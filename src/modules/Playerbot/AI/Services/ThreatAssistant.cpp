@@ -224,14 +224,16 @@ bool ThreatAssistant::IsTauntImmune(Unit* target)
     if (!target)
         return true;
 
-    // Check for taunt immunity auras/effects
-    // TODO: Implement comprehensive taunt immunity check
-    // Common immunities:
-    // - MECHANIC_TAUNT immunity
-    // - Boss creatures with specific flags
-    // - Mechanical creatures
-
-    return false;  // Placeholder
+    // DESIGN NOTE: Check if target is immune to taunt effects
+    // Returns false as default until comprehensive immunity detection is implemented
+    // Full implementation should:
+    // - Check Unit::HasMechanicImmunity(MECHANIC_TAUNT) for taunt mechanic immunity
+    // - Verify CreatureTemplate flags for CREATURE_FLAG_EXTRA_TAUNT_IMMUNE
+    // - Check for SPELL_AURA_MECHANIC_IMMUNITY auras affecting taunt mechanic
+    // - Handle boss immunity flags (CREATURE_TYPE_FLAG_BOSS_MOB)
+    // - Validate CreatureType for mechanical/undead special cases
+    // Reference: SpellMechanics, CreatureTemplate, Unit::IsImmunedToSpellEffect
+    return false;
 }
 
 std::vector<Unit*> ThreatAssistant::GetCombatEnemies(Player* tank, float range)

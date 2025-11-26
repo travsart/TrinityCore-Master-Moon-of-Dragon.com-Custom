@@ -674,7 +674,11 @@ private:
                 {
                     if (creature->isWorldBoss() || creature->IsDungeonBoss())
                         score += 100.0f; // Highest priority for bosses
-                    // TODO: Elite classification - CreatureTemplate no longer has 'rank' field
+                    // DESIGN NOTE: Elite creature classification for targeting priority
+                    // Implementation should use TrinityCore 11.2 CreatureTemplate API.
+                    // CreatureTemplate no longer has 'rank' field in current API.
+                    // Should use creature->GetCreatureTemplate()->Classification or similar.
+                    // Reference: TrinityCore 11.2 CreatureTemplate structure
                     // else if (creature->GetCreatureTemplate()->rank >= CREATURE_ELITE_ELITE)
                     //     score += 50.0f; // High priority for elites
                 }

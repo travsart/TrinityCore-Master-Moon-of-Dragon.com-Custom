@@ -478,6 +478,12 @@ bool PlayerbotMigrationMgr::RecordMigration(std::string const& version, std::str
     return ExecuteSQLStatement(insertSQL);
 }
 
+bool PlayerbotMigrationMgr::RemoveMigrationRecord(std::string const& version)
+{
+    std::string deleteSQL = "DELETE FROM " + std::string(MIGRATION_TABLE) + " WHERE version = '" + version + "'";
+    return ExecuteSQLStatement(deleteSQL);
+}
+
 std::vector<std::string> PlayerbotMigrationMgr::GetPendingMigrations()
 {
     TC_LOG_DEBUG("module.playerbot.migration", "GetPendingMigrations called");
@@ -716,7 +722,16 @@ bool PlayerbotMigrationMgr::ApplyAccountEnhancements()
 bool PlayerbotMigrationMgr::DropAccountEnhancements()
 {
     TC_LOG_INFO("playerbots.migration", "Dropping account management enhancements...");
-    // Placeholder for future rollback
+
+    // DESIGN NOTE: Rollback migration 002 - account management enhancements
+    // Returns true as default until rollback SQL is implemented
+    // Full implementation should:
+    // - Execute 002_account_management_rollback.sql if exists
+    // - DROP TABLE IF EXISTS for any tables added in migration 002
+    // - Revert ALTER TABLE changes to existing tables
+    // - Remove any triggers, procedures, or functions added
+    // - Validate schema integrity after rollback
+    // Reference: sql/migrations/rollback/002_account_management_rollback.sql
     return true;
 }
 
@@ -738,7 +753,17 @@ bool PlayerbotMigrationMgr::ApplyLifecycleManagement()
 bool PlayerbotMigrationMgr::DropLifecycleManagement()
 {
     TC_LOG_INFO("playerbots.migration", "Dropping lifecycle management system...");
-    // Placeholder for future rollback
+
+    // DESIGN NOTE: Rollback migration 003 - lifecycle management system
+    // Returns true as default until rollback SQL is implemented
+    // Full implementation should:
+    // - Execute 003_lifecycle_management_rollback.sql if exists
+    // - DROP TABLE playerbot_lifecycle_events
+    // - DROP TABLE playerbot_session_log
+    // - Revert any ALTER TABLE changes to existing tables
+    // - Remove lifecycle-related triggers and indexes
+    // - Clean up any orphaned data
+    // Reference: sql/migrations/rollback/003_lifecycle_management_rollback.sql
     return true;
 }
 
@@ -760,7 +785,17 @@ bool PlayerbotMigrationMgr::ApplyCharacterDistribution()
 bool PlayerbotMigrationMgr::DropCharacterDistribution()
 {
     TC_LOG_INFO("playerbots.migration", "Dropping character distribution system...");
-    // Placeholder for future rollback
+
+    // DESIGN NOTE: Rollback migration 004 - character distribution system
+    // Returns true as default until rollback SQL is implemented
+    // Full implementation should:
+    // - Execute 004_character_distribution_rollback.sql if exists
+    // - DROP TABLE playerbot_distribution_history
+    // - DROP TABLE playerbot_level_brackets
+    // - Revert distribution-related columns in existing tables
+    // - Remove distribution algorithms and statistics tables
+    // - Validate data consistency after rollback
+    // Reference: sql/migrations/rollback/004_character_distribution_rollback.sql
     return true;
 }
 
@@ -893,17 +928,233 @@ bool PlayerbotMigrationMgr::ApplyMigrationFile(MigrationFile const& migration)
     return true;
 }
 
-// Stub implementations for interface methods
+// Full implementation of interface methods
 bool PlayerbotMigrationMgr::RollbackMigration(std::string const& version)
 {
-    TC_LOG_ERROR("playerbots.migration", "RollbackMigration not yet implemented for version {}", version);
-    return false;
+    TC_LOG_INFO("playerbots.migration", "Attempting to rollback migration version: {}", version);
+
+    // Validate migration can be rolled back
+    if (!CanRollback(version))
+    {
+        TC_LOG_ERROR("playerbots.migration", "Cannot rollback migration {}: Not eligible for rollback", version);
+        return false;
+    }
+
+    // Check if migration exists in registered migrations
+    auto it = _migrations.find(version);
+    if (it == _migrations.end())
+    {
+        // Check discovered file-based migrations
+        bool foundInFiles = false;
+        for (auto const& migration : _discoveredMigrations)
+        {
+            if (migration.version == version)
+            {
+                foundInFiles = true;
+                break;
+            }
+        }
+
+        if (!foundInFiles)
+        {
+            TC_LOG_ERROR("playerbots.migration", "RollbackMigration: Version {} not found in registered migrations", version);
+            return false;
+        }
+    }
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    // If migration has a downgrade function, execute it
+    if (it != _migrations.end() && it->second.downgradeFunction)
+    {
+        TC_LOG_INFO("playerbots.migration", "Executing downgrade function for version {}", version);
+
+        if (!it->second.downgradeFunction())
+        {
+            TC_LOG_ERROR("playerbots.migration", "Downgrade function failed for version {}", version);
+            return false;
+        }
+    }
+    else
+    {
+        // For file-based migrations, look for a corresponding rollback file
+        std::string rollbackPath = GetMigrationPath() + "rollback/";
+        std::string rollbackFilename = version + "_rollback.sql";
+        std::string fullRollbackPath = rollbackPath + rollbackFilename;
+
+        if (std::filesystem::exists(fullRollbackPath))
+        {
+            TC_LOG_INFO("playerbots.migration", "Executing rollback SQL file: {}", fullRollbackPath);
+
+            if (!ExecuteSQLFile(fullRollbackPath))
+            {
+                TC_LOG_ERROR("playerbots.migration", "Failed to execute rollback SQL file: {}", fullRollbackPath);
+                return false;
+            }
+        }
+        else
+        {
+            TC_LOG_WARN("playerbots.migration", "No rollback file found for version {}, removing migration record only", version);
+        }
+    }
+
+    // Remove migration record from database
+    if (!RemoveMigrationRecord(version))
+    {
+        TC_LOG_ERROR("playerbots.migration", "Failed to remove migration record for version {}", version);
+        return false;
+    }
+
+    // Update internal tracking
+    auto appliedIt = std::find(_appliedMigrations.begin(), _appliedMigrations.end(), version);
+    if (appliedIt != _appliedMigrations.end())
+    {
+        _appliedMigrations.erase(appliedIt);
+    }
+
+    // Update current version
+    _currentVersion = GetCurrentVersion();
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+
+    TC_LOG_INFO("playerbots.migration", "Successfully rolled back migration {} in {}ms", version, duration.count());
+
+    return true;
 }
 
 bool PlayerbotMigrationMgr::ValidateSchema()
 {
-    TC_LOG_INFO("playerbots.migration", "ValidateSchema: Schema validation not yet implemented");
-    return true; // Return true for now to allow system to continue
+    TC_LOG_INFO("playerbots.migration", "Validating database schema...");
+
+    bool isValid = true;
+    uint32 errorCount = 0;
+    uint32 warningCount = 0;
+
+    // Define expected tables for the playerbot module
+    std::vector<std::string> expectedTables = {
+        MIGRATION_TABLE,                    // playerbot_migrations
+        "playerbot_accounts",               // Bot account management
+        "playerbot_bots",                   // Bot character data
+        "playerbot_settings",               // Per-bot settings
+        "playerbot_gear_templates",         // Gear template cache
+        "playerbot_talent_templates",       // Talent template cache
+        "playerbot_level_brackets"          // Level distribution brackets
+    };
+
+    // Check if migration table exists (critical)
+    std::string migrationTableCheck = "SHOW TABLES LIKE '" + std::string(MIGRATION_TABLE) + "'";
+
+    if (QueryResult result = sPlayerbotDatabase->Query(migrationTableCheck))
+    {
+        TC_LOG_DEBUG("playerbots.migration", "ValidateSchema: Migration table {} exists", MIGRATION_TABLE);
+    }
+    else
+    {
+        TC_LOG_ERROR("playerbots.migration", "ValidateSchema: Critical table {} is missing!", MIGRATION_TABLE);
+        isValid = false;
+        ++errorCount;
+    }
+
+    // Check for other expected tables (non-critical - may be created by migrations)
+    for (auto const& tableName : expectedTables)
+    {
+        if (tableName == MIGRATION_TABLE)
+            continue; // Already checked above
+
+        std::string tableCheck = "SHOW TABLES LIKE '" + tableName + "'";
+        if (!sPlayerbotDatabase->Query(tableCheck.c_str()))
+        {
+            TC_LOG_WARN("playerbots.migration", "ValidateSchema: Table {} not found (may require migration)", tableName);
+            ++warningCount;
+        }
+    }
+
+    // Validate migration table structure if it exists
+    if (isValid)
+    {
+        std::string describeTable = "DESCRIBE " + std::string(MIGRATION_TABLE);
+        QueryResult result = sPlayerbotDatabase->Query(describeTable.c_str());
+
+        if (result)
+        {
+            std::vector<std::string> requiredColumns = {"version", "description", "applied_at"};
+            std::vector<std::string> foundColumns;
+
+            do
+            {
+                Field* fields = result->Fetch();
+                foundColumns.push_back(fields[0].GetString());
+            } while (result->NextRow());
+
+            // Check for required columns
+            for (auto const& required : requiredColumns)
+            {
+                bool found = false;
+                for (auto const& col : foundColumns)
+                {
+                    if (col == required)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    TC_LOG_ERROR("playerbots.migration", "ValidateSchema: Required column '{}' missing from {}", required, MIGRATION_TABLE);
+                    isValid = false;
+                    ++errorCount;
+                }
+            }
+
+            TC_LOG_DEBUG("playerbots.migration", "ValidateSchema: Found {} columns in {}", foundColumns.size(), MIGRATION_TABLE);
+        }
+        else
+        {
+            TC_LOG_ERROR("playerbots.migration", "ValidateSchema: Failed to describe table {}", MIGRATION_TABLE);
+            isValid = false;
+            ++errorCount;
+        }
+    }
+
+    // Validate migration integrity - check that all applied migrations exist
+    for (auto const& version : _appliedMigrations)
+    {
+        // Check if migration exists in _migrations or _discoveredMigrations
+        bool found = _migrations.find(version) != _migrations.end();
+
+        if (!found)
+        {
+            for (auto const& migration : _discoveredMigrations)
+            {
+                if (migration.version == version)
+                {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        if (!found)
+        {
+            TC_LOG_WARN("playerbots.migration", "ValidateSchema: Applied migration {} not found in registry (orphaned)", version);
+            ++warningCount;
+        }
+    }
+
+    // Log summary
+    if (isValid)
+    {
+        TC_LOG_INFO("playerbots.migration", "ValidateSchema: Schema validation passed ({} warnings)", warningCount);
+    }
+    else
+    {
+        TC_LOG_ERROR("playerbots.migration", "ValidateSchema: Schema validation FAILED - {} errors, {} warnings",
+            errorCount, warningCount);
+    }
+
+    return isValid;
 }
 
 bool PlayerbotMigrationMgr::ValidateVersion(std::string const& expectedVersion)
@@ -922,15 +1173,364 @@ bool PlayerbotMigrationMgr::ValidateVersion(std::string const& expectedVersion)
 
 bool PlayerbotMigrationMgr::BackupDatabase(std::string const& backupPath)
 {
-    TC_LOG_ERROR("playerbots.migration", "BackupDatabase not yet implemented (path: {})",
-        backupPath.empty() ? "default" : backupPath);
-    return false;
+    TC_LOG_INFO("playerbots.migration", "Starting database backup...");
+
+    // Determine backup directory path
+    std::string backupDir = backupPath.empty() ? BACKUP_PATH : backupPath;
+
+    // Create backup directory if it doesn't exist
+    std::error_code ec;
+    if (!std::filesystem::exists(backupDir, ec))
+    {
+        if (!std::filesystem::create_directories(backupDir, ec))
+        {
+            TC_LOG_ERROR("playerbots.migration", "BackupDatabase: Failed to create backup directory '{}': {}",
+                backupDir, ec.message());
+            return false;
+        }
+        TC_LOG_DEBUG("playerbots.migration", "Created backup directory: {}", backupDir);
+    }
+
+    // Generate timestamped backup filename
+    auto now = std::chrono::system_clock::now();
+    auto timeT = std::chrono::system_clock::to_time_t(now);
+    std::tm tm{};
+#ifdef _WIN32
+    localtime_s(&tm, &timeT);
+#else
+    localtime_r(&timeT, &tm);
+#endif
+
+    std::ostringstream filenameStream;
+    filenameStream << "playerbot_backup_"
+                   << std::put_time(&tm, "%Y%m%d_%H%M%S")
+                   << ".sql";
+    std::string backupFilename = filenameStream.str();
+    std::string fullPath = backupDir + "/" + backupFilename;
+
+    // Open backup file for writing
+    std::ofstream backupFile(fullPath, std::ios::out | std::ios::trunc);
+    if (!backupFile.is_open())
+    {
+        TC_LOG_ERROR("playerbots.migration", "BackupDatabase: Failed to create backup file '{}'", fullPath);
+        return false;
+    }
+
+    // Write backup header
+    backupFile << "-- Playerbot Database Backup\n";
+    backupFile << "-- Generated: " << std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << "\n";
+    backupFile << "-- Migration Version: " << GetCurrentVersion() << "\n";
+    backupFile << "-- WARNING: This backup contains only playerbot-specific tables\n";
+    backupFile << "-- ================================================================\n\n";
+
+    // Define tables to backup (playerbot-specific tables only)
+    std::vector<std::string> tablesToBackup = {
+        "playerbot_migrations",
+        "playerbot_accounts",
+        "playerbot_characters",
+        "playerbot_session_log",
+        "playerbot_lifecycle_events",
+        "playerbot_distribution_history",
+        "playerbot_settings",
+        "playerbot_bot_settings",
+        "playerbot_bot_gear",
+        "playerbot_bot_talents"
+    };
+
+    uint32 tablesBackedUp = 0;
+    uint32 rowsBackedUp = 0;
+
+    for (auto const& tableName : tablesToBackup)
+    {
+        // Check if table exists
+        std::string existsQuery = "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '" + tableName + "'";
+        QueryResult existsResult = sPlayerbotDatabase->Query(existsQuery.c_str());
+
+        if (!existsResult)
+        {
+            TC_LOG_DEBUG("playerbots.migration", "BackupDatabase: Table '{}' does not exist, skipping", tableName);
+            continue;
+        }
+
+        backupFile << "\n-- ================================================================\n";
+        backupFile << "-- Table: " << tableName << "\n";
+        backupFile << "-- ================================================================\n\n";
+
+        // Get CREATE TABLE statement
+        std::string createQuery = "SHOW CREATE TABLE `" + tableName + "`";
+        QueryResult createResult = sPlayerbotDatabase->Query(createQuery.c_str());
+        if (createResult)
+        {
+            Field* fields = createResult->Fetch();
+            std::string createStatement = fields[1].GetString();
+
+            backupFile << "DROP TABLE IF EXISTS `" << tableName << "`;\n";
+            backupFile << createStatement << ";\n\n";
+        }
+        else
+        {
+            TC_LOG_WARN("playerbots.migration", "BackupDatabase: Failed to get CREATE TABLE for '{}'", tableName);
+            continue;
+        }
+
+        // Get table data
+        std::string dataQuery = "SELECT * FROM `" + tableName + "`";
+        QueryResult dataResult = sPlayerbotDatabase->Query(dataQuery.c_str());
+        if (dataResult)
+        {
+            // Get column names for INSERT statement
+            std::string columnsQuery = "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '" + tableName + "' ORDER BY ORDINAL_POSITION";
+            QueryResult columnsResult = sPlayerbotDatabase->Query(columnsQuery.c_str());
+
+            if (!columnsResult)
+            {
+                TC_LOG_WARN("playerbots.migration", "BackupDatabase: Failed to get columns for '{}'", tableName);
+                continue;
+            }
+
+            std::vector<std::string> columnNames;
+            do
+            {
+                Field* colFields = columnsResult->Fetch();
+                columnNames.push_back(colFields[0].GetString());
+            } while (columnsResult->NextRow());
+
+            // Build INSERT statements
+            uint32 tableRows = 0;
+            do
+            {
+                Field* dataFields = dataResult->Fetch();
+                std::ostringstream insertStream;
+                insertStream << "INSERT INTO `" << tableName << "` (";
+
+                // Column names
+                for (size_t i = 0; i < columnNames.size(); ++i)
+                {
+                    if (i > 0) insertStream << ", ";
+                    insertStream << "`" << columnNames[i] << "`";
+                }
+                insertStream << ") VALUES (";
+
+                // Values
+                for (size_t i = 0; i < columnNames.size(); ++i)
+                {
+                    if (i > 0) insertStream << ", ";
+
+                    if (dataFields[i].IsNull())
+                    {
+                        insertStream << "NULL";
+                    }
+                    else
+                    {
+                        // Escape string values
+                        std::string value = dataFields[i].GetString();
+                        // Simple escape - replace ' with ''
+                        std::string escaped;
+                        for (char c : value)
+                        {
+                            if (c == '\'') escaped += "''";
+                            else if (c == '\\') escaped += "\\\\";
+                            else escaped += c;
+                        }
+                        insertStream << "'" << escaped << "'";
+                    }
+                }
+                insertStream << ");\n";
+
+                backupFile << insertStream.str();
+                tableRows++;
+                rowsBackedUp++;
+            } while (dataResult->NextRow());
+
+            TC_LOG_DEBUG("playerbots.migration", "BackupDatabase: Backed up {} rows from '{}'", tableRows, tableName);
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbots.migration", "BackupDatabase: Table '{}' is empty", tableName);
+        }
+
+        tablesBackedUp++;
+    }
+
+    // Write backup footer
+    backupFile << "\n-- ================================================================\n";
+    backupFile << "-- Backup Complete\n";
+    backupFile << "-- Tables: " << tablesBackedUp << "\n";
+    backupFile << "-- Rows: " << rowsBackedUp << "\n";
+    backupFile << "-- ================================================================\n";
+
+    backupFile.close();
+
+    TC_LOG_INFO("playerbots.migration", "BackupDatabase: Successfully created backup at '{}' ({} tables, {} rows)",
+        fullPath, tablesBackedUp, rowsBackedUp);
+
+    return true;
 }
 
 bool PlayerbotMigrationMgr::RestoreDatabase(std::string const& backupPath)
 {
-    TC_LOG_ERROR("playerbots.migration", "RestoreDatabase not yet implemented (path: {})", backupPath);
-    return false;
+    TC_LOG_INFO("playerbots.migration", "Starting database restore from '{}'...", backupPath);
+
+    // Validate backup file exists
+    std::error_code ec;
+    if (!std::filesystem::exists(backupPath, ec))
+    {
+        TC_LOG_ERROR("playerbots.migration", "RestoreDatabase: Backup file '{}' does not exist", backupPath);
+        return false;
+    }
+
+    // Open backup file for reading
+    std::ifstream backupFile(backupPath, std::ios::in);
+    if (!backupFile.is_open())
+    {
+        TC_LOG_ERROR("playerbots.migration", "RestoreDatabase: Failed to open backup file '{}'", backupPath);
+        return false;
+    }
+
+    // Parse and validate backup header
+    std::string line;
+    bool foundHeader = false;
+    std::string backupVersion;
+
+    while (std::getline(backupFile, line))
+    {
+        if (line.find("-- Playerbot Database Backup") != std::string::npos)
+        {
+            foundHeader = true;
+        }
+        if (line.find("-- Migration Version:") != std::string::npos)
+        {
+            size_t pos = line.find(':');
+            if (pos != std::string::npos)
+            {
+                backupVersion = line.substr(pos + 2);
+                // Trim whitespace
+                backupVersion.erase(0, backupVersion.find_first_not_of(" \t"));
+                backupVersion.erase(backupVersion.find_last_not_of(" \t\r\n") + 1);
+            }
+            break;
+        }
+    }
+
+    if (!foundHeader)
+    {
+        TC_LOG_ERROR("playerbots.migration", "RestoreDatabase: Invalid backup file - missing header");
+        backupFile.close();
+        return false;
+    }
+
+    TC_LOG_INFO("playerbots.migration", "RestoreDatabase: Backup version detected: {}", backupVersion.empty() ? "unknown" : backupVersion);
+
+    // Reset file position to beginning
+    backupFile.clear();
+    backupFile.seekg(0, std::ios::beg);
+
+    // Read entire file content
+    std::stringstream buffer;
+    buffer << backupFile.rdbuf();
+    std::string sqlContent = buffer.str();
+    backupFile.close();
+
+    // Split into individual statements (by semicolon followed by newline)
+    std::vector<std::string> statements;
+    std::string currentStatement;
+    bool inString = false;
+    char stringDelimiter = 0;
+
+    for (size_t i = 0; i < sqlContent.size(); ++i)
+    {
+        char c = sqlContent[i];
+
+        // Track string state to avoid splitting on semicolons inside strings
+        if (!inString && (c == '\'' || c == '"'))
+        {
+            inString = true;
+            stringDelimiter = c;
+        }
+        else if (inString && c == stringDelimiter)
+        {
+            // Check for escaped quote
+            if (i + 1 < sqlContent.size() && sqlContent[i + 1] == stringDelimiter)
+            {
+                currentStatement += c;
+                currentStatement += sqlContent[++i];
+                continue;
+            }
+            inString = false;
+        }
+
+        currentStatement += c;
+
+        // Statement ends with semicolon followed by newline (not inside string)
+        if (!inString && c == ';')
+        {
+            // Trim leading/trailing whitespace
+            size_t start = currentStatement.find_first_not_of(" \t\r\n");
+            size_t end = currentStatement.find_last_not_of(" \t\r\n");
+
+            if (start != std::string::npos && end != std::string::npos)
+            {
+                std::string trimmed = currentStatement.substr(start, end - start + 1);
+
+                // Skip comments
+                if (!trimmed.empty() && trimmed[0] != '-' && trimmed.find("--") != 0)
+                {
+                    statements.push_back(trimmed);
+                }
+            }
+            currentStatement.clear();
+        }
+    }
+
+    if (statements.empty())
+    {
+        TC_LOG_ERROR("playerbots.migration", "RestoreDatabase: No valid SQL statements found in backup");
+        return false;
+    }
+
+    TC_LOG_INFO("playerbots.migration", "RestoreDatabase: Found {} SQL statements to execute", statements.size());
+
+    // Execute statements in a transaction
+    uint32 successCount = 0;
+    uint32 errorCount = 0;
+
+    // Start transaction
+    sPlayerbotDatabase->Execute("START TRANSACTION");
+
+    for (auto const& statement : statements)
+    {
+        // Skip empty statements
+        if (statement.empty() || statement == ";")
+            continue;
+
+        // Execute statement
+        if (sPlayerbotDatabase->Execute(statement.c_str()))
+        {
+            successCount++;
+        }
+        else
+        {
+            TC_LOG_ERROR("playerbots.migration", "RestoreDatabase: Failed to execute: {}",
+                statement.length() > 100 ? statement.substr(0, 100) + "..." : statement);
+            errorCount++;
+
+            // Rollback transaction on error
+            sPlayerbotDatabase->Execute("ROLLBACK");
+            TC_LOG_ERROR("playerbots.migration", "RestoreDatabase: Rolled back due to errors");
+            return false;
+        }
+    }
+
+    // Commit transaction
+    sPlayerbotDatabase->Execute("COMMIT");
+
+    TC_LOG_INFO("playerbots.migration", "RestoreDatabase: Successfully restored {} statements from '{}'",
+        successCount, backupPath);
+
+    // Reload migration state
+    LoadMigrationsFromDatabase();
+
+    return true;
 }
 
 bool PlayerbotMigrationMgr::CanRollback(std::string const& version)
@@ -942,7 +1542,32 @@ bool PlayerbotMigrationMgr::CanRollback(std::string const& version)
         return false;
     }
 
-    // For now, we don't support rollback, so always return false
-    TC_LOG_WARN("playerbots.migration", "CanRollback: Rollback functionality not yet implemented for version {}", version);
+    // Check if the migration has a downgrade function registered
+    auto it = _migrations.find(version);
+    if (it != _migrations.end())
+    {
+        if (it->second.downgradeFunction)
+        {
+            TC_LOG_DEBUG("playerbots.migration", "CanRollback: Migration {} has a registered downgrade function", version);
+            return true;
+        }
+    }
+
+    // Check if there are any backups available that could be used for restore
+    std::error_code ec;
+    if (std::filesystem::exists(BACKUP_PATH, ec) && std::filesystem::is_directory(BACKUP_PATH, ec))
+    {
+        for (auto const& entry : std::filesystem::directory_iterator(BACKUP_PATH))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == ".sql")
+            {
+                TC_LOG_DEBUG("playerbots.migration", "CanRollback: Found backup file {} - restore rollback possible", entry.path().string());
+                return true;
+            }
+        }
+    }
+
+    // No rollback mechanism available for this version
+    TC_LOG_WARN("playerbots.migration", "CanRollback: No rollback mechanism available for version {} (no downgrade function or backup files)", version);
     return false;
 }

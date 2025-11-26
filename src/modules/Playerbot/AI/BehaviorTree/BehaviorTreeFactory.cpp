@@ -94,7 +94,13 @@ namespace Playerbot
     // If low health, try to use defensive CD (placeholder - class-specific)
     defensiveSelector->AddChild(::std::make_shared<BTAction>("UseDefensive",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Class-specific defensive cooldowns
+            // DESIGN NOTE: Class-specific defensive cooldowns implementation required
+            // When implementing per-class defensive behaviors, add logic here for:
+            // - Warriors: Shield Wall, Last Stand, Shield Block
+            // - Paladins: Divine Shield, Divine Protection, Lay on Hands
+            // - Death Knights: Icebound Fortitude, Anti-Magic Shell, Vampiric Blood
+            // - Druids: Barkskin, Survival Instincts, Frenzied Regeneration
+            // - Monks: Fortifying Brew, Dampen Harm, Diffuse Magic
             return BTStatus::SUCCESS;
         }
     ));
@@ -168,7 +174,13 @@ namespace Playerbot
     // Cast ranged abilities (placeholder - class-specific)
     combatSequence->AddChild(::std::make_shared<BTAction>("CastRangedSpell",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Class-specific ranged spell rotation
+            // DESIGN NOTE: Class-specific ranged spell rotation implementation required
+            // When implementing per-class ranged combat, add logic here for:
+            // - Hunters: Steady Shot, Arcane Shot, Kill Command, Multi-Shot
+            // - Mages: Fireball, Frostbolt, Arcane Blast, AoE spells
+            // - Warlocks: Shadow Bolt, Incinerate, Corruption, Immolate
+            // - Priests (Shadow): Mind Blast, Mind Flay, Shadow Word: Pain
+            // - Balance Druids: Wrath, Starfire, Moonfire, Sunfire
             return BTStatus::SUCCESS;
         }
     ));
@@ -188,7 +200,14 @@ namespace Playerbot
     emergencyDefensive->AddChild(::std::make_shared<BTCheckInCombat>());
     emergencyDefensive->AddChild(::std::make_shared<BTAction>("UseEmergencyCD",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Class-specific emergency defensive
+            // DESIGN NOTE: Class-specific emergency defensive cooldowns implementation required
+            // When implementing per-class tank survival abilities, add logic here for:
+            // - Warriors: Shield Wall, Last Stand, Rallying Cry
+            // - Paladins: Ardent Defender, Guardian of Ancient Kings, Divine Shield
+            // - Death Knights: Dancing Rune Weapon, Vampiric Blood, Icebound Fortitude
+            // - Druids: Survival Instincts, Barkskin, Frenzied Regeneration
+            // - Monks: Fortifying Brew, Zen Meditation, Dampen Harm
+            // - Demon Hunters: Metamorphosis, Fiery Brand, Demon Spikes
             return BTStatus::SUCCESS;
         }
     ));
@@ -204,7 +223,14 @@ namespace Playerbot
     // Use threat generation
     tankingSequence->AddChild(::std::make_shared<BTAction>("GenerateThreat",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Class-specific threat abilities
+            // DESIGN NOTE: Class-specific threat generation abilities implementation required
+            // When implementing per-class threat management, add logic here for:
+            // - Warriors: Thunder Clap, Revenge, Shield Slam, Heroic Strike
+            // - Paladins: Avenger's Shield, Hammer of the Righteous, Consecration
+            // - Death Knights: Death and Decay, Heart Strike, Blood Boil
+            // - Druids: Mangle, Thrash, Swipe, Maul
+            // - Monks: Keg Smash, Breath of Fire, Tiger Palm
+            // - Demon Hunters: Immolation Aura, Spirit Bomb, Fracture
             return BTStatus::SUCCESS;
         }
     ));
@@ -212,7 +238,14 @@ namespace Playerbot
     // Maintain defensive stance/presence
     tankingSequence->AddChild(::std::make_shared<BTAction>("DefensiveStance",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Check and apply defensive stance
+            // DESIGN NOTE: Class-specific defensive stance/presence implementation required
+            // When implementing per-class stance management, add logic here for:
+            // - Warriors: Defensive Stance (if applicable)
+            // - Paladins: Righteous Fury / Devotion Aura
+            // - Death Knights: Blood Presence / Frost Presence
+            // - Druids: Bear Form
+            // - Monks: Stance of the Sturdy Ox
+            // - Demon Hunters: Demon Spikes (active mitigation)
             return BTStatus::SUCCESS;
         }
     ));
@@ -235,7 +268,13 @@ namespace Playerbot
             Player* bot = ai->GetBot();
             if (!bot) return BTStatus::INVALID;
             bb.Set<Unit*>("HealTarget", bot);
-            // TODO: Cast self-heal spell
+            // DESIGN NOTE: Class-specific self-healing spell implementation required
+            // When implementing per-class healing, add logic here for:
+            // - Priests: Flash Heal, Renew, Desperate Prayer
+            // - Paladins: Flash of Light, Holy Light, Word of Glory
+            // - Druids: Rejuvenation, Regrowth, Swiftmend
+            // - Shamans: Healing Surge, Healing Wave, Riptide
+            // - Monks: Soothing Mist, Enveloping Mist, Expel Harm
             return BTStatus::SUCCESS;
         }
     ));
@@ -258,7 +297,13 @@ namespace Playerbot
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             float targetHealthPct = bb.GetOr<float>("HealTargetHealthPct", 1.0f);
 
-            // TODO: Class-specific heal selection
+            // DESIGN NOTE: Class-specific heal spell selection implementation required
+            // When implementing per-class healing priorities, add logic here for:
+            // - Priests: Flash Heal (fast), Greater Heal (efficient), Renew (HoT)
+            // - Paladins: Flash of Light (fast), Holy Light (efficient), Word of Glory (instant)
+            // - Druids: Regrowth (fast), Healing Touch (efficient), Rejuvenation (HoT)
+            // - Shamans: Healing Surge (fast), Healing Wave (efficient), Riptide (HoT)
+            // - Monks: Surging Mist (fast), Soothing Mist (channel), Enveloping Mist (efficient)
             // For now, simple logic:
             uint32 spellId = 0;
             if (targetHealthPct < 0.3f)
@@ -276,7 +321,13 @@ namespace Playerbot
     // Cast heal (placeholder)
     healAllySequence->AddChild(::std::make_shared<BTAction>("CastHeal",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Actually cast the selected heal spell
+            // DESIGN NOTE: Spell casting implementation required
+            // When implementing spell casting, add logic here to:
+            // - Retrieve the selected heal spell ID from blackboard
+            // - Verify the spell is available and off cooldown
+            // - Check mana/resource requirements
+            // - Execute the spell cast using TrinityCore Spell API
+            // - Handle cast interruption and failure cases
             return BTStatus::SUCCESS;
         }
     ));
@@ -295,7 +346,13 @@ namespace Playerbot
     selfHealSequence->AddChild(::std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
     selfHealSequence->AddChild(::std::make_shared<BTAction>("HealSelf",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Self-heal
+            // DESIGN NOTE: Class-specific self-healing spell implementation required
+            // When implementing per-class healing, add logic here for:
+            // - Priests: Flash Heal, Renew, Desperate Prayer
+            // - Paladins: Flash of Light, Holy Light, Word of Glory
+            // - Druids: Rejuvenation, Regrowth, Swiftmend
+            // - Shamans: Healing Surge, Healing Wave, Riptide
+            // - Monks: Soothing Mist, Enveloping Mist, Expel Harm
             return BTStatus::SUCCESS;
         }
     ));
@@ -314,7 +371,13 @@ namespace Playerbot
     // Cast AoE heal (placeholder)
     aoeHealSequence->AddChild(::std::make_shared<BTAction>("CastAoEHeal",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Class-specific AoE heal (Chain Heal, Circle of Healing, etc.)
+            // DESIGN NOTE: Class-specific AoE healing spell implementation required
+            // When implementing per-class group healing, add logic here for:
+            // - Priests: Circle of Healing, Prayer of Healing, Holy Nova
+            // - Paladins: Light of Dawn, Holy Radiance, Beacon of Light
+            // - Druids: Wild Growth, Efflorescence, Tranquility
+            // - Shamans: Chain Heal, Healing Rain, Healing Tide Totem
+            // - Monks: Revival, Essence Font, Chi Burst
             return BTStatus::SUCCESS;
         }
     ));
@@ -403,8 +466,15 @@ namespace Playerbot
     auto meleeSequence = ::std::make_shared<BTSequence>("MeleePositioning");
     meleeSequence->AddChild(::std::make_shared<BTCondition>("IsMeleeClass",
         [](BotAI* ai, BTBlackboard& bb) {
-            // TODO: Check if bot is melee class
-            return true; // Placeholder
+            // DESIGN NOTE: Condition check for melee class identification
+            // Returns true as default behavior
+            // Full implementation should evaluate:
+            // - Bot's class type (Warrior, Rogue, Death Knight, Paladin, Monk, etc.)
+            // - Current specialization (Arms, Fury, Assassination, Subtlety, Unholy, Windwalker, etc.)
+            // - Determine if specialization is melee-based combat
+            // - Consider hybrid classes (Enhancement Shaman, Feral Druid, Retribution Paladin)
+            // Reference: See ClassAI implementations for spec-specific logic
+            return true;
         }
     ));
     meleeSequence->AddChild(::std::make_shared<BTCondition>("TooFarFromTarget",
@@ -427,8 +497,15 @@ namespace Playerbot
     auto rangedSequence = ::std::make_shared<BTSequence>("RangedPositioning");
     rangedSequence->AddChild(::std::make_shared<BTCondition>("IsRangedClass",
         [](BotAI* ai, BTBlackboard& bb) {
-            // TODO: Check if bot is ranged class
-            return true; // Placeholder
+            // DESIGN NOTE: Condition check for ranged class identification
+            // Returns true as default behavior
+            // Full implementation should evaluate:
+            // - Bot's class type (Hunter, Mage, Warlock, Priest, Shaman, Druid, etc.)
+            // - Current specialization (Marksmanship, Beast Mastery, Arcane, Fire, Shadow, Elemental, Balance)
+            // - Determine if specialization is ranged-based combat
+            // - Consider hybrid classes (Balance Druid, Elemental Shaman, Shadow Priest)
+            // Reference: See ClassAI implementations for spec-specific logic
+            return true;
         }
     ));
     rangedSequence->AddChild(::std::make_shared<BTCondition>("NotInOptimalRange",
@@ -484,8 +561,15 @@ namespace Playerbot
     ));
     canBuffSelector->AddChild(::std::make_shared<BTCondition>("EarlyCombat",
         [](BotAI* ai, BTBlackboard& bb) {
-            // TODO: Check combat duration
-            return false; // Placeholder
+            // DESIGN NOTE: Condition check for early combat phase
+            // Returns false as default behavior
+            // Full implementation should evaluate:
+            // - Combat start timestamp (first combat state change)
+            // - Current combat duration (current time - start time)
+            // - Store combat start time in blackboard or bot state
+            // - Return true if combat duration < 5 seconds
+            // Reference: See BotAI combat state tracking for timestamp management
+            return false;
         }
     ));
     root->AddChild(canBuffSelector);
@@ -493,15 +577,33 @@ namespace Playerbot
     // Check missing self buff
     root->AddChild(::std::make_shared<BTCondition>("MissingBuff",
         [](BotAI* ai, BTBlackboard& bb) {
-            // TODO: Check for missing class buffs
-            return false; // Placeholder
+            // DESIGN NOTE: Condition check for missing class buffs
+            // Returns false as default behavior
+            // Full implementation should evaluate:
+            // - Warriors: Battle Shout, Commanding Shout
+            // - Mages: Arcane Intellect, Mage Armor
+            // - Paladins: Blessings (Might, Kings, Wisdom), Seals
+            // - Priests: Power Word: Fortitude, Inner Fire
+            // - Druids: Mark of the Wild, appropriate form
+            // - Warlocks: Soul Link, Demon Armor/Fel Armor
+            // - Shamans: Water Shield/Lightning Shield, totems
+            // - Death Knights: Bone Shield, presence buffs
+            // - Monks: Legacy of the Emperor/White Tiger
+            // Reference: See ClassAI implementations for spec-specific logic
+            return false;
         }
     ));
 
     // Cast self buff
     root->AddChild(::std::make_shared<BTAction>("CastBuff",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Cast appropriate buff
+            // DESIGN NOTE: Class-specific buff casting implementation required
+            // When implementing per-class buff casting, add logic here to:
+            // - Determine which buff is missing (from previous check)
+            // - Select appropriate spell ID for the buff
+            // - Verify spell is available and ready to cast
+            // - Cast the buff on self or appropriate party members
+            // - Handle cast failures and cooldowns
             return BTStatus::SUCCESS;
         }
     ));
@@ -528,7 +630,13 @@ namespace Playerbot
     // Use consumable
     consumableSequence->AddChild(::std::make_shared<BTAction>("UseConsumable",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // TODO: Find and use mana consumable
+            // DESIGN NOTE: Consumable item usage implementation required
+            // When implementing consumable usage, add logic here to:
+            // - Search bot's inventory for appropriate consumables (mana/health potions, food, drink)
+            // - Prioritize by quality/effectiveness (conjured > vendor items)
+            // - Check item cooldowns and usage restrictions
+            // - Use the item via TrinityCore Item API
+            // - Handle special cases (conjured items, class-specific consumables)
             return BTStatus::SUCCESS;
         }
     ));

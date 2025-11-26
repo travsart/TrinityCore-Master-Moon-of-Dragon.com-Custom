@@ -387,6 +387,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupRoleEnums.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupRoleUtils.cpp
 
     # Group Event System - Event-Driven Architecture for Group Coordination
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
@@ -1055,6 +1057,8 @@ source_group("Group" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupRoleEnums.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupRoleUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.h

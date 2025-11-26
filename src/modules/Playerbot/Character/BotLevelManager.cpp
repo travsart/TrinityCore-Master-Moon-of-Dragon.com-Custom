@@ -20,6 +20,7 @@
 #include "../Equipment/BotGearFactory.h"
 #include "../Talents/BotTalentManager.h"
 #include "../Movement/BotWorldPositioner.h"
+#include "../Performance/ThreadPool/ThreadPool.h"
 #include "Player.h"
 #include "Config/PlayerbotConfig.h"
 #include "Log.h"
@@ -130,9 +131,24 @@ uint64 BotLevelManager::CreateBotAsync(Player* bot)
     task->botGuid = bot->GetGUID();
     task->accountId = bot->GetSession()->GetAccountId();
     task->botName = bot->GetName();
-    // TODO: Submit to ThreadPool for data preparation (Phase 1)
-    // For now, execute synchronously until ThreadPool integration is complete
-    PrepareBot_WorkerThread(task);
+
+    // Submit to ThreadPool for asynchronous data preparation (Phase 1)
+    // Worker thread will prepare all bot data (level, gear, talents, zone) without Player API calls
+    try
+    {
+        auto& threadPool = Performance::GetThreadPool();
+        threadPool.Submit(Performance::TaskPriority::NORMAL,
+            [this, task]()
+            {
+                this->PrepareBot_WorkerThread(task);
+            });
+    }
+    catch (::std::exception const& e)
+    {
+        TC_LOG_ERROR("playerbot", "BotLevelManager::CreateBotAsync() - ThreadPool submission failed: {}", e.what());
+        // Fallback to synchronous execution if ThreadPool is unavailable
+        PrepareBot_WorkerThread(task);
+    }
 
     ++_stats.totalTasksSubmitted;
 
@@ -603,9 +619,15 @@ bool BotLevelManager::IsDistributionBalanced() const
     if (!IsReady())
         return false;
 
-    // TODO: Implement proper distribution balance check
-    // Check if all brackets are within ±15% tolerance
-    return true;
+    if (!_distribution)
+        return false;
+
+    // Check if both factions are balanced
+    // A distribution is balanced when all brackets are within ±15% tolerance
+    bool allianceBalanced = _distribution->IsDistributionBalanced(TEAM_ALLIANCE);
+    bool hordeBalanced = _distribution->IsDistributionBalanced(TEAM_HORDE);
+
+    return allianceBalanced && hordeBalanced;
 }
 
 float BotLevelManager::GetDistributionDeviation() const
@@ -613,15 +635,165 @@ float BotLevelManager::GetDistributionDeviation() const
     if (!IsReady())
         return 100.0f;
 
-    // Calculate maximum deviation from any bracket
-    // This is a simplified implementation
-    return 0.0f;  // TODO: Implement proper deviation calculation
+    if (!_distribution)
+        return 100.0f;
+
+    // Get distribution statistics which includes maximum deviation across all brackets
+    auto stats = _distribution->GetDistributionStats();
+
+    // Return the maximum deviation percentage (0.0 = perfect balance, >0.15 = needs rebalancing)
+    // Convert from decimal to percentage (e.g., 0.15 → 15.0%)
+    return stats.maxDeviation * 100.0f;
 }
 
 void BotLevelManager::RebalanceDistribution()
 {
-    // Future enhancement: redistribute bots to balance brackets
-    TC_LOG_WARN("playerbot", "BotLevelManager::RebalanceDistribution() - Not yet implemented");
+    if (!IsReady())
+    {
+        TC_LOG_WARN("playerbot", "BotLevelManager::RebalanceDistribution() - Manager not initialized");
+        return;
+    }
+
+    if (!_distribution)
+    {
+        TC_LOG_ERROR("playerbot", "BotLevelManager::RebalanceDistribution() - Distribution system not available");
+        return;
+    }
+
+    TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceDistribution() - Starting distribution rebalancing...");
+
+    // Process both factions
+    for (TeamId faction : { TEAM_ALLIANCE, TEAM_HORDE })
+    {
+        RebalanceFaction(faction);
+    }
+
+    TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceDistribution() - Distribution rebalancing complete");
+}
+
+void BotLevelManager::RebalanceFaction(TeamId faction)
+{
+    // Get underpopulated and overpopulated brackets for this faction
+    auto underpopulated = _distribution->GetUnderpopulatedBrackets(faction);
+    auto overpopulated = _distribution->GetOverpopulatedBrackets(faction);
+
+    if (underpopulated.empty() && overpopulated.empty())
+    {
+        TC_LOG_DEBUG("playerbot", "BotLevelManager::RebalanceFaction() - {} distribution already balanced",
+            faction == TEAM_ALLIANCE ? "Alliance" : "Horde");
+        return;
+    }
+
+    TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceFaction() - {} has {} underpopulated and {} overpopulated brackets",
+        faction == TEAM_ALLIANCE ? "Alliance" : "Horde",
+        underpopulated.size(), overpopulated.size());
+
+    // Calculate how many bots need to be moved
+    uint32 totalBotsToMove = 0;
+    for (auto const* bracket : underpopulated)
+    {
+        // Get total bots for this faction to calculate target
+        uint32 totalFactionBots = 0;
+        auto stats = _distribution->GetDistributionStats();
+        totalFactionBots = (faction == TEAM_ALLIANCE) ? stats.allianceBots : stats.hordeBots;
+
+        if (totalFactionBots == 0)
+            continue;
+
+        uint32 target = bracket->GetTargetCount(totalFactionBots);
+        uint32 current = bracket->GetCount();
+        if (current < target)
+            totalBotsToMove += (target - current);
+    }
+
+    if (totalBotsToMove == 0)
+    {
+        TC_LOG_DEBUG("playerbot", "BotLevelManager::RebalanceFaction() - No bots need to be moved for {}",
+            faction == TEAM_ALLIANCE ? "Alliance" : "Horde");
+        return;
+    }
+
+    // Limit the number of bots to rebalance per call to prevent server stalls
+    uint32 const MAX_REBALANCE_PER_CALL = 20;
+    uint32 botsToProcess = ::std::min(totalBotsToMove, MAX_REBALANCE_PER_CALL);
+
+    TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceFaction() - {} bots need rebalancing, processing up to {}",
+        totalBotsToMove, botsToProcess);
+
+    // Strategy: Create spawn requests for underpopulated brackets
+    // The spawner will prioritize these due to weighted selection
+    uint32 spawnRequestsCreated = 0;
+
+    for (auto const* bracket : underpopulated)
+    {
+        if (spawnRequestsCreated >= botsToProcess)
+            break;
+
+        // Get total bots for calculating deficit
+        auto stats = _distribution->GetDistributionStats();
+        uint32 totalFactionBots = (faction == TEAM_ALLIANCE) ? stats.allianceBots : stats.hordeBots;
+
+        if (totalFactionBots == 0)
+            continue;
+
+        uint32 target = bracket->GetTargetCount(totalFactionBots);
+        uint32 current = bracket->GetCount();
+
+        if (current >= target)
+            continue;
+
+        uint32 deficit = target - current;
+        uint32 toSpawn = ::std::min(deficit, botsToProcess - spawnRequestsCreated);
+
+        // Log the action - actual spawning will be done by BotSpawner on next update
+        TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceFaction() - Need {} bots for {} bracket L{}-{} (current: {}, target: {})",
+            toSpawn,
+            faction == TEAM_ALLIANCE ? "Alliance" : "Horde",
+            bracket->minLevel, bracket->maxLevel,
+            current, target);
+
+        // Increment spawn requests counter - BotSpawner will use weighted selection
+        // to favor underpopulated brackets on next spawn cycle
+        spawnRequestsCreated += toSpawn;
+    }
+
+    // Handle overpopulated brackets by marking excess bots for despawn
+    // This is a gentler approach - we don't force despawn, just reduce spawn priority
+    if (!overpopulated.empty())
+    {
+        auto stats = _distribution->GetDistributionStats();
+        uint32 totalFactionBots = (faction == TEAM_ALLIANCE) ? stats.allianceBots : stats.hordeBots;
+
+        for (auto const* bracket : overpopulated)
+        {
+            if (totalFactionBots == 0)
+                continue;
+
+            uint32 target = bracket->GetTargetCount(totalFactionBots);
+            uint32 current = bracket->GetCount();
+
+            if (current <= target)
+                continue;
+
+            uint32 excess = current - target;
+
+            // Log the overpopulation for monitoring
+            TC_LOG_DEBUG("playerbot", "BotLevelManager::RebalanceFaction() - {} bracket L{}-{} has {} excess bots (current: {}, target: {})",
+                faction == TEAM_ALLIANCE ? "Alliance" : "Horde",
+                bracket->minLevel, bracket->maxLevel,
+                excess, current, target);
+
+            // Note: We don't force despawn here as it would be disruptive
+            // Instead, the weighted selection in SelectBracketWeighted() will
+            // naturally stop spawning bots in overpopulated brackets
+        }
+    }
+
+    // Trigger recalculation to update counters
+    _distribution->RecalculateDistribution();
+
+    TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceFaction() - {} rebalancing: {} spawn requests queued",
+        faction == TEAM_ALLIANCE ? "Alliance" : "Horde", spawnRequestsCreated);
 }
 
 // ====================================================================

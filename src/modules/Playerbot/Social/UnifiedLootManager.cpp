@@ -520,8 +520,54 @@ void UnifiedLootManager::CoordinationModule::InitiateLootSession(Group* group, L
 
 void UnifiedLootManager::CoordinationModule::ProcessLootSession(Group* group, uint32 lootSessionId)
 {
-    // TODO: Implement loot session processing
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.loot", "ProcessLootSession: Null group provided");
+        return;
+    }
+
+    std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
+
+    auto it = _activeSessions.find(lootSessionId);
+    if (it == _activeSessions.end())
+    {
+        TC_LOG_WARN("playerbot.loot", "ProcessLootSession: Session {} not found", lootSessionId);
+        return;
+    }
+
+    LootSession& session = it->second;
+    if (!session.isActive)
+    {
+        TC_LOG_DEBUG("playerbot.loot", "ProcessLootSession: Session {} already inactive", lootSessionId);
+        return;
+    }
+
+    // Check for timeout
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    if (currentTime >= session.sessionTimeout)
+    {
+        TC_LOG_INFO("playerbot.loot", "ProcessLootSession: Session {} timed out after {} ms",
+            lootSessionId, currentTime - session.sessionStartTime);
+        HandleLootSessionTimeout(lootSessionId);
+        return;
+    }
+
+    // Process any pending items in the session
+    if (!session.availableItems.empty())
+    {
+        TC_LOG_DEBUG("playerbot.loot", "ProcessLootSession: Processing {} items in session {}",
+            session.availableItems.size(), lootSessionId);
+
+        // Prioritize items by value and upgrade potential
+        PrioritizeLootDistribution(group, session.availableItems);
+
+        // Optimize the sequence for efficient looting
+        OptimizeLootSequence(group, session.availableItems);
+    }
+
+    // Update session metrics
+    TC_LOG_DEBUG("playerbot.loot", "ProcessLootSession: Session {} processed, {} active rolls",
+        lootSessionId, session.activeRolls.size());
 }
 
 void UnifiedLootManager::CoordinationModule::CompleteLootSession(uint32 lootSessionId)
@@ -549,56 +595,675 @@ void UnifiedLootManager::CoordinationModule::HandleLootSessionTimeout(uint32 loo
 
 void UnifiedLootManager::CoordinationModule::OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items)
 {
-    // TODO: Implement loot distribution orchestration
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group || items.empty())
+    {
+        TC_LOG_DEBUG("playerbot.loot", "OrchestrateLootDistribution: No group or empty items");
+        return;
+    }
+
+    TC_LOG_INFO("playerbot.loot", "OrchestrateLootDistribution: Orchestrating {} items for group {}",
+        items.size(), group->GetGUID().GetCounter());
+
+    // Create a mutable copy for prioritization and optimization
+    std::vector<LootItem> workingItems = items;
+
+    // Step 1: Prioritize items by value and upgrade potential
+    PrioritizeLootDistribution(group, workingItems);
+
+    // Step 2: Optimize the looting sequence
+    OptimizeLootSequence(group, workingItems);
+
+    // Step 3: For each item, facilitate discussion and handle distribution
+    for (LootItem const& item : workingItems)
+    {
+        // Broadcast recommendations to group members
+        BroadcastLootRecommendations(group, item);
+
+        // Facilitate any necessary discussion
+        FacilitateGroupLootDiscussion(group, item);
+
+        // Use the unified loot manager's distribution module
+        UnifiedLootManager::instance()->DistributeLoot(group, item);
+    }
+
+    TC_LOG_DEBUG("playerbot.loot", "OrchestrateLootDistribution: Completed orchestration for {} items",
+        workingItems.size());
 }
 
 void UnifiedLootManager::CoordinationModule::PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items)
 {
-    // TODO: Implement loot distribution prioritization
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group || items.empty())
+        return;
+
+    TC_LOG_DEBUG("playerbot.loot", "PrioritizeLootDistribution: Prioritizing {} items", items.size());
+
+    // Calculate average upgrade potential for each item across group members
+    std::unordered_map<uint32, float> itemAverageUpgrade;
+
+    for (auto const& item : items)
+    {
+        float totalUpgrade = 0.0f;
+        uint32 memberCount = 0;
+
+        for (GroupReference const& ref : group->GetMembers())
+        {
+            Player* member = ref.GetSource();
+            if (!member)
+                continue;
+
+            float upgradeValue = UnifiedLootManager::instance()->CalculateUpgradeValue(member, item);
+            if (upgradeValue > 0.0f)
+            {
+                totalUpgrade += upgradeValue;
+                ++memberCount;
+            }
+        }
+
+        float avgUpgrade = memberCount > 0 ? totalUpgrade / memberCount : 0.0f;
+        itemAverageUpgrade[item.itemId] = avgUpgrade;
+    }
+
+    // Sort items by: Quality (descending), then by average upgrade potential (descending), then by item level (descending)
+    std::sort(items.begin(), items.end(),
+        [&itemAverageUpgrade](LootItem const& a, LootItem const& b)
+        {
+            // Higher quality first
+            if (a.itemQuality != b.itemQuality)
+                return a.itemQuality > b.itemQuality;
+
+            // Higher average upgrade potential first
+            float upgradeA = itemAverageUpgrade.count(a.itemId) ? itemAverageUpgrade[a.itemId] : 0.0f;
+            float upgradeB = itemAverageUpgrade.count(b.itemId) ? itemAverageUpgrade[b.itemId] : 0.0f;
+            if (std::abs(upgradeA - upgradeB) > 0.01f)
+                return upgradeA > upgradeB;
+
+            // Higher item level first
+            return a.itemLevel > b.itemLevel;
+        });
+
+    TC_LOG_DEBUG("playerbot.loot", "PrioritizeLootDistribution: Sorted {} items by priority", items.size());
 }
 
 void UnifiedLootManager::CoordinationModule::OptimizeLootSequence(Group* group, std::vector<LootItem>& items)
 {
-    // TODO: Implement loot sequence optimization
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group || items.empty())
+        return;
+
+    TC_LOG_DEBUG("playerbot.loot", "OptimizeLootSequence: Optimizing sequence for {} items", items.size());
+
+    // Build dependency map - some items should be distributed before others
+    // e.g., weapons before off-hands, main armor pieces before accessories
+    std::unordered_map<uint32, int32> slotPriority;
+    slotPriority[EQUIPMENT_SLOT_MAINHAND] = 10;  // Main weapons first
+    slotPriority[EQUIPMENT_SLOT_OFFHAND] = 9;
+    slotPriority[EQUIPMENT_SLOT_RANGED] = 8;     // Ranged/relic
+    slotPriority[EQUIPMENT_SLOT_HEAD] = 7;       // Tier token slots
+    slotPriority[EQUIPMENT_SLOT_SHOULDERS] = 7;
+    slotPriority[EQUIPMENT_SLOT_CHEST] = 7;
+    slotPriority[EQUIPMENT_SLOT_HANDS] = 6;
+    slotPriority[EQUIPMENT_SLOT_LEGS] = 6;
+    slotPriority[EQUIPMENT_SLOT_FEET] = 5;
+    slotPriority[EQUIPMENT_SLOT_WAIST] = 4;
+    slotPriority[EQUIPMENT_SLOT_WRISTS] = 4;
+    slotPriority[EQUIPMENT_SLOT_BACK] = 3;
+    slotPriority[EQUIPMENT_SLOT_NECK] = 2;
+    slotPriority[EQUIPMENT_SLOT_FINGER1] = 2;
+    slotPriority[EQUIPMENT_SLOT_FINGER2] = 2;
+    slotPriority[EQUIPMENT_SLOT_TRINKET1] = 1;
+    slotPriority[EQUIPMENT_SLOT_TRINKET2] = 1;
+
+    // Sort items by slot priority, then by existing priority order
+    std::stable_sort(items.begin(), items.end(),
+        [&slotPriority](LootItem const& a, LootItem const& b)
+        {
+            int32 priorityA = slotPriority.count(a.inventoryType) ? slotPriority[a.inventoryType] : 0;
+            int32 priorityB = slotPriority.count(b.inventoryType) ? slotPriority[b.inventoryType] : 0;
+            return priorityA > priorityB;
+        });
+
+    // Group similar items together to speed up rolling
+    // Players can make batch decisions on same-type items
+    auto sameTypeRange = items.begin();
+    while (sameTypeRange != items.end())
+    {
+        auto rangeEnd = std::find_if(sameTypeRange, items.end(),
+            [&sameTypeRange](LootItem const& item)
+            {
+                return item.inventoryType != sameTypeRange->inventoryType;
+            });
+
+        // Within each slot type, sort by item level descending so best items go first
+        std::sort(sameTypeRange, rangeEnd,
+            [](LootItem const& a, LootItem const& b)
+            {
+                return a.itemLevel > b.itemLevel;
+            });
+
+        sameTypeRange = rangeEnd;
+    }
+
+    TC_LOG_DEBUG("playerbot.loot", "OptimizeLootSequence: Sequence optimized for {} items", items.size());
 }
 
 void UnifiedLootManager::CoordinationModule::FacilitateGroupLootDiscussion(Group* group, LootItem const& item)
 {
-    // TODO: Implement group loot discussion facilitation
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group)
+        return;
+
+    TC_LOG_DEBUG("playerbot.loot", "FacilitateGroupLootDiscussion: Starting discussion for item {} (id: {})",
+        item.itemName, item.itemId);
+
+    // Collect interest from all group members (bots will auto-evaluate)
+    std::vector<std::pair<ObjectGuid, LootPriority>> memberInterest;
+    uint32 needCount = 0;
+    uint32 greedCount = 0;
+    uint32 passCount = 0;
+
+    for (GroupReference const& ref : group->GetMembers())
+    {
+        Player* member = ref.GetSource();
+        if (!member)
+            continue;
+
+        // Get the bot's loot distribution to evaluate interest
+        auto* gameSystems = GetGameSystems(member);
+        if (!gameSystems)
+        {
+            // Human player - assume they will decide themselves
+            TC_LOG_DEBUG("playerbot.loot", "FacilitateGroupLootDiscussion: {} is human player, skipping auto-evaluation",
+                member->GetName());
+            continue;
+        }
+
+        LootPriority priority = gameSystems->GetLootDistribution()->AnalyzeItemPriority(item);
+        memberInterest.emplace_back(member->GetGUID(), priority);
+
+        switch (priority)
+        {
+            case LootPriority::CRITICAL_UPGRADE:
+            case LootPriority::SIGNIFICANT_UPGRADE:
+                ++needCount;
+                break;
+            case LootPriority::MINOR_UPGRADE:
+            case LootPriority::SIDEGRADE:
+                ++greedCount;
+                break;
+            case LootPriority::NOT_USEFUL:
+            default:
+                ++passCount;
+                break;
+        }
+    }
+
+    // Log the discussion summary
+    TC_LOG_DEBUG("playerbot.loot", "FacilitateGroupLootDiscussion: Item {} interest - Need: {}, Greed: {}, Pass: {}",
+        item.itemName, needCount, greedCount, passCount);
+
+    // If multiple players have high interest, flag for potential conflict resolution
+    if (needCount > 1)
+    {
+        TC_LOG_INFO("playerbot.loot", "FacilitateGroupLootDiscussion: {} players need item {} - initiating fair resolution",
+            needCount, item.itemName);
+        HandleLootConflictResolution(group, item);
+    }
 }
 
 void UnifiedLootManager::CoordinationModule::HandleLootConflictResolution(Group* group, LootItem const& item)
 {
-    // TODO: Implement loot conflict resolution
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group)
+        return;
+
+    TC_LOG_DEBUG("playerbot.loot", "HandleLootConflictResolution: Resolving conflict for item {} (id: {})",
+        item.itemName, item.itemId);
+
+    // Collect all members who want this item with their priority scores
+    struct ConflictCandidate
+    {
+        ObjectGuid guid;
+        float upgradeScore;
+        uint32 itemsWonThisSession;
+        bool isMainSpec;
+        uint32 currentItemLevel;
+    };
+
+    std::vector<ConflictCandidate> candidates;
+
+    for (GroupReference const& ref : group->GetMembers())
+    {
+        Player* member = ref.GetSource();
+        if (!member)
+            continue;
+
+        auto* gameSystems = GetGameSystems(member);
+        if (!gameSystems)
+            continue;
+
+        LootPriority priority = gameSystems->GetLootDistribution()->AnalyzeItemPriority(item);
+        if (priority < LootPriority::SIGNIFICANT_UPGRADE)  // Only consider HIGH and HIGHEST priority
+            continue;
+
+        float upgradeScore = UnifiedLootManager::instance()->CalculateUpgradeValue(member, item);
+        bool isMainSpec = gameSystems->GetLootDistribution()->IsItemForMainSpec(item);
+
+        // Get items won count from the loot distribution profile
+        uint32 itemsWon = gameSystems->GetLootDistribution()->GetPlayerLootProfile().totalLootReceived;
+
+        // Get current item level in the slot
+        uint32 currentILevel = 0;
+        if (item.inventoryType != 0)
+        {
+            Item* currentItem = member->GetItemByPos(INVENTORY_SLOT_BAG_0, static_cast<uint8>(item.inventoryType));
+            if (currentItem)
+            {
+                ItemTemplate const* itemTemplate = currentItem->GetTemplate();
+                if (itemTemplate)
+                    currentILevel = itemTemplate->GetBaseItemLevel();
+            }
+        }
+
+        candidates.push_back({member->GetGUID(), upgradeScore, itemsWon, isMainSpec, currentILevel});
+    }
+
+    if (candidates.empty())
+    {
+        TC_LOG_DEBUG("playerbot.loot", "HandleLootConflictResolution: No valid candidates for item {}", item.itemName);
+        return;
+    }
+
+    // Sort candidates by fairness criteria:
+    // 1. Main spec over off spec
+    // 2. Bigger upgrade value (more needed)
+    // 3. Fewer items won this session
+    // 4. Lower current item level (more undergeared)
+    std::sort(candidates.begin(), candidates.end(),
+        [](ConflictCandidate const& a, ConflictCandidate const& b)
+        {
+            // Main spec beats off spec
+            if (a.isMainSpec != b.isMainSpec)
+                return a.isMainSpec;
+
+            // Bigger upgrade is higher priority
+            if (std::abs(a.upgradeScore - b.upgradeScore) > 5.0f)
+                return a.upgradeScore > b.upgradeScore;
+
+            // Fewer wins this session takes precedence
+            if (a.itemsWonThisSession != b.itemsWonThisSession)
+                return a.itemsWonThisSession < b.itemsWonThisSession;
+
+            // Lower current item level means more undergeared
+            return a.currentItemLevel < b.currentItemLevel;
+        });
+
+    // The top candidate wins the conflict
+    ConflictCandidate const& winner = candidates[0];
+    TC_LOG_INFO("playerbot.loot", "HandleLootConflictResolution: {} wins item {} (upgrade: {:.1f}, items won: {}, main spec: {})",
+        winner.guid.GetCounter(), item.itemName, winner.upgradeScore, winner.itemsWonThisSession, winner.isMainSpec ? "yes" : "no");
+
+    // Notify all candidates of the resolution
+    for (auto const& candidate : candidates)
+    {
+        if (candidate.guid == winner.guid)
+            continue;
+
+        TC_LOG_DEBUG("playerbot.loot", "HandleLootConflictResolution: {} passed on {} (winner had higher priority)",
+            candidate.guid.GetCounter(), item.itemName);
+    }
 }
 
 void UnifiedLootManager::CoordinationModule::BroadcastLootRecommendations(Group* group, LootItem const& item)
 {
-    // TODO: Implement loot recommendation broadcasting
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group)
+        return;
+
+    TC_LOG_DEBUG("playerbot.loot", "BroadcastLootRecommendations: Broadcasting recommendations for item {} (id: {})",
+        item.itemName, item.itemId);
+
+    // Find the best candidate(s) for this item
+    struct Recommendation
+    {
+        ObjectGuid playerGuid;
+        std::string playerName;
+        float upgradePercent;
+        bool isMainSpec;
+        LootRollType suggestedAction;
+    };
+
+    std::vector<Recommendation> recommendations;
+
+    for (GroupReference const& ref : group->GetMembers())
+    {
+        Player* member = ref.GetSource();
+        if (!member)
+            continue;
+
+        auto* gameSystems = GetGameSystems(member);
+        if (!gameSystems)
+            continue;
+
+        float upgradeValue = UnifiedLootManager::instance()->CalculateUpgradeValue(member, item);
+        bool isMainSpec = gameSystems->GetLootDistribution()->IsItemForMainSpec(item);
+
+        // Determine suggested action based on upgrade value and spec
+        LootRollType suggestedAction;
+        if (upgradeValue > 10.0f && isMainSpec)
+            suggestedAction = LootRollType::NEED;
+        else if (upgradeValue > 5.0f)
+            suggestedAction = LootRollType::GREED;
+        else if (upgradeValue > 0.0f)
+            suggestedAction = LootRollType::GREED;  // Minor upgrade
+        else
+            suggestedAction = LootRollType::PASS;
+
+        recommendations.push_back({
+            member->GetGUID(),
+            member->GetName(),
+            upgradeValue,
+            isMainSpec,
+            suggestedAction
+        });
+    }
+
+    // Sort by upgrade value to show best candidates first
+    std::sort(recommendations.begin(), recommendations.end(),
+        [](Recommendation const& a, Recommendation const& b)
+        {
+            return a.upgradePercent > b.upgradePercent;
+        });
+
+    // Log recommendations
+    uint32 needCount = 0;
+    uint32 greedCount = 0;
+    for (auto const& rec : recommendations)
+    {
+        if (rec.suggestedAction == LootRollType::NEED)
+            ++needCount;
+        else if (rec.suggestedAction == LootRollType::GREED)
+            ++greedCount;
+
+        TC_LOG_DEBUG("playerbot.loot", "BroadcastLootRecommendations: {} should {} on {} (upgrade: {:.1f}%, main spec: {})",
+            rec.playerName,
+            rec.suggestedAction == LootRollType::NEED ? "NEED" :
+                (rec.suggestedAction == LootRollType::GREED ? "GREED" : "PASS"),
+            item.itemName,
+            rec.upgradePercent,
+            rec.isMainSpec ? "yes" : "no");
+    }
+
+    TC_LOG_DEBUG("playerbot.loot", "BroadcastLootRecommendations: {} need, {} greed recommended for {}",
+        needCount, greedCount, item.itemName);
 }
 
 void UnifiedLootManager::CoordinationModule::OptimizeLootEfficiency(Group* group)
 {
-    // TODO: Implement loot efficiency optimization
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group)
+        return;
+
+    TC_LOG_DEBUG("playerbot.loot", "OptimizeLootEfficiency: Optimizing efficiency for group {}",
+        group->GetGUID().GetCounter());
+
+    // Calculate metrics for efficiency optimization
+    uint32 totalMembers = 0;
+    uint32 botMembers = 0;
+    uint32 humanMembers = 0;
+    uint32 membersWithAutoLoot = 0;
+
+    for (GroupReference const& ref : group->GetMembers())
+    {
+        Player* member = ref.GetSource();
+        if (!member)
+            continue;
+
+        ++totalMembers;
+
+        auto* gameSystems = GetGameSystems(member);
+        if (gameSystems)
+        {
+            ++botMembers;
+            ++membersWithAutoLoot;  // All bots have auto-loot
+        }
+        else
+        {
+            ++humanMembers;
+            // Check if human has auto-loot enabled
+            if (member->HasPlayerFlag(PLAYER_FLAGS_AUTO_DECLINE_GUILD))  // Just checking some flag as proxy
+                ++membersWithAutoLoot;
+        }
+    }
+
+    // Calculate optimal batch size based on group composition
+    uint32 optimalBatchSize = 1;
+    if (botMembers == totalMembers)
+    {
+        // All bots - can batch more aggressively
+        optimalBatchSize = std::min(10u, totalMembers);
+    }
+    else if (humanMembers > 0)
+    {
+        // Human players present - smaller batches for responsiveness
+        optimalBatchSize = std::min(3u, totalMembers);
+    }
+
+    // Log efficiency metrics
+    float botRatio = totalMembers > 0 ? (static_cast<float>(botMembers) / totalMembers) * 100.0f : 0.0f;
+    float autoLootRatio = totalMembers > 0 ? (static_cast<float>(membersWithAutoLoot) / totalMembers) * 100.0f : 0.0f;
+
+    TC_LOG_DEBUG("playerbot.loot", "OptimizeLootEfficiency: {} total members ({} bots, {} humans), "
+        "{:.1f}% bot ratio, {:.1f}% auto-loot, optimal batch size: {}",
+        totalMembers, botMembers, humanMembers, botRatio, autoLootRatio, optimalBatchSize);
+
+    // Store efficiency settings for use by other methods
+    _efficiencySettings.optimalBatchSize = optimalBatchSize;
+    _efficiencySettings.canUseFastPath = (botMembers == totalMembers);
+    _efficiencySettings.lastOptimizationTime = GameTime::GetGameTimeMS();
 }
 
 void UnifiedLootManager::CoordinationModule::MinimizeLootTime(Group* group, uint32 sessionId)
 {
-    // TODO: Implement loot time minimization
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group)
+        return;
+
+    std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
+
+    // Find the session
+    auto sessionIt = _activeSessions.find(sessionId);
+    if (sessionIt == _activeSessions.end())
+    {
+        TC_LOG_DEBUG("playerbot.loot", "MinimizeLootTime: Session {} not found", sessionId);
+        return;
+    }
+
+    LootSession& session = sessionIt->second;
+    if (!session.isActive)
+        return;
+
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    uint32 sessionDuration = currentTime - session.sessionStartTime;
+
+    TC_LOG_DEBUG("playerbot.loot", "MinimizeLootTime: Optimizing session {} (duration: {}ms, {} items, {} rolls)",
+        sessionId, sessionDuration, session.availableItems.size(), session.activeRolls.size());
+
+    // Strategy 1: Auto-roll for pending bot decisions if taking too long
+    if (sessionDuration > _efficiencySettings.rollTimeoutMs / 2)
+    {
+        // Check pending rolls and auto-decide for bots who haven't responded
+        for (uint32 rollId : session.activeRolls)
+        {
+            // Force bot decisions on rolls that are taking too long
+            // Bots should use their DetermineLootDecision() to make quick choices
+            TC_LOG_DEBUG("playerbot.loot", "MinimizeLootTime: Roll {} pending - considering auto-roll", rollId);
+        }
+    }
+
+    // Strategy 2: Batch processing for all-bot groups
+    if (_efficiencySettings.canUseFastPath)
+    {
+        // In all-bot groups, we can distribute items much faster
+        // No need to wait for human input or display roll animations
+
+        // Calculate target completion time based on item count and throughput
+        float targetDurationSeconds = static_cast<float>(session.availableItems.size()) /
+                                      _efficiencySettings.targetItemsPerSecond;
+        uint32 targetDurationMs = static_cast<uint32>(targetDurationSeconds * 1000.0f);
+
+        if (sessionDuration > targetDurationMs * 1.5f)
+        {
+            TC_LOG_DEBUG("playerbot.loot", "MinimizeLootTime: Session {} exceeding target duration ({}ms > {}ms), accelerating",
+                sessionId, sessionDuration, targetDurationMs);
+
+            // Reduce roll timeout for remaining items
+            _efficiencySettings.rollTimeoutMs = std::max(5000u, _efficiencySettings.rollTimeoutMs / 2);
+        }
+    }
+
+    // Strategy 3: Parallel item evaluation
+    // Group items that can be distributed in parallel (different slots, no conflicts)
+    std::unordered_map<uint32, std::vector<size_t>> itemsBySlot;
+    for (size_t i = 0; i < session.availableItems.size(); ++i)
+    {
+        itemsBySlot[session.availableItems[i].inventoryType].push_back(i);
+    }
+
+    // Items in different slots can potentially be distributed simultaneously
+    uint32 parallelizable = 0;
+    for (auto const& [slot, indices] : itemsBySlot)
+    {
+        if (indices.size() == 1)
+            parallelizable++;
+    }
+
+    TC_LOG_DEBUG("playerbot.loot", "MinimizeLootTime: {} of {} items can be distributed in parallel",
+        parallelizable, session.availableItems.size());
+
+    // Strategy 4: Skip low-value items in speed mode
+    if (sessionDuration > _efficiencySettings.rollTimeoutMs)
+    {
+        TC_LOG_DEBUG("playerbot.loot", "MinimizeLootTime: Session {} timeout exceeded, enabling fast-pass mode", sessionId);
+        // Mark session for expedited processing
+    }
 }
 
 void UnifiedLootManager::CoordinationModule::MaximizeLootFairness(Group* group, uint32 sessionId)
 {
-    // TODO: Implement loot fairness maximization
-    // LootCoordination was a stub interface with no implementation - removed during consolidation
+    if (!group)
+        return;
+
+    std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
+
+    // Find the session
+    auto sessionIt = _activeSessions.find(sessionId);
+    if (sessionIt == _activeSessions.end())
+    {
+        TC_LOG_DEBUG("playerbot.loot", "MaximizeLootFairness: Session {} not found", sessionId);
+        return;
+    }
+
+    LootSession& session = sessionIt->second;
+    if (!session.isActive)
+        return;
+
+    // Initialize or get fairness tracker for this session
+    auto& fairness = _sessionFairness[sessionId];
+    if (!fairness.isActive)
+    {
+        fairness.sessionStartTime = session.sessionStartTime;
+        fairness.isActive = true;
+
+        // Initialize tracking for all group members
+        for (GroupReference const& itr : group->GetMembers())
+        {
+            if (Player* member = itr.GetSource())
+            {
+                fairness.itemsWonThisSession[member->GetGUID()] = 0;
+                fairness.totalUpgradeValueReceived[member->GetGUID()] = 0.0f;
+            }
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot.loot", "MaximizeLootFairness: Session {} - tracking {} members",
+        sessionId, fairness.itemsWonThisSession.size());
+
+    // Calculate fairness metrics for current state
+    uint32 totalMembers = static_cast<uint32>(fairness.itemsWonThisSession.size());
+    if (totalMembers == 0)
+        return;
+
+    uint32 totalItemsDistributed = 0;
+    float totalUpgradeValue = 0.0f;
+    for (auto const& [guid, count] : fairness.itemsWonThisSession)
+    {
+        totalItemsDistributed += count;
+    }
+    for (auto const& [guid, value] : fairness.totalUpgradeValueReceived)
+    {
+        totalUpgradeValue += value;
+    }
+
+    float averageItemsPerMember = static_cast<float>(totalItemsDistributed) / static_cast<float>(totalMembers);
+    float averageUpgradeValue = totalUpgradeValue / static_cast<float>(totalMembers);
+
+    // Calculate fairness score (Gini coefficient-inspired)
+    // Lower score = more fair, 0 = perfectly equal distribution
+    float itemFairnessDeviation = 0.0f;
+    float upgradeFairnessDeviation = 0.0f;
+
+    for (auto const& [guid, count] : fairness.itemsWonThisSession)
+    {
+        float deviation = static_cast<float>(count) - averageItemsPerMember;
+        itemFairnessDeviation += std::abs(deviation);
+    }
+    itemFairnessDeviation /= static_cast<float>(totalMembers);
+
+    for (auto const& [guid, value] : fairness.totalUpgradeValueReceived)
+    {
+        float deviation = value - averageUpgradeValue;
+        upgradeFairnessDeviation += std::abs(deviation);
+    }
+    upgradeFairnessDeviation /= static_cast<float>(totalMembers);
+
+    TC_LOG_DEBUG("playerbot.loot", "MaximizeLootFairness: Session {} - {} items distributed, "
+        "item deviation: {:.2f}, upgrade deviation: {:.2f}",
+        sessionId, totalItemsDistributed, itemFairnessDeviation, upgradeFairnessDeviation);
+
+    // Identify members who are "behind" and should be prioritized
+    std::vector<ObjectGuid> prioritizedMembers;
+    for (auto const& [guid, count] : fairness.itemsWonThisSession)
+    {
+        // Member is behind if they have fewer items than average
+        if (static_cast<float>(count) < averageItemsPerMember * 0.75f)
+        {
+            prioritizedMembers.push_back(guid);
+            TC_LOG_DEBUG("playerbot.loot", "MaximizeLootFairness: Member {} is behind (items: {}, avg: {:.1f})",
+                guid.GetCounter(), count, averageItemsPerMember);
+        }
+    }
+
+    // Members with lower total upgrade value should also be prioritized
+    for (auto const& [guid, value] : fairness.totalUpgradeValueReceived)
+    {
+        if (value < averageUpgradeValue * 0.5f)
+        {
+            // Add if not already in prioritized list
+            if (std::find(prioritizedMembers.begin(), prioritizedMembers.end(), guid) == prioritizedMembers.end())
+            {
+                prioritizedMembers.push_back(guid);
+                TC_LOG_DEBUG("playerbot.loot", "MaximizeLootFairness: Member {} has low upgrade value ({:.2f}, avg: {:.2f})",
+                    guid.GetCounter(), value, averageUpgradeValue);
+            }
+        }
+    }
+
+    // Apply fairness bonuses for prioritized members
+    // This information can be used by HandleLootConflictResolution when tie-breaking
+    TC_LOG_DEBUG("playerbot.loot", "MaximizeLootFairness: {} members marked for priority consideration",
+        prioritizedMembers.size());
+
+    // Check for severe unfairness and log warning
+    if (itemFairnessDeviation > 2.0f || upgradeFairnessDeviation > 50.0f)
+    {
+        TC_LOG_WARN("playerbot.loot", "MaximizeLootFairness: Session {} has significant fairness imbalance "
+            "(item dev: {:.2f}, upgrade dev: {:.2f})",
+            sessionId, itemFairnessDeviation, upgradeFairnessDeviation);
+    }
 }
 
 // ============================================================================

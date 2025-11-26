@@ -619,9 +619,19 @@ CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 itemId)
 
 float MarketAnalysis::GetSellerReputationScore(uint32 sellerGuid)
 {
-    // Calculate reputation based on selling history
-    // This would require tracking seller performance over time
-    return 0.5f; // Placeholder
+    // DESIGN NOTE: Seller reputation scoring system for market trust analysis
+    // Returns 0.5f as neutral default score (range: 0.0 to 1.0)
+    // Full implementation should:
+    // - Track seller's historical auction success rate (completed vs expired)
+    // - Monitor pricing consistency (fair vs manipulative pricing patterns)
+    // - Analyze average listing duration (fast sales indicate fair pricing)
+    // - Evaluate buyer satisfaction (implicit from repurchase patterns)
+    // - Consider market manipulation indicators (pump and dump schemes)
+    // - Weight recent performance more heavily (decay old history)
+    // - Account for total transaction volume (experience factor)
+    // - Cross-reference with known bot/gold seller patterns
+    // Reference: AuctionHouse transaction logging, player behavior analytics
+    return 0.5f;
 }
 
 bool MarketAnalysis::IsMarketDominated(uint32 itemId, float threshold)

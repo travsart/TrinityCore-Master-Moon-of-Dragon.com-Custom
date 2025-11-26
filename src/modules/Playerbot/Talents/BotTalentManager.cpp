@@ -289,8 +289,14 @@ uint32 BotTalentManager::CalculateTalentPointsForLevel(uint32 level) const
     if (level < 10)
         return 0;
 
-    // Simplified: approximately 1 point per level from 10-70
-    // Then hero talents 71-80
+    // DESIGN NOTE: Simplified talent point calculation
+    // Current behavior: Linear approximation - ~1 point per level from 10-70, plus hero talents 71-80
+    // Full implementation should:
+    // - Query ChrSpecializationEntry for actual talent point progression per level
+    // - Account for class-specific talent tree structures (class vs spec talents)
+    // - Reference TalentTabEntry for proper tier unlock levels
+    // - Consider PvP talent points as separate progression (if applicable)
+    // Reference: TrinityCore DB2 stores (sTalentStore, sChrSpecializationStore)
     uint32 classAndSpecPoints = ::std::min(level - 9, 61u);  // ~61 points at 70
 
     // Hero talents at 71+

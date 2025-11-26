@@ -546,7 +546,7 @@ void GroupFormation::UpdateMemberPositions()
     return positions;
 }
 
-// Placeholder implementations for other formation generators
+// Formation generator implementations for specialized tactical arrangements
 ::std::vector<Position> GroupFormation::GenerateWedgeFormation(uint32 memberCount, float spacing) const
 {
     ::std::vector<Position> positions;

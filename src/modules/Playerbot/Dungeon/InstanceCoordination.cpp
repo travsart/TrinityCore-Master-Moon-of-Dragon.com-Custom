@@ -297,12 +297,17 @@ void InstanceCoordination::AdaptFormationToTerrain(Group* group, const Position&
 
     FormationData& formation = formationItr->second;
 
-    // Analyze terrain at location
-    // In a full implementation, this would use navmesh/pathfinding data
-    // For now, we use simple heuristics
-
-    // Compact formation for narrow passages
-    float terrainComplexity = 0.5f; // Placeholder - would calculate from terrain
+    // DESIGN NOTE: Terrain analysis for formation adaptation
+    // Uses 0.5f as default terrain complexity value
+    // Full implementation should:
+    // - Query TrinityCore navmesh/pathfinding data for terrain geometry
+    // - Analyze passage width and height restrictions
+    // - Detect narrow corridors, wide rooms, staircases, bridges
+    // - Calculate terrain complexity score (0.0 = wide open, 1.0 = very narrow)
+    // - Use Map::IsInLineOfSight() and Map::GetHeight() for terrain checks
+    // - Consider dynamic obstacles (mobs, other players)
+    // Reference: TrinityCore PathGenerator, MMAP navigation mesh
+    float terrainComplexity = 0.5f;
     formation.isCompact = terrainComplexity > 0.6f;
     formation.formationRadius = formation.isCompact ? 8.0f : 12.0f;
 
@@ -1683,7 +1688,16 @@ void InstanceCoordination::CheckGroupResources(Group* group)
 
     // Calculate group readiness
     float averageHealth = memberCount > 0 ? totalHealth / memberCount : 0.0f;
-    float averageMana = 0.8f; // Simplified - would calculate from ManageGroupMana
+
+    // DESIGN NOTE: Simplified mana calculation
+    // Current behavior: Uses fixed 0.8f (80%) as average mana value
+    // Full implementation should:
+    // - Call ManageGroupMana() to calculate actual average mana across mana-using members
+    // - Track mana percentage per member in ResourceCoordination::memberMana
+    // - Weight mana importance based on number of mana-dependent members (healers, casters)
+    // - Consider mana-less classes (warriors, rogues, DKs) should not affect mana average
+    // Reference: ManageGroupMana() method at line 480
+    float averageMana = 0.8f;
 
     resources.groupReadiness = static_cast<uint32>((averageHealth * 0.6f + averageMana * 0.4f) * 100.0f);
 

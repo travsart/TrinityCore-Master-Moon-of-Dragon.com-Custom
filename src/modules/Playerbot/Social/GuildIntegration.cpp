@@ -998,11 +998,19 @@ bool GuildIntegration::ShouldWithdrawItem( uint32 itemId)
     if (!_bot)
         return false;
 
-    // Determine if player should withdraw item from guild bank
-    // Check if player needs the item
-    // Consider player's class, level, and current equipment
-
-    return false; // Placeholder
+    // DESIGN NOTE: Intelligent guild bank item withdrawal decision system
+    // Returns false as default behavior (no automatic withdrawals)
+    // Full implementation should:
+    // - Analyze player's current inventory and equipment slots
+    // - Check if item is useful for player's class and specialization
+    // - Consider item level vs equipped items (upgrade detection)
+    // - Evaluate consumable needs (food, potions, flasks based on current stocks)
+    // - Check player's professions and withdraw relevant materials
+    // - Respect guild bank permissions and withdrawal limits
+    // - Track withdrawal history to prevent abuse
+    // - Consider upcoming content needs (raid consumables, etc.)
+    // Reference: Guild bank API (Guild.h), ItemTemplate analysis
+    return false;
 }
 
 void GuildIntegration::SendGuildChatMessage( const std::string& message)

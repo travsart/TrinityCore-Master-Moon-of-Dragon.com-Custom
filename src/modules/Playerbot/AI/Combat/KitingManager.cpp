@@ -89,7 +89,13 @@ void KitingManager::UpdateKiting(uint32 diff)
                     // Resolve GUIDs to Unit pointers and filter enemies
     for (ObjectGuid guid : nearbyGuids)
                     {
-                        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+                        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+                        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+                        // 1. context.threats is std::vector<Unit*> - requires live Unit*
+                        // 2. IsHostileTo() faction check requires live relationship data
+                        // 3. IsAlive() verification requires real-time state check
+                        // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
+                        ::Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
                         if (enemy && _bot->IsHostileTo(enemy) && enemy->IsAlive())
                             context.threats.push_back(enemy);
                     }

@@ -245,7 +245,18 @@ void ArenaAI::OnMatchEnd(bool won)
     {
         _metrics.matchesWon++;
         _globalMetrics.matchesWon++;
-        _metrics.rating += 15; // Simplified rating gain
+
+        // DESIGN NOTE: Simplified arena rating calculation
+        // Current behavior: Fixed +15 rating gain for wins, -15 for losses
+        // Full implementation should:
+        // - Use TrinityCore's Battleground rating system (BattlegroundMgr, ArenaTeam)
+        // - Calculate rating change based on MMR difference between teams (ELO-like system)
+        // - Apply rating formula: ratingChange = K * (actualScore - expectedScore)
+        // - Factor in team average rating vs opponent average rating
+        // - Apply diminishing returns for rating gains at higher ratings
+        // - Use different K-factors for 2v2, 3v3, 5v5 brackets
+        // Reference: ArenaTeam::FinishGame(), BattlegroundMgr rating calculations
+        _metrics.rating += 15;
     }
     else
     {
@@ -360,7 +371,14 @@ void ArenaAI::AdaptStrategy()
                 if (enemy->IsPlayer())
                 {
                     ::Player* enemyPlayer = enemy->ToPlayer();
-                    // Check if healer (simplified)
+                    // DESIGN NOTE: Simplified healer detection
+                    // Current behavior: Checks class only, assumes all Priests/Paladins/etc are healers
+                    // Full implementation should:
+                    // - Query player's active ChrSpecialization to determine if healing spec
+                    // - Check for healing spec IDs specifically (Holy Priest, Holy Paladin, etc)
+                    // - Account for dual-spec situations in arena
+                    // - Verify player is actually specced as healer via GetPrimarySpecialization()
+                    // Reference: IsHealer() method in PvPCombatAI for proper implementation pattern
                     uint8 enemyClass = enemyPlayer->GetClass();
                     if (enemyClass == CLASS_PRIEST || enemyClass == CLASS_PALADIN ||
                         enemyClass == CLASS_SHAMAN || enemyClass == CLASS_DRUID ||

@@ -232,10 +232,18 @@ public:
     float GetDistributionDeviation() const override;
 
     /**
-     * Force rebalance distribution (future enhancement)
+     * Force rebalance distribution
      * Redistributes bots to match target percentages
+     * Analyzes over/underpopulated brackets and coordinates spawning
      */
     void RebalanceDistribution() override;
+
+private:
+    /**
+     * Rebalance distribution for a specific faction
+     * @param faction The faction to rebalance (TEAM_ALLIANCE or TEAM_HORDE)
+     */
+    void RebalanceFaction(TeamId faction);
 
     // ====================================================================
     // STATISTICS & MONITORING

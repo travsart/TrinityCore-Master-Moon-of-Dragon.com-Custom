@@ -665,8 +665,9 @@ void TacticalCoordinator::CleanupExpiredData(uint32 currentTime)
     for (auto it = m_tacticalState.crowdControlTargets.begin();
          it != m_tacticalState.crowdControlTargets.end(); )
     {
-        // TODO: Validate target still exists and is CC'd
-        // For now, keep all targets
+        // ENHANCEMENT: Validate target still exists and is CC'd
+        // Implementation: Use ObjectAccessor::GetUnit() to check existence, verify CC auras
+        // For now, keep all targets (cleanup happens on combat end)
         ++it;
     }
 }
@@ -682,8 +683,9 @@ ObjectGuid TacticalCoordinator::FindBestFocusTarget() const
     if (!m_tacticalState.priorityTargets.empty())
         return m_tacticalState.priorityTargets.front();
 
-    // TODO: Implement threat-based focus target selection
-    // For now, return current focus or empty
+    // ENHANCEMENT: Implement threat-based focus target selection
+    // Implementation: Iterate group members, get ThreatManager, find target with highest cumulative threat
+    // For now, return current focus or empty (manual priority targets only)
     return m_tacticalState.focusTarget;
 }
 
@@ -724,12 +726,13 @@ ObjectGuid TacticalCoordinator::FindBestDispeller(ObjectGuid targetGuid) const
     if (!m_group)
         return ObjectGuid::Empty;
 
-    // TODO: Implement proper dispeller selection based on:
-    // - Class/spec capabilities (magic/curse/poison/disease)
-    // - Proximity to target
-    // - Current workload
+    // ENHANCEMENT: Implement proper dispeller selection based on:
+    // - Class/spec capabilities (magic/curse/poison/disease) via CanDispelAuraType()
+    // - Proximity to target (GetDistance < 40 yards)
+    // - Current workload (check dispelAssignments count per bot)
+    // Implementation: Iterate group members, score each by capability+proximity+workload
 
-    // For now, return empty (no dispeller logic implemented)
+    // For now, return empty (no dispeller logic implemented - manual dispel only)
     return ObjectGuid::Empty;
 }
 

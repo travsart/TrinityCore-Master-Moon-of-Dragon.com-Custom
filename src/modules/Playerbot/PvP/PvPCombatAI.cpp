@@ -837,10 +837,17 @@ uint32 PvPCombatAI::EstimateDPS(::Unit* unit) const
     if (!unit)
         return 0;
 
-    // Simplified DPS estimation based on class/spec
-    // Full implementation would analyze damage dealt over time
-
-    return 5000; // Placeholder
+    // DESIGN NOTE: Damage-per-second estimation for enemy units
+    // Returns 5000 as default placeholder value
+    // Full implementation should:
+    // - Track actual damage dealt by unit over time window (last 10 seconds)
+    // - Account for class/spec burst potential (Combustion, Avatar, etc.)
+    // - Factor in gear/stats (attack power, spell power, crit rating, haste)
+    // - Consider cooldown availability for burst damage windows
+    // - Use rolling average for dynamic DPS calculation during combat
+    // - Query Unit::GetDamageDoneInPastSecs() if available
+    // Reference: TrinityCore Unit damage tracking, CombatLog events
+    return 5000;
 }
 
 float PvPCombatAI::CalculateThreatScore(::Unit* target) const
@@ -912,8 +919,15 @@ uint32 PvPCombatAI::GetCCSpellId(CCType ccType) const
     if (!_bot)
         return 0;
 
-    // Return class-specific CC spell IDs
-    // Simplified - full implementation has complete spell mapping
+    // DESIGN NOTE: Simplified CC spell ID mapping
+    // Current behavior: Returns basic CC spell ID per class without spec consideration
+    // Full implementation should:
+    // - Query player's active specialization to return spec-specific CC spells
+    // - Handle talent-based CC abilities (e.g., Intimidating Shout vs Storm Bolt for Warriors)
+    // - Check if spell is learned via HasSpell() before returning
+    // - Map CCType to multiple possible spells per class (primary, secondary, tertiary options)
+    // - Consider covenant/talent tree variations for current expansion
+    // Reference: SpellMgr, Player::HasSpell(), ChrSpecialization mappings
 
     switch (_bot->GetClass())
     {

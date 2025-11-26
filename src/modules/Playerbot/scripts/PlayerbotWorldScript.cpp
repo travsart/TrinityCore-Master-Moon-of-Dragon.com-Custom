@@ -20,7 +20,8 @@
 #include "Lifecycle/BotLifecycleMgr.h"
 #include "Character/BotLevelManager.h"
 #include "Core/PlayerBotHooks.h"
-// TODO: Re-enable when API compatibility is fixed
+// INTEGRATION REQUIRED: Re-enable when API compatibility is fixed
+// Blocked by TrinityCore 11.2 API changes - see TODO at line 144 for details
 // #include "Companion/MountManager.h"
 // #include "Companion/BattlePetManager.h"
 
@@ -141,16 +142,16 @@ void PlayerbotWorldScript::OnStartup()
     TC_LOG_INFO("module.playerbot.script", "Initializing PlayerBot hook system...");
     Playerbot::PlayerBotHooks::Initialize();
 
-    // TODO: Initialize companion systems (MountManager, BattlePetManager)
-    // DISABLED: These systems need API updates for current TrinityCore version
-    // Errors to fix:
-    // - PassengerInfo boolean conversion (use VehicleSeat::IsEmpty())
-    // - SpellMgr::GetSpellInfo signature changed
-    // - Map::IsFlyingAllowed doesn't exist
-    // - Map::IsArena doesn't exist
+    // INTEGRATION REQUIRED: Initialize companion systems (MountManager, BattlePetManager)
+    // BLOCKED: These systems need API updates for TrinityCore 11.2 compatibility
+    // API Changes Required:
+    // - PassengerInfo boolean conversion -> use VehicleSeat::IsEmpty()
+    // - SpellMgr::GetSpellInfo signature changed (now returns SpellInfo const*)
+    // - Map::IsFlyingAllowed removed -> use CanFlyInZone() or check zone flags
+    // - Map::IsArena removed -> use GetMapDifficulty()->IsArena()
+    // Once fixed, uncomment:
     // TC_LOG_INFO("module.playerbot.script", "Initializing MountManager...");
     // Playerbot::MountManager::instance()->Initialize();
-
     // TC_LOG_INFO("module.playerbot.script", "Initializing BattlePetManager...");
     // Playerbot::BattlePetManager::instance()->Initialize();
 

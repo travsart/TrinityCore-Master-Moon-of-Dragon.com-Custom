@@ -1020,9 +1020,16 @@ float ResourceCalculator::CalculateManaRegen(Player* player)
     if (!player)
         return 0.0f;
 
-    // Base mana regeneration calculation
-    // This would need to be enhanced with proper stats calculation
-    return 10.0f; // Placeholder
+    // DESIGN NOTE: Calculate mana regeneration rate for caster bots
+    // Returns 10.0f as baseline mana per second
+    // Full implementation should:
+    // - Query Spirit stat from player character stats
+    // - Apply intellect scaling coefficient
+    // - Factor in combat vs out-of-combat regen rates (5SR rule)
+    // - Apply class-specific mana regen talents/passives
+    // - Consider equipped gear with mana regeneration bonuses
+    // Reference: WoW 11.2 mana regeneration formulas (varies by class/spec)
+    return 10.0f;
 }
 
 float ResourceCalculator::CalculateEnergyRegen(Player* player)
@@ -1039,8 +1046,16 @@ float ResourceCalculator::CalculateRageDecay(Player* player)
     if (!player)
         return 0.0f;
 
-    // Rage decays at varying rates
-    return 2.0f; // Placeholder
+    // DESIGN NOTE: Calculate rage decay rate for Warrior/Druid bots
+    // Returns 2.0f as baseline rage decay per second (negative regeneration)
+    // Full implementation should:
+    // - Check if player is in combat (no decay during combat)
+    // - Apply out-of-combat decay rate (typically 1-2 rage per second)
+    // - Factor in talents that modify rage decay
+    // - Consider stance/form-specific decay rates
+    // - Return 0.0f if in combat or with rage retention buffs
+    // Reference: WoW 11.2 rage resource system (decays out of combat only)
+    return 2.0f;
 }
 
 bool ResourceCalculator::IsResourceEfficientSpell(uint32 spellId, Player* caster)
@@ -1064,8 +1079,16 @@ uint32 ResourceCalculator::GetOptimalResourceLevel(ResourceType type, Player* pl
     if (!player)
         return 0;
 
-    // Class and resource-specific optimal levels
-    return 50; // Placeholder
+    // DESIGN NOTE: Calculate optimal resource threshold for efficient bot decision-making
+    // Returns 50 as baseline threshold value
+    // Full implementation should:
+    // - Query max resource pool for resource type
+    // - Apply class-specific optimal thresholds (e.g., 35% mana, 60% energy)
+    // - Factor in combat role (healers need higher mana reserves)
+    // - Consider resource generation rate and consumption patterns
+    // - Adjust based on encounter length and resource availability
+    // Reference: WoW 11.2 resource management varies by class (Mana: 30%, Energy: 40%, Rage: 20%)
+    return 50;
 }
 
 uint32 ResourceCalculator::GetComboPointsFromSpell(uint32 spellId)

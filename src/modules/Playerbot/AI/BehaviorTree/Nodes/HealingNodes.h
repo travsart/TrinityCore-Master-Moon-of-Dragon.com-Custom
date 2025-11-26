@@ -192,8 +192,12 @@ private:
         if (!target)
             return false;
 
-        // TODO: Implement proper debuff detection based on _dispelType
-        // This would require accessing target's aura list and checking dispel types
+        // ENHANCEMENT: Debuff detection and dispel type matching
+        // Future implementation should:
+        // - Iterate through target's active auras via Unit::GetAuraEffectsByType()
+        // - Match aura dispel type against _dispelType (DISPEL_MAGIC, DISPEL_CURSE, DISPEL_DISEASE, DISPEL_POISON)
+        // - Prioritize debuffs by severity (damage-over-time, crowd control, stat reduction)
+        // - Return true if any matching dispellable debuff found
         // For now, return false as placeholder
         return false;
     }

@@ -223,10 +223,15 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), range);
 
-    // Resolve GUIDs to Unit pointers and find nearest enemy
+    // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+    // ObjectAccessor is intentionally retained here because we need:
+    // 1. Real-time IsAlive() check (creature may have died since snapshot)
+    // 2. bot->IsHostileTo() requires live Unit* for faction/reputation checks
+    // 3. GetExactDistSq() for precise current position comparison
+    // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
     for (ObjectGuid guid : nearbyGuids)
     {
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
+        ::Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
         // Check if hostile

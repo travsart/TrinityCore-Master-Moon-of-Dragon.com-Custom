@@ -211,8 +211,16 @@ bool GuildBankManager::CanAccessGuildBank(uint32 tabId)
     if (false)
         return false;
 
-    // Check tab rights
-    return true; // Simplified check
+    // DESIGN NOTE: Simplified implementation for guild bank access validation
+    // Current behavior: Always returns true (permits all access)
+    // Full implementation should:
+    // - Query Guild::GetMember() for player's rank permissions
+    // - Check tab-specific deposit/withdraw rights via Guild::GetBankRights()
+    // - Validate daily withdrawal limits haven't been exceeded
+    // - Verify player is online and in guild
+    // - Check if tab is purchased and available
+    // Reference: Guild::GetBankRights(), Guild::GetMemberSlotWithdrawRem()
+    return true;
 }
 
 // Intelligent bank management
@@ -278,11 +286,16 @@ void GuildBankManager::OptimizeItemPlacement()
     std::unordered_map<uint32, GuildBankItemType> layout;
     CalculateOptimalTabLayout(guild, layout);
 
-    // Simplified implementation - actual bank organization would require different approach
-    // Since we can't directly access bank tabs, we would need to:
-    // 1. Use guild API calls to get bank information
-    // 2. Or implement this functionality server-side
-    // 3. Or use a different approach that doesn't require direct tab access
+    // DESIGN NOTE: Simplified implementation for bank item reorganization
+    // Current behavior: No-op (does not reorganize items)
+    // Full implementation should:
+    // - Use Guild::GetBankTab() to access tab contents
+    // - Iterate through slots via Guild::GetTabSlot()
+    // - Move items between tabs based on category optimization plan
+    // - Use Guild::SwapItems() for safe item movement
+    // - Track movement operations for rollback on errors
+    // - Update BankOrganizationPlan metrics after completion
+    // Reference: Guild bank API (GetBankTab, GetTabSlot, SwapItems)
 }
 
 void GuildBankManager::AnalyzeGuildBankContents()
@@ -353,7 +366,15 @@ void GuildBankManager::DepositExcessConsumables()
         if (!HasDepositRights(tabId))
             continue;
 
-        // Simplified check - assume tab 0 for consumables
+        // DESIGN NOTE: Simplified implementation for tab assignment
+        // Current behavior: Assumes tab 0 is always for consumables
+        // Full implementation should:
+        // - Use GuildBankConfiguration to look up tab purposes
+        // - Analyze existing tab contents to identify consumable tab
+        // - Support dynamic tab reassignment based on guild needs
+        // - Fall back to least-full tab if no consumable tab defined
+        // - Respect guild officer's manual tab designations
+        // Reference: GuildBankConfiguration, BankOrganizationPlan
         if (tabId == 0)
         {
             consumableTabId = tabId;
@@ -425,7 +446,15 @@ void GuildBankManager::DepositCraftingMaterials()
         if (!HasDepositRights(tabId))
             continue;
 
-    // Simplified check - assume tab 1 for crafting materials
+        // DESIGN NOTE: Simplified implementation for tab assignment
+        // Current behavior: Assumes tab 1 is always for crafting materials
+        // Full implementation should:
+        // - Use GuildBankConfiguration to look up tab purposes
+        // - Analyze existing tab contents to identify crafting materials tab
+        // - Support profession-specific tabs (e.g., herbs vs ores)
+        // - Fall back to least-full tab if no materials tab defined
+        // - Respect guild officer's manual tab designations
+        // Reference: GuildBankConfiguration, BankOrganizationPlan
         if (tabId == 1)
         {
             craftingTabId = tabId;
@@ -533,7 +562,16 @@ void GuildBankManager::WithdrawConsumables()
         if (!HasWithdrawRights(tabId))
             continue;
 
-    // Simplified withdrawal - try to withdraw from known slots
+        // DESIGN NOTE: Simplified implementation for consumable withdrawal
+        // Current behavior: Blindly withdraws from first 10 slots without item verification
+        // Full implementation should:
+        // - Use Guild::GetTabSlot() to identify actual item IDs in slots
+        // - Match slot contents against neededConsumables list
+        // - Calculate optimal withdrawal quantity based on inventory space
+        // - Prioritize higher-level consumables when multiple tiers available
+        // - Track withdrawal counts to avoid exceeding daily limits
+        // - Skip empty slots to avoid wasting API calls
+        // Reference: Guild::GetTabSlot(), neededConsumables list above
         for (uint8 slotId = 0; slotId < 10; ++slotId) // Check first 10 slots
         {
             WithdrawItem(tabId, slotId, 1);
@@ -580,7 +618,16 @@ void GuildBankManager::WithdrawCraftingMaterials()
         if (remainingWithdraws == 0)
             continue;
 
-    // Simplified withdrawal - try to withdraw from known slots
+        // DESIGN NOTE: Simplified implementation for materials withdrawal
+        // Current behavior: Blindly withdraws from first N slots without item verification
+        // Full implementation should:
+        // - Use Guild::GetTabSlot() to identify actual item IDs in slots
+        // - Match materials to bot's profession skills (professionSkills list)
+        // - Check if materials are needed for known recipes
+        // - Calculate optimal withdrawal quantity for skill-up crafting
+        // - Prioritize rare/epic materials over common ones
+        // - Skip empty slots to avoid wasting withdrawal limits
+        // Reference: Guild::GetTabSlot(), ProfessionManager for recipe analysis
         for (uint8 slotId = 0; slotId < std::min(uint8(5), uint8(remainingWithdraws)); ++slotId)
         {
             if (WithdrawItem(tabId, slotId, 1))
@@ -710,7 +757,16 @@ GuildBankManager::BankOrganizationPlan GuildBankManager::CreateOrganizationPlan(
     // Assign tabs to item types based on current contents
     std::unordered_map<uint32, std::unordered_map<GuildBankItemType, uint32>> tabItemCounts;
 
-// Simplified implementation - use default tab assignments
+    // DESIGN NOTE: Simplified implementation for tab content analysis
+    // Current behavior: Assigns default item types based on tab index modulo 8
+    // Full implementation should:
+    // - Use Guild::GetTabSlot() to scan all slots in each tab
+    // - Classify items using ItemTemplate::GetClass() and GetSubClass()
+    // - Count items by GuildBankItemType categories
+    // - Calculate tab utilization percentages
+    // - Identify mixed-use tabs that need reorganization
+    // - Detect empty tabs available for new purposes
+    // Reference: Guild::GetTabSlot(), ItemTemplate classification
     for (uint8 tabId = 0; tabId < GUILD_BANK_MAX_TABS; ++tabId)
     {
         // Assign default purposes to tabs
@@ -767,13 +823,21 @@ float GuildBankManager::CalculateOrganizationScore(Guild* guild)
     // Check how well items are organized by category
     std::unordered_map<uint32, GuildBankItemType> tabPurposes;
 
-// Simplified - assign default tab purposes
+    // DESIGN NOTE: Simplified implementation for organization scoring
+    // Current behavior: Returns fixed 75% score without analyzing actual organization
+    // Full implementation should:
+    // - Use Guild::GetTabSlot() to scan all items across all tabs
+    // - Compare item categories against tab's designated purpose
+    // - Calculate percentage of correctly-placed items (correctlyPlaced/totalItems)
+    // - Penalize fragmented stacks (same item split across multiple tabs)
+    // - Reward efficient stack consolidation
+    // - Factor in empty slot distribution (clustered vs scattered)
+    // Reference: Guild::GetTabSlot(), BankOrganizationPlan tab assignments
     for (uint8 tabId = 0; tabId < GUILD_BANK_MAX_TABS; ++tabId)
     {
         tabPurposes[tabId] = static_cast<GuildBankItemType>(tabId % 8);
     }
 
-// Return a default organization score
     return 0.75f; // Assume 75% organization
 
     if (totalItems > 0)
@@ -784,7 +848,16 @@ float GuildBankManager::CalculateOrganizationScore(Guild* guild)
 
 void GuildBankManager::ConsolidateStacks(uint32 tabId)
 {
-    // Simplified implementation - stack consolidation requires bank access
+    // DESIGN NOTE: Simplified implementation for stack consolidation
+    // Current behavior: No-op (does not consolidate stacks)
+    // Full implementation should:
+    // - Use Guild::GetTabSlot() to scan all slots in the tab
+    // - Build map of itemId -> list of (slotId, stackCount) pairs
+    // - For each item with multiple partial stacks, merge them
+    // - Use Guild::SwapItems() to move items between slots
+    // - Fill stacks to max stack size (ItemTemplate::GetMaxStackSize())
+    // - Compact remaining items to eliminate gaps
+    // Reference: Guild::GetTabSlot(), Guild::SwapItems(), ItemTemplate::GetMaxStackSize()
 }
 
 void GuildBankManager::RemoveExpiredItems()
@@ -798,7 +871,15 @@ uint32 GuildBankManager::CalculateAvailableSpace(Guild* guild, uint32 tabId)
     if (!guild || tabId >= GUILD_BANK_MAX_TABS)
         return 0;
 
-    // Simplified - estimate available space
+    // DESIGN NOTE: Simplified implementation for space calculation
+    // Current behavior: Returns fixed value of 30 slots available
+    // Full implementation should:
+    // - Use Guild::GetTabSlot() to iterate through all GUILD_BANK_MAX_SLOTS
+    // - Count empty slots (nullptr items)
+    // - Count partial stacks that can accept more items
+    // - Calculate consolidatable space from fragmented stacks
+    // - Return actual free slot count
+    // Reference: Guild::GetTabSlot(), GUILD_BANK_MAX_SLOTS constant
     return 30;
 }
 
@@ -807,14 +888,34 @@ uint32 GuildBankManager::CalculateAvailableSpace(Guild* guild, uint32 tabId)
 std::vector<GuildBankItem> GuildBankManager::GetDuplicatesAnalysis(Guild* guild)
 {
     std::vector<GuildBankItem> duplicates;
-    // Simplified implementation - requires bank access
+
+    // DESIGN NOTE: Simplified implementation for duplicate detection
+    // Current behavior: Returns empty list (no duplicates detected)
+    // Full implementation should:
+    // - Use Guild::GetTabSlot() to scan all tabs and slots
+    // - Build map of itemId -> count to identify duplicates
+    // - For items appearing in multiple tabs, create GuildBankItem entries
+    // - Calculate total duplicate count and wasted space
+    // - Prioritize expensive items (vendor value > threshold)
+    // - Return sorted list by value*quantity descending
+    // Reference: Guild::GetTabSlot(), ItemTemplate::GetSellPrice()
     return duplicates;
 }
 
 std::vector<GuildBankItem> GuildBankManager::GetExpiredItemsAnalysis(Guild* guild)
 {
     std::vector<GuildBankItem> expired;
-    // Simplified implementation - requires bank access
+
+    // DESIGN NOTE: Simplified implementation for expired item detection
+    // Current behavior: Returns empty list (no expired items detected)
+    // Full implementation should:
+    // - Use Guild::GetTabSlot() to scan all tabs and slots
+    // - Check Item::GetExpiration() for time-limited items
+    // - Identify obsolete consumables from previous expansions
+    // - Detect replaced profession materials (e.g., old ore types)
+    // - Flag items below vendor value threshold
+    // - Return sorted list by urgency (expiring soonest first)
+    // Reference: Guild::GetTabSlot(), Item::GetExpiration(), expansion item databases
     return expired;
 }
 

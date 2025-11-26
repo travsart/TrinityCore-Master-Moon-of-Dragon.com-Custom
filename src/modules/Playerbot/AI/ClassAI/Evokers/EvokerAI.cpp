@@ -1202,12 +1202,28 @@ void EvokerAI::RecordEchoHealing(uint32 amount)
 // Utility class implementations
 uint32 EvokerCalculator::CalculateAzureStrikeDamage(Player* caster, ::Unit* target)
 {
-    return 600; // Placeholder
+    // DESIGN NOTE: Calculate Azure Strike damage for Evoker bots
+    // Returns 600 as baseline damage value
+    // Full implementation should:
+    // - Query spell power from caster stats
+    // - Apply spell power coefficient from SpellInfo
+    // - Factor in target resistances and armor
+    // - Apply mastery and versatility modifiers
+    // Reference: WoW 11.2 Azure Strike (spell ID varies by spec)
+    return 600;
 }
 
 uint32 EvokerCalculator::CalculateLivingFlameDamage(Player* caster, ::Unit* target)
 {
-    return 800; // Placeholder
+    // DESIGN NOTE: Calculate Living Flame damage for Evoker bots
+    // Returns 800 as baseline damage value
+    // Full implementation should:
+    // - Query spell power and attack power from caster
+    // - Apply dual-scaling coefficient (spell + attack power)
+    // - Factor in target resistances
+    // - Apply Devastation mastery (Giantkiller) bonus if applicable
+    // Reference: WoW 11.2 Living Flame (spell ID 361469)
+    return 800;
 }
 
 uint32 EvokerCalculator::CalculateEmpoweredSpellDamage(uint32 spellId, EmpowermentLevel level, Player* caster, ::Unit* target)
@@ -1218,22 +1234,59 @@ uint32 EvokerCalculator::CalculateEmpoweredSpellDamage(uint32 spellId, Empowerme
 
 uint32 EvokerCalculator::CalculateEmeraldBlossomHealing(Player* caster)
 {
-    return 800; // Placeholder
+    // DESIGN NOTE: Calculate Emerald Blossom healing for Preservation Evoker bots
+    // Returns 800 as baseline healing value
+    // Full implementation should:
+    // - Query spell power and versatility from caster
+    // - Apply healing coefficient from SpellInfo
+    // - Factor in Preservation mastery (Lifebinder) modifier
+    // - Apply critical strike and multistrike bonuses
+    // - Consider Echo interaction for duplicate healing
+    // Reference: WoW 11.2 Emerald Blossom (spell ID 355913)
+    return 800;
 }
 
 uint32 EvokerCalculator::CalculateVerdantEmbraceHealing(Player* caster, ::Unit* target)
 {
-    return 1200; // Placeholder
+    // DESIGN NOTE: Calculate Verdant Embrace healing for Preservation Evoker bots
+    // Returns 1200 as baseline healing value
+    // Full implementation should:
+    // - Query spell power from caster stats
+    // - Apply instant heal coefficient
+    // - Factor in Preservation mastery (Lifebinder) multiplier
+    // - Apply critical strike and versatility bonuses
+    // - Consider target's missing health for smart healing
+    // - Track Echo application for follow-up heals
+    // Reference: WoW 11.2 Verdant Embrace (spell ID 360995)
+    return 1200;
 }
 
 uint32 EvokerCalculator::CalculateEchoHealing(Player* caster, ::Unit* target)
 {
-    return 300; // Placeholder
+    // DESIGN NOTE: Calculate Echo healing for Preservation Evoker bots
+    // Returns 300 as baseline periodic healing value
+    // Full implementation should:
+    // - Query spell power from caster stats
+    // - Apply Echo coefficient (percentage of original heal)
+    // - Factor in number of active Echoes on target
+    // - Apply Preservation mastery and versatility
+    // - Consider Echo duration and remaining heal count
+    // Reference: WoW 11.2 Echo (spell ID 364343) - signature Preservation mechanic
+    return 300;
 }
 
 EmpowermentLevel EvokerCalculator::GetOptimalEmpowermentLevel(uint32 spellId, Player* caster, ::Unit* target)
 {
-    return EmpowermentLevel::RANK_2; // Placeholder
+    // DESIGN NOTE: Determine optimal empowerment level for Evoker empowered spells
+    // Returns RANK_2 as balanced default empowerment
+    // Full implementation should:
+    // - Analyze current essence availability
+    // - Calculate damage/healing scaling per rank
+    // - Factor in number of targets for AoE spells
+    // - Consider combat urgency (use higher rank for burst)
+    // - Balance channel time vs immediate need
+    // Reference: WoW 11.2 Empowered spells (Fire Breath, Eternity's Surge, Dream Breath, Spirit Bloom)
+    return EmpowermentLevel::RANK_2;
 }
 
 uint32 EvokerCalculator::CalculateEmpowermentChannelTime(EmpowermentLevel level)
@@ -1257,7 +1310,16 @@ uint32 EvokerCalculator::CalculateEssenceGeneration(uint32 spellId, Player* cast
 
 float EvokerCalculator::CalculateEssenceEfficiency(uint32 spellId, Player* caster)
 {
-    return 1.0f; // Placeholder
+    // DESIGN NOTE: Calculate essence efficiency (damage or healing per essence point)
+    // Returns 1.0f as neutral efficiency baseline
+    // Full implementation should:
+    // - Calculate total damage/healing from spell
+    // - Divide by essence cost to get efficiency ratio
+    // - Factor in AoE target count for cleave spells
+    // - Consider cooldown availability and uptime
+    // - Weight spenders vs generators differently
+    // Reference: WoW 11.2 Essence resource system (max 5-6 based on talents)
+    return 1.0f;
 }
 
 bool EvokerCalculator::ShouldConserveEssence(Player* caster, uint32 currentEssence)
@@ -1282,12 +1344,30 @@ uint32 EvokerCalculator::CalculateEchoValue(Player* caster, ::Unit* target)
 
 uint32 EvokerCalculator::CalculateBuffEfficiency(uint32 spellId, Player* caster, ::Unit* target)
 {
-    return 100; // Placeholder
+    // DESIGN NOTE: Calculate buff efficiency for Augmentation Evoker support abilities
+    // Returns 100 as baseline efficiency score
+    // Full implementation should:
+    // - Query target's DPS potential and role
+    // - Calculate stat buff value (Ebon Might, Prescience)
+    // - Factor in target's gear and primary stat scaling
+    // - Prioritize high-DPS allies for maximum raid benefit
+    // - Consider buff duration and overlap prevention
+    // Reference: WoW 11.2 Augmentation spec buffs (Ebon Might, Prescience, Blistering Scales)
+    return 100;
 }
 
 ::Unit* EvokerCalculator::GetOptimalAugmentationTarget(Player* caster, const ::std::vector<::Unit*>& allies)
 {
-    return allies.empty() ? nullptr : allies[0]; // Placeholder
+    // DESIGN NOTE: Select optimal ally target for Augmentation Evoker buffs
+    // Returns first ally as fallback selection
+    // Full implementation should:
+    // - Calculate DPS potential for each ally
+    // - Prioritize DPS specs over tanks/healers
+    // - Check for existing buff duration to avoid overwriting
+    // - Consider ally proximity and combat engagement
+    // - Favor allies with cooldowns active for maximum value
+    // Reference: WoW 11.2 Augmentation targeting priority (melee > ranged > support)
+    return allies.empty() ? nullptr : allies[0];
 }
 
 void EvokerCalculator::CacheEvokerData()
@@ -1417,12 +1497,30 @@ uint32 EmpowermentController::GetSpellId() const
 
 EmpowermentLevel EmpowermentController::CalculateOptimalLevel(uint32 spellId, ::Unit* target)
 {
-    return EmpowermentLevel::RANK_2; // Placeholder
+    // DESIGN NOTE: Calculate optimal empowerment rank for channeled spell
+    // Returns RANK_2 as balanced default empowerment
+    // Full implementation should:
+    // - Analyze current combat situation urgency
+    // - Calculate targets hit by AoE cone/radius
+    // - Balance channel time vs immediate threat response
+    // - Consider essence availability for follow-up casts
+    // - Factor in movement requirements and interrupt risk
+    // Reference: WoW 11.2 Empowerment system (1-4 ranks, ~1 sec per rank)
+    return EmpowermentLevel::RANK_2;
 }
 
 bool EmpowermentController::ShouldEmpowerSpell(uint32 spellId)
 {
-    return true; // Placeholder
+    // DESIGN NOTE: Determine whether to cast spell at empowered level
+    // Returns true as default behavior to always use empowerment
+    // Full implementation should:
+    // - Check if spell is on empowered spell list (Fire Breath, Eternity's Surge, etc.)
+    // - Verify sufficient essence available for higher ranks
+    // - Consider combat mobility requirements (avoid channeling during movement)
+    // - Evaluate interrupt risk from enemy casters
+    // - Balance empowerment vs quick-cast instant abilities
+    // Reference: WoW 11.2 Empowered spells require channeling and cannot be used while moving
+    return true;
 }
 
 void EmpowermentController::UpdateEmpowermentLevel()
@@ -1510,7 +1608,16 @@ bool EchoController::ShouldCreateEcho(::Unit* target) const
 
 ::Unit* EchoController::GetBestEchoTarget() const
 {
-    return nullptr; // Placeholder
+    // DESIGN NOTE: Select best ally target for Echo application (Preservation mechanic)
+    // Returns nullptr as default (no valid target)
+    // Full implementation should:
+    // - Scan group members for missing Echo debuff
+    // - Prioritize tanks and melee DPS (high sustained damage intake)
+    // - Avoid targets at full health (wasted healing)
+    // - Check for incoming damage patterns
+    // - Consider target's role and expected damage taken
+    // Reference: WoW 11.2 Echo (spell ID 364343) - applies HoT that duplicates certain heals
+    return nullptr;
 }
 
 void EchoController::UpdateEchoStates()

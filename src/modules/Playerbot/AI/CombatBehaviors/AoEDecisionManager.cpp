@@ -28,6 +28,7 @@
 #include "CellImpl.h"
 #include "UpdateFields.h"
 #include "../../Spatial/SpatialGridManager.h"
+#include "../../Group/GroupRoleEnums.h" // Centralized role detection utilities
 #include <algorithm>
 #include <cmath>
 
@@ -36,43 +37,11 @@ namespace Playerbot
 
 namespace
 {
-    // Role Detection Helpers
-    enum BotRole : uint8 {
-        BOT_ROLE_TANK = 0,
-        BOT_ROLE_HEALER = 1,
-        BOT_ROLE_DPS = 2
-    };
-
-    BotRole GetPlayerRole(Player const* player)
-    {
-        if (!player) return BOT_ROLE_DPS;
-        Classes cls = static_cast<Classes>(player->GetClass());
-        uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-    switch (cls)
-    {
-            case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_PALADIN:
-                if (spec == 1) return BOT_ROLE_HEALER;
-                if (spec == 2) return BOT_ROLE_TANK;
-                return BOT_ROLE_DPS;
-            case CLASS_DEATH_KNIGHT: return (spec == 0) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_MONK:
-                if (spec == 0) return BOT_ROLE_TANK;
-                if (spec == 1) return BOT_ROLE_HEALER;
-                return BOT_ROLE_DPS;
-            case CLASS_DRUID:
-                if (spec == 2) return BOT_ROLE_TANK;
-                if (spec == 3) return BOT_ROLE_HEALER;
-                return BOT_ROLE_DPS;
-            case CLASS_DEMON_HUNTER: return (spec == 1) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_PRIEST: return (spec == 2) ? BOT_ROLE_DPS : BOT_ROLE_HEALER;
-            case CLASS_SHAMAN: return (spec == 2) ? BOT_ROLE_HEALER : BOT_ROLE_DPS;
-            default: return BOT_ROLE_DPS;
-        }
-    }
-    bool IsTank(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_TANK; }
-    bool IsHealer(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_HEALER; }
-    bool IsDPS(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_DPS; }
+    // Role Detection using centralized utilities from GroupRoleEnums.h
+    // These use TrinityCore's ChrSpecializationEntry for accurate role detection
+    bool IsTank(Player const* p) { return IsPlayerTank(p); }
+    bool IsHealer(Player const* p) { return IsPlayerHealer(p); }
+    bool IsDPS(Player const* p) { return IsPlayerDPS(p); }
 
     // AoE spell categories for different classes
     enum AoESpells : uint32
@@ -238,7 +207,13 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
             continue;
 
         // Get Unit* for additional validation
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+        // 1. IsValidAttackTarget() requires live target validation logic
+        // 2. ToCreature() type conversion requires live object
+        // 3. IsCritter()/IsTotem() require real-time creature state
+        // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (!unit || !_bot->IsValidAttackTarget(unit))
             continue;
 
@@ -527,8 +502,16 @@ float AoEDecisionManager::CalculateResourceEfficiency(uint32 aoeSpellId, uint32 
     if (targetCount < 2)
         return 0.5f;  // Single target always favors ST spell
 
+    // DESIGN NOTE: Simplified implementation for damage calculation
+    // Current behavior: Assumes AoE spells deal 60% of single-target damage per target hit
+    // Full implementation should:
+    // - Query actual spell damage coefficients from SpellInfo
+    // - Account for AoE damage falloff/diminishing returns per target
+    // - Calculate damage based on spell effects (SPELL_EFFECT_SCHOOL_DAMAGE)
+    // - Factor in target resistances and armor mitigation
+    // - Consider spell-specific mechanics (e.g., chain vs splash)
+    // Reference: SpellInfo::GetEffect(), spell damage calculation formulas
     // Calculate damage per resource point
-    // Simplified: assume AoE does 60% of ST damage per target
     float aoeDamagePerResource = (0.6f * targetCount) / aoeCost;
     float stDamagePerResource = 1.0f / stCost;
 
@@ -580,7 +563,11 @@ float AoEDecisionManager::CalculateResourceEfficiency(uint32 aoeSpellId, uint32 
         float distance = ::std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared distance
         priority -= distance * 2.0f;
 
-        // MIGRATION TODO: Convert to GUID-based
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+        // 1. Return type is std::vector<Unit*> - callers require live Unit*
+        // 2. DoT spreading logic requires live aura verification
+        // The spatial grid provides position/health data, ObjectAccessor handles DoT state.
         Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (!unit) continue;
         candidates.push_back({unit, priority});
@@ -670,7 +657,13 @@ void AoEDecisionManager::UpdateTargetCache()
         if (!snapshot)
             continue;
         // Get Unit* for additional validation
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+        // 1. IsValidAoETarget() requires live target validation logic
+        // 2. ToCreature()->IsElite() requires real-time creature state
+        // 3. GetThreatManager() requires live threat table access
+        // The spatial grid provides health/position data, ObjectAccessor handles live validation.
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (!unit || !IsValidAoETarget(unit))
             continue;
 

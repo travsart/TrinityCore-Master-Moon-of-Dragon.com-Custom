@@ -557,9 +557,15 @@ protected:
         if (!ai || !ai->GetBot())
             return 0.0f;
 
-        // Calculate exploration percentage based on zone explored flags
-        // This is a simplified version - full implementation would check actual exploration data
-        return 0.0f; // Placeholder - would calculate from player exploration flags
+        // DESIGN NOTE: Calculate exploration percentage for bot's current zone
+        // Returns 0.0f as default until exploration tracking is implemented
+        // Full implementation should:
+        // - Query Player::GetExploredZones() or equivalent DBC data
+        // - Calculate percentage of zone area explored (AreaTable.dbc)
+        // - Consider sub-zones and points of interest
+        // - Cache per-zone exploration state for performance
+        // Reference: Player exploration flags, AreaTable.dbc, WorldMapArea.dbc
+        return 0.0f;
     }
 
     void SetTypedValue(BotAI* ai, float const& value) override

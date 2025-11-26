@@ -192,9 +192,16 @@ void UnifiedQuestManager::CompletionModule::UpdateObjectiveProgress(Player* bot,
 bool UnifiedQuestManager::CompletionModule::IsObjectiveComplete(const QuestObjectiveData& objective)
 {
     _objectivesCompleted++;
-    // Note: This wrapper doesn't have bot context - objective should contain player info
-    // TODO: Review if this method needs Player* parameter
-    return false; // Placeholder - needs proper implementation
+    // DESIGN NOTE: Quest objective completion verification
+    // Returns false as default fallback behavior
+    // Full implementation should:
+    // - Accept Player* parameter to check player-specific quest progress
+    // - Query IQuestCompletion interface for objective state (see Core/DI/Interfaces/IQuestCompletion.h)
+    // - Check QuestObjectiveData against player's quest log via TrinityCore Quest API
+    // - Handle all objective types: QUEST_OBJECTIVE_MONSTER (kill), QUEST_OBJECTIVE_ITEM (collect), etc.
+    // - Validate objective criteria counts match required counts
+    // Reference: Phase 2 refactoring to add player context to QuestObjectiveData
+    return false;
 }
 
 void UnifiedQuestManager::CompletionModule::HandleKillObjective(Player* bot, QuestObjectiveData& objective)
@@ -260,8 +267,11 @@ bool UnifiedQuestManager::CompletionModule::FindObjectiveTarget(Player* bot, Que
 
 std::vector<Position> UnifiedQuestManager::CompletionModule::GetObjectiveLocations(const QuestObjectiveData& objective)
 {
-    // Static wrapper without bot context - return empty
-    // TODO: This needs bot parameter or should be removed if not used
+    // INTEGRATION REQUIRED: Add Player* parameter for objective location lookup
+    // Implementation depends on:
+    // - IQuestCompletion interface update to include GetObjectiveLocations method with Player* parameter
+    // - Access to bot's current map and phase for accurate location data
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestCompletion.h for required interface
     return {};
 }
 
@@ -274,26 +284,38 @@ Position UnifiedQuestManager::CompletionModule::GetOptimalObjectivePosition(Play
 
 void UnifiedQuestManager::CompletionModule::CoordinateGroupQuestCompletion(Group* group, uint32 questId)
 {
-    // Static wrapper without bot context - cannot delegate
-    // TODO: This needs bot parameter or should be redesigned
+    // INTEGRATION REQUIRED: Add Player* parameter or redesign for group-level operations
+    // Implementation depends on:
+    // - IQuestCompletion interface update to support group coordination
+    // - Group member iteration logic to access individual bot contexts
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestCompletion.h for required interface
 }
 
 void UnifiedQuestManager::CompletionModule::ShareObjectiveProgress(Group* group, uint32 questId)
 {
-    // Static wrapper without bot context - cannot delegate
-    // TODO: This needs bot parameter or should be redesigned
+    // INTEGRATION REQUIRED: Add Player* parameter or redesign for group-level operations
+    // Implementation depends on:
+    // - IQuestCompletion interface update to support progress sharing
+    // - Group member iteration logic to access individual bot contexts
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestCompletion.h for required interface
 }
 
 void UnifiedQuestManager::CompletionModule::SynchronizeGroupObjectives(Group* group, uint32 questId)
 {
-    // Static wrapper without bot context - cannot delegate
-    // TODO: This needs bot parameter or should be redesigned
+    // INTEGRATION REQUIRED: Add Player* parameter or redesign for group-level operations
+    // Implementation depends on:
+    // - IQuestCompletion interface update to support objective synchronization
+    // - Group member iteration logic to access individual bot contexts
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestCompletion.h for required interface
 }
 
 void UnifiedQuestManager::CompletionModule::HandleGroupObjectiveConflict(Group* group, uint32 questId, uint32 objectiveIndex)
 {
-    // Static wrapper without bot context - cannot delegate
-    // TODO: This needs bot parameter or should be redesigned
+    // INTEGRATION REQUIRED: Add Player* parameter or redesign for group-level operations
+    // Implementation depends on:
+    // - IQuestCompletion interface update to support conflict resolution
+    // - Group member iteration logic to access individual bot contexts
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestCompletion.h for required interface
 }
 
 void UnifiedQuestManager::CompletionModule::OptimizeQuestCompletionOrder(Player* bot)
@@ -368,7 +390,11 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuestRequirements(uint32 que
 
 std::vector<std::string> UnifiedQuestManager::ValidationModule::GetValidationErrors(uint32 questId, Player* bot)
 {
-    // TODO: GetValidationErrors method signature needs review
+    // INTEGRATION REQUIRED: Implement validation error reporting
+    // Implementation depends on:
+    // - IQuestValidation interface update to include GetValidationErrors method
+    // - Centralized validation error collection and formatting
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
     return {};
 }
 
@@ -439,36 +465,57 @@ bool UnifiedQuestManager::ValidationModule::ValidateFactionRequirements(uint32 q
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredReputation(uint32 questId, Player* bot, uint32 factionId)
 {
-    // TODO: QuestValidation does not have HasRequiredReputation method
-    // Need to implement reputation checking logic
+    // INTEGRATION REQUIRED: Implement faction-specific reputation checking
+    // Implementation depends on:
+    // - IQuestValidation interface update to include HasRequiredReputation method
+    // - Access to Player reputation data via TrinityCore Reputation API
+    // - Quest database fields for faction-specific reputation requirements
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
     return true; // Stub - always return true for now
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateItemRequirements(uint32 questId, Player* bot)
 {
-    // TODO: QuestValidation does not have ValidateItemRequirements method
-    // Need to implement item requirement checking logic
+    // INTEGRATION REQUIRED: Implement item requirement validation
+    // Implementation depends on:
+    // - IQuestValidation interface update to include ValidateItemRequirements method
+    // - Access to Player inventory via TrinityCore Item API
+    // - Quest database fields for required items at acceptance
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
     return true; // Stub - always return true for now
 }
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredItems(uint32 questId, Player* bot)
 {
-    // TODO: QuestValidation does not have HasRequiredItems method
-    // Need to implement item requirement checking logic
+    // INTEGRATION REQUIRED: Implement required item possession checking
+    // Implementation depends on:
+    // - IQuestValidation interface update to include HasRequiredItems method
+    // - Access to Player inventory via TrinityCore Item API
+    // - Quest database fields for required items with quantities
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
     return true; // Stub - always return true for now
 }
 
 bool UnifiedQuestManager::ValidationModule::HasInventorySpace(uint32 questId, Player* bot)
 {
-    // TODO: QuestValidation does not have HasInventorySpace method
-    // Need to implement inventory space checking logic
+    // INTEGRATION REQUIRED: Implement inventory space validation for quest rewards
+    // Implementation depends on:
+    // - IQuestValidation interface update to include HasInventorySpace method
+    // - Access to Player inventory capacity via TrinityCore Item API
+    // - Quest reward data to calculate required inventory slots
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
     return true; // Stub - always return true for now
 }
 
 std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingQuestItems(uint32 questId, Player* bot)
 {
-    // TODO: QuestValidation does not have GetMissingQuestItems method
-    // Need to implement missing quest items checking logic
+    // INTEGRATION REQUIRED: Implement missing quest item identification
+    // Implementation depends on:
+    // - IQuestValidation interface update to include GetMissingQuestItems method
+    // - Access to Player inventory via TrinityCore Item API
+    // - Quest database fields for required items with quantities
+    // - Logic to compare required vs. possessed items
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
     return {}; // Stub - return empty vector for now
 }
 
@@ -560,8 +607,13 @@ bool UnifiedQuestManager::ValidationModule::CanGroupMemberShareQuest(uint32 ques
 
 bool UnifiedQuestManager::ValidationModule::ValidateWithContext(ValidationContext& context)
 {
-    // TODO: ValidationContext is incomplete type in this context
-    // Need to access QuestValidation differently or pass bot separately
+    // INTEGRATION REQUIRED: Implement context-based validation
+    // Implementation depends on:
+    // - ValidationContext type definition in QuestValidation.h being accessible
+    // - IQuestValidation interface update to include ValidateWithContext method
+    // - Bot extraction from ValidationContext or separate Player* parameter
+    // See: src/modules/Playerbot/Quest/QuestValidation.h for ValidationContext definition
+    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
     return true; // Stub - always return true for now
 }
 

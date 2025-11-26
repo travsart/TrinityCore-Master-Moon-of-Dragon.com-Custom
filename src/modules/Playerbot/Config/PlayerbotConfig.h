@@ -230,6 +230,31 @@ private:
         uint32 aiDecisionTimeLimit = 50;
         uint32 loginDelay = 1000;
 
+        // Group coordination intervals (milliseconds)
+        uint32 groupUpdateInterval = 1000;      // Group state synchronization
+        uint32 inviteResponseDelay = 2000;      // Bot invite acceptance delay
+        uint32 readyCheckTimeout = 30000;       // Ready check expiration
+        uint32 lootRollTimeout = 60000;         // Loot roll window duration
+        uint32 targetUpdateInterval = 500;      // Target selection refresh
+
+        // System update intervals (milliseconds)
+        uint32 bankingCheckInterval = 300000;   // Banking evaluation (5 min)
+        uint32 goldCheckInterval = 60000;       // Gold management (1 min)
+        uint32 mountUpdateInterval = 5000;      // Mount state update
+        uint32 petUpdateInterval = 5000;        // Battle pet update
+
+        // Session management (milliseconds)
+        uint32 sessionCleanupInterval = 10000;  // Session cleanup cycle
+        uint32 maxLoadingTime = 30000;          // Max bot loading time
+        uint32 sessionTimeout = 60000;          // Session expiration
+
+        // History/transaction limits
+        uint32 maxTransactionHistory = 100;     // Banking transaction log size
+        uint32 maxConcurrentCommands = 5;       // Chat command queue limit
+
+        // Account management
+        uint32 targetPoolSize = 50;             // Bot account pool target
+
         // Logging settings (accessed during log operations)
         uint32 logLevel = 4;
         std::string logFile = "Playerbot.log";

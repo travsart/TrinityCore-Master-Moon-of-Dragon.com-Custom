@@ -261,7 +261,15 @@ GroupComposition RoleAssignment::AnalyzeGroupComposition(Group* group)
 
 bool RoleAssignment::IsCompositionViable(const GroupComposition& composition)
 {
-    // Basic viability checks
+    // DESIGN NOTE: Basic composition viability checks
+    // Current behavior: Only checks for presence of tank and healer
+    // Full implementation should:
+    // - Validate minimum DPS count for content type (dungeons need 3 DPS, raids vary)
+    // - Check for buff coverage (Bloodlust, Battle Res, key utility abilities)
+    // - Verify interrupt availability for dungeon content
+    // - Consider composition score threshold for different content difficulties
+    // - Account for special role requirements (e.g., tank swaps in raids)
+    // Reference: _contentRequirements map for content-specific requirements
     if (!composition.hasMainTank || !composition.hasMainHealer)
         return false;
 
@@ -543,24 +551,18 @@ void RoleAssignment::CalculateRoleCapabilities(PlayerRoleProfile& profile)
         return;
 
     uint8 playerClass = _bot->GetClass();
-    // Get player's active specialization
-    uint8 playerSpec = 0;
-    ChrSpecialization primarySpec = _bot->GetPrimarySpecialization();
-    if (primarySpec != ChrSpecialization::None)
-    {
-        playerSpec = static_cast<uint8>(primarySpec);
-    }
-    else
-    {
-        // Fallback: try to determine spec from talents if primary spec not set
-        // This handles low-level characters or edge cases
-        playerSpec = 0; // Default to first spec
-    }
+
+    // Get player's spec index (0-3) using the centralized utility
+    // This queries ChrSpecializationEntry::OrderIndex for the correct mapping
+    uint8 playerSpecIndex = GetPlayerSpecIndex(_bot);
+
+    // Store the spec index in the profile
+    profile.playerSpec = playerSpecIndex;
 
     auto classIt = _classSpecRoles.find(playerClass);
     if (classIt != _classSpecRoles.end())
     {
-        auto specIt = classIt->second.find(playerSpec);
+        auto specIt = classIt->second.find(playerSpecIndex);
         if (specIt != classIt->second.end())
         {
             for (const auto& [role, capability] : specIt->second)
@@ -568,9 +570,19 @@ void RoleAssignment::CalculateRoleCapabilities(PlayerRoleProfile& profile)
                 profile.roleCapabilities[role] = capability;
             }
         }
+        else
+        {
+            // Spec index not found in our mapping - use the centralized role detection
+            // This handles cases where our static mapping is out of date
+            GroupRole detectedRole = GetPlayerSpecRole(_bot);
+            if (detectedRole != GroupRole::NONE)
+            {
+                profile.roleCapabilities[detectedRole] = RoleCapability::PRIMARY;
+            }
+        }
     }
 
-    // Initialize all roles to incapable by default
+    // Initialize all roles to incapable by default if not already set
     for (int roleInt = 0; roleInt <= static_cast<int>(GroupRole::UTILITY); ++roleInt)
     {
         GroupRole role = static_cast<GroupRole>(roleInt);
@@ -718,17 +730,9 @@ float RoleAssignment::CalculateSynergyScore( GroupRole role, Group* group)
             uint8 memberClass = member->GetClass();
             classCounts[memberClass]++;
 
-            // Determine member's role (simplified)
-            ChrSpecialization spec = member->GetPrimarySpecialization();
-            uint32 specId = static_cast<uint32>(spec);
-
-            GroupRole memberRole = GroupRole::NONE;
-            if (specId == 66 || specId == 73 || specId == 104 || specId == 250 || specId == 268 || specId == 581)
-                memberRole = GroupRole::TANK;
-            else if (specId == 65 || specId == 256 || specId == 257 || specId == 264 || specId == 270 || specId == 105 || specId == 1468)
-                memberRole = GroupRole::HEALER;
-            else
-                memberRole = GroupRole::MELEE_DPS; // Simplified
+            // Use centralized role detection utilities from GroupRoleEnums.h
+            // This queries ChrSpecializationEntry to get authoritative role data
+            GroupRole memberRole = GetPlayerSpecRole(member);
 
             roleCounts[memberRole]++;
         }
@@ -1015,14 +1019,87 @@ void RoleAssignment::ExecuteOptimalStrategy(Group* group)
     }
 }
 
-// Placeholder implementations for other strategies
-void RoleAssignment::ExecuteBalancedStrategy(Group* group) { ExecuteOptimalStrategy(group); }
-void RoleAssignment::ExecuteFlexibleStrategy(Group* group) { ExecuteOptimalStrategy(group); }
-void RoleAssignment::ExecuteStrictStrategy(Group* group) { ExecuteOptimalStrategy(group); }
-void RoleAssignment::ExecuteHybridStrategy(Group* group) { ExecuteOptimalStrategy(group); }
-void RoleAssignment::ExecuteDungeonStrategy(Group* group) { ExecuteOptimalStrategy(group); }
-void RoleAssignment::ExecuteRaidStrategy(Group* group) { ExecuteOptimalStrategy(group); }
-void RoleAssignment::ExecutePvPStrategy(Group* group) { ExecuteOptimalStrategy(group); }
+// DESIGN NOTE: Role assignment strategy implementations
+// Currently use ExecuteOptimalStrategy as fallback behavior
+// Full implementations should provide strategy-specific role assignment logic:
+
+void RoleAssignment::ExecuteBalancedStrategy(Group* group)
+{
+    // DESIGN NOTE: Balanced role distribution strategy
+    // Should balance role distribution evenly across all members
+    // - Prioritize even distribution of tanks, healers, DPS
+    // - Consider player preferences but maintain balance
+    // - Optimize for sustained group performance
+    // Reference: GroupComposition analysis
+    ExecuteOptimalStrategy(group);
+}
+
+void RoleAssignment::ExecuteFlexibleStrategy(Group* group)
+{
+    // DESIGN NOTE: Flexible role switching strategy
+    // Should allow dynamic role changes based on situation
+    // - Enable hybrid classes to switch roles mid-content
+    // - Respond to changing group needs in real-time
+    // - Prioritize adaptability over specialization
+    // Reference: RoleCapability::HYBRID handling
+    ExecuteOptimalStrategy(group);
+}
+
+void RoleAssignment::ExecuteStrictStrategy(Group* group)
+{
+    // DESIGN NOTE: Strict primary role enforcement strategy
+    // Should enforce primary role assignments only
+    // - Only assign roles where RoleCapability::PRIMARY exists
+    // - Reject assignments outside primary specialization
+    // - Maximize individual role performance
+    // Reference: _classSpecRoles primary mappings
+    ExecuteOptimalStrategy(group);
+}
+
+void RoleAssignment::ExecuteHybridStrategy(Group* group)
+{
+    // DESIGN NOTE: Hybrid class optimization strategy
+    // Should maximize value of hybrid classes (Druid, Paladin, Shaman, Monk)
+    // - Leverage multi-role capabilities of hybrid classes
+    // - Apply HYBRID_CLASS_BONUS to role scoring
+    // - Enable seamless role transitions
+    // Reference: CalculateFlexibilityBonus(), hybrid class detection
+    ExecuteOptimalStrategy(group);
+}
+
+void RoleAssignment::ExecuteDungeonStrategy(Group* group)
+{
+    // DESIGN NOTE: 5-man dungeon optimized strategy
+    // Should optimize for dungeon content (1 tank, 1 healer, 3 DPS)
+    // - Enforce standard dungeon composition
+    // - Prioritize interrupt capabilities and crowd control
+    // - Balance melee/ranged DPS for mechanic handling
+    // Reference: _contentRequirements dungeon templates
+    ExecuteOptimalStrategy(group);
+}
+
+void RoleAssignment::ExecuteRaidStrategy(Group* group)
+{
+    // DESIGN NOTE: Raid content optimized strategy
+    // Should optimize for raid content (2-3 tanks, 5-6 healers, rest DPS)
+    // - Scale role requirements based on raid size (10/25/30)
+    // - Ensure buff coverage and utility distribution
+    // - Balance healing assignments across raid groups
+    // Reference: _contentRequirements raid templates
+    ExecuteOptimalStrategy(group);
+}
+
+void RoleAssignment::ExecutePvPStrategy(Group* group)
+{
+    // DESIGN NOTE: PvP/Battleground optimized strategy
+    // Should optimize for PvP content
+    // - Balance between offense and defense roles
+    // - Prioritize mobility and survivability
+    // - Ensure flag carriers, healers, and damage dealers
+    // - Consider PvP-specific utility (stealth, crowd control)
+    // Reference: Battleground role requirements
+    ExecuteOptimalStrategy(group);
+}
 
 void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile)
 {

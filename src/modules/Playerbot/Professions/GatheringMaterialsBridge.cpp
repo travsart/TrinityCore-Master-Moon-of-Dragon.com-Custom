@@ -378,8 +378,15 @@ uint32 GatheringMaterialsBridge::GetEstimatedYield(GatheringNode const& node)
 
 void GatheringMaterialsBridge::ConfigureGatheringForMaterials(bool prioritizeMaterials)
 {
-    // Configuration would be applied to GatheringManager
-    // For now, this is a placeholder
+    // DESIGN NOTE: Configure GatheringManager to prioritize crafting materials
+    // Returns immediately as placeholder behavior
+    // Full implementation should:
+    // - Access GatheringManager via GetGatheringManager()
+    // - Set priority flags for material-driven gathering vs opportunistic gathering
+    // - Configure node filtering based on _materialRequirements
+    // - Adjust gathering radius and search patterns for efficiency
+    // - Update GatheringManager's node scoring to favor needed materials
+    // Reference: GatheringManager configuration API (once implemented)
 }
 
 GatheringManager* GatheringMaterialsBridge::GetGatheringManager()
@@ -396,8 +403,15 @@ GatheringManager* GatheringMaterialsBridge::GetGatheringManager()
 
 void GatheringMaterialsBridge::SynchronizeWithGatheringManager()
 {
-    // Synchronization logic placeholder
-    // Would coordinate state with GatheringManager
+    // DESIGN NOTE: Synchronize material requirements with GatheringManager
+    // Returns immediately as placeholder behavior
+    // Full implementation should:
+    // - Push current _materialRequirements to GatheringManager
+    // - Retrieve active gathering session state from GatheringManager
+    // - Coordinate _activeSession with GatheringManager's gathering state
+    // - Ensure both systems agree on target materials and priorities
+    // - Handle conflicts between material needs and skill-up opportunities
+    // Reference: GatheringManager state synchronization API
 }
 
 // ============================================================================
@@ -471,8 +485,15 @@ void GatheringMaterialsBridge::LoadNodeMaterialMappings()
 {
     _materialToNodeType.clear();
 
-    // TODO: Load from database or configuration
-    // For now, hardcode common materials
+    // DESIGN NOTE: Load item-to-node-type mappings
+    // Currently hardcodes common materials as placeholder data
+    // Full implementation should:
+    // - Load from database table (playerbot_gathering_materials)
+    // - Query game_object_template for herb/mining node loot tables
+    // - Parse item_template to identify gathering profession items
+    // - Support dynamic updates without code recompilation
+    // - Include all expansion materials (Classic through TWW)
+    // Reference: TrinityCore GameObjectTemplate, LootTemplate tables
 
     // Herbs
     _materialToNodeType[2447] = GatheringNodeType::HERB_NODE;    // Peacebloom
@@ -490,8 +511,15 @@ void GatheringMaterialsBridge::LoadNodeMaterialMappings()
 
 void GatheringMaterialsBridge::InitializeGatheringProfessionMaterials()
 {
-    // Additional initialization for gathering profession materials
-    // Placeholder for future expansion
+    // DESIGN NOTE: Initialize gathering profession material data structures
+    // Returns immediately as placeholder for future expansion
+    // Full implementation should:
+    // - Pre-cache material yield rates per node type
+    // - Load profession-specific material requirements (e.g., Inscription needs herbs)
+    // - Initialize material value/priority scoring tables
+    // - Set up cross-profession material dependencies (leather -> Leatherworking)
+    // - Configure seasonal/zone-specific material availability
+    // Reference: ProfessionDatabase for profession-material relationships
 }
 
 // ============================================================================

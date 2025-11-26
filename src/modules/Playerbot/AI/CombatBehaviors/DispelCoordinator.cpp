@@ -25,6 +25,7 @@
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
+#include "../../Group/GroupRoleEnums.h" // Centralized role detection utilities
 #include <mutex>
 #include <algorithm>
 #include <cmath>
@@ -33,7 +34,7 @@ namespace Playerbot
 {
 
 // ============================================================================
-// Role Detection Helpers
+// Role Detection Helpers - Using centralized utilities from GroupRoleEnums.h
 // ============================================================================
 
 namespace {
@@ -46,32 +47,23 @@ namespace {
     BotRole GetPlayerRole(Player const* player)
     {
         if (!player) return BOT_ROLE_DPS;
-        Classes cls = static_cast<Classes>(player->GetClass());
-        uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-    switch (cls)
-    {
-            case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_PALADIN:
-                if (spec == 1) return BOT_ROLE_HEALER;
-                if (spec == 2) return BOT_ROLE_TANK;
+
+        // Use centralized role detection from GroupRoleEnums.h
+        // This queries ChrSpecializationEntry for accurate role detection
+        GroupRole role = GetPlayerSpecRole(player);
+
+        switch (role)
+        {
+            case GroupRole::TANK:
+                return BOT_ROLE_TANK;
+            case GroupRole::HEALER:
+                return BOT_ROLE_HEALER;
+            default:
                 return BOT_ROLE_DPS;
-            case CLASS_DEATH_KNIGHT: return (spec == 0) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_MONK:
-                if (spec == 0) return BOT_ROLE_TANK;
-                if (spec == 1) return BOT_ROLE_HEALER;
-                return BOT_ROLE_DPS;
-            case CLASS_DRUID:
-                if (spec == 2) return BOT_ROLE_TANK;
-                if (spec == 3) return BOT_ROLE_HEALER;
-                return BOT_ROLE_DPS;
-            case CLASS_DEMON_HUNTER: return (spec == 1) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_PRIEST: return (spec == 2) ? BOT_ROLE_DPS : BOT_ROLE_HEALER;
-            case CLASS_SHAMAN: return (spec == 2) ? BOT_ROLE_HEALER : BOT_ROLE_DPS;
-            default: return BOT_ROLE_DPS;
         }
     }
-    bool IsTank(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_TANK; }
-    bool IsHealer(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_HEALER; }
+    bool IsTank(Player const* p) { return IsPlayerTank(p); }
+    bool IsHealer(Player const* p) { return IsPlayerHealer(p); }
 }
 
 // Static member definitions moved to header with inline to fix DLL linkage (C2491)
@@ -460,7 +452,15 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
             priority += 1.0f;  // Heavy DOT at low health
     }
 
-    // Spreading debuff adjustment (simplified check)
+    // DESIGN NOTE: Simplified implementation for spreading debuff detection
+    // Current behavior: Adds flat +1.0 priority if debuff has "spreads" flag
+    // Full implementation should:
+    // - Check nearby allies within spread radius for same debuff
+    // - Calculate actual spread probability based on proximity
+    // - Monitor debuff application timing to detect spread patterns
+    // - Account for group composition (melee vs ranged clustering)
+    // - Prioritize based on number of potential spread targets
+    // Reference: Debuff spread mechanics, AOE debuff system
     if (spreads)
     {
         priority += 1.0f;  // Spreading debuffs are always higher priority

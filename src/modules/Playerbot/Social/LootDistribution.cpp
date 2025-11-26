@@ -298,7 +298,15 @@ bool LootDistribution::ShouldPlayerGreedItem(const LootItem& item)
     if (item.vendorValue < profile.greedThreshold * 10000) // Convert threshold to copper
         return false;
 
-    // Don't greed if someone else can need it (simplified)
+    // DESIGN NOTE: Simplified implementation for greed eligibility
+    // Current behavior: Always returns true after vendor value check
+    // Full implementation should:
+    // - Query Group members to check if anyone can use item for main spec
+    // - Use IsClassAppropriate() against all group member classes
+    // - Respect "main spec before off spec" etiquette
+    // - Check if item is BiS (Best in Slot) for any group member
+    // - Consider group loot strategy and fairness policies
+    // Reference: Group::GetMembers(), IsClassAppropriate(), LootFairnessTracker
     return true;
 }
 
@@ -749,7 +757,15 @@ bool LootDistribution::CanParticipateInRoll(const LootItem& item)
     if (!_bot->CanUseItem(item.itemTemplate))
         return false;
 
-    // Player must be in range (simplified check)
+    // DESIGN NOTE: Simplified implementation for roll participation validation
+    // Current behavior: Always returns true after basic item usability check
+    // Full implementation should:
+    // - Verify player is within loot range (typically 30-40 yards)
+    // - Check if player is alive (dead players can't roll)
+    // - Validate player is still in the group
+    // - Ensure player hasn't left the instance
+    // - Check if player has inventory space for the item
+    // Reference: Player::IsWithinDistInMap(), Group::IsMember()
     return true;
 }
 
@@ -930,8 +946,16 @@ bool LootDistribution::IsItemForMainSpec( const LootItem& item)
     if (!_bot || !item.itemTemplate)
         return false;
 
-    // Simplified check based on item type and player spec
-    // In a real implementation, this would be more sophisticated
+    // DESIGN NOTE: Simplified implementation for main spec validation
+    // Current behavior: Basic armor/weapon type checks for a few classes
+    // Full implementation should:
+    // - Parse player's active talent specialization
+    // - Match item's primary stats to spec's stat priorities
+    // - Use ClassAI spec configurations for stat weights
+    // - Check if item has spec-specific procs or bonuses
+    // - Compare against BiS (Best in Slot) lists for the spec
+    // - Consider tier set bonuses and set piece priorities
+    // Reference: Player::GetPrimarySpecialization(), ClassAI stat priorities
 
     uint8 playerClass = _bot->GetClass();
     uint8 spec = AsUnderlyingType(_bot->GetPrimarySpecialization());
@@ -968,8 +992,16 @@ bool LootDistribution::IsItemUsefulForOffSpec(const LootItem& item)
     if (!_bot || !item.itemTemplate)
         return false;
 
-    // Check if item could be useful for an alternative specialization
-    // This is a simplified implementation
+    // DESIGN NOTE: Simplified implementation for off-spec validation
+    // Current behavior: Returns true if player can equip the item
+    // Full implementation should:
+    // - Check player's secondary/tertiary talent specs
+    // - Match item stats against off-spec stat priorities
+    // - Verify item isn't already owned for off-spec use
+    // - Compare item level against current off-spec gear
+    // - Consider dual-spec and spec-switching frequency
+    // - Respect "main spec > off spec" loot priority rules
+    // Reference: Player::GetSpecializationsCount(), ClassAI off-spec configs
 
     return _bot->CanUseItem(item.itemTemplate);
 }

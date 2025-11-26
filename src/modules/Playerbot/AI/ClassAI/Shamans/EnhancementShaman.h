@@ -739,8 +739,12 @@ private:
     void InitializeEnhancementMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        // DESIGN NOTE: BotAI integration for priority queue registration
+        // Implementation requires proper BotAI access pattern from Player object.
+        // Player::GetBotAI() method doesn't exist in TrinityCore 11.2 API.
+        // Should use appropriate accessor method when BotAI integration is complete.
+        // Reference: TrinityCore 11.2 Player class API
         // COMMENTED OUT: BotAI* ai = this->GetBot()->GetBotAI(); // Player doesn't have GetBotAI()
-        // TODO: Fix BotAI access pattern
         BotAI* ai = nullptr; // Temporary fix
         if (!ai) return;
 

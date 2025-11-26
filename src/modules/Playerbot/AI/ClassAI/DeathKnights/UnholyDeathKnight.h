@@ -632,8 +632,13 @@ private:
     void InitializeUnholyMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
-        // TODO: GetBotAI() doesn't exist on Player - this needs proper BotAI integration
-        // Commenting out for now to fix compilation errors
+        // DESIGN NOTE: BotAI integration for ActionPriorityQueue and BehaviorTree registration
+        // Implementation should include:
+        // - Proper BotAI retrieval from Player instance (via custom Player extension or bot registry)
+        // - ActionPriorityQueue registration for Unholy DK spells (Anti-Magic Shell, Army of the Dead, Apocalypse, Festering Strike, Scourge Strike, Death Coil)
+        // - BehaviorTree construction with burst cooldowns, Festering Wound management, wound application/bursting, and runic power dump
+        // Reference: WoW 11.2 Death Knight mechanics, Unholy specialization pet management and Festering Wound stacking patterns
+        // Commenting out for now until BotAI integration is implemented
         /*
         BotAI* ai = this->GetBot()->GetBotAI();
         if (!ai) return;

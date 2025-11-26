@@ -207,9 +207,14 @@ void BotCharacterDistribution::LoadRaceClassGenderOverrides()
         return;
     }
 
-    // TODO: Implement proper processing for gender preference weights
-    // Current table structure stores individual gender preferences, not male percentages
-    // For now, skip loading gender overrides to get basic functionality working
+    // INTEGRATION REQUIRED: Implement proper processing for gender preference weights
+    // Current Issue: Table stores individual gender preferences (0=male, 1=female) with weights
+    // Need: Aggregate weights per race/class to calculate male percentage
+    // Algorithm:
+    //   1. Group by (race, class)
+    //   2. Sum weights for gender=0 (male_weight) and gender=1 (female_weight)
+    //   3. Calculate: male_percentage = male_weight / (male_weight + female_weight) * 100
+    // For now, skip loading gender overrides (use race-wide defaults from playerbots_gender_distribution)
 
     /*
     do
@@ -221,7 +226,8 @@ void BotCharacterDistribution::LoadRaceClassGenderOverrides()
         uint8 gender = fields[2].GetUInt8();
         float preferenceWeight = fields[3].GetFloat();
 
-        // TODO: Convert preference weights to male percentages
+        // INTEGRATION REQUIRED: Convert preference weights to male percentages
+        // Implementation: Group by race/class, aggregate weights, calculate percentage
         // uint32 key = (race << 8) | classId;
         // m_raceClassGenderOverrides[key] = calculatedMalePercentage;
 

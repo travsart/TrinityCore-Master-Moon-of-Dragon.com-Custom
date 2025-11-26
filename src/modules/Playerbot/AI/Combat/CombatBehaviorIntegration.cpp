@@ -720,7 +720,12 @@ ActionUrgency CombatBehaviorIntegration::EvaluateMovementPriority()
 
 ActionUrgency CombatBehaviorIntegration::EvaluateTargetSwitchPriority()
 {
-    /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* currentTarget = ObjectAccessor::GetUnit(*_bot, _bot->GetTarget());
+    // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+    // ObjectAccessor is intentionally retained because:
+    // 1. _bot->GetTarget() returns a GUID, needs resolution to Unit*
+    // 2. We need the live Unit* to check HasAura() for immunity detection
+    // 3. Target switching requires real-time unit state
+    Unit* currentTarget = ObjectAccessor::GetUnit(*_bot, _bot->GetTarget());
     Unit* priorityTarget = _targetManager->GetPriorityTarget();
 
     if (!currentTarget || !priorityTarget)

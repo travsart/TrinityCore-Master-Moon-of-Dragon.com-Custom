@@ -43,6 +43,10 @@
 #include <atomic>
 #include <mutex>
 #include <future>
+#include <queue>
+#include <thread>
+#include <condition_variable>
+#include <chrono>
 
 class Player;
 class WorldSession;
@@ -179,6 +183,196 @@ struct CommandCooldown
 {
     uint32 lastUsed;                     // Last usage timestamp
     uint32 cooldownMs;                   // Cooldown duration
+};
+
+/**
+ * @brief Async command state for tracking command execution
+ */
+enum class AsyncCommandState : uint8
+{
+    PENDING = 0,                         // Queued but not started
+    PROCESSING,                          // Currently executing
+    COMPLETED,                           // Finished successfully
+    FAILED,                              // Execution failed
+    TIMED_OUT,                           // Command timed out
+    CANCELLED                            // Command was cancelled
+};
+
+/**
+ * @brief Async command entry for the command queue
+ */
+struct TC_GAME_API AsyncCommandEntry
+{
+    uint64 commandId;                    // Unique command ID
+    CommandContext context;              // Original command context
+    ChatCommand command;                 // Command to execute
+    AsyncCommandState state;             // Current state
+    uint32 enqueueTime;                  // When command was queued
+    uint32 startTime;                    // When command started processing
+    uint32 timeoutMs;                    // Command timeout in milliseconds
+    ::std::future<CommandResult> future; // Future for async execution
+    CommandResponse response;            // Command response
+
+    AsyncCommandEntry()
+        : commandId(0)
+        , state(AsyncCommandState::PENDING)
+        , enqueueTime(0)
+        , startTime(0)
+        , timeoutMs(30000)  // 30 second default timeout
+    {
+    }
+};
+
+/**
+ * @brief Callback for async command completion
+ */
+using AsyncCommandCallback = ::std::function<void(uint64 commandId, CommandResult result, CommandResponse const& response)>;
+
+/**
+ * @brief Thread-safe async command queue for handling long-running commands
+ *
+ * Provides non-blocking command execution with:
+ * - Per-player concurrent command limiting
+ * - Timeout handling
+ * - Completion callbacks
+ * - Priority-based processing
+ * - Statistics tracking
+ */
+class TC_GAME_API AsyncCommandQueue
+{
+public:
+    AsyncCommandQueue();
+    ~AsyncCommandQueue();
+
+    // Non-copyable
+    AsyncCommandQueue(AsyncCommandQueue const&) = delete;
+    AsyncCommandQueue& operator=(AsyncCommandQueue const&) = delete;
+
+    /**
+     * @brief Start the command queue processing thread
+     */
+    void Start();
+
+    /**
+     * @brief Stop the command queue and wait for completion
+     */
+    void Stop();
+
+    /**
+     * @brief Check if queue is running
+     */
+    bool IsRunning() const { return _running.load(); }
+
+    /**
+     * @brief Enqueue a command for async execution
+     * @param context Command context
+     * @param command Command to execute
+     * @param callback Optional completion callback
+     * @return Command ID for tracking, or 0 if enqueue failed
+     */
+    uint64 EnqueueCommand(CommandContext const& context, ChatCommand const& command,
+                          AsyncCommandCallback callback = nullptr);
+
+    /**
+     * @brief Cancel a pending command
+     * @param commandId Command ID to cancel
+     * @return true if command was cancelled
+     */
+    bool CancelCommand(uint64 commandId);
+
+    /**
+     * @brief Cancel all commands for a player
+     * @param playerGuid Player GUID
+     * @return Number of commands cancelled
+     */
+    uint32 CancelPlayerCommands(ObjectGuid playerGuid);
+
+    /**
+     * @brief Get current state of a command
+     * @param commandId Command ID
+     * @return Command state or CANCELLED if not found
+     */
+    AsyncCommandState GetCommandState(uint64 commandId) const;
+
+    /**
+     * @brief Get number of pending commands for a player
+     * @param playerGuid Player GUID
+     * @return Number of pending commands
+     */
+    uint32 GetPlayerPendingCount(ObjectGuid playerGuid) const;
+
+    /**
+     * @brief Check if player can enqueue more commands
+     * @param playerGuid Player GUID
+     * @param maxConcurrent Maximum allowed concurrent commands
+     * @return true if player can enqueue more commands
+     */
+    bool CanPlayerEnqueue(ObjectGuid playerGuid, uint32 maxConcurrent) const;
+
+    /**
+     * @brief Get queue statistics
+     */
+    struct QueueStatistics
+    {
+        ::std::atomic<uint64_t> totalEnqueued{0};
+        ::std::atomic<uint64_t> totalCompleted{0};
+        ::std::atomic<uint64_t> totalFailed{0};
+        ::std::atomic<uint64_t> totalTimedOut{0};
+        ::std::atomic<uint64_t> totalCancelled{0};
+        ::std::atomic<uint64_t> currentPending{0};
+        ::std::atomic<uint64_t> currentProcessing{0};
+        ::std::atomic<uint64_t> avgProcessingTimeMs{0};
+    };
+
+    QueueStatistics const& GetStatistics() const { return _statistics; }
+
+    /**
+     * @brief Reset queue statistics
+     */
+    void ResetStatistics();
+
+private:
+    /**
+     * @brief Main processing loop (runs in separate thread)
+     */
+    void ProcessingLoop();
+
+    /**
+     * @brief Process a single command
+     */
+    void ProcessCommand(AsyncCommandEntry& entry);
+
+    /**
+     * @brief Check for timed out commands
+     */
+    void CheckTimeouts();
+
+    /**
+     * @brief Clean up completed commands
+     */
+    void CleanupCompleted();
+
+    // Thread management
+    ::std::atomic<bool> _running{false};
+    ::std::thread _processingThread;
+    ::std::condition_variable_any _queueCondition;
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _queueMutex;
+
+    // Command storage
+    ::std::queue<AsyncCommandEntry> _pendingQueue;
+    ::std::unordered_map<uint64, AsyncCommandEntry> _activeCommands;
+    ::std::unordered_map<uint64, AsyncCommandCallback> _callbacks;
+    ::std::unordered_map<ObjectGuid, uint32> _playerCommandCounts;
+
+    // ID generation
+    ::std::atomic<uint64_t> _nextCommandId{1};
+
+    // Statistics
+    QueueStatistics _statistics;
+
+    // Timing
+    uint32 _cleanupIntervalMs{5000};   // Cleanup every 5 seconds
+    uint32 _lastCleanupTime{0};
 };
 
 /**
@@ -465,6 +659,12 @@ private:
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _commandsMutex;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _cooldownsMutex;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _llmMutex;
+
+    // Async command queue for non-blocking command execution
+    static inline ::std::unique_ptr<AsyncCommandQueue> _asyncQueue;
+
+    // Friend class for AsyncCommandQueue to access SendResponse
+    friend class AsyncCommandQueue;
 };
 
 } // namespace Playerbot

@@ -518,8 +518,9 @@ bool BotNpcLocationService::IsTrainerForSkill(uint32 creatureEntry, uint32 skill
     if (!(cInfo->npcflag & UNIT_NPC_FLAG_TRAINER))
         return false;
 
-    // TODO: Implement full trainer spell checking via TrainerSpell table
-    // For now, return true if it's a trainer - better filtering can be added later
+    // INTEGRATION REQUIRED: Implement full trainer spell checking via TrainerSpell table
+    // Needs: Query world.trainer_spell WHERE TrainerId = cInfo->trainer_id to verify profession skills
+    // Current: Returns all NPCs with TRAINER flag (includes class/profession trainers)
     return true;
 }
 
@@ -533,8 +534,9 @@ bool BotNpcLocationService::IsClassTrainer(uint32 creatureEntry, uint8 classId)
     if (!(cInfo->npcflag & UNIT_NPC_FLAG_TRAINER) && !(cInfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS))
         return false;
 
-    // TODO: Implement class-specific trainer checking via TrainerSpell table
-    // For now, return true if it's a class trainer
+    // INTEGRATION REQUIRED: Implement class-specific trainer checking via TrainerSpell table
+    // Needs: Query world.trainer_spell to verify trainer teaches class-specific spells for classId
+    // Current: Returns all NPCs with CLASS_TRAINER flag (no class filtering)
     return true;
 }
 

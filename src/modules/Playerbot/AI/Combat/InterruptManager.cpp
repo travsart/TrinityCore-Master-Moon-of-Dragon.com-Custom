@@ -125,10 +125,15 @@ void InterruptManager::UpdateInterruptSystem(uint32 diff)
     ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), _maxInterruptRange);
 
-    // Resolve GUIDs to Unit pointers and apply filtering logic
+    // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+    // ObjectAccessor is intentionally retained because we need:
+    // 1. Real-time casting state via HasUnitState(UNIT_STATE_CASTING)
+    // 2. GetCurrentSpell() for spell information
+    // 3. GetSpellInfo() for interrupt worthiness checks
+    // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
     for (ObjectGuid guid : nearbyGuids)
     {
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!IsValidInterruptTarget(unit))
             continue;
 

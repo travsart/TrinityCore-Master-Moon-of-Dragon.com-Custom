@@ -636,31 +636,56 @@ bool UnifiedMovementCoordinator::FormationModule::AdjustFormationForCombat(::std
 
 bool UnifiedMovementCoordinator::FormationModule::AddMember(Player* player, FormationRole role)
 {
-    // TODO: Implement AddMember in FormationManager
+    // INTEGRATION REQUIRED: Formation member management
+    // Implementation depends on:
+    // - FormationManager::AddMember() method
+    // - Member tracking data structure
+    // - Role validation logic
+    // See: FormationManager.h for required interface
     return false;
 }
 
 bool UnifiedMovementCoordinator::FormationModule::RemoveMember(Player* player)
 {
-    // TODO: Implement RemoveMember in FormationManager
+    // INTEGRATION REQUIRED: Formation member removal
+    // Implementation depends on:
+    // - FormationManager::RemoveMember() method
+    // - Member list update logic
+    // - Position reallocation for remaining members
+    // See: FormationManager.h for required interface
     return false;
 }
 
 bool UnifiedMovementCoordinator::FormationModule::ChangeMemberRole(Player* player, FormationRole newRole)
 {
-    // TODO: Implement ChangeMemberRole in FormationManager
+    // INTEGRATION REQUIRED: Dynamic role reassignment
+    // Implementation depends on:
+    // - FormationManager::ChangeMemberRole() method
+    // - Role validation for formation type
+    // - Position recalculation based on new role
+    // See: FormationManager.h for required interface
     return false;
 }
 
 FormationMember* UnifiedMovementCoordinator::FormationModule::GetMember(Player* player)
 {
-    // TODO: Implement GetMember in FormationManager
+    // INTEGRATION REQUIRED: Member lookup functionality
+    // Implementation depends on:
+    // - FormationManager::GetMember() method
+    // - Member tracking data structure (map or vector)
+    // - FormationMember structure definition
+    // See: FormationManager.h for required interface
     return nullptr;
 }
 
 ::std::vector<FormationMember> UnifiedMovementCoordinator::FormationModule::GetAllMembers() const
 {
-    // TODO: Implement GetAllMembers in FormationManager
+    // INTEGRATION REQUIRED: Bulk member retrieval
+    // Implementation depends on:
+    // - FormationManager::GetAllMembers() method
+    // - Member storage container access
+    // - FormationMember copy or reference return strategy
+    // See: FormationManager.h for required interface
     return {};
 }
 
@@ -676,7 +701,12 @@ Position UnifiedMovementCoordinator::FormationModule::CalculateFormationPosition
 
 Position UnifiedMovementCoordinator::FormationModule::GetAssignedPosition() const
 {
-    // TODO: Implement GetAssignedPosition in FormationManager
+    // INTEGRATION REQUIRED: Individual bot position query
+    // Implementation depends on:
+    // - FormationManager::GetAssignedPosition() method
+    // - Per-bot position cache/storage
+    // - Current formation state tracking
+    // See: FormationManager.h for required interface
     return Position();
 }
 
@@ -707,7 +737,13 @@ bool UnifiedMovementCoordinator::FormationModule::RequiresReformation()
 
 void UnifiedMovementCoordinator::FormationModule::CoordinateMovement(Position const& destination)
 {
-    // TODO: Implement CoordinateMovement in FormationManager
+    // INTEGRATION REQUIRED: Formation-wide movement coordination
+    // Implementation depends on:
+    // - FormationManager::CoordinateMovement() method
+    // - Leader movement detection and follower synchronization
+    // - Path calculation for each member maintaining formation
+    // - Movement speed synchronization across all members
+    // See: FormationManager.h for required interface
     (void)destination;
 }
 
@@ -763,18 +799,36 @@ void UnifiedMovementCoordinator::FormationModule::SetConfig(FormationType format
 
 void UnifiedMovementCoordinator::FormationModule::AdjustForTerrain()
 {
-    // TODO: Implement AdjustForTerrain in FormationManager
+    // ENHANCEMENT: Terrain-aware formation adaptation
+    // Future implementation should:
+    // - Detect narrow passages, slopes, and elevation changes
+    // - Automatically switch to single-file or compact formations in tight spaces
+    // - Maintain cohesion on uneven terrain
+    // - Restore original formation when terrain permits
+    // See: FormationManager.h for integration point
 }
 
 void UnifiedMovementCoordinator::FormationModule::AdjustForObstacles(::std::vector<Position> const& obstacles)
 {
-    // TODO: Implement AdjustForObstacles in FormationManager
+    // ENHANCEMENT: Obstacle-aware formation deformation
+    // Future implementation should:
+    // - Detect static and dynamic obstacles in formation path
+    // - Calculate obstacle-free positions for each member
+    // - Temporarily deform formation to flow around obstacles
+    // - Reform once obstacles are cleared
+    // See: FormationManager.h for integration point
     (void)obstacles;
 }
 
 void UnifiedMovementCoordinator::FormationModule::AdjustForGroupSize()
 {
-    // TODO: Implement AdjustForGroupSize in FormationManager
+    // ENHANCEMENT: Dynamic formation scaling
+    // Future implementation should:
+    // - Calculate optimal spacing based on current member count
+    // - Adjust formation width/depth for small vs large groups
+    // - Switch to appropriate formation type for group size (5-man vs raid)
+    // - Maintain proportional member distribution
+    // See: FormationManager.h for integration point
 }
 
 void UnifiedMovementCoordinator::FormationModule::HandleMemberDisconnection(Player* disconnectedMember)
@@ -804,7 +858,12 @@ bool UnifiedMovementCoordinator::FormationModule::IsInFormation() const
 
 uint32 UnifiedMovementCoordinator::FormationModule::GetMemberCount() const
 {
-    // TODO: Implement GetMemberCount in FormationManager
+    // INTEGRATION REQUIRED: Member count query
+    // Implementation depends on:
+    // - FormationManager::GetMemberCount() method
+    // - Active member tracking (exclude disconnected/dead)
+    // - Thread-safe access to member container size
+    // See: FormationManager.h for required interface
     return 0;
 }
 
@@ -840,14 +899,24 @@ float UnifiedMovementCoordinator::FormationModule::GetFormationSpacing() const
 
 FormationMetrics const& UnifiedMovementCoordinator::FormationModule::GetMetrics() const
 {
-    // TODO: Implement GetMetrics in FormationManager
+    // INTEGRATION REQUIRED: Formation performance metrics
+    // Implementation depends on:
+    // - FormationManager::GetMetrics() method
+    // - FormationMetrics structure with tracking data
+    // - Metrics: cohesion violations, reformation count, average position deviation
+    // See: FormationManager.h for required interface
     static FormationMetrics dummyMetrics{};
     return dummyMetrics;
 }
 
 void UnifiedMovementCoordinator::FormationModule::ResetMetrics()
 {
-    // TODO: Implement ResetMetrics in FormationManager
+    // INTEGRATION REQUIRED: Metrics reset functionality
+    // Implementation depends on:
+    // - FormationManager::ResetMetrics() method
+    // - Zero out all tracking counters and statistics
+    // - Preserve configuration while clearing runtime data
+    // See: FormationManager.h for required interface
 }
 
 void UnifiedMovementCoordinator::FormationModule::EnableAdaptive(bool enable)

@@ -83,6 +83,7 @@ struct LootItem
     uint32 itemLevel;
     uint32 itemQuality;
     uint32 vendorValue;
+    uint8 inventoryType;           // Equipment slot type (InventoryType enum)
     bool isClassRestricted;
     std::vector<uint32> allowedClasses;
     std::vector<uint32> allowedSpecs;
@@ -91,12 +92,12 @@ struct LootItem
     std::string itemName;
 
     LootItem() : itemId(0), itemCount(0), lootSlot(0), itemTemplate(nullptr)
-        , itemLevel(0), itemQuality(0), vendorValue(0), isClassRestricted(false)
+        , itemLevel(0), itemQuality(0), vendorValue(0), inventoryType(0), isClassRestricted(false)
         , isBoundOnPickup(false), isBoundOnEquip(false) {}
 
     LootItem(uint32 id, uint32 count, uint32 slot) : itemId(id), itemCount(count)
         , lootSlot(slot), itemTemplate(nullptr), itemLevel(0), itemQuality(0)
-        , vendorValue(0), isClassRestricted(false), isBoundOnPickup(false)
+        , vendorValue(0), inventoryType(0), isClassRestricted(false), isBoundOnPickup(false)
         , isBoundOnEquip(false) {}
 };
 

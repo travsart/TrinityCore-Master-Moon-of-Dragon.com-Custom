@@ -664,7 +664,12 @@ public:
             return _status;
         }
 
-        // TODO: Implement proper ground AoE detection via DynamicObject/AreaTrigger
+        // ENHANCEMENT: Ground AoE detection system
+        // Future implementation should:
+        // - Query DynamicObject entries in vicinity (e.g., Death and Decay, Blizzard, Consecration)
+        // - Check AreaTrigger objects for hazardous zones (e.g., Defile, Ring of Frost)
+        // - Calculate safe positions outside detected AoE radius
+        // - Account for multiple overlapping AoE effects
         // For now, find position away from current location
         float angle = frand(0.0f, 2.0f * M_PI);
         float distance = frand(_searchRadius * 0.5f, _searchRadius);

@@ -581,8 +581,12 @@ private:
         Player* bot = this->GetBot();
         if (!bot) return;
 
-        // TODO: Player::GetPlayerAI() doesn't exist in TrinityCore
-        // Need proper way to get BotAI from Player
+        // DESIGN NOTE: BotAI integration for ActionPriorityQueue and BehaviorTree registration
+        // Implementation should include:
+        // - Proper BotAI retrieval from Player instance (via custom Player extension or bot registry)
+        // - ActionPriorityQueue registration for Blood DK spells (Vampiric Blood, Death Strike, Marrowrend, Heart Strike, Blood Boil)
+        // - BehaviorTree construction with emergency defensives, active mitigation, bone shield maintenance, and threat generation sequences
+        // Reference: WoW 11.2 Death Knight mechanics, Blood specialization active mitigation patterns
         // BotAI* ai = dynamic_cast<BotAI*>(bot->GetPlayerAI());
         // if (!ai) return;
 

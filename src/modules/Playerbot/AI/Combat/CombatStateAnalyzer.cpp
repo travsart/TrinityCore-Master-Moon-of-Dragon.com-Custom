@@ -254,10 +254,15 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
                 ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                     _bot->GetPosition(), 50.0f);
 
-                // Resolve GUIDs to Unit pointers and apply filtering logic
+                // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+                // ObjectAccessor is intentionally retained because we need:
+                // 1. Real-time IsAlive() check (creature may have died since snapshot)
+                // 2. IsInCombatWith() for live combat state verification
+                // 3. ToCreature() for creature-specific checks (IsElite, IsDungeonBoss)
+                // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
     for (ObjectGuid guid : nearbyGuids)
                 {
-                    /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+                    Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
                                                             if (!enemy || !enemy->IsAlive() || !enemy->IsInCombatWith(_bot))
                         continue;
 

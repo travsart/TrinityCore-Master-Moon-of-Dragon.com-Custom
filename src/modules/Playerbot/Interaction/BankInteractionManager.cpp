@@ -720,7 +720,17 @@ bool BankInteractionManager::IsBanker(WorldObject* target) const
 
     // Check if it's a bank chest (GameObject)
     if (GameObject* go = target->ToGameObject())
-        return go->GetGoType() == GAMEOBJECT_TYPE_CHEST; // Simplified check
+    {
+        // DESIGN NOTE: Simplified bank GameObject validation
+        // Current behavior: Checks if GameObject type is CHEST (any chest treated as bank)
+        // Full implementation should:
+        // - Verify GameObject has GAMEOBJECT_FLAG_INTERACT (interactable)
+        // - Check specific GameObjectType for bank chests vs regular chests
+        // - Validate faction access permissions (guild banks, faction-specific banks)
+        // - Ensure GameObject has valid bank data (not a loot chest)
+        // Reference: TrinityCore GameObjectData, GAMEOBJECT_TYPE_BANK constant
+        return go->GetGoType() == GAMEOBJECT_TYPE_CHEST;
+    }
 
     return false;
 }

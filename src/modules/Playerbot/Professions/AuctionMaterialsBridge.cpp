@@ -345,7 +345,17 @@ MaterialSourcingDecision AuctionMaterialsBridge::GetBestMaterialSource(
 
     // Calculate opportunity cost and net benefit
     decision.opportunityCost = CalculateOpportunityCost(decision.recommendedMethod, itemId, quantity);
-    decision.netBenefit = -decision.opportunityCost; // Simplified
+
+    // DESIGN NOTE: Simplified implementation for net benefit calculation
+    // Current behavior: Net benefit is negative of opportunity cost
+    // Full implementation should:
+    // - Factor in crafted item's market value vs material cost
+    // - Account for profession skill gain value
+    // - Consider guild bank contribution benefits
+    // - Include reputation gains from faction-specific materials
+    // - Calculate time-adjusted present value of future profits
+    // Reference: EconomicParameters, ProfessionManager skill progression
+    decision.netBenefit = -decision.opportunityCost;
 
     // Generate rationale and confidence
     decision.rationale = GenerateDecisionRationale(decision);

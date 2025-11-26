@@ -882,9 +882,17 @@ namespace Playerbot
 
         metrics.maxQueryTimeMs = _maxQueryTime;
 
-        // Get database connection info (placeholder - would need TrinityCore API integration)
-        metrics.activeConnections = 0;      // TODO: Integrate with DatabaseWorkerPool
-        metrics.connectionPoolSize = 50;    // TODO: Get from config
+        // DESIGN NOTE: Database connection pool integration
+        // Returns static placeholder values until TrinityCore API integration is implemented
+        // Full implementation should:
+        // - Access DatabaseWorkerPool::GetActiveConnectionCount() for real-time connection count
+        // - Query DatabaseWorkerPool::GetPoolSize() for configured pool size
+        // - Monitor connection queue depth for performance analysis
+        // - Track connection wait times and timeouts
+        // - Integrate with sWorld->GetPlayerbotDatabase()->GetConnectionInfo()
+        // Reference: DatabaseWorkerPool API, worldserver.conf DatabaseWorkerPool settings
+        metrics.activeConnections = 0;
+        metrics.connectionPoolSize = 50;
 
         return metrics;
     }
@@ -1036,7 +1044,15 @@ namespace Playerbot
 
     double BotMonitor::CalculateNetworkThroughput() const
     {
-        // Placeholder - would need TrinityCore network statistics integration
+        // DESIGN NOTE: Network throughput calculation for bot traffic
+        // Returns 0.0 as default until network statistics integration is implemented
+        // Full implementation should:
+        // - Access WorldSocket::GetBytesReceived() and GetBytesSent() per bot session
+        // - Aggregate network I/O across all active bot WorldSessions
+        // - Calculate throughput in Mbps using delta measurements
+        // - Track packet rate and average packet size
+        // - Monitor network latency per bot connection
+        // Reference: WorldSocket, WorldSession network statistics, sWorld->GetNetworkStats()
         return 0.0;
     }
 

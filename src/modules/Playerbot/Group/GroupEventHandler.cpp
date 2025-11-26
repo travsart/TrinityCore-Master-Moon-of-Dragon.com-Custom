@@ -12,7 +12,12 @@
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
-// #include "BotAI.h" // TODO: Include when BotAI is available
+// INTEGRATION REQUIRED: BotAI header inclusion blocked
+// Implementation depends on BotAI being available to provide:
+// - BotAI class definition and interface methods
+// - Access to bot-specific managers (FormationMgr, HealingMgr, LootMgr)
+// See: BotAI.h for required interface
+// #include "BotAI.h"
 
 namespace Playerbot
 {
@@ -26,7 +31,10 @@ Player* GroupEventHandler::GetBotPlayer() const
     if (!_botAI)
         return nullptr;
 
-    // TODO: Implement when BotAI is available
+    // INTEGRATION REQUIRED: BotAI::GetPlayer() access blocked
+    // Implementation depends on BotAI providing:
+    // - GetPlayer() method returning associated Player* instance
+    // See: BotAI.h for required interface
     // return _botAI->GetPlayer();
     return nullptr;
 }
@@ -79,7 +87,15 @@ bool MemberJoinedHandler::HandleEvent(GroupEvent const& event)
 
     LogEventHandling(event, "Member joined group");
 
-    // TODO: Implement bot-specific logic when BotAI is available
+    // INTEGRATION REQUIRED: Member join handling logic blocked
+    // Implementation depends on BotAI integration providing:
+    // - FormationMgr::AddMember() for updating bot formations
+    // - Social features configuration and Say() method for greeting
+    // - HealingMgr::AddHealTarget() for adding to healing priority list
+    // - Role assignment system integration
+    // See: BotAI.h, FormationMgr.h, HealingMgr.h for required interfaces
+    //
+    // Required implementation steps:
     // 1. Update group member cache
     // 2. Greet new member (if social features enabled)
     // 3. Adjust formation to accommodate new member
@@ -128,7 +144,15 @@ bool MemberLeftHandler::HandleEvent(GroupEvent const& event)
 
     LogEventHandling(event, fmt::format("Member left (method: {})", removeMethod));
 
-    // TODO: Implement bot-specific logic
+    // INTEGRATION REQUIRED: Member leave handling logic blocked
+    // Implementation depends on BotAI integration providing:
+    // - FormationMgr::RemoveMember() for updating formations
+    // - HealingMgr::RemoveHealTarget() for removing from healing priority
+    // - SwitchToSoloStrategy() for small group size adaptation
+    // - Role reassignment system for taking over departed roles
+    // See: BotAI.h, FormationMgr.h, HealingMgr.h for required interfaces
+    //
+    // Required implementation steps:
     // 1. Update group member cache
     // 2. Adjust formation after member leaves
     // 3. Take over roles if departed member had important role
@@ -175,7 +199,15 @@ bool LeaderChangedHandler::HandleEvent(GroupEvent const& event)
 
     LogEventHandling(event, fmt::format("Leader changed to {}", newLeaderGuid.ToString()));
 
-    // TODO: Implement bot-specific logic
+    // INTEGRATION REQUIRED: Leader change handling logic blocked
+    // Implementation depends on BotAI integration providing:
+    // - SetGroupLeader() for updating leader reference
+    // - IsFollowing() and Follow() for leader following logic
+    // - SetMainAssist() for updating main assist reference
+    // - Group member flag checking for role detection
+    // See: BotAI.h for required interface
+    //
+    // Required implementation steps:
     // 1. Update leader reference
     // 2. Follow new leader if following old leader
     // 3. Update assist target if leader is main assist
@@ -215,7 +247,16 @@ bool GroupDisbandedHandler::HandleEvent(GroupEvent const& event)
 
     LogEventHandling(event, "Group disbanded");
 
-    // TODO: Implement cleanup logic
+    // INTEGRATION REQUIRED: Group disband cleanup logic blocked
+    // Implementation depends on BotAI integration providing:
+    // - ClearGroupMembers() for clearing member cache
+    // - SetGroupLeader/SetMainTank/SetMainAssist() for clearing references
+    // - StopFollowing() for stopping movement
+    // - FormationMgr::Clear() for clearing formation
+    // - SwitchToSoloStrategy() for behavior adaptation
+    // See: BotAI.h, FormationMgr.h for required interfaces
+    //
+    // Required implementation steps:
     // 1. Clean up all group-related state
     // 2. Stop following group members
     // 3. Clear combat coordination state
@@ -266,7 +307,10 @@ bool LootMethodChangedHandler::HandleEvent(GroupEvent const& event)
         uint8 newMethod = event.data1;
         LogEventHandling(event, fmt::format("Loot method changed to {}", newMethod));
 
-        // TODO: Update bot loot behavior
+        // INTEGRATION REQUIRED: Loot method change handling blocked
+        // Implementation depends on BotAI integration providing:
+        // - LootMgr::SetLootMethod() for updating loot behavior
+        // See: BotAI.h, LootMgr.h for required interface
         // _botAI->GetLootMgr()->SetLootMethod(static_cast<LootMethod>(newMethod));
     }
     else if (event.type == GroupEventType::LOOT_THRESHOLD_CHANGED)
@@ -274,7 +318,10 @@ bool LootMethodChangedHandler::HandleEvent(GroupEvent const& event)
         uint8 newThreshold = event.data1;
         LogEventHandling(event, fmt::format("Loot threshold changed to {}", newThreshold));
 
-        // TODO: Update loot rolling behavior
+        // INTEGRATION REQUIRED: Loot threshold change handling blocked
+        // Implementation depends on BotAI integration providing:
+        // - LootMgr::SetLootThreshold() for updating roll behavior
+        // See: BotAI.h, LootMgr.h for required interface
         // _botAI->GetLootMgr()->SetLootThreshold(static_cast<ItemQualities>(newThreshold));
     }
     else if (event.type == GroupEventType::MASTER_LOOTER_CHANGED)
@@ -282,7 +329,10 @@ bool LootMethodChangedHandler::HandleEvent(GroupEvent const& event)
         ObjectGuid masterLooterGuid = event.targetGuid;
         LogEventHandling(event, fmt::format("Master looter changed to {}", masterLooterGuid.ToString()));
 
-        // TODO: Update master looter tracking
+        // INTEGRATION REQUIRED: Master looter change handling blocked
+        // Implementation depends on BotAI integration providing:
+        // - LootMgr::SetMasterLooter() for tracking master looter
+        // See: BotAI.h, LootMgr.h for required interface
         // _botAI->GetLootMgr()->SetMasterLooter(masterLooterGuid);
     }
 
@@ -307,7 +357,15 @@ bool TargetIconChangedHandler::HandleEvent(GroupEvent const& event)
 
     LogEventHandling(event, fmt::format("Target icon {} set to {}", iconIndex, targetGuid.ToString()));
 
-    // TODO: Implement target priority logic
+    // INTEGRATION REQUIRED: Target icon handling logic blocked
+    // Implementation depends on BotAI integration providing:
+    // - SetPrimaryTarget() for kill priority targets
+    // - SetCCTarget() for crowd control targets
+    // - SetFocusTarget() for focus fire targets
+    // - ClearTargetIcon() for icon removal
+    // See: BotAI.h for required interface
+    //
+    // Target icon mappings (WoW standard):
     // Skull (0) = kill first
     // X (1) = sheep/CC
     // Square (2) = secondary target
@@ -370,7 +428,14 @@ bool ReadyCheckHandler::HandleEvent(GroupEvent const& event)
         LogEventHandling(event, fmt::format("Ready check started by {} (duration: {}ms)",
             initiatorGuid.ToString(), durationMs));
 
-        // TODO: Respond to ready check
+        // INTEGRATION REQUIRED: Ready check response logic blocked
+        // Implementation depends on BotAI integration providing:
+        // - IsReadyForCombat() for checking bot readiness state
+        // - PrepareForCombat() for preparation actions with callback
+        // - Packet sending infrastructure for ReadyCheckResponseClient
+        // See: BotAI.h for required interface
+        //
+        // Required implementation steps:
         // 1. Check if bot is ready (health, mana, cooldowns, position)
         // 2. Send ready/not ready response
         // 3. If not ready, move to safe position and prepare
@@ -403,7 +468,10 @@ bool ReadyCheckHandler::HandleEvent(GroupEvent const& event)
         bool allReady = event.data1 != 0;
         LogEventHandling(event, fmt::format("Ready check completed (all ready: {})", allReady));
 
-        // TODO: Prepare for encounter if all ready
+        // INTEGRATION REQUIRED: Ready check completion handling blocked
+        // Implementation depends on BotAI integration providing:
+        // - PrepareForPull() for pre-encounter preparation
+        // See: BotAI.h for required interface
         // if (allReady)
         //     _botAI->PrepareForPull();
     }
@@ -428,7 +496,14 @@ bool RaidConvertedHandler::HandleEvent(GroupEvent const& event)
 
     LogEventHandling(event, fmt::format("Group converted to {}", isRaid ? "RAID" : "PARTY"));
 
-    // TODO: Implement raid conversion logic
+    // INTEGRATION REQUIRED: Raid conversion logic blocked
+    // Implementation depends on BotAI integration providing:
+    // - FormationMgr::SwitchToRaidFormation/SwitchToPartyFormation()
+    // - EnableRaidAbilities/DisableRaidAbilities() for ability toggling
+    // - HealingMgr::SetRaidHealingMode() for healing priority adjustment
+    // See: BotAI.h, FormationMgr.h, HealingMgr.h for required interfaces
+    //
+    // Required implementation steps:
     // 1. Update formation (party formation vs raid subgroups)
     // 2. Enable/disable raid-specific abilities
     // 3. Update healing/buffing priorities
@@ -481,7 +556,14 @@ bool SubgroupChangedHandler::HandleEvent(GroupEvent const& event)
     LogEventHandling(event, fmt::format("Member {} moved to subgroup {}",
         memberGuid.ToString(), newSubgroup));
 
-    // TODO: Implement subgroup awareness
+    // INTEGRATION REQUIRED: Subgroup awareness logic blocked
+    // Implementation depends on BotAI integration providing:
+    // - OnSubgroupChanged() for bot's own subgroup changes
+    // - HealingMgr::AddSubgroupMember/RemoveSubgroupMember() for priority management
+    // - Subgroup-based proximity and buff distribution logic
+    // See: BotAI.h, HealingMgr.h for required interfaces
+    //
+    // Required implementation steps:
     // 1. Update bot's subgroup tracking
     // 2. Adjust healing priority (prioritize own subgroup)
     // 3. Update buff distribution (chain heal targets, etc.)
@@ -541,7 +623,10 @@ bool RoleAssignmentHandler::HandleEvent(GroupEvent const& event)
         LogEventHandling(event, fmt::format("Main tank {} to {}",
             isAssigned ? "assigned" : "removed", memberGuid.ToString()));
 
-        // TODO: Update main tank tracking
+        // INTEGRATION REQUIRED: Main tank tracking logic blocked
+        // Implementation depends on BotAI integration providing:
+        // - SetMainTank() for updating main tank reference
+        // See: BotAI.h for required interface
         /*
         if (Player* tank = ObjectAccessor::FindConnectedPlayer(memberGuid))
         {
@@ -557,7 +642,11 @@ bool RoleAssignmentHandler::HandleEvent(GroupEvent const& event)
         LogEventHandling(event, fmt::format("Main assist {} to {}",
             isAssigned ? "assigned" : "removed", memberGuid.ToString()));
 
-        // TODO: Update main assist tracking
+        // INTEGRATION REQUIRED: Main assist tracking logic blocked
+        // Implementation depends on BotAI integration providing:
+        // - SetMainAssist() for updating main assist reference
+        // - EnableAssistMode() for toggling assist behavior
+        // See: BotAI.h for required interface
         /*
         if (Player* assist = ObjectAccessor::FindConnectedPlayer(memberGuid))
         {
@@ -580,7 +669,11 @@ bool RoleAssignmentHandler::HandleEvent(GroupEvent const& event)
         LogEventHandling(event, fmt::format("Assistant status {} for {}",
             isAssigned ? "granted" : "revoked", memberGuid.ToString()));
 
-        // TODO: Check if bot gained/lost assistant powers
+        // INTEGRATION REQUIRED: Assistant powers handling logic blocked
+        // Implementation depends on BotAI integration providing:
+        // - EnableAssistantPowers() for granting assistant capabilities
+        // - DisableAssistantPowers() for revoking assistant capabilities
+        // See: BotAI.h for required interface
         /*
         if (memberGuid == bot->GetGUID())
         {
@@ -612,7 +705,16 @@ bool DifficultyChangedHandler::HandleEvent(GroupEvent const& event)
 
     LogEventHandling(event, fmt::format("Difficulty changed to {}", newDifficulty));
 
-    // TODO: Implement difficulty adjustment
+    // INTEGRATION REQUIRED: Difficulty adjustment logic blocked
+    // Implementation depends on BotAI integration providing:
+    // - SetDifficulty() for updating difficulty awareness
+    // - SetCooldownUsage*() for adjusting cooldown strategies
+    // - EnableConsumableUsage() for toggling consumable usage
+    // - IsGearedForDifficulty() for gear checking
+    // - Warn() for notifying about undergear status
+    // See: BotAI.h for required interface
+    //
+    // Required implementation steps:
     // 1. Update combat difficulty expectations
     // 2. Adjust cooldown usage for heroic/mythic
     // 3. Update consumable usage thresholds

@@ -1047,7 +1047,12 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
                     continue;
 
                 // Validate with Unit* for IsHostileTo check
-                /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* enemy = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+                // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+                // ObjectAccessor is intentionally retained - Live Unit* needed for:
+                // 1. IsHostileTo() faction check requires live relationship data
+                // 2. Threat level assessment requires current threat table state
+                // The spatial grid provides position data, ObjectAccessor handles faction checks.
+                Unit* enemy = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
                 if (!enemy || !_bot->IsHostileTo(enemy))
                     continue;
 

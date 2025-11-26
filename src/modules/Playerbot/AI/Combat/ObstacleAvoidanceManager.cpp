@@ -355,7 +355,13 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
             continue;
 
         // Get Unit* for complex checks if needed
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+        // 1. IsInWorld() requires live object state verification
+        // 2. HasUnitState(UNIT_STATE_UNATTACKABLE) requires real-time state check
+        // 3. GetCollisionHeight() requires current collision data
+        // The spatial grid provides snapshots, ObjectAccessor handles live state.
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
         if (!unit || !unit->IsInWorld())
             continue;
 

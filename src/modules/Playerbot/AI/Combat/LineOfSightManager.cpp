@@ -329,7 +329,13 @@ bool LineOfSightManager::HasLineOfSightFromPosition(const Position& fromPos, Uni
     // Resolve GUIDs to Unit pointers and filter visible enemies
     for (ObjectGuid guid : nearbyGuids)
     {
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+        // 1. Return type is std::vector<Unit*> - callers require live Unit*
+        // 2. IsAlive() verification requires real-time state check
+        // 3. IsHostileTo() faction check requires live relationship data
+        // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -370,7 +376,13 @@ bool LineOfSightManager::HasLineOfSightFromPosition(const Position& fromPos, Uni
     // Resolve GUIDs to Unit pointers and filter visible allies
     for (ObjectGuid guid : nearbyGuids)
     {
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+        // 1. Return type is std::vector<Unit*> - callers require live Unit*
+        // 2. IsAlive() verification requires real-time state check
+        // 3. IsHostileTo() faction check requires live relationship data
+        // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -633,7 +645,13 @@ bool LineOfSightManager::CheckUnitBlocking(const Position& from, const Position&
     // Resolve GUIDs to Unit pointers and check for blocking
     for (ObjectGuid guid : nearbyGuids)
     {
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+        // 1. GetPosition() requires current position from live object
+        // 2. IsAlive() verification requires real-time state check
+        // 3. Equality comparison (unit == ignoreUnit) requires live references
+        // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || unit == _bot || unit == ignoreUnit)
             continue;
 

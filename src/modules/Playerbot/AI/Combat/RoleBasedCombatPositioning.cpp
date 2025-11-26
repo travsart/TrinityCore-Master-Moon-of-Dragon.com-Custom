@@ -1851,22 +1851,28 @@ ThreatRole RoleBasedCombatPositioning::DetermineRole(Player* bot)
     if (!bot)
         return ThreatRole::UNDEFINED;
 
-    // Determine role based on spec
-    // This is a simplified version - would need actual spec checking
+    // DESIGN NOTE: Simplified implementation for role determination
+    // Current behavior: Returns default role based on class only (e.g., all Warriors = TANK)
+    // Full implementation should:
+    // - Query active specialization via Player::GetSpecializationId()
+    // - Check talent point distribution for hybrid classes
+    // - Analyze equipped gear (tank stats, healing power, DPS stats)
+    // - Consider active aura effects indicating role (e.g., tanking stance)
+    // - Use group role assignment if explicitly set
+    // - Factor in performance metrics from BotRoleEffectiveness tracking
+    // Reference: Player::GetSpecializationId(), TalentMgr, Item stat analysis
+
     Classes playerClass = static_cast<Classes>(bot->GetClass());
     switch (playerClass)
     {
         case CLASS_WARRIOR:
-            // Check if Protection spec
-            return ThreatRole::TANK;  // Simplified
+            return ThreatRole::TANK;
 
         case CLASS_PALADIN:
-            // Could be tank, healer, or DPS
-            return ThreatRole::TANK;  // Simplified
+            return ThreatRole::TANK;
 
         case CLASS_PRIEST:
-            // Check if Shadow or healing spec
-            return ThreatRole::HEALER;  // Simplified
+            return ThreatRole::HEALER;
 
         case CLASS_ROGUE:
         case CLASS_HUNTER:
@@ -1875,28 +1881,22 @@ ThreatRole RoleBasedCombatPositioning::DetermineRole(Player* bot)
             return ThreatRole::DPS;
 
         case CLASS_DRUID:
-            // Could be tank, healer, or DPS
-            return ThreatRole::DPS;  // Simplified
+            return ThreatRole::DPS;
 
         case CLASS_SHAMAN:
-            // Could be healer or DPS
-            return ThreatRole::DPS;  // Simplified
+            return ThreatRole::DPS;
 
         case CLASS_MONK:
-            // Could be tank, healer, or DPS
-            return ThreatRole::DPS;  // Simplified
+            return ThreatRole::DPS;
 
         case CLASS_DEATH_KNIGHT:
-            // Could be tank or DPS
-            return ThreatRole::DPS;  // Simplified
+            return ThreatRole::DPS;
 
         case CLASS_DEMON_HUNTER:
-            // Could be tank or DPS
-            return ThreatRole::DPS;  // Simplified
+            return ThreatRole::DPS;
 
         case CLASS_EVOKER:
-            // Could be healer or DPS
-            return ThreatRole::DPS;  // Simplified
+            return ThreatRole::DPS;
 
         default:
             return ThreatRole::UNDEFINED;

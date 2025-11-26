@@ -258,9 +258,14 @@ DecisionVote BehaviorTree::GetVote(Player* bot, Unit* target, CombatContext cont
                 if (!bot)
                     return false;
 
-                // Check if we're in combat and not recently used cooldowns
-                // This is a simplified check for the demo tree
-                // Real implementations in Refactored specs check specific cooldowns
+                // DESIGN NOTE: Simplified implementation for demonstration
+                // Current behavior: Only checks if bot is in combat
+                // Full implementation should:
+                // - Track individual cooldown usage timestamps
+                // - Verify specific offensive cooldowns are available (e.g., Bloodlust, Avatar)
+                // - Check cooldown stacking opportunities via CooldownStackingOptimizer
+                // - Consider boss phase timing and group cooldown coordination
+                // Reference: CooldownStackingOptimizer, ClassAI Refactored specs
                 return bot->IsInCombat();
             }),
             Action("Use Offensive Cooldown", [](Player* bot, Unit*) {
@@ -269,15 +274,20 @@ DecisionVote BehaviorTree::GetVote(Player* bot, Unit* target, CombatContext cont
             })
         }),
 
-        // AoE if multiple enemies nearby (simplified check)
+        // DESIGN NOTE: Simplified implementation for demonstration
+        // Current behavior: Basic threat list size check for AoE detection
+        // Full implementation should:
+        // - Use AoEDecisionManager for proper target clustering analysis
+        // - Calculate optimal AoE breakpoint based on spell coefficients
+        // - Consider target positioning and cleave potential
+        // - Account for interrupt/priority target mechanics
+        // - Integrate with CombatBehaviorIntegration's target validation
+        // Reference: AoEDecisionManager, CombatBehaviorIntegration
         Sequence("AoE Rotation", {
             Condition("Multiple Enemies Nearby", [](Player* bot, Unit* target) {
                 if (!bot || !target)
                     return false;
 
-                // Simplified check: Bot is in combat with primary target
-                // Real AoE detection would use proper threat list enumeration
-                // This is a demo tree - actual implementation uses ClassAI systems
                 return bot->IsInCombat() && bot->GetThreatManager().GetThreatListSize() >= 3;
             }),
             Action("Cast AoE Spell", [](Player* bot, Unit*) {

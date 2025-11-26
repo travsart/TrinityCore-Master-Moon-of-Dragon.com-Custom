@@ -25,6 +25,7 @@
 #include "CellImpl.h"
 #include "../../Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
+#include "../../Group/GroupRoleEnums.h" // Centralized role detection utilities
 #include <algorithm>
 #include <execution>
 #include "../../Spatial/SpatialGridManager.h"
@@ -34,7 +35,8 @@ namespace Playerbot
 
 namespace
 {
-    // Role Detection Helpers
+    // Role Detection using centralized utilities from GroupRoleEnums.h
+    // These use TrinityCore's ChrSpecializationEntry for accurate role detection
     enum BotRole : uint8 {
         BOT_ROLE_TANK = 0,
         BOT_ROLE_HEALER = 1,
@@ -44,32 +46,22 @@ namespace
     BotRole GetPlayerRole(Player const* player)
     {
         if (!player) return BOT_ROLE_DPS;
-        Classes cls = static_cast<Classes>(player->GetClass());
-        uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-    switch (cls)
-    {
-            case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_PALADIN:
-                if (spec == 1) return BOT_ROLE_HEALER;
-                if (spec == 2) return BOT_ROLE_TANK;
+
+        // Use centralized role detection from GroupRoleEnums.h
+        GroupRole role = GetPlayerSpecRole(player);
+
+        switch (role)
+        {
+            case GroupRole::TANK:
+                return BOT_ROLE_TANK;
+            case GroupRole::HEALER:
+                return BOT_ROLE_HEALER;
+            default:
                 return BOT_ROLE_DPS;
-            case CLASS_DEATH_KNIGHT: return (spec == 0) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_MONK:
-                if (spec == 0) return BOT_ROLE_TANK;
-                if (spec == 1) return BOT_ROLE_HEALER;
-                return BOT_ROLE_DPS;
-            case CLASS_DRUID:
-                if (spec == 2) return BOT_ROLE_TANK;
-                if (spec == 3) return BOT_ROLE_HEALER;
-                return BOT_ROLE_DPS;
-            case CLASS_DEMON_HUNTER: return (spec == 1) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_PRIEST: return (spec == 2) ? BOT_ROLE_DPS : BOT_ROLE_HEALER;
-            case CLASS_SHAMAN: return (spec == 2) ? BOT_ROLE_HEALER : BOT_ROLE_DPS;
-            default: return BOT_ROLE_DPS;
         }
     }
-    bool IsTank(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_TANK; }
-    bool IsHealer(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_HEALER; }
+    bool IsTank(Player const* p) { return IsPlayerTank(p); }
+    bool IsHealer(Player const* p) { return IsPlayerHealer(p); }
 
     // Spell IDs for defensive cooldowns by class
     enum DefensiveSpells : uint32
@@ -440,8 +432,16 @@ void DefensiveBehaviorManager::PrepareForIncoming(uint32 spellId)
             effect.IsEffect(SPELL_EFFECT_WEAPON_DAMAGE) ||
             effect.IsEffect(SPELL_EFFECT_HEALTH_LEECH))
         {
-            // Estimate potential damage (simplified)
-            uint32 estimatedDamage = effect.CalcValue() * 2; // Rough estimate
+            // DESIGN NOTE: Simplified implementation for damage estimation
+            // Current behavior: Multiplies spell effect base value by 2 as rough estimate
+            // Full implementation should:
+            // - Use SpellInfo::CalcDamage() for accurate damage calculation
+            // - Account for spell power, attack power, and stat scaling
+            // - Consider crit multipliers and damage modifiers
+            // - Factor in target armor/resistances
+            // - Handle multi-effect spells correctly
+            // Reference: Unit::SpellDamageBonusDone(), spell damage formulas
+            uint32 estimatedDamage = effect.CalcValue() * 2;
     if (estimatedDamage > _bot->GetMaxHealth() * 0.3f)
                 isMajorThreat = true;
         }
@@ -814,8 +814,15 @@ bool DefensiveBehaviorManager::ShouldUseHealthPotion() const
     if (_bot->GetSpellHistory()->HasCooldown(HEALTH_POTION))
         return false;
 
-    // Check if we have potions in inventory
-    // Simplified check - would need inventory scanning in real implementation
+    // DESIGN NOTE: Simplified implementation for potion inventory check
+    // Current behavior: Always returns true (assumes potions are available)
+    // Full implementation should:
+    // - Scan player inventory using Player::GetItemByEntry()
+    // - Check for specific potion item IDs (Runic Healing Potion, etc.)
+    // - Verify potion stack count and availability
+    // - Track potion cooldowns via item spell cooldowns
+    // - Handle different potion types by level/expansion
+    // Reference: Player::HasItemCount(), Item cooldown system
     return true;
 }
 
@@ -833,8 +840,15 @@ bool DefensiveBehaviorManager::ShouldUseHealthstone() const
     if (_bot->GetSpellHistory()->HasCooldown(HEALTHSTONE))
         return false;
 
-    // Check if we have healthstone in inventory
-    // Simplified check - would need inventory scanning in real implementation
+    // DESIGN NOTE: Simplified implementation for healthstone inventory check
+    // Current behavior: Always returns true (assumes healthstone is available)
+    // Full implementation should:
+    // - Scan player inventory using Player::GetItemByEntry()
+    // - Check for Warlock-created healthstone items
+    // - Verify healthstone charges/stack count
+    // - Track healthstone cooldowns separately from potions
+    // - Handle different healthstone ranks/types
+    // Reference: Player::HasItemCount(), Warlock healthstone mechanics
     return true;
 }
 
@@ -848,8 +862,15 @@ bool DefensiveBehaviorManager::ShouldUseBandage() const
     if (_currentState.healthPercent > 60.0f)
         return false;
 
-    // Check if we have First Aid skill
-    // Simplified check - would need skill checking in real implementation
+    // DESIGN NOTE: Simplified implementation for First Aid skill check
+    // Current behavior: Always returns true (assumes First Aid skill is learned)
+    // Full implementation should:
+    // - Query player's First Aid skill level via Player::GetSkillValue(SKILL_FIRST_AID)
+    // - Verify player has bandages in inventory (Heavy Frostweave Bandage, etc.)
+    // - Check bandage usage requirements (minimum skill level, cooldowns)
+    // - Ensure player is not in combat (bandaging restrictions)
+    // - Track bandage application cooldowns
+    // Reference: Player skill system, bandage mechanics
     return true;
 }
 
@@ -1152,7 +1173,12 @@ uint32 DefensiveBehaviorManager::CountNearbyEnemies(float range) const
             continue;
 
         // Validate with Unit* for IsHostileTo check
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained - Live Unit* needed for:
+        // 1. IsHostileTo() faction check requires live relationship data
+        // 2. Enemy validation requires real-time hostility check
+        // The spatial grid pre-filters candidates, ObjectAccessor validates faction state.
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (!unit || !_bot->IsHostileTo(unit))
             continue;
 

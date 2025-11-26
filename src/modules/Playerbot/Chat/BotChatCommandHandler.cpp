@@ -74,7 +74,11 @@ void BotChatCommandHandler::Initialize()
     // Register default commands
     RegisterDefaultCommands();
 
-    TC_LOG_INFO("playerbot.chat", "BotChatCommandHandler: Initialized successfully with {} commands",
+    // Create and start the async command queue
+    _asyncQueue = ::std::make_unique<AsyncCommandQueue>();
+    _asyncQueue->Start();
+
+    TC_LOG_INFO("playerbot.chat", "BotChatCommandHandler: Initialized successfully with {} commands, async queue started",
         _commands.size());
 }
 
@@ -87,6 +91,15 @@ void BotChatCommandHandler::Shutdown()
     }
 
     TC_LOG_INFO("playerbot.chat", "BotChatCommandHandler: Shutting down...");
+
+    // Stop async queue first to ensure no pending commands
+    if (_asyncQueue)
+    {
+        TC_LOG_DEBUG("playerbot.chat", "BotChatCommandHandler: Stopping async command queue...");
+        _asyncQueue->Stop();
+        _asyncQueue.reset();
+        TC_LOG_DEBUG("playerbot.chat", "BotChatCommandHandler: Async command queue stopped");
+    }
 
     // Clear all data structures
     {
@@ -118,8 +131,9 @@ bool BotChatCommandHandler::IsInitialized()
 
 void BotChatCommandHandler::LoadConfiguration()
 {
-    // TODO: Load from playerbots.conf when configuration system is complete
-    // For now, use sensible defaults
+    // INTEGRATION REQUIRED: Load from playerbots.conf when configuration system is complete
+    // Currently using hardcoded defaults until PlayerbotConfig provides command configuration keys
+    // Expected config keys: Playerbot.Command.Prefix, Playerbot.Command.NLP.Enable, etc.
 
     _commandPrefix = "@bot";  // Changed from .bot to avoid conflict with Trinity GM commands
     _naturalLanguageEnabled = false; // Disabled until LLM provider is registered
@@ -386,6 +400,82 @@ CommandResult BotChatCommandHandler::ProcessNaturalLanguageCommand(CommandContex
         return CommandResult::LLM_UNAVAILABLE;
     }
 
+    // Check if async queue is available and running
+    if (_asyncQueue && _asyncQueue->IsRunning())
+    {
+        // Check per-player concurrent command limit
+        if (!_asyncQueue->CanPlayerEnqueue(context.sender->GetGUID(), _maxConcurrentCommands.load()))
+        {
+            TC_LOG_WARN("playerbot.chat", "BotChatCommandHandler: Player {} has too many pending commands ({} max)",
+                context.sender->GetName(), _maxConcurrentCommands.load());
+
+            CommandResponse limitResponse;
+            limitResponse.SetText("Too many pending commands. Please wait for previous commands to complete.");
+            SendResponse(context, limitResponse);
+
+            return CommandResult::RATE_LIMITED;
+        }
+
+        // Create a chat command wrapper for async processing
+        ChatCommand nlpCommand;
+        nlpCommand.name = "nlp";
+        nlpCommand.description = "Natural language processing command";
+        nlpCommand.handler = [](CommandContext const& ctx, CommandResponse& resp) -> CommandResult {
+            // Execute the actual LLM processing in the async thread
+            ::std::lock_guard lock(_llmMutex);
+
+            if (!_llmProvider || !_llmProvider->IsAvailable())
+            {
+                resp.SetText("LLM provider is not available.");
+                return CommandResult::LLM_UNAVAILABLE;
+            }
+
+            try
+            {
+                ::std::future<CommandResult> future = _llmProvider->ProcessNaturalLanguage(ctx, resp);
+                // Wait for result in the async thread (non-blocking from main thread perspective)
+                return future.get();
+            }
+            catch (::std::exception const& ex)
+            {
+                TC_LOG_ERROR("playerbot.chat", "BotChatCommandHandler: Exception in async NLP processing: {}",
+                    ex.what());
+                resp.SetText("Error processing natural language command.");
+                return CommandResult::EXECUTION_FAILED;
+            }
+        };
+
+        // Enqueue the NLP command with a completion callback
+        uint64 commandId = _asyncQueue->EnqueueCommand(context, nlpCommand,
+            [](uint64 cmdId, CommandResult result, CommandResponse const& response) {
+                // Callback is handled internally by ProcessCommand which sends response
+                TC_LOG_DEBUG("playerbot.chat", "BotChatCommandHandler: Async NLP command {} completed with result {}",
+                    cmdId, static_cast<int>(result));
+            });
+
+        if (commandId > 0)
+        {
+            TC_LOG_DEBUG("playerbot.chat", "BotChatCommandHandler: Enqueued NLP command {} for player {}",
+                commandId, context.sender->GetName());
+
+            // Return pending to indicate command is being processed asynchronously
+            return CommandResult::SUCCESS;
+        }
+        else
+        {
+            TC_LOG_ERROR("playerbot.chat", "BotChatCommandHandler: Failed to enqueue NLP command");
+
+            CommandResponse failResponse;
+            failResponse.SetText("Failed to queue command for processing.");
+            SendResponse(context, failResponse);
+
+            return CommandResult::INTERNAL_ERROR;
+        }
+    }
+
+    // Fallback to synchronous processing if async queue is not available
+    TC_LOG_DEBUG("playerbot.chat", "BotChatCommandHandler: Falling back to synchronous NLP processing");
+
     ::std::lock_guard lock(_llmMutex);
 
     if (!_llmProvider->IsAvailable())
@@ -399,8 +489,7 @@ CommandResult BotChatCommandHandler::ProcessNaturalLanguageCommand(CommandContex
         CommandResponse response;
         ::std::future<CommandResult> future = _llmProvider->ProcessNaturalLanguage(context, response);
 
-        // For now, wait synchronously
-        // TODO: Implement proper async command queue in Phase 7
+        // Synchronous fallback - wait for result
         CommandResult result = future.get();
 
         if (!response.GetText().empty())
@@ -543,11 +632,13 @@ CommandPermission BotChatCommandHandler::GetPlayerPermission(Player* player, Pla
     if (player->GetSession()->GetAccountId() == bot->GetSession()->GetAccountId())
         return CommandPermission::OWNER;
 
-    // TODO: Check if bot admin (requires admin list implementation)
-    // For now, skip admin check
+    // ENHANCEMENT: Check if bot admin (requires admin list implementation)
+    // Needs: BotAdminList table with account_id/player_guid mapping
+    // Implementation: Query playerbots_admin_list for player->GetGUID()
 
-    // TODO: Check if friend (requires friend list implementation)
-    // For now, skip friend check
+    // ENHANCEMENT: Check if friend (requires friend list implementation)
+    // Needs: Integration with TrinityCore's social system or custom friend list
+    // Implementation: Check SocialMgr or custom playerbots_friends table
 
     // Check guild membership
     if (player->GetGuildId() != 0 && player->GetGuildId() == bot->GetGuildId())
@@ -888,7 +979,8 @@ static CommandResult HandleAttackCommand(CommandContext const& context, CommandR
     {
         // Argument provided - try to find target by name
         // For now, just use sender's target (name-based targeting requires world search)
-        // TODO: Implement name-based target search in future enhancement
+        // ENHANCEMENT: Implement name-based target search
+        // Implementation: Use ObjectAccessor::FindPlayerByName() or Map::GetCreatureByName()
         target = context.sender->GetSelectedUnit();
         if (!target)
         {
@@ -1050,6 +1142,505 @@ CommandResponse& CommandResponse::SetIcon(uint32 icon)
 {
     _icon = icon;
     return *this;
+}
+
+// ========================================
+// AsyncCommandQueue Implementation
+// ========================================
+
+AsyncCommandQueue::AsyncCommandQueue()
+{
+    TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Created");
+}
+
+AsyncCommandQueue::~AsyncCommandQueue()
+{
+    Stop();
+    TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Destroyed");
+}
+
+void AsyncCommandQueue::Start()
+{
+    if (_running.exchange(true))
+    {
+        TC_LOG_WARN("playerbot.chat", "AsyncCommandQueue: Already running");
+        return;
+    }
+
+    TC_LOG_INFO("playerbot.chat", "AsyncCommandQueue: Starting processing thread");
+
+    _processingThread = ::std::thread([this]()
+    {
+        ProcessingLoop();
+    });
+}
+
+void AsyncCommandQueue::Stop()
+{
+    if (!_running.exchange(false))
+    {
+        return;
+    }
+
+    TC_LOG_INFO("playerbot.chat", "AsyncCommandQueue: Stopping processing thread");
+
+    // Wake up the processing thread
+    _queueCondition.notify_all();
+
+    // Wait for thread to finish
+    if (_processingThread.joinable())
+    {
+        _processingThread.join();
+    }
+
+    // Clear all pending commands
+    {
+        ::std::lock_guard lock(_queueMutex);
+
+        // Mark all pending commands as cancelled
+        while (!_pendingQueue.empty())
+        {
+            AsyncCommandEntry& entry = _pendingQueue.front();
+            entry.state = AsyncCommandState::CANCELLED;
+            _statistics.totalCancelled++;
+
+            // Call callback if registered
+            auto it = _callbacks.find(entry.commandId);
+            if (it != _callbacks.end())
+            {
+                CommandResponse response;
+                response.SetText("Command cancelled due to queue shutdown");
+                it->second(entry.commandId, CommandResult::EXECUTION_FAILED, response);
+                _callbacks.erase(it);
+            }
+
+            _pendingQueue.pop();
+        }
+
+        // Clear active commands
+        _activeCommands.clear();
+        _playerCommandCounts.clear();
+    }
+
+    TC_LOG_INFO("playerbot.chat", "AsyncCommandQueue: Stopped");
+}
+
+uint64 AsyncCommandQueue::EnqueueCommand(CommandContext const& context, ChatCommand const& command,
+                                          AsyncCommandCallback callback)
+{
+    if (!_running)
+    {
+        TC_LOG_WARN("playerbot.chat", "AsyncCommandQueue: Cannot enqueue - queue not running");
+        return 0;
+    }
+
+    // Get max concurrent commands from config
+    uint32 maxConcurrent = BotChatCommandHandler::_maxConcurrentCommands.load();
+
+    // Check per-player limit
+    if (context.sender && !CanPlayerEnqueue(context.sender->GetGUID(), maxConcurrent))
+    {
+        TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Player {} exceeded concurrent command limit ({})",
+            context.sender->GetName(), maxConcurrent);
+        return 0;
+    }
+
+    uint64 commandId = _nextCommandId++;
+
+    AsyncCommandEntry entry;
+    entry.commandId = commandId;
+    entry.context = context;
+    entry.command = command;
+    entry.state = AsyncCommandState::PENDING;
+    entry.enqueueTime = GameTime::GetGameTimeMS();
+    entry.timeoutMs = command.cooldownMs > 0 ? command.cooldownMs * 10 : 30000; // Default 30s timeout
+
+    {
+        ::std::lock_guard lock(_queueMutex);
+
+        _pendingQueue.push(::std::move(entry));
+
+        if (callback)
+        {
+            _callbacks[commandId] = ::std::move(callback);
+        }
+
+        // Increment player command count
+        if (context.sender)
+        {
+            _playerCommandCounts[context.sender->GetGUID()]++;
+        }
+
+        _statistics.totalEnqueued++;
+        _statistics.currentPending++;
+    }
+
+    // Notify processing thread
+    _queueCondition.notify_one();
+
+    TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Enqueued command {} ('{}')",
+        commandId, command.name);
+
+    return commandId;
+}
+
+bool AsyncCommandQueue::CancelCommand(uint64 commandId)
+{
+    ::std::lock_guard lock(_queueMutex);
+
+    // Check active commands first
+    auto activeIt = _activeCommands.find(commandId);
+    if (activeIt != _activeCommands.end())
+    {
+        if (activeIt->second.state == AsyncCommandState::PROCESSING)
+        {
+            // Cannot cancel a processing command
+            TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Cannot cancel command {} - currently processing",
+                commandId);
+            return false;
+        }
+
+        activeIt->second.state = AsyncCommandState::CANCELLED;
+        _statistics.totalCancelled++;
+
+        // Call callback
+        auto cbIt = _callbacks.find(commandId);
+        if (cbIt != _callbacks.end())
+        {
+            CommandResponse response;
+            response.SetText("Command cancelled by user");
+            cbIt->second(commandId, CommandResult::EXECUTION_FAILED, response);
+            _callbacks.erase(cbIt);
+        }
+
+        // Decrement player count
+        if (activeIt->second.context.sender)
+        {
+            auto& count = _playerCommandCounts[activeIt->second.context.sender->GetGUID()];
+            if (count > 0)
+                count--;
+        }
+
+        _activeCommands.erase(activeIt);
+        return true;
+    }
+
+    TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Command {} not found for cancellation", commandId);
+    return false;
+}
+
+uint32 AsyncCommandQueue::CancelPlayerCommands(ObjectGuid playerGuid)
+{
+    uint32 cancelledCount = 0;
+
+    ::std::lock_guard lock(_queueMutex);
+
+    // Cancel active commands for this player
+    for (auto it = _activeCommands.begin(); it != _activeCommands.end();)
+    {
+        if (it->second.context.sender &&
+            it->second.context.sender->GetGUID() == playerGuid &&
+            it->second.state == AsyncCommandState::PENDING)
+        {
+            it->second.state = AsyncCommandState::CANCELLED;
+            _statistics.totalCancelled++;
+            cancelledCount++;
+
+            // Call callback
+            auto cbIt = _callbacks.find(it->second.commandId);
+            if (cbIt != _callbacks.end())
+            {
+                CommandResponse response;
+                response.SetText("Command cancelled - player disconnected");
+                cbIt->second(it->second.commandId, CommandResult::EXECUTION_FAILED, response);
+                _callbacks.erase(cbIt);
+            }
+
+            it = _activeCommands.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+    // Clear player command count
+    _playerCommandCounts.erase(playerGuid);
+
+    TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Cancelled {} commands for player {}",
+        cancelledCount, playerGuid.ToString());
+
+    return cancelledCount;
+}
+
+AsyncCommandState AsyncCommandQueue::GetCommandState(uint64 commandId) const
+{
+    ::std::lock_guard lock(_queueMutex);
+
+    auto it = _activeCommands.find(commandId);
+    if (it != _activeCommands.end())
+    {
+        return it->second.state;
+    }
+
+    return AsyncCommandState::CANCELLED; // Not found = effectively cancelled
+}
+
+uint32 AsyncCommandQueue::GetPlayerPendingCount(ObjectGuid playerGuid) const
+{
+    ::std::lock_guard lock(_queueMutex);
+
+    auto it = _playerCommandCounts.find(playerGuid);
+    if (it != _playerCommandCounts.end())
+    {
+        return it->second;
+    }
+
+    return 0;
+}
+
+bool AsyncCommandQueue::CanPlayerEnqueue(ObjectGuid playerGuid, uint32 maxConcurrent) const
+{
+    return GetPlayerPendingCount(playerGuid) < maxConcurrent;
+}
+
+void AsyncCommandQueue::ResetStatistics()
+{
+    _statistics.totalEnqueued = 0;
+    _statistics.totalCompleted = 0;
+    _statistics.totalFailed = 0;
+    _statistics.totalTimedOut = 0;
+    _statistics.totalCancelled = 0;
+    _statistics.currentPending = 0;
+    _statistics.currentProcessing = 0;
+    _statistics.avgProcessingTimeMs = 0;
+
+    TC_LOG_INFO("playerbot.chat", "AsyncCommandQueue: Statistics reset");
+}
+
+void AsyncCommandQueue::ProcessingLoop()
+{
+    TC_LOG_INFO("playerbot.chat", "AsyncCommandQueue: Processing loop started");
+
+    while (_running)
+    {
+        uint64 commandIdToProcess = 0;
+        bool hasCommand = false;
+
+        {
+            ::std::unique_lock lock(_queueMutex);
+
+            // Wait for commands or shutdown
+            _queueCondition.wait_for(lock, ::std::chrono::milliseconds(100), [this]()
+            {
+                return !_running || !_pendingQueue.empty();
+            });
+
+            if (!_running)
+                break;
+
+            // Get next command from queue
+            if (!_pendingQueue.empty())
+            {
+                AsyncCommandEntry entry = ::std::move(_pendingQueue.front());
+                _pendingQueue.pop();
+                _statistics.currentPending--;
+
+                // Move to active commands
+                entry.state = AsyncCommandState::PROCESSING;
+                entry.startTime = GameTime::GetGameTimeMS();
+                commandIdToProcess = entry.commandId;
+                _activeCommands.insert_or_assign(commandIdToProcess, ::std::move(entry));
+                _statistics.currentProcessing++;
+
+                hasCommand = true;
+            }
+        }
+
+        if (hasCommand && commandIdToProcess > 0)
+        {
+            // Retrieve the entry from active commands for processing
+            auto it = _activeCommands.find(commandIdToProcess);
+            if (it != _activeCommands.end())
+            {
+                ProcessCommand(it->second);
+            }
+        }
+
+        // Periodically check for timeouts and cleanup
+        CheckTimeouts();
+        CleanupCompleted();
+    }
+
+    TC_LOG_INFO("playerbot.chat", "AsyncCommandQueue: Processing loop ended");
+}
+
+void AsyncCommandQueue::ProcessCommand(AsyncCommandEntry& entry)
+{
+    TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Processing command {} ('{}')",
+        entry.commandId, entry.command.name);
+
+    CommandResult result = CommandResult::EXECUTION_FAILED;
+    CommandResponse response;
+
+    try
+    {
+        // Execute the command handler
+        if (entry.command.handler)
+        {
+            result = entry.command.handler(entry.context, response);
+        }
+        else
+        {
+            response.SetText("Command handler not found");
+        }
+    }
+    catch (::std::exception const& ex)
+    {
+        TC_LOG_ERROR("playerbot.chat", "AsyncCommandQueue: Exception executing command {}: {}",
+            entry.commandId, ex.what());
+        response.SetText("Internal error: " + ::std::string(ex.what()));
+        result = CommandResult::EXECUTION_FAILED;
+    }
+
+    // Calculate processing time
+    uint32 processingTime = GameTime::GetGameTimeMS() - entry.startTime;
+
+    // Update statistics
+    uint64 totalTime = _statistics.avgProcessingTimeMs.load() * _statistics.totalCompleted.load();
+    uint64 newTotal = _statistics.totalCompleted.load() + 1;
+    _statistics.avgProcessingTimeMs = (totalTime + processingTime) / newTotal;
+
+    {
+        ::std::lock_guard lock(_queueMutex);
+
+        auto it = _activeCommands.find(entry.commandId);
+        if (it != _activeCommands.end())
+        {
+            if (result == CommandResult::SUCCESS)
+            {
+                it->second.state = AsyncCommandState::COMPLETED;
+                it->second.response = response;
+                _statistics.totalCompleted++;
+            }
+            else
+            {
+                it->second.state = AsyncCommandState::FAILED;
+                it->second.response = response;
+                _statistics.totalFailed++;
+            }
+
+            _statistics.currentProcessing--;
+
+            // Call callback
+            auto cbIt = _callbacks.find(entry.commandId);
+            if (cbIt != _callbacks.end())
+            {
+                cbIt->second(entry.commandId, result, response);
+                _callbacks.erase(cbIt);
+            }
+
+            // Send response to player
+            if (!response.GetText().empty())
+            {
+                BotChatCommandHandler::SendResponse(entry.context, response);
+            }
+
+            // Decrement player command count
+            if (entry.context.sender)
+            {
+                auto& count = _playerCommandCounts[entry.context.sender->GetGUID()];
+                if (count > 0)
+                    count--;
+            }
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot.chat", "AsyncCommandQueue: Command {} completed in {}ms with result {}",
+        entry.commandId, processingTime, static_cast<int>(result));
+}
+
+void AsyncCommandQueue::CheckTimeouts()
+{
+    uint32 currentTime = GameTime::GetGameTimeMS();
+
+    ::std::lock_guard lock(_queueMutex);
+
+    for (auto& [id, entry] : _activeCommands)
+    {
+        if (entry.state == AsyncCommandState::PROCESSING)
+        {
+            uint32 elapsed = currentTime - entry.startTime;
+            if (elapsed > entry.timeoutMs)
+            {
+                TC_LOG_WARN("playerbot.chat", "AsyncCommandQueue: Command {} timed out after {}ms",
+                    id, elapsed);
+
+                entry.state = AsyncCommandState::TIMED_OUT;
+                _statistics.totalTimedOut++;
+                _statistics.currentProcessing--;
+
+                // Call callback
+                auto cbIt = _callbacks.find(id);
+                if (cbIt != _callbacks.end())
+                {
+                    CommandResponse response;
+                    response.SetText("Command timed out");
+                    cbIt->second(id, CommandResult::EXECUTION_FAILED, response);
+                    _callbacks.erase(cbIt);
+                }
+
+                // Send timeout response
+                CommandResponse response;
+                response.SetText("Command timed out after " + ::std::to_string(elapsed / 1000) + " seconds");
+                BotChatCommandHandler::SendResponse(entry.context, response);
+
+                // Decrement player count
+                if (entry.context.sender)
+                {
+                    auto& count = _playerCommandCounts[entry.context.sender->GetGUID()];
+                    if (count > 0)
+                        count--;
+                }
+            }
+        }
+    }
+}
+
+void AsyncCommandQueue::CleanupCompleted()
+{
+    uint32 currentTime = GameTime::GetGameTimeMS();
+
+    // Only cleanup periodically
+    if (currentTime - _lastCleanupTime < _cleanupIntervalMs)
+        return;
+
+    _lastCleanupTime = currentTime;
+
+    ::std::lock_guard lock(_queueMutex);
+
+    // Remove completed/failed/timed out/cancelled commands older than 30 seconds
+    for (auto it = _activeCommands.begin(); it != _activeCommands.end();)
+    {
+        if (it->second.state != AsyncCommandState::PENDING &&
+            it->second.state != AsyncCommandState::PROCESSING)
+        {
+            uint32 age = currentTime - it->second.startTime;
+            if (age > 30000) // 30 seconds
+            {
+                _callbacks.erase(it->second.commandId);
+                it = _activeCommands.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+        else
+        {
+            ++it;
+        }
+    }
 }
 
 } // namespace Playerbot

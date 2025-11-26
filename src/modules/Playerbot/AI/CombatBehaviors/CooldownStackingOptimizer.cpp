@@ -23,6 +23,7 @@
 #include "Log.h"
 #include "Timer.h"
 #include "UpdateFields.h"
+#include "../../Group/GroupRoleEnums.h" // Centralized role detection utilities
 #include <algorithm>
 #include <cmath>
 
@@ -31,7 +32,7 @@ namespace Playerbot
 
 namespace
 {
-    // Role Detection Helpers
+    // Role Detection Helpers - Using centralized utilities from GroupRoleEnums.h
     enum BotRole : uint8 {
         BOT_ROLE_TANK = 0,
         BOT_ROLE_HEALER = 1,
@@ -41,33 +42,24 @@ namespace
     BotRole GetPlayerRole(Player const* player)
     {
         if (!player) return BOT_ROLE_DPS;
-        Classes cls = static_cast<Classes>(player->GetClass());
-        uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-    switch (cls)
-    {
-            case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_PALADIN:
-                if (spec == 1) return BOT_ROLE_HEALER;
-                if (spec == 2) return BOT_ROLE_TANK;
+
+        // Use centralized role detection from GroupRoleEnums.h
+        // This queries ChrSpecializationEntry for accurate role detection
+        GroupRole role = GetPlayerSpecRole(player);
+
+        switch (role)
+        {
+            case GroupRole::TANK:
+                return BOT_ROLE_TANK;
+            case GroupRole::HEALER:
+                return BOT_ROLE_HEALER;
+            default:
                 return BOT_ROLE_DPS;
-            case CLASS_DEATH_KNIGHT: return (spec == 0) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_MONK:
-                if (spec == 0) return BOT_ROLE_TANK;
-                if (spec == 1) return BOT_ROLE_HEALER;
-                return BOT_ROLE_DPS;
-            case CLASS_DRUID:
-                if (spec == 2) return BOT_ROLE_TANK;
-                if (spec == 3) return BOT_ROLE_HEALER;
-                return BOT_ROLE_DPS;
-            case CLASS_DEMON_HUNTER: return (spec == 1) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
-            case CLASS_PRIEST: return (spec == 2) ? BOT_ROLE_DPS : BOT_ROLE_HEALER;
-            case CLASS_SHAMAN: return (spec == 2) ? BOT_ROLE_HEALER : BOT_ROLE_DPS;
-            default: return BOT_ROLE_DPS;
         }
     }
-    bool IsTank(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_TANK; }
-    bool IsHealer(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_HEALER; }
-    bool IsDPS(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_DPS; }
+    bool IsTank(Player const* p) { return IsPlayerTank(p); }
+    bool IsHealer(Player const* p) { return IsPlayerHealer(p); }
+    bool IsDPS(Player const* p) { return IsPlayerDPS(p); }
 
     // Major cooldown spell IDs by class
     enum MajorCooldowns : uint32
@@ -289,7 +281,15 @@ CooldownStackingOptimizer::BossPhase CooldownStackingOptimizer::DetectBossPhase(
         (healthPct <= 25.0f && healthPct > 24.0f))
         return TRANSITION;
 
-    // Check for high damage phase (simplified)
+    // DESIGN NOTE: Simplified implementation for burn phase detection
+    // Current behavior: Triggers burn phase at 30-20% boss health
+    // Full implementation should:
+    // - Analyze boss script mechanics for actual burn phase indicators
+    // - Check for boss ability usage patterns (cast timers, spell sequences)
+    // - Monitor combat log for phase transition events
+    // - Integrate with dungeon/raid encounter scripts
+    // - Use boss-specific phase detection logic from DungeonScriptMgr
+    // Reference: BossAI phase transitions, CreatureScript events
     if (healthPct <= 30.0f && healthPct > 20.0f)
         return BURN;
 

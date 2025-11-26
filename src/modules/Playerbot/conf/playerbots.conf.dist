@@ -2661,3 +2661,152 @@ Playerbot.ResourceMonitor.MemoryThreshold.Critical = 90.0
 Playerbot.ResourceMonitor.DbConnectionThreshold = 80.0
 
 ###################################################################################################
+# GROUP COORDINATION & SYNCHRONIZATION
+#
+#    Playerbot.Group.UpdateInterval
+#        Description: Group state synchronization interval (milliseconds)
+#        Default:     1000
+#        Range:       500-5000
+#        Note:        How often bots synchronize group state (roles, targets, etc.)
+#                     Lower values = more responsive, higher values = less CPU
+#
+#    Playerbot.Group.InviteResponseDelay
+#        Description: Delay before bot accepts group invite (milliseconds)
+#        Default:     2000
+#        Range:       0-10000
+#        Note:        Simulates human behavior when receiving group invites
+#                     0 = instant accept (may appear bot-like)
+#
+#    Playerbot.Group.ReadyCheckTimeout
+#        Description: Ready check expiration time (milliseconds)
+#        Default:     30000
+#        Range:       10000-120000
+#        Note:        How long bots wait for ready check completion
+#                     After timeout, bots mark themselves as ready
+#
+#    Playerbot.Group.LootRollTimeout
+#        Description: Loot roll window duration (milliseconds)
+#        Default:     60000
+#        Range:       15000-180000
+#        Note:        Time bots have to decide on loot rolls
+#                     Default matches WoW's standard 60 second roll timer
+#
+#    Playerbot.Group.TargetUpdateInterval
+#        Description: Target selection refresh interval (milliseconds)
+#        Default:     500
+#        Range:       100-2000
+#        Note:        How often bots re-evaluate combat targets
+#                     Lower values = faster target switching
+#
+###################################################################################################
+
+Playerbot.Group.UpdateInterval = 1000
+Playerbot.Group.InviteResponseDelay = 2000
+Playerbot.Group.ReadyCheckTimeout = 30000
+Playerbot.Group.LootRollTimeout = 60000
+Playerbot.Group.TargetUpdateInterval = 500
+
+###################################################################################################
+# SYSTEM UPDATE INTERVALS
+#
+#    Playerbot.Banking.CheckInterval
+#        Description: Banking evaluation interval (milliseconds)
+#        Default:     300000 (5 minutes)
+#        Range:       60000-900000
+#        Note:        How often bots check if they should visit bank
+#                     Includes bag space evaluation and deposit decisions
+#
+#    Playerbot.Banking.GoldCheckInterval
+#        Description: Gold management check interval (milliseconds)
+#        Default:     60000 (1 minute)
+#        Range:       30000-300000
+#        Note:        How often bots evaluate gold thresholds for depositing
+#
+#    Playerbot.Banking.MaxTransactionHistory
+#        Description: Maximum banking transaction log size
+#        Default:     100
+#        Range:       10-1000
+#        Note:        Number of transaction entries to keep in memory
+#                     Older entries are discarded when limit is reached
+#
+#    Playerbot.Mount.UpdateInterval
+#        Description: Mount state update interval (milliseconds)
+#        Default:     5000
+#        Range:       1000-30000
+#        Note:        How often bots re-evaluate mount usage
+#                     Includes zone checks, speed requirements, etc.
+#
+#    Playerbot.Pet.UpdateInterval
+#        Description: Battle pet system update interval (milliseconds)
+#        Default:     5000
+#        Range:       1000-30000
+#        Note:        How often bots update battle pet state
+#                     Includes healing, team evaluation, etc.
+#
+###################################################################################################
+
+Playerbot.Banking.CheckInterval = 300000
+Playerbot.Banking.GoldCheckInterval = 60000
+Playerbot.Banking.MaxTransactionHistory = 100
+Playerbot.Mount.UpdateInterval = 5000
+Playerbot.Pet.UpdateInterval = 5000
+
+###################################################################################################
+# SESSION MANAGEMENT
+#
+#    Playerbot.Session.CleanupInterval
+#        Description: Session cleanup cycle interval (milliseconds)
+#        Default:     10000 (10 seconds)
+#        Range:       5000-60000
+#        Note:        How often to check for stale/dead bot sessions
+#                     Sessions past timeout are cleaned up automatically
+#
+#    Playerbot.Session.MaxLoadingTime
+#        Description: Maximum bot loading time (milliseconds)
+#        Default:     30000 (30 seconds)
+#        Range:       10000-120000
+#        Note:        Maximum time allowed for bot to complete login
+#                     Bots exceeding this are terminated and restarted
+#
+#    Playerbot.Session.Timeout
+#        Description: Session expiration timeout (milliseconds)
+#        Default:     60000 (1 minute)
+#        Range:       30000-300000
+#        Note:        Inactive sessions are cleaned up after this duration
+#                     Prevents resource leaks from orphaned sessions
+#
+###################################################################################################
+
+Playerbot.Session.CleanupInterval = 10000
+Playerbot.Session.MaxLoadingTime = 30000
+Playerbot.Session.Timeout = 60000
+
+###################################################################################################
+# CHAT & COMMAND SYSTEM
+#
+#    Playerbot.Chat.MaxConcurrentCommands
+#        Description: Maximum concurrent chat command queue size
+#        Default:     5
+#        Range:       1-20
+#        Note:        Limits pending commands per bot to prevent abuse
+#                     Excess commands are dropped with warning
+#
+###################################################################################################
+
+Playerbot.Chat.MaxConcurrentCommands = 5
+
+###################################################################################################
+# ACCOUNT MANAGEMENT
+#
+#    Playerbot.Account.TargetPoolSize
+#        Description: Target bot account pool size
+#        Default:     50
+#        Range:       10-500
+#        Note:        Number of bot accounts to maintain in the pool
+#                     System creates/removes accounts to reach this target
+#
+###################################################################################################
+
+Playerbot.Account.TargetPoolSize = 50
+
+###################################################################################################

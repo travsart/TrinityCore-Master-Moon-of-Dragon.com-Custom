@@ -469,8 +469,12 @@ TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const Selec
         if (!snapshot)
             continue;
 
-        // Get Unit* for callers that need it
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained here because we need:
+        // 1. Return type is std::vector<Unit*> - callers require live Unit*
+        // 2. Real-time IsAlive() verification (creature may have died since snapshot)
+        // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (unit && unit->IsAlive())
             enemies.push_back(unit);
     }
@@ -507,8 +511,13 @@ TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const Selec
         if (!snapshot.IsAlive() || snapshot.isHostile)
             continue;
 
-        // Get Unit* to check if pet and owner (need actual object)
-        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
+        // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+        // ObjectAccessor is intentionally retained here because we need:
+        // 1. ToPet() type conversion requires live Unit*
+        // 2. pet->GetOwner() accesses Player relationship
+        // 3. IsFriendlyTo(owner) requires live faction/reputation data
+        // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
         if (!unit)
             continue;
 
@@ -838,7 +847,12 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
         {
             nearestDistSq = distSq;
             // Get Unit* for return (needed by caller)
-            /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
+            // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+            // ObjectAccessor is intentionally retained - Live Unit* needed for:
+            // 1. Return type is Unit* - callers require live Unit* reference
+            // 2. IsAlive() verification requires real-time state check
+            // The spatial grid provides distance filtering, ObjectAccessor handles final validation.
+            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
             if (unit && unit->IsAlive())
                 nearestEnemy = unit;
         }
@@ -869,7 +883,12 @@ Unit* TargetSelectionUtils::GetWeakestEnemy(Player* bot, float maxRange)
         {
             lowestHealth = healthPct;
             // Get Unit* for return (needed by caller)
-            /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
+            // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
+            // ObjectAccessor is intentionally retained - Live Unit* needed for:
+            // 1. Return type is Unit* - callers require live Unit* reference
+            // 2. IsAlive() verification requires real-time state check
+            // The spatial grid provides health filtering, ObjectAccessor handles final validation.
+            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
             if (unit && unit->IsAlive())
                 weakestEnemy = unit;
         }

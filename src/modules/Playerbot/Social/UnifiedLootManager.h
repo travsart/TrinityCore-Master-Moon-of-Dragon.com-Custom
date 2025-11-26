@@ -203,6 +203,35 @@ private:
         uint32 _nextSessionId{1};
         Playerbot::OrderedMutex<Playerbot::LockOrder::LOOT_MANAGER> _sessionMutex;
 
+        // Efficiency settings for optimized loot processing
+        struct EfficiencySettings
+        {
+            uint32 optimalBatchSize{5};      // Optimal number of items to process per batch
+            bool canUseFastPath{false};       // True if all members are bots (no human approval needed)
+            uint32 lastOptimizationTime{0};   // GameTime when last optimized
+            uint32 rollTimeoutMs{15000};      // Timeout for roll decisions (15s default)
+            float targetItemsPerSecond{2.0f}; // Target throughput for loot distribution
+        };
+        EfficiencySettings _efficiencySettings;
+
+        // Fairness tracking for session-based fairness maximization
+        struct FairnessTracker
+        {
+            std::unordered_map<ObjectGuid, uint32> itemsWonThisSession;
+            std::unordered_map<ObjectGuid, float> totalUpgradeValueReceived;
+            uint32 sessionStartTime{0};
+            bool isActive{false};
+
+            void Reset()
+            {
+                itemsWonThisSession.clear();
+                totalUpgradeValueReceived.clear();
+                sessionStartTime = 0;
+                isActive = false;
+            }
+        };
+        std::unordered_map<uint32, FairnessTracker> _sessionFairness;
+
         // Statistics
         std::atomic<uint64> _sessionsCreated{0};
         std::atomic<uint64> _sessionsCompleted{0};

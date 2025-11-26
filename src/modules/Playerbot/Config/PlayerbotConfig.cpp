@@ -478,34 +478,60 @@ void PlayerbotConfig::RefreshCache()
 {
     std::lock_guard lock(_configMutex);
 
+    // Helper lambda for safe uint32 conversion with default fallback
+    auto getConfigUInt = [this](std::string const& key, uint32 defaultVal) -> uint32 {
+        auto it = _configValues.find(key);
+        if (it == _configValues.end()) return defaultVal;
+        try { return static_cast<uint32>(std::stoul(it->second)); }
+        catch (...) { return defaultVal; }
+    };
+
     // Update cache with frequently accessed values - DIRECT ACCESS to avoid recursive mutex lock
-    auto it = _configValues.find("Playerbot.MaxBotsPerAccount");
-    _cache.maxBotsPerAccount = (it != _configValues.end()) ? std::stoul(it->second) : 10;
+    // Bot limits
+    _cache.maxBotsPerAccount = getConfigUInt("Playerbot.MaxBotsPerAccount", 10);
+    _cache.globalMaxBots = getConfigUInt("Playerbot.GlobalMaxBots", 1000);
 
-    it = _configValues.find("Playerbot.GlobalMaxBots");
-    _cache.globalMaxBots = (it != _configValues.end()) ? std::stoul(it->second) : 1000;
+    // Core timing settings
+    _cache.updateInterval = getConfigUInt("Playerbot.UpdateInterval", 1000);
+    _cache.aiDecisionTimeLimit = getConfigUInt("Playerbot.AIDecisionTimeLimit", 50);
+    _cache.loginDelay = getConfigUInt("Playerbot.LoginDelay", 1000);
 
-    it = _configValues.find("Playerbot.UpdateInterval");
-    _cache.updateInterval = (it != _configValues.end()) ? std::stoul(it->second) : 1000;
+    // Group coordination intervals (milliseconds)
+    _cache.groupUpdateInterval = getConfigUInt("Playerbot.Group.UpdateInterval", 1000);
+    _cache.inviteResponseDelay = getConfigUInt("Playerbot.Group.InviteResponseDelay", 2000);
+    _cache.readyCheckTimeout = getConfigUInt("Playerbot.Group.ReadyCheckTimeout", 30000);
+    _cache.lootRollTimeout = getConfigUInt("Playerbot.Group.LootRollTimeout", 60000);
+    _cache.targetUpdateInterval = getConfigUInt("Playerbot.Group.TargetUpdateInterval", 500);
 
-    it = _configValues.find("Playerbot.AIDecisionTimeLimit");
-    _cache.aiDecisionTimeLimit = (it != _configValues.end()) ? std::stoul(it->second) : 50;
+    // System update intervals (milliseconds)
+    _cache.bankingCheckInterval = getConfigUInt("Playerbot.Banking.CheckInterval", 300000);
+    _cache.goldCheckInterval = getConfigUInt("Playerbot.Banking.GoldCheckInterval", 60000);
+    _cache.mountUpdateInterval = getConfigUInt("Playerbot.Mount.UpdateInterval", 5000);
+    _cache.petUpdateInterval = getConfigUInt("Playerbot.Pet.UpdateInterval", 5000);
 
-    it = _configValues.find("Playerbot.LoginDelay");
-    _cache.loginDelay = (it != _configValues.end()) ? std::stoul(it->second) : 1000;
+    // Session management (milliseconds)
+    _cache.sessionCleanupInterval = getConfigUInt("Playerbot.Session.CleanupInterval", 10000);
+    _cache.maxLoadingTime = getConfigUInt("Playerbot.Session.MaxLoadingTime", 30000);
+    _cache.sessionTimeout = getConfigUInt("Playerbot.Session.Timeout", 60000);
 
-    it = _configValues.find("Playerbot.Log.Level");
-    _cache.logLevel = (it != _configValues.end()) ? std::stoul(it->second) : 4;
+    // History/transaction limits
+    _cache.maxTransactionHistory = getConfigUInt("Playerbot.Banking.MaxTransactionHistory", 100);
+    _cache.maxConcurrentCommands = getConfigUInt("Playerbot.Chat.MaxConcurrentCommands", 5);
 
-    it = _configValues.find("Playerbot.Log.File");
+    // Account management
+    _cache.targetPoolSize = getConfigUInt("Playerbot.Account.TargetPoolSize", 50);
+
+    // Logging settings
+    _cache.logLevel = getConfigUInt("Playerbot.Log.Level", 4);
+    auto it = _configValues.find("Playerbot.Log.File");
     _cache.logFile = (it != _configValues.end()) ? it->second : "Playerbot.log";
 
-    it = _configValues.find("Playerbot.Database.Timeout");
-    _cache.databaseTimeout = (it != _configValues.end()) ? std::stoul(it->second) : 30;
+    // Database settings
+    _cache.databaseTimeout = getConfigUInt("Playerbot.Database.Timeout", 30);
 
     _cache.isValid = true;
 
-    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Performance cache refreshed with {} values", 8);
+    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Performance cache refreshed with {} values", 23);
 }
 
 // Template specializations for GetCached
@@ -523,11 +549,41 @@ uint32 PlayerbotConfig::GetCached(std::string const& key, uint32 defaultValue) c
     }
 
     // Fast cache lookup for frequently accessed values
+    // Bot limits
     if (key == "Playerbot.MaxBotsPerAccount") { _metrics.cacheHits++; return _cache.maxBotsPerAccount; }
     if (key == "Playerbot.GlobalMaxBots") { _metrics.cacheHits++; return _cache.globalMaxBots; }
+
+    // Core timing
     if (key == "Playerbot.UpdateInterval") { _metrics.cacheHits++; return _cache.updateInterval; }
     if (key == "Playerbot.AIDecisionTimeLimit") { _metrics.cacheHits++; return _cache.aiDecisionTimeLimit; }
     if (key == "Playerbot.LoginDelay") { _metrics.cacheHits++; return _cache.loginDelay; }
+
+    // Group coordination intervals
+    if (key == "Playerbot.Group.UpdateInterval") { _metrics.cacheHits++; return _cache.groupUpdateInterval; }
+    if (key == "Playerbot.Group.InviteResponseDelay") { _metrics.cacheHits++; return _cache.inviteResponseDelay; }
+    if (key == "Playerbot.Group.ReadyCheckTimeout") { _metrics.cacheHits++; return _cache.readyCheckTimeout; }
+    if (key == "Playerbot.Group.LootRollTimeout") { _metrics.cacheHits++; return _cache.lootRollTimeout; }
+    if (key == "Playerbot.Group.TargetUpdateInterval") { _metrics.cacheHits++; return _cache.targetUpdateInterval; }
+
+    // System update intervals
+    if (key == "Playerbot.Banking.CheckInterval") { _metrics.cacheHits++; return _cache.bankingCheckInterval; }
+    if (key == "Playerbot.Banking.GoldCheckInterval") { _metrics.cacheHits++; return _cache.goldCheckInterval; }
+    if (key == "Playerbot.Mount.UpdateInterval") { _metrics.cacheHits++; return _cache.mountUpdateInterval; }
+    if (key == "Playerbot.Pet.UpdateInterval") { _metrics.cacheHits++; return _cache.petUpdateInterval; }
+
+    // Session management
+    if (key == "Playerbot.Session.CleanupInterval") { _metrics.cacheHits++; return _cache.sessionCleanupInterval; }
+    if (key == "Playerbot.Session.MaxLoadingTime") { _metrics.cacheHits++; return _cache.maxLoadingTime; }
+    if (key == "Playerbot.Session.Timeout") { _metrics.cacheHits++; return _cache.sessionTimeout; }
+
+    // History/transaction limits
+    if (key == "Playerbot.Banking.MaxTransactionHistory") { _metrics.cacheHits++; return _cache.maxTransactionHistory; }
+    if (key == "Playerbot.Chat.MaxConcurrentCommands") { _metrics.cacheHits++; return _cache.maxConcurrentCommands; }
+
+    // Account management
+    if (key == "Playerbot.Account.TargetPoolSize") { _metrics.cacheHits++; return _cache.targetPoolSize; }
+
+    // Logging and database
     if (key == "Playerbot.Log.Level") { _metrics.cacheHits++; return _cache.logLevel; }
     if (key == "Playerbot.Database.Timeout") { _metrics.cacheHits++; return _cache.databaseTimeout; }
 

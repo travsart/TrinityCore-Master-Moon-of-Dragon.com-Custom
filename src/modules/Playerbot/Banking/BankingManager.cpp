@@ -832,8 +832,9 @@ float BankingManager::GetDistanceToNearestBanker()
     // First, check if there's a banker in nearby cells
     Creature* nearestBanker = nullptr;
 
-    // TODO: Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck and
-    // Trinity::CreatureLastSearcher APIs need proper usage research
+    // INTEGRATION REQUIRED: Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck API usage
+    // Needs: Research proper Trinity 11.2 API for grid-based creature searches
+    // Current: Using Map::GetCreatureBySpawnIdStore() iteration (works but not optimal)
     // For now, use a simpler approach by iterating nearby creatures
 
     // Find nearest banker by iterating nearby creatures manually

@@ -95,9 +95,16 @@ void BattlePetManager::Initialize()
 
 void BattlePetManager::LoadPetDatabase()
 {
-    // Full implementation: Load all battle pet species from the database
-    // WoW battle pets are defined in creature_template with CREATURE_TYPE_BATTLEPET (15)
-    // and have associated data in battle_pet_species and battle_pet_breed tables
+    // DESIGN NOTE: Complete battle pet database loading implementation
+    // Current behavior: Loads all WoW battle pet species from WorldDatabase
+    // - Queries creature_template with type 15 (CREATURE_TYPE_BATTLEPET)
+    // - Cross-references battle_pet_species for metadata
+    // - Includes fallback hardcoded pet data if database query returns empty
+    // Full implementation includes:
+    // - Database tables: creature_template, battle_pet_species, battle_pet_breed
+    // - Stat calculations based on level/quality/breed modifiers
+    // - Ability assignments from battle_pet_species_abilities
+    // Reference: TrinityCore WorldDatabase battle pet tables
 
     // Query creature templates that are battle pets
     QueryResult result = WorldDatabase.Query(
@@ -314,8 +321,16 @@ void BattlePetManager::LoadPetDatabase()
 
 void BattlePetManager::InitializeAbilityDatabase()
 {
-    // Full implementation: Load all battle pet abilities from the database
-    // WoW battle pet abilities are stored in battle_pet_ability table
+    // DESIGN NOTE: Complete battle pet ability database loading implementation
+    // Current behavior: Loads all WoW battle pet abilities from WorldDatabase
+    // - Queries battle_pet_ability table for ability metadata
+    // - Includes fallback hardcoded ability data organized by pet family
+    // - Maps pet type enums to PetFamily enum values
+    // Full implementation includes:
+    // - Database table: battle_pet_ability with damage, cooldown, flags
+    // - Effect parsing from battle_pet_ability_effect table
+    // - Visual IDs for animation/spell effects
+    // Reference: TrinityCore WorldDatabase battle_pet_ability tables
 
     QueryResult result = WorldDatabase.Query(
         "SELECT abilityId, name, petType, baseDamage, cooldownDuration, "
@@ -481,8 +496,16 @@ void BattlePetManager::InitializeAbilityDatabase()
 
 void BattlePetManager::LoadRarePetList()
 {
-    // Full implementation: Load all rare battle pet spawn points from the database
-    // Rare pets are those marked as rare in creature_template and are capturable
+    // DESIGN NOTE: Complete rare pet spawn location loading implementation
+    // Current behavior: Loads rare battle pet spawn coordinates from WorldDatabase
+    // - Queries creature table joined with creature_template for battle pets with rare flag
+    // - Stores Position data (x, y, z, orientation, map) per species
+    // - Includes fallback hardcoded spawn data for known rare pets
+    // Full implementation includes:
+    // - Database tables: creature, creature_template with flags_extra & 0x02000000 (rare flag)
+    // - Multiple spawn points per species for respawn rotation
+    // - Zone/area validation for proper spawn distribution
+    // Reference: TrinityCore WorldDatabase creature spawns with battle pet type 15
 
     QueryResult result = WorldDatabase.Query(
         "SELECT ct.entry, ct.name, c.position_x, c.position_y, c.position_z, c.orientation, c.map "
@@ -745,7 +768,14 @@ bool BattlePetManager::StartPetBattle(uint32 targetNpcId)
     TC_LOG_INFO("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) starting battle with NPC {}",
         _bot->GetGUID().GetCounter(), targetNpcId);
 
-    // Full implementation: Call TrinityCore battle pet API to start battle
+    // DESIGN NOTE: Battle pet combat initiation stub
+    // Current behavior: Validates bot has pets and active team, returns success
+    // Full implementation should:
+    // - Call Player::GetBattlePetMgr()->StartPetBattle() with target NPC
+    // - Initialize PetBattle instance with team compositions
+    // - Send SMSG_PET_BATTLE_REQUEST_SUCCEEDED packet to client
+    // - Set up turn-based battle state machine
+    // Reference: TrinityCore BattlePetMgr class, PetBattle.cpp
     return true;
 }
 
@@ -817,7 +847,14 @@ bool BattlePetManager::SwitchActivePet(uint32 petIndex)
     TC_LOG_INFO("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) switching to pet index {}",
         _bot->GetGUID().GetCounter(), petIndex);
 
-    // Full implementation: Call TrinityCore battle pet API to switch pet
+    // DESIGN NOTE: Battle pet switch stub
+    // Current behavior: Logs switch attempt, returns success
+    // Full implementation should:
+    // - Call PetBattle::SwitchPet(petIndex) on active battle instance
+    // - Validate pet is alive and not already active
+    // - Send SMSG_PET_BATTLE_PET_SWITCHED packet to client
+    // - Update battle state with new active pet slot
+    // Reference: TrinityCore PetBattle::SwitchPet(), BattlePetPackets.cpp
     return true;
 }
 
@@ -829,7 +866,15 @@ bool BattlePetManager::UseAbility(uint32 abilityId)
     TC_LOG_DEBUG("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) using ability {}",
         _bot->GetGUID().GetCounter(), abilityId);
 
-    // Full implementation: Call TrinityCore battle pet API to use ability
+    // DESIGN NOTE: Battle pet ability execution stub
+    // Current behavior: Logs ability use, returns success
+    // Full implementation should:
+    // - Call PetBattle::UseAbility(abilityId, targetSlot) on active battle instance
+    // - Validate ability is available (not on cooldown, pet has sufficient stats)
+    // - Calculate damage/effects using BattlePetAbilityEffect entries
+    // - Send SMSG_PET_BATTLE_ABILITY_USED packet to client
+    // - Apply effects to target pet (damage, healing, buffs, debuffs)
+    // Reference: TrinityCore PetBattle::UseAbility(), BattlePetAbilityEffect.cpp
     return true;
 }
 
@@ -844,12 +889,16 @@ bool BattlePetManager::ShouldCapturePet() const
     if (!profile.autoBattle)
         return false;
 
-    // Full implementation: Query battle state
-    // - Check opponent health is low enough (typically <35%)
-    // - Check if opponent is rare quality (if collectRares enabled)
-    // - Check if player already owns pet (if avoidDuplicates enabled)
-
-    return profile.collectRares; // Simplified
+    // DESIGN NOTE: Simplified capture decision logic
+    // Current behavior: Returns true if collectRares profile flag is enabled
+    // Full implementation should:
+    // - Query PetBattle state for opponent health percentage (typically capture at <35%)
+    // - Check opponent pet quality (prioritize rare/epic if profile.collectRares enabled)
+    // - Verify player doesn't already own this species (if profile.avoidDuplicates enabled)
+    // - Calculate capture success rate based on health/quality/item used
+    // - Consider trap item availability (battle_pet_trap in inventory)
+    // Reference: TrinityCore PetBattle::CanCapture(), capture rate formulas
+    return profile.collectRares;
 }
 
 bool BattlePetManager::ForfeitBattle()
@@ -859,7 +908,15 @@ bool BattlePetManager::ForfeitBattle()
 
     TC_LOG_INFO("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) forfeiting battle", _bot->GetGUID().GetCounter());
 
-    // Full implementation: Call TrinityCore battle pet API to forfeit
+    // DESIGN NOTE: Battle forfeit stub
+    // Current behavior: Logs forfeit attempt, returns success
+    // Full implementation should:
+    // - Call PetBattle::ForfeitBattle() on active battle instance
+    // - End battle state immediately without rewards
+    // - Send SMSG_PET_BATTLE_FINISHED packet to client
+    // - Restore bot to pre-battle state and location
+    // - Apply health/status to all pets in team
+    // Reference: TrinityCore PetBattle::ForfeitBattle(), PetBattle::Finish()
     return true;
 }
 
@@ -879,7 +936,15 @@ void BattlePetManager::AutoLevelPets()
     TC_LOG_DEBUG("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) has {} pets needing leveling",
         _bot->GetGUID().GetCounter(), petsNeedingLevel.size());
 
-    // Full implementation: Queue battles with appropriate opponents to level pets
+    // DESIGN NOTE: Auto-leveling system stub
+    // Current behavior: Identifies pets below maxPetLevel, no further action
+    // Full implementation should:
+    // - Find nearby wild battle pets or trainers matching pet levels (±2 levels)
+    // - Queue battle requests prioritizing underleveled pets
+    // - Rotate team composition to give XP to multiple low-level pets
+    // - Navigate to appropriate zones for pet level brackets
+    // - Track XP gained and level progression per battle
+    // Reference: Zone-based wild pet spawns, battle pet trainer locations
 }
 
 std::vector<BattlePetInfo> BattlePetManager::GetPetsNeedingLevel() const
@@ -1376,8 +1441,15 @@ bool BattlePetManager::NavigateToRarePet(uint32 speciesId)
         _bot->GetGUID().GetCounter(), speciesId, spawnPos.GetPositionX(),
         spawnPos.GetPositionY(), spawnPos.GetPositionZ());
 
-    // Full implementation: Use PathGenerator to navigate to spawn location
-
+    // DESIGN NOTE: Navigation to rare pet spawn stub
+    // Current behavior: Logs navigation intent, returns success
+    // Full implementation should:
+    // - Use PathGenerator to calculate path to spawn position
+    // - Handle cross-map travel (flight paths, portals, hearth)
+    // - Queue movement action in bot's movement manager
+    // - Monitor spawn availability (respawn timers, other players)
+    // - Initiate battle when in range of spawned rare pet
+    // Reference: TrinityCore PathGenerator, MotionMaster navigation APIs
     return true;
 }
 

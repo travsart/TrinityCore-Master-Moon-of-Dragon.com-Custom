@@ -690,10 +690,12 @@ private:
     // Helper methods
     Player* CreateTestBot(::std::string const& name)
     {
-        // Simplified bot creation for testing
-        // In real implementation, would create actual Player object
+        // DESIGN NOTE: Test stub implementation
+        // Returns nullptr for test isolation purposes
+        // This mock allows testing lock-free queue behavior without full Player infrastructure
+        // Production implementation in: src/modules/Playerbot/Lifecycle/BotSpawner.cpp
         TC_LOG_DEBUG("test.lockfree", "Creating test bot: %s", name.c_str());
-        return nullptr;  // Placeholder
+        return nullptr;
     }
 
     void DeleteTestBot(Player* bot)

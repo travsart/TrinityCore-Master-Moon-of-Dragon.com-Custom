@@ -615,8 +615,13 @@ private:
     void InitializeFrostMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
-        // TODO: GetBotAI() doesn't exist on Player - this needs proper BotAI integration
-        // Commenting out for now to fix compilation errors
+        // DESIGN NOTE: BotAI integration for ActionPriorityQueue and BehaviorTree registration
+        // Implementation should include:
+        // - Proper BotAI retrieval from Player instance (via custom Player extension or bot registry)
+        // - ActionPriorityQueue registration for Frost DK spells (Icebound Fortitude, Pillar of Frost, Empower Rune Weapon, Obliterate, Howling Blast, Frost Strike, Breath of Sindragosa, Remorseless Winter, Horn of Winter)
+        // - BehaviorTree construction with burst cooldowns, priority procs (Killing Machine/Rime), runic power/rune spenders
+        // Reference: WoW 11.2 Death Knight mechanics, Frost specialization burst windows and proc management
+        // Commenting out for now until BotAI integration is implemented
         /*
         BotAI* ai = this->GetBot()->GetBotAI();
         if (!ai) return;

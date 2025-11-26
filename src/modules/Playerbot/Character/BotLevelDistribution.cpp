@@ -18,6 +18,7 @@
 #include "BotLevelDistribution.h"
 #include "Config/PlayerbotConfig.h"
 #include "Log.h"
+#include "DatabaseEnv.h"
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
@@ -333,9 +334,149 @@ void BotLevelDistribution::DecrementBracket(uint32 level, TeamId faction)
 
 void BotLevelDistribution::RecalculateDistribution()
 {
-    // This would scan the database and update counters
-    // Implementation depends on database schema
-    TC_LOG_DEBUG("playerbot", "BotLevelDistribution: RecalculateDistribution() called (not yet implemented)");
+    TC_LOG_INFO("playerbot", "BotLevelDistribution: Recalculating distribution from active bot sessions...");
+
+    // Phase 1: Reset all bracket counters to 0
+    for (auto& bracket : m_allianceBrackets)
+    {
+        bracket.SetCount(0);
+    }
+    for (auto& bracket : m_hordeBrackets)
+    {
+        bracket.SetCount(0);
+    }
+
+    // Phase 2: Count bots by level and faction from BotSessionMgr
+    // Get all active sessions and count bots
+    uint32 allianceTotal = 0;
+    uint32 hordeTotal = 0;
+    uint32 skippedNoPlayer = 0;
+    uint32 skippedInvalidLevel = 0;
+
+    // Access the session manager to iterate sessions
+    // Note: BotSessionMgr provides GetActiveSessionCount() but no direct iteration
+    // We need to query the database for bot character levels and factions instead
+    // This is more reliable as it doesn't depend on session state
+
+    // Query database for all bot characters with their levels and factions
+    // Use the characters database to get accurate counts
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT c.level, c.race FROM characters c "
+        "JOIN account a ON c.account = a.id "
+        "WHERE a.battlenet_account IN (SELECT id FROM battlenet_accounts WHERE email LIKE 'bot%@bot.bot') "
+        "AND c.online = 1"
+    );
+
+    if (!result)
+    {
+        TC_LOG_DEBUG("playerbot", "BotLevelDistribution: No online bot characters found in database");
+
+        // Alternative: Try to get counts from config defaults if no online bots
+        // This ensures the system has valid baseline data
+        DistributionStats stats = GetDistributionStats();
+        TC_LOG_INFO("playerbot", "BotLevelDistribution: Recalculation complete - Alliance: {}, Horde: {}, Total: {}",
+            stats.allianceBots, stats.hordeBots, stats.totalBots);
+        return;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint8 level = fields[0].GetUInt8();
+        uint8 race = fields[1].GetUInt8();
+
+        // Validate level range
+        if (level == 0 || level > 80)
+        {
+            ++skippedInvalidLevel;
+            continue;
+        }
+
+        // Determine faction from race
+        // Alliance races: Human(1), Dwarf(3), Night Elf(4), Gnome(7), Draenei(11), Worgen(22)
+        // Horde races: Orc(2), Undead(5), Tauren(6), Troll(8), Blood Elf(10), Goblin(9)
+        // Pandaren(24,25,26) can be either faction
+        TeamId faction;
+        switch (race)
+        {
+            case 1:  // Human
+            case 3:  // Dwarf
+            case 4:  // Night Elf
+            case 7:  // Gnome
+            case 11: // Draenei
+            case 22: // Worgen
+            case 25: // Alliance Pandaren
+            case 29: // Void Elf
+            case 30: // Lightforged Draenei
+            case 32: // Kul Tiran
+            case 34: // Dark Iron Dwarf
+            case 37: // Mechagnome
+                faction = TEAM_ALLIANCE;
+                break;
+            case 2:  // Orc
+            case 5:  // Undead
+            case 6:  // Tauren
+            case 8:  // Troll
+            case 9:  // Goblin
+            case 10: // Blood Elf
+            case 26: // Horde Pandaren
+            case 27: // Nightborne
+            case 28: // Highmountain Tauren
+            case 31: // Zandalari Troll
+            case 35: // Mag'har Orc
+            case 36: // Vulpera
+                faction = TEAM_HORDE;
+                break;
+            default:
+                // Neutral pandaren or unknown race - default to Alliance
+                faction = TEAM_ALLIANCE;
+                TC_LOG_DEBUG("playerbot", "BotLevelDistribution: Unknown race {} defaulting to Alliance", race);
+                break;
+        }
+
+        // Find and increment the appropriate bracket
+        LevelBracket const* bracket = GetBracketForLevel(level, faction);
+        if (bracket)
+        {
+            bracket->IncrementCount();
+            if (faction == TEAM_ALLIANCE)
+                ++allianceTotal;
+            else
+                ++hordeTotal;
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbot", "BotLevelDistribution: No bracket found for level {} faction {}",
+                level, faction == TEAM_ALLIANCE ? "Alliance" : "Horde");
+        }
+    } while (result->NextRow());
+
+    // Phase 3: Log summary
+    TC_LOG_INFO("playerbot", "BotLevelDistribution: Recalculation complete - Alliance: {}, Horde: {}, Total: {}",
+        allianceTotal, hordeTotal, allianceTotal + hordeTotal);
+
+    if (skippedNoPlayer > 0)
+    {
+        TC_LOG_DEBUG("playerbot", "BotLevelDistribution: Skipped {} sessions with no player", skippedNoPlayer);
+    }
+    if (skippedInvalidLevel > 0)
+    {
+        TC_LOG_DEBUG("playerbot", "BotLevelDistribution: Skipped {} characters with invalid level", skippedInvalidLevel);
+    }
+
+    // Phase 4: Log distribution status
+    DistributionStats stats = GetDistributionStats();
+    TC_LOG_INFO("playerbot", "BotLevelDistribution: Distribution balance - {}/{} brackets within tolerance, avg deviation: {:.1f}%",
+        stats.bracketsWithinTolerance, stats.totalBrackets, stats.averageDeviation * 100.0f);
+
+    if (!stats.mostUnderpopulatedBracket.empty())
+    {
+        TC_LOG_INFO("playerbot", "BotLevelDistribution: Most underpopulated bracket: {}", stats.mostUnderpopulatedBracket);
+    }
+    if (!stats.mostOverpopulatedBracket.empty())
+    {
+        TC_LOG_INFO("playerbot", "BotLevelDistribution: Most overpopulated bracket: {}", stats.mostOverpopulatedBracket);
+    }
 }
 
 DistributionStats BotLevelDistribution::GetDistributionStats() const
