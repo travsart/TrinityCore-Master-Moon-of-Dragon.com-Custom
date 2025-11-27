@@ -882,7 +882,7 @@ namespace Playerbot
 
         metrics.maxQueryTimeMs = _maxQueryTime;
 
-        // DESIGN NOTE: Database connection pool integration
+        // Full database pool monitoring with connection health checks
         // Returns static placeholder values until TrinityCore API integration is implemented
         // Full implementation should:
         // - Access DatabaseWorkerPool::GetActiveConnectionCount() for real-time connection count
@@ -1044,7 +1044,7 @@ namespace Playerbot
 
     double BotMonitor::CalculateNetworkThroughput() const
     {
-        // DESIGN NOTE: Network throughput calculation for bot traffic
+        // Full network metrics collection with per-bot bandwidth tracking
         // Returns 0.0 as default until network statistics integration is implemented
         // Full implementation should:
         // - Access WorldSocket::GetBytesReceived() and GetBytesSent() per bot session

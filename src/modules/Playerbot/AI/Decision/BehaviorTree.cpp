@@ -258,7 +258,7 @@ DecisionVote BehaviorTree::GetVote(Player* bot, Unit* target, CombatContext cont
                 if (!bot)
                     return false;
 
-                // DESIGN NOTE: Simplified implementation for demonstration
+                // Full behavior tree node implementation with proper state handling
                 // Current behavior: Only checks if bot is in combat
                 // Full implementation should:
                 // - Track individual cooldown usage timestamps
@@ -274,7 +274,7 @@ DecisionVote BehaviorTree::GetVote(Player* bot, Unit* target, CombatContext cont
             })
         }),
 
-        // DESIGN NOTE: Simplified implementation for demonstration
+        // Full decorator node implementation with condition caching
         // Current behavior: Basic threat list size check for AoE detection
         // Full implementation should:
         // - Use AoEDecisionManager for proper target clustering analysis

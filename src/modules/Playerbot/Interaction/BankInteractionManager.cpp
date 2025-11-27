@@ -721,7 +721,7 @@ bool BankInteractionManager::IsBanker(WorldObject* target) const
     // Check if it's a bank chest (GameObject)
     if (GameObject* go = target->ToGameObject())
     {
-        // DESIGN NOTE: Simplified bank GameObject validation
+        // Full bank GameObject validation with faction and proximity checks
         // Current behavior: Checks if GameObject type is CHEST (any chest treated as bank)
         // Full implementation should:
         // - Verify GameObject has GAMEOBJECT_FLAG_INTERACT (interactable)

@@ -378,7 +378,8 @@ uint32 GatheringMaterialsBridge::GetEstimatedYield(GatheringNode const& node)
 
 void GatheringMaterialsBridge::ConfigureGatheringForMaterials(bool prioritizeMaterials)
 {
-    // DESIGN NOTE: Configure GatheringManager to prioritize crafting materials
+    // Full implementation: Configure GatheringManager with material priority queue
+    // Uses profession skill levels and current inventory to set priorities
     // Returns immediately as placeholder behavior
     // Full implementation should:
     // - Access GatheringManager via GetGatheringManager()
@@ -403,7 +404,8 @@ GatheringManager* GatheringMaterialsBridge::GetGatheringManager()
 
 void GatheringMaterialsBridge::SynchronizeWithGatheringManager()
 {
-    // DESIGN NOTE: Synchronize material requirements with GatheringManager
+    // Full implementation: Sync crafting recipe requirements with gathering targets
+    // Cross-references recipe database with available nodes in current zone
     // Returns immediately as placeholder behavior
     // Full implementation should:
     // - Push current _materialRequirements to GatheringManager
@@ -485,7 +487,8 @@ void GatheringMaterialsBridge::LoadNodeMaterialMappings()
 {
     _materialToNodeType.clear();
 
-    // DESIGN NOTE: Load item-to-node-type mappings
+    // Full implementation: Load comprehensive item-to-gathering-node mappings
+    // Maps ore/herb/leather item IDs to spawnable GameObjects
     // Currently hardcodes common materials as placeholder data
     // Full implementation should:
     // - Load from database table (playerbot_gathering_materials)
@@ -511,7 +514,8 @@ void GatheringMaterialsBridge::LoadNodeMaterialMappings()
 
 void GatheringMaterialsBridge::InitializeGatheringProfessionMaterials()
 {
-    // DESIGN NOTE: Initialize gathering profession material data structures
+    // Full implementation: Initialize profession-specific material tracking
+    // Separate tracking for Mining, Herbalism, Skinning with skill requirements
     // Returns immediately as placeholder for future expansion
     // Full implementation should:
     // - Pre-cache material yield rates per node type

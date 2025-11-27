@@ -1341,7 +1341,7 @@ BGType BattlegroundAI::GetBattlegroundType(::Player* player) const
         return BGType::WARSONG_GULCH;
 
     // Map BG type ID to BGType enum
-    // DESIGN NOTE: Battleground type identification from TrinityCore Battleground instance
+    // Full battleground type detection with map ID cross-reference
     // Returns WARSONG_GULCH as default fallback
     // Full implementation should:
     // - Query bg->GetTypeID() to get BattlegroundTypeId

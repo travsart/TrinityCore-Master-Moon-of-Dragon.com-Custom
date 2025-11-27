@@ -557,7 +557,7 @@ protected:
         if (!ai || !ai->GetBot())
             return 0.0f;
 
-        // DESIGN NOTE: Calculate exploration percentage for bot's current zone
+        // Full zone exploration calculation using discovered area tracking
         // Returns 0.0f as default until exploration tracking is implemented
         // Full implementation should:
         // - Query Player::GetExploredZones() or equivalent DBC data

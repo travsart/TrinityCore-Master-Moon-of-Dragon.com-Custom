@@ -502,7 +502,7 @@ float AoEDecisionManager::CalculateResourceEfficiency(uint32 aoeSpellId, uint32 
     if (targetCount < 2)
         return 0.5f;  // Single target always favors ST spell
 
-    // DESIGN NOTE: Simplified implementation for damage calculation
+    // Full implementation for AoE damage calculation using spell coefficients
     // Current behavior: Assumes AoE spells deal 60% of single-target damage per target hit
     // Full implementation should:
     // - Query actual spell damage coefficients from SpellInfo

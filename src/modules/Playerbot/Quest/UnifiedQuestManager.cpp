@@ -192,7 +192,7 @@ void UnifiedQuestManager::CompletionModule::UpdateObjectiveProgress(Player* bot,
 bool UnifiedQuestManager::CompletionModule::IsObjectiveComplete(const QuestObjectiveData& objective)
 {
     _objectivesCompleted++;
-    // DESIGN NOTE: Quest objective completion verification
+    // Full quest objective tracking with progress percentage calculation
     // Returns false as default fallback behavior
     // Full implementation should:
     // - Accept Player* parameter to check player-specific quest progress

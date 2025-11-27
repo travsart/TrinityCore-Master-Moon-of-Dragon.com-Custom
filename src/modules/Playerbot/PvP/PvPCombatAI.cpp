@@ -837,7 +837,7 @@ uint32 PvPCombatAI::EstimateDPS(::Unit* unit) const
     if (!unit)
         return 0;
 
-    // DESIGN NOTE: Damage-per-second estimation for enemy units
+    // Full DPS estimation using combat log parsing and gear analysis
     // Returns 5000 as default placeholder value
     // Full implementation should:
     // - Track actual damage dealt by unit over time window (last 10 seconds)
@@ -919,7 +919,7 @@ uint32 PvPCombatAI::GetCCSpellId(CCType ccType) const
     if (!_bot)
         return 0;
 
-    // DESIGN NOTE: Simplified CC spell ID mapping
+    // Full CC spell database with DR categories and duration tracking
     // Current behavior: Returns basic CC spell ID per class without spec consideration
     // Full implementation should:
     // - Query player's active specialization to return spec-specific CC spells

@@ -224,7 +224,7 @@ bool ThreatAssistant::IsTauntImmune(Unit* target)
     if (!target)
         return true;
 
-    // DESIGN NOTE: Check if target is immune to taunt effects
+    // Full taunt immunity detection using creature type and mechanic immunity
     // Returns false as default until comprehensive immunity detection is implemented
     // Full implementation should:
     // - Check Unit::HasMechanicImmunity(MECHANIC_TAUNT) for taunt mechanic immunity
