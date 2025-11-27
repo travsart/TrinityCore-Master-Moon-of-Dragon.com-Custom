@@ -232,6 +232,27 @@ private:
     void ProcessGuildBankTransaction(uint32 itemId, bool isDeposit);
     void OptimizeGuildBankLayout();
 
+    // Guild bank helper methods
+    uint8 FindBestTabForItem(Item* item) const;
+    int8 FindEmptySlotInTab(Guild* guild, uint8 tabId) const;
+    bool HasGuildBankDepositRights(uint8 tabId) const;
+    bool HasGuildBankWithdrawRights(uint8 tabId) const;
+    int32 GetRemainingWithdrawSlots(uint8 tabId) const;
+    int8 FindItemInTab(Guild* guild, uint8 tabId, uint32 itemId) const;
+    bool FindFreeInventorySlot(uint8& outBag, uint8& outSlot) const;
+
+    // Needs analysis methods
+    void AnalyzeConsumableNeeds(std::vector<uint32>& neededItems) const;
+    void AnalyzeReagentNeeds(std::vector<uint32>& neededItems) const;
+    void AnalyzeProfessionMaterialNeeds(std::vector<uint32>& neededItems) const;
+    void AnalyzeEquipmentUpgrades(Guild* guild, std::vector<std::pair<uint8, uint8>>& upgradeLocations) const;
+
+    // Item evaluation methods
+    bool HasRelevantProfession(uint32 itemSubClass) const;
+    bool IsEquipmentUpgrade(ItemTemplate const* itemTemplate) const;
+    bool CanLearnRecipe(ItemTemplate const* itemTemplate) const;
+    bool HasItemsNeedingSockets() const;
+
     // Event coordination
     void PlanGuildEvent(const std::string& eventType, uint32 proposedTime);
     void InviteMembersToEvent(const std::string& eventId);

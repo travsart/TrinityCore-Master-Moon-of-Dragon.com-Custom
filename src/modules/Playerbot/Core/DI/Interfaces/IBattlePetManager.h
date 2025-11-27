@@ -40,6 +40,17 @@ struct PetMetrics
     std::atomic<uint32> petsLeveled{0};
     std::atomic<uint32> totalXPGained{0};
 
+    // Additional battle statistics
+    std::atomic<uint32> battlesStarted{0};     // Total battles started
+    std::atomic<uint32> battlesForfeited{0};   // Battles forfeited
+    std::atomic<uint32> petsSwitched{0};       // Times pet was switched during battle
+    std::atomic<uint32> abilitiesUsed{0};      // Total abilities used in battles
+    std::atomic<uint32> damageDealt{0};        // Total damage dealt in battles
+    std::atomic<uint32> healingDone{0};        // Total healing done in battles
+    std::atomic<uint32> raresFound{0};         // Rare pets discovered (not captured)
+    std::atomic<uint32> criticalHits{0};       // Critical hits landed
+    std::atomic<uint32> dodges{0};             // Attacks dodged
+
     void Reset()
     {
         petsCollected = 0;
@@ -48,12 +59,39 @@ struct PetMetrics
         raresCaptured = 0;
         petsLeveled = 0;
         totalXPGained = 0;
+        battlesStarted = 0;
+        battlesForfeited = 0;
+        petsSwitched = 0;
+        abilitiesUsed = 0;
+        damageDealt = 0;
+        healingDone = 0;
+        raresFound = 0;
+        criticalHits = 0;
+        dodges = 0;
     }
 
     float GetWinRate() const
     {
         uint32 total = battlesWon + battlesLost;
         return total > 0 ? (float)battlesWon / total : 0.0f;
+    }
+
+    float GetForfeitRate() const
+    {
+        uint32 total = battlesStarted.load();
+        return total > 0 ? (float)battlesForfeited / total : 0.0f;
+    }
+
+    float GetAverageAbilitiesPerBattle() const
+    {
+        uint32 total = battlesStarted.load();
+        return total > 0 ? (float)abilitiesUsed / total : 0.0f;
+    }
+
+    float GetDamagePerBattle() const
+    {
+        uint32 total = battlesWon + battlesLost;
+        return total > 0 ? (float)damageDealt / total : 0.0f;
     }
 };
 

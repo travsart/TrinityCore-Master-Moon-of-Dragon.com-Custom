@@ -2174,8 +2174,10 @@ bool BattlePetManager::NavigateToRarePet(uint32 speciesId)
         return false;
     }
 
-    // Start moving along the path
-    _bot->GetMotionMaster()->MovePath(path);
+    // Navigate to the target position using MovePoint
+    // We move to the destination directly rather than following waypoints
+    G3D::Vector3 const& dest = pathPoints.back();
+    _bot->GetMotionMaster()->MovePoint(0, dest.x, dest.y, dest.z);
 
     // Store navigation target for tracking
     _navigationTarget = *nearestSpawn;

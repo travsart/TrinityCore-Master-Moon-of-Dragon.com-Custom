@@ -112,6 +112,8 @@ public:
         float damageIncrease;      // Damage increase multiplier (1.0 = +100%)
         float hasteIncrease;       // Haste increase (0.3 = +30%)
         float critIncrease;        // Crit increase (0.2 = +20%)
+        float masteryIncrease;     // Mastery increase (0.1 = +10%)
+        float healingIncrease;     // Healing increase multiplier (0.25 = +25%)
         bool stacksWithOthers;     // Can stack with other cooldowns
         bool affectedByHaste;      // Cooldown affected by haste
         uint32 lastUsedTime;       // Last time this was used
@@ -119,8 +121,9 @@ public:
 
         CooldownData() : spellId(0), category(MAJOR_DPS), cooldownMs(0),
                         durationMs(0), damageIncrease(0.0f), hasteIncrease(0.0f),
-                        critIncrease(0.0f), stacksWithOthers(true),
-                        affectedByHaste(false), lastUsedTime(0), nextAvailable(0) {}
+                        critIncrease(0.0f), masteryIncrease(0.0f), healingIncrease(0.0f),
+                        stacksWithOthers(true), affectedByHaste(false),
+                        lastUsedTime(0), nextAvailable(0) {}
     };
 
     /**

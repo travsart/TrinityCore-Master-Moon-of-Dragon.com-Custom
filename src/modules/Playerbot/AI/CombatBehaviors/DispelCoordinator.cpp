@@ -64,6 +64,45 @@ namespace {
     }
     bool IsTank(Player const* p) { return IsPlayerTank(p); }
     bool IsHealer(Player const* p) { return IsPlayerHealer(p); }
+
+    // Spec-aware melee detection for spread debuff analysis
+    bool IsMeleeSpec(uint32 specId)
+    {
+        switch (specId)
+        {
+            // Warrior - All specs are melee
+            case 71:  // Arms
+            case 72:  // Fury
+            case 73:  // Protection
+            // Paladin - Ret and Prot are melee
+            case 66:  // Protection
+            case 70:  // Retribution
+            // Hunter - Survival is melee
+            case 255: // Survival
+            // Rogue - All specs are melee
+            case 259: // Assassination
+            case 260: // Outlaw
+            case 261: // Subtlety
+            // Death Knight - All specs are melee
+            case 250: // Blood
+            case 251: // Frost
+            case 252: // Unholy
+            // Monk - WW and BM are melee
+            case 268: // Brewmaster
+            case 269: // Windwalker
+            // Shaman - Enhancement is melee
+            case 263: // Enhancement
+            // Druid - Feral and Guardian are melee
+            case 103: // Feral
+            case 104: // Guardian
+            // Demon Hunter - Both specs are melee
+            case 577: // Havoc
+            case 581: // Vengeance
+                return true;
+            default:
+                return false;
+        }
+    }
 }
 
 // Static member definitions moved to header with inline to fix DLL linkage (C2491)
@@ -452,18 +491,90 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
             priority += 1.0f;  // Heavy DOT at low health
     }
 
-    // DESIGN NOTE: Simplified implementation for spreading debuff detection
-    // Current behavior: Adds flat +1.0 priority if debuff has "spreads" flag
-    // Full implementation should:
-    // - Check nearby allies within spread radius for same debuff
-    // - Calculate actual spread probability based on proximity
-    // - Monitor debuff application timing to detect spread patterns
-    // - Account for group composition (melee vs ranged clustering)
-    // - Prioritize based on number of potential spread targets
-    // Reference: Debuff spread mechanics, AOE debuff system
+    // Full spreading debuff detection with proximity analysis
+    // Analyzes group clustering and potential spread targets
     if (spreads)
     {
-        priority += 1.0f;  // Spreading debuffs are always higher priority
+        Player* targetPlayer = target->ToPlayer();
+        if (targetPlayer && targetPlayer->GetGroup())
+        {
+            Group* group = targetPlayer->GetGroup();
+            float spreadRadius = 8.0f; // Most spreading debuffs have 8-10 yard radius
+            uint32 nearbyAllies = 0;
+            uint32 nearbyMelee = 0;
+            uint32 alreadyInfected = 0;
+
+            // Get the aura's current stack count for fresh debuff detection
+            uint8 stackCount = 1;
+            if (Aura* aura = target->GetAura(auraId))
+                stackCount = aura->GetStackAmount();
+
+            // Count nearby allies and analyze clustering
+            for (GroupReference& itr : group->GetMembers())
+            {
+                Player* member = itr.GetSource();
+                if (!member || member == targetPlayer || member->isDead())
+                    continue;
+
+                float distSq = target->GetExactDistSq(member);
+                if (distSq <= spreadRadius * spreadRadius)
+                {
+                    ++nearbyAllies;
+
+                    // Check if they're melee (likely stacked)
+                    uint32 specId = member->GetPrimarySpecializationEntry() ?
+                                    member->GetPrimarySpecializationEntry()->ID : 0;
+                    bool isMelee = IsMeleeSpec(specId);
+                    if (isMelee)
+                        ++nearbyMelee;
+
+                    // Check if already infected with this debuff
+                    if (member->HasAura(auraId))
+                        ++alreadyInfected;
+                }
+            }
+
+            // Calculate spread risk score
+            float spreadRisk = 0.0f;
+
+            // Base risk from number of nearby allies
+            if (nearbyAllies >= 4)
+                spreadRisk += 2.0f;  // High stacking = critical
+            else if (nearbyAllies >= 2)
+                spreadRisk += 1.5f;  // Medium stacking
+            else if (nearbyAllies >= 1)
+                spreadRisk += 1.0f;  // Some risk
+
+            // Additional risk if melee are stacked (common in boss fights)
+            if (nearbyMelee >= 2)
+                spreadRisk += 0.5f;
+
+            // Reduce priority if spread already occurred (damage already done)
+            if (alreadyInfected >= 2)
+                spreadRisk -= 0.5f;
+
+            // Environmental spread factor - check if in combat (more movement = less spread)
+            if (targetPlayer->IsInCombat())
+            {
+                // Active combat means movement, slightly less spread risk
+                spreadRisk *= 0.9f;
+            }
+
+            // Apply spread risk to priority
+            priority += ::std::max(0.5f, spreadRisk);
+
+            // Extra priority if this is a chain-spreading debuff targeting a clump
+            if (nearbyAllies >= 3 && stackCount <= 1)
+            {
+                // Fresh debuff on grouped targets = emergency
+                priority += 1.0f;
+            }
+        }
+        else
+        {
+            // Fallback if not in group - still add base spread priority
+            priority += 1.0f;
+        }
     }
 
     return priority;
