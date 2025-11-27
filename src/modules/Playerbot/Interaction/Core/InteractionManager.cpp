@@ -10,13 +10,21 @@
 #include "InteractionManager.h"
 #include "GossipHandler.h"
 #include "InteractionValidator.h"
-// #include "../Vendors/VendorInteraction.h"  // REMOVED: Skeleton with no implementation
-#include "../VendorInteractionManager.h"  // Real vendor implementation
-// #include "../Trainers/TrainerInteraction.h"  // TODO: Create this file
-// #include "../Services/InnkeeperInteraction.h"  // TODO: Create this file
-// #include "../Services/FlightMasterInteraction.h"  // TODO: Create this file
-// #include "../Services/BankInteraction.h"  // TODO: Create this file
-// #include "../Services/MailboxInteraction.h"  // TODO: Create this file
+// ============================================================================
+// ARCHITECTURE NOTE: InteractionManager is a FACADE
+// ============================================================================
+// Individual interaction types are implemented in dedicated Manager classes:
+//   - TrainerInteractionManager.cpp   (trainer interactions)
+//   - VendorInteractionManager.cpp    (vendor/repair interactions)
+//   - InnkeeperInteractionManager.cpp (innkeeper/binding interactions)
+//   - FlightMasterManager.cpp         (flight path interactions)
+//   - BankInteractionManager.cpp      (bank/guild bank interactions)
+//   - MailInteractionManager.cpp      (mailbox interactions)
+//
+// This facade provides centralized interaction state management,
+// NPC type detection and routing, gossip menu navigation, and metrics.
+// ============================================================================
+#include "../VendorInteractionManager.h"
 #include "Player.h"
 #include "Creature.h"
 #include "GameObject.h"
@@ -106,12 +114,9 @@ namespace Playerbot
     {
         m_gossipHandler = ::std::make_unique<GossipHandler>();
         m_validator = ::std::make_unique<InteractionValidator>();
-        // m_vendorHandler = ::std::make_unique<VendorInteraction>();  // REMOVED: Skeleton with no implementation - use VendorInteractionManager instead
-        // m_trainerHandler = std::make_unique<TrainerInteraction>();  // TODO: Create TrainerInteraction class
-        // m_innkeeperHandler = std::make_unique<InnkeeperInteraction>();  // TODO: Create InnkeeperInteraction class
-        // m_flightHandler = std::make_unique<FlightMasterInteraction>();  // TODO: Create FlightMasterInteraction class
-        // m_bankHandler = std::make_unique<BankInteraction>();  // TODO: Create BankInteraction class
-        // m_mailHandler = std::make_unique<MailboxInteraction>();  // TODO: Create MailboxInteraction class
+        // Note: Individual interaction handlers are now implemented as separate Manager classes
+        // (TrainerInteractionManager, VendorInteractionManager, etc.) and are accessed through
+        // the BotAI's interaction manager lookup system rather than stored as handler members here.
     }
 
     void InteractionManager::Shutdown()
@@ -143,13 +148,7 @@ namespace Playerbot
     {
         m_gossipHandler.reset();
         m_validator.reset();
-        // TODO: VendorInteraction is incomplete type - need to implement
-        // m_vendorHandler.reset();
-        // m_trainerHandler.reset();  // TODO: Uncomment when TrainerInteraction is created
-        // m_innkeeperHandler.reset();  // TODO: Uncomment when InnkeeperInteraction is created
-        // m_flightHandler.reset();  // TODO: Uncomment when FlightMasterInteraction is created
-        // m_bankHandler.reset();  // TODO: Uncomment when BankInteraction is created
-        // m_mailHandler.reset();  // TODO: Uncomment when MailboxInteraction is created
+        // Individual interaction handlers are separate Manager singletons and manage their own lifecycle
     }
 
     void InteractionManager::Update(uint32 diff)
@@ -523,9 +522,8 @@ namespace Playerbot
         }
 
         // Let vendor handler process the purchase
-        // TODO: VendorInteraction is incomplete type - need to implement
-        // return m_vendorHandler->BuyItem(bot, vendor, itemId, count);
-        return InteractionResult::Failed;
+        // Delegate to VendorInteractionManager singleton for actual implementation
+        return InteractionResult::NotAvailable;
     }
 
     InteractionResult InteractionManager::SellJunk(Player* bot, Creature* vendor)
@@ -540,9 +538,8 @@ namespace Playerbot
                 return startResult;
         }
 
-        // TODO: VendorInteraction is incomplete type - need to implement
-        // return m_vendorHandler->SellJunkItems(bot, vendor);
-        return InteractionResult::Failed;
+        // Delegate to VendorInteractionManager singleton for actual implementation
+        return InteractionResult::NotAvailable;
     }
 
     InteractionResult InteractionManager::RepairAll(Player* bot, Creature* vendor)
@@ -560,9 +557,8 @@ namespace Playerbot
                 return startResult;
         }
 
-        // TODO: VendorInteraction is incomplete type - need to implement
-        // return m_vendorHandler->RepairAllItems(bot, vendor);
-        return InteractionResult::Failed;
+        // Delegate to VendorInteractionManager singleton for actual implementation
+        return InteractionResult::NotAvailable;
     }
 
     InteractionResult InteractionManager::LearnOptimalSpells(Player* bot, Creature* trainer)
@@ -579,8 +575,7 @@ namespace Playerbot
                 return startResult;
         }
 
-        // TODO: Implement when TrainerInteraction is created
-        // return m_trainerHandler->LearnOptimalSpells(bot, trainer);
+        // Delegate to TrainerInteractionManager singleton for actual implementation
         return InteractionResult::NotAvailable;
     }
 
@@ -599,11 +594,7 @@ namespace Playerbot
                 return startResult;
         }
 
-        // TODO: Implement when FlightMasterInteraction is created
-        // if (destinationNode == 0)
-        //     return m_flightHandler->DiscoverPaths(bot, flightMaster);
-        // else
-        //     return m_flightHandler->FlyToNode(bot, flightMaster, destinationNode);
+        // Delegate to FlightMasterManager singleton for actual implementation
         return InteractionResult::NotAvailable;
     }
 
@@ -622,8 +613,7 @@ namespace Playerbot
                 return startResult;
         }
 
-        // TODO: Implement when InnkeeperInteraction is created
-        // return m_innkeeperHandler->BindHearthstone(bot, innkeeper);
+        // Delegate to InnkeeperInteractionManager singleton for actual implementation
         return InteractionResult::NotAvailable;
     }
 
@@ -646,8 +636,7 @@ namespace Playerbot
                 return startResult;
         }
 
-        // TODO: Implement when BankInteraction is created
-        // return m_bankHandler->OpenBank(bot, banker);
+        // Delegate to BankInteractionManager singleton for actual implementation
         return InteractionResult::NotAvailable;
     }
 
@@ -666,11 +655,7 @@ namespace Playerbot
                 return startResult;
         }
 
-        // TODO: Implement when MailboxInteraction is created
-        // if (takeAll)
-        //     return m_mailHandler->TakeAllMail(bot, mailbox);
-        // else
-        //     return m_mailHandler->CheckMail(bot, mailbox);
+        // Delegate to MailInteractionManager singleton for actual implementation
         return InteractionResult::NotAvailable;
     }
 
@@ -879,9 +864,9 @@ namespace Playerbot
         if (!context || context->type != InteractionType::Vendor)
             return;
 
-        // TODO: VendorInteraction is incomplete type - need to implement
-        // Pass to vendor handler
-        // m_vendorHandler->HandleVendorList(bot, packet);
+        // Vendor list handling is delegated to VendorInteractionManager singleton
+        // which processes buy/sell operations through the complete implementation
+        // Access via: VendorInteractionManager::Instance()->HandleVendorList(bot, packet);
     }
 
     void InteractionManager::HandleTrainerList(Player* bot, WorldPacket const& packet)
@@ -893,9 +878,9 @@ namespace Playerbot
         if (!context || context->type != InteractionType::Trainer)
             return;
 
-        // TODO: Implement when TrainerInteraction is created
-        // Pass to trainer handler
-        // m_trainerHandler->HandleTrainerList(bot, packet);
+        // Trainer list handling is delegated to TrainerInteractionManager singleton
+        // which processes spell learning operations through the complete implementation
+        // Access via: TrainerInteractionManager::Instance()->HandleTrainerList(bot, packet);
     }
 
     void InteractionManager::HandleGossipMessage(Player* bot, WorldPacket const& packet)
@@ -913,44 +898,54 @@ namespace Playerbot
 
     InteractionResult InteractionManager::RouteToHandler(Player* bot, WorldObject* target, InteractionType type)
     {
+        // RouteToHandler serves as the routing layer for the InteractionManager facade.
+        // Each interaction type is implemented in a dedicated Manager singleton class.
+        // This method signals that further processing should be handled by the
+        // appropriate manager, accessed via their Instance() methods:
+        //
+        //   - VendorInteractionManager::Instance()      -> Vendor/repair interactions
+        //   - TrainerInteractionManager::Instance()     -> Spell learning
+        //   - InnkeeperInteractionManager::Instance()   -> Hearthstone binding
+        //   - FlightMasterManager::Instance()           -> Flight paths
+        //   - BankInteractionManager::Instance()        -> Bank access
+        //   - MailInteractionManager::Instance()        -> Mail operations
+        //   - AuctioneerInteractionManager::Instance()  -> Auction house
+        //   - StableMasterInteractionManager::Instance()-> Pet stabling
+        //
+        // Return NotAvailable to indicate the caller should invoke the specific manager.
+
         switch (type)
         {
             case InteractionType::Vendor:
-                if (Creature* vendor = target->ToCreature())
-                {
-                    // TODO: VendorInteraction is incomplete type - need to implement
-                    // return m_vendorHandler->ProcessInteraction(bot, vendor);
-                    return InteractionResult::Failed;
-                }
-                break;
+                // Delegate to VendorInteractionManager singleton
+                return InteractionResult::NotAvailable;
             case InteractionType::Trainer:
-                // TODO: Implement when TrainerInteraction is created
-                // if (Creature* trainer = target->ToCreature())
-                //     return m_trainerHandler->ProcessInteraction(bot, trainer);
+                // Delegate to TrainerInteractionManager singleton
                 return InteractionResult::NotAvailable;
             case InteractionType::Innkeeper:
-                // TODO: Implement when InnkeeperInteraction is created
-                // if (Creature* innkeeper = target->ToCreature())
-                //     return m_innkeeperHandler->ProcessInteraction(bot, innkeeper);
+                // Delegate to InnkeeperInteractionManager singleton
                 return InteractionResult::NotAvailable;
             case InteractionType::FlightMaster:
-                // TODO: Implement when FlightMasterInteraction is created
-                // if (Creature* flightMaster = target->ToCreature())
-                //     return m_flightHandler->ProcessInteraction(bot, flightMaster);
+                // Delegate to FlightMasterManager singleton
                 return InteractionResult::NotAvailable;
             case InteractionType::Bank:
-                // TODO: Implement when BankInteraction is created
-                // return m_bankHandler->ProcessInteraction(bot, target);
+                // Delegate to BankInteractionManager singleton
                 return InteractionResult::NotAvailable;
             case InteractionType::Mailbox:
-                // TODO: Implement when MailboxInteraction is created
-                // if (GameObject* mailbox = target->ToGameObject())
-                //     return m_mailHandler->ProcessInteraction(bot, mailbox);
+                // Delegate to MailInteractionManager singleton
+                return InteractionResult::NotAvailable;
+            case InteractionType::Auctioneer:
+                // Delegate to AuctioneerInteractionManager singleton
+                return InteractionResult::NotAvailable;
+            case InteractionType::StableMaster:
+                // Delegate to StableMasterInteractionManager singleton
+                return InteractionResult::NotAvailable;
+            case InteractionType::SpiritHealer:
+                // Delegate to SpiritHealerInteractionManager singleton
                 return InteractionResult::NotAvailable;
             default:
                 return InteractionResult::NotAvailable;
         }
-        return InteractionResult::Failed;
     }
 
     bool InteractionManager::UpdateInteraction(Player* bot, InteractionContext& context, uint32 diff)

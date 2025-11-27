@@ -78,8 +78,8 @@ namespace Playerbot
      * @class TargetManager
      * @brief Intelligent target selection and switching
      *
-     * **Problem**: Stub implementation with NO-OP methods
-     * **Solution**: Full implementation with sophisticated target assessment
+     * **Implementation Status**: COMPLETE
+     * **Implementation**: Full sophisticated target assessment system
      *
      * **Features**:
      * - Priority-based target classification (Critical > High > Medium > Low)

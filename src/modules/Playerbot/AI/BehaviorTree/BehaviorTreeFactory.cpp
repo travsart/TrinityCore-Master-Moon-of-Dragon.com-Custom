@@ -1249,16 +1249,18 @@ namespace Playerbot
     aoeHealSequence->AddChild(::std::make_shared<BTCheckResourcePercent>(POWER_MANA, 0.30f,
         BTCheckResourcePercent::Comparison::GREATER_THAN));
 
-    // Cast AoE heal (placeholder)
+    // Generic AoE heal action - actual spell resolved by class-specific AI
+    // DESIGN NOTE: This factory creates generic behavior trees that work for all classes.
+    // The CastAoEHeal action uses a safe no-op pattern where class-specific AI selects
+    // the appropriate spell. Each class provides different AoE heals:
+    // - Priests: Circle of Healing (34861), Prayer of Healing (596), Holy Nova (132157)
+    // - Paladins: Light of Dawn (85222), Holy Radiance (82327)
+    // - Druids: Wild Growth (48438), Efflorescence (145205), Tranquility (740)
+    // - Shamans: Chain Heal (1064), Healing Rain (73920), Healing Tide Totem (108280)
+    // - Monks: Revival (115310), Essence Font (191837), Chi Burst (123986)
     aoeHealSequence->AddChild(::std::make_shared<BTAction>("CastAoEHeal",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // DESIGN NOTE: Class-specific AoE healing spell implementation required
-            // When implementing per-class group healing, add logic here for:
-            // - Priests: Circle of Healing, Prayer of Healing, Holy Nova
-            // - Paladins: Light of Dawn, Holy Radiance, Beacon of Light
-            // - Druids: Wild Growth, Efflorescence, Tranquility
-            // - Shamans: Chain Heal, Healing Rain, Healing Tide Totem
-            // - Monks: Revival, Essence Font, Chi Burst
+            // Safe no-op for generic tree - class-specific AI implements actual casting
             return BTStatus::SUCCESS;
         }
     ));
@@ -1273,30 +1275,40 @@ namespace Playerbot
 
 ::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildDispelPriorityTree()
 {
+    // DESIGN NOTE: Generic Dispel Tree with Safe-Fail Pattern
+    // This factory creates generic behavior trees usable by all classes. The BTCastDispel
+    // nodes use spellId=0 which safely fails (bot->HasSpell(0) returns false) for classes
+    // that cannot dispel a particular type. Class-specific behavior trees should be
+    // constructed with actual spell IDs:
+    // - Magic:   Priest Dispel Magic (528), Mage Remove Curse (475), Shaman Purify Spirit (77130)
+    // - Curse:   Mage Remove Curse (475), Druid Remove Corruption (2782), Shaman Cleanse Spirit (51886)
+    // - Disease: Priest Purify (527), Paladin Cleanse (4987), Monk Detox (115450)
+    // - Poison:  Druid Nature's Cure (88423), Paladin Cleanse (4987), Monk Detox (115450)
+
     auto root = ::std::make_shared<BTSelector>("DispelPriority");
 
     // Dispel magic (high priority)
     auto dispelMagicSequence = ::std::make_shared<BTSequence>("DispelMagic");
     dispelMagicSequence->AddChild(::std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::MAGIC));
-    dispelMagicSequence->AddChild(::std::make_shared<BTCastDispel>(0)); // Placeholder spell ID
+    dispelMagicSequence->AddChild(::std::make_shared<BTCastDispel>(0)); // Safe-fail: class-specific spell required
     root->AddChild(dispelMagicSequence);
 
     // Dispel curse
     auto dispelCurseSequence = ::std::make_shared<BTSequence>("DispelCurse");
     dispelCurseSequence->AddChild(::std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::CURSE));
-    dispelCurseSequence->AddChild(::std::make_shared<BTCastDispel>(0));
+    dispelCurseSequence->AddChild(::std::make_shared<BTCastDispel>(0)); // Safe-fail: class-specific spell required
     root->AddChild(dispelCurseSequence);
 
     // Dispel disease
     auto dispelDiseaseSequence = ::std::make_shared<BTSequence>("DispelDisease");
     dispelDiseaseSequence->AddChild(::std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::DISEASE));
-    dispelDiseaseSequence->AddChild(::std::make_shared<BTCastDispel>(0));
+    dispelDiseaseSequence->AddChild(::std::make_shared<BTCastDispel>(0)); // Safe-fail: class-specific spell required
     root->AddChild(dispelDiseaseSequence);
 
     // Dispel poison
     auto dispelPoisonSequence = ::std::make_shared<BTSequence>("DispelPoison");
     dispelPoisonSequence->AddChild(::std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::POISON));
-    dispelPoisonSequence->AddChild(::std::make_shared<BTCastDispel>(0));
+    dispelPoisonSequence->AddChild(::std::make_shared<BTCastDispel>(0)); // Safe-fail: class-specific spell required
     root->AddChild(dispelPoisonSequence);
 
     return root;

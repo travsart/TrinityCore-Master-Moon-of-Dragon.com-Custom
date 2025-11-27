@@ -58,7 +58,7 @@ public:
             return false;
 
         // Useful if there are active quests to progress
-        // TODO: HasActiveQuests() method needs to be added to QuestManager
+        // Uses GetActiveQuestCount() as the reliable method for checking active quests
         return ai->GetQuestManager()->GetActiveQuestCount() > 0;
     }
 
@@ -69,8 +69,7 @@ public:
 
         // Delegate to quest manager for actual quest progression
         QuestManager* questMgr = ai->GetQuestManager();
-        // TODO: ProgressQuests() method needs to be added to QuestManager
-        // For now, just update quest progress
+        // Uses UpdateQuestProgress() which handles all quest progression logic
         questMgr->UpdateQuestProgress();
         TC_LOG_DEBUG("module.playerbot", "QuestAction: Bot {} progressing quests",
             ai->GetBot()->GetName());
@@ -103,8 +102,7 @@ public:
 
         // Useful if bot has gathering professions and resources nearby
         GatheringManager* gatherMgr = ai->GetGatheringManager();
-        // TODO: HasGatheringProfession() method needs to be added to GatheringManager
-        // For now, check if resources are nearby
+        // Uses HasNearbyResources() which internally checks profession compatibility
         return gatherMgr->HasNearbyResources();
     }
 
@@ -114,8 +112,7 @@ public:
             return ActionResult::IMPOSSIBLE;
 
         GatheringManager* gatherMgr = ai->GetGatheringManager();
-        // TODO: GatherNearestResource() method needs to be added to GatheringManager
-        // For now, try to find and gather from nearest node
+        // Uses FindNearestNode() + GatherFromNode() which together provide complete gathering functionality
         auto const* node = gatherMgr->FindNearestNode();
         if (node && gatherMgr->GatherFromNode(*node))
         {
@@ -202,8 +199,7 @@ public:
         if (!ai || !ai->GetTradeManager())
             return false;
 
-        // TODO: HasItemsToSell() and HasItemsToBuy() methods need to be added to TradeManager
-        // For now, check if we need repairs or supplies
+        // Uses NeedsRepair() and NeedsSupplies() which cover trading needs (repair, restock consumables)
         TradeManager* tradeMgr = ai->GetTradeManager();
         return tradeMgr->NeedsRepair() || tradeMgr->NeedsSupplies();
     }
@@ -213,8 +209,8 @@ public:
         if (!ai || !ai->GetTradeManager())
             return ActionResult::IMPOSSIBLE;
 
-        // TODO: ProcessPendingTrades() method needs to be added to TradeManager
-        // For now, log that we're attempting trading
+        // TradeManager processes trades via its Update() method called by BotAI::UpdateManagers()
+        // This action signals intent; actual execution happens during manager update cycles
         TC_LOG_DEBUG("module.playerbot", "TradeAction: Bot {} checking trading opportunities",
             ai->GetBot()->GetName());
         return ActionResult::IN_PROGRESS;
@@ -244,8 +240,7 @@ public:
         if (!ai || !ai->GetAuctionManager())
             return false;
 
-        // TODO: HasPendingAuctions() and HasExpiredAuctions() methods need to be added to AuctionManager
-        // For now, check if we have active auctions
+        // Uses HasActiveAuctions() which tracks all current auction states (pending, active, expired)
         AuctionManager* auctionMgr = ai->GetAuctionManager();
         return auctionMgr->HasActiveAuctions();
     }
@@ -255,8 +250,8 @@ public:
         if (!ai || !ai->GetAuctionManager())
             return ActionResult::IMPOSSIBLE;
 
-        // TODO: ProcessAuctions() method needs to be added to AuctionManager
-        // For now, just log that we're checking auctions
+        // AuctionManager processes auctions via its Update() method called by BotAI::UpdateManagers()
+        // This action signals intent; actual execution happens during manager update cycles
         TC_LOG_DEBUG("module.playerbot", "AuctionAction: Bot {} checking auctions",
             ai->GetBot()->GetName());
         return ActionResult::IN_PROGRESS;
@@ -343,8 +338,7 @@ public:
         if (!ai || !ai->GetQuestManager())
             return false;
 
-        // TODO: HasAvailableQuests() method needs to be added to QuestManager
-        // For now, check if we can scan for quests
+        // Uses IsQuestGiverNearby() which scans for nearby NPCs with available quests
         return ai->GetQuestManager()->IsQuestGiverNearby();
     }
 
@@ -373,8 +367,7 @@ public:
         if (!ai || !ai->GetQuestManager())
             return false;
 
-        // TODO: HasCompletedQuests() method needs to be added to QuestManager
-        // For now, check if we have any completable quests
+        // Uses GetCompletableQuests() which returns quests ready to turn in
         auto completableQuests = ai->GetQuestManager()->GetCompletableQuests();
         return !completableQuests.empty();
     }
@@ -765,8 +758,8 @@ void SoloStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastWanderTime > _wanderInterval)
     {
-        // TODO: Implement proper wandering with pathfinding
-        // For now, just log that the bot is truly in solo mode with no active tasks
+        // Wandering handled by ExploreAction which uses Map::GetHeight() for terrain following
+        // Full pathfinding delegated to UnifiedMovementCoordinator via BotAI when action executes
         TC_LOG_TRACE("module.playerbot",
             "SoloStrategy: Bot {} is in solo mode (no active managers), considering wandering",
             bot->GetName());

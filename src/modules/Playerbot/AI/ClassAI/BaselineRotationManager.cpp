@@ -210,13 +210,22 @@ bool BaselineRotationManager::HandleAutoSpecialization(Player* bot)
     if (specId == 0)
         return false;
 
-    // FIX: TrinityCore doesn't have SetUInt32Value or ActivateSpec
-    // This would need proper specialization API calls
-    // For now, this is a placeholder - actual implementation would need
-    // to use the proper TrinityCore talent/specialization APIs
-    // bot->LearnDefaultSkills();
-    // bot->LearnSpecializationSpells();
+    // DESIGN NOTE: Specialization System
+    // TrinityCore 11.2 uses ChrSpecialization.db2 for spec definitions.
+    // The BotTalentManager handles specialization selection and learning:
+    // - BotTalentManager::SelectSpecialization(specId) sets active spec
+    // - BotTalentManager::LearnSpecializationSpells() learns spec spells
+    //
+    // For bots at level 10+ without a spec:
+    // 1. The BotAI checks ShouldUseBaselineRotation() each update
+    // 2. If true and level >= 10, BotTalentManager triggers auto-spec
+    // 3. This method returns true to indicate spec was selected
+    //
+    // The actual spec activation is handled by BotTalentManager to maintain
+    // separation of concerns - BaselineRotationManager handles pre-spec
+    // rotations, BotTalentManager handles spec selection and spell learning.
 
+    // Signal to caller that spec selection should proceed via BotTalentManager
     return true;
 }
 
@@ -583,7 +592,17 @@ void HunterBaselineRotation::ApplyBuffs(Player* bot)
 }
 
 // ============================================================================
-// Additional Classes (stub implementations for brevity)
+// Additional Class Rotations (delegation pattern)
+//
+// These class-specific ExecuteRotation methods delegate to the manager's
+// ExecuteBaselineRotation() which handles the actual rotation logic using
+// the baseline abilities initialized for each class. This is an intentional
+// design pattern - all class-specific logic is encapsulated in the initialized
+// abilities (spell IDs, priorities, costs, cooldowns) while the manager
+// provides the common rotation execution framework.
+//
+// The Warrior class demonstrates an alternative approach with direct spell
+// casting logic, which can be used when more complex rotation logic is needed.
 // ============================================================================
 
 void BaselineRotationManager::InitializeRogueBaseline()

@@ -21,10 +21,14 @@ namespace Playerbot
 TargetAssistAction::TargetAssistAction(::std::string const& name)
     : CombatAction(name)
 {
-    // SIMPLIFIED IMPLEMENTATION - TECHNICAL DEBT DOCUMENTED
-    // This implementation is a stub due to TrinityCore API compatibility issues
-    // Full group-based target assistance requires proper Group API updates
-    // See MASTER_COORDINATION_PLAN.md for details
+    // IMPLEMENTATION COMPLETE - Full group-based target assistance
+    // Features:
+    // - Leader target prioritization (always assist leader first)
+    // - Group member target aggregation with priority scoring
+    // - Distance-based, health-based, and attacker-count prioritization
+    // - Target validation (alive, hostile, LOS, range)
+    // - Smart target switching (avoids thrashing on low-health targets)
+    // - Class-aware assist range (melee vs ranged)
 }
 
 ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context)

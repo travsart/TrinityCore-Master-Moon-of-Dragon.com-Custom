@@ -280,6 +280,8 @@ public:
             CommandPetAttack(target);
     }
 
+    uint32 GetLastCommandTime() const { return _lastPetCommand; }
+
 private:
     CooldownManager _cooldowns;
     Player* _bot;
@@ -700,7 +702,24 @@ private:
     void MendPetIfNeeded() { _petManager.MendPet(); }
     void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
     bool HasActivePet() const { return _petManager.HasActivePet(); }
-    ::Playerbot::PetInfo GetPetInfo() const { return ::Playerbot::PetInfo(); /* Stub */ }
+    ::Playerbot::PetInfo GetPetInfo() const
+    {
+        ::Playerbot::PetInfo info;
+        Pet* pet = GetBot()->GetPet();
+        if (pet)
+        {
+            info.guid = pet->GetGUID();
+            info.health = pet->GetHealth();
+            info.maxHealth = pet->GetMaxHealth();
+            info.isDead = !pet->IsAlive();
+            info.type = pet->getPetType();
+            // Note: happiness and feeding were removed in modern WoW (Cataclysm+)
+            info.happiness = 0;
+            info.lastFeed = 0;
+            info.lastCommand = _petManager.GetLastCommandTime();
+        }
+        return info;
+    }
 
     // Trap management - delegated to AI
     void UpdateTrapManagement() { /* Traps managed by AI */ }
