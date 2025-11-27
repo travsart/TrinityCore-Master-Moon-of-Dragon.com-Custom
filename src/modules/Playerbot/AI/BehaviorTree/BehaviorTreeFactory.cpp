@@ -247,17 +247,240 @@ namespace Playerbot
     // Face target
     combatSequence->AddChild(::std::make_shared<BTFaceTarget>());
 
-    // Cast ranged abilities (placeholder - class-specific)
+    // Cast ranged abilities - Full class-specific rotation implementation
     combatSequence->AddChild(::std::make_shared<BTAction>("CastRangedSpell",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // DESIGN NOTE: Class-specific ranged spell rotation implementation required
-            // When implementing per-class ranged combat, add logic here for:
-            // - Hunters: Steady Shot, Arcane Shot, Kill Command, Multi-Shot
-            // - Mages: Fireball, Frostbolt, Arcane Blast, AoE spells
-            // - Warlocks: Shadow Bolt, Incinerate, Corruption, Immolate
-            // - Priests (Shadow): Mind Blast, Mind Flay, Shadow Word: Pain
-            // - Balance Druids: Wrath, Starfire, Moonfire, Sunfire
-            return BTStatus::SUCCESS;
+            if (!ai) return BTStatus::INVALID;
+            Player* bot = ai->GetBot();
+            if (!bot) return BTStatus::INVALID;
+
+            Unit* target = bb.GetOr<Unit*>("Target", nullptr);
+            if (!target || !target->IsAlive())
+                return BTStatus::FAILURE;
+
+            uint8 playerClass = bot->GetClass();
+            ChrSpecializationEntry const* spec = bot->GetPrimarySpecializationEntry();
+            uint32 specId = spec ? spec->ID : 0;
+            uint32 spellId = 0;
+
+            switch (playerClass)
+            {
+                case CLASS_HUNTER:
+                {
+                    // Beast Mastery (253), Marksmanship (254), Survival (255)
+                    if (specId == 253) // Beast Mastery
+                    {
+                        // Priority: Kill Command > Barbed Shot > Cobra Shot
+                        if (bot->HasSpell(34026) && !bot->GetSpellHistory()->HasCooldown(34026))
+                            spellId = 34026; // Kill Command
+                        else if (bot->HasSpell(217200) && !bot->GetSpellHistory()->HasCooldown(217200))
+                            spellId = 217200; // Barbed Shot
+                        else if (bot->HasSpell(193455))
+                            spellId = 193455; // Cobra Shot
+                    }
+                    else if (specId == 254) // Marksmanship
+                    {
+                        // Priority: Aimed Shot > Rapid Fire > Arcane Shot > Steady Shot
+                        if (bot->HasSpell(19434) && !bot->GetSpellHistory()->HasCooldown(19434) &&
+                            bot->GetPower(POWER_FOCUS) >= 35)
+                            spellId = 19434; // Aimed Shot
+                        else if (bot->HasSpell(257044) && !bot->GetSpellHistory()->HasCooldown(257044))
+                            spellId = 257044; // Rapid Fire
+                        else if (bot->HasSpell(185358) && bot->GetPower(POWER_FOCUS) >= 20)
+                            spellId = 185358; // Arcane Shot
+                        else if (bot->HasSpell(56641))
+                            spellId = 56641; // Steady Shot
+                    }
+                    else // Survival (melee but can have ranged abilities)
+                    {
+                        if (bot->HasSpell(186270))
+                            spellId = 186270; // Raptor Strike (melee fallback)
+                    }
+                    break;
+                }
+                case CLASS_MAGE:
+                {
+                    // Arcane (62), Fire (63), Frost (64)
+                    if (specId == 62) // Arcane
+                    {
+                        // Priority: Arcane Blast > Arcane Missiles > Arcane Barrage
+                        uint32 arcaneCharges = bot->GetPower(POWER_ARCANE_CHARGES);
+                        if (arcaneCharges >= 4 && bot->HasSpell(44425))
+                            spellId = 44425; // Arcane Barrage (dump charges)
+                        else if (bot->HasSpell(5143) && bot->HasAura(79683)) // Arcane Missiles proc
+                            spellId = 5143; // Arcane Missiles
+                        else if (bot->HasSpell(30451))
+                            spellId = 30451; // Arcane Blast
+                    }
+                    else if (specId == 63) // Fire
+                    {
+                        // Priority: Pyroblast (proc) > Fire Blast > Fireball
+                        if (bot->HasAura(48108) && bot->HasSpell(11366)) // Hot Streak
+                            spellId = 11366; // Pyroblast (instant)
+                        else if (bot->HasSpell(108853) && !bot->GetSpellHistory()->HasCooldown(108853))
+                            spellId = 108853; // Fire Blast
+                        else if (bot->HasSpell(133))
+                            spellId = 133; // Fireball
+                    }
+                    else // Frost (64)
+                    {
+                        // Priority: Ice Lance (proc) > Flurry (proc) > Frostbolt
+                        if (bot->HasAura(44544) && bot->HasSpell(30455)) // Fingers of Frost
+                            spellId = 30455; // Ice Lance (shatter)
+                        else if (bot->HasAura(190446) && bot->HasSpell(44614)) // Brain Freeze
+                            spellId = 44614; // Flurry
+                        else if (bot->HasSpell(116))
+                            spellId = 116; // Frostbolt
+                    }
+                    break;
+                }
+                case CLASS_WARLOCK:
+                {
+                    // Affliction (265), Demonology (266), Destruction (267)
+                    if (specId == 265) // Affliction
+                    {
+                        // Priority: Maintain DoTs > Malefic Rapture > Shadow Bolt
+                        if (bot->HasSpell(980) && !target->HasAura(980)) // Agony not on target
+                            spellId = 980; // Agony
+                        else if (bot->HasSpell(172) && !target->HasAura(172)) // Corruption not on target
+                            spellId = 172; // Corruption
+                        else if (bot->HasSpell(316099) && bot->GetPower(POWER_SOUL_SHARDS) >= 1)
+                            spellId = 316099; // Unstable Affliction
+                        else if (bot->HasSpell(324536) && bot->GetPower(POWER_SOUL_SHARDS) >= 1)
+                            spellId = 324536; // Malefic Rapture
+                        else if (bot->HasSpell(232670))
+                            spellId = 232670; // Shadow Bolt (Affliction version)
+                    }
+                    else if (specId == 266) // Demonology
+                    {
+                        // Priority: Call Dreadstalkers > Hand of Gul'dan > Demonbolt
+                        if (bot->HasSpell(104316) && !bot->GetSpellHistory()->HasCooldown(104316) &&
+                            bot->GetPower(POWER_SOUL_SHARDS) >= 2)
+                            spellId = 104316; // Call Dreadstalkers
+                        else if (bot->HasSpell(105174) && bot->GetPower(POWER_SOUL_SHARDS) >= 1)
+                            spellId = 105174; // Hand of Gul'dan
+                        else if (bot->HasSpell(264178))
+                            spellId = 264178; // Demonbolt
+                    }
+                    else // Destruction (267)
+                    {
+                        // Priority: Chaos Bolt > Conflagrate > Immolate > Incinerate
+                        if (bot->HasSpell(348) && !target->HasAura(348)) // Immolate not on target
+                            spellId = 348; // Immolate
+                        else if (bot->HasSpell(17962) && !bot->GetSpellHistory()->HasCooldown(17962))
+                            spellId = 17962; // Conflagrate
+                        else if (bot->HasSpell(116858) && bot->GetPower(POWER_SOUL_SHARDS) >= 2)
+                            spellId = 116858; // Chaos Bolt
+                        else if (bot->HasSpell(29722))
+                            spellId = 29722; // Incinerate
+                    }
+                    break;
+                }
+                case CLASS_PRIEST:
+                {
+                    // Discipline (256), Holy (257), Shadow (258)
+                    if (specId == 258) // Shadow
+                    {
+                        // Priority: Maintain DoTs > Mind Blast > Mind Flay
+                        if (bot->HasSpell(589) && !target->HasAura(589)) // Shadow Word: Pain
+                            spellId = 589; // Shadow Word: Pain
+                        else if (bot->HasSpell(34914) && !target->HasAura(34914)) // Vampiric Touch
+                            spellId = 34914; // Vampiric Touch
+                        else if (bot->HasSpell(8092) && !bot->GetSpellHistory()->HasCooldown(8092))
+                            spellId = 8092; // Mind Blast
+                        else if (bot->HasSpell(263165) && bot->GetPower(POWER_INSANITY) >= 50)
+                            spellId = 263165; // Void Eruption / Void Bolt
+                        else if (bot->HasSpell(15407))
+                            spellId = 15407; // Mind Flay
+                    }
+                    else // Holy/Disc - use Smite for damage
+                    {
+                        if (bot->HasSpell(585))
+                            spellId = 585; // Smite
+                    }
+                    break;
+                }
+                case CLASS_DRUID:
+                {
+                    // Balance (102), Feral (103), Guardian (104), Restoration (105)
+                    if (specId == 102) // Balance
+                    {
+                        // Priority: Maintain DoTs > Starsurge > Wrath/Starfire
+                        if (bot->HasSpell(164812) && !target->HasAura(164812)) // Moonfire
+                            spellId = 164812; // Moonfire
+                        else if (bot->HasSpell(93402) && !target->HasAura(93402)) // Sunfire
+                            spellId = 93402; // Sunfire
+                        else if (bot->HasSpell(78674) && bot->GetPower(POWER_LUNAR_POWER) >= 40)
+                            spellId = 78674; // Starsurge
+                        else if (bot->HasAura(48517) && bot->HasSpell(194153)) // Eclipse (Solar)
+                            spellId = 194153; // Starfire
+                        else if (bot->HasSpell(190984))
+                            spellId = 190984; // Wrath
+                    }
+                    else // Non-balance specs in ranged situation
+                    {
+                        if (bot->HasSpell(8921) && !target->HasAura(8921))
+                            spellId = 8921; // Moonfire (base)
+                        else if (bot->HasSpell(5176))
+                            spellId = 5176; // Wrath (base)
+                    }
+                    break;
+                }
+                case CLASS_SHAMAN:
+                {
+                    // Elemental (262), Enhancement (263), Restoration (264)
+                    if (specId == 262) // Elemental
+                    {
+                        // Priority: Flame Shock > Lava Burst > Lightning Bolt
+                        if (bot->HasSpell(188389) && !target->HasAura(188389)) // Flame Shock
+                            spellId = 188389; // Flame Shock
+                        else if (bot->HasSpell(51505) && !bot->GetSpellHistory()->HasCooldown(51505))
+                            spellId = 51505; // Lava Burst
+                        else if (bot->HasSpell(188196))
+                            spellId = 188196; // Lightning Bolt
+                    }
+                    else // Enhancement/Resto - use Lightning Bolt as ranged filler
+                    {
+                        if (bot->HasSpell(188196))
+                            spellId = 188196; // Lightning Bolt
+                    }
+                    break;
+                }
+                case CLASS_EVOKER:
+                {
+                    // Devastation (1467), Preservation (1468), Augmentation (1473)
+                    if (specId == 1467) // Devastation
+                    {
+                        // Priority: Fire Breath > Disintegrate > Living Flame
+                        if (bot->HasSpell(357208) && !bot->GetSpellHistory()->HasCooldown(357208))
+                            spellId = 357208; // Fire Breath
+                        else if (bot->HasSpell(356995) && bot->GetPower(POWER_ESSENCE) >= 3)
+                            spellId = 356995; // Disintegrate
+                        else if (bot->HasSpell(361469))
+                            spellId = 361469; // Living Flame
+                    }
+                    else // Preservation/Augmentation
+                    {
+                        if (bot->HasSpell(361469))
+                            spellId = 361469; // Living Flame
+                    }
+                    break;
+                }
+                default:
+                    return BTStatus::FAILURE; // Non-ranged class
+            }
+
+            if (spellId != 0 && bot->HasSpell(spellId))
+            {
+                bb.Set<uint32>("RangedSpellId", spellId);
+                // Cast the spell using TrinityCore spell system
+                Spell* spell = new Spell(bot, sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE), TRIGGERED_NONE);
+                SpellCastTargets targets;
+                targets.SetUnitTarget(target);
+                spell->prepare(targets);
+                return BTStatus::SUCCESS;
+            }
+            return BTStatus::FAILURE;
         }
     ));
 
@@ -495,17 +718,158 @@ namespace Playerbot
         }
     ));
 
-    // Maintain defensive stance/presence
+    // Maintain defensive stance/presence - Full class-specific implementation
     tankingSequence->AddChild(::std::make_shared<BTAction>("DefensiveStance",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // DESIGN NOTE: Class-specific defensive stance/presence implementation required
-            // When implementing per-class stance management, add logic here for:
-            // - Warriors: Defensive Stance (if applicable)
-            // - Paladins: Righteous Fury / Devotion Aura
-            // - Death Knights: Blood Presence / Frost Presence
-            // - Druids: Bear Form
-            // - Monks: Stance of the Sturdy Ox
-            // - Demon Hunters: Demon Spikes (active mitigation)
+            if (!ai) return BTStatus::INVALID;
+            Player* bot = ai->GetBot();
+            if (!bot) return BTStatus::INVALID;
+
+            uint8 playerClass = bot->GetClass();
+            ChrSpecializationEntry const* spec = bot->GetPrimarySpecializationEntry();
+            uint32 specId = spec ? spec->ID : 0;
+            uint32 stanceSpellId = 0;
+            uint32 activeMitigationId = 0;
+
+            switch (playerClass)
+            {
+                case CLASS_WARRIOR:
+                    if (specId == 73) // Protection
+                    {
+                        // Warrior no longer has stances in TWW 11.2
+                        // Use Shield Block as primary active mitigation
+                        if (bot->HasSpell(2565) && !bot->GetSpellHistory()->HasCooldown(2565) &&
+                            bot->GetPower(POWER_RAGE) >= 30 && !bot->HasAura(132404))
+                            activeMitigationId = 2565; // Shield Block
+                        // Ignore Pain as secondary
+                        else if (bot->HasSpell(190456) && bot->GetPower(POWER_RAGE) >= 40 &&
+                                 bot->GetHealthPct() < 80.0f)
+                            activeMitigationId = 190456; // Ignore Pain
+                    }
+                    break;
+
+                case CLASS_PALADIN:
+                    if (specId == 66) // Protection
+                    {
+                        // Ensure Consecration is active
+                        if (bot->HasSpell(26573) && !bot->HasAura(188370) &&
+                            !bot->GetSpellHistory()->HasCooldown(26573))
+                            activeMitigationId = 26573; // Consecration
+                        // Shield of the Righteous for active mitigation
+                        else if (bot->HasSpell(53600) && bot->GetPower(POWER_HOLY_POWER) >= 3)
+                            activeMitigationId = 53600; // Shield of the Righteous
+                    }
+                    break;
+
+                case CLASS_DEATH_KNIGHT:
+                    if (specId == 250) // Blood
+                    {
+                        // Death Knights no longer have presences in TWW 11.2
+                        // Bone Shield maintenance via Marrowrend
+                        if (bot->HasSpell(195182) && !bot->HasAura(195181))
+                            activeMitigationId = 195182; // Marrowrend (apply Bone Shield)
+                        // Death Strike for healing/absorb
+                        else if (bot->HasSpell(49998) && bot->GetPower(POWER_RUNIC_POWER) >= 45 &&
+                                 bot->GetHealthPct() < 75.0f)
+                            activeMitigationId = 49998; // Death Strike
+                    }
+                    break;
+
+                case CLASS_DRUID:
+                    if (specId == 104) // Guardian
+                    {
+                        // Ensure Bear Form
+                        if (bot->HasSpell(5487) && !bot->HasAura(5487))
+                            stanceSpellId = 5487; // Bear Form
+                        // Ironfur for active mitigation
+                        else if (bot->HasSpell(192081) && bot->GetPower(POWER_RAGE) >= 40 &&
+                                 !bot->HasAura(192081))
+                            activeMitigationId = 192081; // Ironfur
+                        // Frenzied Regeneration for healing
+                        else if (bot->HasSpell(22842) && bot->GetPower(POWER_RAGE) >= 10 &&
+                                 bot->GetHealthPct() < 70.0f && !bot->HasAura(22842))
+                            activeMitigationId = 22842; // Frenzied Regeneration
+                    }
+                    break;
+
+                case CLASS_MONK:
+                    if (specId == 268) // Brewmaster
+                    {
+                        // Shuffle maintenance via Blackout Kick / Keg Smash
+                        if (bot->HasSpell(115181) && !bot->GetSpellHistory()->HasCooldown(115181))
+                            activeMitigationId = 115181; // Keg Smash
+                        // Purifying Brew to clear Stagger
+                        else if (bot->HasSpell(119582) && !bot->GetSpellHistory()->HasCooldown(119582))
+                        {
+                            // Check stagger level - purify at high stagger
+                            if (bot->HasAura(124275)) // Heavy Stagger
+                                activeMitigationId = 119582; // Purifying Brew
+                        }
+                        // Celestial Brew for absorb
+                        else if (bot->HasSpell(322507) && !bot->GetSpellHistory()->HasCooldown(322507) &&
+                                 bot->GetHealthPct() < 60.0f)
+                            activeMitigationId = 322507; // Celestial Brew
+                    }
+                    break;
+
+                case CLASS_DEMON_HUNTER:
+                    if (specId == 581) // Vengeance
+                    {
+                        // Demon Spikes for armor increase
+                        if (bot->HasSpell(203720) && !bot->HasAura(203819) &&
+                            !bot->GetSpellHistory()->HasCooldown(203720))
+                            activeMitigationId = 203720; // Demon Spikes
+                        // Soul Cleave for healing
+                        else if (bot->HasSpell(228477) && bot->GetPower(POWER_FURY) >= 30 &&
+                                 bot->GetHealthPct() < 70.0f)
+                            activeMitigationId = 228477; // Soul Cleave
+                        // Fiery Brand for damage reduction
+                        else if (bot->HasSpell(204021) && !bot->GetSpellHistory()->HasCooldown(204021) &&
+                                 bot->GetHealthPct() < 50.0f)
+                            activeMitigationId = 204021; // Fiery Brand
+                    }
+                    break;
+
+                default:
+                    return BTStatus::SUCCESS; // Non-tank class
+            }
+
+            // Cast stance spell if needed
+            if (stanceSpellId != 0 && bot->HasSpell(stanceSpellId))
+            {
+                Spell* stanceSpell = new Spell(bot, sSpellMgr->GetSpellInfo(stanceSpellId, DIFFICULTY_NONE), TRIGGERED_NONE);
+                SpellCastTargets stanceTargets;
+                stanceTargets.SetUnitTarget(bot);
+                stanceSpell->prepare(stanceTargets);
+            }
+
+            // Cast active mitigation spell if needed
+            if (activeMitigationId != 0 && bot->HasSpell(activeMitigationId))
+            {
+                bb.Set<uint32>("ActiveMitigationId", activeMitigationId);
+                Spell* mitigationSpell = new Spell(bot, sSpellMgr->GetSpellInfo(activeMitigationId, DIFFICULTY_NONE), TRIGGERED_NONE);
+                SpellCastTargets mitigationTargets;
+
+                // Some abilities target self, others target enemy - check if spell requires target
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(activeMitigationId, DIFFICULTY_NONE);
+                if (spellInfo && spellInfo->NeedsExplicitUnitTarget())
+                {
+                    // Offensive abilities like Revenge, Shield Slam need enemy target
+                    Unit* target = bb.GetOr<Unit*>("Target", nullptr);
+                    if (target && target->IsAlive() && bot->IsValidAttackTarget(target))
+                        mitigationTargets.SetUnitTarget(target);
+                    else
+                        mitigationTargets.SetUnitTarget(bot);
+                }
+                else
+                {
+                    // Defensive abilities target self
+                    mitigationTargets.SetUnitTarget(bot);
+                }
+                mitigationSpell->prepare(mitigationTargets);
+                return BTStatus::SUCCESS;
+            }
+
             return BTStatus::SUCCESS;
         }
     ));
@@ -519,7 +883,7 @@ namespace Playerbot
 {
     auto root = ::std::make_shared<BTSelector>("SingleTargetHealingRoot");
 
-    // Heal self if critical
+    // Heal self if critical - Full class-specific self-healing implementation
     auto selfHealSequence = ::std::make_shared<BTSequence>("SelfHeal");
     selfHealSequence->AddChild(::std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
     selfHealSequence->AddChild(::std::make_shared<BTAction>("HealSelf",
@@ -528,14 +892,111 @@ namespace Playerbot
             Player* bot = ai->GetBot();
             if (!bot) return BTStatus::INVALID;
             bb.Set<Unit*>("HealTarget", bot);
-            // DESIGN NOTE: Class-specific self-healing spell implementation required
-            // When implementing per-class healing, add logic here for:
-            // - Priests: Flash Heal, Renew, Desperate Prayer
-            // - Paladins: Flash of Light, Holy Light, Word of Glory
-            // - Druids: Rejuvenation, Regrowth, Swiftmend
-            // - Shamans: Healing Surge, Healing Wave, Riptide
-            // - Monks: Soothing Mist, Enveloping Mist, Expel Harm
-            return BTStatus::SUCCESS;
+
+            uint8 playerClass = bot->GetClass();
+            ChrSpecializationEntry const* spec = bot->GetPrimarySpecializationEntry();
+            uint32 specId = spec ? spec->ID : 0;
+            uint32 selfHealSpellId = 0;
+            float healthPct = bot->GetHealthPct();
+
+            switch (playerClass)
+            {
+                case CLASS_PRIEST:
+                    // All priest specs have self-healing
+                    if (bot->HasSpell(19236) && !bot->GetSpellHistory()->HasCooldown(19236))
+                        selfHealSpellId = 19236; // Desperate Prayer (instant)
+                    else if (healthPct < 20.0f && bot->HasSpell(2061))
+                        selfHealSpellId = 2061; // Flash Heal (fast)
+                    else if (bot->HasSpell(139) && !bot->HasAura(139))
+                        selfHealSpellId = 139; // Renew (HoT)
+                    else if (bot->HasSpell(2060))
+                        selfHealSpellId = 2060; // Heal
+                    break;
+
+                case CLASS_PALADIN:
+                    // Word of Glory is best instant heal
+                    if (bot->HasSpell(85673) && bot->GetPower(POWER_HOLY_POWER) >= 1)
+                        selfHealSpellId = 85673; // Word of Glory
+                    else if (bot->HasSpell(633) && !bot->GetSpellHistory()->HasCooldown(633) &&
+                             healthPct < 15.0f)
+                        selfHealSpellId = 633; // Lay on Hands (emergency)
+                    else if (healthPct < 20.0f && bot->HasSpell(19750))
+                        selfHealSpellId = 19750; // Flash of Light (fast)
+                    else if (bot->HasSpell(82326))
+                        selfHealSpellId = 82326; // Holy Light
+                    break;
+
+                case CLASS_DRUID:
+                    // Swiftmend is instant if available
+                    if (bot->HasSpell(18562) && !bot->GetSpellHistory()->HasCooldown(18562) &&
+                        (bot->HasAura(774) || bot->HasAura(8936))) // Has Rejuv or Regrowth
+                        selfHealSpellId = 18562; // Swiftmend
+                    else if (bot->HasSpell(774) && !bot->HasAura(774))
+                        selfHealSpellId = 774; // Rejuvenation
+                    else if (healthPct < 20.0f && bot->HasSpell(8936))
+                        selfHealSpellId = 8936; // Regrowth (fast with HoT)
+                    else if (bot->HasSpell(5185))
+                        selfHealSpellId = 5185; // Healing Touch
+                    break;
+
+                case CLASS_SHAMAN:
+                    // Riptide is instant
+                    if (bot->HasSpell(61295) && !bot->GetSpellHistory()->HasCooldown(61295))
+                        selfHealSpellId = 61295; // Riptide
+                    else if (healthPct < 20.0f && bot->HasSpell(8004))
+                        selfHealSpellId = 8004; // Healing Surge (fast)
+                    else if (bot->HasSpell(77472))
+                        selfHealSpellId = 77472; // Healing Wave
+                    break;
+
+                case CLASS_MONK:
+                    // Expel Harm is instant
+                    if (bot->HasSpell(322101) && !bot->GetSpellHistory()->HasCooldown(322101))
+                        selfHealSpellId = 322101; // Expel Harm
+                    else if (bot->HasSpell(116670))
+                        selfHealSpellId = 116670; // Vivify
+                    break;
+
+                case CLASS_DEATH_KNIGHT:
+                    // Death Strike is primary self-heal
+                    if (bot->HasSpell(49998) && bot->GetPower(POWER_RUNIC_POWER) >= 45)
+                        selfHealSpellId = 49998; // Death Strike
+                    break;
+
+                case CLASS_DEMON_HUNTER:
+                    // Soul Cleave for self-healing
+                    if (specId == 581 && bot->HasSpell(228477) && bot->GetPower(POWER_FURY) >= 30)
+                        selfHealSpellId = 228477; // Soul Cleave (Vengeance)
+                    break;
+
+                case CLASS_WARRIOR:
+                    // Victory Rush after kill, otherwise Impending Victory talent
+                    if (bot->HasSpell(34428) && bot->HasAura(32216)) // Victory Rush proc
+                        selfHealSpellId = 34428; // Victory Rush
+                    else if (bot->HasSpell(202168) && !bot->GetSpellHistory()->HasCooldown(202168))
+                        selfHealSpellId = 202168; // Impending Victory
+                    break;
+
+                case CLASS_EVOKER:
+                    // Living Flame can heal self
+                    if (bot->HasSpell(361469))
+                        selfHealSpellId = 361469; // Living Flame (smart heal)
+                    break;
+
+                default:
+                    return BTStatus::FAILURE; // No self-healing available
+            }
+
+            if (selfHealSpellId != 0 && bot->HasSpell(selfHealSpellId))
+            {
+                bb.Set<uint32>("SelfHealSpellId", selfHealSpellId);
+                Spell* healSpell = new Spell(bot, sSpellMgr->GetSpellInfo(selfHealSpellId, DIFFICULTY_NONE), TRIGGERED_NONE);
+                SpellCastTargets targets;
+                targets.SetUnitTarget(bot);
+                healSpell->prepare(targets);
+                return BTStatus::SUCCESS;
+            }
+            return BTStatus::FAILURE;
         }
     ));
     root->AddChild(selfHealSequence);
@@ -552,41 +1013,201 @@ namespace Playerbot
     // Check line of sight
     healAllySequence->AddChild(::std::make_shared<BTCheckHealTargetLoS>());
 
-    // Select appropriate heal spell based on deficit
+    // Select appropriate heal spell based on deficit - Full class-specific implementation
     healAllySequence->AddChild(::std::make_shared<BTAction>("SelectHealSpell",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
+            if (!ai) return BTStatus::INVALID;
+            Player* bot = ai->GetBot();
+            if (!bot) return BTStatus::INVALID;
+
             float targetHealthPct = bb.GetOr<float>("HealTargetHealthPct", 1.0f);
+            Unit* healTarget = bb.GetOr<Unit*>("HealTarget", nullptr);
+            if (!healTarget) return BTStatus::FAILURE;
 
-            // DESIGN NOTE: Class-specific heal spell selection implementation required
-            // When implementing per-class healing priorities, add logic here for:
-            // - Priests: Flash Heal (fast), Greater Heal (efficient), Renew (HoT)
-            // - Paladins: Flash of Light (fast), Holy Light (efficient), Word of Glory (instant)
-            // - Druids: Regrowth (fast), Healing Touch (efficient), Rejuvenation (HoT)
-            // - Shamans: Healing Surge (fast), Healing Wave (efficient), Riptide (HoT)
-            // - Monks: Surging Mist (fast), Soothing Mist (channel), Enveloping Mist (efficient)
-            // For now, simple logic:
-            uint32 spellId = 0;
-            if (targetHealthPct < 0.3f)
-                spellId = 1; // Fast heal
-            else if (targetHealthPct < 0.6f)
-                spellId = 2; // Medium heal
-            else
-                spellId = 3; // Efficient heal
+            uint8 playerClass = bot->GetClass();
+            ChrSpecializationEntry const* spec = bot->GetPrimarySpecializationEntry();
+            uint32 specId = spec ? spec->ID : 0;
+            uint32 selectedHealSpell = 0;
+            bool isCritical = targetHealthPct < 0.30f;
+            bool isUrgent = targetHealthPct < 0.50f;
 
-            bb.Set<uint32>("SelectedHealSpell", spellId);
-            return BTStatus::SUCCESS;
+            switch (playerClass)
+            {
+                case CLASS_PRIEST:
+                    if (specId == 256) // Discipline
+                    {
+                        // Discipline uses Atonement and shields
+                        if (!healTarget->HasAura(194384)) // No Atonement
+                            selectedHealSpell = 17; // Power Word: Shield (applies Atonement)
+                        else if (isCritical && bot->HasSpell(47540))
+                            selectedHealSpell = 47540; // Penance
+                        else if (bot->HasSpell(194509))
+                            selectedHealSpell = 194509; // Power Word: Radiance
+                    }
+                    else if (specId == 257) // Holy
+                    {
+                        if (isCritical && bot->HasSpell(2061))
+                            selectedHealSpell = 2061; // Flash Heal
+                        else if (bot->HasSpell(2060))
+                            selectedHealSpell = 2060; // Heal
+                        // Add Renew if target doesn't have it
+                        if (!healTarget->HasAura(139) && bot->HasSpell(139))
+                            selectedHealSpell = 139; // Renew
+                    }
+                    break;
+
+                case CLASS_PALADIN:
+                    if (specId == 65) // Holy
+                    {
+                        if (isCritical && bot->HasSpell(85673) && bot->GetPower(POWER_HOLY_POWER) >= 3)
+                            selectedHealSpell = 85673; // Word of Glory (instant)
+                        else if (isCritical && bot->HasSpell(19750))
+                            selectedHealSpell = 19750; // Flash of Light
+                        else if (bot->HasSpell(82326))
+                            selectedHealSpell = 82326; // Holy Light
+                        // Holy Shock on cooldown
+                        if (bot->HasSpell(20473) && !bot->GetSpellHistory()->HasCooldown(20473))
+                            selectedHealSpell = 20473; // Holy Shock (instant)
+                    }
+                    break;
+
+                case CLASS_DRUID:
+                    if (specId == 105) // Restoration
+                    {
+                        // Swiftmend if target has HoT
+                        if (isCritical && bot->HasSpell(18562) && !bot->GetSpellHistory()->HasCooldown(18562) &&
+                            (healTarget->HasAura(774) || healTarget->HasAura(8936)))
+                            selectedHealSpell = 18562; // Swiftmend
+                        else if (isCritical && bot->HasSpell(8936))
+                            selectedHealSpell = 8936; // Regrowth
+                        else if (!healTarget->HasAura(774) && bot->HasSpell(774))
+                            selectedHealSpell = 774; // Rejuvenation
+                        else if (bot->HasSpell(5185))
+                            selectedHealSpell = 5185; // Healing Touch
+                    }
+                    break;
+
+                case CLASS_SHAMAN:
+                    if (specId == 264) // Restoration
+                    {
+                        // Riptide if off cooldown
+                        if (bot->HasSpell(61295) && !bot->GetSpellHistory()->HasCooldown(61295) &&
+                            !healTarget->HasAura(61295))
+                            selectedHealSpell = 61295; // Riptide
+                        else if (isCritical && bot->HasSpell(8004))
+                            selectedHealSpell = 8004; // Healing Surge
+                        else if (bot->HasSpell(77472))
+                            selectedHealSpell = 77472; // Healing Wave
+                    }
+                    break;
+
+                case CLASS_MONK:
+                    if (specId == 270) // Mistweaver
+                    {
+                        // Thunder Focus Tea enhances next spell
+                        if (isCritical && bot->HasSpell(116670))
+                            selectedHealSpell = 116670; // Vivify
+                        else if (!healTarget->HasAura(124682) && bot->HasSpell(124682))
+                            selectedHealSpell = 124682; // Enveloping Mist
+                        else if (bot->HasSpell(115175))
+                            selectedHealSpell = 115175; // Soothing Mist
+                    }
+                    break;
+
+                case CLASS_EVOKER:
+                    if (specId == 1468) // Preservation
+                    {
+                        if (isCritical && bot->HasSpell(355913))
+                            selectedHealSpell = 355913; // Emerald Blossom
+                        else if (bot->HasSpell(361469))
+                            selectedHealSpell = 361469; // Living Flame
+                        else if (bot->HasSpell(366155))
+                            selectedHealSpell = 366155; // Reversion (HoT)
+                    }
+                    break;
+
+                default:
+                    return BTStatus::FAILURE; // Non-healer class
+            }
+
+            if (selectedHealSpell != 0)
+            {
+                bb.Set<uint32>("SelectedHealSpell", selectedHealSpell);
+                return BTStatus::SUCCESS;
+            }
+            return BTStatus::FAILURE;
         }
     ));
 
-    // Cast heal (placeholder)
+    // Cast heal - Full spell casting implementation
     healAllySequence->AddChild(::std::make_shared<BTAction>("CastHeal",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
-            // DESIGN NOTE: Spell casting implementation required
-            // When implementing spell casting, add logic here to:
-            // - Retrieve the selected heal spell ID from blackboard
-            // - Verify the spell is available and off cooldown
-            // - Check mana/resource requirements
-            // - Execute the spell cast using TrinityCore Spell API
+            if (!ai) return BTStatus::INVALID;
+            Player* bot = ai->GetBot();
+            if (!bot) return BTStatus::INVALID;
+
+            uint32 healSpellId = bb.GetOr<uint32>("SelectedHealSpell", 0);
+            if (healSpellId == 0)
+                return BTStatus::FAILURE;
+
+            Unit* healTarget = bb.GetOr<Unit*>("HealTarget", nullptr);
+            if (!healTarget || !healTarget->IsAlive())
+                return BTStatus::FAILURE;
+
+            // Verify spell exists and is known
+            if (!bot->HasSpell(healSpellId))
+                return BTStatus::FAILURE;
+
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(healSpellId, DIFFICULTY_NONE);
+            if (!spellInfo)
+                return BTStatus::FAILURE;
+
+            // Check if spell is on cooldown
+            if (bot->GetSpellHistory()->HasCooldown(healSpellId))
+                return BTStatus::FAILURE;
+
+            // Check mana/resource requirements using TWW 11.2 SpellPowerCost API
+            ::std::vector<SpellPowerCost> powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+            bool hasEnoughPower = true;
+            for (SpellPowerCost const& cost : powerCosts)
+            {
+                if (cost.Amount > 0 && bot->GetPower(cost.Power) < static_cast<uint32>(cost.Amount))
+                {
+                    hasEnoughPower = false;
+                    break;
+                }
+            }
+            if (!hasEnoughPower)
+                return BTStatus::FAILURE;
+
+            // Check range
+            float range = spellInfo->GetMaxRange(false, bot);
+            if (range > 0 && bot->GetDistance(healTarget) > range)
+                return BTStatus::FAILURE;
+
+            // Check line of sight
+            if (!bot->IsWithinLOSInMap(healTarget))
+                return BTStatus::FAILURE;
+
+            // Cast the spell using TrinityCore Spell API
+            Spell* spell = new Spell(bot, spellInfo, TRIGGERED_NONE);
+            SpellCastTargets targets;
+            targets.SetUnitTarget(healTarget);
+
+            SpellCastResult result = spell->prepare(targets);
+
+            if (result == SPELL_CAST_OK)
+            {
+                TC_LOG_DEBUG("playerbot.bt", "Bot {} casting heal spell {} on target {}",
+                    bot->GetName(), healSpellId, healTarget->GetName());
+                return BTStatus::SUCCESS;
+            }
+            else
+            {
+                TC_LOG_DEBUG("playerbot.bt", "Bot {} failed to cast heal spell {}: result {}",
+                    bot->GetName(), healSpellId, uint32(result));
+                return BTStatus::FAILURE;
+            }
             // - Handle cast interruption and failure cases
             return BTStatus::SUCCESS;
         }
