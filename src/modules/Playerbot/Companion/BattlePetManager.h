@@ -377,6 +377,11 @@ private:
     bool ShouldSwitchPet() const;
     uint32 SelectBestSwitchTarget() const;
 
+    /**
+     * @brief Handle battle victory (award XP, capture pet, update metrics)
+     */
+    void OnBattleWon();
+
     // ============================================================================
     // DATA STRUCTURES
     // ============================================================================
@@ -392,6 +397,22 @@ private:
     PetBattleAutomationProfile _profile;                // Automation settings
     PetMetrics _metrics;                                // Per-bot metrics
     uint32 _lastUpdateTime{0};                          // Last update timestamp
+
+    // Battle state tracking
+    bool _inBattle{false};                              // Currently in pet battle
+    uint32 _battleStartTime{0};                         // When battle started (ms)
+    uint32 _currentOpponentEntry{0};                    // Current opponent creature entry
+    PetFamily _opponentFamily{PetFamily::BEAST};        // Opponent pet family
+    uint32 _opponentLevel{1};                           // Opponent pet level
+    float _opponentHealthPercent{100.0f};               // Opponent health percentage
+    uint32 _opponentCurrentHealth{0};                   // Opponent current health
+    uint32 _opponentMaxHealth{0};                       // Opponent max health
+    std::unordered_map<uint32, uint32> _abilityCooldowns; // abilityId -> cooldown end time (ms)
+
+    // Navigation tracking
+    Position _navigationTarget;                         // Target position for navigation
+    uint32 _navigationSpeciesId{0};                     // Species we're navigating to
+    uint32 _pendingBattleTarget{0};                     // Queued battle target
 
     // Shared static data (all bots)
     static std::unordered_map<uint32, BattlePetInfo> _petDatabase;
