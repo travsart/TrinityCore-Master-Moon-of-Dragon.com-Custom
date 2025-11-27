@@ -300,6 +300,11 @@ private:
         ::std::vector<uint32> spellSequence;
         ::std::chrono::steady_clock::time_point lastMatch;
         uint32 currentIndex = 0;
+
+        // Extended pattern tracking fields
+        uint32 lastUpdateTime = 0;              // Time of last pattern update (getMSTime())
+        float confidenceScore = 0.5f;           // Pattern confidence (0.0-1.0)
+        ::std::vector<uint32> castTimings;      // Timing between casts for temporal analysis
     };
     ::std::unordered_map<uint32, SpellPattern> _spellPatterns; // npcId -> pattern
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _patternMutex;

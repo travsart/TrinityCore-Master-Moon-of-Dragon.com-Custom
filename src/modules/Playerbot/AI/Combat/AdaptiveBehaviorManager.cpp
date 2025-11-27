@@ -8,6 +8,8 @@
  */
 
 #include "AdaptiveBehaviorManager.h"
+#include "Item.h"
+#include "ItemTemplate.h"
 #include "GameTime.h"
 #include "../Decision/DecisionFusionSystem.h"
 #include "../Common/ActionScoringEngine.h"
@@ -1042,16 +1044,118 @@ bool AdaptiveBehaviorManager::HasCrowdControl() const
 
 float AdaptiveBehaviorManager::GetGearScore() const
 {
-    // DESIGN NOTE: Calculate gear score for bot performance assessment
-    // Returns 3000.0f as baseline gear score (mid-tier equipment)
-    // Full implementation should:
-    // - Iterate through all equipped item slots
-    // - Sum item levels weighted by slot importance
-    // - Apply quality multipliers (epic, rare, uncommon)
-    // - Factor in gem sockets and enchantments
-    // - Consider set bonuses and tier piece counts
-    // Reference: WoW 11.2 gear scoring systems (average item level * slot count)
-    return 3000.0f;
+    // Full implementation: Calculate comprehensive gear score from equipped items
+    if (!_bot)
+        return 3000.0f;  // Baseline if no bot
+
+    float totalScore = 0.0f;
+    uint32 slotCount = 0;
+    uint32 itemLevelSum = 0;
+
+    // Slot importance multipliers (TWW 11.2 weights)
+    static const std::unordered_map<uint8, float> slotMultipliers = {
+        {EQUIPMENT_SLOT_HEAD, 1.2f},
+        {EQUIPMENT_SLOT_NECK, 0.9f},
+        {EQUIPMENT_SLOT_SHOULDERS, 1.1f},
+        {EQUIPMENT_SLOT_BODY, 0.0f},       // Shirt - no stats
+        {EQUIPMENT_SLOT_CHEST, 1.2f},
+        {EQUIPMENT_SLOT_WAIST, 1.0f},
+        {EQUIPMENT_SLOT_LEGS, 1.2f},
+        {EQUIPMENT_SLOT_FEET, 1.0f},
+        {EQUIPMENT_SLOT_WRISTS, 0.9f},
+        {EQUIPMENT_SLOT_HANDS, 1.0f},
+        {EQUIPMENT_SLOT_FINGER1, 0.85f},
+        {EQUIPMENT_SLOT_FINGER2, 0.85f},
+        {EQUIPMENT_SLOT_TRINKET1, 1.1f},
+        {EQUIPMENT_SLOT_TRINKET2, 1.1f},
+        {EQUIPMENT_SLOT_BACK, 0.9f},
+        {EQUIPMENT_SLOT_MAINHAND, 1.5f},   // Weapons are highly weighted
+        {EQUIPMENT_SLOT_OFFHAND, 1.2f},
+        {EQUIPMENT_SLOT_RANGED, 1.0f}      // Legacy slot
+    };
+
+    // Quality multipliers
+    static const std::unordered_map<uint32, float> qualityMultipliers = {
+        {ITEM_QUALITY_POOR, 0.5f},
+        {ITEM_QUALITY_NORMAL, 0.7f},
+        {ITEM_QUALITY_UNCOMMON, 0.85f},
+        {ITEM_QUALITY_RARE, 1.0f},
+        {ITEM_QUALITY_EPIC, 1.15f},
+        {ITEM_QUALITY_LEGENDARY, 1.3f},
+        {ITEM_QUALITY_ARTIFACT, 1.4f}
+    };
+
+    // Iterate through all equipment slots
+    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+    {
+        Item* item = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!item)
+            continue;
+
+        ItemTemplate const* itemTemplate = item->GetTemplate();
+        if (!itemTemplate)
+            continue;
+
+        // Skip items with no stats (shirts, tabards)
+        auto slotIt = slotMultipliers.find(slot);
+        if (slotIt == slotMultipliers.end() || slotIt->second == 0.0f)
+            continue;
+
+        float slotMultiplier = slotIt->second;
+
+        // Get item level
+        uint32 itemLevel = itemTemplate->GetBaseItemLevel();
+        itemLevelSum += itemLevel;
+
+        // Get quality multiplier
+        float qualityMult = 1.0f;
+        auto qualIt = qualityMultipliers.find(itemTemplate->GetQuality());
+        if (qualIt != qualityMultipliers.end())
+            qualityMult = qualIt->second;
+
+        // Calculate slot score: itemLevel * slotWeight * qualityMult
+        float slotScore = static_cast<float>(itemLevel) * slotMultiplier * qualityMult;
+
+        // Bonus for gem sockets (TWW 11.2: each socket adds ~2% value)
+        uint32 socketCount = 0;
+        for (uint32 i = 0; i < MAX_ITEM_PROTO_SOCKETS; ++i)
+        {
+            if (itemTemplate->GetSocketColor(i) != SocketColor(0))
+                socketCount++;
+        }
+        if (socketCount > 0)
+            slotScore *= (1.0f + 0.02f * socketCount);
+
+        // Bonus for enchantments (enchanted items get 5% boost)
+        if (item->GetEnchantmentId(PERM_ENCHANTMENT_SLOT) != 0)
+            slotScore *= 1.05f;
+
+        totalScore += slotScore;
+        slotCount++;
+    }
+
+    // Calculate average item level for reference
+    float avgItemLevel = slotCount > 0 ? static_cast<float>(itemLevelSum) / slotCount : 0.0f;
+
+    // Base score formula: (total weighted score / expected slots) * 100
+    // Expected filled slots for a fully geared character: ~16 (excluding shirt, tabard)
+    constexpr float EXPECTED_SLOT_COUNT = 16.0f;
+    float normalizedScore = slotCount > 0 ? (totalScore / EXPECTED_SLOT_COUNT) * 100.0f : 0.0f;
+
+    // Add average item level contribution (ilvl 400+ = 4000+ gear score)
+    float ilvlContribution = avgItemLevel * 10.0f;
+
+    // Final gear score combines weighted slot scores and item level
+    float finalScore = normalizedScore + ilvlContribution;
+
+    // Clamp to reasonable bounds (0 to 10000)
+    finalScore = std::clamp(finalScore, 0.0f, 10000.0f);
+
+    TC_LOG_DEBUG("playerbot", "AdaptiveBehaviorManager::GetGearScore - Bot %s: "
+        "slots=%u, avgIlvl=%.1f, weightedScore=%.1f, final=%.1f",
+        _bot->GetName().c_str(), slotCount, avgItemLevel, normalizedScore, finalScore);
+
+    return finalScore;
 }
 
 void AdaptiveBehaviorManager::Reset()

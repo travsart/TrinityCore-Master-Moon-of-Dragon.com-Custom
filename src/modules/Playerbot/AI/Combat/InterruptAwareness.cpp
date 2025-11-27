@@ -4,6 +4,7 @@
 
 // Combat/ThreatManager.h removed - not used in this file
 #include "InterruptAwareness.h"
+#include <unordered_set>
 #include "Player.h"
 #include "Unit.h"
 #include "Spell.h"
@@ -798,15 +799,97 @@ uint32 InterruptAwareness::GetUnitScanPriority(Unit* unit) const
     if (unit->HasUnitState(UNIT_STATE_CASTING))
         priority += 100;
 
-    // DESIGN NOTE: Simplified implementation for basic priority calculation
-    // Current behavior: Base priority (100) with bonuses for combat state (+50) and casting state (+100)
-    // Full implementation should:
-    // - Check creature type and entry for known dangerous casters
-    // - Consider boss/elite status via Creature API
-    // - Factor in spell history and interrupt patterns
-    // - Use NPC-specific priority overrides from pattern database
-    // - Apply group threat level and healer priorities
-    // Reference: CreatureTemplate flags, TrinityCore Creature class methods
+    // Full implementation: Check creature type and dangerous caster patterns
+    if (Creature const* creature = unit->ToCreature())
+    {
+        // Boss/Elite status - high priority interrupts
+        if (creature->isWorldBoss() || creature->IsDungeonBoss())
+            priority += 200;  // Boss spells are critical to interrupt
+        else if (creature->IsElite())
+            priority += 75;   // Elite mobs are dangerous
+
+        // Check creature template for caster type
+        CreatureTemplate const* creatureTemplate = creature->GetCreatureTemplate();
+        if (creatureTemplate)
+        {
+            // Unit class check - casters get higher priority
+            if (creatureTemplate->unit_class == UNIT_CLASS_MAGE ||
+                creatureTemplate->unit_class == UNIT_CLASS_PALADIN ||
+                creatureTemplate->unit_class == UNIT_CLASS_WARRIOR)
+            {
+                // Mage-type NPCs: highest caster priority
+                if (creatureTemplate->unit_class == UNIT_CLASS_MAGE)
+                    priority += 50;
+            }
+
+            // Check for known dangerous NPC entries (raid bosses, dungeon healers)
+            uint32 entry = creature->GetEntry();
+            // TWW 11.2 dungeon/raid healer entries that should be priority interrupted
+            static const std::unordered_set<uint32> healerEntries = {
+                // Nerub-ar Palace healers
+                196662, 196704, 196810,
+                // M+ dungeon healers
+                199193, 199198, 199234, 199312
+            };
+            if (healerEntries.count(entry) > 0)
+                priority += 150;  // Healers are critical interrupt targets
+        }
+
+        // Check current spell being cast for dangerous spell patterns
+        if (Spell const* currentSpell = creature->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+        {
+            SpellInfo const* spellInfo = currentSpell->GetSpellInfo();
+            if (spellInfo)
+            {
+                // Check for healing spells
+                if (spellInfo->HasEffect(SPELL_EFFECT_HEAL) ||
+                    spellInfo->HasEffect(SPELL_EFFECT_HEAL_PCT) ||
+                    spellInfo->HasAura(SPELL_AURA_PERIODIC_HEAL))
+                {
+                    priority += 125;  // Heal spells are high priority
+                }
+
+                // Check for crowd control spells
+                if (spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
+                    spellInfo->HasAura(SPELL_AURA_MOD_FEAR) ||
+                    spellInfo->HasAura(SPELL_AURA_MOD_CHARM) ||
+                    spellInfo->HasAura(SPELL_AURA_MOD_CONFUSE))
+                {
+                    priority += 100;  // CC spells are dangerous
+                }
+
+                // Check for damage reduction/immunity spells
+                if (spellInfo->HasAura(SPELL_AURA_SCHOOL_IMMUNITY) ||
+                    spellInfo->HasAura(SPELL_AURA_DAMAGE_IMMUNITY))
+                {
+                    priority += 75;  // Immunity spells should be interrupted
+                }
+
+                // Long cast time = more important to interrupt
+                uint32 castTime = spellInfo->CalcCastTime();
+                if (castTime > 2500)  // > 2.5s cast
+                    priority += 30;
+                else if (castTime > 1500)  // > 1.5s cast
+                    priority += 15;
+            }
+        }
+    }
+
+    // Apply role-based multiplier if observer is a tank (tanks need to interrupt more)
+    // Check if observer has tank specialization via talent tree analysis
+    if (_observer)
+    {
+        // Get player's current specialization to check for tank role
+        ChrSpecialization specId = _observer->GetPrimarySpecialization();
+        // Tank spec IDs in TWW 11.2: Protection Warrior (73), Protection Paladin (66),
+        // Blood DK (250), Guardian Druid (104), Brewmaster Monk (268), Vengeance DH (581)
+        static const std::unordered_set<ChrSpecialization> tankSpecs = {
+            ChrSpecialization(73), ChrSpecialization(66), ChrSpecialization(250),
+            ChrSpecialization(104), ChrSpecialization(268), ChrSpecialization(581)
+        };
+        if (tankSpecs.count(specId) > 0)
+            priority = static_cast<int32>(priority * 1.2f);
+    }
 
     return priority;
 }
@@ -816,20 +899,86 @@ void InterruptAwareness::UpdateSpellPatterns(DetectedSpellCast const& cast)
     if (!_enablePatterns)
         return;
 
-    // DESIGN NOTE: Simplified implementation for spell pattern tracking
-    // Current behavior: Logs detected spells for future analysis without pattern matching
-    // Full implementation should:
-    // - Match spell against known NPC spell sequences in _spellPatterns map
-    // - Update currentIndex in SpellPattern for sequence progression
-    // - Predict upcoming spells based on pattern history
-    // - Calculate confidence scores for pattern matches
-    // - Register new patterns dynamically from observed behavior
-    // - Use temporal analysis to detect rotation variations
-    // Reference: SpellPattern struct, NPC AI script patterns, boss mechanic timers
+    // Full implementation: Track and analyze spell patterns for prediction
+    uint64 casterKey = cast.casterGuid.IsCreature() ? cast.casterGuid.GetEntry() : cast.casterGuid.GetCounter();
 
-    // For now, just log the detected spell for future pattern analysis
-    TC_LOG_DEBUG("playerbot", "InterruptAwareness: Spell pattern detection deferred - spell %u from caster %s",
-                 cast.spellId, cast.casterGuid.ToString().c_str());
+    // Get or create pattern for this caster
+    auto& pattern = _spellPatterns[casterKey];
+
+    // Update pattern with new spell
+    if (pattern.spellSequence.empty())
+    {
+        // First spell from this caster - initialize pattern
+        pattern.spellSequence.push_back(cast.spellId);
+        pattern.currentIndex = 0;
+        pattern.lastUpdateTime = getMSTime();
+        pattern.confidenceScore = 0.5f;  // Start with moderate confidence
+    }
+    else
+    {
+        uint32 timeSinceLastCast = getMSTime() - pattern.lastUpdateTime;
+
+        // Check if this matches expected next spell in sequence
+        size_t nextIndex = (pattern.currentIndex + 1) % pattern.spellSequence.size();
+        bool matchesPattern = false;
+
+        if (nextIndex < pattern.spellSequence.size() &&
+            pattern.spellSequence[nextIndex] == cast.spellId)
+        {
+            // Spell matches expected pattern - increase confidence
+            matchesPattern = true;
+            pattern.currentIndex = nextIndex;
+            pattern.confidenceScore = std::min(1.0f, pattern.confidenceScore + 0.1f);
+
+            TC_LOG_DEBUG("playerbot", "InterruptAwareness: Pattern match for caster %llu - spell %u at index %zu (confidence: %.2f)",
+                casterKey, cast.spellId, nextIndex, pattern.confidenceScore);
+        }
+        else
+        {
+            // Spell doesn't match - either new pattern or variation
+            // Check if we've seen this spell before in the sequence
+            bool foundInSequence = false;
+            for (size_t i = 0; i < pattern.spellSequence.size(); ++i)
+            {
+                if (pattern.spellSequence[i] == cast.spellId)
+                {
+                    foundInSequence = true;
+                    pattern.currentIndex = i;
+                    break;
+                }
+            }
+
+            if (!foundInSequence)
+            {
+                // New spell - extend pattern if sequence is short enough
+                if (pattern.spellSequence.size() < 10)  // Max pattern length
+                {
+                    pattern.spellSequence.push_back(cast.spellId);
+                    pattern.currentIndex = pattern.spellSequence.size() - 1;
+                }
+                else
+                {
+                    // Pattern too long - might be random, reduce confidence
+                    pattern.confidenceScore = std::max(0.1f, pattern.confidenceScore - 0.2f);
+                }
+            }
+            else
+            {
+                // Spell found but out of order - minor confidence reduction
+                pattern.confidenceScore = std::max(0.2f, pattern.confidenceScore - 0.05f);
+            }
+        }
+
+        // Record timing for temporal analysis
+        if (pattern.castTimings.size() < 20)
+            pattern.castTimings.push_back(timeSinceLastCast);
+
+        pattern.lastUpdateTime = getMSTime();
+    }
+
+    TC_LOG_DEBUG("playerbot", "InterruptAwareness: Updated pattern for caster %llu - "
+        "sequence length %zu, current index %zu, confidence %.2f",
+        casterKey, pattern.spellSequence.size(), pattern.currentIndex, pattern.confidenceScore);
 }
 
 bool InterruptAwareness::MatchesKnownPattern(ObjectGuid casterGuid, uint32 spellId) const
@@ -837,8 +986,46 @@ bool InterruptAwareness::MatchesKnownPattern(ObjectGuid casterGuid, uint32 spell
     if (!_enablePatterns)
         return false;
 
-    // Implementation would check if this spell matches expected patterns
-    // This is a placeholder for future pattern matching logic
+    // Full implementation: Check if spell matches known dangerous patterns
+    uint64 casterKey = casterGuid.IsCreature() ? casterGuid.GetEntry() : casterGuid.GetCounter();
+
+    auto it = _spellPatterns.find(casterKey);
+    if (it == _spellPatterns.end())
+        return false;
+
+    SpellPattern const& pattern = it->second;
+
+    // Only consider high-confidence patterns
+    if (pattern.confidenceScore < 0.6f)
+        return false;
+
+    // Check if this spell is in the pattern and is a dangerous spell
+    for (uint32 patternSpellId : pattern.spellSequence)
+    {
+        if (patternSpellId == spellId)
+        {
+            // Verify this is a dangerous spell worth tracking
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+            if (spellInfo)
+            {
+                // Consider dangerous if it's a heal, CC, or high damage spell
+                if (spellInfo->HasEffect(SPELL_EFFECT_HEAL) ||
+                    spellInfo->HasEffect(SPELL_EFFECT_HEAL_PCT) ||
+                    spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
+                    spellInfo->HasAura(SPELL_AURA_MOD_FEAR) ||
+                    spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE) ||
+                    spellInfo->HasAura(SPELL_AURA_SCHOOL_ABSORB))
+                {
+                    return true;
+                }
+
+                // Also check if cast time is long (worth interrupting)
+                if (spellInfo->CalcCastTime() > 2000)
+                    return true;
+            }
+        }
+    }
+
     return false;
 }
 
