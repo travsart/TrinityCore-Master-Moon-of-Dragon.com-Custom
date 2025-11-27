@@ -14,6 +14,7 @@
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"
+#include "LFG.h"
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
@@ -1851,52 +1852,133 @@ ThreatRole RoleBasedCombatPositioning::DetermineRole(Player* bot)
     if (!bot)
         return ThreatRole::UNDEFINED;
 
-    // DESIGN NOTE: Simplified implementation for role determination
-    // Current behavior: Returns default role based on class only (e.g., all Warriors = TANK)
-    // Full implementation should:
-    // - Query active specialization via Player::GetSpecializationId()
-    // - Check talent point distribution for hybrid classes
-    // - Analyze equipped gear (tank stats, healing power, DPS stats)
-    // - Consider active aura effects indicating role (e.g., tanking stance)
-    // - Use group role assignment if explicitly set
-    // - Factor in performance metrics from BotRoleEffectiveness tracking
-    // Reference: Player::GetSpecializationId(), TalentMgr, Item stat analysis
+    // =========================================================================
+    // Full specialization-based role detection for TWW 11.2
+    // Uses ChrSpecialization enum for precise role determination
+    // =========================================================================
 
+    // 1. Get player's active specialization
+    ChrSpecialization spec = bot->GetPrimarySpecialization();
+
+    // 2. Check for explicit group role assignment first (if available)
+    Group* group = bot->GetGroup();
+    if (group)
+    {
+        uint8 groupRole = group->GetLfgRoles(bot->GetGUID());
+        if (groupRole & lfg::PLAYER_ROLE_TANK)
+            return ThreatRole::TANK;
+        if (groupRole & lfg::PLAYER_ROLE_HEALER)
+            return ThreatRole::HEALER;
+        if (groupRole & lfg::PLAYER_ROLE_DAMAGE)
+            return ThreatRole::DPS;
+    }
+
+    // 3. Specialization-based role determination
+    // TWW 11.2 specialization IDs from ChrSpecialization enum
+    switch (spec)
+    {
+        // =====================================================================
+        // TANK SPECIALIZATIONS
+        // =====================================================================
+        case ChrSpecialization(73):    // Protection Warrior
+        case ChrSpecialization(66):    // Protection Paladin
+        case ChrSpecialization(250):   // Blood Death Knight
+        case ChrSpecialization(104):   // Guardian Druid
+        case ChrSpecialization(268):   // Brewmaster Monk
+        case ChrSpecialization(581):   // Vengeance Demon Hunter
+            return ThreatRole::TANK;
+
+        // =====================================================================
+        // HEALER SPECIALIZATIONS
+        // =====================================================================
+        case ChrSpecialization(256):   // Discipline Priest
+        case ChrSpecialization(257):   // Holy Priest
+        case ChrSpecialization(65):    // Holy Paladin
+        case ChrSpecialization(264):   // Restoration Shaman
+        case ChrSpecialization(105):   // Restoration Druid
+        case ChrSpecialization(270):   // Mistweaver Monk
+        case ChrSpecialization(1468):  // Preservation Evoker
+            return ThreatRole::HEALER;
+
+        // =====================================================================
+        // MELEE DPS SPECIALIZATIONS
+        // =====================================================================
+        case ChrSpecialization(71):    // Arms Warrior
+        case ChrSpecialization(72):    // Fury Warrior
+        case ChrSpecialization(259):   // Assassination Rogue
+        case ChrSpecialization(260):   // Outlaw Rogue
+        case ChrSpecialization(261):   // Subtlety Rogue
+        case ChrSpecialization(251):   // Frost Death Knight
+        case ChrSpecialization(252):   // Unholy Death Knight
+        case ChrSpecialization(255):   // Survival Hunter
+        case ChrSpecialization(263):   // Enhancement Shaman
+        case ChrSpecialization(269):   // Windwalker Monk
+        case ChrSpecialization(70):    // Retribution Paladin
+        case ChrSpecialization(103):   // Feral Druid
+        case ChrSpecialization(577):   // Havoc Demon Hunter
+        case ChrSpecialization(1473):  // Augmentation Evoker (melee support)
+            return ThreatRole::DPS;
+
+        // =====================================================================
+        // RANGED DPS SPECIALIZATIONS
+        // =====================================================================
+        case ChrSpecialization(253):   // Beast Mastery Hunter
+        case ChrSpecialization(254):   // Marksmanship Hunter
+        case ChrSpecialization(258):   // Shadow Priest
+        case ChrSpecialization(262):   // Elemental Shaman
+        case ChrSpecialization(62):    // Arcane Mage
+        case ChrSpecialization(63):    // Fire Mage
+        case ChrSpecialization(64):    // Frost Mage
+        case ChrSpecialization(265):   // Affliction Warlock
+        case ChrSpecialization(266):   // Demonology Warlock
+        case ChrSpecialization(267):   // Destruction Warlock
+        case ChrSpecialization(102):   // Balance Druid
+        case ChrSpecialization(1467):  // Devastation Evoker
+            return ThreatRole::DPS;
+
+        default:
+            break;
+    }
+
+    // 4. Fallback: Skip gear analysis (deprecated ITEM_MOD_* constants removed in TWW 11.2)
+    // In modern WoW, specialization is always set, so gear analysis is rarely needed
+    // If specialization is unset, fall back directly to class-based defaults
+
+    // 5. Check active auras for role indicators (tank stance/presence spells)
+    // Defensive Stance (Warrior tank stance)
+    if (bot->HasAura(71))
+        return ThreatRole::TANK;
+    // Blood Presence (DK tank)
+    if (bot->HasAura(48263))
+        return ThreatRole::TANK;
+    // Bear Form (Druid tank)
+    if (bot->HasAura(5487) || bot->HasAura(9634))
+        return ThreatRole::TANK;
+
+    // 6. Final fallback to class-based defaults for pure classes
     Classes playerClass = static_cast<Classes>(bot->GetClass());
     switch (playerClass)
     {
-        case CLASS_WARRIOR:
-            return ThreatRole::TANK;
-
-        case CLASS_PALADIN:
-            return ThreatRole::TANK;
-
-        case CLASS_PRIEST:
-            return ThreatRole::HEALER;
-
         case CLASS_ROGUE:
-        case CLASS_HUNTER:
         case CLASS_MAGE:
         case CLASS_WARLOCK:
+        case CLASS_HUNTER:
             return ThreatRole::DPS;
+
+        case CLASS_PRIEST:
+            return ThreatRole::HEALER; // Default to healer for unspecialized priests
+
+        case CLASS_WARRIOR:
+        case CLASS_PALADIN:
+        case CLASS_DEATH_KNIGHT:
+            return ThreatRole::TANK; // Default to tank for plate wearers
 
         case CLASS_DRUID:
-            return ThreatRole::DPS;
-
         case CLASS_SHAMAN:
-            return ThreatRole::DPS;
-
         case CLASS_MONK:
-            return ThreatRole::DPS;
-
-        case CLASS_DEATH_KNIGHT:
-            return ThreatRole::DPS;
-
         case CLASS_DEMON_HUNTER:
-            return ThreatRole::DPS;
-
         case CLASS_EVOKER:
-            return ThreatRole::DPS;
+            return ThreatRole::DPS; // Hybrid classes default to DPS
 
         default:
             return ThreatRole::UNDEFINED;

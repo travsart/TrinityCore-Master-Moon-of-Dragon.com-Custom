@@ -232,6 +232,39 @@ private:
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _marketMutex;
 
     // Analysis models and algorithms
+
+    // Seller reputation tracking data for market trust analysis
+    struct SellerReputation
+    {
+        uint32 sellerGuid = 0;
+        uint32 firstSeenTime = 0;
+        uint32 lastActivityTime = 0;
+        uint32 lastCalculationTime = 0;
+
+        // Auction history
+        uint32 completedAuctions = 0;
+        uint32 expiredAuctions = 0;
+        uint32 cancelledAuctions = 0;
+
+        // Pricing analysis
+        float pricingDeviationSum = 0.0f;   // Sum of deviations from fair value
+        uint32 totalPricingChecks = 0;
+
+        // Sale velocity
+        uint32 totalSaleTimeHours = 0;      // Total time items took to sell
+
+        // Market manipulation indicators
+        float largestPriceSwing = 0.0f;     // Largest single price change
+        uint32 suspiciousTimingPatterns = 0; // Count of suspicious listing patterns
+        uint32 monopolyAttempts = 0;        // Times seller cornered a market
+
+        // Cached score
+        float reputationScore = 0.5f;
+    };
+
+    // Seller reputation cache
+    ::std::unordered_map<uint32, SellerReputation> _sellerReputations;
+
     struct PredictionModel
     {
         ::std::vector<float> weights;

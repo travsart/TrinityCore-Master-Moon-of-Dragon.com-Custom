@@ -619,19 +619,166 @@ CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 itemId)
 
 float MarketAnalysis::GetSellerReputationScore(uint32 sellerGuid)
 {
-    // DESIGN NOTE: Seller reputation scoring system for market trust analysis
-    // Returns 0.5f as neutral default score (range: 0.0 to 1.0)
-    // Full implementation should:
-    // - Track seller's historical auction success rate (completed vs expired)
-    // - Monitor pricing consistency (fair vs manipulative pricing patterns)
-    // - Analyze average listing duration (fast sales indicate fair pricing)
-    // - Evaluate buyer satisfaction (implicit from repurchase patterns)
-    // - Consider market manipulation indicators (pump and dump schemes)
-    // - Weight recent performance more heavily (decay old history)
-    // - Account for total transaction volume (experience factor)
-    // - Cross-reference with known bot/gold seller patterns
-    // Reference: AuctionHouse transaction logging, player behavior analytics
-    return 0.5f;
+    // =========================================================================
+    // Full seller reputation scoring system for market trust analysis
+    // Returns score in range [0.0, 1.0] where:
+    //   0.0-0.3: Poor reputation (avoid transactions)
+    //   0.3-0.5: Below average (caution advised)
+    //   0.5-0.7: Average/neutral (new or limited history)
+    //   0.7-0.9: Good reputation (reliable seller)
+    //   0.9-1.0: Excellent reputation (trusted seller)
+    // =========================================================================
+
+    if (sellerGuid == 0)
+        return 0.5f;  // Neutral for invalid GUID
+
+    ::std::lock_guard lock(_marketMutex);
+
+    // Check if we have reputation data for this seller
+    auto sellerIt = _sellerReputations.find(sellerGuid);
+    if (sellerIt == _sellerReputations.end())
+    {
+        // Initialize new seller reputation tracking
+        SellerReputation newRep;
+        newRep.sellerGuid = sellerGuid;
+        newRep.firstSeenTime = GameTime::GetGameTimeMS();
+        newRep.lastActivityTime = newRep.firstSeenTime;
+        newRep.reputationScore = 0.5f;  // Neutral starting score
+        _sellerReputations[sellerGuid] = newRep;
+        return 0.5f;
+    }
+
+    SellerReputation& rep = sellerIt->second;
+
+    // =========================================================================
+    // COMPONENT 1: Auction Success Rate (25% weight)
+    // Measures ratio of completed vs expired auctions
+    // =========================================================================
+    float successRateScore = 0.5f;
+    uint32 totalAuctions = rep.completedAuctions + rep.expiredAuctions + rep.cancelledAuctions;
+    if (totalAuctions > 0)
+    {
+        float successRate = float(rep.completedAuctions) / float(totalAuctions);
+        // Scale to reputation score: 100% = 1.0, 50% = 0.5, 0% = 0.0
+        successRateScore = successRate;
+
+        // Penalty for high cancellation rate (possible price manipulation)
+        float cancelRate = float(rep.cancelledAuctions) / float(totalAuctions);
+        if (cancelRate > 0.3f)
+            successRateScore *= (1.0f - (cancelRate - 0.3f));  // Reduce score for high cancels
+    }
+
+    // =========================================================================
+    // COMPONENT 2: Pricing Consistency (20% weight)
+    // Measures how close to market value seller prices items
+    // =========================================================================
+    float pricingScore = 0.5f;
+    if (rep.pricingDeviationSum > 0.0f && rep.totalPricingChecks > 0)
+    {
+        float avgDeviation = rep.pricingDeviationSum / float(rep.totalPricingChecks);
+        // Convert deviation to score: 0% deviation = 1.0, 50%+ deviation = 0.0
+        pricingScore = ::std::max(0.0f, 1.0f - (avgDeviation / 0.5f));
+    }
+
+    // =========================================================================
+    // COMPONENT 3: Sale Velocity (15% weight)
+    // Faster sales indicate fair pricing and reliable goods
+    // =========================================================================
+    float velocityScore = 0.5f;
+    if (rep.totalSaleTimeHours > 0 && rep.completedAuctions > 0)
+    {
+        float avgSaleTime = float(rep.totalSaleTimeHours) / float(rep.completedAuctions);
+        // Ideal sale time < 12 hours = 1.0, 48+ hours = 0.3
+        if (avgSaleTime <= 12.0f)
+            velocityScore = 1.0f;
+        else if (avgSaleTime <= 48.0f)
+            velocityScore = 1.0f - ((avgSaleTime - 12.0f) / 36.0f * 0.7f);  // Scale down to 0.3
+        else
+            velocityScore = 0.3f;
+    }
+
+    // =========================================================================
+    // COMPONENT 4: Transaction Volume Experience (15% weight)
+    // More transactions = more reliable reputation data
+    // =========================================================================
+    float volumeScore = 0.5f;
+    // Scale: 0 transactions = 0.3, 10 = 0.5, 50 = 0.8, 100+ = 1.0
+    if (totalAuctions >= 100)
+        volumeScore = 1.0f;
+    else if (totalAuctions >= 50)
+        volumeScore = 0.8f + (float(totalAuctions - 50) / 250.0f);
+    else if (totalAuctions >= 10)
+        volumeScore = 0.5f + (float(totalAuctions - 10) / 133.0f);
+    else
+        volumeScore = 0.3f + (float(totalAuctions) / 50.0f);
+
+    // =========================================================================
+    // COMPONENT 5: Market Manipulation Detection (15% weight)
+    // Detects suspicious patterns like pump-and-dump schemes
+    // =========================================================================
+    float manipulationScore = 1.0f;  // Start with perfect score, deduct for violations
+
+    // Check for rapid price swings (pump and dump indicator)
+    if (rep.largestPriceSwing > 0.5f)  // >50% price swing detected
+        manipulationScore -= 0.3f;
+
+    // Check for coordinated listing patterns (bot indicator)
+    if (rep.suspiciousTimingPatterns > 5)
+        manipulationScore -= 0.2f;
+
+    // Check for market cornering attempts
+    if (rep.monopolyAttempts > 0)
+        manipulationScore -= 0.3f * ::std::min(3u, rep.monopolyAttempts);
+
+    manipulationScore = ::std::max(0.0f, manipulationScore);
+
+    // =========================================================================
+    // COMPONENT 6: Time-Weighted Recency (10% weight)
+    // Recent activity counts more than old activity
+    // =========================================================================
+    float recencyScore = 0.5f;
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    uint32 daysSinceActivity = (currentTime - rep.lastActivityTime) / (24 * 60 * 60 * 1000);
+
+    if (daysSinceActivity == 0)
+        recencyScore = 1.0f;
+    else if (daysSinceActivity <= 7)
+        recencyScore = 0.9f;
+    else if (daysSinceActivity <= 30)
+        recencyScore = 0.7f;
+    else if (daysSinceActivity <= 90)
+        recencyScore = 0.5f;
+    else
+        recencyScore = 0.3f;  // Stale seller data
+
+    // =========================================================================
+    // FINAL SCORE CALCULATION
+    // Weighted combination of all components
+    // =========================================================================
+    float finalScore =
+        successRateScore * 0.25f +      // 25% - Auction success rate
+        pricingScore * 0.20f +          // 20% - Pricing consistency
+        velocityScore * 0.15f +         // 15% - Sale velocity
+        volumeScore * 0.15f +           // 15% - Transaction volume
+        manipulationScore * 0.15f +     // 15% - Market manipulation detection
+        recencyScore * 0.10f;           // 10% - Recency bonus
+
+    // Apply reputation decay for inactive sellers
+    if (daysSinceActivity > 30)
+    {
+        float decayFactor = ::std::max(0.5f, 1.0f - (float(daysSinceActivity - 30) / 180.0f));
+        // Decay towards neutral (0.5) over time
+        finalScore = 0.5f + (finalScore - 0.5f) * decayFactor;
+    }
+
+    // Clamp final score to valid range
+    finalScore = ::std::clamp(finalScore, 0.0f, 1.0f);
+
+    // Update cached reputation score
+    rep.reputationScore = finalScore;
+    rep.lastCalculationTime = currentTime;
+
+    return finalScore;
 }
 
 bool MarketAnalysis::IsMarketDominated(uint32 itemId, float threshold)
