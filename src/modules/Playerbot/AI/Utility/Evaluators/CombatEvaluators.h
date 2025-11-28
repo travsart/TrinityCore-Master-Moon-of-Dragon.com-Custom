@@ -217,6 +217,14 @@ public:
 /**
  * @brief Evaluates need to dispel harmful effects from allies
  * High score when allies have dispellable debuffs
+ *
+ * Uses blackboard keys:
+ * - "dispel_count_magic": Number of allies with magic debuffs
+ * - "dispel_count_curse": Number of allies with curse debuffs
+ * - "dispel_count_disease": Number of allies with disease debuffs
+ * - "dispel_count_poison": Number of allies with poison debuffs
+ * - "dispel_priority_target": GUID of highest priority dispel target
+ * - "dispel_urgent": Boolean flag for urgent dispel (CC/silence effects)
  */
 class TC_GAME_API DispelEvaluator : public UtilityEvaluator
 {
@@ -230,10 +238,52 @@ public:
             context.role != UtilityContext::Role::SUPPORT)
             return 0.0f;
 
-        // TODO: Implement debuff detection via blackboard
-        // For now, return moderate priority if in group
-        if (context.inGroup && context.inCombat)
-            return 0.5f;
+        // Not in combat = no dispel urgency
+        if (!context.inCombat)
+            return 0.0f;
+
+        // No mana = can't dispel
+        if (context.manaPercent < 0.05f)
+            return 0.0f;
+
+        // Check blackboard for dispellable debuff counts
+        if (context.blackboard)
+        {
+            // Check for urgent dispels (CC/silence/incapacitate)
+            bool urgentDispel = false;
+            if (context.blackboard->Get("dispel_urgent", urgentDispel) && urgentDispel)
+                return 1.0f;  // Maximum priority for urgent dispels
+
+            // Count dispellable debuffs from blackboard
+            uint32 magicCount = 0, curseCount = 0, diseaseCount = 0, poisonCount = 0;
+            context.blackboard->Get("dispel_count_magic", magicCount);
+            context.blackboard->Get("dispel_count_curse", curseCount);
+            context.blackboard->Get("dispel_count_disease", diseaseCount);
+            context.blackboard->Get("dispel_count_poison", poisonCount);
+
+            uint32 totalDebuffs = magicCount + curseCount + diseaseCount + poisonCount;
+
+            if (totalDebuffs > 0)
+            {
+                // Scale priority based on number of debuffs
+                // 1 debuff = 0.5, 2 = 0.65, 3 = 0.75, 4+ = 0.85
+                float baseScore = 0.5f + (Clamp(totalDebuffs / 8.0f, 0.0f, 0.35f));
+
+                // Magic debuffs often more dangerous (damage, CC)
+                if (magicCount > 0)
+                    baseScore += 0.1f;
+
+                // Mana availability factor
+                float manaFactor = Quadratic(context.manaPercent);
+
+                return Clamp(baseScore * manaFactor, 0.0f, 0.95f);
+            }
+        }
+
+        // Fallback: moderate priority if in group during combat
+        // (blackboard may not have been updated yet)
+        if (context.inGroup)
+            return 0.3f;
 
         return 0.0f;
     }

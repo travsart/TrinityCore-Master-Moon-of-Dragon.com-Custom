@@ -1259,7 +1259,65 @@ void DruidAI::UpdateBuffs()
         return;
     }
 
-    // TODO: Add spec-specific buff logic here if needed
+    // Spec-specific buff logic based on current specialization
+    ChrSpecialization spec = bot->GetPrimarySpecialization();
+
+    switch (spec)
+    {
+        case ChrSpecialization::DruidBalance:
+            // Balance druids should be in Moonkin Form for combat
+            if (!bot->IsInCombat())
+            {
+                // Out of combat: ensure Moonkin Form for DPS
+                if (!IsInForm(DruidForm::MOONKIN) && CanUseAbility(MOONKIN_FORM))
+                    ShiftToForm(DruidForm::MOONKIN);
+            }
+            // Apply Mark of the Wild if not present (universal druid buff)
+            // Spell ID 1126 = Mark of the Wild
+            if (!bot->HasAura(1126) && CanUseAbility(1126))
+                CastSpell(1126, bot);
+            break;
+
+        case ChrSpecialization::DruidFeral:
+            // Feral druids should be in Cat Form for melee DPS
+            if (!bot->IsInCombat())
+            {
+                // Out of combat: ensure Cat Form ready
+                if (!IsInForm(DruidForm::CAT) && CanUseAbility(CAT_FORM))
+                    ShiftToForm(DruidForm::CAT);
+            }
+            // Apply Mark of the Wild if not present
+            if (!bot->HasAura(1126) && CanUseAbility(1126))
+                CastSpell(1126, bot);
+            break;
+
+        case ChrSpecialization::DruidGuardian:
+            // Guardian druids should be in Bear Form for tanking
+            if (!bot->IsInCombat())
+            {
+                // Out of combat: ensure Bear Form ready for tanking
+                if (!IsInForm(DruidForm::BEAR) && CanUseAbility(BEAR_FORM))
+                    ShiftToForm(DruidForm::BEAR);
+            }
+            // Apply Mark of the Wild if not present
+            if (!bot->HasAura(1126) && CanUseAbility(1126))
+                CastSpell(1126, bot);
+            break;
+
+        case ChrSpecialization::DruidRestoration:
+            // Restoration druids stay in caster form for healing
+            // They might use Tree of Life form during heavy healing phases (handled in rotation)
+            // Apply Mark of the Wild if not present
+            if (!bot->HasAura(1126) && CanUseAbility(1126))
+                CastSpell(1126, bot);
+            break;
+
+        default:
+            // No specialization or unknown - apply basic buffs
+            if (!bot->HasAura(1126) && CanUseAbility(1126))
+                CastSpell(1126, bot);
+            break;
+    }
 }
 
 void DruidAI::UpdateCooldowns(uint32 diff)

@@ -30,6 +30,8 @@
 #include "ObjectAccessor.h"
 #include "GameTime.h"
 #include "LFG.h"
+#include "SpellHistory.h"
+#include "SpellMgr.h"
 
 namespace Playerbot
 {
@@ -89,7 +91,7 @@ static ::std::vector<ObjectGuid> GetGroupMembersByRole(GroupCoordinator* group, 
                     if (botGroupCoord)
                     {
                         // Get the bot's assigned role from its own GroupCoordinator
-                        memberRole = botGroupCoord->GetMemberRole(member->GetGUID());
+                        memberRole = botGroupCoord->GetRole();
                     }
                 }
             }

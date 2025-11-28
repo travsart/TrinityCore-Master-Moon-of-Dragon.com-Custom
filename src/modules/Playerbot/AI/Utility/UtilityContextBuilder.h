@@ -24,6 +24,7 @@
 #include "Group.h"
 #include "Unit.h"
 #include "GridNotifiers.h"
+#include "ThreatManager.h"
 
 namespace Playerbot
 {
@@ -88,19 +89,48 @@ public:
 private:
     /**
      * @brief Check if bot currently has aggro
+     * Uses ThreatManager to accurately check if bot is being targeted
      */
     static bool HasAggro(Player* bot)
     {
         if (!bot || !bot->IsInCombat())
             return false;
 
-        // Check if bot has any attackers
+        // Check if bot has any attackers via direct combat check
         Unit* victim = bot->GetVictim();
         if (victim && victim->GetVictim() == bot)
             return true;
 
-        // Check threat table if available
-        // TODO: Integrate with ThreatManager when available
+        // Check threat tables of nearby hostile units using ThreatManager
+        // Find any unit that has bot at the top of their threat list
+        ::std::list<Unit*> targets;
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
+        Cell::VisitAllObjects(bot, searcher, 40.0f);
+
+        for (Unit* hostile : targets)
+        {
+            if (!hostile || hostile->isDead())
+                continue;
+
+            // Check if hostile is targeting the bot using ThreatManager
+            ThreatManager& threatMgr = hostile->GetThreatManager();
+            Unit* topThreat = hostile->GetVictim();
+
+            if (topThreat && topThreat == bot)
+                return true;
+
+            // Also check if bot has significant threat on this target
+            float botThreat = threatMgr.GetThreat(bot);
+            if (topThreat)
+            {
+                float topThreatValue = threatMgr.GetThreat(topThreat);
+                // Bot has aggro if it's at 90%+ of top threat (melee range threshold)
+                if (topThreatValue > 0.0f && (botThreat / topThreatValue) >= 0.9f)
+                    return true;
+            }
+        }
+
         return false;
     }
 
@@ -190,6 +220,7 @@ private:
 
     /**
      * @brief Get time since combat started (in milliseconds)
+     * Uses static tracking per player GUID to monitor combat state transitions
      */
     static uint32 GetTimeSinceCombatStart(BotAI* ai)
     {
@@ -197,12 +228,35 @@ private:
             return 0;
 
         Player* bot = ai->GetBot();
-        if (!bot || !bot->IsInCombat())
+        if (!bot)
             return 0;
 
-        // TODO: Integrate with CombatStateManager to track combat start time
-        // For now, return 0 as placeholder
-        return 0;
+        // Static storage for combat start times
+        // Map player GUID -> combat start time
+        static ::std::unordered_map<ObjectGuid, uint32> combatStartTimes;
+
+        ObjectGuid botGuid = bot->GetGUID();
+        uint32 currentTime = GameTime::GetGameTimeMS();
+
+        if (!bot->IsInCombat())
+        {
+            // Not in combat - clear tracking entry
+            combatStartTimes.erase(botGuid);
+            return 0;
+        }
+
+        // In combat - check if we have a start time recorded
+        auto it = combatStartTimes.find(botGuid);
+        if (it == combatStartTimes.end())
+        {
+            // Just entered combat - record start time
+            combatStartTimes[botGuid] = currentTime;
+            return 0;  // Just started, 0 duration
+        }
+
+        // Calculate duration since combat start
+        uint32 startTime = it->second;
+        return currentTime >= startTime ? (currentTime - startTime) : 0;
     }
 };
 

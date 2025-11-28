@@ -1238,17 +1238,17 @@ Playerbot::bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(U
     }
 
     // Adjust confidence based on active strategies
-    if (HasFlag(_activeStrategies, AdaptiveStrategy::STRATEGY_AGGRESSIVE))
+    if (_activeStrategies & STRATEGY_AGGRESSIVE)
     {
         vote.confidence += 0.1f;
         vote.reasoning += "; Aggressive strategy active";
     }
-    if (HasFlag(_activeStrategies, AdaptiveStrategy::STRATEGY_DEFENSIVE))
+    if (_activeStrategies & STRATEGY_DEFENSIVE)
     {
         vote.confidence += 0.15f;
         vote.reasoning += "; Defensive strategy active";
     }
-    if (HasFlag(_activeStrategies, AdaptiveStrategy::STRATEGY_BURST))
+    if (_activeStrategies & STRATEGY_BURST_DAMAGE)
     {
         vote.confidence += 0.1f;
         vote.urgency += 0.2f;  // Burst increases urgency

@@ -658,9 +658,6 @@ enum CharacterDatabaseStatements : uint32
     CHAR_DEL_CHARACTER_BANK_TAB_SETTINGS,
     CHAR_INS_CHARACTER_BANK_TAB_SETTINGS,
 
-    // Playerbot module statements
-    CHAR_SEL_BOT_TALENT_LOADOUTS,           // SELECT class_id, spec_id, min_level, max_level, talent_string, hero_talent_string, description FROM playerbot_talent_loadouts ORDER BY class_id, spec_id, min_level
-
     MAX_CHARACTERDATABASE_STATEMENTS
 };
 

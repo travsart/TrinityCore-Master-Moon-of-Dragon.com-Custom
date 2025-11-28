@@ -18,6 +18,9 @@
 #include "MotionMaster.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "Bag.h"
+#include "Creature.h"
+#include "ObjectAccessor.h"
 #include "../Quest/UnifiedQuestManager.h"
 #include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5C: Thread-safe helpers
 #include <algorithm>
@@ -763,30 +766,48 @@ bool EnhancedBotAI::ShouldLoot()
     if (_inCombat)
         return false;
 
-    // Don't loot if inventory is full
-    if (bot->GetFreeInventorySpace() == 0)
+    // Don't loot if inventory is nearly full (check if at least one bag slot is available)
+    // Use simple inventory check - if bot has no empty slots, skip looting
+    bool hasEmptySlot = false;
+    for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+    {
+        if (Bag* bag = bot->GetBagByPos(i))
+        {
+            for (uint32 slot = 0; slot < bag->GetBagSize(); ++slot)
+            {
+                if (!bag->GetItemByPos(slot))
+                {
+                    hasEmptySlot = true;
+                    break;
+                }
+            }
+        }
+        if (hasEmptySlot)
+            break;
+    }
+    if (!hasEmptySlot)
         return false;
 
     // Check if there are lootable corpses nearby using thread-safe spatial query
     constexpr float LOOT_RANGE = 30.0f;
     bool hasLootableCorpse = false;
 
-    // Use spatial grid helpers for thread-safe creature iteration
-    auto nearbyCreatures = SpatialGridQueryHelpers::GetNearbyCreatures(
-        bot->GetMap(),
-        bot->GetPositionX(),
-        bot->GetPositionY(),
-        bot->GetPositionZ(),
-        LOOT_RANGE
-    );
+    // Use spatial grid helpers for thread-safe creature iteration via snapshots
+    auto nearbyHostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(
+        bot, LOOT_RANGE, false /* include dead creatures */);
 
-    for (Creature* creature : nearbyCreatures)
+    for (auto const* snapshot : nearbyHostileSnapshots)
     {
-        if (!creature || creature->IsAlive())
+        if (!snapshot || snapshot->IsAlive())
             continue;
 
-        // Check if this creature has loot for this player
-        if (!creature->HasLootRecipient(bot))
+        // Find the actual creature for detailed checks using ObjectAccessor on main thread
+        Creature* creature = ObjectAccessor::GetCreature(*bot, snapshot->guid);
+        if (!creature)
+            continue;
+
+        // Check if this creature can be looted by this player
+        if (!bot->isAllowedToLoot(creature))
             continue;
 
         // Check if creature still has loot

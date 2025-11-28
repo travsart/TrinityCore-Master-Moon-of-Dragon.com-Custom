@@ -481,12 +481,12 @@ void CombatStateAnalyzer::DetectBossMechanics()
                     {
                         BossMechanic mechanic;
                         mechanic.spellId = spellInfo->Id;
-                        mechanic.name = spellInfo->SpellName[LOCALE_enUS];
+                        mechanic.name = std::string((*spellInfo->SpellName)[LOCALE_enUS]);
                         mechanic.castTime = spellInfo->CastTimeEntry ? spellInfo->CastTimeEntry->Base : 0;
                         mechanic.cooldown = 0;  // Would need to track from usage patterns
                         mechanic.lastSeen = now;
                         mechanic.requiresMovement = isAreaEffect;
-                        mechanic.requiresInterrupt = spellInfo->InterruptFlags != 0;
+                        mechanic.requiresInterrupt = spellInfo->HasChannelInterruptFlag(SpellAuraInterruptFlags::Action);
                         mechanic.requiresDefensive = spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE);
                         _knownMechanics.push_back(mechanic);
                     }
@@ -494,7 +494,7 @@ void CombatStateAnalyzer::DetectBossMechanics()
             }
 
             // Check for interruptible dangerous casts
-            if (spellInfo->InterruptFlags != 0 && spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE))
+            if (spellInfo->HasChannelInterruptFlag(SpellAuraInterruptFlags::Action) && spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE))
             {
                 // Track recent mechanic casts for pattern detection
                 _recentMechanicCasts.push_back(spellInfo->Id);
@@ -648,15 +648,16 @@ bool CombatStateAnalyzer::CheckForSpreadNeed() const
                         spellInfo->HasEffect(SPELL_EFFECT_APPLY_AREA_AURA_ENEMY))
                     {
                         // Check if this targets multiple people (chain or area)
-                        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                        for (SpellEffectInfo const& effect : spellInfo->GetEffects())
                         {
-                            if (spellInfo->Effects[i].TargetA.GetTarget() == TARGET_UNIT_TARGET_ENEMY &&
-                                spellInfo->Effects[i].ChainTargets > 1)
+                            if (effect.TargetA.GetTarget() == TARGET_UNIT_TARGET_ENEMY &&
+                                effect.ChainTargets > 1)
                             {
                                 return true;  // Chain spell - need to spread
                             }
-                            if (spellInfo->Effects[i].RadiusEntry &&
-                                spellInfo->Effects[i].RadiusEntry->RadiusMax > 5.0f)
+                            // Check TargetA and TargetB radius entries for large AOE
+                            if ((effect.TargetARadiusEntry && effect.TargetARadiusEntry->RadiusMax > 5.0f) ||
+                                (effect.TargetBRadiusEntry && effect.TargetBRadiusEntry->RadiusMax > 5.0f))
                             {
                                 return true;  // Large AOE - need to spread
                             }
@@ -739,11 +740,11 @@ bool CombatStateAnalyzer::CheckForStackNeed() const
             if (spellInfo)
             {
                 // Check for damage split/shared damage mechanics
-                for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                for (SpellEffectInfo const& effect : spellInfo->GetEffects())
                 {
                     // Shared damage mechanics often have specific aura types
-                    if (spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_SPLIT_DAMAGE_PCT ||
-                        spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_SHARE_DAMAGE_PCT)
+                    if (effect.ApplyAuraName == SPELL_AURA_SPLIT_DAMAGE_PCT ||
+                        effect.ApplyAuraName == SPELL_AURA_SHARE_DAMAGE_PCT)
                     {
                         return true;  // Damage split mechanic - stack up
                     }
@@ -1432,11 +1433,11 @@ bool CombatStateAnalyzer::IsInVoidZone() const
         // Check if this is a harmful area aura (typically void zones)
         if (!spellInfo->IsPositive())
         {
-            for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+            for (SpellEffectInfo const& effect : spellInfo->GetEffects())
             {
                 // Check for periodic damage auras from area sources
-                if (spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
-                    spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE_PERCENT)
+                if (effect.ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
+                    effect.ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE_PERCENT)
                 {
                     // Check if it's from a creature (enemy) or dynamic object (ground effect)
                     Unit* caster = aura->GetCaster();
@@ -1465,7 +1466,7 @@ bool CombatStateAnalyzer::IsInVoidZone() const
     // This catches desecrations, death and decay, etc.
     // Note: In production, would iterate DynamicObjects in range
     // For now, check if we're taking rapid periodic damage while stationary
-    if (_currentMetrics.incomingDPS > 0 && !_bot->IsMoving())
+    if (_currentMetrics.incomingDPS > 0 && !_bot->isMoving())
     {
         // If taking significant damage while standing still, probably in bad
         float healthLossRate = _currentMetrics.incomingDPS / static_cast<float>(_bot->GetMaxHealth());

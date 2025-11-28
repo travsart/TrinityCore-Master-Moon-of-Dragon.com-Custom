@@ -19,6 +19,8 @@
 #include "ObjectMgr.h"  // For sObjectMgr->GetQuestTemplate
 #include "Player.h"  // For Player::GetReputationRank, HasItemCount, etc.
 #include "QuestDef.h"  // For Quest template and objective types
+#include "Bag.h"  // For inventory bag checks
+#include "RaceMask.h"  // For Trinity::RaceMask
 
 namespace Playerbot
 {
@@ -897,10 +899,11 @@ bool UnifiedQuestManager::ValidationModule::ValidateWithContext(ValidationContex
 
     // 1. Level requirements
     uint8 botLevel = bot->GetLevel();
-    uint8 minLevel = quest->GetMinLevel();
+    // Use Player::GetQuestMinLevel which uses ContentTuning system for level scaling
+    int32 minLevel = bot->GetQuestMinLevel(quest);
     uint8 maxLevel = quest->GetMaxLevel();
 
-    if (botLevel < minLevel)
+    if (static_cast<int32>(botLevel) < minLevel)
     {
         context.errors.push_back("Bot level " + std::to_string(botLevel) + " is below minimum " + std::to_string(minLevel));
         hasErrors = true;
@@ -919,9 +922,9 @@ bool UnifiedQuestManager::ValidationModule::ValidateWithContext(ValidationContex
         hasErrors = true;
     }
 
-    // 3. Race requirements
-    uint64 requiredRaces = quest->GetAllowableRaces();
-    if (requiredRaces != 0 && !(requiredRaces & (1ULL << (bot->GetRace() - 1))))
+    // 3. Race requirements - GetAllowableRaces returns Trinity::RaceMask<uint64>
+    Trinity::RaceMask<uint64> requiredRaces = quest->GetAllowableRaces();
+    if (!requiredRaces.IsEmpty() && !requiredRaces.HasRace(bot->GetRace()))
     {
         context.errors.push_back("Bot race not allowed for this quest");
         hasErrors = true;

@@ -13,6 +13,7 @@
 #include "LootDistribution.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
+#include "ObjectMgr.h"  // For sObjectMgr
 #include "Random.h"
 #include <algorithm>
 #include <sstream>

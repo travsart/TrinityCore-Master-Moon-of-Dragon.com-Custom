@@ -14,6 +14,7 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "../../Group/RoleDefinitions.h"  // For tank detection in GetPlayerRole
 #include <algorithm>
 
 namespace Playerbot {
@@ -334,20 +335,83 @@ float ThreatAssistant::CalculateDangerRating(Unit* target)
     float danger = 5.0f;  // Base danger
 
     // Elite/boss bonus
-    if (target->ToCreature() && target->ToCreature()->IsElite())
-        danger += 2.0f;
+    if (Creature* creature = target->ToCreature())
+    {
+        if (creature->IsElite())
+            danger += 2.0f;
 
-    if (target->ToCreature() && target->ToCreature()->isWorldBoss())
-        danger = 10.0f;
+        if (creature->isWorldBoss())
+            danger = 10.0f;
+
+        // Assess creature special abilities from template
+        CreatureTemplate const* creatureTemplate = creature->GetCreatureTemplate();
+        if (creatureTemplate)
+        {
+            // Check for heal capability - creatures with healing spells are higher priority
+            for (uint8 i = 0; i < MAX_CREATURE_SPELLS; ++i)
+            {
+                uint32 spellId = creatureTemplate->spells[i];
+                if (spellId == 0)
+                    continue;
+
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+                if (spellInfo)
+                {
+                    // Healing ability detection
+                    if (spellInfo->HasEffect(SPELL_EFFECT_HEAL) ||
+                        spellInfo->HasEffect(SPELL_EFFECT_HEAL_PCT))
+                    {
+                        danger += 2.0f;  // Healers are high priority
+                        break;
+                    }
+
+                    // Dangerous spell detection (fear, stun, charm)
+                    if (spellInfo->HasAura(SPELL_AURA_MOD_FEAR) ||
+                        spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
+                        spellInfo->HasAura(SPELL_AURA_MOD_CHARM))
+                    {
+                        danger += 1.5f;  // CC abilities make target more dangerous
+                    }
+                }
+            }
+
+            // Creature type modifiers
+            uint32 creatureType = creatureTemplate->type;
+            if (creatureType == CREATURE_TYPE_HUMANOID)
+                danger += 0.5f;  // Humanoids often have more complex AI
+        }
+    }
 
     // Caster bonus (ranged attacks, spells)
     if (target->GetPowerType() == POWER_MANA)
         danger += 1.0f;
 
-    // TODO: Add more sophisticated danger assessment
-    // - Recent damage dealt
-    // - Special abilities
-    // - Heal capability
+    // Recent damage assessment - check if target is currently attacking
+    if (Unit* victim = target->GetVictim())
+    {
+        if (victim->IsPlayer())
+        {
+            // Target is actively attacking a player
+            danger += 1.0f;
+
+            // Extra danger if attacking a non-tank player
+            if (Player* victimPlayer = victim->ToPlayer())
+            {
+                PlayerRole role = GetPlayerRole(victimPlayer);
+                if (role == PlayerRole::HEALER)
+                    danger += 2.0f;  // Attacking healer = very dangerous
+                else if (role == PlayerRole::DPS)
+                    danger += 1.0f;  // Attacking DPS = moderately dangerous
+            }
+        }
+    }
+
+    // Health-based danger adjustment - low health targets are less dangerous
+    float healthPct = target->GetHealthPct();
+    if (healthPct < 20.0f)
+        danger *= 0.7f;  // Low health = less threat
+    else if (healthPct > 80.0f)
+        danger *= 1.1f;  // Full health = slightly more dangerous
 
     return std::min(danger, 10.0f);
 }
@@ -373,25 +437,28 @@ ThreatAssistant::PlayerRole ThreatAssistant::GetPlayerRole(Player* player)
     if (!player)
         return PlayerRole::UNKNOWN;
 
-    // Simple heuristic based on class
-    // TODO: Integrate with proper role detection system
-    switch (player->GetClass())
+    // Use RoleDefinitions system for accurate spec-based role detection
+    uint8 classId = player->GetClass();
+    uint8 specId = static_cast<uint8>(player->GetPrimarySpecialization());
+
+    GroupRole groupRole = RoleDefinitions::GetPrimaryRole(classId, specId);
+
+    switch (groupRole)
     {
-        case CLASS_WARRIOR:
-        case CLASS_PALADIN:
-        case CLASS_DEATH_KNIGHT:
-            // Check spec/stance for tank
+        case GroupRole::TANK:
             return PlayerRole::TANK;
 
-        case CLASS_PRIEST:
-        case CLASS_SHAMAN:
-        case CLASS_DRUID:
-        case CLASS_MONK:
-            // Check spec for healer
+        case GroupRole::HEALER:
             return PlayerRole::HEALER;
 
-        default:
+        case GroupRole::MELEE_DPS:
+        case GroupRole::RANGED_DPS:
+        case GroupRole::SUPPORT:
             return PlayerRole::DPS;
+
+        case GroupRole::NONE:
+        default:
+            return PlayerRole::UNKNOWN;
     }
 }
 

@@ -60,6 +60,7 @@ struct QuestTurnInData;
 struct TurnInBatch;
 struct QuestMetadata;
 struct QuestProgress;
+struct ValidationContext;
 struct ValidationResult;
 struct ValidationMetrics;
 struct QuestReward;
@@ -295,7 +296,6 @@ public:
     /**
      * @brief Advanced validation
      */
-    struct ValidationContext;
     virtual bool ValidateWithContext(ValidationContext& context) = 0;
     virtual bool ValidateQuestObjectives(uint32 questId, Player* bot) = 0;
     virtual bool ValidateQuestRewards(uint32 questId, Player* bot) = 0;

@@ -913,8 +913,10 @@ void ClassAI::CancelPendingSpell()
         // Optimistic resource consumption and cooldown tracking
         // (Will be validated again on main thread, but tracking here for ClassAI responsiveness)
         ConsumeResource(spellId);
-        // TODO: CooldownManager::StartCooldown doesn't exist, use Trigger() if cooldown is pre-registered
-        // _cooldownManager->Trigger(spellId);
+
+        // Track cooldown if pre-registered in CooldownManager
+        if (_cooldownManager && _cooldownManager->IsTracked(spellId))
+            _cooldownManager->Trigger(spellId);
 
         TC_LOG_DEBUG("playerbot.classai.spell",
                      "ClassAI queued CMSG_CAST_SPELL for spell {} (bot: {}, target: {})",

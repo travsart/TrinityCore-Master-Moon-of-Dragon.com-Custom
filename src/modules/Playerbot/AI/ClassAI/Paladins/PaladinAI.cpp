@@ -21,6 +21,7 @@
 #include "Group.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Group/RoleDefinitions.h"  // For tank detection
 #include "GameTime.h"
 
 namespace Playerbot
@@ -1046,8 +1047,16 @@ bool PaladinAI::ShouldUseLayOnHands() const
         for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
-            // TODO: Check if member is tank
-    if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
+            if (!member || member == GetBot())
+                continue;
+
+            // Check if member is a tank using RoleDefinitions
+            uint8 classId = member->GetClass();
+            uint8 specId = static_cast<uint8>(member->GetPrimarySpecialization());
+            GroupRole memberRole = RoleDefinitions::GetPrimaryRole(classId, specId);
+
+            // Prioritize tanks for Lay on Hands (they keep the group alive)
+            if (memberRole == GroupRole::TANK && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
                 return true;
         }
     }
