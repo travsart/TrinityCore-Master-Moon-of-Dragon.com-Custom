@@ -13,6 +13,7 @@
 #include "Log.h"
 #include "Map.h"
 #include "DatabaseEnv.h"
+#include "PlayerbotDatabase.h"
 #include "Position.h"
 #include "ObjectAccessor.h"
 #include "World.h"
@@ -111,14 +112,16 @@ void BattlePetManager::LoadPetDatabase()
     // - Ability assignments from battle_pet_species_abilities
     // Reference: TrinityCore WorldDatabase battle pet tables
 
-    // Query creature templates that are battle pets
+    // Query creature templates that are battle pets (type 15 = CREATURE_TYPE_BATTLEPET)
+    // Note: We only query creature_template from world database
+    // Battle pet species metadata should be stored in playerbot database if needed
+    // TrinityCore 11.2: minlevel/maxlevel, HealthModifier, DamageModifier columns removed
+    // Levels are now dynamically scaled and modifiers are handled elsewhere
     QueryResult result = WorldDatabase.Query(
-        "SELECT ct.entry, ct.name, ct.minlevel, ct.maxlevel, ct.HealthModifier, "
-        "ct.DamageModifier, ct.SpeedWalk, bps.speciesId, bps.petType, bps.flags "
-        "FROM creature_template ct "
-        "LEFT JOIN battle_pet_species bps ON ct.entry = bps.creatureId "
-        "WHERE ct.type = 15 OR bps.speciesId IS NOT NULL "  // type 15 = CREATURE_TYPE_BATTLEPET
-        "ORDER BY ct.entry"
+        "SELECT entry, name, speed_walk "
+        "FROM creature_template "
+        "WHERE type = 15 "
+        "ORDER BY entry"
     );
 
     if (result)
@@ -128,14 +131,32 @@ void BattlePetManager::LoadPetDatabase()
             Field* fields = result->Fetch();
             uint32 creatureEntry = fields[0].GetUInt32();
             std::string name = fields[1].GetString();
-            uint32 minLevel = fields[2].GetUInt32();
-            uint32 maxLevel = fields[3].GetUInt32();
-            float healthMod = fields[4].GetFloat();
-            float damageMod = fields[5].GetFloat();
-            float speedWalk = fields[6].GetFloat();
-            uint32 speciesId = fields[7].IsNull() ? creatureEntry : fields[7].GetUInt32();
-            uint32 petType = fields[8].IsNull() ? 0 : fields[8].GetUInt32();
-            uint32 flags = fields[9].IsNull() ? 0 : fields[9].GetUInt32();
+            float speedWalk = fields[2].GetFloat();
+            // TrinityCore 11.2: These modifiers don't exist in creature_template anymore
+            // Use default values - actual scaling handled by game systems
+            float healthMod = 1.0f;
+            float damageMod = 1.0f;
+            // TrinityCore 11.2: Battle pets use level scaling, default to standard pet level range
+            uint32 minLevel = 1;
+            uint32 maxLevel = 25;
+            // Query battle_pet_species from playerbot database for metadata
+            uint32 speciesId = creatureEntry;
+            uint32 petType = 0;
+            uint32 flags = 0;
+            
+            // Try to get extended metadata from playerbot.battle_pet_species
+            if (sPlayerbotDatabase->IsConnected())
+            {
+                QueryResult speciesResult = sPlayerbotDatabase->Query(
+                    "SELECT speciesId, petType, flags FROM battle_pet_species WHERE creatureId = " + std::to_string(creatureEntry));
+                if (speciesResult)
+                {
+                    Field* speciesFields = speciesResult->Fetch();
+                    speciesId = speciesFields[0].GetUInt32();
+                    petType = speciesFields[1].GetUInt8();
+                    flags = speciesFields[2].GetUInt32();
+                }
+            }
 
             BattlePetInfo petInfo;
             petInfo.speciesId = speciesId;
