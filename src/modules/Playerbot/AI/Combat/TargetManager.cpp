@@ -11,9 +11,11 @@
 #include "ThreatManager.h"
 #include "SpellAuras.h"
 #include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "Log.h"
 #include "GameTime.h"
 #include "ObjectAccessor.h"
+#include "../../Group/RoleDefinitions.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -211,8 +213,28 @@ TMTargetPriority TargetManager::ClassifyTarget(Unit* target)
             return TMTargetPriority::HIGH;
     }
 
-    // Tank = low
-    // TODO: Detect tank role properly
+    // Tank detection using Player spec analysis
+    if (target->IsPlayer())
+    {
+        Player* player = target->ToPlayer();
+        uint8 classId = player->GetClass();
+        uint8 specId = static_cast<uint8>(player->GetPrimarySpecialization());
+
+        // Use RoleDefinitions to check if this player is a tank spec
+        GroupRole primaryRole = RoleDefinitions::GetPrimaryRole(classId, specId);
+        if (primaryRole == GroupRole::TANK)
+            return TMTargetPriority::LOW;  // Tank = low priority for DPS
+    }
+    else if (Creature* creature = target->ToCreature())
+    {
+        // Check creature flags for tank behavior
+        if (creature->HasUnitFlag(UNIT_FLAG_PLAYER_CONTROLLED))
+        {
+            // Pet acting as tank - check if has taunt aura (SPELL_AURA_MOD_TAUNT)
+            if (creature->HasAuraType(SPELL_AURA_MOD_TAUNT))
+                return TMTargetPriority::LOW;
+        }
+    }
 
     // Default = medium
     return TMTargetPriority::MEDIUM;
@@ -263,8 +285,13 @@ TMTargetInfo TargetManager::AssessTarget(Unit* target)
     info.isCrowdControlled = IsCrowdControlled(target);
     info.isImmune = IsImmune(target);
     info.threatLevel = CalculateThreatLevel(target);
-    info.damageDealt = 0.0f;  // TODO: Get from metrics
-    info.timeSinceLastSwitch = 0;  // TODO: Track switch history
+
+    // Get damage dealt from recent tracking (no metrics parameter needed)
+    info.damageDealt = GetRecentDamage(target);
+
+    // Calculate time since last target switch
+    uint32 now = GameTime::GetGameTimeMS();
+    info.timeSinceLastSwitch = (_currentTarget == target->GetGUID()) ? 0 : (now - _lastSwitchTime);
 
     return info;
 }
@@ -308,26 +335,47 @@ bool TargetManager::IsHealer(Unit* target) const
     if (!target)
         return false;
 
-    // Check if target is a healing class/spec
+    // Check if target is a healing class/spec using RoleDefinitions
     if (target->IsPlayer())
     {
         Player* player = target->ToPlayer();
-        switch (player->GetClass())
+        uint8 classId = player->GetClass();
+        uint8 specId = static_cast<uint8>(player->GetPrimarySpecialization());
+
+        // Use RoleDefinitions system for accurate spec-based healer detection
+        GroupRole primaryRole = RoleDefinitions::GetPrimaryRole(classId, specId);
+        return primaryRole == GroupRole::HEALER;
+    }
+
+    // For NPCs, check for healing capabilities
+    if (Creature* creature = target->ToCreature())
+    {
+        // Check if creature is marked as a healer in creature_template
+        // Common healer NPC types: priests, shamans, druids
+        uint32 creatureType = creature->GetCreatureTemplate()->type;
+
+        // Check power type (healers typically use mana)
+        if (target->GetPowerType() != POWER_MANA)
+            return false;
+
+        // Check for healing spell presence in creature spells
+        // This is a heuristic - look for creatures with heal-type abilities
+        if (creature->GetCreatureTemplate()->spells[0] != 0)
         {
-            case CLASS_PRIEST:
-            case CLASS_PALADIN:
-            case CLASS_SHAMAN:
-            case CLASS_DRUID:
-            case CLASS_MONK:
-                // TODO: Check spec for healer role
-                return true;
-            default:
-                return false;
+            // Check first few spell slots for healing spells
+            for (uint8 i = 0; i < MAX_CREATURE_SPELLS; ++i)
+            {
+                uint32 spellId = creature->GetCreatureTemplate()->spells[i];
+                if (spellId == 0)
+                    continue;
+
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+                if (spellInfo && spellInfo->HasEffect(SPELL_EFFECT_HEAL))
+                    return true;
+            }
         }
     }
 
-    // For NPCs, check for healing abilities
-    // TODO: Implement NPC healer detection
     return false;
 }
 
@@ -387,11 +435,28 @@ float TargetManager::CalculateThreatLevel(Unit* target) const
     return ::std::min(botThreat / maxThreat, 1.0f);
 }
 
-float TargetManager::GetRecentDamage(Unit* target, const CombatMetrics& metrics) const
+float TargetManager::GetRecentDamage(Unit* target) const
 {
-    // TODO: Implement damage tracking from combat metrics
-    // This requires integration with combat metrics system
-    return 0.0f;
+    if (!target || !_bot)
+        return 0.0f;
+
+    // Get damage from target cache if available
+    auto it = _targetCache.find(target->GetGUID());
+    if (it != _targetCache.end())
+    {
+        // Use cached damage value if available
+        return it->second.damageDealt;
+    }
+
+    // Estimate damage from threat as fallback
+    // Threat is typically proportional to damage dealt
+    ThreatManager& threatMgr = target->GetThreatManager();
+    float botThreat = threatMgr.GetThreat(_bot);
+
+    // Threat modifier is typically 1.0 for damage, so threat ≈ damage
+    // This is an approximation since actual damage tracking requires
+    // integration with spell/melee hit events
+    return botThreat * 0.8f;  // Slightly reduce as threat includes other factors
 }
 
 void TargetManager::UpdateTargetCache(const CombatMetrics& metrics)

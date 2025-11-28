@@ -184,6 +184,25 @@ private:
 
     ::std::vector<HealingAssignment> _healingAssignments;
     ::std::unordered_map<ObjectGuid, ::std::unordered_map<::std::string, uint32>> _healerCooldowns; // Healer → Cooldown → ExpireTime
+
+    // Mana conservation state
+    bool _manaConservationMode = false;
+    uint32 _manaConservationStartTime = 0;
+    ::std::unordered_map<ObjectGuid, bool> _healerManaConservation; // Track per-healer conservation state
+
+public:
+    /**
+     * @brief Check if healers should conserve mana
+     * @return True if in mana conservation mode
+     */
+    bool IsInManaConservationMode() const { return _manaConservationMode; }
+
+    /**
+     * @brief Check if specific healer should conserve mana
+     * @param healerGuid Healer to check
+     * @return True if this healer should use mana-efficient spells
+     */
+    bool ShouldConserveMana(ObjectGuid healerGuid) const;
 };
 
 /**

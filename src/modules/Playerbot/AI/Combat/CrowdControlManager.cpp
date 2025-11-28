@@ -359,15 +359,138 @@ float CrowdControlManager::CalculateCCPriority(Unit* target) const
     if (!_bot)
         return spells;
 
-    // TODO: Implement class-specific CC spell detection
-    // This is a placeholder that should be replaced with actual spell checking
-    // For example:
-    // - Mage: Polymorph (118)
-    // - Rogue: Sap (6770)
-    // - Hunter: Freezing Trap (1499)
-    // - Warlock: Fear (5782), Banish (710)
-    // - Priest: Shackle Undead (9484), Mind Control (605)
-    // - etc.
+    // Class-specific CC spell database
+    // Maps class to list of CC spell IDs
+    struct CCSpellInfo
+    {
+        uint32 spellId;
+        CrowdControlType ccType;
+    };
+
+    static const std::unordered_map<uint8, std::vector<CCSpellInfo>> classCCSpells = {
+        // Mage
+        {CLASS_MAGE, {
+            {118, CrowdControlType::INCAPACITATE},      // Polymorph
+            {82691, CrowdControlType::INCAPACITATE},    // Ring of Frost
+            {122, CrowdControlType::ROOT},              // Frost Nova
+            {31661, CrowdControlType::DISORIENT},       // Dragon's Breath
+        }},
+        // Rogue
+        {CLASS_ROGUE, {
+            {6770, CrowdControlType::INCAPACITATE},     // Sap
+            {1776, CrowdControlType::STUN},             // Gouge
+            {2094, CrowdControlType::DISORIENT},        // Blind
+            {408, CrowdControlType::STUN},              // Kidney Shot
+        }},
+        // Hunter
+        {CLASS_HUNTER, {
+            {187650, CrowdControlType::INCAPACITATE},   // Freezing Trap
+            {19386, CrowdControlType::INCAPACITATE},    // Wyvern Sting
+            {213691, CrowdControlType::INCAPACITATE},   // Scatter Shot
+            {109248, CrowdControlType::STUN},           // Binding Shot
+        }},
+        // Warlock
+        {CLASS_WARLOCK, {
+            {5782, CrowdControlType::DISORIENT},        // Fear
+            {710, CrowdControlType::INCAPACITATE},      // Banish
+            {6789, CrowdControlType::DISORIENT},        // Mortal Coil
+            {30283, CrowdControlType::STUN},            // Shadowfury
+        }},
+        // Priest
+        {CLASS_PRIEST, {
+            {9484, CrowdControlType::INCAPACITATE},     // Shackle Undead
+            {605, CrowdControlType::INCAPACITATE},      // Mind Control
+            {8122, CrowdControlType::DISORIENT},        // Psychic Scream
+            {200196, CrowdControlType::STUN},           // Holy Word: Chastise
+        }},
+        // Druid
+        {CLASS_DRUID, {
+            {339, CrowdControlType::ROOT},              // Entangling Roots
+            {2637, CrowdControlType::INCAPACITATE},     // Hibernate
+            {99, CrowdControlType::DISORIENT},          // Incapacitating Roar
+            {5211, CrowdControlType::STUN},             // Mighty Bash
+            {102359, CrowdControlType::ROOT},           // Mass Entanglement
+        }},
+        // Shaman
+        {CLASS_SHAMAN, {
+            {51514, CrowdControlType::INCAPACITATE},    // Hex
+            {118905, CrowdControlType::STUN},           // Static Charge
+            {197214, CrowdControlType::STUN},           // Sundering
+        }},
+        // Paladin
+        {CLASS_PALADIN, {
+            {20066, CrowdControlType::INCAPACITATE},    // Repentance
+            {853, CrowdControlType::STUN},              // Hammer of Justice
+            {115750, CrowdControlType::STUN},           // Blinding Light
+            {10326, CrowdControlType::DISORIENT},       // Turn Evil
+        }},
+        // Death Knight
+        {CLASS_DEATH_KNIGHT, {
+            {108194, CrowdControlType::STUN},           // Asphyxiate
+            {91807, CrowdControlType::STUN},            // Shambling Rush (Ghoul)
+            {207167, CrowdControlType::DISORIENT},      // Blinding Sleet
+        }},
+        // Monk
+        {CLASS_MONK, {
+            {115078, CrowdControlType::INCAPACITATE},   // Paralysis
+            {119381, CrowdControlType::STUN},           // Leg Sweep
+            {198909, CrowdControlType::DISORIENT},      // Song of Chi-Ji
+        }},
+        // Warrior
+        {CLASS_WARRIOR, {
+            {5246, CrowdControlType::DISORIENT},        // Intimidating Shout
+            {132168, CrowdControlType::STUN},           // Shockwave
+            {132169, CrowdControlType::STUN},           // Storm Bolt
+        }},
+        // Demon Hunter
+        {CLASS_DEMON_HUNTER, {
+            {217832, CrowdControlType::INCAPACITATE},   // Imprison
+            {179057, CrowdControlType::STUN},           // Chaos Nova
+            {211881, CrowdControlType::STUN},           // Fel Eruption
+        }},
+        // Evoker
+        {CLASS_EVOKER, {
+            {360806, CrowdControlType::INCAPACITATE},   // Sleep Walk
+            {357210, CrowdControlType::ROOT},           // Deep Breath knockback
+        }},
+    };
+
+    // Get spells for bot's class
+    uint8 botClass = _bot->GetClass();
+    auto classIt = classCCSpells.find(botClass);
+    if (classIt == classCCSpells.end())
+        return spells;
+
+    // Check each CC spell for availability
+    for (const CCSpellInfo& ccInfo : classIt->second)
+    {
+        // Check if bot knows the spell
+        if (!_bot->HasSpell(ccInfo.spellId))
+            continue;
+
+        // Check if spell is on cooldown
+        if (_bot->GetSpellHistory()->HasCooldown(ccInfo.spellId))
+            continue;
+
+        // Check if bot has enough power to cast
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ccInfo.spellId, DIFFICULTY_NONE);
+        if (!spellInfo)
+            continue;
+
+        std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+        bool hasPower = true;
+        for (SpellPowerCost const& cost : costs)
+        {
+            if (_bot->GetPower(cost.Power) < cost.Amount)
+            {
+                hasPower = false;
+                break;
+            }
+        }
+
+        if (hasPower)
+            spells.push_back(ccInfo.spellId);
+    }
 
     return spells;
 }

@@ -1196,10 +1196,74 @@ void AdaptiveBehaviorManager::ResetStrategies()
 
 Playerbot::bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target, Playerbot::bot::ai::CombatContext context) const
 {
-    // TODO: DecisionVote and DecisionSource not fully defined (only forward-declared)
-    // TODO: Implement when DecisionFusionSystem.h provides full definitions
-    (void)target; (void)context; // Suppress unused warnings
-    return Playerbot::bot::ai::DecisionVote{}; // Return default-constructed vote
+    using namespace Playerbot::bot::ai;
+
+    // Create vote based on active profile and strategies
+    DecisionVote vote;
+    vote.source = DecisionSource::ADAPTIVE_BEHAVIOR;
+    vote.target = target;
+    vote.confidence = 0.0f;
+    vote.urgency = 0.0f;
+
+    if (!_bot || !_activeProfile)
+    {
+        vote.reasoning = "No active profile";
+        return vote;
+    }
+
+    // Base confidence on profile effectiveness
+    vote.confidence = 0.5f;  // Moderate baseline confidence
+
+    // Evaluate urgency based on combat context
+    float healthPct = _bot->GetHealthPct();
+    if (healthPct < 20.0f)
+    {
+        vote.urgency = 0.95f;
+        vote.reasoning = "Emergency: Low health, prioritize survival";
+    }
+    else if (healthPct < 40.0f)
+    {
+        vote.urgency = 0.7f;
+        vote.reasoning = "Warning: Moderate health, consider defensive options";
+    }
+    else if (target && target->GetHealthPct() < 20.0f)
+    {
+        vote.urgency = 0.8f;
+        vote.reasoning = "Execute phase: Target low health, prioritize finishing blows";
+    }
+    else
+    {
+        vote.urgency = 0.4f;
+        vote.reasoning = "Normal combat: Standard priority";
+    }
+
+    // Adjust confidence based on active strategies
+    if (HasFlag(_activeStrategies, AdaptiveStrategy::STRATEGY_AGGRESSIVE))
+    {
+        vote.confidence += 0.1f;
+        vote.reasoning += "; Aggressive strategy active";
+    }
+    if (HasFlag(_activeStrategies, AdaptiveStrategy::STRATEGY_DEFENSIVE))
+    {
+        vote.confidence += 0.15f;
+        vote.reasoning += "; Defensive strategy active";
+    }
+    if (HasFlag(_activeStrategies, AdaptiveStrategy::STRATEGY_BURST))
+    {
+        vote.confidence += 0.1f;
+        vote.urgency += 0.2f;  // Burst increases urgency
+        vote.reasoning += "; Burst strategy active";
+    }
+
+    // Clamp values
+    vote.confidence = std::clamp(vote.confidence, 0.0f, 1.0f);
+    vote.urgency = std::clamp(vote.urgency, 0.0f, 1.0f);
+
+    // Action ID would typically come from the active profile's recommended action
+    // For now, return 0 to indicate "defer to other systems for specific action"
+    vote.actionId = 0;
+
+    return vote;
 }
 
 } // namespace Playerbot

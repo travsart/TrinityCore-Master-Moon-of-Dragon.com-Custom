@@ -7,10 +7,12 @@
 #include "DefensiveManager.h"
 #include "Player.h"
 #include "SpellAuras.h"
+#include "SpellAuraEffects.h"
 #include "ThreatManager.h"
 #include "Log.h"
 #include "Creature.h"
 #include "GameTime.h"
+#include "../../Group/RoleDefinitions.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -144,9 +146,33 @@ bool DefensiveManager::ShouldUseDefensive(float healthPercent, float incomingDam
     if (HasActiveDefensive())
         return false;
 
-    // Determine threshold based on role
-    float threshold = 60.0f;  // Default
-    // TODO: Adjust based on role (tank = 80%, healer = 70%, DPS = 50%)
+    // Determine threshold based on role using RoleDefinitions
+    float threshold = 50.0f;  // Default for DPS
+
+    uint8 classId = _bot->GetClass();
+    uint8 specId = static_cast<uint8>(_bot->GetPrimarySpecialization());
+    GroupRole primaryRole = RoleDefinitions::GetPrimaryRole(classId, specId);
+
+    switch (primaryRole)
+    {
+        case GroupRole::TANK:
+            // Tanks should use defensives more liberally to smooth damage
+            threshold = 80.0f;
+            break;
+        case GroupRole::HEALER:
+            // Healers can partially self-heal, use defensives at lower threshold
+            threshold = 70.0f;
+            break;
+        case GroupRole::MELEE_DPS:
+            // Melee DPS take more damage, moderate threshold
+            threshold = 60.0f;
+            break;
+        case GroupRole::RANGED_DPS:
+        default:
+            // Ranged DPS should avoid damage, emergency threshold
+            threshold = 50.0f;
+            break;
+    }
 
     // Need defensive if below threshold or high incoming damage
     return (healthPercent < threshold) || (incomingDamage > (_bot->GetMaxHealth() * 0.3f));
@@ -284,11 +310,65 @@ bool DefensiveManager::HasActiveDefensive() const
     if (!_bot)
         return false;
 
-    // Check for active major defensive auras
-    // TODO: Implement comprehensive defensive aura detection
-    // For now, check for common DR auras
+    // Comprehensive defensive aura detection
+    // Check for damage reduction auras
+    if (_bot->HasAuraType(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN))
+        return true;
 
-    return _bot->HasAuraType(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN);
+    // Check for absorb shields
+    if (_bot->HasAuraType(SPELL_AURA_SCHOOL_ABSORB))
+        return true;
+
+    // Check for immunity effects
+    if (_bot->HasAuraType(SPELL_AURA_SCHOOL_IMMUNITY))
+        return true;
+
+    // Check for deflection/parry buffs
+    if (_bot->HasAuraType(SPELL_AURA_MOD_PARRY_PERCENT) &&
+        _bot->GetAuraEffectsByType(SPELL_AURA_MOD_PARRY_PERCENT).front()->GetAmount() > 10)
+        return true;
+
+    // Check for dodge buffs
+    if (_bot->HasAuraType(SPELL_AURA_MOD_DODGE_PERCENT) &&
+        _bot->GetAuraEffectsByType(SPELL_AURA_MOD_DODGE_PERCENT).front()->GetAmount() > 10)
+        return true;
+
+    // Check for block amount increases (shield wall type effects)
+    if (_bot->HasAuraType(SPELL_AURA_MOD_BLOCK_PERCENT) &&
+        _bot->GetAuraEffectsByType(SPELL_AURA_MOD_BLOCK_PERCENT).front()->GetAmount() > 20)
+        return true;
+
+    // Check known major defensive cooldown spell IDs
+    static const std::vector<uint32> majorDefensiveSpells = {
+        48707,  // Anti-Magic Shell (DK)
+        48792,  // Icebound Fortitude (DK)
+        871,    // Shield Wall (Warrior)
+        12975,  // Last Stand (Warrior)
+        498,    // Divine Protection (Paladin)
+        642,    // Divine Shield (Paladin)
+        31850,  // Ardent Defender (Paladin)
+        22812,  // Barkskin (Druid)
+        61336,  // Survival Instincts (Druid)
+        47585,  // Dispersion (Priest)
+        108271, // Astral Shift (Shaman)
+        115203, // Fortifying Brew (Monk)
+        122278, // Dampen Harm (Monk)
+        122783, // Diffuse Magic (Monk)
+        198589, // Blur (Demon Hunter)
+        187827, // Metamorphosis (Demon Hunter)
+        186265, // Aspect of the Turtle (Hunter)
+        1966,   // Feint (Rogue)
+        31224,  // Cloak of Shadows (Rogue)
+        108238, // Spear Hand Strike (Monk)
+    };
+
+    for (uint32 spellId : majorDefensiveSpells)
+    {
+        if (_bot->HasAura(spellId))
+            return true;
+    }
+
+    return false;
 }
 
 float DefensiveManager::GetHealthDeficit() const
@@ -301,15 +381,33 @@ float DefensiveManager::GetHealthDeficit() const
 
 void DefensiveManager::UpdateDamageTracking(const CombatMetrics& metrics)
 {
-    // TODO: Implement damage tracking from combat metrics
-    // This requires integration with combat metrics system
-    // For now, use simple heuristic
     if (!_bot)
         return;
 
-    // Estimate damage as inverse of health change
-    // This is a placeholder - should be replaced with actual metrics
-    _recentDamage = 0.0f;
+    // Track damage from combat metrics
+    // The CombatMetrics structure provides damage taken over time windows
+
+    // Calculate recent damage using health delta tracking
+    static float lastHealthPct = 100.0f;
+    float currentHealthPct = _bot->GetHealthPct();
+
+    // If health decreased, record damage
+    if (currentHealthPct < lastHealthPct)
+    {
+        float healthLost = lastHealthPct - currentHealthPct;
+        float maxHealth = static_cast<float>(_bot->GetMaxHealth());
+        _recentDamage = (healthLost / 100.0f) * maxHealth;
+    }
+    else
+    {
+        // Health stable or increased (healed), decay recent damage
+        _recentDamage *= 0.8f;
+    }
+
+    lastHealthPct = currentHealthPct;
+
+    // Clamp to reasonable bounds
+    _recentDamage = std::clamp(_recentDamage, 0.0f, static_cast<float>(_bot->GetMaxHealth()));
 }
 
 } // namespace Playerbot

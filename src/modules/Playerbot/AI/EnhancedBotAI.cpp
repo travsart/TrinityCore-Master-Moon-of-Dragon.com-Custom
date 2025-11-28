@@ -466,8 +466,9 @@ void EnhancedBotAI::UpdateSolo(uint32 diff)
 
         if (snapshot && snapshot->isAlive)
         {
-            // Get Player* for follow movement (validated via snapshot first)
-            // TODO: Implement safe conversion from snapshot to Player*
+            // Validated via snapshot - now safe to get actual Player* on main thread
+            // ObjectAccessor::GetPlayer is safe here because we validated existence first
+            leader = ObjectAccessor::GetPlayer(*GetBot(), _followTarget);
         }
 
         if (leader && GetBot()->GetExactDist2d(leader) > 10.0f)
@@ -507,8 +508,9 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
         Player* leader = nullptr;
         if (snapshot && snapshot->isAlive)
         {
-            // Get Player* for follow movement (validated via snapshot first)
-            // TODO: Implement safe conversion from snapshot to Player*
+            // Validated via snapshot - now safe to get actual Player* on main thread
+            // ObjectAccessor::GetPlayer is safe here because we validated existence first
+            leader = ObjectAccessor::GetPlayer(*GetBot(), _followTarget);
         }
 
         if (leader)
@@ -753,8 +755,53 @@ bool EnhancedBotAI::ShouldRest()
 
 bool EnhancedBotAI::ShouldLoot()
 {
-    // TODO: Implement looting logic
-    return false;
+    Player* bot = GetBot();
+    if (!bot || !bot->IsAlive())
+        return false;
+
+    // Don't loot while in combat
+    if (_inCombat)
+        return false;
+
+    // Don't loot if inventory is full
+    if (bot->GetFreeInventorySpace() == 0)
+        return false;
+
+    // Check if there are lootable corpses nearby using thread-safe spatial query
+    constexpr float LOOT_RANGE = 30.0f;
+    bool hasLootableCorpse = false;
+
+    // Use spatial grid helpers for thread-safe creature iteration
+    auto nearbyCreatures = SpatialGridQueryHelpers::GetNearbyCreatures(
+        bot->GetMap(),
+        bot->GetPositionX(),
+        bot->GetPositionY(),
+        bot->GetPositionZ(),
+        LOOT_RANGE
+    );
+
+    for (Creature* creature : nearbyCreatures)
+    {
+        if (!creature || creature->IsAlive())
+            continue;
+
+        // Check if this creature has loot for this player
+        if (!creature->HasLootRecipient(bot))
+            continue;
+
+        // Check if creature still has loot
+        if (creature->IsFullyLooted())
+            continue;
+
+        // Check line of sight
+        if (!bot->IsWithinLOSInMap(creature))
+            continue;
+
+        hasLootableCorpse = true;
+        break;
+    }
+
+    return hasLootableCorpse;
 }
 
 bool EnhancedBotAI::ShouldFollowGroup()

@@ -16,6 +16,9 @@
 #include "Timer.h"
 #include <sstream>
 #include "GameTime.h"
+#include "ObjectMgr.h"  // For sObjectMgr->GetQuestTemplate
+#include "Player.h"  // For Player::GetReputationRank, HasItemCount, etc.
+#include "QuestDef.h"  // For Quest template and objective types
 
 namespace Playerbot
 {
@@ -465,58 +468,311 @@ bool UnifiedQuestManager::ValidationModule::ValidateFactionRequirements(uint32 q
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredReputation(uint32 questId, Player* bot, uint32 factionId)
 {
-    // INTEGRATION REQUIRED: Implement faction-specific reputation checking
-    // Implementation depends on:
-    // - IQuestValidation interface update to include HasRequiredReputation method
-    // - Access to Player reputation data via TrinityCore Reputation API
-    // - Quest database fields for faction-specific reputation requirements
-    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
-    return true; // Stub - always return true for now
+    if (!bot)
+        return false;
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+        return false;
+
+    // If a specific faction is requested, check that faction
+    if (factionId != 0)
+    {
+        // For faction-specific checks, we need the required rep value from quest objectives
+        for (QuestObjective const& objective : quest->GetObjectives())
+        {
+            if (objective.Type == QUEST_OBJECTIVE_MIN_REPUTATION && static_cast<uint32>(objective.ObjectID) == factionId)
+            {
+                ReputationRank currentRank = bot->GetReputationRank(factionId);
+                // objective.Amount contains the required reputation value
+                int32 currentRepValue = bot->GetReputation(factionId);
+                if (currentRepValue < objective.Amount)
+                    return false;
+            }
+            else if (objective.Type == QUEST_OBJECTIVE_MAX_REPUTATION && static_cast<uint32>(objective.ObjectID) == factionId)
+            {
+                int32 currentRepValue = bot->GetReputation(factionId);
+                if (currentRepValue > objective.Amount)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    // Check quest's required min reputation faction
+    uint32 requiredMinRepFaction = quest->GetRequiredMinRepFaction();
+    if (requiredMinRepFaction)
+    {
+        int32 requiredMinRepValue = quest->GetRequiredMinRepValue();
+        int32 currentRepValue = bot->GetReputation(requiredMinRepFaction);
+        if (currentRepValue < requiredMinRepValue)
+        {
+            TC_LOG_DEBUG("playerbot.quest", "Bot {} lacks required min reputation ({}/{}) for faction {} for quest {}",
+                bot->GetName(), currentRepValue, requiredMinRepValue, requiredMinRepFaction, questId);
+            return false;
+        }
+    }
+
+    // Check quest's required max reputation faction
+    uint32 requiredMaxRepFaction = quest->GetRequiredMaxRepFaction();
+    if (requiredMaxRepFaction)
+    {
+        int32 requiredMaxRepValue = quest->GetRequiredMaxRepValue();
+        int32 currentRepValue = bot->GetReputation(requiredMaxRepFaction);
+        if (currentRepValue > requiredMaxRepValue)
+        {
+            TC_LOG_DEBUG("playerbot.quest", "Bot {} exceeds max reputation ({}/{}) for faction {} for quest {}",
+                bot->GetName(), currentRepValue, requiredMaxRepValue, requiredMaxRepFaction, questId);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateItemRequirements(uint32 questId, Player* bot)
 {
-    // INTEGRATION REQUIRED: Implement item requirement validation
-    // Implementation depends on:
-    // - IQuestValidation interface update to include ValidateItemRequirements method
-    // - Access to Player inventory via TrinityCore Item API
-    // - Quest database fields for required items at acceptance
-    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
-    return true; // Stub - always return true for now
+    if (!bot)
+        return false;
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+        return false;
+
+    // Check quest item objectives - items player needs to collect
+    for (QuestObjective const& objective : quest->GetObjectives())
+    {
+        if (objective.Type == QUEST_OBJECTIVE_ITEM)
+        {
+            uint32 itemId = objective.ObjectID;
+            uint32 requiredCount = objective.Amount;
+
+            // Check if player has the item (for quest items that need to be in inventory at turn-in)
+            uint32 currentCount = bot->GetItemCount(itemId, true);  // true = include bank
+            if (currentCount < requiredCount)
+            {
+                TC_LOG_DEBUG("playerbot.quest", "Bot {} missing item {} ({}/{}) for quest {}",
+                    bot->GetName(), itemId, currentCount, requiredCount, questId);
+                // This is expected during quest - item objectives are collected
+                // Only fail if this is meant for turn-in validation
+            }
+        }
+    }
+
+    // Check source item (quest starter item that should be in inventory)
+    uint32 sourceItemId = quest->GetSrcItemId();
+    if (sourceItemId)
+    {
+        uint32 sourceItemCount = quest->GetSrcItemCount();
+        if (sourceItemCount == 0)
+            sourceItemCount = 1;
+
+        if (!bot->HasItemCount(sourceItemId, sourceItemCount))
+        {
+            TC_LOG_DEBUG("playerbot.quest", "Bot {} missing source item {} for quest {}",
+                bot->GetName(), sourceItemId, questId);
+            return false;
+        }
+    }
+
+    // Check ItemDrop requirements (items that must drop during the quest)
+    for (uint32 i = 0; i < QUEST_ITEM_DROP_COUNT; ++i)
+    {
+        if (quest->ItemDrop[i] != 0)
+        {
+            // ItemDrop items are collected during quest, no need to validate at acceptance
+            // They will be validated when checking quest completion
+        }
+    }
+
+    return true;
 }
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredItems(uint32 questId, Player* bot)
 {
-    // INTEGRATION REQUIRED: Implement required item possession checking
-    // Implementation depends on:
-    // - IQuestValidation interface update to include HasRequiredItems method
-    // - Access to Player inventory via TrinityCore Item API
-    // - Quest database fields for required items with quantities
-    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
-    return true; // Stub - always return true for now
+    if (!bot)
+        return false;
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+        return false;
+
+    // Check all item objectives
+    for (QuestObjective const& objective : quest->GetObjectives())
+    {
+        if (objective.Type == QUEST_OBJECTIVE_ITEM)
+        {
+            uint32 itemId = objective.ObjectID;
+            int32 requiredCount = objective.Amount;
+
+            if (requiredCount > 0)
+            {
+                uint32 currentCount = bot->GetItemCount(itemId, true);  // true = include bank
+                if (static_cast<int32>(currentCount) < requiredCount)
+                {
+                    TC_LOG_DEBUG("playerbot.quest", "Bot {} has {}/{} of item {} for quest {}",
+                        bot->GetName(), currentCount, requiredCount, itemId, questId);
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Check ItemDrop items (items that can drop during quest, may be required for turn-in)
+    for (uint32 i = 0; i < QUEST_ITEM_DROP_COUNT; ++i)
+    {
+        uint32 itemId = quest->ItemDrop[i];
+        uint32 requiredCount = quest->ItemDropQuantity[i];
+
+        if (itemId != 0 && requiredCount > 0)
+        {
+            uint32 currentCount = bot->GetItemCount(itemId, true);
+            if (currentCount < requiredCount)
+            {
+                TC_LOG_DEBUG("playerbot.quest", "Bot {} has {}/{} of drop item {} for quest {}",
+                    bot->GetName(), currentCount, requiredCount, itemId, questId);
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 bool UnifiedQuestManager::ValidationModule::HasInventorySpace(uint32 questId, Player* bot)
 {
-    // INTEGRATION REQUIRED: Implement inventory space validation for quest rewards
-    // Implementation depends on:
-    // - IQuestValidation interface update to include HasInventorySpace method
-    // - Access to Player inventory capacity via TrinityCore Item API
-    // - Quest reward data to calculate required inventory slots
-    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
-    return true; // Stub - always return true for now
+    if (!bot)
+        return false;
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+        return false;
+
+    // Count how many reward items will be received
+    uint32 rewardSlots = 0;
+
+    // Count guaranteed reward items
+    for (uint32 i = 0; i < QUEST_REWARD_ITEM_COUNT; ++i)
+    {
+        if (quest->RewardItemId[i] != 0 && quest->RewardItemCount[i] > 0)
+        {
+            // Each unique item type needs at least one slot (may need more if stack doesn't fit)
+            ++rewardSlots;
+        }
+    }
+
+    // Note: Choice rewards only give ONE item, not all of them
+    // So we don't count choice items as additional slots needed
+
+    // Source item (quest starter item) - will be in inventory already
+    if (quest->GetSrcItemId() != 0)
+    {
+        // Player already has this item, no additional slot needed
+    }
+
+    // Check if player has enough free slots
+    // Simple check: compare to empty bag slots
+    uint32 freeSlots = 0;
+
+    // Count free bag slots
+    for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
+        if (Bag* pBag = bot->GetBagByPos(bag))
+        {
+            for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
+            {
+                if (!pBag->GetItemByPos(slot))
+                    ++freeSlots;
+            }
+        }
+    }
+
+    // Check main backpack
+    for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    {
+        if (!bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+            ++freeSlots;
+    }
+
+    if (freeSlots < rewardSlots)
+    {
+        TC_LOG_DEBUG("playerbot.quest", "Bot {} has insufficient inventory space ({}/{}) for quest {} rewards",
+            bot->GetName(), freeSlots, rewardSlots, questId);
+        return false;
+    }
+
+    return true;
 }
 
 std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingQuestItems(uint32 questId, Player* bot)
 {
-    // INTEGRATION REQUIRED: Implement missing quest item identification
-    // Implementation depends on:
-    // - IQuestValidation interface update to include GetMissingQuestItems method
-    // - Access to Player inventory via TrinityCore Item API
-    // - Quest database fields for required items with quantities
-    // - Logic to compare required vs. possessed items
-    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
-    return {}; // Stub - return empty vector for now
+    std::vector<uint32> missingItems;
+
+    if (!bot)
+        return missingItems;
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+        return missingItems;
+
+    // Check item objectives
+    for (QuestObjective const& objective : quest->GetObjectives())
+    {
+        if (objective.Type == QUEST_OBJECTIVE_ITEM)
+        {
+            uint32 itemId = static_cast<uint32>(objective.ObjectID);
+            int32 requiredCount = objective.Amount;
+
+            if (requiredCount > 0)
+            {
+                uint32 currentCount = bot->GetItemCount(itemId, true);  // true = include bank
+                if (static_cast<int32>(currentCount) < requiredCount)
+                {
+                    // Calculate how many more are needed
+                    uint32 missing = requiredCount - currentCount;
+                    // Add itemId to missing list (once per item type, not per missing count)
+                    missingItems.push_back(itemId);
+
+                    TC_LOG_DEBUG("playerbot.quest", "Bot {} missing {} of item {} for quest {}",
+                        bot->GetName(), missing, itemId, questId);
+                }
+            }
+        }
+    }
+
+    // Check ItemDrop items (items that can drop during quest)
+    for (uint32 i = 0; i < QUEST_ITEM_DROP_COUNT; ++i)
+    {
+        uint32 itemId = quest->ItemDrop[i];
+        uint32 requiredCount = quest->ItemDropQuantity[i];
+
+        if (itemId != 0 && requiredCount > 0)
+        {
+            uint32 currentCount = bot->GetItemCount(itemId, true);
+            if (currentCount < requiredCount)
+            {
+                // Avoid duplicates if same item is in both objectives and ItemDrop
+                bool alreadyListed = false;
+                for (uint32 existingId : missingItems)
+                {
+                    if (existingId == itemId)
+                    {
+                        alreadyListed = true;
+                        break;
+                    }
+                }
+
+                if (!alreadyListed)
+                {
+                    missingItems.push_back(itemId);
+                    TC_LOG_DEBUG("playerbot.quest", "Bot {} missing {} of drop item {} for quest {}",
+                        bot->GetName(), requiredCount - currentCount, itemId, questId);
+                }
+            }
+        }
+    }
+
+    return missingItems;
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestAvailability(uint32 questId, Player* bot)
@@ -607,14 +863,223 @@ bool UnifiedQuestManager::ValidationModule::CanGroupMemberShareQuest(uint32 ques
 
 bool UnifiedQuestManager::ValidationModule::ValidateWithContext(ValidationContext& context)
 {
-    // INTEGRATION REQUIRED: Implement context-based validation
-    // Implementation depends on:
-    // - ValidationContext type definition in QuestValidation.h being accessible
-    // - IQuestValidation interface update to include ValidateWithContext method
-    // - Bot extraction from ValidationContext or separate Player* parameter
-    // See: src/modules/Playerbot/Quest/QuestValidation.h for ValidationContext definition
-    // See: src/modules/Playerbot/Core/DI/Interfaces/IQuestValidation.h for required interface
-    return true; // Stub - always return true for now
+    // Validate inputs
+    if (!context.bot)
+    {
+        context.errors.push_back("No bot provided for validation");
+        return false;
+    }
+
+    if (context.questId == 0)
+    {
+        context.errors.push_back("Invalid quest ID (0)");
+        return false;
+    }
+
+    // Get quest template if not already in context
+    if (!context.quest)
+    {
+        context.quest = sObjectMgr->GetQuestTemplate(context.questId);
+        if (!context.quest)
+        {
+            context.errors.push_back("Quest template not found for ID " + std::to_string(context.questId));
+            return false;
+        }
+    }
+
+    Player* bot = context.bot;
+    const Quest* quest = context.quest;
+    uint32 questId = context.questId;
+    bool hasErrors = false;
+
+    // Record validation start time
+    context.validationTime = GameTime::GetGameTimeMS();
+
+    // 1. Level requirements
+    uint8 botLevel = bot->GetLevel();
+    uint8 minLevel = quest->GetMinLevel();
+    uint8 maxLevel = quest->GetMaxLevel();
+
+    if (botLevel < minLevel)
+    {
+        context.errors.push_back("Bot level " + std::to_string(botLevel) + " is below minimum " + std::to_string(minLevel));
+        hasErrors = true;
+    }
+    if (maxLevel > 0 && botLevel > maxLevel)
+    {
+        context.errors.push_back("Bot level " + std::to_string(botLevel) + " exceeds maximum " + std::to_string(maxLevel));
+        hasErrors = true;
+    }
+
+    // 2. Class requirements
+    uint32 requiredClasses = quest->GetAllowableClasses();
+    if (requiredClasses != 0 && !(requiredClasses & (1 << (bot->GetClass() - 1))))
+    {
+        context.errors.push_back("Bot class not allowed for this quest");
+        hasErrors = true;
+    }
+
+    // 3. Race requirements
+    uint64 requiredRaces = quest->GetAllowableRaces();
+    if (requiredRaces != 0 && !(requiredRaces & (1ULL << (bot->GetRace() - 1))))
+    {
+        context.errors.push_back("Bot race not allowed for this quest");
+        hasErrors = true;
+    }
+
+    // 4. Quest status check
+    QuestStatus questStatus = bot->GetQuestStatus(questId);
+    if (questStatus == QUEST_STATUS_COMPLETE || questStatus == QUEST_STATUS_REWARDED)
+    {
+        if (!quest->IsRepeatable() && !quest->IsDailyOrWeekly())
+        {
+            context.errors.push_back("Quest already completed and is not repeatable");
+            hasErrors = true;
+        }
+    }
+    else if (questStatus == QUEST_STATUS_INCOMPLETE)
+    {
+        context.warnings.push_back("Quest is already in progress");
+    }
+
+    // 5. Quest log full check
+    if (bot->GetQuestSlotQuestId(MAX_QUEST_LOG_SIZE - 1) != 0)
+    {
+        context.warnings.push_back("Quest log may be full");
+    }
+
+    // 6. Reputation requirements (if strict validation)
+    if (context.strictValidation)
+    {
+        uint32 requiredMinRepFaction = quest->GetRequiredMinRepFaction();
+        if (requiredMinRepFaction)
+        {
+            int32 requiredMinRepValue = quest->GetRequiredMinRepValue();
+            int32 currentRepValue = bot->GetReputation(requiredMinRepFaction);
+            if (currentRepValue < requiredMinRepValue)
+            {
+                context.errors.push_back("Insufficient reputation with faction " + std::to_string(requiredMinRepFaction));
+                hasErrors = true;
+            }
+        }
+
+        uint32 requiredMaxRepFaction = quest->GetRequiredMaxRepFaction();
+        if (requiredMaxRepFaction)
+        {
+            int32 requiredMaxRepValue = quest->GetRequiredMaxRepValue();
+            int32 currentRepValue = bot->GetReputation(requiredMaxRepFaction);
+            if (currentRepValue > requiredMaxRepValue)
+            {
+                context.errors.push_back("Reputation too high with faction " + std::to_string(requiredMaxRepFaction));
+                hasErrors = true;
+            }
+        }
+    }
+
+    // 7. Prerequisite quest check
+    int32 prevQuestId = quest->GetPrevQuestId();
+    if (prevQuestId != 0)
+    {
+        if (prevQuestId > 0)
+        {
+            // Must have completed previous quest
+            if (!bot->GetQuestRewardStatus(static_cast<uint32>(prevQuestId)))
+            {
+                context.errors.push_back("Prerequisite quest " + std::to_string(prevQuestId) + " not completed");
+                hasErrors = true;
+            }
+        }
+        else
+        {
+            // Must NOT have completed the quest (negative ID)
+            if (bot->GetQuestRewardStatus(static_cast<uint32>(-prevQuestId)))
+            {
+                context.errors.push_back("Conflicting quest " + std::to_string(-prevQuestId) + " already completed");
+                hasErrors = true;
+            }
+        }
+    }
+
+    // 8. Check optional requirements if requested
+    if (context.checkOptionalRequirements)
+    {
+        // Source item check (quest starter item)
+        uint32 sourceItemId = quest->GetSrcItemId();
+        if (sourceItemId)
+        {
+            uint32 sourceItemCount = quest->GetSrcItemCount();
+            if (sourceItemCount == 0)
+                sourceItemCount = 1;
+
+            if (!bot->HasItemCount(sourceItemId, sourceItemCount))
+            {
+                context.warnings.push_back("Missing source item " + std::to_string(sourceItemId));
+            }
+        }
+
+        // Inventory space for rewards
+        uint32 rewardSlots = 0;
+        for (uint32 i = 0; i < QUEST_REWARD_ITEM_COUNT; ++i)
+        {
+            if (quest->RewardItemId[i] != 0 && quest->RewardItemCount[i] > 0)
+                ++rewardSlots;
+        }
+
+        if (rewardSlots > 0)
+        {
+            uint32 freeSlots = 0;
+            for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+            {
+                if (Bag* pBag = bot->GetBagByPos(bag))
+                {
+                    for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
+                    {
+                        if (!pBag->GetItemByPos(slot))
+                            ++freeSlots;
+                    }
+                }
+            }
+            for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+            {
+                if (!bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+                    ++freeSlots;
+            }
+
+            if (freeSlots < rewardSlots)
+            {
+                context.warnings.push_back("May have insufficient inventory space for " + std::to_string(rewardSlots) + " reward items");
+            }
+        }
+    }
+
+    // 9. Validate future requirements if requested (helpful for quest planning)
+    if (context.validateFutureRequirements)
+    {
+        // Check item objectives that will need to be collected
+        for (QuestObjective const& objective : quest->GetObjectives())
+        {
+            if (objective.Type == QUEST_OBJECTIVE_ITEM)
+            {
+                uint32 itemId = objective.ObjectID;
+                uint32 currentCount = bot->GetItemCount(itemId, true);
+                int32 requiredCount = objective.Amount;
+
+                if (static_cast<int32>(currentCount) < requiredCount)
+                {
+                    context.warnings.push_back("Will need to collect " + std::to_string(requiredCount - currentCount) +
+                        " more of item " + std::to_string(itemId));
+                }
+            }
+        }
+    }
+
+    // Update validation time to reflect completion
+    context.validationTime = GameTime::GetGameTimeMS() - context.validationTime;
+
+    TC_LOG_DEBUG("playerbot.quest", "ValidateWithContext for bot {} quest {}: {} errors, {} warnings, took {}ms",
+        bot->GetName(), questId, context.errors.size(), context.warnings.size(), context.validationTime);
+
+    return !hasErrors;
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestObjectives(uint32 questId, Player* bot)

@@ -311,6 +311,61 @@ private:
     float PredictOptimalChallenge(PlayerSkillProfile* profile) const;
     void AdaptToPlayerLearning(PlayerSkillProfile* profile, DifficultySettings& settings);
 
+    // Player action tracking for skill calculation
+    struct PlayerActionTracker
+    {
+        // Spell cast tracking
+        uint32 spellsCastTotal{0};
+        uint32 spellsHitTotal{0};
+        uint32 spellsMissed{0};
+        uint32 spellsInterrupted{0};
+
+        // Timing tracking
+        uint32 lastActionTime{0};
+        uint32 actionCount{0};
+        uint32 trackingStartTime{0};
+        float totalReactionTime{0.0f};
+        uint32 reactionSamples{0};
+
+        // Resource usage
+        uint32 resourceWasted{0};
+        uint32 resourceUsed{0};
+
+        // Position tracking
+        float totalMovementDistance{0.0f};
+        float optimalMovementDistance{0.0f};
+        uint32 goodPositionCount{0};
+        uint32 positionChecks{0};
+
+        // Decision tracking
+        uint32 goodDecisions{0};
+        uint32 totalDecisions{0};
+
+        void Reset()
+        {
+            spellsCastTotal = 0;
+            spellsHitTotal = 0;
+            spellsMissed = 0;
+            spellsInterrupted = 0;
+            lastActionTime = 0;
+            actionCount = 0;
+            trackingStartTime = 0;
+            totalReactionTime = 0.0f;
+            reactionSamples = 0;
+            resourceWasted = 0;
+            resourceUsed = 0;
+            totalMovementDistance = 0.0f;
+            optimalMovementDistance = 0.0f;
+            goodPositionCount = 0;
+            positionChecks = 0;
+            goodDecisions = 0;
+            totalDecisions = 0;
+        }
+    };
+
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _trackerMutex;
+    ::std::unordered_map<ObjectGuid, PlayerActionTracker> _playerTrackers;
+
     // Constants
     static constexpr float MIN_DIFFICULTY = 0.0f;
     static constexpr float MAX_DIFFICULTY = 1.0f;

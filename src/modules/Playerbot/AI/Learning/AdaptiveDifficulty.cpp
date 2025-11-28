@@ -14,6 +14,10 @@
 #include "Group.h"
 #include "Log.h"
 #include "Performance/BotPerformanceMonitor.h"
+#include "GameTime.h"
+#include "SpellHistory.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
 #include <algorithm>
 #include <numeric>
 #include <cmath>
@@ -540,25 +544,187 @@ SkillIndicators AdaptiveDifficulty::CalculateSkillIndicators(Player* player) con
     if (!player)
         return indicators;
 
-    // Calculate accuracy (simplified - would need combat tracking)
-    indicators.accuracy = 0.7f;  // Placeholder
+    ObjectGuid playerGuid = player->GetGUID();
 
-    // Calculate APM (actions per minute)
-    indicators.apm = 40.0f;  // Placeholder
+    // Get or access the tracker for this player
+    ::std::lock_guard trackerLock(_trackerMutex);
+    auto trackerIt = _playerTrackers.find(playerGuid);
 
-    // Calculate survival rate
-    indicators.survivalRate = player->IsAlive() ? 0.8f : 0.2f;
-    // Calculate damage efficiency
-    indicators.damageEfficiency = 0.6f;  // Placeholder
+    if (trackerIt != _playerTrackers.end())
+    {
+        const PlayerActionTracker& tracker = trackerIt->second;
+        uint32 now = GameTime::GetGameTimeMS();
 
-    // Calculate positioning quality
-    indicators.positioningQuality = 0.5f;  // Placeholder
+        // Calculate accuracy from tracked spell hits/misses
+        if (tracker.spellsCastTotal > 0)
+        {
+            indicators.accuracy = static_cast<float>(tracker.spellsHitTotal) /
+                                 static_cast<float>(tracker.spellsCastTotal);
+        }
+        else
+        {
+            // Use player's combat rating if no tracked data
+            // Hit rating affects spell hit chance
+            float hitRating = player->GetRatingBonusValue(CR_HIT_SPELL);
+            float critRating = player->GetRatingBonusValue(CR_CRIT_SPELL);
+            // Normalize hit rating: 0% = 0.5 base accuracy, +15% hit = ~0.85 accuracy
+            indicators.accuracy = ::std::clamp(0.7f + (hitRating / 100.0f) + (critRating / 200.0f), 0.3f, 1.0f);
+        }
 
-    // Calculate decision quality
-    indicators.decisionQuality = 0.5f;  // Placeholder
+        // Calculate APM from tracked actions
+        if (tracker.trackingStartTime > 0 && now > tracker.trackingStartTime)
+        {
+            float minutesTracked = static_cast<float>(now - tracker.trackingStartTime) / 60000.0f;
+            if (minutesTracked > 0.1f) // At least 6 seconds of tracking
+            {
+                indicators.apm = static_cast<float>(tracker.actionCount) / minutesTracked;
+            }
+            else
+            {
+                // Estimate from player haste - higher haste = faster actions
+                float hasteRating = player->GetRatingBonusValue(CR_HASTE_SPELL);
+                indicators.apm = 30.0f + (hasteRating / 5.0f); // Base 30 APM + haste bonus
+            }
+        }
+        else
+        {
+            // Estimate APM from haste rating
+            float hasteRating = player->GetRatingBonusValue(CR_HASTE_SPELL);
+            indicators.apm = 30.0f + (hasteRating / 5.0f);
+        }
 
-    // Calculate reaction time (ms)
-    indicators.reactionTime = 500.0f;  // Placeholder
+        // Calculate reaction time from tracked samples
+        if (tracker.reactionSamples > 0)
+        {
+            indicators.reactionTime = tracker.totalReactionTime / static_cast<float>(tracker.reactionSamples);
+        }
+        else
+        {
+            // Estimate reaction time inversely from haste
+            // Base 500ms, reduced by haste (faster players = lower reaction time)
+            float hasteRating = player->GetRatingBonusValue(CR_HASTE_SPELL);
+            indicators.reactionTime = ::std::max(200.0f, 500.0f - hasteRating * 2.0f);
+        }
+
+        // Calculate damage efficiency from resource usage
+        if (tracker.resourceUsed > 0)
+        {
+            float wasteRatio = static_cast<float>(tracker.resourceWasted) /
+                              static_cast<float>(tracker.resourceUsed + tracker.resourceWasted);
+            indicators.damageEfficiency = 1.0f - wasteRatio;
+        }
+        else
+        {
+            // Estimate from mastery - higher mastery = better resource management knowledge
+            float masteryRating = player->GetRatingBonusValue(CR_MASTERY);
+            indicators.damageEfficiency = ::std::clamp(0.5f + (masteryRating / 100.0f), 0.3f, 0.95f);
+        }
+
+        // Calculate positioning quality from tracking
+        if (tracker.positionChecks > 0)
+        {
+            indicators.positioningQuality = static_cast<float>(tracker.goodPositionCount) /
+                                           static_cast<float>(tracker.positionChecks);
+        }
+        else
+        {
+            // Estimate from movement speed and versatility
+            // Players who use movement well tend to have good positioning
+            float movementSpeed = player->GetSpeed(MOVE_RUN) / 7.0f; // Normalized to base speed
+            float versatilityRating = player->GetRatingBonusValue(CR_VERSATILITY_DAMAGE_DONE);
+            // Better speed utilization and versatility = better positioning
+            indicators.positioningQuality = ::std::clamp(0.4f + (movementSpeed - 1.0f) * 0.3f +
+                                                        versatilityRating / 200.0f, 0.2f, 0.95f);
+        }
+
+        // Calculate decision quality from tracked good/bad decisions
+        if (tracker.totalDecisions > 0)
+        {
+            indicators.decisionQuality = static_cast<float>(tracker.goodDecisions) /
+                                        static_cast<float>(tracker.totalDecisions);
+        }
+        else
+        {
+            // Estimate from overall player power - experienced players have better gear
+            uint32 avgItemLevel = player->GetAverageItemLevel();
+            // Normalize: ilvl 200 = 0.5, ilvl 400+ = 0.9 (rough scale for modern WoW)
+            indicators.decisionQuality = ::std::clamp(0.3f + (static_cast<float>(avgItemLevel) - 100.0f) / 500.0f,
+                                                      0.3f, 0.9f);
+        }
+    }
+    else
+    {
+        // No tracker data - estimate all metrics from player stats
+        // This happens for new players or when tracking hasn't started
+
+        // Accuracy from hit/crit ratings
+        float hitRating = player->GetRatingBonusValue(CR_HIT_SPELL);
+        float critRating = player->GetRatingBonusValue(CR_CRIT_SPELL);
+        indicators.accuracy = ::std::clamp(0.7f + (hitRating / 100.0f) + (critRating / 200.0f), 0.3f, 1.0f);
+
+        // APM from haste rating
+        float hasteRating = player->GetRatingBonusValue(CR_HASTE_SPELL);
+        indicators.apm = 30.0f + (hasteRating / 5.0f);
+
+        // Reaction time inversely from haste
+        indicators.reactionTime = ::std::max(200.0f, 500.0f - hasteRating * 2.0f);
+
+        // Damage efficiency from mastery
+        float masteryRating = player->GetRatingBonusValue(CR_MASTERY);
+        indicators.damageEfficiency = ::std::clamp(0.5f + (masteryRating / 100.0f), 0.3f, 0.95f);
+
+        // Positioning from movement speed and versatility
+        float movementSpeed = player->GetSpeed(MOVE_RUN) / 7.0f;
+        float versatilityRating = player->GetRatingBonusValue(CR_VERSATILITY_DAMAGE_DONE);
+        indicators.positioningQuality = ::std::clamp(0.4f + (movementSpeed - 1.0f) * 0.3f +
+                                                    versatilityRating / 200.0f, 0.2f, 0.95f);
+
+        // Decision quality from item level
+        uint32 avgItemLevel = player->GetAverageItemLevel();
+        indicators.decisionQuality = ::std::clamp(0.3f + (static_cast<float>(avgItemLevel) - 100.0f) / 500.0f,
+                                                  0.3f, 0.9f);
+    }
+
+    // Calculate survival rate - this is always available from player state
+    // Consider current health, defensive cooldowns active, and recent death count
+    float healthPercent = player->GetHealthPct() / 100.0f;
+    bool hasDefensiveBuff = false;
+
+    // Check for common defensive auras
+    if (player->HasAura(871) ||    // Shield Wall
+        player->HasAura(12975) ||  // Last Stand
+        player->HasAura(498) ||    // Divine Protection
+        player->HasAura(642) ||    // Divine Shield
+        player->HasAura(48792) ||  // Icebound Fortitude
+        player->HasAura(61336) ||  // Survival Instincts
+        player->HasAura(22812))    // Barkskin
+    {
+        hasDefensiveBuff = true;
+    }
+
+    // Base survival rate on health and defensive state
+    if (player->IsAlive())
+    {
+        indicators.survivalRate = healthPercent * 0.6f + 0.3f;
+        if (hasDefensiveBuff)
+            indicators.survivalRate += 0.1f;
+    }
+    else
+    {
+        indicators.survivalRate = 0.1f;
+    }
+    indicators.survivalRate = ::std::clamp(indicators.survivalRate, 0.1f, 0.95f);
+
+    // Calculate learning rate from profile history if available
+    auto profile = GetPlayerProfile(playerGuid);
+    if (profile)
+    {
+        indicators.learningRate = profile->GetSkillTrend();
+    }
+    else
+    {
+        indicators.learningRate = 0.0f;
+    }
 
     return indicators;
 }

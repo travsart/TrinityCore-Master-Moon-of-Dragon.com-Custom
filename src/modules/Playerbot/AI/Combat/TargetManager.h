@@ -237,7 +237,7 @@ namespace Playerbot
         /**
          * @brief Get recent damage dealt by target
          */
-        float GetRecentDamage(Unit* target, const CombatMetrics& metrics) const;
+        float GetRecentDamage(Unit* target) const;
 
         /**
          * @brief Update target cache

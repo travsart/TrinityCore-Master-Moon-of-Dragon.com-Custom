@@ -150,6 +150,11 @@ private:
         // Statistics
         std::atomic<uint64> _itemsAnalyzed{0};
         std::atomic<uint64> _upgradesDetected{0};
+
+    public:
+        // Getters for statistics (used by GetLootStatistics)
+        uint64 GetItemsAnalyzed() const { return _itemsAnalyzed.load(); }
+        uint64 GetUpgradesDetected() const { return _upgradesDetected.load(); }
     };
 
     /**
@@ -235,6 +240,12 @@ private:
         // Statistics
         std::atomic<uint64> _sessionsCreated{0};
         std::atomic<uint64> _sessionsCompleted{0};
+
+    public:
+        // Getters for statistics (used by GetLootStatistics)
+        uint64 GetSessionsCreated() const { return _sessionsCreated.load(); }
+        uint64 GetSessionsCompleted() const { return _sessionsCompleted.load(); }
+        uint32 GetActiveSessionCount() const { return static_cast<uint32>(_activeSessions.size()); }
     };
 
     /**
@@ -278,17 +289,27 @@ private:
             uint32 itemId;
             uint32 lootSlot;
             uint32 groupId;
+            uint32 winnerGuid{0};  // GUID of the player who won the roll
             std::unordered_map<uint32, LootRollType> playerRolls;
             std::unordered_map<uint32, uint32> rollValues;
             bool isComplete;
 
             // Default constructor for map usage
             LootRoll()
-                : rollId(0), itemId(0), lootSlot(0), groupId(0), isComplete(false)
+                : rollId(0), itemId(0), lootSlot(0), groupId(0), winnerGuid(0), isComplete(false)
             {}
 
-            LootRoll(uint32 id) : rollId(id), itemId(0), lootSlot(0), groupId(0), isComplete(false) {}
+            LootRoll(uint32 id) : rollId(id), itemId(0), lootSlot(0), groupId(0), winnerGuid(0), isComplete(false) {}
         };
+
+        /**
+         * @brief Awards an item to a player using TrinityCore's inventory system
+         * @param player The player to award the item to
+         * @param itemId The item entry ID to award
+         * @param count Number of items to award (default 1)
+         * @return True if item was successfully awarded
+         */
+        bool AwardItemToPlayer(Player* player, uint32 itemId, uint32 count = 1);
 
         std::unordered_map<uint32, LootRoll> _activeRolls;
         uint32 _nextRollId{1};

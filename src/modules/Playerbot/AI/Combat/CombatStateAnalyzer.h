@@ -305,6 +305,38 @@ namespace Playerbot
         mutable Player* _mainTankCache;
         mutable Player* _mainHealerCache;
         mutable uint32 _roleCacheTime;
+
+        // Damage tracking for DPS calculation
+        struct DamageRecord
+        {
+            uint32 timestamp;
+            uint32 damage;
+            ObjectGuid sourceGuid;
+            ObjectGuid targetGuid;
+            bool isIncoming;  // true = damage to bot, false = damage from bot
+        };
+
+        static constexpr uint32 DAMAGE_HISTORY_SIZE = 60;  // ~1 second at 60 updates
+        static constexpr uint32 DPS_WINDOW_MS = 5000;      // 5-second DPS window
+        ::std::array<DamageRecord, DAMAGE_HISTORY_SIZE> _damageHistory;
+        uint32 _damageHistoryIndex{0};
+        uint32 _lastHealthValue{0};
+        uint32 _combatStartTime{0};
+
+        // Total damage tracking for DPS calculation
+        uint64 _totalDamageDealt{0};
+        uint64 _totalDamageTaken{0};
+        uint32 _lastDamageTrackTime{0};
+
+        // Ground effect tracking
+        struct GroundEffectInfo
+        {
+            uint32 spellId;
+            Position center;
+            float radius;
+            uint32 expiryTime;
+        };
+        ::std::vector<GroundEffectInfo> _detectedGroundEffects;
     };
 
 } // namespace Playerbot

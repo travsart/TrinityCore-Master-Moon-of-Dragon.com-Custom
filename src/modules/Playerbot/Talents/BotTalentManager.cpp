@@ -18,6 +18,7 @@
 #include "BotTalentManager.h"
 #include "Player.h"
 #include "DatabaseEnv.h"
+#include "PlayerbotDatabase.h"
 #include "Log.h"
 #include "Config.h"
 #include "Group/RoleDefinitions.h"
@@ -117,8 +118,10 @@ void BotTalentManager::LoadLoadoutsFromDatabase()
 {
     TC_LOG_DEBUG("playerbot", "BotTalentManager: Loading loadouts from database...");
 
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_BOT_TALENT_LOADOUTS);
-    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+    // Use PlayerbotDatabase (playerbot database) instead of CharacterDatabase
+    QueryResult result = sPlayerbotDatabase->Query(
+        "SELECT class_id, spec_id, min_level, max_level, talent_string, hero_talent_string, description "
+        "FROM playerbot_talent_loadouts ORDER BY class_id, spec_id, min_level");
 
     if (!result)
     {

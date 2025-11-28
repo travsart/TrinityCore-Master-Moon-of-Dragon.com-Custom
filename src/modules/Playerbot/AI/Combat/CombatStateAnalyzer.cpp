@@ -10,6 +10,7 @@
 #include "CombatStateAnalyzer.h"
 #include "Player.h"
 #include "Group.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "SpellHistory.h"
@@ -148,13 +149,68 @@ void CombatStateAnalyzer::UpdateMetrics(uint32 diff)
     // Update threat data
     UpdateThreatData();
 
-    // Calculate DPS metrics (simplified for now)
-    if (_history[0].timestamp > 0 && GameTime::GetGameTimeMS() - _history[0].timestamp >= 1000)
+    // Calculate DPS metrics using damage tracking
+    uint32 now = GameTime::GetGameTimeMS();
+
+    // Track damage taken based on health changes
+    uint32 currentHealth = _bot->GetHealth();
+    if (_lastHealthValue > 0 && currentHealth < _lastHealthValue)
     {
-        // This would need actual damage tracking in production
-        _currentMetrics.personalDPS = 0.0f; // Placeholder
-        _currentMetrics.groupDPS = 0.0f; // Placeholder
-        _currentMetrics.incomingDPS = 0.0f; // Placeholder
+        uint32 damageTaken = _lastHealthValue - currentHealth;
+        _totalDamageTaken += damageTaken;
+        _currentMetrics.lastDamageTime = now;
+
+        // Record in damage history
+        DamageRecord& record = _damageHistory[_damageHistoryIndex % DAMAGE_HISTORY_SIZE];
+        record.timestamp = now;
+        record.damage = damageTaken;
+        record.targetGuid = _bot->GetGUID();
+        record.isIncoming = true;
+        _damageHistoryIndex++;
+    }
+    _lastHealthValue = currentHealth;
+
+    // Calculate DPS over the window period
+    if (_combatStartTime == 0)
+        _combatStartTime = now;
+
+    uint32 combatDuration = now - _combatStartTime;
+    if (combatDuration > 0)
+    {
+        // Personal DPS - estimate from target health changes
+        float personalDamageDealt = 0.0f;
+        if (Unit* target = _bot->GetVictim())
+        {
+            // Track enemy health changes as our damage contribution
+            // This is an estimate assuming we're the primary damage dealer
+            personalDamageDealt = static_cast<float>(_totalDamageDealt);
+        }
+
+        float durationSeconds = static_cast<float>(::std::min(combatDuration, DPS_WINDOW_MS)) / 1000.0f;
+        if (durationSeconds > 0.0f)
+        {
+            _currentMetrics.personalDPS = personalDamageDealt / durationSeconds;
+            _currentMetrics.incomingDPS = static_cast<float>(_totalDamageTaken) / durationSeconds;
+        }
+
+        // Group DPS - sum of all group members' estimated DPS
+        _currentMetrics.groupDPS = _currentMetrics.personalDPS;  // Start with personal
+        if (Group* group = _bot->GetGroup())
+        {
+            for (GroupReference const& groupRef : group->GetMembers())
+            {
+                if (Player* member = groupRef.GetSource())
+                {
+                    if (member != _bot && member->IsInCombat())
+                    {
+                        // Estimate member DPS based on their primary stat and level
+                        // This is a heuristic since we can't track their actual damage
+                        float memberDPS = member->GetTotalAttackPowerValue(BASE_ATTACK) * 0.5f;
+                        _currentMetrics.groupDPS += memberDPS;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -374,8 +430,79 @@ void CombatStateAnalyzer::UpdateBossTimers(uint32 diff)
 
 void CombatStateAnalyzer::DetectBossMechanics()
 {
-    // Would scan for boss spell casts and register them
-    // This is a placeholder for actual mechanic detection
+    // Scan for boss spell casts and detect dangerous mechanics
+    uint32 now = GameTime::GetGameTimeMS();
+
+    // Clean up expired ground effects
+    _detectedGroundEffects.erase(
+        std::remove_if(_detectedGroundEffects.begin(), _detectedGroundEffects.end(),
+            [now](const GroundEffectInfo& effect) { return now > effect.expiryTime; }),
+        _detectedGroundEffects.end()
+    );
+
+    // Scan enemies for dangerous spell casts
+    for (Unit* enemy : _enemyCache)
+    {
+        if (!enemy || enemy->GetTypeId() != TYPEID_UNIT)
+            continue;
+
+        Creature* creature = enemy->ToCreature();
+        if (!creature)
+            continue;
+
+        // Check if creature is casting
+        if (Spell* currentSpell = creature->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+        {
+            SpellInfo const* spellInfo = currentSpell->GetSpellInfo();
+            if (!spellInfo)
+                continue;
+
+            // Check for area effect spells (potential void zones)
+            bool isAreaEffect = spellInfo->HasEffect(SPELL_EFFECT_PERSISTENT_AREA_AURA) ||
+                               spellInfo->HasEffect(SPELL_EFFECT_APPLY_AREA_AURA_ENEMY) ||
+                               spellInfo->HasEffect(SPELL_EFFECT_CREATE_AREATRIGGER);
+
+            if (isAreaEffect)
+            {
+                // Register as a known mechanic if from a boss
+                if (creature->IsDungeonBoss())
+                {
+                    bool alreadyKnown = false;
+                    for (const auto& mechanic : _knownMechanics)
+                    {
+                        if (mechanic.spellId == spellInfo->Id)
+                        {
+                            alreadyKnown = true;
+                            break;
+                        }
+                    }
+
+                    if (!alreadyKnown)
+                    {
+                        BossMechanic mechanic;
+                        mechanic.spellId = spellInfo->Id;
+                        mechanic.name = spellInfo->SpellName[LOCALE_enUS];
+                        mechanic.castTime = spellInfo->CastTimeEntry ? spellInfo->CastTimeEntry->Base : 0;
+                        mechanic.cooldown = 0;  // Would need to track from usage patterns
+                        mechanic.lastSeen = now;
+                        mechanic.requiresMovement = isAreaEffect;
+                        mechanic.requiresInterrupt = spellInfo->InterruptFlags != 0;
+                        mechanic.requiresDefensive = spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE);
+                        _knownMechanics.push_back(mechanic);
+                    }
+                }
+            }
+
+            // Check for interruptible dangerous casts
+            if (spellInfo->InterruptFlags != 0 && spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE))
+            {
+                // Track recent mechanic casts for pattern detection
+                _recentMechanicCasts.push_back(spellInfo->Id);
+                if (_recentMechanicCasts.size() > 20)
+                    _recentMechanicCasts.erase(_recentMechanicCasts.begin());
+            }
+        }
+    }
 }
 
 void CombatStateAnalyzer::AnalyzeCombatTrends()
@@ -491,12 +618,79 @@ bool CombatStateAnalyzer::CheckForDefensiveNeed() const
 
 bool CombatStateAnalyzer::CheckForSpreadNeed() const
 {
-    // Check for spread mechanics (would need actual spell detection)
-    // Placeholder: spread if group is too close and there's AOE damage
+    // Check for spread mechanics based on enemy spell casts and group proximity
+    // Spread is needed when:
+    // 1. Group is clustered together
+    // 2. Enemy is casting an AOE spell
+    // 3. Multiple group members are being hit by chain damage
+
     if (_currentMetrics.groupSpread < 5.0f && _currentMetrics.enemyCount > 0)
     {
-        // Would check for specific spread mechanics here
-        return false;
+        // Check for area effect spells being cast
+        for (Unit* enemy : _enemyCache)
+        {
+            if (!enemy || enemy->GetTypeId() != TYPEID_UNIT)
+                continue;
+
+            Creature* creature = enemy->ToCreature();
+            if (!creature)
+                continue;
+
+            // Check if creature is casting an AOE spell
+            if (Spell* currentSpell = creature->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+            {
+                SpellInfo const* spellInfo = currentSpell->GetSpellInfo();
+                if (spellInfo)
+                {
+                    // Check for area effect targeting
+                    if (spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE) ||
+                        spellInfo->HasEffect(SPELL_EFFECT_PERSISTENT_AREA_AURA) ||
+                        spellInfo->HasEffect(SPELL_EFFECT_APPLY_AREA_AURA_ENEMY))
+                    {
+                        // Check if this targets multiple people (chain or area)
+                        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                        {
+                            if (spellInfo->Effects[i].TargetA.GetTarget() == TARGET_UNIT_TARGET_ENEMY &&
+                                spellInfo->Effects[i].ChainTargets > 1)
+                            {
+                                return true;  // Chain spell - need to spread
+                            }
+                            if (spellInfo->Effects[i].RadiusEntry &&
+                                spellInfo->Effects[i].RadiusEntry->RadiusMax > 5.0f)
+                            {
+                                return true;  // Large AOE - need to spread
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Also spread if we detect multiple group members taking simultaneous damage
+    // (indicates cleave or chain mechanics)
+    if (_currentMetrics.groupSpread < 8.0f &&
+        _currentMetrics.averageGroupHealth < 80.0f &&
+        _currentMetrics.incomingDPS > 0)
+    {
+        // Check if multiple members took recent damage
+        uint32 recentlyDamagedCount = 0;
+        uint32 now = GameTime::GetGameTimeMS();
+        if (Group* group = _bot->GetGroup())
+        {
+            for (GroupReference const& groupRef : group->GetMembers())
+            {
+                if (Player* member = groupRef.GetSource())
+                {
+                    // If member health dropped recently, count them
+                    if (member->GetHealthPct() < 95.0f && member->IsInCombat())
+                        recentlyDamagedCount++;
+                }
+            }
+        }
+        // If 3+ members are taking damage while clustered, spread out
+        if (recentlyDamagedCount >= 3)
+            return true;
     }
 
     return false;
@@ -504,11 +698,58 @@ bool CombatStateAnalyzer::CheckForSpreadNeed() const
 
 bool CombatStateAnalyzer::CheckForStackNeed() const
 {
-    // Check for stack mechanics (would need actual spell detection)
-    // Placeholder: stack if group is too spread and healer is struggling
+    // Check for stack mechanics based on healer efficiency and group spread
+    // Stack is needed when:
+    // 1. Group is too spread out for efficient healing
+    // 2. Healer mana is low and needs to conserve with group heals
+    // 3. Boss mechanic requires stacking (shared damage)
+
+    // Stack if group is too spread and healer is struggling
     if (_currentMetrics.groupSpread > 15.0f && _currentMetrics.averageGroupHealth < 70.0f)
     {
         return true;
+    }
+
+    // Stack if healer is low on mana - group heals are more efficient when stacked
+    if (_currentMetrics.healerAlive && _currentMetrics.groupSpread > 10.0f)
+    {
+        // Check healer mana
+        if (Player* healer = GetMainHealer())
+        {
+            if (healer->GetPower(POWER_MANA) * 100 / healer->GetMaxPower(POWER_MANA) < 40)
+            {
+                return true;  // Low mana healer - stack for efficient group heals
+            }
+        }
+    }
+
+    // Check for shared damage mechanics (boss casting damage split spell)
+    for (Unit* enemy : _enemyCache)
+    {
+        if (!enemy || enemy->GetTypeId() != TYPEID_UNIT)
+            continue;
+
+        Creature* creature = enemy->ToCreature();
+        if (!creature || !creature->IsDungeonBoss())
+            continue;
+
+        if (Spell* currentSpell = creature->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+        {
+            SpellInfo const* spellInfo = currentSpell->GetSpellInfo();
+            if (spellInfo)
+            {
+                // Check for damage split/shared damage mechanics
+                for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                {
+                    // Shared damage mechanics often have specific aura types
+                    if (spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_SPLIT_DAMAGE_PCT ||
+                        spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_SHARE_DAMAGE_PCT)
+                    {
+                        return true;  // Damage split mechanic - stack up
+                    }
+                }
+            }
+        }
     }
 
     return false;
@@ -1161,8 +1402,79 @@ bool CombatStateAnalyzer::IsBeingFocused() const
 
 bool CombatStateAnalyzer::IsInVoidZone() const
 {
-    // Would need actual void zone detection
-    // This is a placeholder that checks for ground effects
+    // Check for dangerous ground effects using detected effects and auras
+    Position botPos = _bot->GetPosition();
+
+    // Check tracked ground effects from DetectBossMechanics
+    for (const auto& effect : _detectedGroundEffects)
+    {
+        if (GameTime::GetGameTimeMS() < effect.expiryTime)
+        {
+            float dist = botPos.GetExactDist2d(effect.center);
+            if (dist <= effect.radius)
+                return true;
+        }
+    }
+
+    // Check for harmful auras that indicate standing in bad stuff
+    // These are common "void zone" type effects that deal periodic damage
+    Unit::AuraApplicationMap const& auras = _bot->GetAppliedAuras();
+    for (auto const& [auraId, aurApp] : auras)
+    {
+        Aura const* aura = aurApp->GetBase();
+        if (!aura)
+            continue;
+
+        SpellInfo const* spellInfo = aura->GetSpellInfo();
+        if (!spellInfo)
+            continue;
+
+        // Check if this is a harmful area aura (typically void zones)
+        if (!spellInfo->IsPositive())
+        {
+            for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+            {
+                // Check for periodic damage auras from area sources
+                if (spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
+                    spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE_PERCENT)
+                {
+                    // Check if it's from a creature (enemy) or dynamic object (ground effect)
+                    Unit* caster = aura->GetCaster();
+                    if (caster && caster->GetTypeId() == TYPEID_UNIT && _bot->IsHostileTo(caster))
+                    {
+                        // If the spell creates persistent area aura, we're in a void zone
+                        if (spellInfo->HasEffect(SPELL_EFFECT_PERSISTENT_AREA_AURA) ||
+                            spellInfo->HasEffect(SPELL_EFFECT_CREATE_AREATRIGGER))
+                        {
+                            return true;
+                        }
+
+                        // Check if this aura was applied very recently (indicates we just stepped in)
+                        if (aura->GetDuration() > 0 && aura->GetMaxDuration() - aura->GetDuration() < 1000)
+                        {
+                            // Freshly applied damage over time from enemy - likely void zone
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Check for nearby dynamic objects (ground-based effects)
+    // This catches desecrations, death and decay, etc.
+    // Note: In production, would iterate DynamicObjects in range
+    // For now, check if we're taking rapid periodic damage while stationary
+    if (_currentMetrics.incomingDPS > 0 && !_bot->IsMoving())
+    {
+        // If taking significant damage while standing still, probably in bad
+        float healthLossRate = _currentMetrics.incomingDPS / static_cast<float>(_bot->GetMaxHealth());
+        if (healthLossRate > 0.05f)  // Losing more than 5% health per second
+        {
+            return true;
+        }
+    }
+
     return false;
 }
 

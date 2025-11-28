@@ -1369,9 +1369,7 @@ bool UnifiedMovementCoordinator::PositionModule::HasLineOfSight(Position const& 
 
 bool UnifiedMovementCoordinator::PositionModule::IsWalkable(Position const& pos)
 {
-    // TODO: Implement IsWalkable in PositionManager
-    (void)pos;
-    return true;
+    return _manager->IsWalkablePosition(pos);
 }
 
 float UnifiedMovementCoordinator::PositionModule::CalculateMovementCost(Position const& from, Position const& to)
@@ -1391,9 +1389,9 @@ bool UnifiedMovementCoordinator::PositionModule::ShouldMaintainGroupProximity()
 
 float UnifiedMovementCoordinator::PositionModule::GetOptimalGroupDistance(uint8 role)
 {
-    // TODO: Fix parameter type mismatch - PositionManager expects ThreatRole
-    (void)role;
-    return 10.0f;
+    // Convert uint8 role to ThreatRole enum for PositionManager
+    ThreatRole threatRole = static_cast<ThreatRole>(role);
+    return _manager->GetOptimalGroupDistance(threatRole);
 }
 
 bool UnifiedMovementCoordinator::PositionModule::ShouldStrafe(Unit* target)
@@ -1418,15 +1416,12 @@ Position UnifiedMovementCoordinator::PositionModule::PredictTargetPosition(Unit*
 
 void UnifiedMovementCoordinator::PositionModule::SetWeights(PositionWeights const& weights)
 {
-    // TODO: Implement SetWeights in PositionManager
-    (void)weights;
+    _manager->SetWeights(weights);
 }
 
 PositionWeights const& UnifiedMovementCoordinator::PositionModule::GetWeights() const
 {
-    // TODO: Implement GetWeights in PositionManager
-    static PositionWeights dummyWeights{};
-    return dummyWeights;
+    return _manager->GetWeights();
 }
 
 void UnifiedMovementCoordinator::PositionModule::SetUpdateInterval(uint32 intervalMs)
@@ -1441,14 +1436,12 @@ uint32 UnifiedMovementCoordinator::PositionModule::GetUpdateInterval() const
 
 PositionMetrics const& UnifiedMovementCoordinator::PositionModule::GetMetrics() const
 {
-    // TODO: Implement GetMetrics in PositionManager
-    static PositionMetrics dummyMetrics{};
-    return dummyMetrics;
+    return _manager->GetMetrics();
 }
 
 void UnifiedMovementCoordinator::PositionModule::ResetMetrics()
 {
-    // TODO: Implement ResetMetrics in PositionManager
+    _manager->ResetMetrics();
 }
 
 MovementResult UnifiedMovementCoordinator::PositionModule::HandleEmergencyMovement(MovementContext const& context)
