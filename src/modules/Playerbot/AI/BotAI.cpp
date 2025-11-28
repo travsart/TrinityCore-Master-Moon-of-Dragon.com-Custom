@@ -777,11 +777,13 @@ void BotAI::ProcessTriggers()
 }
 
 // ============================================================================
-// ACTION EXECUTION// ============================================================================
+// ACTION EXECUTION
+// ============================================================================
 
 void BotAI::UpdateActions(uint32 diff)
 {
-    // Execute current action if in progressif (_currentAction)
+    // Execute current action if in progress
+    if (_currentAction)
     {
         // Check if action is still valid
         if (!_currentAction->IsUseful(this))
@@ -792,7 +794,8 @@ void BotAI::UpdateActions(uint32 diff)
         {
             // Action still in progress
             return;
-        }}
+        }
+    }
 
     // Process triggered actions first (higher priority)
     if (!_triggeredActions.empty())
@@ -802,7 +805,8 @@ void BotAI::UpdateActions(uint32 diff)
         {
             auto execResult = ExecuteActionInternal(result.suggestedAction.get(), result.context);
             if (execResult == ActionResult::SUCCESS || execResult == ActionResult::IN_PROGRESS)
-            {_currentAction = result.suggestedAction;
+            {
+                _currentAction = result.suggestedAction;
                 _performanceMetrics.actionsExecuted++;
             }
         }
