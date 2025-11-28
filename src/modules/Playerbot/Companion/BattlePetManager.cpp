@@ -27,6 +27,8 @@
 #include "MotionMaster.h"
 #include "MovementGenerator.h"
 #include "PathGenerator.h"
+#include "DB2Stores.h"
+#include "ObjectMgr.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -101,119 +103,98 @@ void BattlePetManager::Initialize()
 
 void BattlePetManager::LoadPetDatabase()
 {
-    // DESIGN NOTE: Complete battle pet database loading implementation
-    // Current behavior: Loads all WoW battle pet species from WorldDatabase
-    // - Queries creature_template with type 15 (CREATURE_TYPE_BATTLEPET)
-    // - Cross-references battle_pet_species for metadata
-    // - Includes fallback hardcoded pet data if database query returns empty
-    // Full implementation includes:
-    // - Database tables: creature_template, battle_pet_species, battle_pet_breed
-    // - Stat calculations based on level/quality/breed modifiers
-    // - Ability assignments from battle_pet_species_abilities
-    // Reference: TrinityCore WorldDatabase battle pet tables
+    // DESIGN NOTE: Complete battle pet species loading implementation
+    // PRIMARY: Load species from TrinityCore's DB2 store (sBattlePetSpeciesStore)
+    // FALLBACK: Hardcoded pet data if DB2 store is empty
+    //
+    // BattlePetSpeciesEntry structure (from DB2Structure.h):
+    // - ID: Unique species identifier
+    // - Description/SourceText: LocalizedStrings
+    // - CreatureID: Links to creature_template entry
+    // - SummonSpellID: Spell to summon this pet
+    // - IconFileDataID: Icon for UI display
+    // - PetTypeEnum: Maps to PetFamily (0=Humanoid, 1=Dragonkin, etc.)
+    // - Flags: Species flags (tradeable, capturable, etc.)
+    // - SourceTypeEnum: How the pet is obtained
+    // - CovenantID: Covenant restriction (if any)
 
-    // Query creature templates that are battle pets (type 15 = CREATURE_TYPE_BATTLEPET)
-    // Note: We only query creature_template from world database
-    // Battle pet species metadata should be stored in playerbot database if needed
-    // TrinityCore 11.2: minlevel/maxlevel, HealthModifier, DamageModifier columns removed
-    // Levels are now dynamically scaled and modifiers are handled elsewhere
-    QueryResult result = WorldDatabase.Query(
-        "SELECT entry, name, speed_walk "
-        "FROM creature_template "
-        "WHERE type = 15 "
-        "ORDER BY entry"
-    );
+    TC_LOG_INFO("playerbot.battlepet", "BattlePetManager: Loading species from TrinityCore DB2 store...");
 
-    if (result)
+    // PRIMARY: Load from TrinityCore's DB2 store
+    uint32 db2SpeciesCount = 0;
+    for (BattlePetSpeciesEntry const* speciesEntry : sBattlePetSpeciesStore)
     {
-        do
+        if (!speciesEntry)
+            continue;
+
+        // Skip species without valid creature links
+        if (speciesEntry->CreatureID <= 0)
+            continue;
+
+        BattlePetInfo petInfo;
+        petInfo.speciesId = speciesEntry->ID;
+
+        // Try to get name from creature_template
+        if (CreatureTemplate const* creatureTemplate = sObjectMgr->GetCreatureTemplate(speciesEntry->CreatureID))
+            petInfo.name = creatureTemplate->Name;
+        else
+            petInfo.name = speciesEntry->Description[LOCALE_enUS];
+
+        // Map DB2 PetTypeEnum to our PetFamily enum
+        // DB2 values: 0=Humanoid, 1=Dragonkin, 2=Flying, 3=Undead, 4=Critter,
+        //             5=Magic, 6=Elemental, 7=Beast, 8=Aquatic, 9=Mechanical
+        switch (speciesEntry->PetTypeEnum)
         {
-            Field* fields = result->Fetch();
-            uint32 creatureEntry = fields[0].GetUInt32();
-            std::string name = fields[1].GetString();
-            float speedWalk = fields[2].GetFloat();
-            // TrinityCore 11.2: These modifiers don't exist in creature_template anymore
-            // Use default values - actual scaling handled by game systems
-            float healthMod = 1.0f;
-            float damageMod = 1.0f;
-            // TrinityCore 11.2: Battle pets use level scaling, default to standard pet level range
-            uint32 minLevel = 1;
-            uint32 maxLevel = 25;
-            // Query battle_pet_species from playerbot database for metadata
-            uint32 speciesId = creatureEntry;
-            uint32 petType = 0;
-            uint32 flags = 0;
-            
-            // Try to get extended metadata from playerbot.battle_pet_species
-            if (sPlayerbotDatabase->IsConnected())
-            {
-                QueryResult speciesResult = sPlayerbotDatabase->Query(
-                    "SELECT speciesId, petType, flags FROM battle_pet_species WHERE creatureId = " + std::to_string(creatureEntry));
-                if (speciesResult)
-                {
-                    Field* speciesFields = speciesResult->Fetch();
-                    speciesId = speciesFields[0].GetUInt32();
-                    petType = speciesFields[1].GetUInt8();
-                    flags = speciesFields[2].GetUInt32();
-                }
-            }
+            case 0: petInfo.family = PetFamily::HUMANOID; break;
+            case 1: petInfo.family = PetFamily::DRAGONKIN; break;
+            case 2: petInfo.family = PetFamily::FLYING; break;
+            case 3: petInfo.family = PetFamily::UNDEAD; break;
+            case 4: petInfo.family = PetFamily::CRITTER; break;
+            case 5: petInfo.family = PetFamily::MAGIC; break;
+            case 6: petInfo.family = PetFamily::ELEMENTAL; break;
+            case 7: petInfo.family = PetFamily::BEAST; break;
+            case 8: petInfo.family = PetFamily::AQUATIC; break;
+            case 9: petInfo.family = PetFamily::MECHANICAL; break;
+            default: petInfo.family = PetFamily::BEAST; break;
+        }
 
-            BattlePetInfo petInfo;
-            petInfo.speciesId = speciesId;
-            petInfo.name = name;
+        petInfo.level = 1;  // Default starting level
+        petInfo.xp = 0;
 
-            // Map WoW pet type to PetFamily enum
-            switch (petType)
-            {
-                case 0: petInfo.family = PetFamily::HUMANOID; break;
-                case 1: petInfo.family = PetFamily::DRAGONKIN; break;
-                case 2: petInfo.family = PetFamily::FLYING; break;
-                case 3: petInfo.family = PetFamily::UNDEAD; break;
-                case 4: petInfo.family = PetFamily::CRITTER; break;
-                case 5: petInfo.family = PetFamily::MAGIC; break;
-                case 6: petInfo.family = PetFamily::ELEMENTAL; break;
-                case 7: petInfo.family = PetFamily::BEAST; break;
-                case 8: petInfo.family = PetFamily::AQUATIC; break;
-                case 9: petInfo.family = PetFamily::MECHANICAL; break;
-                default: petInfo.family = PetFamily::BEAST; break;
-            }
+        // Determine quality based on DB2 flags
+        // Flag meanings: 0x100=Legendary, 0x80=Epic, 0x40=Rare, 0x20=Uncommon
+        if (speciesEntry->Flags & 0x100)
+            petInfo.quality = PetQuality::LEGENDARY;
+        else if (speciesEntry->Flags & 0x80)
+            petInfo.quality = PetQuality::EPIC;
+        else if (speciesEntry->Flags & 0x40)
+            petInfo.quality = PetQuality::RARE;
+        else if (speciesEntry->Flags & 0x20)
+            petInfo.quality = PetQuality::UNCOMMON;
+        else
+            petInfo.quality = PetQuality::COMMON;
 
-            petInfo.level = minLevel > 0 ? minLevel : 1;
-            petInfo.xp = 0;
+        // Calculate base stats for level 1
+        uint32 baseHealth = 100 + petInfo.level * 5;
+        petInfo.maxHealth = baseHealth;
+        petInfo.health = petInfo.maxHealth;
+        petInfo.power = 10 + petInfo.level * 2;
+        petInfo.speed = 10;
 
-            // Determine quality based on flags or level range
-            if (flags & 0x10)  // Legendary flag
-                petInfo.quality = PetQuality::LEGENDARY;
-            else if (flags & 0x8)  // Epic flag
-                petInfo.quality = PetQuality::EPIC;
-            else if (flags & 0x4)  // Rare flag
-                petInfo.quality = PetQuality::RARE;
-            else if (maxLevel > 20)
-                petInfo.quality = PetQuality::UNCOMMON;
-            else
-                petInfo.quality = PetQuality::COMMON;
+        // Flags from DB2
+        petInfo.isRare = (petInfo.quality >= PetQuality::RARE);
+        petInfo.isTradeable = !(speciesEntry->Flags & 0x1);  // Flag 0x1 = not tradeable
+        petInfo.isFavorite = false;
 
-            // Calculate stats based on level and modifiers
-            // Base stats scale with level (WoW formula: base + level * 5)
-            uint32 baseHealth = 100 + petInfo.level * 5;
-            petInfo.maxHealth = static_cast<uint32>(baseHealth * healthMod);
-            petInfo.health = petInfo.maxHealth;
+        // Assign default abilities based on family (3 abilities per pet)
+        uint32 familyBase = static_cast<uint32>(petInfo.family) * 100;
+        petInfo.abilities = {familyBase + 1, familyBase + 2, familyBase + 3};
 
-            uint32 basePower = 10 + petInfo.level * 2;
-            petInfo.power = static_cast<uint32>(basePower * damageMod);
-
-            // Speed calculation (walk speed typically 2.5-3.5)
-            petInfo.speed = static_cast<uint32>((speedWalk > 0 ? speedWalk : 2.8f) * 4);
-
-            // Flags for special pets
-            petInfo.isRare = (petInfo.quality >= PetQuality::RARE);
-            petInfo.isTradeable = !(flags & 0x20);  // Non-tradeable flag
-            petInfo.isFavorite = false;
-
-            _petDatabase[speciesId] = petInfo;
-
-        } while (result->NextRow());
+        _petDatabase[speciesEntry->ID] = petInfo;
+        ++db2SpeciesCount;
     }
+
+    TC_LOG_INFO("playerbot.battlepet", "BattlePetManager: Loaded {} species from DB2 store", db2SpeciesCount);
 
     // If database query returns nothing, populate with known WoW battle pets
     if (_petDatabase.empty())
@@ -316,11 +297,16 @@ void BattlePetManager::LoadPetDatabase()
         }
     }
 
-    // Load pet abilities for each species from database
-    QueryResult abilityResult = WorldDatabase.Query(
-        "SELECT speciesId, abilityId1, abilityId2, abilityId3, abilityId4, abilityId5, abilityId6 "
-        "FROM battle_pet_species_abilities ORDER BY speciesId"
-    );
+    // Load pet abilities for each species from playerbot database
+    // Note: battle_pet_species_abilities is playerbot-specific data, not in TrinityCore world database
+    QueryResult abilityResult = nullptr;
+    if (sPlayerbotDatabase->IsConnected())
+    {
+        abilityResult = sPlayerbotDatabase->Query(
+            "SELECT speciesId, abilityId1, abilityId2, abilityId3, abilityId4, abilityId5, abilityId6 "
+            "FROM battle_pet_species_abilities ORDER BY speciesId"
+        );
+    }
 
     if (abilityResult)
     {
@@ -348,63 +334,65 @@ void BattlePetManager::LoadPetDatabase()
 void BattlePetManager::InitializeAbilityDatabase()
 {
     // DESIGN NOTE: Complete battle pet ability database loading implementation
-    // Current behavior: Loads all WoW battle pet abilities from WorldDatabase
-    // - Queries battle_pet_ability table for ability metadata
-    // - Includes fallback hardcoded ability data organized by pet family
-    // - Maps pet type enums to PetFamily enum values
-    // Full implementation includes:
-    // - Database table: battle_pet_ability with damage, cooldown, flags
-    // - Effect parsing from battle_pet_ability_effect table
-    // - Visual IDs for animation/spell effects
-    // Reference: TrinityCore WorldDatabase battle_pet_ability tables
+    // PRIMARY: Load abilities from TrinityCore's DB2 store (client data)
+    // FALLBACK: Hardcoded ability data if DB2 store is empty
+    //
+    // DB2 stores are populated from client DB2 files at server startup.
+    // Using sBattlePetAbilityStore provides access to all WoW battle pet abilities
+    // without needing custom database tables.
+    //
+    // BattlePetAbilityEntry structure (from DB2Structure.h):
+    // - ID: Unique ability identifier
+    // - Name: LocalizedString with ability name
+    // - Description: LocalizedString with ability description
+    // - IconFileDataID: Icon for UI display
+    // - PetTypeEnum: Maps to PetFamily (0=Humanoid, 1=Dragonkin, etc.)
+    // - Cooldown: Turns until ability can be used again
+    // - BattlePetVisualID: Visual effect identifier
+    // - Flags: Ability flags (multi-turn, etc.)
 
-    QueryResult result = WorldDatabase.Query(
-        "SELECT abilityId, name, petType, baseDamage, cooldownDuration, "
-        "flags, effectCount, visualId "
-        "FROM battle_pet_ability ORDER BY abilityId"
-    );
+    TC_LOG_INFO("playerbot.battlepet", "BattlePetManager: Loading abilities from TrinityCore DB2 store...");
 
-    if (result)
+    // PRIMARY: Load from TrinityCore's DB2 store
+    uint32 db2AbilityCount = 0;
+    for (BattlePetAbilityEntry const* abilityEntry : sBattlePetAbilityStore)
     {
-        do
+        if (!abilityEntry)
+            continue;
+
+        AbilityInfo ability;
+        ability.abilityId = abilityEntry->ID;
+        ability.name = abilityEntry->Name[LOCALE_enUS];
+
+        // Map DB2 PetTypeEnum to our PetFamily enum
+        // DB2 values: 0=Humanoid, 1=Dragonkin, 2=Flying, 3=Undead, 4=Critter,
+        //             5=Magic, 6=Elemental, 7=Beast, 8=Aquatic, 9=Mechanical
+        switch (abilityEntry->PetTypeEnum)
         {
-            Field* fields = result->Fetch();
-            uint32 abilityId = fields[0].GetUInt32();
-            std::string name = fields[1].GetString();
-            uint32 petType = fields[2].GetUInt32();
-            uint32 baseDamage = fields[3].GetUInt32();
-            uint32 cooldown = fields[4].GetUInt32();
-            uint32 flags = fields[5].GetUInt32();
-            uint32 effectCount = fields[6].GetUInt32();
+            case 0: ability.family = PetFamily::HUMANOID; break;
+            case 1: ability.family = PetFamily::DRAGONKIN; break;
+            case 2: ability.family = PetFamily::FLYING; break;
+            case 3: ability.family = PetFamily::UNDEAD; break;
+            case 4: ability.family = PetFamily::CRITTER; break;
+            case 5: ability.family = PetFamily::MAGIC; break;
+            case 6: ability.family = PetFamily::ELEMENTAL; break;
+            case 7: ability.family = PetFamily::BEAST; break;
+            case 8: ability.family = PetFamily::AQUATIC; break;
+            case 9: ability.family = PetFamily::MECHANICAL; break;
+            default: ability.family = PetFamily::BEAST; break;
+        }
 
-            AbilityInfo ability;
-            ability.abilityId = abilityId;
-            ability.name = name;
+        ability.cooldown = abilityEntry->Cooldown;
+        // Base damage estimation: 20 base + 5 per cooldown turn (abilities with longer cooldowns do more damage)
+        ability.damage = 20 + (abilityEntry->Cooldown * 5);
+        // Multi-turn flag check (flag 0x1 indicates multi-turn ability)
+        ability.isMultiTurn = (abilityEntry->Flags & 0x1) != 0;
 
-            // Map pet type to family enum
-            switch (petType)
-            {
-                case 0: ability.family = PetFamily::HUMANOID; break;
-                case 1: ability.family = PetFamily::DRAGONKIN; break;
-                case 2: ability.family = PetFamily::FLYING; break;
-                case 3: ability.family = PetFamily::UNDEAD; break;
-                case 4: ability.family = PetFamily::CRITTER; break;
-                case 5: ability.family = PetFamily::MAGIC; break;
-                case 6: ability.family = PetFamily::ELEMENTAL; break;
-                case 7: ability.family = PetFamily::BEAST; break;
-                case 8: ability.family = PetFamily::AQUATIC; break;
-                case 9: ability.family = PetFamily::MECHANICAL; break;
-                default: ability.family = PetFamily::BEAST; break;
-            }
-
-            ability.damage = baseDamage;
-            ability.cooldown = cooldown;
-            ability.isMultiTurn = (flags & 0x1) != 0;  // Multi-turn flag
-
-            _abilityDatabase[abilityId] = ability;
-
-        } while (result->NextRow());
+        _abilityDatabase[abilityEntry->ID] = ability;
+        ++db2AbilityCount;
     }
+
+    TC_LOG_INFO("playerbot.battlepet", "BattlePetManager: Loaded {} abilities from DB2 store", db2AbilityCount);
 
     // If database query returns nothing, populate with known WoW battle pet abilities
     if (_abilityDatabase.empty())
@@ -533,11 +521,12 @@ void BattlePetManager::LoadRarePetList()
     // - Zone/area validation for proper spawn distribution
     // Reference: TrinityCore WorldDatabase creature spawns with battle pet type 15
 
+    // NOTE: Query only creature and creature_template tables (standard TrinityCore tables)
+    // No battle_pet_species join needed - we get species info from DB2 stores
     QueryResult result = WorldDatabase.Query(
         "SELECT ct.entry, ct.name, c.position_x, c.position_y, c.position_z, c.orientation, c.map "
         "FROM creature c "
         "JOIN creature_template ct ON c.id = ct.entry "
-        "LEFT JOIN battle_pet_species bps ON ct.entry = bps.creatureId "
         "WHERE ct.type = 15 AND (ct.flags_extra & 0x02000000) != 0 "  // Battle pet type + rare flag
         "ORDER BY ct.entry, c.guid"
     );
