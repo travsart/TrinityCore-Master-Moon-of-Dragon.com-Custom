@@ -17,8 +17,12 @@
 
 #include "RoleCoordinator.h"
 #include "../../Advanced/GroupCoordinator.h"
+#include "../../Session/BotSession.h"
 #include "../../Session/BotSessionMgr.h"
+#include "../../Session/BotSessionManager.h"
 #include "../../Session/BotWorldSessionMgr.h"
+#include "../../AI/BotAI.h"
+#include "../../Core/Managers/IGameSystemsManager.h"
 #include "Group.h"
 #include "Player.h"
 #include "Unit.h"
@@ -69,47 +73,64 @@ static ::std::vector<ObjectGuid> GetGroupMembersByRole(GroupCoordinator* group, 
         GroupCoordinator::GroupRole memberRole = GroupCoordinator::GroupRole::UNDEFINED;
 
         // Check if this is a bot and get its GroupCoordinator
-        // Note: Player::IsBot() doesn't exist, use BotSessionMgr instead
-        // Use session manager to check if this player is a bot
-        Player* botPlayer = sBotWorldSessionMgr->GetPlayerBot(member->GetGUID());
-        if (botPlayer)
+        // Use BotSessionManager to check if this player has a BotSession
+        BotSession* botSession = BotSessionManager::GetBotSession(member->GetSession());
+        if (botSession)
         {
-            // This is a bot, get its assigned role from GroupCoordinator
-            // TODO: BotSession::GetBotAI() method needs implementation
-            // For now, use the LFG role assignment as fallback
-            uint8 lfgRoles = trinityGroup->GetLfgRoles(member->GetGUID());
-            if (lfgRoles & lfg::PLAYER_ROLE_TANK)
-                memberRole = GroupCoordinator::GroupRole::TANK;
-            else if (lfgRoles & lfg::PLAYER_ROLE_HEALER)
-                memberRole = GroupCoordinator::GroupRole::HEALER;
-            else if (lfgRoles & lfg::PLAYER_ROLE_DAMAGE)
+            // This is a bot - get its assigned role from GroupCoordinator
+            // BotSession::GetAI() provides access to the BotAI which has GameSystems
+            BotAI* botAI = botSession->GetAI();
+            if (botAI)
             {
-                // Distinguish melee vs ranged based on class/spec
-                switch (member->GetClass())
+                IGameSystemsManager* gameSystems = botAI->GetGameSystems();
+                if (gameSystems)
                 {
-                    case CLASS_WARRIOR:
-                    case CLASS_PALADIN:
-                    case CLASS_ROGUE:
-                    case CLASS_DEATH_KNIGHT:
-                    case CLASS_MONK:
-                    case CLASS_DEMON_HUNTER:
-                        memberRole = GroupCoordinator::GroupRole::DPS_MELEE;
-                        break;
-                    case CLASS_HUNTER:
-                    case CLASS_MAGE:
-                    case CLASS_WARLOCK:
-                    case CLASS_EVOKER:
-                        memberRole = GroupCoordinator::GroupRole::DPS_RANGED;
-                        break;
-                    case CLASS_PRIEST:
-                    case CLASS_SHAMAN:
-                    case CLASS_DRUID:
-                        // Could be either - check spec
-                        memberRole = GroupCoordinator::GroupRole::DPS_RANGED;
-                        break;
-                    default:
-                        memberRole = GroupCoordinator::GroupRole::DPS_MELEE;
-                        break;
+                    GroupCoordinator* botGroupCoord = gameSystems->GetGroupCoordinator();
+                    if (botGroupCoord)
+                    {
+                        // Get the bot's assigned role from its own GroupCoordinator
+                        memberRole = botGroupCoord->GetMemberRole(member->GetGUID());
+                    }
+                }
+            }
+
+            // If role still undefined, fall back to LFG role assignment
+            if (memberRole == GroupCoordinator::GroupRole::UNDEFINED)
+            {
+                uint8 lfgRoles = trinityGroup->GetLfgRoles(member->GetGUID());
+                if (lfgRoles & lfg::PLAYER_ROLE_TANK)
+                    memberRole = GroupCoordinator::GroupRole::TANK;
+                else if (lfgRoles & lfg::PLAYER_ROLE_HEALER)
+                    memberRole = GroupCoordinator::GroupRole::HEALER;
+                else if (lfgRoles & lfg::PLAYER_ROLE_DAMAGE)
+                {
+                    // Distinguish melee vs ranged based on class/spec
+                    switch (member->GetClass())
+                    {
+                        case CLASS_WARRIOR:
+                        case CLASS_PALADIN:
+                        case CLASS_ROGUE:
+                        case CLASS_DEATH_KNIGHT:
+                        case CLASS_MONK:
+                        case CLASS_DEMON_HUNTER:
+                            memberRole = GroupCoordinator::GroupRole::DPS_MELEE;
+                            break;
+                        case CLASS_HUNTER:
+                        case CLASS_MAGE:
+                        case CLASS_WARLOCK:
+                        case CLASS_EVOKER:
+                            memberRole = GroupCoordinator::GroupRole::DPS_RANGED;
+                            break;
+                        case CLASS_PRIEST:
+                        case CLASS_SHAMAN:
+                        case CLASS_DRUID:
+                            // Could be either - check spec
+                            memberRole = GroupCoordinator::GroupRole::DPS_RANGED;
+                            break;
+                        default:
+                            memberRole = GroupCoordinator::GroupRole::DPS_MELEE;
+                            break;
+                    }
                 }
             }
         }
@@ -211,17 +232,24 @@ static ObjectGuid GetGroupFocusTarget(GroupCoordinator* group)
     if (!trinityGroup)
         return ObjectGuid::Empty;
 
-    // TODO: Group::GetTargetIcon() method needs to be researched or implemented
-    // For now, skip raid target marker checking and use tank's target directly
     // Check for skull (8) raid target marker - primary kill target
-    // ObjectGuid skullTarget = trinityGroup->GetTargetIcon(7); // Index is 0-7, skull is 7
-    // if (!skullTarget.IsEmpty())
-    //     return skullTarget;
+    // Index is 0-7, skull is 7 (TARGET_ICON_SKULL)
+    ObjectGuid skullTarget = trinityGroup->GetTargetIcon(7);
+    if (!skullTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*trinityGroup->GetMembers().begin()->GetSource(), skullTarget);
+        if (target && target->IsAlive())
+            return skullTarget;
+    }
 
-    // Check for cross (X) marker - secondary kill target
-    // ObjectGuid crossTarget = trinityGroup->GetTargetIcon(6);
-    // if (!crossTarget.IsEmpty())
-    //     return crossTarget;
+    // Check for cross (X) marker - secondary kill target (index 6)
+    ObjectGuid crossTarget = trinityGroup->GetTargetIcon(6);
+    if (!crossTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*trinityGroup->GetMembers().begin()->GetSource(), crossTarget);
+        if (target && target->IsAlive())
+            return crossTarget;
+    }
 
     // Fall back to main tank's target
     ::std::vector<ObjectGuid> tanks = GetGroupMembersByRole(group, GroupCoordinator::GroupRole::TANK);
@@ -346,10 +374,91 @@ bool TankCoordinator::NeedsTankSwap(ObjectGuid mainTankGuid) const
         return true;
 
     // Swap if main tank has high stacks of tank debuff
-    // TODO: Check for specific debuff stacks (requires boss mechanics knowledge)
+    // Check for common tank swap debuffs - high stacks indicate need to swap
+    // Common 11.x tank swap debuffs (stacks that increase damage taken):
+    static const uint32 TANK_SWAP_DEBUFFS[] = {
+        // Generic tank swap debuffs with stacking damage increase
+        451288, // Darkflame Venom (Nerub-ar Palace)
+        451277, // Acidic Eruption (various bosses)
+        438708, // Void Corruption
+        // Add more as boss content is encountered
+    };
+
+    for (uint32 debuffId : TANK_SWAP_DEBUFFS)
+    {
+        uint32 stacks = mainTank->GetAuraCount(debuffId);
+        if (stacks >= 3) // Generally 3+ stacks requires swap
+        {
+            TC_LOG_DEBUG("playerbot.coordination", "Tank swap needed - {} has {} stacks of debuff {}",
+                mainTank->GetName(), stacks, debuffId);
+            return true;
+        }
+    }
 
     // Swap if main tank is out of defensive cooldowns
-    // TODO: Check defensive cooldown availability
+    // Check if tank has any active defensive buffs or cooldowns available
+    // Common tank defensive cooldowns by class:
+    static const uint32 TANK_DEFENSIVES[] = {
+        // Warrior
+        12975,  // Last Stand
+        871,    // Shield Wall
+        23920,  // Spell Reflection
+
+        // Paladin
+        642,    // Divine Shield
+        31850,  // Ardent Defender
+        86659,  // Guardian of Ancient Kings
+
+        // Death Knight
+        48792,  // Icebound Fortitude
+        48707,  // Anti-Magic Shell
+        55233,  // Vampiric Blood
+
+        // Monk
+        115203, // Fortifying Brew
+        122278, // Dampen Harm
+        122783, // Diffuse Magic
+
+        // Druid
+        22812,  // Barkskin
+        61336,  // Survival Instincts
+
+        // Demon Hunter
+        187827, // Metamorphosis (tank form)
+        204021, // Fiery Brand
+        206803, // Void Reaver (damage reduction)
+    };
+
+    bool hasActiveDefensive = false;
+    bool hasDefensiveAvailable = false;
+
+    for (uint32 spellId : TANK_DEFENSIVES)
+    {
+        // Check if currently active
+        if (mainTank->HasAura(spellId))
+        {
+            hasActiveDefensive = true;
+            break;
+        }
+
+        // Check if on cooldown (if not on CD, it's available)
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+        if (spellInfo && mainTank->HasSpell(spellId))
+        {
+            if (!mainTank->GetSpellHistory()->HasCooldown(spellId))
+            {
+                hasDefensiveAvailable = true;
+            }
+        }
+    }
+
+    // If tank is in danger (health < 40%) and has no active defensive and no cooldowns available, swap
+    if (mainTank->GetHealthPct() < 40.0f && !hasActiveDefensive && !hasDefensiveAvailable)
+    {
+        TC_LOG_DEBUG("playerbot.coordination", "Tank swap needed - {} at {:.1f}% health with no defensives",
+            mainTank->GetName(), mainTank->GetHealthPct());
+        return true;
+    }
 
     return false;
 }
@@ -729,8 +838,60 @@ void HealerCoordinator::UpdateManaManagement(GroupCoordinator* group)
     if (avgManaPct < 30.0f)
     {
         TC_LOG_DEBUG("playerbot.coordination", "Group healer mana low ({:.1f}%), coordinating conservation", avgManaPct);
-        // TODO: Signal healers to use mana-efficient spells
+
+        // Enter mana conservation mode if not already in it
+        if (!_manaConservationMode)
+        {
+            _manaConservationMode = true;
+            _manaConservationStartTime = GameTime::GetGameTimeMS();
+            TC_LOG_DEBUG("playerbot.coordination", "Entering mana conservation mode");
+        }
+
+        // Signal each healer to conserve mana
+        for (ObjectGuid healerGuid : healers)
+        {
+            Player* healer = ObjectAccessor::FindPlayer(healerGuid);
+            if (!healer)
+                continue;
+
+            // Calculate individual conservation needs based on healer's mana
+            float healerManaPct = (static_cast<float>(healer->GetPower(POWER_MANA)) /
+                                    static_cast<float>(healer->GetMaxPower(POWER_MANA))) * 100.0f;
+
+            // Set conservation flag for this healer
+            // Healers with <50% mana should conserve, or all if group avg <30%
+            bool shouldConserve = (healerManaPct < 50.0f || avgManaPct < 30.0f);
+            _healerManaConservation[healerGuid] = shouldConserve;
+
+            if (shouldConserve)
+            {
+                TC_LOG_DEBUG("playerbot.coordination", "Healer {} ({:.1f}% mana) flagged for mana conservation",
+                    healer->GetName(), healerManaPct);
+            }
+        }
     }
+    else if (_manaConservationMode && avgManaPct > 60.0f)
+    {
+        // Exit mana conservation mode when mana recovers above 60%
+        _manaConservationMode = false;
+        _healerManaConservation.clear();
+        TC_LOG_DEBUG("playerbot.coordination", "Exiting mana conservation mode (avg mana {:.1f}%)", avgManaPct);
+    }
+}
+
+bool HealerCoordinator::ShouldConserveMana(ObjectGuid healerGuid) const
+{
+    // Check global conservation mode
+    if (!_manaConservationMode)
+        return false;
+
+    // Check individual healer flag
+    auto it = _healerManaConservation.find(healerGuid);
+    if (it != _healerManaConservation.end())
+        return it->second;
+
+    // Default to global mode
+    return _manaConservationMode;
 }
 
 // ============================================================================

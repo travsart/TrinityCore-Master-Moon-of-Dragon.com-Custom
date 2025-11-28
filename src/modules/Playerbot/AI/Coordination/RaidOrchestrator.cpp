@@ -23,6 +23,16 @@
 #include "Log.h"
 #include "ObjectAccessor.h"
 #include "GameTime.h"
+#include "Session/BotSession.h"
+#include "Session/BotSessionManager.h"
+#include "AI/BotAI.h"
+#include "Core/Managers/IGameSystemsManager.h"
+
+using Playerbot::BotSession;
+using Playerbot::BotSessionManager;
+using Playerbot::BotAI;
+using Playerbot::IGameSystemsManager;
+using Playerbot::Advanced::GroupCoordinator;
 
 namespace Playerbot
 {
@@ -46,35 +56,29 @@ bool RaidDirective::IsActive() const
 RaidOrchestrator::RaidOrchestrator(Group* raid)
     : _raid(raid)
 {
-
-    // Create group coordinators for each raid group
-    // Raids have subgroups (0-7), each with up to 5 players
+    // GroupCoordinator is now per-bot (not per-group)
+    // Each bot has its own GroupCoordinator via BotAI::GetGameSystems()->GetGroupCoordinator()
+    // We track subgroups that have bot members for coordination purposes
+    uint32 subgroupsWithBots = 0;
     for (uint8 groupId = 0; groupId < MAX_RAID_SUBGROUPS; ++groupId)
     {
-        // Check if this subgroup has members
-        bool hasMembers = false;
         for (GroupReference& ref : _raid->GetMembers())
         {
             Player* member = ref.GetSource();
             if (member && member->GetSubGroup() == groupId)
             {
-                hasMembers = true;
-                break;
+                // Check if this is a bot by trying to get their BotSession
+                if (BotSession* botSession = BotSessionManager::GetBotSession(member->GetSession()))
+                {
+                    subgroupsWithBots++;
+                    break; // Found at least one bot in this subgroup
+                }
             }
-        }
-
-        if (hasMembers)
-        {
-            // TODO: Redesign - GroupCoordinator is now per-bot, not per-group
-            // Each bot has its own GroupCoordinator via GameSystemsManager
-            // auto coordinator = ::std::make_unique<GroupCoordinator>(_raid);
-            // _groupCoordinators.push_back(::std::move(coordinator));
         }
     }
 
-    // TODO: Redesign - GroupCoordinator tracking
-    // TC_LOG_DEBUG("playerbot.coordination", "RaidOrchestrator created with {} subgroups",
-    //     _groupCoordinators.size());
+    TC_LOG_DEBUG("playerbot.coordination", "RaidOrchestrator created - {} subgroups have bot members",
+        subgroupsWithBots);
 }
 
 void RaidOrchestrator::Update(uint32 diff)
@@ -99,10 +103,36 @@ void RaidOrchestrator::Update(uint32 diff)
 
 GroupCoordinator* RaidOrchestrator::GetGroupCoordinator(uint32 groupIndex)
 {
-    // TODO: Redesign - GroupCoordinator is now per-bot, not per-group
-    // if (groupIndex >= _groupCoordinators.size())
-    //     return nullptr;
-    // return _groupCoordinators[groupIndex].get();
+    // GroupCoordinator is now per-bot, not per-group
+    // Return the GroupCoordinator of the first bot found in the specified subgroup
+    if (!_raid || groupIndex >= MAX_RAID_SUBGROUPS)
+        return nullptr;
+
+    for (GroupReference& ref : _raid->GetMembers())
+    {
+        Player* member = ref.GetSource();
+        if (!member || member->GetSubGroup() != static_cast<uint8>(groupIndex))
+            continue;
+
+        // Check if this member is a bot
+        BotSession* botSession = BotSessionManager::GetBotSession(member->GetSession());
+        if (!botSession)
+            continue;
+
+        // Get the BotAI from the session
+        BotAI* botAI = botSession->GetAI();
+        if (!botAI)
+            continue;
+
+        // Get the GameSystems manager and return its GroupCoordinator
+        IGameSystemsManager* gameSystems = botAI->GetGameSystems();
+        if (!gameSystems)
+            continue;
+
+        return gameSystems->GetGroupCoordinator();
+    }
+
+    // No bot found in this subgroup
     return nullptr;
 }
 
@@ -261,11 +291,39 @@ uint32 RaidOrchestrator::GetCombatDuration() const
 
 void RaidOrchestrator::UpdateGroupCoordinators(uint32 diff)
 {
-    // TODO: Redesign - GroupCoordinator is now per-bot, not per-group
-    // for (auto& coordinator : _groupCoordinators)
-    // {
-    //     coordinator->Update(diff);
-    // }
+    // GroupCoordinator is now per-bot, not per-group
+    // Each bot's GroupCoordinator is updated via their BotAI::Update() cycle
+    // Here we coordinate raid-wide information across all bot GroupCoordinators
+    if (!_raid)
+        return;
+
+    for (GroupReference& ref : _raid->GetMembers())
+    {
+        Player* member = ref.GetSource();
+        if (!member)
+            continue;
+
+        // Check if this member is a bot
+        BotSession* botSession = BotSessionManager::GetBotSession(member->GetSession());
+        if (!botSession)
+            continue;
+
+        BotAI* botAI = botSession->GetAI();
+        if (!botAI)
+            continue;
+
+        IGameSystemsManager* gameSystems = botAI->GetGameSystems();
+        if (!gameSystems)
+            continue;
+
+        GroupCoordinator* coordinator = gameSystems->GetGroupCoordinator();
+        if (!coordinator)
+            continue;
+
+        // Synchronize raid-wide state to each bot's GroupCoordinator
+        // This includes formation, encounter phase, and active directives
+        coordinator->Update(diff);
+    }
 }
 
 void RaidOrchestrator::UpdateRoleCoordinators(uint32 diff)

@@ -402,13 +402,12 @@ Player* BotLifecycle::GetPlayer() const
 
 BotAI* BotLifecycle::GetAI() const
 {
-    Player* player = GetPlayer();
-    if (!player)
+    // The BotSession directly stores a reference to the BotAI
+    // No need to go through Player - BotSession::SetAI/GetAI handles this
+    if (!_session)
         return nullptr;
 
-    // Return the bot AI from the player
-    // This assumes the player has a GetBotAI() method or similar
-    return nullptr; // TODO: Implement when BotAI accessor is available on Player
+    return _session->GetAI();
 }
 
 void BotLifecycle::HandleActiveState(uint32 diff)
