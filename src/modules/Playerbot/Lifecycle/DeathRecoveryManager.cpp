@@ -136,20 +136,13 @@ DeathRecoveryManager::DeathRecoveryManager(Player* bot, BotAI* ai)
     , m_needsTeleportAck(false)
 {
     m_config = DeathRecoveryConfig::LoadFromConfig();
-
-    if (m_config.logDebugInfo)
-    {
-        TC_LOG_DEBUG("playerbot.death", "DeathRecoveryManager created for bot {}",
-            m_bot ? m_bot->GetName() : "nullptr");
-    }
+    // CRITICAL: No logging with bot->GetName() in constructor/destructor
+    // Player's m_name can be corrupted during concurrent access, causing ACCESS_VIOLATION
 }
+
 DeathRecoveryManager::~DeathRecoveryManager()
 {
-    if (m_config.logDebugInfo && m_bot)
-    {
-        TC_LOG_DEBUG("playerbot.death", "DeathRecoveryManager destroyed for bot {}",
-            m_bot->GetName());
-    }
+    // CRITICAL: No logging in destructors - allocation can throw + player may be invalid
 }
 
 // ========================================================================
