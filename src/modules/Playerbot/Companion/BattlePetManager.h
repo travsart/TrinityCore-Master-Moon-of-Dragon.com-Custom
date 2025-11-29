@@ -360,12 +360,12 @@ public:
 private:
 
     // ============================================================================
-    // INITIALIZATION HELPERS
+    // INITIALIZATION HELPERS (static - operate on static data only)
     // ============================================================================
 
-    void LoadPetDatabase();
-    void InitializeAbilityDatabase();
-    void LoadRarePetList();
+    static void LoadPetDatabase();
+    static void InitializeAbilityDatabase();
+    static void LoadRarePetList();
 
     // ============================================================================
     // BATTLE AI HELPERS
@@ -419,7 +419,8 @@ private:
     static std::unordered_map<uint32, std::vector<Position>> _rarePetSpawns;
     static std::unordered_map<uint32, AbilityInfo> _abilityDatabase;
     static PetMetrics _globalMetrics;
-    static bool _databaseInitialized;
+    static std::atomic<bool> _databaseInitialized;
+    static std::once_flag _initFlag;
 
     // Update intervals
     static constexpr uint32 PET_UPDATE_INTERVAL = 5000;  // 5 seconds

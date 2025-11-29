@@ -49,17 +49,21 @@ BattlePetManager::BattlePetManager(Player* bot)
         return;
     }
 
-    // Initialize shared database once
-    if (!_databaseInitialized)
-    {
-        TC_LOG_INFO("playerbot.battlepet", "BattlePetManager: Loading pet database...");
+    // Thread-safe one-time initialization of shared static database
+    // Uses std::call_once to ensure LoadPetDatabase/InitializeAbilityDatabase/LoadRarePetList
+    // are called exactly once, even when multiple worker threads create BattlePetManager instances simultaneously
+    std::call_once(_initFlag, []() {
+        TC_LOG_INFO("playerbot.battlepet", "BattlePetManager: Loading pet database (one-time init)...");
+        // NOTE: These functions must NOT call sPlayerbotDatabase->Query() from worker threads
+        // The DB2 stores are thread-safe, but sPlayerbotDatabase uses a single MySQL connection
+        // that is NOT thread-safe. The database query for battle_pet_species_abilities is skipped.
         LoadPetDatabase();
         InitializeAbilityDatabase();
         LoadRarePetList();
-        _databaseInitialized = true;
+        _databaseInitialized.store(true, std::memory_order_release);
         TC_LOG_INFO("playerbot.battlepet", "BattlePetManager: Database initialized - {} pets, {} abilities",
                    _petDatabase.size(), _abilityDatabase.size());
-    }
+    });
 
     TC_LOG_DEBUG("playerbot.battlepet", "BattlePetManager: Created for bot {} ({})",
                  _bot->GetName(), _bot->GetGUID().ToString());
@@ -78,7 +82,8 @@ std::unordered_map<uint32, BattlePetInfo> BattlePetManager::_petDatabase;
 std::unordered_map<uint32, std::vector<Position>> BattlePetManager::_rarePetSpawns;
 std::unordered_map<uint32, AbilityInfo> BattlePetManager::_abilityDatabase;
 PetMetrics BattlePetManager::_globalMetrics;
-bool BattlePetManager::_databaseInitialized = false;
+std::atomic<bool> BattlePetManager::_databaseInitialized{false};
+std::once_flag BattlePetManager::_initFlag;
 
 
 
@@ -89,15 +94,17 @@ bool BattlePetManager::_databaseInitialized = false;
 
 void BattlePetManager::Initialize()
 {
-    // No lock needed - battle pet data is per-bot instance data
+    // Database is already loaded in constructor via std::call_once
+    // This method now only initializes per-bot instance data
 
-    TC_LOG_INFO("playerbot", "BattlePetManager: Loading battle pet database...");
+    if (!_databaseInitialized.load(std::memory_order_acquire))
+    {
+        TC_LOG_ERROR("playerbot.battlepet", "BattlePetManager::Initialize: Database not initialized!");
+        return;
+    }
 
-    LoadPetDatabase();
-    InitializeAbilityDatabase();
-    LoadRarePetList();
-
-    TC_LOG_INFO("playerbot", "BattlePetManager: Initialized with {} species, {} abilities, {} rare spawns",
+    TC_LOG_INFO("playerbot", "BattlePetManager: Initialized for bot {} with {} species, {} abilities, {} rare spawns",
+        _bot ? _bot->GetName() : "Unknown",
         _petDatabase.size(), _abilityDatabase.size(), _rarePetSpawns.size());
 }
 
@@ -297,36 +304,19 @@ void BattlePetManager::LoadPetDatabase()
         }
     }
 
-    // Load pet abilities for each species from playerbot database
-    // Note: battle_pet_species_abilities is playerbot-specific data, not in TrinityCore world database
-    QueryResult abilityResult = nullptr;
-    if (sPlayerbotDatabase->IsConnected())
-    {
-        abilityResult = sPlayerbotDatabase->Query(
-            "SELECT speciesId, abilityId1, abilityId2, abilityId3, abilityId4, abilityId5, abilityId6 "
-            "FROM battle_pet_species_abilities ORDER BY speciesId"
-        );
-    }
-
-    if (abilityResult)
-    {
-        do
-        {
-            Field* fields = abilityResult->Fetch();
-            uint32 speciesId = fields[0].GetUInt32();
-
-            if (_petDatabase.count(speciesId))
-            {
-                _petDatabase[speciesId].abilities.clear();
-                for (uint8 i = 1; i <= 6; ++i)
-                {
-                    uint32 abilityId = fields[i].GetUInt32();
-                    if (abilityId > 0)
-                        _petDatabase[speciesId].abilities.push_back(abilityId);
-                }
-            }
-        } while (abilityResult->NextRow());
-    }
+    // THREAD SAFETY NOTE: Database queries are NOT safe from worker threads!
+    // The sPlayerbotDatabase singleton uses a single MySQL connection that is not thread-safe.
+    // Since LoadPetDatabase() may be called from worker threads via std::call_once in the constructor,
+    // we SKIP the database query for battle_pet_species_abilities here.
+    //
+    // The default abilities assigned above (familyBase + 1/2/3) are sufficient for basic functionality.
+    // If custom ability data is needed, it should be loaded during server startup on the main thread
+    // BEFORE any bot sessions are created.
+    //
+    // Original code (DO NOT USE from worker threads):
+    // QueryResult abilityResult = sPlayerbotDatabase->Query(
+    //     "SELECT speciesId, abilityId1, ... FROM battle_pet_species_abilities");
+    TC_LOG_DEBUG("playerbot.battlepet", "BattlePetManager::LoadPetDatabase: Skipping DB query (not thread-safe)");
 
     TC_LOG_INFO("playerbot", "BattlePetManager: Loaded {} battle pet species from database", _petDatabase.size());
 }
