@@ -724,12 +724,40 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     }
 
     // PHASE 3: Cleanup disconnected sessions
+    // CRITICAL FIX (GridNotifiers.cpp:226 crash): Must call LogoutPlayer() BEFORE erasing session!
+    // Problem: When session is erased, shared_ptr destructor runs but Player is still registered in Grid
+    // Solution: Call LogoutPlayer() first (removes Player from Map/Grid), THEN erase session
     if (!disconnectedSessions.empty())
     {
         ::std::lock_guard lock(_sessionsMutex);
         for (ObjectGuid const& guid : disconnectedSessions)
         {
-            _botSessions.erase(guid);
+            auto it = _botSessions.find(guid);
+            if (it != _botSessions.end())
+            {
+                ::std::shared_ptr<BotSession> session = it->second;
+                if (session)
+                {
+                    // CRITICAL: Call LogoutPlayer() on main thread to safely remove from Grid
+                    // This must happen BEFORE the session is destroyed
+                    if (session->GetPlayer() && session->GetPlayer()->IsInWorld())
+                    {
+                        try {
+                            TC_LOG_DEBUG("module.playerbot.session",
+                                "Logging out bot {} before session cleanup (GridNotifiers crash fix)",
+                                session->GetPlayer()->GetName());
+                            session->LogoutPlayer(true);  // true = save to DB
+                        }
+                        catch (...)
+                        {
+                            TC_LOG_ERROR("module.playerbot.session",
+                                "Exception during LogoutPlayer() for bot {} - continuing cleanup",
+                                guid.ToString());
+                        }
+                    }
+                }
+                _botSessions.erase(it);
+            }
             sBotPriorityMgr->RemoveBot(guid);
         }
     }

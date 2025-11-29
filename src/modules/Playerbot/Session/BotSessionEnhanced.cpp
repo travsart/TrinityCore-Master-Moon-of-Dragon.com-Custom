@@ -177,7 +177,7 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
         auto worldEntry = ::std::make_shared<BotWorldEntry>(shared_from_this(), characterGuid);
 
         // Perform synchronous world entry with 30 second timeout
-    if (!worldEntry->EnterWorldSync(30000))
+        if (!worldEntry->EnterWorldSync(30000))
         {
             TC_LOG_ERROR("module.playerbot.session",
                         "Failed to complete world entry for bot {}",
@@ -238,7 +238,7 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
         // Solution: Call LogoutPlayer() which sets m_playerLogout flag, then RemovePlayerFromMap()
         // is called during next Update() cycle on main thread (WorldSession.cpp:716)
         // This matches how real players logout and prevents race conditions
-    if (GetPlayer())
+        if (GetPlayer())
         {
             LogoutPlayer(false);  // false = don't save (login failed)
         }
@@ -272,13 +272,37 @@ bool BotSession::UpdateEnhanced(uint32 diff, PacketFilter& updater)
     if (GetPlayer() && GetPlayer()->IsInWorld())
     {
         // Update AI if available
-    if (BotAI* ai = GetAI())
+            if (BotAI* ai = GetAI())
         {
             ai->UpdateAI(diff);
         }
 
-        // Process player updates
-        GetPlayer()->Update(diff);
+        // CRITICAL FIX (2025-11-29): DO NOT call GetPlayer()->Update(diff) from worker threads!
+        //
+        // PROBLEM: BotSession::UpdateEnhanced() is called from ThreadPool workers (via BotWorldSessionMgr::UpdateSessions).
+        //          Player::Update() can trigger visibility updates that access m_clientGUIDs (std::unordered_set).
+        //          Map worker threads ALSO access m_clientGUIDs via ProcessRelocationNotifies() -> HaveAtClient().
+        //          This causes a race condition leading to heap corruption in the hash table.
+        //
+        // EVIDENCE: Crash at Player::HaveAtClient+34 (Player.cpp:24121)
+        //           Crash dump: 8942890282c2+_worldserver.exe_[2025_11_29_7_43_2].txt
+        //           Corrupted registers: RAX:6F002DCE2601900E, RCX:31F0AFCEF4503F67 (invalid memory)
+        //           Call stack: MapUpdater::WorkerThread -> ProcessRelocationNotifies -> PlayerRelocationNotifier::Visit
+        //                       -> Player::UpdateVisibilityOf -> Player::HaveAtClient (CRASH - m_clientGUIDs corrupted)
+        //
+        // ROOT CAUSE: std::unordered_set is NOT thread-safe. Concurrent access from:
+        //             1. Map worker threads: VisibleNotifier::SendToSelf() erases from m_clientGUIDs (GridNotifiers.cpp:73)
+        //             2. Bot ThreadPool workers: GetPlayer()->Update() can modify visibility state
+        //
+        // SOLUTION: Do NOT call Player::Update() from worker threads. Bot AI updates (BotAI::UpdateAI) are safe
+        //           because they don't directly access m_clientGUIDs. The Player::Update() is already called by the
+        //           Map system during Map::Update() on the map's dedicated worker thread, which is synchronized
+        //           with visibility updates.
+        //
+        // REMOVED LINE: GetPlayer()->Update(diff);
+        //
+        // NOTE: Bot players still receive full updates via Map::Update() -> Player::Update() path.
+        //       This is safe because Map::Update() and ProcessRelocationNotifies() are synchronized on the same thread.
     }
 
     // Handle logout if needed
