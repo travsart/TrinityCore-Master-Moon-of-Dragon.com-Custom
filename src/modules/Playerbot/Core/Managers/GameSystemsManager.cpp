@@ -52,222 +52,59 @@ GameSystemsManager::GameSystemsManager(Player* bot, BotAI* botAI)
 GameSystemsManager::~GameSystemsManager()
 {
     // ========================================================================
-    // CRITICAL: Destructor must NEVER throw exceptions!
+    // CRITICAL: Destructor must be COMPLETELY ALLOCATION-FREE!
     // ========================================================================
-    // If this destructor is called during stack unwinding from another exception
-    // (e.g., std::bad_alloc from DeathRecoveryManager constructor), any exception
-    // thrown here will cause std::terminate() to be called.
+    // This destructor may be called during stack unwinding from exceptions
+    // (e.g., std::bad_alloc). During memory pressure:
+    // - TC_LOG_* macros allocate std::string internally
+    // - Any allocation can throw std::bad_alloc
+    // - Exceptions from destructors during unwinding = std::terminate()
     //
-    // The TC_LOG_* macros allocate std::string internally, which can throw
-    // std::bad_alloc during memory pressure. We wrap EVERYTHING in try-catch.
-    // ========================================================================
-    try
-    {
-    // ========================================================================
-    //
-    // Problem: C++ destroys members in REVERSE declaration order
-    // - _eventDispatcher destroyed BEFORE _combatStateManager
-    // - Managers try to UnsubscribeAll() from already-destroyed EventDispatcher
-    // - Results in ACCESS_VIOLATION
-    //
-    // Solution: Manually destroy managers HERE in correct dependency order
-    // - Ensures EventDispatcher is still alive during manager cleanup
-    // - Managers can safely call UnsubscribeAll() during OnShutdown()
-    //
-    // Destruction Order (CORRECT):
-    // 1. Manual reset() of managers (HERE) ← Managers alive, EventDispatcher alive ✅
-    // 2. Automatic _eventDispatcher destruction ← All managers gone, safe ✅
+    // Solution: NO LOGGING, NO ALLOCATIONS. Just reset the unique_ptrs.
+    // The manager destructors themselves should also be allocation-free.
     // ========================================================================
 
-    // 1. Combat state manager - monitors other managers
-    if (_combatStateManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying CombatStateManager");
-        _combatStateManager.reset();
-    }
+    // Explicit destruction order to ensure EventDispatcher outlives managers
+    // (managers may call UnsubscribeAll() in their destructors)
 
-    // 2. Death recovery manager - may interact with combat
-    if (_deathRecoveryManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying DeathRecoveryManager");
-        _deathRecoveryManager.reset();
-    }
+    // 1. High-level systems first
+    _combatStateManager.reset();
+    _deathRecoveryManager.reset();
+    _unifiedMovementCoordinator.reset();
 
-    // 3. Movement system
-    if (_unifiedMovementCoordinator)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying UnifiedMovementCoordinator");
-        _unifiedMovementCoordinator.reset();
-    }
+    // 2. Game system managers
+    _questManager.reset();
+    _tradeManager.reset();
+    _gatheringManager.reset();
+    _professionManager.reset();
+    _gatheringMaterialsBridge.reset();
+    _auctionMaterialsBridge.reset();
+    _professionAuctionBridge.reset();
+    _auctionManager.reset();
+    _bankingManager.reset();
+    _equipmentManager.reset();
+    _mountManager.reset();
+    _battlePetManager.reset();
+    _arenaAI.reset();
+    _pvpCombatAI.reset();
+    _auctionHouse.reset();
+    _farmingCoordinator.reset();
+    _groupCoordinator.reset();
 
-    // 4. Game system managers (order doesn't matter, no interdependencies)
-    if (_questManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying QuestManager");
-        _questManager.reset();
-    }
+    // 3. Support systems
+    _targetScanner.reset();
+    _groupInvitationHandler.reset();
+    _priorityManager.reset();
 
-    if (_tradeManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying TradeManager");
-        _tradeManager.reset();
-    }
+    // 4. Decision systems
+    _decisionFusion.reset();
+    _actionPriorityQueue.reset();
+    _behaviorTree.reset();
+    _hybridAI.reset();
 
-    if (_gatheringManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying GatheringManager");
-        _gatheringManager.reset();
-    }
-
-    if (_professionManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying ProfessionManager");
-        _professionManager.reset();
-    }
-
-    if (_gatheringMaterialsBridge)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying GatheringMaterialsBridge");
-        _gatheringMaterialsBridge.reset();
-    }
-
-    if (_auctionMaterialsBridge)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying AuctionMaterialsBridge");
-        _auctionMaterialsBridge.reset();
-    }
-
-    if (_professionAuctionBridge)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying ProfessionAuctionBridge");
-        _professionAuctionBridge.reset();
-    }
-
-    if (_auctionManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying AuctionManager");
-        _auctionManager.reset();
-    }
-
-    if (_bankingManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying BankingManager");
-        _bankingManager.reset();
-    }
-
-    if (_equipmentManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying EquipmentManager");
-        _equipmentManager.reset();
-    }
-
-    if (_mountManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying MountManager");
-        _mountManager.reset();
-    }
-
-    if (_battlePetManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying BattlePetManager");
-        _battlePetManager.reset();
-    }
-
-    if (_arenaAI)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying ArenaAI");
-        _arenaAI.reset();
-    }
-
-    if (_pvpCombatAI)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying PvPCombatAI");
-        _pvpCombatAI.reset();
-    }
-
-    if (_auctionHouse)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying AuctionHouse");
-        _auctionHouse.reset();
-    }
-
-    if (_farmingCoordinator)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying FarmingCoordinator");
-        _farmingCoordinator.reset();
-    }
-
-    if (_groupCoordinator)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying GroupCoordinator");
-        _groupCoordinator.reset();
-    }
-
-    // 5. Support systems
-    if (_targetScanner)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying TargetScanner");
-        _targetScanner.reset();
-    }
-
-    if (_groupInvitationHandler)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying GroupInvitationHandler");
-        _groupInvitationHandler.reset();
-    }
-
-    if (_priorityManager)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying BehaviorPriorityManager");
-        _priorityManager.reset();
-    }
-
-    // 6. Decision systems
-    if (_decisionFusion)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying DecisionFusionSystem");
-        _decisionFusion.reset();
-    }
-
-    if (_actionPriorityQueue)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying ActionPriorityQueue");
-        _actionPriorityQueue.reset();
-    }
-
-    if (_behaviorTree)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying BehaviorTree");
-        _behaviorTree.reset();
-    }
-
-    if (_hybridAI)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying HybridAIController");
-        _hybridAI.reset();
-    }
-
-    // 7. Finally: Manager registry and event dispatcher
-    if (_managerRegistry)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying ManagerRegistry");
-        _managerRegistry.reset();
-    }
-
-    if (_eventDispatcher)
-    {
-        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying EventDispatcher");
-        _eventDispatcher.reset();
-    }
-
-    }
-    catch (...)
-    {
-        // CRITICAL: Never let exceptions escape from destructor!
-        // During stack unwinding, this would call std::terminate().
-        // Just silently continue - the unique_ptrs will be destroyed anyway
-        // when member destruction happens (they'll be nullptr after reset()).
-    }
+    // 5. Finally: Registry and event dispatcher (must be last)
+    _managerRegistry.reset();
+    _eventDispatcher.reset();
 }
 
 // ============================================================================

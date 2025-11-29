@@ -53,13 +53,8 @@ GatheringMaterialsBridge::GatheringMaterialsBridge(Player* bot)
 
 GatheringMaterialsBridge::~GatheringMaterialsBridge()
 {
-    if (_bot)
-    {
-        TC_LOG_DEBUG("playerbot", "GatheringMaterialsBridge: Destroying instance for bot '{}'", _bot->GetName());
-
-        // Unsubscribe from event bus
-        // Note: Event bus handles cleanup automatically when subscriber is destroyed
-    }
+    // CRITICAL: No logging in destructors - can throw std::bad_alloc during memory pressure
+    // Note: Event bus handles cleanup automatically when subscriber is destroyed
 }
 
 // ============================================================================

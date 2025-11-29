@@ -54,10 +54,7 @@ ProfessionAuctionBridge::ProfessionAuctionBridge(Player* bot)
 
 ProfessionAuctionBridge::~ProfessionAuctionBridge()
 {
-    if (_bot)
-    {
-        TC_LOG_DEBUG("playerbot", "ProfessionAuctionBridge: Destroying instance for bot '{}'", _bot->GetName());
-    }
+    // CRITICAL: No logging in destructors - can throw std::bad_alloc during memory pressure
     // Event bus unsubscription handled automatically by ProfessionEventBus
 }
 

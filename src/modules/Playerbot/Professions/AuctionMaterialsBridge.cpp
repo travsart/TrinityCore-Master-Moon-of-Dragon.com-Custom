@@ -51,10 +51,7 @@ AuctionMaterialsBridge::AuctionMaterialsBridge(Player* bot)
 
 AuctionMaterialsBridge::~AuctionMaterialsBridge()
 {
-    if (_bot)
-    {
-        TC_LOG_DEBUG("playerbot", "AuctionMaterialsBridge: Destroying instance for bot '{}'", _bot->GetName());
-    }
+    // CRITICAL: No logging in destructors - can throw std::bad_alloc during memory pressure
     // Event bus unsubscription handled automatically by ProfessionEventBus
 }
 

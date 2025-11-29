@@ -51,10 +51,8 @@ ProfessionManager::ProfessionManager(Player* bot)
 
 ProfessionManager::~ProfessionManager()
 {
-    if (_bot)
-    {
-        TC_LOG_DEBUG("playerbot", "ProfessionManager: Destroying instance for bot '{}'", _bot->GetName());
-    }
+    // CRITICAL: No logging in destructors - can throw std::bad_alloc during memory pressure
+    // which causes std::terminate() if called during stack unwinding
 }
 
 // ============================================================================
