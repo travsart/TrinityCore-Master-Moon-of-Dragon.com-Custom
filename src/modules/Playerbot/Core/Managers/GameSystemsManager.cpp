@@ -51,11 +51,18 @@ GameSystemsManager::GameSystemsManager(Player* bot, BotAI* botAI)
 
 GameSystemsManager::~GameSystemsManager()
 {
-    TC_LOG_DEBUG("module.playerbot", "GameSystemsManager::~GameSystemsManager: Begin cleanup for bot '{}'",
-        _bot ? _bot->GetName() : "Unknown");
-
     // ========================================================================
-    // CRITICAL: Explicit Manager Destruction Order
+    // CRITICAL: Destructor must NEVER throw exceptions!
+    // ========================================================================
+    // If this destructor is called during stack unwinding from another exception
+    // (e.g., std::bad_alloc from DeathRecoveryManager constructor), any exception
+    // thrown here will cause std::terminate() to be called.
+    //
+    // The TC_LOG_* macros allocate std::string internally, which can throw
+    // std::bad_alloc during memory pressure. We wrap EVERYTHING in try-catch.
+    // ========================================================================
+    try
+    {
     // ========================================================================
     //
     // Problem: C++ destroys members in REVERSE declaration order
@@ -253,9 +260,14 @@ GameSystemsManager::~GameSystemsManager()
         _eventDispatcher.reset();
     }
 
-    TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: ✅ All managers destroyed");
-    TC_LOG_INFO("module.playerbot", "GameSystemsManager: Destructor complete for bot '{}'",
-        _bot ? _bot->GetName() : "Unknown");
+    }
+    catch (...)
+    {
+        // CRITICAL: Never let exceptions escape from destructor!
+        // During stack unwinding, this would call std::terminate().
+        // Just silently continue - the unique_ptrs will be destroyed anyway
+        // when member destruction happens (they'll be nullptr after reset()).
+    }
 }
 
 // ============================================================================
