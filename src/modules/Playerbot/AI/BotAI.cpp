@@ -81,6 +81,10 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Phase 4: Initialize Shared Blackboard (thread-safe shared state system)
     _sharedBlackboard = BlackboardManager::GetBotBlackboard(_bot->GetGUID());
 
+    // Initialize behavior priority manager BEFORE strategies
+    // This must exist before strategies are added so they can auto-register
+    _priorityManager = std::make_unique<BehaviorPriorityManager>(this);
+
     // Initialize default strategies for basic functionality
     InitializeDefaultStrategies();
 
@@ -834,11 +838,13 @@ void BotAI::UpdateActions(uint32 diff)
 }
 
 // ============================================================================
-// SOLO BEHAVIORS - Autonomous play when not in group// ============================================================================
+// SOLO BEHAVIORS - Autonomous play when not in group
+// ============================================================================
 
 void BotAI::UpdateSoloBehaviors(uint32 diff)
 {
-    // Only run solo behaviors when in solo play mode (not grouped/following)if (IsInCombat() || IsFollowing())
+    // Only run solo behaviors when in solo play mode (not grouped/following)
+    if (IsInCombat() || IsFollowing())
         return;
 
     uint32 currentTime = GameTime::GetGameTimeMS();
