@@ -125,9 +125,54 @@ void GroupInvitationHandler::Update(uint32 diff)
     _updateTimer += diff;
     _cleanupTimer += diff;
 
-    // DEADLOCK FIX: Removed TrinityCore GetGroupInvite() calls that were causing
-    // cross-system mutex deadlock. All invitations should come through HandleInvitation()
-    // packet handler instead of polling TrinityCore's group system.
+    // CRITICAL FIX: Bots don't receive network packets, so HandleInvitation() is never called.
+    // We MUST poll TrinityCore's GetGroupInvite() to detect pending invitations.
+    // This is safe as long as we don't hold our mutex while calling TrinityCore APIs.
+    if (_bot && !_bot->GetGroup())
+    {
+        Group* pendingInvite = _bot->GetGroupInvite();
+        if (pendingInvite)
+        {
+            ObjectGuid leaderGuid = pendingInvite->GetLeaderGUID();
+
+            // Check if we already have this invite queued
+            bool alreadyQueued = false;
+            {
+                ::std::lock_guard lock(_invitationMutex);
+                if (_currentInviter == leaderGuid)
+                    alreadyQueued = true;
+                // Check if we recently processed this inviter (prevent spam)
+                if (_recentInviters.find(leaderGuid) != _recentInviters.end())
+                {
+                    auto timeSinceLastAccept = ::std::chrono::steady_clock::now() - _lastAcceptTime;
+                    if (timeSinceLastAccept < ::std::chrono::milliseconds(5000))
+                        alreadyQueued = true;
+                }
+            }
+
+            if (!alreadyQueued)
+            {
+                Player* leader = ObjectAccessor::FindPlayer(leaderGuid);
+                TC_LOG_INFO("playerbot.group", "GroupInvitationHandler: Bot {} detected pending invite from {} ({}), queueing for processing",
+                    _bot->GetName(),
+                    leader ? leader->GetName() : "Unknown",
+                    leaderGuid.ToString());
+
+                // Create synthetic pending invitation
+                ::std::lock_guard lock(_invitationMutex);
+                PendingInvitation invitation;
+                invitation.inviterGuid = leaderGuid;
+                invitation.inviterName = leader ? leader->GetName() : "Unknown";
+                invitation.proposedRoles = 0;
+                invitation.timestamp = ::std::chrono::steady_clock::now();
+                invitation.isProcessing = false;
+                _pendingInvitations.push(invitation);
+
+                _stats.totalInvitations++;
+                _stats.lastInvitation = ::std::chrono::steady_clock::now();
+            }
+        }
+    }
 
     // Cleanup expired invitations periodically
     if (_cleanupTimer >= CLEANUP_INTERVAL)
