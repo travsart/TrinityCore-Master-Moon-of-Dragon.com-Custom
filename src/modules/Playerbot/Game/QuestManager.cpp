@@ -136,12 +136,19 @@ namespace Playerbot
         if (!bot)
             return;
 
+        // CRITICAL: Check IsInWorld() before accessing quest data!
+        // During bot login, the quest status map (m_QuestStatus) may not be fully
+        // loaded yet. Accessing it causes ACCESS_VIOLATION in Player::GetQuestStatus()
+        // as std::map::find() crashes on uninitialized tree structure.
+        if (!bot->IsInWorld())
+            return;
+
         m_questCache.clear();
         m_activeQuests.clear();
         m_completableQuests.clear();
 
         // Cache all quest statuses
-    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
+        for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
         {
             uint32 questId = bot->GetQuestSlotQuestId(slot);
             if (questId == 0)
@@ -232,8 +239,12 @@ namespace Playerbot
         // Configuration is loaded from constructor defaults
         // Future: Load from PlayerbotConfig when implemented
 
-        // Initialize quest cache
-        UpdateQuestCache();
+        // CRITICAL: Do NOT call UpdateQuestCache() during initialization!
+        // The bot's quest status map (m_QuestStatus) is not loaded yet during the login
+        // phase, causing ACCESS_VIOLATION in Player::GetQuestStatus() when it accesses
+        // the internal std::map<uint32, QuestStatusData>. The map's tree structure
+        // may not be initialized yet, causing crash in std::_Tree::_Find_lower_bound.
+        // Quest cache update will happen on first OnUpdate() call when bot is in world.
 
         // CRITICAL: Do NOT scan for quests during initialization!
         // The bot may not be in the world yet, causing ACCESS_VIOLATION when
