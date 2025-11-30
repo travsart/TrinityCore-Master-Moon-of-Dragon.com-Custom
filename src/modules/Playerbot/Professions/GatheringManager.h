@@ -478,6 +478,11 @@ namespace Playerbot
         bool _gatherSkinning = true;
         bool _gatherFishing = false;  // Requires special handling
 
+        // Deferred initialization flag
+        // CRITICAL: Professions cannot be queried during OnInitialize() because bot's
+        // skill data (mSkillStatus map) isn't loaded yet, causing ACCESS_VIOLATION.
+        bool _professionsInitialized = false;
+
         // ========================================================================
         // NODE TRACKING
         // ========================================================================

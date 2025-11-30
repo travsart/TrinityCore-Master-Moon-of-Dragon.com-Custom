@@ -44,18 +44,10 @@ bool GatheringManager::OnInitialize()
     if (!GetBot() || !GetBot()->IsInWorld())
         return false;
 
-    // Check which gathering professions the bot has
-    _gatherMining = GetProfessionSkill(GatheringNodeType::MINING_VEIN) > 0;
-    _gatherHerbalism = GetProfessionSkill(GatheringNodeType::HERB_NODE) > 0;
-    _gatherSkinning = GetProfessionSkill(GatheringNodeType::CREATURE_CORPSE) > 0;
-    _gatherFishing = GetProfessionSkill(GatheringNodeType::FISHING_POOL) > 0;
-
-    TC_LOG_DEBUG("bot.playerbot", "GatheringManager initialized for bot %s - Mining: %s, Herbalism: %s, Skinning: %s, Fishing: %s",
-        GetBot()->GetName().c_str(),
-        _gatherMining ? "Yes" : "No",
-        _gatherHerbalism ? "Yes" : "No",
-        _gatherSkinning ? "Yes" : "No",
-        _gatherFishing ? "Yes" : "No");
+    // CRITICAL: Do NOT call GetProfessionSkill() here!
+    // The bot's skill data (mSkillStatus map) may not be loaded yet during login,
+    // causing ACCESS_VIOLATION in Player::GetSkillValue(). Defer to first OnUpdate().
+    _professionsInitialized = false;
 
     return true;
 }
@@ -79,6 +71,23 @@ void GatheringManager::OnUpdate(uint32 elapsed)
 {
     if (!GetBot() || !GetBot()->IsInWorld() || !_gatheringEnabled)
         return;
+
+    // CRITICAL: Deferred profession initialization - bot's skill data must be ready
+    if (!_professionsInitialized)
+    {
+        _gatherMining = GetProfessionSkill(GatheringNodeType::MINING_VEIN) > 0;
+        _gatherHerbalism = GetProfessionSkill(GatheringNodeType::HERB_NODE) > 0;
+        _gatherSkinning = GetProfessionSkill(GatheringNodeType::CREATURE_CORPSE) > 0;
+        _gatherFishing = GetProfessionSkill(GatheringNodeType::FISHING_POOL) > 0;
+        _professionsInitialized = true;
+
+        TC_LOG_DEBUG("bot.playerbot", "GatheringManager professions initialized for bot {} - Mining: {}, Herbalism: {}, Skinning: {}, Fishing: {}",
+            GetBot()->GetName(),
+            _gatherMining ? "Yes" : "No",
+            _gatherHerbalism ? "Yes" : "No",
+            _gatherSkinning ? "Yes" : "No",
+            _gatherFishing ? "Yes" : "No");
+    }
 
     // Update node detection every few seconds
     auto now = ::std::chrono::steady_clock::now();

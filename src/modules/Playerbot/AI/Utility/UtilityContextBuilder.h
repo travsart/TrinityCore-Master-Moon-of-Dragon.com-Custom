@@ -54,15 +54,17 @@ public:
             return context;
 
         Player* bot = ai->GetBot();
-        if (!bot)
+        if (!bot || !bot->IsInWorld())
             return context;
 
         // Bot state
         context.healthPercent = bot->GetHealthPct() / 100.0f;
 
         // Mana percentage (handle power types correctly)
-        if (bot->GetMaxPower(POWER_MANA) > 0)
-            context.manaPercent = bot->GetPower(POWER_MANA) / static_cast<float>(bot->GetMaxPower(POWER_MANA));
+        // CRITICAL: GetMaxPower() can crash if bot's power systems aren't ready
+        int32 maxMana = bot->GetMaxPower(POWER_MANA);
+        if (maxMana > 0)
+            context.manaPercent = bot->GetPower(POWER_MANA) / static_cast<float>(maxMana);
         else
             context.manaPercent = 1.0f; // Non-mana classes always at "full" mana
 
