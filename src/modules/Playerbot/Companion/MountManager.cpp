@@ -54,13 +54,16 @@ MountManager::MountManager(Player* bot)
         TC_LOG_INFO("playerbot.mount", "MountManager: Initialized mount database with {} mounts", _mountDatabase.size());
     }
 
-    TC_LOG_DEBUG("playerbot.mount", "MountManager: Created for bot {} ({})",
-                 _bot->GetName(), _bot->GetGUID().ToString());
+    // CRITICAL: Do NOT access _bot->GetName() or _bot->GetGUID() in constructor!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name/m_guid are not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot identity deferred to first Update() call.
 }
 
 MountManager::~MountManager()
 {
-    if (_bot)
+    // Note: Safe to access GetName() in destructor only if bot is still valid and in world
+    if (_bot && _bot->IsInWorld())
     {
         TC_LOG_DEBUG("playerbot.mount", "MountManager: Destroyed for bot {} ({})",
                      _bot->GetName(), _bot->GetGUID().ToString());
@@ -73,9 +76,9 @@ MountManager::~MountManager()
 
 void MountManager::Initialize()
 {
-    // Database already loaded in constructor
-    TC_LOG_DEBUG("playerbot.mount", "MountManager: Initialized for bot {}",
-        _bot ? _bot->GetName() : "unknown");
+    // CRITICAL: Do NOT access _bot->GetName() here!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize().
+    // Database already loaded in constructor. Logging deferred to first Update().
 }
 
 void MountManager::Update(uint32 diff)
