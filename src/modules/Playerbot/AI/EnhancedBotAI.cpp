@@ -66,7 +66,9 @@ EnhancedBotAI::EnhancedBotAI(Player* bot) :
     LoadConfiguration();
 
     _lastUpdateTime = ::std::chrono::high_resolution_clock::now();
-    TC_LOG_DEBUG("bot.ai.enhanced", "EnhancedBotAI initialized for bot {}", bot->GetName());
+    // CRITICAL: Do NOT access bot->GetName() or bot->GetGUID() in constructor!
+    // Bot may not be fully in world yet, and Player::m_name/m_guid are not initialized,
+    // causing ACCESS_VIOLATION. Logging deferred to first Update() when bot IsInWorld().
 }
 
 EnhancedBotAI::~EnhancedBotAI() = default;

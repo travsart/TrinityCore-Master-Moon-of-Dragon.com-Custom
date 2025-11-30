@@ -32,8 +32,12 @@ ResourceManager::ResourceManager(Player* bot) : _bot(bot), _runicPower(0)
         _runes[i].type = (i < 2) ? 0 : ((i < 4) ? 1 : 2); // 2 Blood, 2 Frost, 2 Unholy
     }
 
-    TC_LOG_DEBUG("playerbot.resource", "ResourceManager initialized for bot {}", _bot ? _bot->GetName() : "unknown");
+    // CRITICAL: Do NOT access _bot->GetName() or _bot->GetGUID() in constructor!
+    // Bot may not be fully in world yet during ClassAI/BotAI construction,
+    // and Player::m_name/m_guid are not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot name deferred to first Update() when bot IsInWorld().
 }
+
 
 void ResourceManager::Update(uint32 diff)
 {
@@ -809,7 +813,7 @@ float ResourceManager::GetAverageResourceUsage(ResourceType type)
 
 void ResourceManager::DumpResourceState()
 {
-    if (!_bot)
+    if (!_bot || !_bot->IsInWorld())
         return;
 
     TC_LOG_DEBUG("playerbot.resource", "=== Resource Manager Dump for {} ===", _bot->GetName());

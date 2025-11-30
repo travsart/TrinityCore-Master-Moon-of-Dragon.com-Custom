@@ -25,9 +25,10 @@ namespace Playerbot
 LazyManagerFactory::LazyManagerFactory(Player* bot, BotAI* ai)
     : _bot(bot), _ai(ai)
 {
-
-    TC_LOG_DEBUG("module.playerbot.lazy", "LazyManagerFactory initialized for bot {} - Managers will be created on-demand",
-                 _bot->GetName());
+    // CRITICAL: Do NOT access _bot->GetName() or _bot->GetGUID() in constructor!
+    // Bot may not be fully in world yet during BotAI construction,
+    // and Player::m_name/m_guid are not initialized, causing ACCESS_VIOLATION.
+    // Logging deferred to lazy getter methods when bot is IsInWorld().
 }
 LazyManagerFactory::~LazyManagerFactory()
 {
