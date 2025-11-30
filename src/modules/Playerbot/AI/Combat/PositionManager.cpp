@@ -37,14 +37,19 @@ PositionManager::PositionManager(Player* bot, BotThreatManager* threatManager)
       _lastUpdate(0), _positionTolerance(POSITION_TOLERANCE), _maxCandidates(MAX_CANDIDATES),
       _lastZoneUpdate(0), _lastMovePointTime(0)
 {
+    // CRITICAL: Do NOT access _bot->GetName() in constructor!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name is not initialized, causing ACCESS_VIOLATION in fmt::buffer::append.
+    // Logging with bot name deferred to first UpdatePosition() call.
 
     if (!_threatManager)
     {
-        TC_LOG_ERROR("playerbot", "PositionManager: ThreatManager is null for bot {}", _bot->GetName());
+        TC_LOG_ERROR("playerbot", "PositionManager: ThreatManager is null (bot ptr: {})",
+                     _bot ? "valid" : "null");
         return;
     }
 
-    TC_LOG_DEBUG("playerbot.position", "PositionManager initialized for bot {}", _bot->GetName());
+    // NOTE: Debug logging deferred - bot name not safe to access during construction
 }
 
 PositionMovementResult PositionManager::UpdatePosition(const MovementContext& context)
