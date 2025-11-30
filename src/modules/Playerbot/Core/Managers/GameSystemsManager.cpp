@@ -43,9 +43,8 @@ namespace Playerbot
 GameSystemsManager::GameSystemsManager(Player* bot, BotAI* botAI)
     : _bot(bot), _botAI(botAI)
 {
-    TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Constructing facade for bot '{}'",
-        _bot ? _bot->GetName() : "Unknown");
-
+    // CRITICAL: No logging with _bot->GetName() in constructor/Initialize()
+    // Player's m_name can be corrupted during concurrent access, causing ACCESS_VIOLATION
     // Manager instances will be created in Initialize()
 }
 
@@ -114,16 +113,10 @@ GameSystemsManager::~GameSystemsManager()
 void GameSystemsManager::Initialize(Player* bot)
 {
     if (_initialized)
-    {
-        TC_LOG_WARN("module.playerbot", "GameSystemsManager: Already initialized for bot '{}'",
-            bot ? bot->GetName() : "Unknown");
-        return;
-    }
+        return;  // No logging - GetName() unsafe during concurrent access
 
     _bot = bot;
-
-    TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Initializing all managers for bot '{}'",
-        _bot ? _bot->GetName() : "Unknown");
+    // CRITICAL: No logging with _bot->GetName() - concurrent access during initialization
 
     // ========================================================================
     // PHASE 1: Create Manager Instances (in dependency order)
@@ -191,8 +184,7 @@ void GameSystemsManager::Initialize(Player* bot)
     // Combat state manager
     _combatStateManager = std::make_unique<CombatStateManager>(_bot, _botAI);
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS CREATED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, UnifiedMovement, CombatState systems ready",
-        _bot->GetName());
+    // Manager creation complete - no logging to avoid GetName() during init
 
     // ========================================================================
     // PHASE 2: Event System
@@ -202,8 +194,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _eventDispatcher = std::make_unique<Events::EventDispatcher>(512);  // Initial queue size: 512 events
     _managerRegistry = std::make_unique<ManagerRegistry>();
 
-    TC_LOG_INFO("module.playerbot", "🔄 EVENT DISPATCHER & MANAGER REGISTRY: {} - Phase 7.1 integration ready",
-        _bot->GetName());
+    // Event system ready - no logging during init
 
     // ========================================================================
     // PHASE 3: Decision Systems
@@ -212,20 +203,17 @@ void GameSystemsManager::Initialize(Player* bot)
     // Decision fusion system
     _decisionFusion = std::make_unique<bot::ai::DecisionFusionSystem>();
 
-    TC_LOG_INFO("module.playerbot", "🎯 DECISION FUSION SYSTEM: {} - Phase 5E unified arbitration ready",
-        _bot->GetName());
+    // Decision fusion ready - no logging during init
 
     // Action priority queue
     _actionPriorityQueue = std::make_unique<bot::ai::ActionPriorityQueue>();
 
-    TC_LOG_INFO("module.playerbot", "📋 ACTION PRIORITY QUEUE: {} - Phase 5 spell priority system ready",
-        _bot->GetName());
+    // Action queue ready - no logging during init
 
     // Behavior tree
     _behaviorTree = std::make_unique<bot::ai::BehaviorTree>("DefaultTree");
 
-    TC_LOG_INFO("module.playerbot", "🌲 BEHAVIOR TREE: {} - Phase 5 hierarchical decision system ready",
-        _bot->GetName());
+    // Behavior tree ready - no logging during init
 
     // ========================================================================
     // PHASE 4: Hybrid AI System
@@ -333,24 +321,17 @@ void GameSystemsManager::Initialize(Player* bot)
         // Subscribe managers to events
         SubscribeManagersToEvents();
 
-        TC_LOG_INFO("module.playerbot.managers",
-            "🎯 PHASE 7.1 INTEGRATION COMPLETE: {} - {} managers initialized, events subscribed",
-            _bot->GetName(),
-            (_questManager ? 1 : 0) + (_tradeManager ? 1 : 0) + (_gatheringManager ? 1 : 0) +
-            (_auctionManager ? 1 : 0) + (_combatStateManager ? 1 : 0));
+        // Phase 7.1 integration complete - no logging during init
     }
 
     _initialized = true;
 
-    TC_LOG_INFO("module.playerbot", "✅ GameSystemsManager: Initialization complete for bot '{}'",
-        _bot ? _bot->GetName() : "Unknown");
+    // Initialization complete - no logging to avoid GetName() crash
 }
 
 void GameSystemsManager::Shutdown()
 {
-    TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Shutting down all managers for bot '{}'",
-        _bot ? _bot->GetName() : "Unknown");
-
+    // CRITICAL: No logging - GetName() unsafe during shutdown
     // Managers will be destroyed in destructor with proper order
     _initialized = false;
 }
@@ -364,9 +345,7 @@ void GameSystemsManager::InitializeHybridAI()
     // Initialize Hybrid AI Decision System (Utility AI + Behavior Trees)
     // Pass BotAI pointer to HybridAIController
     _hybridAI = std::make_unique<HybridAIController>(_botAI);
-
-    TC_LOG_INFO("module.playerbot", "🤖 HYBRID AI CONTROLLER: {} - Hybrid decision system ready",
-        _bot ? _bot->GetName() : "Unknown");
+    // CRITICAL: No logging with GetName() - causes ACCESS_VIOLATION during concurrent init
 }
 
 // ============================================================================
