@@ -118,10 +118,14 @@ namespace Playerbot
             return;
         }
         // Validate pointers are still valid
-    if (!ValidatePointers())
+        // CRITICAL: Do NOT disable the manager if bot is just not in world yet!
+        // ValidatePointers() returns false when bot isn't IsInWorld() to prevent
+        // crashes from accessing uninitialized data. But this is a TEMPORARY state
+        // during login - the manager should retry on next Update(), not be disabled.
+        if (!ValidatePointers())
         {
-            m_enabled.store(false, ::std::memory_order_release);
-            TC_LOG_ERROR("module.playerbot", " [{}] DISABLED due to ValidatePointers() returning false", m_managerName);
+            // Only log if shouldLog is true to prevent spam
+            // Do NOT disable - just return and retry next update
             return;
         }
 
@@ -361,29 +365,25 @@ namespace Playerbot
 
     bool BehaviorManager::Initialize()
     {
-        // Validate pointers before initialization
-    if (!ValidatePointers())
+        // CRITICAL: Do NOT call ValidatePointers() here!
+        // Initialize() is called from GameSystemsManager::Initialize() during
+        // BotAI::BotAI() constructor, when bot is NOT yet in world. ValidatePointers()
+        // checks IsInWorld() and would fail, causing all managers to never initialize.
+        //
+        // Instead, we defer full initialization to the first Update() call when
+        // ValidatePointers() will pass. For now, just do basic pointer checks.
+        if (!m_bot || !m_ai)
         {
-            TC_LOG_ERROR("module.playerbot", "[{}] Initialize() failed: Invalid bot or AI pointers", m_managerName);
+            TC_LOG_ERROR("module.playerbot", "[{}] Initialize() failed: null bot or AI pointer", m_managerName);
             return false;
         }
 
-        // Call derived class initialization
-        bool success = OnInitialize();
+        // Don't call OnInitialize() here - it may access bot data that's not ready.
+        // Initialization will happen in Update() when bot is in world.
+        // Just mark as "ready for deferred init" and return success.
+        // m_initialized stays false until Update() completes OnInitialize().
 
-        if (success)
-        {
-            m_initialized.store(true, ::std::memory_order_release);
-            TC_LOG_INFO("module.playerbot", "[{}] Initialized successfully for bot {}",
-                        m_managerName, m_bot->GetName());
-        }
-        else
-        {
-            TC_LOG_ERROR("module.playerbot", "[{}] OnInitialize() failed for bot {}",
-                         m_managerName, m_bot->GetName());
-        }
-
-        return success;
+        return true;
     }
 
     void BehaviorManager::Shutdown()
