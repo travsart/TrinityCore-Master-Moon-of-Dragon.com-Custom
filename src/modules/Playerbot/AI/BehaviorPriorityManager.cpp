@@ -114,16 +114,19 @@ BehaviorPriorityManager::BehaviorPriorityManager(BotAI* ai)
     AddExclusionRule(BehaviorPriority::ERROR_PRIORITY, BehaviorPriority::CASTING);
     AddExclusionRule(BehaviorPriority::ERROR_PRIORITY, BehaviorPriority::FLEEING);
 
-    TC_LOG_INFO("module.playerbot.priority",
-        "BehaviorPriorityManager initialized with comprehensive mutual exclusion rules for bot {}",
-        m_ai && m_ai->GetBot() ? m_ai->GetBot()->GetName() : "NULL");
+    // CRITICAL: Do NOT access m_ai->GetBot()->GetName() in constructor!
+    // Bot may not be fully in world yet, and Player::m_name is not initialized.
 }
 
 BehaviorPriorityManager::~BehaviorPriorityManager()
 {
-    TC_LOG_DEBUG("module.playerbot.priority",
-        "BehaviorPriorityManager destroyed for bot {}",
-        m_ai && m_ai->GetBot() ? m_ai->GetBot()->GetName() : "NULL");
+    // Note: Safe to access GetName() only if bot is still valid and in world
+    Player* bot = m_ai ? m_ai->GetBot() : nullptr;
+    if (bot && bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.priority",
+            "BehaviorPriorityManager destroyed for bot {}", bot->GetName());
+    }
 }
 
 // ========================================================================

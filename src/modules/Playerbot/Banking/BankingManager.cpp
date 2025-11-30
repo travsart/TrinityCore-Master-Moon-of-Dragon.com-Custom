@@ -55,12 +55,18 @@ BankingManager::BankingManager(Player* bot)
     , _currentlyBanking(false)
     , _enabled(true)
 {
-    TC_LOG_DEBUG("playerbot", "BankingManager: Constructed for bot {}", _bot ? _bot->GetName() : "null");
+    // CRITICAL: Do NOT access _bot->GetName() in constructor!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name is not initialized, causing ACCESS_VIOLATION.
 }
 
 BankingManager::~BankingManager()
 {
-    TC_LOG_DEBUG("playerbot", "BankingManager: Destroyed for bot {}", _bot ? _bot->GetName() : "null");
+    // Note: Safe to access GetName() only if bot is still valid and in world
+    if (_bot && _bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("playerbot", "BankingManager: Destroyed for bot {}", _bot->GetName());
+    }
 }
 
 // ============================================================================
