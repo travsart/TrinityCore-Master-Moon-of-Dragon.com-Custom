@@ -73,31 +73,41 @@ namespace Advanced
 
     void GroupCoordinator::Initialize()
     {
-        // Determine initial role
-        m_assignedRole = DetermineRole();
-        m_preferredRole = m_assignedRole;
+        // CRITICAL: Do NOT access bot data during initialization!
+        // Bot may not be fully in world yet when Initialize() is called from
+        // GameSystemsManager::Initialize() during BotAI constructor.
+        // Defer all bot data access to first Update() call.
 
-        // Initialize tactical coordinator if in a group
-        if (m_bot->GetGroup())
-        {
-            // Create shared tactical coordinator for the group
-            // Note: In a production implementation, this should be shared across all group members
-            // For now, each bot creates its own instance
-            m_tacticalCoordinator = std::make_shared<TacticalCoordinator>(m_bot->GetGroup());
-            m_tacticalCoordinator->Initialize();
-        }
+        // Just set defaults - actual initialization will happen in Update() when bot is in world
+        m_assignedRole = GroupRole::UNDEFINED;
+        m_preferredRole = GroupRole::UNDEFINED;
 
-        // Load boss strategies
-        LoadBossStrategies();
-
-        TC_LOG_DEBUG("bot.playerbot", "GroupCoordinator initialized for bot %s (Role: %u)",
-            m_bot->GetName().c_str(), static_cast<uint32>(m_assignedRole));
+        // NOTE: TacticalCoordinator creation deferred to UpdateGroupState() when bot is in world
+        // NOTE: Boss strategies loading deferred to first Update() when bot is in world
+        // NOTE: Logging with bot name deferred to avoid crash on uninitialized m_name
     }
 
     void GroupCoordinator::Update(uint32 diff)
     {
         if (!m_enabled || !m_bot || !m_bot->IsInWorld())
             return;
+
+        // Deferred initialization - now safe to access bot data
+        if (m_assignedRole == GroupRole::UNDEFINED)
+        {
+            m_assignedRole = DetermineRole();
+            m_preferredRole = m_assignedRole;
+            LoadBossStrategies();
+            TC_LOG_DEBUG("bot.playerbot", "GroupCoordinator deferred init for bot {} (Role: {})",
+                m_bot->GetName(), static_cast<uint32>(m_assignedRole));
+        }
+
+        // Create TacticalCoordinator on-demand when bot joins a group
+        if (!m_tacticalCoordinator && m_bot->GetGroup())
+        {
+            m_tacticalCoordinator = std::make_shared<TacticalCoordinator>(m_bot->GetGroup());
+            m_tacticalCoordinator->Initialize();
+        }
 
         StartPerformanceTimer();
 

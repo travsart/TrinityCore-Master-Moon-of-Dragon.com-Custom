@@ -59,8 +59,11 @@ void TacticalCoordinator::Initialize()
 {
     std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
-    TC_LOG_DEBUG("playerbot", "TacticalCoordinator::Initialize() - Initializing for group {}",
-                 m_group ? m_group->GetGUID().ToString() : "null");
+    // CRITICAL: Do NOT access m_group->GetGUID() here!
+    // The Group pointer may be valid but the group's internal state may not be
+    // fully initialized during bot login phase. Just log existence/null status.
+    TC_LOG_DEBUG("playerbot", "TacticalCoordinator::Initialize() - Initializing (group ptr: {})",
+                 m_group ? "valid" : "null");
 
     // Clear all state
     m_tacticalState = GroupTacticalState();
