@@ -39,9 +39,9 @@ FormationManager::FormationManager(Player* bot)
       _adaptiveFormations(true), _emergencyScatter(false), _lastUpdate(0),
       _lastIntegrityCheck(0), _lastReformation(0)
 {
-
     InitializeFormationConfigs();
-    TC_LOG_DEBUG("playerbot.formation", "FormationManager initialized for bot {}", _bot->GetName());
+    // CRITICAL: No logging with _bot->GetName() in constructor
+    // Player's m_name can be corrupted during concurrent access, causing ACCESS_VIOLATION
 }
 
 bool FormationManager::JoinFormation(const ::std::vector<Player*>& groupMembers, FormationType formation)

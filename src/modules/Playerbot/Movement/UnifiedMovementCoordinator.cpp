@@ -59,12 +59,13 @@ UnifiedMovementCoordinator::UnifiedMovementCoordinator(Player* bot)
     BotThreatManager* threatMgr = nullptr; // TODO: Get from bot AI
     _position = ::std::make_unique<PositionModule>(bot, threatMgr);
     
-    TC_LOG_INFO("playerbot.movement", "UnifiedMovementCoordinator initialized for bot {}", bot->GetName());
+    // CRITICAL: No logging with bot->GetName() in constructor
+    // Player's m_name can be corrupted during concurrent access, causing ACCESS_VIOLATION
 }
 
 UnifiedMovementCoordinator::~UnifiedMovementCoordinator()
 {
-    TC_LOG_INFO("playerbot.movement", "UnifiedMovementCoordinator destroyed");
+    // CRITICAL: No logging in destructor - allocations can throw
 }
 
 // ============================================================================
