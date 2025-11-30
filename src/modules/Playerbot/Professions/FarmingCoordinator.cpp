@@ -51,10 +51,11 @@ FarmingCoordinator::FarmingCoordinator(Player* bot)
 FarmingCoordinator::~FarmingCoordinator()
 {
     // Cleanup per-bot resources
-    if (_activeSession.isActive)
+    // Note: Safe to access GetName() here only if bot is still valid and in world
+    if (_activeSession.isActive && _bot && _bot->IsInWorld())
     {
         TC_LOG_DEBUG("playerbots", "FarmingCoordinator: Cleaning up active session for bot {}",
-            _bot ? _bot->GetName() : "unknown");
+            _bot->GetName());
     }
 }
 
@@ -65,8 +66,11 @@ FarmingCoordinator::~FarmingCoordinator()
 void FarmingCoordinator::Initialize()
 {
     // Per-bot initialization (zones already loaded in constructor)
-    TC_LOG_DEBUG("playerbots", "FarmingCoordinator: Initialized for bot {}",
-        _bot ? _bot->GetName() : "unknown");
+    // CRITICAL: Do NOT access _bot->GetName() here!
+    // Initialize() is called from GameSystemsManager::Initialize() during BotAI
+    // constructor, when bot's m_name string is not initialized yet. Accessing it
+    // causes ACCESS_VIOLATION in std::string copy constructor.
+    // Logging deferred to first Update() call when bot is fully in world.
 }
 
 void FarmingCoordinator::Update(::Player* player, uint32 diff)
