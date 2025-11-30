@@ -65,15 +65,20 @@ BattlePetManager::BattlePetManager(Player* bot)
                    _petDatabase.size(), _abilityDatabase.size());
     });
 
-    TC_LOG_DEBUG("playerbot.battlepet", "BattlePetManager: Created for bot {} ({})",
-                 _bot->GetName(), _bot->GetGUID().ToString());
+    // CRITICAL: Do NOT access _bot->GetName() or _bot->GetGUID() in constructor!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name/m_guid are not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot identity deferred to first Update() call.
 }
 
 BattlePetManager::~BattlePetManager()
 {
-    TC_LOG_DEBUG("playerbot.battlepet", "BattlePetManager: Destroyed for bot {} ({})",
-                 _bot ? _bot->GetName() : "Unknown",
-                 _bot ? _bot->GetGUID().ToString() : "Unknown");
+    // Note: Safe to access GetName() in destructor only if bot is still valid and in world
+    if (_bot && _bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("playerbot.battlepet", "BattlePetManager: Destroyed for bot {} ({})",
+                     _bot->GetName(), _bot->GetGUID().ToString());
+    }
 }
 
 
@@ -103,8 +108,10 @@ void BattlePetManager::Initialize()
         return;
     }
 
-    TC_LOG_INFO("playerbot", "BattlePetManager: Initialized for bot {} with {} species, {} abilities, {} rare spawns",
-        _bot ? _bot->GetName() : "Unknown",
+    // CRITICAL: Do NOT access _bot->GetName() here!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize().
+    // Logging with bot identity deferred to first Update() call.
+    TC_LOG_DEBUG("playerbot", "BattlePetManager: Initialized with {} species, {} abilities, {} rare spawns",
         _petDatabase.size(), _abilityDatabase.size(), _rarePetSpawns.size());
 }
 

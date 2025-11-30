@@ -49,9 +49,10 @@ CombatStateManager::CombatStateManager(Player* bot, BotAI* ai)
         return;
     }
 
-    TC_LOG_DEBUG("module.playerbot.combat",
-        "CombatStateManager: Instantiated for bot '{}' (GUID: {})",
-        botPtr->GetName(), botPtr->GetGUID().ToString());
+    // CRITICAL: Do NOT access botPtr->GetName() or botPtr->GetGUID() in constructor!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name/m_guid are not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot identity deferred to first Update() call.
 }
 
 CombatStateManager::~CombatStateManager()
@@ -64,8 +65,9 @@ CombatStateManager::~CombatStateManager()
         OnShutdown();
     }
 
+    // Note: Safe to access GetName() in destructor only if bot is still valid and in world
     Player* botPtr = GetBot();
-    if (botPtr)
+    if (botPtr && botPtr->IsInWorld())
     {
         TC_LOG_DEBUG("module.playerbot.combat",
             "CombatStateManager: Destroyed for bot '{}' (total damage events: {})",
