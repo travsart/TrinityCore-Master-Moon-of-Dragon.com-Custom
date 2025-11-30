@@ -40,17 +40,25 @@ InterruptManager::InterruptManager(Player* bot)
       _reactionTime(DEFAULT_REACTION_TIME), _maxInterruptRange(DEFAULT_MAX_RANGE),
       _scanInterval(DEFAULT_SCAN_INTERVAL), _predictiveInterrupts(true), _emergencyMode(false),
       _timingAccuracyTarget(TIMING_ACCURACY_TARGET), _lastScan(0), _lastInterruptAttempt(0),
-      _lastCoordinationUpdate(0)
+      _lastCoordinationUpdate(0), _capabilitiesInitialized(false)
 {
-
-    InitializeInterruptCapabilities();
-    TC_LOG_DEBUG("playerbot.interrupt", "InterruptManager initialized for bot {} with {} capabilities",
-               _bot->GetName(), _interruptCapabilities.size());
+    // CRITICAL: Do NOT call InitializeInterruptCapabilities() here!
+    // The bot's power systems may not be initialized yet, causing ACCESS_VIOLATION
+    // in CalcPowerCost() -> Unit::GetPower(). Defer to first Update() call.
+    // Also no logging with _bot->GetName() - concurrent access issue.
 }
 
 void InterruptManager::UpdateInterruptSystem(uint32 diff)
 {
     // No lock needed - interrupt tracking is per-bot instance data
+
+    // CRITICAL: Deferred initialization - bot's power systems must be ready
+    // before we can call InitializeInterruptCapabilities() which uses CalcPowerCost()
+    if (!_capabilitiesInitialized && _bot && _bot->IsInWorld())
+    {
+        InitializeInterruptCapabilities();
+        _capabilitiesInitialized = true;
+    }
 
     uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastScan < _scanInterval && !_emergencyMode)

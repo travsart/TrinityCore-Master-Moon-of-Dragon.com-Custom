@@ -460,6 +460,12 @@ private:
     ::std::unordered_map<ObjectGuid, uint32> _groupInterruptClaims;
     uint32 _lastCoordinationUpdate;
 
+    // Deferred initialization flag
+    // CRITICAL: Capabilities cannot be initialized in constructor because bot's
+    // power systems (GetPower()) are not ready yet, causing ACCESS_VIOLATION
+    // in CalcPowerCost(). Initialize on first Update() when bot is fully ready.
+    bool _capabilitiesInitialized;
+
     // Performance metrics
     mutable InterruptMetrics _metrics;
 
