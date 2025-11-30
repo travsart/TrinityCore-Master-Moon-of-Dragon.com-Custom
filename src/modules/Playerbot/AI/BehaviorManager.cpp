@@ -36,35 +36,48 @@ namespace Playerbot
         , m_timeSinceLastUpdate(0)
     {
         // Validate input parameters
-    if (!m_bot)
+        if (!m_bot)
         {
             TC_LOG_ERROR("module.playerbot", "[{}] BehaviorManager created with null bot pointer!", m_managerName);
             m_enabled.store(false, ::std::memory_order_release);
             return;
         }
 
+        // CRITICAL: Do NOT access m_bot->GetName() in constructor!
+        // Player::m_name may not be initialized during bot login phase, causing
+        // ACCESS_VIOLATION in string operations. Safe logging only after IsInWorld().
         if (!m_ai)
         {
-            TC_LOG_ERROR("module.playerbot", "[{}] BehaviorManager created with null AI pointer for bot {}",
-                         m_managerName, m_bot->GetName());
+            TC_LOG_ERROR("module.playerbot", "[{}] BehaviorManager created with null AI pointer",
+                         m_managerName);
             m_enabled.store(false, ::std::memory_order_release);
             return;
         }
+
         // Initialize with current time to prevent immediate update
         m_lastUpdate = GameTime::GetGameTimeMS();
 
-        TC_LOG_DEBUG("module.playerbot", "[{}] Created for bot {} with {}ms update interval",
-                     m_managerName, m_bot->GetName(), m_updateInterval);
+        // NOTE: Debug logging with bot name deferred to first successful Update()
+        // when bot is confirmed to be fully in world
     }
 
     void BehaviorManager::Update(uint32 diff)
     {
         // DEBUG: Only log for whitelisted test bots to prevent log spam
+        // CRITICAL: Must check IsInWorld() BEFORE accessing GetName() because
+        // Player::m_name may not be initialized during login phase, causing
+        // ACCESS_VIOLATION in string operations (memcmp crash).
         static const ::std::set<::std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-        bool isTestBot = m_bot && (testBots.find(m_bot->GetName()) != testBots.end());
+        bool isTestBot = false;
         // Per-bot debug log accumulator (only for test bots)
         static ::std::unordered_map<::std::string, uint32> debugLogAccumulators;
         bool shouldLog = false;
+
+        // CRITICAL: Guard against accessing m_bot->GetName() before bot is fully in world
+        if (m_bot && m_bot->IsInWorld())
+        {
+            isTestBot = testBots.find(m_bot->GetName()) != testBots.end();
+        }
 
         if (isTestBot)
         {
@@ -72,7 +85,7 @@ namespace Playerbot
             debugLogAccumulators[botName] += diff;
 
             // Log every 50 seconds per test bot
-    if (debugLogAccumulators[botName] >= 50000)
+            if (debugLogAccumulators[botName] >= 50000)
             {
                 shouldLog = true;
                 debugLogAccumulators[botName] = 0;
@@ -264,11 +277,35 @@ namespace Playerbot
 
     bool BehaviorManager::ValidatePointers() const
     {
+        // CRITICAL: First check bot pointer is valid
+        if (!m_bot)
+        {
+            return false;
+        }
+
+        // CRITICAL: Check IsInWorld() BEFORE accessing GetName()!
+        // Player::m_name may not be initialized during login phase, causing
+        // ACCESS_VIOLATION in string operations (memcmp crash in std::set::find).
+        // The crash at line 271 was caused by: testBots.find(m_bot->GetName())
+        // being called before bot was fully in world.
+        if (!m_bot->IsInWorld())
+        {
+            return false;
+        }
+
+        // Check AI pointer validity
+        if (!m_ai)
+        {
+            TC_LOG_ERROR("module.playerbot", " [{}] ValidatePointers FAILED: AI pointer is null for bot {}", m_managerName, m_bot->GetName());
+            return false;
+        }
+
         // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
+        // Now safe to access GetName() since we've confirmed bot is in world
         static const ::std::set<::std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
         static ::std::unordered_map<::std::string, uint32> validateLogAccumulators;
 
-        bool isTestBot = m_bot && (testBots.find(m_bot->GetName()) != testBots.end());
+        bool isTestBot = testBots.find(m_bot->GetName()) != testBots.end();
         bool shouldLog = false;
 
         if (isTestBot)
@@ -281,26 +318,6 @@ namespace Playerbot
                 shouldLog = true;
                 validateLogAccumulators[botName] = 0;
             }
-        }
-
-        // Check bot pointer validity
-
-        // Check if bot is in world
-    if (!m_bot->IsInWorld())
-        {
-            if (shouldLog)
-            {
-                TC_LOG_ERROR("module.playerbot", " [{}] ValidatePointers FAILED: Bot {} IsInWorld()=false (THIS IS THE PROBLEM!)",
-                            m_managerName, m_bot->GetName());
-            }
-            return false;
-        }
-
-        // Check AI pointer validity
-    if (!m_ai)
-        {
-            TC_LOG_ERROR("module.playerbot", " [{}] ValidatePointers FAILED: AI pointer is null for bot {}", m_managerName, m_bot->GetName());
-            return false;
         }
 
         if (shouldLog)
