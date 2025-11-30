@@ -235,10 +235,11 @@ namespace Playerbot
         // Initialize quest cache
         UpdateQuestCache();
 
-        // Initial quest giver scan
-        ScanForQuests();
+        // CRITICAL: Do NOT scan for quests during initialization!
+        // The bot may not be in the world yet, causing ACCESS_VIOLATION when
+        // SpatialGridManager::GetGrid() calls map->GetId() on invalid Map pointer.
+        // Quest scanning will happen on first Update() call when bot is in world.
 
-        TC_LOG_DEBUG("bot.playerbot", "QuestManager initialized for bot %s", GetBot()->GetName().c_str());
         return true;  // Initialization successful
     }
 
@@ -534,6 +535,11 @@ namespace Playerbot
 
     void QuestManager::ScanCreatureQuestGivers()
     {
+        // CRITICAL: Check IsInWorld() FIRST to prevent ACCESS_VIOLATION
+        // During initialization, bot may not be in world and GetMap() returns invalid pointer
+        if (!GetBot() || !GetBot()->IsInWorld())
+            return;
+
         ::std::list<Creature*> creatures;
         Trinity::AnyUnitInObjectRangeCheck checker(GetBot(), QUEST_GIVER_SCAN_RANGE, true, true);
         Trinity::CreatureListSearcher searcher(GetBot(), creatures, checker);
@@ -611,6 +617,11 @@ namespace Playerbot
 
     void QuestManager::ScanGameObjectQuestGivers()
     {
+        // CRITICAL: Check IsInWorld() FIRST to prevent ACCESS_VIOLATION
+        // During initialization, bot may not be in world and GetMap() returns invalid pointer
+        if (!GetBot() || !GetBot()->IsInWorld())
+            return;
+
         ::std::list<GameObject*> objects;
         Trinity::AllWorldObjectsInRange checker(GetBot(), QUEST_GIVER_SCAN_RANGE);
         Trinity::GameObjectListSearcher searcher(GetBot(), objects, checker);
