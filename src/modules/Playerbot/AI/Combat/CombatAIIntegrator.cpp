@@ -68,7 +68,10 @@ CombatAIIntegrator::CombatAIIntegrator(Player* bot) :
     // Set default configuration
     _config = CombatAIConfig();
 
-    TC_LOG_DEBUG("bot.ai.combat", "CombatAIIntegrator initialized for bot {}", bot->GetName());
+    // CRITICAL: Do NOT access bot->GetName() in constructor!
+    // Bot's internal data (m_name) is not initialized during constructor chain.
+    // Accessing it causes ACCESS_VIOLATION crash in string construction.
+    // Logging deferred to first Update() when bot IsInWorld()
 }
 
 CombatAIIntegrator::~CombatAIIntegrator() = default;

@@ -24,9 +24,12 @@ MovementIntegration::MovementIntegration(Player* bot, PositionManager* positionM
     , _lastUpdate(0)
     , _currentSituation(static_cast<CombatSituation>(0))
 {
+    // CRITICAL: Do NOT access bot->GetName() in constructor!
+    // Bot's internal data (m_name) is not initialized during constructor chain.
+    // Accessing it causes ACCESS_VIOLATION crash in string construction.
     if (!_positionManager)
     {
-        TC_LOG_ERROR("playerbot", "MovementIntegration: PositionManager is null for bot {}", bot ? bot->GetName() : "unknown");
+        TC_LOG_ERROR("playerbot", "MovementIntegration: PositionManager is null");
     }
 }
 

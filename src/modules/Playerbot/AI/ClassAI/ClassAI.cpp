@@ -56,20 +56,21 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
 
     // Initialize unified combat behavior system
     // This provides advanced combat coordination across all managers
+    // CRITICAL: Do NOT access bot->GetName() in constructor!
+    // Bot's internal data (m_name) is not initialized during constructor chain.
+    // Accessing it causes ACCESS_VIOLATION crash in string construction.
     try {
         _combatBehaviors = ::std::make_unique<CombatBehaviorIntegration>(bot);
-        TC_LOG_DEBUG("playerbot.classai", "CombatBehaviorIntegration initialized for bot {}",
-                     bot ? bot->GetName() : "null");
+        // Logging with GetName() deferred to first Update() when bot IsInWorld()
     }
     catch (const ::std::exception& e)
     {
-        TC_LOG_ERROR("playerbot.classai", "Failed to initialize CombatBehaviorIntegration for bot {}: {}",
-                     bot ? bot->GetName() : "null", e.what());
+        TC_LOG_ERROR("playerbot.classai", "Failed to initialize CombatBehaviorIntegration: {}",
+                     e.what());
         _combatBehaviors = nullptr;
     }
 
-    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
-                 bot ? bot->GetName() : "null");
+    // ClassAI creation logging deferred to first Update() when bot IsInWorld()
 }
 
 ClassAI::~ClassAI() = default;

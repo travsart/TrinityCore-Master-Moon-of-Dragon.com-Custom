@@ -61,7 +61,10 @@ CombatBehaviorIntegration::CombatBehaviorIntegration(Player* bot) :
     _crowdControlManager = std::make_unique<CrowdControlManager>(bot);
     _defensiveManager = std::make_unique<DefensiveManager>(bot);
     _movementIntegration = std::make_unique<MovementIntegration>(bot, _positionManager.get());
-    TC_LOG_DEBUG("bot.playerbot", "CombatBehaviorIntegration initialized for bot {} with ThreatManager and PositionManager", bot->GetName());
+    // CRITICAL: Do NOT access bot->GetName() in constructor!
+    // Bot's internal data (m_name) is not initialized during constructor chain.
+    // Accessing it causes ACCESS_VIOLATION crash in string construction.
+    // Logging deferred to first Update() when bot IsInWorld()
 }
 
 CombatBehaviorIntegration::~CombatBehaviorIntegration() = default;
