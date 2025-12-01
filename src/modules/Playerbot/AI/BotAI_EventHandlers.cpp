@@ -84,8 +84,11 @@ void BotAI::SubscribeToEventBuses()
     InstanceEventBus::instance()->SubscribeAll(this);
     ProfessionEventBus::instance()->SubscribeAll(this);
 
-    TC_LOG_DEBUG("playerbot.events", "Bot {} subscribed to all 12 event buses",
-        _bot->GetName());
+    // CRITICAL: Use GetGUID().ToString() instead of GetName() during constructor
+    // GetName() accesses m_name which may not be initialized yet during bot construction
+    // This prevents ACCESS_VIOLATION crash at BotAI_EventHandlers.cpp line 87
+    TC_LOG_DEBUG("playerbot.events", "Bot subscribed to all 12 event buses (GUID: {})",
+        _bot->GetGUID().ToString());
 }
 
 void BotAI::UnsubscribeFromEventBuses()
@@ -107,8 +110,11 @@ void BotAI::UnsubscribeFromEventBuses()
     InstanceEventBus::instance()->Unsubscribe(this);
     ProfessionEventBus::instance()->Unsubscribe(this);
 
-    TC_LOG_DEBUG("playerbot.events", "Bot {} unsubscribed from all event buses",
-        _bot->GetName());
+    // CRITICAL: Use GetGUID().ToString() instead of GetName() during destructor
+    // GetName() may access invalid memory during bot destruction
+    // This prevents ACCESS_VIOLATION crash at BotAI_EventHandlers.cpp line 110
+    TC_LOG_DEBUG("playerbot.events", "Bot unsubscribed from all event buses (GUID: {})",
+        _bot->GetGUID().ToString());
 }
 
 // ============================================================================

@@ -518,6 +518,12 @@ namespace Advanced
     {
         GroupComposition comp;
 
+        // CRITICAL: Early return if bot is not in world or not valid
+        // During construction/initialization, m_bot may not be fully initialized
+        // and accessing group->GetMembers() can cause ACCESS_VIOLATION crash
+        if (!m_bot || !m_bot->IsInWorld())
+            return comp;
+
         Group* group = GetGroup();
         if (!group)
             return comp;
