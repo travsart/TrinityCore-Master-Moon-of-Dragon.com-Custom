@@ -75,11 +75,10 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _gameSystems = std::make_unique<GameSystemsManager>(_bot, this);
     _gameSystems->Initialize(_bot);
 
-    TC_LOG_INFO("module.playerbot", "📋 GAME SYSTEMS FACADE: {} - All 17 managers initialized via facade",
-                _bot->GetName());
+    // CRITICAL: Do NOT access _bot->GetName() in constructor - bot data not initialized yet
 
     // Phase 4: Initialize Shared Blackboard (thread-safe shared state system)
-    _sharedBlackboard = BlackboardManager::GetBotBlackboard(_bot->GetGUID());
+    _sharedBlackboard = nullptr; // Deferred to first Update() when bot IsInWorld()
 
     // Initialize behavior priority manager BEFORE strategies
     // This must exist before strategies are added so they can auto-register
@@ -123,13 +122,13 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             {
                 // Player is currently online
                 hasValidPlayer = true;
-                TC_LOG_INFO("playerbot", "Bot {} group validation: Found online player {} in group",_bot->GetName(), member->GetName());
+                // Log deferred - bot not fully initialized
                 break;}
             else
             {
                 // Player is offline - need to check logout time from database
                 playerGuidToCheck = member->GetGUID();
-                TC_LOG_INFO("playerbot", "Bot {} group validation: Found offline player {} - will check logout time", _bot->GetName(), member->GetName());
+                // Log deferred - bot not fully initialized
                 break;
             }
         }
@@ -149,30 +148,31 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                 if (timeSinceLogout < 3600)
                 {
                     hasValidPlayer = true;
-                    TC_LOG_INFO("playerbot", "Bot {} group validation: Player offline for {}s (< 1 hour), group persists",_bot->GetName(), timeSinceLogout);
+                    // Log deferred - bot not fully initialized
                 }
                 else
                 {
-                    TC_LOG_INFO("playerbot", "Bot {} group validation: Player offline for {}s (> 1 hour), group invalid",_bot->GetName(), timeSinceLogout);}
+                    // Log deferred - bot not fully initialized
+                }
             }
         }
 
         if (hasValidPlayer)
         {
             // Valid group with active or recently logged out player
-            TC_LOG_INFO("playerbot", "Bot {} in valid group (members: {}), activating follow strategy",_bot->GetName(), group->GetMembersCount());
+            // Log deferred - bot not fully initialized
             OnGroupJoined(group);
         }
         else
         {
             // No valid player found - all offline > 1 hour or only bots
-            TC_LOG_WARN("playerbot", "Bot {} group has no valid player (all offline > 1 hour), disbanding group",_bot->GetName());
+            // Log deferred - bot not fully initialized
             // Leave the invalid group
             _bot->RemoveFromGroup();
             _aiState = BotAIState::SOLO; // Explicitly set to SOLO
         }
     }
-    TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot->GetGUID().ToString());
+    // Log deferred - bot not fully initialized
 }
 
 BotAI::~BotAI()
@@ -228,10 +228,13 @@ void BotAI::UpdateAI(uint32 diff)
     // Timing: This runs in UpdateAI() which is called DURING Player::Update(), BEFORE EventProcessor::Update()
     if (!_firstUpdateComplete)
     {
-        // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
-        // No longer need to manually clear - KillAllEvents() will properly clean up spell mods
-        _bot->m_Events.KillAllEvents(false);  // false = graceful shutdown, not forced_firstUpdateComplete = true;
-        TC_LOG_DEBUG("module.playerbot", "🧹 Bot {} cleared login spell events on FIRST UPDATE to prevent m_spellModTakingSpell crash", _bot->GetName());
+        // Deferred blackboard initialization - GetGUID() unsafe in constructor
+        if (!_sharedBlackboard)
+            _sharedBlackboard = BlackboardManager::GetBotBlackboard(_bot->GetGUID());
+
+        // Core Fix Applied: SpellEvent destructor now clears m_spellModTakingSpell
+        _bot->m_Events.KillAllEvents(false);
+        _firstUpdateComplete = true;
     }
 
     // DIAGNOSTIC: Log UpdateAI entry for first bot only, once per 10 seconds
