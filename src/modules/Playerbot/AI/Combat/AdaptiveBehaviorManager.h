@@ -319,6 +319,9 @@ namespace Playerbot
         // Caches
         mutable uint32 _compositionCacheTime;
         mutable uint32 _roleCacheTime;
+
+        // Deferred initialization flag
+        bool _rolesInitialized;
     };
 
     // Helper functions for role determination

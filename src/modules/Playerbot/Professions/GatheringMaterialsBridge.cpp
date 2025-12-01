@@ -45,10 +45,9 @@ bool GatheringMaterialsBridge::_sharedDataInitialized = false;
 GatheringMaterialsBridge::GatheringMaterialsBridge(Player* bot)
     : _bot(bot)
 {
-    if (_bot)
-    {
-        TC_LOG_DEBUG("playerbot", "GatheringMaterialsBridge: Creating instance for bot '{}'", _bot->GetName());
-    }
+    // CRITICAL: Do NOT access _bot->GetName() here!
+    // Bot internal data (m_name) is not initialized during constructor chain.
+    // Accessing it causes ACCESS_VIOLATION in fmt library when formatting the string.
 }
 
 GatheringMaterialsBridge::~GatheringMaterialsBridge()
@@ -66,7 +65,7 @@ void GatheringMaterialsBridge::Initialize()
     if (!_bot)
         return;
 
-    TC_LOG_DEBUG("playerbot", "GatheringMaterialsBridge: Initializing for bot '{}'", _bot->GetName());
+    // CRITICAL: Do NOT access _bot->GetName() during initialization - bot not fully loaded yet
 
     // Load shared data once (thread-safe via static initialization)
     if (!_sharedDataInitialized)
@@ -90,8 +89,7 @@ void GatheringMaterialsBridge::Initialize()
         }
     );
 
-    TC_LOG_DEBUG("playerbot", "GatheringMaterialsBridge: Initialization complete for bot '{}', subscribed to 3 event types",
-        _bot->GetName());
+    // Initialization complete - event subscriptions active
 }
 
 void GatheringMaterialsBridge::Update(uint32 diff)

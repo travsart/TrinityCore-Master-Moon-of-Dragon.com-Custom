@@ -43,10 +43,15 @@ AdaptiveBehaviorManager::AdaptiveBehaviorManager(::Player* bot) :
     _totalUpdateTime(0),
     _updateCount(0),
     _compositionCacheTime(0),
-    _roleCacheTime(0)
+    _roleCacheTime(0),
+    _rolesInitialized(false)
 {
     InitializeDefaultProfiles();
-    AssignRoles();
+    // CRITICAL: Do NOT call AssignRoles() in constructor!
+    // Bot's inventory and internal state may not be fully loaded yet during
+    // ClassAI/BotAI construction. GetGearScore() accesses item templates which
+    // can crash if inventory is not loaded. AssignRoles is deferred to first
+    // Update() when bot IsInWorld().
 }
 
 AdaptiveBehaviorManager::~AdaptiveBehaviorManager() = default;
@@ -182,6 +187,14 @@ void AdaptiveBehaviorManager::CreateResourceConservationProfile()
 void AdaptiveBehaviorManager::Update(uint32 diff, const CombatMetrics& metrics, CombatSituation situation)
 {
     uint32 startTime = GameTime::GetGameTimeMS();
+
+    // Deferred role initialization - only when bot is fully in world
+    // This cannot be done in constructor as inventory is not yet loaded
+    if (!_rolesInitialized && _bot && _bot->IsInWorld())
+    {
+        AssignRoles();
+        _rolesInitialized = true;
+    }
 
     _updateTimer += diff;
 
