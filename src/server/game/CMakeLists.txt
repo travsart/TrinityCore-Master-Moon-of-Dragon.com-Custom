@@ -46,6 +46,14 @@ target_include_directories(game
   PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR})
 
+# Add modules-common include path for Update/ModuleUpdateManager.h
+# This is required for World.cpp to access the shared module update system
+if(TARGET modules-common)
+  target_link_libraries(game
+    PRIVATE
+      modules-common)
+endif()
+
 target_link_libraries(game
   PRIVATE
     trinity-core-interface
