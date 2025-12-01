@@ -151,8 +151,12 @@ public:
         , _targetManager(botPtr)
         // Phase 5D: Target selection
         , _crowdControlManager(botPtr)      // Phase 5D: CC coordination
+        , _resourceInitialized(false)
     {
-        InitializeResource();
+        // CRITICAL: Do NOT call InitializeResource() here!
+        // During bot constructor chain, Player power systems are NOT initialized.
+        // Calling GetMaxPower()/GetPower() causes ACCESS_VIOLATION crash.
+        // Resource initialization is deferred to first UpdateCooldowns() when bot IsInWorld().
     }
 
     virtual ~CombatSpecializationTemplate() = default;
@@ -172,6 +176,14 @@ protected:
      */
     void UpdateCooldowns(uint32 diff) final override
     {
+        // CRITICAL: Deferred resource initialization - bot's power systems must be ready
+        // Before calling GetMaxPower()/GetPower() in complex resource Initialize() methods
+        if (!_resourceInitialized && GetBot() && GetBot()->IsInWorld())
+        {
+            InitializeResource();
+            _resourceInitialized = true;
+        }
+
         // Thread-safe cooldown update
         ::std::lock_guard lock(_cooldownMutex);
 
@@ -712,6 +724,9 @@ protected:
     TargetManager _targetManager;
     // Smart target selection and switching
     CrowdControlManager _crowdControlManager;       // CC coordination and DR tracking
+
+    // Deferred initialization flag (power systems not ready during constructor)
+    bool _resourceInitialized;
 
     // Constants
     static constexpr uint32 GLOBAL_COOLDOWN_MS = 1500;
