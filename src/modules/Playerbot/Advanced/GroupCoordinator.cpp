@@ -1216,29 +1216,32 @@ namespace Advanced
 
     void GroupCoordinator::OnGroupCompositionChanged(GroupEvent const& event)
     {
-        if (!m_enabled || !m_bot || !IsInGroup())
+        // CRITICAL: Check bot validity AND IsInWorld() before ANY bot access
+        // During destruction or initialization, m_bot may not be in world and
+        // accessing GetName(), GetGroup(), or iterating group members can crash
+        if (!m_enabled || !m_bot || !m_bot->IsInWorld() || !IsInGroup())
             return;
 
         // Handle member join/leave events
-        TC_LOG_DEBUG("bot.playerbot", "Bot %s received group composition change (Type: %u)",
-            m_bot->GetName().c_str(), static_cast<uint32>(event.type));
+        TC_LOG_DEBUG("bot.playerbot", "Bot {} received group composition change (Type: {})",
+            m_bot->GetGUID().ToString(), static_cast<uint32>(event.type));
 
         // Analyze new group composition
         GroupComposition comp = AnalyzeGroupComposition();
 
         // Log composition changes
-        TC_LOG_DEBUG("bot.playerbot", "Bot %s group composition - Tanks: %u, Healers: %u, DPS: %u, Total: %u, Balanced: %s",
-            m_bot->GetName().c_str(), comp.tanks, comp.healers, comp.dps, comp.total,
+        TC_LOG_DEBUG("bot.playerbot", "Bot {} group composition - Tanks: {}, Healers: {}, DPS: {}, Total: {}, Balanced: {}",
+            m_bot->GetGUID().ToString(), comp.tanks, comp.healers, comp.dps, comp.total,
             comp.isBalanced ? "Yes" : "No");
 
         // If group became unbalanced, consider suggesting role changes
-    if (!comp.isBalanced)
+        if (!comp.isBalanced)
         {
             GroupRole neededRole = GetNeededRole();
             if (CanFillRole(neededRole) && neededRole != m_assignedRole)
             {
-                TC_LOG_DEBUG("bot.playerbot", "Bot %s could fill needed role %u (current: %u)",
-                    m_bot->GetName().c_str(), static_cast<uint32>(neededRole),
+                TC_LOG_DEBUG("bot.playerbot", "Bot {} could fill needed role {} (current: {})",
+                    m_bot->GetGUID().ToString(), static_cast<uint32>(neededRole),
                     static_cast<uint32>(m_assignedRole));
             }
         }

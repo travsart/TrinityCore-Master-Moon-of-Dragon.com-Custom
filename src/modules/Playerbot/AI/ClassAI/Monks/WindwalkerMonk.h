@@ -128,10 +128,20 @@ struct EnergyChiResourceWindwalker
 
     void Initialize(Player* bot)
     {
-        if (bot)
+        // CRITICAL: Only access bot power system if fully initialized and in-world
+        // During construction, bot may not have power systems ready yet
+        // GetMaxPower() can crash with ACCESS_VIOLATION if called too early
+        if (bot && bot->IsInWorld())
         {
             maxEnergy = bot->GetMaxPower(POWER_ENERGY);
-            energy = bot->GetPower(POWER_ENERGY);        }
+            energy = bot->GetPower(POWER_ENERGY);
+        }
+        else
+        {
+            // Use safe defaults until bot is fully in world
+            maxEnergy = 100;
+            energy = 100;
+        }
         chi = 0;
     }
 };
