@@ -42,6 +42,7 @@
 #include "Timer.h"
 #include "DatabaseEnv.h"
 #include "QueryResult.h"
+#include "Core/PlayerBotHooks.h"
 #include <chrono>
 #include <set>
 #include <unordered_map>
@@ -93,8 +94,28 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Phase 4: Subscribe to all event buses for comprehensive event handling
     SubscribeToEventBuses();
 
+    // CRITICAL FIX: Group validation DEFERRED to first UpdateAI() call!
+    // Accessing _bot->GetGroup() and iterating group members in constructor causes
+    // ACCESS_VIOLATION because Player/Group internal structures are not initialized yet.
+    // The bot is not in world during construction, so GetGroup() may return corrupted data.
+    // Group validation logic moved to ValidateExistingGroupMembership() called in UpdateAI().
+}
+
+// ============================================================================
+// DEFERRED GROUP VALIDATION - Called from first UpdateAI() when bot IsInWorld()
+// ============================================================================
+// CRITICAL FIX: This logic was moved from constructor to avoid ACCESS_VIOLATION.
+// During constructor, bot is not in world and Group/GroupReference data may be invalid.
+
+void BotAI::ValidateExistingGroupMembership()
+{
+    // Only run once
+    if (_groupValidationDone)
+        return;
+    _groupValidationDone = true;
+
     // Check if bot is already in a VALID group (e.g., after server restart)
-    // CRITICAL FIX: Groups should persist if there's at least one real player character
+    // Groups should persist if there's at least one real player character
     // who has been offline for less than 1 hour. This applies to all group sizes:
     // - 2-person groups (1 player + 1 bot)
     // - 5-person dungeon groups (1 player + 4 bots)
@@ -105,7 +126,7 @@ BotAI::BotAI(Player* bot) : _bot(bot)
         bool hasValidPlayer = false;
         ObjectGuid playerGuidToCheck = ObjectGuid::Empty;
 
-// Check all group members for a real player character
+        // Check all group members for a real player character
         for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
@@ -122,22 +143,27 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             {
                 // Player is currently online
                 hasValidPlayer = true;
-                // Log deferred - bot not fully initialized
-                break;}
+                TC_LOG_DEBUG("module.playerbot.ai", "ValidateExistingGroupMembership: Bot {} found valid online player {} in group",
+                             _bot->GetName(), member->GetName());
+                break;
+            }
             else
             {
                 // Player is offline - need to check logout time from database
                 playerGuidToCheck = member->GetGUID();
-                // Log deferred - bot not fully initialized
+                TC_LOG_DEBUG("module.playerbot.ai", "ValidateExistingGroupMembership: Bot {} found offline player {} in group, checking logout time",
+                             _bot->GetName(), member->GetGUID().GetCounter());
                 break;
             }
         }
+
         // If we found an offline player, check their logout time via database query
         if (!hasValidPlayer && !playerGuidToCheck.IsEmpty())
         {
             // Query the characters database for logout_time
             QueryResult result = CharacterDatabase.PQuery(
-                "SELECT logout_time FROM characters WHERE guid = {}", playerGuidToCheck.GetCounter());if (result)
+                "SELECT logout_time FROM characters WHERE guid = {}", playerGuidToCheck.GetCounter());
+            if (result)
             {
                 Field* fields = result->Fetch();
                 uint64 logoutTime = fields[0].GetUInt64();
@@ -148,11 +174,13 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                 if (timeSinceLogout < 3600)
                 {
                     hasValidPlayer = true;
-                    // Log deferred - bot not fully initialized
+                    TC_LOG_DEBUG("module.playerbot.ai", "ValidateExistingGroupMembership: Bot {} - offline player {} logged out {} seconds ago (valid)",
+                                 _bot->GetName(), playerGuidToCheck.GetCounter(), timeSinceLogout);
                 }
                 else
                 {
-                    // Log deferred - bot not fully initialized
+                    TC_LOG_DEBUG("module.playerbot.ai", "ValidateExistingGroupMembership: Bot {} - offline player {} logged out {} seconds ago (expired)",
+                                 _bot->GetName(), playerGuidToCheck.GetCounter(), timeSinceLogout);
                 }
             }
         }
@@ -160,19 +188,25 @@ BotAI::BotAI(Player* bot) : _bot(bot)
         if (hasValidPlayer)
         {
             // Valid group with active or recently logged out player
-            // Log deferred - bot not fully initialized
+            TC_LOG_INFO("module.playerbot.ai", "ValidateExistingGroupMembership: Bot {} has valid group, calling OnGroupJoined",
+                        _bot->GetName());
             OnGroupJoined(group);
         }
         else
         {
             // No valid player found - all offline > 1 hour or only bots
-            // Log deferred - bot not fully initialized
+            TC_LOG_INFO("module.playerbot.ai", "ValidateExistingGroupMembership: Bot {} has no valid player in group, leaving group",
+                        _bot->GetName());
             // Leave the invalid group
             _bot->RemoveFromGroup();
             _aiState = BotAIState::SOLO; // Explicitly set to SOLO
         }
     }
-    // Log deferred - bot not fully initialized
+    else
+    {
+        TC_LOG_DEBUG("module.playerbot.ai", "ValidateExistingGroupMembership: Bot {} is not in a group",
+                     _bot->GetName());
+    }
 }
 
 BotAI::~BotAI()
@@ -254,6 +288,14 @@ void BotAI::UpdateAI(uint32 diff)
 
     if (!_bot || !_bot->IsInWorld())
         return;
+
+    // ========================================================================
+    // DEFERRED GROUP VALIDATION - Now safe because bot is in world
+    // ========================================================================
+    // CRITICAL FIX: Moved from constructor to avoid ACCESS_VIOLATION.
+    // Group iteration in constructor caused crashes because Player/Group data
+    // is not initialized during construction.
+    ValidateExistingGroupMembership();
 
     // ========================================================================
     // STALL DETECTION - Record update timestamp for health monitoring

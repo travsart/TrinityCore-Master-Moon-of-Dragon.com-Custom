@@ -802,6 +802,9 @@ protected:
     void SubscribeToEventBuses();
     void UnsubscribeFromEventBuses();
 
+    // Deferred group validation (called from first UpdateAI, not constructor)
+    void ValidateExistingGroupMembership();
+
 protected:
     // Core components
     Player* _bot;
@@ -835,6 +838,9 @@ protected:
 
     // Login spell event cleanup tracking (prevents LOGINEFFECT crash)
     bool _firstUpdateComplete = false;
+
+    // Group validation deferred to first UpdateAI (prevents ACCESS_VIOLATION in constructor)
+    bool _groupValidationDone = false;
 
     // ========================================================================
     // PHASE 6: GAME SYSTEMS FACADE - Consolidates all 17 manager instances
