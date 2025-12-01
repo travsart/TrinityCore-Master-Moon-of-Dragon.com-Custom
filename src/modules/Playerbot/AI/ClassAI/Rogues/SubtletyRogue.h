@@ -217,23 +217,33 @@ public:
         , _lastBackstabTime(0)
         , _lastShadowstrikeTime(0)
         , _lastEviscerateTime(0)
+        , _spellsInitialized(false)
     {
-        // Initialize energy/combo resources
+        // CRITICAL: Do NOT call bot->HasSpell() or bot->GetName() in constructor!
+        // Bot's spell data and internal fields are NOT initialized during constructor chain.
+        // Use default values here, real values initialized in first UpdateRotation() when bot IsInWorld().
         this->_resource.maxEnergy = 100;
-        this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;
+        this->_resource.maxComboPoints = 5;  // Default, updated when spells loaded
         this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
         // Phase 5 Integration: Initialize decision systems
         InitializeSubtletyMechanics();
 
-        TC_LOG_DEBUG("playerbot", "SubtletyRogueRefactored initialized for {}", bot->GetName());
+        // Logging deferred to first Update when bot IsInWorld()
     }
 
     void UpdateRotation(::Unit* target) override
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // CRITICAL: Deferred spell initialization - bot's spell data must be loaded
+        if (!_spellsInitialized && this->GetBot() && this->GetBot()->IsInWorld())
+        {
+            this->_resource.maxComboPoints = this->GetBot()->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;
+            _spellsInitialized = true;
+        }
 
         // Update tracking systems
         UpdateSubtletyState();
@@ -826,6 +836,7 @@ private:
     uint32 _lastBackstabTime;
     uint32 _lastShadowstrikeTime;
     uint32 _lastEviscerateTime;
+    bool _spellsInitialized;  // Deferred initialization flag
 };
 
 } // namespace Playerbot

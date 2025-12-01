@@ -82,10 +82,13 @@ public:
         , _lastEnvenomTime(0)
         , _vendettaActive(false)
         , _vendettaEndTime(0)
+        , _spellsInitialized(false)
     {
-        // Initialize energy/combo resources
-        this->_resource.maxEnergy = bot->HasSpell(RogueAI::VIGOR) ? 120 : 100;
-        this->_resource.maxComboPoints = bot->HasSpell(RogueAI::DEEPER_STRATAGEM) ? 6 : 5;
+        // CRITICAL: Do NOT call bot->HasSpell() or bot->GetName() in constructor!
+        // Bot's spell data and internal fields are NOT initialized during constructor chain.
+        // Use default values here, real values initialized in first UpdateRotation() when bot IsInWorld().
+        this->_resource.maxEnergy = 100;  // Default, updated when spells loaded
+        this->_resource.maxComboPoints = 5;  // Default, updated when spells loaded
         this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
@@ -94,28 +97,25 @@ public:
         _dotTracker.RegisterDot(RogueAI::RUPTURE, 24000); // 4s base per CP
         _dotTracker.RegisterDot(RogueAI::CRIMSON_TEMPEST, 14000);
 
-        // Register cooldowns using CooldownManager
-        // COMMENTED OUT:         _cooldowns.RegisterBatch({
-        // COMMENTED OUT:             {VENDETTA, CooldownPresets::MINOR_OFFENSIVE, 1},      // 2 min CD
-        // COMMENTED OUT:             {RogueAI::DEATHMARK, CooldownPresets::MINOR_OFFENSIVE, 1}, // 2 min CD
-        // COMMENTED OUT:             {KINGSBANE, CooldownPresets::OFFENSIVE_60, 1},        // 1 min CD
-        // COMMENTED OUT:             {EXSANGUINATE, CooldownPresets::OFFENSIVE_45, 1},     // 45 sec CD
-        // COMMENTED OUT:             {RogueAI::VANISH, CooldownPresets::MINOR_OFFENSIVE, 1},    // 2 min CD
-        // COMMENTED OUT:             {RogueAI::CLOAK_OF_SHADOWS, CooldownPresets::MINOR_DEFENSIVE, 1}, // 2 min CD
-        // COMMENTED OUT:             {RogueAI::KICK, CooldownPresets::INTERRUPT, 1},       // 15 sec CD
-        // COMMENTED OUT:             {RogueAI::BLIND, CooldownPresets::MINOR_DEFENSIVE, 1} // 2 min CD
-        // COMMENTED OUT:         });
-
         // Phase 5 Integration: Initialize decision systems
         InitializeAssassinationMechanics();
 
-        TC_LOG_DEBUG("playerbot", "AssassinationRogueRefactored initialized for {}", bot->GetName());
+        // Logging deferred to first Update when bot IsInWorld()
     }
 
     void UpdateRotation(::Unit* target) override
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // CRITICAL: Deferred spell initialization - bot's spell data must be loaded
+        if (!_spellsInitialized && this->GetBot() && this->GetBot()->IsInWorld())
+        {
+            this->_resource.maxEnergy = this->GetBot()->HasSpell(RogueAI::VIGOR) ? 120 : 100;
+            this->_resource.maxComboPoints = this->GetBot()->HasSpell(RogueAI::DEEPER_STRATAGEM) ? 6 : 5;
+            this->_resource.energy = this->_resource.maxEnergy;
+            _spellsInitialized = true;
+        }
 
         // Update tracking systems
         UpdateAssassinationState();
@@ -676,6 +676,7 @@ private:
     uint32 _lastEnvenomTime;
     bool _vendettaActive;
     uint32 _vendettaEndTime;
+    bool _spellsInitialized;  // Deferred initialization flag
 };
 
 } // namespace Playerbot
