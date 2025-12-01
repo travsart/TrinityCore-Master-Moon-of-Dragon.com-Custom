@@ -192,13 +192,13 @@ BotAI::~BotAI()
     // no risk of forgetting a manager or getting the order wrong.
     // ========================================================================
 
-    TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Facade will destroy all managers for bot '{}'",
-        _bot ? _bot->GetName() : "Unknown");
+    // CRITICAL: Do NOT call _bot->GetName() in destructor!
+    // During destruction, _bot may be in invalid state where GetName() returns
+    // garbage data, causing std::bad_alloc when string tries huge allocation.
 
     // Phase 4: Cleanup Shared Blackboard
     if (_sharedBlackboard && _bot)
     {
-        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Removing bot from BlackboardManager");
         BlackboardManager::RemoveBotBlackboard(_bot->GetGUID());
         _sharedBlackboard = nullptr;
     }
@@ -206,9 +206,6 @@ BotAI::~BotAI()
     // Facade (_gameSystems) will be automatically destroyed here,
     // which triggers GameSystemsManager::~GameSystemsManager()
     // and cleans up all 17 managers in correct dependency order
-
-    TC_LOG_INFO("module.playerbot", "BotAI::~BotAI: Destructor complete for bot '{}'",
-        _bot ? _bot->GetName() : "Unknown");
 }
 
 // ============================================================================
