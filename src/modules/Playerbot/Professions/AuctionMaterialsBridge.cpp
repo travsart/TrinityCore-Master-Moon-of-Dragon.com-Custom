@@ -43,10 +43,10 @@ bool AuctionMaterialsBridge::_sharedDataInitialized = false;
 AuctionMaterialsBridge::AuctionMaterialsBridge(Player* bot)
     : _bot(bot)
 {
-    if (_bot)
-    {
-        TC_LOG_DEBUG("playerbot", "AuctionMaterialsBridge: Creating instance for bot '{}'", _bot->GetName());
-    }
+    // CRITICAL: Do NOT call _bot->GetName() in constructor!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name is not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot identity deferred to first Update() call.
 }
 
 AuctionMaterialsBridge::~AuctionMaterialsBridge()

@@ -33,8 +33,11 @@ LazyManagerFactory::LazyManagerFactory(Player* bot, BotAI* ai)
 LazyManagerFactory::~LazyManagerFactory()
 {
     ShutdownAll();
-    TC_LOG_DEBUG("module.playerbot.lazy", "LazyManagerFactory destroyed for bot {} - {} managers initialized, total init time: {}ms",
-                 _bot ? _bot->GetName() : "Unknown",
+    // CRITICAL: Do NOT call _bot->GetName() in destructor!
+    // During destruction, _bot may be in invalid state where GetName() returns
+    // garbage data, causing ACCESS_VIOLATION or std::bad_alloc.
+    // Only log manager statistics without bot identity.
+    TC_LOG_DEBUG("module.playerbot.lazy", "LazyManagerFactory destroyed - {} managers initialized, total init time: {}ms",
                  _initCount.load(),
                  _totalInitTime.count());
 }

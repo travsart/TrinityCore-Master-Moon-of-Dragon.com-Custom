@@ -1348,7 +1348,10 @@ bool BankingManager::Initialize()
         return false;
     }
 
-    TC_LOG_DEBUG("playerbot", "BankingManager::Initialize: Initializing for bot {}", _bot->GetName());
+    // CRITICAL: Do NOT call _bot->GetName() in Initialize()!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name is not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot identity deferred to first Update() call.
 
     // Initialize default rules if not already done
     if (!_defaultRulesInitialized)
@@ -1365,7 +1368,7 @@ bool BankingManager::Initialize()
     _lastBankAccessTime = 0;
     _enabled = true;
 
-    TC_LOG_DEBUG("playerbot", "BankingManager::Initialize: Initialized for bot {}", _bot->GetName());
+    // Logging with bot identity deferred - do not access _bot->GetName() here
 
     return true;
 }
@@ -1378,20 +1381,18 @@ void BankingManager::Shutdown()
         return;
     }
 
-    TC_LOG_DEBUG("playerbot", "BankingManager::Shutdown: Shutting down for bot {}", _bot->GetName());
+    // CRITICAL: Do NOT call _bot->GetName() in Shutdown()!
+    // During destruction, _bot may be in invalid state where GetName() returns
+    // garbage data, causing ACCESS_VIOLATION or std::bad_alloc.
 
     // Cancel any ongoing banking operation
     if (_currentlyBanking)
     {
         _currentlyBanking = false;
-        TC_LOG_DEBUG("playerbot", "BankingManager::Shutdown: Cancelled ongoing banking operation for {}",
-                     _bot->GetName());
     }
 
     // Disable manager
     _enabled = false;
-
-    TC_LOG_DEBUG("playerbot", "BankingManager::Shutdown: Shutdown complete for bot {}", _bot->GetName());
 }
 
 } // namespace Playerbot

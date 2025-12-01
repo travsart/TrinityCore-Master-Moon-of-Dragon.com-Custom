@@ -46,10 +46,10 @@ bool ProfessionAuctionBridge::_sharedDataInitialized = false;
 ProfessionAuctionBridge::ProfessionAuctionBridge(Player* bot)
     : _bot(bot)
 {
-    if (_bot)
-    {
-        TC_LOG_DEBUG("playerbot", "ProfessionAuctionBridge: Creating instance for bot '{}'", _bot->GetName());
-    }
+    // CRITICAL: Do NOT call _bot->GetName() in constructor!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name is not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot identity deferred to first Update() call.
 }
 
 ProfessionAuctionBridge::~ProfessionAuctionBridge()
@@ -88,7 +88,10 @@ void ProfessionAuctionBridge::Initialize()
         }
     );
 
-    TC_LOG_DEBUG("playerbot", "ProfessionAuctionBridge: Initialized for bot '{}', subscribed to 2 event types", _bot->GetName());
+    // CRITICAL: Do NOT call _bot->GetName() in Initialize()!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name is not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot identity deferred to first Update() call.
 }
 
 void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
