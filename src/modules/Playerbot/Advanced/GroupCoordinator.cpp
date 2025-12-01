@@ -157,7 +157,10 @@ namespace Advanced
     void GroupCoordinator::Shutdown()
     {
         m_enabled = false;
-        if (IsInGroup())
+        // CRITICAL: Only attempt to leave group if bot is valid and in world
+        // During destruction, m_bot may be in an invalid state and calling
+        // Group::RemoveMember can crash when iterating the group's member list
+        if (m_bot && m_bot->IsInWorld() && IsInGroup())
             LeaveGroup();
         Reset();
     }
@@ -176,6 +179,12 @@ namespace Advanced
 
     bool GroupCoordinator::LeaveGroup()
     {
+        // CRITICAL: Check bot validity before any group operations
+        // During destruction, m_bot may not be in world and Group::RemoveMember
+        // can crash when iterating the member list (std::list::begin() crash)
+        if (!m_bot || !m_bot->IsInWorld())
+            return false;
+
         if (!IsInGroup())
             return false;
 
@@ -185,7 +194,7 @@ namespace Advanced
         m_currentGroup = nullptr;
         m_currentState = GroupState::IDLE;
 
-        TC_LOG_DEBUG("bot.playerbot", "Bot %s left group", m_bot->GetName().c_str());
+        TC_LOG_DEBUG("bot.playerbot", "Bot {} left group", m_bot->GetGUID().ToString());
         return true;
     }
 
