@@ -73,12 +73,10 @@ BattlePetManager::BattlePetManager(Player* bot)
 
 BattlePetManager::~BattlePetManager()
 {
-    // Note: Safe to access GetName() in destructor only if bot is still valid and in world
-    if (_bot && _bot->IsInWorld())
-    {
-        TC_LOG_DEBUG("playerbot.battlepet", "BattlePetManager: Destroyed for bot {} ({})",
-                     _bot->GetName(), _bot->GetGUID().ToString());
-    }
+    // CRITICAL: Do NOT call _bot->GetName() or GetGUID() in destructor!
+    // During destruction, _bot may be in invalid state where these return
+    // garbage data, causing ACCESS_VIOLATION or std::bad_alloc.
+    // IsInWorld() guard is NOT reliable during destruction sequence.
 }
 
 

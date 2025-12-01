@@ -228,15 +228,15 @@ ArenaAI::ArenaAI(Player* bot)
         TC_LOG_INFO("playerbot.arena", "ArenaAI: Arena map data initialized");
     }
 
-    TC_LOG_DEBUG("playerbot.arena", "ArenaAI: Created for bot {} ({})",
-                 _bot->GetName(), _bot->GetGUID().ToString());
+    // CRITICAL: Do NOT call _bot->GetName() in constructor!
+    // Bot's internal data (m_name) is not initialized during constructor chain.
 }
 
 ArenaAI::~ArenaAI()
 {
-    TC_LOG_DEBUG("playerbot.arena", "ArenaAI: Destroyed for bot {} ({})",
-                 _bot ? _bot->GetName() : "Unknown",
-                 _bot ? _bot->GetGUID().ToString() : "Unknown");
+    // CRITICAL: Do NOT call _bot->GetName() or GetGUID() in destructor!
+    // During destruction, _bot may be in invalid state where these return
+    // garbage data, causing ACCESS_VIOLATION when string tries to copy.
 }
 
 

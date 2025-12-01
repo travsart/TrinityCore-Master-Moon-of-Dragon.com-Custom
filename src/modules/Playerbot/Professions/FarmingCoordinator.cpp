@@ -50,13 +50,10 @@ FarmingCoordinator::FarmingCoordinator(Player* bot)
 
 FarmingCoordinator::~FarmingCoordinator()
 {
-    // Cleanup per-bot resources
-    // Note: Safe to access GetName() here only if bot is still valid and in world
-    if (_activeSession.isActive && _bot && _bot->IsInWorld())
-    {
-        TC_LOG_DEBUG("playerbots", "FarmingCoordinator: Cleaning up active session for bot {}",
-            _bot->GetName());
-    }
+    // CRITICAL: Do NOT call _bot->GetName() in destructor!
+    // During destruction, _bot may be in invalid state where GetName() returns
+    // garbage data, causing ACCESS_VIOLATION or std::bad_alloc.
+    // IsInWorld() guard is NOT reliable during destruction sequence.
 }
 
 // ============================================================================

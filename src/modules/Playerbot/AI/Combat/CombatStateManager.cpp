@@ -65,14 +65,10 @@ CombatStateManager::~CombatStateManager()
         OnShutdown();
     }
 
-    // Note: Safe to access GetName() in destructor only if bot is still valid and in world
-    Player* botPtr = GetBot();
-    if (botPtr && botPtr->IsInWorld())
-    {
-        TC_LOG_DEBUG("module.playerbot.combat",
-            "CombatStateManager: Destroyed for bot '{}' (total damage events: {})",
-            botPtr->GetName(), m_statistics.totalDamageEvents.load());
-    }
+    // CRITICAL: Do NOT call GetBot()->GetName() in destructor!
+    // During destruction, bot may be in invalid state where GetName() returns
+    // garbage data, causing ACCESS_VIOLATION or std::bad_alloc.
+    // IsInWorld() guard is NOT reliable during destruction sequence.
 }
 
 // ============================================================================
