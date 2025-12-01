@@ -82,7 +82,10 @@ void AuctionMaterialsBridge::Initialize()
         }
     );
 
-    TC_LOG_DEBUG("playerbot", "AuctionMaterialsBridge: Initialized for bot '{}', subscribed to 2 event types", _bot->GetName());
+    // CRITICAL: Do NOT call _bot->GetName() in Initialize()!
+    // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
+    // and Player::m_name is not initialized, causing ACCESS_VIOLATION.
+    // Logging with bot identity deferred to first Update() call.
 }
 
 void AuctionMaterialsBridge::Update(uint32 diff)
