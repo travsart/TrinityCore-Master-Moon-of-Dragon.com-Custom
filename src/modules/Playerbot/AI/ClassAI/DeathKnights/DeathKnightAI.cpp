@@ -420,9 +420,8 @@ DeathKnightAI::DeathKnightAI(Player* bot) :
     _runeManager = ::std::make_unique<RuneManager>(bot);
     _diseaseManager = ::std::make_unique<DiseaseManager>(bot);
     _positioning = ::std::make_unique<DeathKnightCombatPositioning>(bot);
-    TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
-
-                 bot->GetName(), static_cast<uint32>(_detectedSpec));
+    TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for bot {} with specialization {}",
+                 bot->GetGUID().GetCounter(), static_cast<uint32>(_detectedSpec));
 }
 
 void DeathKnightAI::InitializeCombatSystems()
@@ -434,7 +433,7 @@ void DeathKnightAI::InitializeCombatSystems()
     _interruptManager = ::std::make_unique<InterruptManager>(GetBot());
     _cooldownManager = ::std::make_unique<CooldownManager>();
 
-    TC_LOG_DEBUG("playerbot", "DeathKnightAI combat systems initialized for {}", GetBot()->GetName());
+    TC_LOG_DEBUG("playerbot", "DeathKnightAI combat systems initialized for bot {}", GetBot()->GetGUID().GetCounter());
 }
 
 void DeathKnightAI::DetectSpecialization()

@@ -202,7 +202,7 @@ public:
         // COMMENTED OUT:         });
 
         InitializeFireMechanics();
-        TC_LOG_DEBUG("playerbot", "FireMageRefactored initialized for {}", bot->GetName());
+        TC_LOG_DEBUG("playerbot", "FireMageRefactored initialized for bot {}", bot->GetGUID().GetCounter());
     }
 
     void UpdateRotation(::Unit* target) override

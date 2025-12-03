@@ -61,7 +61,7 @@ public:
         bool debugLogging = sConfigMgr->GetBoolDefault("Playerbot.AI.Weighting.LogScoring", false);
         _scoringEngine.EnableDebugLogging(debugLogging);
 
-        TC_LOG_DEBUG("playerbot", "ArcaneMageWeighted initialized for {} with weighting system", bot->GetName());
+        TC_LOG_DEBUG("playerbot", "ArcaneMageWeighted initialized for bot {} with weighting system", bot->GetGUID().GetCounter());
     }
 
     /**

@@ -212,7 +212,7 @@ public:
         // COMMENTED OUT:             {FROST_ICE_BLOCK, 240000, 1},
         // COMMENTED OUT:             {FROST_MIRROR_IMAGE, 120000, 1}
         // COMMENTED OUT:         });
-        TC_LOG_DEBUG("playerbot", "FrostMageRefactored initialized for {}", bot->GetName());
+        TC_LOG_DEBUG("playerbot", "FrostMageRefactored initialized for bot {}", bot->GetGUID().GetCounter());
 
         // Phase 5: Initialize decision systems
         InitializeFrostMechanics();

@@ -62,7 +62,7 @@ HunterAI::HunterAI(Player* bot) :
     _combatBehaviors = ::std::make_unique<CombatBehaviorIntegration>(bot);    // Reset combat metrics
     _combatMetrics.Reset();
 
-    TC_LOG_DEBUG("playerbot", "HunterAI initialized for {} with CombatBehaviorIntegration", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "HunterAI initialized for bot {} with CombatBehaviorIntegration", bot->GetGUID().GetCounter());
 }
 
 void HunterAI::InitializeCombatSystems()

@@ -312,7 +312,7 @@ public:
         // Phase 5: Initialize decision systems
         InitializeVengeanceMechanics();
 
-        TC_LOG_DEBUG("playerbot", "VengeanceDemonHunterRefactored initialized for {}", bot->GetName());
+        TC_LOG_DEBUG("playerbot", "VengeanceDemonHunterRefactored initialized for bot {}", bot->GetGUID().GetCounter());
     }
 
     // ========================================================================    // CORE ROTATION - Vengeance specific logic

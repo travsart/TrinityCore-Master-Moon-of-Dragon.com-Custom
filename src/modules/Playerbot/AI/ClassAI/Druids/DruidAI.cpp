@@ -41,7 +41,7 @@ DruidAI::DruidAI(Player* bot) : ClassAI(bot),    _currentForm(DruidForm::HUMANOI
     _lastIncarnation(0),
     _lastCelestialAlignment(0)
 {
-    TC_LOG_DEBUG("playerbot", "DruidAI initialized for {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "DruidAI initialized for bot {}", bot->GetGUID().GetCounter());
 }
 
 void DruidAI::UpdateRotation(::Unit* target)

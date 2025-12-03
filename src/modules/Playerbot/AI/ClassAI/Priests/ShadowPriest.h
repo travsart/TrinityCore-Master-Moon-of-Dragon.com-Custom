@@ -296,7 +296,7 @@ public:
         // Phase 5 Integration: Initialize decision systems
         InitializeShadowMechanics();
 
-        TC_LOG_DEBUG("playerbot", "ShadowPriestRefactored initialized for {}", bot->GetName());
+        TC_LOG_DEBUG("playerbot", "ShadowPriestRefactored initialized for bot {}", bot->GetGUID().GetCounter());
     }
 
     void UpdateRotation(::Unit* target) override

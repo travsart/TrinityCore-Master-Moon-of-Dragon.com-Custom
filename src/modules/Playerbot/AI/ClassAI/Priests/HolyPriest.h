@@ -258,7 +258,7 @@ public:
         // Initialize Phase 5 systems
         InitializeHolyMechanics();
 
-        TC_LOG_DEBUG("playerbot", "HolyPriestRefactored initialized for {}", bot->GetName());
+        TC_LOG_DEBUG("playerbot", "HolyPriestRefactored initialized for bot {}", bot->GetGUID().GetCounter());
     }
 
     void UpdateRotation(::Unit* target) override

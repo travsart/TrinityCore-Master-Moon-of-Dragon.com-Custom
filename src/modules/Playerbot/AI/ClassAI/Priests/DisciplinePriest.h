@@ -240,7 +240,7 @@ public:
         // Initialize Phase 5 systems
         InitializeDisciplineMechanics();
 
-        TC_LOG_DEBUG("playerbot", "DisciplinePriestRefactored initialized for {}", this->GetBot()->GetName());
+        TC_LOG_DEBUG("playerbot", "DisciplinePriestRefactored initialized for bot {}", this->GetBot()->GetGUID().GetCounter());
     }
 
     void UpdateRotation(::Unit* target) override

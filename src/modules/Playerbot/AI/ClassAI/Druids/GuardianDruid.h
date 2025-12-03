@@ -217,7 +217,7 @@ public:
         // COMMENTED OUT: 
         // COMMENTED OUT:             {GUARDIAN_FRENZIED_REGEN, 36000, 1}
         // COMMENTED OUT:         });
-        TC_LOG_DEBUG("playerbot", "GuardianDruidRefactored initialized for {}", bot->GetName());
+        TC_LOG_DEBUG("playerbot", "GuardianDruidRefactored initialized for bot {}", bot->GetGUID().GetCounter());
 
         // Phase 5: Initialize decision systems
         InitializeGuardianMechanics();

@@ -27,7 +27,7 @@ namespace Playerbot
 
 MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER)
 {
-    TC_LOG_DEBUG("playerbots", "MonkAI initialized for player {}", bot->GetName());
+    TC_LOG_DEBUG("playerbots", "MonkAI initialized for bot {}", bot->GetGUID().GetCounter());
 }
 
 void MonkAI::UpdateRotation(::Unit* target)

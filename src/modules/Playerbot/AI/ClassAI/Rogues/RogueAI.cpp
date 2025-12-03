@@ -273,7 +273,7 @@ RogueAI::RogueAI(Player* bot) :
     _metrics = new RogueMetrics();
     _combatMetrics = new RogueCombatMetrics();
     _positioning = new RogueCombatPositioning(bot);
-    TC_LOG_DEBUG("playerbot", "RogueAI initialized for {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "RogueAI initialized for bot {}", bot->GetGUID().GetCounter());
 }
 
 void RogueAI::InitializeCombatSystems()
@@ -285,7 +285,7 @@ void RogueAI::InitializeCombatSystems()
     _interruptManager = ::std::make_unique<InterruptManager>(GetBot());
     _cooldownManager = ::std::make_unique<CooldownManager>();
 
-    TC_LOG_DEBUG("playerbot", "RogueAI combat systems initialized for {}", GetBot()->GetName());
+    TC_LOG_DEBUG("playerbot", "RogueAI combat systems initialized for bot {}", GetBot()->GetGUID().GetCounter());
 }
 
 void RogueAI::UpdateRotation(Unit* target)
