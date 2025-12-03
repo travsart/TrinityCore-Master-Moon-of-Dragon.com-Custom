@@ -76,7 +76,9 @@ struct FeralDruidEnergy : public EnergyComboResource
     // Override Initialize to properly set resource values
     void Initialize(Player* bot)
     {
-        if (!bot)
+        // CRITICAL: Do NOT call GetPower/GetMaxPower during bot construction!
+        // Bot may not be fully in world yet. Set safe defaults only.
+        if (!bot || !bot->IsInWorld())
             return;
 
         energy = bot->GetPower(POWER_ENERGY);
@@ -364,10 +366,13 @@ public:
         // COMMENTED OUT:         });
 
         this->_resource.Initialize(bot);
-        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored initialized for {}", bot->GetName());
 
         // Phase 5: Initialize decision systems
         InitializeFeralMechanics();
+
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
     }
 
     void UpdateRotation(::Unit* target) override

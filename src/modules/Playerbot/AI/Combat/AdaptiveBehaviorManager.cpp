@@ -82,7 +82,8 @@ void AdaptiveBehaviorManager::CreateEmergencyTankProfile()
 
     profile.applyFunction = [this](::Player* bot, uint32 flags) {
         // Emergency tank activation logic
-        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating emergency tank mode", bot->GetName());
+        // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
+        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating emergency tank mode", bot->GetGUID().GetCounter());
         ActivateStrategy(flags);
     };
 
@@ -106,7 +107,8 @@ void AdaptiveBehaviorManager::CreateAOEProfile()
     };
 
     profile.applyFunction = [this](::Player* bot, uint32 flags) {
-        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating AOE mode", bot->GetName());
+        // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
+        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating AOE mode", bot->GetGUID().GetCounter());
         ActivateStrategy(flags);
     };
 
@@ -131,7 +133,8 @@ void AdaptiveBehaviorManager::CreateSurvivalProfile()
     };
 
     profile.applyFunction = [this](::Player* bot, uint32 flags) {
-        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating survival mode", bot->GetName());
+        // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
+        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating survival mode", bot->GetGUID().GetCounter());
         ActivateStrategy(flags);
     };
 
@@ -154,7 +157,8 @@ void AdaptiveBehaviorManager::CreateBurstProfile()
     };
 
     profile.applyFunction = [this](::Player* bot, uint32 flags) {
-        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating burst phase", bot->GetName());
+        // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
+        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating burst phase", bot->GetGUID().GetCounter());
         ActivateStrategy(flags);
     };
 
@@ -177,7 +181,8 @@ void AdaptiveBehaviorManager::CreateResourceConservationProfile()
     };
 
     profile.applyFunction = [this](::Player* bot, uint32 flags) {
-        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating resource conservation", bot->GetName());
+        // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
+        TC_LOG_DEBUG("bot.playerbot", "Bot {} activating resource conservation", bot->GetGUID().GetCounter());
         ActivateStrategy(flags);
     };
 
@@ -336,7 +341,8 @@ void AdaptiveBehaviorManager::ApplyProfile(BehaviorProfile& profile)
     profile.isActive = true;
     profile.lastActivated = GameTime::GetGameTimeMS();
     profile.activeTime = 0;
-    TC_LOG_DEBUG("bot.playerbot", "Bot {} activated behavior profile: {}", _bot->GetName(), profile.name);
+    // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
+    TC_LOG_DEBUG("bot.playerbot", "Bot {} activated behavior profile: {}", _bot->GetGUID().GetCounter(), profile.name);
 }
 
 void AdaptiveBehaviorManager::RemoveProfile(BehaviorProfile& profile)
@@ -344,7 +350,8 @@ void AdaptiveBehaviorManager::RemoveProfile(BehaviorProfile& profile)
     DeactivateStrategy(profile.strategyFlags);
     profile.isActive = false;
     profile.activeTime = 0;
-    TC_LOG_DEBUG("bot.playerbot", "Bot {} deactivated behavior profile: {}", _bot->GetName(), profile.name);
+    // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
+    TC_LOG_DEBUG("bot.playerbot", "Bot {} deactivated behavior profile: {}", _bot->GetGUID().GetCounter(), profile.name);
 }
 
 void AdaptiveBehaviorManager::AdaptToComposition()
@@ -394,8 +401,9 @@ void AdaptiveBehaviorManager::AssignRoles()
     _roleAssignment.assignedTime = GameTime::GetGameTimeMS();
     _roleAssignment.isTemporary = false;
 
+    // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
     TC_LOG_DEBUG("bot.playerbot", "Bot {} assigned roles - Primary: {}, Secondary: {}",
-        _bot->GetName(), GetRoleName(primary), GetRoleName(secondary));
+        _bot->GetGUID().GetCounter(), GetRoleName(primary), GetRoleName(secondary));
 }
 
 void AdaptiveBehaviorManager::ActivateStrategy(uint32 flags)
@@ -526,8 +534,9 @@ void AdaptiveBehaviorManager::ForceRole(BotRole role, bool temporary)
     _roleAssignment.isTemporary = temporary;
     _roleAssignment.assignedTime = GameTime::GetGameTimeMS();
 
+    // SAFETY: Use GetGUID().GetCounter() instead of GetName() - Player string data may be freed during destruction
     TC_LOG_DEBUG("bot.playerbot", "Bot {} forced to role: {} (temporary: {})",
-        _bot->GetName(), GetRoleName(role), temporary);
+        _bot->GetGUID().GetCounter(), GetRoleName(role), temporary);
 }
 
 void AdaptiveBehaviorManager::UpdateGroupComposition()
@@ -1164,9 +1173,10 @@ float AdaptiveBehaviorManager::GetGearScore() const
     // Clamp to reasonable bounds (0 to 10000)
     finalScore = std::clamp(finalScore, 0.0f, 10000.0f);
 
-    TC_LOG_DEBUG("playerbot", "AdaptiveBehaviorManager::GetGearScore - Bot %s: "
-        "slots=%u, avgIlvl=%.1f, weightedScore=%.1f, final=%.1f",
-        _bot->GetName().c_str(), slotCount, avgItemLevel, normalizedScore, finalScore);
+    // SAFETY: Use GetGUID().GetCounter() instead of GetName().c_str() - Player string data may be freed during destruction
+    TC_LOG_DEBUG("playerbot", "AdaptiveBehaviorManager::GetGearScore - Bot {}: "
+        "slots={}, avgIlvl={:.1f}, weightedScore={:.1f}, final={:.1f}",
+        _bot->GetGUID().GetCounter(), slotCount, avgItemLevel, normalizedScore, finalScore);
 
     return finalScore;
 }

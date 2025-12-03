@@ -120,13 +120,16 @@ BehaviorPriorityManager::BehaviorPriorityManager(BotAI* ai)
 
 BehaviorPriorityManager::~BehaviorPriorityManager()
 {
-    // Note: Safe to access GetName() only if bot is still valid and in world
-    Player* bot = m_ai ? m_ai->GetBot() : nullptr;
-    if (bot && bot->IsInWorld())
-    {
-        TC_LOG_DEBUG("module.playerbot.priority",
-            "BehaviorPriorityManager destroyed for bot {}", bot->GetName());
-    }
+    // CRITICAL: Do NOT access bot->GetName() during destructor!
+    // During bot destruction, the Player's internal string data may already be
+    // freed even if IsInWorld() returns true. This causes ACCESS_VIOLATION in
+    // the string formatting code.
+    //
+    // If logging is needed, use GUID counter instead:
+    // Player* bot = m_ai ? m_ai->GetBot() : nullptr;
+    // if (bot)
+    //     TC_LOG_DEBUG("module.playerbot.priority",
+    //         "BehaviorPriorityManager destroyed for bot {}", bot->GetGUID().GetCounter());
 }
 
 // ========================================================================

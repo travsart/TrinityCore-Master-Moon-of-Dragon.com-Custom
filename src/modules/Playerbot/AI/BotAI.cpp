@@ -13,6 +13,8 @@
 #include "BotAI.h"
 #include "GameTime.h"
 #include "Core/Managers/GameSystemsManager.h"
+#include "Lifecycle/BotLifecycleState.h"
+#include "Lifecycle/BotFactory.h"
 #include "Advanced/TacticalCoordinator.h"
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
@@ -296,6 +298,86 @@ void BotAI::UpdateAI(uint32 diff)
     // Group iteration in constructor caused crashes because Player/Group data
     // is not initialized during construction.
     ValidateExistingGroupMembership();
+
+    // ========================================================================
+    // LIFECYCLE STATE TRANSITION - Two-Phase AddToWorld Pattern
+    // ========================================================================
+    // On first successful UpdateAI, transition from READY → ACTIVE state.
+    // This indicates the bot is now fully operational and all managers are safe to use.
+    // The lifecycle manager processes any queued deferred events at this point.
+    if (!_lifecycleActivated && _lifecycleManager)
+    {
+        BotInitState currentState = _lifecycleManager->GetState();
+
+        // Only transition if we're in READY state (safe to become ACTIVE)
+        if (currentState == BotInitState::READY)
+        {
+            if (_lifecycleManager->MarkActive())
+            {
+                _lifecycleActivated = true;
+
+                TC_LOG_DEBUG("module.playerbot.lifecycle",
+                    "Bot {} transitioned to ACTIVE on first UpdateAI",
+                    _bot->GetName());
+
+                // Process any deferred events that were queued during initialization
+                uint32 processedEvents = _lifecycleManager->ProcessQueuedEvents(
+                    [this](BotInitStateManager::DeferredEvent const& event)
+                    {
+                        // Handle different event types
+                        switch (event.type)
+                        {
+                            case BotInitStateManager::DeferredEventType::GROUP_JOINED:
+                                if (Group* group = _bot->GetGroup())
+                                    OnGroupJoined(group);
+                                break;
+
+                            case BotInitStateManager::DeferredEventType::COMBAT_START:
+                                if (::Unit* target = ObjectAccessor::GetUnit(*_bot, event.targetGuid))
+                                    OnCombatStart(target);
+                                break;
+
+                            case BotInitStateManager::DeferredEventType::CUSTOM:
+                                // Callback events are handled internally by ProcessQueuedEvents
+                                break;
+
+                            default:
+                                TC_LOG_TRACE("module.playerbot.lifecycle",
+                                    "Bot {} processing deferred event type {}",
+                                    _bot->GetName(), static_cast<uint8>(event.type));
+                                break;
+                        }
+                    });
+
+                if (processedEvents > 0)
+                {
+                    TC_LOG_INFO("module.playerbot.lifecycle",
+                        "Bot {} processed {} deferred events on activation",
+                        _bot->GetName(), processedEvents);
+                }
+            }
+        }
+        else if (currentState == BotInitState::ACTIVE)
+        {
+            // Already active (maybe from previous session or manual transition)
+            _lifecycleActivated = true;
+        }
+        else if (currentState == BotInitState::FAILED ||
+                 currentState == BotInitState::DESTROYED)
+        {
+            // Bot is in error state - skip activation
+            TC_LOG_WARN("module.playerbot.lifecycle",
+                "Bot {} cannot activate - in state {}",
+                _bot->GetName(),
+                std::string(BotInitStateToString(currentState)));
+            _lifecycleActivated = true; // Prevent repeated warnings
+        }
+    }
+    // For bots without lifecycle management (legacy code path), mark as activated
+    else if (!_lifecycleActivated && !_lifecycleManager)
+    {
+        _lifecycleActivated = true;
+    }
 
     // ========================================================================
     // STALL DETECTION - Record update timestamp for health monitoring
@@ -1836,5 +1918,30 @@ void BotAI::StopAllMovement()
 
 // NOTE: BotAIFactory implementation is in BotAIFactory.cpp
 // Do not duplicate method definitions here to avoid linker errors
+
+// ============================================================================
+// LIFECYCLE MANAGEMENT IMPLEMENTATION - Two-Phase AddToWorld Pattern
+// ============================================================================
+
+bool BotAI::IsLifecycleSafe() const
+{
+    if (!_lifecycleManager)
+        return true; // Legacy bots without lifecycle management are assumed safe
+    return Playerbot::IsPlayerDataSafe(_lifecycleManager->GetState());
+}
+
+bool BotAI::IsLifecycleOperational() const
+{
+    if (!_lifecycleManager)
+        return true; // Legacy bots without lifecycle management are assumed operational
+    return Playerbot::IsFullyOperational(_lifecycleManager->GetState());
+}
+
+BotInitState BotAI::GetLifecycleState() const
+{
+    if (!_lifecycleManager)
+        return BotInitState::ACTIVE; // Legacy bots treated as always active
+    return _lifecycleManager->GetState();
+}
 
 } // namespace Playerbot

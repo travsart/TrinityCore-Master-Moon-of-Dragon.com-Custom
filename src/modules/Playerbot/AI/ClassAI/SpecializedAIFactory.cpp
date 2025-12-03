@@ -74,9 +74,10 @@ namespace Playerbot
     uint8 classId = bot->GetClass();
     uint8 specId = static_cast<uint8>(bot->GetPrimarySpecialization());
 
+    // Note: Use GetGUID().GetCounter() instead of GetName() - Player name may not be loaded yet
     TC_LOG_DEBUG("module.playerbot.ai.factory",
-                 "Creating specialized AI for bot {} (class: {}, spec: {})",
-                 bot->GetName(), classId, specId);
+                 "Creating specialized AI for bot GUID {} (class: {}, spec: {})",
+                 bot->GetGUID().GetCounter(), classId, specId);
 
     try
     {
@@ -138,15 +139,15 @@ namespace Playerbot
 
             default:
                 TC_LOG_ERROR("module.playerbot.ai.factory",
-                            "Unknown class {} for bot {}", classId, bot->GetName());
+                            "Unknown class {} for bot GUID {}", classId, bot->GetGUID().GetCounter());
                 return nullptr;
         }
 
         if (specializedAI)
         {
             TC_LOG_INFO("module.playerbot.ai.factory",
-                       "Successfully created specialized AI for bot {} (class: {}, spec: {})",
-                       bot->GetName(), classId, specId);
+                       "Successfully created specialized AI for bot GUID {} (class: {}, spec: {})",
+                       bot->GetGUID().GetCounter(), classId, specId);
         }
 
         return specializedAI;
@@ -154,8 +155,8 @@ namespace Playerbot
     catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("module.playerbot.ai.factory",
-                     "Exception creating specialized AI for bot {}: {}",
-                     bot->GetName(), e.what());
+                     "Exception creating specialized AI for bot GUID {}: {}",
+                     bot->GetGUID().GetCounter(), e.what());
         return nullptr;
     }
 }

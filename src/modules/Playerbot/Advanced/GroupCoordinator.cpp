@@ -157,11 +157,23 @@ namespace Advanced
     void GroupCoordinator::Shutdown()
     {
         m_enabled = false;
-        // CRITICAL: Only attempt to leave group if bot is valid and in world
-        // During destruction, m_bot may be in an invalid state and calling
-        // Group::RemoveMember can crash when iterating the group's member list
-        if (m_bot && m_bot->IsInWorld() && IsInGroup())
-            LeaveGroup();
+        // CRITICAL: Do NOT call LeaveGroup() during destructor!
+        // When a bot is being destroyed, the Group::RemoveMember() call can crash
+        // because Group::BroadcastGroupUpdate() may try to access members that are
+        // already being destroyed or have invalid state.
+        //
+        // The Player destructor will handle group cleanup automatically via
+        // Group::RemoveMember called from Player::~Player() or RemoveFromWorld.
+        // We should only call LeaveGroup() when explicitly requested (e.g., by command)
+        // NOT during destruction shutdown.
+        //
+        // OLD CODE (CAUSES CRASH):
+        // if (m_bot && m_bot->IsInWorld() && IsInGroup())
+        //     LeaveGroup();
+        //
+        // Just clear our internal state - let TrinityCore handle group cleanup
+        m_currentGroup = nullptr;
+        m_currentState = GroupState::IDLE;
         Reset();
     }
 

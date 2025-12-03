@@ -275,17 +275,24 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit FrostDeathKnightRefactored(Player* bot)        : MeleeDpsSpecialization<FrostRuneRunicPowerResource>(bot)
-        
+    explicit FrostDeathKnightRefactored(Player* bot)
+        : MeleeDpsSpecialization<FrostRuneRunicPowerResource>(bot)
         , _kmTracker()
         , _rimeTracker()
         , _pillarOfFrostActive(false)
         , _pillarEndTime(0)
         , _breathOfSindragosaActive(false)
         , _lastRemorselessWinterTime(0)
-    {        // Initialize runes/runic power resources
+    {
+        // CRITICAL: Do NOT call bot->GetPower(), bot->GetMaxPower(), or bot->GetName() here!
+        // Bot is not fully in world during constructor.
+        // FrostRuneRunicPowerResource::Initialize() is safe - it only sets default rune values.
         this->_resource.Initialize(bot);
-        TC_LOG_DEBUG("playerbot", "FrostDeathKnightRefactored initialized for {}", bot->GetName());
+
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "FrostDeathKnightRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
+
         InitializeFrostMechanics();
     }
 

@@ -240,16 +240,23 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit BloodDeathKnightRefactored(Player* bot)        : TankSpecialization<RuneRunicPowerResource>(bot)
-        
+    explicit BloodDeathKnightRefactored(Player* bot)
+        : TankSpecialization<RuneRunicPowerResource>(bot)
         , _boneShieldTracker()
         , _deathsAndDecayActive(false)
         , _deathsAndDecayEndTime(0)
         , _crimsonScourgeProc(false)
         , _lastDeathStrikeTime(0)
-    {        // Initialize runes/runic power resources
+    {
+        // CRITICAL: Do NOT call bot->GetPower(), bot->GetMaxPower(), or bot->GetName() here!
+        // Bot is not fully in world during constructor.
+        // RuneRunicPowerResource::Initialize() is safe - it only sets default rune values.
         this->_resource.Initialize(bot);
-        TC_LOG_DEBUG("playerbot", "BloodDeathKnightRefactored initialized for {}", bot->GetName());
+
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "BloodDeathKnightRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
+
         InitializeBloodMechanics();
     }
 

@@ -55,11 +55,15 @@ EquipmentManager::EquipmentManager(Player* bot)
 
 EquipmentManager::~EquipmentManager()
 {
-    if (_bot)
-    {
-        TC_LOG_DEBUG("playerbot.equipment", "EquipmentManager: Destroyed for bot {} ({})",
-                     _bot->GetName(), _bot->GetGUID().ToString());
-    }
+    // CRITICAL: Do NOT access _bot->GetName() during destructor!
+    // During bot destruction, the Player's internal string data may already be
+    // freed even if the pointer is valid. This causes ACCESS_VIOLATION in
+    // the string formatting code (VCRUNTIME140.dll).
+    //
+    // If logging is needed, use GUID counter instead:
+    // if (_bot)
+    //     TC_LOG_DEBUG("playerbot.equipment",
+    //         "EquipmentManager destroyed for bot {}", _bot->GetGUID().GetCounter());
 }
 
 // ============================================================================

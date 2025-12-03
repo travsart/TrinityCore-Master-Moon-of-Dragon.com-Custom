@@ -50,8 +50,15 @@ PvPCombatAI::PvPCombatAI(Player* bot)
 
 PvPCombatAI::~PvPCombatAI()
 {
-    TC_LOG_DEBUG("playerbot.pvp", "PvPCombatAI: Destroyed for bot {} ({})",
-                 _bot->GetName(), _bot->GetGUID().ToString());
+    // CRITICAL: Do NOT access _bot->GetName() or GetGUID().ToString() during destructor!
+    // During bot destruction, the Player's internal string data may already be
+    // freed even if the pointer is valid. This causes ACCESS_VIOLATION in
+    // the string formatting code (VCRUNTIME140.dll).
+    //
+    // If logging is needed, use GUID counter instead:
+    // if (_bot)
+    //     TC_LOG_DEBUG("playerbot.pvp",
+    //         "PvPCombatAI destroyed for bot {}", _bot->GetGUID().GetCounter());
 }
 
 // ============================================================================

@@ -111,9 +111,13 @@ public:
         : RangedDpsSpecialization<EssenceResourceAug>(bot)
         , _buffTracker()
     {
+        // EssenceResourceAug::Initialize() is safe - only sets default values
         this->_resource.Initialize(bot);
         InitializeAugmentationMechanics();
-        TC_LOG_DEBUG("playerbot", "AugmentationEvokerRefactored initialized for {}", bot->GetName());
+
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "AugmentationEvokerRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
     }
 
     void UpdateRotation(::Unit* target) override

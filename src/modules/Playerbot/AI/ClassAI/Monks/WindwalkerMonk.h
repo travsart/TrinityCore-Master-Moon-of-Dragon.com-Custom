@@ -126,23 +126,24 @@ struct EnergyChiResourceWindwalker
     }
 
 
-    void Initialize(Player* bot)
+    void Initialize(Player* /*bot*/)
     {
-        // CRITICAL: Only access bot power system if fully initialized and in-world
-        // During construction, bot may not have power systems ready yet
-        // GetMaxPower() can crash with ACCESS_VIOLATION if called too early
+        // CRITICAL: NEVER call GetMaxPower()/GetPower() during construction!
+        // Even with IsInWorld() check, the power data may not be initialized yet
+        // during bot login. Use static defaults and refresh later in UpdateRotation.
+        maxEnergy = 100;  // Standard Monk max energy
+        energy = 100;
+        chi = 0;
+    }
+
+    // Call this from UpdateRotation when bot is fully ready
+    void RefreshFromPlayer(Player* bot)
+    {
         if (bot && bot->IsInWorld())
         {
             maxEnergy = bot->GetMaxPower(POWER_ENERGY);
             energy = bot->GetPower(POWER_ENERGY);
         }
-        else
-        {
-            // Use safe defaults until bot is fully in world
-            maxEnergy = 100;
-            energy = 100;
-        }
-        chi = 0;
     }
 };
 
@@ -257,9 +258,17 @@ public:
         , _sefTracker()
         , _lastRisingSunKickTime(0)
         , _comboBreaker(false)
-    {        // Initialize energy/chi resources
+    {
+        // CRITICAL: Do NOT call bot->GetPower(), bot->GetMaxPower(), or bot->GetName() here!
+        // Bot is not fully in world during constructor. Resource initialization is safe
+        // because it uses IsInWorld() check internally.
         this->_resource.Initialize(bot);
-        TC_LOG_DEBUG("playerbot", "WindwalkerMonkRefactored initialized for {}", bot->GetName());
+
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        // Logging will happen once bot is fully active
+        TC_LOG_DEBUG("playerbot", "WindwalkerMonkRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
+
         InitializeWindwalkerMechanics();
     }
 

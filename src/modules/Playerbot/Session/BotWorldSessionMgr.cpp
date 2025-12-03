@@ -743,9 +743,11 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     if (session->GetPlayer() && session->GetPlayer()->IsInWorld())
                     {
                         try {
+                            // SAFETY: Use GetGUID().GetCounter() instead of GetName()
+                            // Player string data may be freed during destruction
                             TC_LOG_DEBUG("module.playerbot.session",
                                 "Logging out bot {} before session cleanup (GridNotifiers crash fix)",
-                                session->GetPlayer()->GetName());
+                                session->GetPlayer()->GetGUID().GetCounter());
                             session->LogoutPlayer(true);  // true = save to DB
                         }
                         catch (...)

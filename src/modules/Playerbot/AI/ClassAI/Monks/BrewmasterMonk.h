@@ -130,13 +130,24 @@ struct EnergyChiResource
     }
 
 
-    void Initialize(Player* bot)
+    void Initialize(Player* /*bot*/)
     {
-        if (bot)
+        // CRITICAL: NEVER call GetPower/GetMaxPower during construction!
+        // Even with IsInWorld() check, power data may not be initialized during bot login.
+        // Use static defaults here; refresh from player data in UpdateRotation later.
+        maxEnergy = 100;  // Standard Monk max energy - will be refreshed when player data is ready
+        energy = 100;
+        chi = 0;
+    }
+
+    // Call this from UpdateRotation when bot is fully ready
+    void RefreshFromPlayer(Player* bot)
+    {
+        if (bot && bot->IsInWorld())
         {
             maxEnergy = bot->GetMaxPower(POWER_ENERGY);
-            energy = bot->GetPower(POWER_ENERGY);        }
-        chi = 0;
+            energy = bot->GetPower(POWER_ENERGY);
+        }
     }
 };
 
@@ -289,7 +300,9 @@ public:
         // Phase 5: Initialize decision systems
         InitializeBrewmasterMechanics();
 
-        TC_LOG_DEBUG("playerbot", "BrewmasterMonkRefactored initialized for {}", bot->GetName());
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "BrewmasterMonkRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
     }
 
     void UpdateRotation(::Unit* target) override

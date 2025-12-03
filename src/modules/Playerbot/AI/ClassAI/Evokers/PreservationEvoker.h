@@ -288,13 +288,15 @@ public:
         , _echoTracker()
         , _essenceBurstStacks(0)
     {
-        // Initialize essence resources
+        // EssenceResourcePres::Initialize() is safe - only sets default values
         this->_resource.Initialize(bot);
 
         // Phase 5: Initialize decision systems
         InitializePreservationMechanics();
 
-        TC_LOG_DEBUG("playerbot", "PreservationEvokerRefactored initialized for {}", bot->GetName());
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "PreservationEvokerRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
     }
 
     void UpdateRotation(::Unit* target) override

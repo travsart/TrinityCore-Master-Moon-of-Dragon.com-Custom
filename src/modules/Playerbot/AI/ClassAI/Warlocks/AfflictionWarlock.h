@@ -139,14 +139,26 @@ struct ManaSoulShardResource
     [[nodiscard]] uint32 GetAvailable() const { return mana; }
     [[nodiscard]] uint32 GetMax() const { return maxMana; }
 
-    void Initialize(Player* bot)
+    void Initialize(Player* /*bot*/)
     {
-        if (bot)
+        // CRITICAL: NEVER call GetMaxPower()/GetPower() during construction!
+        // Even with IsInWorld() check, the power data may not be initialized yet
+        // during bot login. Use static defaults and refresh later in UpdateRotation.
+        maxMana = 100000;  // Standard max mana
+        mana = 100000;
+        soulShards = 0;
+        available = true;
+    }
+
+    // Refresh resource values from player when data becomes available
+    void RefreshFromPlayer(Player* bot)
+    {
+        if (bot && bot->IsInWorld())
         {
             maxMana = bot->GetMaxPower(POWER_MANA);
-            mana = bot->GetPower(POWER_MANA);        }
-        soulShards = 0;
-        available = mana > 0;
+            mana = bot->GetPower(POWER_MANA);
+            available = mana > 0;
+        }
     }
 };
 
@@ -278,9 +290,13 @@ public:
         , _nightfallProc(false)
         , _lastDarkglareTime(0)
     {
-        // Initialize mana/soul shard resources
+        // Initialize mana/soul shard resources (safe with IsInWorld check)
         this->_resource.Initialize(bot);
-        TC_LOG_DEBUG("playerbot", "AfflictionWarlockRefactored initialized for {}", bot->GetName());
+
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        // Logging will happen once bot is fully active
+        TC_LOG_DEBUG("playerbot", "AfflictionWarlockRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
 
         // Phase 5: Initialize decision systems
         InitializeAfflictionMechanics();

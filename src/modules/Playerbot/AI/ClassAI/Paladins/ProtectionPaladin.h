@@ -149,18 +149,27 @@ struct ManaHolyPowerResource
         return 100; // Simplified for ComplexResource concept
     }
 
-    void Initialize(Player* bot)
+    void Initialize(Player* /*bot*/)
     {
-        if (bot)
+        // CRITICAL: NEVER call GetPower/GetMaxPower during construction!
+        // Even with IsInWorld() check, power data may not be initialized during bot login.
+        // Use static defaults here; refresh from player data in UpdateRotation later.
+        maxMana = 100000;  // Standard max mana - will be refreshed when player data is ready
+        mana = 100000;
+        maxHolyPower = 5;  // Standard max Holy Power
+        holyPower = 0;
+    }
+
+    // Call this from UpdateRotation when bot is fully ready
+    void RefreshFromPlayer(Player* bot)
+    {
+        if (bot && bot->IsInWorld())
         {
-
             maxMana = bot->GetMaxPower(POWER_MANA);
-
             mana = bot->GetPower(POWER_MANA);
             maxHolyPower = bot->GetMaxPower(POWER_HOLY_POWER);
-
             holyPower = bot->GetPower(POWER_HOLY_POWER);
-            }
+        }
     }
 };
 #endif // PLAYERBOT_RESOURCE_TYPES_MANA_HOLY_POWER
@@ -249,7 +258,9 @@ public:
         // Initialize Phase 5 systems
         InitializeProtectionPaladinMechanics();
 
-        TC_LOG_DEBUG("playerbot", "ProtectionPaladinRefactored initialized for {}", bot->GetName());
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "ProtectionPaladinRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
     }
 
     void UpdateRotation(::Unit* target) override

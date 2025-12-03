@@ -53,6 +53,10 @@ class UnifiedMovementCoordinator; // Phase 2: Unified Movement System (Week 3 co
 class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
+// Two-Phase AddToWorld Lifecycle Management (Initialization Lifecycle)
+class BotInitStateManager;
+enum class BotInitState : uint8;
+
 // Phase 3: Tactical Coordination forward declarations
 namespace Advanced {
     class TacticalCoordinator;
@@ -248,6 +252,43 @@ public:
 
     Player* GetBot() const { return _bot; }
     ObjectGuid GetBotGuid() const { return _bot ? _bot->GetGUID() : ObjectGuid::Empty; }
+
+    // ========================================================================
+    // LIFECYCLE MANAGEMENT - Two-Phase AddToWorld Pattern
+    // ========================================================================
+
+    /**
+     * @brief Set the lifecycle manager for this bot
+     * Called by BotFactory during staged initialization
+     *
+     * @param manager Pointer to lifecycle manager (owned by BotFactory)
+     */
+    void SetLifecycleManager(BotInitStateManager* manager) { _lifecycleManager = manager; }
+
+    /**
+     * @brief Get the lifecycle manager for this bot
+     * @return Pointer to lifecycle manager, or nullptr if not managed
+     */
+    BotInitStateManager* GetLifecycleManager() { return _lifecycleManager; }
+    BotInitStateManager const* GetLifecycleManager() const { return _lifecycleManager; }
+
+    /**
+     * @brief Check if bot lifecycle is in a state safe for player data access
+     * @return true if state >= READY and state <= ACTIVE
+     */
+    bool IsLifecycleSafe() const;
+
+    /**
+     * @brief Check if bot is fully operational (ACTIVE state)
+     * @return true if bot has completed initialization and is in ACTIVE state
+     */
+    bool IsLifecycleOperational() const;
+
+    /**
+     * @brief Get current lifecycle state
+     * @return Current state, or FAILED if no lifecycle manager
+     */
+    BotInitState GetLifecycleState() const;
 
     // ========================================================================
     // GROUP MANAGEMENT - Social behavior
@@ -841,6 +882,13 @@ protected:
 
     // Group validation deferred to first UpdateAI (prevents ACCESS_VIOLATION in constructor)
     bool _groupValidationDone = false;
+
+    // Two-Phase AddToWorld lifecycle tracking
+    // Set true after first successful UpdateAI when lifecycle transitions to ACTIVE
+    bool _lifecycleActivated = false;
+
+    // Lifecycle manager (owned by BotFactory, not by BotAI)
+    BotInitStateManager* _lifecycleManager = nullptr;
 
     // ========================================================================
     // PHASE 6: GAME SYSTEMS FACADE - Consolidates all 17 manager instances

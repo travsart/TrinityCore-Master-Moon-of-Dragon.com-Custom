@@ -255,13 +255,15 @@ public:
         , _lastEternityTime(0)
         , _lastFireBreathTime(0)
     {
-        // Initialize essence resources
+        // DevastationEssence::Initialize() is safe - only sets default values
         this->_resource.Initialize(bot);
 
         // Phase 5: Initialize decision systems
         InitializeDevastationMechanics();
 
-        TC_LOG_DEBUG("playerbot", "DevastationEvokerRefactored initialized for {}", bot->GetName());
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "DevastationEvokerRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
     }
 
     void UpdateRotation(::Unit* target) override

@@ -296,14 +296,22 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit UnholyDeathKnightRefactored(Player* bot)        : MeleeDpsSpecialization<UnholyRuneRunicPowerResource>(bot)        , _woundTracker()
+    explicit UnholyDeathKnightRefactored(Player* bot)
+        : MeleeDpsSpecialization<UnholyRuneRunicPowerResource>(bot)
+        , _woundTracker()
         , _petTracker()
         , _suddenDoomProc(false)
         , _lastOutbreakTime(0)
     {
-        // Initialize runes/runic power resources
+        // CRITICAL: Do NOT call bot->GetPower(), bot->GetMaxPower(), or bot->GetName() here!
+        // Bot is not fully in world during constructor.
+        // UnholyRuneRunicPowerResource::Initialize() is safe - it only sets default rune values.
         this->_resource.Initialize(bot);
-        TC_LOG_DEBUG("playerbot", "UnholyDeathKnightRefactored initialized for {}", bot->GetName());
+
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        TC_LOG_DEBUG("playerbot", "UnholyDeathKnightRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
+
         InitializeUnholyMechanics();
     }
 

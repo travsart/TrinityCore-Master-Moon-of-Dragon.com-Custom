@@ -138,12 +138,27 @@ struct ManaSoulShardResourceDemo
 
     void Initialize(Player* bot)
     {
-        if (bot)
+        // Defer player data access until bot is fully in world
+        // During construction, Player data may not be loaded yet
+        if (bot && bot->IsInWorld())
         {
             maxMana = bot->GetMaxPower(POWER_MANA);
-            mana = bot->GetPower(POWER_MANA);        }
+            mana = bot->GetPower(POWER_MANA);
+        }
+        // Use safe defaults until data is available
         soulShards = 0;
-        available = mana > 0;
+        available = maxMana > 0;
+    }
+
+    // Refresh resource values from player when data becomes available
+    void RefreshFromPlayer(Player* bot)
+    {
+        if (bot && bot->IsInWorld())
+        {
+            maxMana = bot->GetMaxPower(POWER_MANA);
+            mana = bot->GetPower(POWER_MANA);
+            available = mana > 0;
+        }
     }
 };
 
@@ -270,9 +285,13 @@ public:
         , _demonicCoreStacks(0)
         , _lastTyrantTime(0)
     {
-        // Initialize mana/soul shard resources
+        // Initialize mana/soul shard resources (safe with IsInWorld check)
         this->_resource.Initialize(bot);
-        TC_LOG_DEBUG("playerbot", "DemonologyWarlockRefactored initialized for {}", bot->GetName());
+
+        // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
+        // Logging will happen once bot is fully active
+        TC_LOG_DEBUG("playerbot", "DemonologyWarlockRefactored created for bot GUID: {}",
+            bot ? bot->GetGUID().GetCounter() : 0);
 
         // Phase 5: Initialize decision systems
         InitializeDemonologyMechanics();

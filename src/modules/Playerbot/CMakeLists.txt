@@ -554,6 +554,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEvents.h
 
+    # Two-Phase AddToWorld Lifecycle System (Enterprise-Grade Bot Initialization)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleState.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleState.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotFactory.h
+
     # Performance Optimization System (Phase 5)
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ObjectPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PacketPoolManager.h
