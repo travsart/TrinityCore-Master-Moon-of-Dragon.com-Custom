@@ -165,12 +165,19 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 {
     if (!ai || !ai->GetBot())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ UpdateBehavior: NULL ai or bot");
+        TC_LOG_ERROR("module.playerbot.quest", "UpdateBehavior: NULL ai or bot");
         return;
     }
 
     Player* bot = ai->GetBot();
-    TC_LOG_ERROR("module.playerbot.quest", "🚀 UpdateBehavior: Bot {} starting quest behavior update", bot->GetName());
+
+    // CRITICAL: Safety check for worker thread access during bot destruction
+    // IsInWorld() returns false during Player destruction, preventing ACCESS_VIOLATION
+    // in WorldObject::GetMap() and related grid operations (GetCreatureListWithEntryInGrid, etc.)
+    if (!bot->IsInWorld())
+        return;
+
+    TC_LOG_ERROR("module.playerbot.quest", "UpdateBehavior: Bot {} starting quest behavior update", bot->GetName());
 
     // Don't interrupt combat
     if (bot->IsInCombat())
@@ -223,7 +230,12 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     if (!ai || !ai->GetBot())
         return;
     Player* bot = ai->GetBot();
-    TC_LOG_ERROR("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} starting objective processing", bot->GetName());
+
+    // CRITICAL: Safety check for worker thread access during bot destruction
+    if (!bot->IsInWorld())
+        return;
+
+    TC_LOG_ERROR("module.playerbot.quest", "ProcessQuestObjectives: Bot {} starting objective processing", bot->GetName());
 
     // Get highest priority objective from ObjectiveTracker
     ObjectivePriority priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
@@ -1531,6 +1543,13 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
     }
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL: Safety check for worker thread access during bot destruction
+    // IsInWorld() returns false during Player destruction, preventing ACCESS_VIOLATION
+    // in WorldObject::GetMap() and GetCreatureListWithEntryInGrid() grid operations
+    if (!bot->IsInWorld())
+        return;
+
     TC_LOG_ERROR("module.playerbot.quest", "🔍 SearchForQuestGivers: ENTRY for bot {}", bot->GetName());
 
     // Initialize QuestAcceptanceManager if not already done
