@@ -1162,7 +1162,12 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
     uint32 accountId = 0;
     uint32 zoneId = 0;
 
-    // Get bot info and remove from tracking in a single critical section
+    // DEADLOCK FIX: Split read and erase into separate lock scopes
+    // TBB's concurrent_hash_map::erase() acquires a write lock internally,
+    // but const_accessor holds a read lock. Calling erase() while holding
+    // a const_accessor causes deadlock (read lock blocks write lock acquisition).
+
+    // Step 1: Read the zone ID with a read lock, then release it
     {
         tbb::concurrent_hash_map<ObjectGuid, uint32>::const_accessor it;
         if (!_activeBots.find(it, guid))
@@ -1171,14 +1176,25 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
                 "Attempted to despawn non-active bot {}", guid.ToString());
             return;
         }
-
         zoneId = it->second;
-        _activeBots.erase(guid);
+        // const_accessor is released here when it goes out of scope
+    }
 
-        // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
-        _activeBotCount.fetch_sub(1, ::std::memory_order_release);
+    // Step 2: Erase from map without holding any locks (erase acquires its own write lock)
+    if (!_activeBots.erase(guid))
+    {
+        // Already erased by another thread - this is OK during concurrent shutdown
+        TC_LOG_DEBUG("module.playerbot.spawner",
+            "Bot {} already removed by another thread", guid.ToString());
+        return;
+    }
 
-        // Remove from zone tracking
+    // Step 3: Update atomic counter after successful erase
+    // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
+    _activeBotCount.fetch_sub(1, ::std::memory_order_release);
+
+    // Step 4: Remove from zone tracking with separate lock scope
+    {
         tbb::concurrent_hash_map<uint32, ::std::vector<ObjectGuid>>::accessor zoneIt;
         if (_botsByZone.find(zoneIt, zoneId))
         {

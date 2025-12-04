@@ -723,14 +723,33 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         disconnectedSessions.push_back(disconnectedGuid);
     }
 
-    // PHASE 3: Cleanup disconnected sessions
-    // CRITICAL FIX (GridNotifiers.cpp:226 crash): Must call LogoutPlayer() BEFORE erasing session!
-    // Problem: When session is erased, shared_ptr destructor runs but Player is still registered in Grid
-    // Solution: Call LogoutPlayer() first (removes Player from Map/Grid), THEN erase session
-    if (!disconnectedSessions.empty())
+    // ============================================================================
+    // CRITICAL FIX: Two-Phase Deferred Logout (Cell::Visit crash prevention)
+    // ============================================================================
+    // Problem: When LogoutPlayer() is called during UpdateSessions(), it removes the Player
+    //          from the Grid. But Map worker threads (ProcessRelocationNotifies) may already
+    //          have iterators pointing to that Player, causing ACCESS_VIOLATION in Cell::Visit
+    //          when they access player->m_seer (GridNotifiers.cpp:237).
+    //
+    // Root Cause: World::Update() execution order:
+    //   Line 2346: sScriptMgr->OnBeforeWorldUpdate() - triggers module updates (bots)
+    //   Line 2363: sMapMgr->Update() - triggers map worker threads (ProcessRelocationNotifies)
+    //
+    // Race condition: Bot cleanup (LogoutPlayer) runs BEFORE map update completes, but map
+    //                 workers may already hold references to the Player being logged out.
+    //
+    // Solution: Two-phase deferred cleanup:
+    //   Phase 1 (this tick): Collect disconnected GUIDs into _pendingLogouts (don't logout yet)
+    //   Phase 2 (next tick): Move _pendingLogouts to _readyForLogout, then call LogoutPlayer()
+    //   This ensures LogoutPlayer() is only called AFTER the map update cycle for the tick
+    //   where the disconnection was detected has fully completed.
+    // ============================================================================
+
+    // PHASE 2 FIRST: Process _readyForLogout (collected from PREVIOUS tick - safe now!)
+    if (!_readyForLogout.empty())
     {
         ::std::lock_guard lock(_sessionsMutex);
-        for (ObjectGuid const& guid : disconnectedSessions)
+        for (ObjectGuid const& guid : _readyForLogout)
         {
             auto it = _botSessions.find(guid);
             if (it != _botSessions.end())
@@ -738,22 +757,18 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                 ::std::shared_ptr<BotSession> session = it->second;
                 if (session)
                 {
-                    // CRITICAL: Call LogoutPlayer() on main thread to safely remove from Grid
-                    // This must happen BEFORE the session is destroyed
                     if (session->GetPlayer() && session->GetPlayer()->IsInWorld())
                     {
                         try {
-                            // SAFETY: Use GetGUID().GetCounter() instead of GetName()
-                            // Player string data may be freed during destruction
                             TC_LOG_DEBUG("module.playerbot.session",
-                                "Logging out bot {} before session cleanup (GridNotifiers crash fix)",
+                                "Deferred logout for bot {} (Cell::Visit crash prevention)",
                                 session->GetPlayer()->GetGUID().GetCounter());
-                            session->LogoutPlayer(true);  // true = save to DB
+                            session->LogoutPlayer(true);
                         }
                         catch (...)
                         {
                             TC_LOG_ERROR("module.playerbot.session",
-                                "Exception during LogoutPlayer() for bot {} - continuing cleanup",
+                                "Exception during deferred LogoutPlayer() for bot {} - continuing cleanup",
                                 guid.ToString());
                         }
                     }
@@ -762,6 +777,30 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             }
             sBotPriorityMgr->RemoveBot(guid);
         }
+        _readyForLogout.clear();
+    }
+
+    // PHASE 1a: Move _pendingLogouts to _readyForLogout (will be processed NEXT tick)
+    if (!_pendingLogouts.empty())
+    {
+        _readyForLogout = ::std::move(_pendingLogouts);
+        _pendingLogouts.clear();
+        TC_LOG_TRACE("module.playerbot.session",
+            "Moved {} pending logouts to ready queue (will process next tick)",
+            _readyForLogout.size());
+    }
+
+    // PHASE 1b: Add newly detected disconnections to _pendingLogouts
+    for (ObjectGuid const& guid : disconnectedSessions)
+    {
+        _pendingLogouts.push_back(guid);
+    }
+
+    if (!disconnectedSessions.empty())
+    {
+        TC_LOG_DEBUG("module.playerbot.session",
+            "Queued {} bot disconnections for deferred logout (Cell::Visit crash prevention)",
+            disconnectedSessions.size());
     }
 
     // PHASE 4: Lightweight enterprise monitoring (reduced frequency to minimize overhead)

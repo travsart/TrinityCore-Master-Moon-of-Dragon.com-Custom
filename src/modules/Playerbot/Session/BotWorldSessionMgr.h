@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  */
 
@@ -29,8 +29,8 @@ namespace Playerbot {
 namespace Playerbot {
 
 /**
- * Clean implementation using TrinityCore's native login pattern
- * Based on mod-playerbots' proven approach with modern enhancements
+ * Clean implementation using TrinityCore''s native login pattern
+ * Based on mod-playerbots'' proven approach with modern enhancements
  */
 class TC_GAME_API BotWorldSessionMgr final : public IBotWorldSessionMgr
 {
@@ -46,7 +46,7 @@ public:
     bool Initialize() override;
     void Shutdown() override;
 
-    // Bot management using TrinityCore's native login
+    // Bot management using TrinityCore''s native login
     bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0) override;
     void RemovePlayerBot(ObjectGuid playerGuid) override;
     Player* GetPlayerBot(ObjectGuid playerGuid) const;
@@ -117,6 +117,18 @@ private:
 
     // Atomic counter for bot updates completed asynchronously
     ::std::atomic<uint32> _asyncBotsUpdated{0};
+
+    // CRITICAL FIX: Two-phase deferred logout queue to prevent Cell::Visit crash (GridNotifiers.cpp:237)
+    // Problem: When LogoutPlayer() is called during UpdateSessions(), it removes the Player from the Grid.
+    //          But Map worker threads (ProcessRelocationNotifies) may already have iterators pointing to
+    //          that Player, causing ACCESS_VIOLATION when they access player->m_seer.
+    // Solution: Two-phase deferred cleanup:
+    //   Phase 1 (current tick): Collect disconnected GUIDs into _pendingLogouts (don''t logout yet)
+    //   Phase 2 (next tick): Move _pendingLogouts to _readyForLogout, then call LogoutPlayer()
+    //   This ensures LogoutPlayer() is only called AFTER the map update cycle for the tick where
+    //   the disconnection was detected has fully completed.
+    ::std::vector<ObjectGuid> _pendingLogouts;    // Collected this tick, will be processed next tick
+    ::std::vector<ObjectGuid> _readyForLogout;    // Moved from _pendingLogouts, safe to logout now
 };
 
 // Global instance accessor

@@ -453,30 +453,32 @@ void BehaviorPriorityManager::UpdateContext()
         return;
     }
 
-    // Check combat state
+    // CRITICAL FIX: Check critically low health REGARDLESS of combat state
+    // Bots at <20% health should always prioritize survival (flee/heal/rest)
+    // This prevents bots at 0.6% health from running SOLO strategies like RestStrategy
+    float healthPct = bot->GetHealthPct();
+    if (healthPct < 20.0f)
+    {
+        if (m_activePriority != BehaviorPriority::FLEEING)
+        {
+            TC_LOG_DEBUG("module.playerbot.priority",
+                "Bot {} entering FLEEING priority (critical health: {:.1f}%)",
+                bot->GetName(),
+                healthPct);
+            m_activePriority = BehaviorPriority::FLEEING;
+        }
+        return; // Don't process other priorities when critically low health
+    }
+
+    // Check combat state (only if not critically low health)
     if (bot->IsInCombat())
     {
-        // Check fleeing conditions first
-    if (bot->GetHealthPct() < 20.0f)
+        if (m_activePriority != BehaviorPriority::COMBAT)
         {
-            if (m_activePriority != BehaviorPriority::FLEEING)
-            {
-                TC_LOG_DEBUG("module.playerbot.priority",
-                    "Bot {} entering FLEEING priority (health: {:.1f}%)",
-                    bot->GetName(),
-                    bot->GetHealthPct());
-                m_activePriority = BehaviorPriority::FLEEING;
-            }
-        }
-        else
-        {
-            if (m_activePriority != BehaviorPriority::COMBAT)
-            {
-                TC_LOG_DEBUG("module.playerbot.priority",
-                    "Bot {} entering COMBAT priority",
-                    bot->GetName());
-                m_activePriority = BehaviorPriority::COMBAT;
-            }
+            TC_LOG_DEBUG("module.playerbot.priority",
+                "Bot {} entering COMBAT priority",
+                bot->GetName());
+            m_activePriority = BehaviorPriority::COMBAT;
         }
     }
     // Check if casting
