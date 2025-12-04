@@ -15,7 +15,7 @@ namespace Playerbot
 
 MageAI::MageAI(Player* bot) : ClassAI(bot)
 {
-    TC_LOG_DEBUG("module.playerbot.ai", "MageAI created for player {}", bot->GetName());
+    // SAFETY: GetName() removed from constructor to prevent ACCESS_VIOLATION crash during worker thread bot login
 }
 
 MageAI::~MageAI() = default;

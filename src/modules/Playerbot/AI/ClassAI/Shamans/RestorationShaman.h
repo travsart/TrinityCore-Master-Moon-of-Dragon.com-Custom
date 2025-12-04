@@ -250,7 +250,7 @@ public:
         // Phase 5: Initialize decision systems
         InitializeRestorationShamanMechanics();
 
-        TC_LOG_DEBUG("playerbot", "RestorationShamanRefactored initialized for {}", bot->GetName());
+        // SAFETY: GetName() removed from constructor to prevent ACCESS_VIOLATION crash during worker thread bot login
     }
 
     void UpdateRotation(::Unit* target) override

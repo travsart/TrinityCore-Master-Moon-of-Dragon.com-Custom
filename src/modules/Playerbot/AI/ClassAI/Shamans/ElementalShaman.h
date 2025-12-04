@@ -311,7 +311,7 @@ public:
         // COMMENTED OUT:         });
 
         // Resource initialization handled by base class CombatSpecializationTemplate
-        TC_LOG_DEBUG("playerbot", "ElementalShamanRefactored initialized for {}", bot->GetName());
+        // SAFETY: GetName() removed from constructor to prevent ACCESS_VIOLATION crash during worker thread bot login
 
         // Phase 5: Initialize decision systems
         InitializeElementalMechanics();

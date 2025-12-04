@@ -206,7 +206,7 @@ public:
         // COMMENTED OUT:             {ENHANCEMENT_STORMSTRIKE, 9000, 2}
         // COMMENTED OUT:         });
 
-        // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "EnhancementShamanRefactored initialized for {}", bot->GetName());
+        // Resource initialization handled by base class CombatSpecializationTemplate        // SAFETY: GetName() removed from constructor to prevent ACCESS_VIOLATION crash during worker thread bot login
         InitializeEnhancementMechanics();
     }
 
