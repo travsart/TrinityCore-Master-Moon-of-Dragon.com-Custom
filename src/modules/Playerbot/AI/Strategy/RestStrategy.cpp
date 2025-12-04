@@ -238,6 +238,13 @@ bool RestStrategy::NeedsFood(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL FIX: Safety check for worker thread access during bot destruction
+    // Bot may be destroyed/logging out between null check and GetHealthPct() call
+    // IsInWorld() returns false during destruction, preventing ACCESS_VIOLATION crash
+    if (!bot->IsInWorld())
+        return false;
+
     return bot->GetHealthPct() < _eatHealthThreshold;
 }
 
@@ -247,6 +254,12 @@ bool RestStrategy::NeedsDrink(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL FIX: Safety check for worker thread access during bot destruction
+    // Bot may be destroyed/logging out between null check and GetMaxPower() call
+    // IsInWorld() returns false during destruction, preventing ACCESS_VIOLATION crash
+    if (!bot->IsInWorld())
+        return false;
 
     // Only mana users need to drink
     if (bot->GetMaxPower(POWER_MANA) == 0)
