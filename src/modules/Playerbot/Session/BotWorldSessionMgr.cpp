@@ -272,14 +272,32 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
     if (session)
     {
         // Log removal (safely handle name access)
-    if (session->GetPlayer())
+        Player* player = session->GetPlayer();
+        if (player)
         {
             try {
-                TC_LOG_INFO("module.playerbot.session", "?? Queuing bot for removal: {}", session->GetPlayer()->GetName());
+                TC_LOG_INFO("module.playerbot.session", "Queuing bot for removal: {}", player->GetName());
             }
             catch (...)
             {
-                TC_LOG_INFO("module.playerbot.session", "?? Queuing bot for removal (name unavailable)");
+                TC_LOG_INFO("module.playerbot.session", "Queuing bot for removal (name unavailable)");
+            }
+
+            // CRITICAL FIX (Cell::Visit crash - CellImpl.h:65):
+            // Clear visibility notification flags BEFORE queuing for removal.
+            //
+            // Problem: DelayedUnitRelocation::Visit() (GridNotifiers.cpp:222) iterates over
+            // players in the grid and calls Cell::VisitAllObjects() for each player that has
+            // NOTIFY_VISIBILITY_CHANGED set. If a bot is being removed while this iteration
+            // runs on the MapUpdater worker thread, the bot's Map pointer may become corrupted
+            // (observed value: 0x400000004E instead of valid pointer), causing ACCESS_VIOLATION.
+            //
+            // Solution: Clear all notification flags to prevent the bot from being processed
+            // by Map::ProcessRelocationNotifies() after removal is queued.
+            if (player->IsInWorld())
+            {
+                player->ResetAllNotifies();
+                TC_LOG_DEBUG("module.playerbot.session", "Cleared visibility flags for bot {} to prevent Cell::Visit crash", playerGuid.ToString());
             }
         }
 
