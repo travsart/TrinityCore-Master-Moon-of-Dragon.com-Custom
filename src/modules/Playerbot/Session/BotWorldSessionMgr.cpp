@@ -733,6 +733,44 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
     }
 
+    // ============================================================================
+    // CRITICAL FIX (Map.cpp:686 crash): Wait for all bot update tasks to complete
+    // ============================================================================
+    // Problem: Bot update tasks run on ThreadPool workers CONCURRENTLY with main thread.
+    //          If we process deferred logouts (calling LogoutPlayer) while workers are still
+    //          accessing player data, we create a race condition. LogoutPlayer removes the
+    //          player from the map immediately, which can corrupt Map iterators.
+    //
+    // Timing Issue:
+    //   1. Main thread submits 100 bot update tasks to ThreadPool (line 718)
+    //   2. Main thread IMMEDIATELY processes deferred logouts (calls LogoutPlayer)
+    //   3. ThreadPool workers are STILL running, accessing player data
+    //   4. Player removed from map while worker accesses it → Map.cpp:686 crash
+    //
+    // Solution: Wait for all ThreadPool tasks to complete before processing logouts.
+    //           ONLY wait if there are actually pending logouts to process.
+    //           Use short timeout (50ms) to avoid blocking world update.
+    //           If timeout, skip logout processing this tick (will retry next tick).
+    // ============================================================================
+    bool canProcessLogouts = true;  // Assume we can process logouts
+
+    // ONLY wait if there are logouts pending - otherwise don't block!
+    if (useThreadPool && !_readyForLogout.empty() && Performance::GetThreadPool().GetQueuedTasks() > 0)
+    {
+        // Wait up to 50ms for bot update tasks to complete
+        // This is acceptable because:
+        // 1. Individual bot updates are fast (<1ms each)
+        // 2. 50ms is within frame budget (world tick is 50ms)
+        // 3. Prevents race condition that causes Map.cpp:686 crash
+        if (!Performance::GetThreadPool().WaitForCompletion(::std::chrono::milliseconds(50)))
+        {
+            TC_LOG_WARN("module.playerbot.session",
+                "ThreadPool tasks still running after 50ms - deferring logouts to next tick");
+            // Don't process logouts this tick - workers are still accessing player data
+            canProcessLogouts = false;
+        }
+    }
+
     // OPTION 5: Process async disconnections from lock-free queue
     // Worker threads push to _asyncDisconnections, we pop here (no mutex needed)
     ObjectGuid disconnectedGuid;
@@ -764,7 +802,8 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // ============================================================================
 
     // PHASE 2 FIRST: Process _readyForLogout (collected from PREVIOUS tick - safe now!)
-    if (!_readyForLogout.empty())
+    // CRITICAL: Only process if canProcessLogouts is true (ThreadPool workers finished)
+    if (canProcessLogouts && !_readyForLogout.empty())
     {
         ::std::lock_guard lock(_sessionsMutex);
         for (ObjectGuid const& guid : _readyForLogout)

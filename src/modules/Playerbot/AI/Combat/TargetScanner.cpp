@@ -127,6 +127,10 @@ namespace Playerbot
     TargetScanner::~TargetScanner() = default;
     ObjectGuid TargetScanner::FindNearestHostile(float range)
     {
+        // CRITICAL: Safety check to prevent crash when bot is removed from world during worker thread execution
+        if (!m_bot || !m_bot->IsInWorld())
+            return ObjectGuid::Empty;
+
         if (m_scanMode == ScanMode::PASSIVE)
             return ObjectGuid::Empty;
 
@@ -182,6 +186,11 @@ namespace Playerbot
 
     ObjectGuid TargetScanner::FindBestTarget(float range)
     {
+        // CRITICAL: Safety check to prevent crash when bot is removed from world during worker thread execution
+        // The BotSession::Update checks IsInWorld() but there's a race condition between the check and this call
+        if (!m_bot || !m_bot->IsInWorld())
+            return ObjectGuid::Empty;
+
         if (m_scanMode == ScanMode::PASSIVE)
             return ObjectGuid::Empty;
 
@@ -268,6 +277,10 @@ namespace Playerbot
     ::std::vector<ObjectGuid> TargetScanner::FindAllHostiles(float range)
     {
         ::std::vector<ObjectGuid> hostileGuids;
+
+        // CRITICAL: Safety check to prevent crash when bot is removed from world during worker thread execution
+        if (!m_bot || !m_bot->IsInWorld())
+            return hostileGuids;
 
         if (m_scanMode == ScanMode::PASSIVE)
             return hostileGuids;
