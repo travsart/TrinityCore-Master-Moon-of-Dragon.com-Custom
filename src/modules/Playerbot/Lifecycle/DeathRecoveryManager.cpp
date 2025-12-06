@@ -1376,25 +1376,43 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
     if (!m_bot)
         return false;
 
-    // SPIRIT HEALER RESURRECTION (v9): Call SendSpiritResurrect directly
+    // THREAD SAFETY FIX (v10): DO NOT call SendSpiritResurrect from worker thread!
     //
-    // IMPORTANT FIX: The previous approach using CMSG_REPOP_REQUEST packet DOES NOT WORK
-    // for bots that are already ghosts. TrinityCore's HandleRepopRequest() handler
-    // (MiscHandler.cpp:62) explicitly returns early if the player has PLAYER_FLAGS_GHOST:
+    // SendSpiritResurrect() modifies player state (ResurrectPlayer, DurabilityLossAll,
+    // SpawnCorpseBones, TeleportTo) which causes Map.cpp:686 ACCESS_VIOLATION crash
+    // when called from ThreadPool worker during Map::Update iteration.
     //
-    //   if (GetPlayer()->IsAlive() || GetPlayer()->HasPlayerFlag(PLAYER_FLAGS_GHOST))
-    //       return;
+    // Instead, we set a flag that the main thread will check and execute.
+    // The main thread path is BotWorldSessionMgr::ProcessPendingResurrections()
+    // which runs AFTER Map::Update completes.
     //
-    // This means once a bot is a ghost, sending CMSG_REPOP_REQUEST does nothing!
-    //
-    // The correct approach is to call SendSpiritResurrect() directly, which:
-    // 1. Calls ResurrectPlayer(0.5f, true) - resurrects at 50% health with sickness
-    // 2. Applies durability loss (25%)
-    // 3. Spawns corpse bones
-    // 4. Teleports to appropriate graveyard if needed
-    //
-    // For bots, we bypass the normal spirit healer NPC interaction validation since
-    // bots don't need to physically interact with the spirit healer gossip UI.
+    // IMPORTANT FIX: The previous packet-based approach using CMSG_REPOP_REQUEST
+    // does NOT work for bots that are already ghosts. TrinityCore's HandleRepopRequest
+    // handler (MiscHandler.cpp:62) returns early if player has PLAYER_FLAGS_GHOST.
+
+    TC_LOG_INFO("playerbot.death", "Bot {} setting pending resurrection flag (main thread will execute)",
+        m_bot->GetName());
+
+    // Set flag for main thread to execute resurrection
+    _pendingMainThreadResurrection.store(true, ::std::memory_order_release);
+
+    return true;
+}
+
+bool DeathRecoveryManager::ExecutePendingMainThreadResurrection()
+{
+    // Check and clear the flag atomically
+    bool expected = true;
+    if (!_pendingMainThreadResurrection.compare_exchange_strong(expected, false, ::std::memory_order_acq_rel))
+    {
+        return false;  // No pending resurrection
+    }
+
+    if (!m_bot)
+    {
+        TC_LOG_ERROR("playerbot.death", "ExecutePendingMainThreadResurrection: Bot is null");
+        return false;
+    }
 
     WorldSession* session = m_bot->GetSession();
     if (!session)
@@ -1404,10 +1422,15 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
         return false;
     }
 
-    TC_LOG_INFO("playerbot.death", "Bot {} executing spirit healer resurrection via SendSpiritResurrect()",
+    TC_LOG_INFO("playerbot.death", "Bot {} executing spirit healer resurrection via SendSpiritResurrect() [MAIN THREAD]",
         m_bot->GetName());
 
-    // Call SendSpiritResurrect directly - this properly resurrects the ghost
+    // SAFE: Called from main thread - SendSpiritResurrect modifies player state
+    // This properly resurrects the ghost:
+    // 1. ResurrectPlayer(0.5f, true) - resurrects at 50% health with sickness
+    // 2. DurabilityLossAll(0.25f, true) - applies 25% durability loss
+    // 3. SpawnCorpseBones() - spawns bones at corpse location
+    // 4. TeleportTo() if needed - teleports to appropriate graveyard
     session->SendSpiritResurrect();
 
     return true;

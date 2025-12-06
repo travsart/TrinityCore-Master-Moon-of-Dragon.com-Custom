@@ -18,6 +18,8 @@
 #include "../Performance/ThreadPool/ThreadPool.h"
 #include "../Spatial/SpatialGridManager.h"
 #include "../Spatial/SpatialGridScheduler.h"
+#include "../AI/BotAI.h"
+#include "../Lifecycle/DeathRecoveryManager.h"
 #include <chrono>
 #include <queue>
 #include "GameTime.h"
@@ -778,6 +780,46 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                 "ThreadPool tasks still running after 50ms - deferring logouts to next tick");
             // Don't process logouts this tick - workers are still accessing player data
             canProcessLogouts = false;
+        }
+    }
+
+    // ============================================================================
+    // CRITICAL FIX: Process Pending Resurrections (Map.cpp:686 crash prevention)
+    // ============================================================================
+    // Worker threads set _pendingMainThreadResurrection flag when a ghost bot needs
+    // resurrection. We execute the actual resurrection HERE on the main thread
+    // AFTER ThreadPool workers have completed (safe to modify player state).
+    //
+    // This prevents the Map.cpp:686 ACCESS_VIOLATION crash caused by calling
+    // SendSpiritResurrect() (which modifies player state) from a worker thread
+    // while Map::Update is iterating over players.
+    // ============================================================================
+    if (canProcessLogouts)  // Reuse the same condition - workers are done
+    {
+        ::std::lock_guard lock(_sessionsMutex);
+        for (auto& [guid, session] : _botSessions)
+        {
+            if (!session || !session->IsLoginComplete())
+                continue;
+
+            Player* bot = session->GetPlayer();
+            if (!bot || !bot->IsInWorld())
+                continue;
+
+            // Get BotAI directly from BotSession (avoids dynamic_cast and registry issues)
+            if (BotAI* ai = session->GetAI())
+            {
+                if (auto* deathMgr = ai->GetDeathRecoveryManager())
+                {
+                    if (deathMgr->HasPendingMainThreadResurrection())
+                    {
+                        TC_LOG_INFO("module.playerbot.session",
+                            "Processing pending resurrection for bot {} [MAIN THREAD]",
+                            bot->GetName());
+                        deathMgr->ExecutePendingMainThreadResurrection();
+                    }
+                }
+            }
         }
     }
 

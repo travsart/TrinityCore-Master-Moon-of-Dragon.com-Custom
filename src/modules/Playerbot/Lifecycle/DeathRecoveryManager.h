@@ -234,6 +234,19 @@ public:
      */
     bool IsResurrecting() const { return m_state == DeathRecoveryState::RESURRECTING; }
 
+    /**
+     * @brief Check if there's a pending resurrection waiting for main thread
+     * @return True if resurrection needs to be executed on main thread
+     */
+    bool HasPendingMainThreadResurrection() const { return _pendingMainThreadResurrection.load(::std::memory_order_acquire); }
+
+    /**
+     * @brief Execute pending resurrection on main thread
+     * MUST be called from main thread only (e.g., from Map::Update path)
+     * @return True if resurrection was executed
+     */
+    bool ExecutePendingMainThreadResurrection();
+
     // ========================================================================
     // CORPSE INFORMATION
     // ========================================================================
@@ -540,6 +553,11 @@ private:
     mutable ::std::timed_mutex _resurrectionMutex;    ///< Prevents concurrent resurrection attempts with timeout support
     ::std::atomic<bool> _resurrectionInProgress{false};         ///< Resurrection is currently executing
     ::std::atomic<uint64> _lastResurrectionAttemptMs{0}; ///< Last resurrection attempt timestamp (for debouncing)
+
+    // THREAD SAFETY FIX: Main thread resurrection execution
+    // SendSpiritResurrect() modifies player state and MUST run on main thread
+    // Worker threads set this flag, main thread executes the resurrection
+    ::std::atomic<bool> _pendingMainThreadResurrection{false};
 
     // SPELL MOD CRASH FIX: Deferred teleport ack to prevent Spell.cpp:603 crash
     ::std::chrono::steady_clock::time_point m_teleportAckTime;  ///< Time when teleport ack was deferred
