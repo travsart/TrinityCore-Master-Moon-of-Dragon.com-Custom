@@ -186,34 +186,21 @@ namespace Playerbot
         // Random gender selection for bot
         uint8 gender = urand(0, 1); // 0 = male, 1 = female
 
-        // Step 1: Create bot character in database using BotCharacterCreator
-        ObjectGuid botGuid;
-        std::string errorMsg;
-        BotCharacterCreator::CreateResult result = BotCharacterCreator::CreateBotCharacter(
-            accountId, botRace, botClass, gender, name, botGuid, errorMsg);
-
-        if (result != BotCharacterCreator::CreateResult::SUCCESS)
-        {
-            handler->PSendSysMessage("Failed to create bot character: %s (%s)",
-                                    BotCharacterCreator::ResultToString(result), errorMsg.c_str());
-            TC_LOG_ERROR("playerbot", "HandleBotSpawnCommand: Character creation failed for '{}': {} - {}",
-                        name, BotCharacterCreator::ResultToString(result), errorMsg);
-            return false;
-        }
-
-        TC_LOG_INFO("playerbot", "HandleBotSpawnCommand: Created character '{}' (GUID: {})",
-                   name, botGuid.ToString());
-
-        // Step 2: Create bot session and spawn in world
+        // Create bot character AND spawn in world (CreateAndSpawnBot handles both)
+        // NOTE: Previously this code called BotCharacterCreator::CreateBotCharacter() first,
+        // then called CreateAndSpawnBot() which ALSO called CreateBotCharacter() - double creation!
         ObjectGuid spawnedGuid;
         if (!sBotSpawner->CreateAndSpawnBot(accountId, botClass, botRace, gender, name, spawnedGuid))
         {
-            handler->PSendSysMessage("Bot character created but failed to spawn in world.");
-            TC_LOG_ERROR("playerbot", "HandleBotSpawnCommand: Spawn failed for character '{}'", name);
+            handler->PSendSysMessage("Failed to create and spawn bot '%s'.", name.c_str());
+            TC_LOG_ERROR("playerbot", "HandleBotSpawnCommand: CreateAndSpawnBot failed for '{}'", name);
             return false;
         }
 
-        // Step 3: Teleport bot to player's location
+        TC_LOG_INFO("playerbot", "HandleBotSpawnCommand: Bot '{}' created with GUID {}",
+                   name, spawnedGuid.ToString());
+
+        // Teleport bot to player's location
         Player* bot = ObjectAccessor::FindPlayer(spawnedGuid);
         if (bot)
         {
