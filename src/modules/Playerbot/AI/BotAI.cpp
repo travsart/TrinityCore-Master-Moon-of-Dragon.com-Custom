@@ -768,9 +768,13 @@ void BotAI::UpdateStrategies(uint32 diff)
         else
         {
             // Other strategies can use their normal update
-            if (shouldLogStrategy)
+            // DIAGNOSTIC: ALWAYS log for first 100 calls per bot to debug "bots doing nothing" issue
+            static std::unordered_map<std::string, uint32> callCounts;
+            std::string botName = _bot->GetName();
+            if (callCounts[botName]++ < 100 || shouldLogStrategy)
             {
-                TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",_bot->GetName(), selectedStrategy->GetName());
+                TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior #{} for bot {} strategy '{}'",
+                             callCounts[botName], _bot->GetName(), selectedStrategy->GetName());
             }
             selectedStrategy->UpdateBehavior(this, diff);
             if (shouldLogStrategy)

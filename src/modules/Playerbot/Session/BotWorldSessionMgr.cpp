@@ -582,9 +582,19 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
         // Safety: Ensure minimum threshold to handle edge cases
         // Even with minimum 16 workers enforced by ThreadPool, be defensive
-    if (busyThreshold < 3)
+        if (busyThreshold < 3)
             busyThreshold = 3;
-        if (queuedTasks > 100 || activeWorkers > busyThreshold)
+
+        // CRITICAL FIX: Only skip if there's ACTUAL backlog (queued tasks)
+        // Workers being active is NORMAL - they're processing current batch
+        // We should only skip if NEW tasks would pile up behind existing queued tasks
+        //
+        // OLD (broken): queuedTasks > 100 || activeWorkers > busyThreshold
+        //   - Skipped updates even when queue was EMPTY just because workers were busy
+        //   - Caused bots to do nothing because updates were constantly skipped
+        //
+        // NEW: Only skip if queue has significant backlog AND workers are saturated
+        if (queuedTasks > 100 && activeWorkers > busyThreshold)
         {
             TC_LOG_WARN("module.playerbot.session",
                 "ThreadPool saturated (queue: {} tasks, active: {}/{} workers, busy threshold: {}) - skipping bot updates this tick",

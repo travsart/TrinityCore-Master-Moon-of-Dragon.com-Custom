@@ -216,6 +216,20 @@ void DeathRecoveryManager::OnResurrection()
         recoveryTime / 1000.0f);
 
     Reset();
+
+    // CRITICAL FIX: Signal BotAI to reset AI state from DEAD to SOLO
+    // Without this, bots remain in DEAD state and do nothing after resurrection
+    if (m_ai)
+    {
+        m_ai->OnRespawn();
+        TC_LOG_INFO("playerbot.death", "Bot {} AI state reset via OnRespawn() - bot should now resume normal behavior",
+            m_bot ? m_bot->GetName() : "nullptr");
+    }
+    else
+    {
+        TC_LOG_ERROR("playerbot.death", "Bot {} has no AI reference - cannot reset AI state after resurrection!",
+            m_bot ? m_bot->GetName() : "nullptr");
+    }
 }
 
 void DeathRecoveryManager::Reset()
@@ -1362,14 +1376,39 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
     if (!m_bot)
         return false;
 
-    // PACKET-BASED RESURRECTION (v8): Spirit healer uses CMSG_REPOP_REQUEST
-    // Queue packet for main thread processing via HandleRepopRequest handler
-    WorldPacket* repopPacket = new WorldPacket(CMSG_REPOP_REQUEST, 1);
-    *repopPacket << uint8(0); // CheckInstance = false
-    m_bot->GetSession()->QueuePacket(repopPacket);
+    // SPIRIT HEALER RESURRECTION (v9): Call SendSpiritResurrect directly
+    //
+    // IMPORTANT FIX: The previous approach using CMSG_REPOP_REQUEST packet DOES NOT WORK
+    // for bots that are already ghosts. TrinityCore's HandleRepopRequest() handler
+    // (MiscHandler.cpp:62) explicitly returns early if the player has PLAYER_FLAGS_GHOST:
+    //
+    //   if (GetPlayer()->IsAlive() || GetPlayer()->HasPlayerFlag(PLAYER_FLAGS_GHOST))
+    //       return;
+    //
+    // This means once a bot is a ghost, sending CMSG_REPOP_REQUEST does nothing!
+    //
+    // The correct approach is to call SendSpiritResurrect() directly, which:
+    // 1. Calls ResurrectPlayer(0.5f, true) - resurrects at 50% health with sickness
+    // 2. Applies durability loss (25%)
+    // 3. Spawns corpse bones
+    // 4. Teleports to appropriate graveyard if needed
+    //
+    // For bots, we bypass the normal spirit healer NPC interaction validation since
+    // bots don't need to physically interact with the spirit healer gossip UI.
 
-    TC_LOG_INFO("playerbot.death", "Bot {} queued CMSG_REPOP_REQUEST packet for spirit healer resurrection",
+    WorldSession* session = m_bot->GetSession();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.death", "Bot {} has no session, cannot perform spirit healer resurrection",
+            m_bot->GetName());
+        return false;
+    }
+
+    TC_LOG_INFO("playerbot.death", "Bot {} executing spirit healer resurrection via SendSpiritResurrect()",
         m_bot->GetName());
+
+    // Call SendSpiritResurrect directly - this properly resurrects the ghost
+    session->SendSpiritResurrect();
 
     return true;
 }
