@@ -414,9 +414,10 @@ void BotAI::UpdateAI(uint32 diff)
     // ========================================================================
     // For bots not in a group, activate solo-relevant strategies on first UpdateAI() call
     // This ensures solo bots have active strategies and can perform autonomous actions
-    // Group-related strategies (follow, group_combat) are activated in OnGroupJoined()if (!_bot->GetGroup() && !_soloStrategiesActivated)
+    // Group-related strategies (follow, group_combat) are activated in OnGroupJoined()
+    if (!_bot->GetGroup() && !_soloStrategiesActivated)
     {
-        TC_LOG_INFO("module.playerbot.ai", "🎯 ACTIVATING SOLO STRATEGIES: Bot {} (not in group, first UpdateAI)",_bot->GetName());
+        TC_LOG_INFO("module.playerbot.ai", "🎯 ACTIVATING SOLO STRATEGIES: Bot {} (not in group, first UpdateAI)", _bot->GetName());
 
         // Activate all solo-relevant strategies in priority order:
         ActivateStrategy("rest");
@@ -427,7 +428,7 @@ void BotAI::UpdateAI(uint32 diff)
 
         _soloStrategiesActivated = true;
 
-        TC_LOG_INFO("module.playerbot.ai", "✅ SOLO BOT ACTIVATION COMPLETE: Bot {} - {} strategies active",_bot->GetName(), _activeStrategies.size());
+        TC_LOG_INFO("module.playerbot.ai", "✅ SOLO BOT ACTIVATION COMPLETE: Bot {} - {} strategies active", _bot->GetName(), _activeStrategies.size());
     }
 
     // PHASE 0 - Quick Win #3: Periodic group check REMOVED
