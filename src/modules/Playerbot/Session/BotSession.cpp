@@ -889,7 +889,21 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // Update AI if available and player is valid
         // CRITICAL FIX: Add comprehensive memory safety validation to prevent ACCESS_VIOLATION
         Player* player = GetPlayer();
-        // Removed excessive per-tick logging
+
+        // DIAGNOSTIC: Log if initial conditions fail (throttled)
+        if (!(_ai && player && _active.load() && !_destroyed.load()))
+        {
+            static ::std::unordered_map<uint32, uint32> lastInitFailLog;
+            uint32 now = GameTime::GetGameTimeMS();
+            if (lastInitFailLog.find(accountId) == lastInitFailLog.end() || (now - lastInitFailLog[accountId]) > 10000)
+            {
+                TC_LOG_ERROR("module.playerbot.session",
+                    "⚠️ AI BLOCK SKIPPED for account {} - INITIAL CHECK FAILED: ai={}, player={}, active={}, destroyed={}",
+                    accountId, _ai != nullptr, player != nullptr, _active.load(), _destroyed.load());
+                lastInitFailLog[accountId] = now;
+            }
+        }
+
     if (_ai && player && _active.load() && !_destroyed.load())
     {
 
@@ -1008,7 +1022,16 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         _ai = nullptr;
                     }
                 } else {
-                    // Removed excessive per-tick logging
+                    // DIAGNOSTIC: Log why UpdateAI is NOT being called (throttled to 1 per 10s per account)
+                    static ::std::unordered_map<uint32, uint32> lastFailLog;
+                    uint32 now = GameTime::GetGameTimeMS();
+                    if (lastFailLog.find(accountId) == lastFailLog.end() || (now - lastFailLog[accountId]) > 10000)
+                    {
+                        TC_LOG_ERROR("module.playerbot.session",
+                            "⚠️ UpdateAI NOT called for account {} - CONDITIONS FAILED: valid={}, inWorld={}, ai={}, active={}",
+                            accountId, validSnapshot, inWorldSnapshot, aiSnapshot != nullptr, activeSnapshot);
+                        lastFailLog[accountId] = now;
+                    }
                 }
             }
             catch (...)
