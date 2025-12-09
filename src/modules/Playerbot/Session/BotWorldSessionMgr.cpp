@@ -301,6 +301,31 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
                 player->ResetAllNotifies();
                 TC_LOG_DEBUG("module.playerbot.session", "Cleared visibility flags for bot {} to prevent Cell::Visit crash", playerGuid.ToString());
             }
+
+            // CRITICAL FIX (Map.cpp:1945 crash - Map::SendObjectUpdates crash):
+            // Clear update mask BEFORE queuing for removal to remove from Map::_updateObjects.
+            //
+            // Problem: Map::SendObjectUpdates() iterates over _updateObjects on MapUpdater worker
+            // threads. If a bot is queued for removal here but still has pending updates in
+            // _updateObjects, the worker thread may access a stale pointer causing ACCESS_VIOLATION.
+            //
+            // Race condition:
+            //   1. Main thread: RemovePlayerBot() queues bot for deferred logout
+            //   2. Main thread: MapManager::Update() spawns worker threads
+            //   3. Worker thread: Map::SendObjectUpdates() iterates _updateObjects
+            //   4. Worker thread: Accesses bot that's queued for removal -> CRASH
+            //
+            // Solution: Call ClearUpdateMask(true) which calls RemoveFromObjectUpdate()
+            // to remove the bot from _updateObjects IMMEDIATELY, before MapUpdater workers run.
+            // This is safe because:
+            //   - We're on the main thread (OnBeforeWorldUpdate callback)
+            //   - MapUpdater workers haven't started yet for this tick
+            //   - The bot won't receive any more updates anyway (it's being removed)
+            //
+            // Note: Player::ClearUpdateMask is protected, but Object::ClearUpdateMask is public.
+            // We cast to Object* to access the base class public method.
+            static_cast<Object*>(player)->ClearUpdateMask(true);  // true = remove from _updateObjects
+            TC_LOG_DEBUG("module.playerbot.session", "Cleared update mask for bot {} to prevent Map::SendObjectUpdates crash", playerGuid.ToString());
         }
 
         // Signal session termination - BotSession::Update() will return false next cycle
@@ -781,18 +806,24 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // ============================================================================
     bool canProcessLogouts = true;  // Assume we can process logouts
 
-    // ONLY wait if there are logouts pending - otherwise don't block!
-    if (useThreadPool && !_readyForLogout.empty() && Performance::GetThreadPool().GetQueuedTasks() > 0)
+    // CRITICAL FIX (Unit.cpp:437 m_procDeep crash): ALWAYS wait for ThreadPool completion!
+    // Problem: Bot ThreadPool workers call CastSpell which triggers procs (m_procDeep++).
+    //          If workers are still running when MapUpdater starts, Map::Update calls
+    //          Unit::Update which asserts !m_procDeep - but worker has it incremented!
+    // Solution: Wait for ALL bot update tasks to complete before returning from UpdateSessions.
+    //           This ensures procs are fully resolved before MapUpdater runs.
+    if (useThreadPool && Performance::GetThreadPool().GetQueuedTasks() > 0)
     {
         // Wait up to 50ms for bot update tasks to complete
         // This is acceptable because:
         // 1. Individual bot updates are fast (<1ms each)
         // 2. 50ms is within frame budget (world tick is 50ms)
-        // 3. Prevents race condition that causes Map.cpp:686 crash
+        // 3. Prevents race condition that causes Unit.cpp:437 m_procDeep crash
+        // 4. Prevents race condition that causes Map.cpp:686 crash
         if (!Performance::GetThreadPool().WaitForCompletion(::std::chrono::milliseconds(50)))
         {
             TC_LOG_WARN("module.playerbot.session",
-                "ThreadPool tasks still running after 50ms - deferring logouts to next tick");
+                "ThreadPool tasks still running after 50ms - deferring operations to next tick");
             // Don't process logouts this tick - workers are still accessing player data
             canProcessLogouts = false;
         }
