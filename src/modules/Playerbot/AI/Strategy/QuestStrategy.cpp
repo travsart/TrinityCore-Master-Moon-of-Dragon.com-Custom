@@ -520,6 +520,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
     }
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL: Must be in world before any grid/map operations
+    if (!bot->IsInWorld())
+        return;
+
     TC_LOG_ERROR("module.playerbot.quest", "🎯 EngageQuestTargets: Bot {} searching for quest targets for quest {} objective {}",
                  bot->GetName(), objective.questId, objective.objectiveIndex);
 
@@ -1201,6 +1206,11 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
         return;
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL: Must be in world before any grid/map operations
+    if (!bot->IsInWorld())
+        return;
+
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
 
     TC_LOG_ERROR("module.playerbot.quest", "🎯 TurnInQuest: Bot {} attempting to turn in quest {} ({})",
@@ -2030,6 +2040,17 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
         return false;
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL: Must be in world before any grid/map operations
+    // Without this check, GetCreatureListWithEntryInGrid() calls GetMap() which returns nullptr
+    // causing ACCESS_VIOLATION crash at 0x0 (null pointer dereference)
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ CheckForQuestEnderInRange: Bot {} is not in world, skipping grid search",
+                     bot->GetName());
+        return false;
+    }
+
     TC_LOG_ERROR("module.playerbot.quest", "🔎 CheckForQuestEnderInRange: Bot {} scanning 50-yard radius for NPC entry {}",
                  bot->GetName(), npcEntry);
 

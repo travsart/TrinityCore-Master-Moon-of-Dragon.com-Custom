@@ -586,6 +586,10 @@ bool GrindStrategy::IsSafeToPull(Player* bot, Creature* creature) const
     if (!bot || !creature)
         return false;
 
+    // CRITICAL: Must be in world before any grid/map operations
+    if (!creature->IsInWorld())
+        return false;
+
     // Check for nearby linked mobs
     std::list<Creature*> nearbyMobs;
     creature->GetCreatureListWithEntryInGrid(nearbyMobs, 0, 10.0f); // 10 yard radius
@@ -730,6 +734,10 @@ bool GrindStrategy::CheckQuestAvailability(BotAI* ai)
 
     Player* bot = ai->GetBot();
 
+    // CRITICAL: Must be in world before any grid/map operations
+    if (!bot->IsInWorld())
+        return false;
+
     // Check quest hub database for level-appropriate hubs
     auto& hubDb = QuestHubDatabase::Instance();
     if (!hubDb.IsInitialized())
@@ -834,6 +842,10 @@ bool GrindStrategy::HasTargetsInArea(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL: Must be in world before any grid/map operations
+    if (!bot->IsInWorld())
+        return false;
 
     std::list<Creature*> nearbyCreatures;
     bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, _scanRange);
