@@ -478,6 +478,13 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveState const& objecti
 
     Player* bot = ai->GetBot();
 
+    // CRITICAL: Must be in world before any grid/map operations
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ NavigateToObjective: Bot not in world, aborting");
+        return;
+    }
+
     // CRITICAL FIX: Check for combat FIRST - combat always takes priority over navigation!
     if (bot->IsInCombat())
     {
@@ -793,6 +800,13 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveState const& objective
 
     Player* bot = ai->GetBot();
 
+    // CRITICAL: Must be in world before any grid/map operations
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ CollectQuestItems: Bot not in world, aborting");
+        return;
+    }
+
     // CRITICAL FIX: Check for combat FIRST - combat always takes priority!
     if (bot->IsInCombat())
     {
@@ -889,6 +903,15 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     }
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL: Must be in world before any grid/map operations
+    // IsInWorld() returns false during Player destruction, preventing ACCESS_VIOLATION
+    // in WorldObject::GetMap() calls
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Bot not in world, aborting");
+        return;
+    }
 
     // CRITICAL FIX: Check for combat FIRST - combat always takes priority over questing!
     // This prevents bots from dying because they're trying to use quest items while being attacked.
