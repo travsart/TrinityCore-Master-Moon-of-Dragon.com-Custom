@@ -154,8 +154,11 @@ void CombatBehaviorIntegration::UpdateManagers(uint32 diff)
                      metrics.personalHealthPercent < 20.0f ||
                      (!metrics.healerAlive && metrics.averageGroupHealth < 40.0f);
 
+    // CRITICAL FIX: The 50% health threshold was WAY too aggressive, causing
+    // HandleEmergencies() to return true and skip the combat rotation entirely!
+    // Changed to 25% to only trigger in actual emergency situations.
     _survivalMode = situation == CombatSituation::DEFENSIVE ||
-                    metrics.personalHealthPercent < 50.0f ||
+                    metrics.personalHealthPercent < 25.0f ||
                     _defensiveManager->NeedsEmergencyDefensive();
 }
 
@@ -324,12 +327,16 @@ bool CombatBehaviorIntegration::HandleEmergencies()
     }
 
     // Use health consumables
+    // CRITICAL FIX: Only return true if we ACTUALLY use a consumable.
+    // Previously this returned true just for needing healing, which blocked the rotation
+    // without actually doing anything!
     if (metrics.personalHealthPercent < 30.0f)
     {
-        // Would trigger health potion/healthstone here
+        // TODO: Actually implement health potion/healthstone usage here
+        // For now, just log and continue to rotation (don't block it)
         if (_detailedLogging)
-            TC_LOG_DEBUG("bot.playerbot", "Bot {} needs emergency healing", _bot->GetName());
-        return true;
+            TC_LOG_DEBUG("bot.playerbot", "Bot {} needs emergency healing (not implemented)", _bot->GetName());
+        // return true;  // REMOVED: Don't block rotation without doing anything
     }
 
     // Emergency movement

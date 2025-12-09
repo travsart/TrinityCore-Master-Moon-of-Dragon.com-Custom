@@ -35,9 +35,15 @@
 #include <chrono>
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
+#include "BaselineRotationManager.h"  // Centralized baseline rotation for low-level bots
+#include "../../Session/BotSession.h"  // For thread-safe facing via QueueFacingTarget
 
 namespace Playerbot
 {
+
+// Static instance of BaselineRotationManager for low-level bot handling
+// Initialized once, thread-safe for read operations
+static BaselineRotationManager s_baselineRotationManager;
 
 // ============================================================================
 // CONSTRUCTOR / DESTRUCTOR
@@ -188,48 +194,101 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     // Class-specific combat updates
     if (_currentCombatTarget)
     {
-        TC_LOG_ERROR("module.playerbot", " Calling UpdateRotation for {} (class {}) with target {}",
+        TC_LOG_TRACE("module.playerbot", "Calling UpdateRotation for {} (class {}) with target {}",
                      GetBot()->GetName(), GetBot()->GetClass(), _currentCombatTarget->GetName());
 
-        // DIAGNOSTIC: Check if this is actually the derived class
-        const char* className = typeid(*this).name();
-        TC_LOG_ERROR("module.playerbot", " AI Type: {}", className);
+        // ========================================================================
+        // CENTRALIZED BASELINE ROTATION CHECK - Enterprise-grade dispatch logic
+        // ========================================================================
+        // This is the SINGLE point where we decide whether to use baseline rotation
+        // or specialization-specific rotation. By checking here at the dispatch level:
+        //
+        // 1. ALL spec classes automatically get baseline handling - no code duplication
+        // 2. Spec classes can assume they only receive calls when bot has talents
+        // 3. Single source of truth for the "should use baseline?" decision
+        // 4. Clean separation: BaselineRotationManager handles levels 1-9,
+        //    spec classes handle level 10+ with talents
+        //
+        // The baseline rotation should be used when:
+        // - Bot is level < 10 (no specialization available)
+        // - Bot is level 10+ but hasn't chosen a specialization yet
+        //
+        // This prevents the bug where spec-specific AI (like AfflictionWarlockRefactored)
+        // would try to use abilities the bot doesn't have yet.
+        // ========================================================================
 
-        // FIX FOR ISSUE #3: Ensure melee bots continuously face their target
-        // This prevents the "facing wrong direction" bug where melee bots don't attack
-        // NOTE: Combat movement is now handled by CombatMovementStrategy for role-based positioning
-        float optimalRange = GetOptimalRange(_currentCombatTarget);
-        if (optimalRange <= 5.0f) // Melee range
+        // ========================================================================
+        // THREAD-SAFE FACING - Queue facing request for main thread execution
+        // ========================================================================
+        // SetFacingToObject() manipulates movement splines which is NOT thread-safe.
+        // This code runs on worker threads (ThreadPool) but movement APIs require main thread.
+        //
+        // Solution: Queue the facing request via BotSession::QueueFacingTarget()
+        // The main thread (BotWorldSessionMgr::ProcessAllDeferredPackets) will call
+        // BotSession::ProcessPendingFacing() to safely execute SetFacingToObject().
+        // ========================================================================
+        if (_currentCombatTarget)
         {
-            GetBot()->SetFacingToObject(_currentCombatTarget);
+            // Get the BotSession to queue facing request
+            WorldSession* session = GetBot()->GetSession();
+            if (BotSession* botSession = dynamic_cast<BotSession*>(session))
+            {
+                botSession->QueueFacingTarget(_currentCombatTarget->GetGUID());
+            }
         }
+
+        if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+        {
+            TC_LOG_DEBUG("module.playerbot.baseline",
+                         "Bot {} (level {}, class {}) using BASELINE rotation - no spec yet",
+                         GetBot()->GetName(), GetBot()->GetLevel(), GetBot()->GetClass());
+
+            // Handle auto-specialization attempt at level 10
+            // This will select an optimal spec when the bot reaches level 10
+            s_baselineRotationManager.HandleAutoSpecialization(GetBot());
+
+            // Execute the baseline rotation (class-appropriate abilities for levels 1-9)
+            bool executed = s_baselineRotationManager.ExecuteBaselineRotation(GetBot(), _currentCombatTarget);
+
+            if (!executed)
+            {
+                TC_LOG_TRACE("module.playerbot.baseline",
+                             "Bot {} baseline rotation returned false - relying on auto-attack",
+                             GetBot()->GetName());
+            }
+
+            // Skip the specialized rotation - baseline handles everything for low-level bots
+            // Update cooldowns still applies (shared functionality)
+            UpdateCooldowns(diff);
+            return;
+        }
+
+        // ========================================================================
+        // SPECIALIZATION ROTATION - Bot has talents, use spec-specific AI
+        // ========================================================================
 
         // NOTE: Combat movement (chase, positioning, range management) is delegated to
         // CombatMovementStrategy which provides superior role-based positioning.
         // ClassAI now focuses solely on ability rotation and cooldown management.
 
-        TC_LOG_ERROR("module.playerbot", " About to call UpdateRotation() virtual method");
-        TC_LOG_ERROR("module.playerbot", " Target valid: {}, target name: {}",
-                     _currentCombatTarget != nullptr,
-                     _currentCombatTarget ? _currentCombatTarget->GetName() : "NULL");
+        TC_LOG_TRACE("module.playerbot", "Bot {} calling specialized UpdateRotation()",
+                     GetBot()->GetName());
 
-        // Update class-specific rotation
+        // Update class-specific rotation (spec classes can assume talents exist)
         try
         {
-            TC_LOG_ERROR("module.playerbot", " INSIDE TRY BLOCK - calling UpdateRotation");
             UpdateRotation(_currentCombatTarget);
-            TC_LOG_ERROR("module.playerbot", " UpdateRotation call completed without exception");
         }
         catch (::std::exception const& e)
         {
-            TC_LOG_ERROR("module.playerbot", " EXCEPTION in UpdateRotation: {}", e.what());
+            TC_LOG_ERROR("module.playerbot", "EXCEPTION in UpdateRotation for {}: {}",
+                         GetBot()->GetName(), e.what());
         }
         catch (...)
         {
-            TC_LOG_ERROR("module.playerbot", " UNKNOWN EXCEPTION in UpdateRotation");
+            TC_LOG_ERROR("module.playerbot", "UNKNOWN EXCEPTION in UpdateRotation for {}",
+                         GetBot()->GetName());
         }
-
-        TC_LOG_ERROR("module.playerbot", " Returned from UpdateRotation()");
 
         // Update class-specific cooldowns
         UpdateCooldowns(diff);
@@ -688,16 +747,16 @@ bool ClassAI::CanRequestBotSpellCast(uint32 spellId) const
 
 bool ClassAI::CanExecutePendingSpell() const
 {
-    // DIAGNOSTIC: Log every check to trace execution flow
-
-    TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} has pending spell {} queued",
-                GetBot() ? GetBot()->GetName() : "NULL", _pendingSpellCastRequest->spellId);
+    // CRITICAL FIX: Check for null BEFORE accessing any member
+    if (!_pendingSpellCastRequest)
+        return false;
 
     if (!GetBot())
-    {
-        TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: NO BOT");
         return false;
-    }
+
+    // DIAGNOSTIC: Log every check to trace execution flow (now safe since we checked for null above)
+    TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} has pending spell {} queued",
+                GetBot()->GetName(), _pendingSpellCastRequest->spellId);
 
     // CRITICAL FIX: Don't check UNIT_STATE_CASTING for bots    // Unlike players who have packet-driven spell casting, bots queue spells
     // and then ExecutePendingSpell() calls Spell::prepare() which sets the state.
@@ -849,12 +908,19 @@ void ClassAI::CancelPendingSpell()
 
 ::SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
 {
+    TC_LOG_ERROR("playerbot.classai.spell", "ClassAI::CastSpell ENTRY: spell={} target={} bot={}",
+                 spellId, target ? target->GetName() : "NULL", GetBot() ? GetBot()->GetName() : "NULL");
+
     // If no target specified, self-cast
     if (!target)
         target = GetBot();
 
     if (!target || !spellId || !GetBot())
+    {
+        TC_LOG_ERROR("playerbot.classai.spell", "ClassAI::CastSpell FAILED: target={} spellId={} bot={}",
+                     target != nullptr, spellId, GetBot() != nullptr);
         return SPELL_FAILED_ERROR;
+    }
 
     // MIGRATION COMPLETE (2025-10-30):
     // Replaced direct CastSpell(spellId, false, ) API call with packet-based SpellPacketBuilder.
@@ -865,24 +931,24 @@ void ClassAI::CancelPendingSpell()
     // Pre-validation (ClassAI-specific checks before packet building)
     if (!IsSpellUsable(spellId))
     {
-        TC_LOG_TRACE("playerbot.classai.spell",
-                     "ClassAI spell {} not usable for bot {}",
+        TC_LOG_ERROR("playerbot.classai.spell",
+                     "ClassAI::CastSpell FAILED: spell {} not usable for bot {}",
                      spellId, GetBot()->GetName());
         return SPELL_FAILED_NOT_READY;
     }
 
     if (!IsInRange(target, spellId))
     {
-        TC_LOG_TRACE("playerbot.classai.spell",
-                     "ClassAI spell {} target out of range for bot {}",
+        TC_LOG_ERROR("playerbot.classai.spell",
+                     "ClassAI::CastSpell FAILED: spell {} target out of range for bot {}",
                      spellId, GetBot()->GetName());
         return SPELL_FAILED_OUT_OF_RANGE;
     }
 
     if (!HasLineOfSight(target))
     {
-        TC_LOG_TRACE("playerbot.classai.spell",
-                     "ClassAI spell {} target no LOS for bot {}",
+        TC_LOG_ERROR("playerbot.classai.spell",
+                     "ClassAI::CastSpell FAILED: spell {} target no LOS for bot {}",
                      spellId, GetBot()->GetName());
         return SPELL_FAILED_LINE_OF_SIGHT;
     }
@@ -909,7 +975,24 @@ void ClassAI::CancelPendingSpell()
     auto result = SpellPacketBuilder::BuildCastSpellPacket(GetBot(), spellId, target, options);
     if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
-        // Packet successfully queued to main thread
+        // CRITICAL FIX: Actually send the packet to the session!
+        // Previously the packet was built but never queued, so spells were never cast.
+        // This is why bots were only doing auto-attack with 1 damage - no abilities fired!
+        if (result.packet && GetBot()->GetSession())
+        {
+            // QueuePacket takes ownership of raw pointer (deletes after processing)
+            GetBot()->GetSession()->QueuePacket(result.packet.release());
+            TC_LOG_ERROR("playerbot.classai.spell",
+                         "🎯 ClassAI QUEUED spell {} packet for bot {} targeting {}",
+                         spellId, GetBot()->GetName(), target->GetName());
+        }
+        else
+        {
+            TC_LOG_ERROR("playerbot.classai.spell",
+                         "❌ ClassAI spell {} packet build succeeded but packet/session is null for bot {}",
+                         spellId, GetBot()->GetName());
+            return SPELL_FAILED_ERROR;
+        }
 
         // Optimistic resource consumption and cooldown tracking
         // (Will be validated again on main thread, but tracking here for ClassAI responsiveness)

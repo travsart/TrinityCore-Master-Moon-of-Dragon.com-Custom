@@ -189,7 +189,7 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastObjectiveUpdate > 2000) // Every 2 seconds
     {
-        (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->UpdateBotTracking(bot, diff) : (void)0);
+        (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->UpdateBotTracking(bot, diff) : (void)0);
         _lastObjectiveUpdate = currentTime;
     }
 
@@ -238,7 +238,10 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     TC_LOG_ERROR("module.playerbot.quest", "ProcessQuestObjectives: Bot {} starting objective processing", bot->GetName());
 
     // Get highest priority objective from ObjectiveTracker
-    ObjectivePriority priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
+    // CRITICAL FIX: Use ai->GetGameSystems() directly instead of GetGameSystems(bot)
+    // The helper function GetGameSystems(bot) goes through player->GetAI() which may return
+    // nullptr if the AI is being accessed from a different context (e.g., worker thread)
+    ObjectivePriority priority = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
 
     TC_LOG_ERROR("module.playerbot.quest", "🎯 ProcessQuestObjectives: Bot {} - priority.questId={}, priority.objectiveIndex={}",
                  bot->GetName(), priority.questId, priority.objectiveIndex);
@@ -282,7 +285,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                 // Create objective data using constructor (questId, index, type, targetId, requiredCount)
                 QuestObjectiveData objData(questId, i, objType, objective.ObjectID, objective.Amount);
 
-                IGameSystemsManager* gameSystems = GetGameSystems(bot);
+                IGameSystemsManager* gameSystems = ai->GetGameSystems();
                 if (gameSystems && gameSystems->GetObjectiveTracker())
                 {
                     TC_LOG_ERROR("module.playerbot.quest", "📝 ProcessQuestObjectives: Bot {} registering objective {} for quest {} (type={}, targetId={}, amount={})",
@@ -297,7 +300,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             }
         }
         // Try again after initialization
-        priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
+        priority = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
         TC_LOG_ERROR("module.playerbot.quest", "🔄 ProcessQuestObjectives: Bot {} after initialization - priority.questId={}, priority.objectiveIndex={}",
                      bot->GetName(), priority.questId, priority.objectiveIndex);
 
@@ -362,7 +365,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
         }
     }
     // Get objective state
-    ObjectiveState objective = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetObjectiveState(bot, priority.questId, priority.objectiveIndex) : ObjectiveState());
+    ObjectiveState objective = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetObjectiveState(bot, priority.questId, priority.objectiveIndex) : ObjectiveState());
 
     // Cache current objective info
     _currentQuestId = objective.questId;
@@ -474,6 +477,15 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveState const& objecti
     }
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL FIX: Check for combat FIRST - combat always takes priority over navigation!
+    if (bot->IsInCombat())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚔️ NavigateToObjective: Bot {} IN COMBAT - aborting navigation, combat takes priority!",
+                     bot->GetName());
+        return;
+    }
+
     TC_LOG_ERROR("module.playerbot.quest", "🗺️ NavigateToObjective: Bot {} navigating to quest {} objective {}",
                  bot->GetName(), objective.questId, objective.objectiveIndex);
 
@@ -780,6 +792,15 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveState const& objective
     }
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL FIX: Check for combat FIRST - combat always takes priority!
+    if (bot->IsInCombat())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚔️ CollectQuestItems: Bot {} IN COMBAT - aborting item collection, combat takes priority!",
+                     bot->GetName());
+        return;
+    }
+
     TC_LOG_ERROR("module.playerbot.quest", "📦 CollectQuestItems: Bot {} starting item collection for quest {} objective {}",
                  bot->GetName(), objective.questId, objective.objectiveIndex);
 
@@ -868,6 +889,16 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     }
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL FIX: Check for combat FIRST - combat always takes priority over questing!
+    // This prevents bots from dying because they're trying to use quest items while being attacked.
+    if (bot->IsInCombat())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚔️ UseQuestItemOnTarget: Bot {} IN COMBAT - aborting quest item usage, combat takes priority!",
+                     bot->GetName());
+        return;
+    }
+
     TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Bot {} using quest item for quest {} objective {}",
                  bot->GetName(), objective.questId, objective.objectiveIndex);
 
@@ -921,7 +952,7 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     uint32 targetObjectId = questObjective.ObjectID;
 
     // Scan for target GameObject in 200-yard radius (same as FindQuestObject)
-    std::vector<uint32> objects = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->ScanForGameObjects(bot, targetObjectId, 200.0f) : std::vector<uint32>());
+    std::vector<uint32> objects = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->ScanForGameObjects(bot, targetObjectId, 200.0f) : std::vector<uint32>());
 
     TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning for GameObject {} - found {} objects",
                  targetObjectId, objects.size());
@@ -984,7 +1015,8 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
 
     if (snapshot)
     {
-        // Get GameObject* for quest item use (validated via snapshot first)
+        // CRITICAL FIX: Actually retrieve the GameObject from the snapshot!
+        targetObject = ObjectAccessor::GetGameObject(*bot, targetGuid);
     }
 
     if (!targetObject)
@@ -1222,6 +1254,14 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
     if (!bot->IsInWorld())
         return;
 
+    // CRITICAL FIX: Check for combat FIRST - combat always takes priority!
+    if (bot->IsInCombat())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚔️ TurnInQuest: Bot {} IN COMBAT - aborting turn-in, combat takes priority!",
+                     bot->GetName());
+        return;
+    }
+
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
 
     TC_LOG_ERROR("module.playerbot.quest", "🎯 TurnInQuest: Bot {} attempting to turn in quest {} ({})",
@@ -1271,7 +1311,7 @@ ObjectivePriority QuestStrategy::GetCurrentObjective(BotAI* ai) const
         return ObjectivePriority(0, 0);
 
     Player* bot = ai->GetBot();
-    return (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
+    return (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
 }
 
 bool QuestStrategy::HasActiveObjectives(BotAI* ai) const
@@ -1370,7 +1410,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
                                       static_cast<QuestObjectiveType>(questObjective.Type),
                                       questObjective.ObjectID, questObjective.Amount);
 
-            Position newPos = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->FindObjectiveTargetLocation(bot, objData) : Position());
+            Position newPos = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->FindObjectiveTargetLocation(bot, objData) : Position());
             // Check if we got a valid position
             if (newPos.GetExactDist2d(0.0f, 0.0f) > 0.1f)
             {
@@ -1454,6 +1494,14 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
     if (snapshot)
     {
         // Get Unit* for quest NPC interaction (validated via snapshot first)
+        // CRITICAL FIX: Actually retrieve the Creature from the snapshot!
+        // The snapshot validation confirms the creature exists, now get the real pointer
+        target = ObjectAccessor::GetCreature(*bot, targetGuid);
+        if (!target)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestTarget: Snapshot found creature {} but ObjectAccessor::GetCreature returned nullptr",
+                         targetGuid.GetCounter());
+        }
     }
 
     // CRITICAL FIX: Distinguish between "talk to" NPCs and "attackable neutral" mobs
@@ -1553,7 +1601,21 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveState const& obje
 
     if (snapshot)
     {
-        // Get GameObject* for quest object interaction (validated via snapshot first)
+        // CRITICAL FIX: Actually retrieve the GameObject from the snapshot!
+        // The snapshot validation confirms the object exists, now get the real pointer
+        gameObject = ObjectAccessor::GetGameObject(*bot, objectGuid);
+        if (!gameObject)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestObject: Snapshot found GameObject {} but ObjectAccessor::GetGameObject returned nullptr",
+                         objectGuid.GetCounter());
+            return nullptr;
+        }
+    }
+    else
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestObject: Bot {} - Snapshot validation failed for GameObject {}",
+                     bot->GetName(), objectGuid.GetCounter());
+        return nullptr;
     }
 
     TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestObject: Bot {} found GameObject {} (Entry: {}) at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
@@ -1599,6 +1661,14 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
     // in WorldObject::GetMap() and GetCreatureListWithEntryInGrid() grid operations
     if (!bot->IsInWorld())
         return;
+
+    // CRITICAL FIX: Check for combat FIRST - combat always takes priority!
+    if (bot->IsInCombat())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚔️ SearchForQuestGivers: Bot {} IN COMBAT - aborting search, combat takes priority!",
+                     bot->GetName());
+        return;
+    }
 
     TC_LOG_ERROR("module.playerbot.quest", "🔍 SearchForQuestGivers: ENTRY for bot {}", bot->GetName());
 
@@ -2160,7 +2230,7 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
     TC_LOG_ERROR("module.playerbot.quest", "🎯 CheckForQuestEnderInRange: Bot {} at quest ender {} (distance {:.1f} <= INTERACTION_DISTANCE), processing quest turn-ins",
                  bot->GetName(), closestQuestEnder->GetName(), closestDistance);
 
-    // Scan ALL active quests and turn in any that are complete with this NPC
+    // Scan ALL active quests and turn in any that are complete OR talk-to quests with this NPC
     bool anyQuestTurnedIn = false;
 
     for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
@@ -2169,13 +2239,18 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
         if (questId == 0)
             continue;
 
-        // Check if quest is complete
-        if (bot->GetQuestStatus(questId) != QUEST_STATUS_COMPLETE)
-            continue;
-
-        // Verify this NPC can end this quest
         Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
         if (!quest)
+            continue;
+
+        QuestStatus status = bot->GetQuestStatus(questId);
+
+        // Check if quest is complete OR is a "talk-to" quest (incomplete with no objectives)
+        // Talk-to quests need NPC interaction to complete - they don't have kill/collect objectives
+        bool isComplete = (status == QUEST_STATUS_COMPLETE);
+        bool isTalkToQuest = (status == QUEST_STATUS_INCOMPLETE && quest->Objectives.empty());
+
+        if (!isComplete && !isTalkToQuest)
             continue;
 
         // Check if this NPC is a valid quest ender for this quest
@@ -2193,14 +2268,22 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
 
         if (!isValidEnder)
         {
-            TC_LOG_ERROR("module.playerbot.quest", "⚠️ CheckForQuestEnderInRange: NPC {} is NOT a valid ender for quest {} ({}), skipping",
+            TC_LOG_DEBUG("module.playerbot.quest", "⚠️ CheckForQuestEnderInRange: NPC {} is NOT a valid ender for quest {} ({}), skipping",
                          closestQuestEnder->GetName(), questId, quest->GetLogTitle());
             continue;
         }
 
         // Turn in the quest
-        TC_LOG_ERROR("module.playerbot.quest", "🎯 CheckForQuestEnderInRange: Bot {} turning in quest {} ({}) to NPC {}",
-                     bot->GetName(), questId, quest->GetLogTitle(), closestQuestEnder->GetName());
+        if (isTalkToQuest)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🗣️ CheckForQuestEnderInRange: Bot {} turning in TALK-TO quest {} ({}) to NPC {}",
+                         bot->GetName(), questId, quest->GetLogTitle(), closestQuestEnder->GetName());
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🎯 CheckForQuestEnderInRange: Bot {} turning in COMPLETE quest {} ({}) to NPC {}",
+                         bot->GetName(), questId, quest->GetLogTitle(), closestQuestEnder->GetName());
+        }
 
         if (CompleteQuestTurnIn(ai, questId, closestQuestEnder))
         {

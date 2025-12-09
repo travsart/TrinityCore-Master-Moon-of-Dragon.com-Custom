@@ -885,6 +885,47 @@ void BotAI::UpdateCombatState(uint32 diff)
             }
         }
 
+        // CRITICAL FIX #2: If still no target, find who's attacking us (reactive combat)
+        // When a mob attacks the bot, GetVictim() is nullptr because we haven't called Attack() yet
+        // We need to find the attacker from our threat list or attackers list
+        //
+        // NOTE: getAttackers() returns a reference to a set that can be modified by the main thread
+        // while we iterate. This is a potential race condition. We wrap in try-catch and copy
+        // the GUIDs first to minimize the window of potential corruption.
+        if (!target)
+        {
+            try
+            {
+                // Copy attacker GUIDs first (smaller window for race condition)
+                std::vector<ObjectGuid> attackerGuids;
+                {
+                    Unit::AttackerSet const& attackers = _bot->getAttackers();
+                    attackerGuids.reserve(attackers.size());
+                    for (Unit* attacker : attackers)
+                    {
+                        if (attacker)
+                            attackerGuids.push_back(attacker->GetGUID());
+                    }
+                }
+
+                // Now safely iterate the copied GUIDs
+                for (ObjectGuid const& guid : attackerGuids)
+                {
+                    Unit* attacker = ObjectAccessor::GetUnit(*_bot, guid);
+                    if (attacker && attacker->IsAlive() && _bot->IsValidAttackTarget(attacker))
+                    {
+                        target = attacker;
+                        TC_LOG_ERROR("module.playerbot", "🎯 Target from getAttackers(): {}", target->GetName());
+                        break;
+                    }
+                }
+            }
+            catch (...)
+            {
+                TC_LOG_ERROR("module.playerbot", "⚠️ Exception while iterating attackers for bot {}", _bot->GetName());
+            }
+        }
+
         if (target)
         {
             TC_LOG_ERROR("module.playerbot", "✅ Calling OnCombatStart() with target {}", target->GetName());
