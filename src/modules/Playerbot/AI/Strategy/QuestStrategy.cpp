@@ -282,7 +282,18 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                 // Create objective data using constructor (questId, index, type, targetId, requiredCount)
                 QuestObjectiveData objData(questId, i, objType, objective.ObjectID, objective.Amount);
 
-                (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->StartTrackingObjective(bot, objData) : (void)0);
+                IGameSystemsManager* gameSystems = GetGameSystems(bot);
+                if (gameSystems && gameSystems->GetObjectiveTracker())
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "📝 ProcessQuestObjectives: Bot {} registering objective {} for quest {} (type={}, targetId={}, amount={})",
+                                 bot->GetName(), i, questId, static_cast<int>(objType), objective.ObjectID, objective.Amount);
+                    gameSystems->GetObjectiveTracker()->StartTrackingObjective(bot, objData);
+                }
+                else
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "❌ ProcessQuestObjectives: Bot {} - GetGameSystems() or GetObjectiveTracker() returned nullptr! Cannot register objective.",
+                                 bot->GetName());
+                }
             }
         }
         // Try again after initialization

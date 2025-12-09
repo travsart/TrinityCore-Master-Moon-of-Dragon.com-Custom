@@ -63,6 +63,9 @@ struct ObjectiveState
     bool isStuck;
     uint32 stuckTime;
 
+    // NOTE: lastUpdateTime defaults to 0 here. Callers MUST set lastUpdateTime = GameTime::GetGameTimeMS()
+    // after construction, otherwise CleanupInactiveTracking() will immediately remove the objective
+    // (since currentTime - 0 > OBJECTIVE_TIMEOUT for any reasonable game time).
     ObjectiveState() : questId(0), objectiveIndex(0), status(ObjectiveStatus::NOT_STARTED)
         , currentProgress(0), requiredProgress(1), lastUpdateTime(0), timeStarted(0)
         , estimatedTimeRemaining(0), completionVelocity(0.0f), isOptimized(false)

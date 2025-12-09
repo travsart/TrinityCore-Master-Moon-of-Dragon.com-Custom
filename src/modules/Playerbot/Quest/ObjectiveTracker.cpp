@@ -47,6 +47,8 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     ObjectiveState state(objective.questId, objective.objectiveIndex);
     state.status = ObjectiveStatus::IN_PROGRESS;
     state.requiredProgress = objective.requiredCount;
+    state.lastUpdateTime = GameTime::GetGameTimeMS();  // CRITICAL: Initialize to prevent immediate cleanup
+    state.timeStarted = GameTime::GetGameTimeMS();
 
     // CRITICAL FIX: Set objective position to actual quest target location, NOT bot's current position!
     // Get the spawn location of the quest target (creature/object/etc)
