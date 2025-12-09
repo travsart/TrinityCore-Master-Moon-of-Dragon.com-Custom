@@ -971,268 +971,161 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     TC_LOG_ERROR("module.playerbot.quest", "📊 UseQuestItemOnTarget: Progress: {} / {} - need to use item {} more times",
                  currentProgress, requiredAmount, requiredAmount - currentProgress);
 
-    // Find the target GameObject (e.g., fire for Quest 26391)
+    // CRITICAL: ObjectID can be either a GameObject entry OR a Creature entry!
+    // For example, Quest 26391 uses item on Creature entry 42940 (Northshire Vineyards Fire Trigger)
+    // We need to try BOTH types.
     uint32 targetObjectId = questObjective.ObjectID;
 
-    // Scan for target GameObject in 200-yard radius (same as FindQuestObject)
-    std::vector<uint32> objects = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->ScanForGameObjects(bot, targetObjectId, 200.0f) : std::vector<uint32>());
+    TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Looking for target with ObjectID {} (could be GameObject OR Creature)",
+                 targetObjectId);
 
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning for GameObject {} - found {} objects",
-                 targetObjectId, objects.size());
+    // ============================================================
+    // PHASE 1: Try to find as CREATURE first (more common for use-item quests)
+    // ============================================================
+    ::Unit* targetCreature = nullptr;
+    float nearestCreatureDistance = std::numeric_limits<float>::max();
 
-    if (objects.empty())
-    {
-        // No target found - navigate to objective area
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: NO target GameObject {} found, navigating to objective area",
-                     targetObjectId);
-        NavigateToObjective(ai, objective);
-        return;
-    }
-
-    // DEADLOCK FIX: Use spatial grid snapshots instead of ObjectAccessor in loop
+    // Use spatial grid to find nearby creatures
     Map* map = bot->GetMap();
     if (!map)
         return;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-        return;
-
-    // Query nearby GameObjects (lock-free!)
-    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
-        spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 200.0f);
-
-    // Find the nearest valid GameObject matching target entry
-    ObjectGuid targetGuid;
-    float nearestDistance = std::numeric_limits<float>::max();
-    uint32 validObjectsFound = 0;
-
-    for (auto const& snapshot : nearbyObjects)
+    if (spatialGrid)
     {
-        // Filter by entry ID
-        if (snapshot.entry != targetObjectId)
-            continue;
+        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+            spatialGrid->QueryNearbyCreatures(bot->GetPosition(), 100.0f);
 
-        // CRITICAL FIX: Be more permissive with state checks!
-        // The spatial grid snapshot fields may not be populated correctly for all GameObjects.
-        // Quest objects often have different states (GO_STATE_ACTIVE instead of GO_STATE_READY).
-        // Only skip if explicitly marked as not spawned AND not a quest object.
-        if (!snapshot.isSpawned && !snapshot.isQuestObject && !snapshot.isUsable)
+        TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning {} nearby creatures for entry {}",
+                     nearbyCreatures.size(), targetObjectId);
+
+        ObjectGuid nearestCreatureGuid;
+        for (auto const& snapshot : nearbyCreatures)
         {
-            TC_LOG_DEBUG("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject entry={} is NOT spawned (spawned={}, questObj={}, usable={}), skipping",
-                         snapshot.entry, snapshot.isSpawned, snapshot.isQuestObject, snapshot.isUsable);
-            continue;
+            if (snapshot.entry != targetObjectId)
+                continue;
+
+            float distance = bot->GetExactDist(snapshot.position);
+            TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found Creature entry={} at distance {:.1f}yd",
+                         snapshot.entry, distance);
+
+            if (distance < nearestCreatureDistance)
+            {
+                nearestCreatureDistance = distance;
+                nearestCreatureGuid = snapshot.guid;
+            }
         }
 
-        validObjectsFound++;
-
-        // Find nearest valid GameObject using snapshot position
-        float distance = bot->GetExactDist(snapshot.position);
-        if (distance < nearestDistance)
+        if (!nearestCreatureGuid.IsEmpty())
         {
-            nearestDistance = distance;
-            targetGuid = snapshot.guid;
+            targetCreature = ObjectAccessor::GetCreature(*bot, nearestCreatureGuid);
+            if (targetCreature)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Using CREATURE {} (entry {}) at {:.1f}yd",
+                             targetCreature->GetName(), targetCreature->GetEntry(), nearestCreatureDistance);
+            }
         }
     }
 
-    // PHASE 5D: Thread-safe spatial grid validation
-    auto snapshot = SpatialGridQueryHelpers::FindGameObjectByGuid(bot, targetGuid);
+    // ============================================================
+    // PHASE 2: If no creature found, try GameObject
+    // ============================================================
     GameObject* targetObject = nullptr;
+    float nearestObjectDistance = std::numeric_limits<float>::max();
 
-    if (snapshot)
+    if (!targetCreature && spatialGrid)
     {
-        // CRITICAL FIX: Actually retrieve the GameObject from the snapshot!
-        targetObject = ObjectAccessor::GetGameObject(*bot, targetGuid);
+        std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+            spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 100.0f);
+
+        TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning {} nearby GameObjects for entry {}",
+                     nearbyObjects.size(), targetObjectId);
+
+        ObjectGuid nearestObjectGuid;
+        for (auto const& snapshot : nearbyObjects)
+        {
+            if (snapshot.entry != targetObjectId)
+                continue;
+
+            float distance = bot->GetExactDist(snapshot.position);
+            TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found GameObject entry={} at distance {:.1f}yd",
+                         snapshot.entry, distance);
+
+            if (distance < nearestObjectDistance)
+            {
+                nearestObjectDistance = distance;
+                nearestObjectGuid = snapshot.guid;
+            }
+        }
+
+        if (!nearestObjectGuid.IsEmpty())
+        {
+            targetObject = ObjectAccessor::GetGameObject(*bot, nearestObjectGuid);
+            if (targetObject)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Using GAMEOBJECT {} (entry {}) at {:.1f}yd",
+                             targetObject->GetName(), targetObject->GetEntry(), nearestObjectDistance);
+            }
+        }
     }
 
-    if (!targetObject)
+    // ============================================================
+    // PHASE 3: Check if we found anything
+    // ============================================================
+    if (!targetCreature && !targetObject)
     {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: No valid (spawned & ready) GameObject {} found (scanned {} nearby objects, {} were valid but GUID resolution failed)",
-                     targetObjectId, nearbyObjects.size(), validObjectsFound);
-
-        // All gameobjects might be despawned/used - navigate to objective area to wait for respawn
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: No target found for ObjectID {} (checked both Creatures and GameObjects)",
+                     targetObjectId);
         NavigateToObjective(ai, objective);
         return;
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found nearest valid GameObject {} at ({:.1f}, {:.1f}, {:.1f}) - distance {:.1f}yd ({} valid nearby)",
-                 targetObject->GetEntry(),
-                 targetObject->GetPositionX(), targetObject->GetPositionY(), targetObject->GetPositionZ(),
-                 nearestDistance, validObjectsFound);
+    // Determine which target to use (creature takes priority if both exist)
+    WorldObject* targetWorldObject = targetCreature ? static_cast<WorldObject*>(targetCreature) : static_cast<WorldObject*>(targetObject);
+    float currentDistance = targetCreature ? nearestCreatureDistance : nearestObjectDistance;
+    bool isCreatureTarget = (targetCreature != nullptr);
 
-    // CRITICAL: Calculate SAFE distance from target based on GameObject type and damage radius
-    // We need to detect if the GameObject causes damage and how large the damage area is
+    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Target is {} (entry {}), distance {:.1f}yd",
+                 isCreatureTarget ? "CREATURE" : "GAMEOBJECT",
+                 isCreatureTarget ? targetCreature->GetEntry() : targetObject->GetEntry(),
+                 currentDistance);
 
-    GameObjectTemplate const* goInfo = targetObject->GetGOInfo();
-    float damageRadius = 0.0f;
-    bool causesDamage = false;
-
-    // Detect damage-causing GameObjects and their radius
-    if (goInfo)
-    {
-        switch (goInfo->type)
-        {
-            case GAMEOBJECT_TYPE_TRAP: // Type 6 - Traps (like "Bonfire Damage")
-            {
-                // For traps: data1 is lockId, data2 is radius, data3 is spellId
-                damageRadius = static_cast<float>(goInfo->trap.radius);
-                causesDamage = (goInfo->trap.spell != 0); // Has damage spell
-
-                TC_LOG_ERROR("module.playerbot.quest", "🔥 UseQuestItemOnTarget: GameObject is TRAP type - radius={:.1f}yd, spellId={}, causes damage={}",
-                             damageRadius, goInfo->trap.spell, causesDamage);
-                break;
-            }
-            case GAMEOBJECT_TYPE_SPELL_FOCUS: // Type 8 - Spell Focus (like "Fire", "Campfire")
-            {
-                // For spell focus: data0 is spellFocusType, data1 is radius, data2 is linkedTrap
-                damageRadius = static_cast<float>(goInfo->spellFocus.radius);
-
-                // Check if linked to a trap GameObject (indicates it causes damage)
-                if (goInfo->spellFocus.linkedTrap != 0)
-                {
-                    causesDamage = true;
-                    TC_LOG_ERROR("module.playerbot.quest", "🔥 UseQuestItemOnTarget: GameObject is SPELL_FOCUS with LINKED TRAP {} - radius={:.1f}yd",
-                                 goInfo->spellFocus.linkedTrap, damageRadius);
-                }
-                else
-                {
-                    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: GameObject is SPELL_FOCUS without trap - radius={:.1f}yd, safe",
-                                 damageRadius);
-                }
-                break;
-            }
-            case GAMEOBJECT_TYPE_AURA_GENERATOR: // Type 30 - Aura Generator
-            {
-                // For aura generator: data1 is radius, data2/data4 are auraID1/auraID2
-                damageRadius = static_cast<float>(goInfo->auraGenerator.radius);
-                causesDamage = (goInfo->auraGenerator.auraID1 != 0 || goInfo->auraGenerator.auraID2 != 0);
-
-                TC_LOG_ERROR("module.playerbot.quest", "🔮 UseQuestItemOnTarget: GameObject is AURA_GENERATOR - radius={:.1f}yd, auraID1={}, auraID2={}, causes damage={}",
-                             damageRadius, goInfo->auraGenerator.auraID1, goInfo->auraGenerator.auraID2, causesDamage);
-                break;
-            }
-            default:
-            {
-                TC_LOG_ERROR("module.playerbot.quest", "ℹ️ UseQuestItemOnTarget: GameObject type {} - assuming safe, no damage detection",
-                             goInfo->type);
-                break;
-            }
-        }
-    }
-
-    // Calculate safe positioning
-    float gameObjectScale = targetObject->GetObjectScale();
-    float baseRadius = damageRadius > 0.0f ? damageRadius : (gameObjectScale * 2.0f);
-    // Safe distance calculation:
-    // - If causes damage: damage radius + 3 yards safety buffer + item use margin
-    // - If no damage: just use reasonable item casting distance
-    float safeDistance;
-    if (causesDamage && damageRadius > 0.0f)
-    {
-        // Stay OUTSIDE damage radius with safety buffer
-        safeDistance = damageRadius + 3.0f; // 3 yard safety buffer outside damage zone
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject CAUSES DAMAGE - staying {:.1f}yd outside damage radius ({:.1f}yd + 3yd safety)",
-                     safeDistance, damageRadius);
-    }
-    else
-    {
-        // No damage - can get closer
-        safeDistance = baseRadius + 5.0f; // Standard item use distance
-        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: GameObject SAFE - using standard distance {:.1f}yd",
-                     safeDistance);
-    }
-
-    float minSafeDistance = safeDistance;
+    // ============================================================
+    // PHASE 4: Position and use item
+    // ============================================================
+    float safeDistance = 5.0f;  // Standard interaction distance
     float maxUseDistance = 30.0f; // Maximum range for item usage
 
-    TC_LOG_ERROR("module.playerbot.quest", "📏 UseQuestItemOnTarget: GameObject scale={:.1f}, damage radius={:.1f}yd, safe distance={:.1f}yd",
-                 gameObjectScale, damageRadius, safeDistance);
-
-    // Calculate bot's current distance to target
-    float currentDistance = std::sqrt(bot->GetExactDistSq(targetObject)); // Calculate once from squared distance
-
-    TC_LOG_ERROR("module.playerbot.quest", "📏 UseQuestItemOnTarget: Bot distance to target={:.1f}yd (safe range: {:.1f}-{:.1f}yd)",
-                 currentDistance, minSafeDistance, maxUseDistance);
-
-    // Check if bot is in safe range
-    if (currentDistance < minSafeDistance)
+    // Check if bot is in range
+    if (currentDistance > maxUseDistance)
     {
-        // TOO CLOSE - move away to safe distance
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: Bot {} TOO CLOSE to target ({:.1f}yd < {:.1f}yd safe distance) - MOVING AWAY",
-                     bot->GetName(), currentDistance, minSafeDistance);
-
-        // Calculate position AWAY from target at safe distance
-        // Get angle from target to bot
-        float angleToBot = targetObject->GetRelativeAngle(bot);
-        // Create position at safe distance in that direction
-        Position safePos;
-        targetObject->GetNearPoint(bot, safePos.m_positionX, safePos.m_positionY, safePos.m_positionZ,
-                                   safeDistance, angleToBot);
-
-        TC_LOG_ERROR("module.playerbot.quest", "🏃 UseQuestItemOnTarget: Moving AWAY to safe position ({:.1f}, {:.1f}, {:.1f}) at distance {:.1f}yd",
-                     safePos.GetPositionX(), safePos.GetPositionY(), safePos.GetPositionZ(), safeDistance);
-
-        BotMovementUtil::MoveToPosition(bot, safePos);
-        return;
-    }
-    else if (currentDistance > maxUseDistance)
-    {
-        // TOO FAR - move closer to safe distance
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: Bot {} TOO FAR from target ({:.1f}yd > {:.1f}yd max use distance) - MOVING CLOSER",
+        // TOO FAR - move closer
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: Bot {} TOO FAR ({:.1f}yd > {:.1f}yd) - MOVING CLOSER",
                      bot->GetName(), currentDistance, maxUseDistance);
 
-        // Calculate position TOWARD target at safe distance
-        float angleFromBot = bot->GetRelativeAngle(targetObject);
-
         Position closePos;
-        bot->GetNearPoint(bot, closePos.m_positionX, closePos.m_positionY, closePos.m_positionZ,
-                          safeDistance, angleFromBot);
-
-        TC_LOG_ERROR("module.playerbot.quest", "🏃 UseQuestItemOnTarget: Moving CLOSER to safe position ({:.1f}, {:.1f}, {:.1f}) at distance {:.1f}yd",
-                     closePos.GetPositionX(), closePos.GetPositionY(), closePos.GetPositionZ(), safeDistance);
-
-        BotMovementUtil::MoveToPosition(bot, closePos);
+        closePos.Relocate(targetWorldObject->GetPositionX(), targetWorldObject->GetPositionY(), targetWorldObject->GetPositionZ());
+        BotMovementUtil::MoveToPosition(bot, closePos, 0, safeDistance);
         return;
     }
 
-    // FIRE DAMAGE EVASION: Check bot health and retreat if taking damage
-    float healthPercent = (bot->GetHealth() * 100.0f) / bot->GetMaxHealth();
-    if (healthPercent < 70.0f)
-    {
-        // Bot is taking significant damage - move away to safer distance
-        TC_LOG_ERROR("module.playerbot.quest", "🔥 UseQuestItemOnTarget: Bot {} health LOW ({:.1f}%) - RETREATING from fire damage!",
-                     bot->GetName(), healthPercent);
-
-        // Move further away (increase safe distance by 5 yards)
-        float retreatDistance = safeDistance + 5.0f;
-        float angleToBot = targetObject->GetRelativeAngle(bot);
-        Position retreatPos;
-        targetObject->GetNearPoint(bot, retreatPos.m_positionX, retreatPos.m_positionY, retreatPos.m_positionZ,
-                                   retreatDistance, angleToBot);
-
-        TC_LOG_ERROR("module.playerbot.quest", "🏃 UseQuestItemOnTarget: RETREATING to safer position ({:.1f}, {:.1f}, {:.1f}) at distance {:.1f}yd",
-                     retreatPos.GetPositionX(), retreatPos.GetPositionY(), retreatPos.GetPositionZ(), retreatDistance);
-
-        BotMovementUtil::MoveToPosition(bot, retreatPos);
-        return;
-    }
-
-    // Bot is in safe range and healthy - stop, face target, and use item
-    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} in safe range ({:.1f}yd), health {:.1f}%, preparing to use item {}",
-                 bot->GetName(), currentDistance, healthPercent, questItemId);
+    // Bot is in range - stop, face target, and use item
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} in range ({:.1f}yd), preparing to use item {}",
+                 bot->GetName(), currentDistance, questItemId);
 
     // CRITICAL: Stop all movement before using the item (required for spell casting)
     bot->StopMoving();
     bot->GetMotionMaster()->Clear();
     bot->GetMotionMaster()->MoveIdle();
-    TC_LOG_ERROR("module.playerbot.quest", "🛑 UseQuestItemOnTarget: Bot {} stopped moving",
-                 bot->GetName());
 
-    // Face the target GameObject
-    bot->SetFacingToObject(targetObject);
+    // Face the target
+    bot->SetFacingToObject(targetWorldObject);
 
-    TC_LOG_ERROR("module.playerbot.quest", "👁️ UseQuestItemOnTarget: Bot {} now facing target GameObject {}",
-                 bot->GetName(), targetObject->GetEntry());
+    TC_LOG_ERROR("module.playerbot.quest", "👁️ UseQuestItemOnTarget: Bot {} now facing target {} (entry {})",
+                 bot->GetName(),
+                 isCreatureTarget ? "Creature" : "GameObject",
+                 isCreatureTarget ? targetCreature->GetEntry() : targetObject->GetEntry());
+
     // Get the spell ID from the quest item
     // Quest items trigger spells through their ItemEffect entries
     uint32 spellId = 0;
@@ -1256,18 +1149,32 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
 
     // Get spell info for validation
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    (void)spellInfo; // Suppress unused warning
 
-    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Casting spell {} on GameObject {} (entry {})",
-                 spellId, targetObject->GetGUID().ToString(), targetObject->GetEntry());
+    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Casting spell {} on {} (entry {})",
+                 spellId,
+                 isCreatureTarget ? "Creature" : "GameObject",
+                 isCreatureTarget ? targetCreature->GetEntry() : targetObject->GetEntry());
 
-    // Cast the spell with the item as the source and GameObject as target
+    // Cast the spell with the item as the source and target (Creature or GameObject)
     // Use CastSpellExtraArgs to pass the item that's being used
     CastSpellExtraArgs args;
     args.SetCastItem(questItem);
     args.SetOriginalCaster(bot->GetGUID());
-    bot->CastSpell(targetObject, spellId, args);
-    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on GameObject {} - objective should progress",
-                 bot->GetName(), spellId, questItemId, targetObject->GetEntry());
+
+    // Cast on the correct target type
+    if (isCreatureTarget)
+    {
+        bot->CastSpell(targetCreature, spellId, args);
+        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on CREATURE {} - objective should progress",
+                     bot->GetName(), spellId, questItemId, targetCreature->GetEntry());
+    }
+    else
+    {
+        bot->CastSpell(targetObject, spellId, args);
+        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on GAMEOBJECT {} - objective should progress",
+                     bot->GetName(), spellId, questItemId, targetObject->GetEntry());
+    }
 }
 void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
 {
