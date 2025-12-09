@@ -1613,13 +1613,16 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
 
     for (Creature* creature : nearbyCreatures)
     {
-        if (!creature || !creature->IsAlive())
+        // CRITICAL: Full validity check before accessing creature methods
+        // With 300-yard range, creatures may despawn/become invalid during iteration
+        if (!creature || !creature->IsAlive() || !creature->IsInWorld())
             continue;
 
         // CRITICAL: Check if bot can actually see this creature (phase check)
+        // Must verify creature is valid before calling CanSeeOrDetect to prevent crash
         if (!bot->CanSeeOrDetect(creature))
         {
-            TC_LOG_ERROR("module.playerbot.quest", "👻 Creature {} (Entry: {}) is in different phase, skipping",
+            TC_LOG_TRACE("module.playerbot.quest", "Creature {} (Entry: {}) is in different phase, skipping",
                          creature->GetName(), creature->GetEntry());
             continue;
         }

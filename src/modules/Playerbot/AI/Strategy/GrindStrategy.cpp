@@ -750,7 +750,9 @@ bool GrindStrategy::CheckQuestAvailability(BotAI* ai)
 
     for (Creature* creature : nearbyCreatures)
     {
-        if (!creature || !creature->IsAlive())
+        // CRITICAL: Full validity check before accessing creature methods
+        // With 300-yard range, creatures may despawn/become invalid during iteration
+        if (!creature || !creature->IsAlive() || !creature->IsInWorld())
             continue;
 
         if (!bot->CanSeeOrDetect(creature))
