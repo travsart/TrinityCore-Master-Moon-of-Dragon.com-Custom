@@ -1093,25 +1093,37 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     // ============================================================
     // PHASE 4: Position and use item
     // ============================================================
-    float safeDistance = 5.0f;  // Standard interaction distance
-    float maxUseDistance = 30.0f; // Maximum range for item usage
+    // Most quest item spells have short range (5-10 yards)
+    // We need to get close before attempting to cast
+    float maxUseDistance = 8.0f; // Reduced from 30 - most quest items need close range
 
     // Check if bot is in range
     if (currentDistance > maxUseDistance)
     {
-        // TOO FAR - move closer
+        // TOO FAR - move closer to the target
         TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: Bot {} TOO FAR ({:.1f}yd > {:.1f}yd) - MOVING CLOSER",
                      bot->GetName(), currentDistance, maxUseDistance);
 
+        // Move to a position near the target (5 yards away)
+        float targetDistance = 5.0f;
+        float angle = targetWorldObject->GetAbsoluteAngle(bot);
         Position closePos;
-        closePos.Relocate(targetWorldObject->GetPositionX(), targetWorldObject->GetPositionY(), targetWorldObject->GetPositionZ());
-        BotMovementUtil::MoveToPosition(bot, closePos, 0, safeDistance);
+        closePos.Relocate(
+            targetWorldObject->GetPositionX() + targetDistance * std::cos(angle),
+            targetWorldObject->GetPositionY() + targetDistance * std::sin(angle),
+            targetWorldObject->GetPositionZ()
+        );
+
+        TC_LOG_ERROR("module.playerbot.quest", "🚶 UseQuestItemOnTarget: Bot {} moving to ({:.1f}, {:.1f}, {:.1f}) - {:.1f}yd from target",
+                     bot->GetName(), closePos.GetPositionX(), closePos.GetPositionY(), closePos.GetPositionZ(), targetDistance);
+
+        BotMovementUtil::MoveToPosition(bot, closePos);
         return;
     }
 
     // Bot is in range - stop, face target, and use item
-    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} in range ({:.1f}yd), preparing to use item {}",
-                 bot->GetName(), currentDistance, questItemId);
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} IN RANGE ({:.1f}yd <= {:.1f}yd), preparing to use item {}",
+                 bot->GetName(), currentDistance, maxUseDistance, questItemId);
 
     // CRITICAL: Stop all movement before using the item (required for spell casting)
     bot->StopMoving();
