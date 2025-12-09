@@ -49,6 +49,8 @@
 #include "PhasingHandler.h"  // For bot phase initialization
 #include "Spatial/SpatialGridQueryHelpers.h"  // PHASE 2F: For snapshot-based player validation
 #include "MotionMaster.h"  // For ProcessPendingStopMovement
+#include "DB2Stores.h"     // For sDB2Manager, ChrSpecializationEntry (auto-spec fix)
+#include "SharedDefines.h" // For MIN_SPECIALIZATION_LEVEL, LOCALE_enUS (auto-spec fix)
 
 namespace Playerbot {
 
@@ -440,6 +442,16 @@ BotSession::~BotSession()
     // We MUST clear this pointer before the base WorldSession destructor cleans up the player
     if (Player* player = GetPlayer()) {
         try {
+            // CRITICAL FIX (Map.cpp:1945 crash): Remove from _updateObjects BEFORE destruction
+            // This is a defensive fallback in case RemovePlayerBot() wasn't called (e.g., session
+            // destroyed through a different code path). ClearUpdateMask(true) calls
+            // RemoveFromObjectUpdate() which removes the player from Map::_updateObjects,
+            // preventing MapUpdater worker threads from accessing a destroyed player.
+            //
+            // Note: Player::ClearUpdateMask is protected, but Object::ClearUpdateMask is public.
+            // We cast to Object* to access the base class public method.
+            static_cast<Object*>(player)->ClearUpdateMask(true);
+
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             player->m_Events.KillAllEvents(false);
             TC_LOG_DEBUG("module.playerbot.session", "Bot {} cleared spell events during logout", player->GetName());
@@ -567,17 +579,19 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // Failed to acquire lock within 100ms
 
         // Check if shutting down - bail immediately
-    if (_destroyed.load() || !_active.load())
-    {
+        if (_destroyed.load() || !_active.load())
+        {
             TC_LOG_DEBUG("module.playerbot.session", "BotSession::Update lock timeout - shutting down (account {})", GetAccountId());
-            return false;  // Shutdown detected - exit gracefully
+            return false;  // Shutdown detected - exit gracefully (triggers disconnect)
         }
 
         // Otherwise: Another thread is updating this bot
-        // DIAGNOSTIC: Log lock contention - this could cause "Bot update failed" if frequent
-        TC_LOG_WARN("module.playerbot.session", "BotSession::Update LOCK TIMEOUT for account {} - another thread is updating this bot", GetAccountId());
-        // Just skip this update cycle (bot updates 5-10 times/sec anyway)
-        return false;
+        // CRITICAL FIX: Return TRUE to indicate "session is healthy, just busy"
+        // Returning false here was incorrectly triggering bot disconnections!
+        // The caller (BotWorldSessionMgr) treats false as "session needs removal"
+        // but lock contention is temporary - the bot should remain connected.
+        TC_LOG_DEBUG("module.playerbot.session", "BotSession::Update LOCK CONTENTION for account {} - skipping this update cycle", GetAccountId());
+        return true;  // Session is healthy, just skip this update cycle
     }
 
     // Successfully acquired lock - proceed with update
@@ -1448,9 +1462,55 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // Bot-specific initialization
         pCurrChar->SetVirtualPlayerRealm(GetVirtualRealmAddress());
 
+        // CRITICAL FIX: Auto-assign proper specialization for level 10+ bots
+        // TrinityCore assigns all new characters the "Initial" spec (index 4, e.g., Warlock=1454)
+        // which has NO specialization spells. Real players pick a spec at level 10 via UI.
+        // Bots need this done programmatically on login.
+        if (pCurrChar->GetLevel() >= MIN_SPECIALIZATION_LEVEL)
+        {
+            ChrSpecializationEntry const* currentSpec = pCurrChar->GetPrimarySpecializationEntry();
+            ChrSpecializationEntry const* initialSpec = sDB2Manager.GetDefaultChrSpecializationForClass(pCurrChar->GetClass());
+
+            // Check if bot still has the "Initial" spec (no real spec chosen yet)
+            if (currentSpec && initialSpec && currentSpec->ID == initialSpec->ID)
+            {
+                // Get the first real spec for this class (index 0 = first spec like Affliction, Arms, etc.)
+                ChrSpecializationEntry const* firstSpec = sDB2Manager.GetChrSpecializationByIndex(pCurrChar->GetClass(), 0);
+                if (firstSpec)
+                {
+                    TC_LOG_INFO("module.playerbot.session", "Bot {} has Initial spec ({}) at level {} - auto-assigning spec {}",
+                        pCurrChar->GetName(), initialSpec->ID, pCurrChar->GetLevel(), firstSpec->ID);
+
+                    // Set the real specialization
+                    pCurrChar->SetPrimarySpecialization(firstSpec->ID);
+                    pCurrChar->SetActiveTalentGroup(firstSpec->OrderIndex);
+
+                    // Learn all spec-specific spells (including Summon Imp for warlocks!)
+                    pCurrChar->LearnSpecializationSpells();
+
+                    // NOTE: Don't call SaveToDB() here - it will be saved naturally later
+                    // Calling it during login can cause thread safety issues with MapUpdater
+
+                    TC_LOG_INFO("module.playerbot.session", "Bot {} now has spec {} - specialization spells learned",
+                        pCurrChar->GetName(), firstSpec->ID);
+                }
+            }
+        }
+
         // NOTE: Specialization spells are NOT saved to database in modern WoW
         // LoadFromDB() at line 18356 calls LearnSpecializationSpells() which loads spells from DB2 data
         // This is by design - spells are learned dynamically on each login
+
+        // CRITICAL FIX: Ensure ALL class skills and spells are learned
+        // LearnDefaultSkills() teaches class skills (e.g., Affliction skill for warlocks)
+        // SetSkill() triggers LearnSkillRewardedSpells() which teaches spells like Summon Imp (688)
+        // Without this, bots miss base class spells that aren't specialization-specific
+        TC_LOG_DEBUG("module.playerbot.session", "Bot {} - Learning default skills and spells for level {}",
+            pCurrChar->GetName(), pCurrChar->GetLevel());
+        pCurrChar->LearnDefaultSkills();
+        pCurrChar->UpdateSkillsForLevel();  // Ensures skill values match current level
+        TC_LOG_DEBUG("module.playerbot.session", "Bot {} - Default skills learned, now checking spells",
+            pCurrChar->GetName());
 
         // Set the player for this session
         SetPlayer(pCurrChar);
