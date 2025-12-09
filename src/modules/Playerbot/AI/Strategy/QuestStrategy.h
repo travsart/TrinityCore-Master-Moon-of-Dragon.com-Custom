@@ -164,6 +164,12 @@ private:
 
     // NPC interaction detection (distinguish "talk to" NPCs from "killable neutral" mobs)
     bool RequiresSpellClickInteraction(uint32 creatureEntry) const;
+
+    // Quest item usage tracking (prevent recasting on same/despawned targets)
+    // Key: questId, Value: set of used target GUIDs
+    ::std::unordered_map<uint32, ::std::set<ObjectGuid>> _usedQuestItemTargets;
+    uint32 _lastQuestItemCastTime = 0;
+    static constexpr uint32 QUEST_ITEM_CAST_COOLDOWN_MS = 5000; // 5 second cooldown between casts
 };
 
 } // namespace Playerbot

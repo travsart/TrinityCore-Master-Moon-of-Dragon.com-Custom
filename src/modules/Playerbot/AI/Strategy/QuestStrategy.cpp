@@ -364,6 +364,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             return;
         }
     }
+
     // Get objective state
     ObjectiveState objective = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetObjectiveState(bot, priority.questId, priority.objectiveIndex) : ObjectiveState());
 
@@ -374,10 +375,45 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
     if (!quest)
         return;
+
+    // CRITICAL FIX: Validate quest status BEFORE processing
+    // ObjectiveTracker may return stale data for quests the bot no longer has
+    QuestStatus questStatus = bot->GetQuestStatus(objective.questId);
+
     // Check if quest is complete - turn it in
-    if (bot->GetQuestStatus(objective.questId) == QUEST_STATUS_COMPLETE)
+    if (questStatus == QUEST_STATUS_COMPLETE)
     {
         TurnInQuest(ai, objective.questId);
+        return;
+    }
+
+    // CRITICAL: If quest is not INCOMPLETE, skip it - ObjectiveTracker has stale data
+    // This happens when ObjectiveTracker returns a quest that was abandoned/completed/rewarded
+    if (questStatus != QUEST_STATUS_INCOMPLETE)
+    {
+        TC_LOG_WARN("module.playerbot.quest", "⚠️ ProcessQuestObjectives: Bot {} - ObjectiveTracker returned quest {} but status is {} (not INCOMPLETE) - checking for complete quests to turn in",
+                     bot->GetName(), objective.questId, static_cast<int>(questStatus));
+
+        // Fall back to checking for any COMPLETE quests to turn in
+        for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
+        {
+            uint32 questId = bot->GetQuestSlotQuestId(slot);
+            if (questId == 0)
+                continue;
+
+            if (bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+            {
+                TC_LOG_INFO("module.playerbot.quest", "✅ ProcessQuestObjectives: Bot {} found COMPLETE quest {} to turn in",
+                            bot->GetName(), questId);
+                TurnInQuest(ai, questId);
+                return;
+            }
+        }
+
+        // No complete quests - search for new quests
+        TC_LOG_INFO("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} has no incomplete/complete quests - searching for quest givers",
+                    bot->GetName());
+        SearchForQuestGivers(ai);
         return;
     }
 
@@ -578,7 +614,10 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
             bot->GetCreatureListWithEntryInGrid(nearbyCreatures, questObjective.ObjectID, 300.0f);
             for (Creature* creature : nearbyCreatures)
             {
-                if (!creature || !creature->IsAlive())
+                // CRITICAL SAFETY: Check IsInWorld() before any operations that access Map
+                // Prevents ASSERTION FAILED: m_currMap in WorldObject::GetMap (Object.h:785)
+                // when creature is despawned or not yet fully added to world
+                if (!creature || !creature->IsAlive() || !creature->IsInWorld())
                     continue;
 
                 // Check if this is a FRIENDLY NPC (not hostile to bot)
@@ -917,12 +956,38 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     // This prevents bots from dying because they're trying to use quest items while being attacked.
     if (bot->IsInCombat())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "⚔️ UseQuestItemOnTarget: Bot {} IN COMBAT - aborting quest item usage, combat takes priority!",
+        TC_LOG_DEBUG("module.playerbot.quest", "⚔️ UseQuestItemOnTarget: Bot {} IN COMBAT - aborting quest item usage, combat takes priority!",
                      bot->GetName());
         return;
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Bot {} using quest item for quest {} objective {}",
+    // CRITICAL FIX: Check if bot is currently casting/channeling
+    // Prevents recasting on same target every tick while channeled spell is active
+    if (bot->GetCurrentSpell(CURRENT_CHANNELED_SPELL) != nullptr)
+    {
+        TC_LOG_DEBUG("module.playerbot.quest", "⏳ UseQuestItemOnTarget: Bot {} is CHANNELING - waiting for spell to complete",
+                     bot->GetName());
+        return;
+    }
+
+    if (bot->HasUnitState(UNIT_STATE_CASTING))
+    {
+        TC_LOG_DEBUG("module.playerbot.quest", "⏳ UseQuestItemOnTarget: Bot {} is CASTING - waiting for spell to complete",
+                     bot->GetName());
+        return;
+    }
+
+    // CRITICAL FIX: Cooldown between quest item casts to prevent spam
+    // This gives time for creatures to despawn and new ones to spawn
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    if (_lastQuestItemCastTime > 0 && (currentTime - _lastQuestItemCastTime) < QUEST_ITEM_CAST_COOLDOWN_MS)
+    {
+        TC_LOG_DEBUG("module.playerbot.quest", "⏳ UseQuestItemOnTarget: Bot {} on cooldown - {} ms remaining",
+                     bot->GetName(), QUEST_ITEM_CAST_COOLDOWN_MS - (currentTime - _lastQuestItemCastTime));
+        return;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Bot {} using quest item for quest {} objective {}",
                  bot->GetName(), objective.questId, objective.objectiveIndex);
 
     // Get quest and verify it has a source item
@@ -942,8 +1007,34 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     Item* questItem = bot->GetItemByEntry(questItemId);
     if (!questItem)
     {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Bot {} does NOT have quest item {}!",
+        TC_LOG_WARN("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: Bot {} missing quest item {} - waiting for item acquisition",
                      bot->GetName(), questItemId);
+
+        // TODO: FUTURE IMPROVEMENT - Quest Objective Order Detection
+        // =============================================================
+        // Some quests have multi-step objectives where you must:
+        //   1) Collect quest item from a nearby GameObject/Creature
+        //   2) Use that item on a target at the quest POI
+        //
+        // Example: Quest A might have objectives:
+        //   - Objective 0: QUEST_OBJECTIVE_ITEM (collect Torch from barrel)
+        //   - Objective 1: QUEST_OBJECTIVE_MONSTER (use Torch on target)
+        //
+        // CURRENT BEHAVIOR (simple return):
+        // If item is missing, we return and let the quest system process
+        // objectives in order - hopefully catching the "collect item" objective.
+        //
+        // IDEAL FUTURE BEHAVIOR:
+        // 1. Iterate through quest->Objectives to find if there's an earlier
+        //    QUEST_OBJECTIVE_ITEM or QUEST_OBJECTIVE_GAMEOBJECT that would
+        //    give us this item
+        // 2. If found, navigate to that objective's location instead
+        // 3. If not found (item should have been given on quest accept),
+        //    then navigate to quest POI and hope script provides item
+        //
+        // For now, simple return prevents incorrect navigation that could
+        // skip the item acquisition step entirely.
+        // =============================================================
         return;
     }
 
@@ -996,8 +1087,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
         std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
             spatialGrid->QueryNearbyCreatures(bot->GetPosition(), 100.0f);
 
-        TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning {} nearby creatures for entry {}",
+        TC_LOG_DEBUG("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning {} nearby creatures for entry {}",
                      nearbyCreatures.size(), targetObjectId);
+
+        // Get the set of already-used targets for this quest
+        auto& usedTargets = _usedQuestItemTargets[objective.questId];
 
         ObjectGuid nearestCreatureGuid;
         for (auto const& snapshot : nearbyCreatures)
@@ -1005,8 +1099,17 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
             if (snapshot.entry != targetObjectId)
                 continue;
 
+            // CRITICAL FIX: Skip targets we've already used
+            // This prevents recasting on the same creature after it despawns
+            if (usedTargets.find(snapshot.guid) != usedTargets.end())
+            {
+                TC_LOG_DEBUG("module.playerbot.quest", "⏭️ UseQuestItemOnTarget: Skipping ALREADY USED target GUID {}",
+                             snapshot.guid.ToString());
+                continue;
+            }
+
             float distance = bot->GetExactDist(snapshot.position);
-            TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found Creature entry={} at distance {:.1f}yd",
+            TC_LOG_DEBUG("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found Creature entry={} at distance {:.1f}yd",
                          snapshot.entry, distance);
 
             if (distance < nearestCreatureDistance)
@@ -1038,8 +1141,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
         std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
             spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 100.0f);
 
-        TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning {} nearby GameObjects for entry {}",
+        TC_LOG_DEBUG("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning {} nearby GameObjects for entry {}",
                      nearbyObjects.size(), targetObjectId);
+
+        // Get the set of already-used targets for this quest
+        auto& usedTargets = _usedQuestItemTargets[objective.questId];
 
         ObjectGuid nearestObjectGuid;
         for (auto const& snapshot : nearbyObjects)
@@ -1047,8 +1153,16 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
             if (snapshot.entry != targetObjectId)
                 continue;
 
+            // CRITICAL FIX: Skip targets we've already used
+            if (usedTargets.find(snapshot.guid) != usedTargets.end())
+            {
+                TC_LOG_DEBUG("module.playerbot.quest", "⏭️ UseQuestItemOnTarget: Skipping ALREADY USED GameObject GUID {}",
+                             snapshot.guid.ToString());
+                continue;
+            }
+
             float distance = bot->GetExactDist(snapshot.position);
-            TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found GameObject entry={} at distance {:.1f}yd",
+            TC_LOG_DEBUG("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found GameObject entry={} at distance {:.1f}yd",
                          snapshot.entry, distance);
 
             if (distance < nearestObjectDistance)
@@ -1174,18 +1288,28 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     args.SetCastItem(questItem);
     args.SetOriginalCaster(bot->GetGUID());
 
-    // Cast on the correct target type
+    // Cast on the correct target type and track the used target
     if (isCreatureTarget)
     {
         bot->CastSpell(targetCreature, spellId, args);
-        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on CREATURE {} - objective should progress",
-                     bot->GetName(), spellId, questItemId, targetCreature->GetEntry());
+
+        // CRITICAL FIX: Track this target as used to prevent recasting on it
+        _usedQuestItemTargets[objective.questId].insert(targetCreature->GetGUID());
+        _lastQuestItemCastTime = GameTime::GetGameTimeMS();
+
+        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on CREATURE {} (GUID tracked: {}) - objective should progress",
+                     bot->GetName(), spellId, questItemId, targetCreature->GetEntry(), targetCreature->GetGUID().ToString());
     }
     else
     {
         bot->CastSpell(targetObject, spellId, args);
-        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on GAMEOBJECT {} - objective should progress",
-                     bot->GetName(), spellId, questItemId, targetObject->GetEntry());
+
+        // CRITICAL FIX: Track this target as used to prevent recasting on it
+        _usedQuestItemTargets[objective.questId].insert(targetObject->GetGUID());
+        _lastQuestItemCastTime = GameTime::GetGameTimeMS();
+
+        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on GAMEOBJECT {} (GUID tracked: {}) - objective should progress",
+                     bot->GetName(), spellId, questItemId, targetObject->GetEntry(), targetObject->GetGUID().ToString());
     }
 }
 void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
