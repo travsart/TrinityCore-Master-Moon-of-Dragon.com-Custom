@@ -1013,11 +1013,14 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
         if (snapshot.entry != targetObjectId)
             continue;
 
-        // Check if GameObject is spawned and ready using snapshot fields
-        if (!snapshot.isSpawned || snapshot.goState != GO_STATE_READY)
+        // CRITICAL FIX: Be more permissive with state checks!
+        // The spatial grid snapshot fields may not be populated correctly for all GameObjects.
+        // Quest objects often have different states (GO_STATE_ACTIVE instead of GO_STATE_READY).
+        // Only skip if explicitly marked as not spawned AND not a quest object.
+        if (!snapshot.isSpawned && !snapshot.isQuestObject && !snapshot.isUsable)
         {
-            TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject entry={} is NOT ready (spawned={}, state={}), skipping",
-                         snapshot.entry, snapshot.isSpawned, snapshot.goState);
+            TC_LOG_DEBUG("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject entry={} is NOT spawned (spawned={}, questObj={}, usable={}), skipping",
+                         snapshot.entry, snapshot.isSpawned, snapshot.isQuestObject, snapshot.isUsable);
             continue;
         }
 
