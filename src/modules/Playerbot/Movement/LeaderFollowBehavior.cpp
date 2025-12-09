@@ -28,6 +28,7 @@
 #include "Log.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "../Session/BotSession.h"  // For thread-safe QueueStopMovement()
 #include "UnifiedMovementCoordinator.h"  // Phase 2: Unified movement system
 #include "Arbiter/MovementRequest.h"
 #include "Arbiter/MovementPriorityMapper.h"
@@ -1350,8 +1351,24 @@ void LeaderFollowBehavior::StopMovement(Player* bot)
     if (!bot)
         return;
 
-    bot->StopMoving();
-    bot->GetMotionMaster()->Clear();
+    // THREAD-SAFETY FIX: MotionMaster::Clear() is NOT thread-safe!
+    // It modifies unit state and splines which can cause ACCESS_VIOLATION
+    // when called from worker threads (e.g., during OnGroupLeft processing).
+    // Solution: Queue the stop request for main thread execution.
+    WorldSession* session = bot->GetSession();
+    if (BotSession* botSession = dynamic_cast<BotSession*>(session))
+    {
+        botSession->QueueStopMovement();
+        TC_LOG_TRACE("module.playerbot.movement",
+                     "StopMovement: Queued for main thread (bot {})", bot->GetName());
+    }
+    else
+    {
+        // Not a bot session (shouldn't happen) - fall back to direct call
+        // This path is only for safety, normal bots always have BotSession
+        bot->StopMoving();
+        bot->GetMotionMaster()->Clear();
+    }
 }
 
 float LeaderFollowBehavior::GetMovementSpeed(Player* bot)

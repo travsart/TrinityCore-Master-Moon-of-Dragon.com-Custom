@@ -1591,7 +1591,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
     // Update last search time
     _lastQuestGiverSearchTime = currentTime;
 
-    TC_LOG_ERROR("module.playerbot.quest", "🔎 SearchForQuestGivers: Bot {} starting quest giver scan (50 yard radius)",
+    TC_LOG_ERROR("module.playerbot.quest", "🔎 SearchForQuestGivers: Bot {} starting quest giver scan (300 yard radius)",
                  bot->GetName());
 
     TC_LOG_DEBUG("module.playerbot.strategy",
@@ -1599,8 +1599,9 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         bot->GetName(), bot->GetLevel());
 
     // Search for nearby creatures that might offer quests
+    // Extended to 300 yards to catch quest givers in nearby areas and reduce grinding fallback triggers
     std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, 50.0f); // 50 yard radius
+    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, 300.0f); // 300 yard radius
 
     TC_LOG_ERROR("module.playerbot.quest", "🔬 SearchForQuestGivers: Bot {} found {} nearby creatures",
                  bot->GetName(), nearbyCreatures.size());
@@ -1688,7 +1689,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         _questGiverSearchFailures++;
 
         TC_LOG_ERROR("module.playerbot.quest",
-            "❌ SearchForQuestGivers: Bot {} found no quest givers within 50 yards (failures: {}, next search in {}s)",
+            "❌ SearchForQuestGivers: Bot {} found no quest givers within 300 yards (failures: {}, next search in {}s)",
             bot->GetName(), _questGiverSearchFailures,
             std::min(30u, 5u * (1u << (_questGiverSearchFailures - 1))));
 

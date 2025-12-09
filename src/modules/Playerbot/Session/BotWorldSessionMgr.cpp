@@ -467,9 +467,18 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     _botsLoading.erase(guid);
                     TC_LOG_INFO("module.playerbot.session", "?? ? Bot login completed: {}", guid.ToString());
 
-                    // Initialize priority for newly logged-in bot (default to LOW, will adjust in Phase 2 if needed)
+                    // Initialize priority for newly logged-in bot
+                    // FIX: Changed from LOW to MEDIUM to ensure responsive updates
+                    // LOW priority (50 tick interval = 2.5s) was too slow for:
+                    // - Group invitation processing
+                    // - Initial movement/strategy activation
+                    // - Quest giver detection
+                    // MEDIUM (10 tick interval = 500ms) gives bots time to:
+                    // - Process group invites promptly
+                    // - Start moving and get promoted to higher priority
+                    // AutoAdjustPriority() will demote idle bots to LOW after 2.5s
     if (_enterpriseMode)
-                        sBotPriorityMgr->SetPriority(guid, BotPriority::LOW);
+                        sBotPriorityMgr->SetPriority(guid, BotPriority::MEDIUM);
 
                     sessionsToUpdate.emplace_back(guid, session);
                 }
@@ -697,6 +706,12 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                             else if (bot->GetHealthPct() < 20.0f)
                             {
                                 sBotPriorityMgr->SetPriority(guid, BotPriority::EMERGENCY);
+                            }
+                            // CRITICAL FIX: Pending group invitation needs fast response
+                            // Without this boost, bot may timeout waiting for next update
+                            else if (bot->GetGroupInvite())
+                            {
+                                sBotPriorityMgr->SetPriority(guid, BotPriority::MEDIUM);
                             }
                         }
                     }
@@ -968,7 +983,7 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
         }
     } // Release mutex before processing
 
-    // Process deferred packets for each session
+    // Process deferred packets and facing for each session
     for (auto const& session : sessionsToProcess)
     {
         if (!session)
@@ -983,6 +998,14 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
                 "Bot {} processed {} deferred packets on main thread",
                 session->GetPlayerName(), processed);
         }
+
+        // Process pending facing request (thread-safe facing system)
+        // SetFacingToObject() requires main thread - worker threads queue facing via QueueFacingTarget()
+        session->ProcessPendingFacing();
+
+        // Process pending stop movement request (thread-safe movement system)
+        // MotionMaster::Clear() requires main thread - worker threads queue via QueueStopMovement()
+        session->ProcessPendingStopMovement();
     }
 
     // Log statistics if significant activity

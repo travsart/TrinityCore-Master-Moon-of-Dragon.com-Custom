@@ -23,6 +23,7 @@
 #include "Strategy/QuestStrategy.h"
 #include "Strategy/LootStrategy.h"
 #include "Strategy/RestStrategy.h"
+#include "Strategy/GrindStrategy.h"
 #include "Actions/Action.h"
 #include "Triggers/Trigger.h"
 #include "Movement/LeaderFollowBehavior.h"
@@ -423,6 +424,7 @@ void BotAI::UpdateAI(uint32 diff)
         ActivateStrategy("rest");
         ActivateStrategy("solo_combat");
         ActivateStrategy("quest");
+        ActivateStrategy("grind");  // Fallback when quests unavailable (activates via ShouldGrind check)
         ActivateStrategy("loot");
         ActivateStrategy("solo");
 
@@ -753,11 +755,36 @@ void BotAI::UpdateStrategies(uint32 diff)
     // PHASE 4: Execute the selected strategy
     // ========================================================================
 
+    // DIAGNOSTIC: Log whether strategy was selected (ALWAYS, throttled per bot)
+    {
+        static ::std::unordered_map<::std::string, uint32> lastSelectedLog;
+        uint32 now = GameTime::GetGameTimeMS();
+        ::std::string botName = _bot->GetName();
+        if (lastSelectedLog.find(botName) == lastSelectedLog.end() || (now - lastSelectedLog[botName]) > 5000)
+        {
+            TC_LOG_ERROR("module.playerbot.strategy",
+                "📊 STRATEGY SELECTION: Bot {} - selectedStrategy={}, activeCount={}",
+                botName,
+                selectedStrategy ? selectedStrategy->GetName() : "NULL",
+                activeStrategies.size());
+            lastSelectedLog[botName] = now;
+        }
+    }
+
     if (selectedStrategy)
     {
-        if (shouldLogStrategy)
+        // DIAGNOSTIC: Log strategy execution (ALWAYS, throttled per bot)
         {
-            TC_LOG_ERROR("module.playerbot", "⚡ EXECUTING: Bot {} strategy '{}'",_bot->GetName(), selectedStrategy->GetName());
+            static ::std::unordered_map<::std::string, uint32> lastExecLog;
+            uint32 now = GameTime::GetGameTimeMS();
+            ::std::string botName = _bot->GetName();
+            if (lastExecLog.find(botName) == lastExecLog.end() || (now - lastExecLog[botName]) > 5000)
+            {
+                TC_LOG_ERROR("module.playerbot.strategy",
+                    "⚡ EXECUTING: Bot {} strategy '{}' (will call UpdateBehavior)",
+                    botName, selectedStrategy->GetName());
+                lastExecLog[botName] = now;
+            }
         }
 
         // Special handling for follow strategy - needs every frame update
@@ -768,20 +795,20 @@ void BotAI::UpdateStrategies(uint32 diff)
         }
         else
         {
-            // Other strategies can use their normal update
-            // DIAGNOSTIC: ALWAYS log for first 100 calls per bot to debug "bots doing nothing" issue
-            static std::unordered_map<std::string, uint32> callCounts;
-            std::string botName = _bot->GetName();
-            if (callCounts[botName]++ < 100 || shouldLogStrategy)
+            // DIAGNOSTIC: Always log strategy UpdateBehavior call (throttled)
             {
-                TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior #{} for bot {} strategy '{}'",
-                             callCounts[botName], _bot->GetName(), selectedStrategy->GetName());
+                static ::std::unordered_map<::std::string, uint32> lastUpdateLog;
+                uint32 now = GameTime::GetGameTimeMS();
+                ::std::string botName = _bot->GetName();
+                if (lastUpdateLog.find(botName) == lastUpdateLog.end() || (now - lastUpdateLog[botName]) > 5000)
+                {
+                    TC_LOG_ERROR("module.playerbot.strategy",
+                        "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",
+                        botName, selectedStrategy->GetName());
+                    lastUpdateLog[botName] = now;
+                }
             }
             selectedStrategy->UpdateBehavior(this, diff);
-            if (shouldLogStrategy)
-            {
-                TC_LOG_ERROR("module.playerbot", "✔️ RETURNED from UpdateBehavior for bot {} strategy '{}'",_bot->GetName(), selectedStrategy->GetName());
-            }
         }
 
         _performanceMetrics.strategiesEvaluated = 1;}
@@ -842,24 +869,20 @@ void BotAI::UpdateCombatState(uint32 diff)
         // Find initial target
         // FIX #19: Use ObjectCache instead of ObjectAccessor to avoid TrinityCore deadlock
         ::Unit* target = _objectCache.GetTarget();
-        if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                return;
-            }
         if (target)
         {
             TC_LOG_ERROR("module.playerbot", "🎯 Target from cache: {}", target->GetName());
         }
 
+        // CRITICAL FIX: Try GetVictim() as fallback if cache has no target
+        // This is the primary source when bot enters combat reactively
         if (!target)
         {
-            target = _bot->GetVictim();if (!target)
+            target = _bot->GetVictim();
+            if (target)
             {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                return;
+                TC_LOG_ERROR("module.playerbot", "🎯 Target from GetVictim(): {}", target->GetName());
             }
-            TC_LOG_ERROR("module.playerbot", "🎯 Target from GetVictim(): {}", target ? target->GetName() : "null");
         }
 
         if (target)
@@ -867,9 +890,11 @@ void BotAI::UpdateCombatState(uint32 diff)
             TC_LOG_ERROR("module.playerbot", "✅ Calling OnCombatStart() with target {}", target->GetName());
             OnCombatStart(target);
         }
-        else{
+        else
+        {
             TC_LOG_ERROR("module.playerbot", "❌ COMBAT START FAILED: No valid target found!");
-        }}
+        }
+    }
     else if (wasInCombat && !isInCombat)
     {
         // Leaving combat
@@ -1278,8 +1303,15 @@ void BotAI::OnGroupJoined(Group* group)
             strategy->OnActivate(this);
     }
 
-    // Deactivate solo strategy when joining a group
+    // CRITICAL FIX: Deactivate ALL solo strategies when joining a group
+    // These strategies have the same priority (FOLLOW=50) as the follow strategy,
+    // and would compete with it, preventing follow from being selected.
+    // Solo strategies should only be active when bot is NOT in a group.
     DeactivateStrategy("solo");
+    DeactivateStrategy("quest");      // Solo questing - groups do group content
+    DeactivateStrategy("solo_combat"); // Solo combat - groups use group_combat
+    DeactivateStrategy("loot");       // Auto-looting can interfere with group loot rules
+    // Note: "rest" strategy remains active as it has FLEEING priority (90) for health/mana recovery
 
     // Phase 3: Tactical coordinator now integrated into Advanced/GroupCoordinator
     // TacticalCoordinator is created by GroupCoordinator::Initialize()
@@ -1342,10 +1374,13 @@ void BotAI::OnGroupLeft()
 
     // Activate all solo strategies when leaving a group
     // These are the same strategies activated in UpdateAI() for solo bots
-    ActivateStrategy("rest");    // Priority: 90 - eating/drinking
-    ActivateStrategy("quest");   // Priority: 70 - quest objectives
-    ActivateStrategy("loot");    // Priority: 60 - corpse looting
-    ActivateStrategy("solo");    // Priority: 10 - fallback coordinatorTC_LOG_INFO("module.playerbot.ai", "🎯 SOLO BOT REACTIVATION: Bot {} reactivated solo strategies after leaving group",_bot->GetName());
+    ActivateStrategy("rest");        // Priority: FLEEING (90) - eating/drinking
+    ActivateStrategy("solo_combat"); // Priority: COMBAT (100) - solo combat handling
+    ActivateStrategy("quest");       // Priority: FOLLOW (50) - quest objectives
+    ActivateStrategy("grind");       // Priority: GRIND (40) - fallback when quests unavailable
+    ActivateStrategy("loot");        // Priority: MOVEMENT (45) - corpse looting
+    ActivateStrategy("solo");        // Priority: SOLO (10) - fallback coordinator
+    TC_LOG_INFO("module.playerbot.ai", "🎯 SOLO BOT REACTIVATION: Bot {} reactivated solo strategies after leaving group", _bot->GetName());
 
     // Set state to solo if not in combatif (!IsInCombat())
         SetAIState(BotAIState::SOLO);_wasInGroup = false;
@@ -1788,8 +1823,19 @@ void BotAI::InitializeDefaultStrategies()
     auto soloStrategy = std::make_unique<SoloStrategy>();
     AddStrategy(std::move(soloStrategy));
 
+    // Create grind strategy as fallback when quests are unavailable
+    // This strategy activates when:
+    // - No active quests available
+    // - No quest givers found within 300 yards
+    // - No suitable quest hubs for level range
+    // - Quest search fails 3+ times consecutively
+    // Priority 40 (below Quest=50, above Solo=10) ensures it only activates as fallback
+    auto grindStrategy = std::make_unique<GrindStrategy>();
+    AddStrategy(std::move(grindStrategy));
+
     // NOTE: Mutual exclusion rules are automatically configured in BehaviorPriorityManager constructor
-    // No need to add them here - they're already set up when _priorityManager is initializedTC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, solo_combat, quest, loot, rest, and solo strategies for bot {}", _bot->GetName());
+    // No need to add them here - they're already set up when _priorityManager is initialized
+    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, solo_combat, quest, loot, rest, solo, and grind strategies for bot {}", _bot->GetName());
 
     // NOTE: Do NOT activate strategies here!
     // Strategy activation happens AFTER bot is fully loaded:

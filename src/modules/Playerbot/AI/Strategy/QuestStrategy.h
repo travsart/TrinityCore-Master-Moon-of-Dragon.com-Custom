@@ -53,6 +53,27 @@ public:
     float GetRelevance(BotAI* ai) const override;
     void UpdateBehavior(BotAI* ai, uint32 diff) override;
 
+    // ========================================================================
+    // GRIND FALLBACK INTEGRATION
+    // ========================================================================
+
+    /**
+     * @brief Get number of consecutive quest giver search failures
+     * @return Failure count (used by GrindStrategy to determine when to activate)
+     */
+    uint32 GetQuestGiverSearchFailures() const { return _questGiverSearchFailures; }
+
+    /**
+     * @brief Check if quest strategy has exhausted all options
+     * @return true if no quests, no quest givers, and no quest hubs found
+     */
+    bool HasExhaustedQuestOptions() const { return _questGiverSearchFailures >= 3; }
+
+    /**
+     * @brief Reset quest search failure counter (called when quests become available)
+     */
+    void ResetQuestSearchFailures() { _questGiverSearchFailures = 0; }
+
 private:
     // Quest navigation phases
     enum class QuestPhase

@@ -171,6 +171,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloCombatStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloCombatStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GrindStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GrindStrategy.h
 
     # AI Action System (basic)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.cpp
@@ -988,6 +990,8 @@ source_group("AI\\Strategy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LootStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GrindStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GrindStrategy.h
 )
 
 source_group("AI\\Actions" FILES

@@ -215,6 +215,19 @@ public:
     void AddStrategy(std::unique_ptr<Strategy> strategy);
     void RemoveStrategy(std::string const& name);
     Strategy* GetStrategy(std::string const& name) const;
+
+    /**
+     * @brief Get strategy with type-safe casting
+     * @tparam T Strategy type to cast to
+     * @param name Strategy name
+     * @return Typed strategy pointer or nullptr if not found/wrong type
+     */
+    template<typename T>
+    T* GetStrategy(std::string const& name) const
+    {
+        return dynamic_cast<T*>(GetStrategy(name));
+    }
+
     std::vector<Strategy*> GetActiveStrategies() const;
     void ActivateStrategy(std::string const& name);
     void DeactivateStrategy(std::string const& name);

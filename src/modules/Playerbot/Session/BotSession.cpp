@@ -48,6 +48,7 @@
 #include "Core/Events/EventDispatcher.h"  // PHASE 0 - Quick Win #3: For event dispatch
 #include "PhasingHandler.h"  // For bot phase initialization
 #include "Spatial/SpatialGridQueryHelpers.h"  // PHASE 2F: For snapshot-based player validation
+#include "MotionMaster.h"  // For ProcessPendingStopMovement
 
 namespace Playerbot {
 
@@ -568,12 +569,14 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // Check if shutting down - bail immediately
     if (_destroyed.load() || !_active.load())
     {
+            TC_LOG_DEBUG("module.playerbot.session", "BotSession::Update lock timeout - shutting down (account {})", GetAccountId());
             return false;  // Shutdown detected - exit gracefully
         }
 
         // Otherwise: Another thread is updating this bot
+        // DIAGNOSTIC: Log lock contention - this could cause "Bot update failed" if frequent
+        TC_LOG_WARN("module.playerbot.session", "BotSession::Update LOCK TIMEOUT for account {} - another thread is updating this bot", GetAccountId());
         // Just skip this update cycle (bot updates 5-10 times/sec anyway)
-        // No need to log - this is normal concurrent behavior
         return false;
     }
 
@@ -1864,6 +1867,103 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
         TC_LOG_ERROR("module.playerbot.group", "Exception handling party invitation for bot {}: {}",
             bot->GetName(), e.what());
     }
+}
+
+// ============================================================================
+// THREAD-SAFE FACING SYSTEM IMPLEMENTATION
+// ============================================================================
+
+void BotSession::QueueFacingTarget(ObjectGuid targetGuid)
+{
+    // Thread-safe: Can be called from any thread (worker threads via ClassAI)
+    std::lock_guard<std::mutex> lock(_facingMutex);
+    _pendingFacingTarget = targetGuid;
+
+    TC_LOG_TRACE("module.playerbot.facing",
+                 "Queued facing target {} for bot session",
+                 targetGuid.ToString());
+}
+
+bool BotSession::ProcessPendingFacing()
+{
+    // CRITICAL: Must only be called from main thread!
+    // This method is called from BotSession::Update() which runs on main thread
+
+    ObjectGuid targetGuid;
+    {
+        std::lock_guard<std::mutex> lock(_facingMutex);
+        if (_pendingFacingTarget.IsEmpty())
+            return false;
+
+        targetGuid = _pendingFacingTarget;
+        _pendingFacingTarget = ObjectGuid::Empty;  // Clear the pending request
+    }
+
+    // Get the player and target
+    Player* bot = GetPlayer();
+    if (!bot || !bot->IsInWorld())
+    {
+        TC_LOG_TRACE("module.playerbot.facing",
+                     "ProcessPendingFacing: Bot not available or not in world");
+        return false;
+    }
+
+    // Find the target unit
+    Unit* target = ObjectAccessor::GetUnit(*bot, targetGuid);
+    if (!target)
+    {
+        TC_LOG_TRACE("module.playerbot.facing",
+                     "ProcessPendingFacing: Target {} not found",
+                     targetGuid.ToString());
+        return false;
+    }
+
+    // Execute facing on main thread - this is now safe!
+    bot->SetFacingToObject(target);
+
+    TC_LOG_TRACE("module.playerbot.facing",
+                 "Bot {} now facing {}",
+                 bot->GetName(), target->GetName());
+
+    return true;
+}
+
+void BotSession::QueueStopMovement()
+{
+    // Thread-safe: atomic flag set
+    _pendingStopMovement.store(true);
+
+    TC_LOG_TRACE("module.playerbot.movement",
+                 "Queued stop movement for bot session");
+}
+
+bool BotSession::ProcessPendingStopMovement()
+{
+    // CRITICAL: Must only be called from main thread!
+    // This method is called from BotWorldSessionMgr::ProcessAllDeferredPackets()
+
+    // Atomic exchange - check and clear in one operation
+    if (!_pendingStopMovement.exchange(false))
+        return false;  // No pending request
+
+    // Get the player
+    Player* bot = GetPlayer();
+    if (!bot || !bot->IsInWorld())
+    {
+        TC_LOG_TRACE("module.playerbot.movement",
+                     "ProcessPendingStopMovement: Bot not available or not in world");
+        return false;
+    }
+
+    // Execute stop movement on main thread - this is now safe!
+    bot->StopMoving();
+    bot->GetMotionMaster()->Clear();
+
+    TC_LOG_TRACE("module.playerbot.movement",
+                 "Bot {} stopped movement on main thread",
+                 bot->GetName());
+
+    return true;
 }
 
 } // namespace Playerbot

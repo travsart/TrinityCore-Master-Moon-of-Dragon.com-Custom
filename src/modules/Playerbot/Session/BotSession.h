@@ -152,6 +152,65 @@ public:
     void SetAI(BotAI* ai) { _ai = ai; }
     BotAI* GetAI() const { return _ai; }
 
+    // ========================================================================
+    // THREAD-SAFE FACING SYSTEM
+    // ========================================================================
+    // SetFacingToObject() manipulates movement splines which is NOT thread-safe.
+    // Bot AI runs on worker threads, but movement APIs require main thread.
+    // Solution: Queue the facing request atomically, execute on main thread.
+    // ========================================================================
+
+    /**
+     * @brief Queue a facing request to be executed on main thread (thread-safe)
+     * @param targetGuid The GUID of the unit to face
+     *
+     * Called from: Worker threads (ClassAI::OnCombatUpdate)
+     * Executed by: Main thread (BotSession::Update -> ProcessPendingFacing)
+     */
+    void QueueFacingTarget(ObjectGuid targetGuid);
+
+    /**
+     * @brief Process pending facing request on main thread
+     * @return true if facing was executed
+     *
+     * CRITICAL: Must only be called from main thread (BotSession::Update)
+     */
+    bool ProcessPendingFacing();
+
+    /**
+     * @brief Check if there's a pending facing request
+     */
+    bool HasPendingFacing() const { return !_pendingFacingTarget.IsEmpty(); }
+
+    // ========================================================================
+    // THREAD-SAFE MOVEMENT STOP SYSTEM
+    // ========================================================================
+    // MotionMaster::Clear() is NOT thread-safe (modifies splines, unit state).
+    // Bot AI runs on worker threads, but movement APIs require main thread.
+    // Solution: Queue the stop request atomically, execute on main thread.
+    // ========================================================================
+
+    /**
+     * @brief Queue a stop movement request to be executed on main thread (thread-safe)
+     *
+     * Called from: Worker threads (LeaderFollowBehavior::OnDeactivate, OnGroupLeft)
+     * Executed by: Main thread (BotWorldSessionMgr::ProcessAllDeferredPackets)
+     */
+    void QueueStopMovement();
+
+    /**
+     * @brief Process pending stop movement request on main thread
+     * @return true if stop was executed
+     *
+     * CRITICAL: Must only be called from main thread
+     */
+    bool ProcessPendingStopMovement();
+
+    /**
+     * @brief Check if there's a pending stop movement request
+     */
+    bool HasPendingStopMovement() const { return _pendingStopMovement.load(); }
+
 private:
     // Helper methods for safe database access
     CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName);
@@ -196,6 +255,16 @@ private:
 
     // Player loading state for async operations
     ObjectGuid m_playerLoading;
+
+    // Thread-safe pending facing target
+    // Worker threads set this, main thread processes it
+    // Uses atomic operations for lock-free thread safety
+    mutable std::mutex _facingMutex;
+    ObjectGuid _pendingFacingTarget;
+
+    // Thread-safe pending stop movement flag
+    // Worker threads set this, main thread processes it
+    std::atomic<bool> _pendingStopMovement{false};
 
     // Deleted copy operations
     BotSession(BotSession const&) = delete;
