@@ -1668,6 +1668,16 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         if (!creature || !creature->IsAlive() || !creature->IsInWorld())
             continue;
 
+        // CRITICAL: Double-check bot is still in world before CanSeeOrDetect
+        // Race condition: bot may be removed from world during iteration
+        if (!bot->IsInWorld())
+            return;
+
+        // CRITICAL: Re-verify creature validity immediately before CanSeeOrDetect
+        // TOCTOU race: creature may have despawned between the check above and now
+        if (!creature->IsInWorld() || !creature->GetMap())
+            continue;
+
         // CRITICAL: Check if bot can actually see this creature (phase check)
         // Must verify creature is valid before calling CanSeeOrDetect to prevent crash
         if (!bot->CanSeeOrDetect(creature))
@@ -2085,7 +2095,15 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
 
     for (Creature* creature : nearbyCreatures)
     {
-        if (!creature || !creature->IsAlive())
+        if (!creature || !creature->IsAlive() || !creature->IsInWorld())
+            continue;
+
+        // CRITICAL: Double-check bot is still in world before CanSeeOrDetect
+        if (!bot->IsInWorld())
+            return false;
+
+        // CRITICAL: Re-verify creature validity immediately before CanSeeOrDetect (TOCTOU race)
+        if (!creature->IsInWorld() || !creature->GetMap())
             continue;
 
         // CRITICAL: Phase validation to prevent Ilario-type issues

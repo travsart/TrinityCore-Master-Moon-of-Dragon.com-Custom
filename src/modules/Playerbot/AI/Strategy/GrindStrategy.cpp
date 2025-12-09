@@ -524,6 +524,14 @@ bool GrindStrategy::IsValidGrindTarget(Player* bot, Creature* creature) const
     if (!creature->IsInWorld())
         return false;
 
+    // CRITICAL: Bot must also be in world before CanSeeOrDetect
+    if (!bot->IsInWorld())
+        return false;
+
+    // CRITICAL: Re-verify creature has valid map (TOCTOU race)
+    if (!creature->GetMap())
+        return false;
+
     // Must be visible
     if (!bot->CanSeeOrDetect(creature))
         return false;
@@ -761,6 +769,14 @@ bool GrindStrategy::CheckQuestAvailability(BotAI* ai)
         // CRITICAL: Full validity check before accessing creature methods
         // With 300-yard range, creatures may despawn/become invalid during iteration
         if (!creature || !creature->IsAlive() || !creature->IsInWorld())
+            continue;
+
+        // CRITICAL: Double-check bot is still in world before CanSeeOrDetect
+        if (!bot->IsInWorld())
+            return false;
+
+        // CRITICAL: Re-verify creature validity immediately before CanSeeOrDetect (TOCTOU race)
+        if (!creature->IsInWorld() || !creature->GetMap())
             continue;
 
         if (!bot->CanSeeOrDetect(creature))
