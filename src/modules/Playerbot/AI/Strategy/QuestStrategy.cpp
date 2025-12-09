@@ -293,29 +293,58 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
         if (priority.questId == 0)
         {
             // Still no objectives - bot has only autocomplete/scripted quests with no trackable objectives
-            TC_LOG_ERROR("module.playerbot.quest", "⚠️ ProcessQuestObjectives: Bot {} has NO trackable objectives (only autocomplete/scripted quests)",
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ ProcessQuestObjectives: Bot {} has NO trackable objectives (checking for talk-to/turn-in quests)",
                          bot->GetName());
 
-            // CRITICAL FIX: Check if any of these quests are COMPLETE and ready to turn in
-            // Don't fall back to searching for new quests if we have completed quests!
+            // CRITICAL FIX: Handle quests with no objectives
+            // These include:
+            // 1. Completed quests ready to turn in
+            // 2. "Talk-to" quests (no objectives, just need to talk to quest ender)
+            // 3. IsTurnIn() quests (QUEST_TYPE_TURNIN)
             for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
             {
                 uint32 questId = bot->GetQuestSlotQuestId(slot);
                 if (questId == 0)
                     continue;
 
-                // Check if quest is complete
-                if (bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+                Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+                if (!quest)
+                    continue;
+
+                QuestStatus status = bot->GetQuestStatus(questId);
+
+                // Check if quest is complete - turn it in
+                if (status == QUEST_STATUS_COMPLETE)
                 {
-                    TC_LOG_ERROR("module.playerbot.quest", "✅ ProcessQuestObjectives: Bot {} has COMPLETE autocomplete quest {} - turning it in!",
+                    TC_LOG_ERROR("module.playerbot.quest", "✅ ProcessQuestObjectives: Bot {} has COMPLETE quest {} - turning it in!",
+                                 bot->GetName(), questId);
+                    TurnInQuest(ai, questId);
+                    return;
+                }
+
+                // Check for "talk-to" quests: no objectives but INCOMPLETE status
+                // These are quests where you just need to talk to the quest ender to complete them
+                if (status == QUEST_STATUS_INCOMPLETE && quest->Objectives.empty())
+                {
+                    // This is a "talk-to" quest - navigate to quest ender and turn in
+                    TC_LOG_ERROR("module.playerbot.quest", "🗣️ ProcessQuestObjectives: Bot {} has TALK-TO quest {} (no objectives, incomplete) - navigating to quest ender",
+                                 bot->GetName(), questId);
+                    TurnInQuest(ai, questId);
+                    return;
+                }
+
+                // Check for IsTurnIn() quests (QUEST_TYPE_TURNIN)
+                if (quest->IsTurnIn())
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "📜 ProcessQuestObjectives: Bot {} has TURN-IN type quest {} - navigating to quest ender",
                                  bot->GetName(), questId);
                     TurnInQuest(ai, questId);
                     return;
                 }
             }
 
-            // No completed quests - fall back to searching for new quests
-            TC_LOG_ERROR("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} has no completed quests, searching for new quests",
+            // No actionable quests - fall back to searching for new quests
+            TC_LOG_ERROR("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} has no actionable quests, searching for new quests",
                          bot->GetName());
             SearchForQuestGivers(ai);
             return;
