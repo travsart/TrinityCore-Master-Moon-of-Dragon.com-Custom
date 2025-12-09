@@ -692,19 +692,31 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
             // Initialize wandering if not already done
             if (_questAreaWanderPoints.empty())
             {
-                TC_LOG_ERROR("module.playerbot.quest", "🗺️ EngageQuestTargets: Bot {} - Initializing quest area wandering",
+                TC_LOG_DEBUG("module.playerbot.quest", "🗺️ EngageQuestTargets: Bot {} - Initializing quest area wandering",
                              bot->GetName());
                 InitializeQuestAreaWandering(ai, objective);
             }
-            // Wander through quest area to find respawns
-            TC_LOG_ERROR("module.playerbot.quest", "🚶 EngageQuestTargets: Bot {} - Wandering in quest area to search for spawns",
-                         bot->GetName());
-            WanderInQuestArea(ai);
+
+            // CRITICAL FIX: Check if wander points were actually loaded
+            // If InitializeQuestAreaWandering failed to find matching POI blob, fall back to NavigateToObjective
+            if (_questAreaWanderPoints.empty())
+            {
+                TC_LOG_WARN("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - Wander points failed to load, falling back to NavigateToObjective",
+                             bot->GetName());
+                NavigateToObjective(ai, objective);
+            }
+            else
+            {
+                // Wander through quest area to find respawns
+                TC_LOG_DEBUG("module.playerbot.quest", "🚶 EngageQuestTargets: Bot {} - Wandering in quest area to search for spawns",
+                             bot->GetName());
+                WanderInQuestArea(ai);
+            }
         }
         else
         {
             // No quest area - just navigate to objective POI with randomness
-            TC_LOG_ERROR("module.playerbot.quest", "📍 EngageQuestTargets: Bot {} - No quest area, navigating to objective POI",
+            TC_LOG_DEBUG("module.playerbot.quest", "📍 EngageQuestTargets: Bot {} - No quest area, navigating to objective POI",
                          bot->GetName());
             NavigateToObjective(ai, objective);
         }
