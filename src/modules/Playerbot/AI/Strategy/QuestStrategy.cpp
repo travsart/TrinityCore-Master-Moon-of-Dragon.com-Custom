@@ -1527,7 +1527,74 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
 
     QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
 
-    if (questObjective.Type != QUEST_OBJECTIVE_MONSTER)
+    // Determine which creature entry to search for based on objective type
+    uint32 targetCreatureEntry = 0;
+
+    if (questObjective.Type == QUEST_OBJECTIVE_MONSTER)
+    {
+        // MONSTER objectives: ObjectID is the creature entry directly
+        targetCreatureEntry = questObjective.ObjectID;
+        TC_LOG_DEBUG("module.playerbot.quest", "🎯 FindQuestTarget: MONSTER objective - looking for creature entry {}",
+                     targetCreatureEntry);
+    }
+    else if (questObjective.Type == QUEST_OBJECTIVE_ITEM)
+    {
+        // ITEM objectives: Need to look up which creature drops this item
+        // Query creature_loot_template to find the creature entry
+        uint32 itemId = questObjective.ObjectID;
+
+        // PERFORMANCE: Use static cache to avoid repeated database queries
+        static std::unordered_map<uint32, uint32> itemToCreatureCache;
+        static std::recursive_mutex cacheMutex;
+
+        {
+            std::lock_guard lock(cacheMutex);
+            auto cacheIt = itemToCreatureCache.find(itemId);
+            if (cacheIt != itemToCreatureCache.end())
+            {
+                targetCreatureEntry = cacheIt->second;
+                TC_LOG_DEBUG("module.playerbot.quest", "🎯 FindQuestTarget: ITEM objective (cached) - item {} drops from creature entry {}",
+                             itemId, targetCreatureEntry);
+            }
+        }
+
+        // If not in cache, query database
+        if (targetCreatureEntry == 0)
+        {
+            // Query creature_loot_template to find which creature drops this item
+            QueryResult result = WorldDatabase.PQuery("SELECT Entry FROM creature_loot_template WHERE Item = {} LIMIT 1", itemId);
+
+            if (result)
+            {
+                Field* fields = result->Fetch();
+                targetCreatureEntry = fields[0].GetUInt32();
+
+                // Cache the result
+                {
+                    std::lock_guard lock(cacheMutex);
+                    itemToCreatureCache[itemId] = targetCreatureEntry;
+                }
+
+                TC_LOG_DEBUG("module.playerbot.quest", "🎯 FindQuestTarget: ITEM objective (DB lookup) - item {} drops from creature entry {}",
+                             itemId, targetCreatureEntry);
+            }
+            else
+            {
+                TC_LOG_WARN("module.playerbot.quest", "⚠️ FindQuestTarget: ITEM objective - item {} NOT FOUND in creature_loot_template!",
+                             itemId);
+                return nullptr;
+            }
+        }
+    }
+    else
+    {
+        // Other objective types (GAMEOBJECT, etc.) - not handled here
+        TC_LOG_DEBUG("module.playerbot.quest", "⚠️ FindQuestTarget: Unsupported objective type {} for quest {}",
+                     static_cast<uint32>(questObjective.Type), objective.questId);
+        return nullptr;
+    }
+
+    if (targetCreatureEntry == 0)
         return nullptr;
 
     // DEADLOCK FIX: Use spatial grid instead of ObjectAccessor in loops
@@ -1547,10 +1614,10 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
     ObjectGuid targetGuid;
     for (auto const& snapshot : nearbyCreatures)
     {
-        if (snapshot.entry == questObjective.ObjectID && !snapshot.isDead)
+        if (snapshot.entry == targetCreatureEntry && !snapshot.isDead)
         {
             targetGuid = snapshot.guid;
-            TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestTarget: Found creature entry {} at ({:.1f}, {:.1f}, {:.1f})",
+            TC_LOG_DEBUG("module.playerbot.quest", "✅ FindQuestTarget: Found creature entry {} at ({:.1f}, {:.1f}, {:.1f})",
                          snapshot.entry, snapshot.position.GetPositionX(),
                          snapshot.position.GetPositionY(), snapshot.position.GetPositionZ());
             break;
@@ -1559,8 +1626,8 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
 
     if (targetGuid.IsEmpty())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestTarget: Bot {} - NO targets found in 300-yard scan for entry {}",
-                     bot->GetName(), questObjective.ObjectID);
+        TC_LOG_DEBUG("module.playerbot.quest", "⚠️ FindQuestTarget: Bot {} - NO targets found in 300-yard scan for entry {}",
+                     bot->GetName(), targetCreatureEntry);
 
         // FALLBACK: Bot should move closer to spawn locations from FindObjectiveTargetLocation
         // The caller (EngageQuestTargets) will handle navigation to objective.lastKnownPosition
@@ -1602,7 +1669,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
     if (target && target->ToCreature())
     {
         Creature* creature = target->ToCreature();
-        uint32 entry = questObjective.ObjectID;
+        uint32 entry = targetCreatureEntry;
 
         // If creature is not hostile, check if it requires spell click interaction
         if (!bot->IsHostileTo(creature))
