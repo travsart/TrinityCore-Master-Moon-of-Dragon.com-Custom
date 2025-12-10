@@ -46,6 +46,10 @@ public:
     void OnCombatStart(::Unit* target) override;
     void OnCombatEnd() override;
 
+    // Non-combat update (called when NOT in combat)
+    // Used for pet summoning, buff maintenance, preparation
+    void OnNonCombatUpdate(uint32 diff) override;
+
 protected:
     // Resource management
     bool HasEnoughResource(uint32 spellId) override;
@@ -91,6 +95,9 @@ private:
     bool HasHealthstone();
     bool UseHealthstone();
     bool HasSoulstone();
+
+    // Priority 10: Basic Rotation (Shadow Bolt / Corruption)
+    void ExecuteBasicRotation(Unit* target);
 
     // ========================================================================
     // Combat Utilities

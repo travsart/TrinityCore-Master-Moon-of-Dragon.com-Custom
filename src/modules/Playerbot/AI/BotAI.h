@@ -182,6 +182,23 @@ public:
      */
     virtual void OnCombatUpdate(uint32 diff) {}
 
+    /**
+     * Virtual method for class-specific NON-COMBAT updates
+     * Called by UpdateAI() when bot is NOT in combat
+     *
+     * ClassAI implementations should override this for:
+     * - Pet summoning and management
+     * - Buff application
+     * - Out-of-combat resource regeneration
+     * - Preparation for combat
+     *
+     * MUST NOT:
+     * - Control movement (handled by strategies)
+     * - Throttle updates (causes following issues)
+     * - Call base UpdateAI (would cause recursion)
+     */
+    virtual void OnNonCombatUpdate(uint32 diff) {}
+
     // ========================================================================
     // STATE TRANSITIONS - Clean lifecycle management
     // ========================================================================

@@ -525,10 +525,10 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
     UpdateCombatState(diff);
 
     // ========================================================================
-    // PHASE 3: COMBAT SPECIALIZATION - Only when in combat
+    // PHASE 3: CLASS-SPECIFIC UPDATES - Combat and Non-Combat
     // ========================================================================
 
-    // If in combat AND this is a ClassAI instance, delegate combat updates
+    // Delegate to class-specific AI based on combat state
     if (IsInCombat())
     {
         // Virtual call to ClassAI::OnCombatUpdate() if overridden
@@ -536,6 +536,14 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         // But NOT movement - that's already handled by strategies
         OnCombatUpdate(diff);
     }
+    else
+    {
+        // Virtual call to ClassAI::OnNonCombatUpdate() if overridden
+        // ClassAI handles pet summoning, buff application, out-of-combat prep
+        // But NOT movement - that's already handled by strategies
+        OnNonCombatUpdate(diff);
+    }
+
     // ========================================================================
     // PHASE 4: GROUP INVITATION PROCESSING - Critical for joining groups
     // ========================================================================

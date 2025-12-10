@@ -122,7 +122,7 @@ enum WarlockSpells
     // Resources
     LIFE_TAP = 1454,
     DARK_INTENT = 109773,
-    DRAIN_LIFE = 689,
+    DRAIN_LIFE = 234153,     // WoW 11.2 retail spell ID (NOT 689 which is Classic)
     DRAIN_MANA = 5138,
 
     // Utility
@@ -166,8 +166,7 @@ WarlockAI::WarlockAI(Player* bot) :
     _petAbilityCooldowns.clear();
 
     TC_LOG_DEBUG("playerbot.warlock", "WarlockAI initialized for {} with specialization {}",
-
-                 GetBot()->GetName(), GetBot()->GetPrimarySpecialization());
+                 GetBot()->GetName(), static_cast<uint32>(GetBot()->GetPrimarySpecialization()));
 }
 
 // Destructor (required because of forward declarations)
@@ -185,23 +184,9 @@ void WarlockAI::UpdateRotation(::Unit* target)
 
                  bot->GetName(), bot->GetLevel(), target->GetName(), distance);
 
-    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
-    {
-        TC_LOG_ERROR("module.playerbot", " Bot {} using BASELINE rotation (level {})",
-
-                     bot->GetName(), bot->GetLevel());
-
-        static BaselineRotationManager baselineManager;
-        baselineManager.HandleAutoSpecialization(bot);
-
-        bool executed = baselineManager.ExecuteBaselineRotation(bot, target);
-        TC_LOG_ERROR("module.playerbot", " BaselineRotation result: {}", executed ? "SUCCESS" : "FAILED");
-
-        // No fallback for casters - if rotation failed, just return
-        // Do NOT use AttackerStateUpdate (melee) for a caster class
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     // ========================================================================
     // COMBAT BEHAVIOR INTEGRATION - Full 10 Priority System
@@ -333,10 +318,10 @@ void WarlockAI::UpdateRotation(::Unit* target)
 // Priority 9: Soul Shard Management - Efficient shard generation and spending
     HandleSoulShardManagement();
 
-    // Priority 10: Normal Rotation - Execute spec-specific rotation via BaselineRotationManager
-    // Note: Spec-specific rotation logic is now handled through the refactored specialization classes
-    // which are automatically selected by BaselineRotationManager based on GetBot()->GetPrimarySpecialization()
-    _warlockMetrics.spellsCast++;
+    // Priority 10: Normal Rotation - Cast basic damage spells
+    // CRITICAL FIX: This was completely empty! Just incremented a counter but never cast anything!
+    // For level 10+ warlocks, we execute a simple Shadow Bolt / Corruption rotation
+    ExecuteBasicRotation(target);
 }
 
 bool WarlockAI::HandleInterrupt(Unit* target)
@@ -591,22 +576,26 @@ bool WarlockAI::SummonPet()
             summonSpell = SUMMON_VOIDWALKER;
             }
             if (summonSpell && !bot->GetSpellHistory()->HasCooldown(summonSpell))
-  
     {
-        // Check soul shard requirement
-        uint32 soulShards = bot->GetItemCount(6265);
-        if (soulShards > 0)
+        // CRITICAL FIX: Check soul shard POWER resource, not items!
+        // In WoW 11.2 (The War Within), Summon Imp costs 1 Soul Shard (power type).
+        // Soul Shards are a class resource (like mana), NOT inventory items (item 6265 was vanilla).
+        // Power type: POWER_SOUL_SHARDS = 7
+        // Each Soul Shard = 10 Soul Shard Fragments, max 5 shards (50 fragments)
+        int32 soulShards = bot->GetPower(POWER_SOUL_SHARDS);
+
+        // Need at least 10 fragments (1 shard) to summon
+        if (soulShards >= 10)
         {
-
             bot->CastSpell(CastSpellTargetArg(bot), summonSpell);
-
             _lastPetSummon = GameTime::GetGameTimeMS();
-
             _petsSpawned++;
-
-            TC_LOG_DEBUG("playerbot.warlock", "Summoning pet with spell {}", summonSpell);
-
+            TC_LOG_INFO("playerbot.warlock", "Summoning pet with spell {} (soul shards: {})", summonSpell, soulShards);
             return true;
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbot.warlock", "Cannot summon pet - insufficient soul shards ({}/10)", soulShards);
         }
     }
 
@@ -864,6 +853,106 @@ void WarlockAI::HandleSoulShardManagement()
 
             bot->CastSpell(CastSpellTargetArg(bot), CREATE_SOULSTONE);
         }
+    }
+}
+
+// ============================================================================
+// Priority 10: Basic Rotation - Pet + Shadow Bolt / Corruption / Drain Life
+// ============================================================================
+void WarlockAI::ExecuteBasicRotation(Unit* target)
+{
+    if (!target || !target->IsAlive())
+        return;
+
+    Player* bot = GetBot();
+    if (!bot || !bot->IsAlive())
+        return;
+
+    // Don't cast if already casting
+    if (bot->HasUnitState(UNIT_STATE_CASTING))
+        return;
+
+    TC_LOG_DEBUG("module.playerbot.warlock", "ExecuteBasicRotation: Bot {} level {} executing rotation on {}",
+                 bot->GetName(), bot->GetLevel(), target->GetName());
+
+    // NOTE: Pet summoning is handled in WarlockBaselineRotation::ApplyBuffs()
+    // which runs OUT OF COMBAT. Pet summons have 6s cast time - cannot cast in combat!
+
+    // ========================================================================
+    // PRIORITY 1: Self-heal with Drain Life if health is low (level 9+)
+    // ========================================================================
+    float healthPct = bot->GetHealthPct();
+    if (healthPct < 50.0f && bot->HasSpell(DRAIN_LIFE))
+    {
+        TC_LOG_DEBUG("module.playerbot.warlock", "ExecuteBasicRotation: {} health low ({:.0f}%), using Drain Life",
+                     bot->GetName(), healthPct);
+        SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), DRAIN_LIFE);
+        if (result == SPELL_CAST_OK)
+        {
+            _warlockMetrics.spellsCast++;
+            return;
+        }
+    }
+
+    // ========================================================================
+    // PRIORITY 2: Apply Corruption if target doesn't have it (instant cast DoT)
+    // ========================================================================
+    if (bot->HasSpell(CORRUPTION))
+    {
+        bool hasCorruption = target->HasAura(CORRUPTION, bot->GetGUID());
+        if (!hasCorruption)
+        {
+            TC_LOG_DEBUG("module.playerbot.warlock", "ExecuteBasicRotation: {} casting Corruption on {}",
+                         bot->GetName(), target->GetName());
+            SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), CORRUPTION);
+            if (result == SPELL_CAST_OK)
+            {
+                _warlockMetrics.spellsCast++;
+                return;
+            }
+        }
+    }
+
+    // ========================================================================
+    // PRIORITY 3: Shadow Bolt (main cast-time damage spell)
+    // SHADOWBOLT = 686 - This is the base Warlock damage spell
+    // ========================================================================
+    bool hasShadowBolt = bot->HasSpell(SHADOWBOLT);
+    TC_LOG_INFO("playerbot.warlock", "ExecuteBasicRotation: {} HasSpell(SHADOWBOLT={})={}",
+                bot->GetName(), static_cast<uint32>(SHADOWBOLT), hasShadowBolt ? "YES" : "NO");
+
+    if (hasShadowBolt)
+    {
+        TC_LOG_INFO("playerbot.warlock", "ExecuteBasicRotation: {} ATTEMPTING Shadow Bolt (ID {}) on {}",
+                    bot->GetName(), static_cast<uint32>(SHADOWBOLT), target->GetName());
+        SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), SHADOWBOLT);
+        TC_LOG_INFO("playerbot.warlock", "ExecuteBasicRotation: {} Shadow Bolt result = {} (OK={})",
+                    bot->GetName(), static_cast<int>(result), static_cast<int>(SPELL_CAST_OK));
+        if (result == SPELL_CAST_OK)
+        {
+            _warlockMetrics.spellsCast++;
+            return;
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot.warlock", "ExecuteBasicRotation: {} Shadow Bolt FAILED with result {}!",
+                        bot->GetName(), static_cast<int>(result));
+        }
+    }
+    else
+    {
+        TC_LOG_WARN("playerbot.warlock", "ExecuteBasicRotation: {} does NOT have Shadow Bolt spell ID {}!",
+                    bot->GetName(), static_cast<uint32>(SHADOWBOLT));
+    }
+
+    // ========================================================================
+    // FALLBACK: Auto-attack if no spells available
+    // ========================================================================
+    if (bot->GetVictim() != target)
+    {
+        bot->Attack(target, true);
+        TC_LOG_DEBUG("module.playerbot.warlock", "ExecuteBasicRotation: {} falling back to auto-attack on {}",
+                     bot->GetName(), target->GetName());
     }
 }
 
@@ -1260,13 +1349,8 @@ void WarlockAI::UpdateCombatMetrics()
 // Required virtual function implementations
 void WarlockAI::UpdateBuffs()
 {
-    // Use baseline buffs for low-level bots
-    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.ApplyBaselineBuffs(GetBot());
-        return;
-    }
+    // NOTE: Baseline buff check is now handled at the dispatch level.
+    // This method is only called for level 10+ bots with talents.
 
     // Update warlock-specific buffs
     UpdateWarlockBuffs();    // Note: Spec-specific buff logic is now handled through the refactored specialization classes
@@ -1372,6 +1456,88 @@ void WarlockAI::OnCombatEnd()
     ManageLifeTapTiming();
 }
 
+void WarlockAI::OnNonCombatUpdate(uint32 diff)
+{
+    // CRITICAL FIX: Pet summoning MUST happen out of combat
+    // This method is called by BotAI::UpdateAI() when NOT in combat
+    // Handles pet summoning, buff maintenance, and out-of-combat preparation
+
+    Player* bot = GetBot();
+    if (!bot || !bot->IsAlive())
+        return;
+
+    // Priority 1: Pet Management - Summon pet if missing
+    // Check if we need to summon a pet (no pet or pet is dead)
+    Pet* pet = bot->GetPet();
+    if (!pet || !pet->IsAlive())
+    {
+        // Try to summon pet
+        if (SummonPet())
+        {
+            TC_LOG_DEBUG("playerbot.warlock", "Warlock {} summoned pet out of combat", bot->GetName());
+            return; // Pet summoning takes time, don't do anything else this frame
+        }
+    }
+    else
+    {
+        // Pet is alive - update pet status
+        _petActive = true;
+        _petHealthPercent = static_cast<uint32>(pet->GetHealthPct());
+
+        // Heal pet if needed (out of combat)
+        if (_petHealthPercent.load() < 70)
+        {
+            // Health Funnel (only if we have good health ourselves)
+            if (bot->GetHealthPct() > 80.0f &&
+                bot->HasSpell(HEALTH_FUNNEL) &&
+                !bot->GetSpellHistory()->HasCooldown(HEALTH_FUNNEL))
+            {
+                bot->CastSpell(CastSpellTargetArg(pet), HEALTH_FUNNEL);
+                TC_LOG_DEBUG("playerbot.warlock", "Warlock {} healing pet with Health Funnel (out of combat)", bot->GetName());
+                return;
+            }
+
+            // Consume Shadows (Voidwalker self-heal)
+            if (pet->GetEntry() == 1860) // Voidwalker
+            {
+                if (!_petAbilityCooldowns[CONSUME_SHADOWS] ||
+                    GameTime::GetGameTimeMS() - _petAbilityCooldowns[CONSUME_SHADOWS] > 180000)
+                {
+                    pet->CastSpell(CastSpellTargetArg(pet), CONSUME_SHADOWS);
+                    _petAbilityCooldowns[CONSUME_SHADOWS] = GameTime::GetGameTimeMS();
+                    TC_LOG_DEBUG("playerbot.warlock", "Warlock {} pet using Consume Shadows (out of combat)", bot->GetName());
+                    return;
+                }
+            }
+        }
+    }
+
+    // Priority 2: Apply buffs
+    // Throttle buff checks to every 5 seconds (expensive operations)
+    static uint32 lastBuffCheck = 0;
+    uint32 now = GameTime::GetGameTimeMS();
+    if (now - lastBuffCheck > 5000)
+    {
+        UpdateBuffs();
+        lastBuffCheck = now;
+    }
+
+    // Priority 3: Soul Shard Management (create healthstone/soulstone)
+    // Only check every 10 seconds
+    static uint32 lastShardCheck = 0;
+    if (now - lastShardCheck > 10000)
+    {
+        HandleSoulShardManagement();
+        lastShardCheck = now;
+    }
+
+    // Priority 4: Mana Management (Life Tap if needed and safe)
+    if (bot->GetHealthPct() > 70.0f && bot->GetPowerPct(POWER_MANA) < 50.0f)
+    {
+        ManageLifeTapTiming();
+    }
+}
+
 bool WarlockAI::HasEnoughResource(uint32 spellId)
 {
     Player* bot = GetBot();
@@ -1468,6 +1634,34 @@ void WarlockAI::UpdateWarlockBuffs()
     Player* bot = GetBot();
     if (!bot)
         return;
+
+    // Don't apply buffs while casting (especially important for 6s pet summons)
+    if (bot->HasUnitState(UNIT_STATE_CASTING))
+        return;
+
+    // ========================================================================
+    // PRIORITY 1: PET SUMMONING (must happen OUT OF COMBAT - 6s cast time!)
+    // Level 3: Imp, Level 10: Voidwalker
+    // ========================================================================
+    Pet* pet = bot->GetPet();
+    if (!pet || !pet->IsAlive())
+    {
+        // Prefer Voidwalker for leveling (tanks damage)
+        if (bot->GetLevel() >= 10 && bot->HasSpell(SUMMON_VOIDWALKER))
+        {
+            TC_LOG_INFO("playerbot.warlock", "UpdateWarlockBuffs: {} summoning Voidwalker (out of combat)",
+                        bot->GetName());
+            bot->CastSpell(bot, SUMMON_VOIDWALKER, false);
+            return;  // Don't cast other buffs while summoning
+        }
+        else if (bot->HasSpell(SUMMON_IMP))
+        {
+            TC_LOG_INFO("playerbot.warlock", "UpdateWarlockBuffs: {} summoning Imp (out of combat)",
+                        bot->GetName());
+            bot->CastSpell(bot, SUMMON_IMP, false);
+            return;  // Don't cast other buffs while summoning
+        }
+    }
 
     // Demon Armor/Fel Armor
     if (!bot->HasAura(DEMON_ARMOR) && !bot->HasAura(FEL_ARMOR))
