@@ -491,33 +491,9 @@ void DeathKnightAI::UpdateRotation(Unit* target)
     if (!target || !GetBot())
         return;
 
-    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.HandleAutoSpecialization(GetBot());
-
-        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
-
-            return;
-
-        // Fallback: Use Death Grip if available for ranged pull
-        float rangeCheckSq = OPTIMAL_MELEE_RANGE * OPTIMAL_MELEE_RANGE; // 25.0f
-    if (GetBot()->GetExactDistSq(target) > rangeCheckSq && ShouldUseDeathGrip(target))
-        {
-
-            if (CanUseAbility(DEATH_GRIP))
-
-            {
-
-                CastSpell(DEATH_GRIP, target);
-
-                return;
-
-            }
-        }
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     // ========================================================================
     // COMBAT BEHAVIOR INTEGRATION - Priority-based decision making

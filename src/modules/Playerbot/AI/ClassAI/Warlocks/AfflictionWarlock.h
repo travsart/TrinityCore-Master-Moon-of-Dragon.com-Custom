@@ -24,6 +24,8 @@
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
+// NOTE: BaselineRotationManager.h no longer needed - baseline rotation check
+// is now handled centrally at the dispatch level in ClassAI::OnCombatUpdate()
 
 namespace Playerbot
 {
@@ -307,11 +309,17 @@ public:
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
+        // NOTE: Baseline rotation check is now handled at the dispatch level in
+        // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+        // already chosen a specialization (level 10+ with talents). This ensures
+        // clean separation of concerns and prevents code duplication across all
+        // 39 specialization classes.
+
         // Update Affliction state
         UpdateAfflictionState();
 
-        // Ensure pet is active
-        EnsurePetActive();
+        // NOTE: Pet summoning moved to UpdateBuffs() since summons have 6s cast time
+        // and must be done OUT OF COMBAT. See UpdateBuffs() below.
 
         // Determine if AoE or single target
         uint32 enemyCount = this->GetEnemiesInRange(40.0f);
@@ -323,11 +331,17 @@ public:
         {
             ExecuteSingleTargetRotation(target);
         }
-    }    void UpdateBuffs() override
+    }
+
+    void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
         if (!bot)
             return;
+
+        // CRITICAL: Summon pet OUT OF COMBAT (6 second cast time!)
+        // This must be called in UpdateBuffs, not UpdateRotation
+        EnsurePetActive();
 
         // Defensive cooldowns
         HandleDefensiveCooldowns();
@@ -446,16 +460,29 @@ protected:
         }
 
         // Priority 10: Shadow Bolt (filler + shard gen)
-        if (shards < 5)
+        // NOTE: For level 10 warlocks, this is often the only damage spell available!
+        TC_LOG_INFO("playerbot", "Affliction {}: Priority 10 - shards={}, nightfall={}, target={}",
+                    this->GetBot()->GetName(), shards, _nightfallProc ? "true" : "false", target->GetName());
+
+        // Try Shadow Bolt regardless of shard count for low-level warlocks
+        bool canCastShadowBolt = this->CanCastSpell(SHADOW_BOLT_AFF, target);
+        TC_LOG_INFO("playerbot", "Affliction {}: CanCastSpell(SHADOW_BOLT_AFF={})={}",
+                    this->GetBot()->GetName(), static_cast<uint32>(SHADOW_BOLT_AFF), canCastShadowBolt ? "YES" : "NO");
+
+        if (_nightfallProc || canCastShadowBolt)
         {
-            // Use Nightfall proc if available
-            if (_nightfallProc || this->CanCastSpell(SHADOW_BOLT_AFF, target))
-            {
-                this->CastSpell(SHADOW_BOLT_AFF, target);
-                _nightfallProc = false;
+            TC_LOG_INFO("playerbot", "Affliction {}: CASTING Shadow Bolt on {}",
+                        this->GetBot()->GetName(), target->GetName());
+            this->CastSpell(SHADOW_BOLT_AFF, target);
+            _nightfallProc = false;
+            if (shards < 5)
                 GenerateSoulShard(1);
-                return;
-            }
+            return;
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot", "Affliction {}: Cannot cast Shadow Bolt! HasSpell={}",
+                        this->GetBot()->GetName(), this->GetBot()->HasSpell(SHADOW_BOLT_AFF) ? "YES" : "NO");
         }
     }
 
@@ -614,19 +641,51 @@ protected:
         if (!bot)
             return;
 
-        // Check if pet exists
+        // Don't summon while casting (6s cast time!)
+        if (bot->HasUnitState(UNIT_STATE_CASTING))
+            return;
+
+        // Check if pet exists and is alive
         if (Pet* pet = bot->GetPet())
         {
             if (pet->IsAlive())
                 return; // Pet is active
         }
 
-        // Summon Felhunter (best for Affliction - interrupt + dispel)
-        if (this->CanCastSpell(SUMMON_FELHUNTER_AFF, bot))
+        // CRITICAL: For self-cast spells like pet summons, pass nullptr as target!
+        // Passing 'bot' causes CanCastSpell to fail because bot->IsFriendlyTo(bot) = true
+
+        // Try summons in order of preference with fallbacks for low-level warlocks
+        // Priority 1: Felhunter (best for Affliction - interrupt + dispel) - Level 30+
+        if (bot->HasSpell(SUMMON_FELHUNTER_AFF) && this->CanCastSpell(SUMMON_FELHUNTER_AFF, nullptr))
         {
             this->CastSpell(SUMMON_FELHUNTER_AFF, bot);
-            TC_LOG_DEBUG("playerbot", "Affliction: Summon Felhunter");
+            TC_LOG_INFO("playerbot", "Affliction {}: Summoning Felhunter", bot->GetName());
+            return;
         }
+
+        // Priority 2: Voidwalker (tank for leveling) - Level 10+
+        if (bot->HasSpell(SUMMON_VOIDWALKER_AFF) && this->CanCastSpell(SUMMON_VOIDWALKER_AFF, nullptr))
+        {
+            this->CastSpell(SUMMON_VOIDWALKER_AFF, bot);
+            TC_LOG_INFO("playerbot", "Affliction {}: Summoning Voidwalker (fallback)", bot->GetName());
+            return;
+        }
+
+        // Priority 3: Imp (ranged DPS) - Level 3+
+        if (bot->HasSpell(SUMMON_IMP_AFF) && this->CanCastSpell(SUMMON_IMP_AFF, nullptr))
+        {
+            this->CastSpell(SUMMON_IMP_AFF, bot);
+            TC_LOG_INFO("playerbot", "Affliction {}: Summoning Imp (fallback)", bot->GetName());
+            return;
+        }
+
+        // Diagnostic: Show which spells the bot actually has
+        TC_LOG_DEBUG("playerbot", "Affliction {}: No pet summon spell available (level {}) - HasSpell: Imp={}, Voidwalker={}, Felhunter={}",
+                     bot->GetName(), bot->GetLevel(),
+                     bot->HasSpell(SUMMON_IMP_AFF) ? "Y" : "N",
+                     bot->HasSpell(SUMMON_VOIDWALKER_AFF) ? "Y" : "N",
+                     bot->HasSpell(SUMMON_FELHUNTER_AFF) ? "Y" : "N");
     }
 
 private:

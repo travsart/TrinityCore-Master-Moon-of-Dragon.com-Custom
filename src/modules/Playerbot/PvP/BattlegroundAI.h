@@ -204,6 +204,39 @@ struct SiegeStrategy
 };
 
 /**
+ * @brief BG performance metrics
+ */
+struct BGMetrics
+{
+    ::std::atomic<uint32> objectivesCaptured{0};
+    ::std::atomic<uint32> objectivesDefended{0};
+    ::std::atomic<uint32> flagCaptures{0};
+    ::std::atomic<uint32> flagReturns{0};
+    ::std::atomic<uint32> basesAssaulted{0};
+    ::std::atomic<uint32> basesDefended{0};
+    ::std::atomic<uint32> matchesWon{0};
+    ::std::atomic<uint32> matchesLost{0};
+
+    void Reset()
+    {
+        objectivesCaptured = 0;
+        objectivesDefended = 0;
+        flagCaptures = 0;
+        flagReturns = 0;
+        basesAssaulted = 0;
+        basesDefended = 0;
+        matchesWon = 0;
+        matchesLost = 0;
+    }
+
+    float GetWinRate() const
+    {
+        uint32 total = matchesWon.load() + matchesLost.load();
+        return total > 0 ? static_cast<float>(matchesWon.load()) / total : 0.0f;
+    }
+};
+
+/**
  * @brief Battleground AI - Complete BG automation
  *
  * Features:
@@ -410,36 +443,6 @@ public:
     // ============================================================================
     // METRICS
     // ============================================================================
-
-    struct BGMetrics
-    {
-        ::std::atomic<uint32> objectivesCaptured{0};
-        ::std::atomic<uint32> objectivesDefended{0};
-        ::std::atomic<uint32> flagCaptures{0};
-        ::std::atomic<uint32> flagReturns{0};
-        ::std::atomic<uint32> basesAssaulted{0};
-        ::std::atomic<uint32> basesDefended{0};
-        ::std::atomic<uint32> matchesWon{0};
-        ::std::atomic<uint32> matchesLost{0};
-
-        void Reset()
-        {
-            objectivesCaptured = 0;
-            objectivesDefended = 0;
-            flagCaptures = 0;
-            flagReturns = 0;
-            basesAssaulted = 0;
-            basesDefended = 0;
-            matchesWon = 0;
-            matchesLost = 0;
-        }
-
-        float GetWinRate() const
-        {
-            uint32 total = matchesWon.load() + matchesLost.load();
-            return total > 0 ? static_cast<float>(matchesWon.load()) / total : 0.0f;
-        }
-    };
 
     BGMetrics const& GetPlayerMetrics(uint32 playerGuid) const override;
     BGMetrics const& GetGlobalMetrics() const override;

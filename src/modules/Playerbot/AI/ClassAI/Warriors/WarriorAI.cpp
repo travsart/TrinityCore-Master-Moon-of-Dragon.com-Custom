@@ -45,23 +45,9 @@ void WarriorAI::UpdateRotation(::Unit* target)
     if (!target || !GetBot())
         return;
 
-    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
-    {
-        // Use baseline rotation manager for unspecialized bots
-        static BaselineRotationManager baselineManager;
-
-        // Try auto-specialization if level 10+
-        baselineManager.HandleAutoSpecialization(GetBot());
-
-        // Execute baseline rotation
-    if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
-            return;
-
-        // Fallback to charge if nothing else worked
-        UseChargeAbilities(target);
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     // ========================================================================
     // COMBAT BEHAVIOR INTEGRATION - Priority-based decision making
@@ -209,13 +195,8 @@ void WarriorAI::UpdateRotation(::Unit* target)
 
 void WarriorAI::UpdateBuffs()
 {
-    // Check if bot should use baseline buffs
-    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.ApplyBaselineBuffs(GetBot());
-        return;
-    }
+    // NOTE: Baseline buff check is now handled at the dispatch level.
+    // This method is only called for level 10+ bots with talents.
 
     // Use full warrior buff system for specialized bots
     UpdateWarriorBuffs();

@@ -39,6 +39,11 @@ namespace Playerbot
         if (!player)
             return false;
 
+        // CRITICAL: Check if player is on the same map as this quest hub
+        // Without this check, hubs on different continents would be considered!
+        if (player->GetMapId() != mapId)
+            return false;
+
         // Check level range
         uint32 playerLevel = player->GetLevel();
         if (playerLevel < minLevel)
@@ -65,7 +70,7 @@ namespace Playerbot
         }
 
         // Check if faction is allowed
-    if (!(factionMask & playerFactionBit))
+        if (!(factionMask & playerFactionBit))
             return false;
 
         return true;
@@ -74,6 +79,11 @@ namespace Playerbot
     float QuestHub::GetDistanceFrom(Player const* player) const
     {
         if (!player)
+            return ::std::numeric_limits<float>::max();
+
+        // CRITICAL: If player is on a different map, return infinite distance
+        // This prevents nonsensical distance calculations across continents
+        if (player->GetMapId() != mapId)
             return ::std::numeric_limits<float>::max();
 
         // Use 2D distance for performance (Z-axis less relevant for quest selection)
@@ -366,6 +376,7 @@ namespace Playerbot
     {
         uint32 creatureEntry;
         Position position;
+        uint32 mapId;
         uint32 zoneId;
         uint32 factionTemplate;
     };
@@ -393,6 +404,7 @@ namespace Playerbot
                 fields[3].GetFloat(),  // y
                 fields[4].GetFloat()   // z
             );
+            data.mapId = fields[5].GetUInt32();
             data.zoneId = fields[7].GetUInt32();
             data.factionTemplate = fields[6].GetUInt32();
 
@@ -401,8 +413,7 @@ namespace Playerbot
 
             // Track distribution
             zoneDistribution[data.zoneId]++;
-            uint32 mapId = fields[5].GetUInt32();
-            mapDistribution[mapId]++;
+            mapDistribution[data.mapId]++;
 
         } while (result->NextRow());
 
@@ -489,15 +500,22 @@ namespace Playerbot
         ::std::vector<int32> clusterIds(_tempQuestGivers.size(), -1); // -1 = noise
         int32 currentClusterId = 0;
 
-        // Lambda: Find neighbors within EPSILON
+        // Lambda: Find neighbors within EPSILON (MUST be on same map!)
         auto findNeighbors = [&](size_t index) -> ::std::vector<size_t>
         {
             ::std::vector<size_t> neighbors;
             Position const& pos = _tempQuestGivers[index].position;
+            uint32 mapId = _tempQuestGivers[index].mapId;
 
             for (size_t i = 0; i < _tempQuestGivers.size(); ++i)
             {
                 if (i == index)
+                    continue;
+
+                // CRITICAL: Only cluster quest givers on the SAME MAP
+                // Without this check, quest givers on different continents could be
+                // incorrectly clustered together based on similar X/Y coordinates
+                if (_tempQuestGivers[i].mapId != mapId)
                     continue;
 
                 Position const& otherPos = _tempQuestGivers[i].position;
@@ -627,6 +645,7 @@ namespace Playerbot
             // Calculate center position (average of all quest giver positions)
             float sumX = 0.0f, sumY = 0.0f, sumZ = 0.0f;
             ::std::set<uint32> uniqueCreatures;
+            uint32 mapId = 0;
             uint32 zoneId = 0;
 
             for (size_t idx : indices)
@@ -637,6 +656,9 @@ namespace Playerbot
                 sumZ += qg.position.GetPositionZ();
                 uniqueCreatures.insert(qg.creatureEntry);
 
+                // All quest givers in a cluster are on the same map (enforced by findNeighbors)
+                if (mapId == 0)
+                    mapId = qg.mapId;
                 if (zoneId == 0)
                     zoneId = qg.zoneId;
             }
@@ -647,6 +669,7 @@ namespace Playerbot
                 sumZ / indices.size()
             );
 
+            hub.mapId = mapId;
             hub.zoneId = zoneId;
             hub.creatureIds.assign(uniqueCreatures.begin(), uniqueCreatures.end());
 

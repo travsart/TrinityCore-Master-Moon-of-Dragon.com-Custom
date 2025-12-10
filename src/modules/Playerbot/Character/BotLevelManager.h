@@ -352,6 +352,12 @@ private:
      */
     bool ApplyZone(Player* bot, BotCreationTask* task);
 
+    /**
+     * Apply professions for bot (level 10+)
+     * Learns 2 main professions + cooking/fishing and levels up skills
+     */
+    bool ApplyProfessions(Player* bot, BotCreationTask* task);
+
     // ====================================================================
     // TASK QUEUE MANAGEMENT
     // ====================================================================

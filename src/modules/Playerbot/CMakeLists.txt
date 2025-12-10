@@ -411,6 +411,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PvP/PvPCombatAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PvP/PvPCombatAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/BattlegroundAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/BattlegroundAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/BGBotManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/BGBotManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaBotManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaBotManager.h
 
     # Network Packet Sniffer - Centralized Event Detection System
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.cpp
@@ -679,6 +685,9 @@ set(PLAYERBOT_SOURCES
     # Script integration
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotWorldScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotWorldScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotLFGScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotBGScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotArenaScript.cpp
 
     # Social Systems - WoW 11.2 Economy Integration
     # Phase 2.4: Replaced by TradeManager and AuctionManager (BehaviorManager pattern)
@@ -911,6 +920,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotSelector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGGroupCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGGroupCoordinator.h
 )
 
 # Group sources for IDE organization
@@ -1265,6 +1276,9 @@ source_group("Adapters" FILES
 source_group("Scripts" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotWorldScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotWorldScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotLFGScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotBGScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotArenaScript.cpp
 )
 
 source_group("Social" FILES
@@ -1450,6 +1464,23 @@ source_group("LFG" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotSelector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGGroupCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGGroupCoordinator.h
+)
+
+source_group("PvP" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/BattlegroundAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/BattlegroundAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/PvPCombatAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/PvPCombatAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/PvPTacticalAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/PvPTacticalAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/BGBotManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/BGBotManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaBotManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaBotManager.h
 )
 
 source_group("Tests" FILES
@@ -1493,6 +1524,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/Adapters
         ${CMAKE_CURRENT_SOURCE_DIR}/Economy
         ${CMAKE_CURRENT_SOURCE_DIR}/LFG
+        ${CMAKE_CURRENT_SOURCE_DIR}/PvP
         ${CMAKE_CURRENT_SOURCE_DIR}/Packets
         ${CMAKE_SOURCE_DIR}/src/modules/Common
         ${MYSQL_INCLUDE_DIR}

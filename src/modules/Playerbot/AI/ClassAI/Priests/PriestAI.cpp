@@ -85,30 +85,9 @@ void PriestAI::UpdateRotation(::Unit* target)
     if (!GetBot() || !target)
         return;
 
-    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.HandleAutoSpecialization(GetBot());
-
-        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
-
-            return;
-
-        // Fallback: basic ranged attack
-    if (!GetBot()->IsNonMeleeSpellCast(false))
-        {
-
-            if (target && GetBot()->GetDistance(target) <= 35.0f)
-
-            {
-
-                GetBot()->AttackerStateUpdate(target);
-
-            }
-        }
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     // Update shared priest mechanics
     UpdatePriestBuffs();
@@ -135,13 +114,8 @@ void PriestAI::UpdateBuffs()
     if (!GetBot())
         return;
 
-    // Use baseline buffs for low-level bots
-    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.ApplyBaselineBuffs(GetBot());
-        return;
-    }
+    // NOTE: Baseline buff check is now handled at the dispatch level.
+    // This method is only called for level 10+ bots with talents.
 
     UpdatePriestBuffs();
     UpdateFortitudeBuffs();

@@ -498,13 +498,15 @@ void BotSpawner::LoadConfig()
     _config.respectPopulationCaps = sPlayerbotConfig->GetBool("Playerbot.Spawn.RespectCaps", true);
     _config.botToPlayerRatio = sPlayerbotConfig->GetFloat("Playerbot.Spawn.BotToPlayerRatio", 20.0f);
 
-    TC_LOG_INFO("module.playerbot.spawner", "Loaded spawn configuration:");
-    TC_LOG_INFO("module.playerbot.spawner", "  MaxTotal: {}, MaxPerZone: {}, MaxPerMap: {}",
-        _config.maxBotsTotal, _config.maxBotsPerZone, _config.maxBotsPerMap);
-    TC_LOG_INFO("module.playerbot.spawner", "  BatchSize: {}, DelayMs: {}",
-        _config.spawnBatchSize, _config.spawnDelayMs);
-    TC_LOG_INFO("module.playerbot.spawner", "  Dynamic: {}, RespectCaps: {}, BotToPlayerRatio: {}",
-        _config.enableDynamicSpawning, _config.respectPopulationCaps, _config.botToPlayerRatio);
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧🔧🔧 CONFIG DEBUG - Spawn configuration loaded from playerbots.conf:");
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.MaxTotal = {} (this controls total bots)", _config.maxBotsTotal);
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.MaxPerZone = {}", _config.maxBotsPerZone);
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.MaxPerMap = {}", _config.maxBotsPerMap);
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.BatchSize = {}", _config.spawnBatchSize);
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.Dynamic = {}", _config.enableDynamicSpawning);
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.RespectCaps = {} (if true, MaxTotal is enforced)", _config.respectPopulationCaps);
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.BotToPlayerRatio = {}", _config.botToPlayerRatio);
+    TC_LOG_ERROR("module.playerbot.spawner", "🔧🔧🔧 If MaxTotal shows 80 instead of your config value, the config file isn't being read!");
 }
 
 bool BotSpawner::SpawnBot(SpawnRequest const& request)

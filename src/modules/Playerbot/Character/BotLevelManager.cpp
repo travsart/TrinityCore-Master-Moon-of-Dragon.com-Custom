@@ -20,6 +20,7 @@
 #include "../Equipment/BotGearFactory.h"
 #include "../Talents/BotTalentManager.h"
 #include "../Movement/BotWorldPositioner.h"
+#include "../Professions/ProfessionManager.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
 #include "Player.h"
 #include "Config/PlayerbotConfig.h"
@@ -454,6 +455,17 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
         success = false;
     }
 
+    // Apply professions (level 10+)
+    if (task->targetLevel >= 10)
+    {
+        if (!ApplyProfessions(bot, task))
+        {
+            TC_LOG_WARN("playerbot", "BotLevelManager::ApplyBot_MainThread() - Profession application failed for {}",
+                bot->GetName());
+            // Don't fail the whole bot creation for profession issues
+        }
+    }
+
     // Apply gear (skip for L1-4)
     if (task->targetLevel > 4)
     {
@@ -572,6 +584,49 @@ bool BotLevelManager::ApplyZone(Player* bot, BotCreationTask* task)
         ++_stats.teleportFailures;
 
     return success;
+}
+
+bool BotLevelManager::ApplyProfessions(Player* bot, BotCreationTask* task)
+{
+    if (!bot || !task)
+        return false;
+
+    // Create a temporary ProfessionManager for this bot to learn professions
+    // The bot's persistent ProfessionManager (via GameSystemsManager) will handle
+    // auto-leveling through crafting/gathering during regular Update() cycles
+    ProfessionManager profMgr(bot);
+
+    // Learn class-appropriate professions + cooking/fishing
+    // This calls LearnProfession for 2 main professions + Cooking + Fishing
+    // Skill starts at 1 - bot will level it up naturally through crafting
+    profMgr.AutoLearnProfessionsForClass();
+
+    // Get all learned professions for logging
+    std::vector<ProfessionSkillInfo> professions = profMgr.GetPlayerProfessions();
+
+    uint32 professionsLearned = 0;
+    for (ProfessionSkillInfo const& profInfo : professions)
+    {
+        if (profInfo.profession == ProfessionType::NONE)
+            continue;
+
+        ++professionsLearned;
+
+        if (_verboseLogging.load(::std::memory_order_acquire))
+        {
+            uint32 skillId = static_cast<uint32>(profInfo.profession);
+            TC_LOG_DEBUG("playerbot", "BotLevelManager::ApplyProfessions - {} learned profession {} (skill starts at 1, will level through crafting)",
+                bot->GetName(), skillId);
+        }
+    }
+
+    // Calculate max skill potential for logging
+    uint16 maxSkillPotential = std::min<uint16>(task->targetLevel * 5, 450);
+
+    TC_LOG_INFO("playerbot", "BotLevelManager::ApplyProfessions - {} learned {} professions (skill 1, max potential {} for level {})",
+        bot->GetName(), professionsLearned, maxSkillPotential, task->targetLevel);
+
+    return professionsLearned > 0;
 }
 
 // ====================================================================

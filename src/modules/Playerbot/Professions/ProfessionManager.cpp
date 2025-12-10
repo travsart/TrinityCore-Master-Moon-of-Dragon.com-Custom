@@ -91,10 +91,39 @@ void ProfessionManager::Update(uint32 diff)
         }
     }
 
-    // Process crafting queue
+    // Auto-level professions through crafting
     if (_profile.autoLevelProfessions)
     {
+        // Process existing queue first
         ProcessCraftingQueue(diff);
+
+        // If queue is empty, try to queue leveling crafts for each profession
+        if (_craftingQueue.empty())
+        {
+            std::vector<ProfessionSkillInfo> professions = GetPlayerProfessions();
+            for (ProfessionSkillInfo const& profInfo : professions)
+            {
+                if (profInfo.profession == ProfessionType::NONE)
+                    continue;
+
+                // Check if profession needs leveling (current < max skill for level)
+                uint16 maxSkillForLevel = std::min<uint16>(_bot->GetLevel() * 5, 450);
+                if (profInfo.currentSkill >= maxSkillForLevel)
+                    continue;
+
+                // Find optimal recipe for this profession
+                RecipeInfo const* recipe = GetOptimalLevelingRecipe(profInfo.profession);
+                if (recipe)
+                {
+                    // Queue 1 craft - will be processed next update cycle
+                    QueueCraft(recipe->recipeId, 1);
+                    TC_LOG_DEBUG("playerbots", "ProfessionManager::Update - {} queued {} for leveling {} (skill {}/{})",
+                        _bot->GetName(), recipe->recipeId, static_cast<uint32>(profInfo.profession),
+                        profInfo.currentSkill, maxSkillForLevel);
+                    break; // Only queue one craft per update to avoid spam
+                }
+            }
+        }
     }
 }
 

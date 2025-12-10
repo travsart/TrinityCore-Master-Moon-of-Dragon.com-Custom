@@ -98,26 +98,9 @@ void EvokerAI::UpdateRotation(::Unit* target)
     if (!target || !_bot)
         return;
 
-    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.HandleAutoSpecialization(_bot);
-
-        if (baselineManager.ExecuteBaselineRotation(_bot, target))
-            return;
-
-        // Fallback: basic ranged attack
-    if (!_bot->IsNonMeleeSpellCast(false))
-        {
-            float rangeSq = 35.0f * 35.0f; // 1225.0f
-    if (_bot->GetExactDistSq(target) <= rangeSq)
-            {
-                _bot->AttackerStateUpdate(target);
-            }
-        }
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     UpdateEssenceManagement(target);  // DEADLOCK FIX: Pass target parameter
     UpdateEmpowermentSystem();
@@ -337,13 +320,8 @@ void EvokerAI::UpdateBuffs()
     if (!_bot)
         return;
 
-    // Use baseline buffs for low-level bots
-    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.ApplyBaselineBuffs(_bot);
-        return;
-    }
+    // NOTE: Baseline buff check is now handled at the dispatch level.
+    // This method is only called for level 10+ bots with talents.
 
     ManageBuffs();
 

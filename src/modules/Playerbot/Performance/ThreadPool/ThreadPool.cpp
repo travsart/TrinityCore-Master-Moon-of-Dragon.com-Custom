@@ -717,15 +717,12 @@ void ThreadPool::Shutdown(bool waitForPending)
     if (_shutdown.exchange(true))
         return; // Already shutting down
 
-    // Only log if logger is available (may not be during early shutdown)
-    try
-    {
-        TC_LOG_INFO("playerbot.performance", "ThreadPool shutting down (waitForPending={})", waitForPending);
-    }
-    catch (...)
-    {
-        // Logger not available, continue silently
-    }
+    // NOTE: Do NOT log here! During static destruction (atexit), the Log singleton
+    // may already be destroyed. Accessing it causes ACCESS_VIOLATION because the
+    // internal unordered_map has been destructed. This is the C++ "static destruction
+    // order fiasco" - we cannot control which static objects are destroyed first.
+    // The ThreadPool destructor is called via atexit when g_threadPool is destroyed,
+    // which may happen AFTER Log::instance() has been destroyed.
 
     if (waitForPending && _workersCreated.load(::std::memory_order_relaxed))
     {
@@ -760,15 +757,7 @@ void ThreadPool::Shutdown(bool waitForPending)
     _workers.clear();
     _workersCreated.store(false, ::std::memory_order_relaxed);
 
-    // Only log if logger is available
-    try
-    {
-        TC_LOG_INFO("playerbot.performance", "ThreadPool shutdown complete");
-    }
-    catch (...)
-    {
-        // Logger not available, continue silently
-    }
+    // NOTE: Do NOT log here! Same reason as above - Log singleton may be destroyed.
 }
 
 size_t ThreadPool::GetActiveThreads() const

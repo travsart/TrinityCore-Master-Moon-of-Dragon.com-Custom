@@ -1309,7 +1309,7 @@ BGStrategyProfile BattlegroundAI::GetStrategyProfile(uint32 playerGuid) const
 // METRICS
 // ============================================================================
 
-BattlegroundAI::BGMetrics const& BattlegroundAI::GetPlayerMetrics(uint32 playerGuid) const
+BGMetrics const& BattlegroundAI::GetPlayerMetrics(uint32 playerGuid) const
 {
     ::std::lock_guard lock(_mutex);
 
@@ -1322,7 +1322,7 @@ BattlegroundAI::BGMetrics const& BattlegroundAI::GetPlayerMetrics(uint32 playerG
     return _playerMetrics.at(playerGuid);
 }
 
-BattlegroundAI::BGMetrics const& BattlegroundAI::GetGlobalMetrics() const
+BGMetrics const& BattlegroundAI::GetGlobalMetrics() const
 {
     return _globalMetrics;
 }

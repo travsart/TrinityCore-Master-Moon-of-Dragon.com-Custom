@@ -88,25 +88,9 @@ void HunterAI::UpdateRotation(::Unit* target)
         _combatBehaviors->Update(100); // Update with 100ms diff for standard tick
     }
 
-    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
-    {
-        // Use baseline rotation manager for unspecialized bots
-        static BaselineRotationManager baselineManager;
-
-        // Try auto-specialization if level 10+
-        baselineManager.HandleAutoSpecialization(_bot);        // Execute baseline rotation
-    if (baselineManager.ExecuteBaselineRotation(_bot, target))
-        return;
-
-        // Fallback to basic ranged attack
-    if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
-
-        {
-        _bot->CastSpell(CastSpellTargetArg(target), ARCANE_SHOT);
-        }
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     // ========================================================================
     // COMBAT BEHAVIOR INTEGRATION - Intelligent decision making for Hunters
@@ -966,13 +950,8 @@ void HunterAI::UpdateBuffs()
     if (!_bot)
         return;
 
-    // Check if bot should use baseline buffs
-    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.ApplyBaselineBuffs(_bot);
-        return;
-    }
+    // NOTE: Baseline buff check is now handled at the dispatch level.
+    // This method is only called for level 10+ bots with talents.
 
     // Use full hunter buff system for specialized bots
     ManageAspects();

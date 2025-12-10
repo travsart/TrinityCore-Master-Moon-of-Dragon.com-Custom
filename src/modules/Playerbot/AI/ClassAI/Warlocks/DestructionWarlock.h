@@ -304,8 +304,8 @@ public:
         // Update Destruction state
         UpdateDestructionState();
 
-        // Ensure pet is active
-        EnsurePetActive();
+        // NOTE: Pet summoning moved to UpdateBuffs() since summons have 6s cast time
+        // and must be done OUT OF COMBAT. See UpdateBuffs() below.
 
         // Determine if AoE or single target
         uint32 enemyCount = this->GetEnemiesInRange(40.0f);
@@ -328,6 +328,10 @@ public:
         Player* bot = this->GetBot();
         if (!bot)
             return;
+
+        // CRITICAL: Summon pet OUT OF COMBAT (6 second cast time!)
+        // This must be called in UpdateBuffs, not UpdateRotation
+        EnsurePetActive();
 
         // Defensive cooldowns
         HandleDefensiveCooldowns();
@@ -578,10 +582,16 @@ public:
             TC_LOG_DEBUG("playerbot", "Destruction: Mortal Coil");
             return;
         }
-    }    void EnsurePetActive()
+    }
+
+    void EnsurePetActive()
     {
         Player* bot = this->GetBot();
         if (!bot)
+            return;
+
+        // Don't summon while casting (6s cast time!)
+        if (bot->HasUnitState(UNIT_STATE_CASTING))
             return;
 
         // Check if pet exists
@@ -591,12 +601,21 @@ public:
                 return; // Pet is active
         }
 
-        // Summon Imp (best for Destruction - ranged DPS)
-        if (this->CanCastSpell(SUMMON_IMP_DESTRO, bot))
+        // CRITICAL: For self-cast spells like pet summons, pass nullptr as target!
+        // Passing 'bot' causes CanCastSpell to fail because bot->IsFriendlyTo(bot) = true
+
+        // Priority 1: Imp (best for Destruction - ranged DPS)
+        if (bot->HasSpell(SUMMON_IMP_DESTRO) && this->CanCastSpell(SUMMON_IMP_DESTRO, nullptr))
         {
             this->CastSpell(SUMMON_IMP_DESTRO, bot);
-            TC_LOG_DEBUG("playerbot", "Destruction: Summon Imp");
+            TC_LOG_INFO("playerbot", "Destruction {}: Summoning Imp", bot->GetName());
+            return;
         }
+
+        // Diagnostic: Show which spells the bot actually has
+        TC_LOG_DEBUG("playerbot", "Destruction {}: No pet summon spell available (level {}) - HasSpell: Imp={}",
+                     bot->GetName(), bot->GetLevel(),
+                     bot->HasSpell(SUMMON_IMP_DESTRO) ? "Y" : "N");
     }
 
 private:

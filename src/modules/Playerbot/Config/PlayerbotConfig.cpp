@@ -65,7 +65,15 @@ bool PlayerbotConfig::Initialize()
     }
 
     _loaded = true;
-    TC_LOG_INFO("server.loading", "PlayerbotConfig: Successfully loaded from {}", _configPath);
+    TC_LOG_ERROR("server.loading", "🔧🔧🔧 PlayerbotConfig: Successfully loaded from: {}", _configPath);
+
+    // DEBUG: Print critical config values to verify they were read correctly
+    TC_LOG_ERROR("server.loading", "🔧 PlayerbotConfig DEBUG - Critical spawn values:");
+    TC_LOG_ERROR("server.loading", "🔧   Playerbot.Spawn.MaxTotal = {}", GetUInt("Playerbot.Spawn.MaxTotal", 80));
+    TC_LOG_ERROR("server.loading", "🔧   Playerbot.Startup.Phase1.TargetBots = {}", GetInt("Playerbot.Startup.Phase1.TargetBots", 100));
+    TC_LOG_ERROR("server.loading", "🔧   Playerbot.MaxBots = {}", GetInt("Playerbot.MaxBots", 100));
+    TC_LOG_ERROR("server.loading", "🔧🔧🔧 If these show defaults (80, 100, 100) instead of your values, check config file format!");
+
     return true;
 }
 

@@ -293,23 +293,9 @@ void RogueAI::UpdateRotation(Unit* target)
     if (!target || !GetBot())
         return;
 
-    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
-    {
-        // Use baseline rotation manager for unspecialized bots
-        static BaselineRotationManager baselineManager;
-
-        // Try auto-specialization if level 10+
-        baselineManager.HandleAutoSpecialization(GetBot());
-
-        // Execute baseline rotation
-        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
-            return;
-
-        // Fallback to basic melee attack if nothing else worked
-        ExecuteFallbackRotation(target);
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     auto startTime = ::std::chrono::steady_clock::now();
 
@@ -1219,13 +1205,8 @@ void RogueAI::UpdateBuffs()
     if (!GetBot())
         return;
 
-    // Check if bot should use baseline buffs
-    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.ApplyBaselineBuffs(GetBot());
-        return;
-    }
+    // NOTE: Baseline buff check is now handled at the dispatch level.
+    // This method is only called for level 10+ bots with talents.
 
     uint32 currentTime = GameTime::GetGameTimeMS();
 

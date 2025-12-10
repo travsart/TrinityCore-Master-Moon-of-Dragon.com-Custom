@@ -263,6 +263,12 @@ bool BotPriorityManager::IsInMediumPriorityActivity(Player* bot) const
     if (bot->GetGroup())
         return true;
 
+    // CRITICAL FIX: Pending group invitation requires responsive updates
+    // Bot with pending invite needs to process it via GroupInvitationHandler::Update()
+    // Without this, bot stays LOW priority and may miss the invitation timeout
+    if (bot->GetGroupInvite())
+        return true;
+
     // Low health/mana but not critical (needs attention soon)
     if (bot->GetHealthPct() < 50.0f || bot->GetPowerPct(bot->GetPowerType()) < 50.0f)
         return true;

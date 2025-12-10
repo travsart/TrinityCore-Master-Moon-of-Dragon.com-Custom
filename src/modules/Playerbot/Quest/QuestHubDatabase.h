@@ -51,6 +51,9 @@ namespace Playerbot
         /// Unique identifier for this quest hub
         uint32 hubId = 0;
 
+        /// Map ID where this hub is located (0 = Eastern Kingdoms, 1 = Kalimdor, etc.)
+        uint32 mapId = 0;
+
         /// Zone ID where this hub is located (from AreaTable.dbc)
         uint32 zoneId = 0;
 

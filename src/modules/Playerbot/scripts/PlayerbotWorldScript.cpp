@@ -333,6 +333,9 @@ void AddSC_playerbot_event_scripts();
 // Forward declaration for group event scripts
 void AddSC_PlayerbotGroupScripts();
 
+// Forward declaration for LFG bot integration scripts
+namespace Playerbot { void AddSC_PlayerbotLFGScript(); }
+
 // Script registration function
 void AddSC_playerbot_world()
 {
@@ -347,5 +350,8 @@ void AddSC_playerbot_world()
 
     // Group Event System: Register group event handlers (ScriptMgr + polling)
     AddSC_PlayerbotGroupScripts();
+
+    // LFG Bot Integration: Register LFG polling scripts (module-only, no core hooks)
+    Playerbot::AddSC_PlayerbotLFGScript();
     #endif
 }

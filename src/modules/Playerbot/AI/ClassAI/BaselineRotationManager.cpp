@@ -7,6 +7,7 @@
 
 #include "BaselineRotationManager.h"
 #include "Player.h"
+#include "Pet.h"  // For warlock pet summoning in ApplyBuffs
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Unit.h"
@@ -15,6 +16,7 @@
 #include "ObjectGuid.h"
 #include "Map.h"
 #include "Log.h"  // For TC_LOG_DEBUG
+#include "WorldSession.h"  // For bot->GetSession()->QueuePacket()
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 #include "GameTime.h"
@@ -257,13 +259,23 @@ float BaselineRotationManager::GetBaselineOptimalRange(Player* bot)
 
 bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, BaselineAbility const& ability)
 {
+    TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: Bot {} trying spell {} on {}",
+                 bot->GetName(), ability.spellId, target->GetName());
+
     if (!CanUseAbility(bot, target, ability))
+    {
+        TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: CanUseAbility returned FALSE for spell {}", ability.spellId);
         return false;
+    }
 
     // Check cooldown
     auto& botCooldowns = _cooldowns[bot->GetGUID().GetCounter()];
     auto cdIt = botCooldowns.find(ability.spellId);
-    if (cdIt != botCooldowns.end() && cdIt->second > GameTime::GetGameTimeMS())        return false; // On cooldown
+    if (cdIt != botCooldowns.end() && cdIt->second > GameTime::GetGameTimeMS())
+    {
+        TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: Spell {} on cooldown", ability.spellId);
+        return false; // On cooldown
+    }
 
     // MIGRATION COMPLETE (2025-10-30):
     // Replaced direct CastSpell(spellId, false, ) API call with packet-based SpellPacketBuilder.
@@ -274,12 +286,37 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());
     if (!spellInfo)
     {
-        TC_LOG_TRACE("playerbot.baseline.packets",
-
-                     "Bot {} spell {} not found in spell data",
-
-                     bot->GetName(), ability.spellId);
+        TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: Spell {} NOT FOUND in spell data", ability.spellId);
         return false;
+    }
+
+    // DIAGNOSTIC: Log spell power cost calculation
+    // This helps debug the "mana cost too low" issue
+    {
+        auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+        for (auto const& cost : powerCosts)
+        {
+            TC_LOG_ERROR("playerbot.baseline",
+                         "TryCastAbility: Spell {} power cost - Type={}, Amount={}, BotMaxMana={}, BotCurrentMana={}, BotCreateMana={}",
+                         ability.spellId, static_cast<int>(cost.Power), cost.Amount,
+                         bot->GetMaxPower(POWER_MANA), bot->GetPower(POWER_MANA), bot->GetCreateMana());
+        }
+        // Log raw spell power data from DBC
+        for (SpellPowerEntry const* power : spellInfo->PowerCosts)
+        {
+            if (power)
+            {
+                TC_LOG_ERROR("playerbot.baseline",
+                             "TryCastAbility: Spell {} RAW POWER DATA - ManaCost={}, PowerCostPct={:.4f}, PowerCostMaxPct={:.4f}, PowerType={}",
+                             ability.spellId, power->ManaCost, power->PowerCostPct, power->PowerCostMaxPct, static_cast<int>(power->PowerType));
+            }
+        }
+        if (powerCosts.empty())
+        {
+            TC_LOG_ERROR("playerbot.baseline",
+                         "TryCastAbility: Spell {} has NO power costs! BotLevel={}, SpellLevel={}",
+                         ability.spellId, bot->GetLevel(), spellInfo->SpellLevel);
+        }
     }
 
     // Determine cast target
@@ -290,51 +327,70 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     options.skipGcdCheck = false;      // Respect GCD
     options.skipResourceCheck = false; // Check mana/energy/rage
     options.skipRangeCheck = false;    // Check spell range
-    // Cast time check covered by skipStateCheck
-    // Cooldown check covered by skipGcdCheck
-    // LOS check covered by skipRangeCheck
 
-
-    auto result = SpellPacketBuilder::BuildCastSpellPacket(bot, ability.spellId, castTarget, options);
+    // CRITICAL FIX: Check castTarget BEFORE building packet
     if (!castTarget)
     {
+        TC_LOG_TRACE("playerbot.baseline.packets",
+                     "Bot {} cannot cast spell {} - no target",
+                     bot->GetName(), ability.spellId);
         return false;
     }
 
+    TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: Building packet for spell {} target {}",
+                 ability.spellId, castTarget->GetName());
+
+    auto result = SpellPacketBuilder::BuildCastSpellPacket(bot, ability.spellId, castTarget, options);
+
+    TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: BuildCastSpellPacket result={} reason={}",
+                 static_cast<uint8>(result.result), result.failureReason);
+
     if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
-        // Packet successfully queued to main thread
+        // CRITICAL FIX: The packet must be queued to the session for execution!
+        // Without this, the spell cast never happens - the packet is built but never sent.
+        if (result.packet && bot->GetSession())
+        {
+            // QueuePacket takes ownership of the raw pointer
+            bot->GetSession()->QueuePacket(result.packet.release());
+            TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: QUEUED spell {} packet successfully!",
+                         ability.spellId);
+        }
+        else
+        {
+            TC_LOG_ERROR("playerbot.baseline",
+                         "Bot {} spell {} - packet built but session or packet is null!",
+                         bot->GetName(), ability.spellId);
+            return false;
+        }
 
         // Optimistic cooldown recording (packet will be processed)
         botCooldowns[ability.spellId] = GameTime::GetGameTimeMS() + ability.cooldown;
-        TC_LOG_DEBUG("playerbot.baseline.packets",
-
-                     "Bot {} queued CMSG_CAST_SPELL for baseline spell {} (target: {})",
-
-                     bot->GetName(), ability.spellId,
-
-                     castTarget ? castTarget->GetName() : "self");
         return true;
     }
     else
     {
         // Validation failed - packet not queued
-        TC_LOG_TRACE("playerbot.baseline.packets",
-
-                     "Bot {} baseline spell {} validation failed: {} ({})",
-
-                     bot->GetName(), ability.spellId,
-
-                     static_cast<uint8>(result.result),
-
-                     result.failureReason);
+        TC_LOG_ERROR("playerbot.baseline",
+                     "TryCastAbility: VALIDATION FAILED for spell {} - result={} reason={}",
+                     ability.spellId, static_cast<uint8>(result.result), result.failureReason);
         return false;
-    }}
+    }
+}
 
 bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, BaselineAbility const& ability) const
 {
     if (!bot || !target)
         return false;
+
+    // CRITICAL FIX: Check if bot actually knows this spell!
+    // Without this check, we try to cast spells the bot hasn't learned yet
+    if (!bot->HasSpell(ability.spellId))
+    {
+        TC_LOG_DEBUG("playerbot.baseline", "CanUseAbility: Bot {} does NOT have spell {} in spellbook",
+                     bot->GetName(), ability.spellId);
+        return false;
+    }
 
     // Level check
     if (bot->GetLevel() < ability.minLevel)
@@ -608,8 +664,11 @@ void HunterBaselineRotation::ApplyBuffs(Player* bot)
 void BaselineRotationManager::InitializeRogueBaseline()
 {
     ::std::vector<BaselineAbility> abilities;
-    abilities.emplace_back(1752, 1, 40, 0, 10.0f, true);  // Sinister Strike
-    abilities.emplace_back(196819, 3, 35, 0, 9.0f, true); // Eviscerate (finisher)
+    // WoW 11.2 (The War Within) spell IDs:
+    // - Sinister Strike: 193315 (retail), NOT 1752 (classic)
+    // - Eviscerate: 196819 (retail)
+    abilities.emplace_back(193315, 1, 40, 0, 10.0f, true);  // Sinister Strike (retail)
+    abilities.emplace_back(196819, 3, 35, 0, 9.0f, true);   // Eviscerate (finisher)
     _baselineAbilities[CLASS_ROGUE] = ::std::move(abilities);
 }
 
@@ -632,8 +691,11 @@ void BaselineRotationManager::InitializeDeathKnightBaseline()
 void BaselineRotationManager::InitializeShamanBaseline()
 {
     ::std::vector<BaselineAbility> abilities;
-    abilities.emplace_back(403, 1, 0, 0, 10.0f, false);    // Lightning Bolt
-    abilities.emplace_back(73899, 1, 0, 0, 9.0f, true);    // Primal Strike
+    // WoW 11.2 (The War Within) spell IDs:
+    // - Lightning Bolt: 188196 (retail), NOT 403 (classic)
+    // - Primal Strike: 73899 (retail)
+    abilities.emplace_back(188196, 1, 0, 0, 10.0f, false);  // Lightning Bolt (retail)
+    abilities.emplace_back(73899, 1, 0, 0, 9.0f, true);     // Primal Strike
     _baselineAbilities[CLASS_SHAMAN] = ::std::move(abilities);
 }
 
@@ -648,6 +710,9 @@ void BaselineRotationManager::InitializeMageBaseline()
 void BaselineRotationManager::InitializeWarlockBaseline()
 {
     ::std::vector<BaselineAbility> abilities;
+    // WoW 11.2 (The War Within) spell IDs:
+    // - Shadow Bolt: 686 (same as classic)
+    // - Corruption: 172 (same as classic)
     abilities.emplace_back(686, 1, 0, 0, 10.0f, false);    // Shadow Bolt
     abilities.emplace_back(172, 1, 0, 0, 9.0f, false);     // Corruption
     _baselineAbilities[CLASS_WARLOCK] = ::std::move(abilities);
@@ -726,7 +791,55 @@ bool WarlockBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
     return manager.ExecuteBaselineRotation(bot, target);
 }
 
-void WarlockBaselineRotation::ApplyBuffs(Player* bot) {}
+void WarlockBaselineRotation::ApplyBuffs(Player* bot)
+{
+    if (!bot || !bot->IsAlive())
+        return;
+
+    // Don't summon pets while already casting
+    if (bot->HasUnitState(UNIT_STATE_CASTING))
+        return;
+
+    // ========================================================================
+    // WARLOCK PET SUMMONING - Must happen OUT OF COMBAT
+    // Pet summons have 6 second cast time - impossible in combat!
+    // Level 3: Imp (ranged fire DPS)
+    // Level 10: Voidwalker (melee tank - preferred for solo leveling)
+    // ========================================================================
+
+    // Warlock pet spell IDs (WoW 11.2)
+    constexpr uint32 SUMMON_IMP = 688;
+    constexpr uint32 SUMMON_VOIDWALKER = 697;
+
+    Pet* pet = bot->GetPet();
+    if (pet && pet->IsAlive())
+    {
+        TC_LOG_DEBUG("playerbot.baseline", "WarlockApplyBuffs: {} already has pet {} (entry {})",
+                     bot->GetName(), pet->GetName(), pet->GetEntry());
+        return;  // Already have a pet
+    }
+
+    // Prefer Voidwalker (level 10+) for solo leveling - it tanks!
+    if (bot->GetLevel() >= 10 && bot->HasSpell(SUMMON_VOIDWALKER))
+    {
+        TC_LOG_INFO("playerbot.baseline", "WarlockApplyBuffs: {} summoning Voidwalker (out of combat)",
+                    bot->GetName());
+        bot->CastSpell(bot, SUMMON_VOIDWALKER, false);
+        return;
+    }
+
+    // Fallback to Imp (level 3+)
+    if (bot->HasSpell(SUMMON_IMP))
+    {
+        TC_LOG_INFO("playerbot.baseline", "WarlockApplyBuffs: {} summoning Imp (out of combat)",
+                    bot->GetName());
+        bot->CastSpell(bot, SUMMON_IMP, false);
+        return;
+    }
+
+    TC_LOG_DEBUG("playerbot.baseline", "WarlockApplyBuffs: {} has no pet summon spells yet (level {})",
+                 bot->GetName(), bot->GetLevel());
+}
 
 bool MonkBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, BaselineRotationManager& manager)
 {

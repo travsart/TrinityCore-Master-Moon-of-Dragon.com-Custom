@@ -10,6 +10,7 @@
 #include "LFGGroupCoordinator.h"
 #include "Player.h"
 #include "Group.h"
+#include "GroupMgr.h"
 #include "LFGMgr.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
@@ -18,6 +19,8 @@
 #include "Chat.h"
 #include "GameTime.h"
 #include "DB2Stores.h"
+#include "DatabaseEnv.h"
+#include "QueryResult.h"
 
 namespace Playerbot
 {
@@ -111,10 +114,9 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
         info.pendingTeleports.clear();
 
         // Add all group members to pending teleports
-    for (GroupReference const* ref : *group)
+        for (auto const& slot : group->GetMemberSlots())
         {
-            if (Player* member = ref->GetSource())
-                info.pendingTeleports.push_back(member->GetGUID());
+            info.pendingTeleports.push_back(slot.guid);
         }
     }
 
@@ -180,49 +182,23 @@ bool LFGGroupCoordinator::TeleportPlayerToDungeon(Player* player, uint32 dungeon
         return false;
     }
 
-    // Get dungeon entrance location
-    uint32 mapId = 0;
-    float x = 0.0f, y = 0.0f, z = 0.0f, orientation = 0.0f;
-    if (!GetDungeonEntrance(dungeonId, mapId, x, y, z, orientation))
-    {
-        TC_LOG_ERROR("lfg.playerbot", "Failed to get dungeon entrance for dungeon {}", dungeonId);
-        HandleTeleportFailure(player, "Dungeon entrance not found");
-        return false;
-    }
-
-    // Validate entrance data
-    if (!ValidateEntranceData(mapId, x, y, z))
-    {
-        TC_LOG_ERROR("lfg.playerbot", "Invalid entrance data for dungeon {}", dungeonId);
-        HandleTeleportFailure(player, "Invalid dungeon entrance data");
-        return false;
-    }
-
-    // Get dungeon name for notification
-    lfg::LFGDungeonData const* dungeonData = sLFGMgr->GetLFGDungeon(dungeonId);
-    ::std::string dungeonName = dungeonData ? dungeonData->name : "Unknown Dungeon";
+    // Get dungeon name for notification from DB2 store
+    LFGDungeonsEntry const* dungeonEntry = sLFGDungeonsStore.LookupEntry(dungeonId);
+    ::std::string dungeonName = dungeonEntry ? std::string(dungeonEntry->Name[LOCALE_enUS]) : "Unknown Dungeon";
 
     // Send notification
     NotifyTeleportStart(player, dungeonName);
     // Track teleport
     TrackTeleport(player->GetGUID(), dungeonId, GameTime::GetGameTimeMS());
 
-    // Perform actual teleportation
-    bool result = player->TeleportTo(mapId, x, y, z, orientation, TELE_TO_NOT_LEAVE_COMBAT);
-    if (result)
-    {
-        TC_LOG_DEBUG("lfg.playerbot", "Successfully teleported player {} to dungeon {}",
-            player->GetName(), dungeonId);
-    }
-    else
-    {
-        TC_LOG_ERROR("lfg.playerbot", "Failed to teleport player {} to dungeon {}",
-            player->GetName(), dungeonId);
-        HandleTeleportFailure(player, "Teleportation failed");
-        ClearTeleport(player->GetGUID());
-    }
+    // Use TrinityCore's built-in LFG teleportation which handles entrance lookup internally
+    // The false parameter means "teleport IN to dungeon" (not out)
+    sLFGMgr->TeleportPlayer(player, false, false);
 
-    return result;
+    TC_LOG_DEBUG("lfg.playerbot", "Teleport initiated for player {} to dungeon {}",
+        player->GetName(), dungeonId);
+
+    return true;
 }
 
 bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
@@ -234,9 +210,9 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
     uint32 successCount = 0;
     uint32 totalMembers = 0;
     // Teleport all group members
-    for (GroupReference const* ref : *group)
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref->GetSource();
+        Player* member = ObjectAccessor::FindPlayer(slot.guid);
         if (!member)
             continue;
 
@@ -252,27 +228,14 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
     return successCount == totalMembers;
 }
 
-bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 dungeonId) const
+bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 /*dungeonId*/) const
 {
     if (!player)
         return false;
 
-    // Get dungeon data
-    lfg::LFGDungeonData const* dungeonData = sLFGMgr->GetLFGDungeon(dungeonId);
-
-    // Check level requirements
-    if (player->GetLevel() < dungeonData->minlevel)
-    {
-        TC_LOG_DEBUG("lfg.playerbot", "Player {} level {} is too low for dungeon {} (min: {})",
-            player->GetName(), player->GetLevel(), dungeonId, dungeonData->minlevel);
-        return false;
-    }
-    if (player->GetLevel() > dungeonData->maxlevel)
-    {
-        TC_LOG_DEBUG("lfg.playerbot", "Player {} level {} is too high for dungeon {} (max: {})",
-            player->GetName(), player->GetLevel(), dungeonId, dungeonData->maxlevel);
-        // Don't prevent teleport for overleveled players - just log warning
-    }
+    // TrinityCore 11.2: Level requirements are handled by ContentTuning system
+    // and player conditions (RequiredPlayerConditionId in LFGDungeonsEntry)
+    // We don't need to check minlevel/maxlevel - the LFG system handles this
 
     // Check if player is dead
     if (player->isDead())
@@ -303,22 +266,40 @@ bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 dung
 
 bool LFGGroupCoordinator::GetDungeonEntrance(uint32 dungeonId, uint32& mapId, float& x, float& y, float& z, float& orientation) const
 {
-    // Get LFG dungeon data
-    lfg::LFGDungeonData const* dungeonData = sLFGMgr->GetLFGDungeon(dungeonId);
+    // Get dungeon info from DB2 store
+    LFGDungeonsEntry const* dungeonEntry = sLFGDungeonsStore.LookupEntry(dungeonId);
+    if (!dungeonEntry)
+    {
+        TC_LOG_ERROR("lfg.playerbot", "Dungeon {} not found in LFGDungeons DB2 store", dungeonId);
+        return false;
+    }
 
-    // Get map ID from dungeon data
-    mapId = dungeonData->map;
+    // Get map ID from DB2 entry
+    mapId = static_cast<uint32>(dungeonEntry->MapID);
     if (mapId == 0)
     {
         TC_LOG_ERROR("lfg.playerbot", "Invalid map ID for dungeon {}", dungeonId);
         return false;
     }
 
-    // Get entrance coordinates from dungeon data
-    x = dungeonData->x;
-    y = dungeonData->y;
-    z = dungeonData->z;
-    orientation = dungeonData->o;
+    // TrinityCore 11.2: Entrance coordinates are stored in lfg_dungeon_template table,
+    // loaded into LFGMgr's private LFGDungeonData container. Since we can't access it,
+    // query the database directly.
+    QueryResult result = WorldDatabase.PQuery(
+        "SELECT position_x, position_y, position_z, orientation FROM lfg_dungeon_template WHERE dungeonId = %u",
+        dungeonId);
+
+    if (!result)
+    {
+        TC_LOG_ERROR("lfg.playerbot", "No entrance data found for dungeon {} in lfg_dungeon_template", dungeonId);
+        return false;
+    }
+
+    Field* fields = result->Fetch();
+    x = fields[0].GetFloat();
+    y = fields[1].GetFloat();
+    z = fields[2].GetFloat();
+    orientation = fields[3].GetFloat();
 
     TC_LOG_DEBUG("lfg.playerbot", "Dungeon {} entrance: Map {}, ({}, {}, {}), Orientation: {}",
         dungeonId, mapId, x, y, z, orientation);
@@ -401,11 +382,12 @@ void LFGGroupCoordinator::ProcessTeleportTimeouts()
 
 uint32 LFGGroupCoordinator::GetDungeonMapId(uint32 dungeonId) const
 {
-    lfg::LFGDungeonData const* dungeonData = sLFGMgr->GetLFGDungeon(dungeonId);
-    if (!dungeonData)
+    // Use DB2 store instead of private LFGMgr method
+    LFGDungeonsEntry const* dungeonEntry = sLFGDungeonsStore.LookupEntry(dungeonId);
+    if (!dungeonEntry)
         return 0;
 
-    return dungeonData->map;
+    return static_cast<uint32>(dungeonEntry->MapID);
 }
 
 bool LFGGroupCoordinator::ValidateEntranceData(uint32 mapId, float x, float y, float z) const

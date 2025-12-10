@@ -15,6 +15,7 @@
 #include "Player.h"
 #include "MotionMaster.h"
 #include "Position.h"
+#include "MoveSpline.h"
 
 namespace Playerbot
 {

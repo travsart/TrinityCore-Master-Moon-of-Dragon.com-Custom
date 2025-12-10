@@ -241,23 +241,11 @@ void ShamanAI::UpdateRotation(::Unit* target)
     if (!GetBot() || !target)
         return;
 
-    Player* bot = GetBot();    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
-    {
-        TC_LOG_DEBUG("module.playerbot.shaman", "Shaman {} using BASELINE rotation (level {})",
+    Player* bot = GetBot();
 
-                     bot->GetName(), bot->GetLevel());
-
-        static BaselineRotationManager baselineManager;
-        baselineManager.HandleAutoSpecialization(bot);
-
-        bool executed = baselineManager.ExecuteBaselineRotation(bot, target);
-        TC_LOG_DEBUG("module.playerbot.shaman", "BaselineRotation result: {}", executed ? "SUCCESS" : "FAILED");
-
-        // No fallback for casters - if rotation failed, just return
-        // Do NOT use AttackerStateUpdate (melee) for a caster class
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     // ========================================================================
     // COMBAT BEHAVIOR INTEGRATION - Priority-based decision system

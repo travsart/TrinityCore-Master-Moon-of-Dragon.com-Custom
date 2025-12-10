@@ -23,6 +23,7 @@
 #include "Lifecycle/BotSpawner.h"
 #include "Lifecycle/BotCharacterCreator.h"
 #include "Session/BotSessionMgr.h"
+#include "Session/BotWorldSessionMgr.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -159,26 +160,87 @@ namespace Playerbot
     {
         Player* player = handler->GetSession()->GetPlayer();
         if (!player)
-
             return false;
 
+        // Check if bot name already exists in the database
+        ObjectGuid existingGuid = sCharacterCache->GetCharacterGuidByName(name);
+        if (existingGuid.IsPlayer())
+        {
+            // Bot exists in database - try to respawn it
+            TC_LOG_INFO("playerbot", "HandleBotSpawnCommand: Bot '{}' exists (GUID {}), attempting respawn",
+                       name, existingGuid.ToString());
+
+            // Check if bot is already in world
+            Player* existingBot = ObjectAccessor::FindPlayer(existingGuid);
+            if (existingBot)
+            {
+                handler->PSendSysMessage("Bot '%s' is already in the world.", name.c_str());
+                return false;
+            }
+
+            // Get account ID for the existing character
+            uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(existingGuid);
+            if (!accountId)
+            {
+                handler->PSendSysMessage("Failed to find account for bot '%s'.", name.c_str());
+                return false;
+            }
+
+            // Spawn existing bot using AddPlayerBot
+            if (!sBotWorldSessionMgr->AddPlayerBot(existingGuid, accountId))
+            {
+                handler->PSendSysMessage("Failed to spawn existing bot '%s'.", name.c_str());
+                TC_LOG_ERROR("playerbot", "HandleBotSpawnCommand: AddPlayerBot failed for existing bot '{}'", name);
+                return false;
+            }
+
+            // Wait briefly for bot to enter world, then teleport and add to group
+            Player* bot = ObjectAccessor::FindPlayer(existingGuid);
+            if (bot)
+            {
+                bot->TeleportTo(player->GetMapId(), player->GetPositionX(), player->GetPositionY(),
+                               player->GetPositionZ(), player->GetOrientation());
+
+                // Add to group
+                Group* group = player->GetGroup();
+                if (!group)
+                {
+                    group = new Group;
+                    if (group->Create(player))
+                    {
+                        group->AddMember(bot);
+                        handler->PSendSysMessage("Bot '%s' respawned and added to new group.", name.c_str());
+                    }
+                    else
+                    {
+                        delete group;
+                        handler->PSendSysMessage("Bot '%s' respawned but failed to create group.", name.c_str());
+                    }
+                }
+                else
+                {
+                    group->AddMember(bot);
+                    handler->PSendSysMessage("Bot '%s' respawned and added to your group.", name.c_str());
+                }
+            }
+            else
+            {
+                handler->PSendSysMessage("Bot '%s' spawn initiated but not yet visible in world.", name.c_str());
+            }
+
+            TC_LOG_INFO("playerbot", "HandleBotSpawnCommand: Existing bot '{}' respawned for player '{}'",
+                       name, player->GetName());
+            return true;
+        }
+
+        // Bot doesn't exist - create a new one
         // Default to player's race/class if not specified
         uint8 botRace = race ? *race : player->GetRace();
         uint8 botClass = classId ? *classId : player->GetClass();
 
         // Validate race/class combination
         if (!ValidateRaceClass(botRace, botClass, handler))
-
             return false;
-
-        // Check if bot name already exists
-        if (sCharacterCache->GetCharacterGuidByName(name).IsPlayer())
-        {
-
-            handler->PSendSysMessage("Bot name '%s' is already taken.", name.c_str());
-
-            return false;
-        }
 
         // Get player's account ID for bot ownership
         uint32 accountId = player->GetSession()->GetAccountId();
@@ -187,8 +249,6 @@ namespace Playerbot
         uint8 gender = urand(0, 1); // 0 = male, 1 = female
 
         // Create bot character AND spawn in world (CreateAndSpawnBot handles both)
-        // NOTE: Previously this code called BotCharacterCreator::CreateBotCharacter() first,
-        // then called CreateAndSpawnBot() which ALSO called CreateBotCharacter() - double creation!
         ObjectGuid spawnedGuid;
         if (!sBotSpawner->CreateAndSpawnBot(accountId, botClass, botRace, gender, name, spawnedGuid))
         {
@@ -207,7 +267,7 @@ namespace Playerbot
             bot->TeleportTo(player->GetMapId(), player->GetPositionX(), player->GetPositionY(),
                            player->GetPositionZ(), player->GetOrientation());
 
-            // Step 4: Invite bot to player's group
+            // Invite bot to player's group
             Group* group = player->GetGroup();
             if (!group)
             {

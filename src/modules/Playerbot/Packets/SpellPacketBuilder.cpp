@@ -18,11 +18,14 @@
 #include "SpellPacketBuilder.h"
 
 // TrinityCore includes
+#include "CombatLogPacketsCommon.h"
 #include "GameObject.h"
 #include "Log.h"
 #include "Map.h"
+#include "MovementPackets.h"
 #include "ObjectAccessor.h"
 #include "Opcodes.h"
+#include "PacketOperators.h"
 #include "Player.h"
 #include "Spell.h"
 #include "SpellAuraEffects.h"
@@ -887,6 +890,239 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidatePositionTarget(
 // Internal Packet Builders (Use TrinityCore official structures)
 // ============================================================================
 
+// ============================================================================
+// Helper: Write MovementInfo to packet (mirrors operator<< in MovementPackets.cpp:72-160)
+// ============================================================================
+// This is duplicated here because the operator<< for MovementInfo is defined in
+// MovementPackets.cpp but NOT declared in MovementPackets.h (only TransportInfo is).
+// Rather than modifying core headers, we duplicate the serialization logic here.
+// ============================================================================
+static void WriteMovementInfo(ByteBuffer& data, MovementInfo const& movementInfo)
+{
+    bool hasTransportData = !movementInfo.transport.guid.IsEmpty();
+    bool hasFallDirection = movementInfo.HasMovementFlag(MOVEMENTFLAG_FALLING | MOVEMENTFLAG_FALLING_FAR);
+    bool hasFallData = hasFallDirection || movementInfo.jump.fallTime != 0;
+    bool hasSpline = false; // Not used for client->server packets
+    bool hasInertia = movementInfo.inertia.has_value();
+    bool hasAdvFlying = movementInfo.advFlying.has_value();
+    bool hasDriveStatus = movementInfo.driveStatus.has_value();
+    bool hasStandingOnGameObjectGUID = movementInfo.standingOnGameObjectGUID.has_value();
+
+    data << movementInfo.guid;
+    data << uint32(movementInfo.flags);
+    data << uint32(movementInfo.flags2);
+    data << uint32(movementInfo.flags3);
+    data << uint32(movementInfo.time);
+    data << movementInfo.pos.PositionXYZOStream();
+    data << float(movementInfo.pitch);
+    data << float(movementInfo.stepUpStartElevation);
+
+    uint32 removeMovementForcesCount = 0;
+    data << removeMovementForcesCount;
+
+    uint32 moveIndex = 0;
+    data << moveIndex;
+
+    data.WriteBit(hasStandingOnGameObjectGUID);
+    data.WriteBit(hasTransportData);
+    data.WriteBit(hasFallData);
+    data.WriteBit(hasSpline);
+
+    data.WriteBit(false); // HeightChangeFailed
+    data.WriteBit(false); // RemoteTimeValid
+    data.WriteBit(hasInertia);
+    data.WriteBit(hasAdvFlying);
+    data.WriteBit(hasDriveStatus);
+
+    data.FlushBits();
+
+    if (hasTransportData)
+        data << movementInfo.transport;
+
+    if (hasStandingOnGameObjectGUID)
+        data << *movementInfo.standingOnGameObjectGUID;
+
+    if (hasInertia)
+    {
+        data << uint32(movementInfo.inertia->id);
+        data << movementInfo.inertia->force.PositionXYZStream();
+        data << uint32(movementInfo.inertia->lifetime);
+    }
+
+    if (hasAdvFlying)
+    {
+        data << float(movementInfo.advFlying->forwardVelocity);
+        data << float(movementInfo.advFlying->upVelocity);
+    }
+
+    if (hasFallData)
+    {
+        data << uint32(movementInfo.jump.fallTime);
+        data << float(movementInfo.jump.zspeed);
+
+        data.WriteBit(hasFallDirection);
+        data.FlushBits();
+        if (hasFallDirection)
+        {
+            data << float(movementInfo.jump.sinAngle);
+            data << float(movementInfo.jump.cosAngle);
+            data << float(movementInfo.jump.xyspeed);
+        }
+    }
+
+    if (hasDriveStatus)
+    {
+        data << float(movementInfo.driveStatus->speed);
+        data << float(movementInfo.driveStatus->movementAngle);
+        data.WriteBit(movementInfo.driveStatus->accelerating);
+        data.WriteBit(movementInfo.driveStatus->drifting);
+        data.FlushBits();
+    }
+}
+
+// ============================================================================
+// Helper: Write SpellTargetData to packet (mirrors operator>> in SpellPackets.cpp:167-194)
+// ============================================================================
+static void WriteSpellTargetData(ByteBuffer& buffer, WorldPackets::Spells::SpellTargetData const& targetData)
+{
+    size_t startSize = buffer.size();
+
+    buffer << uint32(targetData.Flags);
+    buffer << targetData.Unit;
+    buffer << targetData.Item;
+
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellTargetData: After Flags/Unit/Item, Unit={}, size={}",
+        targetData.Unit.ToString(), buffer.size());
+
+    // Write optional presence bits
+    buffer << WorldPackets::OptionalInit(targetData.SrcLocation);
+    buffer << WorldPackets::OptionalInit(targetData.DstLocation);
+    buffer << WorldPackets::OptionalInit(targetData.Orientation);
+    buffer << WorldPackets::OptionalInit(targetData.MapID);
+    buffer << WorldPackets::SizedString::BitsSize<7>(targetData.Name);
+    buffer.FlushBits();
+
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellTargetData: After bits, SrcLoc={}, DstLoc={}, Name.len={}, size={}",
+        targetData.SrcLocation.has_value(), targetData.DstLocation.has_value(), targetData.Name.length(), buffer.size());
+
+    // Write optional data
+    if (targetData.SrcLocation)
+    {
+        buffer << targetData.SrcLocation->Transport;
+        buffer << targetData.SrcLocation->Location;
+    }
+
+    if (targetData.DstLocation)
+    {
+        buffer << targetData.DstLocation->Transport;
+        buffer << targetData.DstLocation->Location;
+    }
+
+    if (targetData.Orientation)
+        buffer << float(*targetData.Orientation);
+
+    if (targetData.MapID)
+        buffer << int32(*targetData.MapID);
+
+    buffer << WorldPackets::SizedString::Data(targetData.Name);
+}
+
+// ============================================================================
+// Helper: Write SpellCastRequest to packet (mirrors operator>> in SpellPackets.cpp:224-270)
+// ============================================================================
+static void WriteSpellCastRequest(ByteBuffer& buffer, WorldPackets::Spells::SpellCastRequest const& request)
+{
+    size_t startSize = buffer.size();
+
+    // Fixed fields (must match read order exactly - see SpellPackets.cpp:224-237)
+    buffer << request.CastID;
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: After CastID, size={}", buffer.size());
+
+    buffer << uint8(request.SendCastFlags);
+    buffer << int32(request.Misc[0]);
+    buffer << int32(request.Misc[1]);
+    buffer << int32(request.SpellID);
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: After SpellID={}, size={}", request.SpellID, buffer.size());
+
+    buffer << request.Visual;
+
+    // MissileTrajectory (pitch and speed)
+    buffer << float(request.MissileTrajectory.Pitch);
+    buffer << float(request.MissileTrajectory.Speed);
+
+    buffer << request.CraftingNPC;
+
+    // Array sizes
+    buffer << WorldPackets::Size<uint32>(request.OptionalCurrencies);
+    buffer << WorldPackets::Size<uint32>(request.OptionalReagents);
+    buffer << WorldPackets::Size<uint32>(request.RemovedModifications);
+
+    buffer << uint8(request.CraftingFlags);
+
+    // Write OptionalCurrencies
+    for (auto const& currency : request.OptionalCurrencies)
+    {
+        buffer << int32(currency.CurrencyID);
+        buffer << int32(currency.Count);
+    }
+
+    // SpellTargetData
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: Before Target, size={}", buffer.size());
+    WriteSpellTargetData(buffer, request.Target);
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: After Target (Flags={}), size={}", uint32(request.Target.Flags), buffer.size());
+
+    // Bit fields section (must reset bit position before writing)
+    buffer.ResetBitPos();
+    buffer << WorldPackets::OptionalInit(request.MoveUpdate);
+    buffer << WorldPackets::BitsSize<2>(request.Weight);
+    buffer << WorldPackets::OptionalInit(request.CraftingOrderID);
+    buffer.FlushBits();
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: After bits, MoveUpdate={}, WeightSize={}, size={}",
+        request.MoveUpdate.has_value(), request.Weight.size(), buffer.size());
+
+    // Write OptionalReagents
+    for (auto const& reagent : request.OptionalReagents)
+    {
+        buffer << int32(reagent.ItemID);
+        buffer << int32(reagent.DataSlotIndex);
+        buffer << int32(reagent.Quantity);
+        buffer << WorldPackets::OptionalInit(reagent.Source);
+        if (reagent.Source)
+            buffer << uint8(*reagent.Source);
+    }
+
+    // CraftingOrderID
+    if (request.CraftingOrderID)
+        buffer << uint64(*request.CraftingOrderID);
+
+    // Write RemovedModifications
+    for (auto const& mod : request.RemovedModifications)
+    {
+        buffer << int32(mod.ItemID);
+        buffer << int32(mod.DataSlotIndex);
+        buffer << int32(mod.Quantity);
+        buffer << WorldPackets::OptionalInit(mod.Source);
+        if (mod.Source)
+            buffer << uint8(*mod.Source);
+    }
+
+    // MoveUpdate - Used when casting while moving (e.g., kiting classes like Frost Mage, Hunter)
+    // TrinityCore will validate if the spell can be cast while moving and return appropriate errors
+    if (request.MoveUpdate)
+        WriteMovementInfo(buffer, *request.MoveUpdate);
+
+    // Weight array
+    for (auto const& weight : request.Weight)
+    {
+        buffer.ResetBitPos();
+        buffer << WorldPackets::Bits<2>(weight.Type);
+        buffer << int32(weight.ID);
+        buffer << uint32(weight.Quantity);
+    }
+
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: COMPLETE, totalSize={}", buffer.size() - startSize);
+}
+
 std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternal(
     Player* caster,
     SpellInfo const* spellInfo,
@@ -896,46 +1132,116 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternal(
     if (!caster || !spellInfo)
         return nullptr;
 
-    // Create CMSG_CAST_SPELL packet using TrinityCore's official WorldPackets::Spells::CastSpell structure
+    // =========================================================================
+    // ENTERPRISE-GRADE CMSG_CAST_SPELL PACKET CONSTRUCTION
+    // =========================================================================
+    // This implementation creates a complete, valid CMSG_CAST_SPELL packet that
+    // exactly mirrors what a real WoW client would send. The packet structure
+    // is defined in WorldPackets::Spells::SpellCastRequest and must be serialized
+    // in the exact order that operator>> reads it (see SpellPackets.cpp:224-270).
+    //
+    // Flow: Bot AI → SpellPacketBuilder → QueuePacket → HandleCastSpellOpcode
+    //       → CanRequestSpellCast → RequestSpellCast → Thread-safe execution
+    // =========================================================================
+
+    // Create CMSG_CAST_SPELL packet
     auto packet = std::make_unique<WorldPacket>(CMSG_CAST_SPELL);
 
-    // Build SpellCastRequest structure
+    // Build SpellCastRequest structure with all required fields
     WorldPackets::Spells::SpellCastRequest castRequest;
-    castRequest.CastID = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, caster->GetMapId(), spellInfo->Id, caster->GetMap()->GenerateLowGuid<HighGuid::Cast>());
+
+    // Generate unique CastID (required for spell cast identification)
+    castRequest.CastID = ObjectGuid::Create<HighGuid::Cast>(
+        SPELL_CAST_SOURCE_NORMAL,
+        caster->GetMapId(),
+        spellInfo->Id,
+        caster->GetMap()->GenerateLowGuid<HighGuid::Cast>()
+    );
+
+    // Core spell identification
     castRequest.SpellID = spellInfo->Id;
-    castRequest.Visual = WorldPackets::Spells::SpellCastVisual();
+
+    // Visual information (optional - server will use defaults from SpellInfo)
+    castRequest.Visual.SpellXSpellVisualID = 0;
+    castRequest.Visual.ScriptVisualID = 0;
+
+    // Cast flags (0 = normal cast)
     castRequest.SendCastFlags = 0;
 
-    // Set target
+    // Misc data (typically 0 for normal spell casts)
+    castRequest.Misc[0] = 0;
+    castRequest.Misc[1] = 0;
+
+    // Missile trajectory (for ranged/projectile spells - use defaults)
+    castRequest.MissileTrajectory.Pitch = 0.0f;
+    castRequest.MissileTrajectory.Speed = 0.0f;
+
+    // Crafting-related fields (not used for combat spells)
+    castRequest.CraftingNPC = ObjectGuid::Empty;
+    castRequest.CraftingFlags = 0;
+    // OptionalCurrencies, OptionalReagents, RemovedModifications - leave empty
+    // CraftingOrderID - leave unset
+
+    // =========================================================================
+    // TARGET CONFIGURATION
+    // =========================================================================
+    // SpellTargetData structure must match what HandleCastSpellOpcode expects
+    // See SpellPackets.cpp:167-194 for the full structure
+
     if (target)
     {
+        // Unit target (most common case for combat spells)
         castRequest.Target.Flags = TARGET_FLAG_UNIT;
         castRequest.Target.Unit = target->GetGUID();
+        castRequest.Target.Item = ObjectGuid::Empty;
+        // SrcLocation, DstLocation, Orientation, MapID - leave unset
+        castRequest.Target.Name.clear();
     }
     else if (position)
     {
+        // Ground-targeted spell (e.g., Blizzard, Rain of Fire)
         castRequest.Target.Flags = TARGET_FLAG_DEST_LOCATION;
+        castRequest.Target.Unit = ObjectGuid::Empty;
+        castRequest.Target.Item = ObjectGuid::Empty;
+
+        // Set destination location
         castRequest.Target.DstLocation = WorldPackets::Spells::TargetLocation();
-        castRequest.Target.DstLocation->Location.Pos.Relocate(position->GetPositionX(),
-            position->GetPositionY(), position->GetPositionZ());
+        castRequest.Target.DstLocation->Transport = ObjectGuid::Empty;
+        castRequest.Target.DstLocation->Location.Pos.Relocate(
+            position->GetPositionX(),
+            position->GetPositionY(),
+            position->GetPositionZ()
+        );
+
+        castRequest.Target.Name.clear();
     }
     else
     {
-        // Self-cast or no target
+        // Self-cast or no explicit target
+        // Many spells work with TARGET_FLAG_UNIT + self GUID
         castRequest.Target.Flags = TARGET_FLAG_UNIT;
         castRequest.Target.Unit = caster->GetGUID();
+        castRequest.Target.Item = ObjectGuid::Empty;
+        castRequest.Target.Name.clear();
     }
 
-    // Write SpellCastRequest to packet
-    // Note: This requires access to WorldPackets::Spells::CastSpell::Write() method
-    // For now, we'll manually write the essential fields
-    *packet << castRequest.CastID;
-    *packet << castRequest.SpellID;
-    // ... (additional fields would be written here following TrinityCore packet structure)
+    // Weight array (spell weighting for queue system - leave empty for normal casts)
+    // MoveUpdate - not needed for bots (they don't send movement updates during casts)
 
-    TC_LOG_TRACE("playerbot.spells.packets",
-        "Built CMSG_CAST_SPELL packet: caster={}, spell={}, target={}",
-        caster->GetName(), spellInfo->Id, target ? target->GetName() : "none");
+    // =========================================================================
+    // SERIALIZE TO PACKET
+    // =========================================================================
+    // Write the complete SpellCastRequest structure to the packet buffer
+    // This must match the exact order that operator>> reads (SpellPackets.cpp:224-270)
+
+    WriteSpellCastRequest(*packet, castRequest);
+
+    TC_LOG_DEBUG("playerbot.spells.packets",
+        "Built CMSG_CAST_SPELL packet: caster={}, spell={}, target={}, packetSize={}",
+        caster->GetName(),
+        spellInfo->Id,
+        target ? target->GetName() : (position ? "position" : "self"),
+        packet->size());
 
     return packet;
 }
@@ -948,38 +1254,76 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternalGam
     if (!caster || !spellInfo)
         return nullptr;
 
-    // Create CMSG_CAST_SPELL packet for GameObject target (quest items, interactions)
+    // =========================================================================
+    // ENTERPRISE-GRADE CMSG_CAST_SPELL PACKET FOR GAMEOBJECT TARGETS
+    // =========================================================================
+    // Used for quest interactions, harvesting, opening chests, etc.
+    // GameObjects use TARGET_FLAG_GAMEOBJECT and store GUID in Unit field
+    // =========================================================================
+
     auto packet = std::make_unique<WorldPacket>(CMSG_CAST_SPELL);
 
     // Build SpellCastRequest structure
     WorldPackets::Spells::SpellCastRequest castRequest;
-    castRequest.CastID = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, caster->GetMapId(), spellInfo->Id, caster->GetMap()->GenerateLowGuid<HighGuid::Cast>());
+
+    // Generate unique CastID
+    castRequest.CastID = ObjectGuid::Create<HighGuid::Cast>(
+        SPELL_CAST_SOURCE_NORMAL,
+        caster->GetMapId(),
+        spellInfo->Id,
+        caster->GetMap()->GenerateLowGuid<HighGuid::Cast>()
+    );
+
+    // Core spell identification
     castRequest.SpellID = spellInfo->Id;
-    castRequest.Visual = WorldPackets::Spells::SpellCastVisual();
+
+    // Visual information
+    castRequest.Visual.SpellXSpellVisualID = 0;
+    castRequest.Visual.ScriptVisualID = 0;
+
+    // Cast flags
     castRequest.SendCastFlags = 0;
+
+    // Misc data
+    castRequest.Misc[0] = 0;
+    castRequest.Misc[1] = 0;
+
+    // Missile trajectory
+    castRequest.MissileTrajectory.Pitch = 0.0f;
+    castRequest.MissileTrajectory.Speed = 0.0f;
+
+    // Crafting fields
+    castRequest.CraftingNPC = ObjectGuid::Empty;
+    castRequest.CraftingFlags = 0;
 
     // Set GameObject target
     if (goTarget)
     {
+        // GameObjects use TARGET_FLAG_GAMEOBJECT
+        // The GUID is stored in the Unit field (TrinityCore convention)
         castRequest.Target.Flags = TARGET_FLAG_GAMEOBJECT;
-        // GameObjects use the Unit field for their GUID in SpellTargetData
         castRequest.Target.Unit = goTarget->GetGUID();
+        castRequest.Target.Item = ObjectGuid::Empty;
+        castRequest.Target.Name.clear();
     }
     else
     {
-        // Self-cast if no GameObject provided
+        // Fallback to self-cast
         castRequest.Target.Flags = TARGET_FLAG_UNIT;
         castRequest.Target.Unit = caster->GetGUID();
+        castRequest.Target.Item = ObjectGuid::Empty;
+        castRequest.Target.Name.clear();
     }
 
-    // Write SpellCastRequest to packet
-    *packet << castRequest.CastID;
-    *packet << castRequest.SpellID;
-    // ... (additional fields would be written here following TrinityCore packet structure)
+    // Serialize complete packet
+    WriteSpellCastRequest(*packet, castRequest);
 
-    TC_LOG_TRACE("playerbot.spells.packets",
-        "Built CMSG_CAST_SPELL packet (GameObject): caster={}, spell={}, goTarget={}",
-        caster->GetName(), spellInfo->Id, goTarget ? goTarget->GetGUID().ToString() : "none");
+    TC_LOG_DEBUG("playerbot.spells.packets",
+        "Built CMSG_CAST_SPELL packet (GameObject): caster={}, spell={}, goTarget={}, packetSize={}",
+        caster->GetName(),
+        spellInfo->Id,
+        goTarget ? goTarget->GetGUID().ToString() : "none",
+        packet->size());
 
     return packet;
 }

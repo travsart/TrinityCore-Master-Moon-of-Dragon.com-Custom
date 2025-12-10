@@ -45,6 +45,7 @@ void OrchestratorConfig::InitializeDefaultPhases()
     phase1.minDurationSeconds = 0;
     phase1.maxDurationSeconds = 120;  // 2 minutes max
     phase1.targetBotsToSpawn = sPlayerbotConfig->GetInt("Playerbot.Startup.Phase1.TargetBots", 100);
+    TC_LOG_INFO("module.playerbot.orchestrator", "🔧 CONFIG DEBUG: Phase1.TargetBots = {} (from Playerbot.Startup.Phase1.TargetBots)", phase1.targetBotsToSpawn);
     phase1.spawnRateMultiplier = 1.5f;  // Hardcoded default (not in config)
     phase1.allowEarlyTransition = true;
     phases.push_back(phase1);

@@ -25,26 +25,9 @@ void MageAI::UpdateRotation(::Unit* target)
     if (!target || !_bot)
         return;
 
-    // Check if bot should use baseline rotation (levels 1-9 or no spec)
-    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
-    {
-        static BaselineRotationManager baselineManager;
-        baselineManager.HandleAutoSpecialization(_bot);
-
-        if (baselineManager.ExecuteBaselineRotation(_bot, target))
-            return;
-
-        // Fallback: basic ranged attack
-    if (!_bot->IsNonMeleeSpellCast(false))
-        {
-            float rangeSq = 35.0f * 35.0f; // 1225.0f
-    if (_bot->GetExactDistSq(target) <= rangeSq)
-            {
-                _bot->AttackerStateUpdate(target);
-            }
-        }
-        return;
-    }
+    // NOTE: Baseline rotation check is now handled at the dispatch level in
+    // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
+    // already chosen a specialization (level 10+ with talents).
 
     // Delegate to specialization-specific AI
     ChrSpecialization spec = _bot->GetPrimarySpecialization();
