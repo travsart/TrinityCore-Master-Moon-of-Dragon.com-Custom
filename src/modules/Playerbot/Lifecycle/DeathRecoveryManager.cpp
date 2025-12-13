@@ -32,6 +32,8 @@
 #include "../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 #include "MiscPackets.h"  // For ReclaimCorpse packet
 #include "Opcodes.h"  // For CMSG_RECLAIM_CORPSE
+#include "../Session/BotSessionManager.h"  // For BotSessionManager::GetBotSession (safe resurrection)
+#include "../Session/BotSession.h"         // For BotSession::QueueSafeResurrection (crash fix)
 
 // PHASE 3 MIGRATION: Movement Arbiter Integration
 #include "Movement/UnifiedMovementCoordinator.h"
@@ -646,34 +648,49 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
         return; // Wait for delay to expire
     }
     // ============================================================================
-    // ALL VALIDATIONS PASSED - Queue Packet-Based Resurrection
+    // ALL VALIDATIONS PASSED - Queue Safe Resurrection (SpawnCorpseBones Crash Fix)
+    // ============================================================================
+    // CRITICAL FIX: DO NOT use CMSG_RECLAIM_CORPSE packet!
+    // HandleReclaimCorpse → SpawnCorpseBones → Map::RemoveWorldObject crashes
+    // due to corrupted i_worldObjects tree structure (infinite loop in _Erase).
+    //
+    // Instead, we use QueueSafeResurrection() which calls ResurrectPlayer() directly
+    // on the main thread WITHOUT SpawnCorpseBones. The corpse will decay naturally.
     // ============================================================================
 
-    TC_LOG_INFO("playerbot.death", " Bot {} passed all 5 validation checks, queuing CMSG_RECLAIM_CORPSE packet",
+    TC_LOG_INFO("playerbot.death", " Bot {} passed all 5 validation checks, queuing SAFE resurrection (bypasses SpawnCorpseBones crash)",
         m_bot->GetName());
 
     TC_LOG_DEBUG("playerbot.death", " Bot {} resurrection validation details: IsAlive=false, Corpse=yes, "
         "Ghost=true, Distance={:.1f}y<{:.1f}y, GhostDelay=expired",
         m_bot->GetName(), distance, CORPSE_RESURRECTION_RANGE);
 
-    // Create CMSG_RECLAIM_CORPSE packet (opcode 0x300073)
-    // Packet format: Just the corpse GUID (16 bytes)
-    // HandleReclaimCorpse will process this on the main thread
-    WorldPacket* reclaimPacket = new WorldPacket(CMSG_RECLAIM_CORPSE, 16);
-    *reclaimPacket << corpse->GetGUID();
+    // Get BotSession for safe resurrection queue
+    BotSession* botSession = BotSessionManager::GetBotSession(m_bot->GetSession());
+    if (!botSession)
+    {
+        TC_LOG_ERROR("playerbot.death", " Bot {} CRITICAL: BotSession not found! Cannot queue safe resurrection.",
+            m_bot->GetName());
+        HandleResurrectionFailure("BotSession not found for safe resurrection");
+        return;
+    }
 
-    // Queue packet for main thread processing
-    // QueuePacket is thread-safe (uses LockedQueue with mutex)
-    m_bot->GetSession()->QueuePacket(reclaimPacket);
+    // Queue safe resurrection (thread-safe atomic flag)
+    // ProcessPendingSafeResurrection() will execute on main thread:
+    // - Validates bot state (IsAlive, ghost flag, corpse distance)
+    // - Calls ResurrectPlayer() directly
+    // - Does NOT call SpawnCorpseBones (avoids crash)
+    // - Corpse will decay naturally via TrinityCore's corpse cleanup
+    botSession->QueueSafeResurrection();
 
-    TC_LOG_INFO("playerbot.death", " Bot {} queued CMSG_RECLAIM_CORPSE packet for main thread resurrection "
-        "(distance: {:.1f}y, map: {}, corpseMap: {})",
+    TC_LOG_INFO("playerbot.death", " Bot {} queued SAFE resurrection for main thread "
+        "(distance: {:.1f}y, map: {}, corpseMap: {}) - NO SpawnCorpseBones!",
         m_bot->GetName(), distance, m_bot->GetMapId(), corpse->GetMapId());
 
     // Transition to RESURRECTING state
     // HandleResurrecting() will poll IsAlive() to detect completion
     // 30-second timeout will trigger HandleResurrectionFailure() if needed
-    TransitionToState(DeathRecoveryState::RESURRECTING, "Packet-based resurrection scheduled");
+    TransitionToState(DeathRecoveryState::RESURRECTING, "Safe resurrection scheduled (no SpawnCorpseBones)");
 }
 
 void DeathRecoveryManager::HandleFindingSpiritHealer(uint32 diff)
@@ -1241,18 +1258,28 @@ bool DeathRecoveryManager::InteractWithCorpse()
         m_bot->GetName(), healthBefore, maxHealth, restorePercent,
         static_cast<int>(deathStateBefore), m_bot->IsAlive(), IsGhost());
 
-    // PACKET-BASED RESURRECTION (v8): Queue CMSG_RECLAIM_CORPSE packet
-    // This is the MAIN resurrection path - mirrors real players exactly
+    // SAFE RESURRECTION (v9): Queue via BotSession::QueueSafeResurrection()
+    // ============================================================================
+    // CRITICAL FIX: DO NOT use CMSG_RECLAIM_CORPSE packet!
+    // HandleReclaimCorpse → SpawnCorpseBones → Map::RemoveWorldObject crashes
+    // due to corrupted i_worldObjects tree structure (infinite loop in _Erase).
+    //
+    // Instead, we use QueueSafeResurrection() which calls ResurrectPlayer() directly
+    // on the main thread WITHOUT SpawnCorpseBones. The corpse will decay naturally.
+    // ============================================================================
 
-    // Create CMSG_RECLAIM_CORPSE packet with corpse GUID
-    WorldPacket* reclaimPacket = new WorldPacket(CMSG_RECLAIM_CORPSE, 16);
-    *reclaimPacket << corpse->GetGUID();
+    BotSession* botSession = BotSessionManager::GetBotSession(m_bot->GetSession());
+    if (!botSession)
+    {
+        TC_LOG_ERROR("playerbot.death", "Bot {} InteractWithCorpse FAILED: BotSession not found!",
+            m_bot->GetName());
+        return false;
+    }
 
-    // Queue packet for main thread processing via WorldSession
-    // TrinityCore's HandleReclaimCorpse will execute on main thread and call ResurrectPlayer
-    m_bot->GetSession()->QueuePacket(reclaimPacket);
+    // Queue safe resurrection (thread-safe atomic flag)
+    botSession->QueueSafeResurrection();
 
-    TC_LOG_WARN("playerbot.death", "Bot {} queued CMSG_RECLAIM_CORPSE packet (distance: {:.1f}y, deathState: {}) - Main thread will handle resurrection",
+    TC_LOG_WARN("playerbot.death", "Bot {} queued SAFE resurrection (distance: {:.1f}y, deathState: {}) - NO SpawnCorpseBones!",
         m_bot->GetName(), m_corpseDistance, static_cast<int>(deathStateBefore));
 
     return true;
@@ -1655,27 +1682,39 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
         m_bot->GetName(),
         method == ResurrectionMethod::CORPSE_RUN ? "corpse" : "spirit healer");
 
-    // PACKET-BASED RESURRECTION (v8): Force resurrect via packet
-    Corpse* corpse = m_bot->GetCorpse();
-    if (corpse)
-    {
-        // Use CMSG_RECLAIM_CORPSE for force resurrect at corpse
-        WorldPacket* reclaimPacket = new WorldPacket(CMSG_RECLAIM_CORPSE, 16);
-        *reclaimPacket << corpse->GetGUID();
-        m_bot->GetSession()->QueuePacket(reclaimPacket);
+    // SAFE RESURRECTION (v9): Force resurrect via BotSession::QueueSafeResurrection()
+    // ============================================================================
+    // CRITICAL FIX: DO NOT use CMSG_RECLAIM_CORPSE packet!
+    // HandleReclaimCorpse → SpawnCorpseBones → Map::RemoveWorldObject crashes.
+    // ============================================================================
 
-        TC_LOG_INFO("playerbot.death", "Bot {} queued CMSG_RECLAIM_CORPSE for force resurrection (method: {})",
+    BotSession* botSession = BotSessionManager::GetBotSession(m_bot->GetSession());
+    Corpse* corpse = m_bot->GetCorpse();
+
+    if (corpse && botSession)
+    {
+        // Use safe resurrection (bypasses SpawnCorpseBones crash)
+        botSession->QueueSafeResurrection();
+
+        TC_LOG_INFO("playerbot.death", "Bot {} queued SAFE force resurrection (method: {}) - NO SpawnCorpseBones!",
             m_bot->GetName(), static_cast<int>(method));
     }
-    else
+    else if (!corpse)
     {
         // No corpse - use CMSG_REPOP_REQUEST to resurrect at graveyard
+        // This path is safe as it doesn't involve SpawnCorpseBones
         WorldPacket* repopPacket = new WorldPacket(CMSG_REPOP_REQUEST, 1);
         *repopPacket << uint8(0);
         m_bot->GetSession()->QueuePacket(repopPacket);
 
         TC_LOG_INFO("playerbot.death", "Bot {} queued CMSG_REPOP_REQUEST for force resurrection (no corpse)",
             m_bot->GetName());
+    }
+    else
+    {
+        TC_LOG_ERROR("playerbot.death", "Bot {} force resurrection FAILED: BotSession not found!",
+            m_bot->GetName());
+        return false;
     }
 
     OnResurrection();

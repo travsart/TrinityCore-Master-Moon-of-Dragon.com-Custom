@@ -30,6 +30,7 @@
 #include "Map.h"
 #include "SpellAuras.h"
 #include "../../Core/PlayerBotHooks.h"
+#include "../../Session/BotWorldSessionMgr.h"
 #include <algorithm>
 
 LFGBotSelector::LFGBotSelector()
@@ -56,20 +57,43 @@ std::vector<Player*> LFGBotSelector::FindAvailableTanks(
     uint32 count,
     Player* humanPlayer)
 {
-    std::vector<Player*> tanks = instance()->FindTanks(minLevel, maxLevel, count);
+    // Request extra bots to account for faction filtering (request 10x or at least 50)
+    uint32 requestCount = std::max(count * 10, 50u);
+    std::vector<Player*> tanks = instance()->FindTanks(minLevel, maxLevel, requestCount);
+    size_t beforeFactionFilter = tanks.size();
 
-    // Filter out bots already grouped with the human player
-    if (humanPlayer && humanPlayer->GetGroup())
+    if (humanPlayer)
     {
-        ObjectGuid humanGroupGuid = humanPlayer->GetGroup()->GetGUID();
+        uint32 humanFaction = humanPlayer->GetTeam();
+
+        // Filter by faction - bots must be same faction as human player
         tanks.erase(
             std::remove_if(tanks.begin(), tanks.end(),
-                [humanGroupGuid](Player* bot) {
-                    Group* botGroup = bot->GetGroup();
-                    return botGroup && botGroup->GetGUID() == humanGroupGuid;
+                [humanFaction](Player* bot) {
+                    return bot->GetTeam() != humanFaction;
                 }),
             tanks.end());
+
+        TC_LOG_INFO("module.playerbot.lfg", "FindAvailableTanks: Human {} faction={}, before filter={}, after faction filter={}",
+                    humanPlayer->GetName(), humanFaction == 67 ? "HORDE" : "ALLIANCE", beforeFactionFilter, tanks.size());
+
+        // Filter out bots already grouped with the human player
+        if (humanPlayer->GetGroup())
+        {
+            ObjectGuid humanGroupGuid = humanPlayer->GetGroup()->GetGUID();
+            tanks.erase(
+                std::remove_if(tanks.begin(), tanks.end(),
+                    [humanGroupGuid](Player* bot) {
+                        Group* botGroup = bot->GetGroup();
+                        return botGroup && botGroup->GetGUID() == humanGroupGuid;
+                    }),
+                tanks.end());
+        }
     }
+
+    // Limit to requested count after faction filtering
+    if (tanks.size() > count)
+        tanks.resize(count);
 
     return tanks;
 }
@@ -80,20 +104,43 @@ std::vector<Player*> LFGBotSelector::FindAvailableHealers(
     uint32 count,
     Player* humanPlayer)
 {
-    std::vector<Player*> healers = instance()->FindHealers(minLevel, maxLevel, count);
+    // Request extra bots to account for faction filtering (request 10x or at least 50)
+    uint32 requestCount = std::max(count * 10, 50u);
+    std::vector<Player*> healers = instance()->FindHealers(minLevel, maxLevel, requestCount);
+    size_t beforeFactionFilter = healers.size();
 
-    // Filter out bots already grouped with the human player
-    if (humanPlayer && humanPlayer->GetGroup())
+    if (humanPlayer)
     {
-        ObjectGuid humanGroupGuid = humanPlayer->GetGroup()->GetGUID();
+        uint32 humanFaction = humanPlayer->GetTeam();
+
+        // Filter by faction - bots must be same faction as human player
         healers.erase(
             std::remove_if(healers.begin(), healers.end(),
-                [humanGroupGuid](Player* bot) {
-                    Group* botGroup = bot->GetGroup();
-                    return botGroup && botGroup->GetGUID() == humanGroupGuid;
+                [humanFaction](Player* bot) {
+                    return bot->GetTeam() != humanFaction;
                 }),
             healers.end());
+
+        TC_LOG_INFO("module.playerbot.lfg", "FindAvailableHealers: Human {} faction={}, before filter={}, after faction filter={}",
+                    humanPlayer->GetName(), humanFaction == 67 ? "HORDE" : "ALLIANCE", beforeFactionFilter, healers.size());
+
+        // Filter out bots already grouped with the human player
+        if (humanPlayer->GetGroup())
+        {
+            ObjectGuid humanGroupGuid = humanPlayer->GetGroup()->GetGUID();
+            healers.erase(
+                std::remove_if(healers.begin(), healers.end(),
+                    [humanGroupGuid](Player* bot) {
+                        Group* botGroup = bot->GetGroup();
+                        return botGroup && botGroup->GetGUID() == humanGroupGuid;
+                    }),
+                healers.end());
+        }
     }
+
+    // Limit to requested count after faction filtering
+    if (healers.size() > count)
+        healers.resize(count);
 
     return healers;
 }
@@ -104,20 +151,43 @@ std::vector<Player*> LFGBotSelector::FindAvailableDPS(
     uint32 count,
     Player* humanPlayer)
 {
-    std::vector<Player*> dps = instance()->FindDPS(minLevel, maxLevel, count);
+    // Request extra bots to account for faction filtering (request 10x or at least 50)
+    uint32 requestCount = std::max(count * 10, 50u);
+    std::vector<Player*> dps = instance()->FindDPS(minLevel, maxLevel, requestCount);
+    size_t beforeFactionFilter = dps.size();
 
-    // Filter out bots already grouped with the human player
-    if (humanPlayer && humanPlayer->GetGroup())
+    if (humanPlayer)
     {
-        ObjectGuid humanGroupGuid = humanPlayer->GetGroup()->GetGUID();
+        uint32 humanFaction = humanPlayer->GetTeam();
+
+        // Filter by faction - bots must be same faction as human player
         dps.erase(
             std::remove_if(dps.begin(), dps.end(),
-                [humanGroupGuid](Player* bot) {
-                    Group* botGroup = bot->GetGroup();
-                    return botGroup && botGroup->GetGUID() == humanGroupGuid;
+                [humanFaction](Player* bot) {
+                    return bot->GetTeam() != humanFaction;
                 }),
             dps.end());
+
+        TC_LOG_INFO("module.playerbot.lfg", "FindAvailableDPS: Human {} faction={}, before filter={}, after faction filter={}",
+                    humanPlayer->GetName(), humanFaction == 67 ? "HORDE" : "ALLIANCE", beforeFactionFilter, dps.size());
+
+        // Filter out bots already grouped with the human player
+        if (humanPlayer->GetGroup())
+        {
+            ObjectGuid humanGroupGuid = humanPlayer->GetGroup()->GetGUID();
+            dps.erase(
+                std::remove_if(dps.begin(), dps.end(),
+                    [humanGroupGuid](Player* bot) {
+                        Group* botGroup = bot->GetGroup();
+                        return botGroup && botGroup->GetGUID() == humanGroupGuid;
+                    }),
+                dps.end());
+        }
     }
+
+    // Limit to requested count after faction filtering
+    if (dps.size() > count)
+        dps.resize(count);
 
     return dps;
 }
@@ -305,6 +375,9 @@ std::vector<Player*> LFGBotSelector::FindBotsForRole(uint8 minLevel, uint8 maxLe
     // Get all online bots
     std::vector<Player*> allBots = GetAllOnlineBots();
 
+    TC_LOG_INFO("module.playerbot.lfg", "LFGBotSelector::FindBotsForRole - Searching {} online bots for role {} (level {}-{})",
+                allBots.size(), desiredRole, minLevel, maxLevel);
+
     // Structure to hold bot and priority
     struct BotPriority
     {
@@ -322,26 +395,55 @@ std::vector<Player*> LFGBotSelector::FindBotsForRole(uint8 minLevel, uint8 maxLe
     // Calculate midpoint level for priority calculation
     uint8 idealLevel = (minLevel + maxLevel) / 2;
 
+    // Diagnostic counters
+    uint32 filteredByAvailability = 0;
+    uint32 filteredByLevel = 0;
+    uint32 filteredByRole = 0;
+
+    // Detailed availability counters
+    uint32 failedGroup = 0, failedLFG = 0, failedDeserter = 0;
+    uint32 failedInstance = 0, failedDead = 0, failedCombat = 0, failedQueued = 0;
+
     // Filter and score bots
     for (Player* bot : allBots)
     {
-        // Check basic availability
-    if (!IsBotAvailable(bot))
-            continue;
+        // Check basic availability with detailed counters
+        if (bot->GetGroup()) { ++failedGroup; ++filteredByAvailability; continue; }
+        if (IsInLFG(bot)) { ++failedLFG; ++filteredByAvailability; continue; }
+        if (HasDeserterDebuff(bot)) { ++failedDeserter; ++filteredByAvailability; continue; }
+        if (IsInInstance(bot)) { ++failedInstance; ++filteredByAvailability; continue; }
+        if (!bot->IsAlive()) { ++failedDead; ++filteredByAvailability; continue; }
+        if (bot->IsInCombat()) { ++failedCombat; ++filteredByAvailability; continue; }
+        if (sLFGBotManager->IsBotQueued(bot->GetGUID())) { ++failedQueued; ++filteredByAvailability; continue; }
 
         // Check level range
         uint8 botLevel = bot->GetLevel();
         if (botLevel < minLevel || botLevel > maxLevel)
+        {
+            TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::FindBotsForRole - Bot {} level {} outside range {}-{}",
+                        bot->GetName(), botLevel, minLevel, maxLevel);
+            ++filteredByLevel;
             continue;
+        }
 
         // Check if bot can perform the desired role
-    if (!sLFGRoleDetector->CanPerformRole(bot, desiredRole))
+        if (!sLFGRoleDetector->CanPerformRole(bot, desiredRole))
+        {
+            TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::FindBotsForRole - Bot {} cannot perform role {}",
+                        bot->GetName(), desiredRole);
+            ++filteredByRole;
             continue;
+        }
 
         // Calculate priority
         uint32 priority = CalculateBotPriority(bot, desiredRole, idealLevel);
         candidates.push_back({ bot, priority });
     }
+
+    TC_LOG_INFO("module.playerbot.lfg", "LFGBotSelector::FindBotsForRole - Filter results: {} candidates, filtered by: availability={}, level={}, role={}",
+                candidates.size(), filteredByAvailability, filteredByLevel, filteredByRole);
+    TC_LOG_INFO("module.playerbot.lfg", "LFGBotSelector::FindBotsForRole - Availability breakdown: group={}, lfg={}, deserter={}, instance={}, dead={}, combat={}, queued={}",
+                failedGroup, failedLFG, failedDeserter, failedInstance, failedDead, failedCombat, failedQueued);
 
     // Sort by priority (highest first)
     std::sort(candidates.begin(), candidates.end());
@@ -369,30 +471,13 @@ std::vector<Player*> LFGBotSelector::FindBotsForRole(uint8 minLevel, uint8 maxLe
 
 std::vector<Player*> LFGBotSelector::GetAllOnlineBots()
 {
-    std::vector<Player*> bots;
+    // CRITICAL FIX: Bot sessions are NOT in sWorld->GetAllSessions()!
+    // They are managed separately by BotWorldSessionMgr.
+    // Use the new GetAllBotPlayers() method which iterates through _botSessions.
+    std::vector<Player*> bots = Playerbot::sBotWorldSessionMgr->GetAllBotPlayers();
 
-    // Iterate through all online sessions
-    for (auto const& [accountId, session] : sWorld->GetAllSessions())
-    {
-        if (!session)
-            continue;
-
-        Player* player = session->GetPlayer();
-        if (!player)
-            continue;
-
-        // Check if this is a bot
-    if (!Playerbot::PlayerBotHooks::IsPlayerBot(player))
-            continue;
-
-        // Check if bot is in world
-    if (!player->IsInWorld())
-            continue;
-
-        bots.push_back(player);
-    }
-
-    TC_LOG_TRACE("module.playerbot.lfg", "LFGBotSelector::GetAllOnlineBots - Found {} online bots", bots.size());
+    TC_LOG_INFO("module.playerbot.lfg", "LFGBotSelector::GetAllOnlineBots - Found {} bots via BotWorldSessionMgr",
+                bots.size());
 
     return bots;
 }

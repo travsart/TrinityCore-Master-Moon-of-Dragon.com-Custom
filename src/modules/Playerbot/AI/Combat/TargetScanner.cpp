@@ -385,11 +385,19 @@ namespace Playerbot
         // to after ObjectAccessor::GetUnit(). This is acceptable because we've already
         // filtered out 90% of candidates using snapshot data (distance, level, alive, blacklist).
 
-        // Don't attack creatures already in combat with someone else (unless we're in a group)
-        // This prevents bots from "stealing" kills
-    if (creature.isInCombat && creature.victim != m_bot->GetGUID() &&
-            !m_bot->GetGroup())
-            return false;
+        // REMOVED: "Don't steal kills" check was too aggressive
+        // The old logic filtered ANY creature in combat with someone else when bot is solo.
+        // This prevented bots from:
+        //   1. Attacking creatures already fighting other bots
+        //   2. Assisting nearby bots in combat
+        //   3. Attacking creatures that were pulled by other bots
+        //
+        // WoW's native tagging system handles loot/XP distribution properly.
+        // Bots should behave like normal players and engage any hostile creature.
+        //
+        // OLD CODE:
+        // if (creature.isInCombat && creature.victim != m_bot->GetGUID() && !m_bot->GetGroup())
+        //     return false;
 
         // Level check - don't attack creatures too high level (10+ levels above)
     if (creature.level > m_bot->GetLevel() + 10)

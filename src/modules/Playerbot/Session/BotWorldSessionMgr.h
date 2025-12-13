@@ -71,6 +71,9 @@ public:
     void RemoveAllPlayerBots(uint32 accountId) override;
     uint32 GetBotCountByAccount(uint32 accountId) const override;
 
+    // All-bots operations (for LFG, BG, etc.)
+    ::std::vector<Player*> GetAllBotPlayers() const override;
+
 private:
     BotWorldSessionMgr() = default;
     ~BotWorldSessionMgr() = default;

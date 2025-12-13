@@ -1886,24 +1886,22 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         if (!creature || !creature->IsAlive() || !creature->IsInWorld())
             continue;
 
-        // CRITICAL: Double-check bot is still in world before CanSeeOrDetect
+        // CRITICAL: Double-check bot is still in world
         // Race condition: bot may be removed from world during iteration
         if (!bot->IsInWorld())
             return;
 
-        // CRITICAL: Re-verify creature validity immediately before CanSeeOrDetect
+        // CRITICAL: Re-verify creature validity
         // TOCTOU race: creature may have despawned between the check above and now
         if (!creature->IsInWorld() || !creature->GetMap())
             continue;
 
-        // CRITICAL: Check if bot can actually see this creature (phase check)
-        // Must verify creature is valid before calling CanSeeOrDetect to prevent crash
-        if (!bot->CanSeeOrDetect(creature))
-        {
-            TC_LOG_TRACE("module.playerbot.quest", "Creature {} (Entry: {}) is in different phase, skipping",
-                         creature->GetName(), creature->GetEntry());
+        // NOTE: CanSeeOrDetect() is NOT SAFE to call from worker thread!
+        // It accesses Map data which can cause ASSERTION FAILED: !IsInWorld() in ResetMap
+        // Phase visibility will be validated when bot actually interacts with the NPC.
+        // For now, we rely on same-map check which covers most cases.
+        if (creature->GetMapId() != bot->GetMapId())
             continue;
-        }
 
         TC_LOG_ERROR("module.playerbot.quest", "🔬 Checking creature: {} (Entry: {}), IsQuestGiver={}",
                      creature->GetName(), creature->GetEntry(), creature->IsQuestGiver());
@@ -2316,21 +2314,20 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
         if (!creature || !creature->IsAlive() || !creature->IsInWorld())
             continue;
 
-        // CRITICAL: Double-check bot is still in world before CanSeeOrDetect
+        // CRITICAL: Double-check bot is still in world
         if (!bot->IsInWorld())
             return false;
 
-        // CRITICAL: Re-verify creature validity immediately before CanSeeOrDetect (TOCTOU race)
+        // CRITICAL: Re-verify creature validity (TOCTOU race)
         if (!creature->IsInWorld() || !creature->GetMap())
             continue;
 
-        // CRITICAL: Phase validation to prevent Ilario-type issues
-        if (!bot->CanSeeOrDetect(creature))
-        {
-            TC_LOG_ERROR("module.playerbot.quest", "👻 CheckForQuestEnderInRange: NPC {} (Entry: {}) is in different phase, skipping",
-                         creature->GetName(), creature->GetEntry());
+        // NOTE: CanSeeOrDetect() is NOT SAFE to call from worker thread!
+        // It accesses Map data which can cause ASSERTION FAILED: !IsInWorld() in ResetMap
+        // Phase visibility will be validated when bot actually interacts with the NPC.
+        // For now, we rely on same-map check which covers most cases.
+        if (creature->GetMapId() != bot->GetMapId())
             continue;
-        }
 
         // Verify it's a quest giver (quest enders are also quest givers)
         if (!creature->IsQuestGiver())

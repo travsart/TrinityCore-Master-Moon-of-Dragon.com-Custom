@@ -524,7 +524,7 @@ bool GrindStrategy::IsValidGrindTarget(Player* bot, Creature* creature) const
     if (!creature->IsInWorld())
         return false;
 
-    // CRITICAL: Bot must also be in world before CanSeeOrDetect
+    // CRITICAL: Bot must also be in world
     if (!bot->IsInWorld())
         return false;
 
@@ -532,8 +532,10 @@ bool GrindStrategy::IsValidGrindTarget(Player* bot, Creature* creature) const
     if (!creature->GetMap())
         return false;
 
-    // Must be visible
-    if (!bot->CanSeeOrDetect(creature))
+    // NOTE: CanSeeOrDetect() is NOT SAFE to call from worker thread!
+    // It accesses Map data which can cause ASSERTION FAILED: !IsInWorld() in ResetMap
+    // Use same-map check instead. Phase visibility validated during actual combat.
+    if (creature->GetMapId() != bot->GetMapId())
         return false;
 
     // Must be hostile
@@ -771,15 +773,17 @@ bool GrindStrategy::CheckQuestAvailability(BotAI* ai)
         if (!creature || !creature->IsAlive() || !creature->IsInWorld())
             continue;
 
-        // CRITICAL: Double-check bot is still in world before CanSeeOrDetect
+        // CRITICAL: Double-check bot is still in world
         if (!bot->IsInWorld())
             return false;
 
-        // CRITICAL: Re-verify creature validity immediately before CanSeeOrDetect (TOCTOU race)
+        // CRITICAL: Re-verify creature validity (TOCTOU race)
         if (!creature->IsInWorld() || !creature->GetMap())
             continue;
 
-        if (!bot->CanSeeOrDetect(creature))
+        // NOTE: CanSeeOrDetect() is NOT SAFE to call from worker thread!
+        // Use same-map check instead. Phase visibility validated during actual interaction.
+        if (creature->GetMapId() != bot->GetMapId())
             continue;
 
         if (!creature->IsQuestGiver())

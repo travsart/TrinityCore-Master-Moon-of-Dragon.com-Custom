@@ -1200,7 +1200,15 @@ void BotAI::OnDeath()
 
     // Initiate death recovery process
     if (auto* deathRecoveryManager = GetDeathRecoveryManager())
+    {
+        TC_LOG_ERROR("playerbots.ai", "Bot {} died - calling DeathRecoveryManager::OnDeath()", _bot->GetName());
         deathRecoveryManager->OnDeath();
+    }
+    else
+    {
+        TC_LOG_ERROR("playerbots.ai", "Bot {} died but GetDeathRecoveryManager() returned nullptr! _gameSystems={}",
+            _bot->GetName(), _gameSystems ? "valid" : "null");
+    }
 
     TC_LOG_DEBUG("playerbots.ai", "Bot {} died, AI state reset, death recovery initiated", _bot->GetName());
 }
@@ -1485,13 +1493,15 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
         }
         else if (name == "quest")
         {
-            // Quest strategy gets FOLLOW priority (50) to ensure it runs for solo bots
-            // This allows quests to take priority over gathering/trading/social
-            priority = BehaviorPriority::FOLLOW;
+            // Quest strategy gets MOVEMENT priority (45)
+            // Lower than loot so bots loot corpses before continuing quests
+            priority = BehaviorPriority::MOVEMENT;
         }
         else if (name == "loot")
-        {// Loot strategy gets MOVEMENT priority (45) - slightly lower than quest
-            priority = BehaviorPriority::MOVEMENT;
+        {
+            // Loot strategy gets FOLLOW priority (50) - HIGHER than quest
+            // Ensures bots loot corpses immediately after combat before wandering
+            priority = BehaviorPriority::FOLLOW;
         }
         else if (name == "rest")
         {

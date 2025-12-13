@@ -12,6 +12,9 @@
 #include "Log.h"
 #include "WorldPacket.h"
 #include "Player.h"
+#include "Corpse.h"  // For CORPSE_RECLAIM_RADIUS in safe resurrection
+#include "Creature.h"  // For loot processing
+#include "Loot.h"  // For SendLoot
 #include "QueryHolder.h"
 #include "QueryCallback.h"
 #include "CharacterPackets.h"
@@ -2024,6 +2027,213 @@ bool BotSession::ProcessPendingStopMovement()
                  bot->GetName());
 
     return true;
+}
+
+// ============================================================================
+// SAFE RESURRECTION SYSTEM (SpawnCorpseBones Crash Fix)
+// ============================================================================
+// HandleReclaimCorpse → SpawnCorpseBones → Map::RemoveWorldObject crashes
+// due to corrupted i_worldObjects tree structure (infinite loop in _Erase).
+//
+// FIX: Call ResurrectPlayer() directly on main thread WITHOUT SpawnCorpseBones.
+// The corpse will decay naturally via TrinityCore's corpse cleanup system.
+// ============================================================================
+
+void BotSession::QueueSafeResurrection()
+{
+    // Thread-safe: atomic flag set
+    _pendingSafeResurrection.store(true);
+
+    TC_LOG_DEBUG("playerbot.death",
+                 "Bot {} queued safe resurrection (bypasses SpawnCorpseBones crash)",
+                 GetPlayerName());
+}
+
+bool BotSession::ProcessPendingSafeResurrection()
+{
+    // CRITICAL: Must only be called from main thread!
+    // This method is called from BotWorldSessionMgr::ProcessAllDeferredPackets()
+
+    // Atomic exchange - check and clear in one operation
+    if (!_pendingSafeResurrection.exchange(false))
+        return false;  // No pending request
+
+    // Get the player
+    Player* bot = GetPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.death",
+                     "ProcessPendingSafeResurrection: Bot player is nullptr");
+        return false;
+    }
+
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_WARN("playerbot.death",
+                    "ProcessPendingSafeResurrection: Bot {} not in world, deferring resurrection",
+                    bot->GetName());
+        // Re-queue for next update
+        _pendingSafeResurrection.store(true);
+        return false;
+    }
+
+    // Validation checks (mirror HandleReclaimCorpse checks)
+    if (bot->IsAlive())
+    {
+        TC_LOG_INFO("playerbot.death",
+                    "ProcessPendingSafeResurrection: Bot {} is already alive",
+                    bot->GetName());
+        return true;  // Already alive, success
+    }
+
+    if (!bot->HasPlayerFlag(PLAYER_FLAGS_GHOST))
+    {
+        TC_LOG_WARN("playerbot.death",
+                    "ProcessPendingSafeResurrection: Bot {} has no ghost flag, cannot resurrect",
+                    bot->GetName());
+        return false;
+    }
+
+    // Get corpse for distance check
+    Corpse* corpse = bot->GetCorpse();
+    if (!corpse)
+    {
+        TC_LOG_WARN("playerbot.death",
+                    "ProcessPendingSafeResurrection: Bot {} has no corpse, forcing resurrection anyway",
+                    bot->GetName());
+        // Still proceed with resurrection - bot is stuck as ghost without corpse
+    }
+    else
+    {
+        // Check distance to corpse (must be within 39 yards) - same as HandleReclaimCorpse
+        if (!corpse->IsWithinDistInMap(bot, CORPSE_RECLAIM_RADIUS, true))
+        {
+            TC_LOG_WARN("playerbot.death",
+                        "ProcessPendingSafeResurrection: Bot {} too far from corpse ({:.1f}y)",
+                        bot->GetName(), bot->GetDistance2d(corpse));
+            return false;
+        }
+    }
+
+    // ========================================================================
+    // SAFE RESURRECTION - NO SpawnCorpseBones!
+    // ========================================================================
+    // HandleReclaimCorpse calls:
+    //   1. ResurrectPlayer(healthPct)  <- SAFE
+    //   2. SpawnCorpseBones()          <- CRASHES (infinite loop in Map::RemoveWorldObject)
+    //
+    // We ONLY call ResurrectPlayer. The corpse will:
+    //   - Decay naturally via TrinityCore's corpse cleanup timer
+    //   - Or be cleaned up when the bot dies again
+    // ========================================================================
+
+    TC_LOG_INFO("playerbot.death",
+                "ProcessPendingSafeResurrection: Bot {} - SAFE resurrection starting (NO SpawnCorpseBones)",
+                bot->GetName());
+
+    // Resurrect with 50% health (same as normal corpse reclaim)
+    // In battlegrounds, use 100% health
+    float healthPct = bot->InBattleground() ? 1.0f : 0.5f;
+    bot->ResurrectPlayer(healthPct);
+
+    TC_LOG_INFO("playerbot.death",
+                "ProcessPendingSafeResurrection: Bot {} - ResurrectPlayer() complete! IsAlive={} (corpse left to decay)",
+                bot->GetName(), bot->IsAlive());
+
+    // NOTE: We intentionally DO NOT call SpawnCorpseBones() here!
+    // The corpse will be cleaned up by TrinityCore's natural corpse decay system.
+    // This avoids the Map::RemoveWorldObject crash in the corrupted i_worldObjects tree.
+
+    return true;
+}
+
+// ============================================================================
+// THREAD-SAFE LOOT QUEUE
+// ============================================================================
+// FIX: SendLoot() causes ACCESS_VIOLATION when called from worker threads
+// because it modifies _updateObjects which must only be touched on main thread.
+//
+// Solution: Queue loot targets from worker threads, process on main thread.
+// ============================================================================
+
+void BotSession::QueueLootTarget(ObjectGuid creatureGuid)
+{
+    std::lock_guard<std::mutex> lock(_pendingLootMutex);
+    _pendingLootTargets.push_back(creatureGuid);
+
+    TC_LOG_DEBUG("module.playerbot.loot",
+                 "Bot {} queued loot target {} for main thread processing",
+                 GetPlayerName(), creatureGuid.ToString());
+}
+
+bool BotSession::HasPendingLoot() const
+{
+    std::lock_guard<std::mutex> lock(_pendingLootMutex);
+    return !_pendingLootTargets.empty();
+}
+
+bool BotSession::ProcessPendingLoot()
+{
+    // CRITICAL: Must only be called from main thread!
+
+    // Get pending targets atomically
+    std::vector<ObjectGuid> targets;
+    {
+        std::lock_guard<std::mutex> lock(_pendingLootMutex);
+        if (_pendingLootTargets.empty())
+            return false;
+        targets = std::move(_pendingLootTargets);
+        _pendingLootTargets.clear();
+    }
+
+    Player* bot = GetPlayer();
+    if (!bot || !bot->IsInWorld())
+        return false;
+
+    bool lootedAny = false;
+
+    for (ObjectGuid const& targetGuid : targets)
+    {
+        if (!targetGuid.IsCreature())
+            continue;
+
+        Creature* creature = bot->GetMap()->GetCreature(targetGuid);
+        if (!creature || !creature->isDead())
+        {
+            TC_LOG_DEBUG("module.playerbot.loot",
+                         "ProcessPendingLoot: Bot {} - creature {} not found or not dead",
+                         bot->GetName(), targetGuid.ToString());
+            continue;
+        }
+
+        // Check distance
+        if (!creature->IsWithinDistInMap(bot, INTERACTION_DISTANCE))
+        {
+            TC_LOG_DEBUG("module.playerbot.loot",
+                         "ProcessPendingLoot: Bot {} too far from corpse {} ({:.1f}y)",
+                         bot->GetName(), targetGuid.ToString(), bot->GetDistance(creature));
+            continue;
+        }
+
+        // Check if creature has loot
+        if (!creature->m_loot || creature->m_loot->isLooted())
+        {
+            TC_LOG_DEBUG("module.playerbot.loot",
+                         "ProcessPendingLoot: Bot {} - corpse {} has no loot",
+                         bot->GetName(), targetGuid.ToString());
+            continue;
+        }
+
+        // SAFE: Now on main thread, can call SendLoot
+        bot->SendLoot(*creature->m_loot, false);
+        lootedAny = true;
+
+        TC_LOG_DEBUG("module.playerbot.loot",
+                     "ProcessPendingLoot: Bot {} LOOTING corpse {} (entry {})",
+                     bot->GetName(), targetGuid.ToString(), creature->GetEntry());
+    }
+
+    return lootedAny;
 }
 
 } // namespace Playerbot

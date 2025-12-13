@@ -999,7 +999,11 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
 
     uint32 totalProcessed = 0;
 
-    // Collect sessions that need deferred packet processing
+    // Collect sessions that need main thread processing:
+    // - Deferred packets (race condition sensitive operations)
+    // - Pending facing requests (SetFacingToObject requires main thread)
+    // - Pending stop movement (MotionMaster::Clear requires main thread)
+    // - Pending safe resurrection (SpawnCorpseBones crash fix)
     ::std::vector<::std::shared_ptr<BotSession>> sessionsToProcess;
     {
         ::std::lock_guard lock(_sessionsMutex);
@@ -1007,7 +1011,14 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
 
         for (auto const& [guid, session] : _botSessions)
         {
-            if (session && session->HasDeferredPackets())
+            // CRITICAL FIX: Check ALL main-thread-only operations, not just deferred packets!
+            // Safe resurrection uses atomic flag (_pendingSafeResurrection), not deferred queue
+            // Pending loot uses mutex-protected queue (_pendingLootTargets)
+            if (session && (session->HasDeferredPackets() ||
+                           session->HasPendingFacing() ||
+                           session->HasPendingStopMovement() ||
+                           session->HasPendingSafeResurrection() ||
+                           session->HasPendingLoot()))
             {
                 sessionsToProcess.push_back(session);
             }
@@ -1037,6 +1048,14 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
         // Process pending stop movement request (thread-safe movement system)
         // MotionMaster::Clear() requires main thread - worker threads queue via QueueStopMovement()
         session->ProcessPendingStopMovement();
+
+        // Process pending safe resurrection request (SpawnCorpseBones crash fix)
+        // ResurrectPlayer() on main thread - bypasses HandleReclaimCorpse/SpawnCorpseBones crash
+        session->ProcessPendingSafeResurrection();
+
+        // Process pending loot requests (SendLoot crash fix)
+        // SendLoot() modifies _updateObjects which requires main thread
+        session->ProcessPendingLoot();
     }
 
     // Log statistics if significant activity
@@ -1178,6 +1197,31 @@ uint32 BotWorldSessionMgr::GetBotCountByAccount(uint32 accountId) const
     }
 
     return count;
+}
+
+::std::vector<Player*> BotWorldSessionMgr::GetAllBotPlayers() const
+{
+    ::std::vector<Player*> bots;
+    ::std::lock_guard lock(_sessionsMutex);
+
+    bots.reserve(_botSessions.size());
+
+    for (auto const& [guid, session] : _botSessions)
+    {
+        if (!session || !session->IsLoginComplete())
+            continue;
+
+        Player* bot = session->GetPlayer();
+        if (!bot || !bot->IsInWorld())
+            continue;
+
+        bots.push_back(bot);
+    }
+
+    TC_LOG_DEBUG("module.playerbot.lfg", "GetAllBotPlayers - Returning {} bots from {} sessions",
+                 bots.size(), _botSessions.size());
+
+    return bots;
 }
 
 } // namespace Playerbot

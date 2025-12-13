@@ -140,6 +140,13 @@ void LFGBotManager::OnPlayerJoinQueue(Player* player, uint8 playerRole, lfg::Lfg
 
     ObjectGuid playerGuid = player->GetGUID();
 
+    // Debug: Log raw role value and which flags are set
+    TC_LOG_INFO("module.playerbot.lfg", "LFGBotManager::OnPlayerJoinQueue - Player {} role bitmask: {} (TANK={}, HEALER={}, DPS={})",
+                player->GetName(), playerRole,
+                (playerRole & lfg::PLAYER_ROLE_TANK) ? "YES" : "no",
+                (playerRole & lfg::PLAYER_ROLE_HEALER) ? "YES" : "no",
+                (playerRole & lfg::PLAYER_ROLE_DAMAGE) ? "YES" : "no");
+
     // Calculate needed roles (assuming 5-man dungeon composition)
     uint8 tanksNeeded = 0, healersNeeded = 0, dpsNeeded = 0;
     CalculateNeededRoles(playerRole, tanksNeeded, healersNeeded, dpsNeeded);
@@ -406,6 +413,8 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
         TC_LOG_ERROR("module.playerbot", "LFGBotManager::PopulateQueue - Could not get level range for dungeon {}", dungeonId);
         return 0;
     }
+
+    TC_LOG_INFO("module.playerbot", "LFGBotManager::PopulateQueue - Dungeon {} requires level {}-{}", dungeonId, minLevel, maxLevel);
 
     // Determine what roles the human player has
     Player* humanPlayer = ObjectAccessor::FindPlayer(playerGuid);

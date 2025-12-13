@@ -53,6 +53,9 @@ public:
     virtual ::std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const = 0;
     virtual void RemoveAllPlayerBots(uint32 accountId) = 0;
     virtual uint32 GetBotCountByAccount(uint32 accountId) const = 0;
+
+    // All-bots operations (for LFG, BG, etc.)
+    virtual ::std::vector<Player*> GetAllBotPlayers() const = 0;
 };
 
 } // namespace Playerbot

@@ -211,6 +211,67 @@ public:
      */
     bool HasPendingStopMovement() const { return _pendingStopMovement.load(); }
 
+    // ========================================================================
+    // THREAD-SAFE SAFE RESURRECTION SYSTEM (SpawnCorpseBones Crash Fix)
+    // ========================================================================
+    // HandleReclaimCorpse → SpawnCorpseBones → Map::RemoveWorldObject crashes
+    // due to corrupted i_worldObjects tree structure (infinite loop in _Erase).
+    //
+    // FIX: Instead of using CMSG_RECLAIM_CORPSE packet (which calls SpawnCorpseBones),
+    // we queue a safe resurrection request that calls ResurrectPlayer() directly
+    // WITHOUT SpawnCorpseBones. The corpse will decay naturally.
+    //
+    // Thread Safety:
+    // - QueueSafeResurrection() called from worker threads (atomic flag)
+    // - ProcessPendingSafeResurrection() called from main thread
+    // ========================================================================
+
+    /**
+     * @brief Queue a safe resurrection request to be executed on main thread
+     *
+     * Called from: Worker threads (DeathRecoveryManager::HandleAtCorpse)
+     * Executed by: Main thread (BotWorldSessionMgr::ProcessAllDeferredPackets)
+     *
+     * This bypasses HandleReclaimCorpse/SpawnCorpseBones crash by calling
+     * ResurrectPlayer() directly on the main thread.
+     */
+    void QueueSafeResurrection();
+
+    /**
+     * @brief Process pending safe resurrection request on main thread
+     * @return true if resurrection was executed
+     *
+     * CRITICAL: Must only be called from main thread
+     */
+    bool ProcessPendingSafeResurrection();
+
+    /**
+     * @brief Check if there's a pending safe resurrection request
+     */
+    bool HasPendingSafeResurrection() const { return _pendingSafeResurrection.load(); }
+
+    /**
+     * @brief Queue a creature for looting on main thread (thread-safe)
+     * @param creatureGuid GUID of the creature corpse to loot
+     *
+     * Called from worker threads to defer SendLoot to main thread.
+     * Prevents ACCESS_VIOLATION crash in Map::SendObjectUpdates.
+     */
+    void QueueLootTarget(ObjectGuid creatureGuid);
+
+    /**
+     * @brief Process pending loot targets on main thread
+     * @return true if any loot was processed
+     *
+     * MUST be called from main thread only.
+     */
+    bool ProcessPendingLoot();
+
+    /**
+     * @brief Check if there are pending loot targets
+     */
+    bool HasPendingLoot() const;
+
 private:
     // Helper methods for safe database access
     CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName);
@@ -265,6 +326,15 @@ private:
     // Thread-safe pending stop movement flag
     // Worker threads set this, main thread processes it
     std::atomic<bool> _pendingStopMovement{false};
+
+    // Thread-safe pending safe resurrection flag (SpawnCorpseBones crash fix)
+    // Worker threads set this, main thread processes it
+    std::atomic<bool> _pendingSafeResurrection{false};
+
+    // Thread-safe pending loot queue (SendLoot crash fix)
+    // Worker threads queue targets, main thread processes loot
+    mutable std::mutex _pendingLootMutex;
+    std::vector<ObjectGuid> _pendingLootTargets;
 
     // Deleted copy operations
     BotSession(BotSession const&) = delete;
