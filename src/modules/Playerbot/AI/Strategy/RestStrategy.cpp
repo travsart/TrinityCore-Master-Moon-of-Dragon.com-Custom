@@ -89,11 +89,28 @@ float RestStrategy::GetRelevance(BotAI* ai) const
         return 0.0f;
 
     // Check if bot needs to rest
-    bool needsRest = NeedsFood(ai) || NeedsDrink(ai);
+    bool needsFood = NeedsFood(ai);
+    bool needsDrink = NeedsDrink(ai);
 
-    // HIGHEST priority when needs rest (even higher than quest=70)
-    // Bot must rest before doing anything else
-    return needsRest ? 90.0f : 0.0f;
+    if (!needsFood && !needsDrink)
+        return 0.0f;
+
+    // CRITICAL FIX: Only claim high priority if we CAN actually rest
+    // If no consumables available, return 0 to let other strategies run
+    // Bot will passively regenerate while questing/grinding
+    bool canRestForFood = needsFood && (FindFood(ai) != nullptr);
+    bool canRestForDrink = needsDrink && (FindDrink(ai) != nullptr);
+
+    if (!canRestForFood && !canRestForDrink)
+    {
+        // Can't fulfill any rest needs - let other strategies run, bot regens naturally
+        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} needs rest but has no consumables, yielding priority",
+                     bot->GetName());
+        return 0.0f;
+    }
+
+    // High priority when we can actually rest (have consumables for at least one need)
+    return 90.0f;
 }
 
 void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
@@ -110,13 +127,13 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         return;
     }
 
-    // DEBUG: Log current status
+    // Log current status
     float healthPct = bot->GetHealthPct();
     float manaPct = bot->GetMaxPower(POWER_MANA) > 0
         ? (bot->GetPower(POWER_MANA) * 100.0f / bot->GetMaxPower(POWER_MANA))
         : 100.0f;
 
-    TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy::UpdateBehavior: Bot {} health={:.1f}%, mana={:.1f}%, needsFood={}, needsDrink={}",
+    TC_LOG_ERROR("module.playerbot.strategy", "RestStrategy::UpdateBehavior: Bot {} health={:.1f}%, mana={:.1f}%, needsFood={}, needsDrink={}",
                  bot->GetName(), healthPct, manaPct, NeedsFood(ai), NeedsDrink(ai));
 
     uint32 currentTime = GameTime::GetGameTimeMS();
@@ -178,7 +195,7 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         }
         else
         {
-            TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} needs food but none found in inventory",
+            TC_LOG_ERROR("module.playerbot.strategy", "RestStrategy: Bot {} needs food but none found in inventory",
                          bot->GetName());
         }
     }

@@ -812,20 +812,43 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     //          Unit::Update which asserts !m_procDeep - but worker has it incremented!
     // Solution: Wait for ALL bot update tasks to complete before returning from UpdateSessions.
     //           This ensures procs are fully resolved before MapUpdater runs.
-    if (useThreadPool && Performance::GetThreadPool().GetQueuedTasks() > 0)
+    //
+    // CRITICAL: We MUST wait indefinitely - a 50ms timeout is NOT sufficient!
+    // If we return while workers are still running, MapUpdater WILL crash on m_procDeep assertion.
+    // The timeout approach only deferred logout processing but did NOT prevent the crash.
+    if (useThreadPool)
     {
-        // Wait up to 50ms for bot update tasks to complete
-        // This is acceptable because:
-        // 1. Individual bot updates are fast (<1ms each)
-        // 2. 50ms is within frame budget (world tick is 50ms)
-        // 3. Prevents race condition that causes Unit.cpp:437 m_procDeep crash
-        // 4. Prevents race condition that causes Map.cpp:686 crash
-        if (!Performance::GetThreadPool().WaitForCompletion(::std::chrono::milliseconds(50)))
+        uint32 queuedTasks = Performance::GetThreadPool().GetQueuedTasks();
+        if (queuedTasks > 0)
         {
-            TC_LOG_WARN("module.playerbot.session",
-                "ThreadPool tasks still running after 50ms - deferring operations to next tick");
-            // Don't process logouts this tick - workers are still accessing player data
-            canProcessLogouts = false;
+            auto startWait = ::std::chrono::steady_clock::now();
+
+            // Wait indefinitely for completion - we CANNOT proceed while workers cast spells
+            // Using max timeout to effectively block until all tasks complete
+            bool completed = Performance::GetThreadPool().WaitForCompletion(::std::chrono::milliseconds(5000));
+
+            auto waitDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - startWait);
+
+            if (!completed)
+            {
+                // This should rarely happen - log as error if tasks take > 5 seconds
+                TC_LOG_ERROR("module.playerbot.session",
+                    "ThreadPool tasks still running after 5000ms ({} queued) - BLOCKING until complete to prevent m_procDeep crash",
+                    queuedTasks);
+
+                // Force wait without timeout - we CANNOT proceed with running workers
+                Performance::GetThreadPool().WaitForCompletion(::std::chrono::milliseconds::max());
+                canProcessLogouts = false;
+
+                TC_LOG_WARN("module.playerbot.session", "ThreadPool finally completed after extended wait");
+            }
+            else if (waitDuration.count() > 100)
+            {
+                // Log if wait was notably long (>100ms)
+                TC_LOG_DEBUG("module.playerbot.session",
+                    "ThreadPool wait took {}ms for {} tasks", waitDuration.count(), queuedTasks);
+            }
         }
     }
 
@@ -1014,11 +1037,13 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
             // CRITICAL FIX: Check ALL main-thread-only operations, not just deferred packets!
             // Safe resurrection uses atomic flag (_pendingSafeResurrection), not deferred queue
             // Pending loot uses mutex-protected queue (_pendingLootTargets)
+            // Pending object use uses mutex-protected queue (_pendingObjectUseTargets)
             if (session && (session->HasDeferredPackets() ||
                            session->HasPendingFacing() ||
                            session->HasPendingStopMovement() ||
                            session->HasPendingSafeResurrection() ||
-                           session->HasPendingLoot()))
+                           session->HasPendingLoot() ||
+                           session->HasPendingObjectUse()))
             {
                 sessionsToProcess.push_back(session);
             }
@@ -1056,6 +1081,10 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
         // Process pending loot requests (SendLoot crash fix)
         // SendLoot() modifies _updateObjects which requires main thread
         session->ProcessPendingLoot();
+
+        // Process pending object use requests (GameObject::Use crash fix)
+        // Use() modifies game object state and triggers Map updates - requires main thread
+        session->ProcessPendingObjectUse();
     }
 
     // Log statistics if significant activity

@@ -238,6 +238,11 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         if (!canHaveLoot)
             continue;
 
+        // Check if loot has already been taken (prevents re-queueing looted corpses)
+        Loot* loot = creature->GetLootForPlayer(bot);
+        if (loot && loot->isLooted())
+            continue;  // Already looted, skip
+
         // Check if bot is allowed to loot (is in tap list or in group with someone who tapped)
         if (hasRecipient)
         {
@@ -485,22 +490,23 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
         return false;
     }
 
-    // Get actual GameObject pointer for interaction
-    // Note: Use() is also not thread-safe, but this would need a separate deferred system
-    GameObject* object = ObjectAccessor::GetGameObject(*bot, objectGuid);
-    if (!object)
+    // THREAD-SAFE: Queue object use for main thread processing
+    // GameObject::Use() is NOT thread-safe - it modifies game object state and
+    // triggers Map updates that cause ACCESS_VIOLATION if called from worker threads.
+    // Solution: Defer to main thread via BotSession::QueueObjectUse()
+    BotSession* botSession = BotSessionManager::GetBotSession(bot->GetSession());
+    if (!botSession)
     {
-        TC_LOG_DEBUG("module.playerbot.strategy", "LootObject: Bot {} - object {} not found",
-                     bot->GetName(), objectGuid.ToString());
+        TC_LOG_DEBUG("module.playerbot.strategy", "LootObject: Bot {} has no BotSession, cannot queue object use",
+                     bot->GetName());
         return false;
     }
 
-    // Use the object (opens loot)
-    // TODO: This may need to be deferred to main thread like creature looting
-    object->Use(bot);
+    // Queue the object for main thread Use()
+    botSession->QueueObjectUse(objectGuid);
 
-    TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} looting object {}",
-                 bot->GetName(), objectSnapshot->entry);
+    TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} queued object {} (entry {}) for Use() on main thread",
+                 bot->GetName(), objectGuid.ToString(), objectSnapshot->entry);
 
     return true;
 }

@@ -14,6 +14,7 @@
 #include "Player.h"
 #include "Corpse.h"  // For CORPSE_RECLAIM_RADIUS in safe resurrection
 #include "Creature.h"  // For loot processing
+#include "GameObject.h"  // For object use processing
 #include "Loot.h"  // For SendLoot
 #include "QueryHolder.h"
 #include "QueryCallback.h"
@@ -2222,25 +2223,182 @@ bool BotSession::ProcessPendingLoot()
             continue;
         }
 
-        // Check if creature has loot
-        if (!creature->m_loot || creature->m_loot->isLooted())
+        // Check if creature has loot - use GetLootForPlayer which checks personal loot too
+        Loot* loot = creature->GetLootForPlayer(bot);
+
+        // Debug: Log loot state in detail
+        TC_LOG_DEBUG("module.playerbot.strategy",
+                     "ProcessPendingLoot: Bot {} - corpse {} loot state: loot={}, isLooted={}, items={}, gold={}",
+                     bot->GetName(), targetGuid.ToString(),
+                     loot ? "valid" : "NULL",
+                     loot ? (loot->isLooted() ? "YES" : "NO") : "N/A",
+                     loot ? loot->items.size() : 0,
+                     loot ? loot->gold : 0);
+
+        if (!loot || (loot->isLooted() && loot->items.empty() && loot->gold == 0))
         {
             TC_LOG_DEBUG("module.playerbot.strategy",
-                         "ProcessPendingLoot: Bot {} - corpse {} has no loot or already looted",
-                         bot->GetName(), targetGuid.ToString());
+                         "ProcessPendingLoot: Bot {} - corpse {} (entry {}) has no loot (loot={}, m_loot={}, personalLoot={})",
+                         bot->GetName(), targetGuid.ToString(), creature->GetEntry(),
+                         loot ? "valid" : "NULL",
+                         creature->m_loot ? "exists" : "NULL",
+                         creature->m_personalLoot.count(bot->GetGUID()) ? "exists" : "NONE");
             continue;
         }
 
-        // SAFE: Now on main thread, can call SendLoot
-        bot->SendLoot(*creature->m_loot, false);
-        lootedAny = true;
+        // CRITICAL FIX: Actually loot items instead of just sending loot window
+        // SendLoot() only opens the loot UI for clients - bots need to StoreLootItem() directly
+        ObjectGuid lootOwnerGuid = loot->GetOwnerGUID();
+        uint32 itemsLooted = 0;
+
+        // Check if bot is in a group with special loot rules
+        Group* group = bot->GetGroup();
+        bool useGroupLoot = group && group->GetLootMethod() != FREE_FOR_ALL;
+
+        if (useGroupLoot)
+        {
+            // For group loot, use SendLoot to trigger proper roll mechanics
+            // The group loot system will handle Need/Greed/Master Looter rules
+            bot->SendLoot(*loot, false);
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                         "ProcessPendingLoot: Bot {} in group with loot rules, using SendLoot for corpse {}",
+                         bot->GetName(), targetGuid.ToString());
+            lootedAny = true;
+            continue;
+        }
+
+        // Solo bot or FreeForAll - directly store items
+        // Iterate through all loot items and store them
+        for (uint8 lootSlot = 0; lootSlot < loot->items.size(); ++lootSlot)
+        {
+            LootItem* item = loot->LootItemInSlot(lootSlot, bot);
+            if (!item || item->is_looted)
+                continue;
+
+            // Skip blocked items (pending roll) - shouldn't happen for solo but safety check
+            if (item->is_blocked)
+            {
+                TC_LOG_DEBUG("module.playerbot.strategy",
+                             "ProcessPendingLoot: Bot {} skipping blocked item {} (pending roll)",
+                             bot->GetName(), item->itemid);
+                continue;
+            }
+
+            // Store the item in bot's inventory
+            bot->StoreLootItem(lootOwnerGuid, lootSlot, loot);
+            itemsLooted++;
+
+            TC_LOG_INFO("module.playerbot.strategy",
+                         "ProcessPendingLoot: Bot {} looted item {} (entry {}) from corpse {}",
+                         bot->GetName(), item->itemid, creature->GetEntry(), targetGuid.ToString());
+        }
+
+        // Also loot gold if any
+        if (loot->gold > 0)
+        {
+            bot->ModifyMoney(loot->gold);
+            loot->gold = 0;
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                         "ProcessPendingLoot: Bot {} looted gold from corpse {}",
+                         bot->GetName(), targetGuid.ToString());
+        }
+
+        if (itemsLooted > 0)
+            lootedAny = true;
 
         TC_LOG_INFO("module.playerbot.strategy",
-                     "ProcessPendingLoot: Bot {} LOOTED corpse {} (entry {})",
-                     bot->GetName(), targetGuid.ToString(), creature->GetEntry());
+                     "ProcessPendingLoot: Bot {} LOOTED {} items from corpse {} (entry {})",
+                     bot->GetName(), itemsLooted, targetGuid.ToString(), creature->GetEntry());
     }
 
     return lootedAny;
+}
+
+// ============================================================================
+// THREAD-SAFE OBJECT USE QUEUE (GameObject::Use Crash Fix)
+// ============================================================================
+// GameObject::Use() causes ACCESS_VIOLATION when called from worker threads
+// because it modifies game object state and triggers Map updates.
+//
+// Solution: Queue object use from worker threads, process on main thread.
+// ============================================================================
+
+void BotSession::QueueObjectUse(ObjectGuid objectGuid)
+{
+    std::lock_guard<std::mutex> lock(_pendingObjectUseMutex);
+    _pendingObjectUseTargets.push_back(objectGuid);
+
+    TC_LOG_DEBUG("module.playerbot.loot",
+                 "Bot {} queued object {} for Use() on main thread",
+                 GetPlayerName(), objectGuid.ToString());
+}
+
+bool BotSession::HasPendingObjectUse() const
+{
+    std::lock_guard<std::mutex> lock(_pendingObjectUseMutex);
+    return !_pendingObjectUseTargets.empty();
+}
+
+bool BotSession::ProcessPendingObjectUse()
+{
+    // CRITICAL: Must only be called from main thread!
+
+    // Get pending targets atomically
+    std::vector<ObjectGuid> targets;
+    {
+        std::lock_guard<std::mutex> lock(_pendingObjectUseMutex);
+        if (_pendingObjectUseTargets.empty())
+            return false;
+        targets = std::move(_pendingObjectUseTargets);
+        _pendingObjectUseTargets.clear();
+    }
+
+    Player* bot = GetPlayer();
+    if (!bot || !bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.strategy", "ProcessPendingObjectUse: Bot not in world, skipping {} targets",
+                     targets.size());
+        return false;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.strategy", "ProcessPendingObjectUse: Bot {} processing {} object use requests",
+                 bot->GetName(), targets.size());
+
+    bool usedAny = false;
+
+    for (ObjectGuid const& objectGuid : targets)
+    {
+        if (!objectGuid.IsGameObject())
+            continue;
+
+        GameObject* object = bot->GetMap()->GetGameObject(objectGuid);
+        if (!object)
+        {
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                         "ProcessPendingObjectUse: Bot {} - object {} not found",
+                         bot->GetName(), objectGuid.ToString());
+            continue;
+        }
+
+        // Check distance
+        if (!object->IsWithinDistInMap(bot, INTERACTION_DISTANCE))
+        {
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                         "ProcessPendingObjectUse: Bot {} too far from object {} ({:.1f}y)",
+                         bot->GetName(), objectGuid.ToString(), bot->GetDistance(object));
+            continue;
+        }
+
+        // SAFE: Now on main thread, can call Use()
+        object->Use(bot);
+        usedAny = true;
+
+        TC_LOG_INFO("module.playerbot.strategy",
+                     "ProcessPendingObjectUse: Bot {} USED object {} (entry {})",
+                     bot->GetName(), objectGuid.ToString(), object->GetEntry());
+    }
+
+    return usedAny;
 }
 
 } // namespace Playerbot

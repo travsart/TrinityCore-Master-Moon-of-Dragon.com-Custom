@@ -113,20 +113,29 @@ private:
     GameObject* FindQuestObject(BotAI* ai, ObjectiveState const& objective) const;
     ::Item* FindQuestItem(BotAI* ai, ObjectiveState const& objective) const;
 
-    // Quest turn-in system (multi-tier fallback)
+    // Quest turn-in system (multi-tier fallback with creature AND gameobject support)
     struct QuestEnderLocation
     {
-        uint32 npcEntry = 0;
+        uint32 objectEntry = 0;         // Creature OR GameObject entry ID
         Position position;
-        bool foundViaSpawn = false;     // True if found via creature spawn data
+        bool isGameObject = false;      // True if quest ender is a GameObject, false if Creature
+        bool foundViaSpawn = false;     // True if found via spawn data (creature or gameobject)
         bool foundViaPOI = false;       // True if found via Quest POI
         bool requiresSearch = false;    // True if needs area search
+
+        // Helper methods for clarity
+        bool IsCreature() const { return !isGameObject && objectEntry != 0; }
+        bool IsGameObject() const { return isGameObject && objectEntry != 0; }
+        bool IsValid() const { return objectEntry != 0; }
     };
 
     bool FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnderLocation& location);
     bool NavigateToQuestEnder(BotAI* ai, QuestEnderLocation const& location);
-    bool CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry);
+    bool CheckForQuestEnderInRange(BotAI* ai, QuestEnderLocation const& location);
+    bool CheckForCreatureQuestEnderInRange(BotAI* ai, uint32 creatureEntry);
+    bool CheckForGameObjectQuestEnderInRange(BotAI* ai, uint32 gameobjectEntry);
     bool CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* questEnder);
+    bool CompleteQuestTurnInAtGameObject(BotAI* ai, uint32 questId, GameObject* questEnder);
 
     // State management
     QuestPhase _currentPhase;

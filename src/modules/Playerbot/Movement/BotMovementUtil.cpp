@@ -38,11 +38,16 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     // Check distance to destination
     float distToDestination = bot->GetExactDist2d(destination.GetPositionX(), destination.GetPositionY());
 
+    // DIAGNOSTIC: Always log movement attempts
+    TC_LOG_ERROR("module.playerbot.movement", "🔍 MoveToPosition: Bot {} dist={:.1f} minDist={:.1f} dest=({:.1f},{:.1f},{:.1f})",
+                 bot->GetName(), distToDestination, minDistanceChange,
+                 destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
+
     // If we're very close to destination, no need to move
     if (distToDestination < minDistanceChange)
     {
-        TC_LOG_DEBUG("module.playerbot", "✅ BotMovement: Bot {} already at destination ({:.1f}yd)",
-                     bot->GetName(), distToDestination);
+        TC_LOG_ERROR("module.playerbot.movement", "✅ BotMovement: Bot {} already at destination ({:.1f}yd < {:.1f})",
+                     bot->GetName(), distToDestination, minDistanceChange);
         return true;
     }
 
@@ -57,10 +62,20 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
         {
             // Let the current movement continue unless we're stuck or going wrong direction
             // This prevents the "stutter" from constantly restarting movement
-            TC_LOG_DEBUG("module.playerbot", "⏭ BotMovement: Bot {} spline active, {:.1f}yd to destination",
-                         bot->GetName(), distToDestination);
+            TC_LOG_ERROR("module.playerbot.movement", "⏭ BotMovement: Bot {} spline ACTIVE (moveType={}), letting it continue - {:.1f}yd to destination",
+                         bot->GetName(), static_cast<int>(currentMoveType), distToDestination);
             return true;
         }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.movement", "⚠️ BotMovement: Bot {} spline FINALIZED or NULL (moveType={}), will restart - {:.1f}yd to destination",
+                         bot->GetName(), static_cast<int>(currentMoveType), distToDestination);
+        }
+    }
+    else
+    {
+        TC_LOG_ERROR("module.playerbot.movement", "📍 BotMovement: Bot {} not in POINT/EFFECT motion (moveType={}), will start new movement",
+                     bot->GetName(), static_cast<int>(currentMoveType));
     }
 
     // Start new movement via MotionMaster
@@ -71,7 +86,7 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     //
     // MotionMaster::MovePoint() is the safer approach, and we maintain deduplication above
     // by checking if a spline is already active before calling this.
-    TC_LOG_DEBUG("module.playerbot", "🚶 BotMovement: Bot {} starting movement to ({:.2f},{:.2f},{:.2f}) - {:.1f}yd",
+    TC_LOG_ERROR("module.playerbot.movement", "🚶 BotMovement: Bot {} STARTING MOVEMENT to ({:.2f},{:.2f},{:.2f}) - {:.1f}yd",
                  bot->GetName(), destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ(),
                  distToDestination);
 

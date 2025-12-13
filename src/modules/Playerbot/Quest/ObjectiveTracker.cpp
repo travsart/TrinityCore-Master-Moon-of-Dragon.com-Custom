@@ -128,6 +128,19 @@ void ObjectiveTracker::UpdateObjectiveTracking(Player* bot, uint32 diff)
 
     for (auto& state : statesIt->second)
     {
+        // CRITICAL FIX: Skip objectives for quests that are already COMPLETE or REWARDED
+        // These should not be tracked/updated - the bot should turn in the quest instead
+        QuestStatus questStatus = bot->GetQuestStatus(state.questId);
+        if (questStatus == QUEST_STATUS_COMPLETE || questStatus == QUEST_STATUS_REWARDED)
+        {
+            // Quest is complete - don't flag it as "stuck", just skip tracking
+            continue;
+        }
+
+        // Only track quests that are still INCOMPLETE
+        if (questStatus != QUEST_STATUS_INCOMPLETE)
+            continue;
+
         UpdateObjectiveProgress(bot, state);
 
         // Check for stuck state (check directly on state to avoid recursive lock)
@@ -424,8 +437,49 @@ std::vector<ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
 
     uint32 botGuid = bot->GetGUID().GetCounter();
     auto statesIt = _botObjectiveStates.find(botGuid);
-    if (statesIt != _botObjectiveStates.end())
-        return statesIt->second;
+    if (statesIt == _botObjectiveStates.end())
+        return activeObjectives;
+
+    // CRITICAL FIX: Only return objectives for quests that are still INCOMPLETE
+    // Quests with COMPLETE or REWARDED status should not have objectives worked on
+    for (const auto& state : statesIt->second)
+    {
+        QuestStatus questStatus = bot->GetQuestStatus(state.questId);
+
+        // Skip quests with COMPLETE or REWARDED status
+        if (questStatus == QUEST_STATUS_COMPLETE || questStatus == QUEST_STATUS_REWARDED)
+        {
+            TC_LOG_DEBUG("module.playerbot.quest",
+                "GetActiveObjectives: Skipping quest {} objective {} for bot {} - quest status is {} (should turn in/already rewarded)",
+                state.questId, state.objectiveIndex, bot->GetName(), static_cast<uint32>(questStatus));
+            continue;
+        }
+
+        // Only include objectives for INCOMPLETE quests
+        if (questStatus != QUEST_STATUS_INCOMPLETE)
+            continue;
+
+        // CRITICAL FIX 2: Also check if this specific objective is already complete
+        // This handles the case where quest status is INCOMPLETE but all objectives are done
+        // (e.g., quest 26391 with 8/8 progress but status still INCOMPLETE)
+        Quest const* quest = sObjectMgr->GetQuestTemplate(state.questId);
+        if (quest && state.objectiveIndex < quest->Objectives.size())
+        {
+            QuestObjective const& objective = quest->Objectives[state.objectiveIndex];
+            uint32 currentProgress = bot->GetQuestObjectiveData(state.questId, objective.StorageIndex);
+            uint32 requiredAmount = static_cast<uint32>(objective.Amount);
+
+            if (currentProgress >= requiredAmount)
+            {
+                TC_LOG_DEBUG("module.playerbot.quest",
+                    "GetActiveObjectives: Skipping quest {} objective {} for bot {} - objective already COMPLETE ({}/{})",
+                    state.questId, state.objectiveIndex, bot->GetName(), currentProgress, requiredAmount);
+                continue;  // This objective is done, don't include it
+            }
+        }
+
+        activeObjectives.push_back(state);
+    }
 
     return activeObjectives;
 }
@@ -1069,16 +1123,24 @@ uint32 ObjectiveTracker::GetCurrentObjectiveProgress(Player* bot, const Quest* q
         const QuestObjective& objective = quest->Objectives[objectiveIndex];
 
         // Get progress based on objective type
+        // CRITICAL: In modern WoW (TrinityCore 11.x), quest items are NOT stored in bags!
+        // Quest item progress is tracked via GetQuestObjectiveData(), not GetItemCount().
+        // Quest items go into a special "quest item bag" that doesn't use inventory slots.
         switch (objective.Type)
         {
             case QUEST_OBJECTIVE_MONSTER:
-                return bot->GetReqKillOrCastCurrentCount(quest->GetQuestId(), objective.ObjectID);
-            case QUEST_OBJECTIVE_ITEM:
-                return bot->GetItemCount(objective.ObjectID, true);
             case QUEST_OBJECTIVE_GAMEOBJECT:
+                // Kill/cast and game object objectives use kill credit tracking
                 return bot->GetReqKillOrCastCurrentCount(quest->GetQuestId(), objective.ObjectID);
+
+            case QUEST_OBJECTIVE_ITEM:
+                // FIXED: Use GetQuestObjectiveData - quest items are tracked in quest log, not bags!
+                // GetItemCount() returns 0 because quest items don't occupy bag slots in modern WoW.
+                return bot->GetQuestObjectiveData(quest->GetQuestId(), objective.StorageIndex);
+
             default:
-                return 0;
+                // For other objective types, try GetQuestObjectiveData as fallback
+                return bot->GetQuestObjectiveData(quest->GetQuestId(), objective.StorageIndex);
         }
     }
 

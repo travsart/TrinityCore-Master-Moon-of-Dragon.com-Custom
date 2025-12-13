@@ -272,6 +272,39 @@ public:
      */
     bool HasPendingLoot() const;
 
+    // ========================================================================
+    // THREAD-SAFE OBJECT USE QUEUE (GameObject::Use Crash Fix)
+    // ========================================================================
+    // GameObject::Use() is NOT thread-safe - it modifies game object state,
+    // loot tables, and triggers Map updates that must only happen on main thread.
+    //
+    // Crash: Map::SendObjectUpdates ACCESS_VIOLATION when Use() called from worker
+    //
+    // Solution: Queue object use requests from worker threads, process on main.
+    // ========================================================================
+
+    /**
+     * @brief Queue a game object for Use() on main thread (thread-safe)
+     * @param objectGuid GUID of the game object to use
+     *
+     * Called from worker threads (LootStrategy::LootObject) to defer
+     * GameObject::Use() to main thread. Prevents ACCESS_VIOLATION crash.
+     */
+    void QueueObjectUse(ObjectGuid objectGuid);
+
+    /**
+     * @brief Process pending object use requests on main thread
+     * @return true if any object was used
+     *
+     * MUST be called from main thread only.
+     */
+    bool ProcessPendingObjectUse();
+
+    /**
+     * @brief Check if there are pending object use requests
+     */
+    bool HasPendingObjectUse() const;
+
 private:
     // Helper methods for safe database access
     CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName);
@@ -335,6 +368,11 @@ private:
     // Worker threads queue targets, main thread processes loot
     mutable std::mutex _pendingLootMutex;
     std::vector<ObjectGuid> _pendingLootTargets;
+
+    // Thread-safe pending object use queue (GameObject::Use crash fix)
+    // Worker threads queue objects, main thread calls Use()
+    mutable std::mutex _pendingObjectUseMutex;
+    std::vector<ObjectGuid> _pendingObjectUseTargets;
 
     // Deleted copy operations
     BotSession(BotSession const&) = delete;
