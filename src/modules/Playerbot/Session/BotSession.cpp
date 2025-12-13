@@ -2188,7 +2188,14 @@ bool BotSession::ProcessPendingLoot()
 
     Player* bot = GetPlayer();
     if (!bot || !bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.strategy", "ProcessPendingLoot: Bot not in world, skipping {} targets",
+                     targets.size());
         return false;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.strategy", "ProcessPendingLoot: Bot {} processing {} loot targets",
+                 bot->GetName(), targets.size());
 
     bool lootedAny = false;
 
@@ -2200,7 +2207,7 @@ bool BotSession::ProcessPendingLoot()
         Creature* creature = bot->GetMap()->GetCreature(targetGuid);
         if (!creature || !creature->isDead())
         {
-            TC_LOG_DEBUG("module.playerbot.loot",
+            TC_LOG_DEBUG("module.playerbot.strategy",
                          "ProcessPendingLoot: Bot {} - creature {} not found or not dead",
                          bot->GetName(), targetGuid.ToString());
             continue;
@@ -2209,7 +2216,7 @@ bool BotSession::ProcessPendingLoot()
         // Check distance
         if (!creature->IsWithinDistInMap(bot, INTERACTION_DISTANCE))
         {
-            TC_LOG_DEBUG("module.playerbot.loot",
+            TC_LOG_DEBUG("module.playerbot.strategy",
                          "ProcessPendingLoot: Bot {} too far from corpse {} ({:.1f}y)",
                          bot->GetName(), targetGuid.ToString(), bot->GetDistance(creature));
             continue;
@@ -2218,8 +2225,8 @@ bool BotSession::ProcessPendingLoot()
         // Check if creature has loot
         if (!creature->m_loot || creature->m_loot->isLooted())
         {
-            TC_LOG_DEBUG("module.playerbot.loot",
-                         "ProcessPendingLoot: Bot {} - corpse {} has no loot",
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                         "ProcessPendingLoot: Bot {} - corpse {} has no loot or already looted",
                          bot->GetName(), targetGuid.ToString());
             continue;
         }
@@ -2228,8 +2235,8 @@ bool BotSession::ProcessPendingLoot()
         bot->SendLoot(*creature->m_loot, false);
         lootedAny = true;
 
-        TC_LOG_DEBUG("module.playerbot.loot",
-                     "ProcessPendingLoot: Bot {} LOOTING corpse {} (entry {})",
+        TC_LOG_INFO("module.playerbot.strategy",
+                     "ProcessPendingLoot: Bot {} LOOTED corpse {} (entry {})",
                      bot->GetName(), targetGuid.ToString(), creature->GetEntry());
     }
 
