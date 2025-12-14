@@ -689,9 +689,15 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
     // Create a mutable copy of dungeons for JoinLfg
     lfg::LfgDungeonSet dungeonsCopy = dungeons;
 
+    // CRITICAL FIX: Set bot's team/faction in LFGMgr before queueing
+    // The LFG system uses separate queues per faction (GetQueueId returns GetTeam)
+    // Without this, bots have Team=0 and go into a different queue than human players
+    // This mirrors what LFGPlayerScript::OnLogin does for normal players
+    sLFGMgr->SetTeam(bot->GetGUID(), bot->GetTeam());
+
     // Queue the bot via LFGMgr
-    TC_LOG_DEBUG("module.playerbot", "LFGBotManager::QueueBot - Queueing bot {} as role {} for {} dungeons",
-                 bot->GetName(), validatedRole, dungeonsCopy.size());
+    TC_LOG_DEBUG("module.playerbot", "LFGBotManager::QueueBot - Queueing bot {} as role {} for {} dungeons (Team: {})",
+                 bot->GetName(), validatedRole, dungeonsCopy.size(), bot->GetTeam());
 
     sLFGMgr->JoinLfg(bot, validatedRole, dungeonsCopy);
 
