@@ -552,26 +552,27 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
     // When a bot receives an LFG proposal packet, automatically accept it.
     // This is a module-only solution that intercepts the outgoing packet
     // without modifying TrinityCore core files.
+    //
+    // INFINITE LOOP FIX: UpdateProposal() sends SMSG_LFG_PROPOSAL_UPDATE to all
+    // players in the proposal (to update the UI), which would trigger this
+    // intercept again causing an infinite loop. We track which proposals have
+    // been auto-accepted to prevent re-processing the same proposal.
     // ========================================================================
     if (packet->GetOpcode() == SMSG_LFG_PROPOSAL_UPDATE)
     {
         Player* bot = GetPlayer();
         if (bot)
         {
-            TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Intercepted SMSG_LFG_PROPOSAL_UPDATE for bot {} - parsing and auto-accepting",
-                        bot->GetName());
-
             try
             {
                 // Clone the packet data for reading (packet is const)
-                // WorldPacket derives from ByteBuffer and has a copy constructor
                 WorldPacket packetCopy(*packet);
                 packetCopy.rpos(0);
 
                 // Parse the packet structure:
                 // 1. RideTicket (RequesterGuid + Id + Type + Time + IsCrossFaction)
                 // 2. uint64 InstanceID
-                // 3. uint32 ProposalID  <-- We need this!
+                // 3. uint32 ProposalID
 
                 // Read RideTicket
                 WorldPackets::LFG::RideTicket ticket;
@@ -581,20 +582,45 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
                 uint64 instanceId;
                 packetCopy >> instanceId;
 
-                // Read ProposalID - this is what we need!
+                // Read ProposalID
                 uint32 proposalId;
                 packetCopy >> proposalId;
 
-                TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Parsed LFG proposal - ProposalID={}, InstanceID={} for bot {}",
-                            proposalId, instanceId, bot->GetName());
+                // INFINITE LOOP FIX: Check if we've already auto-accepted this proposal
+                bool shouldAccept = false;
+                {
+                    std::lock_guard<std::mutex> lock(_lfgProposalMutex);
+                    if (_autoAcceptedProposals.count(proposalId) == 0)
+                    {
+                        // First time seeing this proposal - mark it and accept
+                        _autoAcceptedProposals.insert(proposalId);
+                        shouldAccept = true;
 
-                // Auto-accept the proposal!
-                // This calls the same method that the client would call when clicking "Accept"
-                // sLFGMgr is defined as lfg::LFGMgr::instance() via macro
-                sLFGMgr->UpdateProposal(proposalId, bot->GetGUID(), true);
+                        // Cleanup: Limit set size to prevent memory growth (keep last 10 proposals)
+                        if (_autoAcceptedProposals.size() > 10)
+                        {
+                            _autoAcceptedProposals.clear();
+                            _autoAcceptedProposals.insert(proposalId);
+                        }
+                    }
+                }
 
-                TC_LOG_INFO("module.playerbot.lfg", "✅ BotSession: Auto-accepted LFG proposal {} for bot {}",
-                            proposalId, bot->GetName());
+                if (shouldAccept)
+                {
+                    TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Auto-accepting LFG proposal {} for bot {}",
+                                proposalId, bot->GetName());
+
+                    // Auto-accept the proposal
+                    sLFGMgr->UpdateProposal(proposalId, bot->GetGUID(), true);
+
+                    TC_LOG_INFO("module.playerbot.lfg", "✅ BotSession: Auto-accepted LFG proposal {} for bot {}",
+                                proposalId, bot->GetName());
+                }
+                else
+                {
+                    TC_LOG_DEBUG("module.playerbot.lfg", "BotSession: Skipping already-processed LFG proposal {} for bot {}",
+                                proposalId, bot->GetName());
+                }
             }
             catch (ByteBufferPositionException const& ex)
             {

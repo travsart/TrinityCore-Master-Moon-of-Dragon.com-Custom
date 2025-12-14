@@ -17,6 +17,7 @@
 #include <queue>
 #include <mutex>
 #include <chrono>
+#include <unordered_set>
 
 // Forward declaration for bot socket stub
 namespace Playerbot {
@@ -373,6 +374,12 @@ private:
     // Worker threads queue objects, main thread calls Use()
     mutable std::mutex _pendingObjectUseMutex;
     std::vector<ObjectGuid> _pendingObjectUseTargets;
+
+    // LFG proposal auto-accept tracking (infinite loop prevention)
+    // Tracks which proposal IDs have already been auto-accepted to avoid re-accepting
+    // when UpdateProposal() sends SMSG_LFG_PROPOSAL_UPDATE back to all players
+    mutable std::mutex _lfgProposalMutex;
+    std::unordered_set<uint32> _autoAcceptedProposals;
 
     // Deleted copy operations
     BotSession(BotSession const&) = delete;
