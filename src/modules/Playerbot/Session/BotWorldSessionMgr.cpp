@@ -14,6 +14,8 @@
 #include "ObjectAccessor.h"
 #include "Log.h"
 #include "WorldSession.h"
+#include "Group.h"
+#include "LFGMgr.h"
 #include "Config/PlayerbotConfig.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
 #include "../Spatial/SpatialGridManager.h"
@@ -131,12 +133,39 @@ void BotWorldSessionMgr::Shutdown()
             // MEMORY SAFETY: Protect against use-after-free when accessing Player name
             Player* player = session->GetPlayer();
             try {
-                TC_LOG_INFO("module.playerbot.session", "?? Logging out bot: {}", player->GetName());
+                TC_LOG_INFO("module.playerbot.session", "🛑 Logging out bot: {}", player->GetName());
             }
             catch (...)
             {
-                TC_LOG_INFO("module.playerbot.session", "?? Logging out bot (name unavailable - use-after-free protection)");
+                TC_LOG_INFO("module.playerbot.session", "🛑 Logging out bot (name unavailable - use-after-free protection)");
             }
+
+            // PRE-CLEANUP: Clean up bot state before logout to prevent stuck auras
+            // This helps avoid Unit::RemoveAllAuras() assertion during shutdown
+            try
+            {
+                // Leave LFG queue first (prevents LFG-related aura issues)
+                if (sLFGMgr->GetState(player->GetGUID()) != lfg::LFG_STATE_NONE)
+                {
+                    sLFGMgr->LeaveLfg(player->GetGUID());
+                }
+
+                // Leave group if in one (prevents group-related aura issues)
+                if (Group* group = player->GetGroup())
+                {
+                    group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE, ObjectGuid::Empty, "Bot shutdown cleanup");
+                }
+
+                // Remove LFG-related auras that might be problematic during cleanup
+                player->RemoveAurasDueToSpell(71328); // LFG_SPELL_DUNGEON_COOLDOWN
+                player->RemoveAurasDueToSpell(71041); // LFG_SPELL_DUNGEON_DESERTER
+                player->RemoveAurasDueToSpell(72221); // LFG_SPELL_LUCK_OF_THE_DRAW
+            }
+            catch (...)
+            {
+                TC_LOG_ERROR("module.playerbot.session", "🛑 Exception during bot pre-cleanup");
+            }
+
             session->LogoutPlayer(true);
         }
     }
