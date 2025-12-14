@@ -224,6 +224,20 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     if (hasActiveQuests)
     {
+        // CRITICAL FIX: Periodically search for new quest givers even when quests are active
+        // This prevents bots from being permanently stuck on broken/unavailable quests
+        // Check every 60 seconds to see if there are new quest givers nearby
+        uint32 currentTime = GameTime::GetGameTimeMS();
+        constexpr uint32 QUEST_GIVER_SEARCH_INTERVAL = 60000; // 60 seconds
+
+        if (currentTime - _lastQuestGiverSearchTime > QUEST_GIVER_SEARCH_INTERVAL)
+        {
+            TC_LOG_DEBUG("module.playerbot.quest",
+                "🔄 UpdateBehavior: Bot {} - Periodic quest giver search ({}s since last search)",
+                bot->GetName(), (currentTime - _lastQuestGiverSearchTime) / 1000);
+            SearchForQuestGivers(ai);
+        }
+
         TC_LOG_ERROR("module.playerbot.quest", "🎯 UpdateBehavior: Bot {} processing quest objectives", bot->GetName());
         // Process quest objectives
         ProcessQuestObjectives(ai);
@@ -403,6 +417,35 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                     }
                 }
 
+                // CRITICAL FIX: Check for DELIVERY quests (StartItem == objective item)
+                // These quests give the item on acceptance, and completion just requires turning it in
+                // Even if quest progress shows 0/1, if bot has the StartItem, quest is ready to turn in
+                if (status == QUEST_STATUS_INCOMPLETE)
+                {
+                    uint32 startItemId = quest->GetSrcItemId();
+                    if (startItemId != 0)
+                    {
+                        // Check if any ITEM objective matches the StartItem
+                        for (QuestObjective const& objective : quest->Objectives)
+                        {
+                            if (objective.Type == QUEST_OBJECTIVE_ITEM &&
+                                static_cast<uint32>(objective.ObjectID) == startItemId)
+                            {
+                                // This is a delivery quest - check if bot has the item
+                                uint32 itemCount = bot->GetItemCount(startItemId);
+                                if (itemCount >= static_cast<uint32>(objective.Amount))
+                                {
+                                    TC_LOG_ERROR("module.playerbot.quest", "📬 ProcessQuestObjectives: Bot {} has DELIVERY quest {} (StartItem={}, count={}), turning in!",
+                                                 bot->GetName(), questId, startItemId, itemCount);
+                                    TurnInQuest(ai, questId);
+                                    return;
+                                }
+                                break;  // Found the StartItem objective, stop searching
+                            }
+                        }
+                    }
+                }
+
                 // Check for "talk-to" quests: no objectives but INCOMPLETE status
                 // These are quests where you just need to talk to the quest ender to complete them
                 if (status == QUEST_STATUS_INCOMPLETE && quest->Objectives.empty())
@@ -525,7 +568,33 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             // CRITICAL FIX: ITEM objectives can require either:
             // 1. Looting from killed creatures (check creature_loot_template)
             // 2. Interacting with GameObjects (check gameobject_loot_template)
+            // 3. DELIVERY QUEST: Item is the quest's StartItem (given on acceptance)
             // We need to check which one and route appropriately!
+
+            // CRITICAL: Check if this is a DELIVERY QUEST
+            // Delivery quests have StartItem == objective item (e.g., Quest 54 "Report to Goldshire")
+            // The bot receives the item on quest acceptance and just needs to turn it in
+            uint32 startItemId = quest->GetSrcItemId();
+            if (startItemId != 0 && static_cast<uint32>(questObjective->ObjectID) == startItemId)
+            {
+                // Check if bot has the delivery item in inventory
+                uint32 itemCount = bot->GetItemCount(startItemId);
+                if (itemCount >= static_cast<uint32>(questObjective->Amount))
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "📬 ProcessQuestObjectives: Bot {} - Quest {} is DELIVERY quest (StartItem={}, has {}), routing to TurnInQuest!",
+                                 bot->GetName(), objective.questId, startItemId, itemCount);
+                    TurnInQuest(ai, objective.questId);
+                    return;
+                }
+                else
+                {
+                    // Bot doesn't have the item - this shouldn't happen for delivery quests
+                    // The item should have been given on quest acceptance
+                    TC_LOG_ERROR("module.playerbot.quest", "❌ ProcessQuestObjectives: Bot {} - DELIVERY quest {} but MISSING StartItem {} (has {} need {})! Quest may be broken.",
+                                 bot->GetName(), objective.questId, startItemId, itemCount, questObjective->Amount);
+                    // Fall through to try normal item collection as a fallback
+                }
+            }
 
             // Check if item comes from creature loot
             bool isLootFromCreature = IsItemFromCreatureLoot(questObjective->ObjectID);
