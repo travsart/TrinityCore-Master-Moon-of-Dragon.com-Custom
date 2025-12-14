@@ -55,6 +55,8 @@
 #include "MotionMaster.h"  // For ProcessPendingStopMovement
 #include "DB2Stores.h"     // For sDB2Manager, ChrSpecializationEntry (auto-spec fix)
 #include "SharedDefines.h" // For MIN_SPECIALIZATION_LEVEL, LOCALE_enUS (auto-spec fix)
+#include "LFGMgr.h"        // For sLFGMgr->UpdateProposal (LFG auto-accept)
+#include "LFGPacketsCommon.h" // For RideTicket parsing (LFG auto-accept)
 
 namespace Playerbot {
 
@@ -543,6 +545,63 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
     {
         TC_LOG_INFO("module.playerbot.group", "BotSession: Intercepted SMSG_PARTY_INVITE packet for bot session");
         HandleGroupInvitation(*packet);
+    }
+
+    // ========================================================================
+    // LFG PROPOSAL AUTO-ACCEPT
+    // When a bot receives an LFG proposal packet, automatically accept it.
+    // This is a module-only solution that intercepts the outgoing packet
+    // without modifying TrinityCore core files.
+    // ========================================================================
+    if (packet->GetOpcode() == SMSG_LFG_PROPOSAL_UPDATE)
+    {
+        Player* bot = GetPlayer();
+        if (bot)
+        {
+            TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Intercepted SMSG_LFG_PROPOSAL_UPDATE for bot {} - parsing and auto-accepting",
+                        bot->GetName());
+
+            try
+            {
+                // Clone the packet data for reading (packet is const)
+                // WorldPacket derives from ByteBuffer and has a copy constructor
+                WorldPacket packetCopy(*packet);
+                packetCopy.rpos(0);
+
+                // Parse the packet structure:
+                // 1. RideTicket (RequesterGuid + Id + Type + Time + IsCrossFaction)
+                // 2. uint64 InstanceID
+                // 3. uint32 ProposalID  <-- We need this!
+
+                // Read RideTicket
+                WorldPackets::LFG::RideTicket ticket;
+                packetCopy >> ticket;
+
+                // Read InstanceID
+                uint64 instanceId;
+                packetCopy >> instanceId;
+
+                // Read ProposalID - this is what we need!
+                uint32 proposalId;
+                packetCopy >> proposalId;
+
+                TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Parsed LFG proposal - ProposalID={}, InstanceID={} for bot {}",
+                            proposalId, instanceId, bot->GetName());
+
+                // Auto-accept the proposal!
+                // This calls the same method that the client would call when clicking "Accept"
+                // sLFGMgr is defined as lfg::LFGMgr::instance() via macro
+                sLFGMgr->UpdateProposal(proposalId, bot->GetGUID(), true);
+
+                TC_LOG_INFO("module.playerbot.lfg", "✅ BotSession: Auto-accepted LFG proposal {} for bot {}",
+                            proposalId, bot->GetName());
+            }
+            catch (ByteBufferPositionException const& ex)
+            {
+                TC_LOG_ERROR("module.playerbot.lfg", "❌ BotSession: Failed to parse LFG proposal packet for bot {}: {}",
+                             bot->GetName(), ex.what());
+            }
+        }
     }
 
     // PHASE 1: Relay packets to human group members
