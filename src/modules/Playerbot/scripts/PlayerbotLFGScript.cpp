@@ -96,6 +96,7 @@ public:
         _processedPlayers.clear();
         _processedProposals.clear();
         _lastQueueState.clear();
+        _botProposalAcceptTimes.clear();
     }
 
 private:
@@ -147,9 +148,11 @@ private:
             }
             else if (state == lfg::LFG_STATE_PROPOSAL && lastState != lfg::LFG_STATE_PROPOSAL)
             {
-                // Proposal received - bots need to accept
-                TC_LOG_DEBUG("module.playerbot.lfg",
-                    "PlayerbotLFGScript: Player {} has a proposal pending", player->GetName());
+                // Proposal received - human player got a proposal
+                // This means bots in the same proposal also need to accept
+                TC_LOG_INFO("module.playerbot.lfg",
+                    "PlayerbotLFGScript: Human player {} has a proposal pending - bots will auto-accept via PollProposals",
+                    player->GetName());
             }
             else if (state == lfg::LFG_STATE_ROLECHECK && lastState != lfg::LFG_STATE_ROLECHECK)
             {
@@ -161,15 +164,140 @@ private:
 
     /**
      * @brief Poll for proposals that bots need to accept
+     *
+     * CRITICAL FIX: This method now actively polls for bots in LFG_STATE_PROPOSAL
+     * and auto-accepts their proposals. The packet intercept in BotSession is a
+     * backup mechanism, but this polling approach is more reliable because:
+     * 1. It doesn't depend on packet serialization/parsing
+     * 2. It handles edge cases where packets might be dropped
+     * 3. It provides better diagnostic visibility
      */
     void PollProposals()
     {
-        // The proposal handling is triggered by detecting LFG_STATE_PROPOSAL on human players
-        // When detected, we call LFGBotManager::OnProposalReceived for all bots in the proposal
+        // Get all online bots via BotWorldSessionMgr
+        std::vector<Player*> bots = Playerbot::sBotWorldSessionMgr->GetAllBotPlayers();
 
-        // This is handled implicitly by state change detection in PollQueuedPlayers
-        // because when a proposal is created, both human and bot participants
-        // transition to LFG_STATE_PROPOSAL
+        for (Player* bot : bots)
+        {
+            if (!bot || !bot->IsInWorld())
+                continue;
+
+            ObjectGuid botGuid = bot->GetGUID();
+
+            // Check if bot is in proposal state
+            lfg::LfgState state = sLFGMgr->GetState(botGuid);
+            if (state != lfg::LFG_STATE_PROPOSAL)
+                continue;
+
+            // Check if we've already processed this proposal for this bot
+            auto lastAcceptIt = _botProposalAcceptTimes.find(botGuid);
+            uint32 now = GameTime::GetGameTimeMS();
+
+            // Debounce: Only try to accept once every 2 seconds per bot
+            if (lastAcceptIt != _botProposalAcceptTimes.end() &&
+                (now - lastAcceptIt->second) < 2000)
+            {
+                continue;
+            }
+
+            // Bot is in proposal state - we need to find and accept the proposal
+            // The LFGMgr doesn't expose proposal IDs directly, so we iterate through proposals
+            // However, we can use a simpler approach: check the proposal store via internal access
+
+            TC_LOG_INFO("module.playerbot.lfg",
+                "PlayerbotLFGScript::PollProposals - Bot {} in LFG_STATE_PROPOSAL, attempting auto-accept",
+                bot->GetName());
+
+            // Mark this bot as having been processed
+            _botProposalAcceptTimes[botGuid] = now;
+
+            // Call LFGBotManager to handle the proposal acceptance
+            // This will iterate through proposals and accept any that contain this bot
+            AcceptBotProposal(bot);
+        }
+    }
+
+    /**
+     * @brief Accept any pending proposal for a bot
+     *
+     * Optimization: Instead of scanning all proposal IDs, we scan a window
+     * around the highest proposal ID we've seen. This is efficient because
+     * proposal IDs are sequential and we only need to check recent proposals.
+     */
+    void AcceptBotProposal(Player* bot)
+    {
+        if (!bot)
+            return;
+
+        ObjectGuid botGuid = bot->GetGUID();
+        lfg::LfgState stateBefore = sLFGMgr->GetState(botGuid);
+
+        // Calculate scanning window: scan from (highest - 100) to (highest + 100)
+        // This handles both catching up on missed proposals and new ones
+        uint32 scanStart = (_highestProposalIdSeen > 100) ? _highestProposalIdSeen - 100 : 1;
+        uint32 scanEnd = _highestProposalIdSeen + 100;
+
+        // If this is our first scan, start from 1 but limit to 500 attempts
+        if (_highestProposalIdSeen == 0)
+        {
+            scanStart = 1;
+            scanEnd = 500;
+        }
+
+        TC_LOG_DEBUG("module.playerbot.lfg",
+            "PlayerbotLFGScript::AcceptBotProposal - Scanning proposals {} to {} for bot {}",
+            scanStart, scanEnd, bot->GetName());
+
+        for (uint32 proposalId = scanStart; proposalId <= scanEnd; ++proposalId)
+        {
+            // Skip already processed proposals
+            if (_processedProposals.count(proposalId))
+                continue;
+
+            // Try to accept this proposal for the bot
+            // UpdateProposal will silently fail if bot isn't in this proposal
+            sLFGMgr->UpdateProposal(proposalId, botGuid, true);
+
+            lfg::LfgState stateAfter = sLFGMgr->GetState(botGuid);
+
+            // Track highest proposal ID we've attempted (optimization for next scan)
+            if (proposalId > _highestProposalIdSeen)
+                _highestProposalIdSeen = proposalId;
+
+            // If state changed, we found and accepted the right proposal
+            if (stateAfter != stateBefore || stateAfter != lfg::LFG_STATE_PROPOSAL)
+            {
+                TC_LOG_INFO("module.playerbot.lfg",
+                    "PlayerbotLFGScript::AcceptBotProposal - Bot {} accepted proposal {} (state: {} -> {})",
+                    bot->GetName(), proposalId,
+                    static_cast<uint32>(stateBefore), static_cast<uint32>(stateAfter));
+
+                _processedProposals.insert(proposalId);
+
+                // Cleanup old processed proposals to prevent memory growth
+                if (_processedProposals.size() > 1000)
+                {
+                    // Remove proposals older than current - 500
+                    std::vector<uint32> toRemove;
+                    for (uint32 oldId : _processedProposals)
+                    {
+                        if (oldId < proposalId - 500)
+                            toRemove.push_back(oldId);
+                    }
+                    for (uint32 oldId : toRemove)
+                        _processedProposals.erase(oldId);
+                }
+                return;
+            }
+        }
+
+        // Only warn if we've scanned a reasonable range
+        if (scanEnd > scanStart + 10)
+        {
+            TC_LOG_DEBUG("module.playerbot.lfg",
+                "PlayerbotLFGScript::AcceptBotProposal - No proposal found for bot {} in range {}-{}",
+                bot->GetName(), scanStart, scanEnd);
+        }
     }
 
     /**
@@ -293,10 +421,26 @@ private:
             _lastQueueState.erase(guid);
         }
 
-        if (!toRemove.empty())
+        // Also cleanup bot proposal accept times (older than 1 minute is stale)
+        constexpr uint32 BOT_PROPOSAL_STALE_THRESHOLD = 60 * IN_MILLISECONDS;
+        std::vector<ObjectGuid> staleBotTimes;
+        for (auto const& pair : _botProposalAcceptTimes)
+        {
+            if (now - pair.second > BOT_PROPOSAL_STALE_THRESHOLD)
+            {
+                staleBotTimes.push_back(pair.first);
+            }
+        }
+        for (ObjectGuid const& guid : staleBotTimes)
+        {
+            _botProposalAcceptTimes.erase(guid);
+        }
+
+        if (!toRemove.empty() || !staleBotTimes.empty())
         {
             TC_LOG_DEBUG("module.playerbot.lfg",
-                "PlayerbotLFGScript: Cleaned up {} stale player entries", toRemove.size());
+                "PlayerbotLFGScript: Cleaned up {} stale player entries, {} stale bot proposal times",
+                toRemove.size(), staleBotTimes.size());
         }
     }
 
@@ -317,6 +461,12 @@ private:
 
     // Processed proposals
     std::unordered_set<uint32> _processedProposals;
+
+    // Bot proposal acceptance tracking (debounce)
+    std::unordered_map<ObjectGuid, uint32> _botProposalAcceptTimes;
+
+    // Track highest proposal ID seen for efficient scanning
+    uint32 _highestProposalIdSeen = 0;
 };
 
 void AddSC_PlayerbotLFGScript()

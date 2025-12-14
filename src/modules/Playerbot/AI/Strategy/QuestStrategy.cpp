@@ -2630,7 +2630,22 @@ bool QuestStrategy::CheckForCreatureQuestEnderInRange(BotAI* ai, uint32 creature
         bool isComplete = (status == QUEST_STATUS_COMPLETE);
         bool isTalkToQuest = (status == QUEST_STATUS_INCOMPLETE && quest->Objectives.empty());
 
-        if (!isComplete && !isTalkToQuest)
+        // Check if quest is a DELIVERY quest (incomplete, has SourceItemId, bot has the item)
+        // Delivery quests remain INCOMPLETE until turned in - the item delivery IS the objective
+        bool isDeliveryQuest = false;
+        if (status == QUEST_STATUS_INCOMPLETE && quest->GetSrcItemId() != 0)
+        {
+            uint32 srcItemId = quest->GetSrcItemId();
+            uint32 itemCount = bot->GetItemCount(srcItemId);
+            if (itemCount > 0)
+            {
+                isDeliveryQuest = true;
+                TC_LOG_ERROR("module.playerbot.quest", "📬 CheckForCreatureQuestEnderInRange: Bot {} has DELIVERY quest {} ({}) with item {} (count: {})",
+                             bot->GetName(), questId, quest->GetLogTitle(), srcItemId, itemCount);
+            }
+        }
+
+        if (!isComplete && !isTalkToQuest && !isDeliveryQuest)
             continue;
 
         // Check if this NPC is a valid quest ender for this quest
@@ -2657,6 +2672,11 @@ bool QuestStrategy::CheckForCreatureQuestEnderInRange(BotAI* ai, uint32 creature
         if (isTalkToQuest)
         {
             TC_LOG_ERROR("module.playerbot.quest", "🗣️ CheckForCreatureQuestEnderInRange: Bot {} turning in TALK-TO quest {} ({}) to NPC {}",
+                         bot->GetName(), questId, quest->GetLogTitle(), closestQuestEnder->GetName());
+        }
+        else if (isDeliveryQuest)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "📬 CheckForCreatureQuestEnderInRange: Bot {} turning in DELIVERY quest {} ({}) to NPC {}",
                          bot->GetName(), questId, quest->GetLogTitle(), closestQuestEnder->GetName());
         }
         else
@@ -2828,7 +2848,22 @@ bool QuestStrategy::CheckForGameObjectQuestEnderInRange(BotAI* ai, uint32 gameob
         bool isComplete = (status == QUEST_STATUS_COMPLETE);
         bool isTalkToQuest = (status == QUEST_STATUS_INCOMPLETE && quest->Objectives.empty());
 
-        if (!isComplete && !isTalkToQuest)
+        // Check if quest is a DELIVERY quest (incomplete, has SourceItemId, bot has the item)
+        // Delivery quests remain INCOMPLETE until turned in - the item delivery IS the objective
+        bool isDeliveryQuest = false;
+        if (status == QUEST_STATUS_INCOMPLETE && quest->GetSrcItemId() != 0)
+        {
+            uint32 srcItemId = quest->GetSrcItemId();
+            uint32 itemCount = bot->GetItemCount(srcItemId);
+            if (itemCount > 0)
+            {
+                isDeliveryQuest = true;
+                TC_LOG_ERROR("module.playerbot.quest", "📬 CheckForGameObjectQuestEnderInRange: Bot {} has DELIVERY quest {} ({}) with item {} (count: {})",
+                             bot->GetName(), questId, quest->GetLogTitle(), srcItemId, itemCount);
+            }
+        }
+
+        if (!isComplete && !isTalkToQuest && !isDeliveryQuest)
             continue;
 
         // Check if this GameObject is a valid quest ender for this quest
@@ -2855,6 +2890,11 @@ bool QuestStrategy::CheckForGameObjectQuestEnderInRange(BotAI* ai, uint32 gameob
         if (isTalkToQuest)
         {
             TC_LOG_ERROR("module.playerbot.quest", "🗣️ CheckForGameObjectQuestEnderInRange: Bot {} turning in TALK-TO quest {} ({}) to GameObject {}",
+                         bot->GetName(), questId, quest->GetLogTitle(), closestQuestEnder->GetName());
+        }
+        else if (isDeliveryQuest)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "📬 CheckForGameObjectQuestEnderInRange: Bot {} turning in DELIVERY quest {} ({}) to GameObject {}",
                          bot->GetName(), questId, quest->GetLogTitle(), closestQuestEnder->GetName());
         }
         else

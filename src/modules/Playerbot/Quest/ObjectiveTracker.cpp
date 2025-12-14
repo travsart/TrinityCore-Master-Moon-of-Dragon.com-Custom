@@ -469,7 +469,34 @@ std::vector<ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
             uint32 currentProgress = bot->GetQuestObjectiveData(state.questId, objective.StorageIndex);
             uint32 requiredAmount = static_cast<uint32>(objective.Amount);
 
-            if (currentProgress >= requiredAmount)
+            // CRITICAL FIX 3: For AREATRIGGER objectives (exploration quests), Amount is typically 0
+            // but that doesn't mean it's complete - the bot must physically enter the area
+            // Check quest status for these special objective types instead of progress
+            bool isAreaTriggerObjective = (objective.Type == QUEST_OBJECTIVE_AREATRIGGER ||
+                                           objective.Type == QUEST_OBJECTIVE_AREA_TRIGGER_ENTER ||
+                                           objective.Type == QUEST_OBJECTIVE_AREA_TRIGGER_EXIT);
+
+            if (isAreaTriggerObjective && requiredAmount == 0)
+            {
+                // For exploration objectives with Amount=0, check quest status instead
+                // Quest status INCOMPLETE means the area hasn't been visited yet
+                QuestStatus questStatus = bot->GetQuestStatus(state.questId);
+                if (questStatus != QUEST_STATUS_COMPLETE)
+                {
+                    TC_LOG_DEBUG("module.playerbot.quest",
+                        "GetActiveObjectives: AREATRIGGER objective for quest {} (bot {}) - status {} != COMPLETE, keeping as active",
+                        state.questId, bot->GetName(), static_cast<int>(questStatus));
+                    // Don't skip - this exploration objective is NOT complete
+                }
+                else
+                {
+                    TC_LOG_DEBUG("module.playerbot.quest",
+                        "GetActiveObjectives: Skipping quest {} AREATRIGGER objective {} for bot {} - quest status is COMPLETE",
+                        state.questId, state.objectiveIndex, bot->GetName());
+                    continue;  // Quest is complete, skip this objective
+                }
+            }
+            else if (currentProgress >= requiredAmount)
             {
                 TC_LOG_DEBUG("module.playerbot.quest",
                     "GetActiveObjectives: Skipping quest {} objective {} for bot {} - objective already COMPLETE ({}/{})",
