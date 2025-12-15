@@ -630,6 +630,105 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
         }
     }
 
+    // ========================================================================
+    // LFG BOOT VOTE AUTO-ACCEPT
+    // When a bot receives a boot proposal packet (vote kick), automatically
+    // vote YES to allow kicking malfunctioning or offline bots from dungeons.
+    // This is a module-only solution that intercepts the outgoing packet
+    // without modifying TrinityCore core files.
+    // ========================================================================
+    if (packet->GetOpcode() == SMSG_LFG_BOOT_PLAYER)
+    {
+        Player* bot = GetPlayer();
+        if (bot)
+        {
+            try
+            {
+                // Clone the packet data for reading (packet is const)
+                WorldPacket packetCopy(*packet);
+                packetCopy.rpos(0);
+
+                // Parse LfgBootInfo structure:
+                // - Bits<1> VoteInProgress
+                // - Bits<1> VotePassed
+                // - Bits<1> MyVoteCompleted
+                // - Bits<1> MyVote
+                // - SizedString::BitsSize<9> Reason
+                // - ObjectGuid Target
+                // - uint32 TotalVotes, BootVotes
+                // - int32 TimeLeft
+                // - uint32 VotesNeeded
+                // - SizedString::Data Reason
+
+                // Read the first byte containing the 4 bools + start of reason length
+                uint8 firstByte;
+                packetCopy >> firstByte;
+
+                bool voteInProgress = (firstByte & 0x01) != 0;
+                // bool votePassed = (firstByte & 0x02) != 0;  // Not needed for auto-vote
+                bool myVoteCompleted = (firstByte & 0x04) != 0;
+                // bool myVote = (firstByte & 0x08) != 0;  // Not needed for auto-vote
+
+                // Read rest of reason string length (bits 4-12, 9 bits total starting at bit 4)
+                uint8 secondByte;
+                packetCopy >> secondByte;
+                uint32 reasonLength = ((firstByte >> 4) & 0x0F) | ((secondByte & 0x1F) << 4);
+
+                // Read Target GUID
+                ObjectGuid target;
+                packetCopy >> target;
+
+                // Skip TotalVotes, BootVotes, TimeLeft, VotesNeeded (4 uint32s)
+                uint32 totalVotes, bootVotes, votesNeeded;
+                int32 timeLeft;
+                packetCopy >> totalVotes >> bootVotes >> timeLeft >> votesNeeded;
+                (void)totalVotes; (void)bootVotes; (void)timeLeft; (void)votesNeeded;  // Suppress unused warnings
+
+                // Read reason string
+                std::string reason;
+                if (reasonLength > 0)
+                {
+                    reason.resize(reasonLength);
+                    packetCopy.read(reinterpret_cast<uint8*>(reason.data()), reasonLength);
+                }
+
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "🗳️ BotSession: Boot packet for {} - inProgress={}, completed={}, target={}, reason={}",
+                    bot->GetName(), voteInProgress, myVoteCompleted, target.ToString(), reason);
+
+                // Only vote if:
+                // 1. Vote is in progress
+                // 2. We haven't already voted
+                // 3. We're not the target (can't vote to kick yourself)
+                if (voteInProgress && !myVoteCompleted && target != bot->GetGUID())
+                {
+                    TC_LOG_INFO("module.playerbot.lfg",
+                        "🗳️ BotSession: Bot {} auto-voting YES to kick {} (reason: {})",
+                        bot->GetName(), target.ToString(), reason);
+
+                    // Auto-vote YES to allow kicking
+                    sLFGMgr->UpdateBoot(bot->GetGUID(), true);
+
+                    TC_LOG_INFO("module.playerbot.lfg",
+                        "✅ BotSession: Bot {} voted YES to kick {}",
+                        bot->GetName(), target.ToString());
+                }
+                else if (target == bot->GetGUID())
+                {
+                    TC_LOG_INFO("module.playerbot.lfg",
+                        "⚠️ BotSession: Bot {} is being vote-kicked (reason: {})",
+                        bot->GetName(), reason);
+                }
+            }
+            catch (ByteBufferPositionException const& ex)
+            {
+                TC_LOG_ERROR("module.playerbot.lfg",
+                    "❌ BotSession: Failed to parse LFG boot packet for bot {}: {}",
+                    bot->GetName(), ex.what());
+            }
+        }
+    }
+
     // PHASE 1: Relay packets to human group members
     // This enables bot damage/chat to appear in human combat logs and chat
     BotPacketRelay::RelayToGroupMembers(this, packet);

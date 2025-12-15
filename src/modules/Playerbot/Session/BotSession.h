@@ -76,6 +76,7 @@ public:
     void QueuePacket(WorldPacket* packet);
     bool Update(uint32 diff, PacketFilter& updater);
 
+
     // Override socket-related methods to handle socketless sessions
     bool PlayerDisconnected() const;  // Always return false for bots
 
