@@ -41,6 +41,19 @@ public:
 
 private:
     bool IsGroupInCombat(BotAI* ai) const;
+
+    /**
+     * @brief Find a valid attack target from group combat
+     *
+     * Priority order:
+     * 1. Enemy attacking a group member (threat list check)
+     * 2. Group member's victim (what they're fighting)
+     * 3. Group member's selected unit (UI target)
+     *
+     * @param ai Bot AI context
+     * @return Unit* Valid hostile target, or nullptr if none found
+     */
+    Unit* FindGroupCombatTarget(BotAI* ai) const;
 };
 
 } // namespace Playerbot

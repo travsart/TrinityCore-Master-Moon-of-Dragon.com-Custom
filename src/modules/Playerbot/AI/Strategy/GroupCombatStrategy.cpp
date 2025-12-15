@@ -20,6 +20,9 @@
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "GameTime.h"
+#include "GridNotifiers.h"
+#include "CellImpl.h"
+#include "../../Group/GroupRoleEnums.h"  // For IsPlayerHealer
 
 namespace Playerbot
 {
@@ -95,109 +98,142 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         return;
 
     // Group is in combat but bot isn't - ASSIST!
-    Group* group = bot->GetGroup();
-    if (!group)
-        return;
+    // Use FindGroupCombatTarget() to properly detect attackers
+    Unit* target = FindGroupCombatTarget(ai);
 
-    // Find a group member's target to attack
-    // Use GetMemberSlots() for reliable GUID access
-    for (auto const& slot : group->GetMemberSlots())
+    // HEALER FIX: Healers should enter combat state but NOT attack enemies
+    // They need to be in combat mode for their healing rotation to trigger,
+    // but they should focus on healing group members, not attacking.
+    bool isHealer = IsPlayerHealer(bot);
+
+    if (isHealer)
     {
-        Player* member = ObjectAccessor::FindPlayer(slot.guid);
-        if (!member || member == bot || !member->IsInCombat())
-            continue;
-
-        Unit* target = member->GetSelectedUnit();
-        // If group member has an alive target they're attacking, bot should assist
-        // Don't use IsValidAttackTarget() - it fails for neutral mobs
-        // The player is already fighting it, so it's valid for the bot to attack
-    if (target && target->IsAlive())
+        // HEALER: Enter combat state but DON'T attack
+        // Just set combat flag so OnCombatUpdate() triggers healing rotation
+        if (!bot->IsInCombat() && target)
         {
-            // Set target
-            bot->SetTarget(target->GetGUID());
+            // Put healer in combat with the enemy (for combat state tracking)
+            // but don't call Attack() - healers don't auto-attack
+            bot->SetInCombatWith(target);
 
-            // CRITICAL FIX: Delegate movement to ClassAI for proper positioning
-            // ClassAI knows the bot's optimal range (melee vs ranged)
+            TC_LOG_ERROR("module.playerbot.strategy",
+                "💚 GroupCombatStrategy: HEALER {} entering combat state (NOT attacking) - will heal group",
+                bot->GetName());
+        }
 
-            float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
-            // CRITICAL: Ensure combat is initiated BEFORE allowing spell casts
-            // bot->Attack() makes the target hostile but needs to process
-    if (!bot->GetVictim() || bot->GetVictim() != target)
+        // Healers should position at healing range (30yd from group center, not enemies)
+        // Find a group member to stay near (preferably the tank)
+        Group* group = bot->GetGroup();
+        if (group)
+        {
+            Player* tankToFollow = nullptr;
+            for (auto const& slot : group->GetMemberSlots())
             {
-                // CRITICAL FIX: DO NOT call SetAIState() here!
-                // UpdateCombatState() in BotAI::UpdateAI() will detect bot->IsInCombat()
-                // and set the AI state properly. If we set it here, UpdateCombatState()
-                // immediately overwrites it back to non-combat because bot->IsInCombat()
-                // is still false at this point (race condition).
-                //
-                // The correct flow is:
-                // 1. bot->Attack() + bot->SetInCombatWith() → bot->IsInCombat() becomes true
-                // 2. UpdateCombatState() detects bot->IsInCombat() == true
-                // 3. UpdateCombatState() calls SetAIState(BotAIState::COMBAT)
-                // 4. OnCombatUpdate() is called with spell queue ready
+                Player* member = ObjectAccessor::FindPlayer(slot.guid);
+                if (!member || member == bot || !member->IsAlive())
+                    continue;
 
-                // CRITICAL FIX: For neutral mobs, make THEM attack US first
-                // This is the same fix as in autonomous combat (BotAI.cpp lines 858-876)
-    if (Creature* targetCreature = target->ToCreature())
+                if (IsPlayerTank(member))
                 {
-                    // Add threat (makes creature turn hostile)
-    if (targetCreature->CanHaveThreatList())
-                    {
-                        targetCreature->GetThreatManager().AddThreat(bot, 1.0f);
-                        TC_LOG_ERROR("module.playerbot.strategy", " THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
-                                    bot->GetName(), targetCreature->GetName(), targetCreature->GetEntry());
-                    }
-
-                    // Make creature's AI attack us (makes it hostile)
-    if (CreatureAI* ai = targetCreature->AI())
-                    {
-                        ai->AttackStart(bot);
-                        TC_LOG_ERROR("module.playerbot.strategy", " CREATURE ENGAGED: {} AttackStart() called on bot {}",
-                                    targetCreature->GetName(), bot->GetName());
-                    }
+                    tankToFollow = member;
+                    break;
                 }
-
-                // NOW the creature is hostile, our combat initiation will work
-
-                // Initiate combat with target
-                bot->Attack(target, true);
-                bot->SetInCombatWith(target);
-                target->SetInCombatWith(bot);
-
-                TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
-                            bot->GetName(), target->GetName(), bot->IsInCombat(), bot->GetVictim() != nullptr);
-                // Don't return - allow ClassAI combat updates to proceed
-                // Note: OnCombatUpdate() is called from BotAI::UpdateAI() when IsInCombat() returns true
-                // bot->IsInCombat() should now be true after SetInCombatWith()
             }
 
-            // ALWAYS update movement while target is alive (even during combat)
-            // This ensures bot follows moving targets
-    if (target->IsAlive())
+            // If no tank found, follow the group leader or any member in combat
+            if (!tankToFollow)
             {
-                // Get optimal range from ClassAI (if available)
-                float optimalRange = 5.0f; // Default to melee range
-    if (ClassAI* classAI = dynamic_cast<ClassAI*>(ai))
+                for (auto const& slot : group->GetMemberSlots())
                 {
-                    optimalRange = classAI->GetOptimalRange(target);
-                }
-
-                // CRITICAL FIX: Only issue MoveChase if NOT already chasing
-                // Re-issuing every frame causes speed-up and blinking issues
-                MotionMaster* mm = bot->GetMotionMaster();
-                if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) != CHASE_MOTION_TYPE)
-                {
-                    mm->MoveChase(target, optimalRange);
-
-                    TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy: Bot {} chasing {} at optimal range {:.1f}yd (current: {:.1f}yd)",
-                                bot->GetName(), target->GetName(), optimalRange, distance);
-                }
-                else
-                {
-                    TC_LOG_DEBUG("module.playerbot.strategy", "⏭ GroupCombatStrategy: Bot {} already chasing, skipping", bot->GetName());
+                    Player* member = ObjectAccessor::FindPlayer(slot.guid);
+                    if (member && member != bot && member->IsAlive() && member->IsInCombat())
+                    {
+                        tankToFollow = member;
+                        break;
+                    }
                 }
             }
-            break;
+
+            if (tankToFollow)
+            {
+                float healerRange = 25.0f; // Stay at healing range
+                float currentDist = bot->GetExactDist(tankToFollow);
+
+                // Only move if too far from group (>30yd) or too close (<15yd from combat)
+                if (currentDist > 30.0f)
+                {
+                    MotionMaster* mm = bot->GetMotionMaster();
+                    if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) != FOLLOW_MOTION_TYPE)
+                    {
+                        mm->MoveFollow(tankToFollow, healerRange, 0);
+                        TC_LOG_DEBUG("module.playerbot.strategy",
+                            "💚 Healer {} following {} at {:.1f}yd (current: {:.1f}yd)",
+                            bot->GetName(), tankToFollow->GetName(), healerRange, currentDist);
+                    }
+                }
+            }
+        }
+        return; // Healers don't proceed to attack logic
+    }
+
+    // DPS/TANK: Standard combat initiation
+    if (target && target->IsAlive())
+    {
+        // Set target
+        bot->SetTarget(target->GetGUID());
+
+        float distance = ::std::sqrt(bot->GetExactDistSq(target));
+
+        // Initiate combat if not already fighting this target
+        if (!bot->GetVictim() || bot->GetVictim() != target)
+        {
+            // For neutral mobs, make THEM attack US first
+            if (Creature* targetCreature = target->ToCreature())
+            {
+                if (targetCreature->CanHaveThreatList())
+                {
+                    targetCreature->GetThreatManager().AddThreat(bot, 1.0f);
+                    TC_LOG_ERROR("module.playerbot.strategy",
+                        "⚔️ THREAT ADDED: Bot {} added threat to {} (Entry: {})",
+                        bot->GetName(), targetCreature->GetName(), targetCreature->GetEntry());
+                }
+
+                if (CreatureAI* creatureAI = targetCreature->AI())
+                {
+                    creatureAI->AttackStart(bot);
+                    TC_LOG_ERROR("module.playerbot.strategy",
+                        "⚔️ CREATURE ENGAGED: {} AttackStart() on bot {}",
+                        targetCreature->GetName(), bot->GetName());
+                }
+            }
+
+            // Initiate combat
+            bot->Attack(target, true);
+            bot->SetInCombatWith(target);
+            target->SetInCombatWith(bot);
+
+            TC_LOG_ERROR("module.playerbot.strategy",
+                "⚔️ GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
+                bot->GetName(), target->GetName(), bot->IsInCombat(), bot->GetVictim() != nullptr);
+        }
+
+        // Update movement to chase target
+        if (target->IsAlive())
+        {
+            float optimalRange = 5.0f; // Default melee
+            if (ClassAI* classAI = dynamic_cast<ClassAI*>(ai))
+            {
+                optimalRange = classAI->GetOptimalRange(target);
+            }
+
+            MotionMaster* mm = bot->GetMotionMaster();
+            if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) != CHASE_MOTION_TYPE)
+            {
+                mm->MoveChase(target, optimalRange);
+                TC_LOG_ERROR("module.playerbot.strategy",
+                    "⚔️ Bot {} chasing {} at {:.1f}yd (current: {:.1f}yd)",
+                    bot->GetName(), target->GetName(), optimalRange, distance);
+            }
         }
     }
 }
@@ -215,31 +251,19 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
     // If group is in combat, high relevance to assist
     if (IsGroupInCombat(ai))
     {
-        // Engage group member's target
-        Group* group = bot->GetGroup();
-        if (group)
+        // Use FindGroupCombatTarget to properly detect attackers
+        Unit* target = FindGroupCombatTarget(ai);
+        if (target && target->IsAlive())
         {
-            for (auto const& slot : group->GetMemberSlots())
-            {
-                Player* member = ObjectAccessor::FindPlayer(slot.guid);
-                if (!member || member == bot || !member->IsInCombat())
-                    continue;
-                Unit* target = member->GetSelectedUnit();
-                if (target && target->IsAlive())
-                {
-                    // Set target
-                    bot->SetTarget(target->GetGUID());
+            // Set target for combat initiation (handled in UpdateBehavior)
+            bot->SetTarget(target->GetGUID());
 
-                    // Combat initiation is handled in UpdateBehavior
-                    // Just set target here and return high relevance
-    if (!bot->IsInCombat() && !bot->GetVictim())
-                    {
-                        float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
-                        TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",
-                                    bot->GetName(), target->GetName(), distance, member->GetName());
-                    }
-                    break;
-                }
+            if (!bot->IsInCombat() && !bot->GetVictim())
+            {
+                float distance = ::std::sqrt(bot->GetExactDistSq(target));
+                TC_LOG_ERROR("module.playerbot.strategy",
+                    "⚔️ GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd)",
+                    bot->GetName(), target->GetName(), distance);
             }
         }
 
@@ -314,6 +338,117 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
         TC_LOG_ERROR("module.playerbot.strategy", "   No group members in combat detected");
 
     return false;
+}
+
+Unit* GroupCombatStrategy::FindGroupCombatTarget(BotAI* ai) const
+{
+    if (!ai || !ai->GetBot())
+        return nullptr;
+
+    Player* bot = ai->GetBot();
+    Group* group = bot->GetGroup();
+    if (!group)
+        return nullptr;
+
+    Unit* bestTarget = nullptr;
+    float bestPriority = 0.0f;
+
+    // CRITICAL FIX: Iterate through all group members and find:
+    // 1. Enemies attacking group members (highest priority)
+    // 2. What group members are attacking (GetVictim)
+    // 3. What group members have selected (GetSelectedUnit)
+    for (auto const& slot : group->GetMemberSlots())
+    {
+        Player* member = ObjectAccessor::FindPlayer(slot.guid);
+        if (!member || member == bot || !member->IsInCombat())
+            continue;
+
+        // PRIORITY 1: Find enemies attacking this group member (highest priority)
+        // Check the member's threat manager for creatures threatening them
+        if (member->IsInCombat())
+        {
+            // Get nearby hostile creatures that might be attacking the member
+            std::list<Unit*> nearbyHostiles;
+            Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(member, member, 40.0f);
+            Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(member, nearbyHostiles, check);
+            Cell::VisitAllObjects(member, searcher, 40.0f);
+
+            for (Unit* hostile : nearbyHostiles)
+            {
+                if (!hostile || !hostile->IsAlive())
+                    continue;
+
+                // Check if this hostile has threat on our group member
+                if (Creature* creature = hostile->ToCreature())
+                {
+                    if (creature->CanHaveThreatList())
+                    {
+                        ThreatManager& threatMgr = creature->GetThreatManager();
+                        // Check if group member is in this creature's threat list
+                        if (threatMgr.GetThreat(member, true) > 0)
+                        {
+                            // This enemy IS attacking our group member!
+                            float priority = 100.0f + threatMgr.GetThreat(member, true);
+
+                            // Higher priority if attacking tank/healer
+                            // Priority boost for protecting tanks and healers
+                            if (priority > bestPriority)
+                            {
+                                bestTarget = hostile;
+                                bestPriority = priority;
+
+                                TC_LOG_DEBUG("module.playerbot.strategy",
+                                    "🎯 FindGroupCombatTarget: Found {} attacking {} (threat: {:.1f})",
+                                    creature->GetName(), member->GetName(), threatMgr.GetThreat(member, true));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // PRIORITY 2: What the group member is currently fighting (GetVictim)
+        if (Unit* memberVictim = member->GetVictim())
+        {
+            if (memberVictim->IsAlive() && bestPriority < 50.0f)
+            {
+                bestTarget = memberVictim;
+                bestPriority = 50.0f;
+
+                TC_LOG_DEBUG("module.playerbot.strategy",
+                    "🎯 FindGroupCombatTarget: {} is fighting {} (GetVictim)",
+                    member->GetName(), memberVictim->GetName());
+            }
+        }
+
+        // PRIORITY 3: What the group member has selected (lowest priority)
+        if (Unit* selectedTarget = member->GetSelectedUnit())
+        {
+            if (selectedTarget->IsAlive() && bestPriority < 10.0f)
+            {
+                // Verify it's actually hostile
+                if (bot->IsValidAttackTarget(selectedTarget) ||
+                    (selectedTarget->IsInCombat() && !bot->IsFriendlyTo(selectedTarget)))
+                {
+                    bestTarget = selectedTarget;
+                    bestPriority = 10.0f;
+
+                    TC_LOG_DEBUG("module.playerbot.strategy",
+                        "🎯 FindGroupCombatTarget: {} has {} selected (GetSelectedUnit)",
+                        member->GetName(), selectedTarget->GetName());
+                }
+            }
+        }
+    }
+
+    if (bestTarget)
+    {
+        TC_LOG_ERROR("module.playerbot.strategy",
+            "🎯 GroupCombatStrategy: Bot {} found target {} (priority: {:.1f})",
+            bot->GetName(), bestTarget->GetName(), bestPriority);
+    }
+
+    return bestTarget;
 }
 
 } // namespace Playerbot

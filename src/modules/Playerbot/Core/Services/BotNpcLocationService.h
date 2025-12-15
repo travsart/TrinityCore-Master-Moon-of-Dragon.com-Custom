@@ -235,6 +235,8 @@ namespace Playerbot
             uint32 classTrainersCached = 0;
             uint32 serviceNpcsCached = 0;
             uint32 questPOIsCached = 0;
+            uint32 areaTriggerQuestsCached = 0;      // New: Quest→AreaTrigger mappings
+            uint32 areaTriggerPositionsCached = 0;   // New: AreaTrigger positions
             uint32 mapsIndexed = 0;
         };
 
@@ -278,6 +280,21 @@ namespace Playerbot
         // Quest POI cache (questId → objectiveIndex → position)
         ::std::unordered_map<uint32, ::std::unordered_map<uint32, Position>> _questPOICache;
 
+        // ===== AREA TRIGGER CACHES (Thread-safe - populated at init) =====
+        // Maps questId → areaTriggerID (from areatrigger_involvedrelation table)
+        ::std::unordered_map<uint32, uint32> _areaTriggerQuestCache;
+
+        // Maps areaTriggerID → position data (from areatrigger table for classic WoW triggers)
+        struct AreaTriggerPositionData
+        {
+            float posX = 0.0f;
+            float posY = 0.0f;
+            float posZ = 0.0f;
+            uint32 mapId = 0;
+            bool isValid = false;
+        };
+        ::std::unordered_map<uint32, AreaTriggerPositionData> _areaTriggerPositionCache;
+
         bool _initialized = false;
 
         // ===== CACHE BUILDING METHODS (called during Initialize) =====
@@ -288,6 +305,7 @@ namespace Playerbot
         void BuildClassTrainerCache() override;
         void BuildServiceNpcCache() override;
         void BuildQuestPOICache() override;
+        void BuildAreaTriggerCache();  // New: Thread-safe area trigger caching
 
         // ===== HELPER METHODS =====
 

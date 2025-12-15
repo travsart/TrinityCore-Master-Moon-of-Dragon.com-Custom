@@ -98,6 +98,19 @@ private:
     // Quest item usage system (for quests that require using items on targets)
     void UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& objective);
 
+    // ========================================================================
+    // QUEST OBJECTIVE TYPE HANDLERS (complete coverage of all 22 objective types)
+    // ========================================================================
+
+    // TALKTO objectives - interact with NPC via gossip/dialog
+    void TalkToNpc(BotAI* ai, ObjectiveState const& objective);
+
+    // Currency objectives - check if bot has required currency
+    void HandleCurrencyObjective(BotAI* ai, ObjectiveState const& objective);
+
+    // Money objectives - check if bot has required gold/silver/copper
+    void HandleMoneyObjective(BotAI* ai, ObjectiveState const& objective);
+
     // Objective analysis
     ObjectivePriority GetCurrentObjective(BotAI* ai) const;
     bool HasActiveObjectives(BotAI* ai) const;

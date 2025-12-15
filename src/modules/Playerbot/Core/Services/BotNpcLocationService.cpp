@@ -52,6 +52,7 @@ bool BotNpcLocationService::Initialize()
     BuildClassTrainerCache();
     BuildServiceNpcCache();
     BuildQuestPOICache();
+    BuildAreaTriggerCache();  // Thread-safe area trigger caching
 
     auto endTime = ::std::chrono::steady_clock::now();
     auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
@@ -66,6 +67,8 @@ bool BotNpcLocationService::Initialize()
     TC_LOG_INFO("module.playerbot.services", "  Class trainers: {}", stats.classTrainersCached);
     TC_LOG_INFO("module.playerbot.services", "  Service NPCs: {}", stats.serviceNpcsCached);
     TC_LOG_INFO("module.playerbot.services", "  Quest POIs: {}", stats.questPOIsCached);
+    TC_LOG_INFO("module.playerbot.services", "  AreaTrigger quests cached: {}", stats.areaTriggerQuestsCached);
+    TC_LOG_INFO("module.playerbot.services", "  AreaTrigger positions cached: {}", stats.areaTriggerPositionsCached);
     TC_LOG_INFO("module.playerbot.services", "  Maps indexed: {}", stats.mapsIndexed);
     TC_LOG_INFO("module.playerbot.services", "  Initialization time: {} ms", duration.count());
     TC_LOG_INFO("module.playerbot.services", "========================================");
@@ -84,6 +87,8 @@ void BotNpcLocationService::Shutdown()
     _classTrainerCache.clear();
     _serviceNpcCache.clear();
     _questPOICache.clear();
+    _areaTriggerQuestCache.clear();
+    _areaTriggerPositionCache.clear();
 
     _initialized = false;
 
@@ -264,6 +269,62 @@ void BotNpcLocationService::BuildQuestPOICache()
                 cached, _questPOICache.size());
 }
 
+void BotNpcLocationService::BuildAreaTriggerCache()
+{
+    TC_LOG_INFO("module.playerbot.services", "Building AreaTrigger cache (thread-safe)...");
+
+    // Cache 1: areatrigger_involvedrelation - maps questId to areaTriggerID
+    // This query runs ONCE at startup, not at runtime (thread-safe!)
+    QueryResult questResult = WorldDatabase.Query("SELECT id, quest FROM areatrigger_involvedrelation");
+    uint32 questMappings = 0;
+
+    if (questResult)
+    {
+        do
+        {
+            Field* fields = questResult->Fetch();
+            uint32 areaTriggerID = fields[0].GetUInt32();
+            uint32 questId = fields[1].GetUInt32();
+
+            _areaTriggerQuestCache[questId] = areaTriggerID;
+            questMappings++;
+
+            TC_LOG_DEBUG("module.playerbot.services", "  Cached quest {} → areatrigger {}", questId, areaTriggerID);
+        } while (questResult->NextRow());
+    }
+
+    TC_LOG_INFO("module.playerbot.services", "  Cached {} quest→areatrigger mappings", questMappings);
+
+    // Cache 2: areatrigger table - maps areaTriggerID to position data
+    // For classic WoW triggers not in DB2 sAreaTriggerStore
+    QueryResult posResult = WorldDatabase.Query("SELECT SpawnId, PosX, PosY, PosZ, MapId FROM areatrigger");
+    uint32 positionsCached = 0;
+
+    if (posResult)
+    {
+        do
+        {
+            Field* fields = posResult->Fetch();
+            uint32 areaTriggerID = fields[0].GetUInt32();
+
+            AreaTriggerPositionData posData;
+            posData.posX = fields[1].GetFloat();
+            posData.posY = fields[2].GetFloat();
+            posData.posZ = fields[3].GetFloat();
+            posData.mapId = fields[4].GetUInt32();
+            posData.isValid = true;
+
+            _areaTriggerPositionCache[areaTriggerID] = posData;
+            positionsCached++;
+
+            TC_LOG_DEBUG("module.playerbot.services", "  Cached areatrigger {} at ({:.1f}, {:.1f}, {:.1f}) map {}",
+                        areaTriggerID, posData.posX, posData.posY, posData.posZ, posData.mapId);
+        } while (posResult->NextRow());
+    }
+
+    TC_LOG_INFO("module.playerbot.services", "  Cached {} areatrigger positions", positionsCached);
+}
+
 // ===== QUERY METHODS =====
 
 NpcLocationResult BotNpcLocationService::FindQuestObjectiveLocation(Player* bot, uint32 questId, uint32 objectiveIndex)
@@ -283,6 +344,7 @@ NpcLocationResult BotNpcLocationService::FindQuestObjectiveLocation(Player* bot,
     switch (objective.Type)
     {
         case QUEST_OBJECTIVE_MONSTER:
+        case QUEST_OBJECTIVE_KILL_WITH_LABEL:  // Same as MONSTER but with label requirement
         {
             // Try 1: Live creature in spatial grid (best quality)
             result = TryFindLiveCreature(bot, objective.ObjectID, 500.0f);
@@ -294,6 +356,40 @@ NpcLocationResult BotNpcLocationService::FindQuestObjectiveLocation(Player* bot,
             if (result.isValid)
                 return result;
 
+            break;
+        }
+
+        // ========================================================================
+        // TALKTO OBJECTIVES: Find NPC to talk to (gossip/dialog interaction)
+        // Same location finding as MONSTER - just looking for a different NPC
+        // ========================================================================
+        case QUEST_OBJECTIVE_TALKTO:
+        {
+            TC_LOG_ERROR("module.playerbot.services", "🗣️ FindQuestObjectiveLocation: TALKTO objective for NPC entry {}",
+                         objective.ObjectID);
+
+            // Try 1: Live creature in spatial grid (best quality)
+            result = TryFindLiveCreature(bot, objective.ObjectID, 500.0f);
+            if (result.isValid)
+            {
+                TC_LOG_ERROR("module.playerbot.services", "✅ TALKTO: Found live NPC {} at ({:.1f}, {:.1f}, {:.1f})",
+                             objective.ObjectID, result.position.GetPositionX(),
+                             result.position.GetPositionY(), result.position.GetPositionZ());
+                return result;
+            }
+
+            // Try 2: Spawn database cache
+            result = FindNearestCreatureSpawn(bot, objective.ObjectID, 500.0f);
+            if (result.isValid)
+            {
+                TC_LOG_ERROR("module.playerbot.services", "✅ TALKTO: Found NPC spawn {} at ({:.1f}, {:.1f}, {:.1f})",
+                             objective.ObjectID, result.position.GetPositionX(),
+                             result.position.GetPositionY(), result.position.GetPositionZ());
+                return result;
+            }
+
+            TC_LOG_WARN("module.playerbot.services", "⚠️ TALKTO: NPC {} not found via live search or spawn data",
+                        objective.ObjectID);
             break;
         }
 
@@ -316,42 +412,119 @@ NpcLocationResult BotNpcLocationService::FindQuestObjectiveLocation(Player* bot,
         // EXPLORATION QUEST FIX: Handle AREATRIGGER objectives for exploration quests
         // These require the bot to physically enter an area trigger zone
         // The ObjectID is the area trigger ID - query sAreaTriggerStore for position
+        //
+        // CRITICAL FIX: Some quests (like Quest 62 "The Fargodeep Mine") have ObjectID=-1
+        // in quest_objectives but the actual area trigger ID is in areatrigger_involvedrelation.
+        // We must check both sources!
         // ========================================================================
         case QUEST_OBJECTIVE_AREATRIGGER:
         case QUEST_OBJECTIVE_AREA_TRIGGER_ENTER:
         case QUEST_OBJECTIVE_AREA_TRIGGER_EXIT:
         {
-            uint32 areaTriggerID = static_cast<uint32>(objective.ObjectID);
-            AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(areaTriggerID);
+            uint32 areaTriggerID = 0;
 
-            if (atEntry)
+            // Try 1: Get area trigger ID from quest_objectives.ObjectID
+            if (objective.ObjectID > 0)
             {
-                // Check if area trigger is on bot's map
-                if (atEntry->ContinentID == bot->GetMapId())
-                {
-                    result.position.Relocate(atEntry->Pos.X, atEntry->Pos.Y, atEntry->Pos.Z);
-                    result.distance = bot->GetDistance(result.position);
-                    result.isValid = true;
-                    result.qualityScore = 100;  // Area trigger has exact position - highest quality
-                    result.sourceName = "AreaTrigger";
-
-                    TC_LOG_ERROR("module.playerbot.services", "✅ EXPLORATION QUEST: Found AreaTrigger {} at ({:.1f}, {:.1f}, {:.1f}) - Map {} - Radius {:.1f}",
-                                areaTriggerID, atEntry->Pos.X, atEntry->Pos.Y, atEntry->Pos.Z,
-                                atEntry->ContinentID, atEntry->Radius);
-
-                    return result;
-                }
-                else
-                {
-                    TC_LOG_WARN("module.playerbot.services", "⚠️ AreaTrigger {} is on different map {} (bot is on map {})",
-                                areaTriggerID, atEntry->ContinentID, bot->GetMapId());
-                }
+                areaTriggerID = static_cast<uint32>(objective.ObjectID);
+                TC_LOG_DEBUG("module.playerbot.services", "🗺️ AREATRIGGER: Using ObjectID {} from quest_objectives for quest {}",
+                            areaTriggerID, questId);
             }
             else
             {
-                TC_LOG_WARN("module.playerbot.services", "⚠️ AreaTrigger {} not found in sAreaTriggerStore",
-                            areaTriggerID);
+                // Try 2: FALLBACK - Check cached areatrigger_involvedrelation data (THREAD-SAFE!)
+                // Some classic quests have ObjectID=-1 but the area trigger is linked via this table
+                TC_LOG_DEBUG("module.playerbot.services", "⚠️ AREATRIGGER: Quest {} has invalid ObjectID={}, checking cached areatrigger_involvedrelation...",
+                            questId, objective.ObjectID);
+
+                // Use CACHED data instead of runtime query (fixes thread safety crash!)
+                auto atQuestIt = _areaTriggerQuestCache.find(questId);
+                if (atQuestIt != _areaTriggerQuestCache.end())
+                {
+                    areaTriggerID = atQuestIt->second;
+                    TC_LOG_DEBUG("module.playerbot.services", "✅ AREATRIGGER: Found area trigger {} via cached areatrigger_involvedrelation for quest {}",
+                                areaTriggerID, questId);
+                }
+                else
+                {
+                    TC_LOG_WARN("module.playerbot.services", "❌ AREATRIGGER: No area trigger found in cached areatrigger_involvedrelation for quest {}",
+                                questId);
+                }
             }
+
+            // Now look up the area trigger position
+            if (areaTriggerID > 0)
+            {
+                AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(areaTriggerID);
+
+                if (atEntry)
+                {
+                    // Check if area trigger is on bot's map
+                    if (atEntry->ContinentID == bot->GetMapId())
+                    {
+                        result.position.Relocate(atEntry->Pos.X, atEntry->Pos.Y, atEntry->Pos.Z);
+                        result.distance = bot->GetDistance(result.position);
+                        result.isValid = true;
+                        result.qualityScore = 100;  // Area trigger has exact position - highest quality
+                        result.sourceName = "AreaTrigger";
+
+                        TC_LOG_ERROR("module.playerbot.services", "✅ EXPLORATION QUEST: Found AreaTrigger {} at ({:.1f}, {:.1f}, {:.1f}) - Map {} - Radius {:.1f}",
+                                    areaTriggerID, atEntry->Pos.X, atEntry->Pos.Y, atEntry->Pos.Z,
+                                    atEntry->ContinentID, atEntry->Radius);
+
+                        return result;
+                    }
+                    else
+                    {
+                        TC_LOG_WARN("module.playerbot.services", "⚠️ AreaTrigger {} is on different map {} (bot is on map {})",
+                                    areaTriggerID, atEntry->ContinentID, bot->GetMapId());
+                    }
+                }
+                else
+                {
+                    TC_LOG_WARN("module.playerbot.services", "⚠️ AreaTrigger {} not found in sAreaTriggerStore (may be classic WoW trigger)",
+                                areaTriggerID);
+
+                    // Try 3: CLASSIC WoW FALLBACK - Use cached world.areatrigger position (THREAD-SAFE!)
+                    // Classic area triggers may not be in DB2 but stored in database cache
+                    auto atPosIt = _areaTriggerPositionCache.find(areaTriggerID);
+
+                    if (atPosIt != _areaTriggerPositionCache.end() && atPosIt->second.isValid)
+                    {
+                        AreaTriggerPositionData const& atPos = atPosIt->second;
+                        float posX = atPos.posX;
+                        float posY = atPos.posY;
+                        float posZ = atPos.posZ;
+                        uint32 mapId = atPos.mapId;
+
+                        if (mapId == bot->GetMapId())
+                        {
+                            result.position.Relocate(posX, posY, posZ);
+                            result.distance = bot->GetDistance(result.position);
+                            result.isValid = true;
+                            result.qualityScore = 100;
+                            result.sourceName = "AreaTrigger-DB";
+
+                            TC_LOG_ERROR("module.playerbot.services", "✅ EXPLORATION QUEST: Found classic AreaTrigger {} in DB at ({:.1f}, {:.1f}, {:.1f}) - Map {}",
+                                        areaTriggerID, posX, posY, posZ, mapId);
+
+                            return result;
+                        }
+                        else
+                        {
+                            TC_LOG_WARN("module.playerbot.services", "⚠️ Classic AreaTrigger {} is on map {} but bot is on map {}",
+                                        areaTriggerID, mapId, bot->GetMapId());
+                        }
+                    }
+                    else
+                    {
+                        TC_LOG_WARN("module.playerbot.services", "⚠️ AreaTrigger {} not in DB - will try Quest POI fallback",
+                                    areaTriggerID);
+                    }
+                }
+            }
+
+            // If we still don't have a valid position, the Quest POI fallback below will be tried
             break;
         }
 
@@ -501,6 +674,10 @@ BotNpcLocationService::CacheStats BotNpcLocationService::GetCacheStats() const
     // Count quest POIs
     for (auto const& [questId, objectives] : _questPOICache)
         stats.questPOIsCached += static_cast<uint32>(objectives.size());
+
+    // Count area trigger caches
+    stats.areaTriggerQuestsCached = static_cast<uint32>(_areaTriggerQuestCache.size());
+    stats.areaTriggerPositionsCached = static_cast<uint32>(_areaTriggerPositionCache.size());
 
     stats.mapsIndexed = static_cast<uint32>(_creatureSpawnCache.size());
 

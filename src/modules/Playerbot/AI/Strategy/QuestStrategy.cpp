@@ -631,6 +631,119 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             ExploreQuestArea(ai, objective);
             break;
 
+        // ========== TALKTO OBJECTIVES ==========
+        // Bot needs to interact with an NPC (gossip/dialog)
+        case QUEST_OBJECTIVE_TALKTO:
+            TC_LOG_ERROR("module.playerbot.quest", "🗣️ ProcessQuestObjectives: Bot {} - TALKTO objective for quest {}, calling TalkToNpc",
+                         bot->GetName(), objective.questId);
+            TalkToNpc(ai, objective);
+            break;
+
+        // ========== KILL WITH LABEL ==========
+        // Same as MONSTER but with special kill label requirement
+        case QUEST_OBJECTIVE_KILL_WITH_LABEL:
+            TC_LOG_ERROR("module.playerbot.quest", "🏷️ ProcessQuestObjectives: Bot {} - KILL_WITH_LABEL objective for quest {}, calling EngageQuestTargets",
+                         bot->GetName(), objective.questId);
+            EngageQuestTargets(ai, objective);
+            break;
+
+        // ========== CURRENCY OBJECTIVES ==========
+        // These track currency spending/obtaining - bot handles currency passively
+        case QUEST_OBJECTIVE_CURRENCY:
+            TC_LOG_ERROR("module.playerbot.quest", "💰 ProcessQuestObjectives: Bot {} - CURRENCY objective for quest {} (ObjectID={}, Amount={}) - handled passively via currency spending",
+                         bot->GetName(), objective.questId, questObjective->ObjectID, questObjective->Amount);
+            // Currency objectives are completed when bot spends currency
+            // Bot may need to visit vendors - navigate to quest area
+            NavigateToObjective(ai, objective);
+            break;
+
+        case QUEST_OBJECTIVE_HAVE_CURRENCY:
+            TC_LOG_ERROR("module.playerbot.quest", "💰 ProcessQuestObjectives: Bot {} - HAVE_CURRENCY objective for quest {} (ObjectID={}, Amount={}) - checking if bot has required currency",
+                         bot->GetName(), objective.questId, questObjective->ObjectID, questObjective->Amount);
+            // Bot needs to have currency when turning in - check and navigate to turn-in if ready
+            HandleCurrencyObjective(ai, objective);
+            break;
+
+        case QUEST_OBJECTIVE_OBTAIN_CURRENCY:
+            TC_LOG_ERROR("module.playerbot.quest", "💰 ProcessQuestObjectives: Bot {} - OBTAIN_CURRENCY objective for quest {} (ObjectID={}, Amount={}) - currency gained passively",
+                         bot->GetName(), objective.questId, questObjective->ObjectID, questObjective->Amount);
+            // Currency is obtained through gameplay - navigate to quest area
+            NavigateToObjective(ai, objective);
+            break;
+
+        // ========== REPUTATION OBJECTIVES ==========
+        // These track reputation gains/levels - completed through gameplay
+        case QUEST_OBJECTIVE_MIN_REPUTATION:
+            TC_LOG_ERROR("module.playerbot.quest", "⭐ ProcessQuestObjectives: Bot {} - MIN_REPUTATION objective for quest {} (FactionID={}, Required={}) - reputation gained passively",
+                         bot->GetName(), objective.questId, questObjective->ObjectID, questObjective->Amount);
+            // Reputation is gained through quests/kills - navigate to quest area
+            NavigateToObjective(ai, objective);
+            break;
+
+        case QUEST_OBJECTIVE_MAX_REPUTATION:
+            TC_LOG_ERROR("module.playerbot.quest", "⭐ ProcessQuestObjectives: Bot {} - MAX_REPUTATION objective for quest {} (FactionID={}, MaxAllowed={}) - waiting for conditions",
+                         bot->GetName(), objective.questId, questObjective->ObjectID, questObjective->Amount);
+            // This is a "don't exceed" reputation check - usually just waiting
+            break;
+
+        case QUEST_OBJECTIVE_INCREASE_REPUTATION:
+            TC_LOG_ERROR("module.playerbot.quest", "⭐ ProcessQuestObjectives: Bot {} - INCREASE_REPUTATION objective for quest {} (FactionID={}, Amount={}) - reputation gained passively",
+                         bot->GetName(), objective.questId, questObjective->ObjectID, questObjective->Amount);
+            // Reputation is gained through quests/kills - navigate to quest area
+            NavigateToObjective(ai, objective);
+            break;
+
+        // ========== SPELL/MONEY OBJECTIVES ==========
+        case QUEST_OBJECTIVE_LEARNSPELL:
+            TC_LOG_ERROR("module.playerbot.quest", "📖 ProcessQuestObjectives: Bot {} - LEARNSPELL objective for quest {} (SpellID={}) - spell learned via trainer/reward",
+                         bot->GetName(), objective.questId, questObjective->ObjectID);
+            // Bot may need to visit a trainer - navigate to quest area or seek trainer
+            NavigateToObjective(ai, objective);
+            break;
+
+        case QUEST_OBJECTIVE_MONEY:
+            TC_LOG_ERROR("module.playerbot.quest", "💵 ProcessQuestObjectives: Bot {} - MONEY objective for quest {} (Amount={} copper) - checking if bot has required gold",
+                         bot->GetName(), objective.questId, questObjective->Amount);
+            // Check if bot has required money - usually just a check at turn-in
+            HandleMoneyObjective(ai, objective);
+            break;
+
+        // ========== PROGRESS BAR / CRITERIA OBJECTIVES ==========
+        // These are completed through various gameplay actions
+        case QUEST_OBJECTIVE_CRITERIA_TREE:
+            TC_LOG_ERROR("module.playerbot.quest", "🎯 ProcessQuestObjectives: Bot {} - CRITERIA_TREE objective for quest {} (CriteriaID={}) - progress tracked automatically",
+                         bot->GetName(), objective.questId, questObjective->ObjectID);
+            // Criteria tree objectives track achievement-like progress
+            NavigateToObjective(ai, objective);
+            break;
+
+        case QUEST_OBJECTIVE_PROGRESS_BAR:
+            TC_LOG_ERROR("module.playerbot.quest", "📊 ProcessQuestObjectives: Bot {} - PROGRESS_BAR objective for quest {} - progress tracked automatically",
+                         bot->GetName(), objective.questId);
+            // Progress bar objectives are completed through various actions in quest area
+            NavigateToObjective(ai, objective);
+            break;
+
+        // ========== PET BATTLE OBJECTIVES (Not Applicable for Bots) ==========
+        // These require the Pet Battle system which bots cannot participate in
+        case QUEST_OBJECTIVE_WINPETBATTLEAGAINSTNPC:
+            TC_LOG_WARN("module.playerbot.quest", "🐾 ProcessQuestObjectives: Bot {} - WINPETBATTLEAGAINSTNPC objective for quest {} - Pet battles NOT SUPPORTED by bots!",
+                        bot->GetName(), objective.questId);
+            // Pet battle system - bots cannot participate, quest may be stuck
+            break;
+
+        case QUEST_OBJECTIVE_DEFEATBATTLEPET:
+            TC_LOG_WARN("module.playerbot.quest", "🐾 ProcessQuestObjectives: Bot {} - DEFEATBATTLEPET objective for quest {} - Pet battles NOT SUPPORTED by bots!",
+                        bot->GetName(), objective.questId);
+            // Pet battle system - bots cannot participate, quest may be stuck
+            break;
+
+        case QUEST_OBJECTIVE_WINPVPPETBATTLES:
+            TC_LOG_WARN("module.playerbot.quest", "🐾 ProcessQuestObjectives: Bot {} - WINPVPPETBATTLES objective for quest {} - Pet battles NOT SUPPORTED by bots!",
+                        bot->GetName(), objective.questId);
+            // PvP Pet battle system - bots cannot participate, quest may be stuck
+            break;
+
         default:
             TC_LOG_ERROR("module.playerbot.quest", "❓ ProcessQuestObjectives: Bot {} - Unknown objective type {}, calling NavigateToObjective for quest {}",
                          bot->GetName(), questObjective->Type, objective.questId);
@@ -1502,6 +1615,243 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
                      bot->GetName(), spellId, questItemId, targetObject->GetEntry(), targetObject->GetGUID().ToString());
     }
 }
+
+// ============================================================================
+// TalkToNpc - Handler for QUEST_OBJECTIVE_TALKTO objectives
+// These require the bot to find and interact with a specific NPC
+// ============================================================================
+void QuestStrategy::TalkToNpc(BotAI* ai, ObjectiveState const& objective)
+{
+    if (!ai || !ai->GetBot())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ TalkToNpc: NULL ai or bot");
+        return;
+    }
+
+    Player* bot = ai->GetBot();
+
+    // CRITICAL: Must be in world before any grid/map operations
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ TalkToNpc: Bot not in world, aborting");
+        return;
+    }
+
+    // Check for combat - combat takes priority
+    if (bot->IsInCombat())
+    {
+        TC_LOG_DEBUG("module.playerbot.quest", "⚔️ TalkToNpc: Bot {} IN COMBAT - aborting, combat takes priority!",
+                     bot->GetName());
+        return;
+    }
+
+    // Get the quest objective details
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (!quest || objective.objectiveIndex >= quest->Objectives.size())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ TalkToNpc: Invalid quest {} or objective index {}",
+                     objective.questId, objective.objectiveIndex);
+        return;
+    }
+
+    QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+    uint32 npcEntry = static_cast<uint32>(questObjective.ObjectID);
+
+    TC_LOG_ERROR("module.playerbot.quest", "🗣️ TalkToNpc: Bot {} looking for NPC entry {} for quest {} objective {}",
+                 bot->GetName(), npcEntry, objective.questId, objective.objectiveIndex);
+
+    // Check if we're already near the NPC
+    Creature* targetNpc = bot->FindNearestCreature(npcEntry, 100.0f);
+
+    if (targetNpc)
+    {
+        float distance = bot->GetExactDist(targetNpc);
+        TC_LOG_ERROR("module.playerbot.quest", "✅ TalkToNpc: Found NPC {} (entry {}) at distance {:.1f}yd",
+                     targetNpc->GetName(), npcEntry, distance);
+
+        if (distance < 5.0f)
+        {
+            // We're close enough - interact with the NPC via gossip
+            TC_LOG_ERROR("module.playerbot.quest", "🗣️ TalkToNpc: Bot {} interacting with NPC {} for TALKTO objective",
+                         bot->GetName(), targetNpc->GetName());
+
+            // Send gossip hello to trigger the quest objective
+            // This simulates clicking on the NPC
+            // Note: GossipMenuIds is a vector in modern TrinityCore - use first menu if available
+            auto const& gossipMenuIds = targetNpc->GetCreatureTemplate()->GossipMenuIds;
+            uint32 gossipMenuId = gossipMenuIds.empty() ? 0 : gossipMenuIds[0];
+            bot->PrepareGossipMenu(targetNpc, gossipMenuId, true);
+            bot->SendPreparedGossip(targetNpc);
+
+            // For some TALKTO objectives, simply being near the NPC completes it
+            // The objective tracking will update automatically via the server
+            TC_LOG_ERROR("module.playerbot.quest", "✅ TalkToNpc: Bot {} sent gossip hello to {} - objective should progress",
+                         bot->GetName(), targetNpc->GetName());
+        }
+        else
+        {
+            // Move closer to the NPC
+            TC_LOG_ERROR("module.playerbot.quest", "🚶 TalkToNpc: Bot {} moving to NPC {} ({:.1f}yd away)",
+                         bot->GetName(), targetNpc->GetName(), distance);
+            BotMovementUtil::MoveToUnit(bot, targetNpc, 3.0f);
+        }
+    }
+    else
+    {
+        // NPC not nearby - navigate to objective location
+        TC_LOG_ERROR("module.playerbot.quest", "🗺️ TalkToNpc: NPC entry {} not nearby, navigating to objective location",
+                     npcEntry);
+        NavigateToObjective(ai, objective);
+    }
+}
+
+// ============================================================================
+// HandleCurrencyObjective - Handler for QUEST_OBJECTIVE_HAVE_CURRENCY objectives
+// Bot needs to have a certain amount of currency when turning in the quest
+// ============================================================================
+void QuestStrategy::HandleCurrencyObjective(BotAI* ai, ObjectiveState const& objective)
+{
+    if (!ai || !ai->GetBot())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ HandleCurrencyObjective: NULL ai or bot");
+        return;
+    }
+
+    Player* bot = ai->GetBot();
+
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ HandleCurrencyObjective: Bot not in world, aborting");
+        return;
+    }
+
+    // Get the quest objective details
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (!quest || objective.objectiveIndex >= quest->Objectives.size())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ HandleCurrencyObjective: Invalid quest {} or objective index {}",
+                     objective.questId, objective.objectiveIndex);
+        return;
+    }
+
+    QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+    uint32 currencyId = static_cast<uint32>(questObjective.ObjectID);
+    uint32 requiredAmount = static_cast<uint32>(questObjective.Amount);
+
+    // Check bot's current currency amount
+    uint32 currentAmount = bot->GetCurrencyQuantity(currencyId);
+
+    TC_LOG_ERROR("module.playerbot.quest", "💰 HandleCurrencyObjective: Bot {} checking currency {} - has {} need {}",
+                 bot->GetName(), currencyId, currentAmount, requiredAmount);
+
+    if (currentAmount >= requiredAmount)
+    {
+        // Bot has enough currency - quest should be completable
+        // The objective is satisfied, so the quest can be turned in
+        TC_LOG_ERROR("module.playerbot.quest", "✅ HandleCurrencyObjective: Bot {} has sufficient currency {} ({}/{})",
+                     bot->GetName(), currencyId, currentAmount, requiredAmount);
+
+        // Check if quest is ready to turn in
+        QuestStatus status = bot->GetQuestStatus(objective.questId);
+        if (status == QUEST_STATUS_COMPLETE)
+        {
+            TurnInQuest(ai, objective.questId);
+        }
+        else
+        {
+            TC_LOG_DEBUG("module.playerbot.quest", "📍 HandleCurrencyObjective: Quest {} not complete yet (status={}), waiting...",
+                         objective.questId, static_cast<int>(status));
+        }
+    }
+    else
+    {
+        // Bot doesn't have enough currency yet
+        // Currency is typically gained through gameplay (dungeons, world quests, etc.)
+        TC_LOG_ERROR("module.playerbot.quest", "⏳ HandleCurrencyObjective: Bot {} needs more currency {} ({}/{}) - continuing gameplay",
+                     bot->GetName(), currencyId, currentAmount, requiredAmount);
+
+        // Navigate to quest area to earn currency
+        NavigateToObjective(ai, objective);
+    }
+}
+
+// ============================================================================
+// HandleMoneyObjective - Handler for QUEST_OBJECTIVE_MONEY objectives
+// Bot needs to have a certain amount of gold/silver/copper
+// ============================================================================
+void QuestStrategy::HandleMoneyObjective(BotAI* ai, ObjectiveState const& objective)
+{
+    if (!ai || !ai->GetBot())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ HandleMoneyObjective: NULL ai or bot");
+        return;
+    }
+
+    Player* bot = ai->GetBot();
+
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ HandleMoneyObjective: Bot not in world, aborting");
+        return;
+    }
+
+    // Get the quest objective details
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (!quest || objective.objectiveIndex >= quest->Objectives.size())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ HandleMoneyObjective: Invalid quest {} or objective index {}",
+                     objective.questId, objective.objectiveIndex);
+        return;
+    }
+
+    QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+    uint32 requiredMoney = static_cast<uint32>(questObjective.Amount);  // In copper
+
+    // Check bot's current money
+    uint32 currentMoney = bot->GetMoney();
+
+    // Format for logging (gold.silver.copper)
+    uint32 reqGold = requiredMoney / 10000;
+    uint32 reqSilver = (requiredMoney % 10000) / 100;
+    uint32 reqCopper = requiredMoney % 100;
+
+    uint32 curGold = currentMoney / 10000;
+    uint32 curSilver = (currentMoney % 10000) / 100;
+    uint32 curCopper = currentMoney % 100;
+
+    TC_LOG_ERROR("module.playerbot.quest", "💵 HandleMoneyObjective: Bot {} checking money - has {}g{}s{}c need {}g{}s{}c",
+                 bot->GetName(), curGold, curSilver, curCopper, reqGold, reqSilver, reqCopper);
+
+    if (currentMoney >= requiredMoney)
+    {
+        // Bot has enough money - quest should be completable
+        TC_LOG_ERROR("module.playerbot.quest", "✅ HandleMoneyObjective: Bot {} has sufficient money",
+                     bot->GetName());
+
+        // Check if quest is ready to turn in
+        QuestStatus status = bot->GetQuestStatus(objective.questId);
+        if (status == QUEST_STATUS_COMPLETE)
+        {
+            TurnInQuest(ai, objective.questId);
+        }
+        else
+        {
+            TC_LOG_DEBUG("module.playerbot.quest", "📍 HandleMoneyObjective: Quest {} not complete yet (status={}), waiting...",
+                         objective.questId, static_cast<int>(status));
+        }
+    }
+    else
+    {
+        // Bot doesn't have enough money yet
+        // Money is gained through gameplay (loot, quest rewards, selling items)
+        TC_LOG_ERROR("module.playerbot.quest", "⏳ HandleMoneyObjective: Bot {} needs more money ({} copper short) - continuing gameplay",
+                     bot->GetName(), requiredMoney - currentMoney);
+
+        // Navigate to quest area or continue normal gameplay to earn money
+        NavigateToObjective(ai, objective);
+    }
+}
+
 void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
 {
     if (!ai || !ai->GetBot())
