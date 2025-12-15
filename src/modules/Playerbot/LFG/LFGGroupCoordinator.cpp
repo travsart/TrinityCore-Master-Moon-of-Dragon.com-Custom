@@ -205,62 +205,83 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
 {
     if (!_enabled || !group)
         return false;
-    TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::TeleportGroupToDungeon - Group: {}, Dungeon: {}",
-        group->GetGUID().ToString(), dungeonId);
+
+    TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::TeleportGroupToDungeon - Group: {}, Dungeon: {}, MemberCount: {}",
+        group->GetGUID().ToString(), dungeonId, group->GetMembersCount());
+
     uint32 successCount = 0;
     uint32 totalMembers = 0;
+    uint32 notFoundCount = 0;
+
     // Teleport all group members
     for (auto const& slot : group->GetMemberSlots())
     {
         Player* member = ObjectAccessor::FindPlayer(slot.guid);
         if (!member)
+        {
+            ++notFoundCount;
+            TC_LOG_WARN("lfg.playerbot", "TeleportGroupToDungeon - Member {} NOT FOUND via ObjectAccessor (name from slot: {})",
+                slot.guid.ToString(), slot.name);
             continue;
+        }
 
         totalMembers++;
 
+        TC_LOG_INFO("lfg.playerbot", "TeleportGroupToDungeon - Attempting teleport for {} (GUID: {})",
+            member->GetName(), member->GetGUID().ToString());
+
         if (TeleportPlayerToDungeon(member, dungeonId))
+        {
             successCount++;
+            TC_LOG_INFO("lfg.playerbot", "TeleportGroupToDungeon - SUCCESS teleporting {} to dungeon {}",
+                member->GetName(), dungeonId);
+        }
+        else
+        {
+            TC_LOG_WARN("lfg.playerbot", "TeleportGroupToDungeon - FAILED to teleport {} to dungeon {}",
+                member->GetName(), dungeonId);
+        }
     }
 
-    TC_LOG_DEBUG("lfg.playerbot", "Teleported {}/{} group members to dungeon {}",
-        successCount, totalMembers, dungeonId);
+    TC_LOG_INFO("lfg.playerbot", "TeleportGroupToDungeon - Result: {} teleported, {} found, {} not found",
+        successCount, totalMembers, notFoundCount);
 
     return successCount == totalMembers;
 }
 
-bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 /*dungeonId*/) const
+bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 dungeonId) const
 {
     if (!player)
         return false;
 
-    // TrinityCore 11.2: Level requirements are handled by ContentTuning system
-    // and player conditions (RequiredPlayerConditionId in LFGDungeonsEntry)
-    // We don't need to check minlevel/maxlevel - the LFG system handles this
+    TC_LOG_DEBUG("lfg.playerbot", "CanTeleportToDungeon - Checking {} for dungeon {} (isDead={}, IsInFlight={}, IsFalling={})",
+        player->GetName(), dungeonId, player->isDead(), player->IsInFlight(), player->IsFalling());
 
     // Check if player is dead
     if (player->isDead())
     {
-        TC_LOG_DEBUG("lfg.playerbot", "Player {} is dead and cannot be teleported", player->GetName());
+        TC_LOG_WARN("lfg.playerbot", "CanTeleportToDungeon - Player {} is DEAD, cannot teleport", player->GetName());
         return false;
     }
 
     // Check if player is in flight
     if (player->IsInFlight())
     {
-        TC_LOG_DEBUG("lfg.playerbot", "Player {} is in flight and cannot be teleported", player->GetName());
+        TC_LOG_WARN("lfg.playerbot", "CanTeleportToDungeon - Player {} is in FLIGHT, cannot teleport", player->GetName());
         return false;
     }
 
     // Check if player is falling
     if (player->IsFalling())
     {
-        TC_LOG_DEBUG("lfg.playerbot", "Player {} is falling and cannot be teleported", player->GetName());
+        TC_LOG_WARN("lfg.playerbot", "CanTeleportToDungeon - Player {} is FALLING, cannot teleport", player->GetName());
         return false;
     }
 
     // Allow teleport even if in combat for LFG (TrinityCore handles this)
     // Combat state is checked by TeleportTo with TELE_TO_NOT_LEAVE_COMBAT flag
 
+    TC_LOG_DEBUG("lfg.playerbot", "CanTeleportToDungeon - Player {} PASSED all checks", player->GetName());
     return true;
 }
 
