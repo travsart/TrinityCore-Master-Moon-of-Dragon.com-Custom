@@ -768,24 +768,122 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // Since bots have no client, we must simulate this response by calling
         // HandleMoveWorldportAck() when the bot is in "teleporting far" state.
         //
-        // Without this fix, bots appear to "logout" because they're removed from the
-        // old map but never added to the new map.
+        // INSTANCE SYNC FIX: For LFG dungeon teleports, bots must wait until another
+        // group member (the human player) has entered the dungeon first. This ensures
+        // all group members enter the SAME instance. Without this, there's a race
+        // condition where bots might create their own instance before the group's
+        // instance is established.
         // ========================================================================
         if (GetPlayer() && GetPlayer()->IsBeingTeleportedFar())
         {
-            TC_LOG_DEBUG("module.playerbot.session",
-                "Bot {} is being teleported far - completing teleport via HandleMoveWorldportAck()",
-                GetPlayer()->GetName());
+            Player* bot = GetPlayer();
+            TeleportLocation const& dest = bot->GetTeleportDest();
+            MapEntry const* destMapEntry = sMapStore.LookupEntry(dest.Location.GetMapId());
 
-            // Complete the far teleport by calling the worldport ack handler
-            // This adds the bot to the new map
-            HandleMoveWorldportAck();
+            bool shouldWaitForGroup = false;
+            uint32 targetInstanceId = 0;
 
-            TC_LOG_DEBUG("module.playerbot.session",
-                "Bot {} far teleport completed, now IsInWorld={}, MapId={}",
-                GetPlayer()->GetName(),
-                GetPlayer()->IsInWorld(),
-                GetPlayer()->GetMapId());
+            // Check if teleporting to a dungeon with a group (LFG scenario)
+            if (destMapEntry && destMapEntry->IsDungeon())
+            {
+                Group* group = bot->GetGroup();
+                if (group && group->isLFGGroup())
+                {
+                    // Check if any group member is already in the destination dungeon
+                    bool groupMemberInDungeon = false;
+                    bool hasHumanWaitingToTeleport = false;
+                    bool thisIsFirstBot = true; // Used when all members are bots
+
+                    for (GroupReference const& ref : group->GetMembers())
+                    {
+                        Player* member = ref.GetSource();
+                        if (!member || member == bot)
+                            continue;
+
+                        // Check if member is already in the dungeon
+                        if (member->IsInWorld() && member->GetMapId() == dest.Location.GetMapId())
+                        {
+                            groupMemberInDungeon = true;
+                            targetInstanceId = member->GetInstanceId();
+                            TC_LOG_DEBUG("module.playerbot.session",
+                                "Bot {} found group member {} already in dungeon (MapId={}, InstanceId={})",
+                                bot->GetName(), member->GetName(), member->GetMapId(), targetInstanceId);
+                            break;
+                        }
+
+                        // Check if a human player is also waiting to teleport
+                        // Human players have real WorldSession with socket connection
+                        if (member->IsBeingTeleportedFar())
+                        {
+                            WorldSession* memberSession = member->GetSession();
+                            if (memberSession && !memberSession->IsBot())
+                            {
+                                hasHumanWaitingToTeleport = true;
+                                TC_LOG_DEBUG("module.playerbot.session",
+                                    "Bot {} detected human {} also waiting to teleport - will wait",
+                                    bot->GetName(), member->GetName());
+                            }
+                            else
+                            {
+                                // Another bot is also waiting - check if we should go first
+                                // Use GUID comparison to ensure deterministic ordering
+                                if (member->GetGUID() < bot->GetGUID())
+                                    thisIsFirstBot = false;
+                            }
+                        }
+                    }
+
+                    // Decide whether to wait:
+                    // - If a group member is already in dungeon: DON'T wait (join their instance)
+                    // - If a human is waiting to teleport: WAIT for them
+                    // - If only bots are waiting: First bot (by GUID) goes, others wait
+                    if (!groupMemberInDungeon)
+                    {
+                        if (hasHumanWaitingToTeleport)
+                        {
+                            shouldWaitForGroup = true;
+                            TC_LOG_DEBUG("module.playerbot.session",
+                                "Bot {} waiting for human player to enter dungeon first (MapId={})",
+                                bot->GetName(), dest.Location.GetMapId());
+                        }
+                        else if (!thisIsFirstBot)
+                        {
+                            shouldWaitForGroup = true;
+                            TC_LOG_DEBUG("module.playerbot.session",
+                                "Bot {} waiting for another bot to enter dungeon first (MapId={})",
+                                bot->GetName(), dest.Location.GetMapId());
+                        }
+                        else
+                        {
+                            TC_LOG_DEBUG("module.playerbot.session",
+                                "Bot {} is first to enter dungeon (MapId={}) - proceeding",
+                                bot->GetName(), dest.Location.GetMapId());
+                        }
+                    }
+                }
+            }
+
+            // Only complete teleport if:
+            // 1. Not a dungeon (no instance sync needed)
+            // 2. Not in an LFG group (no sync needed)
+            // 3. A group member is already in the dungeon (instance exists)
+            if (!shouldWaitForGroup)
+            {
+                TC_LOG_DEBUG("module.playerbot.session",
+                    "Bot {} completing far teleport via HandleMoveWorldportAck() (TargetInstanceId={})",
+                    bot->GetName(), targetInstanceId);
+
+                // Complete the far teleport by calling the worldport ack handler
+                // This adds the bot to the new map
+                HandleMoveWorldportAck();
+
+                TC_LOG_DEBUG("module.playerbot.session",
+                    "Bot {} far teleport completed, now IsInWorld={}, MapId={}, InstanceId={}",
+                    bot->GetName(),
+                    bot->IsInWorld(),
+                    bot->GetMapId(),
+                    bot->GetInstanceId());
+            }
         }
 
         // =======================================================================
