@@ -1569,8 +1569,48 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
 
     if (spellId == 0)
     {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Quest item {} has no ON_USE spell!",
-                     questItemId);
+        // ========================================================================
+        // FALLBACK: Item has no ON_USE spell - try spellclick on target creature
+        // This handles quests like "Fear No Evil" where item 65733's DB2 data
+        // isn't loaded, but creature 50047 has a spellclick spell (93072).
+        // ========================================================================
+        if (isCreatureTarget && targetCreature)
+        {
+            uint32 creatureEntry = targetCreature->GetEntry();
+            auto clickBounds = sObjectMgr->GetSpellClickInfoMapBounds(creatureEntry);
+
+            for (auto const& [entryId, spellClickInfo] : clickBounds)
+            {
+                // Check if this spellclick is valid for the bot
+                if (!spellClickInfo.IsFitToRequirements(bot, targetCreature))
+                    continue;
+
+                TC_LOG_ERROR("module.playerbot.quest",
+                    "🔧 UseQuestItemOnTarget: Item {} has no spell, using SPELLCLICK fallback - creature {} has spellclick spell {}",
+                    questItemId, creatureEntry, spellClickInfo.spellId);
+
+                // Use HandleSpellClick to trigger the spellclick spell
+                targetCreature->HandleSpellClick(bot);
+
+                // Track this target as used
+                _usedQuestItemTargets[objective.questId].insert(targetCreature->GetGUID());
+                _lastQuestItemCastTime = GameTime::GetGameTimeMS();
+
+                TC_LOG_ERROR("module.playerbot.quest",
+                    "✅ UseQuestItemOnTarget: Bot {} triggered SPELLCLICK on creature {} (GUID: {}) - objective should progress",
+                    bot->GetName(), creatureEntry, targetCreature->GetGUID().ToString());
+                return;
+            }
+
+            TC_LOG_ERROR("module.playerbot.quest",
+                "❌ UseQuestItemOnTarget: Quest item {} has no ON_USE spell AND creature {} has no valid spellclick!",
+                questItemId, creatureEntry);
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Quest item {} has no ON_USE spell!",
+                         questItemId);
+        }
         return;
     }
     TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Quest item {} triggers spell {}",
