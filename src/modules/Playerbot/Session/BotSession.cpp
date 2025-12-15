@@ -759,6 +759,35 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // Process bot-specific packets
         ProcessBotPackets();
 
+        // ========================================================================
+        // FAR TELEPORT COMPLETION (LFG Dungeon Entry Fix)
+        // ========================================================================
+        // When a bot is teleported to a different map (e.g., entering a dungeon via LFG),
+        // TrinityCore removes them from the old map and waits for a client response
+        // (CMSG_SUSPEND_TOKEN_RESPONSE) before adding them to the new map.
+        // Since bots have no client, we must simulate this response by calling
+        // HandleMoveWorldportAck() when the bot is in "teleporting far" state.
+        //
+        // Without this fix, bots appear to "logout" because they're removed from the
+        // old map but never added to the new map.
+        // ========================================================================
+        if (GetPlayer() && GetPlayer()->IsBeingTeleportedFar())
+        {
+            TC_LOG_DEBUG("module.playerbot.session",
+                "Bot {} is being teleported far - completing teleport via HandleMoveWorldportAck()",
+                GetPlayer()->GetName());
+
+            // Complete the far teleport by calling the worldport ack handler
+            // This adds the bot to the new map
+            HandleMoveWorldportAck();
+
+            TC_LOG_DEBUG("module.playerbot.session",
+                "Bot {} far teleport completed, now IsInWorld={}, MapId={}",
+                GetPlayer()->GetName(),
+                GetPlayer()->IsInWorld(),
+                GetPlayer()->GetMapId());
+        }
+
         // =======================================================================
         // ENTERPRISE-GRADE _recvQueue PACKET PROCESSING
         // =======================================================================
