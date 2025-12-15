@@ -16,6 +16,7 @@
 #include "Map.h"
 #include "World.h"
 #include "DatabaseEnv.h"
+#include "DB2Stores.h"  // For sAreaTriggerStore (exploration quest area triggers)
 #include "Spatial/SpatialGridQueryHelpers.h"
 #include "Spatial/SpatialGridManager.h"
 #include <algorithm>
@@ -308,6 +309,49 @@ NpcLocationResult BotNpcLocationService::FindQuestObjectiveLocation(Player* bot,
             if (result.isValid)
                 return result;
 
+            break;
+        }
+
+        // ========================================================================
+        // EXPLORATION QUEST FIX: Handle AREATRIGGER objectives for exploration quests
+        // These require the bot to physically enter an area trigger zone
+        // The ObjectID is the area trigger ID - query sAreaTriggerStore for position
+        // ========================================================================
+        case QUEST_OBJECTIVE_AREATRIGGER:
+        case QUEST_OBJECTIVE_AREA_TRIGGER_ENTER:
+        case QUEST_OBJECTIVE_AREA_TRIGGER_EXIT:
+        {
+            uint32 areaTriggerID = static_cast<uint32>(objective.ObjectID);
+            AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(areaTriggerID);
+
+            if (atEntry)
+            {
+                // Check if area trigger is on bot's map
+                if (atEntry->ContinentID == bot->GetMapId())
+                {
+                    result.position.Relocate(atEntry->Pos.X, atEntry->Pos.Y, atEntry->Pos.Z);
+                    result.distance = bot->GetDistance(result.position);
+                    result.isValid = true;
+                    result.qualityScore = 100;  // Area trigger has exact position - highest quality
+                    result.sourceName = "AreaTrigger";
+
+                    TC_LOG_ERROR("module.playerbot.services", "✅ EXPLORATION QUEST: Found AreaTrigger {} at ({:.1f}, {:.1f}, {:.1f}) - Map {} - Radius {:.1f}",
+                                areaTriggerID, atEntry->Pos.X, atEntry->Pos.Y, atEntry->Pos.Z,
+                                atEntry->ContinentID, atEntry->Radius);
+
+                    return result;
+                }
+                else
+                {
+                    TC_LOG_WARN("module.playerbot.services", "⚠️ AreaTrigger {} is on different map {} (bot is on map {})",
+                                areaTriggerID, atEntry->ContinentID, bot->GetMapId());
+                }
+            }
+            else
+            {
+                TC_LOG_WARN("module.playerbot.services", "⚠️ AreaTrigger {} not found in sAreaTriggerStore",
+                            areaTriggerID);
+            }
             break;
         }
 

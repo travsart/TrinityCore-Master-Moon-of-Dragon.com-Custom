@@ -1079,8 +1079,48 @@ void QuestStrategy::ExploreQuestArea(BotAI* ai, ObjectiveState const& objective)
     if (!ai || !ai->GetBot())
         return;
 
-    // Simply navigate to the objective area
-    NavigateToObjective(ai, objective);
+    Player* bot = ai->GetBot();
+
+    // Get the area trigger position from the objective
+    Position objectivePos = GetObjectivePosition(ai, objective);
+
+    if (objectivePos.GetExactDist2d(0.0f, 0.0f) < 0.1f)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ ExploreQuestArea: Bot {} - NO VALID position for exploration quest {} objective {}",
+                     bot->GetName(), objective.questId, objective.objectiveIndex);
+        return;
+    }
+
+    // Calculate 3D distance to the area trigger center
+    float distance3D = bot->GetExactDist(objectivePos);
+    float distance2D = bot->GetExactDist2d(objectivePos.GetPositionX(), objectivePos.GetPositionY());
+    float zDiff = std::abs(bot->GetPositionZ() - objectivePos.GetPositionZ());
+
+    TC_LOG_ERROR("module.playerbot.quest", "🗺️ ExploreQuestArea: Bot {} - Quest {} - Distance to area trigger: 2D={:.1f}, 3D={:.1f}, zDiff={:.1f} at ({:.1f}, {:.1f}, {:.1f})",
+                 bot->GetName(), objective.questId, distance2D, distance3D, zDiff,
+                 objectivePos.GetPositionX(), objectivePos.GetPositionY(), objectivePos.GetPositionZ());
+
+    // MINE/CAVE FIX: For exploration quests, we need to reach the EXACT Z level
+    // The bot must be within a small radius (typically 10-20 yards) AND at the correct Z
+    // to trigger the area trigger event
+    if (distance3D < 5.0f)
+    {
+        // Bot is very close in 3D - the area trigger should fire automatically
+        // when the bot enters the trigger zone
+        TC_LOG_ERROR("module.playerbot.quest", "✅ ExploreQuestArea: Bot {} is AT exploration area (3D dist {:.1f} < 5yd) - waiting for trigger",
+                     bot->GetName(), distance3D);
+        return;
+    }
+
+    // MINE/CAVE FIX: If we're close horizontally but far vertically, we need to go DOWN
+    if (distance2D < 15.0f && zDiff > 10.0f)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "🏔️ ExploreQuestArea: Bot {} is ABOVE/BELOW exploration area (2D={:.1f} < 15, zDiff={:.1f} > 10) - navigating to correct Z level",
+                     bot->GetName(), distance2D, zDiff);
+    }
+
+    // Move directly to the area trigger center position (uses 3D pathfinding)
+    BotMovementUtil::MoveToPosition(bot, objectivePos);
 }
 
 void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& objective)
