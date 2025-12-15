@@ -1585,10 +1585,28 @@ bool QuestStrategy::MoveToObjectiveLocation(BotAI* ai, Position const& location)
 
     Player* bot = ai->GetBot();
 
-    // Check if already at location
-    float distance = bot->GetExactDist2d(location.GetPositionX(), location.GetPositionY());
-    if (distance < 10.0f) // Within 10 yards
+    // MINE/CAVE FIX: Use 3D distance for arrival check
+    // Previously used 2D distance which caused bots to think they arrived at the mine entrance
+    // when the actual spawn was directly below at a lower Z level inside the mine
+    float distance2D = bot->GetExactDist2d(location.GetPositionX(), location.GetPositionY());
+    float distance3D = bot->GetExactDist(location);
+    float zDiff = std::abs(bot->GetPositionZ() - location.GetPositionZ());
+
+    // Consider arrived only if within 10 yards in 3D space
+    // This ensures bots will continue moving to reach proper Z level inside mines
+    if (distance3D < 10.0f)
+    {
+        TC_LOG_DEBUG("module.playerbot.quest", "✅ MoveToObjectiveLocation: Bot {} arrived (3D dist {:.1f} < 10yd)",
+                     bot->GetName(), distance3D);
         return true;
+    }
+
+    // Log movement progress for debugging mine pathing
+    if (zDiff > 5.0f)
+    {
+        TC_LOG_DEBUG("module.playerbot.quest", "🏔️ MoveToObjectiveLocation: Bot {} moving with significant Z difference - dist2D={:.1f} dist3D={:.1f} zDiff={:.1f}",
+                     bot->GetName(), distance2D, distance3D, zDiff);
+    }
 
     // Use centralized movement utility
     return BotMovementUtil::MoveToPosition(bot, location);
@@ -3241,7 +3259,21 @@ bool QuestStrategy::ShouldWanderInQuestArea(BotAI* ai, ObjectiveState const& obj
     if (!quest || objective.objectiveIndex >= quest->Objectives.size())
         return false;
 
-    // Check if quest has area data (QuestPOI with multiple points)
+    QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+
+    // ========================================================================
+    // MINE/CAVE FIX: ALWAYS enable wandering for MONSTER/ITEM objectives
+    // InitializeQuestAreaWandering will use creature spawn locations which have
+    // correct Z coordinates for mine/cave interiors, not 2D POI points.
+    // ========================================================================
+    if (questObjective.Type == QUEST_OBJECTIVE_MONSTER || questObjective.Type == QUEST_OBJECTIVE_ITEM)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "✅ ShouldWanderInQuestArea: Quest {} objective {} is MONSTER/ITEM type - wandering enabled (mine/cave fix)",
+                     objective.questId, objective.objectiveIndex);
+        return true;
+    }
+
+    // For other objective types, check if quest has area data (QuestPOI with multiple points)
     QuestPOIData const* poiData = sObjectMgr->GetQuestPOIData(objective.questId);
 
     if (!poiData || poiData->Blobs.empty())
@@ -3277,7 +3309,99 @@ void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveState const
     _questAreaWanderPoints.clear();
     _currentWanderPointIndex = 0;
 
-    // Get quest POI data
+    // Get quest data to determine objective type
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (!quest || objective.objectiveIndex >= quest->Objectives.size())
+        return;
+
+    QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+
+    // ========================================================================
+    // MINE/CAVE FIX: For MONSTER objectives, use actual creature spawn locations
+    // instead of POI points. POI points are 2D minimap polygons at surface level,
+    // but creature spawns have correct Z coordinates inside mines/caves.
+    // ========================================================================
+    if (questObjective.Type == QUEST_OBJECTIVE_MONSTER || questObjective.Type == QUEST_OBJECTIVE_ITEM)
+    {
+        uint32 creatureEntry = 0;
+
+        if (questObjective.Type == QUEST_OBJECTIVE_MONSTER)
+        {
+            creatureEntry = questObjective.ObjectID;
+        }
+        else if (questObjective.Type == QUEST_OBJECTIVE_ITEM)
+        {
+            // For ITEM objectives, find which creature drops this item
+            uint32 itemId = questObjective.ObjectID;
+            QueryResult result = WorldDatabase.PQuery("SELECT Entry FROM creature_loot_template WHERE Item = {} LIMIT 1", itemId);
+            if (result)
+            {
+                Field* fields = result->Fetch();
+                creatureEntry = fields[0].GetUInt32();
+            }
+        }
+
+        if (creatureEntry != 0)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🗺️ InitializeQuestAreaWandering: Bot {} - Using CREATURE SPAWN locations for entry {} (mine/cave fix)",
+                         bot->GetName(), creatureEntry);
+
+            // Query all spawn locations for this creature on bot's map
+            auto const& creatureSpawnData = sObjectMgr->GetAllCreatureData();
+            uint32 spawnsOnMap = 0;
+
+            for (auto const& pair : creatureSpawnData)
+            {
+                CreatureData const& data = pair.second;
+
+                if (data.id != creatureEntry)
+                    continue;
+
+                if (data.mapId != bot->GetMapId())
+                    continue;
+
+                // Check if spawn is within reasonable distance (1000 yards - covers large mines)
+                float distance = bot->GetExactDist2d(data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY());
+                if (distance > 1000.0f)
+                    continue;
+
+                Position pos;
+                pos.Relocate(data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY(), data.spawnPoint.GetPositionZ());
+                _questAreaWanderPoints.push_back(pos);
+                spawnsOnMap++;
+
+                TC_LOG_ERROR("module.playerbot.quest", "📍 Spawn point {}: ({:.1f}, {:.1f}, {:.1f}) - distance={:.1f}",
+                             spawnsOnMap, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), distance);
+
+                // Limit to 20 spawn points to avoid excessive wandering
+                if (spawnsOnMap >= 20)
+                    break;
+            }
+
+            if (!_questAreaWanderPoints.empty())
+            {
+                // Sort by distance to bot for efficient pathing
+                Position botPos = bot->GetPosition();
+                std::sort(_questAreaWanderPoints.begin(), _questAreaWanderPoints.end(),
+                    [&botPos](Position const& a, Position const& b) {
+                        return botPos.GetExactDist2d(a.GetPositionX(), a.GetPositionY()) <
+                               botPos.GetExactDist2d(b.GetPositionX(), b.GetPositionY());
+                    });
+
+                _currentWanderPointIndex = 0; // Start with nearest spawn
+                TC_LOG_ERROR("module.playerbot.quest", "✅ Bot {} initialized {} SPAWN wander points (mine/cave interior)",
+                             bot->GetName(), _questAreaWanderPoints.size());
+                return; // Successfully initialized with spawn data
+            }
+
+            TC_LOG_WARN("module.playerbot.quest", "⚠️ Bot {} - No spawn data found for creature {} on map {}, falling back to POI",
+                         bot->GetName(), creatureEntry, bot->GetMapId());
+        }
+    }
+
+    // ========================================================================
+    // FALLBACK: Use Quest POI data (original behavior for non-mine areas)
+    // ========================================================================
     QuestPOIData const* poiData = sObjectMgr->GetQuestPOIData(objective.questId);
 
     if (!poiData || poiData->Blobs.empty())
@@ -3289,7 +3413,7 @@ void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveState const
         if (blob.MapID == static_cast<int32>(bot->GetMapId()) &&
             blob.ObjectiveIndex == static_cast<int32>(objective.objectiveIndex))
         {
-            TC_LOG_ERROR("module.playerbot.quest", "🗺️ InitializeQuestAreaWandering: Bot {} - Found quest area with {} POI points",
+            TC_LOG_ERROR("module.playerbot.quest", "🗺️ InitializeQuestAreaWandering: Bot {} - Found quest area with {} POI points (fallback)",
                          bot->GetName(), blob.Points.size());
 
             // Convert POI points to wander positions
@@ -3299,7 +3423,7 @@ void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveState const
                 pos.Relocate(static_cast<float>(point.X), static_cast<float>(point.Y), static_cast<float>(point.Z));
                 _questAreaWanderPoints.push_back(pos);
 
-                TC_LOG_ERROR("module.playerbot.quest", "📍 Wander point {}: ({:.1f}, {:.1f}, {:.1f})",
+                TC_LOG_ERROR("module.playerbot.quest", "📍 POI wander point {}: ({:.1f}, {:.1f}, {:.1f})",
                              _questAreaWanderPoints.size(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
             }
 
@@ -3307,7 +3431,7 @@ void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveState const
             if (!_questAreaWanderPoints.empty())
             {
                 _currentWanderPointIndex = bot->GetGUID().GetCounter() % _questAreaWanderPoints.size();
-                TC_LOG_ERROR("module.playerbot.quest", "🎲 Bot {} starting wander at point {} of {}",
+                TC_LOG_ERROR("module.playerbot.quest", "🎲 Bot {} starting wander at POI point {} of {}",
                              bot->GetName(), _currentWanderPointIndex, _questAreaWanderPoints.size());
             }
 
@@ -3343,25 +3467,26 @@ void QuestStrategy::WanderInQuestArea(BotAI* ai)
     // Update wander time
     _lastWanderTime = currentTime;
 
-    // Check if bot is already at current wander point
+    // MINE/CAVE FIX: Use 3D distance for wander point arrival check
+    // This ensures bots properly navigate to different Z levels inside mines
     Position const& currentWanderPoint = _questAreaWanderPoints[_currentWanderPointIndex];
-    float distance = bot->GetExactDist2d(currentWanderPoint.GetPositionX(), currentWanderPoint.GetPositionY());
-    if (distance < 10.0f)
+    float distance3D = bot->GetExactDist(currentWanderPoint);
+    if (distance3D < 10.0f)
     {
         // Reached current point - move to next point
         _currentWanderPointIndex = (_currentWanderPointIndex + 1) % _questAreaWanderPoints.size();
 
-        TC_LOG_ERROR("module.playerbot.quest", "✅ WanderInQuestArea: Bot {} reached wander point, moving to next point {} of {}",
-                     bot->GetName(), _currentWanderPointIndex, _questAreaWanderPoints.size());
+        TC_LOG_ERROR("module.playerbot.quest", "✅ WanderInQuestArea: Bot {} reached wander point (3D dist {:.1f}), moving to next point {} of {}",
+                     bot->GetName(), distance3D, _currentWanderPointIndex, _questAreaWanderPoints.size());
     }
 
     // Move to current wander point
     Position const& targetPoint = _questAreaWanderPoints[_currentWanderPointIndex];
 
-    TC_LOG_ERROR("module.playerbot.quest", "🚶 WanderInQuestArea: Bot {} wandering to point {} at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
+    TC_LOG_ERROR("module.playerbot.quest", "🚶 WanderInQuestArea: Bot {} wandering to point {} at ({:.1f}, {:.1f}, {:.1f}), dist3D={:.1f}",
                  bot->GetName(), _currentWanderPointIndex,
                  targetPoint.GetPositionX(), targetPoint.GetPositionY(), targetPoint.GetPositionZ(),
-                 bot->GetExactDist2d(targetPoint.GetPositionX(), targetPoint.GetPositionY()));
+                 bot->GetExactDist(targetPoint));
 
     BotMovementUtil::MoveToPosition(bot, targetPoint);
 }

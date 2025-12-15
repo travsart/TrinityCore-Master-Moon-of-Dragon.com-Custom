@@ -35,19 +35,25 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
         return false;
     }
 
-    // Check distance to destination
-    float distToDestination = bot->GetExactDist2d(destination.GetPositionX(), destination.GetPositionY());
+    // MINE/CAVE FIX: Use 3D distance to properly detect vertical distance
+    // Previously used 2D distance which caused bots to think they were "at destination"
+    // when standing at mine entrance but spawn is directly below at different Z
+    float distToDestination2D = bot->GetExactDist2d(destination.GetPositionX(), destination.GetPositionY());
+    float distToDestination3D = bot->GetExactDist(destination);
+    float zDifference = std::abs(bot->GetPositionZ() - destination.GetPositionZ());
 
     // DIAGNOSTIC: Always log movement attempts
-    TC_LOG_ERROR("module.playerbot.movement", "🔍 MoveToPosition: Bot {} dist={:.1f} minDist={:.1f} dest=({:.1f},{:.1f},{:.1f})",
-                 bot->GetName(), distToDestination, minDistanceChange,
+    TC_LOG_ERROR("module.playerbot.movement", "🔍 MoveToPosition: Bot {} dist2D={:.1f} dist3D={:.1f} zDiff={:.1f} minDist={:.1f} dest=({:.1f},{:.1f},{:.1f})",
+                 bot->GetName(), distToDestination2D, distToDestination3D, zDifference, minDistanceChange,
                  destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
 
-    // If we're very close to destination, no need to move
-    if (distToDestination < minDistanceChange)
+    // MINE/CAVE FIX: Use 3D distance for "already at destination" check
+    // This ensures bots will still move if there's significant vertical distance
+    // even if horizontal distance is small (e.g., mine entrance above spawn inside)
+    if (distToDestination3D < minDistanceChange)
     {
-        TC_LOG_ERROR("module.playerbot.movement", "✅ BotMovement: Bot {} already at destination ({:.1f}yd < {:.1f})",
-                     bot->GetName(), distToDestination, minDistanceChange);
+        TC_LOG_ERROR("module.playerbot.movement", "✅ BotMovement: Bot {} already at destination (3D dist {:.1f}yd < {:.1f})",
+                     bot->GetName(), distToDestination3D, minDistanceChange);
         return true;
     }
 
@@ -62,14 +68,14 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
         {
             // Let the current movement continue unless we're stuck or going wrong direction
             // This prevents the "stutter" from constantly restarting movement
-            TC_LOG_ERROR("module.playerbot.movement", "⏭ BotMovement: Bot {} spline ACTIVE (moveType={}), letting it continue - {:.1f}yd to destination",
-                         bot->GetName(), static_cast<int>(currentMoveType), distToDestination);
+            TC_LOG_ERROR("module.playerbot.movement", "⏭ BotMovement: Bot {} spline ACTIVE (moveType={}), letting it continue - {:.1f}yd to destination (3D)",
+                         bot->GetName(), static_cast<int>(currentMoveType), distToDestination3D);
             return true;
         }
         else
         {
-            TC_LOG_ERROR("module.playerbot.movement", "⚠️ BotMovement: Bot {} spline FINALIZED or NULL (moveType={}), will restart - {:.1f}yd to destination",
-                         bot->GetName(), static_cast<int>(currentMoveType), distToDestination);
+            TC_LOG_ERROR("module.playerbot.movement", "⚠️ BotMovement: Bot {} spline FINALIZED or NULL (moveType={}), will restart - {:.1f}yd to destination (3D)",
+                         bot->GetName(), static_cast<int>(currentMoveType), distToDestination3D);
         }
     }
     else
@@ -86,9 +92,9 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     //
     // MotionMaster::MovePoint() is the safer approach, and we maintain deduplication above
     // by checking if a spline is already active before calling this.
-    TC_LOG_ERROR("module.playerbot.movement", "🚶 BotMovement: Bot {} STARTING MOVEMENT to ({:.2f},{:.2f},{:.2f}) - {:.1f}yd",
+    TC_LOG_ERROR("module.playerbot.movement", "🚶 BotMovement: Bot {} STARTING MOVEMENT to ({:.2f},{:.2f},{:.2f}) - {:.1f}yd (3D)",
                  bot->GetName(), destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ(),
-                 distToDestination);
+                 distToDestination3D);
 
     // Use MotionMaster for thread-safe movement initiation
     // The deduplication check above prevents the "60+ MovePoint calls/second" bug
