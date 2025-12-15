@@ -223,6 +223,16 @@ bool LFGBotSelector::IsBotAvailable(Player* bot)
     if (!bot->GetSession())
         return false;
 
+    // Minimum level 10 required for LFG (same as retail)
+    // This prevents low-level bots (like Death Knights in starting zone) from joining
+    constexpr uint8 MIN_LFG_LEVEL = 10;
+    if (bot->GetLevel() < MIN_LFG_LEVEL)
+    {
+        TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::IsBotAvailable - Bot {} is level {} (minimum {} required for LFG)",
+                     bot->GetName(), bot->GetLevel(), MIN_LFG_LEVEL);
+        return false;
+    }
+
     // Must not be in a group
     if (bot->GetGroup())
     {
@@ -371,6 +381,12 @@ std::vector<Player*> LFGBotSelector::FindBotsForRole(uint8 minLevel, uint8 maxLe
 
     if (count == 0)
         return result;
+
+    // Enforce minimum level 10 for LFG (same as retail)
+    // This prevents low-level bots (like Death Knights in starting zone) from joining
+    constexpr uint8 MIN_LFG_LEVEL = 10;
+    if (minLevel < MIN_LFG_LEVEL)
+        minLevel = MIN_LFG_LEVEL;
 
     // Get all online bots
     std::vector<Player*> allBots = GetAllOnlineBots();

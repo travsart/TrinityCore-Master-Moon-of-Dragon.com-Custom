@@ -657,6 +657,16 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
     if (!bot)
         return false;
 
+    // Minimum level 10 required for LFG (same as retail)
+    // This prevents low-level bots (like Death Knights in starting zone) from joining
+    constexpr uint8 MIN_LFG_LEVEL = 10;
+    if (bot->GetLevel() < MIN_LFG_LEVEL)
+    {
+        TC_LOG_DEBUG("module.playerbot", "LFGBotManager::QueueBot - Bot {} is level {} (minimum {} required for LFG)",
+                     bot->GetName(), bot->GetLevel(), MIN_LFG_LEVEL);
+        return false;
+    }
+
     if (bot->GetGroup())
     {
         TC_LOG_WARN("module.playerbot", "LFGBotManager::QueueBot - Bot {} is already in a group", bot->GetName());
