@@ -1610,32 +1610,26 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // CRITICAL FIX: Add bot to world (missing step that prevented bots from entering world)
         pCurrChar->SendInitialPacketsBeforeAddToMap();
 
-        // THREAD SAFETY: Ensure map is created and ready before adding bot
-        // Maps are loaded on-demand when first player enters - we must ensure it's loaded
-        uint32 mapId = pCurrChar->GetMapId();
-        uint32 instanceId = pCurrChar->GetInstanceId();
-
-        TC_LOG_DEBUG("module.playerbot.session", "Bot {} attempting to join MapId={} InstanceId={}",
-            pCurrChar->GetName(), mapId, instanceId);
-
-        // CreateMap will find existing map or create it if it doesn't exist yet
-        // This is what CharacterHandler.cpp does for real players
-        Map* map = sMapMgr->CreateMap(mapId, pCurrChar);
+        // CRITICAL FIX: Player::LoadFromDB() already sets the map via SetMap() at Player.cpp:18257
+        // We MUST use pCurrChar->GetMap() to get the map that was set during LoadFromDB()
+        // DO NOT call CreateMap() separately - this can return a different map instance for
+        // instanced dungeons, causing the assertion "player->GetMap() == this" to fail in AddPlayerToMap
+        Map* map = pCurrChar->GetMap();
         if (!map)
         {
             TC_LOG_ERROR("module.playerbot.session",
-                " CRITICAL: Bot {} cannot create/find map! MapId={} InstanceId={} - Login FAILED",
-                pCurrChar->GetName(), mapId, instanceId);
+                "CRITICAL: Bot {} has no map set after LoadFromDB! MapId={} InstanceId={} - Login FAILED",
+                pCurrChar->GetName(), pCurrChar->GetMapId(), pCurrChar->GetInstanceId());
             _loginState.store(LoginState::LOGIN_FAILED);
             m_playerLoading.Clear();
             return;
         }
 
-        TC_LOG_DEBUG("module.playerbot.session", " Bot {} map ready: MapId={} InstanceId={} MapPtr=0x{:X}",
-            pCurrChar->GetName(), mapId, instanceId, reinterpret_cast<uintptr_t>(map));
+        TC_LOG_DEBUG("module.playerbot.session", "Bot {} using map from LoadFromDB: MapId={} InstanceId={} MapPtr=0x{:X}",
+            pCurrChar->GetName(), map->GetId(), map->GetInstanceId(), reinterpret_cast<uintptr_t>(map));
 
-        // Now safely add bot to the map
-    if (!map->AddPlayerToMap(pCurrChar))
+        // Now safely add bot to the map (matching CharacterHandler.cpp:1273 pattern)
+        if (!map->AddPlayerToMap(pCurrChar))
         {
             TC_LOG_ERROR("module.playerbot.session", "Failed to add bot player {} to map", characterGuid.ToString());
             _loginState.store(LoginState::LOGIN_FAILED);
