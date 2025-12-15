@@ -575,28 +575,42 @@ bool WarlockAI::SummonPet()
 
             summonSpell = SUMMON_VOIDWALKER;
             }
-            if (summonSpell && !bot->GetSpellHistory()->HasCooldown(summonSpell))
+    if (summonSpell && !bot->GetSpellHistory()->HasCooldown(summonSpell))
     {
-        // CRITICAL FIX: Check soul shard POWER resource, not items!
-        // In WoW 11.2 (The War Within), Summon Imp costs 1 Soul Shard (power type).
-        // Soul Shards are a class resource (like mana), NOT inventory items (item 6265 was vanilla).
-        // Power type: POWER_SOUL_SHARDS = 7
-        // Each Soul Shard = 10 Soul Shard Fragments, max 5 shards (50 fragments)
-        int32 soulShards = bot->GetPower(POWER_SOUL_SHARDS);
+        // ========================================================================
+        // CRITICAL FIX: Basic pet summons do NOT cost soul shards in modern WoW!
+        // ========================================================================
+        // In WoW 11.2 (The War Within), Summon Imp/Voidwalker/Succubus/Felhunter
+        // are FREE to cast - they only have a cast time (6 seconds).
+        // Soul Shards are ONLY used for combat abilities (Chaos Bolt, etc.).
+        // The previous check for "soulShards >= 10" was blocking ALL pet summons!
+        // ========================================================================
 
-        // Need at least 10 fragments (1 shard) to summon
-        if (soulShards >= 10)
+        TC_LOG_INFO("playerbot.warlock", "🐾 Warlock {} summoning pet with spell {} (level {})",
+                    bot->GetName(), summonSpell, bot->GetLevel());
+
+        SpellCastResult result = bot->CastSpell(CastSpellTargetArg(bot), summonSpell);
+
+        if (result == SPELL_CAST_OK)
         {
-            bot->CastSpell(CastSpellTargetArg(bot), summonSpell);
             _lastPetSummon = GameTime::GetGameTimeMS();
             _petsSpawned++;
-            TC_LOG_INFO("playerbot.warlock", "Summoning pet with spell {} (soul shards: {})", summonSpell, soulShards);
+            TC_LOG_INFO("playerbot.warlock", "✅ Warlock {} pet summon started successfully (spell {})",
+                        bot->GetName(), summonSpell);
             return true;
         }
         else
         {
-            TC_LOG_DEBUG("playerbot.warlock", "Cannot summon pet - insufficient soul shards ({}/10)", soulShards);
+            TC_LOG_ERROR("playerbot.warlock", "❌ Warlock {} pet summon FAILED - spell {} result {}",
+                         bot->GetName(), summonSpell, static_cast<int>(result));
         }
+    }
+    else if (summonSpell == 0)
+    {
+        TC_LOG_ERROR("playerbot.warlock", "❌ Warlock {} has no pet summon spell! Level={}, HasImp={}, HasVW={}",
+                     bot->GetName(), bot->GetLevel(),
+                     bot->HasSpell(SUMMON_IMP) ? "YES" : "NO",
+                     bot->HasSpell(SUMMON_VOIDWALKER) ? "YES" : "NO");
     }
 
     return false;
