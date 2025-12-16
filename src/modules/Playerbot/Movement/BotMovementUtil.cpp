@@ -12,9 +12,150 @@
 #include "BotMovementUtil.h"
 #include "Log.h"
 #include "Map.h"
+#include "PhaseShift.h"
 
 namespace Playerbot
 {
+
+// ============================================================================
+// Z-VALUE CORRECTION FUNCTIONS
+// ============================================================================
+// CRITICAL: These functions prevent bots from falling through the ground or
+// hovering above terrain. ALL position calculations MUST use these functions
+// before passing positions to movement systems.
+// ============================================================================
+
+bool BotMovementUtil::CorrectPositionToGround(Player* bot, Position& pos, float heightOffset)
+{
+    // Validate input
+    if (!bot)
+    {
+        TC_LOG_ERROR("module.playerbot.movement",
+            "CorrectPositionToGround: NULL bot pointer");
+        return false;
+    }
+
+    // CRITICAL: Use FindMap() instead of GetMap() to avoid ASSERT crash
+    // GetMap() has ASSERT(m_currMap) which crashes if map is null
+    // This can happen during loading, logout, or map transitions
+    Map* map = bot->FindMap();
+    if (!map)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "CorrectPositionToGround: Bot {} has no map, cannot correct Z",
+            bot->GetName());
+        return false;
+    }
+
+    // Use bot's phase shift for proper visibility/collision
+    return CorrectPositionToGroundWithMap(map, bot->GetPhaseShift(), pos, heightOffset);
+}
+
+bool BotMovementUtil::CorrectPositionToGroundWithMap(Map* map, PhaseShift const& phaseShift,
+                                                     Position& pos, float heightOffset)
+{
+    // Validate input
+    if (!map)
+    {
+        TC_LOG_ERROR("module.playerbot.movement",
+            "CorrectPositionToGroundWithMap: NULL map pointer");
+        return false;
+    }
+
+    // Store original Z for logging
+    float originalZ = pos.GetPositionZ();
+
+    // Get ground height at this X/Y position
+    // Parameters:
+    //   - phaseShift: visibility/phase info
+    //   - x, y: position to check
+    //   - z: starting height for downward search
+    //   - checkVMap: true to use vmaps for indoor areas (default)
+    //   - maxSearchDist: how far down to search (100.0f covers most terrain)
+    float groundZ = map->GetHeight(phaseShift,
+                                   pos.GetPositionX(),
+                                   pos.GetPositionY(),
+                                   pos.GetPositionZ() + 10.0f,  // Search from slightly above current Z
+                                   true,                         // Use VMaps
+                                   100.0f);                      // Max search distance
+
+    // Check if we got a valid height
+    if (groundZ <= INVALID_HEIGHT)
+    {
+        // No valid ground found - this can happen over water, void, etc.
+        // Try searching from higher up in case we're in a deep hole
+        groundZ = map->GetHeight(phaseShift,
+                                 pos.GetPositionX(),
+                                 pos.GetPositionY(),
+                                 pos.GetPositionZ() + 50.0f,  // Search from much higher
+                                 true,
+                                 200.0f);                      // Larger search distance
+
+        if (groundZ <= INVALID_HEIGHT)
+        {
+            TC_LOG_DEBUG("module.playerbot.movement",
+                "CorrectPositionToGroundWithMap: No valid ground at ({:.1f}, {:.1f}, {:.1f}) - keeping original Z",
+                pos.GetPositionX(), pos.GetPositionY(), originalZ);
+            return false;
+        }
+    }
+
+    // Apply the corrected Z with height offset
+    float newZ = groundZ + heightOffset;
+
+    // Calculate the correction amount for diagnostics
+    float correction = std::abs(newZ - originalZ);
+
+    // Only log if the correction was significant (> 1 yard)
+    if (correction > 1.0f)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "CorrectPositionToGroundWithMap: Z corrected by {:.1f}yd ({:.1f} -> {:.1f}) at ({:.1f}, {:.1f})",
+            correction, originalZ, newZ, pos.GetPositionX(), pos.GetPositionY());
+    }
+
+    // Apply the correction
+    pos.m_positionZ = newZ;
+
+    return true;
+}
+
+float BotMovementUtil::GetGroundHeight(Player* bot, float x, float y, float z)
+{
+    // Validate input
+    if (!bot)
+        return INVALID_HEIGHT;
+
+    // Use FindMap() instead of GetMap() to avoid ASSERT crash
+    Map* map = bot->FindMap();
+    if (!map)
+        return INVALID_HEIGHT;
+
+    // Get height using bot's phase shift
+    return map->GetHeight(bot->GetPhaseShift(), x, y, z + 10.0f, true, 100.0f);
+}
+
+bool BotMovementUtil::HasValidGround(Player* bot, Position const& pos, float maxHeightDifference)
+{
+    // Validate input
+    if (!bot)
+        return false;
+
+    // Get ground height at position
+    float groundZ = GetGroundHeight(bot, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
+
+    // Check if we got a valid height
+    if (groundZ <= INVALID_HEIGHT)
+        return false;
+
+    // Check if the ground is within acceptable range
+    float heightDiff = std::abs(pos.GetPositionZ() - groundZ);
+    return heightDiff <= maxHeightDifference;
+}
+
+// ============================================================================
+// MOVEMENT FUNCTIONS
+// ============================================================================
 
 bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, uint32 pointId, float minDistanceChange)
 {
@@ -167,6 +308,11 @@ bool BotMovementUtil::MoveToTarget(Player* bot, WorldObject* target, uint32 poin
     Position destination;
     destination.Relocate(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
 
+    // CRITICAL FIX: Correct Z to actual ground level
+    // Target's Z may be different from ground level at bot's approach position
+    // (e.g., target flying, on a different elevation, or Z from database not matching terrain)
+    CorrectPositionToGround(bot, destination);
+
     return MoveToPosition(bot, destination, pointId, minDistanceChange);
 }
 
@@ -190,11 +336,18 @@ bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32
 
     Position destination;
     // Calculate position that is 'distance' yards from unit, on the line between bot and unit
+    // NOTE: We initially use unit's Z, but it will be corrected to ground level below
     destination.Relocate(
         unit->GetPositionX() - distance * std::cos(angle),
         unit->GetPositionY() - distance * std::sin(angle),
         unit->GetPositionZ()
     );
+
+    // CRITICAL FIX: Correct Z to actual ground level at the calculated position
+    // The calculated position may be over terrain that's at a completely different Z level
+    // than the unit (e.g., unit on a hill, calculated position is over a cliff)
+    // Without this correction, bots can fall through the ground or hover in mid-air
+    CorrectPositionToGround(bot, destination);
 
     TC_LOG_DEBUG("module.playerbot", "🚶 BotMovement: Bot {} approaching {} to within {:.1f}yd at ({:.2f},{:.2f},{:.2f})",
                  bot->GetName(), unit->GetName(), distance,

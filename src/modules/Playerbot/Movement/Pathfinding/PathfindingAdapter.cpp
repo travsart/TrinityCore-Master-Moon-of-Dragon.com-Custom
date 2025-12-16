@@ -10,6 +10,7 @@
 #include "PathfindingAdapter.h"
 #include "Player.h"
 #include "Map.h"
+#include "../BotMovementUtil.h"
 
 #include "PhaseShift.h"
 #include "Log.h"
@@ -159,7 +160,13 @@ namespace Playerbot
             float angle = target->GetAbsoluteAngle(bot);
             targetPos.m_positionX += range * cos(angle);
             targetPos.m_positionY += range * sin(angle);
+            // Z will be corrected below
         }
+
+        // CRITICAL FIX: Correct Z to actual ground level at the calculated position
+        // When adjusting X/Y by range, the target's Z may not match the terrain
+        // at the new position (e.g., target on hill, calculated position over cliff)
+        BotMovementUtil::CorrectPositionToGround(bot, targetPos);
 
         return CalculatePath(bot, targetPos, path);
     }
@@ -181,8 +188,14 @@ namespace Playerbot
         formationPos.m_positionY = leaderPos.GetPositionY() +
             offset.GetPositionX() * sin(leaderOrientation) +
             offset.GetPositionY() * cos(leaderOrientation);
-        formationPos.m_positionZ = leaderPos.GetPositionZ();
+        formationPos.m_positionZ = leaderPos.GetPositionZ();  // Initial estimate
         formationPos.SetOrientation(leaderOrientation);
+
+        // CRITICAL FIX: Correct Z to actual ground level at the formation position
+        // Formation positions are calculated with offset from leader, but terrain
+        // at the formation X/Y may be at a completely different Z level
+        // (e.g., leader on flat ground, formation position over a cliff edge)
+        BotMovementUtil::CorrectPositionToGround(bot, formationPos);
 
         return CalculatePath(bot, formationPos, path);
     }
@@ -190,7 +203,10 @@ namespace Playerbot
     bool PathfindingAdapter::CalculateFleePath(Player* bot, Unit* threat,
                                               float distance, MovementPath& path)
     {
-        if (!bot || !threat || !bot->GetMap())
+        // CRITICAL FIX: Use FindMap() instead of GetMap() to avoid ASSERT crash
+        // GetMap() has ASSERT(m_currMap) which crashes if map is null
+        Map* map = bot ? bot->FindMap() : nullptr;
+        if (!bot || !threat || !map)
             return false;
 
         // Calculate flee direction (opposite of threat)
@@ -198,19 +214,23 @@ namespace Playerbot
         angle = Position::NormalizeOrientation(angle);
 
         // Try to find a valid flee position
-        Map* map = bot->GetMap();
         Position fleePos;
         bool found = false;
 
         // Try multiple angles if direct opposite is blocked
-    for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < 8; ++i)
         {
             float tryAngle = angle + (i % 2 == 0 ? i/2 * M_PI/4 : -i/2 * M_PI/4);
             tryAngle = Position::NormalizeOrientation(tryAngle);
 
             fleePos = bot->GetNearPosition(distance, tryAngle);
+
+            // CRITICAL FIX: Correct Z to actual ground level at the flee position
+            // GetNearPosition may return a position with incorrect Z for terrain
+            BotMovementUtil::CorrectPositionToGround(bot, fleePos);
+
             // Check if position is valid
-    if (IsWalkablePosition(map, fleePos))
+            if (IsWalkablePosition(map, fleePos))
             {
                 found = true;
                 break;

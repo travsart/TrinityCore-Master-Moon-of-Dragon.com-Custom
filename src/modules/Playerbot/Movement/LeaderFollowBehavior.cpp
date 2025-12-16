@@ -923,13 +923,20 @@ Position LeaderFollowBehavior::FindAlternativePosition(Player* bot, const Positi
         Position testPos;
         testPos.m_positionX = targetPos.GetPositionX() + cos(angle) * baseDistance;
         testPos.m_positionY = targetPos.GetPositionY() + sin(angle) * baseDistance;
-        testPos.m_positionZ = targetPos.GetPositionZ();
+        testPos.m_positionZ = targetPos.GetPositionZ();  // Initial estimate
+
+        // CRITICAL FIX: Correct Z to actual ground level at the test position
+        // The test position may be over terrain at a different Z level
+        BotMovementUtil::CorrectPositionToGround(bot, testPos);
 
         if (IsPositionSafe(testPos))
             return testPos;
     }
 
-    return targetPos;
+    // No safe alternative found - return original with Z correction
+    Position correctedTarget = targetPos;
+    BotMovementUtil::CorrectPositionToGround(bot, correctedTarget);
+    return correctedTarget;
 }
 
 bool LeaderFollowBehavior::IsPositionSafe(const Position& pos)
@@ -1061,7 +1068,7 @@ Position LeaderFollowBehavior::CalculateCombatPosition(Player* bot, Player* lead
                 float angle = target->GetOrientation() + M_PI;
                 combatPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;
                 combatPos.m_positionY = target->GetPositionY() + sin(angle) * 3.0f;
-                combatPos.m_positionZ = target->GetPositionZ();
+                combatPos.m_positionZ = target->GetPositionZ();  // Will be corrected below
             }
             break;
 
@@ -1074,15 +1081,27 @@ Position LeaderFollowBehavior::CalculateCombatPosition(Player* bot, Player* lead
                 float distance = _formationRole == FormationRole::HEALER ? 25.0f : 20.0f;
                 combatPos.m_positionX = target->GetPositionX() + cos(angle) * distance;
                 combatPos.m_positionY = target->GetPositionY() + sin(angle) * distance;
-                combatPos.m_positionZ = target->GetPositionZ();
+                combatPos.m_positionZ = target->GetPositionZ();  // Will be corrected below
             }
             break;
 
         default:
             // Default to following leader closely
+            // NOTE: CalculateFollowPosition already handles Z correction
             combatPos = CalculateFollowPosition(leader, _formationRole);
-            break;
+            // Return early since Z is already corrected
+            if (!IsPositionSafe(combatPos))
+            {
+                combatPos = FindAlternativePosition(bot, combatPos);
+            }
+            return combatPos;
     }
+
+    // CRITICAL FIX: Correct Z to actual ground level at the calculated position
+    // Combat positions are calculated relative to target, but the terrain at that
+    // X/Y may be at a completely different Z level (cliffs, hills, ramps, etc.)
+    // Without this correction, bots can fall through the ground or hover in mid-air
+    BotMovementUtil::CorrectPositionToGround(bot, combatPos);
 
     // Ensure position is safe
     if (!IsPositionSafe(combatPos))
@@ -1104,8 +1123,13 @@ Position LeaderFollowBehavior::PredictLeaderPosition(Player* leader, float timeA
     Position predicted;
     predicted.m_positionX = leader->GetPositionX() + cos(orientation) * distance;
     predicted.m_positionY = leader->GetPositionY() + sin(orientation) * distance;
-    predicted.m_positionZ = leader->GetPositionZ();
+    predicted.m_positionZ = leader->GetPositionZ();  // Initial estimate
     predicted.SetOrientation(orientation);
+
+    // CRITICAL FIX: Correct Z to actual ground level at the predicted position
+    // Predicted positions extrapolate in X/Y but terrain Z may be different
+    // This prevents bots from falling through ground when predicting over hills/cliffs
+    BotMovementUtil::CorrectPositionToGround(leader, predicted);
 
     return predicted;
 }
@@ -1566,8 +1590,16 @@ Position FollowBehaviorUtils::PredictMovement(::Unit* unit, float timeAhead)
     Position predicted;
     predicted.m_positionX = unit->GetPositionX() + cos(orientation) * distance;
     predicted.m_positionY = unit->GetPositionY() + sin(orientation) * distance;
-    predicted.m_positionZ = unit->GetPositionZ();
+    predicted.m_positionZ = unit->GetPositionZ();  // Initial estimate
     predicted.SetOrientation(orientation);
+
+    // CRITICAL FIX: Correct Z to actual ground level at the predicted position
+    // Predicted positions extrapolate in X/Y but terrain Z may be different
+    // Use FindMap() to avoid ASSERT crash
+    if (Map* map = unit->FindMap())
+    {
+        BotMovementUtil::CorrectPositionToGroundWithMap(map, unit->GetPhaseShift(), predicted);
+    }
 
     return predicted;
 }
