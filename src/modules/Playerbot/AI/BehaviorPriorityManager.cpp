@@ -205,12 +205,20 @@ void BehaviorPriorityManager::AddExclusionRule(BehaviorPriority a, BehaviorPrior
 Strategy* BehaviorPriorityManager::SelectActiveBehavior(
     ::std::vector<Strategy*>& activeStrategies)
 {
-    TC_LOG_ERROR("module.playerbot.priority", " SelectActiveBehavior ENTRY: {} active strategies",
+    // CRITICAL FIX (2024-12-16): Changed TC_LOG_ERROR to TC_LOG_TRACE
+    // These are debug statements, not errors. Excessive ERROR logging from
+    // worker threads was causing heap corruption in WriteWinConsole due to
+    // string formatting race conditions with Strategy::GetName() references.
+    //
+    // Also cache strategy names as copies (not references) before logging
+    // to prevent use-after-free if strategy is deleted during log formatting.
+
+    TC_LOG_TRACE("module.playerbot.priority", "SelectActiveBehavior ENTRY: {} active strategies",
                  activeStrategies.size());
 
     if (activeStrategies.empty())
     {
-        TC_LOG_ERROR("module.playerbot.priority", " SelectActiveBehavior: No active strategies, returning nullptr");
+        TC_LOG_TRACE("module.playerbot.priority", "SelectActiveBehavior: No active strategies, returning nullptr");
         m_lastSelectedStrategy = nullptr;
         return nullptr;
     }
@@ -220,39 +228,38 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
 
     for (Strategy* strategy : activeStrategies)
     {
+        if (!strategy)
+            continue;
+
         const BehaviorMetadata* meta = FindMetadata(strategy);
         if (!meta)
         {
             // Strategy not registered, default to SOLO priority
-            TC_LOG_ERROR("module.playerbot.priority",
-                " SelectActiveBehavior: Strategy '{}' NOT registered, using SOLO priority",
-                strategy->GetName());
+            // Cache name as copy to prevent use-after-free
+            ::std::string stratName = strategy->GetName();
+            TC_LOG_TRACE("module.playerbot.priority",
+                "SelectActiveBehavior: Strategy '{}' NOT registered, using SOLO priority",
+                stratName);
             prioritizedStrategies.emplace_back(BehaviorPriority::SOLO, strategy);
         }
         else
         {
-            TC_LOG_ERROR("module.playerbot.priority",
-                " SelectActiveBehavior: Strategy '{}' registered with priority {} ({})",
-                strategy->GetName(), static_cast<int>(meta->priority), ToString(meta->priority));
-
             // Check if this is a BehaviorManager and if it's enabled
-    if (auto* behaviorMgr = dynamic_cast<BehaviorManager*>(strategy))
+            if (auto* behaviorMgr = dynamic_cast<BehaviorManager*>(strategy))
             {
                 if (!behaviorMgr->IsEnabled())
-                {
-                    TC_LOG_ERROR("module.playerbot.priority",
-                        " SelectActiveBehavior: Strategy '{}' is disabled (BehaviorManager::IsEnabled = false), skipping",
-                        strategy->GetName());
                     continue;
-                }
             }
 
             prioritizedStrategies.emplace_back(meta->priority, strategy);
         }
     }
 
-    TC_LOG_ERROR("module.playerbot.priority", " SelectActiveBehavior: {} prioritized strategies after registration check",
-                 prioritizedStrategies.size());
+    if (prioritizedStrategies.empty())
+    {
+        m_lastSelectedStrategy = nullptr;
+        return nullptr;
+    }
 
     // Sort by priority (descending)
     ::std::sort(prioritizedStrategies.begin(), prioritizedStrategies.end(),
@@ -260,94 +267,62 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
             return a.first > b.first;
         });
 
-    // Select highest priority non-excluded strategy
-    TC_LOG_ERROR("module.playerbot.priority", " SelectActiveBehavior: Starting selection loop with {} candidates",
-                 prioritizedStrategies.size());
-
     // Track which priorities are actually viable (non-zero relevance)
     // This prevents strategies with 0.0f relevance from blocking lower-priority strategies
     ::std::vector<BehaviorPriority> viablePriorities;
 
     for (const auto& [priority, strategy] : prioritizedStrategies)
     {
-        TC_LOG_ERROR("module.playerbot.priority", " Evaluating strategy '{}' with priority {} ({})",
-                     strategy->GetName(), static_cast<int>(priority), ToString(priority));
+        if (!strategy)
+            continue;
 
         // Check if strategy's IsActive method returns true
-    if (!strategy->IsActive(m_ai))
-        {
-            TC_LOG_ERROR("module.playerbot.priority",
-                " Strategy '{}' (priority {}) NOT active (IsActive returned false)",
-                strategy->GetName(),
-                static_cast<int>(priority));
+        if (!strategy->IsActive(m_ai))
             continue;
-        }
 
         // CRITICAL FIX: Check strategy relevance BEFORE exclusion check
         // This prevents strategies with 0.0f relevance from blocking lower-priority strategies
         float relevance = strategy->GetRelevance(m_ai);
-        TC_LOG_ERROR("module.playerbot.priority",
-            " Strategy '{}' (priority {}) relevance = {:.1f}",
-            strategy->GetName(),
-            static_cast<int>(priority),
-            relevance);
 
         if (relevance <= 0.0f)
-        {
-            TC_LOG_ERROR("module.playerbot.priority",
-                " Strategy '{}' (priority {}) has ZERO relevance ({:.1f}), skipping (won't block lower priorities)",
-                strategy->GetName(),
-                static_cast<int>(priority),
-                relevance);
             continue;
-        }
 
         // Strategy has viable relevance - add to viable list for exclusion checking
         viablePriorities.push_back(priority);
 
         // Check if blocked by OTHER VIABLE priorities
-    if (IsBlockedByExclusion(priority, viablePriorities))
-        {
-            TC_LOG_ERROR("module.playerbot.priority",
-                " Strategy '{}' (priority {}) BLOCKED by viable higher-priority exclusion rules",
-                strategy->GetName(),
-                static_cast<int>(priority));
+        if (IsBlockedByExclusion(priority, viablePriorities))
             continue;
-        }
 
-        // This is our winner - log if changed
-    if (m_lastSelectedStrategy != strategy)
+        // This is our winner - log only if changed
+        if (m_lastSelectedStrategy != strategy)
         {
-            TC_LOG_ERROR("module.playerbot.priority",
-                " WINNER: Selected strategy '{}' with priority {} and relevance {:.1f} (was: {})",
-                strategy->GetName(),
+            // Cache names as copies for thread-safe logging
+            ::std::string newStratName = strategy->GetName();
+            ::std::string oldStratName = m_lastSelectedStrategy ?
+                m_lastSelectedStrategy->GetName() : "none";
+
+            TC_LOG_DEBUG("module.playerbot.priority",
+                "Strategy changed: '{}' -> '{}' (priority {}, relevance {:.1f})",
+                oldStratName,
+                newStratName,
                 static_cast<int>(priority),
-                relevance,
-                m_lastSelectedStrategy ? m_lastSelectedStrategy->GetName() : "none");
+                relevance);
 
             m_lastSelectedStrategy = strategy;
             m_activePriority = priority;
-        }
-        else
-        {
-            TC_LOG_ERROR("module.playerbot.priority",
-                " SAME WINNER: Strategy '{}' still selected (priority {}, relevance {:.1f})",
-                strategy->GetName(),
-                static_cast<int>(priority),
-                relevance);
         }
 
         return strategy;
     }
 
     // No strategy selected
-    TC_LOG_ERROR("module.playerbot.priority",
-        " NO STRATEGY SELECTED: All {} candidates failed checks (was: {})",
-        prioritizedStrategies.size(),
-        m_lastSelectedStrategy ? m_lastSelectedStrategy->GetName() : "none");
-
     if (m_lastSelectedStrategy != nullptr)
     {
+        TC_LOG_DEBUG("module.playerbot.priority",
+            "No strategy selected (was: {})",
+            m_lastSelectedStrategy->GetName());
+
         m_lastSelectedStrategy = nullptr;
         m_activePriority = BehaviorPriority::SOLO;
     }

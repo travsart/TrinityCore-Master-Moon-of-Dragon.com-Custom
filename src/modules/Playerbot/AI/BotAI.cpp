@@ -678,21 +678,6 @@ void BotAI::UpdateStrategies(uint32 diff)
     // CRITICAL: This must run EVERY frame for following to work properly
     // No throttling allowed here!
 
-    // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
-    static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-    static std::unordered_map<std::string, uint32> strategyLogAccumulators;
-
-    bool isTestBot = _bot && (testBots.find(_bot->GetName()) != testBots.end());bool shouldLogStrategy = false;
-
-    if (isTestBot)
-    {
-        std::string const& botName = _bot->GetName();strategyLogAccumulators[botName] += diff;
-        if (strategyLogAccumulators[botName] >= 50000)
-        {
-            shouldLogStrategy = true;
-            strategyLogAccumulators[botName] = 0;}
-    }
-
     // ========================================================================
     // PHASE 1: Collect all active strategies WITHOUT holding lock
     // ========================================================================
@@ -700,13 +685,6 @@ void BotAI::UpdateStrategies(uint32 diff)
     std::vector<Strategy*> strategiesToCheck;
     {
         std::lock_guard lock(_mutex);
-
-        // DEBUG LOGGING THROTTLE: Use shouldLogStrategy from above (already throttled)
-        if (shouldLogStrategy)
-        {
-            TC_LOG_ERROR("module.playerbot", "🔍 ACTIVE STRATEGIES: Bot {} has {} active strategies in _activeStrategies set",
-                        _bot->GetName(), _activeStrategies.size());
-        }
 
         for (auto const& strategyName : _activeStrategies)
         {
@@ -724,19 +702,11 @@ void BotAI::UpdateStrategies(uint32 diff)
 
     std::vector<Strategy*> activeStrategies;
 
-    // OLD DEBUG CODE REMOVED - now using test bot whitelist throttling above (lines 433-454)
-    // static uint32 debugStrategyCounter = 0;
-    // bool shouldLogStrategy = (++debugStrategyCounter % 10 == 0);
-
     for (Strategy* strategy : strategiesToCheck)
     {
         if (strategy && strategy->IsActive(this))
         {
             activeStrategies.push_back(strategy);
-            if (shouldLogStrategy)
-            {
-                TC_LOG_ERROR("module.playerbot.ai", "🎯 STRATEGY ACTIVE: Bot {} strategy '{}'",_bot->GetName(), strategy->GetName());
-            }
         }
     }
 
@@ -752,80 +722,28 @@ void BotAI::UpdateStrategies(uint32 diff)
 
         // Select highest priority valid strategy
         selectedStrategy = _priorityManager->SelectActiveBehavior(activeStrategies);
-
-        if (shouldLogStrategy && selectedStrategy)
-        {
-            TC_LOG_ERROR("module.playerbot", "🏆 PRIORITY WINNER: Bot {} selected strategy '{}' from {} candidates",_bot->GetName(), selectedStrategy->GetName(), activeStrategies.size());
-        }
     }
 
     // ========================================================================
     // PHASE 4: Execute the selected strategy
     // ========================================================================
 
-    // DIAGNOSTIC: Log whether strategy was selected (ALWAYS, throttled per bot)
-    {
-        static ::std::unordered_map<::std::string, uint32> lastSelectedLog;
-        uint32 now = GameTime::GetGameTimeMS();
-        ::std::string botName = _bot->GetName();
-        if (lastSelectedLog.find(botName) == lastSelectedLog.end() || (now - lastSelectedLog[botName]) > 5000)
-        {
-            TC_LOG_ERROR("module.playerbot.strategy",
-                "📊 STRATEGY SELECTION: Bot {} - selectedStrategy={}, activeCount={}",
-                botName,
-                selectedStrategy ? selectedStrategy->GetName() : "NULL",
-                activeStrategies.size());
-            lastSelectedLog[botName] = now;
-        }
-    }
-
     if (selectedStrategy)
     {
-        // DIAGNOSTIC: Log strategy execution (ALWAYS, throttled per bot)
-        {
-            static ::std::unordered_map<::std::string, uint32> lastExecLog;
-            uint32 now = GameTime::GetGameTimeMS();
-            ::std::string botName = _bot->GetName();
-            if (lastExecLog.find(botName) == lastExecLog.end() || (now - lastExecLog[botName]) > 5000)
-            {
-                TC_LOG_ERROR("module.playerbot.strategy",
-                    "⚡ EXECUTING: Bot {} strategy '{}' (will call UpdateBehavior)",
-                    botName, selectedStrategy->GetName());
-                lastExecLog[botName] = now;
-            }
-        }
-
         // Special handling for follow strategy - needs every frame update
         if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(selectedStrategy))
         {
-            if (shouldLogStrategy)TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateFollowBehavior for bot {}", _bot->GetName());
             followBehavior->UpdateFollowBehavior(this, diff);
         }
         else
         {
-            // DIAGNOSTIC: Always log strategy UpdateBehavior call (throttled)
-            {
-                static ::std::unordered_map<::std::string, uint32> lastUpdateLog;
-                uint32 now = GameTime::GetGameTimeMS();
-                ::std::string botName = _bot->GetName();
-                if (lastUpdateLog.find(botName) == lastUpdateLog.end() || (now - lastUpdateLog[botName]) > 5000)
-                {
-                    TC_LOG_ERROR("module.playerbot.strategy",
-                        "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",
-                        botName, selectedStrategy->GetName());
-                    lastUpdateLog[botName] = now;
-                }
-            }
             selectedStrategy->UpdateBehavior(this, diff);
         }
 
-        _performanceMetrics.strategiesEvaluated = 1;}
+        _performanceMetrics.strategiesEvaluated = 1;
+    }
     else
     {
-        if (shouldLogStrategy)
-        {
-            TC_LOG_ERROR("module.playerbot", "⚠️ NO STRATEGY SELECTED for bot {} (had {} active)",_bot->GetName(), activeStrategies.size());
-        }
         _performanceMetrics.strategiesEvaluated = 0;
     }
 }
