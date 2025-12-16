@@ -226,14 +226,30 @@ void ClassAI::OnCombatUpdate(uint32 diff)
         // Solution: Queue the facing request via BotSession::QueueFacingTarget()
         // The main thread (BotWorldSessionMgr::ProcessAllDeferredPackets) will call
         // BotSession::ProcessPendingFacing() to safely execute SetFacingToObject().
+        //
+        // CRITICAL FIX (2024-12-16): Do NOT call QueueFacingTarget when chasing!
+        // ChaseMovementGenerator already handles facing the target automatically.
+        // Calling SetFacingToObject while chasing manipulates movement splines,
+        // interfering with the smooth chase motion and causing stuttering.
+        // This was the ROOT CAUSE of low-level bot combat stuttering.
         // ========================================================================
         if (_currentCombatTarget)
         {
-            // Get the BotSession to queue facing request
-            WorldSession* session = GetBot()->GetSession();
-            if (BotSession* botSession = dynamic_cast<BotSession*>(session))
+            // Check if bot is already chasing - ChaseMovementGenerator handles facing
+            ::MotionMaster* motionMaster = GetBot()->GetMotionMaster();
+            ::MovementGeneratorType currentMotion = motionMaster ?
+                motionMaster->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) : IDLE_MOTION_TYPE;
+
+            // Only manually face target when NOT chasing (e.g., standing still casting)
+            // Chase movement already includes automatic facing toward target
+            if (currentMotion != CHASE_MOTION_TYPE)
             {
-                botSession->QueueFacingTarget(_currentCombatTarget->GetGUID());
+                // Get the BotSession to queue facing request
+                WorldSession* session = GetBot()->GetSession();
+                if (BotSession* botSession = dynamic_cast<BotSession*>(session))
+                {
+                    botSession->QueueFacingTarget(_currentCombatTarget->GetGUID());
+                }
             }
         }
 
@@ -300,6 +316,44 @@ void ClassAI::OnCombatUpdate(uint32 diff)
         // No target in combat - try to apply buffs
         UpdateBuffs();
     }
+}
+
+// ============================================================================
+// NON-COMBAT UPDATE - Called when bot is NOT in combat
+// ============================================================================
+
+void ClassAI::OnNonCombatUpdate(uint32 /*diff*/)
+{
+    Player* bot = GetBot();
+    if (!bot || !bot->IsAlive())
+        return;
+
+    // Don't do anything while casting (e.g., pet summon has 6s cast time)
+    if (bot->HasUnitState(UNIT_STATE_CASTING))
+        return;
+
+    // ========================================================================
+    // BASELINE BOT HANDLING (levels 1-9 or no specialization)
+    // ========================================================================
+    // CRITICAL FIX: Low-level bots need ApplyBaselineBuffs() called out of combat
+    // for pet summoning (warlocks), buff application, and other preparation.
+    // This was completely missing before, causing warlock pets to never summon!
+    if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
+    {
+        TC_LOG_DEBUG("module.playerbot.baseline",
+                     "Bot {} (level {}) applying BASELINE buffs out of combat",
+                     bot->GetName(), bot->GetLevel());
+
+        s_baselineRotationManager.ApplyBaselineBuffs(bot);
+        return; // Baseline handling complete
+    }
+
+    // ========================================================================
+    // SPECIALIZED BOT HANDLING (level 10+ with specialization)
+    // ========================================================================
+    // For spec bots, call the virtual UpdateBuffs() which is overridden per class
+    // Example: AfflictionWarlockRefactored::UpdateBuffs() calls EnsurePetActive()
+    UpdateBuffs();
 }
 
 // ============================================================================
