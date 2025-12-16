@@ -1677,6 +1677,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         createInfo->Race = race;
         createInfo->Class = classId;
         createInfo->Sex = gender;
+        createInfo->UseNPE = false;  // Use classic starting zone, not New Player Experience
 
         // Set default customizations (simplified - using basic appearance)
         // These would normally be randomized based on the race
@@ -1734,6 +1735,38 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         newChar->setCinematic(1); // Skip intro cinematics for bots
         newChar->SetAtLoginFlag(AT_LOGIN_FIRST);
+
+        // POSITION VALIDATION FIX: Ensure bot has valid position before saving
+        // Position defaults to (0,0,0) and IsPositionValid() returns TRUE for (0,0,0)
+        // because it only checks coordinate bounds, not gameplay validity.
+        // This caused bots to be saved with invalid positions on wrong maps.
+        if (newChar->GetPositionX() == 0.0f && newChar->GetPositionY() == 0.0f && newChar->GetPositionZ() == 0.0f)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "POSITION BUG DETECTED: Bot {} has (0,0,0) position after Create()! "
+                "Race: {}, Class: {}. Attempting to fix using playercreateinfo.",
+                name, race, classId);
+
+            // Get correct starting position from playercreateinfo
+            PlayerInfo const* info = sObjectMgr->GetPlayerInfo(race, classId);
+            if (info)
+            {
+                PlayerInfo::CreatePosition const& startPos = info->createPosition;
+                newChar->Relocate(startPos.Loc);
+                newChar->SetHomebind(startPos.Loc, newChar->GetAreaId());
+
+                TC_LOG_INFO("module.playerbot.spawner",
+                    "Position fixed: Bot {} relocated to ({:.2f}, {:.2f}, {:.2f}) on map {}",
+                    name, startPos.Loc.GetPositionX(), startPos.Loc.GetPositionY(),
+                    startPos.Loc.GetPositionZ(), startPos.Loc.GetMapId());
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.spawner",
+                    "CRITICAL: Cannot fix position - no PlayerInfo for race {} class {}",
+                    race, classId);
+            }
+        }
 
         // Save to database
         TC_LOG_TRACE("module.playerbot.spawner", "Saving character to database");

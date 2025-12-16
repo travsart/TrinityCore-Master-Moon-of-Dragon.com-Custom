@@ -675,11 +675,33 @@ public:
         // Check if bot is involved
         bool attackerIsBot = IsBot(attacker);
         bool victimIsBot = IsBot(victim);
-        if (!attackerIsBot && !victimIsBot)
+        // CRITICAL FIX: Check if victim is a bot's pet
+        // When a pet is attacked, the owner bot must be notified to engage the attacker
+        // This ensures the bot will defend its pet instead of watching it die
+        Player* petOwnerBot = nullptr;
+        if (!victimIsBot && victim && victim->IsPet())
+        {
+            if (Unit* owner = victim->GetOwner())
+            {
+                if (Player* ownerPlayer = owner->ToPlayer())
+                {
+                    if (IsBot(ownerPlayer))
+                    {
+                        petOwnerBot = ownerPlayer;
+                        TC_LOG_DEBUG("module.playerbot.events",
+                            "Pet {} (owner: {}) attacked by {} for {} damage - notifying owner bot",
+                            victim->GetName(), ownerPlayer->GetName(),
+                            attacker ? attacker->GetName() : "unknown", damage);
+                    }
+                }
+            }
+        }
+
+        if (!attackerIsBot && !victimIsBot && !petOwnerBot)
             return;
 
         // Phase 7.3: Direct event dispatch for damage events
-    if (attackerIsBot)
+        if (attackerIsBot)
         {
             Player* attackerPlayer = attacker->ToPlayer();
             if (attackerPlayer)
@@ -724,7 +746,32 @@ public:
                 }
             }
         }
+
+        // CRITICAL FIX: Notify bot owner when their pet is attacked
+        // This triggers combat engagement so the bot defends its pet
+        if (petOwnerBot && attacker)
+        {
+            // Dispatch DAMAGE_TAKEN event to the pet owner
+            // The attacker GUID tells the bot who to target
+            BotEvent petDamageEvent(EventType::DAMAGE_TAKEN,
+                                    attacker->GetGUID(),
+                                    victim->GetGUID());  // victim is the pet
+            petDamageEvent.data = std::to_string(damage) + ":pet";  // Mark as pet damage
+            petDamageEvent.priority = 200;  // High priority - defend pet!
+            DispatchToBotEventDispatcher(petOwnerBot, petDamageEvent);
+
+            // If pet is critically low, send critical health event
+            if (victim->GetHealthPct() < 30.0f)
+            {
+                BotEvent petCriticalEvent(EventType::HEALTH_CRITICAL,
+                                          attacker->GetGUID(),
+                                          victim->GetGUID());
+                petCriticalEvent.priority = 250;  // Very high priority
+                DispatchToBotEventDispatcher(petOwnerBot, petCriticalEvent);
+            }
+        }
     }
+
     void OnHeal(Unit* healer, Unit* receiver, uint32& gain) override
     {
         // Check if bot is involved

@@ -84,6 +84,15 @@ public:
      */
     void OnCombatUpdate(uint32 diff) override;
 
+    /**
+     * Override from BotAI - handles out-of-combat updates
+     * Called when bot is NOT in combat state
+     * CRITICAL: This handles pet summoning, buffs, and preparation
+     *
+     * @param diff Time since last update in milliseconds
+     */
+    void OnNonCombatUpdate(uint32 diff) override;
+
     // ========================================================================
     // PURE VIRTUAL COMBAT INTERFACE - Must be implemented by each class
     // ========================================================================

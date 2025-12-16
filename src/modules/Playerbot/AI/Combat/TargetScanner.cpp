@@ -9,6 +9,7 @@
 
 #include "TargetScanner.h"
 #include "Player.h"
+#include "Pet.h"
 #include "Creature.h"
 #include "Group.h"
 #include "SpellInfo.h"
@@ -243,8 +244,14 @@ namespace Playerbot
             // Calculate priority using snapshot data
             uint8 priority = PRIORITY_NORMAL;
 
-            // Prioritize creatures attacking bot or group members
-    if (it->victim == m_bot->GetGUID())
+            // Prioritize creatures attacking bot, bot's pet, or group members
+            // CRITICAL FIX: Include pet in priority check - if something attacks our pet,
+            // we must respond immediately to protect it
+            ObjectGuid petGuid = m_bot->GetPetGUID();
+            bool attackingBotOrPet = (it->victim == m_bot->GetGUID()) ||
+                                     (!petGuid.IsEmpty() && it->victim == petGuid);
+
+            if (attackingBotOrPet)
                 priority = PRIORITY_CRITICAL;
             else if (it->isInCombat)
                 priority = PRIORITY_NORMAL;
@@ -702,14 +709,41 @@ namespace Playerbot
 
         Unit* victim = target->GetVictim();
         // Attacking bot
-    if (victim == m_bot)
+        if (victim == m_bot)
             return true;
 
+        // CRITICAL FIX: Check if attacking bot's pet
+        // Pets are extensions of the player - if something attacks the pet,
+        // the bot must respond to defend it
+        if (Pet* pet = m_bot->GetPet())
+        {
+            if (victim == pet)
+            {
+                TC_LOG_DEBUG("playerbot.scanner",
+                    "TargetScanner::IsAttackingGroup - {} is attacking bot {}'s pet {}!",
+                    target->GetName(), m_bot->GetName(), pet->GetName());
+                return true;
+            }
+        }
+
         // Attacking group member
-    if (Group* group = m_bot->GetGroup())
+        if (Group* group = m_bot->GetGroup())
         {
             if (group->IsMember(victim->GetGUID()))
                 return true;
+
+            // Also check group members' pets
+            for (GroupReference const& itr : group->GetMembers())
+            {
+                if (Player* member = itr.GetSource())
+                {
+                    if (Pet* memberPet = member->GetPet())
+                    {
+                        if (victim == memberPet)
+                            return true;
+                    }
+                }
+            }
         }
 
         return false;

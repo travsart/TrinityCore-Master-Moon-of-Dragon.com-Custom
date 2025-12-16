@@ -330,6 +330,25 @@ public:
         HandleDefensiveCooldowns();
     }
 
+    /**
+     * @brief Called by BotAI when NOT in combat - handles pet summoning
+     * CRITICAL FIX: Refactored warlocks were NOT summoning pets because
+     * OnNonCombatUpdate was not overridden, and UpdateBuffs was only called IN combat!
+     * Pet summons have 6 second cast time - MUST happen out of combat!
+     */
+    void OnNonCombatUpdate(uint32 /*diff*/) override
+    {
+        Player* bot = this->GetBot();
+        if (!bot || !bot->IsAlive())
+            return;
+
+        // Don't summon while casting (6s cast time!)
+        if (bot->HasUnitState(UNIT_STATE_CASTING))
+            return;
+
+        // Primary purpose: Ensure Felguard is summoned out of combat
+        EnsureFelguardActive();
+    }
 
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)

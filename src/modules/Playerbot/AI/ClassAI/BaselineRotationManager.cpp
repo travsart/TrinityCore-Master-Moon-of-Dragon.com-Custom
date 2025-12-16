@@ -17,6 +17,7 @@
 #include "Map.h"
 #include "Log.h"  // For TC_LOG_DEBUG
 #include "WorldSession.h"  // For bot->GetSession()->QueuePacket()
+#include "MotionMaster.h"  // For MoveChase - low-level bot movement
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 #include "GameTime.h"
@@ -79,14 +80,28 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
 
     // Initiate auto-attack if not already attacking this target
     // This is critical for low-level bots and serves as a fallback if no spells work
-    if (bot->GetVictim() != target)    {
+    if (bot->GetVictim() != target)
+    {
         bot->Attack(target, true);
         TC_LOG_DEBUG("module.playerbot.baseline",
-
                      "Bot {} initiated auto-attack on {} (baseline rotation)",
-
                      bot->GetName(), target->GetName());
     }
+
+    // ========================================================================
+    // MOVEMENT HANDLING REMOVED - Delegated to SoloCombatStrategy
+    // ========================================================================
+    // CRITICAL FIX: Do NOT call MoveChase here!
+    // Movement is now handled exclusively by SoloCombatStrategy::UpdateBehavior()
+    // Having both BaselineRotationManager and SoloCombatStrategy call MoveChase
+    // causes stutter because the motion type might not update immediately,
+    // leading to both systems issuing MoveChase in rapid succession.
+    //
+    // SoloCombatStrategy has a 500ms throttle and proper motion type checking.
+    // ========================================================================
+    TC_LOG_TRACE("module.playerbot.baseline",
+                 "Bot {} BASELINE - movement handled by SoloCombatStrategy",
+                 bot->GetName());
 
     // Get baseline abilities for bot's class - FIX: use GetClass() not getClass()
     auto abilities = GetBaselineAbilities(bot->GetClass());
