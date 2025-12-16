@@ -15,6 +15,7 @@
 #include "Unit.h"
 #include "Log.h"
 #include "MotionMaster.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {
@@ -190,9 +191,10 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     MovementGeneratorType currentMotion = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
 
-    // DIAGNOSTIC: Log current motion type every time to detect conflicts
-    TC_LOG_ERROR("module.playerbot.strategy",
-        " SoloCombatStrategy: Bot {} motion check - currentMotion={} ({}), distance={:.1f}yd, optimal={:.1f}yd",
+    // DIAGNOSTIC: Log current motion type (throttled to avoid spam)
+    // Use TRACE level - this runs every frame and TC_LOG_ERROR would flood logs
+    TC_LOG_TRACE("module.playerbot.strategy",
+        "SoloCombatStrategy: Bot {} motion check - currentMotion={} ({}), distance={:.1f}yd, optimal={:.1f}yd",
         bot->GetName(),
         static_cast<uint32>(currentMotion),
         currentMotion == CHASE_MOTION_TYPE ? "CHASE" :
@@ -201,31 +203,105 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         currentMotion == IDLE_MOTION_TYPE ? "IDLE" : "OTHER",
         currentDistance, optimalRange);
 
-    // CRITICAL: Do NOT interfere with CHASE motion!
-    // The MotionMaster's ChaseMovementGenerator handles positioning automatically.
-    // If we keep clearing and re-issuing MoveChase, we create a "stuttering" effect
-    // where the bot walks 2 yards, gets reset, walks 2 yards, gets reset, etc.
-    //
-    // The REAL issue is that ClassAI or other systems might be issuing conflicting
-    // movement commands. Let MotionMaster handle chase positioning naturally.
-    //
-    // Only issue MoveChase if bot is NOT already chasing
-    if (currentMotion != CHASE_MOTION_TYPE)
+    // CRITICAL FIX: Use throttle to prevent stutter from multiple MoveChase calls
+    // The problem: Multiple systems (QuestStrategy, SoloCombatStrategy, BaselineRotationManager)
+    // can all call MoveChase in rapid succession before the motion type updates.
+    // Solution: After issuing MoveChase, wait at least 500ms before issuing another.
+    static constexpr uint32 MOVECHASE_THROTTLE_MS = 500;
+    uint32 currentTime = GameTime::GetGameTimeMS();
+
+    // Only issue MoveChase if:
+    // 1. Not already chasing, OR
+    // 2. Throttle has expired (allow re-issue after 500ms)
+    bool shouldIssueMoveChase = (currentMotion != CHASE_MOTION_TYPE) &&
+                                (currentTime - _lastMoveChaseReissue >= MOVECHASE_THROTTLE_MS);
+
+    if (shouldIssueMoveChase)
     {
         // Start chasing target at optimal range
         mm->MoveChase(target, optimalRange);
 
-        TC_LOG_ERROR("module.playerbot.strategy",
-            " SoloCombatStrategy: Bot {} STARTED CHASING {} at {:.1f}yd range (was motion type {})",
+        // Reset stuck detection when starting new chase
+        _lastKnownDistance = currentDistance;
+        _stuckCheckTimer = 0;
+        _stuckDuration = 0;
+
+        // Record when we issued MoveChase (throttle)
+        _lastMoveChaseReissue = currentTime;
+
+        TC_LOG_DEBUG("module.playerbot.strategy",
+            "SoloCombatStrategy: Bot {} STARTED CHASING {} at {:.1f}yd range (was motion type {})",
             bot->GetName(), target->GetName(), optimalRange, static_cast<uint32>(currentMotion));
     }
     else
     {
-        // Already chasing - DON'T interfere! Let MotionMaster handle it.
-        // ChaseMovementGenerator will automatically adjust position as the bot/target moves.
-        TC_LOG_TRACE("module.playerbot.strategy",
-            " SoloCombatStrategy: Bot {} ALREADY CHASING {} (distance {:.1f}/{:.1f}yd) - letting MotionMaster handle positioning",
-            bot->GetName(), target->GetName(), currentDistance, optimalRange);
+        // Already chasing - check for stuck condition
+        // When pathfinding fails, bot stays in CHASE mode but doesn't move
+        // We need to detect this and force a path recalculation
+
+        _stuckCheckTimer += diff;
+
+        // Only check for stuck if we're far away (> STUCK_DISTANCE_THRESHOLD yards)
+        // Close-range oscillation is normal during melee combat
+        if (currentDistance > STUCK_DISTANCE_THRESHOLD)
+        {
+            if (_stuckCheckTimer >= STUCK_CHECK_INTERVAL)
+            {
+                _stuckCheckTimer = 0;
+
+                // Check if we've made progress toward the target
+                float progress = _lastKnownDistance - currentDistance;
+
+                if (progress < PROGRESS_THRESHOLD)
+                {
+                    // No significant progress made - increment stuck duration
+                    _stuckDuration += STUCK_CHECK_INTERVAL;
+
+                    TC_LOG_DEBUG("module.playerbot.strategy",
+                        "SoloCombatStrategy: Bot {} potential stuck - dist={:.1f}yd, lastDist={:.1f}yd, progress={:.1f}yd, stuckDuration={}ms",
+                        bot->GetName(), currentDistance, _lastKnownDistance, progress, _stuckDuration);
+
+                    if (_stuckDuration >= STUCK_THRESHOLD)
+                    {
+                        // Bot is stuck! Force path recalculation by re-issuing MoveChase
+                        TC_LOG_ERROR("module.playerbot.strategy",
+                            "SoloCombatStrategy: Bot {} STUCK for {}ms at {:.1f}yd from {} - forcing path recalc",
+                            bot->GetName(), _stuckDuration, currentDistance, target->GetName());
+
+                        // Clear current movement and re-issue chase
+                        mm->Clear();
+                        mm->MoveChase(target, optimalRange);
+
+                        // Reset stuck tracking
+                        _stuckDuration = 0;
+                        _lastKnownDistance = currentDistance;
+                    }
+                }
+                else
+                {
+                    // Making progress - reset stuck duration
+                    _stuckDuration = 0;
+
+                    TC_LOG_TRACE("module.playerbot.strategy",
+                        "SoloCombatStrategy: Bot {} making progress - dist={:.1f}yd, progress={:.1f}yd",
+                        bot->GetName(), currentDistance, progress);
+                }
+
+                // Update last known distance for next check
+                _lastKnownDistance = currentDistance;
+            }
+        }
+        else
+        {
+            // Close to target - reset stuck tracking
+            _stuckDuration = 0;
+            _stuckCheckTimer = 0;
+            _lastKnownDistance = currentDistance;
+
+            TC_LOG_TRACE("module.playerbot.strategy",
+                "SoloCombatStrategy: Bot {} close to {} (dist={:.1f}yd) - no stuck check needed",
+                bot->GetName(), target->GetName(), currentDistance);
+        }
     }
 
     // ========================================================================

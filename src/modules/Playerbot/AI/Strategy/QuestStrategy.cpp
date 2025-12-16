@@ -1015,67 +1015,25 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
         // 3. Now call Attack() to start the swing timer
         bot->Attack(target, true);
 
-        // 4. CRITICAL: Position ranged classes at optimal range
-        // This mirrors BotAI::UpdateSoloBehaviors (lines 645-659) for autonomous combat
-        // Without this, casters will stand 40+ yards away and never cast spells!
-        if (bot->GetClass() == CLASS_HUNTER ||
-            bot->GetClass() == CLASS_MAGE ||
-            bot->GetClass() == CLASS_WARLOCK ||
-            bot->GetClass() == CLASS_PRIEST)
-        {
-            // Move to optimal range instead of melee
-            float optimalRange = 25.0f; // Standard ranged distance
-            float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
-
-            TC_LOG_ERROR("module.playerbot.quest", "📏 EngageQuestTargets: Bot {} is RANGED class ({}), currentDistance={:.1f}yd, optimalRange={:.1f}yd",
-                         bot->GetName(), bot->GetClass(), currentDistance, optimalRange);
-
-            if (currentDistance > optimalRange)
-            {
-                // Move closer but stay at range
-                Position pos = target->GetNearPosition(optimalRange, 0.0f);
-
-                // PHASE 5 MIGRATION: Use Movement Arbiter with QUEST priority (50)
-                BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
-                if (botAI && botAI->GetUnifiedMovementCoordinator())
-                {
-                    bool accepted = botAI->RequestPointMovement(
-                        PlayerBotMovementPriority::QUEST,  // Priority 50 - LOW tier
-                        pos,
-                        "Quest objective positioning",
-                        "QuestStrategy");
-
-                    if (accepted)
-                    {
-                        TC_LOG_ERROR("module.playerbot.quest", "🏃 EngageQuestTargets: Bot {} moving TO optimal range (from {:.1f}yd → {:.1f}yd)",
-                                     bot->GetName(), currentDistance, optimalRange);
-                    }
-                    else
-                    {
-                        TC_LOG_TRACE("playerbot.movement.arbiter",
-                            "QuestStrategy: Movement rejected for bot {} - higher priority active",
-                            bot->GetName());
-                    }
-                }
-                else
-                {
-                    // FALLBACK: Direct MotionMaster call if arbiter not available
-                    bot->GetMotionMaster()->MovePoint(0, pos);
-                    TC_LOG_ERROR("module.playerbot.quest", "🏃 EngageQuestTargets: Bot {} moving TO optimal range (from {:.1f}yd → {:.1f}yd)",
-                                 bot->GetName(), currentDistance, optimalRange);
-                }
-            }
-            else
-            {
-                TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} already in range ({:.1f}yd <= {:.1f}yd), ready to cast",
-                             bot->GetName(), currentDistance, optimalRange);
-            }
-        }
-        else
-        {
-            TC_LOG_ERROR("module.playerbot.quest", "⚔️ EngageQuestTargets: Bot {} is MELEE class ({}), no range positioning needed",
-                         bot->GetName(), bot->GetClass());
-        }
+        // ========================================================================
+        // COMBAT POSITIONING DELEGATED TO SoloCombatStrategy
+        // ========================================================================
+        // CRITICAL FIX: Do NOT call MovePoint/MoveChase here for ANY class!
+        // SoloCombatStrategy handles ALL combat positioning with proper throttling.
+        //
+        // Calling movement commands from multiple systems (QuestStrategy AND
+        // SoloCombatStrategy) causes stuttering at combat engagement because:
+        // 1. QuestStrategy calls MovePoint → motion type = POINT
+        // 2. SoloCombatStrategy calls MoveChase → motion type = CHASE
+        // 3. Next frame, motion type changes detected → another movement command
+        // 4. This creates a rapid oscillation causing visible stutter
+        //
+        // SoloCombatStrategy already handles ranged vs melee positioning correctly
+        // using ClassAI::GetOptimalRange() which knows the bot's spec.
+        // ========================================================================
+        TC_LOG_DEBUG("module.playerbot.quest",
+            "EngageQuestTargets: Bot {} (class {}) - SoloCombatStrategy will handle ALL combat positioning",
+            bot->GetName(), bot->GetClass());
 
         TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} set to combat state and initiated attack on {} - ClassAI will handle rotation",
                      bot->GetName(), target->GetName());
@@ -1994,18 +1952,100 @@ bool QuestStrategy::ShouldEngageTarget(BotAI* ai, ::Unit* target, ObjectiveState
 
     QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
 
-    if (questObjective.Type != QUEST_OBJECTIVE_MONSTER)
-        return false;
+    // Handle MONSTER objectives (kill creature)
+    if (questObjective.Type == QUEST_OBJECTIVE_MONSTER)
+    {
+        if (target->GetEntry() != questObjective.ObjectID)
+            return false;
 
-    if (target->GetEntry() != questObjective.ObjectID)
-        return false;
+        // Check if already at max kills
+        uint32 currentKills = bot->GetQuestObjectiveData(objective.questId, questObjective.StorageIndex);
+        if (currentKills >= static_cast<uint32>(questObjective.Amount))
+        {
+            TC_LOG_DEBUG("module.playerbot.quest", "⚠️ ShouldEngageTarget: Bot {} - MONSTER objective complete ({}/{}) for quest {}",
+                         bot->GetName(), currentKills, questObjective.Amount, objective.questId);
+            return false;
+        }
 
-    // Check if already at max kills
-    uint32 currentKills = bot->GetQuestObjectiveData(objective.questId, questObjective.StorageIndex);
-    if (currentKills >= static_cast<uint32>(questObjective.Amount))
-        return false;
+        TC_LOG_DEBUG("module.playerbot.quest", "✅ ShouldEngageTarget: Bot {} - MONSTER objective {}/{} for quest {}, target {} matches",
+                     bot->GetName(), currentKills, questObjective.Amount, objective.questId, target->GetName());
+        return true;
+    }
 
-    return true;
+    // Handle ITEM objectives (kill creature that drops quest item)
+    // This is for quests like "Replenishing the Healing Crystals" (9280)
+    // where bots need to kill Vale Moth (16520) to loot item 22889
+    if (questObjective.Type == QUEST_OBJECTIVE_ITEM)
+    {
+        uint32 itemId = questObjective.ObjectID;
+
+        // Look up which creature drops this item (with caching)
+        static std::unordered_map<uint32, uint32> itemToCreatureCache;
+        static std::recursive_mutex cacheMutex;
+
+        uint32 targetCreatureEntry = 0;
+
+        // Check cache first
+        {
+            std::lock_guard lock(cacheMutex);
+            auto cacheIt = itemToCreatureCache.find(itemId);
+            if (cacheIt != itemToCreatureCache.end())
+            {
+                targetCreatureEntry = cacheIt->second;
+            }
+        }
+
+        // If not in cache, query database
+        if (targetCreatureEntry == 0)
+        {
+            QueryResult result = WorldDatabase.PQuery("SELECT Entry FROM creature_loot_template WHERE Item = {} LIMIT 1", itemId);
+            if (result)
+            {
+                Field* fields = result->Fetch();
+                targetCreatureEntry = fields[0].GetUInt32();
+
+                // Cache the result
+                {
+                    std::lock_guard lock(cacheMutex);
+                    itemToCreatureCache[itemId] = targetCreatureEntry;
+                }
+            }
+            else
+            {
+                // Item doesn't drop from creatures - not an engage target
+                TC_LOG_DEBUG("module.playerbot.quest", "⚠️ ShouldEngageTarget: Bot {} - ITEM {} doesn't drop from creatures",
+                             bot->GetName(), itemId);
+                return false;
+            }
+        }
+
+        // Check if target is the creature that drops this item
+        if (target->GetEntry() != targetCreatureEntry)
+        {
+            TC_LOG_DEBUG("module.playerbot.quest", "⚠️ ShouldEngageTarget: Bot {} - Target {} (entry {}) doesn't drop item {} (need entry {})",
+                         bot->GetName(), target->GetName(), target->GetEntry(), itemId, targetCreatureEntry);
+            return false;
+        }
+
+        // Check if already have enough items
+        uint32 currentItems = bot->GetItemCount(itemId, false);
+        uint32 requiredItems = static_cast<uint32>(questObjective.Amount);
+        if (currentItems >= requiredItems)
+        {
+            TC_LOG_DEBUG("module.playerbot.quest", "⚠️ ShouldEngageTarget: Bot {} - ITEM objective complete ({}/{}) for quest {}",
+                         bot->GetName(), currentItems, requiredItems, objective.questId);
+            return false;
+        }
+
+        TC_LOG_DEBUG("module.playerbot.quest", "✅ ShouldEngageTarget: Bot {} - ITEM objective {}/{} for quest {}, target {} drops item {}",
+                     bot->GetName(), currentItems, requiredItems, objective.questId, target->GetName(), itemId);
+        return true;
+    }
+
+    // Other objective types are not engage targets
+    TC_LOG_DEBUG("module.playerbot.quest", "⚠️ ShouldEngageTarget: Bot {} - Objective type {} not handled for engagement",
+                 bot->GetName(), static_cast<uint32>(questObjective.Type));
+    return false;
 }
 
 bool QuestStrategy::MoveToObjectiveLocation(BotAI* ai, Position const& location)
@@ -2504,7 +2544,9 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
 
         // CRITICAL: Re-verify creature validity
         // TOCTOU race: creature may have despawned between the check above and now
-        if (!creature->IsInWorld() || !creature->GetMap())
+        // NOTE: Use FindMap() instead of GetMap() - GetMap() has ASSERT(m_currMap) which crashes
+        // if map is null, even after IsInWorld() check passes (race condition)
+        if (!creature->IsInWorld() || !creature->FindMap())
             continue;
 
         // NOTE: CanSeeOrDetect() is NOT SAFE to call from worker thread!
@@ -2699,8 +2741,12 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
         return false;
 
     Player* bot = ai->GetBot();
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 FindQuestEnderLocation: Bot {} searching for quest ender for quest {}",
-                 bot->GetName(), questId);
+
+    // DIAGNOSTIC: Log bot's actual position and map to debug map mismatch issues
+    TC_LOG_ERROR("module.playerbot.quest", "🔍 FindQuestEnderLocation: Bot {} (Level {}) on MAP {} at ({:.1f}, {:.1f}, {:.1f}) searching for quest ender for quest {}",
+                 bot->GetName(), bot->GetLevel(), bot->GetMapId(),
+                 bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
+                 questId);
 
     // ========================================================================
     // PHASE 1: Determine quest ender type (Creature OR GameObject)
@@ -2753,6 +2799,14 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
         float closestDistance = 999999.0f;
         CreatureData const* closestSpawn = nullptr;
 
+        // DIAGNOSTIC: Log bot's current map and total spawn data size
+        uint32 botMapId = bot->GetMapId();
+        uint32 matchingEntryCount = 0;
+        uint32 matchingMapCount = 0;
+
+        TC_LOG_ERROR("module.playerbot.quest", "🔬 TIER 1A DIAGNOSTIC: Bot {} on map {} searching for creature entry {} (total spawns in DB: {})",
+                     bot->GetName(), botMapId, questEnderEntry, creatureSpawnData.size());
+
         for (auto const& pair : creatureSpawnData)
         {
             CreatureData const& data = pair.second;
@@ -2760,10 +2814,29 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
             if (data.id != questEnderEntry)
                 continue;
 
-            if (data.mapId != bot->GetMapId())
-                continue;
+            // Found matching entry - log it
+            matchingEntryCount++;
 
+            if (data.mapId != botMapId)
+            {
+                // DIAGNOSTIC: Log spawn found but wrong map
+                if (matchingEntryCount <= 5) // Limit logging
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "🔬 TIER 1A: Found creature {} spawn on MAP {} (bot on map {}) at ({:.1f}, {:.1f}, {:.1f}) - SKIPPED (wrong map)",
+                                 questEnderEntry, data.mapId, botMapId,
+                                 data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY(), data.spawnPoint.GetPositionZ());
+                }
+                continue;
+            }
+
+            // Found matching entry AND map
+            matchingMapCount++;
             float distance = bot->GetExactDist2d(data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY());
+
+            TC_LOG_ERROR("module.playerbot.quest", "🔬 TIER 1A: Found creature {} spawn on SAME MAP {} at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
+                         questEnderEntry, data.mapId,
+                         data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY(), data.spawnPoint.GetPositionZ(),
+                         distance);
 
             if (distance < closestDistance)
             {
@@ -2771,6 +2844,9 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
                 closestSpawn = &data;
             }
         }
+
+        TC_LOG_ERROR("module.playerbot.quest", "🔬 TIER 1A SUMMARY: Found {} spawns with entry {}, {} on same map as bot (map {})",
+                     matchingEntryCount, questEnderEntry, matchingMapCount, botMapId);
 
         if (closestSpawn)
         {
@@ -2788,8 +2864,8 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
             return true;
         }
 
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 1A FAILED: No spawn data found for CREATURE {}",
-                     questEnderEntry);
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 1A FAILED: No spawn data found for CREATURE {} on map {} (found {} total spawns, 0 on same map)",
+                     questEnderEntry, botMapId, matchingEntryCount);
     }
 
     // ========================================================================
@@ -3002,7 +3078,8 @@ bool QuestStrategy::CheckForCreatureQuestEnderInRange(BotAI* ai, uint32 creature
             return false;
 
         // CRITICAL: Re-verify creature validity (TOCTOU race)
-        if (!creature->IsInWorld() || !creature->GetMap())
+        // NOTE: Use FindMap() instead of GetMap() - GetMap() has ASSERT(m_currMap) which crashes
+        if (!creature->IsInWorld() || !creature->FindMap())
             continue;
 
         // NOTE: CanSeeOrDetect() is NOT SAFE to call from worker thread!
@@ -3224,7 +3301,8 @@ bool QuestStrategy::CheckForGameObjectQuestEnderInRange(BotAI* ai, uint32 gameob
             return false;
 
         // CRITICAL: Re-verify gameobject validity (TOCTOU race)
-        if (!gameObject->IsInWorld() || !gameObject->GetMap())
+        // NOTE: Use FindMap() instead of GetMap() - GetMap() has ASSERT(m_currMap) which crashes
+        if (!gameObject->IsInWorld() || !gameObject->FindMap())
             continue;
 
         // Check same map

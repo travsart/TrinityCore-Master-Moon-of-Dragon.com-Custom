@@ -42,8 +42,8 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     float distToDestination3D = bot->GetExactDist(destination);
     float zDifference = std::abs(bot->GetPositionZ() - destination.GetPositionZ());
 
-    // DIAGNOSTIC: Always log movement attempts
-    TC_LOG_ERROR("module.playerbot.movement", "🔍 MoveToPosition: Bot {} dist2D={:.1f} dist3D={:.1f} zDiff={:.1f} minDist={:.1f} dest=({:.1f},{:.1f},{:.1f})",
+    // DIAGNOSTIC: Log movement attempts (DEBUG level to avoid spam)
+    TC_LOG_DEBUG("module.playerbot.movement", "🔍 MoveToPosition: Bot {} dist2D={:.1f} dist3D={:.1f} zDiff={:.1f} minDist={:.1f} dest=({:.1f},{:.1f},{:.1f})",
                  bot->GetName(), distToDestination2D, distToDestination3D, zDifference, minDistanceChange,
                  destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
 
@@ -52,7 +52,7 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     // even if horizontal distance is small (e.g., mine entrance above spawn inside)
     if (distToDestination3D < minDistanceChange)
     {
-        TC_LOG_ERROR("module.playerbot.movement", "✅ BotMovement: Bot {} already at destination (3D dist {:.1f}yd < {:.1f})",
+        TC_LOG_DEBUG("module.playerbot.movement", "✅ BotMovement: Bot {} already at destination (3D dist {:.1f}yd < {:.1f})",
                      bot->GetName(), distToDestination3D, minDistanceChange);
         return true;
     }
@@ -60,27 +60,83 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     // Check if bot is already moving
     MovementGeneratorType currentMoveType = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
 
+    // ========================================================================
+    // CRITICAL FIX: Do NOT interrupt CHASE_MOTION_TYPE!
+    // ========================================================================
+    // When the bot is chasing a target (combat), calling MovePoint() interrupts
+    // the chase and causes stuttering as SoloCombatStrategy immediately re-issues
+    // MoveChase(). This creates rapid oscillation between CHASE and POINT motion.
+    //
+    // During combat, SoloCombatStrategy is the ONLY system that should control
+    // movement. If MoveToPosition is called during chase, we should NOT interrupt.
+    // ========================================================================
+    if (currentMoveType == CHASE_MOTION_TYPE)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement", "⚠️ BotMovement: Bot {} in CHASE mode - NOT INTERRUPTING chase to move to position (let combat strategy handle movement)",
+                     bot->GetName());
+        return false;  // Indicate that we did NOT start movement - chase continues
+    }
+
+    // Similarly, don't interrupt FOLLOW_MOTION_TYPE (following group leader)
+    if (currentMoveType == FOLLOW_MOTION_TYPE)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement", "⚠️ BotMovement: Bot {} in FOLLOW mode - NOT INTERRUPTING follow to move to position",
+                     bot->GetName());
+        return false;  // Indicate that we did NOT start movement - follow continues
+    }
+
     // If already moving via spline, check if we should interrupt
     if (currentMoveType == POINT_MOTION_TYPE || currentMoveType == EFFECT_MOTION_TYPE)
     {
         // Check if the spline is still active and heading somewhere reasonable
         if (bot->movespline && !bot->movespline->Finalized())
         {
-            // Let the current movement continue unless we're stuck or going wrong direction
-            // This prevents the "stutter" from constantly restarting movement
-            TC_LOG_ERROR("module.playerbot.movement", "⏭ BotMovement: Bot {} spline ACTIVE (moveType={}), letting it continue - {:.1f}yd to destination (3D)",
-                         bot->GetName(), static_cast<int>(currentMoveType), distToDestination3D);
-            return true;
+            // BUG FIX: Check if current spline is going to the CORRECT destination!
+            // The spline might be going somewhere completely different (e.g., follow target)
+            // We need to interrupt and redirect if the destination doesn't match
+            G3D::Vector3 const& splineDestination = bot->movespline->FinalDestination();
+
+            // Skip zero destination check (means spline not properly initialized)
+            if (splineDestination != G3D::Vector3::zero())
+            {
+                float splineDestDist = std::sqrt(
+                    (splineDestination.x - destination.GetPositionX()) * (splineDestination.x - destination.GetPositionX()) +
+                    (splineDestination.y - destination.GetPositionY()) * (splineDestination.y - destination.GetPositionY()) +
+                    (splineDestination.z - destination.GetPositionZ()) * (splineDestination.z - destination.GetPositionZ())
+                );
+
+                // If spline destination is close to requested destination (< 10 yards), let it continue
+                if (splineDestDist < 10.0f)
+                {
+                    TC_LOG_DEBUG("module.playerbot.movement", "⏭ BotMovement: Bot {} spline ACTIVE going to correct destination (diff={:.1f}yd) - {:.1f}yd to dest (3D)",
+                                 bot->GetName(), splineDestDist, distToDestination3D);
+                    return true;
+                }
+                else
+                {
+                    // Spline is going to WRONG destination - must interrupt and redirect!
+                    TC_LOG_DEBUG("module.playerbot.movement", "🔄 BotMovement: Bot {} spline going WRONG DIRECTION! Spline dest ({:.1f},{:.1f},{:.1f}) is {:.1f}yd from requested ({:.1f},{:.1f},{:.1f}) - INTERRUPTING",
+                                 bot->GetName(),
+                                 splineDestination.x, splineDestination.y, splineDestination.z, splineDestDist,
+                                 destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
+                    // Fall through to start new movement
+                }
+            }
+            else
+            {
+                TC_LOG_DEBUG("module.playerbot.movement", "⚠️ BotMovement: Bot {} spline has zero destination, will restart",
+                             bot->GetName());
+            }
         }
         else
         {
-            TC_LOG_ERROR("module.playerbot.movement", "⚠️ BotMovement: Bot {} spline FINALIZED or NULL (moveType={}), will restart - {:.1f}yd to destination (3D)",
+            TC_LOG_DEBUG("module.playerbot.movement", "⚠️ BotMovement: Bot {} spline FINALIZED or NULL (moveType={}), will restart - {:.1f}yd to destination (3D)",
                          bot->GetName(), static_cast<int>(currentMoveType), distToDestination3D);
         }
     }
     else
     {
-        TC_LOG_ERROR("module.playerbot.movement", "📍 BotMovement: Bot {} not in POINT/EFFECT motion (moveType={}), will start new movement",
+        TC_LOG_DEBUG("module.playerbot.movement", "📍 BotMovement: Bot {} not in POINT/EFFECT motion (moveType={}), will start new movement",
                      bot->GetName(), static_cast<int>(currentMoveType));
     }
 
@@ -92,7 +148,7 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     //
     // MotionMaster::MovePoint() is the safer approach, and we maintain deduplication above
     // by checking if a spline is already active before calling this.
-    TC_LOG_ERROR("module.playerbot.movement", "🚶 BotMovement: Bot {} STARTING MOVEMENT to ({:.2f},{:.2f},{:.2f}) - {:.1f}yd (3D)",
+    TC_LOG_DEBUG("module.playerbot.movement", "🚶 BotMovement: Bot {} STARTING MOVEMENT to ({:.2f},{:.2f},{:.2f}) - {:.1f}yd (3D)",
                  bot->GetName(), destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ(),
                  distToDestination3D);
 

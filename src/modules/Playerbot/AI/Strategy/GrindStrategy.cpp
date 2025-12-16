@@ -529,7 +529,8 @@ bool GrindStrategy::IsValidGrindTarget(Player* bot, Creature* creature) const
         return false;
 
     // CRITICAL: Re-verify creature has valid map (TOCTOU race)
-    if (!creature->GetMap())
+    // NOTE: Use FindMap() instead of GetMap() - GetMap() has ASSERT(m_currMap) which crashes
+    if (!creature->FindMap())
         return false;
 
     // NOTE: CanSeeOrDetect() is NOT SAFE to call from worker thread!
@@ -778,7 +779,8 @@ bool GrindStrategy::CheckQuestAvailability(BotAI* ai)
             return false;
 
         // CRITICAL: Re-verify creature validity (TOCTOU race)
-        if (!creature->IsInWorld() || !creature->GetMap())
+        // NOTE: Use FindMap() instead of GetMap() - GetMap() has ASSERT(m_currMap) which crashes
+        if (!creature->IsInWorld() || !creature->FindMap())
             continue;
 
         // NOTE: CanSeeOrDetect() is NOT SAFE to call from worker thread!

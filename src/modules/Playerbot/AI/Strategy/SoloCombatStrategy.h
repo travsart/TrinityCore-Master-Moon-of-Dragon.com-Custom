@@ -110,6 +110,15 @@ private:
 
     // Throttling timer for MoveChase re-issue (prevents stutter)
     uint32 _lastMoveChaseReissue = 0;
+
+    // Stuck detection - track if chase isn't making progress
+    mutable float _lastKnownDistance = 0.0f;
+    mutable uint32 _stuckCheckTimer = 0;
+    mutable uint32 _stuckDuration = 0;
+    static constexpr uint32 STUCK_CHECK_INTERVAL = 2000;  // Check every 2 seconds
+    static constexpr uint32 STUCK_THRESHOLD = 5000;       // Consider stuck after 5 seconds of no progress
+    static constexpr float STUCK_DISTANCE_THRESHOLD = 50.0f;  // Only check if > 50 yards away
+    static constexpr float PROGRESS_THRESHOLD = 3.0f;     // Need to move at least 3 yards to count as progress
 };
 
 } // namespace Playerbot
