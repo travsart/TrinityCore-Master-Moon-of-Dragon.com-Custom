@@ -1162,6 +1162,23 @@ void HunterAI::UpdatePetStatus()
     {
         _petGuid = pet->GetGUID();
         _petNeedsHeal = pet->GetHealthPct() < PET_HEAL_THRESHOLD;
+
+        // ========================================================================
+        // CRITICAL FIX: Ensure bot pets are always in DEFENSIVE mode
+        // ========================================================================
+        // Pet react state is loaded from database on spawn. If it was saved as PASSIVE,
+        // the pet will not defend itself or its master when attacked.
+        // Bot pets should ALWAYS be DEFENSIVE so they auto-attack when:
+        // - The bot is attacked
+        // - The pet itself is attacked
+        // - The bot issues an attack command
+        // ========================================================================
+        if (pet->HasReactState(REACT_PASSIVE))
+        {
+            TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} pet {} was PASSIVE, setting to DEFENSIVE",
+                         GetBot()->GetName(), pet->GetName());
+            pet->SetReactState(REACT_DEFENSIVE);
+        }
     }
     else
     {

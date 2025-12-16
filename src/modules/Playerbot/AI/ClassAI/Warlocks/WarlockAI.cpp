@@ -480,7 +480,26 @@ bool WarlockAI::HandlePetManagement()
 
     // Update pet status
     _petActive = true;
-    _petHealthPercent = static_cast<uint32>(pet->GetHealthPct());    // Heal pet if needed
+    _petHealthPercent = static_cast<uint32>(pet->GetHealthPct());
+
+    // ========================================================================
+    // CRITICAL FIX: Ensure bot pets are always in DEFENSIVE mode
+    // ========================================================================
+    // Pet react state is loaded from database on spawn. If it was saved as PASSIVE,
+    // the pet will not defend itself or its master when attacked.
+    // Bot pets should ALWAYS be DEFENSIVE so they auto-attack when:
+    // - The bot is attacked
+    // - The pet itself is attacked
+    // - The bot issues an attack command
+    // ========================================================================
+    if (pet->HasReactState(REACT_PASSIVE))
+    {
+        TC_LOG_DEBUG("playerbot.warlock", "Warlock {} pet {} was PASSIVE, setting to DEFENSIVE",
+                     bot->GetName(), pet->GetName());
+        pet->SetReactState(REACT_DEFENSIVE);
+    }
+
+    // Heal pet if needed
     if (_petHealthPercent.load() < 50)
     {
         // Health Funnel
@@ -535,7 +554,7 @@ bool WarlockAI::SummonPet()
         return false;
 
     // Don't summon in combat unless we have enough time
-    if (bot->IsInCombat() && GetNearbyEnemyCount(10.0f) > 0)
+    if (bot->IsInCombat() && GetNearbyEnemyCount(5.0f) > 0)
         return false;
 
     uint32 summonSpell = 0;
@@ -1498,6 +1517,15 @@ void WarlockAI::OnNonCombatUpdate(uint32 diff)
         _petActive = true;
         _petHealthPercent = static_cast<uint32>(pet->GetHealthPct());
 
+        // CRITICAL FIX: Ensure bot pets are always in DEFENSIVE mode
+        // This check is also in HandlePetManagement() but we need it here for out-of-combat
+        if (pet->HasReactState(REACT_PASSIVE))
+        {
+            TC_LOG_DEBUG("playerbot.warlock", "Warlock {} pet {} was PASSIVE (out of combat), setting to DEFENSIVE",
+                         bot->GetName(), pet->GetName());
+            pet->SetReactState(REACT_DEFENSIVE);
+        }
+
         // Heal pet if needed (out of combat)
         if (_petHealthPercent.load() < 70)
         {
@@ -1652,30 +1680,6 @@ void WarlockAI::UpdateWarlockBuffs()
     // Don't apply buffs while casting (especially important for 6s pet summons)
     if (bot->HasUnitState(UNIT_STATE_CASTING))
         return;
-
-    // ========================================================================
-    // PRIORITY 1: PET SUMMONING (must happen OUT OF COMBAT - 6s cast time!)
-    // Level 3: Imp, Level 10: Voidwalker
-    // ========================================================================
-    Pet* pet = bot->GetPet();
-    if (!pet || !pet->IsAlive())
-    {
-        // Prefer Voidwalker for leveling (tanks damage)
-        if (bot->GetLevel() >= 10 && bot->HasSpell(SUMMON_VOIDWALKER))
-        {
-            TC_LOG_INFO("playerbot.warlock", "UpdateWarlockBuffs: {} summoning Voidwalker (out of combat)",
-                        bot->GetName());
-            bot->CastSpell(bot, SUMMON_VOIDWALKER, false);
-            return;  // Don't cast other buffs while summoning
-        }
-        else if (bot->HasSpell(SUMMON_IMP))
-        {
-            TC_LOG_INFO("playerbot.warlock", "UpdateWarlockBuffs: {} summoning Imp (out of combat)",
-                        bot->GetName());
-            bot->CastSpell(bot, SUMMON_IMP, false);
-            return;  // Don't cast other buffs while summoning
-        }
-    }
 
     // Demon Armor/Fel Armor
     if (!bot->HasAura(DEMON_ARMOR) && !bot->HasAura(FEL_ARMOR))

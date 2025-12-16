@@ -321,8 +321,18 @@ public:
             return;
         }
 
-        // Command pet to attack if not already
+        // CRITICAL FIX: Ensure bot pets are always in DEFENSIVE mode
+        // Pet react state is loaded from database on spawn. If it was saved as PASSIVE,
+        // the pet will not defend itself or its master when attacked.
         Pet* pet = _bot->GetPet();
+        if (pet && pet->HasReactState(REACT_PASSIVE))
+        {
+            TC_LOG_DEBUG("module.playerbot.ai", "Survival Hunter {} pet {} was PASSIVE, setting to DEFENSIVE",
+                         _bot->GetName(), pet->GetName());
+            pet->SetReactState(REACT_DEFENSIVE);
+        }
+
+        // Command pet to attack if not already
         if (pet && pet->IsAlive() && pet->GetVictim() != target)
         {
 
