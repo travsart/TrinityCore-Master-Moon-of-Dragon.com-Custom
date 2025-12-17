@@ -62,6 +62,7 @@
 #include "Log.h"
 #include "Chat/BotChatCommandHandler.h"  // PHASE 4: Command processing
 #include "Session/BotSession.h"          // PHASE 4: BotSession for command context
+#include "Session/BotPriorityManager.h"  // CRITICAL: Immediate priority escalation on combat
 // #include "Scripting/BotResurrectionScript.h"  // DEPRECATED: Script disabled - bypassed graveyard teleport
 
 using namespace Playerbot::Events;
@@ -720,6 +721,28 @@ public:
             Player* victimPlayer = victim->ToPlayer();
             if (victimPlayer)
             {
+                // ================================================================
+                // CRITICAL FIX: Immediate priority escalation on damage taken
+                // ================================================================
+                // Problem: LOW priority bots only update every 50 ticks (2.5s).
+                // If attacked between updates, they don't respond and die quickly.
+                //
+                // Solution: Immediately escalate bot priority to HIGH when damaged.
+                // This ensures the bot will be updated on the NEXT tick (50ms)
+                // instead of waiting up to 2.5 seconds.
+                //
+                // This bypasses the throttling system for combat detection while
+                // preserving throttling benefits for idle bots.
+                // ================================================================
+                Playerbot::BotPriority currentPriority = Playerbot::sBotPriorityMgr->GetPriority(victimPlayer->GetGUID());
+                if (currentPriority > Playerbot::BotPriority::HIGH)
+                {
+                    Playerbot::sBotPriorityMgr->SetPriority(victimPlayer->GetGUID(), Playerbot::BotPriority::HIGH);
+                    TC_LOG_DEBUG("module.playerbot.priority",
+                        "Bot {} priority ESCALATED to HIGH due to taking damage (was: {})",
+                        victimPlayer->GetName(), static_cast<uint32>(currentPriority));
+                }
+
                 BotEvent event(EventType::DAMAGE_TAKEN,
                                attacker ? attacker->GetGUID() : ObjectGuid::Empty,
                                victim->GetGUID());
@@ -751,6 +774,21 @@ public:
         // This triggers combat engagement so the bot defends its pet
         if (petOwnerBot && attacker)
         {
+            // ================================================================
+            // CRITICAL FIX: Immediate priority escalation when pet attacked
+            // ================================================================
+            // Same as bot damage - escalate to HIGH priority immediately
+            // so the bot can defend its pet without waiting for scheduled update
+            // ================================================================
+            Playerbot::BotPriority currentPriority = Playerbot::sBotPriorityMgr->GetPriority(petOwnerBot->GetGUID());
+            if (currentPriority > Playerbot::BotPriority::HIGH)
+            {
+                Playerbot::sBotPriorityMgr->SetPriority(petOwnerBot->GetGUID(), Playerbot::BotPriority::HIGH);
+                TC_LOG_DEBUG("module.playerbot.priority",
+                    "Bot {} priority ESCALATED to HIGH - pet {} attacked (was: {})",
+                    petOwnerBot->GetName(), victim->GetName(), static_cast<uint32>(currentPriority));
+            }
+
             // Dispatch DAMAGE_TAKEN event to the pet owner
             // The attacker GUID tells the bot who to target
             BotEvent petDamageEvent(EventType::DAMAGE_TAKEN,
