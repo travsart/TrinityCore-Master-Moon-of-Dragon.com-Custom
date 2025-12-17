@@ -258,6 +258,31 @@ void PlayerbotWorldScript::UpdateBotSystems(uint32 diff)
         TC_LOG_ERROR("module.playerbot.script", " UpdateBotSystems: sBotWorldSessionMgr is NULL!");
     }
 
+    // ================================================================
+    // CRITICAL FIX: Process BotLevelManager queue on main thread
+    // ================================================================
+    // BotLevelManager processes bot level-ups, gear, talents, and zone placement.
+    // Worker threads prepare bot data asynchronously, then main thread applies it.
+    // Without this call, bots get submitted but never leveled up!
+    // ================================================================
+    if (sBotLevelManager->IsReady())
+    {
+        try
+        {
+            uint32 processed = sBotLevelManager->ProcessBotCreationQueue(10);
+            if (processed > 0 && shouldLog)
+            {
+                TC_LOG_INFO("module.playerbot.script",
+                    "PlayerbotWorldScript: BotLevelManager processed {} bots", processed);
+            }
+        }
+        catch (std::exception const& e)
+        {
+            TC_LOG_ERROR("module.playerbot.script",
+                "PlayerbotWorldScript::UpdateBotSystems: BotLevelManager exception: {}", e.what());
+        }
+    }
+
     if (shouldLog)
         lastDebugLog = currentTime;
 

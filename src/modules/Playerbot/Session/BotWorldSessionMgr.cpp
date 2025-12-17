@@ -17,6 +17,7 @@
 #include "Group.h"
 #include "LFGMgr.h"
 #include "Config/PlayerbotConfig.h"
+#include "../Character/BotLevelManager.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
 #include "../Spatial/SpatialGridManager.h"
 #include "../Spatial/SpatialGridScheduler.h"
@@ -533,6 +534,28 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     // AutoAdjustPriority() will demote idle bots to LOW after 2.5s
     if (_enterpriseMode)
                         sBotPriorityMgr->SetPriority(guid, BotPriority::MEDIUM);
+
+                    // ================================================================
+                    // CRITICAL FIX: Submit bot to BotLevelManager for level/gear setup
+                    // ================================================================
+                    // When LevelManager is enabled, newly logged-in bots need to be
+                    // submitted for level assignment, talent setup, gear, and zone placement.
+                    // Without this, bots spawn at level 1 and never get leveled up.
+                    // ================================================================
+                    if (sBotLevelManager->IsReady())
+                    {
+                        Player* bot = session->GetPlayer();
+                        if (bot)
+                        {
+                            uint64 taskId = sBotLevelManager->CreateBotAsync(bot);
+                            if (taskId > 0)
+                            {
+                                TC_LOG_INFO("module.playerbot.session",
+                                    "Bot {} submitted to LevelManager (task {})",
+                                    bot->GetName(), taskId);
+                            }
+                        }
+                    }
 
                     sessionsToUpdate.emplace_back(guid, session);
                 }
