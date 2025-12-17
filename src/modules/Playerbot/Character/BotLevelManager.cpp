@@ -63,6 +63,13 @@ bool BotLevelManager::Initialize()
     _talentManager = BotTalentManager::instance();
     _positioner = BotWorldPositioner::instance();
 
+    // Initialize level distribution system (CRITICAL: loads bracket configuration)
+    if (!_distribution->LoadConfig())
+    {
+        TC_LOG_ERROR("playerbot", "BotLevelManager::Initialize() - BotLevelDistribution failed to load config");
+        return false;
+    }
+
     // Verify all subsystems are ready
     if (!_gearFactory->IsReady())
     {
