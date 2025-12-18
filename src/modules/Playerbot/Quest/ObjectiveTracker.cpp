@@ -1102,6 +1102,15 @@ float ObjectiveTracker::CalculateProximityFactor(Player* bot, const ObjectiveSta
 
     float proximity = 0.5f;
 
+    // Validate lastKnownPosition is initialized (not all zeros = uninitialized)
+    // A position at exactly (0,0,0) is almost certainly uninitialized data
+    if (state.lastKnownPosition.GetPositionX() == 0.0f &&
+        state.lastKnownPosition.GetPositionY() == 0.0f &&
+        state.lastKnownPosition.GetPositionZ() == 0.0f)
+    {
+        return proximity;  // Return default if position unknown
+    }
+
     // Higher priority for closer objectives
     float distance = bot->GetDistance(state.lastKnownPosition);
     if (distance < 50.0f)
