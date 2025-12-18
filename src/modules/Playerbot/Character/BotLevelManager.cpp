@@ -70,6 +70,20 @@ bool BotLevelManager::Initialize()
         return false;
     }
 
+    // Initialize talent manager (CRITICAL: loads talent loadouts, has blocking wait in SelectSpecialization)
+    if (!_talentManager->LoadLoadouts())
+    {
+        TC_LOG_ERROR("playerbot", "BotLevelManager::Initialize() - BotTalentManager failed to load loadouts");
+        return false;
+    }
+
+    // Initialize world positioner (loads zone placements)
+    if (!_positioner->LoadZones())
+    {
+        TC_LOG_ERROR("playerbot", "BotLevelManager::Initialize() - BotWorldPositioner failed to load zones");
+        return false;
+    }
+
     // Verify all subsystems are ready
     if (!_gearFactory->IsReady())
     {
