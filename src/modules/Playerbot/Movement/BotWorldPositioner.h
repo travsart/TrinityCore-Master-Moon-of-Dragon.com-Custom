@@ -24,12 +24,124 @@
 #include <atomic>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
+#include <optional>
 
 class Player;
+struct FactionTemplateEntry;
 
 namespace Playerbot
 {
+
+// ============================================================================
+// SPAWN POINT TYPES - Priority order for zone spawn point selection
+// ============================================================================
+enum class SpawnPointType : uint8
+{
+    INNKEEPER       = 0,    // Highest priority - safe hearthstone bind location
+    FLIGHT_MASTER   = 1,    // Travel hub, always safe
+    QUEST_GIVER     = 2,    // Quest hub cluster centroid
+    GRAVEYARD       = 3,    // Resurrection point fallback
+    CAPITAL_CITY    = 4,    // Capital city fallback
+    HARDCODED       = 5     // Manually defined fallback
+};
+
+// ============================================================================
+// DATABASE SPAWN POINT - Raw data from database queries
+// ============================================================================
+struct DbSpawnPoint
+{
+    uint32 creatureEntry;
+    uint32 mapId;
+    uint32 zoneId;
+    uint32 areaId;
+    float x;
+    float y;
+    float z;
+    float orientation;
+    uint16 factionTemplateId;
+    SpawnPointType type;
+    ::std::string npcName;
+
+    bool IsValid() const { return mapId != 0 || (x != 0.0f && y != 0.0f); }
+};
+
+// ============================================================================
+// ZONE LEVEL INFO - Quest-based level range data for a zone
+// ============================================================================
+struct ZoneLevelInfo
+{
+    uint32 zoneId;
+    uint32 minLevel;
+    uint32 maxLevel;
+    uint32 questCount;
+    float avgLevel;
+
+    ZoneLevelInfo() : zoneId(0), minLevel(80), maxLevel(1), questCount(0), avgLevel(0.0f) {}
+
+    void AddQuest(uint32 questMinLevel, uint32 questMaxLevel)
+    {
+        if (questMinLevel > 0 && questMinLevel < minLevel)
+            minLevel = questMinLevel;
+        if (questMaxLevel > maxLevel)
+            maxLevel = questMaxLevel;
+        avgLevel = (avgLevel * questCount + (questMinLevel + questMaxLevel) / 2.0f) / (questCount + 1);
+        ++questCount;
+    }
+
+    bool IsValid() const { return questCount > 0 && minLevel <= maxLevel; }
+};
+
+// ============================================================================
+// QUEST HUB - Clustered group of quest givers in a location
+// ============================================================================
+struct QuestHub
+{
+    uint32 mapId;
+    uint32 zoneId;
+    float centroidX;
+    float centroidY;
+    float centroidZ;
+    uint32 questGiverCount;
+    TeamId faction;
+
+    QuestHub() : mapId(0), zoneId(0), centroidX(0), centroidY(0), centroidZ(0),
+                 questGiverCount(0), faction(TEAM_NEUTRAL) {}
+
+    void AddQuestGiver(float x, float y, float z)
+    {
+        // Running average for centroid
+        centroidX = (centroidX * questGiverCount + x) / (questGiverCount + 1);
+        centroidY = (centroidY * questGiverCount + y) / (questGiverCount + 1);
+        centroidZ = (centroidZ * questGiverCount + z) / (questGiverCount + 1);
+        ++questGiverCount;
+    }
+
+    float DistanceTo(float x, float y) const
+    {
+        float dx = centroidX - x;
+        float dy = centroidY - y;
+        return ::std::sqrt(dx * dx + dy * dy);
+    }
+};
+
+// ============================================================================
+// CONFIG ZONE OVERRIDE - User-defined zone configuration
+// ============================================================================
+struct ConfigZoneOverride
+{
+    uint32 zoneId;
+    bool enabled;                   // false = disabled zone
+    ::std::optional<float> x;       // Override coordinates
+    ::std::optional<float> y;
+    ::std::optional<float> z;
+    ::std::optional<uint32> minLevel;
+    ::std::optional<uint32> maxLevel;
+    ::std::optional<TeamId> faction;
+
+    ConfigZoneOverride() : zoneId(0), enabled(true) {}
+};
 
 /**
  * Zone Placement Data
@@ -266,10 +378,98 @@ private:
     // ====================================================================
 
     void LoadZonesFromConfig();
-    void LoadZonesFromDatabase();  // Future: DB-driven zone configuration
+    void LoadZonesFromDatabase();
     void BuildDefaultZones();      // Fallback if config is empty
     void ValidateZones();
     void BuildZoneCache();         // Build lookup structures
+    void ApplyConfigOverrides();   // Apply user config overrides
+
+    // ====================================================================
+    // DATABASE ZONE DISCOVERY (Enterprise-Grade Implementation)
+    // ====================================================================
+
+    /**
+     * Query innkeepers from creature/creature_template tables
+     * Innkeepers provide the safest spawn points (hearthstone bind locations)
+     */
+    ::std::vector<DbSpawnPoint> QueryInnkeepers();
+
+    /**
+     * Query flight masters from creature/creature_template tables
+     * Flight masters are at travel hubs - always safe locations
+     */
+    ::std::vector<DbSpawnPoint> QueryFlightMasters();
+
+    /**
+     * Query quest givers and cluster them into quest hubs
+     * Uses spatial clustering to find town/camp centers
+     */
+    ::std::vector<QuestHub> QueryAndClusterQuestHubs();
+
+    /**
+     * Query graveyards as fallback spawn points
+     * Uses world_safe_locs joined with graveyard_zone
+     */
+    ::std::vector<DbSpawnPoint> QueryGraveyards();
+
+    /**
+     * Get zone level ranges from quest_template
+     * Determines appropriate level range for each zone based on quest content
+     */
+    ::std::unordered_map<uint32, ZoneLevelInfo> QueryZoneLevelRanges();
+
+    /**
+     * Determine faction from FactionTemplate DBC entry
+     * Uses FactionGroup flags: FACTION_MASK_ALLIANCE (2), FACTION_MASK_HORDE (4)
+     */
+    TeamId DetermineFaction(uint16 factionTemplateId) const;
+
+    /**
+     * Get zone name from AreaTable DBC
+     * Returns human-readable zone name for logging
+     */
+    ::std::string GetZoneNameFromDBC(uint32 zoneId) const;
+
+    /**
+     * Get zone ID from coordinates using TerrainMgr (SLOW - triggers VMap loading)
+     * @deprecated Use GetZoneIdFromAreaId instead for startup queries
+     */
+    uint32 GetZoneIdFromCoordinates(uint32 mapId, float x, float y, float z) const;
+
+    /**
+     * Get zone ID from area ID using fast DBC lookup (no disk I/O)
+     * Returns parent zone if areaId is a subzone
+     */
+    uint32 GetZoneIdFromAreaId(uint32 areaId) const;
+
+    /**
+     * Check if zone is a starter zone (level 1-10 content)
+     */
+    bool IsStarterZoneByContent(uint32 zoneId, uint32 minLevel, uint32 maxLevel) const;
+
+    /**
+     * Check if zone is a capital city
+     */
+    bool IsCapitalCity(uint32 zoneId) const;
+
+    /**
+     * Merge spawn point into existing zone or create new zone
+     * Handles spawn point priority: Innkeeper > Flight Master > Quest Hub > Graveyard
+     */
+    void MergeSpawnPointIntoZone(DbSpawnPoint const& spawnPoint,
+                                  ::std::unordered_map<uint32, ZoneLevelInfo> const& levelInfo);
+
+    /**
+     * Merge quest hub into zones
+     */
+    void MergeQuestHubIntoZone(QuestHub const& hub,
+                                ::std::unordered_map<uint32, ZoneLevelInfo> const& levelInfo);
+
+    /**
+     * Select best spawn point for a zone from multiple candidates
+     * Priority: Innkeeper > Flight Master > Quest Hub Centroid > Graveyard
+     */
+    DbSpawnPoint SelectBestSpawnPoint(::std::vector<DbSpawnPoint> const& candidates) const;
 
     // ====================================================================
     // ZONE SELECTION HELPERS
@@ -308,6 +508,24 @@ private:
     // Faction-specific lookups
     ::std::vector<ZonePlacement const*> _allianceCapitals;
     ::std::vector<ZonePlacement const*> _hordeCapitals;
+
+    // Database-discovered zone data (used during loading)
+    ::std::unordered_map<uint32, ::std::vector<DbSpawnPoint>> _zoneSpawnPoints;  // zoneId -> spawn points
+    ::std::unordered_map<uint32, SpawnPointType> _zoneBestSpawnType;              // zoneId -> best spawn type found
+
+    // Config overrides
+    ::std::unordered_map<uint32, ConfigZoneOverride> _configOverrides;
+    ::std::unordered_set<uint32> _disabledZones;
+
+    // Known capital city zone IDs (for fallback and special handling)
+    static constexpr uint32 ZONE_STORMWIND = 1519;
+    static constexpr uint32 ZONE_IRONFORGE = 1537;
+    static constexpr uint32 ZONE_DARNASSUS = 1657;
+    static constexpr uint32 ZONE_EXODAR = 3557;
+    static constexpr uint32 ZONE_ORGRIMMAR = 1637;
+    static constexpr uint32 ZONE_THUNDER_BLUFF = 1638;
+    static constexpr uint32 ZONE_UNDERCITY = 1497;
+    static constexpr uint32 ZONE_SILVERMOON = 3487;
 
     // Statistics
     PositionerStats _stats;

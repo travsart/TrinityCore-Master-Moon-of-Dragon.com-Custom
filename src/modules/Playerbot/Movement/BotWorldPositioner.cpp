@@ -21,9 +21,16 @@
 #include "Log.h"
 #include "World.h"
 #include "MapManager.h"
+#include "DatabaseEnv.h"
+#include "DB2Stores.h"
+#include "DBCEnums.h"
+#include "ObjectMgr.h"
+#include "TerrainMgr.h"
+#include "PhasingHandler.h"
 #include <algorithm>
 #include <random>
 #include <sstream>
+#include <cmath>
 
 namespace Playerbot
 {
@@ -59,23 +66,48 @@ bool BotWorldPositioner::LoadZones()
     _starterZonesByRace.clear();
     _allianceCapitals.clear();
     _hordeCapitals.clear();
+    _zoneSpawnPoints.clear();
+    _zoneBestSpawnType.clear();
+    _configOverrides.clear();
+    _disabledZones.clear();
     _stats = PositionerStats();
 
-    // Load from configuration
+    // Step 1: Load config overrides (which zones are enabled/disabled, custom coordinates)
     LoadZonesFromConfig();
 
-    // If no zones loaded, build defaults
+    // Step 2: Load zones from database (primary source - innkeepers, flight masters, quest hubs)
+    bool dbLoadEnabled = sConfigMgr->GetBoolDefault("Playerbot.Zones.LoadFromDatabase", true);
+    if (dbLoadEnabled)
+    {
+        TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Loading zones from database...");
+        LoadZonesFromDatabase();
+        TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Database loading complete, {} zones loaded", _zones.size());
+    }
+
+    // Step 3: Apply config overrides to database-loaded zones
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Checking config overrides ({} overrides)...", _configOverrides.size());
+    if (!_configOverrides.empty())
+    {
+        ApplyConfigOverrides();
+    }
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Config overrides applied, {} zones remaining", _zones.size());
+
+    // Step 4: If still no zones, build hardcoded defaults as fallback
     if (_zones.empty())
     {
-        TC_LOG_WARN("playerbot", "BotWorldPositioner::LoadZones() - No zones in config, building defaults");
+        TC_LOG_WARN("playerbot", "BotWorldPositioner::LoadZones() - No zones from database, building hardcoded defaults");
         BuildDefaultZones();
     }
 
-    // Validate zones
+    // Step 5: Validate all zones
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Validating zones...");
     ValidateZones();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Validation complete");
 
-    // Build lookup structures
+    // Step 6: Build lookup structures
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Building zone cache...");
     BuildZoneCache();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Zone cache built");
 
     // Update statistics
     _stats.totalZones = static_cast<uint32>(_zones.size());
@@ -95,6 +127,12 @@ bool BotWorldPositioner::LoadZones()
     TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Loaded {} zones ({} starter, {} leveling, {} endgame, {} capitals)",
         _stats.totalZones, _stats.starterZones, _stats.levelingZones, _stats.endgameZones, _stats.capitalCities);
 
+    // Print detailed zone report if debug enabled
+    if (sConfigMgr->GetBoolDefault("Playerbot.Zones.DebugReport", false))
+    {
+        PrintZoneReport();
+    }
+
     return true;
 }
 
@@ -106,9 +144,844 @@ void BotWorldPositioner::ReloadZones()
 
 void BotWorldPositioner::LoadZonesFromConfig()
 {
-    // Future: Load from playerbots.conf
-    // Format: Playerbot.Zones.Alliance.Zone1 = "ZoneID,MapID,X,Y,Z,O,MinLevel,MaxLevel,ZoneName"
-    // For now, rely on BuildDefaultZones()
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Loading zone configuration overrides...");
+
+    // Load disabled zones list
+    // Format: Playerbot.Zones.Disabled = "zoneId1,zoneId2,zoneId3"
+    ::std::string disabledZonesStr = sConfigMgr->GetStringDefault("Playerbot.Zones.Disabled", "");
+    if (!disabledZonesStr.empty())
+    {
+        ::std::stringstream ss(disabledZonesStr);
+        ::std::string token;
+        while (::std::getline(ss, token, ','))
+        {
+            try
+            {
+                uint32 zoneId = static_cast<uint32>(::std::stoul(token));
+                _disabledZones.insert(zoneId);
+                TC_LOG_DEBUG("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Zone {} disabled by config", zoneId);
+            }
+            catch (...)
+            {
+                TC_LOG_ERROR("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Invalid zone ID in disabled list: {}", token);
+            }
+        }
+    }
+
+    // Load custom zone overrides
+    // Format: Playerbot.Zones.Override.{ZoneId} = "x,y,z,minLevel,maxLevel,faction"
+    // Example: Playerbot.Zones.Override.12 = "-8949.95,-132.493,83.5312,1,10,0"
+    // faction: 0=Alliance, 1=Horde, 2=Neutral
+    for (uint32 zoneId = 1; zoneId < 20000; ++zoneId)
+    {
+        ::std::string configKey = "Playerbot.Zones.Override." + ::std::to_string(zoneId);
+        ::std::string overrideStr = sConfigMgr->GetStringDefault(configKey.c_str(), "");
+
+        if (overrideStr.empty())
+            continue;
+
+        ConfigZoneOverride override;
+        override.zoneId = zoneId;
+        override.enabled = true;
+
+        ::std::stringstream ss(overrideStr);
+        ::std::string token;
+        int fieldIndex = 0;
+
+        while (::std::getline(ss, token, ',') && fieldIndex < 6)
+        {
+            try
+            {
+                switch (fieldIndex)
+                {
+                    case 0: override.x = ::std::stof(token); break;
+                    case 1: override.y = ::std::stof(token); break;
+                    case 2: override.z = ::std::stof(token); break;
+                    case 3: override.minLevel = static_cast<uint32>(::std::stoul(token)); break;
+                    case 4: override.maxLevel = static_cast<uint32>(::std::stoul(token)); break;
+                    case 5:
+                    {
+                        int factionInt = ::std::stoi(token);
+                        if (factionInt == 0) override.faction = TEAM_ALLIANCE;
+                        else if (factionInt == 1) override.faction = TEAM_HORDE;
+                        else override.faction = TEAM_NEUTRAL;
+                        break;
+                    }
+                }
+            }
+            catch (...)
+            {
+                TC_LOG_ERROR("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Invalid override value for zone {}: {}", zoneId, token);
+            }
+            ++fieldIndex;
+        }
+
+        _configOverrides[zoneId] = override;
+        TC_LOG_DEBUG("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Loaded override for zone {}", zoneId);
+    }
+
+    // Load additional custom zones (not in database)
+    // Format: Playerbot.Zones.Custom.{Index} = "zoneId,mapId,x,y,z,o,minLevel,maxLevel,faction,name"
+    for (int i = 1; i <= 100; ++i)
+    {
+        ::std::string configKey = "Playerbot.Zones.Custom." + ::std::to_string(i);
+        ::std::string customZoneStr = sConfigMgr->GetStringDefault(configKey.c_str(), "");
+
+        if (customZoneStr.empty())
+            continue;
+
+        ZonePlacement zone;
+        ::std::stringstream ss(customZoneStr);
+        ::std::string token;
+        int fieldIndex = 0;
+
+        while (::std::getline(ss, token, ',') && fieldIndex < 10)
+        {
+            try
+            {
+                switch (fieldIndex)
+                {
+                    case 0: zone.zoneId = static_cast<uint32>(::std::stoul(token)); break;
+                    case 1: zone.mapId = static_cast<uint32>(::std::stoul(token)); break;
+                    case 2: zone.x = ::std::stof(token); break;
+                    case 3: zone.y = ::std::stof(token); break;
+                    case 4: zone.z = ::std::stof(token); break;
+                    case 5: zone.orientation = ::std::stof(token); break;
+                    case 6: zone.minLevel = static_cast<uint32>(::std::stoul(token)); break;
+                    case 7: zone.maxLevel = static_cast<uint32>(::std::stoul(token)); break;
+                    case 8:
+                    {
+                        int factionInt = ::std::stoi(token);
+                        if (factionInt == 0) zone.faction = TEAM_ALLIANCE;
+                        else if (factionInt == 1) zone.faction = TEAM_HORDE;
+                        else zone.faction = TEAM_NEUTRAL;
+                        break;
+                    }
+                    case 9: zone.zoneName = token; break;
+                }
+            }
+            catch (...)
+            {
+                TC_LOG_ERROR("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Invalid custom zone field {}: {}", fieldIndex, token);
+            }
+            ++fieldIndex;
+        }
+
+        if (zone.zoneId > 0 && !zone.zoneName.empty())
+        {
+            zone.isStarterZone = IsStarterZoneByContent(zone.zoneId, zone.minLevel, zone.maxLevel);
+            _zones.push_back(zone);
+            TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Added custom zone: {} ({})", zone.zoneName, zone.zoneId);
+        }
+    }
+
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Loaded {} disabled zones, {} overrides, {} custom zones",
+        _disabledZones.size(), _configOverrides.size(), _zones.size());
+}
+
+// ============================================================================
+// DATABASE ZONE DISCOVERY - Enterprise-Grade Implementation
+// ============================================================================
+
+void BotWorldPositioner::LoadZonesFromDatabase()
+{
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Starting database zone discovery...");
+
+    uint32 startTime = getMSTime();
+
+    // Step 1: Get zone level ranges from quest data
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying zone level ranges from quests...");
+    auto zoneLevelInfo = QueryZoneLevelRanges();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found level data for {} zones", zoneLevelInfo.size());
+
+    // Step 2: Query innkeepers (highest priority spawn points)
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying innkeepers...");
+    auto innkeepers = QueryInnkeepers();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found {} innkeepers", innkeepers.size());
+
+    for (auto const& innkeeper : innkeepers)
+    {
+        if (_disabledZones.count(innkeeper.zoneId))
+            continue;
+        MergeSpawnPointIntoZone(innkeeper, zoneLevelInfo);
+    }
+
+    // Step 3: Query flight masters (second priority)
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying flight masters...");
+    auto flightMasters = QueryFlightMasters();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found {} flight masters", flightMasters.size());
+
+    for (auto const& fm : flightMasters)
+    {
+        if (_disabledZones.count(fm.zoneId))
+            continue;
+        MergeSpawnPointIntoZone(fm, zoneLevelInfo);
+    }
+
+    // Step 4: Query and cluster quest hubs (third priority)
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying quest hubs...");
+    auto questHubs = QueryAndClusterQuestHubs();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found {} quest hubs", questHubs.size());
+
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Starting quest hub merge loop...");
+    size_t hubsProcessed = 0;
+    for (size_t i = 0; i < questHubs.size(); ++i)
+    {
+        QuestHub const& hub = questHubs[i];
+        if (_disabledZones.count(hub.zoneId))
+            continue;
+        MergeQuestHubIntoZone(hub, zoneLevelInfo);
+        ++hubsProcessed;
+        if (hubsProcessed % 50 == 0)
+        {
+            TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Processed {} quest hubs...", hubsProcessed);
+        }
+    }
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Quest hub merge loop complete, merged {} hubs", hubsProcessed);
+
+    // Step 5: Query graveyards as fallback (fourth priority)
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying graveyards...");
+    auto graveyards = QueryGraveyards();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found {} graveyards", graveyards.size());
+
+    for (auto const& gy : graveyards)
+    {
+        if (_disabledZones.count(gy.zoneId))
+            continue;
+        MergeSpawnPointIntoZone(gy, zoneLevelInfo);
+    }
+
+    // Step 6: Convert discovered zones to ZonePlacement structs
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Converting {} zones to placements...", _zoneSpawnPoints.size());
+
+    for (auto const& [zoneId, spawnPoints] : _zoneSpawnPoints)
+    {
+        if (spawnPoints.empty())
+            continue;
+
+        // Select the best spawn point for this zone
+        DbSpawnPoint best = SelectBestSpawnPoint(spawnPoints);
+        if (!best.IsValid())
+            continue;
+
+        // Get level info for this zone
+        ZoneLevelInfo levelInfo;
+        auto levelIt = zoneLevelInfo.find(zoneId);
+        if (levelIt != zoneLevelInfo.end())
+        {
+            levelInfo = levelIt->second;
+        }
+        else
+        {
+            // Default level range if no quest data
+            levelInfo.minLevel = 1;
+            levelInfo.maxLevel = 80;
+        }
+
+        // Create zone placement
+        ZonePlacement zone;
+        zone.zoneId = zoneId;
+        zone.mapId = best.mapId;
+        zone.x = best.x;
+        zone.y = best.y;
+        zone.z = best.z;
+        zone.orientation = best.orientation;
+        zone.minLevel = levelInfo.minLevel;
+        zone.maxLevel = levelInfo.maxLevel;
+        zone.faction = best.factionTemplateId > 0 ? DetermineFaction(best.factionTemplateId) : TEAM_NEUTRAL;
+        zone.zoneName = GetZoneNameFromDBC(zoneId);
+        zone.isStarterZone = IsStarterZoneByContent(zoneId, levelInfo.minLevel, levelInfo.maxLevel);
+
+        // Don't add zones without a name (invalid zone IDs)
+        if (zone.zoneName.empty() || zone.zoneName == "Unknown Zone")
+        {
+            zone.zoneName = best.npcName.empty() ? "Zone " + ::std::to_string(zoneId) : best.npcName + " Area";
+        }
+
+        _zones.push_back(zone);
+
+        TC_LOG_DEBUG("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Added zone {} '{}' (L{}-{}, {})",
+            zone.zoneId, zone.zoneName, zone.minLevel, zone.maxLevel,
+            zone.faction == TEAM_ALLIANCE ? "Alliance" : (zone.faction == TEAM_HORDE ? "Horde" : "Neutral"));
+    }
+
+    uint32 elapsed = getMSTimeDiff(startTime, getMSTime());
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Completed in {}ms, discovered {} zones",
+        elapsed, _zones.size());
+
+    // Debug: Explicitly clear local vectors to identify destructor issues
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing graveyards...");
+    graveyards.clear();
+    graveyards.shrink_to_fit();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing questHubs...");
+    questHubs.clear();
+    questHubs.shrink_to_fit();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing flightMasters...");
+    flightMasters.clear();
+    flightMasters.shrink_to_fit();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing innkeepers...");
+    innkeepers.clear();
+    innkeepers.shrink_to_fit();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing zoneLevelInfo...");
+    zoneLevelInfo.clear();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - All cleared, returning...");
+}
+
+void BotWorldPositioner::ApplyConfigOverrides()
+{
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::ApplyConfigOverrides() - Applying {} config overrides...", _configOverrides.size());
+
+    for (auto& zone : _zones)
+    {
+        auto overrideIt = _configOverrides.find(zone.zoneId);
+        if (overrideIt == _configOverrides.end())
+            continue;
+
+        ConfigZoneOverride const& override = overrideIt->second;
+
+        if (!override.enabled)
+        {
+            // Mark zone for removal (we'll remove after iteration)
+            _disabledZones.insert(zone.zoneId);
+            continue;
+        }
+
+        // Apply coordinate overrides
+        if (override.x.has_value()) zone.x = override.x.value();
+        if (override.y.has_value()) zone.y = override.y.value();
+        if (override.z.has_value()) zone.z = override.z.value();
+
+        // Apply level range overrides
+        if (override.minLevel.has_value()) zone.minLevel = override.minLevel.value();
+        if (override.maxLevel.has_value()) zone.maxLevel = override.maxLevel.value();
+
+        // Apply faction override
+        if (override.faction.has_value()) zone.faction = override.faction.value();
+
+        TC_LOG_DEBUG("playerbot", "BotWorldPositioner::ApplyConfigOverrides() - Applied override to zone {}", zone.zoneId);
+    }
+
+    // Remove disabled zones
+    _zones.erase(
+        ::std::remove_if(_zones.begin(), _zones.end(),
+            [this](ZonePlacement const& z) { return _disabledZones.count(z.zoneId) > 0; }),
+        _zones.end());
+}
+
+// ============================================================================
+// DATABASE QUERY IMPLEMENTATIONS
+// ============================================================================
+
+::std::vector<DbSpawnPoint> BotWorldPositioner::QueryInnkeepers()
+{
+    ::std::vector<DbSpawnPoint> result;
+
+    // Query innkeepers from creature/creature_template
+    // npcflag & 65536 = UNIT_NPC_FLAG_INNKEEPER
+    QueryResult dbResult = WorldDatabase.Query(
+        "SELECT ct.entry, ct.name, ct.faction, c.map, c.zoneId, c.areaId, "
+        "c.position_x, c.position_y, c.position_z, c.orientation "
+        "FROM creature c "
+        "JOIN creature_template ct ON c.id = ct.entry "
+        "WHERE ct.npcflag & 65536 "
+        "AND c.map IN (0, 1, 530, 571, 870, 1116, 1220, 1643, 2222, 2444, 2601) " // Major continents
+        "ORDER BY c.map, c.position_x");
+
+    if (!dbResult)
+    {
+        TC_LOG_WARN("playerbot", "BotWorldPositioner::QueryInnkeepers() - No innkeepers found in database");
+        return result;
+    }
+
+    do
+    {
+        Field* fields = dbResult->Fetch();
+
+        DbSpawnPoint spawn;
+        spawn.creatureEntry = fields[0].GetUInt32();
+        spawn.npcName = fields[1].GetString();
+        spawn.factionTemplateId = fields[2].GetUInt16();
+        spawn.mapId = fields[3].GetUInt32();
+        spawn.zoneId = fields[4].GetUInt32();
+        spawn.areaId = fields[5].GetUInt32();
+        spawn.x = fields[6].GetFloat();
+        spawn.y = fields[7].GetFloat();
+        spawn.z = fields[8].GetFloat();
+        spawn.orientation = fields[9].GetFloat();
+        spawn.type = SpawnPointType::INNKEEPER;
+
+        // If zone not populated, try to get from areaId (fast DBC lookup)
+        if (spawn.zoneId == 0 && spawn.areaId > 0)
+        {
+            spawn.zoneId = GetZoneIdFromAreaId(spawn.areaId);
+        }
+
+        // Skip if still no valid zone (don't use expensive coordinate lookup)
+        if (spawn.zoneId == 0)
+            continue;
+
+        result.push_back(spawn);
+
+    } while (dbResult->NextRow());
+
+    TC_LOG_DEBUG("playerbot", "BotWorldPositioner::QueryInnkeepers() - Found {} valid innkeeper spawn points", result.size());
+    return result;
+}
+
+::std::vector<DbSpawnPoint> BotWorldPositioner::QueryFlightMasters()
+{
+    ::std::vector<DbSpawnPoint> result;
+
+    // Query flight masters from creature/creature_template
+    // npcflag & 8192 = UNIT_NPC_FLAG_FLIGHTMASTER
+    QueryResult dbResult = WorldDatabase.Query(
+        "SELECT ct.entry, ct.name, ct.faction, c.map, c.zoneId, c.areaId, "
+        "c.position_x, c.position_y, c.position_z, c.orientation "
+        "FROM creature c "
+        "JOIN creature_template ct ON c.id = ct.entry "
+        "WHERE ct.npcflag & 8192 "
+        "AND c.map IN (0, 1, 530, 571, 870, 1116, 1220, 1643, 2222, 2444, 2601) "
+        "ORDER BY c.map, c.position_x");
+
+    if (!dbResult)
+    {
+        TC_LOG_WARN("playerbot", "BotWorldPositioner::QueryFlightMasters() - No flight masters found in database");
+        return result;
+    }
+
+    do
+    {
+        Field* fields = dbResult->Fetch();
+
+        DbSpawnPoint spawn;
+        spawn.creatureEntry = fields[0].GetUInt32();
+        spawn.npcName = fields[1].GetString();
+        spawn.factionTemplateId = fields[2].GetUInt16();
+        spawn.mapId = fields[3].GetUInt32();
+        spawn.zoneId = fields[4].GetUInt32();
+        spawn.areaId = fields[5].GetUInt32();
+        spawn.x = fields[6].GetFloat();
+        spawn.y = fields[7].GetFloat();
+        spawn.z = fields[8].GetFloat();
+        spawn.orientation = fields[9].GetFloat();
+        spawn.type = SpawnPointType::FLIGHT_MASTER;
+
+        // If zone not populated, try to get from areaId (fast DBC lookup)
+        if (spawn.zoneId == 0 && spawn.areaId > 0)
+        {
+            spawn.zoneId = GetZoneIdFromAreaId(spawn.areaId);
+        }
+
+        // Skip if still no valid zone (don't use expensive coordinate lookup)
+        if (spawn.zoneId == 0)
+            continue;
+
+        result.push_back(spawn);
+
+    } while (dbResult->NextRow());
+
+    TC_LOG_DEBUG("playerbot", "BotWorldPositioner::QueryFlightMasters() - Found {} valid flight master spawn points", result.size());
+    return result;
+}
+
+::std::vector<QuestHub> BotWorldPositioner::QueryAndClusterQuestHubs()
+{
+    ::std::vector<QuestHub> result;
+    ::std::unordered_map<uint64, QuestHub> hubsByLocation;  // Grid cell -> hub
+
+    TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Starting database query...");
+
+    // Query quest givers with their positions
+    // Only query zones that have zoneId or areaId populated (skip ~75% of invalid data)
+    QueryResult dbResult = WorldDatabase.Query(
+        "SELECT DISTINCT ct.entry, ct.faction, c.map, c.zoneId, c.areaId, "
+        "c.position_x, c.position_y, c.position_z "
+        "FROM creature c "
+        "JOIN creature_template ct ON c.id = ct.entry "
+        "JOIN creature_queststarter cqs ON ct.entry = cqs.id "
+        "WHERE c.map IN (0, 1, 530, 571, 870, 1116, 1220, 1643, 2222, 2444, 2601) "
+        "AND (c.zoneId > 0 OR c.areaId > 0) "
+        "ORDER BY c.map, c.zoneId, c.position_x, c.position_y");
+
+    if (!dbResult)
+    {
+        TC_LOG_WARN("playerbot", "BotWorldPositioner::QueryAndClusterQuestHubs() - No quest givers found");
+        return result;
+    }
+
+    TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Query complete, processing results...");
+
+    // Cluster quest givers by spatial proximity (100 yard grid cells)
+    constexpr float CLUSTER_GRID_SIZE = 100.0f;
+    uint32 rowCount = 0;
+
+    do
+    {
+        Field* fields = dbResult->Fetch();
+        ++rowCount;
+
+        uint32 entry = fields[0].GetUInt32();
+        uint16 factionId = fields[1].GetUInt16();
+        uint32 mapId = fields[2].GetUInt32();
+        uint32 zoneId = fields[3].GetUInt32();
+        uint32 areaId = fields[4].GetUInt32();
+        float x = fields[5].GetFloat();
+        float y = fields[6].GetFloat();
+        float z = fields[7].GetFloat();
+
+        // Get zone from areaId if not populated (fast DBC lookup)
+        if (zoneId == 0 && areaId > 0)
+        {
+            zoneId = GetZoneIdFromAreaId(areaId);
+        }
+
+        // Skip if still no valid zone (don't use expensive coordinate lookup)
+        if (zoneId == 0)
+            continue;
+
+        // Calculate grid cell key (map + zone + grid coordinates)
+        int32 gridX = static_cast<int32>(x / CLUSTER_GRID_SIZE);
+        int32 gridY = static_cast<int32>(y / CLUSTER_GRID_SIZE);
+        uint64 cellKey = (static_cast<uint64>(mapId) << 48) |
+                        (static_cast<uint64>(zoneId) << 32) |
+                        (static_cast<uint64>(static_cast<uint32>(gridX + 10000)) << 16) |
+                        static_cast<uint64>(static_cast<uint32>(gridY + 10000));
+
+        // Add to existing hub or create new one
+        auto& hub = hubsByLocation[cellKey];
+        if (hub.mapId == 0)
+        {
+            hub.mapId = mapId;
+            hub.zoneId = zoneId;
+            hub.faction = DetermineFaction(factionId);
+        }
+        hub.AddQuestGiver(x, y, z);
+
+    } while (dbResult->NextRow());
+
+    TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Processed {} rows, found {} grid cells", rowCount, hubsByLocation.size());
+
+    // Convert to vector, filter for significant hubs (2+ quest givers)
+    TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Filtering hubs with 2+ quest givers...");
+    TC_LOG_INFO("playerbot", "QueryAndClusterQuestHubs() - Reserving space for result vector...");
+    result.reserve(hubsByLocation.size());
+    TC_LOG_INFO("playerbot", "QueryAndClusterQuestHubs() - Starting filter loop over {} cells...", hubsByLocation.size());
+
+    uint32 filteredCount = 0;
+    uint32 iterCount = 0;
+    for (auto it = hubsByLocation.begin(); it != hubsByLocation.end(); ++it)
+    {
+        ++iterCount;
+        if (iterCount % 100 == 0)
+        {
+            TC_LOG_INFO("playerbot", "QueryAndClusterQuestHubs() - Filter loop iteration {}...", iterCount);
+        }
+
+        QuestHub const& hub = it->second;
+
+        if (hub.questGiverCount >= 2)  // Only consider clusters with 2+ quest givers
+        {
+            result.push_back(hub);
+            ++filteredCount;
+        }
+    }
+
+    TC_LOG_INFO("playerbot", "QueryAndClusterQuestHubs() - Filtered {} hubs from {} iterations, returning...", filteredCount, iterCount);
+    return result;
+}
+
+::std::vector<DbSpawnPoint> BotWorldPositioner::QueryGraveyards()
+{
+    ::std::vector<DbSpawnPoint> result;
+
+    // Query graveyards with zone association
+    QueryResult dbResult = WorldDatabase.Query(
+        "SELECT wsl.ID, wsl.MapID, wsl.LocX, wsl.LocY, wsl.LocZ, wsl.Facing, "
+        "gz.GhostZone, wsl.Comment "
+        "FROM world_safe_locs wsl "
+        "JOIN graveyard_zone gz ON wsl.ID = gz.ID "
+        "WHERE wsl.MapID IN (0, 1, 530, 571, 870, 1116, 1220, 1643, 2222, 2444, 2601) "
+        "ORDER BY wsl.MapID, gz.GhostZone");
+
+    if (!dbResult)
+    {
+        TC_LOG_WARN("playerbot", "BotWorldPositioner::QueryGraveyards() - No graveyards found");
+        return result;
+    }
+
+    do
+    {
+        Field* fields = dbResult->Fetch();
+
+        DbSpawnPoint spawn;
+        spawn.creatureEntry = fields[0].GetUInt32();  // Graveyard ID
+        spawn.mapId = fields[1].GetUInt32();
+        spawn.x = fields[2].GetFloat();
+        spawn.y = fields[3].GetFloat();
+        spawn.z = fields[4].GetFloat();
+        spawn.orientation = fields[5].GetFloat();
+        spawn.zoneId = fields[6].GetUInt32();  // GhostZone
+        spawn.npcName = fields[7].GetString();  // Comment
+        spawn.factionTemplateId = 0;  // Graveyards are typically faction-neutral
+        spawn.type = SpawnPointType::GRAVEYARD;
+
+        if (spawn.zoneId == 0)
+            continue;
+
+        result.push_back(spawn);
+
+    } while (dbResult->NextRow());
+
+    TC_LOG_DEBUG("playerbot", "BotWorldPositioner::QueryGraveyards() - Found {} graveyard spawn points", result.size());
+    return result;
+}
+
+::std::unordered_map<uint32, ZoneLevelInfo> BotWorldPositioner::QueryZoneLevelRanges()
+{
+    ::std::unordered_map<uint32, ZoneLevelInfo> result;
+
+    // Use DBC stores to get zone level ranges via ContentTuning
+    // AreaTable has ContentTuningID which links to ContentTuning for level data
+    for (AreaTableEntry const* area : sAreaTableStore)
+    {
+        if (!area)
+            continue;
+
+        // Get zone ID (top-level area for this entry)
+        uint32 zoneId = area->ID;
+        if (area->ParentAreaID > 0)
+        {
+            // This is a subzone, use parent as zone
+            zoneId = area->ParentAreaID;
+        }
+
+        // Skip if no content tuning
+        if (area->ContentTuningID == 0)
+            continue;
+
+        // Look up content tuning for level data
+        ContentTuningEntry const* contentTuning = sContentTuningStore.LookupEntry(area->ContentTuningID);
+        if (!contentTuning)
+            continue;
+
+        // Get level range from content tuning
+        int32 minLevel = contentTuning->MinLevel;
+        int32 maxLevel = contentTuning->MaxLevel;
+
+        // Skip invalid level ranges
+        if (minLevel <= 0 && maxLevel <= 0)
+            continue;
+
+        // Apply sensible defaults
+        if (minLevel <= 0)
+            minLevel = 1;
+        if (maxLevel <= 0)
+            maxLevel = minLevel;
+
+        // Ensure minLevel <= maxLevel
+        if (minLevel > maxLevel)
+            ::std::swap(minLevel, maxLevel);
+
+        // Cap at sensible values for current expansion
+        minLevel = ::std::max(1, ::std::min(80, minLevel));
+        maxLevel = ::std::max(minLevel, ::std::min(80, maxLevel));
+
+        // Check if we already have this zone
+        auto it = result.find(zoneId);
+        if (it != result.end())
+        {
+            // Merge level ranges - take the widest range
+            it->second.minLevel = ::std::min(it->second.minLevel, static_cast<uint32>(minLevel));
+            it->second.maxLevel = ::std::max(it->second.maxLevel, static_cast<uint32>(maxLevel));
+            it->second.questCount++;  // Count as additional subzone
+        }
+        else
+        {
+            ZoneLevelInfo info;
+            info.zoneId = zoneId;
+            info.minLevel = static_cast<uint32>(minLevel);
+            info.maxLevel = static_cast<uint32>(maxLevel);
+            info.questCount = 1;
+            result[zoneId] = info;
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot", "BotWorldPositioner::QueryZoneLevelRanges() - Found level data for {} zones from DBC", result.size());
+    return result;
+}
+
+// ============================================================================
+// HELPER IMPLEMENTATIONS
+// ============================================================================
+
+TeamId BotWorldPositioner::DetermineFaction(uint16 factionTemplateId) const
+{
+    if (factionTemplateId == 0)
+        return TEAM_NEUTRAL;
+
+    // Get faction template from DBC
+    FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(factionTemplateId);
+    if (!factionTemplate)
+        return TEAM_NEUTRAL;
+
+    // Check FactionGroup flags
+    // FACTION_MASK_ALLIANCE = 2, FACTION_MASK_HORDE = 4
+    if (factionTemplate->FactionGroup & FACTION_MASK_ALLIANCE)
+        return TEAM_ALLIANCE;
+    if (factionTemplate->FactionGroup & FACTION_MASK_HORDE)
+        return TEAM_HORDE;
+
+    // Check FriendGroup for indirect faction association
+    if (factionTemplate->FriendGroup & FACTION_MASK_ALLIANCE)
+        return TEAM_ALLIANCE;
+    if (factionTemplate->FriendGroup & FACTION_MASK_HORDE)
+        return TEAM_HORDE;
+
+    return TEAM_NEUTRAL;
+}
+
+::std::string BotWorldPositioner::GetZoneNameFromDBC(uint32 zoneId) const
+{
+    AreaTableEntry const* area = sAreaTableStore.LookupEntry(zoneId);
+    if (!area)
+        return "Unknown Zone";
+
+    return area->AreaName[sWorld->GetDefaultDbcLocale()];
+}
+
+uint32 BotWorldPositioner::GetZoneIdFromCoordinates(uint32 /*mapId*/, float /*x*/, float /*y*/, float /*z*/) const
+{
+    // DISABLED: TerrainMgr coordinate lookup is too slow during startup (triggers VMap loading)
+    // Use GetZoneIdFromAreaId() instead which is a fast DBC lookup
+    // If truly needed at runtime, uncomment below:
+    // uint32 zoneId = sTerrainMgr.GetZoneId(PhasingHandler::GetAlwaysVisiblePhaseShift(), mapId, x, y, z);
+    // return zoneId;
+    return 0;
+}
+
+uint32 BotWorldPositioner::GetZoneIdFromAreaId(uint32 areaId) const
+{
+    if (areaId == 0)
+        return 0;
+
+    // Fast DBC lookup - no disk I/O, just memory access
+    AreaTableEntry const* area = sAreaTableStore.LookupEntry(areaId);
+    if (!area)
+        return 0;
+
+    // If this is a subzone, return the parent zone ID
+    if (area->ParentAreaID > 0)
+        return area->ParentAreaID;
+
+    // This is already a top-level zone
+    return areaId;
+}
+
+bool BotWorldPositioner::IsStarterZoneByContent(uint32 zoneId, uint32 minLevel, uint32 maxLevel) const
+{
+    // Starter zones are level 1-10 content
+    if (minLevel <= 1 && maxLevel <= 12)
+        return true;
+
+    // Known starter zone IDs (race starting areas)
+    static const ::std::unordered_set<uint32> starterZoneIds = {
+        // Alliance
+        12,     // Elwynn Forest
+        132,    // Dun Morogh
+        188,    // Teldrassil
+        3524,   // Azuremyst Isle
+        4755,   // Gilneas
+        6170,   // Northshire (subzone)
+        // Horde
+        14,     // Durotar
+        85,     // Tirisfal Glades
+        215,    // Mulgore
+        3430,   // Eversong Woods
+        4720,   // Lost Isles (Goblin)
+        // Neutral
+        5736,   // Wandering Isle (Pandaren)
+    };
+
+    return starterZoneIds.count(zoneId) > 0;
+}
+
+bool BotWorldPositioner::IsCapitalCity(uint32 zoneId) const
+{
+    return zoneId == ZONE_STORMWIND || zoneId == ZONE_IRONFORGE ||
+           zoneId == ZONE_DARNASSUS || zoneId == ZONE_EXODAR ||
+           zoneId == ZONE_ORGRIMMAR || zoneId == ZONE_THUNDER_BLUFF ||
+           zoneId == ZONE_UNDERCITY || zoneId == ZONE_SILVERMOON;
+}
+
+void BotWorldPositioner::MergeSpawnPointIntoZone(DbSpawnPoint const& spawnPoint,
+                                                   ::std::unordered_map<uint32, ZoneLevelInfo> const& levelInfo)
+{
+    (void)levelInfo;  // Reserved for future level-based spawn filtering
+    uint32 zoneId = spawnPoint.zoneId;
+
+    // Check if we should replace existing spawn point based on priority
+    auto bestTypeIt = _zoneBestSpawnType.find(zoneId);
+    if (bestTypeIt != _zoneBestSpawnType.end())
+    {
+        // Lower enum value = higher priority
+        if (static_cast<uint8>(spawnPoint.type) >= static_cast<uint8>(bestTypeIt->second))
+        {
+            // Existing spawn point is equal or higher priority, just add to list
+            _zoneSpawnPoints[zoneId].push_back(spawnPoint);
+            return;
+        }
+    }
+
+    // This is a higher priority spawn point
+    _zoneBestSpawnType[zoneId] = spawnPoint.type;
+    _zoneSpawnPoints[zoneId].push_back(spawnPoint);
+}
+
+void BotWorldPositioner::MergeQuestHubIntoZone(QuestHub const& hub,
+                                                 ::std::unordered_map<uint32, ZoneLevelInfo> const& levelInfo)
+{
+    // Convert quest hub to DbSpawnPoint
+    DbSpawnPoint spawnPoint;
+    spawnPoint.creatureEntry = 0;
+    spawnPoint.mapId = hub.mapId;
+    spawnPoint.zoneId = hub.zoneId;
+    spawnPoint.areaId = 0;
+    spawnPoint.x = hub.centroidX;
+    spawnPoint.y = hub.centroidY;
+    spawnPoint.z = hub.centroidZ;
+    spawnPoint.orientation = 0.0f;
+    spawnPoint.factionTemplateId = 0;  // Will be determined by NPC faction
+    spawnPoint.type = SpawnPointType::QUEST_GIVER;
+    spawnPoint.npcName = "Quest Hub (" + ::std::to_string(hub.questGiverCount) + " NPCs)";
+
+    // Try to determine faction from hub
+    if (hub.faction != TEAM_NEUTRAL)
+    {
+        // Set a faction template ID that will map to the correct team
+        // These are common faction template IDs for Alliance/Horde
+        spawnPoint.factionTemplateId = (hub.faction == TEAM_ALLIANCE) ? 12 : 29;
+    }
+
+    MergeSpawnPointIntoZone(spawnPoint, levelInfo);
+}
+
+DbSpawnPoint BotWorldPositioner::SelectBestSpawnPoint(::std::vector<DbSpawnPoint> const& candidates) const
+{
+    if (candidates.empty())
+        return DbSpawnPoint();
+
+    // Find highest priority spawn point (lowest enum value)
+    DbSpawnPoint const* best = &candidates[0];
+
+    for (auto const& spawn : candidates)
+    {
+        if (static_cast<uint8>(spawn.type) < static_cast<uint8>(best->type))
+        {
+            best = &spawn;
+        }
+    }
+
+    return *best;
 }
 
 void BotWorldPositioner::BuildDefaultZones()
@@ -242,31 +1115,50 @@ void BotWorldPositioner::ValidateZones()
 
 void BotWorldPositioner::BuildZoneCache()
 {
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Building zone ID lookup for {} zones...", _zones.size());
+
     // Build zone ID lookup
-    for (auto const& zone : _zones)
+    for (size_t i = 0; i < _zones.size(); ++i)
     {
-        _zoneById[zone.zoneId] = &zone;
+        _zoneById[_zones[i].zoneId] = &_zones[i];
     }
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Zone ID lookup complete, {} entries", _zoneById.size());
 
     // Build level-based lookup (every 5 levels)
-    for (auto const& zone : _zones)
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Building level-based lookup...");
+    for (size_t i = 0; i < _zones.size(); ++i)
     {
+        ZonePlacement const& zone = _zones[i];
+
+        // Safety check for level range
+        if (zone.minLevel > zone.maxLevel || zone.maxLevel > 100)
+        {
+            TC_LOG_WARN("playerbot", "BotWorldPositioner::BuildZoneCache() - Skipping zone {} with invalid levels {}-{}",
+                zone.zoneId, zone.minLevel, zone.maxLevel);
+            continue;
+        }
+
         for (uint32 level = zone.minLevel; level <= zone.maxLevel; level += 5)
         {
-            _zonesByLevel[level].push_back(&zone);
+            _zonesByLevel[level].push_back(&_zones[i]);
         }
 
         // Also add to exact level for precision
-        _zonesByLevel[zone.minLevel].push_back(&zone);
-        _zonesByLevel[zone.maxLevel].push_back(&zone);
+        _zonesByLevel[zone.minLevel].push_back(&_zones[i]);
+        _zonesByLevel[zone.maxLevel].push_back(&_zones[i]);
     }
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Level lookup complete, {} brackets", _zonesByLevel.size());
 
     // Build race-to-starter-zone mapping
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Building race zone mapping...");
     BuildRaceZoneMapping();
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Race zone mapping complete");
 
     // Build capital city lists
-    for (auto const& zone : _zones)
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Building capital city lists...");
+    for (size_t i = 0; i < _zones.size(); ++i)
     {
+        ZonePlacement const& zone = _zones[i];
         if ((zone.zoneName.find("City") != ::std::string::npos ||
              zone.zoneName.find("Ironforge") != ::std::string::npos ||
              zone.zoneName.find("Darnassus") != ::std::string::npos ||
@@ -275,14 +1167,15 @@ void BotWorldPositioner::BuildZoneCache()
             zone.minLevel == 1 && zone.maxLevel >= 70)
         {
             if (zone.faction == TEAM_ALLIANCE)
-                _allianceCapitals.push_back(&zone);
+                _allianceCapitals.push_back(&_zones[i]);
             else if (zone.faction == TEAM_HORDE)
-                _hordeCapitals.push_back(&zone);
+                _hordeCapitals.push_back(&_zones[i]);
         }
     }
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Capital lists complete: {} Alliance, {} Horde",
+        _allianceCapitals.size(), _hordeCapitals.size());
 
-    TC_LOG_DEBUG("playerbot", "BotWorldPositioner::BuildZoneCache() - Built cache: {} zones, {} level brackets",
-        _zoneById.size(), _zonesByLevel.size());
+    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Cache build complete");
 }
 
 void BotWorldPositioner::BuildRaceZoneMapping()
