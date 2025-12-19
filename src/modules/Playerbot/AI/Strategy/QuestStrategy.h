@@ -143,7 +143,8 @@ private:
         bool IsGameObject() const { return isGameObject && objectEntry != 0; }
         bool IsValid() const { return objectEntry != 0; }
         bool HasValidPosition() const { return position.GetPositionX() != 0.0f || position.GetPositionY() != 0.0f || position.GetPositionZ() != 0.0f; }
-        bool RequiresMapTravel() const { return isOnDifferentMap && targetMapId != 0; }
+        // NOTE: targetMapId=0 is valid (Eastern Kingdoms) - don't check targetMapId != 0
+        bool RequiresMapTravel() const { return isOnDifferentMap && HasValidPosition(); }
     };
 
     bool FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnderLocation& location);
