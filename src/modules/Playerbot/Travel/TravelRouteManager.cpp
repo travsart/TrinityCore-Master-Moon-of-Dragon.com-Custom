@@ -40,18 +40,46 @@ bool TravelRouteManager::s_connectionsInitialized = false;
 
 namespace TransportDB
 {
-    // Map IDs
+    // Map IDs - Classic
     constexpr uint32 MAP_EASTERN_KINGDOMS = 0;
     constexpr uint32 MAP_KALIMDOR = 1;
+
+    // Map IDs - Expansions
     constexpr uint32 MAP_OUTLAND = 530;
     constexpr uint32 MAP_NORTHREND = 571;
+    constexpr uint32 MAP_DEEPHOLM = 646;           // Cataclysm
     constexpr uint32 MAP_PANDARIA = 870;
     constexpr uint32 MAP_DRAENOR = 1116;
     constexpr uint32 MAP_BROKEN_ISLES = 1220;
+    constexpr uint32 MAP_ARGUS = 1669;             // Legion 7.3
     constexpr uint32 MAP_ZANDALAR = 1642;
     constexpr uint32 MAP_KUL_TIRAS = 1643;
     constexpr uint32 MAP_DRAGON_ISLES = 2222;
-    constexpr uint32 MAP_KHAZ_ALGAR = 2552;
+
+    // Map IDs - Shadowlands
+    constexpr uint32 MAP_SHADOWLANDS = 2222;       // Note: Shares ID with Dragon Isles in some contexts
+    constexpr uint32 MAP_ORIBOS = 2364;            // Shadowlands hub city
+    constexpr uint32 MAP_MALDRAXXUS = 2286;        // Shadowlands zone
+    constexpr uint32 MAP_BASTION = 2287;           // Shadowlands zone
+    constexpr uint32 MAP_ARDENWEALD = 2288;        // Shadowlands zone
+    constexpr uint32 MAP_REVENDRETH = 2289;        // Shadowlands zone
+    constexpr uint32 MAP_THE_MAW = 2290;           // Shadowlands endgame zone
+    constexpr uint32 MAP_ZERETH_MORTIS = 2291;     // Shadowlands 9.2 zone
+
+    // Map IDs - The War Within (TWW 11.x)
+    constexpr uint32 MAP_KHAZ_ALGAR = 2552;        // Main TWW continent ID
+    constexpr uint32 MAP_ISLE_OF_DORN = 2444;      // TWW surface zone (Isle of Dorn)
+    constexpr uint32 MAP_RINGING_DEEPS = 2214;     // TWW underground zone 1
+    constexpr uint32 MAP_HALLOWFALL = 2215;        // TWW underground zone 2
+    constexpr uint32 MAP_AZJ_KAHET = 2255;         // TWW underground zone 3
+    constexpr uint32 MAP_CITY_OF_THREADS = 2213;   // TWW Nerubian city
+    constexpr uint32 MAP_DORNOGAL = 2339;          // TWW capital city instance
+    constexpr uint32 MAP_SCENARIO_TWW = 2601;      // TWW scenario/instance map
+
+    // Map IDs - Special locations
+    constexpr uint32 MAP_CAVERNS_OF_TIME = 1;      // Tanaris (same as Kalimdor, different area)
+    constexpr uint32 MAP_SILITHUS = 1;             // Same as Kalimdor
+    constexpr uint32 MAP_EMERALD_DREAM = 2200;     // Dragonflight 10.2 zone
 
     // Transport wait times (in seconds)
     constexpr uint32 SHIP_WAIT_TIME = 180;      // 3 minutes average wait
@@ -504,35 +532,967 @@ namespace TransportDB
 
         // Capital city -> Dragon Isles (Dragonflight)
         {
+            // Stormwind -> Valdrakken (Alliance)
             TransportConnection conn;
             conn.connectionId = nextId++;
             conn.type = TransportType::PORTAL;
-            conn.name = "Stormwind to Dragon Isles Portal";
+            conn.name = "Stormwind to Valdrakken Portal";
             conn.departureMapId = MAP_EASTERN_KINGDOMS;
             conn.departurePosition.Relocate(-8838.0f, 626.0f, 94.0f);
             conn.arrivalMapId = MAP_DRAGON_ISLES;
             conn.arrivalPosition.Relocate(-2512.0f, -376.0f, 201.0f);  // Valdrakken
             conn.waitTimeSeconds = PORTAL_WAIT_TIME;
             conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
             conn.requiresLevel = true;
             conn.minLevel = 60;
             connections.push_back(conn);
+
+            // Orgrimmar -> Valdrakken (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Orgrimmar to Valdrakken Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(1676.0f, -4315.0f, 61.2f);  // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Valdrakken -> Stormwind (Alliance) - REVERSE
+            conn.connectionId = nextId++;
+            conn.name = "Valdrakken to Stormwind Portal";
+            conn.departureMapId = MAP_DRAGON_ISLES;
+            conn.departurePosition.Relocate(-2512.0f, -376.0f, 201.0f);  // Valdrakken portal room
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);      // Stormwind
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+
+            // Valdrakken -> Orgrimmar (Horde) - REVERSE
+            conn.connectionId = nextId++;
+            conn.name = "Valdrakken to Orgrimmar Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);     // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
         }
 
-        // Capital city -> Khaz Algar (The War Within)
+        // Capital city <-> Khaz Algar (The War Within)
         {
+            // Stormwind -> Dornogal (Alliance)
             TransportConnection conn;
             conn.connectionId = nextId++;
             conn.type = TransportType::PORTAL;
-            conn.name = "Dornogal Portal";
+            conn.name = "Stormwind to Dornogal Portal";
             conn.departureMapId = MAP_EASTERN_KINGDOMS;
             conn.departurePosition.Relocate(-8838.0f, 626.0f, 94.0f);
             conn.arrivalMapId = MAP_KHAZ_ALGAR;
             conn.arrivalPosition.Relocate(1287.0f, -2252.0f, 176.0f);  // Dornogal
             conn.waitTimeSeconds = PORTAL_WAIT_TIME;
             conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
             conn.requiresLevel = true;
             conn.minLevel = 70;
+            connections.push_back(conn);
+
+            // Orgrimmar -> Dornogal (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Orgrimmar to Dornogal Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(1676.0f, -4315.0f, 61.2f);  // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Dornogal -> Stormwind (Alliance) - REVERSE
+            conn.connectionId = nextId++;
+            conn.name = "Dornogal to Stormwind Portal";
+            conn.departureMapId = MAP_KHAZ_ALGAR;
+            conn.departurePosition.Relocate(1287.0f, -2252.0f, 176.0f);  // Dornogal portal room
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);      // Stormwind
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+
+            // Dornogal -> Orgrimmar (Horde) - REVERSE
+            conn.connectionId = nextId++;
+            conn.name = "Dornogal to Orgrimmar Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);     // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // REVERSE ROUTES FROM EXPANSION ZONES (Critical for returning home)
+        // ====================================================================
+
+        // Broken Isles (Legion Dalaran) -> Capitals
+        {
+            // Dalaran (Legion) -> Stormwind (Alliance)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Dalaran (Legion) to Stormwind Portal";
+            conn.departureMapId = MAP_BROKEN_ISLES;
+            conn.departurePosition.Relocate(-853.0f, 4491.0f, 729.0f);  // Dalaran portal room
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);     // Stormwind
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Dalaran (Legion) -> Orgrimmar (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Dalaran (Legion) to Orgrimmar Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);    // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // Kul Tiras / Zandalar (BFA) -> Capitals
+        {
+            // Boralus -> Stormwind (Alliance)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Boralus to Stormwind Portal";
+            conn.departureMapId = MAP_KUL_TIRAS;
+            conn.departurePosition.Relocate(-1774.0f, -1580.0f, 0.3f);  // Boralus portal room
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);     // Stormwind
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Dazar'alor -> Orgrimmar (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Dazar'alor to Orgrimmar Portal";
+            conn.departureMapId = MAP_ZANDALAR;
+            conn.departurePosition.Relocate(-1015.0f, 805.0f, 440.0f);  // Dazar'alor portal room
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);    // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // Pandaria (Shrine) -> Capitals
+        {
+            // Shrine of Seven Stars -> Stormwind (Alliance)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Shrine of Seven Stars to Stormwind Portal";
+            conn.departureMapId = MAP_PANDARIA;
+            conn.departurePosition.Relocate(942.0f, 249.0f, 520.0f);    // Shrine portal room
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);     // Stormwind
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Shrine of Two Moons -> Orgrimmar (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Shrine of Two Moons to Orgrimmar Portal";
+            conn.departurePosition.Relocate(1641.0f, 931.0f, 471.0f);   // Shrine portal room
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);    // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Pandaria -> Jade Forest (reverse of capital->pandaria)
+            conn.connectionId = nextId++;
+            conn.name = "Jade Forest to Stormwind Portal";
+            conn.departurePosition.Relocate(942.0f, -569.0f, 184.0f);   // Jade Forest
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+        }
+
+        // Draenor (Garrison/Ashran) -> Capitals
+        {
+            // Alliance Garrison -> Stormwind
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Alliance Garrison to Stormwind Portal";
+            conn.departureMapId = MAP_DRAENOR;
+            conn.departurePosition.Relocate(2068.0f, 196.0f, 87.0f);    // Shadowmoon garrison
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);     // Stormwind
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Horde Garrison -> Orgrimmar
+            conn.connectionId = nextId++;
+            conn.name = "Horde Garrison to Orgrimmar Portal";
+            conn.departurePosition.Relocate(5579.0f, 4571.0f, 133.0f);  // Frostfire garrison
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);    // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Ashran -> Stormwind (Alliance)
+            conn.connectionId = nextId++;
+            conn.name = "Stormshield to Stormwind Portal";
+            conn.departurePosition.Relocate(-4059.0f, -2271.0f, 51.0f); // Stormshield
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+
+            // Ashran -> Orgrimmar (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Warspear to Orgrimmar Portal";
+            conn.departurePosition.Relocate(-3998.0f, -2525.0f, 72.0f); // Warspear
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // THE WAR WITHIN INTERNAL CONNECTIONS
+        // ====================================================================
+        // TWW has multiple map IDs for different zones that need interconnection
+
+        // Isle of Dorn (2444) <-> Khaz Algar Hub (2552) / Dornogal
+        {
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Isle of Dorn to Dornogal Portal";
+            conn.departureMapId = MAP_ISLE_OF_DORN;
+            conn.departurePosition.Relocate(3675.0f, -1833.0f, 2.8f);   // Isle of Dorn
+            conn.arrivalMapId = MAP_KHAZ_ALGAR;
+            conn.arrivalPosition.Relocate(1287.0f, -2252.0f, 176.0f);   // Dornogal
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            connections.push_back(conn);
+
+            // Reverse
+            conn.connectionId = nextId++;
+            conn.name = "Dornogal to Isle of Dorn Portal";
+            std::swap(conn.departureMapId, conn.arrivalMapId);
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+        }
+
+        // Isle of Dorn (2444) -> Capital cities (for bots stuck on this specific map ID)
+        {
+            // Isle of Dorn -> Stormwind (Alliance)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Isle of Dorn to Stormwind Portal";
+            conn.departureMapId = MAP_ISLE_OF_DORN;
+            conn.departurePosition.Relocate(3675.0f, -1833.0f, 2.8f);   // Isle of Dorn (via Dornogal)
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);     // Stormwind
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Isle of Dorn -> Orgrimmar (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Isle of Dorn to Orgrimmar Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);    // Orgrimmar
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // Underground zones <-> Dornogal hub
+        // These are elevator/portal connections within TWW
+        {
+            // Ringing Deeps <-> Dornogal
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Ringing Deeps to Dornogal Elevator";
+            conn.departureMapId = MAP_RINGING_DEEPS;
+            conn.departurePosition.Relocate(0.0f, 0.0f, 0.0f);          // TODO: Get actual coords
+            conn.arrivalMapId = MAP_KHAZ_ALGAR;
+            conn.arrivalPosition.Relocate(1287.0f, -2252.0f, 176.0f);   // Dornogal
+            conn.waitTimeSeconds = 30;  // Elevator wait time
+            conn.travelTimeSeconds = 30;
+            connections.push_back(conn);
+
+            conn.connectionId = nextId++;
+            conn.name = "Dornogal to Ringing Deeps Elevator";
+            std::swap(conn.departureMapId, conn.arrivalMapId);
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+
+            // Hallowfall <-> Dornogal
+            conn.connectionId = nextId++;
+            conn.name = "Hallowfall to Dornogal Portal";
+            conn.departureMapId = MAP_HALLOWFALL;
+            conn.departurePosition.Relocate(0.0f, 0.0f, 0.0f);          // TODO: Get actual coords
+            conn.arrivalMapId = MAP_KHAZ_ALGAR;
+            conn.arrivalPosition.Relocate(1287.0f, -2252.0f, 176.0f);
+            connections.push_back(conn);
+
+            conn.connectionId = nextId++;
+            conn.name = "Dornogal to Hallowfall Portal";
+            std::swap(conn.departureMapId, conn.arrivalMapId);
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+
+            // Azj-Kahet <-> Dornogal
+            conn.connectionId = nextId++;
+            conn.name = "Azj-Kahet to Dornogal Portal";
+            conn.departureMapId = MAP_AZJ_KAHET;
+            conn.departurePosition.Relocate(0.0f, 0.0f, 0.0f);          // TODO: Get actual coords
+            conn.arrivalMapId = MAP_KHAZ_ALGAR;
+            conn.arrivalPosition.Relocate(1287.0f, -2252.0f, 176.0f);
+            connections.push_back(conn);
+
+            conn.connectionId = nextId++;
+            conn.name = "Dornogal to Azj-Kahet Portal";
+            std::swap(conn.departureMapId, conn.arrivalMapId);
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+        }
+
+        // Dragon Isles internal connections (Valdrakken is the hub)
+        // Emerald Dream (map 2200) was added in 10.2
+        {
+            // Valdrakken -> Emerald Dream
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Valdrakken to Emerald Dream Portal";
+            conn.departureMapId = MAP_DRAGON_ISLES;
+            conn.departurePosition.Relocate(-2512.0f, -376.0f, 201.0f); // Valdrakken
+            conn.arrivalMapId = 2200;  // Emerald Dream
+            conn.arrivalPosition.Relocate(4525.0f, -2265.0f, 34.0f);    // Central Encampment
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.requiresLevel = true;
+            conn.minLevel = 70;
+            connections.push_back(conn);
+
+            // Emerald Dream -> Valdrakken
+            conn.connectionId = nextId++;
+            conn.name = "Emerald Dream to Valdrakken Portal";
+            std::swap(conn.departureMapId, conn.arrivalMapId);
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // CATACLYSM CONNECTIONS (Deepholm, Twilight Highlands, etc.)
+        // ====================================================================
+        {
+            // Stormwind -> Deepholm (via portal in Earthen Ring enclave)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Stormwind to Deepholm Portal";
+            conn.departureMapId = MAP_EASTERN_KINGDOMS;
+            conn.departurePosition.Relocate(-8178.0f, 823.0f, 72.0f);   // Stormwind Earthen Ring
+            conn.arrivalMapId = MAP_DEEPHOLM;
+            conn.arrivalPosition.Relocate(980.0f, 523.0f, -44.0f);      // Temple of Earth
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.requiresLevel = true;
+            conn.minLevel = 82;
+            connections.push_back(conn);
+
+            // Orgrimmar -> Deepholm
+            conn.connectionId = nextId++;
+            conn.name = "Orgrimmar to Deepholm Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(1778.0f, -4341.0f, -7.5f);  // Orgrimmar Earthen Ring
+            connections.push_back(conn);
+
+            // Deepholm -> Stormwind
+            conn.connectionId = nextId++;
+            conn.name = "Deepholm to Stormwind Portal";
+            conn.departureMapId = MAP_DEEPHOLM;
+            conn.departurePosition.Relocate(980.0f, 523.0f, -44.0f);
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8178.0f, 823.0f, 72.0f);
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Deepholm -> Orgrimmar
+            conn.connectionId = nextId++;
+            conn.name = "Deepholm to Orgrimmar Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1778.0f, -4341.0f, -7.5f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // ARGUS CONNECTIONS (Legion 7.3)
+        // ====================================================================
+        {
+            // Dalaran (Legion) -> Vindicaar (Argus)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Dalaran to Argus Portal";
+            conn.departureMapId = MAP_BROKEN_ISLES;
+            conn.departurePosition.Relocate(-853.0f, 4491.0f, 729.0f);  // Dalaran
+            conn.arrivalMapId = MAP_ARGUS;
+            conn.arrivalPosition.Relocate(-3033.0f, 9023.0f, -168.0f);  // Vindicaar
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.requiresLevel = true;
+            conn.minLevel = 110;
+            connections.push_back(conn);
+
+            // Argus -> Dalaran
+            conn.connectionId = nextId++;
+            conn.name = "Argus to Dalaran Portal";
+            std::swap(conn.departureMapId, conn.arrivalMapId);
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // SHADOWLANDS CONNECTIONS (Oribos hub)
+        // ====================================================================
+        {
+            // Stormwind -> Oribos (Alliance)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Stormwind to Oribos Portal";
+            conn.departureMapId = MAP_EASTERN_KINGDOMS;
+            conn.departurePosition.Relocate(-8838.0f, 626.0f, 94.0f);   // Stormwind portal room
+            conn.arrivalMapId = MAP_ORIBOS;
+            conn.arrivalPosition.Relocate(-1758.0f, 1257.0f, 5453.0f);  // Oribos Ring of Transference
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            conn.requiresLevel = true;
+            conn.minLevel = 48;
+            connections.push_back(conn);
+
+            // Orgrimmar -> Oribos (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Orgrimmar to Oribos Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(1676.0f, -4315.0f, 61.2f);  // Orgrimmar portal room
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Oribos -> Stormwind (Alliance)
+            conn.connectionId = nextId++;
+            conn.name = "Oribos to Stormwind Portal";
+            conn.departureMapId = MAP_ORIBOS;
+            conn.departurePosition.Relocate(-1758.0f, 1257.0f, 5453.0f);
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+
+            // Oribos -> Orgrimmar (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Oribos to Orgrimmar Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // CAVERNS OF TIME CONNECTIONS
+        // ====================================================================
+        {
+            // Stormwind -> Caverns of Time (via portal room)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Stormwind to Caverns of Time Portal";
+            conn.departureMapId = MAP_EASTERN_KINGDOMS;
+            conn.departurePosition.Relocate(-8838.0f, 626.0f, 94.0f);
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(-8173.0f, -4746.0f, 33.8f);   // Caverns of Time entrance
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Orgrimmar -> Caverns of Time
+            conn.connectionId = nextId++;
+            conn.name = "Orgrimmar to Caverns of Time Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(1676.0f, -4315.0f, 61.2f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Caverns of Time -> Stormwind (Alliance)
+            conn.connectionId = nextId++;
+            conn.name = "Caverns of Time to Stormwind Portal";
+            conn.departurePosition.Relocate(-8173.0f, -4746.0f, 33.8f);
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+
+            // Caverns of Time -> Orgrimmar (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Caverns of Time to Orgrimmar Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // VALDRAKKEN HUB CONNECTIONS (Portals within Valdrakken)
+        // ====================================================================
+        {
+            // Valdrakken -> New Dalaran (Broken Isles)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Valdrakken to New Dalaran Portal";
+            conn.departureMapId = MAP_DRAGON_ISLES;
+            conn.departurePosition.Relocate(-2512.0f, -376.0f, 201.0f);  // Valdrakken
+            conn.arrivalMapId = MAP_BROKEN_ISLES;
+            conn.arrivalPosition.Relocate(-853.0f, 4491.0f, 729.0f);     // Dalaran
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            connections.push_back(conn);
+
+            // Valdrakken -> Jade Forest (Pandaria)
+            conn.connectionId = nextId++;
+            conn.name = "Valdrakken to Jade Forest Portal";
+            conn.arrivalMapId = MAP_PANDARIA;
+            conn.arrivalPosition.Relocate(942.0f, -569.0f, 184.0f);      // Jade Forest
+            connections.push_back(conn);
+
+            // Valdrakken -> Shadowmoon Valley (Draenor) - Alliance only
+            conn.connectionId = nextId++;
+            conn.name = "Valdrakken to Shadowmoon Valley Portal";
+            conn.arrivalMapId = MAP_DRAENOR;
+            conn.arrivalPosition.Relocate(2068.0f, 196.0f, 87.0f);       // Shadowmoon
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Valdrakken -> Frostfire Ridge (Draenor) - Horde only
+            conn.connectionId = nextId++;
+            conn.name = "Valdrakken to Frostfire Ridge Portal";
+            conn.arrivalPosition.Relocate(5579.0f, 4571.0f, 133.0f);     // Frostfire
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // ADDITIONAL ALLIANCE CAPITAL CONNECTIONS
+        // ====================================================================
+        {
+            // Stormwind <-> Ironforge (Deeprun Tram - instant)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;  // Tram acts like portal
+            conn.name = "Stormwind to Ironforge Tram";
+            conn.departureMapId = MAP_EASTERN_KINGDOMS;
+            conn.departurePosition.Relocate(-8366.0f, 615.0f, 91.7f);   // Stormwind Tram entrance
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-4841.0f, -1323.0f, 502.0f);  // Ironforge Tram exit
+            conn.waitTimeSeconds = 30;
+            conn.travelTimeSeconds = 60;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Reverse
+            conn.connectionId = nextId++;
+            conn.name = "Ironforge to Stormwind Tram";
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+
+            // Boralus -> Ironforge Portal
+            conn.connectionId = nextId++;
+            conn.name = "Boralus to Ironforge Portal";
+            conn.type = TransportType::PORTAL;
+            conn.departureMapId = MAP_KUL_TIRAS;
+            conn.departurePosition.Relocate(-1774.0f, -1580.0f, 0.3f);  // Boralus portal room
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-4841.0f, -1323.0f, 502.0f);  // Ironforge
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Boralus -> Exodar Portal
+            conn.connectionId = nextId++;
+            conn.name = "Boralus to Exodar Portal";
+            conn.arrivalMapId = 530;  // Outland (Exodar is technically on same map system)
+            conn.arrivalPosition.Relocate(-4014.0f, -11897.0f, -1.3f);   // Exodar
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // ADDITIONAL HORDE CAPITAL CONNECTIONS
+        // ====================================================================
+        {
+            // Orgrimmar <-> Undercity Zeppelin is already defined above
+
+            // Orgrimmar <-> Thunder Bluff (not currently defined - long flight)
+            // This is typically handled by taxi/flight paths rather than portal
+
+            // Dazar'alor -> Thunder Bluff Portal (BFA addition)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Dazar'alor to Thunder Bluff Portal";
+            conn.departureMapId = MAP_ZANDALAR;
+            conn.departurePosition.Relocate(-1015.0f, 805.0f, 440.0f);  // Dazar'alor
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(-1274.0f, 124.0f, 131.3f);    // Thunder Bluff
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Dazar'alor -> Silvermoon Portal
+            conn.connectionId = nextId++;
+            conn.name = "Dazar'alor to Silvermoon Portal";
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(9492.0f, -7281.0f, 14.3f);    // Silvermoon (translocation)
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // SILVERMOON <-> UNDERCITY (Orb of Translocation - Horde only)
+        // ====================================================================
+        {
+            // Silvermoon -> Undercity (via Orb of Translocation)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Silvermoon to Undercity (Translocation Orb)";
+            conn.departureMapId = MAP_EASTERN_KINGDOMS;
+            conn.departurePosition.Relocate(9492.0f, -7281.0f, 14.3f);   // Silvermoon Sunfury Spire
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(1811.0f, 274.0f, 75.0f);       // Undercity (Ruins of Lordaeron)
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Undercity -> Silvermoon
+            conn.connectionId = nextId++;
+            conn.name = "Undercity to Silvermoon (Translocation Orb)";
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // EXODAR CONNECTIONS (Draenei starting area)
+        // ====================================================================
+        {
+            // Exodar -> Stormwind (direct portal in Vault of Lights)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Exodar to Stormwind Portal";
+            conn.departureMapId = MAP_OUTLAND;  // Exodar shares Outland map ID
+            conn.departurePosition.Relocate(-4014.0f, -11897.0f, -1.3f);  // Exodar
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);       // Stormwind
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            // Exodar -> Darnassus (portal in Vault of Lights)
+            conn.connectionId = nextId++;
+            conn.name = "Exodar to Darnassus Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(9949.0f, 2412.0f, 1327.0f);     // Darnassus
+            connections.push_back(conn);
+
+            // Exodar -> Hellfire Peninsula (for Outland access)
+            conn.connectionId = nextId++;
+            conn.name = "Exodar to Hellfire Peninsula Portal";
+            conn.arrivalMapId = MAP_OUTLAND;
+            conn.arrivalPosition.Relocate(-248.0f, 934.0f, 84.4f);        // Hellfire Peninsula
+            conn.requiresLevel = true;
+            conn.minLevel = 58;
+            connections.push_back(conn);
+
+            // Darnassus -> Exodar (portal in Temple of the Moon)
+            conn.connectionId = nextId++;
+            conn.name = "Darnassus to Exodar Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(9949.0f, 2412.0f, 1327.0f);   // Darnassus Temple of Moon
+            conn.arrivalMapId = MAP_OUTLAND;  // Exodar shares Outland map ID
+            conn.arrivalPosition.Relocate(-4014.0f, -11897.0f, -1.3f);    // Exodar
+            conn.requiresLevel = false;
+            conn.minLevel = 0;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // DARNASSUS / RUT'THERAN CONNECTIONS
+        // ====================================================================
+        {
+            // Darnassus <-> Rut'theran Village (teleporter)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Darnassus to Rut'theran Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(9949.0f, 2412.0f, 1327.0f);   // Darnassus
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(8181.0f, 1005.0f, 0.2f);        // Rut'theran Village
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            connections.push_back(conn);
+
+            conn.connectionId = nextId++;
+            conn.name = "Rut'theran to Darnassus Portal";
+            std::swap(conn.departurePosition, conn.arrivalPosition);
+            connections.push_back(conn);
+
+            // Darnassus -> Blasted Lands (Dark Portal access for Night Elves)
+            conn.connectionId = nextId++;
+            conn.name = "Darnassus to Blasted Lands Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(9949.0f, 2412.0f, 1327.0f);   // Temple of the Moon
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-11903.0f, -3206.0f, -14.9f);   // Blasted Lands (Dark Portal)
+            conn.requiresLevel = true;
+            conn.minLevel = 58;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // AZSUNA PORTAL (Legion starter zone)
+        // ====================================================================
+        {
+            // Stormwind -> Azsuna (Broken Isles)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Stormwind to Azsuna Portal";
+            conn.departureMapId = MAP_EASTERN_KINGDOMS;
+            conn.departurePosition.Relocate(-8838.0f, 626.0f, 94.0f);     // Stormwind portal room
+            conn.arrivalMapId = MAP_BROKEN_ISLES;
+            conn.arrivalPosition.Relocate(-155.0f, 6673.0f, 0.5f);        // Azsuna (Crumbled Palace)
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            conn.requiresLevel = true;
+            conn.minLevel = 98;
+            connections.push_back(conn);
+
+            // Orgrimmar -> Azsuna
+            conn.connectionId = nextId++;
+            conn.name = "Orgrimmar to Azsuna Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(1676.0f, -4315.0f, 61.2f);    // Orgrimmar portal room
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Azsuna -> Stormwind
+            conn.connectionId = nextId++;
+            conn.name = "Azsuna to Stormwind Portal";
+            conn.departureMapId = MAP_BROKEN_ISLES;
+            conn.departurePosition.Relocate(-155.0f, 6673.0f, 0.5f);
+            conn.arrivalMapId = MAP_EASTERN_KINGDOMS;
+            conn.arrivalPosition.Relocate(-8838.0f, 626.0f, 94.0f);
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            conn.requiresLevel = false;
+            connections.push_back(conn);
+
+            // Azsuna -> Orgrimmar
+            conn.connectionId = nextId++;
+            conn.name = "Azsuna to Orgrimmar Portal";
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(1676.0f, -4315.0f, 61.2f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // SILITHUS PORTAL (BFA - Sword of Sargeras location)
+        // ====================================================================
+        {
+            // Boralus -> Silithus (Alliance - via BFA portal hub)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Boralus to Silithus Portal";
+            conn.departureMapId = MAP_KUL_TIRAS;
+            conn.departurePosition.Relocate(-1774.0f, -1580.0f, 0.3f);    // Boralus
+            conn.arrivalMapId = MAP_KALIMDOR;
+            conn.arrivalPosition.Relocate(-6948.0f, 1037.0f, 5.9f);       // Silithus (Magni's camp)
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            conn.requiresLevel = true;
+            conn.minLevel = 50;
+            connections.push_back(conn);
+
+            // Dazar'alor -> Silithus (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Dazar'alor to Silithus Portal";
+            conn.departureMapId = MAP_ZANDALAR;
+            conn.departurePosition.Relocate(-1015.0f, 805.0f, 440.0f);    // Dazar'alor
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Silithus -> Boralus
+            conn.connectionId = nextId++;
+            conn.name = "Silithus to Boralus Portal";
+            conn.departureMapId = MAP_KALIMDOR;
+            conn.departurePosition.Relocate(-6948.0f, 1037.0f, 5.9f);
+            conn.arrivalMapId = MAP_KUL_TIRAS;
+            conn.arrivalPosition.Relocate(-1774.0f, -1580.0f, 0.3f);
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+
+            // Silithus -> Dazar'alor
+            conn.connectionId = nextId++;
+            conn.name = "Silithus to Dazar'alor Portal";
+            conn.arrivalMapId = MAP_ZANDALAR;
+            conn.arrivalPosition.Relocate(-1015.0f, 805.0f, 440.0f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // NAZJATAR PORTAL (BFA 8.2)
+        // ====================================================================
+        {
+            // Boralus -> Nazjatar (Alliance)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Boralus to Nazjatar Portal";
+            conn.departureMapId = MAP_KUL_TIRAS;
+            conn.departurePosition.Relocate(-1774.0f, -1580.0f, 0.3f);
+            conn.arrivalMapId = 1355;  // Nazjatar map ID
+            conn.arrivalPosition.Relocate(-925.0f, 698.0f, 0.8f);         // Mezzamere (Alliance hub)
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            conn.requiresLevel = true;
+            conn.minLevel = 50;
+            connections.push_back(conn);
+
+            // Dazar'alor -> Nazjatar (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Dazar'alor to Nazjatar Portal";
+            conn.departureMapId = MAP_ZANDALAR;
+            conn.departurePosition.Relocate(-1015.0f, 805.0f, 440.0f);
+            conn.arrivalPosition.Relocate(-985.0f, 435.0f, 0.8f);         // Newhome (Horde hub)
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Nazjatar -> Boralus
+            conn.connectionId = nextId++;
+            conn.name = "Nazjatar to Boralus Portal";
+            conn.departureMapId = 1355;
+            conn.departurePosition.Relocate(-925.0f, 698.0f, 0.8f);
+            conn.arrivalMapId = MAP_KUL_TIRAS;
+            conn.arrivalPosition.Relocate(-1774.0f, -1580.0f, 0.3f);
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+
+            // Nazjatar -> Dazar'alor
+            conn.connectionId = nextId++;
+            conn.name = "Nazjatar to Dazar'alor Portal";
+            conn.departurePosition.Relocate(-985.0f, 435.0f, 0.8f);
+            conn.arrivalMapId = MAP_ZANDALAR;
+            conn.arrivalPosition.Relocate(-1015.0f, 805.0f, 440.0f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+        }
+
+        // ====================================================================
+        // MECHAGON PORTAL (BFA 8.2)
+        // ====================================================================
+        {
+            // Boralus -> Mechagon (Alliance)
+            TransportConnection conn;
+            conn.connectionId = nextId++;
+            conn.type = TransportType::PORTAL;
+            conn.name = "Boralus to Mechagon Portal";
+            conn.departureMapId = MAP_KUL_TIRAS;
+            conn.departurePosition.Relocate(-1774.0f, -1580.0f, 0.3f);
+            conn.arrivalMapId = 1462;  // Mechagon map ID
+            conn.arrivalPosition.Relocate(617.0f, 1418.0f, 45.0f);        // Rustbolt
+            conn.waitTimeSeconds = PORTAL_WAIT_TIME;
+            conn.travelTimeSeconds = PORTAL_TRAVEL_TIME;
+            conn.allianceOnly = true;
+            conn.requiresLevel = true;
+            conn.minLevel = 50;
+            connections.push_back(conn);
+
+            // Dazar'alor -> Mechagon (Horde)
+            conn.connectionId = nextId++;
+            conn.name = "Dazar'alor to Mechagon Portal";
+            conn.departureMapId = MAP_ZANDALAR;
+            conn.departurePosition.Relocate(-1015.0f, 805.0f, 440.0f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
+            connections.push_back(conn);
+
+            // Mechagon -> Boralus
+            conn.connectionId = nextId++;
+            conn.name = "Mechagon to Boralus Portal";
+            conn.departureMapId = 1462;
+            conn.departurePosition.Relocate(617.0f, 1418.0f, 45.0f);
+            conn.arrivalMapId = MAP_KUL_TIRAS;
+            conn.arrivalPosition.Relocate(-1774.0f, -1580.0f, 0.3f);
+            conn.allianceOnly = true;
+            conn.hordeOnly = false;
+            connections.push_back(conn);
+
+            // Mechagon -> Dazar'alor
+            conn.connectionId = nextId++;
+            conn.name = "Mechagon to Dazar'alor Portal";
+            conn.arrivalMapId = MAP_ZANDALAR;
+            conn.arrivalPosition.Relocate(-1015.0f, 805.0f, 440.0f);
+            conn.allianceOnly = false;
+            conn.hordeOnly = true;
             connections.push_back(conn);
         }
 
