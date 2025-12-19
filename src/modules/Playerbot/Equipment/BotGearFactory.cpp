@@ -517,6 +517,37 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
     return 0;
 }
 
+::std::vector<uint8> BotGearFactory::GetInventoryTypesForSlot(uint8 slot) const
+{
+    // Convert equipment slot to inventory type(s)
+    // CRITICAL: The cache stores items by InventoryType, but we look up by EquipmentSlot
+    // These are DIFFERENT values! This mapping is essential.
+    switch (slot)
+    {
+        case EQUIPMENT_SLOT_HEAD:       return { INVTYPE_HEAD };
+        case EQUIPMENT_SLOT_NECK:       return { INVTYPE_NECK };
+        case EQUIPMENT_SLOT_SHOULDERS:  return { INVTYPE_SHOULDERS };
+        case EQUIPMENT_SLOT_BODY:       return { INVTYPE_BODY };
+        case EQUIPMENT_SLOT_CHEST:      return { INVTYPE_CHEST, INVTYPE_ROBE };
+        case EQUIPMENT_SLOT_WAIST:      return { INVTYPE_WAIST };
+        case EQUIPMENT_SLOT_LEGS:       return { INVTYPE_LEGS };
+        case EQUIPMENT_SLOT_FEET:       return { INVTYPE_FEET };
+        case EQUIPMENT_SLOT_WRISTS:     return { INVTYPE_WRISTS };
+        case EQUIPMENT_SLOT_HANDS:      return { INVTYPE_HANDS };
+        case EQUIPMENT_SLOT_FINGER1:
+        case EQUIPMENT_SLOT_FINGER2:    return { INVTYPE_FINGER };
+        case EQUIPMENT_SLOT_TRINKET1:
+        case EQUIPMENT_SLOT_TRINKET2:   return { INVTYPE_TRINKET };
+        case EQUIPMENT_SLOT_BACK:       return { INVTYPE_CLOAK };
+        case EQUIPMENT_SLOT_MAINHAND:   return { INVTYPE_WEAPON, INVTYPE_2HWEAPON, INVTYPE_WEAPONMAINHAND, INVTYPE_RANGEDRIGHT };
+        case EQUIPMENT_SLOT_OFFHAND:    return { INVTYPE_SHIELD, INVTYPE_HOLDABLE, INVTYPE_WEAPONOFFHAND };
+        case EQUIPMENT_SLOT_TABARD:     return { INVTYPE_TABARD };
+        default:
+            TC_LOG_WARN("playerbot.gear", "BotGearFactory::GetInventoryTypesForSlot - Unknown slot {}", slot);
+            return {};
+    }
+}
+
 ::std::vector<CachedItem> const* BotGearFactory::GetItemsForSlot(uint8 cls, uint32 specId, uint32 level, uint8 slot) const
 {
     // Round level to nearest 5 for cache lookup
@@ -524,7 +555,13 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
     if (levelBracket == 0)
         levelBracket = 1;
 
-    // First try class-specific lookup: _gearCache[cls][specId][level][slot]
+    // CRITICAL FIX: Convert equipment slot to inventory type(s)
+    // The cache stores items by InventoryType, not EquipmentSlot!
+    auto inventoryTypes = GetInventoryTypesForSlot(slot);
+    if (inventoryTypes.empty())
+        return nullptr;
+
+    // First try class-specific lookup: _gearCache[cls][specId][level][inventoryType]
     auto clsIt = _gearCache.find(cls);
     if (clsIt != _gearCache.end())
     {
@@ -534,9 +571,13 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
             auto levelIt = specIt->second.find(levelBracket);
             if (levelIt != specIt->second.end())
             {
-                auto slotIt = levelIt->second.find(slot);
-                if (slotIt != levelIt->second.end())
-                    return &slotIt->second;
+                // Try each inventory type that maps to this slot
+                for (uint8 invType : inventoryTypes)
+                {
+                    auto slotIt = levelIt->second.find(invType);
+                    if (slotIt != levelIt->second.end() && !slotIt->second.empty())
+                        return &slotIt->second;
+                }
             }
         }
     }
@@ -555,11 +596,15 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
     if (levelIt == specIt->second.end())
         return nullptr;
 
-    auto slotIt = levelIt->second.find(slot);
-    if (slotIt == levelIt->second.end())
-        return nullptr;
+    // Try each inventory type that maps to this slot
+    for (uint8 invType : inventoryTypes)
+    {
+        auto slotIt = levelIt->second.find(invType);
+        if (slotIt != levelIt->second.end() && !slotIt->second.empty())
+            return &slotIt->second;
+    }
 
-    return &slotIt->second;
+    return nullptr;
 }
 
 ::std::vector<CachedItem> BotGearFactory::FilterByQuality(::std::vector<CachedItem> const& items, uint32 quality) const

@@ -163,6 +163,12 @@ private:
     ::std::vector<CachedItem> const* GetItemsForSlot(uint8 cls, uint32 specId, uint32 level, uint8 slot) const;
 
     /**
+     * Convert equipment slot to inventory type(s)
+     * Some slots map to multiple inventory types (e.g., MAINHAND can be WEAPON, 2HWEAPON, etc.)
+     */
+    ::std::vector<uint8> GetInventoryTypesForSlot(uint8 slot) const;
+
+    /**
      * Filter items by quality
      */
     ::std::vector<CachedItem> FilterByQuality(::std::vector<CachedItem> const& items, uint32 quality) const;

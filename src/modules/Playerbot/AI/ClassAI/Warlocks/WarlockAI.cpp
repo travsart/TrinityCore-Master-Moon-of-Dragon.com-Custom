@@ -557,6 +557,38 @@ bool WarlockAI::SummonPet()
     if (bot->IsInCombat() && GetNearbyEnemyCount(5.0f) > 0)
         return false;
 
+    // ========================================================================
+    // CRITICAL FIX: Stop movement before casting summon spells
+    // ========================================================================
+    // Pet summon spells have 6-second cast times and REQUIRE standing still.
+    // If the bot is moving, the cast will fail with SPELL_FAILED_MOVING.
+    // We must stop movement and clear ALL movement flags/state.
+    // ========================================================================
+
+    // Check for ANY movement state (even if visually not moving, flags may be set)
+    // Use TrinityCore 11.2 predefined masks for movement detection
+    bool hasMovementFlags = bot->HasUnitMovementFlag(MOVEMENTFLAG_MASK_MOVING | MOVEMENTFLAG_MASK_TURNING);
+
+    if (bot->isMoving() || hasMovementFlags || bot->HasUnitState(UNIT_STATE_MOVING))
+    {
+        // Aggressively clear ALL movement state
+        bot->StopMoving();
+        bot->GetMotionMaster()->Clear(MOTION_PRIORITY_NORMAL);
+        bot->GetMotionMaster()->MoveIdle();
+
+        // Clear movement flags using TrinityCore 11.2 masks
+        bot->RemoveUnitMovementFlag(MOVEMENTFLAG_MASK_MOVING | MOVEMENTFLAG_MASK_TURNING);
+
+        // Clear unit state
+        bot->ClearUnitState(UNIT_STATE_MOVING | UNIT_STATE_CHASE | UNIT_STATE_FOLLOW);
+
+        TC_LOG_DEBUG("playerbot.warlock", "Warlock {} clearing movement state to summon pet (isMoving={}, hasFlags={}, hasState={})",
+                     bot->GetName(), bot->isMoving(), hasMovementFlags, bot->HasUnitState(UNIT_STATE_MOVING));
+
+        // Return false - we'll try again next update when fully stopped
+        return false;
+    }
+
     uint32 summonSpell = 0;
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());    // Choose pet based on spec and situation
     // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction

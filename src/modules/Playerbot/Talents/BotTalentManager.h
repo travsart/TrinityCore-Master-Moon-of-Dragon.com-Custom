@@ -342,8 +342,10 @@ private:
     // ====================================================================
 
     void LoadLoadoutsFromDatabase();
+    void PopulateEmptyLoadoutsFromDB2();  // Auto-populate empty entries from Talent.db2
     void BuildDefaultLoadouts();  // Fallback if database is empty
     void ValidateLoadouts();
+    void DumpTalentDatabaseSQL() const;  // Debug: Generate SQL to populate database
 
     // ====================================================================
     // SPECIALIZATION SELECTION HELPERS

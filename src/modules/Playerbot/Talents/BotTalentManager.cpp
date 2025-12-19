@@ -66,6 +66,11 @@ bool BotTalentManager::LoadLoadouts()
         BuildDefaultLoadouts();
     }
 
+    // AUTO-POPULATE: Generate talents for empty entries and persist to database
+    // This ensures database is always in sync with current Talent.db2 data
+    // Future-proof: If WoW 13.0 changes talents, this will auto-update on next server start
+    PopulateEmptyLoadoutsFromDB2();
+
     // Build class->specs lookup
     for (auto const& [key, loadout] : _loadoutCache)
     {
@@ -176,6 +181,122 @@ void BotTalentManager::LoadLoadoutsFromDatabase()
     } while (result->NextRow());
 
     TC_LOG_INFO("playerbot", "BotTalentManager: Loaded {} loadouts from database", loadedCount);
+}
+
+void BotTalentManager::PopulateEmptyLoadoutsFromDB2()
+{
+    TC_LOG_INFO("playerbot", "BotTalentManager: Checking for empty talent loadouts to auto-populate from Talent.db2...");
+
+    uint32 populatedCount = 0;
+    uint32 checkedCount = 0;
+
+    // Iterate through all cached loadouts
+    for (auto& [key, loadout] : _loadoutCache)
+    {
+        ++checkedCount;
+
+        // Skip if already has talents
+        if (!loadout.talentEntries.empty())
+            continue;
+
+        // Get actual ChrSpecialization ID from spec index
+        ChrSpecializationEntry const* chrSpec = sDB2Manager.GetChrSpecializationByIndex(loadout.classId, loadout.specId);
+        if (!chrSpec)
+        {
+            TC_LOG_WARN("playerbot", "BotTalentManager: Could not find ChrSpecialization for class {} spec index {}",
+                loadout.classId, loadout.specId);
+            continue;
+        }
+
+        uint16 actualSpecId = static_cast<uint16>(chrSpec->ID);
+
+        // Collect all valid talents for this class/spec from sTalentStore
+        ::std::vector<TalentEntry const*> specTalents;
+        for (uint32 talentId = 0; talentId < sTalentStore.GetNumRows(); ++talentId)
+        {
+            TalentEntry const* talentInfo = sTalentStore.LookupEntry(talentId);
+            if (!talentInfo)
+                continue;
+
+            // Check class match
+            if (talentInfo->ClassID != loadout.classId)
+                continue;
+
+            // Check spec match (SpecID 0 = class-wide talent, available to all specs)
+            if (talentInfo->SpecID != 0 && talentInfo->SpecID != actualSpecId)
+                continue;
+
+            // Verify spell exists and is valid
+            if (talentInfo->SpellID == 0)
+                continue;
+
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talentInfo->SpellID, DIFFICULTY_NONE);
+            if (!spellInfo)
+                continue;
+
+            specTalents.push_back(talentInfo);
+        }
+
+        if (specTalents.empty())
+        {
+            TC_LOG_WARN("playerbot", "BotTalentManager: No valid talents found for class {} spec {} (ChrSpec {})",
+                loadout.classId, loadout.specId, actualSpecId);
+            continue;
+        }
+
+        // Sort talents by tier for logical progression
+        ::std::sort(specTalents.begin(), specTalents.end(),
+            [](TalentEntry const* a, TalentEntry const* b)
+            {
+                return a->TierID < b->TierID;
+            });
+
+        // Calculate max talent points for this level bracket
+        uint32 maxTalentPoints = CalculateTalentPointsForLevel(loadout.maxLevel);
+
+        // Build talent list and string
+        ::std::vector<uint32> newTalentEntries;
+        ::std::ostringstream talentStringStream;
+
+        for (TalentEntry const* talent : specTalents)
+        {
+            if (newTalentEntries.size() >= maxTalentPoints)
+                break;
+
+            if (!newTalentEntries.empty())
+                talentStringStream << ",";
+            talentStringStream << talent->ID;
+            newTalentEntries.push_back(talent->ID);
+        }
+
+        ::std::string talentString = talentStringStream.str();
+
+        // Update in-memory cache
+        loadout.talentEntries = ::std::move(newTalentEntries);
+
+        // Persist to database
+        ::std::string updateSql = Trinity::StringFormat(
+            "UPDATE playerbot_talent_loadouts SET talent_string = '{}' "
+            "WHERE class_id = {} AND spec_id = {} AND min_level = {}",
+            talentString, loadout.classId, loadout.specId, loadout.minLevel);
+        sPlayerbotDatabase->Execute(updateSql);
+
+        ++populatedCount;
+
+        TC_LOG_DEBUG("playerbot", "BotTalentManager: Auto-populated class {} spec {} level {}-{} with {} talents from Talent.db2",
+            loadout.classId, loadout.specId, loadout.minLevel, loadout.maxLevel, loadout.talentEntries.size());
+    }
+
+    if (populatedCount > 0)
+    {
+        TC_LOG_INFO("playerbot", "BotTalentManager: Auto-populated {} empty loadouts from Talent.db2 (checked {} total)",
+            populatedCount, checkedCount);
+    }
+    else
+    {
+        TC_LOG_DEBUG("playerbot", "BotTalentManager: All {} loadouts already have talents, no auto-population needed",
+            checkedCount);
+    }
 }
 
 void BotTalentManager::BuildDefaultLoadouts()
@@ -766,9 +887,63 @@ bool BotTalentManager::ApplyTalentLoadout(Player* bot, uint8 specId, uint32 leve
         return false;
     }
 
+    // Use talents from loadout (should be populated by PopulateEmptyLoadoutsFromDB2 at startup)
+    // NOTE: If this is empty, startup auto-population may have failed - this is a safety fallback
+    ::std::vector<uint32> talentsToLearn = loadout->talentEntries;
+
+    if (talentsToLearn.empty())
+    {
+        // Safety fallback: Generate at runtime if startup auto-population somehow missed this entry
+        TC_LOG_WARN("playerbot", "BotTalentManager: Loadout for class {} spec {} level {} is empty (startup auto-population may have failed), generating runtime fallback",
+            bot->GetClass(), specId, level);
+
+        // Convert spec index to actual ChrSpecialization ID
+        ChrSpecializationEntry const* chrSpec = sDB2Manager.GetChrSpecializationByIndex(bot->GetClass(), specId);
+        if (!chrSpec)
+        {
+            TC_LOG_ERROR("playerbot", "BotTalentManager: Could not find ChrSpecialization for class {} spec index {}",
+                bot->GetClass(), specId);
+            return false;
+        }
+
+        uint16 actualSpecId = static_cast<uint16>(chrSpec->ID);
+
+        // Generate talents from sTalentStore
+        ::std::vector<TalentEntry const*> specTalents;
+        for (uint32 talentId = 0; talentId < sTalentStore.GetNumRows(); ++talentId)
+        {
+            TalentEntry const* talentInfo = sTalentStore.LookupEntry(talentId);
+            if (!talentInfo || talentInfo->ClassID != bot->GetClass())
+                continue;
+            if (talentInfo->SpecID != 0 && talentInfo->SpecID != actualSpecId)
+                continue;
+            if (talentInfo->SpellID == 0)
+                continue;
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talentInfo->SpellID, DIFFICULTY_NONE);
+            if (!spellInfo)
+                continue;
+            specTalents.push_back(talentInfo);
+        }
+
+        // Sort by tier and limit to max talent points
+        ::std::sort(specTalents.begin(), specTalents.end(),
+            [](TalentEntry const* a, TalentEntry const* b) { return a->TierID < b->TierID; });
+
+        uint32 maxTalentPoints = CalculateTalentPointsForLevel(level);
+        for (TalentEntry const* talent : specTalents)
+        {
+            if (talentsToLearn.size() >= maxTalentPoints)
+                break;
+            talentsToLearn.push_back(talent->ID);
+        }
+
+        TC_LOG_INFO("playerbot", "BotTalentManager: Runtime fallback generated {} talents for class {} spec {} level {}",
+            talentsToLearn.size(), bot->GetClass(), specId, level);
+    }
+
     // Learn regular talents
     uint32 talentsLearned = 0;
-    for (uint32 talentEntry : loadout->talentEntries)
+    for (uint32 talentEntry : talentsToLearn)
     {
         if (LearnTalent(bot, talentEntry))
             ++talentsLearned;
@@ -1062,6 +1237,124 @@ void BotTalentManager::PrintLoadoutReport() const
     TC_LOG_INFO("playerbot", "  Specs Applied: {}", _stats.specsApplied);
     TC_LOG_INFO("playerbot", "  Loadouts Applied: {}", _stats.loadoutsApplied);
     TC_LOG_INFO("playerbot", "  Dual-Specs Setup: {}", _stats.dualSpecsSetup);
+    TC_LOG_INFO("playerbot", "====================================");
+}
+
+void BotTalentManager::DumpTalentDatabaseSQL() const
+{
+    TC_LOG_INFO("playerbot", "");
+    TC_LOG_INFO("playerbot", "====================================");
+    TC_LOG_INFO("playerbot", "TALENT DATABASE SQL GENERATION");
+    TC_LOG_INFO("playerbot", "====================================");
+    TC_LOG_INFO("playerbot", "");
+    TC_LOG_INFO("playerbot", "-- SQL to update empty talent_string entries in playerbot_talent_loadouts");
+    TC_LOG_INFO("playerbot", "-- Generated from Talent.db2 data (TrinityCore 11.2)");
+    TC_LOG_INFO("playerbot", "");
+
+    // Class names for readability
+    static const char* classNames[] = {
+        "NONE", "Warrior", "Paladin", "Hunter", "Rogue", "Priest",
+        "DeathKnight", "Shaman", "Mage", "Warlock", "Monk", "Druid",
+        "DemonHunter", "Evoker"
+    };
+
+    // Iterate through all classes
+    for (uint8 cls = CLASS_WARRIOR; cls < MAX_CLASSES; ++cls)
+    {
+        if (cls == CLASS_NONE)
+            continue;
+
+        try
+        {
+            auto const& classData = RoleDefinitions::GetClassData(cls);
+
+            for (auto const& specData : classData.specializations)
+            {
+                // Get actual ChrSpecialization ID
+                ChrSpecializationEntry const* chrSpec = sDB2Manager.GetChrSpecializationByIndex(cls, specData.specId);
+                if (!chrSpec)
+                {
+                    TC_LOG_WARN("playerbot", "-- WARNING: Could not find ChrSpecialization for class {} spec index {}", cls, specData.specId);
+                    continue;
+                }
+
+                uint16 actualSpecId = static_cast<uint16>(chrSpec->ID);
+
+                // Collect talents for this class/spec
+                ::std::vector<TalentEntry const*> specTalents;
+                for (uint32 talentId = 0; talentId < sTalentStore.GetNumRows(); ++talentId)
+                {
+                    TalentEntry const* talentInfo = sTalentStore.LookupEntry(talentId);
+                    if (!talentInfo)
+                        continue;
+
+                    // Check class match
+                    if (talentInfo->ClassID != cls)
+                        continue;
+
+                    // Check spec match (SpecID 0 = class-wide)
+                    if (talentInfo->SpecID != 0 && talentInfo->SpecID != actualSpecId)
+                        continue;
+
+                    // Verify spell exists
+                    if (talentInfo->SpellID == 0)
+                        continue;
+
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talentInfo->SpellID, DIFFICULTY_NONE);
+                    if (!spellInfo)
+                        continue;
+
+                    specTalents.push_back(talentInfo);
+                }
+
+                // Sort by tier
+                ::std::sort(specTalents.begin(), specTalents.end(),
+                    [](TalentEntry const* a, TalentEntry const* b)
+                    {
+                        return a->TierID < b->TierID;
+                    });
+
+                // Generate talent strings for each level bracket
+                for (uint32 minLevel = 1; minLevel <= 80; minLevel += 10)
+                {
+                    uint32 maxLevel = ::std::min(minLevel + 9, 80u);
+                    uint32 maxTalentPoints = CalculateTalentPointsForLevel(maxLevel);
+
+                    // Build talent string
+                    ::std::ostringstream talentStringStream;
+                    uint32 addedCount = 0;
+
+                    for (TalentEntry const* talent : specTalents)
+                    {
+                        if (addedCount >= maxTalentPoints)
+                            break;
+
+                        if (addedCount > 0)
+                            talentStringStream << ",";
+                        talentStringStream << talent->ID;
+                        ++addedCount;
+                    }
+
+                    ::std::string talentString = talentStringStream.str();
+
+                    // Generate SQL UPDATE statement
+                    TC_LOG_INFO("playerbot", "UPDATE playerbot_talent_loadouts SET talent_string = '{}' WHERE class_id = {} AND spec_id = {} AND min_level = {} AND talent_string = '';",
+                        talentString, cls, specData.specId, minLevel);
+                }
+
+                TC_LOG_INFO("playerbot", "-- {} {} (SpecID {} -> ChrSpec {}) - {} talents found",
+                    classNames[cls], specData.name, specData.specId, actualSpecId, specTalents.size());
+                TC_LOG_INFO("playerbot", "");
+            }
+        }
+        catch (...)
+        {
+            TC_LOG_ERROR("playerbot", "-- ERROR: Failed to process class {}", cls);
+        }
+    }
+
+    TC_LOG_INFO("playerbot", "====================================");
+    TC_LOG_INFO("playerbot", "END TALENT DATABASE SQL GENERATION");
     TC_LOG_INFO("playerbot", "====================================");
 }
 

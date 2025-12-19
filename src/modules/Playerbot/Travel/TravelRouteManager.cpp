@@ -18,7 +18,7 @@
 #include "TransportMgr.h"
 #include "Map.h"
 #include "WorldSession.h"
-#include "../Interaction/FlightMasterManager.h"
+#include "../Game/FlightMasterManager.h"
 #include <queue>
 #include <algorithm>
 #include <cmath>
@@ -1788,8 +1788,27 @@ bool TravelRouteManager::BuildRoute(TravelRoute& route, uint32 fromMapId, Positi
 
 bool TravelRouteManager::AddTaxiLeg(TravelRoute& route, uint32 mapId, Position const& from, Position const& to)
 {
-    // For now, simplified - assume taxi is available
-    // Full implementation would use FlightMasterManager to find actual route
+    // Find taxi nodes for start and end positions
+    uint32 startNode = FlightMasterManager::FindNearestTaxiNode(from, mapId);
+    uint32 endNode = FlightMasterManager::FindNearestTaxiNode(to, mapId);
+
+    // If we can't find valid taxi nodes, leg creation fails
+    if (startNode == 0 || endNode == 0)
+    {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "TravelRouteManager::AddTaxiLeg - Cannot find taxi nodes for map {}: start={}, end={}",
+            mapId, startNode, endNode);
+        return false;
+    }
+
+    // Same node - no taxi needed
+    if (startNode == endNode)
+    {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "TravelRouteManager::AddTaxiLeg - Start and end are same taxi node {}, skipping taxi leg",
+            startNode);
+        return false;
+    }
 
     TravelLeg leg;
     leg.legIndex = static_cast<uint32>(route.legs.size());
@@ -1801,9 +1820,17 @@ bool TravelRouteManager::AddTaxiLeg(TravelRoute& route, uint32 mapId, Position c
     leg.endPosition = to;
     leg.currentState = TravelState::IDLE;
 
+    // Set the taxi node fields - CRITICAL for QuestStrategy to use FlyToTaxiNode
+    leg.taxiStartNode = startNode;
+    leg.taxiEndNode = endNode;
+
     float distance = from.GetExactDist(to);
     leg.estimatedTimeSeconds = static_cast<uint32>(distance / 50.0f); // ~50 yards/sec flight speed
     leg.estimatedCostCopper = static_cast<uint32>(distance * 0.1f);   // Rough cost estimate
+
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "TravelRouteManager::AddTaxiLeg - Added taxi leg: node {} -> node {} on map {}",
+        startNode, endNode, mapId);
 
     route.legs.push_back(leg);
     return true;
