@@ -167,6 +167,10 @@ void BotWorldSessionMgr::Shutdown()
                 {
                     player->ExitVehicle();
                 }
+
+                // CRITICAL FIX (Map.cpp:1942 crash): Remove from _updateObjects BEFORE logout
+                // This prevents Map::SendObjectUpdates from accessing the bot after destruction.
+                static_cast<Object*>(player)->ClearUpdateMask(true);
             }
             catch (...)
             {
@@ -1035,6 +1039,13 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                                     bot->GetGUID().GetCounter());
                                 bot->ExitVehicle();
                             }
+
+                            // CRITICAL FIX (Map.cpp:1942 crash): Remove from _updateObjects BEFORE logout
+                            // This prevents Map::SendObjectUpdates from accessing the bot after destruction.
+                            // ClearUpdateMask(true) calls RemoveFromObjectUpdate() which removes the
+                            // player from Map::_updateObjects, ensuring MapUpdater worker threads
+                            // won't access the destroyed player.
+                            static_cast<Object*>(bot)->ClearUpdateMask(true);
 
                             TC_LOG_DEBUG("module.playerbot.session",
                                 "Deferred logout for bot {} (Cell::Visit crash prevention)",
