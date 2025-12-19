@@ -24,6 +24,7 @@
 #include "Group.h"
 #include "Session/BotSession.h"
 #include "Core/Services/BotNpcLocationService.h"
+#include "Core/Threading/SafeGridOperations.h"  // SEH-protected grid operations
 #include <algorithm>
 #include <cmath>
 #include "GameTime.h"
@@ -277,9 +278,10 @@ std::vector<uint32> ObjectiveTracker::ScanForKillTargets(Player* bot, uint32 cre
     if (!bot)
         return targets;
 
-    // Search for creatures within radius
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, creatureId, radius);
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, creatureId, radius))
+        return targets;
 
     for (Creature* creature : nearbyCreatures)
     {
@@ -306,9 +308,10 @@ std::vector<uint32> ObjectiveTracker::ScanForCollectibles(Player* bot, uint32 it
     // Search for collectible items or objects that drop the item
     // This would require knowledge of what creatures drop specific items
 
-    // For now, we'll scan for game objects that might contain the item
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     std::list<GameObject*> nearbyObjects;
-    bot->GetGameObjectListWithEntryInGrid(nearbyObjects, 0, radius);
+    if (!SafeGridOperations::GetGameObjectListSafe(bot, nearbyObjects, 0, radius))
+        return targets;
 
     for (GameObject* object : nearbyObjects)
     {
@@ -328,15 +331,14 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
 
     if (!bot)
         return targets;
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 ScanForGameObjects: Bot {} searching for entry {} within {:.1f}yd radius",
-                 bot->GetName(), objectId, radius);
-    TC_LOG_ERROR("module.playerbot.quest", "  Bot position: ({:.1f}, {:.1f}, {:.1f}) Map: {}",
-                 bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
-                 bot->GetMapId());
 
-    // Search for GameObjects first
+    TC_LOG_TRACE("module.playerbot.quest", "ScanForGameObjects: Bot {} searching for entry {} within {:.1f}yd radius",
+                 bot->GetName(), objectId, radius);
+
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     std::list<GameObject*> nearbyObjects;
-    bot->GetGameObjectListWithEntryInGrid(nearbyObjects, objectId, radius);
+    if (!SafeGridOperations::GetGameObjectListSafe(bot, nearbyObjects, objectId, radius))
+        return targets;
 
     TC_LOG_ERROR("module.playerbot.quest", "  GetGameObjectListWithEntryInGrid returned {} objects",
                  nearbyObjects.size());
@@ -359,12 +361,14 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
     // If no GameObjects found, try searching for Creatures (some quests use creature triggers)
     if (targets.empty())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "  ⚠️ No GameObjects found, searching for Creatures with entry {}...", objectId);
+        TC_LOG_TRACE("module.playerbot.quest", "ScanForGameObjects: No GameObjects found, searching for Creatures with entry {}...", objectId);
 
+        // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
         std::list<Creature*> nearbyCreatures;
-        bot->GetCreatureListWithEntryInGrid(nearbyCreatures, objectId, radius);
+        if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, objectId, radius))
+            return targets;
 
-        TC_LOG_ERROR("module.playerbot.quest", "  GetCreatureListWithEntryInGrid returned {} creatures",
+        TC_LOG_TRACE("module.playerbot.quest", "ScanForGameObjects: GetCreatureListSafe returned {} creatures",
                      nearbyCreatures.size());
 
         for (Creature* creature : nearbyCreatures)
@@ -660,9 +664,10 @@ void ObjectiveTracker::MonitorTargetCompetition(Player* bot, uint32 targetId)
         return;
     auto& trackingData = _targetTracking[targetId];
 
-    // Scan for other players in the area competing for the same target
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     std::list<Player*> nearbyPlayers;
-    bot->GetPlayerListInGrid(nearbyPlayers, 50.0f);
+    if (!SafeGridOperations::GetPlayerListSafe(bot, nearbyPlayers, 50.0f))
+        return;
 
     uint32 competitionLevel = 0;
     for (Player* player : nearbyPlayers)

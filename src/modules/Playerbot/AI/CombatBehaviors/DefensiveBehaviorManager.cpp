@@ -1352,23 +1352,20 @@ uint32 DefensiveBehaviorManager::CountNearbyEnemies(float range) const
 
     // Count enemies
     uint32 count = 0;
-    for (auto const* snapshot : hostileSnapshots)
+    for (auto const& snapshot : hostileSnapshots)
     {
-        if (!snapshot)
-            continue;
-
         // Validate with Unit* for IsHostileTo check
         // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
         // ObjectAccessor is intentionally retained - Live Unit* needed for:
         // 1. IsHostileTo() faction check requires live relationship data
         // 2. Enemy validation requires real-time hostility check
         // The spatial grid pre-filters candidates, ObjectAccessor validates faction state.
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
         if (!unit || !_bot->IsHostileTo(unit))
             continue;
 
         float rangeSq = range * range;
-        if (_bot->GetExactDistSq(snapshot->position) > rangeSq)
+        if (_bot->GetExactDistSq(snapshot.position) > rangeSq)
             continue;
 
         count++;

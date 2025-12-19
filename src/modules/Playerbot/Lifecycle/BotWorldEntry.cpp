@@ -4,6 +4,8 @@
 
 #include "BotWorldEntry.h"
 #include "BotSession.h"
+#include "BotLoginQueryHolder.h"
+#include "QueryHolder.h"
 #include "Player.h"
 #include "World.h"
 #include "WorldSession.h"
@@ -25,6 +27,10 @@
 #include "SocialMgr.h"
 #include "CharacterPackets.h"
 #include "MiscPackets.h"
+#include "DB2Stores.h"
+#include "Equipment/BotGearFactory.h"
+#include "Config/PlayerbotConfig.h"
+#include "PhasingHandler.h"
 #include <thread>
 #include <fstream>
 
@@ -385,23 +391,29 @@ bool BotWorldEntry::CreatePlayerObject()
     _player = new Player(_session.get());
     _player->GetMotionMaster()->Initialize();
 
-    // Load player from database using synchronous query
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
-    stmt->setUInt64(0, _characterGuid.GetCounter());
-    PreparedQueryResult result = CharacterDatabase.Query(stmt);
-
-    if (!result)
+    // CRITICAL FIX: Use BotLoginQueryHolder to properly load ALL player data including spells
+    // The old approach only loaded basic character data from CHAR_SEL_CHARACTER,
+    // which does NOT include spells - causing crashes in Player::HasSpell()
+    auto holder = ::std::make_shared<BotLoginQueryHolder>(_session->GetAccountId(), _characterGuid);
+    if (!holder->Initialize())
     {
-        SetError("Failed to load character from database");
+        SetError("Failed to initialize login query holder");
         delete _player;
         _player = nullptr;
         return false;
     }
 
-    Field* fields = result->Fetch();
-    if (!_player->LoadFromDB(_characterGuid, fields))
+    // Execute all login queries via async mechanism but wait synchronously
+    // This uses the standard TrinityCore query holder pattern
+    SQLQueryHolderCallback callback = CharacterDatabase.DelayQueryHolder(holder);
+
+    // Wait for async queries to complete (blocking wait)
+    callback.m_future.wait();
+
+    // Now load the player using the properly populated holder
+    if (!_player->LoadFromDB(_characterGuid, *holder))
     {
-        SetError("Failed to load player data");
+        SetError("Failed to load player data from query holder");
         delete _player;
         _player = nullptr;
         return false;
@@ -413,6 +425,10 @@ bool BotWorldEntry::CreatePlayerObject()
     // Initialize player for bot
     _player->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_IS_OUT_OF_BOUNDS); // Mark as bot
     _player->SetInitialized(true);
+
+    TC_LOG_DEBUG("module.playerbot.worldentry",
+                "Bot {} loaded successfully with {} spells",
+                _player->GetName(), _player->GetSpellMap().size());
 
     TransitionToState(BotWorldEntryState::PLAYER_CREATED);
     return true;
@@ -616,6 +632,122 @@ bool BotWorldEntry::FinalizeBotActivation()
         guild->OnLogin(_player);
     }
 
+    // ========================================================================
+    // LEARN ALL FLIGHT PATHS
+    // ========================================================================
+    // Bots spawn across all zones, so they need to know all flight paths
+    // to be able to travel around the world properly.
+    // ========================================================================
+    {
+        // Get the faction-appropriate taxi mask
+        TaxiMask const& factionMask = _player->GetTeam() == HORDE
+            ? sHordeTaxiNodesMask
+            : sAllianceTaxiNodesMask;
+
+        // Learn all taxi nodes for the bot's faction
+        uint32 nodesLearned = 0;
+        for (size_t i = 0; i < factionMask.size(); ++i)
+        {
+            TaxiMask::value_type mask = factionMask[i];
+            if (mask == 0)
+                continue;
+
+            // Check each bit in this mask element
+            for (size_t bit = 0; bit < sizeof(TaxiMask::value_type) * 8; ++bit)
+            {
+                if (mask & (TaxiMask::value_type(1) << bit))
+                {
+                    // Calculate node ID: (element index * bits per element) + bit position + 1
+                    uint32 nodeId = static_cast<uint32>(i * (sizeof(TaxiMask::value_type) * 8) + bit + 1);
+
+                    // Learn this taxi node if not already known
+                    if (_player->m_taxi.SetTaximaskNode(nodeId))
+                    {
+                        ++nodesLearned;
+                    }
+                }
+            }
+        }
+
+        TC_LOG_DEBUG("module.playerbot.worldentry",
+                    "Bot {} learned {} flight paths ({} faction)",
+                    _player->GetName(),
+                    nodesLearned,
+                    _player->GetTeam() == HORDE ? "Horde" : "Alliance");
+    }
+
+    // ========================================================================
+    // EQUIP BOT WITH LEVEL-APPROPRIATE GEAR
+    // ========================================================================
+    // Bots created via the spawner may not have equipment. Check if the bot
+    // is missing key equipment slots and generate/apply gear if needed.
+    // ========================================================================
+    {
+        // Check if bot needs gear - check critical slots (weapon + chest)
+        bool needsGear = false;
+        Item* mainHand = _player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        Item* chest = _player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_CHEST);
+
+        if (!mainHand || !chest)
+        {
+            needsGear = true;
+            TC_LOG_INFO("module.playerbot.worldentry",
+                "Bot {} (L{}) missing equipment: mainhand={}, chest={}",
+                _player->GetName(), _player->GetLevel(),
+                mainHand ? "yes" : "NO", chest ? "yes" : "NO");
+        }
+
+        // Only equip if gear factory is ready and bot needs gear
+        if (needsGear && sBotGearFactory->IsReady())
+        {
+            uint8 cls = _player->GetClass();
+            uint32 level = _player->GetLevel();
+            TeamId faction = _player->GetTeamId();
+
+            // Use spec 0 (first spec) for gear generation
+            uint32 specId = 0;
+
+            TC_LOG_INFO("module.playerbot.worldentry",
+                "Generating gear for bot {} (Class: {}, Level: {}, Faction: {})",
+                _player->GetName(), uint32(cls), level, faction == TEAM_HORDE ? "Horde" : "Alliance");
+
+            // Generate gear set
+            GearSet gearSet = sBotGearFactory->BuildGearSet(cls, specId, level, faction);
+
+            if (gearSet.IsComplete())
+            {
+                // Apply gear set to bot
+                bool success = sBotGearFactory->ApplyGearSet(_player, gearSet);
+
+                if (success)
+                {
+                    TC_LOG_INFO("module.playerbot.worldentry",
+                        "Bot {} equipped with {} items (avg ilvl: {:.1f})",
+                        _player->GetName(), gearSet.items.size(), gearSet.averageIlvl);
+
+                    // Save bot to database with new gear
+                    _player->SaveToDB();
+                }
+                else
+                {
+                    TC_LOG_WARN("module.playerbot.worldentry",
+                        "Failed to apply gear set to bot {}", _player->GetName());
+                }
+            }
+            else
+            {
+                TC_LOG_WARN("module.playerbot.worldentry",
+                    "Generated incomplete gear set for bot {} (items: {})",
+                    _player->GetName(), gearSet.items.size());
+            }
+        }
+        else if (needsGear && !sBotGearFactory->IsReady())
+        {
+            TC_LOG_WARN("module.playerbot.worldentry",
+                "Bot {} needs gear but BotGearFactory is not ready", _player->GetName());
+        }
+    }
+
     // Set bot as fully active
     _player->SetCanModifyStats(true);
     _player->UpdateAllStats();
@@ -738,6 +870,12 @@ void BotWorldEntry::SendInitialPacketsAfterMap()
 
     // Update zone
     _player->UpdateZone(_player->GetZoneId(), _player->GetAreaId());
+
+    // CRITICAL FIX: Initialize phasing data for the bot
+    // Without this, the bot's PhaseShift VisibleMapIds container is uninitialized
+    // causing crashes in PhasingHandler::GetTerrainMapId() when path generation tries
+    // to query terrain height during bot movement.
+    PhasingHandler::OnMapChange(_player);
 }
 
 void BotWorldEntry::InitializeBotPosition()

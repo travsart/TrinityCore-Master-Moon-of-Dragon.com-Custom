@@ -923,12 +923,9 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
             auto dynObjSnapshots = SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(
                 _bot, context.scanRadius);
 
-            for (auto const* snapshot : dynObjSnapshots)
+            for (auto const& snapshot : dynObjSnapshots)
             {
-                if (!snapshot)
-                    continue;
-
-                DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*_bot, snapshot->guid);
+                DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*_bot, snapshot.guid);
                 if (dynObj)
                 {
                     // Add to dynamicObjects collection for further processing

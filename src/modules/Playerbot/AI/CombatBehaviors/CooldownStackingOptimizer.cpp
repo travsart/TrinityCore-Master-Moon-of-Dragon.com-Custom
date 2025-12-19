@@ -24,6 +24,7 @@
 #include "Timer.h"
 #include "UpdateFields.h"
 #include "../../Group/GroupRoleEnums.h" // Centralized role detection utilities
+#include "../../Core/Threading/SafeGridOperations.h"  // SEH-protected grid operations
 #include <algorithm>
 #include <cmath>
 
@@ -263,8 +264,9 @@ CooldownStackingOptimizer::BossPhase CooldownStackingOptimizer::DetectBossPhase(
     ::std::list<Creature*> creatures;
     if (boss->GetTypeId() == TYPEID_UNIT)
     {
-        boss->ToCreature()->GetCreatureListWithEntryInGrid(creatures, 0, 30.0f);  // 0 = any entry
-    for (Creature* creature : creatures)
+        // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
+        SafeGridOperations::GetCreatureListFromCreatureSafe(boss->ToCreature(), creatures, 0, 30.0f);  // 0 = any entry
+        for (Creature* creature : creatures)
         {
             if (creature && creature->IsAlive() && creature != boss &&
                 creature->IsHostileTo(_bot))

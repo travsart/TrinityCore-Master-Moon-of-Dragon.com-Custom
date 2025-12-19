@@ -131,15 +131,19 @@ private:
     {
         uint32 objectEntry = 0;         // Creature OR GameObject entry ID
         Position position;
+        uint32 targetMapId = 0;         // Map where quest ender is located
         bool isGameObject = false;      // True if quest ender is a GameObject, false if Creature
         bool foundViaSpawn = false;     // True if found via spawn data (creature or gameobject)
         bool foundViaPOI = false;       // True if found via Quest POI
         bool requiresSearch = false;    // True if needs area search
+        bool isOnDifferentMap = false;  // True if quest ender exists but on a different map
 
         // Helper methods for clarity
         bool IsCreature() const { return !isGameObject && objectEntry != 0; }
         bool IsGameObject() const { return isGameObject && objectEntry != 0; }
         bool IsValid() const { return objectEntry != 0; }
+        bool HasValidPosition() const { return position.GetPositionX() != 0.0f || position.GetPositionY() != 0.0f || position.GetPositionZ() != 0.0f; }
+        bool RequiresMapTravel() const { return isOnDifferentMap && targetMapId != 0; }
     };
 
     bool FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnderLocation& location);

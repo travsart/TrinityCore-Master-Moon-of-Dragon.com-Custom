@@ -464,17 +464,14 @@ TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const Selec
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, range, true);
 
     // Convert snapshots to Unit* for return (needed by callers)
-    for (auto const* snapshot : hostileSnapshots)
+    for (auto const& snapshot : hostileSnapshots)
     {
-        if (!snapshot)
-            continue;
-
         // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
         // ObjectAccessor is intentionally retained here because we need:
         // 1. Return type is std::vector<Unit*> - callers require live Unit*
         // 2. Real-time IsAlive() verification (creature may have died since snapshot)
         // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
         if (unit && unit->IsAlive())
             enemies.push_back(unit);
     }
@@ -837,12 +834,9 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(bot, maxRange, true);
 
     // Find nearest hostile using squared distances
-    for (auto const* snapshot : hostileSnapshots)
+    for (auto const& snapshot : hostileSnapshots)
     {
-        if (!snapshot)
-            continue;
-
-        float distSq = bot->GetExactDistSq(snapshot->position);
+        float distSq = bot->GetExactDistSq(snapshot.position);
         if (distSq < nearestDistSq)
         {
             nearestDistSq = distSq;
@@ -852,7 +846,7 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
             // 1. Return type is Unit* - callers require live Unit* reference
             // 2. IsAlive() verification requires real-time state check
             // The spatial grid provides distance filtering, ObjectAccessor handles final validation.
-            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
+            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot.guid);
             if (unit && unit->IsAlive())
                 nearestEnemy = unit;
         }
@@ -873,12 +867,12 @@ Unit* TargetSelectionUtils::GetWeakestEnemy(Player* bot, float maxRange)
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(bot, maxRange, true);
 
     // Find weakest hostile (lowest health %)
-    for (auto const* snapshot : hostileSnapshots)
+    for (auto const& snapshot : hostileSnapshots)
     {
-        if (!snapshot || snapshot->maxHealth == 0)
+        if (snapshot.maxHealth == 0)
             continue;
 
-        float healthPct = (float(snapshot->health) / float(snapshot->maxHealth)) * 100.0f;
+        float healthPct = (float(snapshot.health) / float(snapshot.maxHealth)) * 100.0f;
         if (healthPct < lowestHealth)
         {
             lowestHealth = healthPct;
@@ -888,7 +882,7 @@ Unit* TargetSelectionUtils::GetWeakestEnemy(Player* bot, float maxRange)
             // 1. Return type is Unit* - callers require live Unit* reference
             // 2. IsAlive() verification requires real-time state check
             // The spatial grid provides health filtering, ObjectAccessor handles final validation.
-            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
+            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot.guid);
             if (unit && unit->IsAlive())
                 weakestEnemy = unit;
         }

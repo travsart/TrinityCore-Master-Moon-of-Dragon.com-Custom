@@ -241,8 +241,13 @@ bool LootDistribution::IsItemUpgrade(const LootItem& item)
     if (!_bot || !item.itemTemplate)
         return false;
 
-    // Check if item can be equipped by player
+    // Check if item can be equipped by player (basic level/race checks)
     if (!_bot->CanUseItem(item.itemTemplate))
+        return false;
+
+    // CRITICAL FIX: Check if item type is appropriate for class (armor/weapon proficiency)
+    // This prevents Priests from trying to use Mail armor or 2H Swords, etc.
+    if (!IsItemTypeUsefulForClass(_bot->GetClass(), item.itemTemplate))
         return false;
 
     // Compare with currently equipped item
@@ -1693,41 +1698,266 @@ bool LootDistribution::IsItemUsefulForOffSpec(const LootItem& item)
     return false;
 }
 
+bool LootDistribution::IsWeaponUsableByClass(uint8 playerClass, uint8 weaponSubClass) const
+{
+    switch (playerClass)
+    {
+        case CLASS_WARRIOR:
+            // Warriors: All melee weapons + bows/guns for pulling
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_AXE:
+                case ITEM_SUBCLASS_WEAPON_AXE2:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_MACE2:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_SWORD2:
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+                case ITEM_SUBCLASS_WEAPON_POLEARM:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                case ITEM_SUBCLASS_WEAPON_BOW:
+                case ITEM_SUBCLASS_WEAPON_GUN:
+                case ITEM_SUBCLASS_WEAPON_CROSSBOW:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_PALADIN:
+            // Paladins: Maces, Swords, Axes, Polearms
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_AXE:
+                case ITEM_SUBCLASS_WEAPON_AXE2:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_MACE2:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_SWORD2:
+                case ITEM_SUBCLASS_WEAPON_POLEARM:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_DEATH_KNIGHT:
+            // Death Knights: Two-handed weapons, one-handed swords/axes/maces
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_AXE:
+                case ITEM_SUBCLASS_WEAPON_AXE2:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_MACE2:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_SWORD2:
+                case ITEM_SUBCLASS_WEAPON_POLEARM:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_HUNTER:
+            // Hunters: Ranged weapons + melee for survival
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_BOW:
+                case ITEM_SUBCLASS_WEAPON_GUN:
+                case ITEM_SUBCLASS_WEAPON_CROSSBOW:
+                case ITEM_SUBCLASS_WEAPON_AXE:
+                case ITEM_SUBCLASS_WEAPON_AXE2:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_SWORD2:
+                case ITEM_SUBCLASS_WEAPON_POLEARM:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_ROGUE:
+            // Rogues: Daggers, Swords, Maces, Fist Weapons
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_PRIEST:
+            // Priests: Daggers, Maces, Staves, Wands ONLY
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                case ITEM_SUBCLASS_WEAPON_WAND:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_SHAMAN:
+            // Shamans: Axes, Maces, Daggers, Fist Weapons, Staves
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_AXE:
+                case ITEM_SUBCLASS_WEAPON_AXE2:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_MACE2:
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_MAGE:
+            // Mages: Daggers, Swords, Staves, Wands
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                case ITEM_SUBCLASS_WEAPON_WAND:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_WARLOCK:
+            // Warlocks: Daggers, Swords, Staves, Wands
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                case ITEM_SUBCLASS_WEAPON_WAND:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_MONK:
+            // Monks: Fist Weapons, One-handed Axes/Maces/Swords, Polearms, Staves
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+                case ITEM_SUBCLASS_WEAPON_AXE:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_POLEARM:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_DRUID:
+            // Druids: Daggers, Fist Weapons, Maces, Polearms, Staves
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_MACE2:
+                case ITEM_SUBCLASS_WEAPON_POLEARM:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_DEMON_HUNTER:
+            // Demon Hunters: Warglaives, Swords, Axes, Fist Weapons, Daggers
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_WARGLAIVES:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_AXE:
+                case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                    return true;
+                default:
+                    return false;
+            }
+
+        case CLASS_EVOKER:
+            // Evokers: Daggers, Fist Weapons, Axes, Maces, Swords, Staves
+            switch (weaponSubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_DAGGER:
+                case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+                case ITEM_SUBCLASS_WEAPON_AXE:
+                case ITEM_SUBCLASS_WEAPON_MACE:
+                case ITEM_SUBCLASS_WEAPON_SWORD:
+                case ITEM_SUBCLASS_WEAPON_STAFF:
+                    return true;
+                default:
+                    return false;
+            }
+
+        default:
+            return true;
+    }
+}
+
 bool LootDistribution::IsItemTypeUsefulForClass(uint8 playerClass, const ItemTemplate* itemTemplate)
 {
     if (!itemTemplate)
         return false;
 
-    // Check if item type is generally useful for the class
-    switch (playerClass)
+    // For armor items, check armor type appropriateness
+    if (itemTemplate->GetClass() == ITEM_CLASS_ARMOR)
     {
-        case CLASS_WARRIOR:
-        case CLASS_PALADIN:
-        case CLASS_DEATH_KNIGHT:
-            return itemTemplate->GetSubClass() == ITEM_SUBCLASS_ARMOR_PLATE ||
-                   itemTemplate->GetClass() == ITEM_CLASS_WEAPON;
-
-        case CLASS_HUNTER:
-        case CLASS_SHAMAN:
-            return itemTemplate->GetSubClass() == ITEM_SUBCLASS_ARMOR_MAIL ||
-                   itemTemplate->GetClass() == ITEM_CLASS_WEAPON;
-
-        case CLASS_ROGUE:
-        case CLASS_DRUID:
-        case CLASS_MONK:
-        case CLASS_DEMON_HUNTER:
-            return itemTemplate->GetSubClass() == ITEM_SUBCLASS_ARMOR_LEATHER ||
-                   itemTemplate->GetClass() == ITEM_CLASS_WEAPON;
-
-        case CLASS_PRIEST:
-        case CLASS_MAGE:
-        case CLASS_WARLOCK:
-            return itemTemplate->GetSubClass() == ITEM_SUBCLASS_ARMOR_CLOTH ||
-                   itemTemplate->GetClass() == ITEM_CLASS_WEAPON;
-
-        default:
+        uint8 armorSubClass = itemTemplate->GetSubClass();
+        // Skip miscellaneous items (rings, trinkets, cloaks, etc.) - they're always useful
+        if (armorSubClass == ITEM_SUBCLASS_ARMOR_MISCELLANEOUS ||
+            armorSubClass == ITEM_SUBCLASS_ARMOR_COSMETIC)
             return true;
+
+        switch (playerClass)
+        {
+            case CLASS_WARRIOR:
+            case CLASS_PALADIN:
+            case CLASS_DEATH_KNIGHT:
+                return armorSubClass == ITEM_SUBCLASS_ARMOR_PLATE;
+
+            case CLASS_HUNTER:
+            case CLASS_SHAMAN:
+            case CLASS_EVOKER:
+                return armorSubClass == ITEM_SUBCLASS_ARMOR_MAIL;
+
+            case CLASS_ROGUE:
+            case CLASS_DRUID:
+            case CLASS_MONK:
+            case CLASS_DEMON_HUNTER:
+                return armorSubClass == ITEM_SUBCLASS_ARMOR_LEATHER;
+
+            case CLASS_PRIEST:
+            case CLASS_MAGE:
+            case CLASS_WARLOCK:
+                return armorSubClass == ITEM_SUBCLASS_ARMOR_CLOTH;
+
+            default:
+                return true;
+        }
     }
+
+    // For weapon items, check weapon type appropriateness using the new helper
+    if (itemTemplate->GetClass() == ITEM_CLASS_WEAPON)
+    {
+        return IsWeaponUsableByClass(playerClass, itemTemplate->GetSubClass());
+    }
+
+    // For other item types (consumables, trade goods, etc.), always useful
+    return true;
 }
 
 uint32 LootDistribution::ProcessNeedRolls(LootRoll& roll)

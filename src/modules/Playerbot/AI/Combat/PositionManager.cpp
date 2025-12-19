@@ -1046,22 +1046,19 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
             float minEnemyDistance = 1000.0f;
 
             // Use snapshots for position calculations (lock-free!)
-    for (auto const* snapshot : hostileSnapshots)
+            for (auto const& snapshot : hostileSnapshots)
             {
-                if (!snapshot)
-                    continue;
-
                 // Validate with Unit* for IsHostileTo check
                 // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
                 // ObjectAccessor is intentionally retained - Live Unit* needed for:
                 // 1. IsHostileTo() faction check requires live relationship data
                 // 2. Threat level assessment requires current threat table state
                 // The spatial grid provides position data, ObjectAccessor handles faction checks.
-                Unit* enemy = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+                Unit* enemy = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
                 if (!enemy || !_bot->IsHostileTo(enemy))
                     continue;
 
-                float enemyDistance = pos.GetExactDist(snapshot->position);
+                float enemyDistance = pos.GetExactDist(snapshot.position);
                 minEnemyDistance = ::std::min(minEnemyDistance, enemyDistance);
 
                 // Higher score for positions farther from enemies

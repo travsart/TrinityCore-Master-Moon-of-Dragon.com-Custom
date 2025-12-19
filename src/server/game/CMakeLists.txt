@@ -54,6 +54,22 @@ if(TARGET modules-common)
       modules-common)
 endif()
 
+# Add BUILD_PLAYERBOT compile definition and include paths when playerbot module is enabled
+# This is CRITICAL for WorldSession.cpp to include the is_bot parameter in constructor
+# and for World.cpp to include Playerbot headers (which need TBB)
+if(BUILD_PLAYERBOT)
+  target_compile_definitions(game
+    PRIVATE
+      BUILD_PLAYERBOT=1)
+  target_include_directories(game
+    PRIVATE
+      ${CMAKE_SOURCE_DIR}/src/modules/Playerbot)
+  # Link to playerbot-dependencies to get TBB include paths for BotSpawner.h
+  if(TARGET playerbot-dependencies)
+    target_link_libraries(game PRIVATE playerbot-dependencies)
+  endif()
+endif()
+
 target_link_libraries(game
   PRIVATE
     trinity-core-interface

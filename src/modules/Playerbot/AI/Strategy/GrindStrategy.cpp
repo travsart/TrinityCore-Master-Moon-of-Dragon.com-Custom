@@ -21,6 +21,7 @@
 #include "Professions/GatheringManager.h"
 #include "Professions/ProfessionManager.h"
 #include "Quest/QuestHubDatabase.h"
+#include "Core/Threading/SafeGridOperations.h"  // SEH-protected grid operations
 #include "GameTime.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
@@ -449,9 +450,10 @@ Creature* GrindStrategy::FindGrindTarget(BotAI* ai)
     if (!bot->IsInWorld())
         return nullptr;
 
-    // Get nearby creatures
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, _scanRange);
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, 0, _scanRange))
+        return nullptr;
 
     if (nearbyCreatures.empty())
         return nullptr;
@@ -601,9 +603,10 @@ bool GrindStrategy::IsSafeToPull(Player* bot, Creature* creature) const
     if (!creature->IsInWorld())
         return false;
 
-    // Check for nearby linked mobs
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     std::list<Creature*> nearbyMobs;
-    creature->GetCreatureListWithEntryInGrid(nearbyMobs, 0, 10.0f); // 10 yard radius
+    if (!SafeGridOperations::GetCreatureListFromCreatureSafe(creature, nearbyMobs, 0, 10.0f)) // 10 yard radius
+        return false;
 
     uint32 hostileCount = 0;
     for (Creature* nearby : nearbyMobs)
@@ -764,12 +767,14 @@ bool GrindStrategy::CheckQuestAvailability(BotAI* ai)
     }
 
     // Also check for nearby quest givers (300 yard range)
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, 300.0f);
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, 0, 300.0f))
+        return false;
 
     for (Creature* creature : nearbyCreatures)
     {
-        // CRITICAL: Full validity check before accessing creature methods
+        // Full validity check before accessing creature methods
         // With 300-yard range, creatures may despawn/become invalid during iteration
         if (!creature || !creature->IsAlive() || !creature->IsInWorld())
             continue;
@@ -869,8 +874,10 @@ bool GrindStrategy::HasTargetsInArea(BotAI* ai) const
     if (!bot->IsInWorld())
         return false;
 
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, _scanRange);
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, 0, _scanRange))
+        return false;
 
     for (Creature* creature : nearbyCreatures)
     {

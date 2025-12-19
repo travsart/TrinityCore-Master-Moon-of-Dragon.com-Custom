@@ -24,6 +24,7 @@
 #include "MotionMaster.h"
 #include "CharmInfo.h"
 #include "HunterAI.h"
+#include "ObjectAccessor.h"
 #include <unordered_map>
 #include <queue>
 
@@ -123,54 +124,81 @@ public:
     void SummonPet()
     {
         if (!_bot || HasActivePet())
-
             return;
 
         // Check if we can summon a pet
         if (_bot->GetPetGUID().IsEmpty())
         {
-
             _bot->CastSpell(CastSpellTargetArg(_bot), SPELL_CALL_PET_1);
+        }
+    }
+
+    // Thread-safe version using validated pointer
+    void SummonPetSafe(Player* bot)
+    {
+        if (!bot || HasActivePetSafe(bot))
+            return;
+
+        // Check if we can summon a pet
+        if (bot->GetPetGUID().IsEmpty())
+        {
+            bot->CastSpell(CastSpellTargetArg(bot), SPELL_CALL_PET_1);
         }
     }
 
     void CommandPetAttack(Unit* target)
     {
         if (!target || !HasActivePet())
-
             return;
 
         Pet* pet = _bot->GetPet();
         if (!pet || !pet->IsAlive())
-
             return;
 
         // Update pet target if different
         if (pet->GetVictim() != target)
         {
-
             pet->AttackStop();
-
             pet->GetMotionMaster()->Clear();
 
-
             if (pet->GetCharmInfo())
-
             {
-
                 pet->GetCharmInfo()->SetCommandState(COMMAND_ATTACK);
-
                 pet->GetCharmInfo()->SetIsCommandAttack(true);
-
                 pet->GetCharmInfo()->SetIsReturning(false);
-
                 pet->GetCharmInfo()->SetIsFollowing(false);
-
             }
 
+            pet->Attack(target, true);
+            pet->GetMotionMaster()->MoveChase(target);
+        }
+    }
+
+    // Thread-safe version using validated pointer
+    void CommandPetAttackSafe(Player* bot, Unit* target)
+    {
+        if (!target || !HasActivePetSafe(bot))
+            return;
+
+        Pet* pet = bot->GetPet();
+        if (!pet || !pet->IsAlive())
+            return;
+
+        // Update pet target if different
+        if (pet->GetVictim() != target)
+        {
+            pet->AttackStop();
+            pet->GetMotionMaster()->Clear();
+
+            if (pet->GetCharmInfo())
+            {
+                pet->GetCharmInfo()->SetCommandState(COMMAND_ATTACK);
+                pet->GetCharmInfo()->SetIsCommandAttack(true);
+                pet->GetCharmInfo()->SetIsReturning(false);
+                pet->GetCharmInfo()->SetIsFollowing(false);
+            }
 
             pet->Attack(target, true);
-
             pet->GetMotionMaster()->MoveChase(target);
         }
     }
@@ -205,13 +233,28 @@ public:
         return _bot && !_bot->GetPetGUID().IsEmpty() && _bot->GetPet() && _bot->GetPet()->IsAlive();
     }
 
+    // Thread-safe version using validated pointer
+    bool HasActivePetSafe(Player* bot) const
+    {
+        return bot && !bot->GetPetGUID().IsEmpty() && bot->GetPet() && bot->GetPet()->IsAlive();
+    }
+
     bool IsPetHealthLow() const
     {
         if (!HasActivePet())
-
             return false;
 
         Pet* pet = _bot->GetPet();
+        return pet && pet->GetHealthPct() < 70.0f;
+    }
+
+    // Thread-safe version using validated pointer
+    bool IsPetHealthLowSafe(Player* bot) const
+    {
+        if (!HasActivePetSafe(bot))
+            return false;
+
+        Pet* pet = bot->GetPet();
         return pet && pet->GetHealthPct() < 70.0f;
     }
 
@@ -219,19 +262,33 @@ public:
     {
         uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastMendPet < 10000) // 10 second cooldown
-
             return;
 
         if (!HasActivePet() || !IsPetHealthLow())
-
             return;
 
         Pet* pet = _bot->GetPet();
         if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
         {
-
             _bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET);
+            _lastMendPet = currentTime;
+        }
+    }
 
+    // Thread-safe version using validated pointer
+    void MendPetSafe(Player* bot)
+    {
+        uint32 currentTime = GameTime::GetGameTimeMS();
+        if (currentTime - _lastMendPet < 10000) // 10 second cooldown
+            return;
+
+        if (!HasActivePetSafe(bot) || !IsPetHealthLowSafe(bot))
+            return;
+
+        Pet* pet = bot->GetPet();
+        if (pet && pet->IsAlive() && !bot->HasAura(SPELL_MEND_PET))
+        {
+            bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET);
             _lastMendPet = currentTime;
         }
     }
@@ -261,34 +318,40 @@ public:
 
     void EnsurePetActive(Unit* target)
     {
-        if (!HasActivePet())
+        // THREAD-SAFETY FIX: Validate bot pointer before access
+        if (!_bot)
+            return;
+
+        // Store GUID for thread-safe lookup
+        ObjectGuid botGuid = _bot->GetGUID();
+        Player* bot = ObjectAccessor::FindPlayer(botGuid);
+        if (!bot)
+            return;
+
+        if (!HasActivePetSafe(bot))
         {
-
-            SummonPet();
-
+            SummonPetSafe(bot);
             return;
         }
 
         // CRITICAL FIX: Ensure bot pets are always in DEFENSIVE mode
         // Pet react state is loaded from database on spawn. If it was saved as PASSIVE,
         // the pet will not defend itself or its master when attacked.
-        Pet* pet = _bot->GetPet();
+        Pet* pet = bot->GetPet();
         if (pet && pet->HasReactState(REACT_PASSIVE))
         {
             TC_LOG_DEBUG("module.playerbot.ai", "BM Hunter {} pet {} was PASSIVE, setting to DEFENSIVE",
-                         _bot->GetName(), pet->GetName());
+                         bot->GetName(), pet->GetName());
             pet->SetReactState(REACT_DEFENSIVE);
         }
 
         // Heal pet if needed
-        if (IsPetHealthLow())
-
-            MendPet();
+        if (IsPetHealthLowSafe(bot))
+            MendPetSafe(bot);
 
         // Command pet to attack
         if (target && target->IsAlive())
-
-            CommandPetAttack(target);
+            CommandPetAttackSafe(bot, target);
     }
 
     uint32 GetLastCommandTime() const { return _lastPetCommand; }

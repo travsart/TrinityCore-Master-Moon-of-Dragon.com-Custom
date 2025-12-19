@@ -1990,6 +1990,14 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
     catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.session", "Exception in HandleBotPlayerLogin: {}", e.what());
+        // CRITICAL FIX: Clean up AI BEFORE deleting player to prevent stale _bot pointer!
+        // If AI was created at line 1916 but exception occurs later, AI holds a reference
+        // to Player. We must delete AI first to prevent use-after-free crash in UpdateAI().
+        if (_ai)
+        {
+            delete _ai;
+            _ai = nullptr;
+        }
         if (GetPlayer())
         {
             delete GetPlayer();
@@ -2001,6 +2009,12 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
     catch (...)
     {
         TC_LOG_ERROR("module.playerbot.session", "Unknown exception in HandleBotPlayerLogin");
+        // CRITICAL FIX: Clean up AI BEFORE deleting player to prevent stale _bot pointer!
+        if (_ai)
+        {
+            delete _ai;
+            _ai = nullptr;
+        }
         if (GetPlayer())
         {
             delete GetPlayer();

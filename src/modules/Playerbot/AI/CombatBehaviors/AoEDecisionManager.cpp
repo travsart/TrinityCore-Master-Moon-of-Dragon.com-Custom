@@ -201,11 +201,8 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, range, true);
 
     // Count valid targets using snapshots (lock-free)
-    for (auto const* snapshot : hostileSnapshots)
+    for (auto const& snapshot : hostileSnapshots)
     {
-        if (!snapshot)
-            continue;
-
         // Get Unit* for additional validation
         // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
         // ObjectAccessor is intentionally retained - Live Unit* needed for:
@@ -213,7 +210,7 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
         // 2. ToCreature() type conversion requires live object
         // 3. IsCritter()/IsTotem() require real-time creature state
         // The spatial grid pre-filters candidates to reduce ObjectAccessor calls.
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
         if (!unit || !_bot->IsValidAttackTarget(unit))
             continue;
 
@@ -652,10 +649,8 @@ void AoEDecisionManager::UpdateTargetCache()
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, searchRadius, true);
 
     // Update cache with hostile snapshots
-    for (auto const* snapshot : hostileSnapshots)
+    for (auto const& snapshot : hostileSnapshots)
     {
-        if (!snapshot)
-            continue;
         // Get Unit* for additional validation
         // SPATIAL GRID MIGRATION COMPLETE (2025-11-26):
         // ObjectAccessor is intentionally retained - Live Unit* needed for:
@@ -663,15 +658,15 @@ void AoEDecisionManager::UpdateTargetCache()
         // 2. ToCreature()->IsElite() requires real-time creature state
         // 3. GetThreatManager() requires live threat table access
         // The spatial grid provides health/position data, ObjectAccessor handles live validation.
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
         if (!unit || !IsValidAoETarget(unit))
             continue;
 
         TargetInfo info;
-        info.guid = snapshot->guid;
-        info.position = snapshot->position;
-        info.healthPercent = (snapshot->maxHealth > 0) ?
-            (float(snapshot->health) / float(snapshot->maxHealth)) * 100.0f : 0.0f;
+        info.guid = snapshot.guid;
+        info.position = snapshot.position;
+        info.healthPercent = (snapshot.maxHealth > 0) ?
+            (float(snapshot.health) / float(snapshot.maxHealth)) * 100.0f : 0.0f;
         info.isElite = unit->GetTypeId() == TYPEID_UNIT &&
                        unit->ToCreature()->IsElite();
         info.hasDot = false;  // Would check for specific DoTs here

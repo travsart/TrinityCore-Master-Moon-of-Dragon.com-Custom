@@ -16,6 +16,7 @@
 #include "Log.h"
 #include "WorldSession.h"
 #include <algorithm>
+#include <limits>
 
 namespace Playerbot
 {
@@ -755,6 +756,44 @@ void EquipmentManager::AutoEquipBestGear()
 
     uint32 upgradesFound = 0;
 
+    // Helper lambda to process an item for potential upgrade
+    auto processItem = [this, &upgradesFound](::Item* item) -> void
+    {
+        if (!item || !IsItemUpgrade(item))
+            return;
+
+        ItemTemplate const* proto = item->GetTemplate();
+        if (!proto)
+            return;
+
+        // Get all valid slots for this item type (handles rings, trinkets, dual-wield)
+        std::vector<uint8> validSlots = GetMultiSlotEquipmentSlots(proto);
+        if (validSlots.empty())
+            return;
+
+        // For multi-slot items, compare against the worst equipped item in those slots
+        ::Item* currentItem = GetWorstEquippedItemForSlots(validSlots);
+
+        // Compare items
+        ItemComparisonResult result = CompareItems(currentItem, item);
+        if (result.isUpgrade && result.scoreDifference >= _profile.minUpgradeThreshold)
+        {
+            TC_LOG_INFO("playerbot.equipment",
+                       "UPGRADE FOUND: Bot {} - {} is upgrade over {} (Score: {:.2f} -> {:.2f}, Reason: {})",
+                       _bot->GetName(),
+                       proto->GetName(DEFAULT_LOCALE),
+                       currentItem ? currentItem->GetTemplate()->GetName(DEFAULT_LOCALE) : "Empty Slot",
+                       result.currentItemScore,
+                       result.newItemScore,
+                       result.upgradeReason);
+
+            // Use the first valid slot - EquipItemInSlot will find the actual best slot
+            EquipItemInSlot(item, validSlots[0]);
+            upgradesFound++;
+            UpdateMetrics(true, true);
+        }
+    };
+
     // Scan all inventory bags for equippable items
     for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
     {
@@ -762,40 +801,7 @@ void EquipmentManager::AutoEquipBestGear()
         {
             for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
             {
-                if (::Item* item = pBag->GetItemByPos(slot))
-                {
-                    if (IsItemUpgrade(item))
-                    {
-                        ItemTemplate const* proto = item->GetTemplate();
-                        if (!proto)
-                            continue;
-
-                        uint8 equipSlot = GetItemEquipmentSlot(proto);
-                        if (equipSlot != EQUIPMENT_SLOT_END)
-                        {
-                            // Get currently equipped item
-                            ::Item* currentItem = GetEquippedItemInSlot(equipSlot);
-
-                            // Compare items
-                            ItemComparisonResult result = CompareItems(currentItem, item);
-                            if (result.isUpgrade && result.scoreDifference >= _profile.minUpgradeThreshold)
-                            {
-                                TC_LOG_INFO("playerbot.equipment",
-                                           "🎯 UPGRADE FOUND: Bot {} - {} is upgrade over {} (Score: {:.2f} -> {:.2f}, Reason: {})",
-                                           _bot->GetName(),
-                                           proto->GetName(DEFAULT_LOCALE),
-                                           currentItem ? currentItem->GetTemplate()->GetName(DEFAULT_LOCALE) : "Empty Slot",
-                                           result.currentItemScore,
-                                           result.newItemScore,
-                                           result.upgradeReason);
-
-                                EquipItemInSlot(item, equipSlot);
-                                upgradesFound++;
-                                UpdateMetrics(true, true);
-                            }
-                        }
-                    }
-                }
+                processItem(pBag->GetItemByPos(slot));
             }
         }
     }
@@ -803,37 +809,12 @@ void EquipmentManager::AutoEquipBestGear()
     // Also check main bag (backpack)
     for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
-        if (::Item* item = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
-        {
-            if (IsItemUpgrade(item))
-            {
-                ItemTemplate const* proto = item->GetTemplate();
-                if (!proto)
-                    continue;
-
-                uint8 equipSlot = GetItemEquipmentSlot(proto);
-                if (equipSlot != EQUIPMENT_SLOT_END)
-                {
-                    ::Item* currentItem = GetEquippedItemInSlot(equipSlot);
-                    ItemComparisonResult result = CompareItems(currentItem, item);
-                    if (result.isUpgrade && result.scoreDifference >= _profile.minUpgradeThreshold)
-                    {
-                        TC_LOG_INFO("playerbot.equipment",
-                                   "🎯 UPGRADE FOUND: Bot {} - {} (Score improvement: {:.2f})",
-                                   _bot->GetName(), proto->GetName(DEFAULT_LOCALE), result.scoreDifference);
-
-                        EquipItemInSlot(item, equipSlot);
-                        upgradesFound++;
-                        UpdateMetrics(true, true);
-                    }
-                }
-            }
-        }
+        processItem(_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot));
     }
 
     if (upgradesFound > 0)
     {
-        TC_LOG_INFO("playerbot.equipment", "✅ AutoEquip Complete: Bot {} equipped {} upgrades",
+        TC_LOG_INFO("playerbot.equipment", "AutoEquip Complete: Bot {} equipped {} upgrades",
                    _bot->GetName(), upgradesFound);
     }
 }
@@ -927,11 +908,14 @@ bool EquipmentManager::IsItemUpgrade(::Item* item)
     if (!CanEquipItem(proto))
         return false;
 
-    uint8 equipSlot = GetItemEquipmentSlot(proto);
-    if (equipSlot == EQUIPMENT_SLOT_END)
+    // Get all valid slots for this item type (handles multi-slot items like rings/trinkets)
+    std::vector<uint8> validSlots = GetMultiSlotEquipmentSlots(proto);
+    if (validSlots.empty())
         return false;
 
-    ::Item* currentItem = GetEquippedItemInSlot(equipSlot);
+    // For multi-slot items, compare against the worst equipped item in those slots
+    // If there's an empty slot, this returns nullptr (meaning it's definitely an upgrade)
+    ::Item* currentItem = GetWorstEquippedItemForSlots(validSlots);
 
     ItemComparisonResult result = CompareItems(currentItem, item);
     return result.isUpgrade;
@@ -1315,6 +1299,65 @@ bool EquipmentManager::CanEquipItem(ItemTemplate const* itemTemplate)
     if (!itemTemplate->GetAllowableRace().IsEmpty() && !itemTemplate->GetAllowableRace().HasRace(_bot->GetRace()))
         return false;
 
+    // Check armor/weapon proficiency (skill requirement)
+    // This prevents Priests from trying to equip Mail armor, Warriors from trying to equip Wands, etc.
+    if (itemTemplate->GetRequiredSkill() != 0)
+    {
+        if (_bot->GetSkillValue(itemTemplate->GetRequiredSkill()) == 0)
+            return false;
+
+        // Also check minimum skill rank if required
+        if (_bot->GetSkillValue(itemTemplate->GetRequiredSkill()) < itemTemplate->GetRequiredSkillRank())
+            return false;
+    }
+
+    // Check armor subclass proficiency for armor items
+    if (itemTemplate->GetClass() == ITEM_CLASS_ARMOR && itemTemplate->GetSubClass() != ITEM_SUBCLASS_ARMOR_MISCELLANEOUS)
+    {
+        // Get the armor skill for this subclass
+        uint32 armorSkill = 0;
+        switch (itemTemplate->GetSubClass())
+        {
+            case ITEM_SUBCLASS_ARMOR_CLOTH:   armorSkill = SKILL_CLOTH; break;
+            case ITEM_SUBCLASS_ARMOR_LEATHER: armorSkill = SKILL_LEATHER; break;
+            case ITEM_SUBCLASS_ARMOR_MAIL:    armorSkill = SKILL_MAIL; break;
+            case ITEM_SUBCLASS_ARMOR_PLATE:   armorSkill = SKILL_PLATE_MAIL; break;
+            case ITEM_SUBCLASS_ARMOR_SHIELD:  armorSkill = SKILL_SHIELD; break;
+            default: break;
+        }
+
+        if (armorSkill != 0 && !_bot->HasSkill(armorSkill))
+            return false;
+    }
+
+    // Check weapon proficiency for weapon items
+    if (itemTemplate->GetClass() == ITEM_CLASS_WEAPON)
+    {
+        uint32 weaponSkill = 0;
+        switch (itemTemplate->GetSubClass())
+        {
+            case ITEM_SUBCLASS_WEAPON_AXE:          weaponSkill = SKILL_AXES; break;
+            case ITEM_SUBCLASS_WEAPON_AXE2:         weaponSkill = SKILL_TWO_HANDED_AXES; break;
+            case ITEM_SUBCLASS_WEAPON_BOW:          weaponSkill = SKILL_BOWS; break;
+            case ITEM_SUBCLASS_WEAPON_GUN:          weaponSkill = SKILL_GUNS; break;
+            case ITEM_SUBCLASS_WEAPON_MACE:         weaponSkill = SKILL_MACES; break;
+            case ITEM_SUBCLASS_WEAPON_MACE2:        weaponSkill = SKILL_TWO_HANDED_MACES; break;
+            case ITEM_SUBCLASS_WEAPON_POLEARM:      weaponSkill = SKILL_POLEARMS; break;
+            case ITEM_SUBCLASS_WEAPON_SWORD:        weaponSkill = SKILL_SWORDS; break;
+            case ITEM_SUBCLASS_WEAPON_SWORD2:       weaponSkill = SKILL_TWO_HANDED_SWORDS; break;
+            case ITEM_SUBCLASS_WEAPON_WARGLAIVES:   weaponSkill = SKILL_WARGLAIVES; break;
+            case ITEM_SUBCLASS_WEAPON_STAFF:        weaponSkill = SKILL_STAVES; break;
+            case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:  weaponSkill = SKILL_FIST_WEAPONS; break;
+            case ITEM_SUBCLASS_WEAPON_DAGGER:       weaponSkill = SKILL_DAGGERS; break;
+            case ITEM_SUBCLASS_WEAPON_CROSSBOW:     weaponSkill = SKILL_CROSSBOWS; break;
+            case ITEM_SUBCLASS_WEAPON_WAND:         weaponSkill = SKILL_WANDS; break;
+            default: break;
+        }
+
+        if (weaponSkill != 0 && !_bot->HasSkill(weaponSkill))
+            return false;
+    }
+
     return true;
 }
 
@@ -1324,6 +1367,8 @@ uint8 EquipmentManager::GetItemEquipmentSlot(ItemTemplate const* itemTemplate)
         return EQUIPMENT_SLOT_END;
 
     // Map inventory type to equipment slot
+    // NOTE: For multi-slot items (rings, trinkets), this returns the first slot.
+    // Use GetMultiSlotEquipmentSlots() for proper multi-slot handling.
     switch (itemTemplate->GetInventoryType())
     {
         case INVTYPE_HEAD: return EQUIPMENT_SLOT_HEAD;
@@ -1336,18 +1381,90 @@ uint8 EquipmentManager::GetItemEquipmentSlot(ItemTemplate const* itemTemplate)
         case INVTYPE_FEET: return EQUIPMENT_SLOT_FEET;
         case INVTYPE_WRISTS: return EQUIPMENT_SLOT_WRISTS;
         case INVTYPE_HANDS: return EQUIPMENT_SLOT_HANDS;
-        case INVTYPE_FINGER: return EQUIPMENT_SLOT_FINGER1; // Rings - would need logic for finger2
-        case INVTYPE_TRINKET: return EQUIPMENT_SLOT_TRINKET1; // Trinkets - would need logic for trinket2
+        case INVTYPE_FINGER: return EQUIPMENT_SLOT_FINGER1;
+        case INVTYPE_TRINKET: return EQUIPMENT_SLOT_TRINKET1;
         case INVTYPE_CLOAK: return EQUIPMENT_SLOT_BACK;
         case INVTYPE_WEAPON:
         case INVTYPE_WEAPONMAINHAND: return EQUIPMENT_SLOT_MAINHAND;
         case INVTYPE_WEAPONOFFHAND: return EQUIPMENT_SLOT_OFFHAND;
         case INVTYPE_HOLDABLE: return EQUIPMENT_SLOT_OFFHAND;
+        case INVTYPE_SHIELD: return EQUIPMENT_SLOT_OFFHAND;
         case INVTYPE_2HWEAPON: return EQUIPMENT_SLOT_MAINHAND;
+        case INVTYPE_RANGED:
+        case INVTYPE_RANGEDRIGHT: return EQUIPMENT_SLOT_MAINHAND;
         case INVTYPE_TABARD: return EQUIPMENT_SLOT_TABARD;
         case INVTYPE_ROBE: return EQUIPMENT_SLOT_CHEST;
         default: return EQUIPMENT_SLOT_END;
     }
+}
+
+std::vector<uint8> EquipmentManager::GetMultiSlotEquipmentSlots(ItemTemplate const* itemTemplate)
+{
+    std::vector<uint8> slots;
+
+    if (!itemTemplate)
+        return slots;
+
+    switch (itemTemplate->GetInventoryType())
+    {
+        case INVTYPE_FINGER:
+            slots.push_back(EQUIPMENT_SLOT_FINGER1);
+            slots.push_back(EQUIPMENT_SLOT_FINGER2);
+            break;
+        case INVTYPE_TRINKET:
+            slots.push_back(EQUIPMENT_SLOT_TRINKET1);
+            slots.push_back(EQUIPMENT_SLOT_TRINKET2);
+            break;
+        case INVTYPE_WEAPON:
+            slots.push_back(EQUIPMENT_SLOT_MAINHAND);
+            if (_bot && _bot->CanDualWield())
+                slots.push_back(EQUIPMENT_SLOT_OFFHAND);
+            break;
+        default:
+        {
+            uint8 slot = GetItemEquipmentSlot(itemTemplate);
+            if (slot != EQUIPMENT_SLOT_END)
+                slots.push_back(slot);
+            break;
+        }
+    }
+
+    return slots;
+}
+
+::Item* EquipmentManager::GetWorstEquippedItemForSlots(std::vector<uint8> const& slots)
+{
+    if (!_bot || slots.empty())
+        return nullptr;
+
+    ::Item* worstItem = nullptr;
+    float worstScore = std::numeric_limits<float>::max();
+    bool hasEmptySlot = false;
+
+    for (uint8 slot : slots)
+    {
+        ::Item* equippedItem = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+
+        if (!equippedItem)
+        {
+            // Empty slot found - this is the best slot to fill
+            hasEmptySlot = true;
+            continue;
+        }
+
+        float score = CalculateItemScore(equippedItem);
+        if (score < worstScore)
+        {
+            worstScore = score;
+            worstItem = equippedItem;
+        }
+    }
+
+    // If there's an empty slot, return nullptr to indicate the new item can go there
+    if (hasEmptySlot)
+        return nullptr;
+
+    return worstItem;
 }
 
 // ============================================================================
@@ -1554,21 +1671,65 @@ void EquipmentManager::EquipItemInSlot(::Item* item, uint8 slot)
     if (!_bot || !item)
         return;
 
-    // Use TrinityCore's EquipItem method
+    ItemTemplate const* proto = item->GetTemplate();
+    if (!proto)
+        return;
+
+    // Use TrinityCore's CanEquipItem with NULL_SLOT to let TrinityCore find the best slot
+    // This handles multi-slot items like rings (FINGER1/FINGER2) and trinkets (TRINKET1/TRINKET2)
+    // Pass swap=true since we want to replace existing equipped items with upgrades
     uint16 dest;
-    InventoryResult result = _bot->CanEquipItem(slot, dest, item, false);
+    InventoryResult result = _bot->CanEquipItem(NULL_SLOT, dest, item, true);
+
+    if (result != EQUIP_ERR_OK)
+    {
+        // If NULL_SLOT fails, try specific slot with swap enabled
+        result = _bot->CanEquipItem(slot, dest, item, true);
+    }
+
     if (result == EQUIP_ERR_OK)
     {
+        // Get the actual destination slot for logging
+        uint8 destSlot = (dest & 0xFF);
+
+        // Check if we need to unequip existing item first (for swap)
+        if (::Item* existingItem = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, destSlot))
+        {
+            // Find a bag slot to store the old item
+            ItemPosCountVec storePos;
+            InventoryResult storeResult = _bot->CanStoreItem(NULL_BAG, NULL_SLOT, storePos, existingItem, false);
+
+            if (storeResult != EQUIP_ERR_OK)
+            {
+                TC_LOG_WARN("playerbot.equipment",
+                    "⚠️ Cannot store replaced item {} for bot {} - no bag space (Error: {})",
+                    existingItem->GetTemplate()->GetName(DEFAULT_LOCALE),
+                    _bot->GetName(), static_cast<uint32>(storeResult));
+                return;
+            }
+
+            // Remove existing item from equipment slot and store in bags
+            _bot->RemoveItem(INVENTORY_SLOT_BAG_0, destSlot, true);
+            _bot->StoreItem(storePos, existingItem, true);
+
+            TC_LOG_DEBUG("playerbot.equipment",
+                "Moved {} to bags to make room for upgrade",
+                existingItem->GetTemplate()->GetName(DEFAULT_LOCALE));
+        }
+
+        // Remove new item from its current position (bag)
         _bot->RemoveItem(item->GetBagSlot(), item->GetSlot(), true);
+
+        // Equip the new item
         _bot->EquipItem(dest, item, true);
 
-        TC_LOG_INFO("playerbot.equipment", "✅ Equipped {} in slot {} for _bot {}",
-                   item->GetTemplate()->GetName(DEFAULT_LOCALE), slot, _bot->GetName());
+        TC_LOG_INFO("playerbot.equipment", "✅ Equipped {} in slot {} for bot {}",
+                   proto->GetName(DEFAULT_LOCALE), destSlot, _bot->GetName());
     }
     else
     {
-        TC_LOG_ERROR("playerbot.equipment", "❌ Failed to equip {} for _bot {} (Error: {})",
-                     item->GetTemplate()->GetName(DEFAULT_LOCALE), _bot->GetName(), static_cast<uint32>(result));
+        TC_LOG_WARN("playerbot.equipment", "❌ Failed to equip {} for bot {} (Error: {})",
+                     proto->GetName(DEFAULT_LOCALE), _bot->GetName(), static_cast<uint32>(result));
     }
 }
 

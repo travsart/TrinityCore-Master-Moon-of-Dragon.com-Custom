@@ -313,37 +313,43 @@ public:
 
     void EnsurePetActive(Unit* target)
     {
-        if (!HasActivePet())
+        // THREAD-SAFETY FIX: Validate bot pointer before access
+        if (!_bot)
+            return;
+
+        // Store GUID for thread-safe lookup
+        ObjectGuid botGuid = _bot->GetGUID();
+        Player* bot = ObjectAccessor::FindPlayer(botGuid);
+        if (!bot)
+            return;
+
+        if (!HasActivePetSafe(bot))
         {
-
-            SummonPet();
-
+            SummonPetSafe(bot);
             return;
         }
 
         // CRITICAL FIX: Ensure bot pets are always in DEFENSIVE mode
         // Pet react state is loaded from database on spawn. If it was saved as PASSIVE,
         // the pet will not defend itself or its master when attacked.
-        Pet* pet = _bot->GetPet();
+        Pet* pet = bot->GetPet();
         if (pet && pet->HasReactState(REACT_PASSIVE))
         {
             TC_LOG_DEBUG("module.playerbot.ai", "Survival Hunter {} pet {} was PASSIVE, setting to DEFENSIVE",
-                         _bot->GetName(), pet->GetName());
+                         bot->GetName(), pet->GetName());
             pet->SetReactState(REACT_DEFENSIVE);
         }
 
         // Command pet to attack if not already
         if (pet && pet->IsAlive() && pet->GetVictim() != target)
         {
-
             pet->Attack(target, true);
         }
 
         // Heal pet if needed
-        if (IsPetHealthLow())
+        if (IsPetHealthLowSafe(bot))
         {
-
-            MendPet();
+            MendPetSafe(bot);
         }
     }
 
@@ -352,22 +358,44 @@ public:
         return _bot && !_bot->GetPetGUID().IsEmpty() && _bot->GetPet() && _bot->GetPet()->IsAlive();
     }
 
+    // Thread-safe version using validated pointer
+    bool HasActivePetSafe(Player* bot) const
+    {
+        return bot && !bot->GetPetGUID().IsEmpty() && bot->GetPet() && bot->GetPet()->IsAlive();
+    }
+
 private:
     void SummonPet()
     {
         if (!_bot || HasActivePet())
-
             return;
-            _bot->CastSpell(CastSpellTargetArg(_bot), SPELL_CALL_PET_SURV);
+        _bot->CastSpell(CastSpellTargetArg(_bot), SPELL_CALL_PET_SURV);
+    }
+
+    // Thread-safe version using validated pointer
+    void SummonPetSafe(Player* bot)
+    {
+        if (!bot || HasActivePetSafe(bot))
+            return;
+        bot->CastSpell(CastSpellTargetArg(bot), SPELL_CALL_PET_SURV);
     }
 
     bool IsPetHealthLow() const
     {
         if (!HasActivePet())
-
             return false;
 
         Pet* pet = _bot->GetPet();
+        return pet && pet->GetHealthPct() < 60.0f;
+    }
+
+    // Thread-safe version using validated pointer
+    bool IsPetHealthLowSafe(Player* bot) const
+    {
+        if (!HasActivePetSafe(bot))
+            return false;
+
+        Pet* pet = bot->GetPet();
         return pet && pet->GetHealthPct() < 60.0f;
     }
 
@@ -375,15 +403,27 @@ private:
     {
         uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastMendPet < 10000)
-
             return;
 
         Pet* pet = _bot->GetPet();
         if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
         {
-
             _bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET_SURV);
+            _lastMendPet = currentTime;
+        }
+    }
 
+    // Thread-safe version using validated pointer
+    void MendPetSafe(Player* bot)
+    {
+        uint32 currentTime = GameTime::GetGameTimeMS();
+        if (currentTime - _lastMendPet < 10000)
+            return;
+
+        Pet* pet = bot->GetPet();
+        if (pet && pet->IsAlive() && !bot->HasAura(SPELL_MEND_PET_SURV))
+        {
+            bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET_SURV);
             _lastMendPet = currentTime;
         }
     }

@@ -2346,6 +2346,7 @@ void World::Update(uint32 diff)
         sModuleUpdateManager->Update(diff);
     }
 
+#ifdef BUILD_PLAYERBOT
     // CRITICAL FIX: Process bot actions queued by worker threads
     // Bot worker threads make decisions using snapshots and queue actions.
     // Main thread executes actions with full Map access (thread-safe by design).
@@ -2355,6 +2356,7 @@ void World::Update(uint32 diff)
         if (sBotActionMgr)
             sBotActionMgr->ProcessActions();
     }
+#endif
 
     /// <li> Handle all other objects
     ///- Update objects when the timer has passed (maps, transport, creatures, ...)

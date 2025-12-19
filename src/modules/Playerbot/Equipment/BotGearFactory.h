@@ -173,6 +173,12 @@ private:
     ::std::vector<uint8> GetAllowedArmorTypes(uint8 cls) const;
 
     /**
+     * Get allowed weapon subtypes for class
+     * Returns vector of ITEM_SUBCLASS_WEAPON_* values
+     */
+    ::std::vector<uint8> GetAllowedWeaponTypes(uint8 cls) const;
+
+    /**
      * Verify item is appropriate for class/spec
      */
     bool IsItemAppropriate(CachedItem const& item, uint8 cls, uint32 specId, uint32 level) const;

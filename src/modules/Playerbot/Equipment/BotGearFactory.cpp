@@ -480,10 +480,27 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
 
     ++_stats.cacheLookups;
 
+    // CRITICAL FIX: Filter items by class proficiency (armor type, weapon type)
+    // This prevents Priests from getting Mail, Mages from getting Axes, etc.
+    ::std::vector<CachedItem> appropriateItems;
+    appropriateItems.reserve(items->size() / 4);  // Estimate ~25% will match class
+    for (auto const& item : *items)
+    {
+        if (IsItemAppropriate(item, cls, specId, level))
+            appropriateItems.push_back(item);
+    }
+
+    if (appropriateItems.empty())
+    {
+        TC_LOG_WARN("playerbot.gear", "BotGearFactory::SelectBestItem - No appropriate items for class {} level {} slot {}",
+                    cls, level, slot);
+        return 0;
+    }
+
     // Filter by quality
-    auto qualityFiltered = FilterByQuality(*items, targetQuality);
+    auto qualityFiltered = FilterByQuality(appropriateItems, targetQuality);
     if (qualityFiltered.empty())
-        qualityFiltered = *items;  // Fallback to all items
+        qualityFiltered = appropriateItems;  // Fallback to all appropriate items
 
     // Select highest scored item
     if (!qualityFiltered.empty())
@@ -502,19 +519,37 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
 
 ::std::vector<CachedItem> const* BotGearFactory::GetItemsForSlot(uint8 cls, uint32 specId, uint32 level, uint8 slot) const
 {
-    // Lookup in cache: _gearCache[cls][specId][level][slot]
-    auto clsIt = _gearCache.find(cls);
-    if (clsIt == _gearCache.end())
-        return nullptr;
-
-    auto specIt = clsIt->second.find(specId);
-    if (specIt == clsIt->second.end())
-        return nullptr;
-
     // Round level to nearest 5 for cache lookup
     uint32 levelBracket = (level / 5) * 5;
     if (levelBracket == 0)
         levelBracket = 1;
+
+    // First try class-specific lookup: _gearCache[cls][specId][level][slot]
+    auto clsIt = _gearCache.find(cls);
+    if (clsIt != _gearCache.end())
+    {
+        auto specIt = clsIt->second.find(specId);
+        if (specIt != clsIt->second.end())
+        {
+            auto levelIt = specIt->second.find(levelBracket);
+            if (levelIt != specIt->second.end())
+            {
+                auto slotIt = levelIt->second.find(slot);
+                if (slotIt != levelIt->second.end())
+                    return &slotIt->second;
+            }
+        }
+    }
+
+    // Fallback to generic cache (class=0, spec=0) - items are stored generically
+    // IsItemAppropriate will filter by class proficiency
+    clsIt = _gearCache.find(0);
+    if (clsIt == _gearCache.end())
+        return nullptr;
+
+    auto specIt = clsIt->second.find(0);
+    if (specIt == clsIt->second.end())
+        return nullptr;
 
     auto levelIt = specIt->second.find(levelBracket);
     if (levelIt == specIt->second.end())
@@ -570,6 +605,160 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
     }
 }
 
+::std::vector<uint8> BotGearFactory::GetAllowedWeaponTypes(uint8 cls) const
+{
+    // Returns ITEM_SUBCLASS_WEAPON_* values that the class can use
+    // Reference: SharedDefines.h and class skill data
+    switch (cls)
+    {
+        case CLASS_WARRIOR:
+            // Warriors can use almost all melee weapons
+            return {
+                ITEM_SUBCLASS_WEAPON_AXE,
+                ITEM_SUBCLASS_WEAPON_AXE2,
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_MACE2,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_SWORD2,
+                ITEM_SUBCLASS_WEAPON_DAGGER,
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON,
+                ITEM_SUBCLASS_WEAPON_POLEARM,
+                ITEM_SUBCLASS_WEAPON_STAFF,
+                ITEM_SUBCLASS_WEAPON_THROWN
+            };
+
+        case CLASS_PALADIN:
+            return {
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_MACE2,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_SWORD2,
+                ITEM_SUBCLASS_WEAPON_AXE,
+                ITEM_SUBCLASS_WEAPON_AXE2,
+                ITEM_SUBCLASS_WEAPON_POLEARM
+            };
+
+        case CLASS_HUNTER:
+            return {
+                ITEM_SUBCLASS_WEAPON_BOW,
+                ITEM_SUBCLASS_WEAPON_GUN,
+                ITEM_SUBCLASS_WEAPON_CROSSBOW,
+                ITEM_SUBCLASS_WEAPON_AXE,
+                ITEM_SUBCLASS_WEAPON_AXE2,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_SWORD2,
+                ITEM_SUBCLASS_WEAPON_POLEARM,
+                ITEM_SUBCLASS_WEAPON_STAFF,
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON,
+                ITEM_SUBCLASS_WEAPON_DAGGER
+            };
+
+        case CLASS_ROGUE:
+            return {
+                ITEM_SUBCLASS_WEAPON_DAGGER,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON,
+                ITEM_SUBCLASS_WEAPON_BOW,
+                ITEM_SUBCLASS_WEAPON_GUN,
+                ITEM_SUBCLASS_WEAPON_CROSSBOW,
+                ITEM_SUBCLASS_WEAPON_THROWN
+            };
+
+        case CLASS_PRIEST:
+            // Priests: Daggers, Maces, Staves, Wands ONLY
+            return {
+                ITEM_SUBCLASS_WEAPON_DAGGER,
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_STAFF,
+                ITEM_SUBCLASS_WEAPON_WAND
+            };
+
+        case CLASS_SHAMAN:
+            return {
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_MACE2,
+                ITEM_SUBCLASS_WEAPON_AXE,
+                ITEM_SUBCLASS_WEAPON_AXE2,
+                ITEM_SUBCLASS_WEAPON_DAGGER,
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON,
+                ITEM_SUBCLASS_WEAPON_STAFF
+            };
+
+        case CLASS_MAGE:
+            // Mages: Daggers, Swords, Staves, Wands ONLY
+            return {
+                ITEM_SUBCLASS_WEAPON_DAGGER,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_STAFF,
+                ITEM_SUBCLASS_WEAPON_WAND
+            };
+
+        case CLASS_WARLOCK:
+            // Warlocks: Daggers, Swords, Staves, Wands ONLY
+            return {
+                ITEM_SUBCLASS_WEAPON_DAGGER,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_STAFF,
+                ITEM_SUBCLASS_WEAPON_WAND
+            };
+
+        case CLASS_MONK:
+            return {
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON,
+                ITEM_SUBCLASS_WEAPON_STAFF,
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_AXE,
+                ITEM_SUBCLASS_WEAPON_POLEARM
+            };
+
+        case CLASS_DRUID:
+            return {
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_MACE2,
+                ITEM_SUBCLASS_WEAPON_DAGGER,
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON,
+                ITEM_SUBCLASS_WEAPON_POLEARM,
+                ITEM_SUBCLASS_WEAPON_STAFF
+            };
+
+        case CLASS_DEMON_HUNTER:
+            return {
+                ITEM_SUBCLASS_WEAPON_WARGLAIVES,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_AXE,
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON,
+                ITEM_SUBCLASS_WEAPON_DAGGER
+            };
+
+        case CLASS_DEATH_KNIGHT:
+            return {
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_SWORD2,
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_MACE2,
+                ITEM_SUBCLASS_WEAPON_AXE,
+                ITEM_SUBCLASS_WEAPON_AXE2,
+                ITEM_SUBCLASS_WEAPON_POLEARM
+            };
+
+        case CLASS_EVOKER:
+            return {
+                ITEM_SUBCLASS_WEAPON_DAGGER,
+                ITEM_SUBCLASS_WEAPON_STAFF,
+                ITEM_SUBCLASS_WEAPON_SWORD,
+                ITEM_SUBCLASS_WEAPON_MACE,
+                ITEM_SUBCLASS_WEAPON_AXE,
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON
+            };
+
+        default:
+            // Default: Only daggers and staves (safe fallback)
+            return {ITEM_SUBCLASS_WEAPON_DAGGER, ITEM_SUBCLASS_WEAPON_STAFF};
+    }
+}
+
 bool BotGearFactory::IsItemAppropriate(CachedItem const& item, uint8 cls, uint32 specId, uint32 level) const
 {
     // Check level requirement
@@ -579,21 +768,41 @@ bool BotGearFactory::IsItemAppropriate(CachedItem const& item, uint8 cls, uint32
     // Check armor type for armor items
     if (item.itemClass == ITEM_CLASS_ARMOR)
     {
-        auto allowedTypes = GetAllowedArmorTypes(cls);
-        bool armorMatch = false;
-        for (uint8 allowedType : allowedTypes)
+        // Skip miscellaneous armor (rings, trinkets, necks, cloaks)
+        // These don't have armor type restrictions
+        if (item.itemSubClass != ITEM_SUBCLASS_ARMOR_MISCELLANEOUS)
         {
-            if (item.armorType == allowedType)
+            auto allowedTypes = GetAllowedArmorTypes(cls);
+            bool armorMatch = false;
+            for (uint8 allowedType : allowedTypes)
             {
-                armorMatch = true;
+                if (item.itemSubClass == allowedType)
+                {
+                    armorMatch = true;
+                    break;
+                }
+            }
+            if (!armorMatch)
+                return false;
+        }
+    }
+
+    // Check weapon type for weapon items
+    if (item.itemClass == ITEM_CLASS_WEAPON)
+    {
+        auto allowedWeapons = GetAllowedWeaponTypes(cls);
+        bool weaponMatch = false;
+        for (uint8 allowedType : allowedWeapons)
+        {
+            if (item.itemSubClass == allowedType)
+            {
+                weaponMatch = true;
                 break;
             }
         }
-        if (!armorMatch)
+        if (!weaponMatch)
             return false;
     }
-
-    // Additional checks can be added here (weapon types, etc.)
 
     return true;
 }

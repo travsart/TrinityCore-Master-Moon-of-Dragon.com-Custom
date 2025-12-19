@@ -16,6 +16,7 @@
 #include "Log.h"
 #include "World.h"
 #include "Performance/BotPerformanceMonitor.h"
+#include "../../Core/Threading/SafeGridOperations.h"  // SEH-protected grid operations
 #include <fstream>
 #include <sstream>
 
@@ -648,10 +649,11 @@ void BehaviorAdaptation::Shutdown()
     features.push_back(0.0f);  // Weather intensity
 
     // Nearby entity counts
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     ::std::list<Player*> nearbyPlayers;
     ::std::list<Creature*> nearbyCreatures;
-    bot->GetPlayerListInGrid(nearbyPlayers, 30.0f);
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, 30.0f);
+    SafeGridOperations::GetPlayerListSafe(bot, nearbyPlayers, 30.0f);
+    SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, 0, 30.0f);
 
     features.push_back(nearbyPlayers.size() / 20.0f);
     features.push_back(nearbyCreatures.size() / 30.0f);

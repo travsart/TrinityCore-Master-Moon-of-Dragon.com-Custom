@@ -45,10 +45,10 @@ SpatialGridQueryHelpers::FindCreatureByGuid(Player* bot, ObjectGuid guid, float 
     return nullptr;
 }
 
-::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot>
 SpatialGridQueryHelpers::FindHostileCreaturesInRange(Player* bot, float range, bool requireAlive)
 {
-    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -60,11 +60,11 @@ SpatialGridQueryHelpers::FindHostileCreaturesInRange(Player* bot, float range, b
     for (auto const& snapshot : creatureSnapshots)
     {
         // Check hostility
-    if (!snapshot.isHostile)
+        if (!snapshot.isHostile)
             continue;
 
         // Check alive requirement
-    if (requireAlive && !snapshot.IsAlive())
+        if (requireAlive && !snapshot.IsAlive())
             continue;
 
         // Check distance (spatial grid may return entities slightly outside range)
@@ -72,7 +72,7 @@ SpatialGridQueryHelpers::FindHostileCreaturesInRange(Player* bot, float range, b
         if (distance > range)
             continue;
 
-        result.push_back(&snapshot);
+        result.push_back(snapshot);  // Copy instead of pointer
     }
 
     return result;
@@ -115,10 +115,10 @@ SpatialGridQueryHelpers::FindPlayerByGuid(Player* bot, ObjectGuid guid, float se
     return nullptr;
 }
 
-::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot>
 SpatialGridQueryHelpers::FindGroupMembersInRange(Player* bot, float range)
 {
-    ::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -135,7 +135,7 @@ SpatialGridQueryHelpers::FindGroupMembersInRange(Player* bot, float range)
     for (auto const& snapshot : playerSnapshots)
     {
         // Check if player is in our group
-    if (snapshot.groupGuid != group->GetGUID())
+        if (snapshot.groupGuid != group->GetGUID())
             continue;
 
         // Check distance
@@ -143,7 +143,7 @@ SpatialGridQueryHelpers::FindGroupMembersInRange(Player* bot, float range)
         if (distance > range)
             continue;
 
-        result.push_back(&snapshot);
+        result.push_back(snapshot);  // Copy instead of pointer
     }
 
     return result;
@@ -170,10 +170,10 @@ SpatialGridQueryHelpers::FindGameObjectByGuid(Player* bot, ObjectGuid guid, floa
     return nullptr;
 }
 
-::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot>
 SpatialGridQueryHelpers::FindQuestGameObjectsInRange(Player* bot, float range)
 {
-    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -185,7 +185,7 @@ SpatialGridQueryHelpers::FindQuestGameObjectsInRange(Player* bot, float range)
     for (auto const& snapshot : gameObjectSnapshots)
     {
         // Check if quest object
-    if (!snapshot.isQuestObject)
+        if (!snapshot.isQuestObject)
             continue;
 
         // Check distance
@@ -193,7 +193,7 @@ SpatialGridQueryHelpers::FindQuestGameObjectsInRange(Player* bot, float range)
         if (distance > range)
             continue;
 
-        result.push_back(&snapshot);
+        result.push_back(snapshot);  // Copy instead of pointer
     }
 
     return result;
@@ -220,10 +220,10 @@ SpatialGridQueryHelpers::FindDynamicObjectByGuid(Player* bot, ObjectGuid guid, f
     return nullptr;
 }
 
-::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot>
 SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(Player* bot, float range)
 {
-    ::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -235,7 +235,7 @@ SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(Player* bot, float r
     for (auto const& snapshot : dynamicObjectSnapshots)
     {
         // Check if active
-    if (!snapshot.IsActive())
+        if (!snapshot.IsActive())
             continue;
 
         // Check distance
@@ -244,7 +244,7 @@ SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(Player* bot, float r
             continue;
 
         // Return all active objects - caller determines what's dangerous based on caster/faction
-        result.push_back(&snapshot);
+        result.push_back(snapshot);  // Copy instead of pointer
     }
 
     return result;
@@ -271,10 +271,10 @@ SpatialGridQueryHelpers::FindAreaTriggerByGuid(Player* bot, ObjectGuid guid, flo
     return nullptr;
 }
 
-::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot>
 SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float range)
 {
-    ::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -286,7 +286,7 @@ SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float ran
     for (auto const& snapshot : areaTriggerSnapshots)
     {
         // Check if active
-    if (!snapshot.IsActive())
+        if (!snapshot.IsActive())
             continue;
 
         // Get caster to check faction hostility
@@ -295,7 +295,7 @@ SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float ran
             caster = ObjectAccessor::GetUnit(*bot, snapshot.casterGuid);
 
         // Dangerous if caster is hostile or missing (assume hostile)
-    if (caster && !bot->IsHostileTo(caster))
+        if (caster && !bot->IsHostileTo(caster))
             continue;
 
         // Check distance
@@ -303,7 +303,7 @@ SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float ran
         if (distance > range)
             continue;
 
-        result.push_back(&snapshot);
+        result.push_back(snapshot);  // Copy instead of pointer
     }
 
     return result;
@@ -524,6 +524,62 @@ TypeID SpatialGridQueryHelpers::GetEntityType(Player* bot, ObjectGuid guid)
     }
 
     return TYPEID_UNIT; // Not found, return default
+}
+
+// ===== ENTRY-BASED QUERIES (THREAD-SAFE REPLACEMENTS FOR GRID OPERATIONS) =====
+
+::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot>
+SpatialGridQueryHelpers::FindCreaturesByEntryInRange(Player* bot, uint32 entry, float range, bool requireAlive)
+{
+    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> results;
+
+    auto spatialGrid = GetSpatialGrid(bot);
+    if (!spatialGrid)
+        return results;
+
+    // Query all nearby creatures from spatial grid (lock-free, thread-safe)
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(bot->GetPosition(), range);
+
+    // Filter by entry and alive status
+    for (auto const& snapshot : creatureSnapshots)
+    {
+        // Filter by entry (0 = all entries)
+        if (entry != 0 && snapshot.entry != entry)
+            continue;
+
+        // Filter by alive status if required
+        if (requireAlive && !snapshot.IsAlive())
+            continue;
+
+        results.push_back(snapshot);  // Copy instead of pointer - safe for caller to use later
+    }
+
+    return results;
+}
+
+::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot>
+SpatialGridQueryHelpers::FindGameObjectsByEntryInRange(Player* bot, uint32 entry, float range)
+{
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> results;
+
+    auto spatialGrid = GetSpatialGrid(bot);
+    if (!spatialGrid)
+        return results;
+
+    // Query all nearby GameObjects from spatial grid (lock-free, thread-safe)
+    auto gameObjectSnapshots = spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), range);
+
+    // Filter by entry
+    for (auto const& snapshot : gameObjectSnapshots)
+    {
+        // Filter by entry (0 = all entries)
+        if (entry != 0 && snapshot.entry != entry)
+            continue;
+
+        results.push_back(snapshot);  // Copy instead of pointer - safe for caller to use later
+    }
+
+    return results;
 }
 
 } // namespace Playerbot

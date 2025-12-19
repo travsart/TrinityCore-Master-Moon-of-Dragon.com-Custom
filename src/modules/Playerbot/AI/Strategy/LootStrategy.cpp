@@ -25,6 +25,7 @@
 #include "MotionMaster.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
+#include "../../Core/Threading/SafeGridOperations.h"  // SEH-protected grid operations
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "UnitAI.h"
@@ -205,9 +206,11 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         return lootableCorpses;
 
     Player* bot = ai->GetBot();
-    // Find all creatures in range
+
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     ::std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, maxDistance);
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, 0, maxDistance))
+        return lootableCorpses;
 
     uint32 deadCount = 0;
     uint32 canHaveLootCount = 0;
@@ -351,9 +354,11 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
 
     // Find the creature using TrinityCore's live API (same as FindLootableCorpses)
     // This is more reliable than spatial grid which may not have updated dead state yet
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     Creature* creature = nullptr;
     ::std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, 50.0f);
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, 0, 50.0f))
+        return false;
 
     TC_LOG_DEBUG("module.playerbot.strategy", "LootCorpse: Bot {} found {} nearby creatures",
                  bot->GetName(), nearbyCreatures.size());

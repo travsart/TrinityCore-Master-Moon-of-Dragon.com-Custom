@@ -249,6 +249,9 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
     if (!bot)
         return;
 
+    TC_LOG_INFO("playerbot.guild", "Bot {} received petition offer from {} (Item: {})",
+        bot->GetName(), packet.Owner.ToString(), packet.Item.ToString());
+
     // Publish event for any subscribers
     NPCEvent event = NPCEvent::PetitionListReceived(
         bot->GetGUID(),
@@ -268,7 +271,7 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
     Petition* petition = sPetitionMgr->GetPetition(packet.Item);
     if (!petition)
     {
-        TC_LOG_DEBUG("playerbot.packets", "Bot {} cannot sign petition - petition {} not found",
+        TC_LOG_INFO("playerbot.guild", "Bot {} cannot sign petition - petition {} not found",
             bot->GetName(), packet.Item.ToString());
         return;
     }
@@ -278,7 +281,7 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
     // Don't sign your own petition
     if (ownerGuid == bot->GetGUID())
     {
-        TC_LOG_DEBUG("playerbot.packets", "Bot {} cannot sign own petition", bot->GetName());
+        TC_LOG_INFO("playerbot.guild", "Bot {} cannot sign own petition", bot->GetName());
         return;
     }
 
@@ -288,8 +291,8 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
         uint32 ownerTeam = sCharacterCache->GetCharacterTeamByGuid(ownerGuid);
         if (bot->GetTeam() != ownerTeam)
         {
-            TC_LOG_DEBUG("playerbot.packets", "Bot {} cannot sign petition - different faction",
-                bot->GetName());
+            TC_LOG_INFO("playerbot.guild", "Bot {} cannot sign petition - different faction (bot: {}, owner: {})",
+                bot->GetName(), bot->GetTeam(), ownerTeam);
             return;
         }
     }
@@ -297,15 +300,15 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
     // Bot cannot sign if already in a guild
     if (bot->GetGuildId())
     {
-        TC_LOG_DEBUG("playerbot.packets", "Bot {} cannot sign petition - already in guild",
-            bot->GetName());
+        TC_LOG_INFO("playerbot.guild", "Bot {} cannot sign petition - already in guild {}",
+            bot->GetName(), bot->GetGuildId());
         return;
     }
 
     // Bot cannot sign if already invited to a guild
     if (bot->GetGuildIdInvited())
     {
-        TC_LOG_DEBUG("playerbot.packets", "Bot {} cannot sign petition - already invited to guild",
+        TC_LOG_INFO("playerbot.guild", "Bot {} cannot sign petition - already invited to guild",
             bot->GetName());
         return;
     }
@@ -313,23 +316,23 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
     // Check if maximum signatures reached
     if (petition->Signatures.size() >= 10)
     {
-        TC_LOG_DEBUG("playerbot.packets", "Bot {} cannot sign petition - max signatures reached",
-            bot->GetName());
+        TC_LOG_INFO("playerbot.guild", "Bot {} cannot sign petition - max signatures reached ({})",
+            bot->GetName(), petition->Signatures.size());
         return;
     }
 
     // Check if bot's account already signed this petition
     if (petition->IsPetitionSignedByAccount(session->GetAccountId()))
     {
-        TC_LOG_DEBUG("playerbot.packets", "Bot {} account already signed petition",
-            bot->GetName());
+        TC_LOG_INFO("playerbot.guild", "Bot {} account {} already signed petition",
+            bot->GetName(), session->GetAccountId());
         return;
     }
 
     // Sign the petition!
     petition->AddSignature(session->GetAccountId(), bot->GetGUID(), false);
 
-    TC_LOG_INFO("playerbot.packets", "Bot {} AUTO-SIGNED guild charter {} (owner: {}, signatures: {})",
+    TC_LOG_INFO("playerbot.guild", "Bot {} AUTO-SIGNED guild charter {} (owner: {}, signatures: {})",
         bot->GetName(), packet.Item.ToString(), ownerGuid.ToString(),
         petition->Signatures.size());
 
@@ -344,7 +347,7 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
     if (Player* owner = ObjectAccessor::FindConnectedPlayer(ownerGuid))
     {
         owner->SendDirectMessage(signResult.GetRawPacket());
-        TC_LOG_DEBUG("playerbot.packets", "Notified owner {} of bot signature", owner->GetName());
+        TC_LOG_INFO("playerbot.guild", "Notified owner {} of bot {} signature", owner->GetName(), bot->GetName());
     }
 }
 

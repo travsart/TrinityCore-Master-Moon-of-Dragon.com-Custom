@@ -30,6 +30,7 @@
 #include "../../Quest/QuestHubDatabase.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
+#include "../../Core/Threading/SafeGridOperations.h"  // SEH-protected grid operations
 #include "../../Equipment/EquipmentManager.h"  // For reward evaluation
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
@@ -37,6 +38,10 @@
 #include "UnitAI.h"
 #include <limits>
 #include "GameTime.h"
+#include "../../Game/FlightMasterManager.h"     // Cross-map travel via flight paths
+#include "../../Travel/TravelRouteManager.h"     // Multi-station travel planning
+#include "SpellHistory.h"                        // For hearthstone cooldown check
+#include "Spell.h"                               // For casting hearthstone spell
 
 namespace Playerbot
 {
@@ -859,8 +864,13 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
         {
             QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
             // Scan for friendly NPCs with this entry in range (300 yards to match hostile creature scan)
+            // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
             std::list<Creature*> nearbyCreatures;
-            bot->GetCreatureListWithEntryInGrid(nearbyCreatures, questObjective.ObjectID, 300.0f);
+            if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, questObjective.ObjectID, 300.0f))
+            {
+                TC_LOG_TRACE("module.playerbot.quest", "EngageQuestTargets: Grid search failed for bot {}", bot->GetName());
+                return;
+            }
             for (Creature* creature : nearbyCreatures)
             {
                 // CRITICAL SAFETY: Check IsInWorld() before any operations that access Map
@@ -1883,12 +1893,353 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
         return;
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} found quest ender {} {} at ({:.1f}, {:.1f}, {:.1f}) - foundViaSpawn={}, foundViaPOI={}, requiresSearch={}",
+    TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} found quest ender {} {} at ({:.1f}, {:.1f}, {:.1f}) - foundViaSpawn={}, foundViaPOI={}, requiresSearch={}, isOnDifferentMap={}, targetMapId={}",
                  bot->GetName(),
                  location.IsGameObject() ? "GameObject" : "NPC",
                  location.objectEntry,
                  location.position.GetPositionX(), location.position.GetPositionY(), location.position.GetPositionZ(),
-                 location.foundViaSpawn, location.foundViaPOI, location.requiresSearch);
+                 location.foundViaSpawn, location.foundViaPOI, location.requiresSearch,
+                 location.isOnDifferentMap, location.targetMapId);
+
+    // Step 1B: Handle cross-map quest enders (quest ender on different map than bot)
+    if (location.RequiresMapTravel())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "🗺️ TurnInQuest: Bot {} needs to travel to MAP {} to turn in quest {} (currently on map {}) - quest ender {} {} at ({:.1f}, {:.1f}, {:.1f})",
+                     bot->GetName(),
+                     location.targetMapId,
+                     questId,
+                     bot->GetMapId(),
+                     location.IsGameObject() ? "GameObject" : "NPC",
+                     location.objectEntry,
+                     location.position.GetPositionX(), location.position.GetPositionY(), location.position.GetPositionZ());
+
+        // ========================================================================
+        // CROSS-MAP TRAVEL SYSTEM - Multi-method travel resolver
+        // ========================================================================
+        // Priority order:
+        // 1. Hearthstone (if bind is on target map and ready)
+        // 2. Flight path (if flight path can reach target map)
+        // 3. Defer turn-in (continue other objectives until travel is possible)
+
+        bool travelInitiated = false;
+
+        // ========================================================================
+        // TRAVEL METHOD 1: Hearthstone (using Player's native API)
+        // ========================================================================
+        // Check if bot's hearthstone bind location is on the target map
+        static constexpr uint32 HEARTHSTONE_SPELL_ID = 8690;
+        WorldLocation const& homebindLoc = bot->m_homebind;  // Direct access to public member
+        uint32 homebindMapId = homebindLoc.GetMapId();
+        bool homebindValid = (homebindMapId != 0 || homebindLoc.GetPositionX() != 0.0f || homebindLoc.GetPositionY() != 0.0f);
+
+        if (homebindValid && homebindMapId == location.targetMapId)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🏠 TurnInQuest: Bot {} hearthstone is bound to MAP {} (target map) - checking if hearthstone is ready",
+                         bot->GetName(), homebindMapId);
+
+            // Check if hearthstone is on cooldown
+            SpellHistory* spellHistory = bot->GetSpellHistory();
+            bool hearthstoneReady = spellHistory && !spellHistory->HasCooldown(HEARTHSTONE_SPELL_ID);
+
+            if (hearthstoneReady)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✨ TurnInQuest: Bot {} using HEARTHSTONE to travel to MAP {} for quest {} turn-in",
+                             bot->GetName(), location.targetMapId, questId);
+
+                // Cast hearthstone spell
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(HEARTHSTONE_SPELL_ID, DIFFICULTY_NONE);
+                if (spellInfo)
+                {
+                    Spell* spell = new Spell(bot, spellInfo, TRIGGERED_NONE);
+                    SpellCastTargets targets;
+                    targets.SetUnitTarget(bot);
+
+                    SpellCastResult result = spell->prepare(targets);
+                    if (result == SPELL_CAST_OK)
+                    {
+                        TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} hearthstone activated - will complete quest {} turn-in after arrival on MAP {}",
+                                     bot->GetName(), questId, location.targetMapId);
+                        travelInitiated = true;
+                    }
+                    else
+                    {
+                        TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} hearthstone cast failed with result {}",
+                                     bot->GetName(), static_cast<uint32>(result));
+                    }
+                }
+            }
+            else
+            {
+                // Get cooldown remaining
+                uint32 cooldownMs = 0;
+                if (spellHistory)
+                {
+                    SpellInfo const* hsInfo = sSpellMgr->GetSpellInfo(HEARTHSTONE_SPELL_ID, DIFFICULTY_NONE);
+                    if (hsInfo)
+                    {
+                        auto remaining = spellHistory->GetRemainingCooldown(hsInfo);
+                        cooldownMs = static_cast<uint32>(remaining.count());
+                    }
+                }
+                TC_LOG_ERROR("module.playerbot.quest", "⏳ TurnInQuest: Bot {} hearthstone on cooldown ({} seconds remaining) - deferring quest {} turn-in",
+                             bot->GetName(), cooldownMs / 1000, questId);
+            }
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🏠 TurnInQuest: Bot {} hearthstone bound to MAP {} (not target MAP {}) - cannot use hearthstone for travel",
+                         bot->GetName(), homebindMapId, location.targetMapId);
+        }
+
+        // ========================================================================
+        // TRAVEL METHOD 2: Flight Path (includes ships, zeppelins, portals via taxi system)
+        // ========================================================================
+        // TrinityCore represents ships, zeppelins, and some portals as taxi nodes
+        // These ARE able to cross continent/map boundaries
+        if (!travelInitiated)
+        {
+            // Find nearest taxi node on target map to quest ender
+            uint32 destinationTaxiNode = FlightMasterManager::FindNearestTaxiNode(location.position, location.targetMapId);
+
+            if (destinationTaxiNode != 0)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✈️ TurnInQuest: Bot {} found taxi node {} near quest ender on MAP {} - checking for transport route",
+                             bot->GetName(), destinationTaxiNode, location.targetMapId);
+
+                // Find nearest flight master to bot on current map
+                auto flightMasterOpt = FlightMasterManager::FindNearestFlightMaster(bot);
+
+                if (flightMasterOpt.has_value())
+                {
+                    FlightMasterLocation const& fm = flightMasterOpt.value();
+
+                    TC_LOG_ERROR("module.playerbot.quest", "✈️ TurnInQuest: Bot {} found flight master '{}' (node {}) at {:.1f} yards - checking path to node {}",
+                                 bot->GetName(), fm.name, fm.taxiNode, fm.distanceFromPlayer, destinationTaxiNode);
+
+                    // Check if a taxi path exists (this includes zeppelin/ship routes)
+                    auto pathOpt = FlightMasterManager::CalculateFlightPath(bot, fm.taxiNode, destinationTaxiNode, FlightPathStrategy::SHORTEST_DISTANCE);
+
+                    if (pathOpt.has_value())
+                    {
+                        FlightPathInfo const& path = pathOpt.value();
+
+                        TC_LOG_ERROR("module.playerbot.quest", "✈️ TurnInQuest: Bot {} found transport route with {} stops, cost {} copper, ~{} seconds",
+                                     bot->GetName(), path.stopCount, path.goldCost, path.flightTime);
+
+                        // Check if bot is close enough to interact with flight master
+                        if (fm.distanceFromPlayer < 10.0f)
+                        {
+                            // Bot is at flight master - initiate the flight
+                            FlightResult result = FlightMasterManager().FlyToTaxiNode(bot, destinationTaxiNode, FlightPathStrategy::SHORTEST_DISTANCE);
+                            if (result == FlightResult::SUCCESS)
+                            {
+                                TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} initiated transport to MAP {} via taxi node {}",
+                                             bot->GetName(), location.targetMapId, destinationTaxiNode);
+                                travelInitiated = true;
+                            }
+                            else
+                            {
+                                TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} failed to initiate flight: {}",
+                                             bot->GetName(), FlightMasterManager::GetResultString(result));
+                            }
+                        }
+                        else
+                        {
+                            // Navigate to flight master first
+                            TC_LOG_ERROR("module.playerbot.quest", "🚶 TurnInQuest: Bot {} navigating to flight master '{}' at ({:.1f}, {:.1f}, {:.1f})",
+                                         bot->GetName(), fm.name,
+                                         fm.position.GetPositionX(), fm.position.GetPositionY(), fm.position.GetPositionZ());
+
+                            if (BotMovementUtil::MoveToPosition(bot, fm.position))
+                            {
+                                TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} moving to flight master - will take transport to MAP {} after arrival",
+                                             bot->GetName(), location.targetMapId);
+                                travelInitiated = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} no transport route found from node {} to node {} (may need to discover nodes or use portal)",
+                                     bot->GetName(), fm.taxiNode, destinationTaxiNode);
+                    }
+                }
+                else
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} no flight master found on current map {} - searching for transport NPCs",
+                                 bot->GetName(), bot->GetMapId());
+                }
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} no taxi node found near quest ender position on MAP {}",
+                             bot->GetName(), location.targetMapId);
+            }
+        }
+
+        // ========================================================================
+        // TRAVEL METHOD 3: Multi-Station Travel (ships, zeppelins, portals)
+        // ========================================================================
+        // Use TravelRouteManager for complex multi-hop routes like:
+        // - FlightMaster -> Ship -> FlightMaster
+        // - FlightMaster -> Portal -> FlightMaster
+        // - Hearthstone -> FlightMaster -> Zeppelin -> FlightMaster
+        if (!travelInitiated)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🚢 TurnInQuest: Bot {} attempting multi-station travel planning to MAP {}",
+                         bot->GetName(), location.targetMapId);
+
+            // Create TravelRouteManager and plan route
+            TravelRouteManager travelMgr(bot);
+
+            if (travelMgr.CanReachMap(bot->GetMapId(), location.targetMapId))
+            {
+                TravelRoute route = travelMgr.PlanRoute(location.targetMapId, location.position);
+
+                if (!route.legs.empty() && route.overallState != TravelState::FAILED)
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "✈️ TurnInQuest: Bot {} planned {}-leg multi-station route: {}",
+                                 bot->GetName(), route.totalLegs, route.description);
+                    TC_LOG_ERROR("module.playerbot.quest", "   📊 Estimated: {} seconds, {} copper",
+                                 route.totalEstimatedTimeSeconds, route.totalEstimatedCostCopper);
+
+                    // Log each leg
+                    for (auto const& leg : route.legs)
+                    {
+                        std::string typeStr;
+                        switch (leg.type)
+                        {
+                            case TransportType::TAXI_FLIGHT: typeStr = "Taxi"; break;
+                            case TransportType::SHIP: typeStr = "Ship"; break;
+                            case TransportType::ZEPPELIN: typeStr = "Zeppelin"; break;
+                            case TransportType::PORTAL: typeStr = "Portal"; break;
+                            case TransportType::BOAT: typeStr = "Boat"; break;
+                            case TransportType::HEARTHSTONE: typeStr = "Hearthstone"; break;
+                            case TransportType::WALK: typeStr = "Walk"; break;
+                            default: typeStr = "Unknown"; break;
+                        }
+                        TC_LOG_ERROR("module.playerbot.quest", "   📍 Leg {}: {} - {} (MAP {} -> MAP {})",
+                                     leg.legIndex + 1, typeStr, leg.description,
+                                     leg.startMapId, leg.endMapId);
+                    }
+
+                    // Start the first leg - walk/taxi to first transport departure point
+                    TravelLeg const& firstLeg = route.legs[0];
+
+                    if (firstLeg.type == TransportType::WALK)
+                    {
+                        // Walk to destination
+                        if (BotMovementUtil::MoveToPosition(bot, firstLeg.endPosition))
+                        {
+                            TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} starting multi-station journey - walking to first waypoint",
+                                         bot->GetName());
+                            travelInitiated = true;
+                        }
+                    }
+                    else if (firstLeg.type == TransportType::TAXI_FLIGHT)
+                    {
+                        // Need to find and walk to flight master first
+                        auto fmOpt = FlightMasterManager::FindNearestFlightMaster(bot);
+                        if (fmOpt.has_value())
+                        {
+                            if (fmOpt->distanceFromPlayer < 10.0f)
+                            {
+                                // At flight master - take flight
+                                FlightResult result = FlightMasterManager().FlyToTaxiNode(bot, firstLeg.taxiEndNode, FlightPathStrategy::SHORTEST_DISTANCE);
+                                if (result == FlightResult::SUCCESS)
+                                {
+                                    TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} starting multi-station journey via taxi",
+                                                 bot->GetName());
+                                    travelInitiated = true;
+                                }
+                            }
+                            else
+                            {
+                                // Walk to flight master
+                                if (BotMovementUtil::MoveToPosition(bot, fmOpt->position))
+                                {
+                                    TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} walking to flight master for multi-station journey",
+                                                 bot->GetName());
+                                    travelInitiated = true;
+                                }
+                            }
+                        }
+                    }
+                    else if (firstLeg.connection)
+                    {
+                        // Transport leg (ship/zeppelin/portal) - walk to departure point
+                        float distToDeparture = bot->GetExactDist(firstLeg.startPosition);
+                        if (distToDeparture < 30.0f)
+                        {
+                            // Close to transport - wait for it or use portal
+                            if (firstLeg.type == TransportType::PORTAL)
+                            {
+                                // Teleport via portal
+                                bot->TeleportTo(firstLeg.endMapId,
+                                                firstLeg.endPosition.GetPositionX(),
+                                                firstLeg.endPosition.GetPositionY(),
+                                                firstLeg.endPosition.GetPositionZ(),
+                                                firstLeg.endPosition.GetOrientation());
+                                TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} used portal for multi-station journey",
+                                             bot->GetName());
+                                travelInitiated = true;
+                            }
+                            else
+                            {
+                                // Wait for ship/zeppelin (simplified - just log)
+                                TC_LOG_ERROR("module.playerbot.quest", "⏳ TurnInQuest: Bot {} waiting for {} at departure point",
+                                             bot->GetName(), firstLeg.description);
+                                travelInitiated = true; // Mark as initiated to not defer
+                            }
+                        }
+                        else
+                        {
+                            // Walk to transport departure
+                            if (BotMovementUtil::MoveToPosition(bot, firstLeg.startPosition))
+                            {
+                                TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} walking to {} departure point",
+                                             bot->GetName(), firstLeg.description);
+                                travelInitiated = true;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} failed to plan multi-station route to MAP {}",
+                                 bot->GetName(), location.targetMapId);
+                }
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} cannot reach MAP {} from MAP {} via transport network",
+                             bot->GetName(), location.targetMapId, bot->GetMapId());
+            }
+        }
+
+        // ========================================================================
+        // TRAVEL METHOD 4: Defer Turn-in (Last Resort)
+        // ========================================================================
+        if (!travelInitiated)
+        {
+            // Log comprehensive diagnostic information for cross-map quest
+            TC_LOG_ERROR("module.playerbot.quest", "⏸️ TurnInQuest: Bot {} DEFERRING quest {} turn-in - all travel methods exhausted",
+                         bot->GetName(), questId);
+            TC_LOG_ERROR("module.playerbot.quest", "   📍 Current: MAP {} at ({:.1f}, {:.1f}, {:.1f})",
+                         bot->GetMapId(), bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ());
+            TC_LOG_ERROR("module.playerbot.quest", "   🎯 Target:  MAP {} at ({:.1f}, {:.1f}, {:.1f}) - {} {}",
+                         location.targetMapId,
+                         location.position.GetPositionX(), location.position.GetPositionY(), location.position.GetPositionZ(),
+                         location.IsGameObject() ? "GameObject" : "NPC", location.objectEntry);
+            TC_LOG_ERROR("module.playerbot.quest", "   🏠 Hearthstone: MAP {} ({})",
+                         homebindMapId, homebindValid ? (homebindMapId == location.targetMapId ? "TARGET MAP - but on cooldown" : "different map") : "invalid");
+            TC_LOG_ERROR("module.playerbot.quest", "   🚢 Multi-station: No viable route found");
+            TC_LOG_ERROR("module.playerbot.quest", "   💡 Recommendation: Bot should acquire quests on current map or wait for travel opportunity");
+        }
+
+        // Return regardless - either travel was initiated or deferred
+        return;
+    }
 
     // Step 2: Check if quest ender (NPC or GameObject) is already in range
     if (CheckForQuestEnderInRange(ai, location))
@@ -2519,8 +2870,15 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
 
     // Search for nearby creatures that might offer quests
     // Extended to 300 yards to catch quest givers in nearby areas and reduce grinding fallback triggers
+
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
+    // Grid operations from worker threads can cause ACCESS_VIOLATION when map is modified
     std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, 300.0f); // 300 yard radius
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, 0, 300.0f)) // 300 yard radius
+    {
+        TC_LOG_TRACE("module.playerbot.quest", "SearchForQuestGivers: Grid search failed for bot {}", bot->GetName());
+        return;
+    }
 
     TC_LOG_ERROR("module.playerbot.quest", "🔬 SearchForQuestGivers: Bot {} found {} nearby creatures",
                  bot->GetName(), nearbyCreatures.size());
@@ -2804,6 +3162,11 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
         uint32 matchingEntryCount = 0;
         uint32 matchingMapCount = 0;
 
+        // Track closest cross-map spawn for diagnostic and future map travel
+        CreatureData const* closestCrossMapSpawn = nullptr;
+        float closestCrossMapDistance = 999999.0f;
+        uint32 crossMapId = 0;
+
         TC_LOG_ERROR("module.playerbot.quest", "🔬 TIER 1A DIAGNOSTIC: Bot {} on map {} searching for creature entry {} (total spawns in DB: {})",
                      bot->GetName(), botMapId, questEnderEntry, creatureSpawnData.size());
 
@@ -2819,10 +3182,20 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
 
             if (data.mapId != botMapId)
             {
+                // Track cross-map spawns for later reference
+                // Use spawn position distance as heuristic (not accurate cross-map, but consistent)
+                float pseudoDistance = data.spawnPoint.GetPositionX() + data.spawnPoint.GetPositionY();
+                if (!closestCrossMapSpawn || pseudoDistance < closestCrossMapDistance)
+                {
+                    closestCrossMapSpawn = &data;
+                    closestCrossMapDistance = pseudoDistance;
+                    crossMapId = data.mapId;
+                }
+
                 // DIAGNOSTIC: Log spawn found but wrong map
                 if (matchingEntryCount <= 5) // Limit logging
                 {
-                    TC_LOG_ERROR("module.playerbot.quest", "🔬 TIER 1A: Found creature {} spawn on MAP {} (bot on map {}) at ({:.1f}, {:.1f}, {:.1f}) - SKIPPED (wrong map)",
+                    TC_LOG_ERROR("module.playerbot.quest", "🔬 TIER 1A: Found creature {} spawn on MAP {} (bot on map {}) at ({:.1f}, {:.1f}, {:.1f}) - DIFFERENT MAP",
                                  questEnderEntry, data.mapId, botMapId,
                                  data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY(), data.spawnPoint.GetPositionZ());
                 }
@@ -2855,6 +3228,7 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
                 closestSpawn->spawnPoint.GetPositionY(),
                 closestSpawn->spawnPoint.GetPositionZ()
             );
+            location.targetMapId = botMapId;
             location.foundViaSpawn = true;
 
             TC_LOG_ERROR("module.playerbot.quest", "✅ TIER 1A SUCCESS: Found CREATURE quest ender {} via spawn data at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
@@ -2864,8 +3238,29 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
             return true;
         }
 
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 1A FAILED: No spawn data found for CREATURE {} on map {} (found {} total spawns, 0 on same map)",
-                     questEnderEntry, botMapId, matchingEntryCount);
+        // No same-map spawn found - check if cross-map spawns exist
+        if (closestCrossMapSpawn && matchingEntryCount > 0 && matchingMapCount == 0)
+        {
+            // Quest ender exists but ONLY on different map(s) - store info for potential map travel
+            location.position.Relocate(
+                closestCrossMapSpawn->spawnPoint.GetPositionX(),
+                closestCrossMapSpawn->spawnPoint.GetPositionY(),
+                closestCrossMapSpawn->spawnPoint.GetPositionZ()
+            );
+            location.targetMapId = crossMapId;
+            location.isOnDifferentMap = true;
+            location.foundViaSpawn = true;
+
+            TC_LOG_ERROR("module.playerbot.quest", "🗺️ TIER 1A: CREATURE quest ender {} exists on MAP {} (bot on map {}) - REQUIRES MAP TRAVEL to ({:.1f}, {:.1f}, {:.1f})",
+                         questEnderEntry, crossMapId, botMapId,
+                         location.position.GetPositionX(), location.position.GetPositionY(), location.position.GetPositionZ());
+            // Don't return true yet - let caller decide how to handle cross-map
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 1A FAILED: No spawn data found for CREATURE {} on map {} (found {} total spawns, 0 on same map)",
+                         questEnderEntry, botMapId, matchingEntryCount);
+        }
     }
 
     // ========================================================================
@@ -2882,9 +3277,16 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
 
         // Get all spawn data for gameobjects
         auto const& goSpawnData = sObjectMgr->GetAllGameObjectData();
+        uint32 botMapId = bot->GetMapId();
 
         float closestDistance = 999999.0f;
         GameObjectData const* closestSpawn = nullptr;
+
+        // Track cross-map spawns
+        GameObjectData const* closestCrossMapSpawn = nullptr;
+        uint32 crossMapId = 0;
+        uint32 matchingEntryCount = 0;
+        uint32 matchingMapCount = 0;
 
         for (auto const& pair : goSpawnData)
         {
@@ -2893,9 +3295,20 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
             if (data.id != questEnderEntry)
                 continue;
 
-            if (data.mapId != bot->GetMapId())
-                continue;
+            matchingEntryCount++;
 
+            if (data.mapId != botMapId)
+            {
+                // Track cross-map spawns
+                if (!closestCrossMapSpawn)
+                {
+                    closestCrossMapSpawn = &data;
+                    crossMapId = data.mapId;
+                }
+                continue;
+            }
+
+            matchingMapCount++;
             float distance = bot->GetExactDist2d(data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY());
 
             if (distance < closestDistance)
@@ -2912,6 +3325,7 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
                 closestSpawn->spawnPoint.GetPositionY(),
                 closestSpawn->spawnPoint.GetPositionZ()
             );
+            location.targetMapId = botMapId;
             location.foundViaSpawn = true;
 
             TC_LOG_ERROR("module.playerbot.quest", "✅ TIER 1B SUCCESS: Found GAMEOBJECT quest ender {} via spawn data at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
@@ -2921,8 +3335,26 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
             return true;
         }
 
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 1B FAILED: No spawn data found for GAMEOBJECT {}",
-                     questEnderEntry);
+        // No same-map spawn found - check if cross-map spawns exist
+        if (closestCrossMapSpawn && matchingEntryCount > 0 && matchingMapCount == 0)
+        {
+            location.position.Relocate(
+                closestCrossMapSpawn->spawnPoint.GetPositionX(),
+                closestCrossMapSpawn->spawnPoint.GetPositionY(),
+                closestCrossMapSpawn->spawnPoint.GetPositionZ()
+            );
+            location.targetMapId = crossMapId;
+            location.isOnDifferentMap = true;
+            location.foundViaSpawn = true;
+
+            TC_LOG_ERROR("module.playerbot.quest", "🗺️ TIER 1B: GAMEOBJECT quest ender {} exists on MAP {} (bot on map {}) - REQUIRES MAP TRAVEL",
+                         questEnderEntry, crossMapId, botMapId);
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 1B FAILED: No spawn data found for GAMEOBJECT {} (found {} spawns, {} on same map)",
+                         questEnderEntry, matchingEntryCount, matchingMapCount);
+        }
     }
 
     // ========================================================================
@@ -2935,15 +3367,31 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
 
     if (!poiData || poiData->Blobs.empty())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 2 FAILED: No Quest POI data found for quest {}, falling back to TIER 3 (Area Search)",
+        // Check if we found a cross-map location earlier
+        if (location.isOnDifferentMap && location.HasValidPosition())
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🗺️ FindQuestEnderLocation: Quest ender for quest {} is on MAP {} (bot on map {}) - returning cross-map location",
+                         questId, location.targetMapId, bot->GetMapId());
+            // Return true with cross-map info - caller must handle map travel
+            return true;
+        }
+
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 2 FAILED: No Quest POI data found for quest {}",
                      questId);
 
-        location.requiresSearch = true;
+        // Only set requiresSearch if we have a valid entry to search for on THIS map
+        if (location.objectEntry != 0 && !location.isOnDifferentMap)
+        {
+            location.requiresSearch = true;
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestEnderLocation: All automated methods failed - bot will need to search 50-yard radius for {} {}",
+                         location.isGameObject ? "GAMEOBJECT" : "CREATURE", location.objectEntry);
+            return true;
+        }
 
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestEnderLocation: All automated methods failed - bot will need to search 50-yard radius for %s {}",
-                     location.isGameObject ? "GAMEOBJECT" : "CREATURE", location.objectEntry);
-
-        return true;
+        // No valid location found at all
+        TC_LOG_ERROR("module.playerbot.quest", "❌ FindQuestEnderLocation: FAILED - No quest ender location found for quest {} (entry={}, isOnDifferentMap={})",
+                     questId, location.objectEntry, location.isOnDifferentMap);
+        return false;
     }
 
     // Find the blob on the same map as bot
@@ -2990,6 +3438,25 @@ bool QuestStrategy::NavigateToQuestEnder(BotAI* ai, QuestEnderLocation const& lo
         return false;
 
     Player* bot = ai->GetBot();
+
+    // SAFETY CHECK: Prevent navigation to cross-map destinations
+    // This should never happen as TurnInQuest handles cross-map travel, but guard against edge cases
+    if (location.isOnDifferentMap)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ NavigateToQuestEnder: SAFETY CHECK - Bot {} attempted navigation to cross-map destination (MAP {} vs current MAP {}) - this should be handled by TurnInQuest cross-map travel system",
+                     bot->GetName(), location.targetMapId, bot->GetMapId());
+        return false;
+    }
+
+    // SAFETY CHECK: Prevent navigation to invalid (0,0,0) positions
+    if (!location.HasValidPosition())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ NavigateToQuestEnder: SAFETY CHECK - Bot {} attempted navigation to invalid position (0,0,0) for {} {} - aborting",
+                     bot->GetName(),
+                     location.IsGameObject() ? "GameObject" : "NPC",
+                     location.objectEntry);
+        return false;
+    }
 
     // Calculate distance to destination
     float distance = bot->GetExactDist2d(location.position.GetPositionX(), location.position.GetPositionY());
@@ -3042,19 +3509,45 @@ bool QuestStrategy::CheckForCreatureQuestEnderInRange(BotAI* ai, uint32 creature
     // causing ACCESS_VIOLATION crash at 0x0 (null pointer dereference)
     if (!bot->IsInWorld())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ CheckForCreatureQuestEnderInRange: Bot {} is not in world, skipping grid search",
+        TC_LOG_TRACE("module.playerbot.quest", "CheckForCreatureQuestEnderInRange: Bot not in world, skipping");
+        return false;
+    }
+
+    // CRITICAL FIX: Validate Map pointer before grid operations
+    // When called from worker thread, the bot may be in process of being removed from world
+    // causing GetMap() to return nullptr or an invalid pointer. Cell::VisitGridObjects dereferences
+    // GetMap() without null check, causing ACCESS_VIOLATION at address like 0x0000000200000000
+    Map* map = bot->FindMap();
+    if (!map)
+    {
+        TC_LOG_TRACE("module.playerbot.quest", "CheckForCreatureQuestEnderInRange: Bot has no valid map, skipping");
+        return false;
+    }
+
+    // Validate bot position is reasonable (not NaN or extreme values)
+    float posX = bot->GetPositionX();
+    float posY = bot->GetPositionY();
+    if (std::isnan(posX) || std::isnan(posY) || std::isinf(posX) || std::isinf(posY))
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "CheckForCreatureQuestEnderInRange: Bot {} has invalid position ({}, {})",
+                     bot->GetName(), posX, posY);
+        return false;
+    }
+
+    TC_LOG_TRACE("module.playerbot.quest", "CheckForCreatureQuestEnderInRange: Bot {} scanning for NPC entry {}",
+                 bot->GetName(), creatureEntry);
+
+    // Scan for quest ender NPC in 50-yard radius
+    // Use SafeGridOperations with SEH protection - grid ops from worker threads can cause ACCESS_VIOLATION
+    std::list<Creature*> nearbyCreatures;
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, creatureEntry, 50.0f))
+    {
+        TC_LOG_TRACE("module.playerbot.quest", "CheckForCreatureQuestEnderInRange: Grid search failed for bot {}",
                      bot->GetName());
         return false;
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "🔎 CheckForCreatureQuestEnderInRange: Bot {} scanning 50-yard radius for NPC entry {}",
-                 bot->GetName(), creatureEntry);
-
-    // Scan for quest ender NPC in 50-yard radius
-    std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, creatureEntry, 50.0f);
-
-    TC_LOG_ERROR("module.playerbot.quest", "📊 CheckForCreatureQuestEnderInRange: Bot {} found {} creatures with entry {} in 50-yard radius",
+    TC_LOG_TRACE("module.playerbot.quest", "CheckForCreatureQuestEnderInRange: Bot {} found {} creatures with entry {}",
                  bot->GetName(), nearbyCreatures.size(), creatureEntry);
 
     if (nearbyCreatures.empty())
@@ -3270,12 +3763,26 @@ bool QuestStrategy::CheckForGameObjectQuestEnderInRange(BotAI* ai, uint32 gameob
         return false;
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "🔎 CheckForGameObjectQuestEnderInRange: Bot {} scanning 50-yard radius for GameObject entry {}",
+    TC_LOG_TRACE("module.playerbot.quest", "CheckForGameObjectQuestEnderInRange: Bot {} scanning 50-yard radius for GameObject entry {}",
                  bot->GetName(), gameobjectEntry);
 
-    // Scan for quest ender GameObject in 50-yard radius
+    // CRITICAL FIX: Validate Map pointer before grid operations to prevent crash
+    // Grid operations call Cell::VisitGridObjects which dereferences GetMap() without null check
+    Map* map = bot->FindMap();
+    if (!map)
+    {
+        TC_LOG_TRACE("module.playerbot.quest", "CheckForGameObjectQuestEnderInRange: Bot {} has no valid map, skipping", bot->GetName());
+        return false;
+    }
+
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
+    // Grid operations from worker threads can cause ACCESS_VIOLATION when map is modified
     std::list<GameObject*> nearbyGameObjects;
-    bot->GetGameObjectListWithEntryInGrid(nearbyGameObjects, gameobjectEntry, 50.0f);
+    if (!SafeGridOperations::GetGameObjectListSafe(bot, nearbyGameObjects, gameobjectEntry, 50.0f))
+    {
+        TC_LOG_TRACE("module.playerbot.quest", "CheckForGameObjectQuestEnderInRange: Grid search failed for bot {}", bot->GetName());
+        return false;
+    }
 
     TC_LOG_ERROR("module.playerbot.quest", "📊 CheckForGameObjectQuestEnderInRange: Bot {} found {} gameobjects with entry {} in 50-yard radius",
                  bot->GetName(), nearbyGameObjects.size(), gameobjectEntry);

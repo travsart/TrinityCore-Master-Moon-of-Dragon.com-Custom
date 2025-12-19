@@ -798,13 +798,13 @@ bool EnhancedBotAI::ShouldLoot()
     auto nearbyHostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(
         bot, LOOT_RANGE, false /* include dead creatures */);
 
-    for (auto const* snapshot : nearbyHostileSnapshots)
+    for (auto const& snapshot : nearbyHostileSnapshots)
     {
-        if (!snapshot || snapshot->IsAlive())
+        if (snapshot.IsAlive())
             continue;
 
         // Find the actual creature for detailed checks using ObjectAccessor on main thread
-        Creature* creature = ObjectAccessor::GetCreature(*bot, snapshot->guid);
+        Creature* creature = ObjectAccessor::GetCreature(*bot, snapshot.guid);
         if (!creature)
             continue;
 

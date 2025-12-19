@@ -161,6 +161,12 @@ void BotWorldSessionMgr::Shutdown()
                 player->RemoveAurasDueToSpell(71328); // LFG_SPELL_DUNGEON_COOLDOWN
                 player->RemoveAurasDueToSpell(71041); // LFG_SPELL_DUNGEON_DESERTER
                 player->RemoveAurasDueToSpell(72221); // LFG_SPELL_LUCK_OF_THE_DRAW
+
+                // CRITICAL FIX: Exit vehicle before logout (Vehicle crash prevention)
+                if (player->GetVehicle())
+                {
+                    player->ExitVehicle();
+                }
             }
             catch (...)
             {
@@ -810,7 +816,26 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             };
 
         // Execute either parallel (ThreadPool) or sequential (direct call)
-    if (useThreadPool)
+        // ============================================================================
+        // CRITICAL FIX: Sessions with pending login MUST run on main thread!
+        // ============================================================================
+        // Problem: When LOGIN_IN_PROGRESS, the session has a pending SQL callback that
+        //          will call HandleBotPlayerLogin → Map::AddPlayerToMap.
+        //          Map operations are NOT thread-safe and MUST run on the map update thread.
+        //          Running this on a thread pool worker causes ACCESS_VIOLATION crash in
+        //          TerrainInfo::LoadMapAndVMap when acquiring the terrain mutex.
+        //
+        // Solution: Force sequential (main thread) execution for sessions that are
+        //           actively logging in. Once login is complete, they can use thread pool.
+        // ============================================================================
+        bool useThreadPoolForThisSession = useThreadPool;
+        if (botSession->GetLoginState() == BotSession::LoginState::LOGIN_IN_PROGRESS)
+        {
+            useThreadPoolForThisSession = false;  // Force main thread for login operations
+            TC_LOG_DEBUG("module.playerbot.session", "?? Bot {} has pending login - forcing main thread update", guid.ToString());
+        }
+
+    if (useThreadPoolForThisSession)
         {
             // OPTION 5: Fire-and-forget submission (no future storage)
             try
@@ -990,9 +1015,30 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     if (session->GetPlayer() && session->GetPlayer()->IsInWorld())
                     {
                         try {
+                            // ============================================================
+                            // CRITICAL FIX: Exit vehicle BEFORE logout to prevent crash
+                            // ============================================================
+                            // Problem: If bot is a vehicle passenger with pending VehicleJoinEvent,
+                            //          LogoutPlayer() destroys the bot but the event still has a
+                            //          dangling Vehicle* pointer. When Map::MoveAllCreaturesInMoveList
+                            //          processes the bot and calls EventProcessor::KillAllEvents,
+                            //          VehicleJoinEvent::Abort crashes accessing the freed Vehicle.
+                            //
+                            // Solution: Force bot to exit any vehicle BEFORE logout.
+                            //           This properly cleans up vehicle events and references.
+                            // ============================================================
+                            Player* bot = session->GetPlayer();
+                            if (bot->GetVehicle())
+                            {
+                                TC_LOG_DEBUG("module.playerbot.session",
+                                    "Bot {} exiting vehicle before logout (Vehicle crash prevention)",
+                                    bot->GetGUID().GetCounter());
+                                bot->ExitVehicle();
+                            }
+
                             TC_LOG_DEBUG("module.playerbot.session",
                                 "Deferred logout for bot {} (Cell::Visit crash prevention)",
-                                session->GetPlayer()->GetGUID().GetCounter());
+                                bot->GetGUID().GetCounter());
                             session->LogoutPlayer(true);
                         }
                         catch (...)

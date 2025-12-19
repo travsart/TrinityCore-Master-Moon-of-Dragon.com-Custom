@@ -1122,12 +1122,9 @@ bool DispelCoordinator::ExecutePurge()
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(m_bot, searchRange, true);
 
     // Resolve snapshots to Unit pointers and check for enemies
-    for (auto const* snapshot : hostileSnapshots)
+    for (auto const& snapshot : hostileSnapshots)
     {
-        if (!snapshot)
-            continue;
-
-        ::Unit* enemy = ObjectAccessor::GetUnit(*m_bot, snapshot->guid);
+        ::Unit* enemy = ObjectAccessor::GetUnit(*m_bot, snapshot.guid);
         if (!enemy || enemy->isDead())
             continue;
 

@@ -19,6 +19,7 @@
 #include "DB2Stores.h"  // For sAreaTriggerStore (exploration quest area triggers)
 #include "Spatial/SpatialGridQueryHelpers.h"
 #include "Spatial/SpatialGridManager.h"
+#include "Threading/SafeGridOperations.h"  // SEH-protected grid operations
 #include <algorithm>
 #include <chrono>
 
@@ -802,9 +803,13 @@ NpcLocationResult BotNpcLocationService::TryFindLiveCreature(Player* bot, uint32
 {
     NpcLocationResult result;
 
-    // Use spatial grid to find live creatures (best quality - spawned and available NOW)
+    if (!bot)
+        return result;
+
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     ::std::list<Creature*> nearbyCreatures;
-    bot->GetCreatureListWithEntryInGrid(nearbyCreatures, creatureEntry, maxRange);
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, creatureEntry, maxRange))
+        return result;
 
     Creature* closest = nullptr;
     float closestDistance = maxRange;
@@ -843,9 +848,13 @@ NpcLocationResult BotNpcLocationService::TryFindLiveGameObject(Player* bot, uint
 {
     NpcLocationResult result;
 
-    // Use spatial grid to find live GameObjects
+    if (!bot)
+        return result;
+
+    // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     ::std::list<GameObject*> nearbyObjects;
-    bot->GetGameObjectListWithEntryInGrid(nearbyObjects, objectEntry, maxRange);
+    if (!SafeGridOperations::GetGameObjectListSafe(bot, nearbyObjects, objectEntry, maxRange))
+        return result;
 
     GameObject* closest = nullptr;
     float closestDistance = maxRange;

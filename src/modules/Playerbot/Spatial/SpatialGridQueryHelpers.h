@@ -81,14 +81,14 @@ namespace Playerbot
          * @param range Search radius in yards
          * @param requireAlive Only return alive creatures (default: true)
          *
-         * @return Vector of const pointers to CreatureSnapshots matching criteria
+         * @return Vector of CreatureSnapshot copies matching criteria
          *
          * PERFORMANCE:
          * - Spatial grid query: O(cells in range)
          * - Filtering: O(entities in cells)
          * - Typical: <10ms for 100-yard radius with 1000 entities
          */
-        static ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot>
         FindHostileCreaturesInRange(Player* bot, float range, bool requireAlive = true);
 
         /**
@@ -137,9 +137,9 @@ namespace Playerbot
          * @param bot The bot performing the query
          * @param range Search radius in yards
          *
-         * @return Vector of const pointers to PlayerSnapshots for group members
+         * @return Vector of PlayerSnapshot copies for group members
          */
-        static ::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot>
         FindGroupMembersInRange(Player* bot, float range);
 
         // ===== GAMEOBJECT QUERIES =====
@@ -165,9 +165,9 @@ namespace Playerbot
          * @param bot The bot performing the query
          * @param range Search radius in yards
          *
-         * @return Vector of const pointers to GameObjectSnapshots that are quest objects
+         * @return Vector of GameObjectSnapshot copies that are quest objects
          */
-        static ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot>
         FindQuestGameObjectsInRange(Player* bot, float range);
 
         // ===== DYNAMICOBJECT QUERIES =====
@@ -193,12 +193,12 @@ namespace Playerbot
          * @param bot The bot performing the query
          * @param range Search radius in yards
          *
-         * @return Vector of const pointers to dangerous DynamicObjectSnapshots
+         * @return Vector of DynamicObjectSnapshot copies
          *
          * USAGE:
          * For danger avoidance in combat positioning, obstacle avoidance
          */
-        static ::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot>
         FindDangerousDynamicObjectsInRange(Player* bot, float range);
 
         // ===== AREATRIGGER QUERIES =====
@@ -221,9 +221,9 @@ namespace Playerbot
          * @param bot The bot performing the query
          * @param range Search radius in yards
          *
-         * @return Vector of const pointers to dangerous AreaTriggerSnapshots
+         * @return Vector of AreaTriggerSnapshot copies
          */
-        static ::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot>
         FindDangerousAreaTriggersInRange(Player* bot, float range);
 
         // ===== DISTANCE & POSITION UTILITIES =====
@@ -279,6 +279,44 @@ namespace Playerbot
          *         Returns TYPEID_UNIT if not found
          */
         static TypeID GetEntityType(Player* bot, ObjectGuid guid);
+
+        // ===== ENTRY-BASED QUERIES (THREAD-SAFE REPLACEMENTS FOR GRID OPERATIONS) =====
+
+        /**
+         * @brief Find all creatures with specific entry in range (thread-safe)
+         *
+         * REPLACES: GetCreatureListWithEntryInGrid() which is NOT thread-safe from worker threads
+         *
+         * @param bot The bot performing the query
+         * @param entry Creature entry to find (0 = all creatures)
+         * @param range Search radius in yards
+         * @param requireAlive Only return alive creatures (default: true)
+         *
+         * @return Vector of CreatureSnapshot copies matching criteria
+         *
+         * USAGE:
+         * Replace:
+         *   std::list<Creature*> creatures;
+         *   bot->GetCreatureListWithEntryInGrid(creatures, entry, range);
+         * With:
+         *   auto snapshots = SpatialGridQueryHelpers::FindCreaturesByEntryInRange(bot, entry, range);
+         */
+        static ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot>
+        FindCreaturesByEntryInRange(Player* bot, uint32 entry, float range, bool requireAlive = true);
+
+        /**
+         * @brief Find all GameObjects with specific entry in range (thread-safe)
+         *
+         * REPLACES: GetGameObjectListWithEntryInGrid() which is NOT thread-safe from worker threads
+         *
+         * @param bot The bot performing the query
+         * @param entry GameObject entry to find (0 = all gameobjects)
+         * @param range Search radius in yards
+         *
+         * @return Vector of GameObjectSnapshot copies matching criteria
+         */
+        static ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot>
+        FindGameObjectsByEntryInRange(Player* bot, uint32 entry, float range);
 
     private:
         /**

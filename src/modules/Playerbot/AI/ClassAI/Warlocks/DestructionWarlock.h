@@ -20,6 +20,7 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
 // Phase 5 Integration: Decision Systems
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
@@ -606,9 +607,23 @@ public:
 
     void EnsurePetActive()
     {
-        Player* bot = this->GetBot();
-        if (!bot)
+        // THREAD-SAFETY FIX: Store GUID first, then use ObjectAccessor::FindPlayer
+        // to get a validated pointer. This prevents use-after-free when bot is deleted
+        // by main thread while worker thread is executing this function.
+        Player* initialBot = this->GetBot();
+        if (!initialBot)
             return;
+
+        // Store GUID for thread-safe lookup
+        ObjectGuid botGuid = initialBot->GetGUID();
+
+        // Get validated pointer via ObjectAccessor (thread-safe)
+        Player* bot = ObjectAccessor::FindPlayer(botGuid);
+        if (!bot)
+        {
+            // Bot was deleted between GetBot() and FindPlayer() - race condition avoided
+            return;
+        }
 
         // Don't summon while casting (6s cast time!)
         if (bot->HasUnitState(UNIT_STATE_CASTING))

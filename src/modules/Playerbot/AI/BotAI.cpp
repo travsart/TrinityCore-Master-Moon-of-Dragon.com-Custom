@@ -252,8 +252,42 @@ BotAI::~BotAI()
 void BotAI::UpdateAI(uint32 diff)
 {
     // CRITICAL: This is the SINGLE entry point for ALL AI updates
-    // No more confusion with DoUpdateAI/UpdateEnhanced// ========================================================================
-    // BOT-SPECIFIC LOGIN SPELL CLEANUP: Clear events on first update to prevent LOGINEFFECT crash// ========================================================================
+    // No more confusion with DoUpdateAI/UpdateEnhanced
+
+    // ========================================================================
+    // CRITICAL SAFETY CHECK: Validate _bot pointer FIRST before ANY access
+    // ========================================================================
+    // This check MUST be at the very beginning to prevent use-after-free crashes.
+    // The _bot pointer can become invalid if:
+    // 1. Exception in HandleBotPlayerLogin deletes Player but not AI
+    // 2. Race condition during logout/cleanup
+    // 3. Memory corruption
+    //
+    // We check for common corruption patterns:
+    // - nullptr (obvious invalid)
+    // - Low addresses (< 0x10000) are never valid heap pointers on any OS
+    // - Debug fill patterns: 0xDDDDDDDD (freed), 0xFEEEFEEE (freed heap),
+    //   0xCDCDCDCD (uninitialized heap), 0xCCCCCCCC (uninitialized stack)
+    {
+        uintptr_t botPtr = reinterpret_cast<uintptr_t>(_bot);
+        if (botPtr == 0 || botPtr < 0x10000 ||
+            botPtr == 0xDDDDDDDDDDDDDDDD || botPtr == 0xFEEEFEEEFEEEFEEE ||
+            botPtr == 0xCDCDCDCDCDCDCDCD || botPtr == 0xCCCCCCCCCCCCCCCC ||
+            botPtr == 0xDDDDDDDD || botPtr == 0xFEEEFEEE ||
+            botPtr == 0xCDCDCDCD || botPtr == 0xCCCCCCCC)
+        {
+            TC_LOG_ERROR("module.playerbot.ai", "CRITICAL: BotAI::UpdateAI called with invalid _bot pointer 0x{:X} - aborting to prevent crash!", botPtr);
+            return;
+        }
+    }
+
+    // Now safe to access _bot
+    if (!_bot->IsInWorld())
+        return;
+
+    // ========================================================================
+    // BOT-SPECIFIC LOGIN SPELL CLEANUP: Clear events on first update to prevent LOGINEFFECT crash
+    // ========================================================================
     // Issue: LOGINEFFECT (Spell 836) is cast during SendInitialPacketsAfterAddToMap() at Player.cpp:24742
     //        and queued in EventProcessor. It fires during first Player::Update() → EventProcessor::Update()
     //        which causes Spell.cpp:603 assertion failure: m_spellModTakingSpell != this
@@ -288,9 +322,6 @@ void BotAI::UpdateAI(uint32 diff)
         lastUpdateLog = now;
         loggedFirstBot = true;
     }
-
-    if (!_bot || !_bot->IsInWorld())
-        return;
 
     // ========================================================================
     // DEFERRED GROUP VALIDATION - Now safe because bot is in world

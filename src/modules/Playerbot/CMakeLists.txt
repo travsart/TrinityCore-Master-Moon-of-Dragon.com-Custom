@@ -865,6 +865,14 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.h
 
+    # Multi-Station Travel Planning System
+    # Enterprise-grade cross-map travel with support for:
+    # - FlightMaster -> Ship -> FlightMaster
+    # - FlightMaster -> Portal -> FlightMaster
+    # - Hearthstone -> FlightMaster -> Zeppelin -> FlightMaster
+    ${CMAKE_CURRENT_SOURCE_DIR}/Travel/TravelRouteManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Travel/TravelRouteManager.h
+
     # Phase 3: Game System Integration - Quest System Completion
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestCompletion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestCompletion.h
@@ -1444,6 +1452,13 @@ source_group("Interaction" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/VendorInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/InnkeeperInteractionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/InnkeeperInteractionManager.h
+)
+
+source_group("Travel" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Travel/TravelRouteManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Travel/TravelRouteManager.h
 )
 
 source_group("Commands" FILES

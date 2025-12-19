@@ -57,8 +57,6 @@ bool BotWorldPositioner::LoadZones()
         return true;
     }
 
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Loading zone placements...");
-
     // Clear existing data
     _zones.clear();
     _zoneById.clear();
@@ -79,35 +77,27 @@ bool BotWorldPositioner::LoadZones()
     bool dbLoadEnabled = sConfigMgr->GetBoolDefault("Playerbot.Zones.LoadFromDatabase", true);
     if (dbLoadEnabled)
     {
-        TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Loading zones from database...");
         LoadZonesFromDatabase();
-        TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Database loading complete, {} zones loaded", _zones.size());
     }
 
     // Step 3: Apply config overrides to database-loaded zones
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Checking config overrides ({} overrides)...", _configOverrides.size());
     if (!_configOverrides.empty())
     {
         ApplyConfigOverrides();
     }
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Config overrides applied, {} zones remaining", _zones.size());
 
     // Step 4: If still no zones, build hardcoded defaults as fallback
     if (_zones.empty())
     {
-        TC_LOG_WARN("playerbot", "BotWorldPositioner::LoadZones() - No zones from database, building hardcoded defaults");
+        TC_LOG_WARN("playerbot", "BotWorldPositioner: No zones from database, using hardcoded defaults");
         BuildDefaultZones();
     }
 
     // Step 5: Validate all zones
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Validating zones...");
     ValidateZones();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Validation complete");
 
     // Step 6: Build lookup structures
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Building zone cache...");
     BuildZoneCache();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Zone cache built");
 
     // Update statistics
     _stats.totalZones = static_cast<uint32>(_zones.size());
@@ -144,7 +134,6 @@ void BotWorldPositioner::ReloadZones()
 
 void BotWorldPositioner::LoadZonesFromConfig()
 {
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Loading zone configuration overrides...");
 
     // Load disabled zones list
     // Format: Playerbot.Zones.Disabled = "zoneId1,zoneId2,zoneId3"
@@ -275,8 +264,11 @@ void BotWorldPositioner::LoadZonesFromConfig()
         }
     }
 
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - Loaded {} disabled zones, {} overrides, {} custom zones",
-        _disabledZones.size(), _configOverrides.size(), _zones.size());
+    if (!_disabledZones.empty() || !_configOverrides.empty() || !_zones.empty())
+    {
+        TC_LOG_DEBUG("playerbot", "BotWorldPositioner::LoadZonesFromConfig() - {} disabled, {} overrides, {} custom zones",
+            _disabledZones.size(), _configOverrides.size(), _zones.size());
+    }
 }
 
 // ============================================================================
@@ -285,20 +277,13 @@ void BotWorldPositioner::LoadZonesFromConfig()
 
 void BotWorldPositioner::LoadZonesFromDatabase()
 {
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Starting database zone discovery...");
-
     uint32 startTime = getMSTime();
 
     // Step 1: Get zone level ranges from quest data
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying zone level ranges from quests...");
     auto zoneLevelInfo = QueryZoneLevelRanges();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found level data for {} zones", zoneLevelInfo.size());
 
     // Step 2: Query innkeepers (highest priority spawn points)
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying innkeepers...");
     auto innkeepers = QueryInnkeepers();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found {} innkeepers", innkeepers.size());
-
     for (auto const& innkeeper : innkeepers)
     {
         if (_disabledZones.count(innkeeper.zoneId))
@@ -307,10 +292,7 @@ void BotWorldPositioner::LoadZonesFromDatabase()
     }
 
     // Step 3: Query flight masters (second priority)
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying flight masters...");
     auto flightMasters = QueryFlightMasters();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found {} flight masters", flightMasters.size());
-
     for (auto const& fm : flightMasters)
     {
         if (_disabledZones.count(fm.zoneId))
@@ -319,31 +301,17 @@ void BotWorldPositioner::LoadZonesFromDatabase()
     }
 
     // Step 4: Query and cluster quest hubs (third priority)
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying quest hubs...");
     auto questHubs = QueryAndClusterQuestHubs();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found {} quest hubs", questHubs.size());
-
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Starting quest hub merge loop...");
-    size_t hubsProcessed = 0;
     for (size_t i = 0; i < questHubs.size(); ++i)
     {
         QuestHub const& hub = questHubs[i];
         if (_disabledZones.count(hub.zoneId))
             continue;
         MergeQuestHubIntoZone(hub, zoneLevelInfo);
-        ++hubsProcessed;
-        if (hubsProcessed % 50 == 0)
-        {
-            TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Processed {} quest hubs...", hubsProcessed);
-        }
     }
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Quest hub merge loop complete, merged {} hubs", hubsProcessed);
 
     // Step 5: Query graveyards as fallback (fourth priority)
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Querying graveyards...");
     auto graveyards = QueryGraveyards();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Found {} graveyards", graveyards.size());
-
     for (auto const& gy : graveyards)
     {
         if (_disabledZones.count(gy.zoneId))
@@ -352,7 +320,6 @@ void BotWorldPositioner::LoadZonesFromDatabase()
     }
 
     // Step 6: Convert discovered zones to ZonePlacement structs
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Converting {} zones to placements...", _zoneSpawnPoints.size());
 
     for (auto const& [zoneId, spawnPoints] : _zoneSpawnPoints)
     {
@@ -406,30 +373,11 @@ void BotWorldPositioner::LoadZonesFromDatabase()
     }
 
     uint32 elapsed = getMSTimeDiff(startTime, getMSTime());
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Completed in {}ms, discovered {} zones",
-        elapsed, _zones.size());
-
-    // Debug: Explicitly clear local vectors to identify destructor issues
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing graveyards...");
-    graveyards.clear();
-    graveyards.shrink_to_fit();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing questHubs...");
-    questHubs.clear();
-    questHubs.shrink_to_fit();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing flightMasters...");
-    flightMasters.clear();
-    flightMasters.shrink_to_fit();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing innkeepers...");
-    innkeepers.clear();
-    innkeepers.shrink_to_fit();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Clearing zoneLevelInfo...");
-    zoneLevelInfo.clear();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - All cleared, returning...");
+    TC_LOG_INFO("playerbot", "BotWorldPositioner: Discovered {} zones from database in {}ms", _zones.size(), elapsed);
 }
 
 void BotWorldPositioner::ApplyConfigOverrides()
 {
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::ApplyConfigOverrides() - Applying {} config overrides...", _configOverrides.size());
 
     for (auto& zone : _zones)
     {
@@ -661,32 +609,16 @@ void BotWorldPositioner::ApplyConfigOverrides()
 
     TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Processed {} rows, found {} grid cells", rowCount, hubsByLocation.size());
 
-    // Convert to vector, filter for significant hubs (2+ quest givers)
-    TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Filtering hubs with 2+ quest givers...");
-    TC_LOG_INFO("playerbot", "QueryAndClusterQuestHubs() - Reserving space for result vector...");
+    // Filter for significant hubs (2+ quest givers)
     result.reserve(hubsByLocation.size());
-    TC_LOG_INFO("playerbot", "QueryAndClusterQuestHubs() - Starting filter loop over {} cells...", hubsByLocation.size());
 
-    uint32 filteredCount = 0;
-    uint32 iterCount = 0;
-    for (auto it = hubsByLocation.begin(); it != hubsByLocation.end(); ++it)
+    for (auto const& [key, hub] : hubsByLocation)
     {
-        ++iterCount;
-        if (iterCount % 100 == 0)
-        {
-            TC_LOG_INFO("playerbot", "QueryAndClusterQuestHubs() - Filter loop iteration {}...", iterCount);
-        }
-
-        QuestHub const& hub = it->second;
-
-        if (hub.questGiverCount >= 2)  // Only consider clusters with 2+ quest givers
-        {
+        if (hub.questGiverCount >= 2)
             result.push_back(hub);
-            ++filteredCount;
-        }
     }
 
-    TC_LOG_INFO("playerbot", "QueryAndClusterQuestHubs() - Filtered {} hubs from {} iterations, returning...", filteredCount, iterCount);
+    TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Clustered {} quest hubs from {} grid cells", result.size(), hubsByLocation.size());
     return result;
 }
 
@@ -1115,17 +1047,13 @@ void BotWorldPositioner::ValidateZones()
 
 void BotWorldPositioner::BuildZoneCache()
 {
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Building zone ID lookup for {} zones...", _zones.size());
-
     // Build zone ID lookup
     for (size_t i = 0; i < _zones.size(); ++i)
     {
         _zoneById[_zones[i].zoneId] = &_zones[i];
     }
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Zone ID lookup complete, {} entries", _zoneById.size());
 
     // Build level-based lookup (every 5 levels)
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Building level-based lookup...");
     for (size_t i = 0; i < _zones.size(); ++i)
     {
         ZonePlacement const& zone = _zones[i];
@@ -1133,7 +1061,7 @@ void BotWorldPositioner::BuildZoneCache()
         // Safety check for level range
         if (zone.minLevel > zone.maxLevel || zone.maxLevel > 100)
         {
-            TC_LOG_WARN("playerbot", "BotWorldPositioner::BuildZoneCache() - Skipping zone {} with invalid levels {}-{}",
+            TC_LOG_DEBUG("playerbot", "BotWorldPositioner::BuildZoneCache() - Skipping zone {} with invalid levels {}-{}",
                 zone.zoneId, zone.minLevel, zone.maxLevel);
             continue;
         }
@@ -1147,15 +1075,11 @@ void BotWorldPositioner::BuildZoneCache()
         _zonesByLevel[zone.minLevel].push_back(&_zones[i]);
         _zonesByLevel[zone.maxLevel].push_back(&_zones[i]);
     }
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Level lookup complete, {} brackets", _zonesByLevel.size());
 
     // Build race-to-starter-zone mapping
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Building race zone mapping...");
     BuildRaceZoneMapping();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Race zone mapping complete");
 
     // Build capital city lists
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Building capital city lists...");
     for (size_t i = 0; i < _zones.size(); ++i)
     {
         ZonePlacement const& zone = _zones[i];
@@ -1172,10 +1096,9 @@ void BotWorldPositioner::BuildZoneCache()
                 _hordeCapitals.push_back(&_zones[i]);
         }
     }
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Capital lists complete: {} Alliance, {} Horde",
-        _allianceCapitals.size(), _hordeCapitals.size());
 
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::BuildZoneCache() - Cache build complete");
+    TC_LOG_DEBUG("playerbot", "BotWorldPositioner::BuildZoneCache() - Built cache: {} zone IDs, {} level brackets, {} capitals",
+        _zoneById.size(), _zonesByLevel.size(), _allianceCapitals.size() + _hordeCapitals.size());
 }
 
 void BotWorldPositioner::BuildRaceZoneMapping()

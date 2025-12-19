@@ -281,8 +281,21 @@ public:
 
     /**
      * Get equipment slot for this item (EQUIPMENT_SLOT_HEAD, etc.)
+     * NOTE: For multi-slot items (rings, trinkets), returns the first slot.
      */
     uint8 GetItemEquipmentSlot(ItemTemplate const* itemTemplate);
+
+    /**
+     * Get all valid equipment slots for this item type
+     * Handles multi-slot items (rings: FINGER1/FINGER2, trinkets: TRINKET1/TRINKET2)
+     */
+    std::vector<uint8> GetMultiSlotEquipmentSlots(ItemTemplate const* itemTemplate);
+
+    /**
+     * Get the worst (lowest score) equipped item from a set of slots
+     * Returns nullptr if any slot is empty (indicating empty slot available)
+     */
+    ::Item* GetWorstEquippedItemForSlots(std::vector<uint8> const& slots);
 
     // ============================================================================
     // ADVANCED FEATURES

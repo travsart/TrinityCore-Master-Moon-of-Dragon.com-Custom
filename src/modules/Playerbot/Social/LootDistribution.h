@@ -375,6 +375,7 @@ private:
     bool CanParticipateInRoll(const LootItem& item);
     float CalculateUpgradeValue(const LootItem& item);
     bool IsItemTypeUsefulForClass(uint8 playerClass, const ItemTemplate* itemTemplate);
+    bool IsWeaponUsableByClass(uint8 playerClass, uint8 weaponSubClass) const;
     bool IsArmorUpgrade(const LootItem& item);
     bool IsWeaponUpgrade(const LootItem& item);
     bool IsAccessoryUpgrade(const LootItem& item);

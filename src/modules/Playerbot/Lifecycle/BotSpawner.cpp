@@ -60,6 +60,7 @@
 #include "RealmList.h"
 #include "DB2Stores.h"
 #include "WorldSession.h"
+#include "Movement/BotWorldPositioner.h"
 #include <algorithm>
 #include <chrono>
 #include <sstream>
@@ -1475,34 +1476,20 @@ void BotSpawner::SpawnToPopulationTarget()
     // Phase 1: Copy zone data with minimal lock scope
     {
 
-        // CRITICAL FIX: If no zones are populated, add test zones
+        // INTEGRATION FIX: If no zones are populated, get them from BotWorldPositioner
     if (_zonePopulations.empty())
         {
-            // Add some test zones with targets
-            ZonePopulation testZone1;
-            testZone1.zoneId = 12; // Elwynn Forest
-            testZone1.mapId = 0;   // Eastern Kingdoms
-            testZone1.botCount = 0;
-            testZone1.targetBotCount = 5; // Target 5 bots
-            testZone1.minLevel = 1;
-            testZone1.maxLevel = 10;
-            {
-                tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
-                _zonePopulations.insert(acc, 12);
-                acc->second = testZone1;
-            }
+            TC_LOG_INFO("module.playerbot.spawner",
+                "SpawnToPopulationTarget: Zone populations empty, triggering UpdatePopulationTargets()");
+            UpdatePopulationTargets();
 
-            ZonePopulation testZone2;
-            testZone2.zoneId = 1; // Dun Morogh
-            testZone2.mapId = 0;
-            testZone2.botCount = 0;
-            testZone2.targetBotCount = 3; // Target 3 bots
-            testZone2.minLevel = 1;
-            testZone2.maxLevel = 10;
+            // If still empty after update (positioner not ready), log warning
+            if (_zonePopulations.empty())
             {
-                tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
-                _zonePopulations.insert(acc, 1);
-                acc->second = testZone2;
+                TC_LOG_WARN("module.playerbot.spawner",
+                    "SpawnToPopulationTarget: No zones available after UpdatePopulationTargets() - "
+                    "check if BotWorldPositioner is initialized");
+                return;
             }
         }
 
@@ -1546,24 +1533,121 @@ void BotSpawner::SpawnToPopulationTarget()
 
 void BotSpawner::UpdatePopulationTargets()
 {
-    // Initialize zone populations for all known zones
-    // This is a simplified version - in reality we'd query the database for all zones
+    // ========================================================================
+    // INTEGRATION FIX: Get zones from BotWorldPositioner
+    // ========================================================================
+    // Previously this only added 2 hardcoded test zones.
+    // Now we integrate with BotWorldPositioner to get all 40+ zones,
+    // which allows bots to spawn across all level-appropriate zones.
+    // ========================================================================
 
-    // Add some default zones if empty
-    if (_zonePopulations.empty())
+    // Ensure positioner is ready
+    if (!sBotWorldPositioner->IsReady())
     {
-        // These would be loaded from database or configuration
+        TC_LOG_WARN("module.playerbot.spawner",
+            "BotSpawner::UpdatePopulationTargets() - BotWorldPositioner not ready, loading zones...");
+        sBotWorldPositioner->LoadZones();
+    }
+
+    // Get minimum bots per zone from config
+    uint32 minimumBotsPerZone = sPlayerbotConfig->GetUInt("Playerbot.MinimumBotsPerZone", 10);
+
+    // Only populate zones if empty (avoid duplicate insertions)
+    if (!_zonePopulations.empty())
+    {
+        TC_LOG_DEBUG("module.playerbot.spawner",
+            "BotSpawner::UpdatePopulationTargets() - Zone populations already initialized ({} zones)",
+            _zonePopulations.size());
+        return;
+    }
+
+    // Get all zones from both factions
+    uint32 zonesAdded = 0;
+
+    // Add Alliance zones
+    for (uint32 level = 1; level <= 80; level += 5)
+    {
+        auto allianceZones = sBotWorldPositioner->GetValidZones(level, TEAM_ALLIANCE);
+        for (auto const* zonePlacement : allianceZones)
         {
+            if (!zonePlacement)
+                continue;
+
+            // Check if already added
+            tbb::concurrent_hash_map<uint32, ZonePopulation>::const_accessor check;
+            if (_zonePopulations.find(check, zonePlacement->zoneId))
+                continue; // Already exists
+
+            // Create zone population entry
+            ZonePopulation newZone;
+            newZone.zoneId = zonePlacement->zoneId;
+            newZone.mapId = zonePlacement->mapId;
+            newZone.playerCount = 0;
+            newZone.botCount = 0;
+            newZone.targetBotCount = minimumBotsPerZone;
+            newZone.minLevel = static_cast<uint8>(zonePlacement->minLevel);
+            newZone.maxLevel = static_cast<uint8>(zonePlacement->maxLevel);
+            newZone.botDensity = 0.5f;
+            newZone.lastUpdate = ::std::chrono::system_clock::now();
+
             tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
-            _zonePopulations.insert(acc, 1);
-            acc->second = {1, 0, 0, 0, 10, 1, 10, 0.5f, ::std::chrono::system_clock::now()};
-        }
-        {
-            tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
-            _zonePopulations.insert(acc, 2);
-            acc->second = {2, 0, 0, 0, 15, 5, 15, 0.3f, ::std::chrono::system_clock::now()};
+            _zonePopulations.insert(acc, zonePlacement->zoneId);
+            acc->second = newZone;
+            ++zonesAdded;
+
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "Added zone {} ({}) - L{}-{}, target: {} bots",
+                zonePlacement->zoneName, zonePlacement->zoneId,
+                zonePlacement->minLevel, zonePlacement->maxLevel, minimumBotsPerZone);
         }
     }
+
+    // Add Horde zones
+    for (uint32 level = 1; level <= 80; level += 5)
+    {
+        auto hordeZones = sBotWorldPositioner->GetValidZones(level, TEAM_HORDE);
+        for (auto const* zonePlacement : hordeZones)
+        {
+            if (!zonePlacement)
+                continue;
+
+            // Check if already added (neutral zones may appear in both)
+            tbb::concurrent_hash_map<uint32, ZonePopulation>::const_accessor check;
+            if (_zonePopulations.find(check, zonePlacement->zoneId))
+                continue; // Already exists
+
+            // Create zone population entry
+            ZonePopulation newZone;
+            newZone.zoneId = zonePlacement->zoneId;
+            newZone.mapId = zonePlacement->mapId;
+            newZone.playerCount = 0;
+            newZone.botCount = 0;
+            newZone.targetBotCount = minimumBotsPerZone;
+            newZone.minLevel = static_cast<uint8>(zonePlacement->minLevel);
+            newZone.maxLevel = static_cast<uint8>(zonePlacement->maxLevel);
+            newZone.botDensity = 0.5f;
+            newZone.lastUpdate = ::std::chrono::system_clock::now();
+
+            tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
+            _zonePopulations.insert(acc, zonePlacement->zoneId);
+            acc->second = newZone;
+            ++zonesAdded;
+
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "Added zone {} ({}) - L{}-{}, target: {} bots",
+                zonePlacement->zoneName, zonePlacement->zoneId,
+                zonePlacement->minLevel, zonePlacement->maxLevel, minimumBotsPerZone);
+        }
+    }
+
+    // Calculate expected total bots
+    uint32 expectedTotalBots = zonesAdded * minimumBotsPerZone;
+    uint32 effectiveTotalBots = ::std::min(expectedTotalBots, _config.maxBotsTotal);
+
+    TC_LOG_INFO("module.playerbot.spawner",
+        "BotSpawner::UpdatePopulationTargets() - Loaded {} zones from BotWorldPositioner "
+        "(expected: {} bots, capped at MaxTotal: {})",
+        zonesAdded, expectedTotalBots, effectiveTotalBots);
 }
 
 void BotSpawner::ResetStats()
