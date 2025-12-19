@@ -754,51 +754,51 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     // IMPROVEMENT #1: ADAPTIVE AutoAdjustPriority frequency based on bot activity
                     // Active bots (combat/group) = more frequent checks (250ms)
                     // Idle bots (high health, not moving) = less frequent checks (2.5s)
-    if (enterpriseMode && session->IsLoginComplete())
+                    if (enterpriseMode && session->IsLoginComplete())
                     {
                         Player* bot = session->GetPlayer();
+                        // CRITICAL FIX: Do NOT logout bots that are temporarily not in world!
+                        // During teleportation, map changes, or loading screens, bots can have
+                        // IsInWorld() == false temporarily. This is NORMAL and should NOT trigger logout.
+                        // Only skip the priority adjustment if bot is not available.
                         if (!bot || !bot->IsInWorld())
                         {
-                            TC_LOG_WARN("module.playerbot.session", "?? Bot disconnected: {}", guid.ToString());
-
-                            // PLAYERBOT FIX: Do NOT call LogoutPlayer() from worker thread!
-                            // This causes Map.cpp:686 crash by removing player from map on worker thread
-                            // Instead, push to _asyncDisconnections - main thread will handle cleanup
-                            // if (session->GetPlayer())
-                            //     session->LogoutPlayer(true);  // REMOVED - worker thread unsafe!
-
-                            _asyncDisconnections.push(guid);  // Lock-free push - main thread handles logout
-                            return;
+                            // Bot is transitioning (teleporting, loading) - skip priority check but DON'T logout
+                            TC_LOG_TRACE("module.playerbot.session", "Bot {} not in world (transitioning?) - skipping priority adjustment", guid.ToString());
+                            // DO NOT push to _asyncDisconnections - bot is just transitioning!
                         }
-
-                        // Adaptive frequency: Adjust interval based on bot activity
-                        uint32 adjustInterval = 10; // Default 500ms
-    if (bot->IsInCombat() || bot->GetGroup())
-                            adjustInterval = 5;  // Active bots: 250ms (more responsive)
-                        else if (!bot->isMoving() && bot->GetHealthPct() > 80.0f)
-                            adjustInterval = 50; // Idle healthy bots: 2.5s (save CPU)
-                        // Call AutoAdjustPriority at adaptive interval
-    if (tickCounter % adjustInterval == 0)
-                        {
-                            sBotPriorityMgr->AutoAdjustPriority(bot, currentTime);
-                        }
-                        // Fast-path critical state detection on other ticks (lightweight checks only)
                         else
                         {
-                            // Immediate priority boost for critical situations (no group/movement checks)
-    if (bot->IsInCombat())
+                            // Adaptive frequency: Adjust interval based on bot activity
+                            uint32 adjustInterval = 10; // Default 500ms
+                            if (bot->IsInCombat() || bot->GetGroup())
+                                adjustInterval = 5;  // Active bots: 250ms (more responsive)
+                            else if (!bot->isMoving() && bot->GetHealthPct() > 80.0f)
+                                adjustInterval = 50; // Idle healthy bots: 2.5s (save CPU)
+
+                            // Call AutoAdjustPriority at adaptive interval
+                            if (tickCounter % adjustInterval == 0)
                             {
-                                sBotPriorityMgr->SetPriority(guid, BotPriority::HIGH);
+                                sBotPriorityMgr->AutoAdjustPriority(bot, currentTime);
                             }
-                            else if (bot->GetHealthPct() < 20.0f)
+                            // Fast-path critical state detection on other ticks (lightweight checks only)
+                            else
                             {
-                                sBotPriorityMgr->SetPriority(guid, BotPriority::EMERGENCY);
-                            }
-                            // CRITICAL FIX: Pending group invitation needs fast response
-                            // Without this boost, bot may timeout waiting for next update
-                            else if (bot->GetGroupInvite())
-                            {
-                                sBotPriorityMgr->SetPriority(guid, BotPriority::MEDIUM);
+                                // Immediate priority boost for critical situations (no group/movement checks)
+                                if (bot->IsInCombat())
+                                {
+                                    sBotPriorityMgr->SetPriority(guid, BotPriority::HIGH);
+                                }
+                                else if (bot->GetHealthPct() < 20.0f)
+                                {
+                                    sBotPriorityMgr->SetPriority(guid, BotPriority::EMERGENCY);
+                                }
+                                // CRITICAL FIX: Pending group invitation needs fast response
+                                // Without this boost, bot may timeout waiting for next update
+                                else if (bot->GetGroupInvite())
+                                {
+                                    sBotPriorityMgr->SetPriority(guid, BotPriority::MEDIUM);
+                                }
                             }
                         }
                     }
