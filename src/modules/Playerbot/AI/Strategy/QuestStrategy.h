@@ -197,6 +197,11 @@ private:
     ::std::unordered_map<uint32, ::std::set<ObjectGuid>> _usedQuestItemTargets;
     uint32 _lastQuestItemCastTime = 0;
     static constexpr uint32 QUEST_ITEM_CAST_COOLDOWN_MS = 5000; // 5 second cooldown between casts
+
+    // Failed quest turn-in tracking (prevent infinite loops on quests missing required items)
+    // Key: questId, Value: consecutive failure count
+    ::std::unordered_map<uint32, uint32> _questTurnInFailures;
+    static constexpr uint32 MAX_QUEST_TURNIN_FAILURES = 3; // Abandon quest after 3 consecutive failures
 };
 
 } // namespace Playerbot
