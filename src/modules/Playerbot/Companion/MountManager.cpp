@@ -647,6 +647,189 @@ MountSpeed MountManager::GetMaxMountSpeed() const
     return MountSpeed::SLOW;
 }
 
+bool MountManager::UpdateRidingForLevel()
+{
+    if (!_bot || !_bot->IsInWorld())
+        return false;
+
+    uint32 level = _bot->GetLevel();
+    bool learnedAnything = false;
+
+    // ========================================================================
+    // RIDING SKILL PROGRESSION (WoW 11.2 Thresholds)
+    // ========================================================================
+    // Level 10: Apprentice Riding (60% ground) - skill 75
+    // Level 20: Journeyman Riding (100% ground) - still skill 75, faster mounts
+    // Level 30: Expert Riding (150% flying) - skill 150
+    // Level 40: Artisan Riding (280% flying) - skill 225
+    // Level 80: Master Riding (310% flying) - skill 300
+    // ========================================================================
+
+    // Level 80+: Master Riding (310% flying)
+    if (level >= 80 && !_bot->HasSpell(SPELL_MOUNT_RIDING_MASTER))
+    {
+        _bot->LearnSpell(SPELL_MOUNT_RIDING_MASTER, false);
+        learnedAnything = true;
+        TC_LOG_INFO("module.playerbot", "MountManager::UpdateRidingForLevel - {} learned Master Riding at level {}",
+            _bot->GetName(), level);
+    }
+    // Level 40+: Artisan Riding (280% flying)
+    if (level >= 40 && !_bot->HasSpell(SPELL_MOUNT_RIDING_ARTISAN))
+    {
+        _bot->LearnSpell(SPELL_MOUNT_RIDING_ARTISAN, false);
+        learnedAnything = true;
+        TC_LOG_INFO("module.playerbot", "MountManager::UpdateRidingForLevel - {} learned Artisan Riding at level {}",
+            _bot->GetName(), level);
+    }
+    // Level 30+: Expert Riding (150% flying)
+    if (level >= 30 && !_bot->HasSpell(SPELL_MOUNT_RIDING_EXPERT))
+    {
+        _bot->LearnSpell(SPELL_MOUNT_RIDING_EXPERT, false);
+        learnedAnything = true;
+        TC_LOG_INFO("module.playerbot", "MountManager::UpdateRidingForLevel - {} learned Expert Riding at level {}",
+            _bot->GetName(), level);
+    }
+    // Level 20+: Journeyman Riding (100% ground)
+    if (level >= 20 && !_bot->HasSpell(SPELL_MOUNT_RIDING_JOURNEYMAN))
+    {
+        _bot->LearnSpell(SPELL_MOUNT_RIDING_JOURNEYMAN, false);
+        learnedAnything = true;
+        TC_LOG_INFO("module.playerbot", "MountManager::UpdateRidingForLevel - {} learned Journeyman Riding at level {}",
+            _bot->GetName(), level);
+    }
+    // Level 10+: Apprentice Riding (60% ground)
+    if (level >= 10 && !_bot->HasSpell(SPELL_MOUNT_RIDING_APPRENTICE))
+    {
+        _bot->LearnSpell(SPELL_MOUNT_RIDING_APPRENTICE, false);
+        learnedAnything = true;
+        TC_LOG_INFO("module.playerbot", "MountManager::UpdateRidingForLevel - {} learned Apprentice Riding at level {}",
+            _bot->GetName(), level);
+    }
+
+    // ========================================================================
+    // MOUNT LEARNING - Race/Faction appropriate mounts
+    // ========================================================================
+    // Only learn mounts if bot has riding skill but no mounts yet
+    if (level >= 10 && GetMountCount() == 0)
+    {
+        uint32 mountSpellId = GetRaceAppropriateMount(level);
+        if (mountSpellId != 0)
+        {
+            LearnMount(mountSpellId);
+            learnedAnything = true;
+            TC_LOG_INFO("module.playerbot", "MountManager::UpdateRidingForLevel - {} learned mount (spell {}) at level {}",
+                _bot->GetName(), mountSpellId, level);
+        }
+    }
+
+    // Learn flying mount at level 30+ if none exists
+    if (level >= 30)
+    {
+        bool hasFlying = false;
+        for (auto const& mount : GetPlayerMounts())
+        {
+            if (mount.isFlyingMount)
+            {
+                hasFlying = true;
+                break;
+            }
+        }
+
+        if (!hasFlying)
+        {
+            uint32 flyingMountSpell = GetRaceAppropriateFlyingMount(level);
+            if (flyingMountSpell != 0)
+            {
+                LearnMount(flyingMountSpell);
+                learnedAnything = true;
+                TC_LOG_INFO("module.playerbot", "MountManager::UpdateRidingForLevel - {} learned flying mount (spell {}) at level {}",
+                    _bot->GetName(), flyingMountSpell, level);
+            }
+        }
+    }
+
+    return learnedAnything;
+}
+
+uint32 MountManager::GetRaceAppropriateMount(uint32 level) const
+{
+    if (!_bot)
+        return 0;
+
+    uint8 race = _bot->GetRace();
+    bool isEpic = level >= 20; // Epic ground mount at 20+
+
+    // ========================================================================
+    // GROUND MOUNTS BY RACE (based on mount database entries)
+    // ========================================================================
+    switch (race)
+    {
+        // ALLIANCE RACES
+        case RACE_HUMAN:
+            return isEpic ? 23229 : 458;     // Swift Brown Steed / Brown Horse
+        case RACE_DWARF:
+            return isEpic ? 23238 : 6897;    // Swift Brown Ram / Brown Ram
+        case RACE_NIGHTELF:
+            return isEpic ? 23338 : 8394;    // Swift Stormsaber / Striped Nightsaber
+        case RACE_GNOME:
+            return isEpic ? 23222 : 10873;   // Swift Green Mechanostrider / Red Mechanostrider
+        case RACE_DRAENEI:
+            return isEpic ? 34406 : 35711;   // Swift Purple Elekk / Gray Elekk
+        case RACE_WORGEN:
+            return isEpic ? 23229 : 458;     // Human mounts for Worgen (Running Wild is special)
+
+        // HORDE RACES
+        case RACE_ORC:
+            return isEpic ? 23250 : 580;     // Swift Brown Wolf / Dire Wolf
+        case RACE_UNDEAD_PLAYER:
+            return isEpic ? 23246 : 8980;    // Purple Skeletal Warhorse / Skeletal Horse
+        case RACE_TAUREN:
+            return isEpic ? 23249 : 18990;   // Swift Brown Kodo / Brown Kodo
+        case RACE_TROLL:
+            return isEpic ? 23243 : 8395;    // Swift Blue Raptor / Emerald Raptor
+        case RACE_BLOODELF:
+            return isEpic ? 35025 : 35020;   // Swift Pink Hawkstrider / Blue Hawkstrider
+        case RACE_GOBLIN:
+            return isEpic ? 36702 : 36702;   // Goblin Trike
+
+        // NEUTRAL/PANDAREN
+        case RACE_PANDAREN_NEUTRAL:
+        case RACE_PANDAREN_ALLIANCE:
+        case RACE_PANDAREN_HORDE:
+            return isEpic ? 118089 : 118089; // Green Dragon Turtle
+
+        default:
+            // Fallback to faction-based default
+            if (_bot->GetTeamId() == TEAM_ALLIANCE)
+                return isEpic ? 23229 : 458; // Human mounts
+            else
+                return isEpic ? 23250 : 580; // Orc mounts
+    }
+}
+
+uint32 MountManager::GetRaceAppropriateFlyingMount(uint32 level) const
+{
+    if (!_bot)
+        return 0;
+
+    bool isEpic = level >= 40; // Epic flying at 40+
+
+    // ========================================================================
+    // FLYING MOUNTS BY FACTION
+    // ========================================================================
+    // All races share faction-based flying mounts
+    if (_bot->GetTeamId() == TEAM_ALLIANCE)
+    {
+        // Alliance: Gryphons
+        return isEpic ? 32292 : 32235;  // Swift Blue Gryphon / Golden Gryphon
+    }
+    else
+    {
+        // Horde: Wind Riders
+        return isEpic ? 32297 : 32243;  // Swift Yellow Wind Rider / Tawny Wind Rider
+    }
+}
+
 // ============================================================================
 // Multi-Passenger Mounts
 // ============================================================================

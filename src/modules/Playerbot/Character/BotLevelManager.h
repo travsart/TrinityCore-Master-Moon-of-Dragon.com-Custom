@@ -358,6 +358,12 @@ private:
      */
     bool ApplyProfessions(Player* bot, BotCreationTask* task);
 
+    /**
+     * Apply riding skills and mounts for bot (level 10+)
+     * Level thresholds: 10 (Apprentice), 20 (Journeyman), 30 (Expert/Flying), 40 (Artisan), 80 (Master)
+     */
+    bool ApplyRiding(Player* bot, BotCreationTask* task);
+
     // ====================================================================
     // TASK QUEUE MANAGEMENT
     // ====================================================================

@@ -21,6 +21,7 @@
 #include "../Talents/BotTalentManager.h"
 #include "../Movement/BotWorldPositioner.h"
 #include "../Professions/ProfessionManager.h"
+#include "../Companion/MountManager.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
 #include "Player.h"
 #include "Config/PlayerbotConfig.h"
@@ -505,6 +506,17 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
         }
     }
 
+    // Apply riding skills and mounts (level 10+)
+    if (task->targetLevel >= 10)
+    {
+        if (!ApplyRiding(bot, task))
+        {
+            TC_LOG_WARN("playerbot", "BotLevelManager::ApplyBot_MainThread() - Riding/mount application failed for {}",
+                bot->GetName());
+            // Don't fail the whole bot creation for riding issues
+        }
+    }
+
     // Apply gear (skip for L1-4)
     if (task->targetLevel > 4)
     {
@@ -666,6 +678,33 @@ bool BotLevelManager::ApplyProfessions(Player* bot, BotCreationTask* task)
         bot->GetName(), professionsLearned, maxSkillPotential, task->targetLevel);
 
     return professionsLearned > 0;
+}
+
+bool BotLevelManager::ApplyRiding(Player* bot, BotCreationTask* task)
+{
+    if (!bot || !task)
+        return false;
+
+    // Create temporary MountManager for this bot to learn riding skills
+    // The bot's persistent MountManager (via GameSystemsManager) handles mounting during gameplay
+    MountManager mountMgr(bot);
+
+    // Learn riding skills and mounts appropriate for the bot's level
+    bool learnedAnything = mountMgr.UpdateRidingForLevel();
+
+    if (learnedAnything)
+    {
+        TC_LOG_INFO("playerbot", "BotLevelManager::ApplyRiding - {} learned riding skills/mounts for level {}",
+            bot->GetName(), task->targetLevel);
+    }
+    else if (task->targetLevel >= 10)
+    {
+        // No new skills learned, but that's OK - may already know them
+        TC_LOG_DEBUG("playerbot", "BotLevelManager::ApplyRiding - {} already has appropriate riding for level {}",
+            bot->GetName(), task->targetLevel);
+    }
+
+    return true; // Always succeed - riding is optional
 }
 
 // ====================================================================

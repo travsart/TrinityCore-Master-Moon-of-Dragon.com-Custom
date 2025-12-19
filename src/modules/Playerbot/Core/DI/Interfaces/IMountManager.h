@@ -59,6 +59,21 @@ public:
     virtual bool LearnRidingSkill(uint32 skillLevel) = 0;
     virtual MountSpeed GetMaxMountSpeed() const = 0;
 
+    /**
+     * @brief Update riding skill and mounts for bot's current level
+     *
+     * Called during level-up to automatically teach riding skills
+     * and provide appropriate mounts based on level thresholds:
+     * - Level 10: Apprentice Riding (60% ground) + ground mount
+     * - Level 20: Journeyman Riding (100% ground)
+     * - Level 30: Expert Riding (150% flying) + flying mount
+     * - Level 40: Artisan Riding (280% flying)
+     * - Level 80: Master Riding (310% flying)
+     *
+     * @return true if any new skills/mounts were learned
+     */
+    virtual bool UpdateRidingForLevel() = 0;
+
     // Multi-passenger mounts
     virtual bool IsMultiPassengerMount(MountInfo const& mount) const = 0;
     virtual uint32 GetAvailablePassengerSeats() const = 0;

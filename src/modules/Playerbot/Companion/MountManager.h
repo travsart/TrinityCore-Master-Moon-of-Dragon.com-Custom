@@ -254,6 +254,13 @@ public:
      */
     MountSpeed GetMaxMountSpeed() const override;
 
+    /**
+     * Update riding skill and mounts for bot's current level
+     * Called during level-up to automatically teach riding skills and mounts
+     * Level thresholds: 10 (Apprentice), 20 (Journeyman), 30 (Expert), 40 (Artisan), 80 (Master)
+     */
+    bool UpdateRidingForLevel() override;
+
     // ============================================================================
     // MULTI-PASSENGER MOUNTS
     // ============================================================================
@@ -359,6 +366,20 @@ private:
     bool IsInCombat() const;
     bool IsIndoors() const;
     bool IsInInstance() const;
+
+    // ============================================================================
+    // MOUNT SELECTION HELPERS (Race/Faction based)
+    // ============================================================================
+
+    /**
+     * Get an appropriate ground mount spell ID based on bot's race and level
+     */
+    uint32 GetRaceAppropriateMount(uint32 level) const;
+
+    /**
+     * Get an appropriate flying mount spell ID based on bot's faction and level
+     */
+    uint32 GetRaceAppropriateFlyingMount(uint32 level) const;
 
     // ============================================================================
     // DATA STRUCTURES
