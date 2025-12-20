@@ -50,7 +50,6 @@
 #include "TerrainMgr.h"
 #include "ThreadPool.h"
 #include "World.h"
-#include "WorldSocket.h"
 #include "WorldSocketMgr.h"
 #include "Util.h"
 #ifdef BUILD_PLAYERBOT
