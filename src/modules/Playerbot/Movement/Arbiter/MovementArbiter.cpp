@@ -472,11 +472,11 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
         {
             auto const& params = request.GetJumpParams();
 
+            // TrinityCore 11.2 API: MoveJump(id, pos, speedOrTime, minHeight, maxHeight, ...)
             motionMaster->MoveJump(
+                params.eventId,
                 params.targetPos,
-                params.speedXY,
-                params.speedZ,
-                params.eventId);
+                params.speedXY);  // speedOrTime variant with horizontal speed
 
             if (_diagnosticLogging)
             {

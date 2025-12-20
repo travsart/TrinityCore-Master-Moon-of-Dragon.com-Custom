@@ -1167,13 +1167,6 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                     opHandle->Name, GetPlayerName(), ihe.GetInvalidValue());
                 // Continue processing other packets
             }
-            catch (WorldPackets::IllegalHyperlinkException const& ihe)
-            {
-                TC_LOG_ERROR("playerbot.packets",
-                    "IllegalHyperlinkException processing opcode {} for bot {}: {}",
-                    opHandle->Name, GetPlayerName(), ihe.GetInvalidValue());
-                // Continue processing other packets
-            }
             catch (WorldPackets::PacketArrayMaxCapacityException const& pamce)
             {
                 TC_LOG_ERROR("playerbot.packets",

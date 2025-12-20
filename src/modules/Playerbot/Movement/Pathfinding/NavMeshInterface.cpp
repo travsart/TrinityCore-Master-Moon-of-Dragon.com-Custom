@@ -569,7 +569,8 @@ namespace Playerbot
         if (!mmapManager)
             return nullptr;
 
-        return mmapManager->GetNavMesh(map->GetId());
+        // GetNavMesh now requires (mapId, instanceId) - use map's InstanceId
+        return mmapManager->GetNavMesh(map->GetId(), map->GetInstanceId());
     }
 
     dtNavMeshQuery const* NavMeshInterface::GetNavMeshQuery(Map* map) const
