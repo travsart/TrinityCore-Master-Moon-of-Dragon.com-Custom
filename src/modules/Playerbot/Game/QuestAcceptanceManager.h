@@ -13,6 +13,7 @@
 #include "QuestDef.h"
 #include "Creature.h"
 #include <vector>
+#include <unordered_set>
 
 namespace Playerbot
 {
@@ -67,6 +68,11 @@ public:
     uint32 GetQuestsAccepted() const { return _questsAccepted; }
     uint32 GetQuestsDropped() const { return _questsDropped; }
 
+    // Quest blacklist (for quests abandoned due to missing items)
+    void BlacklistQuest(uint32 questId);
+    bool IsBlacklisted(uint32 questId) const;
+    void ClearBlacklist() { _questBlacklist.clear(); }
+
 private:
     Player* _bot;
 
@@ -79,6 +85,10 @@ private:
     static constexpr uint32 QUEST_ACCEPT_COOLDOWN = 1000; // 1 second between accepts
     static constexpr float MIN_QUEST_PRIORITY = 10.0f;     // Minimum priority to accept
     static constexpr uint32 RESERVE_QUEST_SLOTS = 2;       // Keep 2 slots free for important quests
+
+    // Quest blacklist - quests that were abandoned due to missing items
+    // These should not be re-accepted until the bot has the required items
+    ::std::unordered_set<uint32> _questBlacklist;
 };
 
 } // namespace Playerbot

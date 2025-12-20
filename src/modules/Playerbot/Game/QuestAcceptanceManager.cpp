@@ -157,6 +157,14 @@ bool QuestAcceptanceManager::IsQuestEligible(Quest const* quest) const
     if (!quest || !_bot)
         return false;
 
+    // Check blacklist first - quests abandoned due to missing items
+    if (IsBlacklisted(quest->GetQuestId()))
+    {
+        TC_LOG_DEBUG("module.playerbot.quest", "🚫 Quest {} '{}' rejected - BLACKLISTED for bot {}",
+                     quest->GetQuestId(), quest->GetLogTitle(), _bot->GetName());
+        return false;
+    }
+
     // CRITICAL FIX: Use TrinityCore's comprehensive quest validation
     // This includes ALL checks: class, race, level, skills, reputation,
     // prerequisites, exclusivegroups, conditions table, expansions, etc.
@@ -514,6 +522,22 @@ float QuestAcceptanceManager::GetChainPriority(Quest const* quest) const
         return 3.0f;
 
     return 0.0f;
+}
+
+// ========================================================================
+// QUEST BLACKLIST
+// ========================================================================
+
+void QuestAcceptanceManager::BlacklistQuest(uint32 questId)
+{
+    _questBlacklist.insert(questId);
+    TC_LOG_INFO("module.playerbot.quest", "🚫 Bot {} BLACKLISTED quest {} - will not re-accept until cleared",
+        _bot ? _bot->GetName() : "NULL", questId);
+}
+
+bool QuestAcceptanceManager::IsBlacklisted(uint32 questId) const
+{
+    return _questBlacklist.find(questId) != _questBlacklist.end();
 }
 
 } // namespace Playerbot

@@ -4120,6 +4120,10 @@ bool QuestStrategy::CompleteQuestTurnInAtGameObject(BotAI* ai, uint32 questId, G
             bot->AbandonQuest(questId);
             _questTurnInFailures.erase(questId);
 
+            // Blacklist this quest to prevent re-accepting it immediately
+            if (_acceptanceManager)
+                _acceptanceManager->BlacklistQuest(questId);
+
             TC_LOG_INFO("module.playerbot.quest", "✅ Bot {} abandoned broken quest {} - will search for new quests",
                         bot->GetName(), questId);
         }
@@ -4294,6 +4298,10 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
             // Abandon the quest
             bot->AbandonQuest(questId);
             _questTurnInFailures.erase(questId);
+
+            // Blacklist this quest to prevent re-accepting it immediately
+            if (_acceptanceManager)
+                _acceptanceManager->BlacklistQuest(questId);
 
             TC_LOG_INFO("module.playerbot.quest", "✅ Bot {} abandoned broken quest {} - will search for new quests",
                         bot->GetName(), questId);
