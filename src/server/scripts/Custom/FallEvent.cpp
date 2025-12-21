@@ -32,6 +32,7 @@ FallEvent.Announce = true
 #include "Chat.h"
 #include "Config.h"
 #include "Player.h"
+#include "ScriptedGossip.h"
 #include "Log.h"
 #include "GossipDef.h"
 #include <algorithm>
