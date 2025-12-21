@@ -1414,7 +1414,7 @@ struct npc_grand_admiral_jes_tereth_135681 : public ScriptedAI
 // 130556, injured-marine
 struct npc_injured_marine : public ScriptedAI
 {
-    npc_injured_marine(Creature* creature) : ScriptedAI(creature) { }
+    npc_injured_marine(Creature* creature) : ScriptedAI(creature), clicked(false) {}
 
     bool clicked;
 
@@ -1643,7 +1643,7 @@ struct npc_cooper_mount : public VehicleAI
 //124802, Lord Aldrius Norwington
 struct npc_lord_aldarius_norwington : public ScriptedAI
 {
-    npc_lord_aldarius_norwington(Creature* creature) : ScriptedAI(creature) { }
+    npc_lord_aldarius_norwington(Creature* creature) : ScriptedAI(creature), talked(false) {}
 
     bool talked;
 
@@ -2032,7 +2032,7 @@ struct npc_flynn_fairwind_126620 : public ScriptedAI
 //130081, Flynn Fairwind
 struct npc_flynn_fairwind_130081 : public ScriptedAI
 {
-    npc_flynn_fairwind_130081(Creature* creature) : ScriptedAI(creature) { }
+    npc_flynn_fairwind_130081(Creature* creature) : ScriptedAI(creature), clicked(false) {}
 
     bool  clicked;
 
@@ -2077,7 +2077,7 @@ struct npc_flynn_fairwind_130081 : public ScriptedAI
 //278308, Irontide Recruiting Poster
 struct go_irontide_recruiting_poster : public GameObjectAI
 {
-    go_irontide_recruiting_poster(GameObject* go) : GameObjectAI(go) { }
+    go_irontide_recruiting_poster(GameObject* go) : GameObjectAI(go), clicked(false) { }
 
     bool clicked;
 
@@ -2236,7 +2236,7 @@ struct npc_meredith : public ScriptedAI
 //130746, Scratchy
 struct npc_scratchy : public ScriptedAI
 {
-    npc_scratchy(Creature* creature) : ScriptedAI(creature) { }
+    npc_scratchy(Creature* creature) : ScriptedAI(creature), scratched(false) {}
 
     bool scratched;
 
@@ -2399,7 +2399,7 @@ struct npc_galeheart_142407 : public VehicleAI
 class npc_proudmoore_guard : public ScriptedAI
 {
 public:
-    npc_proudmoore_guard(Creature* creature) : ScriptedAI(creature) { }
+    npc_proudmoore_guard(Creature* creature) : ScriptedAI(creature), rallied(false) {}
 
     bool rallied;
 
@@ -2644,7 +2644,7 @@ enum StormsongEnums
 class npc_brother_conway : public ScriptedAI
 {
 public:
-    npc_brother_conway(Creature* creature) : ScriptedAI(creature) { }
+    npc_brother_conway(Creature* creature) : ScriptedAI(creature), talk0(false), talk1(false), talk2(false) {}
 
     bool talk0, talk1, talk2;
 
@@ -2707,7 +2707,7 @@ public:
 class npc_keegan_alby : public ScriptedAI
 {
 public:
-    npc_keegan_alby(Creature* creature) : ScriptedAI(creature) { }
+    npc_keegan_alby(Creature* creature) : ScriptedAI(creature), talk(false) {}
 
     bool talk;
 
