@@ -706,7 +706,7 @@ enum PlotTwist {
 
 struct npc_voljamba : public ScriptedAI
 {
-    npc_voljamba(Creature* pCreature) : ScriptedAI(pCreature)
+    npc_voljamba(Creature* pCreature) : ScriptedAI(pCreature), gong(false), potion(false), final(false)
     {
     }
 
@@ -1315,7 +1315,8 @@ struct npc_gonk : public ScriptedAI
 //122866, Vol'kaal <Zanchuli Council>
 struct npc_volkaal : public ScriptedAI
 {
-    npc_volkaal(Creature* creature) : ScriptedAI(creature) { }
+    npc_volkaal(Creature* creature) : ScriptedAI(creature), talked1(false), talked2(false) { }
+
     bool talked1;
     bool talked2;
 
