@@ -34,7 +34,6 @@ FallEvent.Announce = true
 #include "Player.h"
 #include "Log.h"
 #include "GossipDef.h"
-#include "GossipMenu.h"
 #include <algorithm>
 #include <numeric>
 #include <atomic>
@@ -98,7 +97,7 @@ public:
         bool OnGossipHello(Player* player) override
         {
             TC_LOG_ERROR("scripts", "Player {} has requested the event start option.", player->GetName());
-            AddGossipItemFor(player, GossipOptionNpc::None, "Start Fall Event!", GOSSIP_SENDER_MAIN, 1);
+            AddGossipItemFor(player, GossipOptionNpc::None, "Start Fall Event!", 0, 1);
             SendGossipMenuFor(player, EventStarterGossipMenuID, me->GetGUID());
             return true;
         }
@@ -202,7 +201,7 @@ public:
             EVENT_END = 2
         };
 
-        // Methoden zum HinzufÃ¼gen und Entfernen von GameObjects.
+        // Methoden zum Hinzufügen und Entfernen von GameObjects.
         void AddDespawnedObject(GameObject* go)
         {
             if (go)
@@ -252,7 +251,7 @@ public:
                 Events.ScheduleEvent(EVENT_END, Milliseconds(FinalEventDelay));  // Letztes Objekt-Event.
                 break;
             default:
-                uint32 timer = 25000 + (data - 2) * 10000;  // Angepasster Timer fÃ¼r andere Objekte.
+                uint32 timer = 25000 + (data - 2) * 10000;  // Angepasster Timer für andere Objekte.
                 Events.ScheduleEvent(EVENT_ACTIVATE, Milliseconds(timer));
                 break;
             }
@@ -263,8 +262,8 @@ public:
             switch (eventId)
             {
             case EVENT_ACTIVATE:
-                AddDespawnedObject(me);  // Objekt zur Despawn-Liste hinzufÃ¼gen.
-                me->PlayDirectSound(ObjectSoundID);  // Ton fÃ¼r das Objekt abspielen.
+                AddDespawnedObject(me);  // Objekt zur Despawn-Liste hinzufügen.
+                me->PlayDirectSound(ObjectSoundID);  // Ton für das Objekt abspielen.
                 me->DespawnOrUnsummon();
                 TC_LOG_ERROR("scripts", "FallObject with GUID {} has been despawned.", me->GetGUID());
                 break;
