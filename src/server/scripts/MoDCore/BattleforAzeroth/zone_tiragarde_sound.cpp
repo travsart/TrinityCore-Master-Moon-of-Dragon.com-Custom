@@ -31,7 +31,9 @@
 #include "Vehicle.h"
 #include "PhasingHandler.h"
 #include "CombatAI.h"
+#include "SpellAuraEffects.h"
 #include "Spell.h"
+#include "SpellScript.h"
 
 enum eTiragardeQuests
 {
