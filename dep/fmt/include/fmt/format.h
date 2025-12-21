@@ -926,7 +926,7 @@ class writer {
 
  public:
   inline writer(FILE* f) : buf_(nullptr), file_(f) {}
-  inline writer(detail::buffer<char>& buf) : buf_(&buf) {}
+  inline writer(detail::buffer<char>& buf) : buf_(&buf), file_(nullptr) {}
 
   /// Formats `args` according to specifications in `fmt` and writes the
   /// output to the file.
@@ -2706,7 +2706,7 @@ class bigint {
   FMT_CONSTEXPR void multiply(UInt value) {
     using half_uint =
         conditional_t<std::is_same<UInt, uint128_t>::value, uint64_t, uint32_t>;
-    const int shift = num_bits<half_uint>() - bigit_bits;
+    constexpr int shift = num_bits<half_uint>() - bigit_bits;
     const UInt lower = static_cast<half_uint>(value);
     const UInt upper = value >> num_bits<half_uint>();
     UInt carry = 0;
@@ -3913,17 +3913,6 @@ template <typename Locale> class format_facet : public Locale::facet {
       return formatter<Base, Char>::format(value, ctx);             \
     }                                                               \
   }
-
-FMT_FORMAT_AS(signed char, int);
-FMT_FORMAT_AS(unsigned char, unsigned);
-FMT_FORMAT_AS(short, int);
-FMT_FORMAT_AS(unsigned short, unsigned);
-FMT_FORMAT_AS(long, detail::long_type);
-FMT_FORMAT_AS(unsigned long, detail::ulong_type);
-FMT_FORMAT_AS(Char*, const Char*);
-FMT_FORMAT_AS(detail::std_string_view<Char>, basic_string_view<Char>);
-FMT_FORMAT_AS(std::nullptr_t, const void*);
-FMT_FORMAT_AS(void*, const void*);
 
 template <typename Char, size_t N>
 struct formatter<Char[N], Char> : formatter<basic_string_view<Char>, Char> {};

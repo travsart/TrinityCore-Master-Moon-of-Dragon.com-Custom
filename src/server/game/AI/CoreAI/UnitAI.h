@@ -52,7 +52,7 @@ class TC_GAME_API UnitAI
     protected:
         Unit* const me;
     public:
-        explicit UnitAI(Unit* unit) : me(unit) { }
+        explicit UnitAI(Unit* unit) : me(unit), m_EmptyWarned(false) {}
         virtual ~UnitAI() { }
 
         virtual bool CanAIAttack(Unit const* /*target*/) const { return true; }

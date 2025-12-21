@@ -573,8 +573,6 @@ struct npc_paku : public ScriptedAI
 //263018
 class spell_rastari_skull_whistle : public SpellScript
 {
-	PrepareSpellScript(spell_rastari_skull_whistle);
-
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
@@ -608,8 +606,6 @@ class spell_rastari_skull_whistle : public SpellScript
 // 254904 - Revitalize Spirit Obelisk
 class spell_quest_revitalize_spirit_obelisk : public SpellScript
 {
-    PrepareSpellScript(spell_quest_revitalize_spirit_obelisk);
-
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
@@ -639,8 +635,6 @@ class spell_quest_revitalize_spirit_obelisk : public SpellScript
 // todo fix the positions and amount of spells 224839
 class spell_call_the_storm : public SpellScript
 {
-    PrepareSpellScript(spell_call_the_storm);
-
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         Unit* caster = GetCaster();
@@ -669,8 +663,6 @@ public:
 
     class spell_lightning_rod_AuraScript : public AuraScript
     {
-        PrepareAuraScript(spell_lightning_rod_AuraScript);
-
         void HandlePeriodicDummy(AuraEffect const* /*auraEff*/)
         {
             Unit* caster = GetCaster();
@@ -849,8 +841,6 @@ private:
 //264007
 class spell_soul_jaunt : public SpellScript
 {
-    PrepareSpellScript(spell_soul_jaunt);
-
     void HandleAfterCast()
     {
         Unit* caster = GetCaster();
@@ -1177,8 +1167,6 @@ struct npc_wavesinger_zara : public ScriptedAI
 //248495, Scroll of Illusion
 class spell_scroll_of_illusion : public SpellScript
 {
-    PrepareSpellScript(spell_scroll_of_illusion);
-
     void HandleScript()
     {
         Unit* caster = GetCaster();

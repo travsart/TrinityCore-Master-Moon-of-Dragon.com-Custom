@@ -343,7 +343,8 @@ public:
 
     // Construct from task and owner
     explicit TaskContext(TaskScheduler::TaskContainer&& task, std::weak_ptr<TaskScheduler>&& owner)
-        : _task(std::move(task)), _owner(std::move(owner)), _consumed(std::make_shared<bool>(false)) { }
+        : _task(std::move(task)), _owner(std::move(owner)), _consumed(std::make_shared<bool>(false)), _contextUnit(nullptr), _contextGob(nullptr) {
+    }
 
     // Copy construct
     TaskContext(TaskContext const& right) = default;

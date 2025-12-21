@@ -578,7 +578,15 @@ public:
 
     struct npc_sean_dempseyAI : public ScriptedAI
     {
-        npc_sean_dempseyAI(Creature* creature) : ScriptedAI(creature) {}
+        npc_sean_dempseyAI(Creature* creature)
+            : ScriptedAI(creature),
+            tSummon(0),
+            tEvent_Timer(0),
+            tWave_Time(0),
+            EventActive(false),
+            RunOnce(true),
+            player(nullptr)
+        {}
 
         uint32 tSummon, tEvent_Timer, tWave_Time;
         bool EventActive, RunOnce;
@@ -698,7 +706,9 @@ public:
 
     struct npc_lord_darius_crowley_c1AI : public ScriptedAI
     {
-        npc_lord_darius_crowley_c1AI(Creature* creature) : ScriptedAI(creature) {}
+        npc_lord_darius_crowley_c1AI(Creature* creature)
+            : ScriptedAI(creature), tAttack(0) // Initialisierung hinzugefuegt
+        { }
 
         uint32 tAttack;
 
@@ -914,7 +924,7 @@ public:
     {
         npc_worgen_runt_c2AI(Creature* creature)
             : ScriptedAI(creature),
-            WaypointId(0),           // Initialisierung hinzugefügt
+            WaypointId(0),           // Initialisierung hinzugefuegt
             willCastEnrage(0),
             tEnrage(0),
             CommonWPCount(0),
@@ -1052,7 +1062,7 @@ public:
     {
         npc_worgen_alpha_c1AI(Creature* creature)
             : ScriptedAI(creature),
-            WaypointId(0),           // Initialisierung hinzugefügt
+            WaypointId(0),           // Initialisierung hinzugefuegt
             willCastEnrage(0),
             tEnrage(0),
             CommonWPCount(0),
