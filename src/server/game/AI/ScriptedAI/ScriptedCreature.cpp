@@ -730,3 +730,11 @@ void GetPositionWithDistInOrientation(Position* fromPos, float dist, float orien
     movePosition.m_positionY = y;
     movePosition.m_positionZ = fromPos->GetPositionZ();
 }
+
+void ScriptedAI::KillCreditMe(Player* player)
+{
+    if (!player)
+        return;
+
+    player->KilledMonsterCredit(me->GetEntry());
+}
