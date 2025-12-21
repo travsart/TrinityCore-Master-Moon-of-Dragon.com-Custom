@@ -750,7 +750,7 @@ public:
                 else
                     me->GetMotionMaster()->MoveChase(me->GetVictim());
             }
-            else
+            else // If we have a target but our attack timer is still not ready, do regular attack
             {
                 tAttack -= diff;
                 DoMeleeAttackIfReady();
