@@ -23,6 +23,7 @@
 #include "GameObjectData.h"
 #include "MapObject.h"
 #include "SharedDefines.h"
+#include "TaskScheduler.h"
 
 class GameObject;
 class GameObjectAI;
