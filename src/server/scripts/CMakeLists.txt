@@ -161,7 +161,9 @@ target_sources(scripts PRIVATE ${SCRIPT_MODULE_SOURCES})
     CollectAndAddSourceFiles(${SCRIPT_MODULE_PROJECT_NAME} ${SCRIPT_MODULE_PATH})
     target_sources(${SCRIPT_MODULE_PROJECT_NAME}
       PUBLIC
-        FILE_SET HEADERS FILES ScriptLoader.h)
+        FILE_SET HEADERS FILES ScriptLoader.h
+      PRIVATE
+        ${SCRIPT_MODULE_PRIVATE_SCRIPTLOADER})
 
     target_link_libraries(${SCRIPT_MODULE_PROJECT_NAME}
       PRIVATE
