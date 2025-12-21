@@ -28,6 +28,7 @@ FallEvent.Announce = true
 #include "ObjectGuid.h"
 #include "GameObjectAI.h"
 #include "GameObject.h"
+#include "GossipDef.h"
 #include "FallEvent.h"
 #include "Chat.h"
 #include "Config.h"
