@@ -1158,7 +1158,7 @@ struct npc_brazie_vehicle_notifier : public ScriptedAI
             me->DespawnOrUnsummon(Seconds(2));
             break;
         case SPELL_GET_FREEZYA_SEEDS:
-            me->GetMotionMaster()->MoveJump(0, Position(SolarPowerJumpPos.GetPositionX(), SolarPowerJumpPos.GetPositionY(), SolarPowerJumpPos.GetPositionZ()), 45.0f, 20.0f);
+            me->GetMotionMaster()->MoveJump(0, Position(FreezyaSeedJumpPos.GetPositionX(), FreezyaSeedJumpPos.GetPositionY(), FreezyaSeedJumpPos.GetPositionZ()), 45.0f, 20.0f);
             me->SetUnitFlag(UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);
             me->DespawnOrUnsummon(Seconds(2));
             break;
