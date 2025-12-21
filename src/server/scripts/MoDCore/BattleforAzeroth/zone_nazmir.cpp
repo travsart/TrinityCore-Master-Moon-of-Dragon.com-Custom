@@ -22,6 +22,7 @@
 #include "ObjectMgr.h"
 #include "ScriptedGossip.h"
 #include "TemporarySummon.h"
+#include "MotionMaster.h"
 
 enum Quests
 {
