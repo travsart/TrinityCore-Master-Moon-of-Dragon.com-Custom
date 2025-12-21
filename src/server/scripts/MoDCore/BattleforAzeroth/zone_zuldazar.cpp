@@ -33,6 +33,7 @@
 #include "ObjectMgr.h"
 #include "CombatAI.h"
 #include "GameObject.h"
+#include "MotionMaster.h"
 
 enum ZuldazarQuests
 {
@@ -282,7 +283,7 @@ struct npc_soth_zolani : public EscortAI
             me->RemoveNpcFlag(UNIT_NPC_FLAG_GOSSIP);
             me->SetWalk(true);
             Talk(0);
-            me->GetMotionMaster()->MovePoint(1, Position(-1129.335f, 845.836f, 487.865f), true);
+            me->GetMotionMaster()->MovePoint(1, -1129.335f, 845.836f, 487.865f, true);
             player->GetScheduler().Schedule(27s, [this, player] (TaskContext /*context*/)
             {
                 player->KilledMonsterCredit(120169);
