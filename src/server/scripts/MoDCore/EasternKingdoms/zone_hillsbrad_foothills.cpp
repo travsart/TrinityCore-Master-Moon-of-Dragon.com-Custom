@@ -597,7 +597,7 @@ private:
         if (!charmer)
             return;
 
-        // Iterator über alle Positionen und Zauber ausführen
+        // Iterator Ã¼ber alle Positionen und Zauber ausfÃ¼hren
         for (uint8 i = 0; i < MAX_TARGET_POSITIONS; i++)
         {
             Position pos = LawnMowerPositions[i];
@@ -611,7 +611,7 @@ private:
             charmer->CastSpell(nullptr, SPELL_CREATE_SPITTER_TARGET, true);  // ggf. hier anpassen
         }
 
-        // Für leere Spots
+        // FÃ¼r leere Spots
         // for (uint8 i = 0; i < MAX_EMPTY_SPOT_POSITIONS; i++)
         // {
         //     Position pos = EmptySpotPositions[i];
