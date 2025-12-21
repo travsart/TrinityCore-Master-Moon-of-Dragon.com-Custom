@@ -23,7 +23,7 @@
 #include "ScriptedGossip.h"
 #include "TemporarySummon.h"
 #include "MotionMaster.h"
-
+#include "SpellAuraEffects.h"
 enum Quests
 {
     QUEST_TRAVELS_NAZMIR             = 47103,
