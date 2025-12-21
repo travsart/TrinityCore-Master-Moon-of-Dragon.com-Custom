@@ -57,9 +57,6 @@ enum CrowleysHorse
     NPC_LORNA_CROWLEY           = 36457,
 };
 
-Position const crowleysHorseJumpPos = { -1714.762f, 1673.16f, 20.49182f };
-Position const crowleysHorseJumpPos2 = { -1566.71f, 1708.04f, 20.4849f };
-
 class npc_crowleys_horse : public CreatureScript
 {
     public:
@@ -111,7 +108,7 @@ class npc_crowleys_horse : public CreatureScript
                     {
                         case EVENT_JUMP_OVER_BARRICADES_1:
                             me->SetControlled(false, UNIT_STATE_ROOT);
-                            me->GetMotionMaster()->MoveJump(0, Position(crowleysHorseJumpPos.GetPositionX(), crowleysHorseJumpPos.GetPositionY(), crowleysHorseJumpPos.GetPositionZ()), 16.0f, 18.56182f);
+                            me->GetMotionMaster()->MoveJump(0, -1714.762f, 1673.16f, 20.49182f), 16.0f, 18.56182f);
                             _events.ScheduleEvent(EVENT_MOVE_PATH_MAIN_1, Seconds(2));
                             break;
                         case EVENT_MOVE_PATH_MAIN_1:
@@ -119,7 +116,7 @@ class npc_crowleys_horse : public CreatureScript
                             _currentPath = PATH_ID_CROWLEYS_HORSE_1;
                             break;
                         case EVENT_JUMP_OVER_BARRICADES_2:
-                            me->GetMotionMaster()->MoveJump(0, Position(crowleysHorseJumpPos.GetPositionX(), crowleysHorseJumpPos.GetPositionY(), crowleysHorseJumpPos.GetPositionZ()), 16.0f, 18.56182f);
+                            me->GetMotionMaster()->MoveJump(0, -1566.71f, 1708.04f, 20.4849f), 16.0f, 18.56182f);
                             _events.ScheduleEvent(EVENT_MOVE_PATH_MAIN_2, Seconds(2));
                             break;
                         case EVENT_MOVE_PATH_MAIN_2:
