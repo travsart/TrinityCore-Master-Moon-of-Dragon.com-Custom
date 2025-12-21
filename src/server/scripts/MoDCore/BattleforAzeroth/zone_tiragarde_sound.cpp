@@ -34,6 +34,7 @@
 #include "SpellAuraEffects.h"
 #include "Spell.h"
 #include "SpellScript.h"
+#include "MotionMaster.h"
 
 enum eTiragardeQuests
 {
