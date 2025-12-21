@@ -35,6 +35,7 @@
 #include "Spell.h"
 #include "SpellScript.h"
 #include "MotionMaster.h"
+#include "Map.h"
 
 enum eTiragardeQuests
 {
