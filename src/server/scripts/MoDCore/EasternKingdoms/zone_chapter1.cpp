@@ -111,7 +111,7 @@ class npc_crowleys_horse : public CreatureScript
                     {
                         case EVENT_JUMP_OVER_BARRICADES_1:
                             me->SetControlled(false, UNIT_STATE_ROOT);
-                            me->GetMotionMaster()->MoveJump(crowleysHorseJumpPos, 16.0f, 18.56182f);
+                            me->GetMotionMaster()->MoveJump(0, Position(crowleysHorseJumpPos.GetPositionX(), crowleysHorseJumpPos.GetPositionY(), crowleysHorseJumpPos.GetPositionZ()), 16.0f, 18.56182f);
                             _events.ScheduleEvent(EVENT_MOVE_PATH_MAIN_1, Seconds(2));
                             break;
                         case EVENT_MOVE_PATH_MAIN_1:
@@ -119,7 +119,7 @@ class npc_crowleys_horse : public CreatureScript
                             _currentPath = PATH_ID_CROWLEYS_HORSE_1;
                             break;
                         case EVENT_JUMP_OVER_BARRICADES_2:
-                            me->GetMotionMaster()->MoveJump(crowleysHorseJumpPos2, 16.0f, 18.56182f);
+                            me->GetMotionMaster()->MoveJump(0, Position(crowleysHorseJumpPos.GetPositionX(), crowleysHorseJumpPos.GetPositionY(), crowleysHorseJumpPos.GetPositionZ()), 16.0f, 18.56182f);
                             _events.ScheduleEvent(EVENT_MOVE_PATH_MAIN_2, Seconds(2));
                             break;
                         case EVENT_MOVE_PATH_MAIN_2:
@@ -263,7 +263,15 @@ public:
 
     struct npc_mountain_horse_36555AI : public ScriptedAI
     {
-        npc_mountain_horse_36555AI(Creature* creature) : ScriptedAI(creature) { }
+        npc_mountain_horse_36555AI(Creature* creature)
+            : ScriptedAI(creature),
+            m_dist(0.0f),
+            m_angle(0.0f),
+            m_size(0.0f),
+            m_isLornaNear(false),
+            m_isPlayerMounted(false),
+            m_hasPlayerRope(false)
+        { }
 
         EventMap    m_events;
         ObjectGuid  m_playerGUID;
@@ -742,7 +750,7 @@ public:
                 else
                     me->GetMotionMaster()->MoveChase(me->GetVictim());
             }
-            else // If we have a target but our attack timer is still not ready, do regular attack
+            else
             {
                 tAttack -= diff;
                 DoMeleeAttackIfReady();
@@ -767,7 +775,18 @@ public:
 
     struct npc_worgen_runt_c1AI : public ScriptedAI
     {
-        npc_worgen_runt_c1AI(Creature* creature) : ScriptedAI(creature) {}
+        npc_worgen_runt_c1AI(Creature* creature)
+            : ScriptedAI(creature),
+            WaypointId(0),
+            willCastEnrage(0),
+            tEnrage(0),
+            CommonWPCount(0),
+            Run(false),
+            Loc1(false),
+            Loc2(false),
+            Jump(false),
+            Combat(false)
+        {}
 
         uint32 WaypointId, willCastEnrage, tEnrage, CommonWPCount;
         bool Run, Loc1, Loc2, Jump, Combat;
@@ -864,12 +883,12 @@ public:
             {
                 if (Loc1)
                 {
-                    me->GetMotionMaster()->MoveJump(Position(-1668.52f + irand(-3, 3), 1439.69f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
+                    me->GetMotionMaster()->MoveJump(0, Position(-1668.52f + irand(-3, 3), 1439.69f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
                     Loc1 = false;
                 }
                 else if (Loc2)
                 {
-                    me->GetMotionMaster()->MoveJump(Position(-1678.04f + irand(-3, 3), 1450.88f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
+                    me->GetMotionMaster()->MoveJump(0, Position(-1678.04f + irand(-3, 3), 1450.88f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
                     Loc2 = false;
                 }
 
@@ -896,7 +915,16 @@ public:
 
     struct npc_worgen_runt_c2AI : public ScriptedAI
     {
-        npc_worgen_runt_c2AI(Creature* creature) : ScriptedAI(creature) {}
+        npc_worgen_runt_c2AI(Creature* creature)
+            : ScriptedAI(creature),
+            WaypointId(0),           // Initialisierung hinzugefügt
+            willCastEnrage(0),
+            tEnrage(0),
+            CommonWPCount(0),
+            Run(false),
+            Jump(false),
+            Combat(false)
+        {}
 
         uint32 WaypointId, willCastEnrage, tEnrage, CommonWPCount;
         bool Run, Loc1, Loc2, Jump, Combat;
@@ -993,12 +1021,12 @@ public:
             {
                 if (Loc1)
                 {
-                    me->GetMotionMaster()->MoveJump(Position(-1685.521f + irand(-3, 3), 1458.48f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
+                    me->GetMotionMaster()->MoveJump(0, Position(-1685.521f + irand(-3, 3), 1458.48f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
                     Loc1 = false;
                 }
                 else if (Loc2)
                 {
-                    me->GetMotionMaster()->MoveJump(Position(-1681.81f + irand(-3, 3), 1445.54f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
+                    me->GetMotionMaster()->MoveJump(0, Position(-1681.81f + irand(-3, 3), 1445.54f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
                     Loc2 = false;
                 }
 
@@ -1025,7 +1053,16 @@ public:
 
     struct npc_worgen_alpha_c1AI : public ScriptedAI
     {
-        npc_worgen_alpha_c1AI(Creature* creature) : ScriptedAI(creature) {}
+        npc_worgen_alpha_c1AI(Creature* creature)
+            : ScriptedAI(creature),
+            WaypointId(0),           // Initialisierung hinzugefügt
+            willCastEnrage(0),
+            tEnrage(0),
+            CommonWPCount(0),
+            Run(false),
+            Jump(false),
+            Combat(false)
+        { }
 
         uint32 WaypointId, willCastEnrage, tEnrage, CommonWPCount;
         bool Run, Loc1, Loc2, Jump, Combat;
@@ -1122,12 +1159,12 @@ public:
             {
                 if (Loc1)
                 {
-                    me->GetMotionMaster()->MoveJump(Position(-1668.52f + irand(-3, 3), 1439.69f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
+                    me->GetMotionMaster()->MoveJump(0, Position(-1668.52f + irand(-3, 3), 1439.69f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
                     Loc1 = false;
                 }
                 else if (Loc2)
                 {
-                    me->GetMotionMaster()->MoveJump(Position(-1660.17f + irand(-3, 3), 1429.55f + irand(-3, 3), PLATFORM_Z), 22.0f, 20.0f);
+                    me->GetMotionMaster()->MoveJump(0, Position(-1660.17f + irand(-3, 3), 1429.55f + irand(-3, 3), PLATFORM_Z), 22.0f, 20.0f);
                     Loc2 = false;
                 }
 
@@ -1154,7 +1191,16 @@ public:
 
     struct npc_worgen_alpha_c2AI : public ScriptedAI
     {
-        npc_worgen_alpha_c2AI(Creature* creature) : ScriptedAI(creature) {}
+        npc_worgen_alpha_c2AI(Creature* creature)
+            : ScriptedAI(creature),
+            WaypointId(0),
+            willCastEnrage(0),
+            tEnrage(0),
+            CommonWPCount(0),
+            Run(false),
+            Jump(false),
+            Combat(false)
+        {}
 
         uint32 WaypointId, willCastEnrage, tEnrage, CommonWPCount;
         bool Run, Jump, Combat;
@@ -1228,7 +1274,7 @@ public:
 
             if (WaypointId >= CommonWPCount) // If we have reached the last waypoint
             {
-                me->GetMotionMaster()->MoveJump(Position(-1685.52f + irand(-3, 3), 1458.48f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
+                me->GetMotionMaster()->MoveJump(0, Position(-1685.52f + irand(-3, 3), 1458.48f + irand(-3, 3), PLATFORM_Z), 20.0f, 22.0f);
                 Run = false; // Stop running
                 Jump = true; // Time to Jump
             }

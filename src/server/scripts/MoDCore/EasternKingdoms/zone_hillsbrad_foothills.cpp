@@ -597,7 +597,7 @@ private:
         if (!charmer)
             return;
 
-        // Iterator Ã¼ber alle Positionen und Zauber ausfÃ¼hren
+        // Iterator über alle Positionen und Zauber ausführen
         for (uint8 i = 0; i < MAX_TARGET_POSITIONS; i++)
         {
             Position pos = LawnMowerPositions[i];
@@ -611,7 +611,7 @@ private:
             charmer->CastSpell(nullptr, SPELL_CREATE_SPITTER_TARGET, true);  // ggf. hier anpassen
         }
 
-        // FÃ¼r leere Spots
+        // Für leere Spots
         // for (uint8 i = 0; i < MAX_EMPTY_SPOT_POSITIONS; i++)
         // {
         //     Position pos = EmptySpotPositions[i];
@@ -1153,12 +1153,12 @@ struct npc_brazie_vehicle_notifier : public ScriptedAI
         case SPELL_GAIN_SOLAR_POWER_SPELLCLICK:
             if (Unit* vehicle = caster->ToUnit()->GetVehicleCreatureBase())
                 DoCast(vehicle, SPELL_GAIN_SOLAR_POWER_ENERGIZE, true);
-            me->GetMotionMaster()->MoveJump(SolarPowerJumpPos, 45.0f, 20.0f);
+            me->GetMotionMaster()->MoveJump(0, Position(SolarPowerJumpPos.GetPositionX(), SolarPowerJumpPos.GetPositionY(), SolarPowerJumpPos.GetPositionZ()), 45.0f, 20.0f);
             me->SetUnitFlag(UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);
             me->DespawnOrUnsummon(Seconds(2));
             break;
         case SPELL_GET_FREEZYA_SEEDS:
-            me->GetMotionMaster()->MoveJump(FreezyaSeedJumpPos, 45.0f, 20.0f);
+            me->GetMotionMaster()->MoveJump(0, Position(SolarPowerJumpPos.GetPositionX(), SolarPowerJumpPos.GetPositionY(), SolarPowerJumpPos.GetPositionZ()), 45.0f, 20.0f);
             me->SetUnitFlag(UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);
             me->DespawnOrUnsummon(Seconds(2));
             break;
