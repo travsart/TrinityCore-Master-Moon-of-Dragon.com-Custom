@@ -19,6 +19,7 @@
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
 #include "ScriptedCreature.h"
+#include "Player.h"
 #include "DarkmoonIsland.h"
 
 enum eSpells
