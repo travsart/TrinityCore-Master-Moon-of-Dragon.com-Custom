@@ -1,4 +1,4 @@
-#include "ScriptMgr.h"
+/*#include "ScriptMgr.h"
 #include "SpellScript.h"
 #include "ScriptedCreature.h"
 #include "Player.h"
@@ -29,18 +29,22 @@ class spell_potion_of_shrouding : public SpellScript
             // Spieler nah genug an beiden Positionen?
             if (player->IsWithinDist2d(helixX, helixY, 3.0f) && player->IsWithinDist2d(shadowyX, shadowyY, 3.0f))
             {
-                Creature* helix = player->SummonCreature(npcHelix, helixX, helixY, helixZ, helixO);
-                Creature* shadowy = player->SummonCreature(npcShadowy, shadowyX, shadowyY, shadowyZ, shadowyO);
+                TempSummon* helix = player->SummonCreature(npcHelix, helixX, helixY, helixZ, helixO);
+                TempSummon* shadowy = player->SummonCreature(npcShadowy, shadowyX, shadowyY, shadowyZ, shadowyO);
 
-                if (helix)
-                    helix->AI()->Talk(0); // sofort
+                Creature* helixCreature = helix;
+                Creature* shadowyCreature = shadowy;
 
-                if (shadowy)
+
+                if (helixCreature)
+                    helixCreature->AI()->Talk(0); // sofort
+
+                if (shadowyCreature)
                 {
-                    shadowy->AddDelayedEvent(6000, [shadowy]()
+                    shadowyCreature->AddDelayedEvent(6000, [shadowyCreature]()
                         {
-                            if (shadowy)
-                                shadowy->AI()->Talk(0); // nach 6 Sekunden
+                            if (shadowyCreature)
+                                shadowyCreature->AI()->Talk(0); // nach 6 Sekunden
                         });
                 }
             }
@@ -57,3 +61,4 @@ void AddSC_custom_spell_scripts()
 {
     new spell_potion_of_shrouding();
 }
+*/
