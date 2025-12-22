@@ -1,3 +1,4 @@
+#include "ChatCommand.h"
 #include "ScriptMgr.h"
 #include "Chat.h"
 #include "Config.h"
@@ -51,7 +52,7 @@ public:
         if (!player)
             return false;
 
-        // Konfiguration prÃ¼fen
+        // Konfiguration prüfen
         if (!sConfigMgr->GetBoolDefault("BuffCommand.Enable", true))
         {
             handler->PSendSysMessage("The buff command is currently disabled.");
@@ -65,7 +66,7 @@ public:
             return false;
         }
 
-        // Bedingungen prÃ¼fen
+        // Bedingungen prüfen
         if (!player->IsAlive())
         {
             handler->PSendSysMessage("You cannot use this command while dead.");
@@ -113,7 +114,7 @@ public:
             return false;
         }
 
-        // Buff-Liste prÃ¼fen und ggf. laden
+        // Buff-Liste prüfen und ggf. laden
         if (BuffStore.empty())
         {
             if (!BuffsLoadedOnce)
