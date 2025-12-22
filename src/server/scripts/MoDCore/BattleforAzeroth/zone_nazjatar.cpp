@@ -5,9 +5,11 @@
 #include "Creature.h"
 #include "CreatureAI.h"
 #include "ScriptedGossip.h"
+#include "ScriptedCreature.h"
 #include "GameObject.h"
 #include "GameObjectAI.h"
 #include "ObjectMgr.h"
+#include "Player.h"
 
 //TODO: DB work
 
