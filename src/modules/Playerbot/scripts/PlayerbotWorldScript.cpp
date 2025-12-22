@@ -361,6 +361,10 @@ void AddSC_PlayerbotGroupScripts();
 // Forward declaration for LFG bot integration scripts
 namespace Playerbot { void AddSC_PlayerbotLFGScript(); }
 
+// Forward declaration for Dragonriding system scripts
+void AddSC_playerbot_dragonriding();
+void AddSC_playerbot_dragonriding_glyphs();
+
 // Script registration function
 void AddSC_playerbot_world()
 {
@@ -378,5 +382,9 @@ void AddSC_playerbot_world()
 
     // LFG Bot Integration: Register LFG polling scripts (module-only, no core hooks)
     Playerbot::AddSC_PlayerbotLFGScript();
+
+    // Dragonriding System: Register Soar, boost abilities, and glyph collection scripts
+    AddSC_playerbot_dragonriding();
+    AddSC_playerbot_dragonriding_glyphs();
     #endif
 }

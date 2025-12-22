@@ -930,6 +930,15 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGGroupCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGGroupCoordinator.h
+
+    # Dragonriding System - Dracthyr Soar and Dragonriding Physics
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingDefines.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/PlayerbotDragonridingScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/PlayerbotDragonridingGlyphScript.cpp
 )
 
 # Group sources for IDE organization
@@ -1504,6 +1513,16 @@ source_group("Tests" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Tests/QuestHubDatabaseTest.h
 )
 
+source_group("Dragonriding" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingDefines.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/PlayerbotDragonridingScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/PlayerbotDragonridingGlyphScript.cpp
+)
+
 # Create the playerbot library
 add_library(playerbot ${PLAYERBOT_SOURCES})
 
@@ -1541,6 +1560,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/LFG
         ${CMAKE_CURRENT_SOURCE_DIR}/PvP
         ${CMAKE_CURRENT_SOURCE_DIR}/Packets
+        ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding
         ${CMAKE_SOURCE_DIR}/src/modules/Common
         ${MYSQL_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle

@@ -282,3 +282,84 @@ Playerbot.GameSystems.Performance.MaxMemoryMB = 2
 #
 
 Playerbot.GameSystems.Performance.CacheLifetime = 300
+
+###################################################################################################
+# DRAGONRIDING SYSTEM CONFIGURATION
+#
+# Dracthyr Soar ability and dragonriding physics for bots and players
+# This system implements 100% retail-accurate progression with Dragon Glyphs
+#
+# Reference: https://www.icy-veins.com/wow/dragonriding-talents-guide-for-world-of-warcraft-dragonflight
+###################################################################################################
+
+#
+#    Playerbot.GameSystems.Dragonriding.Enable
+#        Description: Enable dragonriding/Soar system for all players
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Dragonriding.Enable = 1
+
+#
+#    Playerbot.GameSystems.Dragonriding.ProgressionEnabled
+#        Description: Enable retail-accurate progression system
+#        Values:      1 - Players must collect glyphs and spend talents (retail-accurate)
+#                     0 - All players get max upgrades immediately (testing/convenience)
+#        Default:     1 (retail-accurate progression)
+#
+
+Playerbot.GameSystems.Dragonriding.ProgressionEnabled = 1
+
+#
+#    Playerbot.GameSystems.Dragonriding.StartingGlyphs
+#        Description: Number of glyphs new accounts start with (for convenience)
+#        Retail:      0 (must collect all)
+#        Default:     0 (retail-accurate)
+#
+
+Playerbot.GameSystems.Dragonriding.StartingGlyphs = 0
+
+#
+#    Playerbot.GameSystems.Dragonriding.Bot.AutoBoost
+#        Description: Allow bots to automatically use boost abilities when dragonriding
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Dragonriding.Bot.AutoBoost = 1
+
+#
+#    Playerbot.GameSystems.Dragonriding.ThrillSpeedThreshold
+#        Description: Minimum speed % to trigger "Thrill of the Skies" fast regen
+#        Retail:      approximately 70% of max velocity
+#        Default:     70
+#
+
+Playerbot.GameSystems.Dragonriding.ThrillSpeedThreshold = 70
+
+#
+#    Playerbot.GameSystems.Dragonriding.GroundSkimHeight
+#        Description: Maximum height (yards) above ground to trigger Ground Skimming regen
+#        Retail:      approximately 10 yards
+#        Default:     10.0
+#
+
+Playerbot.GameSystems.Dragonriding.GroundSkimHeight = 10.0
+
+#
+#    Playerbot.GameSystems.Dragonriding.UpdateInterval
+#        Description: How often to update dragonriding state (milliseconds)
+#        Default:     250 (4 times per second)
+#        Range:       100-1000
+#        Note:        Lower values provide smoother flight but use more CPU
+#
+
+Playerbot.GameSystems.Dragonriding.UpdateInterval = 250
+
+#
+#    Playerbot.GameSystems.Dragonriding.GlyphCheckInterval
+#        Description: How often to check for nearby glyphs (milliseconds)
+#        Default:     500 (twice per second)
+#        Range:       250-2000
+#
+
+Playerbot.GameSystems.Dragonriding.GlyphCheckInterval = 500
