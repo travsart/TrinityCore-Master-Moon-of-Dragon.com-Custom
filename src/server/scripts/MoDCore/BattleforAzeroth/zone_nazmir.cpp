@@ -22,6 +22,7 @@
 #include "Player.h"
 #include "ObjectMgr.h"
 #include "ScriptedGossip.h"
+#include "ScriptMgr.h"
 #include "TemporarySummon.h"
 #include "MotionMaster.h"
 #include "SpellAuraEffects.h"
