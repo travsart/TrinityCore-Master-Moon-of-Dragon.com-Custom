@@ -23,6 +23,7 @@
 #include "GridNotifiersImpl.h"
 #include "SpellScript.h"
 #include "SpellAuras.h"
+#include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "MotionMaster.h"
 #include <G3D/Quat.h>
