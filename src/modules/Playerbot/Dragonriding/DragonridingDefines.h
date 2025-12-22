@@ -39,6 +39,15 @@ constexpr uint32 SPELL_THRILL_OF_THE_SKIES = 900008;  // High-speed flying regen
 constexpr uint32 SPELL_GROUND_SKIMMING = 900009;      // Near-ground flying regen buff
 
 // ============================================================================
+// ACTION BAR OVERRIDE
+// Used to swap the action bar to dragonriding abilities when Soar activates
+// ============================================================================
+
+// Custom OverrideSpellData ID (matches hotfix entry in override_spell_data)
+// This must be added to the hotfixes.override_spell_data table
+constexpr uint32 OVERRIDE_SPELL_DATA_DRAGONRIDING = 900001;
+
+// ============================================================================
 // FLIGHT CAPABILITY IDS
 // From FlightCapability.db2 - these activate dragonriding physics
 // ============================================================================

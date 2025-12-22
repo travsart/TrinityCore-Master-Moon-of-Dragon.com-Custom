@@ -162,7 +162,23 @@ class spell_playerbot_soar : public SpellScript
                 caster->GetName(), maxVigor);
         }
 
-        TC_LOG_INFO("playerbot.dragonriding", "Player {} activated Soar with {} vigor (account {})",
+        // Activate action bar override to show dragonriding abilities
+        // This uses the OverrideSpellData system to swap the action bar
+        caster->SetOverrideSpellsId(OVERRIDE_SPELL_DATA_DRAGONRIDING);
+
+        // Add temporary spells so they can be cast
+        // Base abilities (always available during dragonriding)
+        caster->AddTemporarySpell(SPELL_SURGE_FORWARD);
+        caster->AddTemporarySpell(SPELL_SKYWARD_ASCENT);
+
+        // Talent-locked abilities (only add if talent learned)
+        if (sDragonridingMgr->HasWhirlingSurge(accountId))
+            caster->AddTemporarySpell(SPELL_WHIRLING_SURGE);
+
+        if (sDragonridingMgr->HasAerialHalt(accountId))
+            caster->AddTemporarySpell(SPELL_AERIAL_HALT);
+
+        TC_LOG_INFO("playerbot.dragonriding", "Player {} activated Soar with {} vigor (account {}), action bar swapped",
             caster->GetName(), maxVigor, accountId);
     }
 
@@ -197,7 +213,16 @@ class spell_playerbot_soar_aura : public AuraScript
         target->RemoveAura(SPELL_THRILL_OF_THE_SKIES);
         target->RemoveAura(SPELL_GROUND_SKIMMING);
 
-        TC_LOG_DEBUG("playerbot.dragonriding", "Soar ended for player {}, dragonriding disabled",
+        // Remove action bar override and restore normal action bar
+        target->SetOverrideSpellsId(0);
+
+        // Remove temporary dragonriding spells
+        target->RemoveTemporarySpell(SPELL_SURGE_FORWARD);
+        target->RemoveTemporarySpell(SPELL_SKYWARD_ASCENT);
+        target->RemoveTemporarySpell(SPELL_WHIRLING_SURGE);
+        target->RemoveTemporarySpell(SPELL_AERIAL_HALT);
+
+        TC_LOG_DEBUG("playerbot.dragonriding", "Soar ended for player {}, dragonriding disabled, action bar restored",
             target->GetName());
     }
 

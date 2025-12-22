@@ -130,6 +130,13 @@ void DoubleBufferedSpatialGrid::Update() const
 
 void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
 {
+    // CRITICAL SAFETY CHECK: Verify map pointer is still valid
+    if (!_map)
+    {
+        TC_LOG_ERROR("playerbot.spatial", "PopulateBufferFromMap called with null map pointer!");
+        return;
+    }
+
     auto start = ::std::chrono::high_resolution_clock::now();
 
     auto& writeBuffer = GetWriteBuffer();
@@ -148,21 +155,36 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
     // ===========================================================================
     // CRITICAL THREAD-SAFETY FIX: Copy creature DATA, not just GUIDs!
     // ===========================================================================
-    // OLD APPROACH (UNSAFE): Store GUIDs ? Worker threads call ObjectAccessor::GetUnit()
-    //                        ? Accesses Map::_objectsStore (NOT THREAD-SAFE!) ? DEADLOCK!
+    // OLD APPROACH (UNSAFE): Store GUIDs → Worker threads call ObjectAccessor::GetUnit()
+    //                        → Accesses Map::_objectsStore (NOT THREAD-SAFE!) → DEADLOCK!
     //
-    // NEW APPROACH (SAFE):   Store complete data snapshots ? Worker threads read snapshots
-    //                        ? ZERO Map access from worker threads ? NO DEADLOCKS!
+    // NEW APPROACH (SAFE):   Store complete data snapshots → Worker threads read snapshots
+    //                        → ZERO Map access from worker threads → NO DEADLOCKS!
     // ===========================================================================
 
-    // Iterate all creatures on this map
-    // IMPORTANT: This runs on main thread (or from Map::Update), so Map access is safe HERE
-    auto const& creatures = _map->GetCreatureBySpawnIdStore();
-    for (auto const& pair : creatures)
+    // CRASH FIX: Copy creature pointers to a local vector first to avoid iterator invalidation
+    // The map's internal store can be modified by other threads, so we need a snapshot
+    try
     {
-        Creature* creature = pair.second;
-        if (!creature || !creature->IsInWorld())
-            continue;
+        auto const& creatures = _map->GetCreatureBySpawnIdStore();
+
+        // First pass: collect valid creature pointers into a local container
+        ::std::vector<Creature*> creatureSnapshot;
+        creatureSnapshot.reserve(creatures.size());
+
+        for (auto const& pair : creatures)
+        {
+            Creature* creature = pair.second;
+            if (creature)
+                creatureSnapshot.push_back(creature);
+        }
+
+        // Second pass: process creatures from local snapshot (iterator-safe)
+        for (Creature* creature : creatureSnapshot)
+        {
+            // Double-check validity since creature could have been destroyed
+            if (!creature || !creature->IsInWorld())
+                continue;
 
         // ===== ENTERPRISE-GRADE: COMPLETE CreatureSnapshot Population =====
         // OPTION C: All 60+ fields populated using correct TrinityCore API methods
@@ -283,7 +305,20 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
                 writeBuffer.cells[x][y].creatures.push_back(::std::move(snapshot));
                 ++creatureCount;
             }
+            }
         }
+    }
+    catch (std::exception const& ex)
+    {
+        TC_LOG_ERROR("playerbot.spatial",
+            "Exception during creature iteration for map {}: {}",
+            _map ? _map->GetId() : 0, ex.what());
+    }
+    catch (...)
+    {
+        TC_LOG_ERROR("playerbot.spatial",
+            "Unknown exception during creature iteration for map {}",
+            _map ? _map->GetId() : 0);
     }
 
     // Iterate all players on this map
