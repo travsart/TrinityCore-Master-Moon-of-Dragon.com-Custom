@@ -1,6 +1,7 @@
 #include "ScriptMgr.h"
 #include "World.h"
 #include "Config.h"
+#include "Log.h"
 #include <ctime>
 #include <string>
 
@@ -63,7 +64,7 @@ public:
         }
         else
         {
-            alreadyExecuted = false; // Reset fÃ¼r den nÃ¤chsten Tag
+            alreadyExecuted = false; // Reset für den nächsten Tag
         }
     }
 
