@@ -24,6 +24,9 @@
 #include "TemporarySummon.h"
 #include "MotionMaster.h"
 #include "SpellAuraEffects.h"
+#include "Spell.h"
+#include "SpellScript.h"
+
 enum Quests
 {
     QUEST_TRAVELS_NAZMIR             = 47103,
