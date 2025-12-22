@@ -6,6 +6,7 @@
 #include "GameTime.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "Map.h"
 #include <unordered_map>
 #include <vector>
 
