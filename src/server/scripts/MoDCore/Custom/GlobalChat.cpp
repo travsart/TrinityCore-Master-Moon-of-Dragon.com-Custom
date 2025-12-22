@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "Player.h"
 #include "World.h"
+#include "WorldSession.h"
 #include <unordered_map>
 #include <string>
 #include "ChatCommand.h"
