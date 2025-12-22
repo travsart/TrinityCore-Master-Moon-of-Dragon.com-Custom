@@ -16,6 +16,7 @@
  */
 
 #include "ScriptedCreature.h"
+#include "ObjectAccessor.h"
 #include "Conversation.h"
 #include "Creature.h"
 #include "Player.h"
@@ -201,8 +202,6 @@ struct npc_pterrodax_143701 : public ScriptedAI
 //257255
 class spell_play_chapter_1 : public AuraScript
 {
-    PrepareAuraScript(spell_play_chapter_1);
-
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Unit* caster = GetCaster();
