@@ -7,6 +7,7 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "Map.h"
+#include "DatabaseEnv.h"
 #include <unordered_map>
 #include <vector>
 
