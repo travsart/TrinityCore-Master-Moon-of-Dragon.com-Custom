@@ -14,7 +14,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
+ 
+#include "DBCStores.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
@@ -132,8 +133,8 @@ class npc_darkmoon_canon_target : public CreatureScript
                     {
                         if (AchievementEntry const* achievementEntry = sAchievementStore.LookupEntry(ACHIEVEMENT_BLASTENHEIMER_BULLSEYE))
                             player->CompletedAchievement(achievementEntry);
-                        me->AddAura(SPELL_TARGET_CENTER, player);
-                        creditCount = 5;
+                            me->AddAura(SPELL_TARGET_CENTER, player);
+                            creditCount = 5;
                     }
                     else if (dist <= 10.0f)
                     {
