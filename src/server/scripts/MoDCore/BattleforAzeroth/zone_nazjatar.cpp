@@ -9,6 +9,7 @@
 #include "GameObject.h"
 #include "GameObjectAI.h"
 #include "ObjectMgr.h"
+#include "MotionMaster.h"
 #include "Player.h"
 
 //TODO: DB work
