@@ -52,7 +52,7 @@ public:
         if (!player)
             return false;
 
-        // Konfiguration prüfen
+        // Konfiguration prÃ¼fen
         if (!sConfigMgr->GetBoolDefault("BuffCommand.Enable", true))
         {
             handler->PSendSysMessage("The buff command is currently disabled.");
@@ -66,7 +66,7 @@ public:
             return false;
         }
 
-        // Bedingungen prüfen
+        // Bedingungen prÃ¼fen
         if (!player->IsAlive())
         {
             handler->PSendSysMessage("You cannot use this command while dead.");
@@ -114,7 +114,7 @@ public:
             return false;
         }
 
-        // Buff-Liste prüfen und ggf. laden
+        // Buff-Liste prÃ¼fen und ggf. laden
         if (BuffStore.empty())
         {
             if (!BuffsLoadedOnce)
