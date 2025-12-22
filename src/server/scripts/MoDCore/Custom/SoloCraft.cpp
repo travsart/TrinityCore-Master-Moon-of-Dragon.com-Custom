@@ -9,6 +9,7 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Unit.h"
+#include "DatabaseEnv.h"
 #include <cstdint>
 #include <iostream>
 #include <map>
