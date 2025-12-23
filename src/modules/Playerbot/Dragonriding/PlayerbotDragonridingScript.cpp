@@ -25,6 +25,7 @@
 #include "DragonridingDefines.h"
 #include "DragonridingMgr.h"
 #include "DB2Stores.h"
+#include "DB2Structure.h"
 #include "Log.h"
 #include "Map.h"
 #include "Player.h"
@@ -117,14 +118,19 @@ class spell_playerbot_soar : public SpellScript
         if (!caster)
             return;
 
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR SPELL SCRIPT TRIGGERED for player {}", caster->GetName());
+
         uint32 accountId = GetAccountId(caster);
         if (accountId == 0)
+        {
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Account ID is 0, aborting Soar");
             return;
+        }
 
         // Check if DragonridingMgr is initialized
         if (!sDragonridingMgr->IsInitialized())
         {
-            TC_LOG_WARN("playerbot.dragonriding", "DragonridingMgr not initialized, Soar cast failed for player {}",
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> DragonridingMgr not initialized, Soar cast failed for player {}",
                 caster->GetName());
             return;
         }
@@ -134,14 +140,14 @@ class spell_playerbot_soar : public SpellScript
         if (flightCap)
         {
             caster->SetFlightCapabilityID(flightCap->ID, true);
-            TC_LOG_DEBUG("playerbot.dragonriding", "Soar activated for player {} (account {}), FlightCapability {}",
-                caster->GetName(), accountId, flightCap->ID);
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: FlightCapability set to {} for player {}",
+                flightCap->ID, caster->GetName());
         }
         else
         {
             // Fallback to ID 1 if lookup fails
             caster->SetFlightCapabilityID(FLIGHT_CAPABILITY_SOAR, true);
-            TC_LOG_WARN("playerbot.dragonriding", "FlightCapability lookup failed, using default ID {} for player {}",
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: FlightCapability lookup failed, using default ID {} for player {}",
                 FLIGHT_CAPABILITY_SOAR, caster->GetName());
         }
 
@@ -158,18 +164,41 @@ class spell_playerbot_soar : public SpellScript
         if (Aura* vigorAura = caster->GetAura(SPELL_VIGOR_BUFF))
         {
             vigorAura->SetStackAmount(maxVigor);
-            TC_LOG_DEBUG("playerbot.dragonriding", "Vigor granted to player {}: {} stacks (max based on talents)",
-                caster->GetName(), maxVigor);
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Vigor granted {} stacks for player {}",
+                maxVigor, caster->GetName());
         }
 
-        // Activate action bar override to show dragonriding abilities
-        // This uses the OverrideSpellData system to swap the action bar
-        caster->SetOverrideSpellsId(OVERRIDE_SPELL_DATA_DRAGONRIDING);
-
-        // Add temporary spells so they can be cast
+        // Add temporary spells so they can be cast (also added to spellbook)
         // Base abilities (always available during dragonriding)
         caster->AddTemporarySpell(SPELL_SURGE_FORWARD);
         caster->AddTemporarySpell(SPELL_SKYWARD_ASCENT);
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Added temporary spells {} and {}",
+            SPELL_SURGE_FORWARD, SPELL_SKYWARD_ASCENT);
+
+        // Swap action bar to dragonriding abilities
+        // Requires hotfix entries in sql/hotfixes/dragonriding_complete_spells.sql:
+        // - spell_name entries for 900001-900009
+        // - spell_misc entries for 900001-900009
+        // - override_spell_data entry for 900001
+        // - hotfix_data entries for all above (TableHashes: 1187407512, 3322146344, 3396722460)
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Setting OverrideSpellsId to {} for player {}",
+            OVERRIDE_SPELL_DATA_DRAGONRIDING, caster->GetName());
+        caster->SetOverrideSpellsId(OVERRIDE_SPELL_DATA_DRAGONRIDING);
+
+        // Check if the OverrideSpellData exists in the store
+        if (OverrideSpellDataEntry const* overrideSpells = sOverrideSpellDataStore.LookupEntry(OVERRIDE_SPELL_DATA_DRAGONRIDING))
+        {
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: OverrideSpellData {} FOUND! Spells: {}, {}, {}, {}",
+                OVERRIDE_SPELL_DATA_DRAGONRIDING,
+                overrideSpells->Spells[0], overrideSpells->Spells[1],
+                overrideSpells->Spells[2], overrideSpells->Spells[3]);
+        }
+        else
+        {
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: OverrideSpellData {} NOT FOUND in DB2 store! "
+                "Make sure to import sql/hotfixes/dragonriding_complete_spells.sql and RESTART the server!",
+                OVERRIDE_SPELL_DATA_DRAGONRIDING);
+        }
 
         // Talent-locked abilities (only add if talent learned)
         if (sDragonridingMgr->HasWhirlingSurge(accountId))
@@ -178,8 +207,8 @@ class spell_playerbot_soar : public SpellScript
         if (sDragonridingMgr->HasAerialHalt(accountId))
             caster->AddTemporarySpell(SPELL_AERIAL_HALT);
 
-        TC_LOG_INFO("playerbot.dragonriding", "Player {} activated Soar with {} vigor (account {}), action bar swapped",
-            caster->GetName(), maxVigor, accountId);
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: COMPLETE - Player {} activated Soar with {} vigor, OverrideSpellsId={}",
+            caster->GetName(), maxVigor, OVERRIDE_SPELL_DATA_DRAGONRIDING);
     }
 
     void Register() override
@@ -197,12 +226,20 @@ class spell_playerbot_soar_aura : public AuraScript
 {
     void HandleAfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL TRIGGERED");
+
         Player* target = GetTarget()->ToPlayer();
         if (!target)
+        {
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL: Target is not a player!");
             return;
+        }
+
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL: Cleaning up for player {}", target->GetName());
 
         // Disable dragonriding physics
         target->SetFlightCapabilityID(FLIGHT_CAPABILITY_NORMAL, true);
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL: FlightCapability reset to normal");
 
         // Remove vigor buff
         target->RemoveAura(SPELL_VIGOR_BUFF);
@@ -213,23 +250,23 @@ class spell_playerbot_soar_aura : public AuraScript
         target->RemoveAura(SPELL_THRILL_OF_THE_SKIES);
         target->RemoveAura(SPELL_GROUND_SKIMMING);
 
-        // Remove action bar override and restore normal action bar
-        target->SetOverrideSpellsId(0);
-
         // Remove temporary dragonriding spells
         target->RemoveTemporarySpell(SPELL_SURGE_FORWARD);
         target->RemoveTemporarySpell(SPELL_SKYWARD_ASCENT);
         target->RemoveTemporarySpell(SPELL_WHIRLING_SURGE);
         target->RemoveTemporarySpell(SPELL_AERIAL_HALT);
 
-        TC_LOG_DEBUG("playerbot.dragonriding", "Soar ended for player {}, dragonriding disabled, action bar restored",
-            target->GetName());
+        // Reset action bar to normal
+        target->SetOverrideSpellsId(0);
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL: OverrideSpellsId reset to 0, action bar restored");
+
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL COMPLETE for player {}", target->GetName());
     }
 
     void Register() override
     {
-        // Hook into aura removal to clean up
-        AfterEffectRemove += AuraEffectRemoveFn(spell_playerbot_soar_aura::HandleAfterRemove, EFFECT_0, SPELL_AURA_FLY, AURA_EFFECT_HANDLE_REAL);
+        // Hook into aura removal to clean up - use SPELL_AURA_ANY to match whatever aura type Soar uses
+        AfterEffectRemove += AuraEffectRemoveFn(spell_playerbot_soar_aura::HandleAfterRemove, EFFECT_0, SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -735,5 +772,20 @@ void AddSC_playerbot_dragonriding()
     RegisterSpellScript(spell_playerbot_whirling_surge);
     RegisterSpellScript(spell_playerbot_aerial_halt);
 
-    TC_LOG_INFO("playerbot.dragonriding", ">> Registered Playerbot Dragonriding SpellScripts");
+    TC_LOG_ERROR("server.loading", ">>> PLAYERBOT DRAGONRIDING: SpellScripts registered for Soar (369536) and boost abilities (900001-900005)");
+
+    // Check if OverrideSpellData is loaded
+    if (OverrideSpellDataEntry const* overrideSpells = sOverrideSpellDataStore.LookupEntry(OVERRIDE_SPELL_DATA_DRAGONRIDING))
+    {
+        TC_LOG_ERROR("server.loading", ">>> PLAYERBOT DRAGONRIDING: OverrideSpellData {} LOADED! Spells: {}, {}, {}, {}",
+            OVERRIDE_SPELL_DATA_DRAGONRIDING,
+            overrideSpells->Spells[0], overrideSpells->Spells[1],
+            overrideSpells->Spells[2], overrideSpells->Spells[3]);
+    }
+    else
+    {
+        TC_LOG_ERROR("server.loading", ">>> PLAYERBOT DRAGONRIDING: OverrideSpellData {} NOT IN DB2 STORE! "
+            "Import sql/hotfixes/dragonriding_complete_spells.sql into hotfixes database and restart!",
+            OVERRIDE_SPELL_DATA_DRAGONRIDING);
+    }
 }

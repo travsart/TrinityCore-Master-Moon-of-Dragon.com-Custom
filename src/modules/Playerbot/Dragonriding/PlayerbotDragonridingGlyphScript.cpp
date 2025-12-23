@@ -171,6 +171,30 @@ public:
 };
 
 // ============================================================================
+// DRAGONRIDING MANAGER INITIALIZER
+// Initializes DragonridingMgr on server startup (MUST run first!)
+// ============================================================================
+
+class DragonridingInitializer : public WorldScript
+{
+public:
+    DragonridingInitializer() : WorldScript("playerbot_dragonriding_initializer") { }
+
+    void OnStartup() override
+    {
+        TC_LOG_INFO("playerbot.dragonriding", ">> Initializing DragonridingMgr...");
+
+        if (!sDragonridingMgr->Initialize())
+        {
+            TC_LOG_ERROR("playerbot.dragonriding", "DragonridingMgr: Failed to initialize!");
+            return;
+        }
+
+        TC_LOG_INFO("playerbot.dragonriding", ">> DragonridingMgr initialized successfully");
+    }
+};
+
+// ============================================================================
 // GLYPH SPAWN MANAGER
 // Manages visual representation of glyph locations
 // ============================================================================
@@ -402,6 +426,9 @@ public:
 
 void AddSC_playerbot_dragonriding_glyphs()
 {
+    // MUST be registered first to initialize DragonridingMgr before other scripts use it
+    new DragonridingInitializer();
+
     // Glyph collection
     new GlyphProximityChecker();
     new PlayerGlyphZoneScript();
