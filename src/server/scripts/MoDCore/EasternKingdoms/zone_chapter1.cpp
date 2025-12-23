@@ -30,6 +30,7 @@
 #include "SpellScript.h"
 #include "TemporarySummon.h"
 #include "Vehicle.h"
+#include "Position.h"
 
 /*######
 ## Quest 14212 - Sacrifices
