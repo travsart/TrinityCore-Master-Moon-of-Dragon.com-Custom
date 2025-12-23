@@ -23,13 +23,14 @@
 SET @BUILD := 58941;
 SET @HOTFIX_ID := 1000001;
 
--- Icon IDs from existing database
-SET @ICON_VIGOR := 136243;      -- Generic buff icon
-SET @ICON_FORWARD := 136243;    -- Generic ability icon
-SET @ICON_UPWARD := 136243;     -- Generic ability icon
-SET @ICON_WHIRL := 136243;      -- Generic ability icon
-SET @ICON_HALT := 136243;       -- Generic ability icon
-SET @ICON_BUFF := 136243;       -- Generic buff icon
+-- Icon FileDataIDs from retail WoW (wowhead.com)
+-- These are the actual dragonriding ability icons used in retail
+SET @ICON_VIGOR := 4622485;     -- ability_racial_soar (Soar icon for vigor display)
+SET @ICON_FORWARD := 4640490;   -- ability_dragonriding_forwardflap01 (Surge Forward)
+SET @ICON_UPWARD := 4640498;    -- ability_dragonriding_upwardflap01 (Skyward Ascent)
+SET @ICON_WHIRL := 4640477;     -- ability_dragonriding_barrelroll01 (Whirling Surge)
+SET @ICON_HALT := 5003205;      -- ability_dragonriding_haltthewinds01 (Aerial Halt)
+SET @ICON_BUFF := 4622485;      -- ability_racial_soar (generic buff icon)
 
 -- ============================================================================
 -- STEP 1: SPELL NAMES (all 10 spells)
