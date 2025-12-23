@@ -18,6 +18,7 @@
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
+#include "ObjectAccessor.h"
 #include "DarkmoonIsland.h"
 
 enum whackCreatures
