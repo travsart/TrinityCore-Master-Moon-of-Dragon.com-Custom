@@ -21,6 +21,7 @@
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "SpellScript.h"
+#include "SpellInfo.h"
 
 enum MosshideRep
 {
