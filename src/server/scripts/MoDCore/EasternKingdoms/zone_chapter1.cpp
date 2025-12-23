@@ -30,7 +30,6 @@
 #include "SpellScript.h"
 #include "TemporarySummon.h"
 #include "Vehicle.h"
-#include "Position.h"
 
 /*######
 ## Quest 14212 - Sacrifices
@@ -55,7 +54,7 @@ enum CrowleysHorse
     SPELL_MOUNTAIN_HORSE_CREDIT = 68917,
     SPELL_RIDE_VEHICLE          = 94654,
     NPC_CROWLEYS_HORSE_2        = 44428,
-    NPC_LORNA_CROWLEY           = 36457,
+    NPC_LORNA_CROWLEY           = 36457
 };
 
 class npc_crowleys_horse : public CreatureScript

@@ -17,6 +17,7 @@
  */
  
 #include "Common.h"
+#include "Position.h"
 
 #ifndef GILNEAS_M_
 #define GILNEAS_M_
