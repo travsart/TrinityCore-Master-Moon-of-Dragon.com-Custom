@@ -20,6 +20,7 @@
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
 #include "TemporarySummon.h"
+#include "Player.h"
 
 enum ConstrictionTotem
 {
