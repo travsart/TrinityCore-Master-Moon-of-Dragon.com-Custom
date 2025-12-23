@@ -23,6 +23,7 @@
 #include "ScriptedGossip.h"
 #include "ScriptedEscortAI.h"
 #include "ObjectMgr.h"
+#include "ObjectAccessor.h"
 #include "World.h"
 #include "PetAI.h"
 #include "PassiveAI.h"
