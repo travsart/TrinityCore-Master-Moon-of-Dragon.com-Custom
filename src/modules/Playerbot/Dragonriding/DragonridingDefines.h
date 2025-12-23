@@ -37,6 +37,7 @@ constexpr uint32 SPELL_SURGE_FORWARD_BUFF = 900006;   // Speed boost effect
 constexpr uint32 SPELL_SKYWARD_ASCENT_BUFF = 900007;  // Vertical thrust effect
 constexpr uint32 SPELL_THRILL_OF_THE_SKIES = 900008;  // High-speed flying regen buff
 constexpr uint32 SPELL_GROUND_SKIMMING = 900009;      // Near-ground flying regen buff
+constexpr uint32 SPELL_ACTION_BAR_OVERRIDE = 900010;  // Applies SPELL_AURA_OVERRIDE_SPELLS (293)
 
 // ============================================================================
 // ACTION BAR OVERRIDE

@@ -86,8 +86,7 @@ class spell_playerbot_soar : public SpellScript
         // Validate that required spells exist
         return ValidateSpellInfo({
             SPELL_VIGOR_BUFF,
-            SPELL_SURGE_FORWARD,
-            SPELL_SKYWARD_ASCENT
+            SPELL_ACTION_BAR_OVERRIDE
         });
     }
 
@@ -168,22 +167,16 @@ class spell_playerbot_soar : public SpellScript
                 maxVigor, caster->GetName());
         }
 
-        // Add temporary spells so they can be cast (also added to spellbook)
-        // Base abilities (always available during dragonriding)
-        caster->AddTemporarySpell(SPELL_SURGE_FORWARD);
-        caster->AddTemporarySpell(SPELL_SKYWARD_ASCENT);
-        TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Added temporary spells {} and {}",
-            SPELL_SURGE_FORWARD, SPELL_SKYWARD_ASCENT);
+        // Cast the action bar override spell - this uses SPELL_AURA_OVERRIDE_SPELLS (293)
+        // which automatically handles SetOverrideSpellsId and AddTemporarySpell for all spells
+        // in the override_spell_data entry
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Casting action bar override spell {} for player {}",
+            SPELL_ACTION_BAR_OVERRIDE, caster->GetName());
 
-        // Swap action bar to dragonriding abilities
-        // Requires hotfix entries in sql/hotfixes/dragonriding_complete_spells.sql:
-        // - spell_name entries for 900001-900009
-        // - spell_misc entries for 900001-900009
-        // - override_spell_data entry for 900001
-        // - hotfix_data entries for all above (TableHashes: 1187407512, 3322146344, 3396722460)
-        TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Setting OverrideSpellsId to {} for player {}",
-            OVERRIDE_SPELL_DATA_DRAGONRIDING, caster->GetName());
-        caster->SetOverrideSpellsId(OVERRIDE_SPELL_DATA_DRAGONRIDING);
+        caster->CastSpell(caster, SPELL_ACTION_BAR_OVERRIDE, CastSpellExtraArgsInit{
+            .TriggerFlags = TRIGGERED_FULL_MASK,
+            .OriginalCaster = caster->GetGUID()
+        });
 
         // Check if the OverrideSpellData exists in the store
         if (OverrideSpellDataEntry const* overrideSpells = sOverrideSpellDataStore.LookupEntry(OVERRIDE_SPELL_DATA_DRAGONRIDING))
@@ -200,7 +193,7 @@ class spell_playerbot_soar : public SpellScript
                 OVERRIDE_SPELL_DATA_DRAGONRIDING);
         }
 
-        // Talent-locked abilities (only add if talent learned)
+        // Talent-locked abilities (manually add since they're not in the base override_spell_data)
         if (sDragonridingMgr->HasWhirlingSurge(accountId))
             caster->AddTemporarySpell(SPELL_WHIRLING_SURGE);
 
@@ -250,15 +243,15 @@ class spell_playerbot_soar_aura : public AuraScript
         target->RemoveAura(SPELL_THRILL_OF_THE_SKIES);
         target->RemoveAura(SPELL_GROUND_SKIMMING);
 
-        // Remove temporary dragonriding spells
-        target->RemoveTemporarySpell(SPELL_SURGE_FORWARD);
-        target->RemoveTemporarySpell(SPELL_SKYWARD_ASCENT);
+        // Remove the action bar override aura - this automatically:
+        // 1. Calls SetOverrideSpellsId(0) to restore normal action bar
+        // 2. Removes all temporary spells from the override_spell_data
+        target->RemoveAura(SPELL_ACTION_BAR_OVERRIDE);
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL: Removed action bar override aura");
+
+        // Remove talent-locked temporary spells (not in override_spell_data)
         target->RemoveTemporarySpell(SPELL_WHIRLING_SURGE);
         target->RemoveTemporarySpell(SPELL_AERIAL_HALT);
-
-        // Reset action bar to normal
-        target->SetOverrideSpellsId(0);
-        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL: OverrideSpellsId reset to 0, action bar restored");
 
         TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL COMPLETE for player {}", target->GetName());
     }

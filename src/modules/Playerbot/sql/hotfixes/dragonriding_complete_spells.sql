@@ -14,6 +14,7 @@
 --   900007 - Skyward Ascent Buff (vertical thrust effect)
 --   900008 - Thrill of the Skies (high-speed regen visual)
 --   900009 - Ground Skimming (near-ground regen visual)
+--   900010 - Action Bar Override (SPELL_AURA_OVERRIDE_SPELLS)
 --
 -- Install into: hotfixes database
 -- Restart worldserver after installation
@@ -31,9 +32,9 @@ SET @ICON_HALT := 136243;       -- Generic ability icon
 SET @ICON_BUFF := 136243;       -- Generic buff icon
 
 -- ============================================================================
--- STEP 1: SPELL NAMES (all 9 spells)
+-- STEP 1: SPELL NAMES (all 10 spells)
 -- ============================================================================
-DELETE FROM `spell_name` WHERE `ID` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009);
+DELETE FROM `spell_name` WHERE `ID` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009, 900010);
 INSERT INTO `spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES
 (900001, 'Vigor',               @BUILD),
 (900002, 'Surge Forward',       @BUILD),
@@ -43,12 +44,13 @@ INSERT INTO `spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES
 (900006, 'Surge Forward',       @BUILD),
 (900007, 'Skyward Ascent',      @BUILD),
 (900008, 'Thrill of the Skies', @BUILD),
-(900009, 'Ground Skimming',     @BUILD);
+(900009, 'Ground Skimming',     @BUILD),
+(900010, 'Dragonriding',        @BUILD);
 
 -- ============================================================================
 -- STEP 2: SPELL MISC (icons, cast time, etc)
 -- ============================================================================
-DELETE FROM `spell_misc` WHERE `ID` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009);
+DELETE FROM `spell_misc` WHERE `ID` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009, 900010);
 INSERT INTO `spell_misc` (
     `ID`,
     `Attributes1`, `Attributes2`, `Attributes3`, `Attributes4`, `Attributes5`,
@@ -71,14 +73,16 @@ INSERT INTO `spell_misc` (
 (900006, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_BUFF, 0, 0, 0, 0, 0, 900006, @BUILD),
 (900007, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_BUFF, 0, 0, 0, 0, 0, 900007, @BUILD),
 (900008, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_BUFF, 0, 0, 0, 0, 0, 900008, @BUILD),
-(900009, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_BUFF, 0, 0, 0, 0, 0, 900009, @BUILD);
+(900009, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_BUFF, 0, 0, 0, 0, 0, 900009, @BUILD),
+-- 900010: Action bar override aura
+(900010, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_BUFF, 0, 0, 0, 0, 0, 900010, @BUILD);
 
 -- ============================================================================
 -- STEP 3: SPELL EFFECTS (required for spell to be valid)
 -- Effect=3 (SPELL_EFFECT_DUMMY), ImplicitTarget1=1 (TARGET_UNIT_CASTER)
--- 900001 uses SPELL_EFFECT_APPLY_AURA (6) with SPELL_AURA_DUMMY (4) for stacking
+-- 900010 uses SPELL_AURA_OVERRIDE_SPELLS (293) with MiscValue = 900001 (override ID)
 -- ============================================================================
-DELETE FROM `spell_effect` WHERE `ID` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009);
+DELETE FROM `spell_effect` WHERE `ID` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009, 900010);
 INSERT INTO `spell_effect` (
     `ID`, `EffectAura`, `DifficultyID`, `EffectIndex`, `Effect`,
     `EffectAmplitude`, `EffectAttributes`, `EffectAuraPeriod`,
@@ -103,7 +107,9 @@ INSERT INTO `spell_effect` (
 (900006, 4, 0, 0, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900006, @BUILD),
 (900007, 4, 0, 0, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900007, @BUILD),
 (900008, 4, 0, 0, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900008, @BUILD),
-(900009, 4, 0, 0, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900009, @BUILD);
+(900009, 4, 0, 0, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900009, @BUILD),
+-- 900010: Action bar override - Effect=6 (APPLY_AURA), Aura=293 (OVERRIDE_SPELLS), MiscValue=900001
+(900010, 293, 0, 0, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,900001,0,0,0,0,0,0,0, 1, 0, 900010, @BUILD);
 
 -- ============================================================================
 -- STEP 4: OVERRIDE_SPELL_DATA (action bar definition)
@@ -129,9 +135,9 @@ INSERT INTO `override_spell_data` (
 -- ============================================================================
 
 -- Clean up old hotfix entries
-DELETE FROM `hotfix_data` WHERE `TableHash` = 1187407512 AND `RecordId` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009);
-DELETE FROM `hotfix_data` WHERE `TableHash` = 3322146344 AND `RecordId` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009);
-DELETE FROM `hotfix_data` WHERE `TableHash` = 4030871717 AND `RecordId` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009);
+DELETE FROM `hotfix_data` WHERE `TableHash` = 1187407512 AND `RecordId` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009, 900010);
+DELETE FROM `hotfix_data` WHERE `TableHash` = 3322146344 AND `RecordId` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009, 900010);
+DELETE FROM `hotfix_data` WHERE `TableHash` = 4030871717 AND `RecordId` IN (900001, 900002, 900003, 900004, 900005, 900006, 900007, 900008, 900009, 900010);
 DELETE FROM `hotfix_data` WHERE `TableHash` = 3396722460 AND `RecordId` = 900001;
 
 -- spell_name hotfixes (TableHash: 1187407512)
@@ -144,7 +150,8 @@ INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, 
 (@HOTFIX_ID+6,  @HOTFIX_ID+6,  1187407512, 900006, 1, @BUILD),
 (@HOTFIX_ID+7,  @HOTFIX_ID+7,  1187407512, 900007, 1, @BUILD),
 (@HOTFIX_ID+8,  @HOTFIX_ID+8,  1187407512, 900008, 1, @BUILD),
-(@HOTFIX_ID+9,  @HOTFIX_ID+9,  1187407512, 900009, 1, @BUILD);
+(@HOTFIX_ID+9,  @HOTFIX_ID+9,  1187407512, 900009, 1, @BUILD),
+(@HOTFIX_ID+10, @HOTFIX_ID+10, 1187407512, 900010, 1, @BUILD);
 
 -- spell_misc hotfixes (TableHash: 3322146344)
 INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
@@ -156,7 +163,8 @@ INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, 
 (@HOTFIX_ID+16, @HOTFIX_ID+16, 3322146344, 900006, 1, @BUILD),
 (@HOTFIX_ID+17, @HOTFIX_ID+17, 3322146344, 900007, 1, @BUILD),
 (@HOTFIX_ID+18, @HOTFIX_ID+18, 3322146344, 900008, 1, @BUILD),
-(@HOTFIX_ID+19, @HOTFIX_ID+19, 3322146344, 900009, 1, @BUILD);
+(@HOTFIX_ID+19, @HOTFIX_ID+19, 3322146344, 900009, 1, @BUILD),
+(@HOTFIX_ID+20, @HOTFIX_ID+20, 3322146344, 900010, 1, @BUILD);
 
 -- spell_effect hotfixes (TableHash: 4030871717)
 INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
@@ -168,8 +176,9 @@ INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, 
 (@HOTFIX_ID+26, @HOTFIX_ID+26, 4030871717, 900006, 1, @BUILD),
 (@HOTFIX_ID+27, @HOTFIX_ID+27, 4030871717, 900007, 1, @BUILD),
 (@HOTFIX_ID+28, @HOTFIX_ID+28, 4030871717, 900008, 1, @BUILD),
-(@HOTFIX_ID+29, @HOTFIX_ID+29, 4030871717, 900009, 1, @BUILD);
+(@HOTFIX_ID+29, @HOTFIX_ID+29, 4030871717, 900009, 1, @BUILD),
+(@HOTFIX_ID+30, @HOTFIX_ID+30, 4030871717, 900010, 1, @BUILD);
 
 -- override_spell_data hotfix (TableHash: 3396722460)
 INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
-(@HOTFIX_ID+30, @HOTFIX_ID+30, 3396722460, 900001, 1, @BUILD);
+(@HOTFIX_ID+40, @HOTFIX_ID+40, 3396722460, 900001, 1, @BUILD);
