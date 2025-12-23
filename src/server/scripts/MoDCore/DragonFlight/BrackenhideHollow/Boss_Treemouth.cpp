@@ -4,6 +4,7 @@
 #include "Spell.h"
 #include "SpellAuras.h"
 #include "SpellAuraEffects.h"
+#include "InstanceScript.h"
 #include "Zone_BrackenhideHollow.h"
 
 enum Spells
