@@ -19,6 +19,7 @@
 #include "MotionMaster.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
+#include "ObjectAccessor.h"
 #include "TemporarySummon.h"
 #include "Player.h"
 
