@@ -18,6 +18,7 @@
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
+#include "MotionMaster.h"
 #include "Player.h"
 #include "Vehicle.h"
 #include "TemporarySummon.h"
