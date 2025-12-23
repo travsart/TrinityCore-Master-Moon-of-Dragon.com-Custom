@@ -31,6 +31,7 @@
 #include "GameEventMgr.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
+#include "MotionMaster.h"
 #include "Cell.h"
 #include "CellImpl.h"
 #include "SpellAuras.h"
