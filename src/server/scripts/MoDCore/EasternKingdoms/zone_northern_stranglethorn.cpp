@@ -23,6 +23,7 @@
 #include "ScriptMgr.h"
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
+#include "SpellScript.h"
 
 enum AltarNaias
 {
