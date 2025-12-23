@@ -21,6 +21,7 @@
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
 #include "ScriptedCreature.h"
+#include "MotionMaster.h"
 
 enum thaldrazsusquest
 {
