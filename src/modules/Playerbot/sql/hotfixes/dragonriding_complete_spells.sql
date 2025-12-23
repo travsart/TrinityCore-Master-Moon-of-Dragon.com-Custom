@@ -1,75 +1,118 @@
 -- ============================================================================
--- Playerbot Dragonriding System - Action Bar Override for Soar
+-- Playerbot Dragonriding System - Complete Custom Spell Data
 --
--- Uses REAL retail WoW 11.2 spell IDs for the dragonriding action bar.
--- The client already knows these spells - we just need to create the
--- override_spell_data entry to define which spells appear on the bar.
---
--- Real retail spell IDs (from wowhead.com):
---   372608 = Surge Forward
---   372610 = Skyward Ascent
---   361584 = Whirling Surge
---   403092 = Aerial Halt
+-- Creates custom spells for dragonriding action bar override.
+-- Server needs spell_name + spell_misc + spell_effect for spells to work.
 --
 -- Install into: hotfixes database
 -- Restart worldserver after installation
 -- ============================================================================
 
--- Use current TrinityCore 11.2 build number
 SET @BUILD := 58941;
 SET @HOTFIX_ID := 1000001;
 
--- ============================================================================
--- OVERRIDE_SPELL_DATA
--- Action bar override definition - swaps player action bar when activated
--- Our C++ code calls SetOverrideSpellsId(900001) to trigger this
--- TableHash: 3396722460 (OverrideSpellData.db2)
--- ============================================================================
+-- Known working icon IDs from existing database
+SET @ICON_FORWARD := 136243;   -- Generic ability icon
+SET @ICON_UPWARD := 136243;    -- Generic ability icon
+SET @ICON_WHIRL := 136243;     -- Generic ability icon
+SET @ICON_HALT := 136243;      -- Generic ability icon
 
+-- ============================================================================
+-- STEP 1: SPELL NAMES
+-- ============================================================================
+DELETE FROM `spell_name` WHERE `ID` IN (900002, 900003, 900004, 900005);
+INSERT INTO `spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES
+(900002, 'Surge Forward',    @BUILD),
+(900003, 'Skyward Ascent',   @BUILD),
+(900004, 'Whirling Surge',   @BUILD),
+(900005, 'Aerial Halt',      @BUILD);
+
+-- ============================================================================
+-- STEP 2: SPELL MISC (icons, cast time, etc)
+-- ============================================================================
+DELETE FROM `spell_misc` WHERE `ID` IN (900002, 900003, 900004, 900005);
+INSERT INTO `spell_misc` (
+    `ID`,
+    `Attributes1`, `Attributes2`, `Attributes3`, `Attributes4`, `Attributes5`,
+    `Attributes6`, `Attributes7`, `Attributes8`, `Attributes9`, `Attributes10`,
+    `Attributes11`, `Attributes12`, `Attributes13`, `Attributes14`, `Attributes15`, `Attributes16`,
+    `DifficultyID`, `CastingTimeIndex`, `DurationIndex`, `PvPDurationIndex`, `RangeIndex`,
+    `SchoolMask`, `Speed`, `LaunchDelay`, `MinDuration`,
+    `SpellIconFileDataID`, `ActiveIconFileDataID`,
+    `ContentTuningID`, `ShowFutureSpellPlayerConditionID`, `SpellVisualScript`, `ActiveSpellVisualScript`,
+    `SpellID`, `VerifiedBuild`
+) VALUES
+(900002, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_FORWARD, 0, 0, 0, 0, 0, 900002, @BUILD),
+(900003, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_UPWARD, 0, 0, 0, 0, 0, 900003, @BUILD),
+(900004, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_WHIRL, 0, 0, 0, 0, 0, 900004, @BUILD),
+(900005, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0, 1, 0, 0, 1, 1, 0, 0, 0, @ICON_HALT, 0, 0, 0, 0, 0, 900005, @BUILD);
+
+-- ============================================================================
+-- STEP 3: SPELL EFFECTS (required for spell to be valid)
+-- Effect=3 (SPELL_EFFECT_DUMMY), ImplicitTarget1=1 (TARGET_UNIT_CASTER)
+-- ============================================================================
+DELETE FROM `spell_effect` WHERE `ID` IN (900002, 900003, 900004, 900005);
+INSERT INTO `spell_effect` (
+    `ID`, `EffectAura`, `DifficultyID`, `EffectIndex`, `Effect`,
+    `EffectAmplitude`, `EffectAttributes`, `EffectAuraPeriod`,
+    `EffectBonusCoefficient`, `EffectChainAmplitude`, `EffectChainTargets`,
+    `EffectItemType`, `EffectMechanic`, `EffectPointsPerResource`,
+    `EffectPosFacing`, `EffectRealPointsPerLevel`, `EffectTriggerSpell`,
+    `BonusCoefficientFromAP`, `PvpMultiplier`, `Coefficient`, `Variance`,
+    `ResourceCoefficient`, `GroupSizeBasePointsCoefficient`, `EffectBasePoints`,
+    `ScalingClass`, `EffectMiscValue1`, `EffectMiscValue2`,
+    `EffectRadiusIndex1`, `EffectRadiusIndex2`,
+    `EffectSpellClassMask1`, `EffectSpellClassMask2`, `EffectSpellClassMask3`, `EffectSpellClassMask4`,
+    `ImplicitTarget1`, `ImplicitTarget2`, `SpellID`, `VerifiedBuild`
+) VALUES
+(900002, 0, 0, 0, 3, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900002, @BUILD),
+(900003, 0, 0, 0, 3, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900003, @BUILD),
+(900004, 0, 0, 0, 3, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900004, @BUILD),
+(900005, 0, 0, 0, 3, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1, 0, 900005, @BUILD);
+
+-- ============================================================================
+-- STEP 4: OVERRIDE_SPELL_DATA (action bar definition)
+-- ============================================================================
 DELETE FROM `override_spell_data` WHERE `ID` = 900001;
 INSERT INTO `override_spell_data` (
-    `ID`,
-    `Spells1`, `Spells2`, `Spells3`, `Spells4`, `Spells5`,
+    `ID`, `Spells1`, `Spells2`, `Spells3`, `Spells4`, `Spells5`,
     `Spells6`, `Spells7`, `Spells8`, `Spells9`, `Spells10`,
-    `PlayerActionBarFileDataID`,
-    `Flags`,
-    `VerifiedBuild`
+    `PlayerActionBarFileDataID`, `Flags`, `VerifiedBuild`
 ) VALUES (
     900001,
-    372608,  -- Surge Forward (retail spell ID)
-    372610,  -- Skyward Ascent (retail spell ID)
-    361584,  -- Whirling Surge (retail spell ID)
-    403092,  -- Aerial Halt (retail spell ID)
-    0, 0, 0, 0, 0, 0,
-    0,       -- Default action bar visual
-    0,       -- No special flags
-    @BUILD
+    900002, 900003, 900004, 900005, 0, 0, 0, 0, 0, 0,
+    0, 0, @BUILD
 );
 
 -- ============================================================================
--- HOTFIX_DATA
--- Critical entry that tells TrinityCore to send override_spell_data to clients
--- TableHash: 3396722460 (OverrideSpellData.db2)
+-- STEP 5: HOTFIX_DATA (tells server to send this to clients)
 -- ============================================================================
-
+DELETE FROM `hotfix_data` WHERE `TableHash` = 1187407512 AND `RecordId` IN (900002, 900003, 900004, 900005);
+DELETE FROM `hotfix_data` WHERE `TableHash` = 3322146344 AND `RecordId` IN (900002, 900003, 900004, 900005);
+DELETE FROM `hotfix_data` WHERE `TableHash` = 4030871717 AND `RecordId` IN (900002, 900003, 900004, 900005);
 DELETE FROM `hotfix_data` WHERE `TableHash` = 3396722460 AND `RecordId` = 900001;
-INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
-(@HOTFIX_ID, @HOTFIX_ID, 3396722460, 900001, 1, @BUILD);
 
--- ============================================================================
--- TECHNICAL NOTES
---
--- How this works:
--- 1. Player casts Soar (369536)
--- 2. PlayerbotDragonridingScript.cpp HandleOnCast() calls SetOverrideSpellsId(900001)
--- 3. Client receives PLAYER_FIELD_OVERRIDE_SPELLS_ID = 900001
--- 4. Client looks up OverrideSpellData ID 900001 from hotfix data
--- 5. Client shows the real retail dragonriding spells on action bar:
---    - Surge Forward (372608)
---    - Skyward Ascent (372610)
---    - Whirling Surge (361584)
---    - Aerial Halt (403092)
--- 6. When Soar ends, SetOverrideSpellsId(0) returns action bar to normal
---
--- The spells are REAL retail spells - client already has all data for them!
--- ============================================================================
+-- spell_name hotfixes (TableHash: 1187407512)
+INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
+(@HOTFIX_ID+1, @HOTFIX_ID+1, 1187407512, 900002, 1, @BUILD),
+(@HOTFIX_ID+2, @HOTFIX_ID+2, 1187407512, 900003, 1, @BUILD),
+(@HOTFIX_ID+3, @HOTFIX_ID+3, 1187407512, 900004, 1, @BUILD),
+(@HOTFIX_ID+4, @HOTFIX_ID+4, 1187407512, 900005, 1, @BUILD);
+
+-- spell_misc hotfixes (TableHash: 3322146344)
+INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
+(@HOTFIX_ID+11, @HOTFIX_ID+11, 3322146344, 900002, 1, @BUILD),
+(@HOTFIX_ID+12, @HOTFIX_ID+12, 3322146344, 900003, 1, @BUILD),
+(@HOTFIX_ID+13, @HOTFIX_ID+13, 3322146344, 900004, 1, @BUILD),
+(@HOTFIX_ID+14, @HOTFIX_ID+14, 3322146344, 900005, 1, @BUILD);
+
+-- spell_effect hotfixes (TableHash: 4030871717)
+INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
+(@HOTFIX_ID+21, @HOTFIX_ID+21, 4030871717, 900002, 1, @BUILD),
+(@HOTFIX_ID+22, @HOTFIX_ID+22, 4030871717, 900003, 1, @BUILD),
+(@HOTFIX_ID+23, @HOTFIX_ID+23, 4030871717, 900004, 1, @BUILD),
+(@HOTFIX_ID+24, @HOTFIX_ID+24, 4030871717, 900005, 1, @BUILD);
+
+-- override_spell_data hotfix (TableHash: 3396722460)
+INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
+(@HOTFIX_ID+30, @HOTFIX_ID+30, 3396722460, 900001, 1, @BUILD);

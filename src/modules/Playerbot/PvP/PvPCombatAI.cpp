@@ -592,6 +592,11 @@ bool PvPCombatAI::StackOffensiveCooldowns()
 
     for (uint32 spellId : cooldowns)
     {
+        // Check if spell exists before checking cooldown (HasCooldown asserts on invalid spells)
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+        if (!spellInfo)
+            continue;
+
         if (!_bot->GetSpellHistory()->HasCooldown(spellId))
         {
             // Full implementation: Cast spell
