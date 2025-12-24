@@ -25,6 +25,7 @@
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
 #include "MotionMaster.h"
+#include "ObjectAccessor.h"
 #include "TemporarySummon.h"
 #include "GameObjectAI.h"
 
