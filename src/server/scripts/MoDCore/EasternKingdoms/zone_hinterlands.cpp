@@ -19,6 +19,7 @@
 #include "MotionMaster.h"
 #include "Player.h"
 #include "ScriptedEscortAI.h"
+#include "SpellInfo.h"
 
 enum TrainedRazorbeak
 {
