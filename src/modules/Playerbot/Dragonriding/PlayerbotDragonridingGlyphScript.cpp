@@ -31,7 +31,9 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "SpellAuras.h"
+#include "World.h"
 #include "WorldSession.h"
+#include <unordered_map>
 
 using namespace Playerbot::Dragonriding;
 
@@ -421,6 +423,190 @@ public:
 };
 
 // ============================================================================
+// VIGOR REGENERATION WORLD SCRIPT
+// Handles vigor regeneration for players in dragonriding mode
+// This is required because retail Vigor spell (383359) uses SPELL_AURA_DUMMY
+// which doesn't support periodic tick handlers
+// ============================================================================
+
+class DragonridingVigorRegeneration : public WorldScript
+{
+public:
+    DragonridingVigorRegeneration() : WorldScript("playerbot_dragonriding_vigor_regen") { }
+
+private:
+    // Track accumulated regeneration time per account
+    // Key: accountId, Value: accumulated milliseconds
+    std::unordered_map<uint32, uint32> _regenAccumulator;
+
+    // Update timer
+    uint32 _updateTimer = 0;
+
+    // Get account ID from player safely
+    static uint32 GetAccountId(Player* player)
+    {
+        if (!player || !player->GetSession())
+            return 0;
+        return player->GetSession()->GetAccountId();
+    }
+
+public:
+    void OnUpdate(uint32 diff) override
+    {
+        if (!sDragonridingMgr->IsInitialized() || !sDragonridingMgr->IsEnabled())
+            return;
+
+        // Rate limit updates
+        _updateTimer += diff;
+        if (_updateTimer < VIGOR_UPDATE_INTERVAL_MS)
+            return;
+
+        uint32 elapsed = _updateTimer;
+        _updateTimer = 0;
+
+        // Process all online sessions
+        // Note: In production, maintain a set of active dragonriding players for efficiency
+        SessionMap const& sessions = sWorld->GetAllSessions();
+        for (auto const& pair : sessions)
+        {
+            WorldSession* session = pair.second;
+            if (!session)
+                continue;
+
+            Player* player = session->GetPlayer();
+            if (!player || !player->IsInWorld())
+                continue;
+
+            ProcessPlayerVigorRegen(player, elapsed);
+        }
+    }
+
+private:
+    void ProcessPlayerVigorRegen(Player* player, uint32 elapsedMs)
+    {
+        // Check if player is in dragonriding mode
+        if (player->GetFlightCapabilityID() == 0)
+        {
+            // Not dragonriding - reset accumulator
+            uint32 accountId = GetAccountId(player);
+            if (accountId != 0)
+                _regenAccumulator.erase(accountId);
+            return;
+        }
+
+        // Check if player has vigor aura
+        Aura* vigorAura = player->GetAura(SPELL_VIGOR);
+        if (!vigorAura)
+            return;
+
+        uint32 accountId = GetAccountId(player);
+        if (accountId == 0)
+            return;
+
+        uint32 currentStacks = vigorAura->GetStackAmount();
+        uint32 maxStacks = sDragonridingMgr->GetMaxVigor(accountId);
+
+        // Don't regenerate if already at max
+        if (currentStacks >= maxStacks)
+        {
+            _regenAccumulator[accountId] = 0;
+            return;
+        }
+
+        // Determine current regeneration rate based on conditions
+        uint32 regenMs = DetermineRegenRate(player, accountId);
+
+        // No regeneration if conditions not met
+        if (regenMs == 0)
+        {
+            _regenAccumulator[accountId] = 0;
+            return;
+        }
+
+        // Accumulate time
+        _regenAccumulator[accountId] += elapsedMs;
+
+        // Check if enough time has accumulated for a vigor point
+        while (_regenAccumulator[accountId] >= regenMs && currentStacks < maxStacks)
+        {
+            vigorAura->ModStackAmount(1);
+            _regenAccumulator[accountId] -= regenMs;
+            currentStacks++;
+
+            TC_LOG_DEBUG("playerbot.dragonriding", "Player {} regenerated 1 vigor (now: {}/{}, rate: {}ms)",
+                player->GetName(), currentStacks, maxStacks, regenMs);
+        }
+    }
+
+    uint32 DetermineRegenRate(Player* player, uint32 accountId)
+    {
+        bool isFlying = player->IsFlying();
+
+        if (!isFlying)
+        {
+            // Grounded - fastest regeneration
+            uint32 groundedRegen = sDragonridingMgr->GetGroundedRegenMs(accountId);
+
+            // Apply/remove visual buffs
+            if (player->HasAura(SPELL_THRILL_OF_THE_SKIES))
+                player->RemoveAura(SPELL_THRILL_OF_THE_SKIES);
+            if (player->HasAura(SPELL_GROUND_SKIMMING_BUFF))
+                player->RemoveAura(SPELL_GROUND_SKIMMING_BUFF);
+
+            return groundedRegen;
+        }
+
+        // Flying - check for regeneration conditions
+
+        // Check for Thrill of the Skies (high speed)
+        float speed = player->GetSpeed(MOVE_FLIGHT);
+        float maxSpeed = player->GetSpeedRate(MOVE_FLIGHT);
+        float speedPercent = (maxSpeed > 0) ? (speed / maxSpeed) : 0.0f;
+
+        if (speedPercent >= sDragonridingMgr->GetThrillSpeedThreshold())
+        {
+            // High speed - apply Thrill of the Skies visual buff
+            if (!player->HasAura(SPELL_THRILL_OF_THE_SKIES))
+            {
+                player->CastSpell(player, SPELL_THRILL_OF_THE_SKIES, true);
+                player->RemoveAura(SPELL_GROUND_SKIMMING_BUFF);
+            }
+
+            return sDragonridingMgr->GetFlyingRegenMs(accountId);
+        }
+
+        // Check for Ground Skimming (low altitude with talent)
+        if (sDragonridingMgr->HasGroundSkimming(accountId))
+        {
+            Map* map = player->GetMap();
+            if (map)
+            {
+                float groundZ = map->GetHeight(player->GetPhaseShift(),
+                    player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
+                float heightAboveGround = player->GetPositionZ() - groundZ;
+
+                if (heightAboveGround <= sDragonridingMgr->GetGroundSkimHeight())
+                {
+                    // Near ground - apply Ground Skimming visual buff
+                    if (!player->HasAura(SPELL_GROUND_SKIMMING_BUFF))
+                    {
+                        player->CastSpell(player, SPELL_GROUND_SKIMMING_BUFF, true);
+                        player->RemoveAura(SPELL_THRILL_OF_THE_SKIES);
+                    }
+
+                    return BASE_REGEN_GROUND_SKIM_MS;
+                }
+            }
+        }
+
+        // Not meeting any regeneration conditions while flying
+        player->RemoveAura(SPELL_THRILL_OF_THE_SKIES);
+        player->RemoveAura(SPELL_GROUND_SKIMMING_BUFF);
+        return 0; // No regeneration
+    }
+};
+
+// ============================================================================
 // SCRIPT REGISTRATION
 // ============================================================================
 
@@ -441,5 +627,9 @@ void AddSC_playerbot_dragonriding_glyphs()
     new DragonridingAccountLoader();
     new DragonridingPeriodicSaver();
 
+    // Vigor regeneration handler (required for SPELL_AURA_DUMMY-based vigor)
+    new DragonridingVigorRegeneration();
+
     TC_LOG_INFO("playerbot.dragonriding", ">> Registered Playerbot Dragonriding Glyph Scripts");
+    TC_LOG_INFO("playerbot.dragonriding", ">> Vigor regeneration via WorldScript (SPELL_AURA_DUMMY compatible)");
 }
