@@ -100,7 +100,7 @@ INSERT INTO override_spell_data (
     0,                      -- Slot 10: Empty
     0,                      -- PlayerActionBarFileDataID: Use default
     0,                      -- Flags: None
-    58941                   -- VerifiedBuild: WoW 11.2 build number
+    64978                   -- VerifiedBuild: WoW 11.2 build number
 );
 
 -- ============================================================================
@@ -129,7 +129,7 @@ INSERT INTO hotfix_data (
     0xCA75DF1C,             -- TableHash: OverrideSpellData.db2 (from server log!)
     900001,                 -- RecordId: The override_spell_data.ID we created
     1,                      -- Status: 1 = Valid
-    58941                   -- VerifiedBuild: WoW 11.2 build number
+    64978                   -- VerifiedBuild: WoW 11.2 build number
 );
 
 -- ============================================================================
