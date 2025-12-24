@@ -31,6 +31,7 @@
 #include "TemporarySummon.h"
 #include "ScriptedGossip.h"
 #include "TaskScheduler.h"
+#include "WorldSession.h"
 
 enum Oribos
 {
