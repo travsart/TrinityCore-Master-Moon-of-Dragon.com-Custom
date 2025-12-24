@@ -20,6 +20,7 @@
 #include "ScriptedGossip.h"
 #include "Player.h"
 #include "WorldSession.h"
+#include "ZoneScript.h"
 
 /*######
 ## npc_the_scourge_cauldron
