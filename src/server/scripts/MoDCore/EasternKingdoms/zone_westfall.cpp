@@ -84,6 +84,7 @@ EndContentData */
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
 #include "PhasingHandler.h"
+#include "Player.h"
 #include "TemporarySummon.h"
 #include "QuestDef.h"
 #include <SmartScriptMgr.h>
