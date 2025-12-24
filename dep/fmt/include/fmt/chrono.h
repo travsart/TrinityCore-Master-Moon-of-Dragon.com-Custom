@@ -502,7 +502,7 @@ inline auto gmtime(std::time_t time) -> std::tm {
     std::time_t time_;
     std::tm tm_;
 
-    inline dispatcher(std::time_t t) : time_(t) {}
+    inline dispatcher(std::time_t t) : time_(t), tm_{} {}
 
     inline auto run() -> bool {
       using namespace fmt::detail;
@@ -1593,7 +1593,8 @@ class get_locale {
   bool has_locale_ = false;
 
  public:
-  inline get_locale(bool localized, locale_ref loc) : has_locale_(localized) {
+     inline get_locale(bool localized, locale_ref loc)
+         : locale_(loc.get<std::locale>()), has_locale_(localized) {
     if (!localized) return;
     ignore_unused(loc);
     ::new (&locale_) std::locale(

@@ -22,7 +22,7 @@
 #include "NGrid.h"
 #include <cmath>
 
-// Forward class definitions
+ // Forward class definitions
 class Corpse;
 class Creature;
 class DynamicObject;
@@ -73,15 +73,15 @@ typedef GridRefManager<Conversation>    ConversationMapType;
 
 enum GridMapTypeMask
 {
-    GRID_MAP_TYPE_MASK_CORPSE           = 0x01,
-    GRID_MAP_TYPE_MASK_CREATURE         = 0x02,
-    GRID_MAP_TYPE_MASK_DYNAMICOBJECT    = 0x04,
-    GRID_MAP_TYPE_MASK_GAMEOBJECT       = 0x08,
-    GRID_MAP_TYPE_MASK_PLAYER           = 0x10,
-    GRID_MAP_TYPE_MASK_AREATRIGGER      = 0x20,
-    GRID_MAP_TYPE_MASK_SCENEOBJECT      = 0x40,
-    GRID_MAP_TYPE_MASK_CONVERSATION     = 0x80,
-    GRID_MAP_TYPE_MASK_ALL              = 0xFF
+    GRID_MAP_TYPE_MASK_CORPSE = 0x01,
+    GRID_MAP_TYPE_MASK_CREATURE = 0x02,
+    GRID_MAP_TYPE_MASK_DYNAMICOBJECT = 0x04,
+    GRID_MAP_TYPE_MASK_GAMEOBJECT = 0x08,
+    GRID_MAP_TYPE_MASK_PLAYER = 0x10,
+    GRID_MAP_TYPE_MASK_AREATRIGGER = 0x20,
+    GRID_MAP_TYPE_MASK_SCENEOBJECT = 0x40,
+    GRID_MAP_TYPE_MASK_CONVERSATION = 0x80,
+    GRID_MAP_TYPE_MASK_ALL = 0xFF
 };
 
 // Creature used instead pet to simplify *::Visit templates (not required duplicate code for Creature->Pet case)
@@ -100,15 +100,17 @@ typedef NGrid<MAX_NUMBER_OF_CELLS, WorldTypeMapContainer, GridTypeMapContainer> 
 template<uint32 LIMIT>
 struct CoordPair
 {
-    CoordPair(uint32 x=0, uint32 y=0)
+    CoordPair(uint32 x = 0, uint32 y = 0)
         : x_coord(x), y_coord(y)
-    { }
+    {
+    }
 
-    CoordPair(const CoordPair<LIMIT> &obj)
+    CoordPair(const CoordPair<LIMIT>& obj)
         : x_coord(obj.x_coord), y_coord(obj.y_coord)
-    { }
+    {
+    }
 
-    CoordPair<LIMIT> & operator=(const CoordPair<LIMIT> &obj)
+    CoordPair<LIMIT>& operator=(const CoordPair<LIMIT>& obj)
     {
         x_coord = obj.x_coord;
         y_coord = obj.y_coord;
@@ -179,8 +181,8 @@ namespace Trinity
     inline RET_TYPE Compute(float x, float y, float center_offset, float size)
     {
         // calculate and store temporary values in double format for having same result as same mySQL calculations
-        double x_offset = (double(x) - center_offset)/size;
-        double y_offset = (double(y) - center_offset)/size;
+        double x_offset = (double(x) - center_offset) / size;
+        double y_offset = (double(y) - center_offset) / size;
 
         int x_val = int(x_offset + CENTER_VAL + 0.5);
         int y_val = int(y_offset + CENTER_VAL + 0.5);
@@ -204,10 +206,10 @@ namespace Trinity
         return Compute<CellCoord, CENTER_GRID_CELL_ID>(x, y, CENTER_GRID_CELL_OFFSET, SIZE_OF_GRID_CELL);
     }
 
-    inline CellCoord ComputeCellCoord(float x, float y, float &x_off, float &y_off)
+    inline CellCoord ComputeCellCoord(float x, float y, float& x_off, float& y_off)
     {
-        double x_offset = (double(x) - CENTER_GRID_CELL_OFFSET)/SIZE_OF_GRID_CELL;
-        double y_offset = (double(y) - CENTER_GRID_CELL_OFFSET)/SIZE_OF_GRID_CELL;
+        double x_offset = (double(x) - CENTER_GRID_CELL_OFFSET) / SIZE_OF_GRID_CELL;
+        double y_offset = (double(y) - CENTER_GRID_CELL_OFFSET) / SIZE_OF_GRID_CELL;
 
         int x_val = int(x_offset + CENTER_GRID_CELL_ID + 0.5f);
         int y_val = int(y_offset + CENTER_GRID_CELL_ID + 0.5f);
@@ -216,7 +218,7 @@ namespace Trinity
         return CellCoord(x_val, y_val);
     }
 
-    inline void NormalizeMapCoord(float &c)
+    inline void NormalizeMapCoord(float& c)
     {
         if (c > MAP_HALFSIZE - 0.5f)
             c = MAP_HALFSIZE - 0.5f;
