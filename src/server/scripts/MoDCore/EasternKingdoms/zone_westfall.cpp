@@ -87,6 +87,7 @@ EndContentData */
 #include "Player.h"
 #include "TemporarySummon.h"
 #include "QuestDef.h"
+#include "ObjectMgr.h"
 #include <SmartScriptMgr.h>
 
 enum eThug
