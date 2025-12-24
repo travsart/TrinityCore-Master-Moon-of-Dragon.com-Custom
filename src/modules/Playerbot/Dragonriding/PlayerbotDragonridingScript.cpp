@@ -153,11 +153,27 @@ class spell_playerbot_soar : public SpellScript
         // Grant vigor based on learned talents (progression-based)
         uint32 maxVigor = sDragonridingMgr->GetMaxVigor(accountId);
 
+        // DEBUG: Check if vigor spell exists in SpellMgr
+        SpellInfo const* vigorSpellInfo = sSpellMgr->GetSpellInfo(SPELL_VIGOR_BUFF, DIFFICULTY_NONE);
+        if (!vigorSpellInfo)
+        {
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: CRITICAL - Vigor spell {} NOT FOUND in SpellMgr! "
+                "Make sure hotfixes are imported and server restarted!", SPELL_VIGOR_BUFF);
+        }
+        else
+        {
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Vigor spell {} found in SpellMgr",
+                SPELL_VIGOR_BUFF);
+        }
+
         // Apply vigor buff with calculated max stacks
-        caster->CastSpell(caster, SPELL_VIGOR_BUFF, CastSpellExtraArgsInit{
+        SpellCastResult castResult = caster->CastSpell(caster, SPELL_VIGOR_BUFF, CastSpellExtraArgsInit{
             .TriggerFlags = TRIGGERED_FULL_MASK,
             .OriginalCaster = caster->GetGUID()
         });
+
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: CastSpell(VIGOR_BUFF) result: {}",
+            uint32(castResult));
 
         // Set vigor to max stacks
         if (Aura* vigorAura = caster->GetAura(SPELL_VIGOR_BUFF))
@@ -165,6 +181,11 @@ class spell_playerbot_soar : public SpellScript
             vigorAura->SetStackAmount(maxVigor);
             TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Vigor granted {} stacks for player {}",
                 maxVigor, caster->GetName());
+        }
+        else
+        {
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: FAILED to get vigor aura after cast! "
+                "Spell exists: {}, Cast result: {}", vigorSpellInfo != nullptr, uint32(castResult));
         }
 
         // Swap action bar to dragonriding abilities using DIRECT approach

@@ -183,3 +183,31 @@ INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, 
 -- override_spell_data hotfix (TableHash: 3396722460)
 INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
 (@HOTFIX_ID+40, @HOTFIX_ID+40, 3396722460, 900001, 1, @BUILD);
+
+-- ============================================================================
+-- STEP 6: SPELL_AURA_OPTIONS (required for vigor stacking)
+-- TableHash: 4096770149
+-- ============================================================================
+DELETE FROM `spell_aura_options` WHERE `ID` IN (900001, 900006, 900007, 900008, 900009, 900010);
+INSERT INTO `spell_aura_options` (
+    `ID`, `DifficultyID`, `CumulativeAura`, `ProcCategoryRecovery`,
+    `ProcChance`, `ProcCharges`, `SpellProcsPerMinuteID`,
+    `ProcTypeMask1`, `ProcTypeMask2`, `SpellID`, `VerifiedBuild`
+) VALUES
+-- 900001: Vigor - CumulativeAura=6 means max 6 stacks
+(900001, 0, 6, 0, 0, 0, 0, 0, 0, 900001, @BUILD),
+-- Buff auras (no stacking needed)
+(900006, 0, 0, 0, 0, 0, 0, 0, 0, 900006, @BUILD),
+(900007, 0, 0, 0, 0, 0, 0, 0, 0, 900007, @BUILD),
+(900008, 0, 0, 0, 0, 0, 0, 0, 0, 900008, @BUILD),
+(900009, 0, 0, 0, 0, 0, 0, 0, 0, 900009, @BUILD),
+(900010, 0, 0, 0, 0, 0, 0, 0, 0, 900010, @BUILD);
+
+-- spell_aura_options hotfixes (TableHash: 4096770149)
+INSERT INTO `hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES
+(@HOTFIX_ID+50, @HOTFIX_ID+50, 4096770149, 900001, 1, @BUILD),
+(@HOTFIX_ID+51, @HOTFIX_ID+51, 4096770149, 900006, 1, @BUILD),
+(@HOTFIX_ID+52, @HOTFIX_ID+52, 4096770149, 900007, 1, @BUILD),
+(@HOTFIX_ID+53, @HOTFIX_ID+53, 4096770149, 900008, 1, @BUILD),
+(@HOTFIX_ID+54, @HOTFIX_ID+54, 4096770149, 900009, 1, @BUILD),
+(@HOTFIX_ID+55, @HOTFIX_ID+55, 4096770149, 900010, 1, @BUILD);
