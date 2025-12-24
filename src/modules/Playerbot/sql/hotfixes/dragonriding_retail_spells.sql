@@ -47,8 +47,8 @@ DELETE FROM hotfix_data WHERE TableHash IN (
     0xC5C3F622,
     -- SpellAuraOptions table hash
     0x9A6BDB26,
-    -- OverrideSpellData table hash (CORRECT: 0xCA874B1C = 3396722460 decimal)
-    0xCA874B1C
+    -- OverrideSpellData table hash (from server log: 0xCA75DF1C)
+    0xCA75DF1C
 ) AND RecordId >= 900000;
 
 -- ============================================================================
@@ -109,12 +109,12 @@ INSERT INTO override_spell_data (
 -- The hotfix_data table tells the server to send this DB2 entry to the client.
 -- Without this, the client won't know about our custom override entry.
 --
--- Table hash for OverrideSpellData.db2: 0xCA874B1C (decimal: 3396722460)
--- This is the CORRECT hash verified from TrinityCore's 11.x hotfix data.
+-- Table hash for OverrideSpellData.db2: 0xCA75DF1C (from server log)
+-- This hash was obtained from: sOverrideSpellDataStore.GetTableHash()
 -- Status values: 0=NotSet, 1=Valid, 2=RecordRemoved, 3=Invalid, 4=NotPublic
 -- ============================================================================
 
-DELETE FROM hotfix_data WHERE TableHash = 0xCA874B1C AND RecordId = 900001;
+DELETE FROM hotfix_data WHERE TableHash = 0xCA75DF1C AND RecordId = 900001;
 
 INSERT INTO hotfix_data (
     Id,
@@ -126,7 +126,7 @@ INSERT INTO hotfix_data (
 ) VALUES (
     900001,                 -- Id: Unique hotfix identifier
     900001,                 -- UniqueId: Same as Id for simplicity
-    0xCA874B1C,             -- TableHash: OverrideSpellData.db2 (CORRECT hash!)
+    0xCA75DF1C,             -- TableHash: OverrideSpellData.db2 (from server log!)
     900001,                 -- RecordId: The override_spell_data.ID we created
     1,                      -- Status: 1 = Valid
     58941                   -- VerifiedBuild: WoW 11.2 build number
@@ -176,7 +176,7 @@ INSERT INTO hotfix_data (
 --
 -- 1. Check server logs for this error:
 --    "Table `hotfix_data` references unknown DB2 store by hash 0xXXXXXXXX"
---    The correct hash for OverrideSpellData.db2 is 0xCA874B1C (3396722460 decimal).
+--    The correct hash for OverrideSpellData.db2 is 0xCA75DF1C (from server log).
 --
 -- 2. To find the correct table hash, add this to PlayerbotDragonridingScript.cpp:
 --    TC_LOG_INFO("playerbot", "OverrideSpellData hash: 0x{:X}",
