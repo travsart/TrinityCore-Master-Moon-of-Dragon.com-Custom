@@ -94,7 +94,7 @@ uint32 DragonridingAI::GetCurrentVigor() const
     if (!_bot)
         return 0;
 
-    Aura* vigorAura = _bot->GetAura(SPELL_VIGOR_BUFF);
+    Aura* vigorAura = _bot->GetAura(SPELL_VIGOR); // 383359 - retail vigor spell
     return vigorAura ? vigorAura->GetStackAmount() : 0;
 }
 

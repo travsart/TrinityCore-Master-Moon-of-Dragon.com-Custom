@@ -494,20 +494,16 @@ private:
             return;
         }
 
-        // Check if player has vigor aura
-        Aura* vigorAura = player->GetAura(SPELL_VIGOR);
-        if (!vigorAura)
-            return;
-
         uint32 accountId = GetAccountId(player);
         if (accountId == 0)
             return;
 
-        uint32 currentStacks = vigorAura->GetStackAmount();
-        uint32 maxStacks = sDragonridingMgr->GetMaxVigor(accountId);
+        // Use POWER_ALTERNATE_MOUNT for vigor (retail approach)
+        int32 currentVigor = player->GetPower(POWER_ALTERNATE_MOUNT);
+        int32 maxVigor = player->GetMaxPower(POWER_ALTERNATE_MOUNT);
 
-        // Don't regenerate if already at max
-        if (currentStacks >= maxStacks)
+        // Don't regenerate if already at max or no max set
+        if (maxVigor <= 0 || currentVigor >= maxVigor)
         {
             _regenAccumulator[accountId] = 0;
             return;
@@ -527,14 +523,14 @@ private:
         _regenAccumulator[accountId] += elapsedMs;
 
         // Check if enough time has accumulated for a vigor point
-        while (_regenAccumulator[accountId] >= regenMs && currentStacks < maxStacks)
+        while (_regenAccumulator[accountId] >= regenMs && currentVigor < maxVigor)
         {
-            vigorAura->ModStackAmount(1);
+            currentVigor++;
+            player->SetPower(POWER_ALTERNATE_MOUNT, currentVigor);
             _regenAccumulator[accountId] -= regenMs;
-            currentStacks++;
 
             TC_LOG_DEBUG("playerbot.dragonriding", "Player {} regenerated 1 vigor (now: {}/{}, rate: {}ms)",
-                player->GetName(), currentStacks, maxStacks, regenMs);
+                player->GetName(), currentVigor, maxVigor, regenMs);
         }
     }
 

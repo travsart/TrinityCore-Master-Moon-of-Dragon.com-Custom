@@ -193,7 +193,14 @@ class spell_playerbot_soar : public SpellScript
                 SPELL_VIGOR);
         }
 
-        // Apply retail vigor buff (383359) with calculated max stacks
+        // Set vigor using POWER_ALTERNATE_MOUNT (power type 25)
+        // This is how retail dragonriding vigor works - it's a power type, not just an aura
+        caster->SetMaxPower(POWER_ALTERNATE_MOUNT, maxVigor);
+        caster->SetPower(POWER_ALTERNATE_MOUNT, maxVigor);
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Set POWER_ALTERNATE_MOUNT to {}/{} for player {}",
+            maxVigor, maxVigor, caster->GetName());
+
+        // Also apply retail vigor buff (383359) for visual tracking
         SpellCastResult castResult = caster->CastSpell(caster, SPELL_VIGOR, CastSpellExtraArgsInit{
             .TriggerFlags = TRIGGERED_FULL_MASK,
             .OriginalCaster = caster->GetGUID()
@@ -206,13 +213,12 @@ class spell_playerbot_soar : public SpellScript
         if (Aura* vigorAura = caster->GetAura(SPELL_VIGOR))
         {
             vigorAura->SetStackAmount(maxVigor);
-            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Vigor granted {} stacks for player {}",
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: Vigor aura granted {} stacks for player {}",
                 maxVigor, caster->GetName());
         }
         else
         {
-            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: FAILED to get vigor aura after cast! "
-                "Spell exists: {}, Cast result: {}", vigorSpellInfo != nullptr, uint32(castResult));
+            TC_LOG_ERROR("playerbot.dragonriding", ">>> Soar: No vigor aura (may be handled by power type instead)");
         }
 
         // Swap action bar to dragonriding abilities using DIRECT approach
@@ -288,6 +294,11 @@ class spell_playerbot_soar_aura : public AuraScript
         // Disable dragonriding physics
         target->SetFlightCapabilityID(FLIGHT_CAPABILITY_NORMAL, true);
         TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL: FlightCapability reset to normal");
+
+        // Reset vigor power type
+        target->SetMaxPower(POWER_ALTERNATE_MOUNT, 0);
+        target->SetPower(POWER_ALTERNATE_MOUNT, 0);
+        TC_LOG_ERROR("playerbot.dragonriding", ">>> SOAR AURA REMOVAL: POWER_ALTERNATE_MOUNT reset to 0");
 
         // Remove retail vigor buff (383359)
         target->RemoveAura(SPELL_VIGOR);
@@ -512,9 +523,8 @@ class spell_playerbot_surge_forward : public SpellScript
         if (caster->GetFlightCapabilityID() == 0)
             return SPELL_FAILED_NOT_READY;
 
-        // Must have vigor (retail spell 383359)
-        Aura* vigor = caster->GetAura(SPELL_VIGOR);
-        if (!vigor || vigor->GetStackAmount() < 1)
+        // Must have vigor (POWER_ALTERNATE_MOUNT)
+        if (caster->GetPower(POWER_ALTERNATE_MOUNT) < 1)
             return SPELL_FAILED_NO_POWER;
 
         return SPELL_CAST_OK;
@@ -526,10 +536,11 @@ class spell_playerbot_surge_forward : public SpellScript
         if (!caster)
             return;
 
-        // Consume 1 vigor stack
-        if (Aura* vigor = caster->GetAura(SPELL_VIGOR))
+        // Consume 1 vigor charge (POWER_ALTERNATE_MOUNT)
+        int32 currentVigor = caster->GetPower(POWER_ALTERNATE_MOUNT);
+        if (currentVigor > 0)
         {
-            vigor->ModStackAmount(-1);
+            caster->SetPower(POWER_ALTERNATE_MOUNT, currentVigor - 1);
         }
 
         // The retail spell (372608) already has its own effects
@@ -537,8 +548,8 @@ class spell_playerbot_surge_forward : public SpellScript
 
         if (Player* player = caster->ToPlayer())
         {
-            TC_LOG_DEBUG("playerbot.dragonriding", "Player {} used Surge Forward (retail {}), vigor consumed",
-                player->GetName(), SPELL_SURGE_FORWARD);
+            TC_LOG_DEBUG("playerbot.dragonriding", "Player {} used Surge Forward (retail {}), vigor: {} -> {}",
+                player->GetName(), SPELL_SURGE_FORWARD, currentVigor, currentVigor - 1);
         }
     }
 
@@ -571,9 +582,8 @@ class spell_playerbot_skyward_ascent : public SpellScript
         if (caster->GetFlightCapabilityID() == 0)
             return SPELL_FAILED_NOT_READY;
 
-        // Must have vigor (retail spell 383359)
-        Aura* vigor = caster->GetAura(SPELL_VIGOR);
-        if (!vigor || vigor->GetStackAmount() < 1)
+        // Must have vigor (POWER_ALTERNATE_MOUNT)
+        if (caster->GetPower(POWER_ALTERNATE_MOUNT) < 1)
             return SPELL_FAILED_NO_POWER;
 
         return SPELL_CAST_OK;
@@ -585,10 +595,11 @@ class spell_playerbot_skyward_ascent : public SpellScript
         if (!caster)
             return;
 
-        // Consume 1 vigor stack
-        if (Aura* vigor = caster->GetAura(SPELL_VIGOR))
+        // Consume 1 vigor charge (POWER_ALTERNATE_MOUNT)
+        int32 currentVigor = caster->GetPower(POWER_ALTERNATE_MOUNT);
+        if (currentVigor > 0)
         {
-            vigor->ModStackAmount(-1);
+            caster->SetPower(POWER_ALTERNATE_MOUNT, currentVigor - 1);
         }
 
         // The retail spell (372610) already has its own effects
@@ -596,8 +607,8 @@ class spell_playerbot_skyward_ascent : public SpellScript
 
         if (Player* player = caster->ToPlayer())
         {
-            TC_LOG_DEBUG("playerbot.dragonriding", "Player {} used Skyward Ascent (retail {}), vigor consumed",
-                player->GetName(), SPELL_SKYWARD_ASCENT);
+            TC_LOG_DEBUG("playerbot.dragonriding", "Player {} used Skyward Ascent (retail {}), vigor: {} -> {}",
+                player->GetName(), SPELL_SKYWARD_ASCENT, currentVigor, currentVigor - 1);
         }
     }
 
@@ -642,9 +653,8 @@ class spell_playerbot_whirling_surge : public SpellScript
         if (caster->GetFlightCapabilityID() == 0)
             return SPELL_FAILED_NOT_READY;
 
-        // Must have vigor (retail spell 383359)
-        Aura* vigor = caster->GetAura(SPELL_VIGOR);
-        if (!vigor || vigor->GetStackAmount() < 1)
+        // Must have vigor (POWER_ALTERNATE_MOUNT)
+        if (caster->GetPower(POWER_ALTERNATE_MOUNT) < 1)
             return SPELL_FAILED_NO_POWER;
 
         return SPELL_CAST_OK;
@@ -656,10 +666,11 @@ class spell_playerbot_whirling_surge : public SpellScript
         if (!caster)
             return;
 
-        // Consume 1 vigor stack
-        if (Aura* vigor = caster->GetAura(SPELL_VIGOR))
+        // Consume 1 vigor charge (POWER_ALTERNATE_MOUNT)
+        int32 currentVigor = caster->GetPower(POWER_ALTERNATE_MOUNT);
+        if (currentVigor > 0)
         {
-            vigor->ModStackAmount(-1);
+            caster->SetPower(POWER_ALTERNATE_MOUNT, currentVigor - 1);
         }
 
         // The retail spell (361584) already has barrel roll effects
@@ -667,8 +678,8 @@ class spell_playerbot_whirling_surge : public SpellScript
 
         if (Player* player = caster->ToPlayer())
         {
-            TC_LOG_DEBUG("playerbot.dragonriding", "Player {} used Whirling Surge (retail {})",
-                player->GetName(), SPELL_WHIRLING_SURGE);
+            TC_LOG_DEBUG("playerbot.dragonriding", "Player {} used Whirling Surge (retail {}), vigor: {} -> {}",
+                player->GetName(), SPELL_WHIRLING_SURGE, currentVigor, currentVigor - 1);
         }
     }
 
