@@ -274,14 +274,15 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreatePlayerObject(
     // Note: This is a temporary session just for the creation process
     ::std::shared_ptr<WorldSession> tempSession = ::std::make_shared<WorldSession>(
         accountId,                                  // Account ID
-        ::std::string(""),                            // Account name (battle tag)
+        ::std::string(""),                          // Account name (battle tag)
         0,                                          // Battle.net account ID
-        nullptr,                                    // No socket
+        ::std::string(""),                          // Battle.net account email (new in 11.2.7)
+        ::std::shared_ptr<WorldSocket>(),           // No socket (empty shared_ptr for bots)
         AccountTypes::SEC_PLAYER,                   // Security level
         CURRENT_EXPANSION,                          // Expansion
         0,                                          // Mute time
-        "",                                         // OS string
-        ::std::chrono::minutes(0),                    // Timezone offset
+        ::std::string(""),                          // OS string
+        ::std::chrono::minutes(0),                  // Timezone offset
         0,                                          // Build
         ClientBuild::VariantId{},                   // Client build variant
         DEFAULT_LOCALE,                             // Locale

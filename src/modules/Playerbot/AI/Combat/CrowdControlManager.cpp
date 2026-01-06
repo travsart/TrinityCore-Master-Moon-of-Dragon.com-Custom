@@ -16,6 +16,7 @@
 #include "Log.h"
 #include "Creature.h"
 #include "GameTime.h"
+#include "DBCEnums.h"  // For MAX_EFFECT_MASK
 #include <algorithm>
 
 namespace Playerbot
@@ -581,7 +582,8 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
     }
 
     // Check if target is immune to CC
-    if (target->IsImmunedToSpell(spellInfo, _bot))
+    // Pass MAX_EFFECT_MASK to check all effects of the spell (API changed in 11.2.7)
+    if (target->IsImmunedToSpell(spellInfo, MAX_EFFECT_MASK, _bot))
         return false;
 
     return true;

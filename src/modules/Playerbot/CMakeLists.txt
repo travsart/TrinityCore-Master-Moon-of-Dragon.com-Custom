@@ -517,6 +517,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/ZoneLevelHelper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/ZoneLevelHelper.h
 
     # Phase 2: Companion Systems - Mount and Battle Pet Management
     # TODO: Re-enable when API compatibility is fixed (see PlayerbotWorldScript.cpp)
@@ -1211,6 +1213,8 @@ source_group("Character" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/ZoneLevelHelper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/ZoneLevelHelper.h
 )
 
 # source_group("Companion" FILES

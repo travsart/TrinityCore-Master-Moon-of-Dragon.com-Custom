@@ -14,6 +14,7 @@
 #include "World.h"
 #include "Config/PlayerbotConfig.h"
 #include <algorithm>
+#include <numeric>  // For std::iota
 
 namespace Playerbot
 {
@@ -134,7 +135,7 @@ void ZoneLevelHelper::BuildZoneCache()
     std::span<uint32 const> emptyRedirectFlags{};
 
     // Iterate all areas in AreaTable
-    for (auto const& [areaId, areaEntry] : sAreaTableStore)
+    for (AreaTableEntry const* areaEntry : sAreaTableStore)
     {
         if (!areaEntry)
             continue;
@@ -157,14 +158,14 @@ void ZoneLevelHelper::BuildZoneCache()
 
         // Build zone info
         ZoneInfo info;
-        info.areaId = areaId;
+        info.areaId = areaEntry->ID;
         info.contentTuningId = contentTuning->ID;
         info.expansionId = contentTuning->ExpansionID;
         info.continentId = areaEntry->ContinentID;
 
         // Determine zone ID (parent if this is a subzone)
         info.zoneId = areaEntry->ParentAreaID > 0 ?
-                      areaEntry->ParentAreaID : areaId;
+                      areaEntry->ParentAreaID : areaEntry->ID;
 
         // Set level range from ContentTuning
         info.levels.minLevel = static_cast<int16>(levels->MinLevel);
@@ -172,9 +173,9 @@ void ZoneLevelHelper::BuildZoneCache()
         info.levels.targetMin = static_cast<int16>(levels->TargetLevelMin);
         info.levels.targetMax = static_cast<int16>(levels->TargetLevelMax);
 
-        // Store zone name
-        if (areaEntry->AreaName)
-            info.zoneName = areaEntry->AreaName->Str[DEFAULT_LOCALE];
+        // Store zone name (AreaName is a LocalizedString with Str[] containing const char* in 11.2.7)
+        if (areaEntry->AreaName.Str[DEFAULT_LOCALE] && areaEntry->AreaName.Str[DEFAULT_LOCALE][0] != '\0')
+            info.zoneName = areaEntry->AreaName.Str[DEFAULT_LOCALE];
 
         // Categorize zone type
         CategorizeZone(info, contentTuning->ID);
@@ -183,20 +184,20 @@ void ZoneLevelHelper::BuildZoneCache()
         // Subzones map to their parent zone
         if (areaEntry->ParentAreaID == 0)
         {
-            _zoneCache[areaId] = info;
+            _zoneCache[areaEntry->ID] = info;
 
             // Add to level->zone lookup
             for (int16 lvl = info.levels.minLevel;
                  lvl <= info.levels.maxLevel && lvl <= MAX_LEVEL; ++lvl)
             {
                 if (lvl > 0)
-                    _zonesbyLevel[lvl].push_back(areaId);
+                    _zonesbyLevel[lvl].push_back(areaEntry->ID);
             }
         }
         else
         {
             // Map subzone area to parent zone
-            _areaToZone[areaId] = info.zoneId;
+            _areaToZone[areaEntry->ID] = info.zoneId;
         }
 
         ++zonesProcessed;
