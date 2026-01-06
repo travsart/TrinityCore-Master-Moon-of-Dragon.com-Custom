@@ -26,6 +26,7 @@
 #include "SharedDefines.h"
 #include "Group.h"
 #include "../AI/BotAI.h"
+#include "../Config/PlayerbotConfig.h"
 #include <algorithm>
 #include <random>
 #include "GameTime.h"
@@ -72,6 +73,16 @@ void SocialManager::Initialize()
 {
     if (!m_bot)
         return;
+
+    // Load configuration from PlayerbotConfig
+    m_chatEnabled = sPlayerbotConfig->GetBool("Playerbot.Social.EnableChat", false);
+    m_chatUpdateInterval = sPlayerbotConfig->GetInt("Playerbot.Social.ChatFrequency", 60000);
+    m_autoRespond = sPlayerbotConfig->GetBool("Playerbot.Social.RespondToWhispers", true);
+    m_guildChatEnabled = sPlayerbotConfig->GetBool("Playerbot.Social.JoinGuilds", false);
+    m_enabled = sPlayerbotConfig->GetBool("Playerbot.Social.FormGroups", true);
+
+    TC_LOG_DEBUG("playerbot", "SocialManager: Config loaded - Chat=%d, ChatFreq=%u, RespondWhispers=%d, GuildChat=%d",
+        m_chatEnabled, m_chatUpdateInterval, m_autoRespond, m_guildChatEnabled);
 
     LoadFriendList();
     LoadReputations();

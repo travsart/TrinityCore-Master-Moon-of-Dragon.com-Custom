@@ -183,6 +183,19 @@ private:
     bool LoadConfigFile(const std::string& filePath);
 
     /**
+     * @brief Load profile overrides if Playerbot.Profile is specified
+     * @note Called automatically after main config is loaded
+     */
+    void LoadProfile();
+
+    /**
+     * @brief Find profile configuration file
+     * @param profileName Name of the profile (minimal, standard, performance, singleplayer)
+     * @return Path to profile file, empty if not found
+     */
+    std::string FindProfileFile(std::string const& profileName);
+
+    /**
      * @brief Validate loaded configuration
      * @return true if valid, false otherwise
      */

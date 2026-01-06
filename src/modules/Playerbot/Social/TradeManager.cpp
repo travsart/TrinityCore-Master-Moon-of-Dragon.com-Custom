@@ -28,6 +28,7 @@
 #include "WorldSession.h"
 #include "Opcodes.h"
 #include "SharedDefines.h"
+#include "Config/PlayerbotTradeConfig.h"
 #include <algorithm>
 #include <numeric>
 
@@ -104,16 +105,23 @@ namespace Playerbot
 
     // TradeManager implementation
     TradeManager::TradeManager(Player* bot, BotAI* ai) :
-        BehaviorManager(bot, ai, 5000, "TradeManager"),  // 5 second update interval
-        m_securityLevel(TradeSecurity::SECURITY_STANDARD),
-        m_autoAcceptGroup(true),
-        m_autoAcceptGuild(false),
-        m_autoAcceptWhitelist(true),
-        m_maxTradeValue(10000 * GOLD),
-        m_maxTradeDistance(MAX_TRADE_DISTANCE_YARDS),
+        BehaviorManager(bot, ai, PlayerbotTradeConfig::GetTradeUpdateInterval(), "TradeManager"),
+        m_securityLevel(static_cast<TradeSecurity>(PlayerbotTradeConfig::GetTradeSecurityLevel())),
+        m_autoAcceptGroup(PlayerbotTradeConfig::IsTradeAutoAcceptGroupEnabled()),
+        m_autoAcceptGuild(PlayerbotTradeConfig::IsTradeAutoAcceptGuildEnabled()),
+        m_autoAcceptWhitelist(PlayerbotTradeConfig::IsTradeAutoAcceptWhitelistEnabled()),
+        m_maxTradeValue(PlayerbotTradeConfig::GetTradeMaxGoldAmount()),
+        m_maxTradeDistance(PlayerbotTradeConfig::GetTradeMaxDistance()),
         m_updateTimer(0)
     {
         m_lastUpdateTime = ::std::chrono::steady_clock::now();
+
+        // Load protected items from config
+        for (uint32 itemId : PlayerbotTradeConfig::GetProtectedItems())
+            m_protectedItems.insert(itemId);
+
+        TC_LOG_DEBUG("bot.trade", "TradeManager created with config: SecurityLevel={}, AutoAcceptGroup={}, MaxTradeValue={}",
+            static_cast<uint8>(m_securityLevel), m_autoAcceptGroup, m_maxTradeValue);
     }
 
     TradeManager::~TradeManager()
@@ -293,13 +301,10 @@ namespace Playerbot
 
             now - it->second.requestTime).count();
 
-        if (elapsed > TRADE_REQUEST_TIMEOUT)
+        if (elapsed > static_cast<int64>(PlayerbotTradeConfig::GetTradeRequestTimeout()))
         {
-
             m_pendingRequests.erase(it);
-
             LogTradeAction("ACCEPT_REQUEST_FAILED", "Request timed out");
-
             return false;
         }
 
@@ -690,21 +695,15 @@ namespace Playerbot
 
                 now - it->second.requestTime).count();
 
-            if (elapsed > TRADE_REQUEST_TIMEOUT)
-
+            if (elapsed > static_cast<int64>(PlayerbotTradeConfig::GetTradeRequestTimeout()))
             {
-
                 LogTradeAction("REQUEST_TIMEOUT", "Request from " + it->first.ToString() + " timed out");
-
                 it = m_pendingRequests.erase(it);
-
             }
-
             else
-
             {
                 // Auto-accept logic
-    if (it->second.isAutoAccept)
+                if (it->second.isAutoAccept)
 
                 {
 
@@ -736,20 +735,13 @@ namespace Playerbot
             }
 
             // Check for timeout
-
             auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
-
                 now - m_currentSession.startTime).count();
 
-
-            if (elapsed > TRADE_TIMEOUT)
-
+            if (elapsed > static_cast<int64>(PlayerbotTradeConfig::GetTradeTimeout()))
             {
-
                 LogTradeAction("TRADE_TIMEOUT", "Trade timed out after " + ::std::to_string(elapsed) + "ms");
-
                 CancelTrade("Trade timeout");
-
             }
         }
 
@@ -1467,43 +1459,14 @@ namespace Playerbot
 
     float TradeManager::GetItemQualityMultiplier(ItemQuality quality) const
     {
-        switch (quality)
-        {
-
-            case ITEM_QUALITY_POOR:
-            return 0.5f;
-
-            case ITEM_QUALITY_NORMAL:
-            return 1.0f;
-
-            case ITEM_QUALITY_UNCOMMON:  return 2.5f;
-
-            case ITEM_QUALITY_RARE:
-            return 5.0f;
-
-            case ITEM_QUALITY_EPIC:
-            return 10.0f;
-
-            case ITEM_QUALITY_LEGENDARY: return 25.0f;
-
-            case ITEM_QUALITY_ARTIFACT:  return 50.0f;
-
-            default:
-            return 1.0f;
-        }
+        // Delegate to centralized config for consistency across all trade systems
+        return PlayerbotTradeConfig::GetItemQualityMultiplier(static_cast<uint8>(quality));
     }
 
     float TradeManager::GetItemLevelMultiplier(uint32 itemLevel) const
     {
-        if (itemLevel == 0)
-
-            return 1.0f;
-
-        // Scale based on item level relative to max level
-        float maxLevel = float(sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL));
-        float levelRatio = float(itemLevel) / maxLevel;
-
-        return 1.0f + (levelRatio * 2.0f);
+        // Delegate to centralized config for consistency across all trade systems
+        return PlayerbotTradeConfig::GetItemLevelMultiplier(itemLevel);
     }
 
     bool TradeManager::IsItemNeededByBot(uint32 itemEntry) const
@@ -1735,7 +1698,8 @@ namespace Playerbot
 
     bool TradeManager::CheckValueBalance() const
     {
-        return m_currentSession.IsBalanced(SCAM_VALUE_THRESHOLD);
+        // Use value tolerance from config (scam protection threshold)
+        return m_currentSession.IsBalanced(PlayerbotTradeConfig::GetTradeValueTolerance());
     }
 
     bool TradeManager::ExecuteTrade()

@@ -172,10 +172,18 @@ bool BotSpawner::Initialize()
     }
     TC_LOG_INFO("module.playerbot", "   StartupSpawnOrchestrator initialized successfully");
 
-    // Step 5.5: Begin phased startup sequence
-    TC_LOG_INFO("module.playerbot", "  - Beginning phased startup sequence...");
-    _orchestrator.BeginStartup();
-    TC_LOG_INFO("module.playerbot", "   Phased startup sequence initiated");
+    // Step 5.5: Begin phased startup sequence (conditional based on SpawnOnServerStart)
+    if (_config.spawnOnServerStart)
+    {
+        TC_LOG_INFO("module.playerbot", "  - Beginning phased startup sequence (Spawn.OnServerStart = true)...");
+        _orchestrator.BeginStartup();
+        TC_LOG_INFO("module.playerbot", "   Phased startup sequence initiated - bots will spawn during server startup");
+    }
+    else
+    {
+        TC_LOG_INFO("module.playerbot", "  - Deferring bot spawning (Spawn.OnServerStart = false)");
+        TC_LOG_INFO("module.playerbot", "   Bots will begin spawning when the first player logs in");
+    }
 
     // Mark Phase 2 as initialized
     _phase2Initialized = true;
@@ -184,6 +192,7 @@ bool BotSpawner::Initialize()
     TC_LOG_INFO("module.playerbot", "   - CircuitBreaker: Protecting against spawn failures");
     TC_LOG_INFO("module.playerbot", "   - SpawnThrottler: Dynamic spawn rate (0.2-20 bots/sec)");
     TC_LOG_INFO("module.playerbot", "   - Phased Startup: 4-phase graduated spawning (0-30 min)");
+    TC_LOG_INFO("module.playerbot", "   - SpawnOnServerStart: {}", _config.spawnOnServerStart ? "ENABLED (immediate)" : "DISABLED (wait for player)");
 
     // ========================================================================
     // End Phase 2 Initialization
@@ -497,17 +506,18 @@ void BotSpawner::LoadConfig()
     _config.spawnDelayMs = sPlayerbotConfig->GetUInt("Playerbot.Spawn.DelayMs", 500);
     _config.enableDynamicSpawning = sPlayerbotConfig->GetBool("Playerbot.Spawn.Dynamic", false);
     _config.respectPopulationCaps = sPlayerbotConfig->GetBool("Playerbot.Spawn.RespectCaps", true);
+    _config.spawnOnServerStart = sPlayerbotConfig->GetBool("Playerbot.Spawn.OnServerStart", true);
     _config.botToPlayerRatio = sPlayerbotConfig->GetFloat("Playerbot.Spawn.BotToPlayerRatio", 20.0f);
 
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧🔧🔧 CONFIG DEBUG - Spawn configuration loaded from playerbots.conf:");
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.MaxTotal = {} (this controls total bots)", _config.maxBotsTotal);
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.MaxPerZone = {}", _config.maxBotsPerZone);
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.MaxPerMap = {}", _config.maxBotsPerMap);
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.BatchSize = {}", _config.spawnBatchSize);
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.Dynamic = {}", _config.enableDynamicSpawning);
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.RespectCaps = {} (if true, MaxTotal is enforced)", _config.respectPopulationCaps);
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧 Playerbot.Spawn.BotToPlayerRatio = {}", _config.botToPlayerRatio);
-    TC_LOG_ERROR("module.playerbot.spawner", "🔧🔧🔧 If MaxTotal shows 80 instead of your config value, the config file isn't being read!");
+    TC_LOG_INFO("module.playerbot.spawner", "CONFIG - Spawn configuration loaded from playerbots.conf:");
+    TC_LOG_INFO("module.playerbot.spawner", "  Playerbot.Spawn.MaxTotal = {} (this controls total bots)", _config.maxBotsTotal);
+    TC_LOG_INFO("module.playerbot.spawner", "  Playerbot.Spawn.MaxPerZone = {}", _config.maxBotsPerZone);
+    TC_LOG_INFO("module.playerbot.spawner", "  Playerbot.Spawn.MaxPerMap = {}", _config.maxBotsPerMap);
+    TC_LOG_INFO("module.playerbot.spawner", "  Playerbot.Spawn.BatchSize = {}", _config.spawnBatchSize);
+    TC_LOG_INFO("module.playerbot.spawner", "  Playerbot.Spawn.Dynamic = {}", _config.enableDynamicSpawning);
+    TC_LOG_INFO("module.playerbot.spawner", "  Playerbot.Spawn.RespectCaps = {} (if true, MaxTotal is enforced)", _config.respectPopulationCaps);
+    TC_LOG_INFO("module.playerbot.spawner", "  Playerbot.Spawn.OnServerStart = {} (spawn during startup)", _config.spawnOnServerStart);
+    TC_LOG_INFO("module.playerbot.spawner", "  Playerbot.Spawn.BotToPlayerRatio = {}", _config.botToPlayerRatio);
 }
 
 bool BotSpawner::SpawnBot(SpawnRequest const& request)

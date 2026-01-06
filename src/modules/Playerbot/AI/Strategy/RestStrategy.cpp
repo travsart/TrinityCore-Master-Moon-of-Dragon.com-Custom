@@ -171,7 +171,9 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     }
 
     // Start eating if needed
-    if (NeedsFood(ai) && !_isEating)
+    // CRITICAL: Check IsSitState() to avoid applying food aura when already sitting/eating
+    // This prevents the assertion failure: HasEffect(effIndex) == (!apply)
+    if (NeedsFood(ai) && !_isEating && !bot->IsSitState())
     {
         Item* food = FindFood(ai);
         if (food)
@@ -199,9 +201,17 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                          bot->GetName());
         }
     }
+    // If already sitting but _isEating is false, sync the flag
+    else if (bot->IsSitState() && !_isEating && NeedsFood(ai))
+    {
+        _isEating = true;
+        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} already sitting, syncing eat flag", bot->GetName());
+    }
 
     // Start drinking if needed
-    if (NeedsDrink(ai) && !_isDrinking)
+    // CRITICAL: Check IsSitState() to avoid applying drink aura when already sitting/drinking
+    // This prevents the assertion failure: HasEffect(effIndex) == (!apply)
+    if (NeedsDrink(ai) && !_isDrinking && !bot->IsSitState())
     {
         Item* drink = FindDrink(ai);
         if (drink)
@@ -229,6 +239,12 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} needs drink but none found in inventory",
                          bot->GetName());
         }
+    }
+    // If already sitting but _isDrinking is false, sync the flag
+    else if (bot->IsSitState() && !_isDrinking && NeedsDrink(ai))
+    {
+        _isDrinking = true;
+        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} already sitting, syncing drink flag", bot->GetName());
     }
 
     // Use bandage if health critical and no food

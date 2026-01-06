@@ -13,6 +13,7 @@
  */
 
 #include "BankingManager.h"
+#include "../Config/PlayerbotConfig.h"
 #include "../Professions/ProfessionManager.h"
 #include "../Professions/GatheringMaterialsBridge.h"
 #include "../Professions/ProfessionAuctionBridge.h"
@@ -1352,6 +1353,21 @@ bool BankingManager::Initialize()
     // Bot may not be fully in world yet during GameSystemsManager::Initialize(),
     // and Player::m_name is not initialized, causing ACCESS_VIOLATION.
     // Logging with bot identity deferred to first Update() call.
+
+    // Load configuration from PlayerbotConfig
+    _enabled = sPlayerbotConfig->GetBool("Playerbot.Banking.Enable", true);
+    _profile.bankCheckInterval = sPlayerbotConfig->GetInt("Playerbot.Banking.CheckInterval", 300000);
+    _profile.autoDepositGold = sPlayerbotConfig->GetBool("Playerbot.Banking.AutoDeposit", true);
+    _profile.minGoldInInventory = sPlayerbotConfig->GetInt("Playerbot.Banking.KeepGoldAmount", 10000);
+
+    TC_LOG_DEBUG("playerbot", "BankingManager: Config loaded - Enable=%d, CheckInterval=%u, AutoDeposit=%d",
+        _enabled, _profile.bankCheckInterval, _profile.autoDepositGold);
+
+    if (!_enabled)
+    {
+        TC_LOG_DEBUG("playerbot", "BankingManager: Disabled via config");
+        return true;  // Not an error, just disabled
+    }
 
     // Initialize default rules if not already done
     if (!_defaultRulesInitialized)

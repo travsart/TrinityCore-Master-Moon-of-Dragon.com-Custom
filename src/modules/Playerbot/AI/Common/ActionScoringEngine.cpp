@@ -16,7 +16,7 @@
  */
 
 #include "ActionScoringEngine.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include <cmath>
 #include <iomanip>
 
@@ -234,12 +234,12 @@ void ActionScoringEngine::SetCustomWeights(const ScoringWeights& weights)
 void ActionScoringEngine::ResetToDefaultWeights()
 {
     // Load from configuration
-    _weights.survival = sConfigMgr->GetFloatDefault("Playerbot.AI.Weighting.SurvivalWeight", 200.0f);
-    _weights.groupProtection = sConfigMgr->GetFloatDefault("Playerbot.AI.Weighting.GroupProtectionWeight", 180.0f);
-    _weights.damageOptimization = sConfigMgr->GetFloatDefault("Playerbot.AI.Weighting.DamageWeight", 150.0f);
-    _weights.resourceEfficiency = sConfigMgr->GetFloatDefault("Playerbot.AI.Weighting.ResourceWeight", 100.0f);
-    _weights.positioningMechanics = sConfigMgr->GetFloatDefault("Playerbot.AI.Weighting.PositioningWeight", 120.0f);
-    _weights.strategicValue = sConfigMgr->GetFloatDefault("Playerbot.AI.Weighting.StrategicWeight", 80.0f);
+    _weights.survival = sPlayerbotConfig->GetFloat("Playerbot.AI.Weighting.SurvivalWeight", 200.0f);
+    _weights.groupProtection = sPlayerbotConfig->GetFloat("Playerbot.AI.Weighting.GroupProtectionWeight", 180.0f);
+    _weights.damageOptimization = sPlayerbotConfig->GetFloat("Playerbot.AI.Weighting.DamageWeight", 150.0f);
+    _weights.resourceEfficiency = sPlayerbotConfig->GetFloat("Playerbot.AI.Weighting.ResourceWeight", 100.0f);
+    _weights.positioningMechanics = sPlayerbotConfig->GetFloat("Playerbot.AI.Weighting.PositioningWeight", 120.0f);
+    _weights.strategicValue = sPlayerbotConfig->GetFloat("Playerbot.AI.Weighting.StrategicWeight", 80.0f);
 
     RecalculateEffectiveWeights();
 }

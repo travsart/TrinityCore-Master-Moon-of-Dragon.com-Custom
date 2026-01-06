@@ -17,7 +17,7 @@
 
 #include "BotWorldPositioner.h"
 #include "Player.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include "Log.h"
 #include "World.h"
 #include "MapManager.h"
@@ -74,7 +74,7 @@ bool BotWorldPositioner::LoadZones()
     LoadZonesFromConfig();
 
     // Step 2: Load zones from database (primary source - innkeepers, flight masters, quest hubs)
-    bool dbLoadEnabled = sConfigMgr->GetBoolDefault("Playerbot.Zones.LoadFromDatabase", true);
+    bool dbLoadEnabled = sPlayerbotConfig->GetBool("Playerbot.Zones.LoadFromDatabase", true);
     if (dbLoadEnabled)
     {
         LoadZonesFromDatabase();
@@ -118,7 +118,7 @@ bool BotWorldPositioner::LoadZones()
         _stats.totalZones, _stats.starterZones, _stats.levelingZones, _stats.endgameZones, _stats.capitalCities);
 
     // Print detailed zone report if debug enabled
-    if (sConfigMgr->GetBoolDefault("Playerbot.Zones.DebugReport", false))
+    if (sPlayerbotConfig->GetBool("Playerbot.Zones.DebugReport", false))
     {
         PrintZoneReport();
     }
@@ -137,7 +137,7 @@ void BotWorldPositioner::LoadZonesFromConfig()
 
     // Load disabled zones list
     // Format: Playerbot.Zones.Disabled = "zoneId1,zoneId2,zoneId3"
-    ::std::string disabledZonesStr = sConfigMgr->GetStringDefault("Playerbot.Zones.Disabled", "");
+    ::std::string disabledZonesStr = sPlayerbotConfig->GetString("Playerbot.Zones.Disabled", "");
     if (!disabledZonesStr.empty())
     {
         ::std::stringstream ss(disabledZonesStr);
@@ -164,7 +164,7 @@ void BotWorldPositioner::LoadZonesFromConfig()
     for (uint32 zoneId = 1; zoneId < 20000; ++zoneId)
     {
         ::std::string configKey = "Playerbot.Zones.Override." + ::std::to_string(zoneId);
-        ::std::string overrideStr = sConfigMgr->GetStringDefault(configKey.c_str(), "");
+        ::std::string overrideStr = sPlayerbotConfig->GetString(configKey, "");
 
         if (overrideStr.empty())
             continue;
@@ -214,7 +214,7 @@ void BotWorldPositioner::LoadZonesFromConfig()
     for (int i = 1; i <= 100; ++i)
     {
         ::std::string configKey = "Playerbot.Zones.Custom." + ::std::to_string(i);
-        ::std::string customZoneStr = sConfigMgr->GetStringDefault(configKey.c_str(), "");
+        ::std::string customZoneStr = sPlayerbotConfig->GetString(configKey, "");
 
         if (customZoneStr.empty())
             continue;

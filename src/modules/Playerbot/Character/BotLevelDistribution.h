@@ -19,8 +19,10 @@
 
 #include "Define.h"
 #include "SharedDefines.h"
+#include "ZoneLevelHelper.h"
 #include "Core/DI/Interfaces/IBotLevelDistribution.h"
 #include <atomic>
+#include <array>
 #include <vector>
 #include <map>
 #include <string>
@@ -30,14 +32,21 @@ namespace Playerbot
 {
 
 /**
- * Thread-Safe Level Bracket
+ * Thread-Safe Expansion Tier Bracket
  *
- * Represents a level range with target distribution percentage.
+ * Represents an expansion tier with target distribution percentage.
  * Uses atomic counter for lock-free concurrent access.
  * Memory order relaxed is sufficient due to ±15% tolerance.
+ *
+ * Modern WoW 11.x uses expansion-based tiers:
+ * - Starting (1-10): Exile's Reach / racial zones
+ * - ChromieTime (10-60): All scaled content
+ * - Dragonflight (60-70): Dragon Isles
+ * - TheWarWithin (70-80): Khaz Algar
  */
 struct LevelBracket
 {
+    ExpansionTier tier;
     uint32 minLevel;
     uint32 maxLevel;
     float targetPercentage;
@@ -48,7 +57,8 @@ struct LevelBracket
 
     // Copy constructor - manually copy atomic value
     LevelBracket(LevelBracket const& other)
-        : minLevel(other.minLevel)
+        : tier(other.tier)
+        , minLevel(other.minLevel)
         , maxLevel(other.maxLevel)
         , targetPercentage(other.targetPercentage)
         , faction(other.faction)
@@ -57,13 +67,15 @@ struct LevelBracket
     }
 
     // Default constructor
-    LevelBracket() = default;
+    LevelBracket() : tier(ExpansionTier::Starting), minLevel(1), maxLevel(10),
+                     targetPercentage(0.0f), faction(TEAM_NEUTRAL) {}
 
     // Copy assignment - manually copy atomic value
     LevelBracket& operator=(LevelBracket const& other)
     {
         if (this != &other)
         {
+            tier = other.tier;
             minLevel = other.minLevel;
             maxLevel = other.maxLevel;
             targetPercentage = other.targetPercentage;
@@ -95,7 +107,13 @@ struct LevelBracket
         currentCount.store(count, ::std::memory_order_relaxed);
     }
 
-    // Behavior flags
+    // Tier-based behavior flags
+    bool IsStartingTier() const { return tier == ExpansionTier::Starting; }
+    bool IsChromieTimeTier() const { return tier == ExpansionTier::ChromieTime; }
+    bool IsDragonflightTier() const { return tier == ExpansionTier::Dragonflight; }
+    bool IsWarWithinTier() const { return tier == ExpansionTier::TheWarWithin; }
+
+    // Legacy behavior flags
     bool IsNaturalLeveling() const
     {
         return minLevel <= 4;  // Levels 1-4 level naturally
@@ -108,7 +126,7 @@ struct LevelBracket
 
     bool IsEndgame() const
     {
-        return minLevel == 80;
+        return maxLevel == 80;
     }
 
     // Get random level within bracket
@@ -156,6 +174,19 @@ struct LevelBracket
     {
         return -GetDeviation(totalBots);  // Negative deviation = higher priority
     }
+
+    // Get tier name for logging
+    ::std::string GetTierName() const
+    {
+        switch (tier)
+        {
+            case ExpansionTier::Starting: return "Starting";
+            case ExpansionTier::ChromieTime: return "ChromieTime";
+            case ExpansionTier::Dragonflight: return "Dragonflight";
+            case ExpansionTier::TheWarWithin: return "TheWarWithin";
+            default: return "Unknown";
+        }
+    }
 };
 
 /**
@@ -180,7 +211,8 @@ struct DistributionStats
  * Purpose: Automated world population with level-appropriate bots
  *
  * Features:
- * - Configurable level brackets (default: every 5 levels)
+ * - Expansion tier-based distribution (4 tiers: Starting, Chromie, DF, TWW)
+ * - Level ranges derived from ContentTuning DB2 via ZoneLevelHelper
  * - Thread-safe atomic counters (lock-free reads)
  * - Distribution tolerance checking (±15%)
  * - Weighted bracket selection based on deviation
@@ -195,9 +227,14 @@ struct DistributionStats
  * - Relaxed memory ordering (tolerance allows eventual consistency)
  *
  * Performance:
- * - O(n) bracket selection (n = number of brackets, typically 17)
+ * - O(1) tier selection (4 fixed tiers)
  * - Lock-free counter updates
  * - Minimal contention
+ *
+ * ContentTuning Integration:
+ * - Uses ZoneLevelHelper to get zone level requirements
+ * - Expansion tiers: Starting(1-10), Chromie(10-60), DF(60-70), TWW(70-80)
+ * - Target percentages configurable via Playerbot.Population.Tier.*.Pct
  */
 class TC_GAME_API BotLevelDistribution final : public IBotLevelDistribution
 {
@@ -215,6 +252,10 @@ public:
     LevelBracket const* SelectBracketWeighted(TeamId faction) const;
     LevelBracket const* GetBracketForLevel(uint32 level, TeamId faction) const override;
 
+    // Tier-based selection (new API)
+    LevelBracket const* SelectTier(TeamId faction, ExpansionTier tier) const;
+    LevelBracket const* GetBracketForTier(ExpansionTier tier, TeamId faction) const;
+
     // Distribution analysis
     DistributionStats GetDistributionStats() const;
     ::std::vector<LevelBracket const*> GetUnderpopulatedBrackets(TeamId faction) const;
@@ -227,14 +268,21 @@ public:
     void RecalculateDistribution() override;
 
     // Configuration queries
-    uint32 GetNumBrackets() const override { return m_numBrackets; }
+    uint32 GetNumBrackets() const override { return NUM_TIERS; }
     float GetTolerancePercent() const { return 15.0f; }  // ±15% tolerance
     bool IsEnabled() const override { return m_enabled; }
     bool IsDynamicDistribution() const override { return m_dynamicDistribution; }
 
+    // Zone-level integration
+    bool IsLevelValidForZone(uint32 level, uint32 zoneId) const;
+    uint32 GetRecommendedLevelForZone(uint32 zoneId) const;
+
     // Debugging
     void PrintDistributionReport() const override;
     ::std::string GetDistributionSummary() const;
+
+    // Number of expansion tiers
+    static constexpr uint32 NUM_TIERS = static_cast<uint32>(ExpansionTier::Max);
 
 private:
     BotLevelDistribution() = default;
@@ -242,30 +290,31 @@ private:
     BotLevelDistribution(BotLevelDistribution const&) = delete;
     BotLevelDistribution& operator=(BotLevelDistribution const&) = delete;
 
-    // Config loading helpers
-    void LoadBrackets(TeamId faction, ::std::string const& prefix);
+    // Tier-based initialization
+    void InitializeTiers();
+    void BuildTiersFromZoneLevelHelper();
     bool ValidateConfig() const;
-    void NormalizeBracketPercentages();
 
     // Selection helpers
     LevelBracket const* SelectByPriority(::std::vector<LevelBracket> const& brackets) const;
-    float CalculateTotalPriority(::std::vector<LevelBracket> const& brackets) const;
 
 private:
     // Configuration (immutable after load)
     bool m_enabled = false;
-    uint32 m_numBrackets = 17;
     bool m_dynamicDistribution = false;
     float m_realPlayerWeight = 1.0f;
     bool m_syncFactions = false;
 
-    // Bracket storage (immutable after load)
+    // Tier-based bracket storage (4 tiers per faction)
+    ::std::array<LevelBracket, NUM_TIERS> m_allianceTiers;
+    ::std::array<LevelBracket, NUM_TIERS> m_hordeTiers;
+
+    // Legacy vector-based access for interface compatibility
     ::std::vector<LevelBracket> m_allianceBrackets;
     ::std::vector<LevelBracket> m_hordeBrackets;
 
-    // Fast lookup map: level -> bracket index
-    ::std::map<uint32, size_t> m_allianceLevelMap;
-    ::std::map<uint32, size_t> m_hordeLevelMap;
+    // Fast lookup map: level -> tier index
+    ::std::array<size_t, 81> m_levelToTierIndex;  // levels 0-80
 
     // RNG (thread-local for thread safety)
     mutable ::std::mt19937 m_generator{::std::random_device{}()};

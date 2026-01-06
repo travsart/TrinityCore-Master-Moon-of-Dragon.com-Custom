@@ -67,6 +67,31 @@ public:
     MigrationStatus GetMigrationStatus() override;
     void PrintMigrationStatus() override;
 
+    // Source-Database version synchronization
+    /**
+     * @brief Get the expected database version from source code
+     * @return The PLAYERBOT_DB_VERSION constant
+     */
+    static uint32 GetExpectedDatabaseVersion() { return PLAYERBOT_DB_VERSION; }
+
+    /**
+     * @brief Get the current database version from applied migrations
+     * @return Number of applied migrations (version count)
+     */
+    uint32 GetDatabaseVersion() const;
+
+    /**
+     * @brief Check if database version matches source code version
+     * @return true if versions match, false if migration needed
+     */
+    bool ValidateDatabaseVersion() const;
+
+    /**
+     * @brief Check for version mismatch and log appropriate warnings
+     * @return true if versions match (or mismatch is acceptable), false if critical mismatch
+     */
+    bool CheckVersionMismatch() const;
+
 private:
     PlayerbotMigrationMgr();
     ~PlayerbotMigrationMgr() = default;
@@ -124,6 +149,11 @@ private:
     static constexpr char const* MIGRATION_PATH = "sql/migrations/";
     static constexpr char const* BACKUP_PATH = "sql/backups/";
     static constexpr char const* MIGRATION_TABLE = "playerbot_migrations";
+
+    // Source code database version - increment this when adding new migrations
+    // Version 1: Base schema from dump (includes all previous migrations 001-008)
+    // Future migrations will increment this number
+    static constexpr uint32 PLAYERBOT_DB_VERSION = 1;
 
     // Helper method to get migration directory path
     static std::string GetMigrationPath();

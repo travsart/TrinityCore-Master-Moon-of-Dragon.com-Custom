@@ -77,6 +77,26 @@ private:
      * @param error Error message
      */
     void SetError(std::string const& error);
+
+    /**
+     * @brief Attempt to create the database if it doesn't exist
+     * @param handle MySQL handle
+     * @param hostname Server hostname
+     * @param port Server port
+     * @param username Database username
+     * @param password Database password
+     * @param database Database name to create
+     * @return true if database was created successfully
+     */
+    bool TryCreateDatabase(void* handle, std::string const& hostname, uint32 port,
+        std::string const& username, std::string const& password, std::string const& database);
+
+    /**
+     * @brief Display helpful instructions when database setup is required
+     * @param database Database name
+     * @param username Database username
+     */
+    void DisplayDatabaseSetupInstructions(std::string const& database, std::string const& username);
 };
 
 #endif // PLAYERBOT_DATABASE_CONNECTION_H

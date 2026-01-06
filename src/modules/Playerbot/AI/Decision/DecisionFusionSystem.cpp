@@ -19,7 +19,7 @@
 #include "ObjectAccessor.h"
 #include "Unit.h"
 #include "Log.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include <algorithm>
 #include <unordered_map>
 #include <sstream>
@@ -34,20 +34,20 @@ DecisionFusionSystem::DecisionFusionSystem()
     , _stats{}
 {
     // Load from configuration
-    _debugLogging = sConfigMgr->GetBoolDefault("Playerbot.AI.DecisionFusion.LogDecisions", false);
-    _urgencyThreshold = sConfigMgr->GetFloatDefault("Playerbot.AI.DecisionFusion.UrgencyThreshold", 0.85f);
+    _debugLogging = sPlayerbotConfig->GetBool("Playerbot.AI.DecisionFusion.LogDecisions", false);
+    _urgencyThreshold = sPlayerbotConfig->GetFloat("Playerbot.AI.DecisionFusion.UrgencyThreshold", 0.85f);
 
     // Load system weights from configuration (with defaults)
     _systemWeights[static_cast<size_t>(DecisionSource::BEHAVIOR_PRIORITY)] =
-        sConfigMgr->GetFloatDefault("Playerbot.AI.DecisionFusion.Weight.BehaviorPriority", 0.25f);
+        sPlayerbotConfig->GetFloat("Playerbot.AI.DecisionFusion.Weight.BehaviorPriority", 0.25f);
     _systemWeights[static_cast<size_t>(DecisionSource::ACTION_PRIORITY)] =
-        sConfigMgr->GetFloatDefault("Playerbot.AI.DecisionFusion.Weight.ActionPriority", 0.15f);
+        sPlayerbotConfig->GetFloat("Playerbot.AI.DecisionFusion.Weight.ActionPriority", 0.15f);
     _systemWeights[static_cast<size_t>(DecisionSource::BEHAVIOR_TREE)] =
-        sConfigMgr->GetFloatDefault("Playerbot.AI.DecisionFusion.Weight.BehaviorTree", 0.30f);
+        sPlayerbotConfig->GetFloat("Playerbot.AI.DecisionFusion.Weight.BehaviorTree", 0.30f);
     _systemWeights[static_cast<size_t>(DecisionSource::ADAPTIVE_BEHAVIOR)] =
-        sConfigMgr->GetFloatDefault("Playerbot.AI.DecisionFusion.Weight.AdaptiveBehavior", 0.10f);
+        sPlayerbotConfig->GetFloat("Playerbot.AI.DecisionFusion.Weight.AdaptiveBehavior", 0.10f);
     _systemWeights[static_cast<size_t>(DecisionSource::WEIGHTING_SYSTEM)] =
-        sConfigMgr->GetFloatDefault("Playerbot.AI.DecisionFusion.Weight.WeightingSystem", 0.20f);
+        sPlayerbotConfig->GetFloat("Playerbot.AI.DecisionFusion.Weight.WeightingSystem", 0.20f);
 
     // Normalize weights to ensure they sum to 1.0
     NormalizeWeights();

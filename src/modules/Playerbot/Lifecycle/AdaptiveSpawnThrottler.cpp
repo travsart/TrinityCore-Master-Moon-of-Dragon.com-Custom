@@ -34,14 +34,23 @@ void ThrottlerConfig::LoadFromConfig()
     burstWindowMs = sPlayerbotConfig->GetInt("Playerbot.Throttler.BurstWindow.Seconds", 10) * 1000;
     maxBurstsPerWindow = sPlayerbotConfig->GetInt("Playerbot.Throttler.BurstWindow.Requests", 50);
 
+    // ============================================================================
+    // CRITICAL FIX: Per-update-cycle spawn limit (prevents visibility update hang)
+    // ============================================================================
+    // Default to 1 bot per update cycle to prevent Map::ProcessRelocationNotifies()
+    // from being overwhelmed by accumulated visibility updates from multiple bots.
+    // Higher values may cause server freeze during startup with many bots.
+    // ============================================================================
+    maxSpawnsPerUpdateCycle = sPlayerbotConfig->GetInt("Playerbot.Throttler.MaxSpawnsPerUpdateCycle", 1);
+
     enableAdaptiveThrottling = sPlayerbotConfig->GetBool("Playerbot.Throttler.EnableAdaptive", true);
     enableCircuitBreaker = sPlayerbotConfig->GetBool("Playerbot.Throttler.EnableCircuitBreaker", true);
     enableBurstPrevention = sPlayerbotConfig->GetBool("Playerbot.Throttler.EnableBurstPrevention", true);
 
     TC_LOG_INFO("module.playerbot.throttler",
-        "AdaptiveSpawnThrottler config loaded: Base={}ms, Range=[{}-{}ms], Adaptive={}, CircuitBreaker={}, BurstPrevention={}",
+        "AdaptiveSpawnThrottler config loaded: Base={}ms, Range=[{}-{}ms], MaxPerCycle={}, Adaptive={}, CircuitBreaker={}, BurstPrevention={}",
         baseSpawnIntervalMs, minSpawnIntervalMs, maxSpawnIntervalMs,
-        enableAdaptiveThrottling, enableCircuitBreaker, enableBurstPrevention);
+        maxSpawnsPerUpdateCycle, enableAdaptiveThrottling, enableCircuitBreaker, enableBurstPrevention);
 }
 
 // ============================================================================
@@ -90,8 +99,17 @@ void AdaptiveSpawnThrottler::Update(uint32 diff)
     if (_config.enableAdaptiveThrottling)
         RecalculateInterval();
 
-    // Reset spawn counter for this update cycle
-    _spawnsSinceLastUpdate = 0;
+    // ============================================================================
+    // CRITICAL FIX: Reset per-update-cycle spawn counter
+    // ============================================================================
+    // This counter limits how many bots can be added to the world in a single
+    // BotSpawner::Update() cycle. Each bot added triggers visibility updates
+    // that are processed in Map::ProcessRelocationNotifies(). If too many bots
+    // spawn in the same cycle, visibility processing time grows O(n^2) and can
+    // cause 60+ second hangs during startup.
+    // ============================================================================
+    _spawnsSinceLastUpdate = _spawnsThisUpdateCycle; // Save for metrics before reset
+    _spawnsThisUpdateCycle = 0;
 }
 
 bool AdaptiveSpawnThrottler::CanSpawnNow() const
@@ -111,7 +129,27 @@ bool AdaptiveSpawnThrottler::CanSpawnNow() const
         }
     }
 
-    // 2. Check if in burst prevention mode
+    // ============================================================================
+    // 2. CRITICAL FIX: Check per-update-cycle spawn limit
+    // ============================================================================
+    // This is the key fix for the 60+ second hang during startup. When multiple
+    // bots are added to the world in the same BotSpawner::Update() cycle, their
+    // visibility updates accumulate and are ALL processed together in
+    // Map::ProcessRelocationNotifies(). With many bots and creatures, this causes
+    // O(n^2) processing time.
+    //
+    // By limiting to 1-2 bots per cycle, visibility updates are spread across
+    // multiple Map::Update cycles, preventing the performance spike.
+    // ============================================================================
+    if (_spawnsThisUpdateCycle >= _config.maxSpawnsPerUpdateCycle)
+    {
+        TC_LOG_TRACE("module.playerbot.throttler",
+            "Spawn blocked by per-cycle limit ({}/{} spawns this cycle)",
+            _spawnsThisUpdateCycle, _config.maxSpawnsPerUpdateCycle);
+        return false;
+    }
+
+    // 3. Check if in burst prevention mode
     if (_config.enableBurstPrevention && IsInBurstPrevention())
     {
         TC_LOG_TRACE("module.playerbot.throttler",
@@ -120,7 +158,7 @@ bool AdaptiveSpawnThrottler::CanSpawnNow() const
         return false;
     }
 
-    // 3. Check if enough time passed since last spawn
+    // 4. Check if enough time passed since last spawn
     Milliseconds timeSinceLastSpawn = ::std::chrono::duration_cast<Milliseconds>(
         GameTime::Now() - _lastSpawnTime);
 
@@ -147,12 +185,19 @@ void AdaptiveSpawnThrottler::RecordSpawnSuccess()
     // Add to burst tracking window
     _recentSpawnTimes.push_back(now);
 
-    // Update metrics
-    ++_spawnsSinceLastUpdate;
+    // ============================================================================
+    // CRITICAL FIX: Increment per-update-cycle spawn counter
+    // ============================================================================
+    // This tracks how many bots have been added to the world in the current
+    // BotSpawner::Update() cycle. CanSpawnNow() uses this to block additional
+    // spawns once the limit is reached, spreading visibility updates across cycles.
+    // ============================================================================
+    ++_spawnsThisUpdateCycle;
 
     TC_LOG_TRACE("module.playerbot.throttler",
-        "Spawn success recorded (interval: {}ms, recent spawns: {})",
-        _currentSpawnInterval, _recentSpawnTimes.size());
+        "Spawn success recorded (interval: {}ms, recent spawns: {}, this cycle: {}/{})",
+        _currentSpawnInterval, _recentSpawnTimes.size(),
+        _spawnsThisUpdateCycle, _config.maxSpawnsPerUpdateCycle);
 }
 
 void AdaptiveSpawnThrottler::RecordSpawnFailure(::std::string_view reason)
@@ -214,6 +259,8 @@ ThrottlerMetrics AdaptiveSpawnThrottler::GetMetrics() const
         metrics.circuitState = _circuitBreaker->GetState();
 
     metrics.spawnsSinceLastUpdate = _spawnsSinceLastUpdate;
+    metrics.spawnsThisUpdateCycle = _spawnsThisUpdateCycle;
+    metrics.updateCycleThrottleBlocks = _updateCycleThrottleBlocks;
     metrics.totalSpawnsThrottled = _totalSpawnsThrottled;
     metrics.burstPreventionTriggers = _burstPreventionCount;
 

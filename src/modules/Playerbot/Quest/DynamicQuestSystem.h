@@ -194,25 +194,27 @@ public:
 private:
     Player* _bot;
 
-    // Core data structures
-    std::unordered_map<uint32, QuestMetadata> _questMetadata;
+    // Per-bot data structures (instance members)
     std::unordered_map<uint32, std::vector<QuestProgress>> _botQuestProgress; // botGuid -> quests
     std::unordered_map<uint32, QuestSelectionStrategy> _botStrategies;
     std::unordered_map<uint32, QuestMetrics> _botMetrics;
-    
 
-    // Quest chains and dependencies
-    std::unordered_map<uint32, std::vector<uint32>> _questChains; // questId -> chain
-    std::unordered_map<uint32, std::vector<uint32>> _questPrerequisites; // questId -> required quests
-    std::unordered_map<uint32, std::vector<uint32>> _questFollowups; // questId -> followup quests
-
-    // Zone optimization data
-    std::unordered_map<uint32, std::vector<uint32>> _zoneQuests; // zoneId -> questIds
-    std::unordered_map<uint32, std::vector<Position>> _questHotspots; // zoneId -> optimal locations
-
-    // Group quest coordination
+    // Group quest coordination (per-bot)
     std::unordered_map<uint32, std::vector<uint32>> _questGroups; // questId -> botGuids
     std::queue<std::pair<uint32, uint32>> _groupQuestRequests; // <questId, requesterGuid>
+
+    // ========================================================================
+    // STATIC/SHARED DATA - Loaded once, shared across all bot instances
+    // This prevents 20,000+ quest entries being duplicated per bot
+    // ========================================================================
+    static std::unordered_map<uint32, QuestMetadata> _questMetadata;
+    static std::unordered_map<uint32, std::vector<uint32>> _questChains; // questId -> chain
+    static std::unordered_map<uint32, std::vector<uint32>> _questPrerequisites; // questId -> required quests
+    static std::unordered_map<uint32, std::vector<uint32>> _questFollowups; // questId -> followup quests
+    static std::unordered_map<uint32, std::vector<uint32>> _zoneQuests; // zoneId -> questIds
+    static std::unordered_map<uint32, std::vector<Position>> _questHotspots; // zoneId -> optimal locations
+    static std::mutex _staticDataMutex;
+    static bool _staticDataInitialized;
     
 
     // Helper functions

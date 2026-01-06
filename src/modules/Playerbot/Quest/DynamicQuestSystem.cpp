@@ -27,10 +27,23 @@
 #include <algorithm>
 #include <random>
 #include <cmath>
+#include <unordered_set>
 #include "GameTime.h"
 
 namespace Playerbot
 {
+
+// ============================================================================
+// STATIC MEMBER DEFINITIONS - Shared across all DynamicQuestSystem instances
+// ============================================================================
+std::unordered_map<uint32, QuestMetadata> DynamicQuestSystem::_questMetadata;
+std::unordered_map<uint32, std::vector<uint32>> DynamicQuestSystem::_questChains;
+std::unordered_map<uint32, std::vector<uint32>> DynamicQuestSystem::_questPrerequisites;
+std::unordered_map<uint32, std::vector<uint32>> DynamicQuestSystem::_questFollowups;
+std::unordered_map<uint32, std::vector<uint32>> DynamicQuestSystem::_zoneQuests;
+std::unordered_map<uint32, std::vector<Position>> DynamicQuestSystem::_questHotspots;
+std::mutex DynamicQuestSystem::_staticDataMutex;
+bool DynamicQuestSystem::_staticDataInitialized = false;
 
 DynamicQuestSystem::DynamicQuestSystem(Player* bot)
     : _bot(bot)
@@ -38,10 +51,20 @@ DynamicQuestSystem::DynamicQuestSystem(Player* bot)
     if (!_bot)
         TC_LOG_ERROR("playerbot.quest", "DynamicQuestSystem: null bot!");
 
-    LoadQuestMetadata();
-    AnalyzeQuestDependencies();
-    BuildQuestChains();
-    OptimizeQuestRoutes();
+    // Only load static quest data once (first bot to initialize)
+    {
+        std::lock_guard<std::mutex> lock(_staticDataMutex);
+        if (!_staticDataInitialized)
+        {
+            TC_LOG_INFO("playerbot.quest", "DynamicQuestSystem: Initializing shared quest data (first instance)...");
+            LoadQuestMetadata();
+            AnalyzeQuestDependencies();
+            BuildQuestChains();
+            OptimizeQuestRoutes();
+            _staticDataInitialized = true;
+            TC_LOG_INFO("playerbot.quest", "DynamicQuestSystem: Shared quest data initialized");
+        }
+    }
 }
 
 DynamicQuestSystem::~DynamicQuestSystem() {}
@@ -888,11 +911,20 @@ void DynamicQuestSystem::BuildQuestChains()
     {
         uint32 questId = followupPair.first;
         std::vector<uint32> chain;
+        std::unordered_set<uint32> visited; // Cycle detection
 
         // Build chain forward
         uint32 currentQuest = questId;
         while (currentQuest != 0)
         {
+            // Cycle detection - prevent infinite loops from circular quest references
+            if (visited.count(currentQuest) > 0)
+            {
+                TC_LOG_WARN("playerbot.quest", "DynamicQuestSystem: Circular quest chain detected at quest {}, breaking chain", currentQuest);
+                break;
+            }
+            visited.insert(currentQuest);
+
             chain.push_back(currentQuest);
             auto nextIt = _questFollowups.find(currentQuest);
             if (nextIt != _questFollowups.end() && !nextIt->second.empty())

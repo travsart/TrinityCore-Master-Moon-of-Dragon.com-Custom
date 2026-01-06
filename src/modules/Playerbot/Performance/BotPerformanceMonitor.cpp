@@ -10,6 +10,7 @@
 #include "BotPerformanceMonitor.h"
 #include "Log.h"
 #include "Util.h"
+#include "../Config/PlayerbotConfig.h"
 #include <algorithm>
 #include <sstream>
 #include <fstream>
@@ -83,6 +84,23 @@ ScopedPerformanceMeasurement::~ScopedPerformanceMeasurement()
 bool BotPerformanceMonitor::Initialize()
 {
     TC_LOG_INFO("playerbot", "Initializing Bot Performance Monitor...");
+
+    // Load configuration from PlayerbotConfig
+    _configEnabled = sPlayerbotConfig->GetBool("Playerbot.Performance.EnableMonitoring", false);
+    _cpuWarningThreshold = sPlayerbotConfig->GetFloat("Playerbot.Performance.CpuWarningThreshold", 70.0f);
+    _memoryWarningThreshold = sPlayerbotConfig->GetFloat("Playerbot.Performance.MemoryWarningThreshold", 80.0f);
+    _reportIntervalSeconds = sPlayerbotConfig->GetUInt("Playerbot.Performance.ReportInterval", 60);
+    _enableDetailedTracking = sPlayerbotConfig->GetBool("Playerbot.Performance.DetailedTracking", false);
+    _metricsExportPath = sPlayerbotConfig->GetString("Playerbot.Performance.ExportPath", "");
+
+    TC_LOG_DEBUG("playerbot", "Performance Monitor Config: Enable={}, CpuWarn={}%, MemWarn={}%, Interval={}s, Detailed={}",
+        _configEnabled, _cpuWarningThreshold, _memoryWarningThreshold, _reportIntervalSeconds, _enableDetailedTracking);
+
+    if (!_configEnabled)
+    {
+        TC_LOG_INFO("playerbot", "Bot Performance Monitor disabled via config");
+        return true;
+    }
 
     // Initialize default thresholds
     InitializeDefaultThresholds();

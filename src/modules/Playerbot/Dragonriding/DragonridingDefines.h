@@ -59,6 +59,17 @@ constexpr uint32 SPELL_AERIAL_HALT = 403092;    // "Flap back, reduce forward mo
 constexpr uint32 SPELL_DRAGONRIDING = 376027;   // Base dragonriding unlock spell
 constexpr uint32 SPELL_VIGOR = 383359;          // Skyriding charges resource (formerly "Vigor")
 constexpr uint32 SPELL_THRILL_OF_THE_SKIES = 383366; // High-speed vigor regeneration buff
+constexpr uint32 SPELL_FLIGHT_STYLE_SKYRIDING = 404464; // "Skyriding is currently enabled" - ENABLES ABILITIES
+constexpr uint32 SPELL_FLIGHT_STYLE_STEADY = 404468;    // "Steady Flight is currently enabled" - MUST REMOVE for Soar
+
+// -----------------------------------------------------------------------------
+// CRITICAL: DRAGONRIDER ENERGY (372773)
+// This aura is REQUIRED by Surge Forward (372608) and Skyward Ascent (372610)
+// Both abilities have CasterAuraSpell = 372773 in their SpellInfo
+// Without this aura, abilities show "You can't do that yet"
+// This aura also enables the Alt Power bar (vigor UI display)
+// -----------------------------------------------------------------------------
+constexpr uint32 SPELL_DRAGONRIDER_ENERGY = 372773; // "Dragonrider Energy" - enables vigor UI + ability casting
 
 // -----------------------------------------------------------------------------
 // CUSTOM INTERNAL SPELLS (900000+ range)

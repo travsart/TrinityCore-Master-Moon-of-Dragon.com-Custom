@@ -71,6 +71,38 @@ bool PlayerbotDatabaseConnection::Initialize(std::string const& connectionInfo)
     if (!mysql_real_connect(mysql, hostname.c_str(), username.c_str(), password.c_str(),
                            database.c_str(), port, nullptr, CLIENT_MULTI_STATEMENTS))
     {
+        uint32 errorCode = mysql_errno(mysql);
+
+        // Check if database doesn't exist (Error 1049: ER_BAD_DB_ERROR)
+        if (errorCode == 1049)
+        {
+            TC_LOG_INFO("module.playerbot.database",
+                "PlayerbotDatabaseConnection: Database '{}' does not exist, attempting auto-create...", database);
+
+            // Try to create the database
+            if (TryCreateDatabase(mysql, hostname, port, username, password, database))
+            {
+                // Retry connection with the newly created database
+                if (mysql_real_connect(mysql, hostname.c_str(), username.c_str(), password.c_str(),
+                                       database.c_str(), port, nullptr, CLIENT_MULTI_STATEMENTS))
+                {
+                    _mysqlHandle = mysql;
+                    _connected = true;
+                    _lastError.clear();
+
+                    TC_LOG_INFO("module.playerbot.database",
+                        "PlayerbotDatabaseConnection: Successfully created and connected to {}:{}/{}",
+                        hostname, port, database);
+                    return true;
+                }
+            }
+
+            // Auto-create failed - show helpful instructions
+            DisplayDatabaseSetupInstructions(database, username);
+            mysql_close(mysql);
+            return false;
+        }
+
         SetError(Trinity::StringFormat("Failed to connect to MySQL: {}", mysql_error(mysql)));
         mysql_close(mysql);
         return false;
@@ -84,6 +116,91 @@ bool PlayerbotDatabaseConnection::Initialize(std::string const& connectionInfo)
                 hostname, port, database);
 
     return true;
+}
+
+bool PlayerbotDatabaseConnection::TryCreateDatabase(void* handle, std::string const& hostname, uint32 port,
+    std::string const& username, std::string const& password, std::string const& database)
+{
+    MYSQL* mysql = static_cast<MYSQL*>(handle);
+
+    // Reinitialize handle for connection without database
+    mysql = mysql_init(nullptr);
+    if (!mysql)
+    {
+        TC_LOG_ERROR("module.playerbot.database",
+            "PlayerbotDatabaseConnection: Failed to reinitialize MySQL handle for database creation");
+        return false;
+    }
+
+    // Connect without specifying a database
+    if (!mysql_real_connect(mysql, hostname.c_str(), username.c_str(), password.c_str(),
+                           nullptr, port, nullptr, CLIENT_MULTI_STATEMENTS))
+    {
+        TC_LOG_ERROR("module.playerbot.database",
+            "PlayerbotDatabaseConnection: Cannot connect to MySQL server for database creation: {}",
+            mysql_error(mysql));
+        mysql_close(mysql);
+        return false;
+    }
+
+    // Create the database with proper character set
+    std::string createDbSql = Trinity::StringFormat(
+        "CREATE DATABASE IF NOT EXISTS `{}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+        database);
+
+    if (mysql_query(mysql, createDbSql.c_str()))
+    {
+        uint32 errorCode = mysql_errno(mysql);
+        if (errorCode == 1044) // ER_DBACCESS_DENIED_ERROR - Access denied
+        {
+            TC_LOG_ERROR("module.playerbot.database",
+                "PlayerbotDatabaseConnection: Access denied for CREATE DATABASE. "
+                "User '{}' needs CREATE privilege.", username);
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.database",
+                "PlayerbotDatabaseConnection: Failed to create database '{}': {}",
+                database, mysql_error(mysql));
+        }
+        mysql_close(mysql);
+        return false;
+    }
+
+    TC_LOG_INFO("module.playerbot.database",
+        "PlayerbotDatabaseConnection: Successfully created database '{}'", database);
+
+    mysql_close(mysql);
+    return true;
+}
+
+void PlayerbotDatabaseConnection::DisplayDatabaseSetupInstructions(std::string const& database, std::string const& username)
+{
+    TC_LOG_ERROR("module.playerbot.database", "");
+    TC_LOG_ERROR("module.playerbot.database", "================================================================================");
+    TC_LOG_ERROR("module.playerbot.database", "  PLAYERBOT DATABASE SETUP REQUIRED");
+    TC_LOG_ERROR("module.playerbot.database", "================================================================================");
+    TC_LOG_ERROR("module.playerbot.database", "");
+    TC_LOG_ERROR("module.playerbot.database", "  Database '{}' does not exist and auto-creation failed.", database);
+    TC_LOG_ERROR("module.playerbot.database", "");
+    TC_LOG_ERROR("module.playerbot.database", "  OPTION 1: Grant CREATE privilege for auto-creation");
+    TC_LOG_ERROR("module.playerbot.database", "  ------------------------------------------------");
+    TC_LOG_ERROR("module.playerbot.database", "  GRANT CREATE ON *.* TO '{}'@'localhost';", username);
+    TC_LOG_ERROR("module.playerbot.database", "  FLUSH PRIVILEGES;");
+    TC_LOG_ERROR("module.playerbot.database", "");
+    TC_LOG_ERROR("module.playerbot.database", "  OPTION 2: Create the database manually");
+    TC_LOG_ERROR("module.playerbot.database", "  --------------------------------------");
+    TC_LOG_ERROR("module.playerbot.database", "  CREATE DATABASE {} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;", database);
+    TC_LOG_ERROR("module.playerbot.database", "  GRANT ALL ON {}.* TO '{}'@'localhost';", database, username);
+    TC_LOG_ERROR("module.playerbot.database", "  FLUSH PRIVILEGES;");
+    TC_LOG_ERROR("module.playerbot.database", "");
+    TC_LOG_ERROR("module.playerbot.database", "  After creating the database, restart the server.");
+    TC_LOG_ERROR("module.playerbot.database", "  Schema migrations will be applied automatically.");
+    TC_LOG_ERROR("module.playerbot.database", "");
+    TC_LOG_ERROR("module.playerbot.database", "================================================================================");
+    TC_LOG_ERROR("module.playerbot.database", "");
+
+    SetError(Trinity::StringFormat("Database '{}' does not exist", database));
 }
 
 void PlayerbotDatabaseConnection::Close()

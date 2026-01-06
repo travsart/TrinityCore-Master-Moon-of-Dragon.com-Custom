@@ -56,6 +56,9 @@ bool PlayerbotConfig::Initialize()
         return false;
     }
 
+    // Load profile overrides if specified
+    LoadProfile();
+
     // Validate configuration
     if (!ValidateConfiguration())
     {
@@ -289,6 +292,83 @@ bool PlayerbotConfig::LoadConfigFile(const std::string& filePath)
     TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Successfully loaded {} configuration entries from {}",
                  _configValues.size(), filePath);
     return true;
+}
+
+void PlayerbotConfig::LoadProfile()
+{
+    // Get the profile name from config
+    std::string profileName = GetString("Playerbot.Profile", "");
+
+    // If no profile specified, use individual settings
+    if (profileName.empty())
+    {
+        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: No profile specified, using individual settings");
+        return;
+    }
+
+    // Validate profile name
+    if (profileName != "minimal" && profileName != "standard" &&
+        profileName != "performance" && profileName != "singleplayer")
+    {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Unknown profile '{}'. Valid options: minimal, standard, performance, singleplayer",
+            profileName);
+        return;
+    }
+
+    // Build profile file path
+    std::string profilePath = FindProfileFile(profileName);
+    if (profilePath.empty())
+    {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Profile file not found for '{}'", profileName);
+        return;
+    }
+
+    TC_LOG_INFO("server.loading", "PlayerbotConfig: Loading profile '{}' from {}", profileName, profilePath);
+
+    // Load profile config file - this will override existing values
+    if (LoadConfigFile(profilePath))
+    {
+        TC_LOG_INFO("server.loading", "PlayerbotConfig: Profile '{}' applied successfully", profileName);
+    }
+    else
+    {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Failed to load profile '{}'", profileName);
+    }
+}
+
+std::string PlayerbotConfig::FindProfileFile(std::string const& profileName)
+{
+    // Profile filename
+    std::string filename = profileName + ".conf";
+
+    // List of potential profile file locations (in order of preference)
+    std::vector<std::string> searchPaths = {
+        "./conf/profiles/" + filename,                              // Current directory
+        "./profiles/" + filename,                                   // Alternative current directory
+        "../etc/profiles/" + filename,                              // Parent etc directory
+        "./etc/profiles/" + filename,                               // etc subdirectory
+        "src/modules/Playerbot/conf/profiles/" + filename,          // Source directory
+        "../src/modules/Playerbot/conf/profiles/" + filename        // Alternative source directory
+    };
+
+    // Also try relative to the main config file location
+    if (!_configPath.empty())
+    {
+        std::filesystem::path configDir = std::filesystem::path(_configPath).parent_path();
+        searchPaths.insert(searchPaths.begin(), (configDir / "profiles" / filename).string());
+    }
+
+    // Search for the profile file
+    for (const auto& path : searchPaths)
+    {
+        if (std::filesystem::exists(path))
+        {
+            TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Found profile at: {}", path);
+            return path;
+        }
+    }
+
+    return "";
 }
 
 bool PlayerbotConfig::ValidateConfiguration()

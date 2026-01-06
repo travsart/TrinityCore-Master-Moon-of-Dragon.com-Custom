@@ -21,6 +21,7 @@
 #include "PlayerbotDatabase.h"
 #include "Log.h"
 #include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include "Group/RoleDefinitions.h"
 #include "DB2Stores.h"
 #include "SpellInfo.h"
@@ -48,6 +49,23 @@ BotTalentManager* BotTalentManager::instance()
 bool BotTalentManager::LoadLoadouts()
 {
     TC_LOG_INFO("playerbot", "BotTalentManager: Loading talent loadouts...");
+
+    // Load configuration from PlayerbotConfig
+    _enabled = sPlayerbotConfig->GetBool("Playerbot.TalentManager.Enable", true);
+    _useOptimalBuilds = sPlayerbotConfig->GetBool("Playerbot.TalentManager.UseOptimalBuilds", true);
+    _randomizeMinor = sPlayerbotConfig->GetBool("Playerbot.TalentManager.RandomizeMinor", true);
+    _adaptToContent = sPlayerbotConfig->GetBool("Playerbot.TalentManager.AdaptToContent", true);
+    _respecFrequencyHours = sPlayerbotConfig->GetInt("Playerbot.TalentManager.RespecFrequency", 24);
+    _useHeroTalents = sPlayerbotConfig->GetBool("Playerbot.TalentManager.UseHeroTalents", true);
+
+    TC_LOG_DEBUG("playerbot", "BotTalentManager: Config loaded - Enable=%d, UseOptimal=%d, RandomizeMinor=%d, UseHeroTalents=%d",
+        _enabled, _useOptimalBuilds, _randomizeMinor, _useHeroTalents);
+
+    if (!_enabled)
+    {
+        TC_LOG_INFO("playerbot", "BotTalentManager: Disabled via config");
+        return true;
+    }
 
     auto startTime = ::std::chrono::steady_clock::now();
 

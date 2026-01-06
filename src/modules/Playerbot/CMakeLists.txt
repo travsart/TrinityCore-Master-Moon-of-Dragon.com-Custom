@@ -44,6 +44,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotTradeConfig.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/GuidedSetupHelper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/GuidedSetupHelper.h
     # Runtime configuration manager (Integration & Polish Task I.2)
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigManager.h
@@ -956,6 +958,8 @@ source_group("Config" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotTradeConfig.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/GuidedSetupHelper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/GuidedSetupHelper.h
 )
 
 

@@ -231,7 +231,15 @@ private:
     void StartWorkerThreads();
     void StopWorkerThreads();
 
-    // Configuration
+    // Configuration (loaded from playerbots.conf)
+    bool _configEnabled{false};              // Playerbot.Performance.EnableMonitoring
+    float _cpuWarningThreshold{70.0f};       // Playerbot.Performance.CpuWarningThreshold
+    float _memoryWarningThreshold{80.0f};    // Playerbot.Performance.MemoryWarningThreshold
+    uint32 _reportIntervalSeconds{60};       // Playerbot.Performance.ReportInterval
+    bool _enableDetailedTracking{false};     // Playerbot.Performance.DetailedTracking
+    ::std::string _metricsExportPath;        // Playerbot.Performance.ExportPath
+
+    // Runtime state
     ::std::atomic<bool> _enabled{false};
     ::std::atomic<bool> _shutdownRequested{false};
 

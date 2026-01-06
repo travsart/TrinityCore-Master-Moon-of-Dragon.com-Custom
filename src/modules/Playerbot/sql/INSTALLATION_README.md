@@ -2,133 +2,157 @@
 
 ## Overview
 
-This directory contains the consolidated SQL installation files for the TrinityCore Playerbot module. The database schema and initial data have been consolidated from 65+ separate SQL files into 2 installation-ready files.
+The TrinityCore Playerbot module now features **automatic database setup**. In most cases, **NO MANUAL SQL INSTALLATION IS REQUIRED**. The system will:
 
-## Installation Files
+1. **Auto-create the database** if it doesn't exist (with appropriate MySQL privileges)
+2. **Auto-apply migrations** from `sql/migrations/` on server startup
+3. **Track schema versions** to ensure source code matches database
 
-| File | Purpose | Size | Description |
-|------|---------|------|-------------|
-| `consolidated_playerbot_schema.sql` | Database Schema | ~25KB | All table definitions, indexes, and stored procedures |
-| `consolidated_playerbot_data.sql` | Initial Data | ~45KB | Seed data for activity patterns, zones, names, and distributions |
+## Quick Start (Recommended - Zero Manual Steps)
 
-## Prerequisites
+### Step 1: Configure Database Connection
 
-- MySQL 8.0+ or MariaDB 10.5+
-- TrinityCore `playerbot-dev` branch compiled with `BUILD_PLAYERBOT=1`
-- Database user with CREATE, INSERT, UPDATE, DELETE privileges
-- Recommended: Separate `playerbot` database for isolation
+Edit `playerbots.conf` (or let the guided setup create it for you):
 
-## Installation Steps
-
-### Step 1: Create Database (Recommended)
-
-```sql
--- Create dedicated playerbot database
-CREATE DATABASE `playerbot` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- Create playerbot user (optional but recommended)
-CREATE USER 'playerbotuser'@'localhost' IDENTIFIED BY 'secure_password_here';
-GRANT ALL PRIVILEGES ON `playerbot`.* TO 'playerbotuser'@'localhost';
-FLUSH PRIVILEGES;
+```ini
+Playerbot.Database.Host = "127.0.0.1"
+Playerbot.Database.Port = 3306
+Playerbot.Database.Name = "playerbot_playerbot"
+Playerbot.Database.User = "trinity"
+Playerbot.Database.Password = "trinity"
 ```
 
-### Step 2: Install Schema
+### Step 2: Start the Server
+
+The module will automatically:
+- Create the database if it doesn't exist
+- Apply all pending migrations from `sql/migrations/`
+- Log progress to the console
+
+**That's it!** The database is ready.
+
+---
+
+## Automatic Features
+
+### Auto-Create Database
+
+If the database doesn't exist and the MySQL user has CREATE privilege:
+
+```
+[INFO] PlayerbotDatabaseConnection: Database 'playerbot_playerbot' does not exist, attempting auto-create...
+[INFO] PlayerbotDatabaseConnection: Successfully created database 'playerbot_playerbot'
+```
+
+If CREATE privilege is missing, clear instructions are displayed:
+
+```
+================================================================================
+  PLAYERBOT DATABASE SETUP REQUIRED
+================================================================================
+
+  Database 'playerbot_playerbot' does not exist and auto-creation failed.
+
+  OPTION 1: Grant CREATE privilege for auto-creation
+  ------------------------------------------------
+  GRANT CREATE ON *.* TO 'trinity'@'localhost';
+  FLUSH PRIVILEGES;
+
+  OPTION 2: Create the database manually
+  --------------------------------------
+  CREATE DATABASE playerbot_playerbot CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  GRANT ALL ON playerbot_playerbot.* TO 'trinity'@'localhost';
+  FLUSH PRIVILEGES;
+
+  After creating the database, restart the server.
+  Schema migrations will be applied automatically.
+
+================================================================================
+```
+
+### Auto-Migrations
+
+The `PlayerbotMigrationMgr` automatically discovers and applies SQL files:
+
+- **Location:** `sql/migrations/`
+- **Pattern:** `001_*.sql`, `002_*.sql`, etc.
+- **Tracking:** Applied migrations stored in `playerbot_migrations` table
+- **Version Sync:** Database version checked against source code version
+
+---
+
+## Manual Installation (Legacy Method)
+
+Only use this if automatic setup fails or you prefer manual control.
+
+### SQL Files
+
+| File | Purpose |
+|------|---------|
+| `migrations/001_playerbot_base.sql` | Complete schema + initial data |
+| `optional/dragonriding_tables.sql` | Dragonriding hotfixes (manual apply) |
+
+### Manual Steps
 
 ```bash
-# Method 1: MySQL command line
-mysql -u playerbotuser -p playerbot < consolidated_playerbot_schema.sql
+# Create database
+mysql -u root -p -e "CREATE DATABASE playerbot_playerbot CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# Method 2: MySQL Workbench or phpMyAdmin
-# Import the consolidated_playerbot_schema.sql file through the GUI
+# Apply base migration
+mysql -u trinity -p playerbot_playerbot < sql/migrations/001_playerbot_base.sql
+
+# (Optional) Apply dragonriding tables
+mysql -u trinity -p playerbot_playerbot < sql/optional/dragonriding_tables.sql
 ```
 
-### Step 3: Install Initial Data
-
-```bash
-# Method 1: MySQL command line
-mysql -u playerbotuser -p playerbot < consolidated_playerbot_data.sql
-
-# Method 2: MySQL Workbench or phpMyAdmin
-# Import the consolidated_playerbot_data.sql file through the GUI
-```
-
-### Step 4: Verify Installation
-
-```sql
--- Connect to playerbot database
-USE playerbot;
-
--- Verify all tables were created
-SHOW TABLES;
-
--- Should show 12 tables:
--- playerbot_accounts
--- playerbot_activity_patterns
--- playerbot_character_distribution
--- playerbot_lifecycle_events
--- playerbot_migrations
--- playerbot_schedules
--- playerbot_spawn_log
--- playerbot_zone_populations
--- playerbots_class_popularity
--- playerbots_gender_distribution
--- playerbots_names
--- playerbots_names_used
--- playerbots_race_class_distribution
--- playerbots_race_class_gender
-
--- Verify data was loaded
-SELECT 'Activity Patterns' as Component, COUNT(*) as Count FROM playerbot_activity_patterns
-UNION ALL
-SELECT 'Zone Populations', COUNT(*) FROM playerbot_zone_populations
-UNION ALL
-SELECT 'Available Names', COUNT(*) FROM playerbots_names
-UNION ALL
-SELECT 'Class Popularity', COUNT(*) FROM playerbots_class_popularity;
-```
-
-Expected results:
-- Activity Patterns: 16
-- Zone Populations: 47
-- Available Names: 100
-- Class Popularity: 10
+---
 
 ## Configuration
 
-### Update worldserver.conf
+### Primary Config: playerbots.conf
 
-Add database connection for playerbot:
+All Playerbot settings are in `playerbots.conf` (NOT worldserver.conf).
+
+**First-time setup:** If `playerbots.conf` doesn't exist, the guided setup will:
+1. Display setup instructions
+2. Optionally copy `playerbots.conf.dist` to `playerbots.conf`
+3. Use tester-friendly defaults
+
+### Quick Setup with Profiles
+
+Use a pre-configured profile for instant setup:
 
 ```ini
-###################################################################################################
-# PLAYERBOT DATABASE SETTINGS
-###################################################################################################
-
-# Playerbot Database connection settings
-# Use same format as other database connections
-PlayerbotDatabaseInfo = "localhost;3306;playerbotuser;secure_password_here;playerbot"
-
-# Connection pooling for playerbot database
-PlayerbotDatabase.WorkerThreads = 2
-PlayerbotDatabase.SynchThreads = 1
+# In playerbots.conf
+Playerbot.Profile = "standard"
 ```
 
-### Update playerbots.conf
+**Available Profiles:**
+| Profile | Bots | Description |
+|---------|------|-------------|
+| `minimal` | 10 | Testing/development |
+| `standard` | 100 | Recommended defaults |
+| `performance` | 500 | High-population servers |
+| `singleplayer` | varies | Solo play optimized |
 
-The module will automatically detect the playerbot database. Key settings:
+### Essential Settings
 
 ```ini
 # Enable the playerbot module
 Playerbot.Enable = 1
 
-# Name database table (should match our installation)
-Playerbot.NameDatabase = "playerbots_names"
+# Maximum bots server-wide
+Playerbot.MaxBots = 100
 
-# Maximum number of random bots
-Playerbot.MaxRandomBots = 100
+# Spawn bots on server start (no player login required)
+Playerbot.Spawn.OnServerStart = 1
 
-# Activity patterns (matches our data)
-Playerbot.DefaultActivityPattern = "casual_medium"
+# Database connection
+Playerbot.Database.Host = "127.0.0.1"
+Playerbot.Database.Port = 3306
+Playerbot.Database.Name = "playerbot_playerbot"
+Playerbot.Database.User = "trinity"
+Playerbot.Database.Password = "trinity"
 ```
 
 ## Database Schema Overview
@@ -293,18 +317,31 @@ If migrating from existing `mod-playerbots` installations:
    WHERE name NOT IN (SELECT name FROM playerbots_names);
    ```
 
+## Version Tracking
+
+The Playerbot module tracks database schema versions to ensure compatibility:
+
+```
+[INFO] PlayerbotMigrationMgr: Database version: 1
+[INFO] PlayerbotMigrationMgr: Expected source version: 1
+[INFO] PlayerbotMigrationMgr: Database schema is up to date
+```
+
+If versions mismatch, the server logs detailed instructions for resolution.
+
 ## Support
 
 For issues or questions:
 
 1. Check TrinityCore playerbot module documentation
-2. Verify all tables match the schema in `PlayerbotDatabaseStatements.cpp`
-3. Check server logs for specific error messages
+2. Verify the server log for migration status messages
+3. Check `playerbot_migrations` table for applied migrations
 4. Ensure `BUILD_PLAYERBOT=1` was used during compilation
 
 ## File History
 
-- **consolidated_playerbot_schema.sql**: Generated September 19, 2025
-- **consolidated_playerbot_data.sql**: Generated September 19, 2025
-- **Source**: Consolidated from 65+ individual SQL files
-- **Compatibility**: TrinityCore playerbot-dev branch (commit 53e4b8bf96)
+- **001_playerbot_base.sql**: Complete schema from database dump (January 2026)
+- **Migration System**: PlayerbotMigrationMgr auto-discovers and applies migrations
+- **Version Tracking**: PLAYERBOT_DB_VERSION constant in source code
+- **Auto-Create**: Database created automatically if MySQL user has CREATE privilege
+- **Compatibility**: TrinityCore playerbot-dev branch

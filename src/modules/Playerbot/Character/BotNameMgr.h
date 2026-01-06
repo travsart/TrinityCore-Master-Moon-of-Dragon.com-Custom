@@ -86,6 +86,12 @@ private:
     std::unordered_map<std::string, uint32> _nameToId;        // name -> name_id
     std::unordered_map<uint32, uint32> _guidToNameId;         // character_guid -> name_id
     std::unordered_map<uint32, uint32> _nameIdToGuid;         // name_id -> character_guid
+
+    // Configuration (loaded from playerbots.conf)
+    bool _useRandomNames{true};       // Playerbot.Names.UseRandomNames
+    uint32 _minLength{4};             // Playerbot.Names.MinLength
+    uint32 _maxLength{12};            // Playerbot.Names.MaxLength
+    bool _useRaceTheme{true};         // Playerbot.Names.UseRaceTheme
 };
 
 #define sBotNameMgr BotNameMgr::instance()

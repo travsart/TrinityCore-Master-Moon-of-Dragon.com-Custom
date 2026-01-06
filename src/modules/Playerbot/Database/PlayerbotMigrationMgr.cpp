@@ -1571,3 +1571,79 @@ bool PlayerbotMigrationMgr::CanRollback(std::string const& version)
     TC_LOG_WARN("playerbots.migration", "CanRollback: No rollback mechanism available for version {} (no downgrade function or backup files)", version);
     return false;
 }
+
+// ============================================================================
+// Source-Database Version Synchronization
+// ============================================================================
+
+uint32 PlayerbotMigrationMgr::GetDatabaseVersion() const
+{
+    // Database version is determined by the number of applied migrations
+    // With the new schema:
+    //   Version 1 = Base schema (001_playerbot_base.sql)
+    //   Version 2+ = Additional migrations (002_*.sql, 003_*.sql, etc.)
+    return static_cast<uint32>(_appliedMigrations.size());
+}
+
+bool PlayerbotMigrationMgr::ValidateDatabaseVersion() const
+{
+    uint32 dbVersion = GetDatabaseVersion();
+    uint32 expectedVersion = GetExpectedDatabaseVersion();
+
+    return dbVersion == expectedVersion;
+}
+
+bool PlayerbotMigrationMgr::CheckVersionMismatch() const
+{
+    uint32 dbVersion = GetDatabaseVersion();
+    uint32 expectedVersion = GetExpectedDatabaseVersion();
+
+    if (dbVersion == expectedVersion)
+    {
+        TC_LOG_INFO("playerbots.migration", "Database version check PASSED: DB version {} matches source version {}",
+            dbVersion, expectedVersion);
+        return true;
+    }
+
+    if (dbVersion < expectedVersion)
+    {
+        // Database is behind source - migrations need to be applied
+        TC_LOG_ERROR("playerbots.migration", "================================================================================");
+        TC_LOG_ERROR("playerbots.migration", "  PLAYERBOT DATABASE VERSION MISMATCH");
+        TC_LOG_ERROR("playerbots.migration", "================================================================================");
+        TC_LOG_ERROR("playerbots.migration", "");
+        TC_LOG_ERROR("playerbots.migration", "  Database version:  {}", dbVersion);
+        TC_LOG_ERROR("playerbots.migration", "  Source version:    {}", expectedVersion);
+        TC_LOG_ERROR("playerbots.migration", "  Status:            DATABASE IS OUTDATED");
+        TC_LOG_ERROR("playerbots.migration", "");
+        TC_LOG_ERROR("playerbots.migration", "  {} pending migration(s) need to be applied.", expectedVersion - dbVersion);
+        TC_LOG_ERROR("playerbots.migration", "");
+        TC_LOG_ERROR("playerbots.migration", "  Resolution: Migrations will be applied automatically on startup.");
+        TC_LOG_ERROR("playerbots.migration", "              Check sql/migrations/ for pending SQL files.");
+        TC_LOG_ERROR("playerbots.migration", "");
+        TC_LOG_ERROR("playerbots.migration", "================================================================================");
+        return false;
+    }
+    else
+    {
+        // Database is ahead of source - unusual situation (downgrade or stale source)
+        TC_LOG_WARN("playerbots.migration", "================================================================================");
+        TC_LOG_WARN("playerbots.migration", "  PLAYERBOT DATABASE VERSION WARNING");
+        TC_LOG_WARN("playerbots.migration", "================================================================================");
+        TC_LOG_WARN("playerbots.migration", "");
+        TC_LOG_WARN("playerbots.migration", "  Database version:  {}", dbVersion);
+        TC_LOG_WARN("playerbots.migration", "  Source version:    {}", expectedVersion);
+        TC_LOG_WARN("playerbots.migration", "  Status:            DATABASE IS AHEAD OF SOURCE");
+        TC_LOG_WARN("playerbots.migration", "");
+        TC_LOG_WARN("playerbots.migration", "  This may indicate:");
+        TC_LOG_WARN("playerbots.migration", "    - Source code is out of date");
+        TC_LOG_WARN("playerbots.migration", "    - Manual migrations were applied");
+        TC_LOG_WARN("playerbots.migration", "    - Testing/development database with newer schema");
+        TC_LOG_WARN("playerbots.migration", "");
+        TC_LOG_WARN("playerbots.migration", "  Resolution: Update source code or rollback database migrations.");
+        TC_LOG_WARN("playerbots.migration", "");
+        TC_LOG_WARN("playerbots.migration", "================================================================================");
+        // Return true for warnings - server can continue but should be investigated
+        return true;
+    }
+}

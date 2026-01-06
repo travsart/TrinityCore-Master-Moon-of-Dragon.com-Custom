@@ -16,6 +16,7 @@
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "SharedDefines.h"
+#include "Config/PlayerbotConfig.h"
 #include <algorithm>
 #include <random>
 
@@ -40,6 +41,25 @@ void BotGearFactory::Initialize()
     if (_cacheReady.load(::std::memory_order_acquire))
     {
         TC_LOG_WARN("playerbot.gear", "BotGearFactory: Already initialized");
+        return;
+    }
+
+    // Load configuration from PlayerbotConfig
+    _enabled = sPlayerbotConfig->GetBool("Playerbot.GearFactory.Enable", true);
+    _minQuality = sPlayerbotConfig->GetInt("Playerbot.GearFactory.QualityMin", 2);
+    _maxQuality = sPlayerbotConfig->GetInt("Playerbot.GearFactory.QualityMax", 4);
+    _levelRange = sPlayerbotConfig->GetInt("Playerbot.GearFactory.LevelRange", 5);
+    _useSpecAppropriate = sPlayerbotConfig->GetBool("Playerbot.GearFactory.UseSpecAppropriate", true);
+    _enchantItems = sPlayerbotConfig->GetBool("Playerbot.GearFactory.EnchantItems", true);
+    _gemItems = sPlayerbotConfig->GetBool("Playerbot.GearFactory.GemItems", true);
+    _refreshInterval = sPlayerbotConfig->GetInt("Playerbot.GearFactory.RefreshInterval", 60);
+
+    TC_LOG_DEBUG("playerbot.gear", "BotGearFactory: Config loaded - Enable=%d, QualityMin=%u, QualityMax=%u, UseSpecAppropriate=%d",
+        _enabled, _minQuality, _maxQuality, _useSpecAppropriate);
+
+    if (!_enabled)
+    {
+        TC_LOG_INFO("playerbot.gear", "BotGearFactory: Disabled via config");
         return;
     }
 

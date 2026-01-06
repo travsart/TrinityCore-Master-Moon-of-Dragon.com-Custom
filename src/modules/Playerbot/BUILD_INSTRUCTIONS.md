@@ -477,15 +477,91 @@ See [VENDORED_DEPENDENCIES.md](VENDORED_DEPENDENCIES.md) for:
 
 ---
 
+## Post-Build: Just Works Experience
+
+After building, the Playerbot module is designed for **zero-configuration startup**:
+
+### First Run Experience
+
+1. **Start the server** - no additional setup required
+2. **Guided setup** automatically detects missing config:
+   ```
+   ================================================================================
+     PLAYERBOT FIRST-TIME SETUP
+   ================================================================================
+
+     QUICK START (automatic setup):
+     A default playerbots.conf will be created with tester-friendly settings.
+
+     MANUAL SETUP:
+     1. Copy playerbots.conf.dist to ./playerbots.conf
+     2. Configure database settings
+     3. Restart server
+   ================================================================================
+   ```
+3. **Database auto-created** if MySQL user has CREATE privilege
+4. **Migrations auto-applied** from `sql/migrations/`
+5. **Bots spawn automatically** on server start (configurable)
+
+### Quick Configuration with Profiles
+
+For instant setup, use a pre-configured profile:
+
+```ini
+# In playerbots.conf
+Playerbot.Profile = "standard"
+```
+
+**Available Profiles:**
+
+| Profile | Bots | Use Case |
+|---------|------|----------|
+| `minimal` | 10 | Testing/development |
+| `standard` | 100 | General use (recommended) |
+| `performance` | 500 | High-population servers |
+| `singleplayer` | varies | Solo play optimized |
+
+### Configuration Location
+
+All Playerbot settings are in `playerbots.conf` (NOT worldserver.conf):
+
+```ini
+# Essential settings
+Playerbot.Enable = 1
+Playerbot.MaxBots = 100
+Playerbot.Spawn.OnServerStart = 1
+
+# Database (auto-created if possible)
+Playerbot.Database.Host = "127.0.0.1"
+Playerbot.Database.Name = "playerbot_playerbot"
+Playerbot.Database.User = "trinity"
+Playerbot.Database.Password = "trinity"
+```
+
+### Verification
+
+After startup, check the server log for:
+
+```
+[INFO] Playerbot Module initializing...
+[INFO] PlayerbotDatabaseConnection: Connected to 127.0.0.1:3306/playerbot_playerbot
+[INFO] PlayerbotMigrationMgr: Database schema is up to date
+[INFO] BotSpawner: Beginning phased startup sequence...
+[INFO] Playerbot Module initialized successfully
+```
+
+---
+
 ## Additional Resources
 
 - **TrinityCore Wiki:** https://trinitycore.info/
 - **Playerbot Documentation:** [README.md](README.md)
+- **Database Installation:** [sql/INSTALLATION_README.md](sql/INSTALLATION_README.md)
 - **Vendored Dependencies:** [VENDORED_DEPENDENCIES.md](VENDORED_DEPENDENCIES.md)
 - **License Information:** [deps/LICENSES.md](deps/LICENSES.md)
 
 ---
 
 **Maintainer:** TrinityCore Playerbot Team
-**Last Updated:** 2025-10-29
-**Version:** 1.0.0
+**Last Updated:** 2026-01-06
+**Version:** 1.1.0

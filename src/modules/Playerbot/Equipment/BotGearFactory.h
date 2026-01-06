@@ -202,10 +202,17 @@ private:
     mutable GearFactoryStats _stats;
     Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _initMutex;
 
-    // Configuration
-    uint32 _minItemLevel{5};
-    uint32 _minQuality{2};  // Uncommon (Green)
-    bool _useStatWeighting{true};
+    // Configuration (loaded from playerbots.conf)
+    bool _enabled{true};                   // Playerbot.GearFactory.Enable
+    uint32 _minItemLevel{5};               // Internal: minimum item level
+    uint32 _minQuality{2};                 // Playerbot.GearFactory.QualityMin (Uncommon)
+    uint32 _maxQuality{4};                 // Playerbot.GearFactory.QualityMax (Epic)
+    uint32 _levelRange{5};                 // Playerbot.GearFactory.LevelRange
+    bool _useStatWeighting{true};          // Internal: use stat weights
+    bool _useSpecAppropriate{true};        // Playerbot.GearFactory.UseSpecAppropriate
+    bool _enchantItems{true};              // Playerbot.GearFactory.EnchantItems
+    bool _gemItems{true};                  // Playerbot.GearFactory.GemItems
+    uint32 _refreshInterval{60};           // Playerbot.GearFactory.RefreshInterval (minutes)
 };
 
 #define sBotGearFactory BotGearFactory::instance()

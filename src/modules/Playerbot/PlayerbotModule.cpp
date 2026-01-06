@@ -11,6 +11,8 @@
 
 #include "PlayerbotModule.h"
 #include "Config/PlayerbotConfig.h"
+#include "Config/PlayerbotTradeConfig.h"
+#include "Config/GuidedSetupHelper.h"
 #include "Account/BotAccountMgr.h"
 #include "Character/BotNameMgr.h"
 #include "Character/BotCharacterDistribution.h"
@@ -47,6 +49,15 @@ bool PlayerbotModule::Initialize()
 {
     TC_LOG_INFO("server.loading", "Initializing Playerbot Module...");
 
+    // Run guided setup check FIRST - ensures config file exists
+    // This will create a default config from .dist if missing
+    if (!Playerbot::GuidedSetupHelper::CheckAndRunSetup())
+    {
+        _lastError = "Configuration setup failed - see logs for details";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
     // Load configuration first
     if (!sPlayerbotConfig->Initialize())
     {
@@ -74,6 +85,11 @@ bool PlayerbotModule::Initialize()
 
     // Initialize logging
     InitializeLogging();
+
+    // Load subsystem configurations
+    TC_LOG_INFO("server.loading", "Loading Playerbot subsystem configurations...");
+    Playerbot::PlayerbotTradeConfig::Load();
+    TC_LOG_INFO("server.loading", "Playerbot subsystem configurations loaded");
 
     // Initialize Playerbot Database
     // CRITICAL: If this fails, the server MUST NOT start when Playerbot is enabled
@@ -110,6 +126,10 @@ bool PlayerbotModule::Initialize()
         _lastError = "Failed to apply database migrations";
         return false;
     }
+
+    // Verify database version matches source code version
+    // This ensures schema synchronization between builds
+    PlayerbotMigrationMgr::instance()->CheckVersionMismatch();
 
     // Initialize Bot Account Manager
     TC_LOG_INFO("server.loading", "PlayerbotModule: About to call sBotAccountMgr->Initialize()...");

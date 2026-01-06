@@ -1,39 +1,6 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "description": "Install and configure dependencies (TBB, phmap, MySQL, Boost)",
-        "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/install_dependencies.sh",
-        "timeout": 1800000
-      },
-      {
-        "description": "Display project status and current phase",
-        "command": "echo '=== TrinityCore Playerbot - Iterative Compilation Environment ===' && echo 'Branch: '$(git branch --show-current) && echo 'Latest commit: '$(git log --oneline -1) && echo '' && echo 'Mission: Fix compilation errors until PlayerBot module builds with 0 errors' && echo 'Workflow: analyze → fix → build → commit → repeat' && echo ''"
-      },
-      {
-        "description": "Check git branch and status",
-        "command": "git branch --show-current && git log --oneline -1 && git status --short"
-      },
-      {
-        "description": "Read project configuration",
-        "command": "cat .claude/project.json"
-      }
-    ]
-  },
-  "preferences": {
-    "build": {
-      "parallel_jobs": 8,
-      "timeout": 1800,
-      "log_errors_only": true
-    },
-    "git": {
-      "auto_commit": false,
-      "commit_message_prefix": "fix(playerbot):",
-      "branch": "playerbot-dev"
-    },
-    "language": {
-      "error_messages": "german",
-      "documentation": "english"
-    }
+  "permissions": {
+    "allow": [],
+    "deny": []
   }
 }

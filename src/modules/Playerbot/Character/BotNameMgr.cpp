@@ -14,6 +14,7 @@
 #include "Database/PlayerbotDatabase.h"
 #include "PreparedStatement.h"
 #include "Random.h"
+#include "Config/PlayerbotConfig.h"
 #include <random>
 #include <algorithm>
 
@@ -25,16 +26,27 @@ BotNameMgr* BotNameMgr::instance()
 
 bool BotNameMgr::Initialize()
 {
+    // Load configuration from PlayerbotConfig
+    _useRandomNames = sPlayerbotConfig->GetBool("Playerbot.Names.UseRandomNames", true);
+    _minLength = sPlayerbotConfig->GetInt("Playerbot.Names.MinLength", 4);
+    _maxLength = sPlayerbotConfig->GetInt("Playerbot.Names.MaxLength", 12);
+    _useRaceTheme = sPlayerbotConfig->GetBool("Playerbot.Names.UseRaceTheme", true);
+
+    TC_LOG_DEBUG("module.playerbot.names",
+        "BotNameMgr: Config loaded - UseRandom=%d, MinLen=%u, MaxLen=%u, UseRaceTheme=%d",
+        _useRandomNames, _minLength, _maxLength, _useRaceTheme);
+
+    // Load names from playerbot database first (primary source)
     LoadNamesFromDatabase();
     LoadUsedNames();
-    
-    TC_LOG_INFO("module.playerbot.names", 
-        "Loaded {} names ({} male, {} female), {} in use", 
+
+    TC_LOG_INFO("module.playerbot.names",
+        "Loaded {} names ({} male, {} female), {} in use",
         _names.size(),
         _availableMaleNames.size() + (_guidToNameId.size() / 2), // Approximate
         _availableFemaleNames.size() + (_guidToNameId.size() / 2),
         _guidToNameId.size());
-    
+
     return true;
 }
 

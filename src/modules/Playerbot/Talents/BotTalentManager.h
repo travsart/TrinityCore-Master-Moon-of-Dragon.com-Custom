@@ -381,6 +381,14 @@ private:
     // Initialization flag
     ::std::atomic<bool> _initialized{false};
 
+    // Configuration (loaded from playerbots.conf)
+    bool _enabled = true;                // Playerbot.TalentManager.Enable
+    bool _useOptimalBuilds = true;       // Playerbot.TalentManager.UseOptimalBuilds
+    bool _randomizeMinor = true;         // Playerbot.TalentManager.RandomizeMinor
+    bool _adaptToContent = true;         // Playerbot.TalentManager.AdaptToContent
+    uint32 _respecFrequencyHours = 24;   // Playerbot.TalentManager.RespecFrequency
+    bool _useHeroTalents = true;         // Playerbot.TalentManager.UseHeroTalents
+
     // ====================================================================
     // HELPER FUNCTIONS
     // ====================================================================

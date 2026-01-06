@@ -22,6 +22,7 @@
 #include "../../Common/ActionScoringEngine.h"
 #include "../../Common/CombatContextDetector.h"
 #include "../../BehaviorTree/BehaviorTree.h"
+#include "Config/PlayerbotConfig.h"
 
 namespace Playerbot
 {
@@ -58,7 +59,7 @@ public:
         , _contextUpdateInterval(5000) // Update context every 5 seconds
     {
         // Enable debug logging if configured
-        bool debugLogging = sConfigMgr->GetBoolDefault("Playerbot.AI.Weighting.LogScoring", false);
+        bool debugLogging = sPlayerbotConfig->GetBool("Playerbot.AI.Weighting.LogScoring", false);
         _scoringEngine.EnableDebugLogging(debugLogging);
 
         TC_LOG_DEBUG("playerbot", "ArcaneMageWeighted initialized for bot {} with weighting system", bot->GetGUID().GetCounter());
@@ -190,7 +191,7 @@ private:
         // Get top actions (for logging if debug enabled)
         if (_scoringEngine.IsDebugLoggingEnabled())
         {
-            uint32 topCount = sConfigMgr->GetIntDefault("Playerbot.AI.Weighting.LogTopActions", 3);
+            uint32 topCount = sPlayerbotConfig->GetInt("Playerbot.AI.Weighting.LogTopActions", 3);
             ::std::vector<uint32> topActions = _scoringEngine.GetTopActions(scores, topCount);
 
             if (!topActions.empty())

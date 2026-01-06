@@ -52,6 +52,7 @@ struct SpawnConfig
     uint32 spawnDelayMs = 100;
     bool enableDynamicSpawning = true;
     bool respectPopulationCaps = true;
+    bool spawnOnServerStart = true;  // Begin spawning bots during server startup
     float botToPlayerRatio = 2.0f;
 };
 

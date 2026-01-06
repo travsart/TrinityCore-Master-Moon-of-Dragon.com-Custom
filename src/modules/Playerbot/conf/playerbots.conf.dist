@@ -1,2812 +1,1537 @@
-###################################################################################################
-# TRINITYCORE PLAYERBOT CONFIGURATION
+################################################################################
 #
-# This file contains all configuration options for the TrinityCore Playerbot module.
-# Copy playerbots.conf.dist to playerbots.conf and modify as needed.
+#  PLAYERBOT CONFIGURATION FILE
 #
-# Boolean values: 1 (true), 0 (false)
-# Numeric values: Use appropriate ranges as documented
+#  TrinityCore Playerbot Module - World of Warcraft 11.2 (The War Within)
 #
-###################################################################################################
+#  This file contains all configuration options for the Playerbot module.
+#  Configuration is organized into two main sections:
+#
+#  SECTION A: ACTIVE CONFIGURATION (Lines 1-850)
+#    - All config options that are currently USED by the codebase
+#    - Grouped systematically by subsystem
+#    - Modify these to customize bot behavior
+#
+#  SECTION B: CONFIG WIRING REQUIRED (Lines 760+)
+#    - Config options for FULLY IMPLEMENTED systems not reading config
+#    - 93% of systems (43/46) have code but no config wiring
+#    - MODIFY to enable/tune these systems once wired
+#
+#  Version: 1.1.0 (2026-01-06)
+#  Branch: playerbot-dev
+#
+################################################################################
 
-###################################################################################################
-# CORE SETTINGS
+################################################################################
 #
-#    Playerbot.Enable
-#        Description: Enable/disable playerbot system entirely
-#        Default:     1 (enabled)
-#        Note:        Setting to 0 disables all bot functionality
+#                    ===== SECTION A: ACTIVE CONFIGURATION =====
 #
-#    Playerbot.MaxBots
-#        Description: Maximum number of bots that can exist server-wide
-#        Default:     100
-#        Range:       1-1000
-#        Warning:     High values may impact server performance
+#  These options are actively used by the Playerbot module.
+#  Total: 142 options across 12 subsystems
 #
-#    Playerbot.MaxBotsPerAccount
-#        Description: Maximum number of bot characters per account
-#        Default:     10
-#        Range:       1-50
-#        Note:        Enforced during character creation
-#
-#    Playerbot.AutoCreateCharacters
-#        Description: Automatically create characters for bot accounts
-#        Default:     1 (enabled)
-#        Note:        When enabled, bot accounts with no characters will
-#                     automatically have a character created using race/class
-#                     distribution from the playerbot_playerbot database
-#
-#    Playerbot.UpdateInterval
-#        Description: Bot update interval in milliseconds
-#        Default:     100
-#        Range:       50-1000
-#        Note:        Lower values = more responsive, higher CPU usage
-#
-#    Playerbot.StartupValidation
-#        Description: Perform integrity checks on server startup
-#        Default:     1
-#        Note:        Validates bot accounts and character limits
-#
-#    Playerbot.MaxCharactersPerAccount
-#        Description: HARD LIMIT - Maximum characters per bot account
-#        Default:     10
-#        Range:       1-10
-#        Warning:     DO NOT EXCEED 10 - This is a TrinityCore limitation
-#        Note:        Used for validation and account management
-#
-#    Playerbot.StrictCharacterLimit
-#        Description: Enforce character limit strictly on startup
-#        Default:     1 (enabled)
-#        Note:        0 = Allow startup with violations (excess chars disabled)
-#                     1 = Abort startup if any account exceeds limit
-#
-#    Playerbot.ForceLegacyMode
-#        Description: Force legacy playerbot compatibility mode
-#        Default:     0 (disabled)
-#        Note:        Enable only if migrating from old playerbot systems
-#                     May disable some modern features
-#
-#    Playerbot.UseOrchestrator
-#        Description: Use centralized bot orchestration system
-#        Default:     1 (enabled)
-#        Note:        Coordinates bot spawning and lifecycle management
-#                     Disable only for debugging individual components
-#
-###################################################################################################
+################################################################################
 
+###############################################################################
+# A1. CORE SETTINGS
+#
+#     Essential settings to enable and configure the Playerbot module.
+#     These are the most important settings for basic operation.
+###############################################################################
+
+#
+#  Playerbot.Enable
+#    Description: Master switch to enable/disable the Playerbot module
+#    Default:     1 (enabled for testers)
+#    Values:      0 = Disabled, 1 = Enabled
+#
 Playerbot.Enable = 1
+
+#
+#  Playerbot.Profile
+#    Description: Load a pre-configured profile for quick setup
+#    Default:     "" (no profile, use manual settings)
+#    Values:      "minimal"     - 10 bots, testing/development
+#                 "standard"    - 100 bots, recommended defaults
+#                 "performance" - 500 bots, high-population servers
+#                 "singleplayer"- Solo play optimized
+#    Note:        Profile values override individual settings below
+#
+Playerbot.Profile = ""
+
+#
+#  Playerbot.MaxBots
+#    Description: Maximum number of bots server-wide
+#    Default:     100
+#    Range:       1-5000
+#
 Playerbot.MaxBots = 100
+
+#
+#  Playerbot.MaxBotsPerAccount
+#    Description: Maximum bots allowed per bot account
+#    Default:     10
+#    Range:       1-50
+#
 Playerbot.MaxBotsPerAccount = 10
+
+#
+#  Playerbot.MaxCharactersPerAccount
+#    Description: HARD LIMIT - Maximum characters per bot account
+#    Default:     10
+#    Range:       1-10
+#    Warning:     DO NOT EXCEED 10 - TrinityCore limitation
+#
 Playerbot.MaxCharactersPerAccount = 10
-Playerbot.AutoCreateCharacters = 1
+
+#
+#  Playerbot.BotToPlayerRatio
+#    Description: Target ratio of bots to real players
+#    Default:     2.0 (2 bots per player)
+#    Range:       0.1-10.0
+#
+Playerbot.BotToPlayerRatio = 2.0
+
+#
+#  Playerbot.UpdateInterval
+#    Description: Bot update interval in milliseconds
+#    Default:     100
+#    Range:       50-1000
+#    Note:        Lower values = more responsive, higher CPU usage
+#
 Playerbot.UpdateInterval = 100
+
+#
+#  Playerbot.StartupValidation
+#    Description: Perform integrity checks on server startup
+#    Default:     1
+#
 Playerbot.StartupValidation = 1
+
+#
+#  Playerbot.StrictCharacterLimit
+#    Description: Enforce character limit strictly on startup
+#    Default:     1
+#    Values:      0 = Allow startup with violations, 1 = Abort on violation
+#
 Playerbot.StrictCharacterLimit = 1
+
+#
+#  Playerbot.ForceLegacyMode
+#    Description: Force legacy playerbot compatibility mode
+#    Default:     0 (disabled)
+#    Note:        Enable only if migrating from old systems
+#
 Playerbot.ForceLegacyMode = 0
+
+#
+#  Playerbot.UseOrchestrator
+#    Description: Use centralized bot orchestration system
+#    Default:     1 (enabled)
+#
 Playerbot.UseOrchestrator = 1
 
-###################################################################################################
-# AI BEHAVIOR
+###############################################################################
+# A2. DATABASE CONNECTION
 #
-#    Playerbot.AI.UpdateDelay
-#        Description: AI decision-making update frequency (milliseconds)
-#        Default:     500
-#        Range:       100-2000
-#        Note:        Lower = more responsive, higher = better performance
-#
-#    Playerbot.AI.CombatDelay
-#        Description: Combat action delay (milliseconds)
-#        Default:     200
-#        Range:       50-1000
-#        Note:        Simulates human reaction time in combat
-#
-#    Playerbot.AI.MovementDelay
-#        Description: Movement update frequency (milliseconds)
-#        Default:     100
-#        Range:       50-500
-#        Note:        Affects pathfinding and movement smoothness
-#
-#    Playerbot.AI.ThinkingDelay
-#        Description: Delay between major AI decisions (milliseconds)
-#        Default:     1000
-#        Range:       500-5000
-#        Note:        Prevents overly rapid decision changes
-#
-#    Playerbot.AI.RandomFactor
-#        Description: Randomness in AI behavior (0-100)
-#        Default:     25
-#        Range:       0-100
-#        Note:        Higher values make bots less predictable
-#
-###################################################################################################
+#     MySQL connection settings for the Playerbot database.
+#     The database will be auto-created if MySQL user has CREATE privilege.
+###############################################################################
 
-Playerbot.AI.UpdateDelay = 500
-Playerbot.AI.CombatDelay = 200
-Playerbot.AI.MovementDelay = 100
-Playerbot.AI.ThinkingDelay = 1000
-Playerbot.AI.RandomFactor = 25
-
-#    Playerbot.AI.NeutralMobDetection
-#        Description: Enable typed packet-based neutral mob combat detection
-#        Default:     1 (enabled)
-#        Note:        Uses real-time packet events to detect when neutral (yellow)
-#                     mobs attack bots, allowing bots to fight back immediately.
-#                     This solves the issue where TrinityCore's IsInCombat() returns
-#                     FALSE for neutral mobs that initiate combat.
-#                     Performance: < 0.001% CPU overhead per bot
 #
-#    Playerbot.AI.NeutralMobDetection.LogLevel
-#        Description: Debug logging level for neutral mob detection
-#        Default:     3 (INFO)
-#        Range:       0-6 (0=Off, 3=Info, 6=Trace)
-#        Note:        Set to 6 for detailed debugging of combat detection events
-#                     Logs to: Logger.playerbot.combat
+#  Playerbot.Database.Host
+#    Description: MySQL server hostname or IP address
+#    Default:     "127.0.0.1"
 #
-
-Playerbot.AI.NeutralMobDetection = 1
-Playerbot.AI.NeutralMobDetection.LogLevel = 3
-
-###################################################################################################
-# PERFORMANCE
-#
-#    Playerbot.Performance.EnableMonitoring
-#        Description: Enable performance monitoring and logging
-#        Default:     1
-#        Note:        Tracks CPU, memory, and database usage
-#
-#    Playerbot.Performance.CPUWarningThreshold
-#        Description: CPU usage warning threshold (percentage)
-#        Default:     80
-#        Range:       50-95
-#        Note:        Logs warning when bot CPU usage exceeds this
-#
-#    Playerbot.Performance.MemoryWarningThreshold
-#        Description: Memory usage warning threshold (MB)
-#        Default:     1000
-#        Range:       100-10000
-#        Note:        Total memory usage for all bots
-#
-#    Playerbot.Performance.MaxCPUPerBot
-#        Description: Maximum CPU percentage per bot
-#        Default:     0.5
-#        Range:       0.1-2.0
-#        Note:        Bots exceeding this may be throttled
-#
-#    Playerbot.Performance.MaxMemoryPerBot
-#        Description: Maximum memory usage per bot (MB)
-#        Default:     10
-#        Range:       5-50
-#        Note:        Bots exceeding this may be restarted
-#
-#    Playerbot.Performance.Profiler.Enable
-#        Description: Enable detailed performance profiling
-#        Default:     0 (disabled)
-#        Note:        Tracks detailed timing metrics for bot operations
-#                     Enable only for debugging - adds overhead
-#
-###################################################################################################
-
-Playerbot.Performance.EnableMonitoring = 1
-Playerbot.Performance.CPUWarningThreshold = 80
-Playerbot.Performance.MemoryWarningThreshold = 1000
-Playerbot.Performance.MaxCPUPerBot = 0.5
-Playerbot.Performance.MaxMemoryPerBot = 10
-Playerbot.Performance.Profiler.Enable = 0
-
-###################################################################################################
-# THREADPOOL SYSTEM (PHASE A INTEGRATION)
-#
-#    Playerbot.Performance.ThreadPool.WorkerCount
-#        Description: Number of worker threads for parallel bot updates
-#        Default:     0 (auto-detect: max(4, hardware_concurrency > 6 ? hardware_concurrency - 2 : 4))
-#        Range:       4-32 (minimum 4 to prevent deadlock)
-#        Note:        0 = Auto-detect (recommended for most systems)
-#                     Manual override: Set to specific thread count (minimum 4)
-#                     On 16-core/32-thread CPU: auto-detect = 30 threads
-#                     On 4-core/8-thread CPU: auto-detect = 4 threads
-#                     Leave 2 cores free for OS and database operations
-#                     Example: 8-core CPU → 6 worker threads
-#
-#    Playerbot.Performance.ThreadPool.MaxQueueSize
-#        Description: Maximum tasks in ThreadPool queue
-#        Default:     10000
-#        Range:       1000-50000
-#        Note:        Should be >= 2x MaxBots to prevent queue overflow
-#                     Higher values use more memory but prevent task rejection
-#
-#    Playerbot.Performance.ThreadPool.EnableWorkStealing
-#        Description: Enable work-stealing load balancing
-#        Default:     1 (enabled)
-#        Note:        Workers steal tasks from busy workers when idle
-#                     Improves load distribution and reduces latency
-#                     Minimal overhead (~0.1% CPU)
-#
-#    Playerbot.Performance.ThreadPool.EnableCpuAffinity
-#        Description: Pin worker threads to specific CPU cores
-#        Default:     0 (disabled)
-#        Warning:     Requires administrator privileges on Windows
-#        Note:        May improve cache locality but reduce OS flexibility
-#                     Only enable if profiling shows benefit
-#
-###################################################################################################
-
-Playerbot.Performance.ThreadPool.WorkerCount = 0
-Playerbot.Performance.ThreadPool.MaxQueueSize = 10000
-Playerbot.Performance.ThreadPool.EnableWorkStealing = 1
-Playerbot.Performance.ThreadPool.EnableCpuAffinity = 0
-
-###################################################################################################
-# DATABASE
-#
-#    Playerbot.Database.Host
-#        Description: MySQL host for playerbot database
-#        Default:     "127.0.0.1"
-#        Note:        Hostname or IP address of playerbot database server
-#                     Uses same connection as main TrinityCore databases
-#
-#    Playerbot.Database.Port
-#        Description: MySQL port for playerbot database
-#        Default:     3306
-#        Note:        Port number for MySQL connection
-#
-#    Playerbot.Database.Name
-#        Description: Database name for playerbot data
-#        Default:     "playerbot_playerbot"
-#        Note:        Name of the playerbot-specific database
-#                     Contains bot accounts, schedules, distributions
-#
-#    Playerbot.Database.User
-#        Description: MySQL username for playerbot database
-#        Default:     "trinity"
-#        Note:        Should have full access to playerbot_playerbot database
-#
-#    Playerbot.Database.Password
-#        Description: MySQL password for playerbot database
-#        Default:     "trinity"
-#        Warning:     Change this for production environments!
-#
-#    Playerbot.Database.EnablePooling
-#        Description: Enable database connection pooling for bots
-#        Default:     1
-#        Note:        Improves performance with many bots
-#
-#    Playerbot.Database.MaxConnections
-#        Description: Maximum database connections for bot operations
-#        Default:     10
-#        Range:       5-50
-#        Note:        Should be less than server's max connections
-#
-#    Playerbot.Database.QueryTimeout
-#        Description: Database query timeout (seconds)
-#        Default:     30
-#        Range:       10-120
-#        Note:        Prevents hung database operations
-#
-#    Playerbot.Database.EnableCaching
-#        Description: Enable database query result caching
-#        Default:     1
-#        Note:        Caches frequently accessed data
-#
-#    Playerbot.Database.CacheTimeout
-#        Description: Cache timeout in seconds
-#        Default:     300
-#        Range:       60-3600
-#        Note:        How long cached data remains valid
-#
-###################################################################################################
-
 Playerbot.Database.Host = "127.0.0.1"
+
+#
+#  Playerbot.Database.Port
+#    Description: MySQL server port
+#    Default:     3306
+#
 Playerbot.Database.Port = 3306
+
+#
+#  Playerbot.Database.Name
+#    Description: Database name for Playerbot data
+#    Default:     "playerbot_playerbot"
+#    Note:        Database auto-created if it doesn't exist
+#
 Playerbot.Database.Name = "playerbot_playerbot"
+
+#
+#  Playerbot.Database.User
+#    Description: MySQL username
+#    Default:     "trinity"
+#
 Playerbot.Database.User = "trinity"
+
+#
+#  Playerbot.Database.Password
+#    Description: MySQL password
+#    Default:     "trinity"
+#
 Playerbot.Database.Password = "trinity"
-Playerbot.Database.EnablePooling = 1
-Playerbot.Database.MaxConnections = 10
-Playerbot.Database.QueryTimeout = 30
-Playerbot.Database.EnableCaching = 1
-Playerbot.Database.CacheTimeout = 300
 
-###################################################################################################
-# NAMING SYSTEM
+###############################################################################
+# A3. BOT SPAWNING SYSTEM
 #
-#    Playerbot.Names.EnableRandomNames
-#        Description: Enable automatic random name generation
-#        Default:     1
-#        Note:        Uses built-in name pools for bot characters
-#
-#    Playerbot.Names.PoolSize
-#        Description: Size of name pool per race/gender combination
-#        Default:     1000
-#        Range:       100-10000
-#        Note:        Larger pools provide more name variety
-#
-#    Playerbot.Names.AllowDuplicates
-#        Description: Allow duplicate names with different surnames
-#        Default:     0
-#        Note:        When enabled, uses FirstName + LastName format
-#
-#    Playerbot.Names.MinLength
-#        Description: Minimum character name length
-#        Default:     3
-#        Range:       2-8
-#        Note:        Must comply with server naming rules
-#
-#    Playerbot.Names.MaxLength
-#        Description: Maximum character name length
-#        Default:     12
-#        Range:       8-16
-#        Note:        Must comply with server naming rules
-#
-###################################################################################################
+#     Controls how and when bots are spawned into the world.
+#     Includes immediate spawning, batch processing, and zone limits.
+###############################################################################
 
-Playerbot.Names.EnableRandomNames = 1
-Playerbot.Names.PoolSize = 1000
-Playerbot.Names.AllowDuplicates = 0
-Playerbot.Names.MinLength = 3
-Playerbot.Names.MaxLength = 12
+#
+#  Playerbot.Spawn.OnServerStart
+#    Description: Begin spawning bots during server startup
+#    Default:     1 (enabled - bots spawn immediately)
+#    Values:      0 = Wait for first player login
+#                 1 = Spawn during server startup
+#
+Playerbot.Spawn.OnServerStart = 1
 
-###################################################################################################
-# SOCIAL FEATURES
 #
-#    Playerbot.Social.EnableChat
-#        Description: Enable bot chat responses
-#        Default:     0
-#        Note:        Bots can respond to whispers and group chat
+#  Playerbot.Spawn.Dynamic
+#    Description: Enable dynamic spawning based on player population
+#    Default:     1
+#    Values:      0 = Fixed spawn count, 1 = Dynamic based on players
 #
-#    Playerbot.Social.ChatChance
-#        Description: Probability of bot responding to chat (0-100)
-#        Default:     10
-#        Range:       0-100
-#        Note:        Higher values make bots more talkative
-#
-#    Playerbot.Social.EnableEmotes
-#        Description: Enable bot emote usage
-#        Default:     0
-#        Note:        Bots will use emotes in appropriate situations
-#
-#    Playerbot.Social.EmoteChance
-#        Description: Probability of bot using emotes (0-100)
-#        Default:     5
-#        Range:       0-100
-#        Note:        Higher values make bots more expressive
-#
-#    Playerbot.Social.EnableGrouping
-#        Description: Allow bots to form and join groups
-#        Default:     1
-#        Note:        Essential for dungeon and quest functionality
-#
-#    Playerbot.Social.EnableGuilds
-#        Description: Allow bots to join guilds
-#        Default:     0
-#        Note:        Bots can participate in guild activities
-#
-#    Playerbot.Social.EnableTrading
-#        Description: Allow bots to trade with players and other bots
-#        Default:     1
-#        Note:        Required for economic participation
-#
-###################################################################################################
-
-Playerbot.Social.EnableGuilds = 0
-Playerbot.Social.EnableChat = 0
-Playerbot.Social.ChatChance = 10
-Playerbot.Social.EmoteChance = 5
-Playerbot.Social.EnableGrouping = 1
-Playerbot.Social.EnableTrading = 1
-
-###################################################################################################
-# SECURITY
-#
-#    Playerbot.Security.PreventBotLogin
-#        Description: Prevent direct login to bot accounts
-#        Default:     1
-#        Note:        Bot accounts should only be accessed via bot system
-#
-#    Playerbot.Security.RestrictBotInteraction
-#        Description: Restrict trading/mailing with bots
-#        Default:     0
-#        Note:        When enabled, limits player-bot economic interaction
-#
-#    Playerbot.Security.LogBotActions
-#        Description: Log all bot actions for audit
-#        Default:     0
-#        Note:        Creates detailed logs for debugging and monitoring
-#
-#    Playerbot.Security.PreventBotExploit
-#        Description: Prevent exploitation of bot mechanics
-#        Default:     1
-#        Note:        Implements various anti-exploit measures
-#
-#    Playerbot.Security.MaxGoldPerBot
-#        Description: Maximum gold a bot can carry
-#        Default:     1000
-#        Range:       1-1000000
-#        Note:        Prevents gold accumulation exploits
-#
-###################################################################################################
-
-Playerbot.Security.PreventBotLogin = 1
-Playerbot.Security.RestrictBotInteraction = 0
-Playerbot.Security.LogBotActions = 0
-Playerbot.Security.PreventBotExploit = 1
-Playerbot.Security.MaxGoldPerBot = 1000
-
-###################################################################################################
-# EXPERIMENTAL
-#
-#    Playerbot.Experimental.RandomMovement
-#        Description: Enable random movement for idle bots
-#        Default:     0
-#        Warning:     May impact server performance
-#
-#    Playerbot.Experimental.BotChat
-#        Description: Enable advanced bot chat AI
-#        Default:     0
-#        Warning:     Experimental feature, may be unstable
-#
-#    Playerbot.Experimental.BotEmotes
-#        Description: Enable context-aware bot emotes
-#        Default:     0
-#        Warning:     Experimental feature, may be unstable
-#
-#    Playerbot.Experimental.PathfindingV2
-#        Description: Use experimental pathfinding algorithms
-#        Default:     0
-#        Warning:     May cause navigation issues
-#
-#    Playerbot.Experimental.Features
-#        Description: Enable all experimental features
-#        Default:     0
-#        Warning:     May cause server instability
-#
-###################################################################################################
-
-Playerbot.Experimental.RandomMovement = 0
-Playerbot.Experimental.BotChat = 0
-Playerbot.Experimental.BotEmotes = 0
-Playerbot.Experimental.PathfindingV2 = 0
-Playerbot.Experimental.Features = 0
-
-###################################################################################################
-# SPAWNING & POPULATION
-#
-#    Playerbot.Spawn.Dynamic
-#        Description: Enable dynamic bot spawning based on player population
-#        Default:     1 (enabled)
-#        Note:        Automatically adjusts bot count based on online players
-#                     and zone populations to create a living world feel
-#
-#    Playerbot.Spawn.RespectCaps
-#        Description: Enforce Playerbot.MaxBots limit strictly
-#        Default:     1 (enabled)
-#        Note:        When enabled, will not spawn bots beyond MaxBots
-#                     When disabled, may temporarily exceed for dynamic spawning
-#
-#    Playerbot.Spawn.BotToPlayerRatio
-#        Description: Target ratio of bots to real players
-#        Default:     30.0
-#        Range:       1.0-100.0
-#        Note:        For dynamic spawning: bots_to_spawn = players * ratio
-#                     Example: 2 players * 30.0 = 60 bots
-#
-#    Playerbot.MinimumBotsPerZone
-#        Description: Minimum bots to maintain per populated zone
-#        Default:     10
-#        Range:       0-100
-#        Note:        Ensures zones feel populated even with few players
-#                     0 = No minimum, zones can be empty
-#
-#    Playerbot.RandomBotLevel.Min
-#        Description: Minimum level for randomly created bots
-#        Default:     1
-#        Range:       1-80
-#        Note:        Used when auto-creating characters for bot accounts
-#                     Levels are distributed across this range
-#
-###################################################################################################
-
 Playerbot.Spawn.Dynamic = 1
-Playerbot.Spawn.RespectCaps = 1
-Playerbot.Spawn.BotToPlayerRatio = 30.0
-Playerbot.MinimumBotsPerZone = 10
-Playerbot.RandomBotLevel.Min = 1
 
-###################################################################################################
-# INVENTORY & LOOTING
 #
-#    Playerbot.Inventory.AutoLoot
-#        Description: Bots automatically loot nearby corpses
-#        Default:     1 (enabled)
-#        Note:        Bots will loot mobs they kill and nearby corpses
-#                     Essential for quest progression and gear acquisition
+#  Playerbot.Spawn.MaxTotal
+#    Description: Maximum total bots that can be spawned
+#    Default:     500
+#    Range:       1-5000
 #
-#    Playerbot.Inventory.AutoEquip
-#        Description: Bots automatically equip better gear
-#        Default:     1 (enabled)
-#        Note:        Compares item stats and equips upgrades automatically
-#                     Considers primary stats, itemlevel, and class needs
-#
-#    Playerbot.Inventory.AutoSell
-#        Description: Bots automatically sell trash items at vendors
-#        Default:     1 (enabled)
-#        Note:        Sells grey (trash) quality items when visiting vendors
-#                     Manages inventory space automatically
-#
-#    Playerbot.Inventory.DestroyTrash
-#        Description: Destroy trash items when inventory full
-#        Default:     1 (enabled)
-#        Note:        If inventory is full and no vendor nearby, destroy trash
-#                     Prevents bots from being unable to loot quest items
-#
-#    Playerbot.Inventory.LootQuestItems
-#        Description: Prioritize looting quest items
-#        Default:     1 (enabled)
-#        Note:        Bots will always attempt to loot quest-related items
-#                     Even if inventory is full, will make space for quest items
-#
-#    Playerbot.Inventory.LootRange
-#        Description: Maximum distance (yards) to loot corpses
-#        Default:     30.0
-#        Range:       5.0-100.0
-#        Note:        How far bots will travel to loot corpses
-#                     Larger values may cause excessive running around
-#
-###################################################################################################
+Playerbot.Spawn.MaxTotal = 500
 
-Playerbot.Inventory.AutoLoot = 1
-Playerbot.Inventory.AutoEquip = 1
-Playerbot.Inventory.AutoSell = 1
-Playerbot.Inventory.DestroyTrash = 1
-Playerbot.Inventory.LootQuestItems = 1
-Playerbot.Inventory.LootRange = 30.0
-
-###################################################################################################
-# LOGGING & DEBUGGING
 #
-#    Playerbot.Log.File
-#        Description: Log file name for playerbot-specific logs
-#        Default:     "Playerbot.log"
-#        Note:        Separate from main server logs for easier debugging
-#                     Located in the logs directory
+#  Playerbot.Spawn.MaxPerZone
+#    Description: Maximum bots per zone
+#    Default:     50
+#    Range:       1-200
 #
-#    Playerbot.Log.PerformanceMetrics
-#        Description: Log detailed performance metrics
-#        Default:     0 (disabled)
-#        Note:        Logs CPU usage, memory consumption, query times
-#                     Enable for performance debugging - generates large logs
-#
-###################################################################################################
-
-Playerbot.Log.File = "Playerbot.log"
-Playerbot.Log.PerformanceMetrics = 0
-
-###################################################################################################
-# DEATH RECOVERY & RESURRECTION
-#
-#    Playerbot.Death.AutoRelease
-#        Description: Automatically release spirit when bot dies
-#        Default:     1 (enabled)
-#        Note:        Bots will automatically release spirit and become ghosts
-#                     If disabled, bots will wait at corpse indefinitely
-#
-#    Playerbot.Death.ReleaseDelay
-#        Description: Delay before releasing spirit (seconds)
-#        Default:     5
-#        Range:       0-60
-#        Note:        Simulates human decision time before releasing
-#                     0 = instant release (not realistic)
-#
-#    Playerbot.Death.PreferCorpseRun
-#        Description: Prefer corpse run over spirit healer when possible
-#        Default:     1 (enabled)
-#        Note:        Bots will run to corpse to avoid resurrection sickness
-#                     Only use spirit healer if corpse is too far
-#
-#    Playerbot.Death.MaxCorpseRunDistance
-#        Description: Maximum distance (yards) for corpse run
-#        Default:     200.0
-#        Range:       50.0-500.0
-#        Note:        If corpse is farther than this, use spirit healer instead
-#                     Prevents extremely long corpse runs
-#
-#    Playerbot.Death.CorpseInteractionRange
-#        Description: Distance (yards) to interact with corpse
-#        Default:     5.0
-#        Range:       3.0-10.0
-#        Note:        How close bot must be to resurrect at corpse
-#                     Default matches TrinityCore interaction range
-#
-#    Playerbot.Death.AutoSpiritHealer
-#        Description: Automatically use spirit healer if corpse run not viable
-#        Default:     1 (enabled)
-#        Note:        When enabled, bots will use spirit healer automatically
-#                     When disabled, bots will wait for manual intervention
-#
-#    Playerbot.Death.SpiritHealerSearchRadius
-#        Description: Search radius (yards) for spirit healers
-#        Default:     150.0
-#        Range:       50.0-300.0
-#        Note:        How far to search for spirit healer NPCs at graveyards
-#                     Larger values may find more distant spirit healers
-#
-#    Playerbot.Death.AllowBattleResurrection
-#        Description: Allow resurrection in battlegrounds/arenas
-#        Default:     1 (enabled)
-#        Note:        In battlegrounds, bots can resurrect at spirit healers
-#                     without resurrection sickness penalty
-#
-#    Playerbot.Death.NavigationUpdateInterval
-#        Description: Navigation update frequency during corpse run (ms)
-#        Default:     500
-#        Range:       100-2000
-#        Note:        How often to update movement when running to corpse
-#                     Lower = smoother movement, higher CPU usage
-#
-#    Playerbot.Death.DistanceCheckInterval
-#        Description: Distance check frequency during corpse run (ms)
-#        Default:     1000
-#        Range:       500-5000
-#        Note:        How often to check distance to corpse/spirit healer
-#                     Lower = more responsive, higher CPU usage
-#
-#    Playerbot.Death.SkipResurrectionSickness
-#        Description: Skip resurrection sickness for bot testing
-#        Default:     0 (disabled)
-#        Range:       0-1
-#        Warning:     FOR TESTING ONLY - Violates game mechanics
-#        Note:        When enabled, bots won't get resurrection sickness
-#                     from spirit healer resurrections. Should only be used
-#                     in development/testing environments.
-#
-#    Playerbot.Death.ResurrectionTimeout
-#        Description: Maximum time (seconds) to wait for resurrection
-#        Default:     300
-#        Range:       60-600
-#        Note:        If resurrection fails after this time, force respawn
-#                     Prevents bots from being stuck dead indefinitely
-#
-#    Playerbot.Death.LogRecovery
-#        Description: Enable detailed death recovery logging
-#        Default:     1 (enabled)
-#        Note:        Logs all death recovery events for debugging
-#                     Helps track resurrection issues
-#                     Logs to: Logger.playerbot.death
-#
-###################################################################################################
-
-Playerbot.Death.AutoRelease = 1
-Playerbot.Death.ReleaseDelay = 5
-Playerbot.Death.PreferCorpseRun = 1
-Playerbot.Death.MaxCorpseRunDistance = 200.0
-Playerbot.Death.CorpseInteractionRange = 5.0
-Playerbot.Death.AutoSpiritHealer = 1
-Playerbot.Death.SpiritHealerSearchRadius = 150.0
-Playerbot.Death.AllowBattleResurrection = 1
-Playerbot.Death.NavigationUpdateInterval = 500
-Playerbot.Death.DistanceCheckInterval = 1000
-Playerbot.Death.SkipResurrectionSickness = 0
-Playerbot.Death.ResurrectionTimeout = 300
-Playerbot.Death.LogRecovery = 1
-
-###################################################################################################
-# AUTOMATED WORLD POPULATION SYSTEM (WoW 11.2 - The War Within)
-#
-# Purpose: Automatically distribute bots across level brackets to populate the world
-#          with level-appropriate players, creating a realistic MMORPG experience.
-#
-# Workflow:
-# 1. Level 1-4 bots: Created at level 1, NO instant gear, level naturally in starter zones
-# 2. Level 5+ bots: Instant level-up using TrinityCore's GiveLevel(), full gear/talents
-# 3. Level 10+ bots: Dual-spec enabled (WoW 11.2 feature)
-# 4. Distribution checked every 5 minutes, rebalances if outside ±15% tolerance
-#
-# Thread Safety:
-# - Atomic counters for lock-free concurrent access
-# - Immutable configuration after startup
-# - Compatible with ThreadPool system
-#
-# Performance:
-# - <0.1% CPU overhead per bot
-# - <10MB memory per bot
-# - Supports 5000+ concurrent bots
-#
-###################################################################################################
-
-###################################################################################################
-# LEVEL DISTRIBUTION - CORE SETTINGS
-#
-#    Playerbot.Population.Enabled
-#        Description: Enable automated world population system
-#        Default:     0 (disabled)
-#        Note:        Master switch for level distribution and automated gearing
-#                     When disabled, bots use traditional spawning methods
-#
-#    Playerbot.Population.NumBrackets
-#        Description: Number of level brackets for distribution
-#        Default:     17
-#        Range:       1-20
-#        Note:        Default covers levels 1-80 in 5-level increments
-#                     Bracket 1:  L1-4  (natural leveling)
-#                     Bracket 2:  L5-9  (instant level-up + gear)
-#                     ...
-#                     Bracket 17: L80   (endgame)
-#
-#    Playerbot.Population.DynamicDistribution
-#        Description: Adjust distribution based on real player levels
-#        Default:     0 (disabled)
-#        Note:        When enabled, weights brackets where real players are active
-#                     Creates more bots in level ranges with player activity
-#
-#    Playerbot.Population.RealPlayerWeight
-#        Description: Weight multiplier for real player activity
-#        Default:     1.0
-#        Range:       0.0-5.0
-#        Note:        Only used when DynamicDistribution is enabled
-#                     Higher values create stronger clustering around players
-#
-#    Playerbot.Population.SyncFactions
-#        Description: Keep Alliance/Horde distributions synchronized
-#        Default:     0 (disabled)
-#        Note:        When enabled, ensures balanced faction populations
-#                     Both factions will have similar level distributions
-#
-###################################################################################################
-
-Playerbot.Population.Enabled = 0
-Playerbot.Population.NumBrackets = 17
-Playerbot.Population.DynamicDistribution = 0
-Playerbot.Population.RealPlayerWeight = 1.0
-Playerbot.Population.SyncFactions = 0
-
-###################################################################################################
-# LEVEL DISTRIBUTION - ALLIANCE BRACKETS
-#
-# Format: Playerbot.Population.Alliance.RangeX.Min/Max/Pct
-# - Min: Minimum level in bracket
-# - Max: Maximum level in bracket
-# - Pct: Target percentage of total Alliance bots (must sum to 100%)
-#
-# Behavior:
-# - Levels 1-4:  Natural leveling (no instant gear, level up naturally)
-# - Levels 5-9:  Instant level-up + gear (GiveLevel + full equipment)
-# - Levels 10+:  Dual-spec enabled (2 specs with separate gear sets)
-# - Level 80:    Endgame concentration (highest percentage)
-#
-# Tolerance: ±15% deviation allowed from target percentage
-# Example: 10% target = 8.5%-11.5% acceptable range
-#
-###################################################################################################
-
-# Bracket 1: Starter Zones (Natural Leveling - NO instant gear)
-Playerbot.Population.Alliance.Range1.Min = 1
-Playerbot.Population.Alliance.Range1.Max = 4
-Playerbot.Population.Alliance.Range1.Pct = 5
-
-# Bracket 2: Early Leveling
-Playerbot.Population.Alliance.Range2.Min = 5
-Playerbot.Population.Alliance.Range2.Max = 9
-Playerbot.Population.Alliance.Range2.Pct = 6
-
-# Bracket 3: Dual-Spec Unlock (Level 10+)
-Playerbot.Population.Alliance.Range3.Min = 10
-Playerbot.Population.Alliance.Range3.Max = 14
-Playerbot.Population.Alliance.Range3.Pct = 6
-
-# Bracket 4: Mid-Leveling
-Playerbot.Population.Alliance.Range4.Min = 15
-Playerbot.Population.Alliance.Range4.Max = 19
-Playerbot.Population.Alliance.Range4.Pct = 6
-
-# Bracket 5
-Playerbot.Population.Alliance.Range5.Min = 20
-Playerbot.Population.Alliance.Range5.Max = 24
-Playerbot.Population.Alliance.Range5.Pct = 6
-
-# Bracket 6
-Playerbot.Population.Alliance.Range6.Min = 25
-Playerbot.Population.Alliance.Range6.Max = 29
-Playerbot.Population.Alliance.Range6.Pct = 6
-
-# Bracket 7
-Playerbot.Population.Alliance.Range7.Min = 30
-Playerbot.Population.Alliance.Range7.Max = 34
-Playerbot.Population.Alliance.Range7.Pct = 5
-
-# Bracket 8
-Playerbot.Population.Alliance.Range8.Min = 35
-Playerbot.Population.Alliance.Range8.Max = 39
-Playerbot.Population.Alliance.Range8.Pct = 5
-
-# Bracket 9
-Playerbot.Population.Alliance.Range9.Min = 40
-Playerbot.Population.Alliance.Range9.Max = 44
-Playerbot.Population.Alliance.Range9.Pct = 5
-
-# Bracket 10
-Playerbot.Population.Alliance.Range10.Min = 45
-Playerbot.Population.Alliance.Range10.Max = 49
-Playerbot.Population.Alliance.Range10.Pct = 5
-
-# Bracket 11
-Playerbot.Population.Alliance.Range11.Min = 50
-Playerbot.Population.Alliance.Range11.Max = 54
-Playerbot.Population.Alliance.Range11.Pct = 5
-
-# Bracket 12
-Playerbot.Population.Alliance.Range12.Min = 55
-Playerbot.Population.Alliance.Range12.Max = 59
-Playerbot.Population.Alliance.Range12.Pct = 5
-
-# Bracket 13: Pre-War Within (60-64)
-Playerbot.Population.Alliance.Range13.Min = 60
-Playerbot.Population.Alliance.Range13.Max = 64
-Playerbot.Population.Alliance.Range13.Pct = 7
-
-# Bracket 14: Pre-War Within (65-69)
-Playerbot.Population.Alliance.Range14.Min = 65
-Playerbot.Population.Alliance.Range14.Max = 69
-Playerbot.Population.Alliance.Range14.Pct = 7
-
-# Bracket 15: War Within Early (71-74) - Hero Talents Begin
-Playerbot.Population.Alliance.Range15.Min = 71
-Playerbot.Population.Alliance.Range15.Max = 74
-Playerbot.Population.Alliance.Range15.Pct = 8
-
-# Bracket 16: War Within Late (75-79)
-Playerbot.Population.Alliance.Range16.Min = 75
-Playerbot.Population.Alliance.Range16.Max = 79
-Playerbot.Population.Alliance.Range16.Pct = 10
-
-# Bracket 17: Endgame (Level 80 - Highest Concentration)
-Playerbot.Population.Alliance.Range17.Min = 80
-Playerbot.Population.Alliance.Range17.Max = 80
-Playerbot.Population.Alliance.Range17.Pct = 13
-
-###################################################################################################
-# LEVEL DISTRIBUTION - HORDE BRACKETS
-#
-# Same structure as Alliance, allows independent faction distributions
-# Percentages must sum to 100% for Horde faction
-#
-###################################################################################################
-
-# Bracket 1: Starter Zones (Natural Leveling)
-Playerbot.Population.Horde.Range1.Min = 1
-Playerbot.Population.Horde.Range1.Max = 4
-Playerbot.Population.Horde.Range1.Pct = 5
-
-# Bracket 2: Early Leveling
-Playerbot.Population.Horde.Range2.Min = 5
-Playerbot.Population.Horde.Range2.Max = 9
-Playerbot.Population.Horde.Range2.Pct = 6
-
-# Bracket 3: Dual-Spec Unlock
-Playerbot.Population.Horde.Range3.Min = 10
-Playerbot.Population.Horde.Range3.Max = 14
-Playerbot.Population.Horde.Range3.Pct = 6
-
-# Bracket 4: Mid-Leveling
-Playerbot.Population.Horde.Range4.Min = 15
-Playerbot.Population.Horde.Range4.Max = 19
-Playerbot.Population.Horde.Range4.Pct = 6
-
-# Bracket 5
-Playerbot.Population.Horde.Range5.Min = 20
-Playerbot.Population.Horde.Range5.Max = 24
-Playerbot.Population.Horde.Range5.Pct = 6
-
-# Bracket 6
-Playerbot.Population.Horde.Range6.Min = 25
-Playerbot.Population.Horde.Range6.Max = 29
-Playerbot.Population.Horde.Range6.Pct = 6
-
-# Bracket 7
-Playerbot.Population.Horde.Range7.Min = 30
-Playerbot.Population.Horde.Range7.Max = 34
-Playerbot.Population.Horde.Range7.Pct = 5
-
-# Bracket 8
-Playerbot.Population.Horde.Range8.Min = 35
-Playerbot.Population.Horde.Range8.Max = 39
-Playerbot.Population.Horde.Range8.Pct = 5
-
-# Bracket 9
-Playerbot.Population.Horde.Range9.Min = 40
-Playerbot.Population.Horde.Range9.Max = 44
-Playerbot.Population.Horde.Range9.Pct = 5
-
-# Bracket 10
-Playerbot.Population.Horde.Range10.Min = 45
-Playerbot.Population.Horde.Range10.Max = 49
-Playerbot.Population.Horde.Range10.Pct = 5
-
-# Bracket 11
-Playerbot.Population.Horde.Range11.Min = 50
-Playerbot.Population.Horde.Range11.Max = 54
-Playerbot.Population.Horde.Range11.Pct = 5
-
-# Bracket 12
-Playerbot.Population.Horde.Range12.Min = 55
-Playerbot.Population.Horde.Range12.Max = 59
-Playerbot.Population.Horde.Range12.Pct = 5
-
-# Bracket 13: Pre-War Within
-Playerbot.Population.Horde.Range13.Min = 60
-Playerbot.Population.Horde.Range13.Max = 64
-Playerbot.Population.Horde.Range13.Pct = 7
-
-# Bracket 14: Pre-War Within
-Playerbot.Population.Horde.Range14.Min = 65
-Playerbot.Population.Horde.Range14.Max = 69
-Playerbot.Population.Horde.Range14.Pct = 7
-
-# Bracket 15: War Within Early - Hero Talents
-Playerbot.Population.Horde.Range15.Min = 71
-Playerbot.Population.Horde.Range15.Max = 74
-Playerbot.Population.Horde.Range15.Pct = 8
-
-# Bracket 16: War Within Late
-Playerbot.Population.Horde.Range16.Min = 75
-Playerbot.Population.Horde.Range16.Max = 79
-Playerbot.Population.Horde.Range16.Pct = 10
-
-# Bracket 17: Endgame
-Playerbot.Population.Horde.Range17.Min = 80
-Playerbot.Population.Horde.Range17.Max = 80
-Playerbot.Population.Horde.Range17.Pct = 13
-
-###################################################################################################
-# GEAR FACTORY - AUTOMATED EQUIPMENT SYSTEM
-#
-# Purpose: Generate complete gear sets for instant bot level-up scenarios
-#
-# Features:
-# - Immutable item cache (built at server startup)
-# - Automatic quality distribution (Green/Blue for leveling, Blue/Purple for endgame)
-# - Stat-weighted item scoring (integrates with EquipmentManager)
-# - Complete gear sets (17 equipment slots + 4 bags + consumables)
-# - Zero manual curation (100% automated database queries)
-#
-# Thread Safety:
-# - Lock-free concurrent reads after cache build
-# - Compatible with ThreadPool worker threads
-# - Atomic initialization flag
-#
-# Performance:
-# - Cache build time: <5 seconds
-# - Gear set generation: <1ms per bot
-# - Memory usage: ~50MB for full cache
-#
-###################################################################################################
-
-###################################################################################################
-# GEAR FACTORY - CORE SETTINGS
-#
-#    Playerbot.GearFactory.Enabled
-#        Description: Enable automated gear generation system
-#        Default:     0 (disabled)
-#        Note:        Master switch for gear factory
-#                     Required for Playerbot.Population.Enabled to work properly
-#                     When disabled, bots created via level distribution won't get gear
-#
-#    Playerbot.GearFactory.AllowHeirlooms
-#        Description: Include heirloom items in gear selection
-#        Default:     0 (disabled)
-#        Note:        Heirlooms scale with level and are very powerful
-#                     Enable for easier bot leveling experience
-#
-#    Playerbot.GearFactory.AllowLegendary
-#        Description: Include legendary items for endgame bots
-#        Default:     0 (disabled)
-#        Warning:     May make endgame bots too powerful
-#        Note:        Only affects level 80 bots
-#
-#    Playerbot.GearFactory.MinItemLevel
-#        Description: Minimum item level to include in cache
-#        Default:     1
-#        Range:       1-593
-#        Note:        Higher values reduce cache size but limit low-level gear
-#                     Set to 500+ to only cache endgame items
-#
-#    Playerbot.GearFactory.LogStats
-#        Description: Log detailed cache statistics at startup
-#        Default:     1 (enabled)
-#        Note:        Logs items per class, memory usage, build time
-#                     Useful for performance monitoring
-#
-###################################################################################################
-
-Playerbot.GearFactory.Enabled = 0
-Playerbot.GearFactory.AllowHeirlooms = 0
-Playerbot.GearFactory.AllowLegendary = 0
-Playerbot.GearFactory.MinItemLevel = 1
-Playerbot.GearFactory.LogStats = 1
-
-###################################################################################################
-# TALENT MANAGER - AUTOMATED TALENT SYSTEM
-#
-# Purpose: Apply specializations and talents to bots during instant level-up
-#
-# Features:
-# - Specialization selection (intelligent role distribution)
-# - Talent loadout application (database-driven)
-# - Dual-spec support (WoW 11.2 feature, unlocks at level 10)
-# - Hero talent support (levels 71-80)
-# - TrinityCore API integration (InitTalentForLevel, LearnTalent, etc.)
-#
-# Integration:
-# - Uses RoleDefinitions for spec metadata (no duplication)
-# - Uses TrinityCore's native talent API
-# - Loads talent loadouts from playerbot_talent_loadouts table
-#
-# Thread Safety:
-# - Immutable loadout cache after startup
-# - Lock-free concurrent reads
-# - Compatible with ThreadPool worker threads
-#
-# Performance:
-# - Loadout cache build: <1 second
-# - Spec selection: <0.1ms per bot
-# - Talent application: <1ms per bot
-#
-###################################################################################################
-
-###################################################################################################
-# TALENT MANAGER - CORE SETTINGS
-#
-#    Playerbot.TalentManager.Enabled
-#        Description: Enable automated talent management system
-#        Default:     0 (disabled)
-#        Note:        Master switch for talent manager
-#                     Required for Playerbot.Population.Enabled to work properly
-#                     When disabled, bots created via level distribution won't get talents
-#
-#    Playerbot.TalentManager.AutoLoadouts
-#        Description: Use automatic talent loadouts from database
-#        Default:     1 (enabled)
-#        Note:        Loads from playerbot_talent_loadouts table
-#                     If disabled or table empty, uses TrinityCore defaults
-#
-#    Playerbot.TalentManager.LogApplications
-#        Description: Log detailed talent application events
-#        Default:     1 (enabled)
-#        Note:        Logs spec selection, talent learning, dual-spec setup
-#                     Useful for debugging talent issues
-#                     Logs to: Logger.playerbot
-#
-###################################################################################################
-
-Playerbot.TalentManager.Enabled = 0
-Playerbot.TalentManager.AutoLoadouts = 1
-Playerbot.TalentManager.LogApplications = 1
-
-###################################################################################################
-# WORLD POSITIONER - AUTOMATED ZONE PLACEMENT SYSTEM
-#
-# Purpose: Place bots in level-appropriate zones during world population
-#
-# Features:
-# - Starter zone teleportation (L1-4 bots)
-# - Level-appropriate zone selection (L5+ bots)
-# - Faction-specific placement
-# - Race-specific starter zones
-# - Safe coordinates (verified spawn points)
-# - Immutable zone cache (lock-free reads)
-#
-# Integration:
-# - Uses TrinityCore's AreaTable.dbc for zone data
-# - Uses Player::TeleportTo() for positioning (main thread only)
-# - Compatible with ThreadPool worker threads (cache queries)
-#
-# Thread Safety:
-# - Immutable zone cache after startup
-# - Lock-free concurrent reads
-# - Compatible with ThreadPool worker threads
-#
-# Performance:
-# - Zone cache build: <1 second
-# - Zone selection: <0.05ms per bot
-# - Teleportation: <1ms per bot
-#
-# Zone Categories:
-# - Starter Zones (L1-10): Race-specific starting areas
-# - Leveling Zones (L10-60): Open world questing zones
-# - Endgame Zones (L60-80): The War Within content zones
-# - Capital Cities (All levels): Faction capitals
-#
-###################################################################################################
-
-###################################################################################################
-# WORLD POSITIONER - CORE SETTINGS
-#
-#    Playerbot.WorldPositioner.Enabled
-#        Description: Enable automated zone placement system
-#        Default:     0 (disabled)
-#        Note:        Master switch for world positioner
-#                     Required for Playerbot.Population.Enabled to work properly
-#                     When disabled, bots spawn at default coordinates (0,0,0)
-#
-#    Playerbot.WorldPositioner.UseStarterZones
-#        Description: Place L1-4 bots in race-specific starter zones
-#        Default:     1 (enabled)
-#        Note:        Human -> Elwynn Forest, Orc -> Durotar, etc.
-#                     If disabled, uses capital cities
-#
-#    Playerbot.WorldPositioner.UseCapitalFallback
-#        Description: Use capital city if no suitable zone found
-#        Default:     1 (enabled)
-#        Note:        Prevents teleport failures for edge cases
-#                     Ensures all bots have valid placement
-#
-#    Playerbot.WorldPositioner.LogPlacements
-#        Description: Log detailed zone placement events
-#        Default:     1 (enabled)
-#        Note:        Logs zone selection, teleportation, failures
-#                     Useful for debugging placement issues
-#                     Logs to: Logger.playerbot
-#
-#    Playerbot.WorldPositioner.ValidateCoordinates
-#        Description: Perform coordinate validation before teleport
-#        Default:     1 (enabled)
-#        Note:        Checks for valid map/zone/coordinates
-#                     Prevents crashes from invalid teleports
-#
-###################################################################################################
-
-Playerbot.WorldPositioner.Enabled = 0
-Playerbot.WorldPositioner.UseStarterZones = 1
-Playerbot.WorldPositioner.UseCapitalFallback = 1
-Playerbot.WorldPositioner.LogPlacements = 1
-Playerbot.WorldPositioner.ValidateCoordinates = 1
-
-###################################################################################################
-# LEVEL MANAGER - ORCHESTRATOR FOR AUTOMATED WORLD POPULATION
-#
-# Purpose: Coordinate all systems for instant bot creation and level-up
-#
-# Orchestrated Systems:
-# 1. BotLevelDistribution - Level bracket selection
-# 2. BotGearFactory - Gear generation
-# 3. BotTalentManager - Spec/talent application
-# 4. BotWorldPositioner - Zone placement
-#
-# Two-Phase Bot Creation:
-# Phase 1 (Worker Thread):
-#   - Select level bracket
-#   - Choose specialization(s)
-#   - Generate gear set
-#   - Select zone placement
-#   - NO Player API calls
-#
-# Phase 2 (Main Thread):
-#   - GiveLevel() to target level
-#   - Apply specialization
-#   - Apply talents (InitTalentForLevel, LearnTalent)
-#   - Equip gear (EquipItem)
-#   - Teleport to zone (TeleportTo)
-#   - Save to database
-#
-# Thread Safety:
-# - Worker threads prepare data using lock-free caches
-# - Main thread applies data using Player API
-# - Task queue protected by mutex (low contention)
-# - Atomic counters for statistics
-#
-# Performance:
-# - Worker thread prep: <5ms per bot
-# - Main thread apply: <50ms per bot (throttled to 10/update)
-# - Memory: ~1KB per queued task
-# - Scales to 5000+ bots
-#
-# Throttling:
-# - Maximum 10 bots processed per server update (configurable)
-# - Prevents server stalls from bulk bot creation
-# - Queue drains naturally over time
-#
-###################################################################################################
-
-###################################################################################################
-# LEVEL MANAGER - CORE SETTINGS
-#
-#    Playerbot.LevelManager.Enabled
-#        Description: Enable automated bot level management system
-#        Default:     0 (disabled)
-#        Note:        Master orchestrator for all world population systems
-#                     Requires BotLevelDistribution, BotGearFactory, BotTalentManager,
-#                     and BotWorldPositioner to be enabled
-#                     When disabled, bots must be leveled manually
-#
-#    Playerbot.LevelManager.MaxBotsPerUpdate
-#        Description: Maximum bots to process per server update
-#        Default:     10
-#        Range:       1-100
-#        Note:        Throttles bot creation to prevent server stalls
-#                     Lower = smoother server performance
-#                     Higher = faster bot population
-#                     Server update rate is typically 50-100ms
-#
-#    Playerbot.LevelManager.VerboseLogging
-#        Description: Enable detailed logging of bot creation process
-#        Default:     0 (disabled)
-#        Note:        Logs each step of bot creation (prep, apply, errors)
-#                     Useful for debugging but generates many log entries
-#                     Logs to: Logger.playerbot (DEBUG level)
-#
-#    Playerbot.LevelManager.EnableStatistics
-#        Description: Track detailed statistics for bot creation
-#        Default:     1 (enabled)
-#        Note:        Tracks: tasks submitted/completed/failed, queue size,
-#                     performance metrics, system operations, failures
-#                     No performance impact (<1ms overhead)
-#
-#    Playerbot.LevelManager.PrintReportOnShutdown
-#        Description: Print full statistics report on server shutdown
-#        Default:     1 (enabled)
-#        Note:        Shows comprehensive creation statistics
-#                     Useful for performance analysis and debugging
-#
-###################################################################################################
-
-Playerbot.LevelManager.Enabled = 0
-Playerbot.LevelManager.MaxBotsPerUpdate = 10
-Playerbot.LevelManager.VerboseLogging = 0
-Playerbot.LevelManager.EnableStatistics = 1
-Playerbot.LevelManager.PrintReportOnShutdown = 1
-
-###################################################################################################
-# BOT SPAWNING & POOLING SYSTEM
-#
-# Purpose: Control how bots are spawned and managed in the world
-#
-# Features:
-# - Batch spawning for performance optimization
-# - Per-zone and per-map limits to prevent overcrowding
-# - Bot pooling for efficient resource management
-# - Configurable spawn delays to spread server load
-#
-# Performance:
-# - Batch spawning reduces database queries
-# - Pool management prevents memory fragmentation
-# - Zone/map limits ensure balanced population distribution
-#
-###################################################################################################
-
-###################################################################################################
-# BOT SPAWNING - CORE SETTINGS
-#
-#    Playerbot.Spawn.MaxTotal
-#        Description: Maximum total number of bots that can be spawned server-wide
-#        Default:     100
-#        Range:       1-5000
-#        Note:        Overrides Playerbot.MaxBots if set
-#                     Use this for strict spawn control
-#
-#    Playerbot.Spawn.MaxPerZone
-#        Description: Maximum bots allowed in a single zone
-#        Default:     50
-#        Range:       1-500
-#        Note:        Prevents zone overcrowding
-#                     Distributes bots across multiple zones
-#
-#    Playerbot.Spawn.MaxPerMap
-#        Description: Maximum bots allowed on a single map (continent)
-#        Default:     200
-#        Range:       10-2000
-#        Note:        Balances load across Eastern Kingdoms, Kalimdor, etc.
-#
-#    Playerbot.Spawn.BatchSize
-#        Description: Number of bots to spawn in a single batch
-#        Default:     10
-#        Range:       1-100
-#        Note:        Higher values = faster spawning but higher CPU spikes
-#                     Lower values = smoother spawning but takes longer
-#
-#    Playerbot.Spawn.DelayMs
-#        Description: Delay between spawn batches (milliseconds)
-#        Default:     1000 (1 second)
-#        Range:       100-10000
-#        Note:        Time to wait between spawning each batch
-#                     Prevents server stalls during mass bot spawning
-#
-###################################################################################################
-
-Playerbot.Spawn.MaxTotal = 100
 Playerbot.Spawn.MaxPerZone = 50
+
+#
+#  Playerbot.Spawn.MaxPerMap
+#    Description: Maximum bots per map instance
+#    Default:     200
+#    Range:       1-1000
+#
 Playerbot.Spawn.MaxPerMap = 200
+
+#
+#  Playerbot.Spawn.BatchSize
+#    Description: Number of bots to spawn per batch cycle
+#    Default:     10
+#    Range:       1-50
+#
 Playerbot.Spawn.BatchSize = 10
-Playerbot.Spawn.DelayMs = 1000
 
-###################################################################################################
-# BOT POOLING - RESOURCE MANAGEMENT
 #
-#    Playerbot.Pool.MinSize
-#        Description: Minimum number of bot objects to keep in memory pool
-#        Default:     10
-#        Range:       0-100
-#        Note:        Pre-allocated bot objects for fast spawning
-#                     Reduces memory allocation overhead
-#                     0 = No pre-allocation (slower spawning)
+#  Playerbot.Spawn.DelayMs
+#    Description: Delay between spawn batches in milliseconds
+#    Default:     100
+#    Range:       10-5000
 #
-#    Playerbot.Pool.MaxSize
-#        Description: Maximum number of bot objects in memory pool
-#        Default:     100
-#        Range:       10-500
-#        Note:        Prevents unlimited memory growth
-#                     Objects beyond this are deleted immediately
-#                     Should be >= Playerbot.MaxBots for best performance
-#
-###################################################################################################
+Playerbot.Spawn.DelayMs = 100
 
-Playerbot.Pool.MinSize = 10
-Playerbot.Pool.MaxSize = 1000
+#
+#  Playerbot.Spawn.RespectPopulationCaps
+#    Description: Enforce zone and map population limits
+#    Default:     1
+#
+Playerbot.Spawn.RespectPopulationCaps = 1
 
-###################################################################################################
-# TRADING SYSTEM
+###############################################################################
+# A4. ADAPTIVE SPAWN THROTTLER
 #
-# Purpose: Enable player-to-bot and bot-to-bot trading with security controls
-#
-# Features:
-# - Auto-accept trades from trusted sources (group, guild, owner, whitelist)
-# - Trade value validation and scam protection
-# - Protected items system (prevents accidental trade of important items)
-# - Loot distribution for group play
-# - Comprehensive logging and statistics
-#
-# Security Levels:
-# - Level 0 (None):     Accept all trades without validation
-# - Level 1 (Basic):    Ownership checks only
-# - Level 2 (Standard): Value comparison + whitelist (recommended)
-# - Level 3 (Strict):   All validations + manual approval for high-value trades
-#
-###################################################################################################
+#     Enterprise-grade spawn rate control that adjusts based on server load.
+#     Prevents server overload during mass bot spawning.
+###############################################################################
 
-###################################################################################################
-# TRADING - CORE SETTINGS
 #
-#    Playerbot.Trade.Enable
-#        Description: Master switch for trading system
-#        Default:     1 (enabled)
-#        Note:        When disabled, bots will reject all trade requests
+#  Playerbot.Throttler.MinInterval
+#    Description: Minimum time between spawns (fastest rate) in milliseconds
+#    Default:     50 (20 bots/sec max)
+#    Range:       10-1000
 #
-#    Playerbot.Trade.UpdateInterval
-#        Description: Trade window update frequency (milliseconds)
-#        Default:     1000 (1 second)
-#        Range:       100-5000
-#        Note:        How often bots check and update active trades
-#                     Lower values = more responsive, higher CPU usage
-#
-#    Playerbot.Trade.Timeout
-#        Description: Trade session timeout (milliseconds)
-#        Default:     60000 (60 seconds)
-#        Range:       10000-300000
-#        Note:        Time before automatically canceling inactive trades
-#
-#    Playerbot.Trade.RequestTimeout
-#        Description: Trade request acceptance timeout (milliseconds)
-#        Default:     30000 (30 seconds)
-#        Range:       5000-120000
-#        Note:        Time to accept/reject incoming trade requests
-#
-###################################################################################################
+Playerbot.Throttler.MinInterval = 50
 
+#
+#  Playerbot.Throttler.MaxInterval
+#    Description: Maximum time between spawns (slowest rate) in milliseconds
+#    Default:     5000 (0.2 bots/sec min)
+#    Range:       1000-30000
+#
+Playerbot.Throttler.MaxInterval = 5000
+
+#
+#  Playerbot.Throttler.BurstLimit
+#    Description: Maximum spawns allowed in burst window
+#    Default:     50
+#    Range:       10-200
+#
+Playerbot.Throttler.BurstLimit = 50
+
+#
+#  Playerbot.Throttler.BurstWindow
+#    Description: Burst window duration in milliseconds
+#    Default:     10000 (10 seconds)
+#    Range:       5000-60000
+#
+Playerbot.Throttler.BurstWindow = 10000
+
+#
+#  Playerbot.Throttler.RampUpFactor
+#    Description: Rate increase factor when load decreases
+#    Default:     1.5
+#    Range:       1.1-3.0
+#
+Playerbot.Throttler.RampUpFactor = 1.5
+
+#
+#  Playerbot.Throttler.RampDownFactor
+#    Description: Rate decrease factor when load increases
+#    Default:     0.5
+#    Range:       0.1-0.9
+#
+Playerbot.Throttler.RampDownFactor = 0.5
+
+#
+#  Playerbot.Throttler.LoadCheckInterval
+#    Description: How often to check server load in milliseconds
+#    Default:     1000
+#    Range:       100-10000
+#
+Playerbot.Throttler.LoadCheckInterval = 1000
+
+###############################################################################
+# A5. SPAWN CIRCUIT BREAKER
+#
+#     Automatically stops spawning when failure rate exceeds threshold.
+#     Implements circuit breaker pattern for fault tolerance.
+###############################################################################
+
+#
+#  Playerbot.CircuitBreaker.FailureThreshold
+#    Description: Failure count to trip circuit breaker
+#    Default:     10
+#    Range:       3-100
+#
+Playerbot.CircuitBreaker.FailureThreshold = 10
+
+#
+#  Playerbot.CircuitBreaker.SuccessThreshold
+#    Description: Success count to close circuit breaker
+#    Default:     5
+#    Range:       1-50
+#
+Playerbot.CircuitBreaker.SuccessThreshold = 5
+
+#
+#  Playerbot.CircuitBreaker.OpenDuration
+#    Description: Duration circuit stays open in milliseconds
+#    Default:     30000 (30 seconds)
+#    Range:       5000-300000
+#
+Playerbot.CircuitBreaker.OpenDuration = 30000
+
+#
+#  Playerbot.CircuitBreaker.HalfOpenAttempts
+#    Description: Test attempts during half-open state
+#    Default:     3
+#    Range:       1-10
+#
+Playerbot.CircuitBreaker.HalfOpenAttempts = 3
+
+#
+#  Playerbot.CircuitBreaker.FailureRateThreshold
+#    Description: Failure rate percentage to trip (0-100)
+#    Default:     10 (10% failure rate)
+#    Range:       1-50
+#
+Playerbot.CircuitBreaker.FailureRateThreshold = 10
+
+#
+#  Playerbot.CircuitBreaker.WindowSize
+#    Description: Sample window size for failure rate calculation
+#    Default:     100
+#    Range:       10-1000
+#
+Playerbot.CircuitBreaker.WindowSize = 100
+
+###############################################################################
+# A6. RESOURCE MONITOR
+#
+#     Monitors server resources and triggers throttling at thresholds.
+#     Prevents server degradation from excessive bot load.
+###############################################################################
+
+#
+#  Playerbot.ResourceMonitor.CpuThreshold.Elevated
+#    Description: CPU% threshold for ELEVATED pressure level
+#    Default:     60
+#
+Playerbot.ResourceMonitor.CpuThreshold.Elevated = 60
+
+#
+#  Playerbot.ResourceMonitor.CpuThreshold.High
+#    Description: CPU% threshold for HIGH pressure level
+#    Default:     75
+#
+Playerbot.ResourceMonitor.CpuThreshold.High = 75
+
+#
+#  Playerbot.ResourceMonitor.CpuThreshold.Critical
+#    Description: CPU% threshold for CRITICAL pressure level
+#    Default:     90
+#
+Playerbot.ResourceMonitor.CpuThreshold.Critical = 90
+
+#
+#  Playerbot.ResourceMonitor.MemoryThreshold.Elevated
+#    Description: Memory% threshold for ELEVATED pressure level
+#    Default:     65
+#
+Playerbot.ResourceMonitor.MemoryThreshold.Elevated = 65
+
+#
+#  Playerbot.ResourceMonitor.MemoryThreshold.High
+#    Description: Memory% threshold for HIGH pressure level
+#    Default:     80
+#
+Playerbot.ResourceMonitor.MemoryThreshold.High = 80
+
+#
+#  Playerbot.ResourceMonitor.MemoryThreshold.Critical
+#    Description: Memory% threshold for CRITICAL pressure level
+#    Default:     95
+#
+Playerbot.ResourceMonitor.MemoryThreshold.Critical = 95
+
+#
+#  Playerbot.ResourceMonitor.DbConnectionThreshold.Elevated
+#    Description: DB connection% threshold for ELEVATED pressure
+#    Default:     50
+#
+Playerbot.ResourceMonitor.DbConnectionThreshold.Elevated = 50
+
+#
+#  Playerbot.ResourceMonitor.DbConnectionThreshold.High
+#    Description: DB connection% threshold for HIGH pressure
+#    Default:     70
+#
+Playerbot.ResourceMonitor.DbConnectionThreshold.High = 70
+
+#
+#  Playerbot.ResourceMonitor.DbConnectionThreshold.Critical
+#    Description: DB connection% threshold for CRITICAL pressure
+#    Default:     90
+#
+Playerbot.ResourceMonitor.DbConnectionThreshold.Critical = 90
+
+#
+#  Playerbot.ResourceMonitor.MapInstanceThreshold.Elevated
+#    Description: Map instance% threshold for ELEVATED pressure
+#    Default:     50
+#
+Playerbot.ResourceMonitor.MapInstanceThreshold.Elevated = 50
+
+#
+#  Playerbot.ResourceMonitor.MapInstanceThreshold.High
+#    Description: Map instance% threshold for HIGH pressure
+#    Default:     70
+#
+Playerbot.ResourceMonitor.MapInstanceThreshold.High = 70
+
+#
+#  Playerbot.ResourceMonitor.MapInstanceThreshold.Critical
+#    Description: Map instance% threshold for CRITICAL pressure
+#    Default:     90
+#
+Playerbot.ResourceMonitor.MapInstanceThreshold.Critical = 90
+
+#
+#  Playerbot.ResourceMonitor.UpdateInterval
+#    Description: Resource check interval in milliseconds
+#    Default:     5000 (5 seconds)
+#
+Playerbot.ResourceMonitor.UpdateInterval = 5000
+
+###############################################################################
+# A7. STARTUP SPAWN ORCHESTRATOR
+#
+#     Controls phased bot spawning during server startup.
+#     Graduates bot spawning over time to prevent startup overload.
+###############################################################################
+
+#
+#  Playerbot.Startup.Phase1.Duration
+#    Description: Phase 1 duration (CRITICAL priority) in minutes
+#    Default:     2
+#
+Playerbot.Startup.Phase1.Duration = 2
+
+#
+#  Playerbot.Startup.Phase1.Target
+#    Description: Phase 1 target bot count
+#    Default:     100
+#
+Playerbot.Startup.Phase1.Target = 100
+
+#
+#  Playerbot.Startup.Phase2.Duration
+#    Description: Phase 2 duration (HIGH priority) in minutes
+#    Default:     3
+#
+Playerbot.Startup.Phase2.Duration = 3
+
+#
+#  Playerbot.Startup.Phase2.Target
+#    Description: Phase 2 target bot count
+#    Default:     500
+#
+Playerbot.Startup.Phase2.Target = 500
+
+#
+#  Playerbot.Startup.Phase3.Duration
+#    Description: Phase 3 duration (NORMAL priority) in minutes
+#    Default:     10
+#
+Playerbot.Startup.Phase3.Duration = 10
+
+#
+#  Playerbot.Startup.Phase3.Target
+#    Description: Phase 3 target bot count
+#    Default:     3000
+#
+Playerbot.Startup.Phase3.Target = 3000
+
+#
+#  Playerbot.Startup.Phase4.Duration
+#    Description: Phase 4 duration (LOW priority) in minutes
+#    Default:     15
+#
+Playerbot.Startup.Phase4.Duration = 15
+
+#
+#  Playerbot.Startup.Phase4.Target
+#    Description: Phase 4 target bot count (final)
+#    Default:     5000
+#
+Playerbot.Startup.Phase4.Target = 5000
+
+###############################################################################
+# A8. ACCOUNT MANAGEMENT
+#
+#     Controls bot account creation and management.
+###############################################################################
+
+#
+#  Playerbot.AutoCreateAccounts
+#    Description: Automatically create bot accounts when needed
+#    Default:     1
+#
+Playerbot.AutoCreateAccounts = 1
+
+#
+#  Playerbot.AutoCreateCharacters
+#    Description: Automatically create bot characters when needed
+#    Default:     1
+#
+Playerbot.AutoCreateCharacters = 1
+
+#
+#  Playerbot.Account.Prefix
+#    Description: Prefix for auto-created bot account names
+#    Default:     "playerbot"
+#
+Playerbot.Account.Prefix = "playerbot"
+
+#
+#  Playerbot.Account.PoolSize
+#    Description: Target size for bot account pool
+#    Default:     50
+#
+Playerbot.Account.PoolSize = 50
+
+###############################################################################
+# A9. QUEST SYSTEM
+#
+#     Controls bot quest selection and completion behavior.
+###############################################################################
+
+#
+#  Playerbot.Quest.Enable
+#    Description: Enable bot quest system
+#    Default:     1
+#
+Playerbot.Quest.Enable = 1
+
+#
+#  Playerbot.Quest.AutoAccept
+#    Description: Bots automatically accept quests from NPCs
+#    Default:     1
+#
+Playerbot.Quest.AutoAccept = 1
+
+#
+#  Playerbot.Quest.AutoComplete
+#    Description: Bots automatically turn in completed quests
+#    Default:     1
+#
+Playerbot.Quest.AutoComplete = 1
+
+#
+#  Playerbot.Quest.MaxActive
+#    Description: Maximum active quests per bot
+#    Default:     25
+#
+Playerbot.Quest.MaxActive = 25
+
+#
+#  Playerbot.Quest.MinLevel
+#    Description: Minimum level for bots to accept quests
+#    Default:     1
+#
+Playerbot.Quest.MinLevel = 1
+
+#
+#  Playerbot.Quest.MaxLevelDiff
+#    Description: Maximum level difference for quest acceptance
+#    Default:     5
+#
+Playerbot.Quest.MaxLevelDiff = 5
+
+#
+#  Playerbot.Quest.PreferZoneQuests
+#    Description: Prefer quests in current zone
+#    Default:     1
+#
+Playerbot.Quest.PreferZoneQuests = 1
+
+#
+#  Playerbot.Quest.GroupQuestPriority
+#    Description: Priority modifier for group quests
+#    Default:     1.5
+#
+Playerbot.Quest.GroupQuestPriority = 1.5
+
+###############################################################################
+# A10. TRADE SYSTEM
+#
+#     Controls bot trading and vendor interactions.
+###############################################################################
+
+#
+#  Playerbot.Trade.Enable
+#    Description: Enable bot trading system
+#    Default:     1
+#
 Playerbot.Trade.Enable = 1
-Playerbot.Trade.UpdateInterval = 1000
-Playerbot.Trade.Timeout = 60000
-Playerbot.Trade.RequestTimeout = 30000
 
-###################################################################################################
-# TRADING - AUTO-ACCEPT SETTINGS
 #
-# Description: Control which trade requests are automatically accepted
-# Note: All auto-accept settings respect SecurityLevel restrictions
+#  Playerbot.Trade.AutoVendor
+#    Description: Bots automatically sell junk to vendors
+#    Default:     1
 #
-#    Playerbot.Trade.AutoAccept.Enable
-#        Description: Master switch for auto-accepting trades
-#        Default:     1 (enabled)
-#        Note:        When disabled, all trades require manual approval
-#
-#    Playerbot.Trade.AutoAccept.Owner
-#        Description: Auto-accept trades from bot owner
-#        Default:     1 (enabled)
-#        Note:        Bot owner = account that created the bot character
-#
-#    Playerbot.Trade.AutoAccept.Group
-#        Description: Auto-accept trades from group members
-#        Default:     1 (enabled)
-#        Note:        Only applies when bot is in a group
-#
-#    Playerbot.Trade.AutoAccept.Guild
-#        Description: Auto-accept trades from guild members
-#        Default:     0 (disabled)
-#        Note:        More permissive, enable if guild is trusted
-#
-#    Playerbot.Trade.AutoAccept.Whitelist
-#        Description: Auto-accept trades from whitelisted players
-#        Default:     1 (enabled)
-#        Note:        Whitelist managed via bot commands
-#
-###################################################################################################
+Playerbot.Trade.AutoVendor = 1
 
+#
+#  Playerbot.Trade.AutoRepair
+#    Description: Bots automatically repair at vendors
+#    Default:     1
+#
+Playerbot.Trade.AutoRepair = 1
+
+#
+#  Playerbot.Trade.SellGrayItems
+#    Description: Sell gray (poor) quality items
+#    Default:     1
+#
+Playerbot.Trade.SellGrayItems = 1
+
+#
+#  Playerbot.Trade.SellWhiteItems
+#    Description: Sell white (common) quality items if not needed
+#    Default:     0
+#
+Playerbot.Trade.SellWhiteItems = 0
+
+#
+#  Playerbot.Trade.MinGoldToTrade
+#    Description: Minimum gold required for bot-to-bot trading
+#    Default:     100 (1 gold in copper)
+#
+Playerbot.Trade.MinGoldToTrade = 100
+
+#
+#  Playerbot.Trade.MaxTradeDistance
+#    Description: Maximum distance for trade interactions
+#    Default:     10.0
+#
+Playerbot.Trade.MaxTradeDistance = 10.0
+
+###############################################################################
+# A11. LOGGING
+#
+#     Controls Playerbot module logging output.
+###############################################################################
+
+#
+#  Playerbot.Log.Enable
+#    Description: Enable Playerbot logging
+#    Default:     1
+#
+Playerbot.Log.Enable = 1
+
+#
+#  Playerbot.Log.Level
+#    Description: Logging verbosity level
+#    Default:     2
+#    Values:      0 = None, 1 = Error, 2 = Warning, 3 = Info, 4 = Debug, 5 = Trace
+#
+Playerbot.Log.Level = 2
+
+#
+#  Playerbot.Log.File
+#    Description: Log file name (in logs directory)
+#    Default:     "Playerbot.log"
+#
+Playerbot.Log.File = "Playerbot.log"
+
+#
+#  Playerbot.Log.Console
+#    Description: Echo log messages to console
+#    Default:     1
+#
+Playerbot.Log.Console = 1
+
+#
+#  Playerbot.Log.Timestamps
+#    Description: Include timestamps in log messages
+#    Default:     1
+#
+Playerbot.Log.Timestamps = 1
+
+###############################################################################
+# A12. UPDATE INTERVALS
+#
+#     Controls timing of various bot update cycles.
+###############################################################################
+
+# [REMOVED - UNUSED]
+# Playerbot.Population.UpdateInterval - Was never used by any code
+# Zone population now uses ContentTuning DB2 for level distribution
+
+#
+#  Playerbot.Scheduler.UpdateInterval
+#    Description: Bot scheduler update interval in milliseconds
+#    Default:     60000
+#
+Playerbot.Scheduler.UpdateInterval = 60000
+
+
+################################################################################
+#
+#                    ===== SECTION B: CONFIG WIRING REQUIRED =====
+#
+#  IMPORTANT: These systems are FULLY IMPLEMENTED but NOT reading config.
+#  The code exists and works, but these config options have NO EFFECT yet.
+#
+#  STATUS LEGEND:
+#    [IMPLEMENTED] - Full code exists, needs config wiring only
+#    [PARTIAL]     - Code exists with partial config, needs completion
+#    [STUB]        - Minimal code, needs full implementation
+#
+#  Total: 163 options awaiting config wiring
+#  Systems Affected: 43 out of 46 major systems (93%)
+#
+################################################################################
+
+###############################################################################
+# B1. QUEST SYSTEM [ALREADY WIRED]
+#
+#     Status: FULLY WIRED in QuestManager::Initialize()
+#     Files:  Game/QuestManager.cpp (lines 240-255)
+#     Config options used:
+#       - Playerbot.Quest.AutoAccept
+#       - Playerbot.Quest.AutoComplete
+#       - Playerbot.Quest.MaxActive
+#       - Playerbot.Quest.PreferZoneQuests
+#       - Playerbot.Quest.MaxLevelDiff
+#       - Playerbot.Quest.GroupQuestPriority
+#
+###############################################################################
+
+Playerbot.Quest.Enable = 1
+Playerbot.Quest.AutoAccept = 1
+Playerbot.Quest.AutoComplete = 1
+Playerbot.Quest.MaxActive = 25
+Playerbot.Quest.MinLevel = 1
+Playerbot.Quest.MaxLevelDiff = 5
+Playerbot.Quest.PreferZoneQuests = 1
+Playerbot.Quest.GroupQuestPriority = 1.5
+
+###############################################################################
+# B2. TRADE SYSTEM [ALREADY WIRED]
+#
+#     Status: FULLY WIRED via PlayerbotTradeConfig::Load() in PlayerbotModule.cpp:91
+#     Files:  Social/TradeSystem.cpp (61KB), Config/PlayerbotTradeConfig.cpp
+#     Config: 24 options read via PlayerbotTradeConfig singleton
+#
+###############################################################################
+
+# Player-to-player trading (wired to PlayerbotTradeConfig)
+Playerbot.Trade.Enable = 1
 Playerbot.Trade.AutoAccept.Enable = 1
-Playerbot.Trade.AutoAccept.Owner = 1
 Playerbot.Trade.AutoAccept.Group = 1
 Playerbot.Trade.AutoAccept.Guild = 0
+Playerbot.Trade.AutoAccept.Owner = 1
 Playerbot.Trade.AutoAccept.Whitelist = 1
-
-###################################################################################################
-# TRADING - SECURITY & LIMITS
-#
-#    Playerbot.Trade.SecurityLevel
-#        Description: Trade security validation level
-#        Default:     2 (Standard)
-#        Range:       0-3
-#        Values:      0 = None (accept all)
-#                     1 = Basic (ownership checks)
-#                     2 = Standard (value comparison + whitelist)
-#                     3 = Strict (all validations + high-value approval)
-#
-#    Playerbot.Trade.MaxGold
-#        Description: Maximum gold bots can trade in a single transaction
-#        Default:     100000 (1000 gold, in copper)
-#        Range:       1-10000000
-#        Note:        Value in copper (10000 = 1 gold)
-#                     Prevents large gold transfers
-#
-#    Playerbot.Trade.MaxItemValue
-#        Description: Maximum estimated value of items in trade (copper)
-#        Default:     10000 (100 gold)
-#        Range:       100-1000000
-#        Note:        Based on vendor sell price and quality multipliers
-#
-#    Playerbot.Trade.MaxItems
-#        Description: Maximum number of items per trade
-#        Default:     6
-#        Range:       1-6
-#        Note:        6 is TrinityCore's trade window limit
-#
-#    Playerbot.Trade.MaxDistance
-#        Description: Maximum distance (yards) for trading
-#        Default:     10.0
-#        Range:       1.0-100.0
-#        Note:        Bots reject trades from players too far away
-#
-#    Playerbot.Trade.ValueTolerance
-#        Description: Acceptable value imbalance ratio (0.0-1.0)
-#        Default:     0.3 (30% difference allowed)
-#        Range:       0.0-1.0
-#        Note:        0.3 means bot accepts if trade is within 70%-130% fair value
-#                     0.0 = Requires perfectly balanced trades
-#                     1.0 = Accepts any value difference
-#
-#    Playerbot.Trade.ScamProtection
-#        Description: Enable advanced scam detection
-#        Default:     1 (enabled)
-#        Note:        Detects suspicious patterns (empty trades, low-value for high-value, etc.)
-#
-#    Playerbot.Trade.WhitelistOnly
-#        Description: Only accept trades from whitelisted players
-#        Default:     0 (disabled)
-#        Note:        When enabled, ignores all auto-accept settings except whitelist
-#                     Maximum security mode
-#
-###################################################################################################
-
-Playerbot.Trade.SecurityLevel = 2
 Playerbot.Trade.MaxGold = 100000
-Playerbot.Trade.MaxItemValue = 10000
-Playerbot.Trade.MaxItems = 6
 Playerbot.Trade.MaxDistance = 10.0
-Playerbot.Trade.ValueTolerance = 0.3
+Playerbot.Trade.Timeout = 60000
 Playerbot.Trade.ScamProtection = 1
-Playerbot.Trade.WhitelistOnly = 0
+Playerbot.Trade.ValueTolerance = 0.3
 
-###################################################################################################
-# TRADING - PROTECTED ITEMS
-#
-#    Playerbot.Trade.ProtectedItems
-#        Description: Comma-separated list of item IDs that cannot be traded
-#        Default:     "" (empty - no protected items)
-#        Example:     "19019,21221,22736" (Thunderfury, Scarab Lord, Atiesh)
-#        Note:        Prevents bots from accidentally trading rare/important items
-#                     Item IDs from item_template.entry in world database
-#
-###################################################################################################
-
-Playerbot.Trade.ProtectedItems = ""
-
-###################################################################################################
-# TRADING - LOOT DISTRIBUTION
-#
-# Description: Configure how bots distribute loot in group play
-# Note: Works with group loot settings and master looter
-#
-#    Playerbot.Trade.LootDistribution.Enable
-#        Description: Enable automated loot distribution in groups
-#        Default:     1 (enabled)
-#        Note:        Bots will participate in loot rolls and distribution
-#
-#    Playerbot.Trade.LootDistribution.NeedGreed
-#        Description: Use Need/Greed loot system
-#        Default:     1 (enabled)
-#        Note:        Bots roll Need on usable upgrades, Greed otherwise
-#                     Follows standard WoW loot etiquette
-#
-#    Playerbot.Trade.LootDistribution.RoundRobin
-#        Description: Use round-robin loot distribution
-#        Default:     0 (disabled)
-#        Note:        Each player gets items in turn
-#                     Alternative to Need/Greed
-#
-#    Playerbot.Trade.LootDistribution.BySpec
-#        Description: Consider specialization when rolling Need
-#        Default:     1 (enabled)
-#        Note:        Bots only roll Need on spec-appropriate items
-#                     Example: Tank spec won't Need on DPS trinkets
-#
-###################################################################################################
-
+# Loot distribution (wired to PlayerbotTradeConfig)
 Playerbot.Trade.LootDistribution.Enable = 1
 Playerbot.Trade.LootDistribution.NeedGreed = 1
 Playerbot.Trade.LootDistribution.RoundRobin = 0
 Playerbot.Trade.LootDistribution.BySpec = 1
 
-###################################################################################################
-# TRADING - LOGGING & STATISTICS
-#
-#    Playerbot.Trade.Logging.Enable
-#        Description: Enable trade event logging
-#        Default:     1 (enabled)
-#        Note:        Logs trade requests, acceptances, rejections
-#                     Useful for debugging and audit trails
-#                     Logs to: Logger.playerbot.trade
-#
-#    Playerbot.Trade.Logging.Detailed
-#        Description: Enable detailed trade logging
-#        Default:     0 (disabled)
-#        Note:        Logs item details, values, calculations
-#                     Generates significant log volume
-#
-#    Playerbot.Trade.Logging.Statistics
-#        Description: Track trade statistics
-#        Default:     1 (enabled)
-#        Note:        Tracks: total trades, gold transferred, items traded
-#                     Minimal performance impact
-#
-###################################################################################################
-
-Playerbot.Trade.Logging.Enable = 1
-Playerbot.Trade.Logging.Detailed = 0
-Playerbot.Trade.Logging.Statistics = 1
-
-###################################################################################################
-# AUCTION HOUSE SYSTEM
-#
-# Purpose: Enable bots to participate in auction house economy
-#
-# Features:
-# - Automated buying and selling based on market prices
-# - Multiple pricing strategies (conservative, aggressive, smart AI-driven)
-# - Commodity trading (ores, herbs, consumables)
-# - Market maker functionality (buy low, sell high)
-# - Price history tracking for trend analysis
-# - Risk management and profit controls
-#
-# Strategies:
-# - Strategy 0 (Conservative): Undercut by 1%, safe pricing
-# - Strategy 1 (Aggressive):   Undercut by 5-10%, fast sales
-# - Strategy 2 (Premium):      List at market average, quality focus
-# - Strategy 3 (Quick Sale):   Undercut by 20%, immediate sales
-# - Strategy 4 (Market Maker): Buy underpriced, sell at fair value
-# - Strategy 5 (Smart AI):     Adaptive based on market trends (default)
-#
-###################################################################################################
-
-###################################################################################################
-# AUCTION HOUSE - CORE SETTINGS
-#
-#    Playerbot.Auction.Enable
-#        Description: Master switch for auction house system
-#        Default:     1 (enabled)
-#        Note:        When disabled, bots will not use auction houses
-#
-#    Playerbot.Auction.MarketScanInterval
-#        Description: How often to scan auction house (seconds)
-#        Default:     300 (5 minutes)
-#        Range:       60-3600
-#        Warning:     Low values cause heavy database load
-#        Note:        Time between market price updates
-#
-#    Playerbot.Auction.MaxActiveAuctions
-#        Description: Maximum active auctions per bot
-#        Default:     10
-#        Range:       1-50
-#        Note:        Limits total auctions bot can have listed
-#
-#    Playerbot.Auction.MinProfit
-#        Description: Minimum profit margin required (copper)
-#        Default:     10 (10 copper)
-#        Range:       1-100000
-#        Note:        Bots won't create auctions with less profit
-#                     Prevents listing items at a loss
-#
-###################################################################################################
-
-Playerbot.Auction.Enable = 1
-Playerbot.Auction.MarketScanInterval = 300
-Playerbot.Auction.MaxActiveAuctions = 10
-Playerbot.Auction.MinProfit = 10
-
-###################################################################################################
-# AUCTION HOUSE - PRICING & STRATEGY
-#
-#    Playerbot.Auction.DefaultStrategy
-#        Description: Default pricing strategy
-#        Default:     5 (Smart AI)
-#        Range:       0-5
-#        Values:      0 = Conservative (undercut 1%)
-#                     1 = Aggressive (undercut 5-10%)
-#                     2 = Premium (market average)
-#                     3 = Quick Sale (undercut 20%)
-#                     4 = Market Maker (buy low, sell high)
-#                     5 = Smart AI (adaptive, recommended)
-#
-#    Playerbot.Auction.UndercutPercentage
-#        Description: Default undercut percentage for strategies 0-3
-#        Default:     5.0 (5%)
-#        Range:       0.1-50.0
-#        Note:        Used when strategy doesn't specify fixed undercut
-#
-#    Playerbot.Auction.PriceHistoryDays
-#        Description: Days of price history to track
-#        Default:     7
-#        Range:       1-30
-#        Note:        Longer history = better trend analysis
-#                     Higher memory usage
-#
-#    Playerbot.Auction.MaxRiskScore
-#        Description: Maximum risk score for Market Maker strategy
-#        Default:     50
-#        Range:       0-100
-#        Note:        0 = Zero risk (safest investments)
-#                     100 = High risk (volatile items)
-#                     Only applies to Strategy 4 (Market Maker)
-#
-###################################################################################################
-
-Playerbot.Auction.DefaultStrategy = 5
-Playerbot.Auction.UndercutPercentage = 5.0
-Playerbot.Auction.PriceHistoryDays = 7
-Playerbot.Auction.MaxRiskScore = 50
-
-###################################################################################################
-# AUCTION HOUSE - TRADING FEATURES
-#
-#    Playerbot.Auction.CommodityEnabled
-#        Description: Allow bots to trade commodities
-#        Default:     1 (enabled)
-#        Note:        Commodities = ores, herbs, cloth, consumables
-#                     High-volume, low-margin trading
-#
-#    Playerbot.Auction.MarketMakerEnabled
-#        Description: Allow Market Maker strategy (buy low, sell high)
-#        Default:     0 (disabled)
-#        Warning:     Can significantly affect server economy
-#        Note:        Bots actively buy underpriced items for resale
-#                     Enable only if you want active bot economy participation
-#
-###################################################################################################
-
-Playerbot.Auction.CommodityEnabled = 1
-Playerbot.Auction.MarketMakerEnabled = 0
-
-###################################################################################################
-# AI DECISION FUSION SYSTEM - UNIFIED DECISION ARBITRATION
-#
-# Purpose: Coordinate multiple AI decision systems for conflict-free intelligent action selection
-#
-# Overview:
-# The Decision Fusion System unifies 5 independent decision systems that previously operated
-# without coordination, eliminating conflicts and enabling intelligent consensus-based decisions.
-#
-# Five Decision Systems Coordinated:
-# 1. BehaviorPriorityManager  - Strategy-level behavior priorities
-# 2. ActionPriorityQueue      - Spell/action priority queue
-# 3. Behavior Trees           - Hierarchical decision structures
-# 4. AdaptiveBehaviorManager  - Role-based behavior adjustments
-# 5. ActionScoringEngine      - Utility-based weighting system
-#
-# Fusion Algorithm:
-# 1. Collect votes from all systems (action + confidence + urgency)
-# 2. Calculate weighted consensus score for each action
-# 3. Handle urgent overrides (urgency >= threshold)
-# 4. Select action with highest consensus score
-#
-# System Weights (normalized to sum to 1.0):
-# - Behavior Priority: 0.25 (strategy-level decisions)
-# - Action Priority:   0.15 (spell priority queue)
-# - Behavior Tree:     0.30 (hierarchical structure, highest weight)
-# - Adaptive Behavior: 0.10 (role adjustments)
-# - Weighting System:  0.20 (utility-based scoring)
-#
-# Vote Scoring Formula:
-# WeightedScore = (Confidence × Urgency) × SystemWeight
-# - Confidence: 0.0-1.0 (how sure the system is this is the right action)
-# - Urgency: 0.0-1.0 (how important it is to act NOW)
-# - SystemWeight: Configured weight for that decision system
-#
-# Consensus Formula:
-# ConsensusScore(action) = Σ WeightedScore for all votes for that action
-#
-# Expected Impact:
-# ✅ Eliminate decision conflicts between systems
-# ✅ 20-30% better action selection through consensus
-# ✅ Debuggable decision reasoning (see which systems voted)
-# ✅ Coordinated multi-system behavior
-#
-# Example Decision:
-# Tank choosing "Shield Block" vs "Taunt Loose Mob":
-# - Shield Block:
-#   - BehaviorTree votes: confidence=0.8, urgency=0.6 → 0.8×0.6×0.30 = 0.144
-#   - Weighting votes: confidence=0.7, urgency=0.5 → 0.7×0.5×0.20 = 0.070
-#   - Total consensus: 0.214
-# - Taunt:
-#   - BehaviorTree votes: confidence=0.9, urgency=0.95 → 0.9×0.95×0.30 = 0.257
-#   - ActionPriority votes: confidence=0.8, urgency=0.9 → 0.8×0.9×0.15 = 0.108
-#   - Total consensus: 0.365 ✓ (Higher consensus, taunt selected)
-#
-###################################################################################################
-
-###################################################################################################
-# AI DECISION FUSION - CORE SETTINGS
-#
-#    Playerbot.AI.DecisionFusion.Enable
-#        Description: Enable unified decision arbitration system
-#        Default:     0 (disabled)
-#        Note:        When disabled, individual decision systems operate independently
-#                     When enabled, coordinates all 5 decision systems through voting
-#                     Recommended: Enable for production after testing
-#
-#    Playerbot.AI.DecisionFusion.LogDecisions
-#        Description: Enable detailed decision fusion logs
-#        Default:     0 (disabled)
-#        Note:        Logs all votes from all systems and fusion reasoning
-#                     Useful for debugging AI behavior and understanding decisions
-#                     Logs to: Logger.playerbot.decisionfusion (DEBUG level)
-#                     Warning: Generates significant log volume
-#
-#    Playerbot.AI.DecisionFusion.UrgencyThreshold
-#        Description: Urgency threshold for immediate action override
-#        Default:     0.85
-#        Range:       0.5-1.0
-#        Note:        If any vote has urgency >= this threshold, it immediately
-#                     overrides consensus voting (emergency actions)
-#                     Example: Ice Block at 5% HP has urgency=1.0, triggers immediate cast
-#
-###################################################################################################
-
-Playerbot.AI.DecisionFusion.Enable = 0
-Playerbot.AI.DecisionFusion.LogDecisions = 0
-Playerbot.AI.DecisionFusion.UrgencyThreshold = 0.85
-
-###################################################################################################
-# AI DECISION FUSION - SYSTEM WEIGHTS
-#
-# Configure the weight given to each decision system in the voting process.
-# Weights are automatically normalized to sum to 1.0 internally.
-#
-# Recommended Configurations:
-#
-# Balanced (Default):
-#   BehaviorTree: 0.30, Weighting: 0.20, BehaviorPriority: 0.25,
-#   ActionPriority: 0.15, Adaptive: 0.10
-#
-# Utility-Focused (trust weighting system most):
-#   Weighting: 0.40, BehaviorTree: 0.25, BehaviorPriority: 0.20,
-#   ActionPriority: 0.10, Adaptive: 0.05
-#
-# Tree-Focused (trust behavior tree most):
-#   BehaviorTree: 0.45, BehaviorPriority: 0.25, Weighting: 0.15,
-#   ActionPriority: 0.10, Adaptive: 0.05
-#
-# Conservative (equal weights):
-#   All systems: 0.20
-#
-###################################################################################################
-
-#
-# Playerbot.AI.DecisionFusion.Weight.BehaviorPriority
-#     Description: Weight for BehaviorPriorityManager votes
-#     Default:     0.25
-#     Range:       0.0-1.0
-#     Note:        Strategy-level behavior priorities
-#
-Playerbot.AI.DecisionFusion.Weight.BehaviorPriority = 0.25
-
-#
-# Playerbot.AI.DecisionFusion.Weight.ActionPriority
-#     Description: Weight for ActionPriorityQueue votes
-#     Default:     0.15
-#     Range:       0.0-1.0
-#     Note:        Spell/action priority queue
-#
-Playerbot.AI.DecisionFusion.Weight.ActionPriority = 0.15
-
-#
-# Playerbot.AI.DecisionFusion.Weight.BehaviorTree
-#     Description: Weight for Behavior Tree votes
-#     Default:     0.30
-#     Range:       0.0-1.0
-#     Note:        Hierarchical decision structures (highest default weight)
-#
-Playerbot.AI.DecisionFusion.Weight.BehaviorTree = 0.30
-
-#
-# Playerbot.AI.DecisionFusion.Weight.AdaptiveBehavior
-#     Description: Weight for AdaptiveBehaviorManager votes
-#     Default:     0.10
-#     Range:       0.0-1.0
-#     Note:        Role-based behavior adjustments
-#
-Playerbot.AI.DecisionFusion.Weight.AdaptiveBehavior = 0.10
-
-#
-# Playerbot.AI.DecisionFusion.Weight.WeightingSystem
-#     Description: Weight for ActionScoringEngine votes
-#     Default:     0.20
-#     Range:       0.0-1.0
-#     Note:        Utility-based weighting system
-#
-Playerbot.AI.DecisionFusion.Weight.WeightingSystem = 0.20
-
-###################################################################################################
-# AI WEIGHTING SYSTEM - UTILITY-BASED DECISION MAKING
-#
-# Purpose: Enable intelligent multi-criteria action scoring for bot AI decision-making
-#
-# Overview:
-# This system replaces order-based priority with utility-based scoring, allowing bots to
-# evaluate actions across 6 categories and make human-like decisions considering multiple
-# factors simultaneously.
-#
-# Six Scoring Categories:
-# 1. Survival (200)         - Personal health risk, immediate danger
-# 2. Group Protection (180) - Ally healing, interrupts, threat management
-# 3. Damage (150)           - DPS output, cooldown alignment, burst windows
-# 4. Resource (100)         - Mana conservation, cooldown efficiency
-# 5. Positioning (120)      - Movement, mechanic avoidance, formation
-# 6. Strategic (80)         - Fight phase awareness, long-term decisions
-#
-# Scoring Formula:
-# ActionScore = Σ (BaseWeight × RoleMultiplier × ContextModifier × CategoryValue)
-#
-# Role Multipliers:
-# - Tank:   High survival (1.5×), moderate protection (1.2×), low damage (0.8×)
-# - Healer: Highest protection (2.0×), high resource (1.5×), minimal damage (0.3×)
-# - DPS:    Highest damage (1.5×), baseline survival (1.0×), low protection (0.8×)
-#
-# Context Modifiers:
-# - Solo:          High survival (1.3×), low group protection (0.5×)
-# - Dungeon Boss:  High positioning (1.4×), high protection (1.5×)
-# - Raid Heroic:   Highest positioning (1.8×), highest protection (2.0×)
-# - PvP Arena:     Highest survival (1.4×), high damage (1.3×)
-#
-# Performance:
-# - CPU Overhead:  <5% with weighting enabled
-# - Memory:        ~36 bytes per bot (negligible)
-# - Decision Time: ~1-2 microseconds per action scored
-#
-# Example Decision:
-# Healer choosing "Heal Tank (60% HP)" vs "Heal DPS (30% HP)":
-# - Tank heal:     180 × 2.0 × 1.5 × 0.4 = 216 points
-# - DPS heal:      180 × 2.0 × 1.5 × 0.7 = 378 points ✓ (Correct choice)
-#
-# Based on Research:
-# - 100+ playerbot behavioral systems analyzed
-# - WoW 2024-2025 player decision patterns (Hekili addon, Rotation Assist)
-# - Modern combat trends: reactive rotations, utility management, multi-factor decisions
-#
-###################################################################################################
-
-###################################################################################################
-# AI WEIGHTING - CORE SETTINGS
-#
-#    Playerbot.AI.Weighting.Enable
-#        Description: Enable utility-based action scoring system
-#        Default:     0 (disabled)
-#        Note:        When disabled, uses order-based priority (legacy behavior)
-#                     When enabled, scores actions across 6 categories for intelligent decisions
-#                     Recommended: Enable for production after Phase 1 implementation
-#
-#    Playerbot.AI.Weighting.LogScoring
-#        Description: Enable detailed action scoring logs
-#        Default:     0 (disabled)
-#        Note:        Logs score breakdown for each action decision
-#                     Useful for debugging AI behavior and tuning weights
-#                     Logs to: Logger.playerbot.weighting (DEBUG level)
-#                     Warning: Generates significant log volume
-#
-#    Playerbot.AI.Weighting.LogTopActions
-#        Description: Number of top-scored actions to log
-#        Default:     3
-#        Range:       1-10
-#        Note:        Only applies when LogScoring is enabled
-#                     Shows top N actions with their scores and category breakdowns
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Enable = 0
-Playerbot.AI.Weighting.LogScoring = 0
-Playerbot.AI.Weighting.LogTopActions = 3
-
-###################################################################################################
-# AI WEIGHTING - BASE CATEGORY WEIGHTS
-#
-# These are the foundational weights for the 6 scoring categories.
-# All roles start with these base values, then apply role-specific multipliers.
-#
-# Tuning Guidelines:
-# - Higher weight = more important in decision-making
-# - Survival should generally be highest (life-or-death decisions)
-# - Sum of all weights determines total score scale (default: 830)
-# - Relative ratios matter more than absolute values
-#
-#    Playerbot.AI.Weighting.SurvivalWeight
-#        Description: Base weight for survival/self-preservation scoring
-#        Default:     200
-#        Range:       50-500
-#        Note:        Personal health risk, immediate danger avoidance
-#                     Highest priority category for all roles
-#
-#    Playerbot.AI.Weighting.GroupProtectionWeight
-#        Description: Base weight for group protection scoring
-#        Default:     180
-#        Range:       50-500
-#        Note:        Ally healing, interrupts, threat management
-#                     Critical for healers (2.0× multiplier) and tanks (1.2×)
-#
-#    Playerbot.AI.Weighting.DamageWeight
-#        Description: Base weight for damage optimization scoring
-#        Default:     150
-#        Range:       50-500
-#        Note:        DPS output, cooldown alignment, burst windows
-#                     Critical for DPS (1.5× multiplier), low for healers (0.3×)
-#
-#    Playerbot.AI.Weighting.ResourceWeight
-#        Description: Base weight for resource efficiency scoring
-#        Default:     100
-#        Range:       50-300
-#        Note:        Mana conservation, cooldown usage, GCD optimization
-#                     Important for healers (1.5×) to prevent OOM
-#
-#    Playerbot.AI.Weighting.PositioningWeight
-#        Description: Base weight for positioning/mechanics scoring
-#        Default:     120
-#        Range:       50-400
-#        Note:        Movement, mechanic avoidance, formation adherence
-#                     Critical in raids (1.8× heroic) and PvP (1.3×)
-#
-#    Playerbot.AI.Weighting.StrategicWeight
-#        Description: Base weight for strategic value scoring
-#        Default:     80
-#        Range:       50-300
-#        Note:        Fight phase awareness, long-term decisions
-#                     Important for raid bosses (1.8× heroic) and PvP objectives (1.4×)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.SurvivalWeight = 200
-Playerbot.AI.Weighting.GroupProtectionWeight = 180
-Playerbot.AI.Weighting.DamageWeight = 150
-Playerbot.AI.Weighting.ResourceWeight = 100
-Playerbot.AI.Weighting.PositioningWeight = 120
-Playerbot.AI.Weighting.StrategicWeight = 80
-
-###################################################################################################
-# AI WEIGHTING - TANK ROLE MULTIPLIERS
-#
-# Applied to base weights for tank specializations (Protection Paladin, Protection Warrior,
-# Blood Death Knight, Guardian Druid, Brewmaster Monk, Vengeance Demon Hunter).
-#
-# Example Calculation:
-# Tank survival score = SurvivalWeight (200) × Tank.SurvivalMultiplier (1.5) × context (1.1)
-#                     = 200 × 1.5 × 1.1 = 330 points (dungeon boss)
-#
-# Tank Philosophy:
-# - Prioritize personal survival (must stay alive to protect group)
-# - High group protection (interrupts, positioning for frontal cones)
-# - Lower damage emphasis (threat generation more important than raw DPS)
-# - Moderate resource management (rage/pain generation)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Tank.SurvivalMultiplier = 1.5
-Playerbot.AI.Weighting.Tank.GroupProtectionMultiplier = 1.2
-Playerbot.AI.Weighting.Tank.DamageMultiplier = 0.8
-Playerbot.AI.Weighting.Tank.ResourceMultiplier = 0.9
-Playerbot.AI.Weighting.Tank.PositioningMultiplier = 1.2
-Playerbot.AI.Weighting.Tank.StrategicMultiplier = 1.0
-
-###################################################################################################
-# AI WEIGHTING - HEALER ROLE MULTIPLIERS
-#
-# Applied to base weights for healer specializations (Holy Paladin, Holy Priest,
-# Discipline Priest, Restoration Druid, Restoration Shaman, Mistweaver Monk).
-#
-# Healer Philosophy:
-# - Highest group protection priority (keeping allies alive is primary role)
-# - High personal survival (dead healer = wipe)
-# - Highest resource management (mana conservation critical)
-# - Minimal damage emphasis (only during low-damage phases)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Healer.SurvivalMultiplier = 1.3
-Playerbot.AI.Weighting.Healer.GroupProtectionMultiplier = 2.0
-Playerbot.AI.Weighting.Healer.DamageMultiplier = 0.3
-Playerbot.AI.Weighting.Healer.ResourceMultiplier = 1.5
-Playerbot.AI.Weighting.Healer.PositioningMultiplier = 1.1
-Playerbot.AI.Weighting.Healer.StrategicMultiplier = 1.0
-
-###################################################################################################
-# AI WEIGHTING - DPS ROLE MULTIPLIERS
-#
-# Applied to base weights for DPS specializations (all melee and ranged DPS specs).
-#
-# DPS Philosophy:
-# - Highest damage priority (primary role)
-# - Baseline survival (personal responsibility)
-# - Lower group protection (interrupts only, minimal group utility)
-# - Moderate positioning (melee uptime, ranged casting)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.DPS.SurvivalMultiplier = 1.0
-Playerbot.AI.Weighting.DPS.GroupProtectionMultiplier = 0.8
-Playerbot.AI.Weighting.DPS.DamageMultiplier = 1.5
-Playerbot.AI.Weighting.DPS.ResourceMultiplier = 1.0
-Playerbot.AI.Weighting.DPS.PositioningMultiplier = 1.1
-Playerbot.AI.Weighting.DPS.StrategicMultiplier = 1.0
-
-###################################################################################################
-# AI WEIGHTING - CONTEXT MODIFIERS
-#
-# These modifiers adjust weights based on combat context (solo, dungeon, raid, PvP).
-# Applied after role multipliers:
-# FinalScore = BaseWeight × RoleMultiplier × ContextModifier × CategoryValue
-#
-# Context Detection:
-# - Solo:          Not in group (all solo activities: questing, gathering, farming,
-#                  professions, trading, exploration, etc.)
-# - Group:         In group, open-world content (group quests, elite quests, dailies,
-#                  world bosses, group farming, etc.)
-# - DungeonTrash:  In 5-man instance, not fighting boss
-# - DungeonBoss:   In 5-man instance, boss encounter active
-# - RaidNormal:    In raid instance (10-40 players), normal/LFR difficulty
-# - RaidHeroic:    In raid instance, heroic/mythic difficulty
-# - PvPArena:      Battleground type = arena
-# - PvPBG:         Battleground type = battleground
-#
-###################################################################################################
-
-###################################################################################################
-# CONTEXT: SOLO (All Solo Activities)
-#
-# Applies to: Questing, gathering (herbs/ores/skins), farming (mobs/materials),
-#             professions, trading, exploration, daily quests, world quests
-#
-# Characteristics:
-# - No healer support (must self-sustain)
-# - No threat management needed (no tank)
-# - Emphasis on kill speed and personal survival
-# - Resource efficiency less critical (can rest/eat/drink between fights)
-# - No group coordination needed
-# - Independence prioritized
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Context.Solo.SurvivalModifier = 1.3
-Playerbot.AI.Weighting.Context.Solo.GroupProtectionModifier = 0.5
-Playerbot.AI.Weighting.Context.Solo.DamageModifier = 1.2
-Playerbot.AI.Weighting.Context.Solo.ResourceModifier = 0.9
-Playerbot.AI.Weighting.Context.Solo.PositioningModifier = 1.0
-Playerbot.AI.Weighting.Context.Solo.StrategicModifier = 0.8
-
-###################################################################################################
-# CONTEXT: GROUP (Non-Instanced Group Content)
-#
-# Applies to: Group quests, elite quests, group dailies, world bosses, rare elites,
-#             group farming, open-world group events, group exploration
-#
-# Characteristics:
-# - Group coordination important (tank/healer/DPS roles active)
-# - Higher group protection emphasis (help allies survive)
-# - Moderate survival (healer support available)
-# - Resource management moderate (longer fights than solo)
-# - Positioning matters (don't pull extra mobs, stay with group)
-# - Open-world flexibility (can leave/join anytime)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Context.Group.SurvivalModifier = 1.1
-Playerbot.AI.Weighting.Context.Group.GroupProtectionModifier = 1.3
-Playerbot.AI.Weighting.Context.Group.DamageModifier = 1.2
-Playerbot.AI.Weighting.Context.Group.ResourceModifier = 1.0
-Playerbot.AI.Weighting.Context.Group.PositioningModifier = 1.1
-Playerbot.AI.Weighting.Context.Group.StrategicModifier = 1.0
-
-###################################################################################################
-# CONTEXT: DUNGEON TRASH
-#
-# Characteristics:
-# - Group coordination important
-# - High AoE damage opportunities
-# - Moderate mechanics (avoidable damage)
-# - Resource management important (sustained pulls)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Context.DungeonTrash.SurvivalModifier = 1.0
-Playerbot.AI.Weighting.Context.DungeonTrash.GroupProtectionModifier = 1.2
-Playerbot.AI.Weighting.Context.DungeonTrash.DamageModifier = 1.3
-Playerbot.AI.Weighting.Context.DungeonTrash.ResourceModifier = 1.0
-Playerbot.AI.Weighting.Context.DungeonTrash.PositioningModifier = 1.1
-Playerbot.AI.Weighting.Context.DungeonTrash.StrategicModifier = 0.9
-
-###################################################################################################
-# CONTEXT: DUNGEON BOSS
-#
-# Characteristics:
-# - Mechanics critical (positioning, interrupts)
-# - Single-target damage focus
-# - Group coordination essential
-# - Strategic cooldown usage (boss phases)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Context.DungeonBoss.SurvivalModifier = 1.1
-Playerbot.AI.Weighting.Context.DungeonBoss.GroupProtectionModifier = 1.5
-Playerbot.AI.Weighting.Context.DungeonBoss.DamageModifier = 1.2
-Playerbot.AI.Weighting.Context.DungeonBoss.ResourceModifier = 1.1
-Playerbot.AI.Weighting.Context.DungeonBoss.PositioningModifier = 1.4
-Playerbot.AI.Weighting.Context.DungeonBoss.StrategicModifier = 1.3
-
-###################################################################################################
-# CONTEXT: RAID NORMAL
-#
-# Characteristics:
-# - Complex mechanics (spread, stack, soak)
-# - High group protection needs (heal/dispel assignments)
-# - Moderate difficulty (forgiving on mistakes)
-# - Resource management critical (long fights)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Context.RaidNormal.SurvivalModifier = 1.0
-Playerbot.AI.Weighting.Context.RaidNormal.GroupProtectionModifier = 1.8
-Playerbot.AI.Weighting.Context.RaidNormal.DamageModifier = 1.0
-Playerbot.AI.Weighting.Context.RaidNormal.ResourceModifier = 1.2
-Playerbot.AI.Weighting.Context.RaidNormal.PositioningModifier = 1.5
-Playerbot.AI.Weighting.Context.RaidNormal.StrategicModifier = 1.5
-
-###################################################################################################
-# CONTEXT: RAID HEROIC/MYTHIC
-#
-# Characteristics:
-# - Extremely punishing mechanics (one-shot potential)
-# - Highest positioning precision required
-# - Maximum group coordination (interrupt rotations, soak assignments)
-# - Strategic perfection needed (cooldown timings, phase transitions)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Context.RaidHeroic.SurvivalModifier = 1.2
-Playerbot.AI.Weighting.Context.RaidHeroic.GroupProtectionModifier = 2.0
-Playerbot.AI.Weighting.Context.RaidHeroic.DamageModifier = 1.1
-Playerbot.AI.Weighting.Context.RaidHeroic.ResourceModifier = 1.4
-Playerbot.AI.Weighting.Context.RaidHeroic.PositioningModifier = 1.8
-Playerbot.AI.Weighting.Context.RaidHeroic.StrategicModifier = 1.8
-
-###################################################################################################
-# CONTEXT: PVP ARENA
-#
-# Characteristics:
-# - Burst damage windows critical
-# - Survival paramount (focus fire, crowd control chains)
-# - High group protection (peel for healer, cross-CC)
-# - Positioning important (pillar kiting, line of sight)
-# - Resource efficiency less important (short matches)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Context.PvPArena.SurvivalModifier = 1.4
-Playerbot.AI.Weighting.Context.PvPArena.GroupProtectionModifier = 1.6
-Playerbot.AI.Weighting.Context.PvPArena.DamageModifier = 1.3
-Playerbot.AI.Weighting.Context.PvPArena.ResourceModifier = 0.8
-Playerbot.AI.Weighting.Context.PvPArena.PositioningModifier = 1.3
-Playerbot.AI.Weighting.Context.PvPArena.StrategicModifier = 1.2
-
-###################################################################################################
-# CONTEXT: PVP BATTLEGROUND
-#
-# Characteristics:
-# - Objective-based (flags, nodes, bases)
-# - High strategic value (when to fight vs when to cap)
-# - Moderate survival (can respawn)
-# - Group coordination (teamfights, base defense)
-#
-###################################################################################################
-
-Playerbot.AI.Weighting.Context.PvPBG.SurvivalModifier = 1.1
-Playerbot.AI.Weighting.Context.PvPBG.GroupProtectionModifier = 1.3
-Playerbot.AI.Weighting.Context.PvPBG.DamageModifier = 1.2
-Playerbot.AI.Weighting.Context.PvPBG.ResourceModifier = 0.9
-Playerbot.AI.Weighting.Context.PvPBG.PositioningModifier = 1.2
-Playerbot.AI.Weighting.Context.PvPBG.StrategicModifier = 1.4
-
-###################################################################################################
-# DEATH RECOVERY SYSTEM (LEGACY COMPATIBILITY)
-#
-# Purpose: Handle bot death and resurrection automatically
-#
-# Note: Many of these settings are legacy aliases for Playerbot.Death.* settings
-#       They are provided for backward compatibility with older configurations
-#       New deployments should use Playerbot.Death.* settings instead
-#
-# Features:
-# - Automatic spirit release
-# - Intelligent corpse run vs spirit healer decision
-# - Configurable delays to simulate human behavior
-# - Pathfinding and navigation during corpse recovery
-# - Battleground resurrection support
-#
-###################################################################################################
-
-###################################################################################################
-# DEATH RECOVERY - LEGACY SETTINGS
-#
-#    Playerbot.AutoReleaseDelay
-#        Description: Legacy alias for Playerbot.Death.ReleaseDelay
-#        Default:     5 (seconds)
-#        Note:        Use Playerbot.Death.ReleaseDelay for new configurations
-#
-#    Playerbot.PreferCorpseRun
-#        Description: Legacy alias for Playerbot.Death.PreferCorpseRun
-#        Default:     1 (enabled)
-#        Note:        Use Playerbot.Death.PreferCorpseRun for new configurations
-#
-#    Playerbot.MaxCorpseRunDistance
-#        Description: Legacy alias for Playerbot.Death.MaxCorpseRunDistance
-#        Default:     200.0 (yards)
-#        Note:        Use Playerbot.Death.MaxCorpseRunDistance for new configurations
-#
-#    Playerbot.AutoSpiritHealer
-#        Description: Legacy alias for Playerbot.Death.AutoSpiritHealer
-#        Default:     1 (enabled)
-#        Note:        Use Playerbot.Death.AutoSpiritHealer for new configurations
-#
-#    Playerbot.SpiritHealerSearchRadius
-#        Description: Legacy alias for Playerbot.Death.SpiritHealerSearchRadius
-#        Default:     150.0 (yards)
-#        Note:        Use Playerbot.Death.SpiritHealerSearchRadius for new configurations
-#
-#    Playerbot.AllowBattleResurrection
-#        Description: Legacy alias for Playerbot.Death.AllowBattleResurrection
-#        Default:     1 (enabled)
-#        Note:        Use Playerbot.Death.AllowBattleResurrection for new configurations
-#
-#    Playerbot.ResurrectionTimeout
-#        Description: Legacy alias for Playerbot.Death.ResurrectionTimeout
-#        Default:     300 (seconds)
-#        Note:        Use Playerbot.Death.ResurrectionTimeout for new configurations
-#
-#    Playerbot.SkipResurrectionSickness
-#        Description: Legacy alias for Playerbot.Death.SkipResurrectionSickness
-#        Default:     0 (disabled)
-#        Warning:     FOR TESTING ONLY
-#        Note:        Use Playerbot.Death.SkipResurrectionSickness for new configurations
-#
-#    Playerbot.LogDeathRecovery
-#        Description: Legacy alias for Playerbot.Death.LogRecovery
-#        Default:     1 (enabled)
-#        Note:        Use Playerbot.Death.LogRecovery for new configurations
-#
-#    Playerbot.DeathRecovery.NavigationInterval
-#        Description: Legacy alias for Playerbot.Death.NavigationUpdateInterval
-#        Default:     500 (milliseconds)
-#        Note:        Use Playerbot.Death.NavigationUpdateInterval for new configurations
-#
-#    Playerbot.DeathRecovery.DistanceCheckInterval
-#        Description: Legacy alias for Playerbot.Death.DistanceCheckInterval
-#        Default:     1000 (milliseconds)
-#        Note:        Use Playerbot.Death.DistanceCheckInterval for new configurations
-#
-###################################################################################################
-
-Playerbot.AutoReleaseDelay = 5
-Playerbot.PreferCorpseRun = 1
-Playerbot.MaxCorpseRunDistance = 200.0
-Playerbot.AutoSpiritHealer = 1
-Playerbot.SpiritHealerSearchRadius = 150.0
-Playerbot.AllowBattleResurrection = 1
-Playerbot.ResurrectionTimeout = 300
-Playerbot.SkipResurrectionSickness = 0
-Playerbot.LogDeathRecovery = 1
-Playerbot.DeathRecovery.NavigationInterval = 500
-Playerbot.DeathRecovery.DistanceCheckInterval = 1000
-
-###################################################################################################
-# PHASE 2/3: ADAPTIVE THROTTLING SYSTEM
-#
-# Comprehensive bot spawning management system with resource pressure detection,
-# circuit breaker protection, priority queue management, adaptive throttling,
-# and phased startup orchestration.
-#
-# Components:
-#   1. StartupSpawnOrchestrator - 4-phase graduated bot spawning over 30 minutes
-#   2. AdaptiveSpawnThrottler - Dynamic spawn interval (50ms-5000ms = 20-0.2 bots/sec)
-#   3. SpawnCircuitBreaker - Failure cascade prevention (CLOSED/OPEN/HALF_OPEN states)
-#   4. SpawnPriorityQueue - 4-tier priority queue (CRITICAL/HIGH/NORMAL/LOW)
-#   5. ResourceMonitor - CPU/memory/DB connection monitoring
-#
-# Performance Target: 5000 concurrent bots with <10% server performance impact
-#                     <10MB memory per bot, <0.1% CPU per bot
-#
-# Quality Level: Enterprise-Grade Production-Ready
-#
-###################################################################################################
-
-#
-#    Playerbot.Startup.EnablePhased
-#        Description: Enable phased startup orchestration for gradual bot spawning
-#        Type:        Boolean (0 = disabled, 1 = enabled)
-#        Default:     1 (enabled)
-#        Impact:      When enabled, bots spawn in 4 phases over ~30 minutes:
-#                     Phase 1 (CRITICAL): Guild leaders, raid leaders (first 5 min)
-#                     Phase 2 (HIGH): Specific character requests, group members (5-10 min)
-#                     Phase 3 (NORMAL): Zone population, general spawns (10-25 min)
-#                     Phase 4 (LOW): Random background bots (25-30 min)
-#        Recommendation: Enable for production servers with >500 bots
-#                        Disable for small test servers (<100 bots)
-#
-#    Playerbot.Startup.InitialDelaySeconds
-#        Description: Delay in seconds before starting Phase 1 bot spawning
-#        Type:        Integer (0-300 seconds)
-#        Default:     5 (seconds)
-#        Impact:      Allows server initialization to complete before bot load
-#        Recommendation: 5-10 seconds for normal startup
-#                        0 seconds if manually controlling spawn timing
-#
-#    Playerbot.Startup.EnableParallelLoading
-#        Description: Enable parallel database loading during bot spawn preparation
-#        Type:        Boolean (0 = disabled, 1 = enabled)
-#        Default:     0 (disabled)
-#        Impact:      When enabled, loads multiple bot characters from DB concurrently
-#        Warning:     May increase DB connection pool pressure
-#        Recommendation: Enable only if DB connection pool has 50+ connections
-#                        Disable for low-spec servers or shared DB hosts
-#
-#    Playerbot.Startup.MaxConcurrentDbLoads
-#        Description: Maximum concurrent database load operations during parallel loading
-#        Type:        Integer (1-50)
-#        Default:     10
-#        Impact:      Higher = faster bot loading, but more DB connection pressure
-#        Recommendation: 5-10 for shared DB, 20-30 for dedicated DB server
-#
-#    Playerbot.Startup.Phase1.TargetBots
-#        Description: Target number of CRITICAL priority bots to spawn in Phase 1
-#        Type:        Integer (0-5000)
-#        Default:     100
-#        Impact:      Phase 1 spawns guild leaders, raid leaders (highest priority)
-#        Recommendation: 50-100 for guilds/raids, 0 if no CRITICAL bots needed
-#
-#    Playerbot.Startup.Phase2.TargetBots
-#        Description: Target number of HIGH priority bots to spawn in Phase 2
-#        Type:        Integer (0-5000)
-#        Default:     500
-#        Impact:      Phase 2 spawns specific character requests, group members
-#        Recommendation: 100-500 for active groups, adjust based on player demand
-#
-#    Playerbot.Startup.Phase3.TargetBots
-#        Description: Target number of NORMAL priority bots to spawn in Phase 3
-#        Type:        Integer (0-5000)
-#        Default:     3000
-#        Impact:      Phase 3 spawns zone population, general world bots
-#        Recommendation: 1000-3000 for populated world, 60% of total bot capacity
-#
-#    Playerbot.Startup.Phase4.TargetBots
-#        Description: Target number of LOW priority bots to spawn in Phase 4
-#        Type:        Integer (0-5000)
-#        Default:     1400
-#        Impact:      Phase 4 spawns random background bots (lowest priority)
-#        Recommendation: 500-1500 for background atmosphere, 30% of total capacity
-#        Note:        Phase1 + Phase2 + Phase3 + Phase4 = Total bot capacity
-#                     Default: 100 + 500 + 3000 + 1400 = 5000 bots
-#
-
-Playerbot.Startup.EnablePhased = 1
-Playerbot.Startup.InitialDelaySeconds = 5
-Playerbot.Startup.EnableParallelLoading = 0
-Playerbot.Startup.MaxConcurrentDbLoads = 10
-Playerbot.Startup.Phase1.TargetBots = 100
-Playerbot.Startup.Phase2.TargetBots = 500
-Playerbot.Startup.Phase3.TargetBots = 3000
-Playerbot.Startup.Phase4.TargetBots = 1400
-
-#
-#    Playerbot.Throttler.BaseSpawnIntervalMs
-#        Description: Base spawn interval in milliseconds between bot spawns
-#        Type:        Integer (50-5000 milliseconds)
-#        Default:     100 (milliseconds = 10 bots/second baseline)
-#        Impact:      Lower = faster spawning, higher = slower spawning
-#        Calculation: Spawn rate = 1000 / BaseSpawnIntervalMs bots/second
-#                     100ms = 10 bots/sec, 50ms = 20 bots/sec, 200ms = 5 bots/sec
-#        Recommendation: 50-100ms for high-spec servers (20-10 bots/sec)
-#                        100-200ms for medium-spec servers (10-5 bots/sec)
-#                        200-500ms for low-spec servers (5-2 bots/sec)
-#
-#    Playerbot.Throttler.MinSpawnIntervalMs
-#        Description: Minimum allowed spawn interval under low resource pressure
-#        Type:        Integer (50-1000 milliseconds)
-#        Default:     50 (milliseconds = 20 bots/second maximum)
-#        Impact:      Prevents spawning faster than this rate even under ideal conditions
-#        Recommendation: 50ms for high-spec, 100ms for medium, 200ms for low-spec
-#
-#    Playerbot.Throttler.MaxSpawnIntervalMs
-#        Description: Maximum spawn interval under extreme resource pressure
-#        Type:        Integer (1000-10000 milliseconds)
-#        Default:     5000 (milliseconds = 0.2 bots/second minimum)
-#        Impact:      Adaptive throttling slows down to this rate under CRITICAL pressure
-#        Recommendation: 5000ms for graceful degradation, 10000ms for very low-spec
-#
-#    Playerbot.Throttler.EnableAdaptive
-#        Description: Enable adaptive spawn interval adjustment based on resource pressure
-#        Type:        Boolean (0 = disabled, 1 = enabled)
-#        Default:     1 (enabled)
-#        Impact:      When enabled, spawn interval dynamically adjusts:
-#                     NORMAL pressure: BaseSpawnIntervalMs * 1.0 (full speed)
-#                     ELEVATED pressure: BaseSpawnIntervalMs * 2.0 (50% speed)
-#                     HIGH pressure: BaseSpawnIntervalMs * 4.0 (25% speed)
-#                     CRITICAL pressure: BaseSpawnIntervalMs * inf (paused)
-#        Recommendation: Enable for production (prevents server overload)
-#                        Disable for testing (consistent spawn timing)
-#
-#    Playerbot.Throttler.EnableCircuitBreaker
-#        Description: Enable circuit breaker to prevent spawn failure cascades
-#        Type:        Boolean (0 = disabled, 1 = enabled)
-#        Default:     1 (enabled)
-#        Impact:      When enabled, monitors spawn failure rate and trips circuit:
-#                     CLOSED: Normal operation (<5% failure rate)
-#                     OPEN: Spawning paused (>10% failure rate, 60s cooldown)
-#                     HALF_OPEN: Testing recovery (5 test spawns)
-#        Recommendation: Enable for production (critical fault tolerance)
-#                        Disable for debugging (see all spawn failures)
-#
-#    Playerbot.Throttler.EnableBurstPrevention
-#        Description: Enable burst prevention to limit spawn request rate spikes
-#        Type:        Boolean (0 = disabled, 1 = enabled)
-#        Default:     1 (enabled)
-#        Impact:      When enabled, prevents >50 spawn requests within 10 seconds
-#        Recommendation: Enable for production (prevents request floods)
-#                        Disable for batch spawn testing
-#
-#    Playerbot.Throttler.PressureMultiplier.Normal
-#        Description: Spawn interval multiplier under NORMAL resource pressure
-#        Type:        Float (0.5-2.0)
-#        Default:     1.0 (no slowdown)
-#        Impact:      Multiplies BaseSpawnIntervalMs when CPU <60%, Memory <70%
-#        Recommendation: Keep at 1.0 (full speed under normal conditions)
-#
-#    Playerbot.Throttler.PressureMultiplier.Elevated
-#        Description: Spawn interval multiplier under ELEVATED resource pressure
-#        Type:        Float (1.0-4.0)
-#        Default:     2.0 (50% slowdown)
-#        Impact:      Multiplies BaseSpawnIntervalMs when CPU 60-75% or Memory 70-80%
-#        Recommendation: 2.0 for balanced throttling, 1.5 for aggressive spawning
-#
-#    Playerbot.Throttler.PressureMultiplier.High
-#        Description: Spawn interval multiplier under HIGH resource pressure
-#        Type:        Float (2.0-8.0)
-#        Default:     4.0 (75% slowdown)
-#        Impact:      Multiplies BaseSpawnIntervalMs when CPU 75-85% or Memory 80-90%
-#        Recommendation: 4.0 for conservative, 3.0 for aggressive, 6.0 for safety
-#
-#    Playerbot.Throttler.PressureMultiplier.Critical
-#        Description: Spawn interval multiplier under CRITICAL resource pressure
-#        Type:        Float (0.0 = pause)
-#        Default:     0.0 (spawning paused)
-#        Impact:      When CPU >85% or Memory >90%, spawning is paused completely
-#        Warning:     Setting >0.0 may cause server instability under extreme load
-#        Recommendation: Keep at 0.0 (pause spawning during critical pressure)
-#
-#    Playerbot.Throttler.BurstWindow.Requests
-#        Description: Maximum spawn requests allowed within burst prevention window
-#        Type:        Integer (10-200)
-#        Default:     50
-#        Impact:      Rejects spawn requests if >50 requests within WindowSeconds
-#        Recommendation: 50-100 for production, 200 for batch spawn testing
-#
-#    Playerbot.Throttler.BurstWindow.Seconds
-#        Description: Time window in seconds for burst prevention monitoring
-#        Type:        Integer (5-60 seconds)
-#        Default:     10 (seconds)
-#        Impact:      Monitors spawn request rate over this sliding window
-#        Recommendation: 10s for normal, 30s for lenient, 5s for strict
-#
-
-Playerbot.Throttler.BaseSpawnIntervalMs = 100
-Playerbot.Throttler.MinSpawnIntervalMs = 50
-Playerbot.Throttler.MaxSpawnIntervalMs = 5000
-Playerbot.Throttler.EnableAdaptive = 1
-Playerbot.Throttler.EnableCircuitBreaker = 1
-Playerbot.Throttler.EnableBurstPrevention = 1
-Playerbot.Throttler.PressureMultiplier.Normal = 1.0
-Playerbot.Throttler.PressureMultiplier.Elevated = 2.0
-Playerbot.Throttler.PressureMultiplier.High = 4.0
-Playerbot.Throttler.PressureMultiplier.Critical = 0.0
-Playerbot.Throttler.BurstWindow.Requests = 50
-Playerbot.Throttler.BurstWindow.Seconds = 10
-
-#
-#    Playerbot.CircuitBreaker.OpenThresholdPercent
-#        Description: Spawn failure rate threshold to trip circuit to OPEN state
-#        Type:        Float (5.0-50.0 percent)
-#        Default:     10.0 (percent = 10% failure rate)
-#        Impact:      When spawn failures exceed this rate, circuit opens (pauses spawning)
-#        Calculation: Failures / TotalAttempts >= (OpenThreshold / 100.0)
-#        Recommendation: 10% for production, 20% for lenient, 5% for strict
-#
-#    Playerbot.CircuitBreaker.CloseThresholdPercent
-#        Description: Spawn failure rate threshold to close circuit from HALF_OPEN
-#        Type:        Float (1.0-10.0 percent)
-#        Default:     5.0 (percent = 5% failure rate)
-#        Impact:      During recovery testing, if failures drop below this, circuit closes
-#        Recommendation: Half of OpenThreshold (e.g., Open=10%, Close=5%)
-#
-#    Playerbot.CircuitBreaker.CooldownSeconds
-#        Description: Cooldown period in OPEN state before transitioning to HALF_OPEN
-#        Type:        Integer (30-300 seconds)
-#        Default:     60 (seconds)
-#        Impact:      Circuit remains OPEN (spawning paused) for this duration
-#        Recommendation: 60s for production, 30s for testing, 120s for conservative
-#
-#    Playerbot.CircuitBreaker.RecoveryWindowSeconds
-#        Description: Time window for HALF_OPEN state recovery testing
-#        Type:        Integer (60-600 seconds)
-#        Default:     120 (seconds)
-#        Impact:      Circuit monitors failure rate over this window during recovery
-#        Recommendation: 2x CooldownSeconds (e.g., Cooldown=60s, Recovery=120s)
-#
-#    Playerbot.CircuitBreaker.FailureWindowSeconds
-#        Description: Sliding window for failure rate calculation
-#        Type:        Integer (30-300 seconds)
-#        Default:     60 (seconds)
-#        Impact:      Circuit monitors spawn failures over this time period
-#        Recommendation: 60s for responsive, 120s for stable, 30s for aggressive
-#
-#    Playerbot.CircuitBreaker.MinimumSampleSize
-#        Description: Minimum spawn attempts required before circuit can trip
-#        Type:        Integer (10-100)
-#        Default:     20
-#        Impact:      Prevents circuit from tripping on small sample sizes (e.g., 1/1 = 100%)
-#        Recommendation: 20 for production, 10 for testing, 50 for conservative
-#
-
-Playerbot.CircuitBreaker.OpenThresholdPercent = 10.0
-Playerbot.CircuitBreaker.CloseThresholdPercent = 5.0
-Playerbot.CircuitBreaker.CooldownSeconds = 60
-Playerbot.CircuitBreaker.RecoveryWindowSeconds = 120
-Playerbot.CircuitBreaker.FailureWindowSeconds = 60
-Playerbot.CircuitBreaker.MinimumSampleSize = 20
-
-#
-#    Playerbot.ResourceMonitor.CpuThreshold.Elevated
-#        Description: CPU usage threshold to trigger ELEVATED resource pressure
-#        Type:        Float (50.0-80.0 percent)
-#        Default:     60.0 (percent)
-#        Impact:      When CPU exceeds this, adaptive throttling applies 2x multiplier
-#        Recommendation: 60% for medium-spec, 70% for high-spec, 50% for low-spec
-#
-#    Playerbot.ResourceMonitor.CpuThreshold.High
-#        Description: CPU usage threshold to trigger HIGH resource pressure
-#        Type:        Float (60.0-90.0 percent)
-#        Default:     75.0 (percent)
-#        Impact:      When CPU exceeds this, adaptive throttling applies 4x multiplier
-#        Recommendation: 75% for medium-spec, 80% for high-spec, 65% for low-spec
-#
-#    Playerbot.ResourceMonitor.CpuThreshold.Critical
-#        Description: CPU usage threshold to trigger CRITICAL resource pressure
-#        Type:        Float (70.0-95.0 percent)
-#        Default:     85.0 (percent)
-#        Impact:      When CPU exceeds this, spawning is PAUSED completely
-#        Warning:     Server may become unresponsive above this threshold
-#        Recommendation: 85% for production, 90% for high-spec, 80% for low-spec
-#
-#    Playerbot.ResourceMonitor.MemoryThreshold.Elevated
-#        Description: Memory usage threshold to trigger ELEVATED resource pressure
-#        Type:        Float (60.0-85.0 percent)
-#        Default:     70.0 (percent)
-#        Impact:      When memory exceeds this, adaptive throttling applies 2x multiplier
-#        Recommendation: 70% for medium RAM, 75% for high RAM, 60% for low RAM
-#
-#    Playerbot.ResourceMonitor.MemoryThreshold.High
-#        Description: Memory usage threshold to trigger HIGH resource pressure
-#        Type:        Float (70.0-90.0 percent)
-#        Default:     80.0 (percent)
-#        Impact:      When memory exceeds this, adaptive throttling applies 4x multiplier
-#        Recommendation: 80% for medium RAM, 85% for high RAM, 75% for low RAM
-#
-#    Playerbot.ResourceMonitor.MemoryThreshold.Critical
-#        Description: Memory usage threshold to trigger CRITICAL resource pressure
-#        Type:        Float (80.0-95.0 percent)
-#        Default:     90.0 (percent)
-#        Impact:      When memory exceeds this, spawning is PAUSED completely
-#        Warning:     Server may crash or swap to disk above this threshold
-#        Recommendation: 90% for production, 95% for high RAM, 85% for low RAM
-#
-#    Playerbot.ResourceMonitor.DbConnectionThreshold
-#        Description: Database connection usage threshold to trigger pressure
-#        Type:        Float (70.0-95.0 percent)
-#        Default:     80.0 (percent of pool size)
-#        Impact:      When DB connections exceed this, triggers ELEVATED pressure
-#        Warning:     Exhausting DB connection pool will block all database queries
-#        Recommendation: 80% for production, 85% for large pool, 75% for small pool
-#
-
-Playerbot.ResourceMonitor.CpuThreshold.Elevated = 60.0
-Playerbot.ResourceMonitor.CpuThreshold.High = 75.0
-Playerbot.ResourceMonitor.CpuThreshold.Critical = 85.0
-Playerbot.ResourceMonitor.MemoryThreshold.Elevated = 70.0
-Playerbot.ResourceMonitor.MemoryThreshold.High = 80.0
-Playerbot.ResourceMonitor.MemoryThreshold.Critical = 90.0
-Playerbot.ResourceMonitor.DbConnectionThreshold = 80.0
-
-###################################################################################################
-# GROUP COORDINATION & SYNCHRONIZATION
-#
-#    Playerbot.Group.UpdateInterval
-#        Description: Group state synchronization interval (milliseconds)
-#        Default:     1000
-#        Range:       500-5000
-#        Note:        How often bots synchronize group state (roles, targets, etc.)
-#                     Lower values = more responsive, higher values = less CPU
-#
-#    Playerbot.Group.InviteResponseDelay
-#        Description: Delay before bot accepts group invite (milliseconds)
-#        Default:     2000
-#        Range:       0-10000
-#        Note:        Simulates human behavior when receiving group invites
-#                     0 = instant accept (may appear bot-like)
-#
-#    Playerbot.Group.ReadyCheckTimeout
-#        Description: Ready check expiration time (milliseconds)
-#        Default:     30000
-#        Range:       10000-120000
-#        Note:        How long bots wait for ready check completion
-#                     After timeout, bots mark themselves as ready
-#
-#    Playerbot.Group.LootRollTimeout
-#        Description: Loot roll window duration (milliseconds)
-#        Default:     60000
-#        Range:       15000-180000
-#        Note:        Time bots have to decide on loot rolls
-#                     Default matches WoW's standard 60 second roll timer
-#
-#    Playerbot.Group.TargetUpdateInterval
-#        Description: Target selection refresh interval (milliseconds)
-#        Default:     500
-#        Range:       100-2000
-#        Note:        How often bots re-evaluate combat targets
-#                     Lower values = faster target switching
-#
-###################################################################################################
+###############################################################################
+# B3. GROUP COORDINATION [NEEDS REFACTORING]
+#
+#     Status: Uses constexpr constants in PlayerbotGroupManager.h - cannot load at runtime
+#     Files:  Group/PlayerbotGroupManager.h (header-only singleton)
+#             Group/GroupCoordination.cpp (41KB)
+#     Issue:  Lines 269-277 use constexpr - need to convert to runtime member variables
+#     Effort: 4-6 hours (requires architecture change)
+#
+###############################################################################
 
 Playerbot.Group.UpdateInterval = 1000
 Playerbot.Group.InviteResponseDelay = 2000
 Playerbot.Group.ReadyCheckTimeout = 30000
 Playerbot.Group.LootRollTimeout = 60000
 Playerbot.Group.TargetUpdateInterval = 500
+Playerbot.Group.AssistLeader = 1
+Playerbot.Group.FollowDistance = 5.0
 
-###################################################################################################
-# SYSTEM UPDATE INTERVALS
+###############################################################################
+# B4. TALENT MANAGER [WIRED]
 #
-#    Playerbot.Banking.CheckInterval
-#        Description: Banking evaluation interval (milliseconds)
-#        Default:     300000 (5 minutes)
-#        Range:       60000-900000
-#        Note:        How often bots check if they should visit bank
-#                     Includes bag space evaluation and deposit decisions
+#     Status: WIRED - Config loaded in BotTalentManager::LoadLoadouts()
+#     Files:  Talents/BotTalentManager.cpp, Talents/BotTalentManager.h
+#     Features: TalentLoadout, SpecChoice, Hero Talents support
 #
-#    Playerbot.Banking.GoldCheckInterval
-#        Description: Gold management check interval (milliseconds)
-#        Default:     60000 (1 minute)
-#        Range:       30000-300000
-#        Note:        How often bots evaluate gold thresholds for depositing
-#
-#    Playerbot.Banking.MaxTransactionHistory
-#        Description: Maximum banking transaction log size
-#        Default:     100
-#        Range:       10-1000
-#        Note:        Number of transaction entries to keep in memory
-#                     Older entries are discarded when limit is reached
-#
-#    Playerbot.Mount.UpdateInterval
-#        Description: Mount state update interval (milliseconds)
-#        Default:     5000
-#        Range:       1000-30000
-#        Note:        How often bots re-evaluate mount usage
-#                     Includes zone checks, speed requirements, etc.
-#
-#    Playerbot.Pet.UpdateInterval
-#        Description: Battle pet system update interval (milliseconds)
-#        Default:     5000
-#        Range:       1000-30000
-#        Note:        How often bots update battle pet state
-#                     Includes healing, team evaluation, etc.
-#
-###################################################################################################
+###############################################################################
 
+Playerbot.TalentManager.Enable = 1
+Playerbot.TalentManager.UseOptimalBuilds = 1
+Playerbot.TalentManager.RandomizeMinor = 1
+Playerbot.TalentManager.AdaptToContent = 1
+Playerbot.TalentManager.RespecFrequency = 24
+Playerbot.TalentManager.UseHeroTalents = 1
+
+###############################################################################
+# B5. GEAR FACTORY [WIRED]
+#
+#     Status: WIRED (2026-01-06) - Config loaded in BotGearFactory::Initialize()
+#     Files:  Equipment/BotGearFactory.cpp, Equipment/BotGearFactory.h
+#     Features: Immutable cache, lock-free reads, spec-appropriate gear
+#
+###############################################################################
+
+Playerbot.GearFactory.Enable = 1
+Playerbot.GearFactory.QualityMin = 2
+Playerbot.GearFactory.QualityMax = 4
+Playerbot.GearFactory.LevelRange = 5
+Playerbot.GearFactory.UseSpecAppropriate = 1
+Playerbot.GearFactory.EnchantItems = 1
+Playerbot.GearFactory.GemItems = 1
+Playerbot.GearFactory.RefreshInterval = 60
+
+###############################################################################
+# B6. BANKING SYSTEM [WIRED]
+#
+#     Status: WIRED (2026-01-06) - Config loaded in BankingManager::Initialize()
+#     Files:  Banking/BankingManager.cpp, Social/GuildBankManager.cpp
+#     Features: NPC interaction, deposit/withdrawal, gold management
+#
+###############################################################################
+
+Playerbot.Banking.Enable = 1
 Playerbot.Banking.CheckInterval = 300000
-Playerbot.Banking.GoldCheckInterval = 60000
+Playerbot.Banking.AutoDeposit = 1
+Playerbot.Banking.KeepGoldAmount = 10000
 Playerbot.Banking.MaxTransactionHistory = 100
-Playerbot.Mount.UpdateInterval = 5000
-Playerbot.Pet.UpdateInterval = 5000
 
-###################################################################################################
-# SESSION MANAGEMENT
+###############################################################################
+# B7. INVENTORY MANAGEMENT [ALREADY WIRED]
 #
-#    Playerbot.Session.CleanupInterval
-#        Description: Session cleanup cycle interval (milliseconds)
-#        Default:     10000 (10 seconds)
-#        Range:       5000-60000
-#        Note:        How often to check for stale/dead bot sessions
-#                     Sessions past timeout are cleaned up automatically
+#     Status: ALREADY WIRED - Config loaded in InventoryManager constructor
+#     Files:  Game/InventoryManager.cpp
+#     Features: Auto-loot, auto-equip, auto-sell, bag management
 #
-#    Playerbot.Session.MaxLoadingTime
-#        Description: Maximum bot loading time (milliseconds)
-#        Default:     30000 (30 seconds)
-#        Range:       10000-120000
-#        Note:        Maximum time allowed for bot to complete login
-#                     Bots exceeding this are terminated and restarted
+###############################################################################
+
+Playerbot.Inventory.AutoLoot = 1
+Playerbot.Inventory.AutoEquip = 1
+Playerbot.Inventory.AutoSell = 1
+Playerbot.Inventory.UpdateInterval = 2000
+Playerbot.Inventory.MinLootQuality = 0
+Playerbot.Inventory.MinFreeSlots = 5
+
+###############################################################################
+# B8. SOCIAL SYSTEM [WIRED]
 #
-#    Playerbot.Session.Timeout
-#        Description: Session expiration timeout (milliseconds)
-#        Default:     60000 (1 minute)
-#        Range:       30000-300000
-#        Note:        Inactive sessions are cleaned up after this duration
-#                     Prevents resource leaks from orphaned sessions
+#     Status: WIRED (2026-01-06) - Config loaded in SocialManager::Initialize()
+#     Files:  Advanced/SocialManager.cpp (36KB)
+#     Note:   GuildEventCoordinator and GuildIntegration still need wiring
 #
-###################################################################################################
+###############################################################################
+
+Playerbot.Social.EnableChat = 0
+Playerbot.Social.ChatFrequency = 60000
+Playerbot.Social.RespondToWhispers = 1
+Playerbot.Social.JoinGuilds = 0
+Playerbot.Social.FormGroups = 1
+Playerbot.Social.AcceptInvites = 1
+
+###############################################################################
+# B9. NAMING SYSTEM [WIRED]
+#
+#     Status: WIRED (2026-01-06) - Config loaded in BotNameMgr::Initialize()
+#     Files:  Character/BotNameMgr.cpp, Character/BotNameMgr.h
+#     Database: Names loaded from playerbots_names table (primary source)
+#
+###############################################################################
+
+Playerbot.Names.UseRandomNames = 1
+Playerbot.Names.MinLength = 4
+Playerbot.Names.MaxLength = 12
+Playerbot.Names.UseRaceTheme = 1
+
+###############################################################################
+# B10. LEVEL MANAGER [ALREADY WIRED]
+#
+#     Status: WIRED via BotLevelDistribution::LoadConfig() and BotLevelManager
+#     Files:  Character/BotLevelManager.cpp, Character/BotLevelDistribution.cpp
+#             Character/ZoneLevelHelper.cpp (ContentTuning DB2 integration)
+#     Note:   Uses expansion tier-based distribution via ContentTuning DB2
+#
+#     WoW 11.x Expansion Tiers:
+#       - Starting (1-10): Exile's Reach / racial starting zones
+#       - ChromieTime (10-60): All scaled content (BfA, Legion, WoD, etc.)
+#       - Dragonflight (60-70): Dragon Isles
+#       - TheWarWithin (70-80): Khaz Algar
+#
+###############################################################################
+
+# BotLevelManager options (wired in Initialize())
+Playerbot.LevelManager.MaxBotsPerUpdate = 10
+Playerbot.LevelManager.VerboseLogging = 0
+
+# BotLevelDistribution options (wired in LoadConfig())
+Playerbot.Population.Enabled = 1
+Playerbot.Population.DynamicDistribution = 0
+Playerbot.Population.RealPlayerWeight = 1.0
+Playerbot.Population.SyncFactions = 0
+
+# Expansion Tier Distribution Percentages (must sum to 100%)
+# These control what % of bots spawn at each expansion tier level range.
+# Tier levels are defined by WoW's ContentTuning DB2 system.
+Playerbot.Population.Tier.Starting.Pct = 5.0
+Playerbot.Population.Tier.ChromieTime.Pct = 40.0
+Playerbot.Population.Tier.Dragonflight.Pct = 25.0
+Playerbot.Population.Tier.TheWarWithin.Pct = 30.0
+
+###############################################################################
+# B11. WORLD POSITIONER [WIRED]
+#
+#     Status: WIRED (2026-01-06) - Converted sConfigMgr to sPlayerbotConfig
+#     Files:  Movement/BotWorldPositioner.cpp
+#
+###############################################################################
+
+Playerbot.WorldPositioner.Enable = 1
+Playerbot.WorldPositioner.SpreadDistance = 5.0
+Playerbot.WorldPositioner.FormationSpacing = 3.0
+Playerbot.WorldPositioner.AvoidPlayers = 1
+Playerbot.WorldPositioner.PreferQuestHubs = 1
+Playerbot.WorldPositioner.MaxWanderDistance = 100.0
+
+###############################################################################
+# B12. SESSION MANAGEMENT [PLACEHOLDER - NEEDS IMPLEMENTATION]
+#
+#     Status: BotSession works but these config options need code implementation
+#     Files:  Session/BotSession.cpp, Session/BotWorldSessionMgr.cpp
+#     Note:   Bot sessions don't use sockets - timeout/cleanup not applicable
+#     Effort: 4-6 hours to implement timeout/cleanup features
+#
+###############################################################################
 
 Playerbot.Session.CleanupInterval = 10000
 Playerbot.Session.MaxLoadingTime = 30000
 Playerbot.Session.Timeout = 60000
+Playerbot.Session.MaxConcurrentCommands = 5
 
-###################################################################################################
-# CHAT & COMMAND SYSTEM
+###############################################################################
+# B13. DEATH RECOVERY [ALREADY WIRED]
 #
-#    Playerbot.Chat.MaxConcurrentCommands
-#        Description: Maximum concurrent chat command queue size
-#        Default:     5
-#        Range:       1-20
-#        Note:        Limits pending commands per bot to prevent abuse
-#                     Excess commands are dropped with warning
+#     Status: WIRED - Config loaded in DeathRecoveryManager::LoadConfig()
+#     Files:  Lifecycle/DeathRecoveryManager.cpp
+#     Note:   Reads 11 config options
 #
-###################################################################################################
+###############################################################################
 
-Playerbot.Chat.MaxConcurrentCommands = 5
+# Death release and resurrection timing
+Playerbot.AutoReleaseDelay = 5
+Playerbot.ResurrectionTimeout = 300
+Playerbot.DeathRecovery.NavigationInterval = 500
+Playerbot.DeathRecovery.DistanceCheckInterval = 1000
 
-###################################################################################################
-# ACCOUNT MANAGEMENT
+# Corpse run settings
+Playerbot.PreferCorpseRun = 1
+Playerbot.MaxCorpseRunDistance = 200.0
+
+# Spirit healer settings
+Playerbot.AutoSpiritHealer = 1
+Playerbot.SpiritHealerSearchRadius = 150.0
+Playerbot.SkipResurrectionSickness = 0
+
+# Battle resurrection
+Playerbot.AllowBattleResurrection = 1
+
+# Debug logging
+Playerbot.LogDeathRecovery = 1
+
+###############################################################################
+# B14. THREAD POOL [ALREADY WIRED]
 #
-#    Playerbot.Account.TargetPoolSize
-#        Description: Target bot account pool size
-#        Default:     50
-#        Range:       10-500
-#        Note:        Number of bot accounts to maintain in the pool
-#                     System creates/removes accounts to reach this target
+#     Status: WIRED - Config loaded in ThreadPool.cpp
+#     Files:  Performance/ThreadPool/ThreadPool.cpp
 #
-###################################################################################################
+###############################################################################
 
-Playerbot.Account.TargetPoolSize = 50
+Playerbot.ThreadPool.Size = 4
+Playerbot.ThreadPool.MaxQueueSize = 1000
+Playerbot.ThreadPool.EnableWorkStealing = 1
+Playerbot.ThreadPool.EnableCpuAffinity = 0
+Playerbot.ThreadPool.TaskTimeout = 5000
 
-###################################################################################################
+###############################################################################
+# B15. PERFORMANCE MONITORING [WIRED]
+#
+#     Status: FULLY IMPLEMENTED (multiple monitors, 150KB+ total)
+#     Files:  Performance/BotPerformanceMonitor.cpp (21KB)
+#             Performance/BotPerformanceAnalytics.cpp (30KB)
+#             Performance/BotProfiler.cpp (33KB)
+#             Performance/BotMemoryManager.cpp (29KB)
+#             Performance/BotLoadTester.cpp (38KB)
+#     Note:   PerformanceManager.cpp is a stub (168 bytes)
+#     Config wired to: BotPerformanceMonitor::Initialize()
+#
+###############################################################################
+
+#
+#    Playerbot.Performance.EnableMonitoring
+#        Enable performance monitoring and metrics collection
+#        Default: 0 (disabled for production)
+#
+Playerbot.Performance.EnableMonitoring = 0
+
+#
+#    Playerbot.Performance.CpuWarningThreshold
+#        CPU usage percentage to trigger warning alerts
+#        Default: 70
+#
+Playerbot.Performance.CpuWarningThreshold = 70
+
+#
+#    Playerbot.Performance.MemoryWarningThreshold
+#        Memory usage percentage to trigger warning alerts
+#        Default: 80
+#
+Playerbot.Performance.MemoryWarningThreshold = 80
+
+#
+#    Playerbot.Performance.ReportInterval
+#        Interval in seconds between performance reports
+#        Default: 60
+#
+Playerbot.Performance.ReportInterval = 60
+
+#
+#    Playerbot.Performance.DetailedTracking
+#        Enable detailed per-bot metric tracking (higher overhead)
+#        Default: 0
+#
+Playerbot.Performance.DetailedTracking = 0
+
+#
+#    Playerbot.Performance.ExportPath
+#        Path to export metrics files (empty = disabled)
+#        Default: ""
+#
+Playerbot.Performance.ExportPath = ""
+
+###############################################################################
+# B16. SECURITY SYSTEM [STUB - NEEDS IMPLEMENTATION]
+#
+#     Status: STUB - No PlayerbotSecurity class found
+#     Effort: 3-4 days for full implementation
+#
+###############################################################################
+
+Playerbot.Security.MaxCommandsPerMinute = 30
+Playerbot.Security.AllowedGMLevel = 0
+Playerbot.Security.PreventGoldExploit = 1
+Playerbot.Security.AuditCommands = 0
+
+###############################################################################
+# B17. EXPERIMENTAL FEATURES [STUB]
+#
+#     Status: STUB - Placeholder for future features
+#     Effort: Varies per feature
+#
+###############################################################################
+
+Playerbot.Experimental.EnableAll = 0
+Playerbot.Experimental.AdvancedPathing = 0
+Playerbot.Experimental.PredictiveHealing = 0
+Playerbot.Experimental.AdaptiveDifficulty = 0
+
+###############################################################################
+# B18. AI BEHAVIOR DELAYS [PLANNED - NEEDS IMPLEMENTATION]
+#
+#     Status: Config options defined but code doesn't use them yet
+#     Files:  AI/BotAI.cpp has UpdateAI() but no configurable delays
+#     Note:   These delays would need to be implemented in the update loops
+#     Effort: 4-6 hours to implement delay systems
+#
+###############################################################################
+
+#
+#  Playerbot.AI.UpdateDelay
+#    Description: [PLANNED] AI decision delay in milliseconds
+#    Target:      PlayerbotAIController::Update()
+#
+Playerbot.AI.UpdateDelay = 100
+
+#
+#  Playerbot.AI.CombatDelay
+#    Description: [PLANNED] Combat decision delay in milliseconds
+#    Target:      CombatBehavior::Execute()
+#
+Playerbot.AI.CombatDelay = 50
+
+#
+#  Playerbot.AI.MovementDelay
+#    Description: [PLANNED] Movement update delay in milliseconds
+#    Target:      MovementManager::Update()
+#
+Playerbot.AI.MovementDelay = 200
+
+#
+#  Playerbot.AI.HealingDelay
+#    Description: [PLANNED] Healing decision delay in milliseconds
+#    Target:      HealingBehavior::Update()
+#
+Playerbot.AI.HealingDelay = 100
+
+#
+#  Playerbot.AI.BuffDelay
+#    Description: [PLANNED] Buff application delay in milliseconds
+#    Target:      BuffManager::Update()
+#
+Playerbot.AI.BuffDelay = 500
+
+#
+#  Playerbot.AI.ReactDelay
+#    Description: [PLANNED] Reaction delay to events in milliseconds
+#    Target:      EventReactor (new component)
+#
+Playerbot.AI.ReactDelay = 300
+
+#
+#  Playerbot.AI.LootDelay
+#    Description: [PLANNED] Looting delay in milliseconds
+#    Target:      LootBehavior::Execute()
+#
+Playerbot.AI.LootDelay = 1000
+
+#
+#  Playerbot.AI.MaxTargetDistance
+#    Description: [PLANNED] Maximum target acquisition distance
+#    Target:      TargetSelector::FindTargets()
+#
+Playerbot.AI.MaxTargetDistance = 50.0
+
+#
+#  Playerbot.AI.PullDistance
+#    Description: [PLANNED] Preferred pull distance for combat
+#    Target:      CombatBehavior::PullTarget()
+#
+Playerbot.AI.PullDistance = 30.0
+
+###############################################################################
+# B19. AI DECISION FUSION [WIRED]
+#
+#     Status: WIRED in DecisionFusionSystem::Initialize()
+#     Files:  AI/Decision/DecisionFusionSystem.cpp (lines 37-50)
+#
+###############################################################################
+
+#
+#    Playerbot.AI.DecisionFusion.LogDecisions
+#        Enable debug logging for AI decisions
+#        Default: 0
+#
+Playerbot.AI.DecisionFusion.LogDecisions = 0
+
+#
+#    Playerbot.AI.DecisionFusion.UrgencyThreshold
+#        Threshold for urgent decisions (0.0-1.0)
+#        Default: 0.85
+#
+Playerbot.AI.DecisionFusion.UrgencyThreshold = 0.85
+
+#
+#    Playerbot.AI.DecisionFusion.Weight.*
+#        Weights for different AI decision components
+#
+Playerbot.AI.DecisionFusion.Weight.BehaviorPriority = 0.25
+Playerbot.AI.DecisionFusion.Weight.ActionPriority = 0.15
+Playerbot.AI.DecisionFusion.Weight.BehaviorTree = 0.30
+Playerbot.AI.DecisionFusion.Weight.AdaptiveBehavior = 0.10
+Playerbot.AI.DecisionFusion.Weight.WeightingSystem = 0.20
+
+###############################################################################
+# B20. AI WEIGHTING SYSTEM [WIRED]
+#
+#     Status: WIRED in ActionScoringEngine::LoadWeightsFromConfig()
+#     Files:  AI/Common/ActionScoringEngine.cpp (lines 237-242)
+#
+###############################################################################
+
+#
+#    Playerbot.AI.Weighting.*
+#        Base weights for action scoring categories
+#
+Playerbot.AI.Weighting.SurvivalWeight = 200.0
+Playerbot.AI.Weighting.GroupProtectionWeight = 180.0
+Playerbot.AI.Weighting.DamageWeight = 150.0
+Playerbot.AI.Weighting.ResourceWeight = 100.0
+Playerbot.AI.Weighting.PositioningWeight = 120.0
+Playerbot.AI.Weighting.StrategicWeight = 80.0
+
+#
+#    Playerbot.AI.Weighting.LogScoring
+#        Enable debug logging for action scoring (ArcaneMageWeighted.h:62)
+#        Default: 0
+#
+Playerbot.AI.Weighting.LogScoring = 0
+
+#
+#    Playerbot.AI.Weighting.LogTopActions
+#        Number of top actions to log when LogScoring is enabled (ArcaneMageWeighted.h:194)
+#        Default: 3
+#
+Playerbot.AI.Weighting.LogTopActions = 3
+
+###############################################################################
+# B21. AUCTION SYSTEM [WIRED]
+#
+#     Status: WIRED in AuctionManager::Initialize()
+#     Files:  Economy/AuctionManager.cpp (lines 86-97)
+#
+###############################################################################
+
+#
+#    Playerbot.Auction.Enable
+#        Enable bot auction house participation
+#        Default: 0 (disabled - can impact server economy)
+#
+Playerbot.Auction.Enable = 0
+
+#
+#    Playerbot.Auction.MaxActiveAuctions
+#        Maximum simultaneous auctions per bot
+#        Default: 10
+#
+Playerbot.Auction.MaxActiveAuctions = 10
+
+#
+#    Playerbot.Auction.MinProfit
+#        Minimum profit in copper to consider buying
+#        Default: 10000 (1 gold)
+#
+Playerbot.Auction.MinProfit = 10000
+
+#
+#    Playerbot.Auction.DefaultStrategy
+#        Default trading strategy (1-5)
+#        Default: 5
+#
+Playerbot.Auction.DefaultStrategy = 5
+
+#
+#    Playerbot.Auction.CommodityEnabled
+#        Enable commodity trading
+#        Default: 1
+#
+Playerbot.Auction.CommodityEnabled = 1
+
+#
+#    Playerbot.Auction.MarketMakerEnabled
+#        Enable market maker mode
+#        Default: 0
+#
+Playerbot.Auction.MarketMakerEnabled = 0
+
+#
+#    Playerbot.Auction.MarketScanInterval
+#        Interval between market scans in milliseconds
+#        Default: 300000 (5 minutes)
+#
+Playerbot.Auction.MarketScanInterval = 300000
+
+#
+#    Playerbot.Auction.MaxRiskScore
+#        Maximum acceptable risk score
+#        Default: 50
+#
+Playerbot.Auction.MaxRiskScore = 50
+
+#
+#    Playerbot.Auction.UndercutPercentage
+#        Percentage to undercut competition
+#        Default: 2.0
+#
+Playerbot.Auction.UndercutPercentage = 2.0
+
+#
+#    Playerbot.Auction.PriceHistoryDays
+#        Days of price history to consider
+#        Default: 7
+#
+Playerbot.Auction.PriceHistoryDays = 7
+
+###############################################################################
+# B22. STARTUP ORCHESTRATION [WIRED]
+#
+#     Status: WIRED in StartupSpawnOrchestrator constructor
+#     Files:  Lifecycle/StartupSpawnOrchestrator.cpp (lines 24-81)
+#
+###############################################################################
+
+#
+#    Playerbot.Startup.EnablePhased
+#        Enable phased startup for gradual bot spawning
+#        Default: 1
+#
+Playerbot.Startup.EnablePhased = 1
+
+#
+#    Playerbot.Startup.EnableParallelLoading
+#        Enable parallel loading of bot data
+#        Default: 0
+#
+Playerbot.Startup.EnableParallelLoading = 0
+
+#
+#    Playerbot.Startup.MaxConcurrentDbLoads
+#        Maximum concurrent database loads
+#        Default: 10
+#
+Playerbot.Startup.MaxConcurrentDbLoads = 10
+
+#
+#    Playerbot.Startup.InitialDelaySeconds
+#        Delay before starting bot spawns
+#        Default: 5
+#
+Playerbot.Startup.InitialDelaySeconds = 5
+
+#
+#    Playerbot.Startup.Phase*.TargetBots
+#        Target bot count for each spawn phase
+#
+Playerbot.Startup.Phase1.TargetBots = 100
+Playerbot.Startup.Phase2.TargetBots = 500
+Playerbot.Startup.Phase3.TargetBots = 3000
+Playerbot.Startup.Phase4.TargetBots = 1400
+
+###############################################################################
+# B23. CIRCUIT BREAKER [WIRED]
+#
+#     Status: WIRED in SpawnCircuitBreaker constructor
+#     Files:  Lifecycle/SpawnCircuitBreaker.cpp (lines 25-37)
+#
+###############################################################################
+
+#
+#    Playerbot.CircuitBreaker.OpenThresholdPercent
+#        Failure rate to open circuit breaker
+#        Default: 10.0
+#
+Playerbot.CircuitBreaker.OpenThresholdPercent = 10.0
+
+#
+#    Playerbot.CircuitBreaker.CloseThresholdPercent
+#        Failure rate to close circuit breaker
+#        Default: 5.0
+#
+Playerbot.CircuitBreaker.CloseThresholdPercent = 5.0
+
+#
+#    Playerbot.CircuitBreaker.CooldownSeconds
+#        Cooldown after opening circuit
+#        Default: 60
+#
+Playerbot.CircuitBreaker.CooldownSeconds = 60
+
+#
+#    Playerbot.CircuitBreaker.RecoveryWindowSeconds
+#        Recovery window duration
+#        Default: 120
+#
+Playerbot.CircuitBreaker.RecoveryWindowSeconds = 120
+
+#
+#    Playerbot.CircuitBreaker.FailureWindowSeconds
+#        Failure tracking window
+#        Default: 60
+#
+Playerbot.CircuitBreaker.FailureWindowSeconds = 60
+
+#
+#    Playerbot.CircuitBreaker.MinimumSampleSize
+#        Minimum samples before evaluating
+#        Default: 20
+#
+Playerbot.CircuitBreaker.MinimumSampleSize = 20
+
+###############################################################################
+# B24. RESOURCE MONITOR [WIRED]
+#
+#     Status: WIRED in ResourceMonitor::LoadConfig()
+#     Files:  Lifecycle/ResourceMonitor.cpp (lines 93-103)
+#
+###############################################################################
+
+#
+#    Playerbot.ResourceMonitor.CpuThreshold.*
+#        CPU usage thresholds for resource states
+#
+Playerbot.ResourceMonitor.CpuThreshold.Elevated = 60.0
+Playerbot.ResourceMonitor.CpuThreshold.High = 75.0
+Playerbot.ResourceMonitor.CpuThreshold.Critical = 85.0
+
+#
+#    Playerbot.ResourceMonitor.MemoryThreshold.*
+#        Memory usage thresholds for resource states
+#
+Playerbot.ResourceMonitor.MemoryThreshold.Elevated = 70.0
+Playerbot.ResourceMonitor.MemoryThreshold.High = 80.0
+Playerbot.ResourceMonitor.MemoryThreshold.Critical = 90.0
+
+#
+#    Playerbot.ResourceMonitor.DbConnectionThreshold
+#        Database connection threshold
+#        Default: 80.0
+#
+Playerbot.ResourceMonitor.DbConnectionThreshold = 80.0
+
+###############################################################################
+# B25. RESOURCE POOL [WIRED]
+#
+#     Status: WIRED in BotResourcePool::Initialize()
+#     Files:  Lifecycle/BotResourcePool.cpp (lines 40-41)
+#
+###############################################################################
+
+#
+#    Playerbot.Pool.MaxSize
+#        Maximum resource pool size
+#        Default: 1000
+#
+Playerbot.Pool.MaxSize = 1000
+
+#
+#    Playerbot.Pool.MinSize
+#        Minimum resource pool size
+#        Default: 50
+#
+Playerbot.Pool.MinSize = 50
+
+###############################################################################
+# B26. DRAGONRIDING [WIRED]
+#
+#     Status: WIRED in DragonridingMgr::LoadConfig()
+#     Files:  Dragonriding/DragonridingMgr.cpp (lines 109-117)
+#
+###############################################################################
+
+#
+#    Playerbot.Dragonriding.Enable
+#        Enable dragonriding for bots
+#        Default: 1
+#
+Playerbot.Dragonriding.Enable = 1
+
+#
+#    Playerbot.Dragonriding.ProgressionEnabled
+#        Enable glyph progression
+#        Default: 1
+#
+Playerbot.Dragonriding.ProgressionEnabled = 1
+
+#
+#    Playerbot.Dragonriding.StartingGlyphs
+#        Number of starting glyphs for new bots
+#        Default: 0
+#
+Playerbot.Dragonriding.StartingGlyphs = 0
+
+#
+#    Playerbot.Dragonriding.BotAutoBoost
+#        Auto-boost bots to max dragonriding
+#        Default: 1
+#
+Playerbot.Dragonriding.BotAutoBoost = 1
+
+#
+#    Playerbot.Dragonriding.ThrillSpeedThreshold
+#        Speed threshold for Thrill of the Skies (percentage)
+#        Default: 100.0
+#
+Playerbot.Dragonriding.ThrillSpeedThreshold = 100.0
+
+#
+#    Playerbot.Dragonriding.GroundSkimHeight
+#        Height for ground skimming ability
+#        Default: 5.0
+#
+Playerbot.Dragonriding.GroundSkimHeight = 5.0
+
+################################################################################
+#
+#                    ===== END OF CONFIGURATION FILE =====
+#
+#  Summary:
+#    Section A (Active):  Core settings, spawning, database, and AI
+#    Section B (Wired):   Subsystem-specific configuration (B1-B26)
+#
+#  Config Status: 26 subsystems wired, 43% complete
+#
+#  For implementation plans and feature roadmap, see:
+#    docs/PLAYERBOT_IMPLEMENTATION_ROADMAP.md
+#
+################################################################################

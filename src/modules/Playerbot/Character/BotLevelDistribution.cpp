@@ -35,7 +35,7 @@ BotLevelDistribution* BotLevelDistribution::instance()
 
 bool BotLevelDistribution::LoadConfig()
 {
-    TC_LOG_INFO("playerbot", "BotLevelDistribution: Loading configuration...");
+    TC_LOG_INFO("playerbot", "BotLevelDistribution: Loading configuration (tier-based)...");
 
     m_enabled = sPlayerbotConfig->GetBool("Playerbot.Population.Enabled", false);
     if (!m_enabled)
@@ -44,7 +44,6 @@ bool BotLevelDistribution::LoadConfig()
         return false;
     }
 
-    m_numBrackets = sPlayerbotConfig->GetInt("Playerbot.Population.NumBrackets", 17);
     m_dynamicDistribution = sPlayerbotConfig->GetBool("Playerbot.Population.DynamicDistribution", false);
     m_realPlayerWeight = sPlayerbotConfig->GetFloat("Playerbot.Population.RealPlayerWeight", 1.0f);
     m_syncFactions = sPlayerbotConfig->GetBool("Playerbot.Population.SyncFactions", false);
@@ -52,12 +51,15 @@ bool BotLevelDistribution::LoadConfig()
     // Clear existing data
     m_allianceBrackets.clear();
     m_hordeBrackets.clear();
-    m_allianceLevelMap.clear();
-    m_hordeLevelMap.clear();
 
-    // Load brackets for both factions
-    LoadBrackets(TEAM_ALLIANCE, "Playerbot.Population.Alliance");
-    LoadBrackets(TEAM_HORDE, "Playerbot.Population.Horde");
+    // Initialize ZoneLevelHelper if not already done
+    if (!sZoneLevelHelper.IsInitialized())
+    {
+        sZoneLevelHelper.Initialize();
+    }
+
+    // Build tiers from ZoneLevelHelper (ContentTuning DB2)
+    BuildTiersFromZoneLevelHelper();
 
     // Validate configuration
     if (!ValidateConfig())
@@ -67,99 +69,76 @@ bool BotLevelDistribution::LoadConfig()
         return false;
     }
 
-    // Normalize percentages to ensure they sum to 100%
-    NormalizeBracketPercentages();
-
     m_loaded = true;
-    TC_LOG_INFO("playerbot", "BotLevelDistribution: Loaded {} brackets for Alliance, {} for Horde",
-        m_allianceBrackets.size(), m_hordeBrackets.size());
+    TC_LOG_INFO("playerbot", "BotLevelDistribution: Loaded {} expansion tiers for both factions",
+        NUM_TIERS);
 
     PrintDistributionReport();
     return true;
 }
 
-void BotLevelDistribution::LoadBrackets(TeamId faction, ::std::string const& prefix)
+void BotLevelDistribution::BuildTiersFromZoneLevelHelper()
 {
-    auto& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
-    auto& levelMap = (faction == TEAM_ALLIANCE) ? m_allianceLevelMap : m_hordeLevelMap;
+    // Get expansion tier configs from ZoneLevelHelper
+    auto const& tierConfigs = sZoneLevelHelper.GetExpansionTiers();
 
-    for (uint32 i = 1; i <= m_numBrackets; ++i)
+    // Initialize both factions with the same tier structure
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        ::std::string rangeKey;
-        rangeKey.reserve(32);
-        rangeKey = prefix;
-        rangeKey += ".Range";
-        rangeKey += ::std::to_string(i);
+        ExpansionTierConfig const& config = tierConfigs[i];
 
-        uint32 minLevel = sPlayerbotConfig->GetInt(rangeKey + ".Min", 0);
-        uint32 maxLevel = sPlayerbotConfig->GetInt(rangeKey + ".Max", 0);
-        float percentage = sPlayerbotConfig->GetFloat(rangeKey + ".Pct", 0.0f);
+        // Alliance tier
+        m_allianceTiers[i].tier = config.tier;
+        m_allianceTiers[i].minLevel = config.levels.minLevel;
+        m_allianceTiers[i].maxLevel = config.levels.maxLevel;
+        m_allianceTiers[i].targetPercentage = config.targetPercentage;
+        m_allianceTiers[i].faction = TEAM_ALLIANCE;
+        m_allianceTiers[i].SetCount(0);
 
-        // Skip invalid brackets
-    if (minLevel == 0 || maxLevel == 0 || percentage == 0.0f)
-        {
-            TC_LOG_DEBUG("playerbot", "BotLevelDistribution: Skipping invalid bracket {} (min={}, max={}, pct={})",
-                i, minLevel, maxLevel, percentage);
-            continue;
-        }
+        // Horde tier (same levels, different faction)
+        m_hordeTiers[i].tier = config.tier;
+        m_hordeTiers[i].minLevel = config.levels.minLevel;
+        m_hordeTiers[i].maxLevel = config.levels.maxLevel;
+        m_hordeTiers[i].targetPercentage = config.targetPercentage;
+        m_hordeTiers[i].faction = TEAM_HORDE;
+        m_hordeTiers[i].SetCount(0);
 
-        // Validate bracket
-    if (minLevel > maxLevel)
-        {
-            TC_LOG_ERROR("playerbot", "BotLevelDistribution: Invalid bracket {} - minLevel ({}) > maxLevel ({})",
-                i, minLevel, maxLevel);
-            continue;
-        }
+        // Add to vector-based storage for interface compatibility
+        m_allianceBrackets.push_back(m_allianceTiers[i]);
+        m_hordeBrackets.push_back(m_hordeTiers[i]);
 
-        if (minLevel > 80 || maxLevel > 80)
-        {
-            TC_LOG_ERROR("playerbot", "BotLevelDistribution: Invalid bracket {} - levels exceed max (80)",
-                i);
-            continue;
-        }
+        TC_LOG_DEBUG("playerbot", "BotLevelDistribution: Tier {} ({}): L{}-{}, {}%",
+            i, config.name, config.levels.minLevel, config.levels.maxLevel,
+            config.targetPercentage);
+    }
 
-        // Create bracket
-        LevelBracket bracket;
-        bracket.minLevel = minLevel;
-        bracket.maxLevel = maxLevel;
-        bracket.targetPercentage = percentage;
-        bracket.faction = faction;
-
-        brackets.push_back(bracket);
-
-        // Build level lookup map
-    for (uint32 level = minLevel; level <= maxLevel; ++level)
-        {
-            levelMap[level] = brackets.size() - 1;
-        }
-
-        TC_LOG_DEBUG("playerbot", "BotLevelDistribution: Loaded bracket {}: Levels {}-{}, Target {}%",
-            i, minLevel, maxLevel, percentage);
+    // Build level-to-tier lookup table
+    m_levelToTierIndex.fill(0);  // Default to Starting tier
+    for (uint32 level = 1; level <= 80; ++level)
+    {
+        ExpansionTier tier = sZoneLevelHelper.GetTierForLevel(static_cast<int16>(level));
+        m_levelToTierIndex[level] = static_cast<size_t>(tier);
     }
 }
 
 bool BotLevelDistribution::ValidateConfig() const
 {
-    // Check Alliance brackets
-    if (m_allianceBrackets.empty())
+    // Validate tier coverage
+    if (m_allianceTiers.empty() || m_hordeTiers.empty())
     {
-        TC_LOG_ERROR("playerbot", "BotLevelDistribution: No Alliance brackets configured");
-        return false;
-    }
-
-    // Check Horde brackets
-    if (m_hordeBrackets.empty())
-    {
-        TC_LOG_ERROR("playerbot", "BotLevelDistribution: No Horde brackets configured");
+        TC_LOG_ERROR("playerbot", "BotLevelDistribution: No tiers initialized");
         return false;
     }
 
     // Validate percentage sums
-    float allianceSum = ::std::accumulate(m_allianceBrackets.begin(), m_allianceBrackets.end(), 0.0f,
-        [](float sum, LevelBracket const& bracket) { return sum + bracket.targetPercentage; });
+    float allianceSum = 0.0f;
+    float hordeSum = 0.0f;
 
-    float hordeSum = ::std::accumulate(m_hordeBrackets.begin(), m_hordeBrackets.end(), 0.0f,
-        [](float sum, LevelBracket const& bracket) { return sum + bracket.targetPercentage; });
+    for (size_t i = 0; i < NUM_TIERS; ++i)
+    {
+        allianceSum += m_allianceTiers[i].targetPercentage;
+        hordeSum += m_hordeTiers[i].targetPercentage;
+    }
 
     if (::std::abs(allianceSum - 100.0f) > 1.0f)
     {
@@ -173,59 +152,26 @@ bool BotLevelDistribution::ValidateConfig() const
             hordeSum);
     }
 
-    // Check for level coverage
+    // Verify all levels 1-80 have tier coverage
     for (uint32 level = 1; level <= 80; ++level)
     {
-        if (m_allianceLevelMap.find(level) == m_allianceLevelMap.end())
+        if (m_levelToTierIndex[level] >= NUM_TIERS)
         {
-            TC_LOG_WARN("playerbot", "BotLevelDistribution: Alliance missing coverage for level {}", level);
-        }
-
-        if (m_hordeLevelMap.find(level) == m_hordeLevelMap.end())
-        {
-            TC_LOG_WARN("playerbot", "BotLevelDistribution: Horde missing coverage for level {}", level);
+            TC_LOG_ERROR("playerbot", "BotLevelDistribution: Level {} has invalid tier index", level);
+            return false;
         }
     }
 
     return true;
 }
 
-void BotLevelDistribution::NormalizeBracketPercentages()
-{
-    // Normalize Alliance
-    float allianceSum = ::std::accumulate(m_allianceBrackets.begin(), m_allianceBrackets.end(), 0.0f,
-        [](float sum, LevelBracket const& bracket) { return sum + bracket.targetPercentage; });
-
-    if (allianceSum > 0.0f && ::std::abs(allianceSum - 100.0f) > 0.01f)
-    {
-        float factor = 100.0f / allianceSum;
-        for (auto& bracket : m_allianceBrackets)
-        {
-            bracket.targetPercentage *= factor;
-        }
-        TC_LOG_INFO("playerbot", "BotLevelDistribution: Normalized Alliance percentages (sum was {:.2f}%)",
-            allianceSum);
-    }
-
-    // Normalize Horde
-    float hordeSum = ::std::accumulate(m_hordeBrackets.begin(), m_hordeBrackets.end(), 0.0f,
-        [](float sum, LevelBracket const& bracket) { return sum + bracket.targetPercentage; });
-
-    if (hordeSum > 0.0f && ::std::abs(hordeSum - 100.0f) > 0.01f)
-    {
-        float factor = 100.0f / hordeSum;
-        for (auto& bracket : m_hordeBrackets)
-        {
-            bracket.targetPercentage *= factor;
-        }
-        TC_LOG_INFO("playerbot", "BotLevelDistribution: Normalized Horde percentages (sum was {:.2f}%)",
-            hordeSum);
-    }
-}
-
 void BotLevelDistribution::ReloadConfig()
 {
     TC_LOG_INFO("playerbot", "BotLevelDistribution: Reloading configuration...");
+
+    // Refresh ZoneLevelHelper cache
+    sZoneLevelHelper.RefreshCache();
+
     LoadConfig();
 }
 
@@ -234,23 +180,18 @@ LevelBracket const* BotLevelDistribution::SelectBracket(TeamId faction) const
     if (!m_loaded)
         return nullptr;
 
-    auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
-    if (brackets.empty())
-        return nullptr;
-
     // Use weighted selection based on priority (deviation from target)
     return SelectBracketWeighted(faction);
 }
 
 LevelBracket const* BotLevelDistribution::SelectBracketWeighted(TeamId faction) const
 {
-    auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
-    if (brackets.empty())
-        return nullptr;
+    auto const& tiers = (faction == TEAM_ALLIANCE) ? m_allianceTiers : m_hordeTiers;
 
     // Calculate total bots for this faction
-    uint32 totalBots = ::std::accumulate(brackets.begin(), brackets.end(), 0u,
-        [](uint32 sum, LevelBracket const& bracket) { return sum + bracket.GetCount(); });
+    uint32 totalBots = 0;
+    for (size_t i = 0; i < NUM_TIERS; ++i)
+        totalBots += tiers[i].GetCount();
 
     // If no bots yet, use target distribution
     if (totalBots == 0)
@@ -258,49 +199,51 @@ LevelBracket const* BotLevelDistribution::SelectBracketWeighted(TeamId faction) 
         float random = static_cast<float>(rand()) / RAND_MAX * 100.0f;
         float cumulative = 0.0f;
 
-        for (auto const& bracket : brackets)
+        for (size_t i = 0; i < NUM_TIERS; ++i)
         {
-            cumulative += bracket.targetPercentage;
+            cumulative += tiers[i].targetPercentage;
             if (random <= cumulative)
-                return &bracket;
+                return &tiers[i];
         }
 
-        return &brackets.back();
+        return &tiers[NUM_TIERS - 1];
     }
 
     // Calculate priorities (negative deviation = needs more bots)
-    ::std::vector<float> priorities;
-    priorities.reserve(brackets.size());
+    ::std::array<float, NUM_TIERS> priorities;
 
-    for (auto const& bracket : brackets)
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        float priority = bracket.GetSelectionPriority(totalBots);
-        // Boost priority for underpopulated brackets
-    if (priority > 0.0f)
+        float priority = tiers[i].GetSelectionPriority(totalBots);
+        // Boost priority for underpopulated tiers
+        if (priority > 0.0f)
             priority *= 2.0f;  // Double weight for underpopulated
         else
             priority = 0.01f;  // Minimal chance for overpopulated
 
-        priorities.push_back(priority);
+        priorities[i] = priority;
     }
 
     // Normalize priorities to probabilities
-    float totalPriority = ::std::accumulate(priorities.begin(), priorities.end(), 0.0f);
-    if (totalPriority <= 0.0f)
-        return &brackets[rand() % brackets.size()];
+    float totalPriority = 0.0f;
+    for (size_t i = 0; i < NUM_TIERS; ++i)
+        totalPriority += priorities[i];
 
-    // Select bracket by weighted random
+    if (totalPriority <= 0.0f)
+        return &tiers[rand() % NUM_TIERS];
+
+    // Select tier by weighted random
     float random = static_cast<float>(rand()) / RAND_MAX * totalPriority;
     float cumulative = 0.0f;
 
-    for (size_t i = 0; i < brackets.size(); ++i)
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
         cumulative += priorities[i];
         if (random <= cumulative)
-            return &brackets[i];
+            return &tiers[i];
     }
 
-    return &brackets.back();
+    return &tiers[NUM_TIERS - 1];
 }
 
 LevelBracket const* BotLevelDistribution::GetBracketForLevel(uint32 level, TeamId faction) const
@@ -308,16 +251,40 @@ LevelBracket const* BotLevelDistribution::GetBracketForLevel(uint32 level, TeamI
     if (!m_loaded || level == 0 || level > 80)
         return nullptr;
 
-    auto const& levelMap = (faction == TEAM_ALLIANCE) ? m_allianceLevelMap : m_hordeLevelMap;
-    auto it = levelMap.find(level);
-    if (it == levelMap.end())
+    size_t tierIndex = m_levelToTierIndex[level];
+    if (tierIndex >= NUM_TIERS)
         return nullptr;
 
-    auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
-    if (it->second >= brackets.size())
+    auto const& tiers = (faction == TEAM_ALLIANCE) ? m_allianceTiers : m_hordeTiers;
+    return &tiers[tierIndex];
+}
+
+LevelBracket const* BotLevelDistribution::SelectTier(TeamId faction, ExpansionTier tier) const
+{
+    if (!m_loaded)
         return nullptr;
 
-    return &brackets[it->second];
+    size_t tierIndex = static_cast<size_t>(tier);
+    if (tierIndex >= NUM_TIERS)
+        return nullptr;
+
+    auto const& tiers = (faction == TEAM_ALLIANCE) ? m_allianceTiers : m_hordeTiers;
+    return &tiers[tierIndex];
+}
+
+LevelBracket const* BotLevelDistribution::GetBracketForTier(ExpansionTier tier, TeamId faction) const
+{
+    return SelectTier(faction, tier);
+}
+
+bool BotLevelDistribution::IsLevelValidForZone(uint32 level, uint32 zoneId) const
+{
+    return sZoneLevelHelper.IsLevelValidForZone(zoneId, static_cast<int16>(level));
+}
+
+uint32 BotLevelDistribution::GetRecommendedLevelForZone(uint32 zoneId) const
+{
+    return static_cast<uint32>(sZoneLevelHelper.GetRecommendedSpawnLevel(zoneId));
 }
 
 void BotLevelDistribution::IncrementBracket(uint32 level, TeamId faction)
@@ -336,30 +303,20 @@ void BotLevelDistribution::RecalculateDistribution()
 {
     TC_LOG_INFO("playerbot", "BotLevelDistribution: Recalculating distribution from active bot sessions...");
 
-    // Phase 1: Reset all bracket counters to 0
-    for (auto& bracket : m_allianceBrackets)
+    // Phase 1: Reset all tier counters to 0
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        bracket.SetCount(0);
-    }
-    for (auto& bracket : m_hordeBrackets)
-    {
-        bracket.SetCount(0);
+        m_allianceTiers[i].SetCount(0);
+        m_hordeTiers[i].SetCount(0);
     }
 
-    // Phase 2: Count bots by level and faction from BotSessionMgr
-    // Get all active sessions and count bots
+    // Phase 2: Count bots by level and faction from database
     uint32 allianceTotal = 0;
     uint32 hordeTotal = 0;
     uint32 skippedNoPlayer = 0;
     uint32 skippedInvalidLevel = 0;
 
-    // Access the session manager to iterate sessions
-    // Note: BotSessionMgr provides GetActiveSessionCount() but no direct iteration
-    // We need to query the database for bot character levels and factions instead
-    // This is more reliable as it doesn't depend on session state
-
     // Query database for all bot characters with their levels and factions
-    // Use the characters database to get accurate counts
     QueryResult result = CharacterDatabase.Query(
         "SELECT c.level, c.race FROM characters c "
         "JOIN account a ON c.account = a.id "
@@ -371,8 +328,6 @@ void BotLevelDistribution::RecalculateDistribution()
     {
         TC_LOG_DEBUG("playerbot", "BotLevelDistribution: No online bot characters found in database");
 
-        // Alternative: Try to get counts from config defaults if no online bots
-        // This ensures the system has valid baseline data
         DistributionStats stats = GetDistributionStats();
         TC_LOG_INFO("playerbot", "BotLevelDistribution: Recalculation complete - Alliance: {}, Horde: {}, Total: {}",
             stats.allianceBots, stats.hordeBots, stats.totalBots);
@@ -393,48 +348,26 @@ void BotLevelDistribution::RecalculateDistribution()
         }
 
         // Determine faction from race
-        // Alliance races: Human(1), Dwarf(3), Night Elf(4), Gnome(7), Draenei(11), Worgen(22)
-        // Horde races: Orc(2), Undead(5), Tauren(6), Troll(8), Blood Elf(10), Goblin(9)
-        // Pandaren(24,25,26) can be either faction
         TeamId faction;
         switch (race)
         {
-            case 1:  // Human
-            case 3:  // Dwarf
-            case 4:  // Night Elf
-            case 7:  // Gnome
-            case 11: // Draenei
-            case 22: // Worgen
-            case 25: // Alliance Pandaren
-            case 29: // Void Elf
-            case 30: // Lightforged Draenei
-            case 32: // Kul Tiran
-            case 34: // Dark Iron Dwarf
-            case 37: // Mechagnome
+            case 1: case 3: case 4: case 7: case 11: case 22:  // Classic Alliance
+            case 25: case 29: case 30: case 32: case 34: case 37:  // Allied Alliance
+            case 52: case 70: case 84: case 85:  // Dracthyr, Earthen
                 faction = TEAM_ALLIANCE;
                 break;
-            case 2:  // Orc
-            case 5:  // Undead
-            case 6:  // Tauren
-            case 8:  // Troll
-            case 9:  // Goblin
-            case 10: // Blood Elf
-            case 26: // Horde Pandaren
-            case 27: // Nightborne
-            case 28: // Highmountain Tauren
-            case 31: // Zandalari Troll
-            case 35: // Mag'har Orc
-            case 36: // Vulpera
+            case 2: case 5: case 6: case 8: case 9: case 10:  // Classic Horde
+            case 26: case 27: case 28: case 31: case 35: case 36:  // Allied Horde
+            case 53:  // Dracthyr Horde
                 faction = TEAM_HORDE;
                 break;
             default:
-                // Neutral pandaren or unknown race - default to Alliance
                 faction = TEAM_ALLIANCE;
                 TC_LOG_DEBUG("playerbot", "BotLevelDistribution: Unknown race {} defaulting to Alliance", race);
                 break;
         }
 
-        // Find and increment the appropriate bracket
+        // Find and increment the appropriate tier
         LevelBracket const* bracket = GetBracketForLevel(level, faction);
         if (bracket)
         {
@@ -446,7 +379,7 @@ void BotLevelDistribution::RecalculateDistribution()
         }
         else
         {
-            TC_LOG_DEBUG("playerbot", "BotLevelDistribution: No bracket found for level {} faction {}",
+            TC_LOG_DEBUG("playerbot", "BotLevelDistribution: No tier found for level {} faction {}",
                 level, faction == TEAM_ALLIANCE ? "Alliance" : "Horde");
         }
     } while (result->NextRow());
@@ -466,36 +399,36 @@ void BotLevelDistribution::RecalculateDistribution()
 
     // Phase 4: Log distribution status
     DistributionStats stats = GetDistributionStats();
-    TC_LOG_INFO("playerbot", "BotLevelDistribution: Distribution balance - {}/{} brackets within tolerance, avg deviation: {:.1f}%",
+    TC_LOG_INFO("playerbot", "BotLevelDistribution: Distribution balance - {}/{} tiers within tolerance, avg deviation: {:.1f}%",
         stats.bracketsWithinTolerance, stats.totalBrackets, stats.averageDeviation * 100.0f);
 
     if (!stats.mostUnderpopulatedBracket.empty())
     {
-        TC_LOG_INFO("playerbot", "BotLevelDistribution: Most underpopulated bracket: {}", stats.mostUnderpopulatedBracket);
+        TC_LOG_INFO("playerbot", "BotLevelDistribution: Most underpopulated tier: {}", stats.mostUnderpopulatedBracket);
     }
     if (!stats.mostOverpopulatedBracket.empty())
     {
-        TC_LOG_INFO("playerbot", "BotLevelDistribution: Most overpopulated bracket: {}", stats.mostOverpopulatedBracket);
+        TC_LOG_INFO("playerbot", "BotLevelDistribution: Most overpopulated tier: {}", stats.mostOverpopulatedBracket);
     }
 }
 
 DistributionStats BotLevelDistribution::GetDistributionStats() const
 {
     DistributionStats stats{};
-    stats.totalBrackets = m_allianceBrackets.size() + m_hordeBrackets.size();
+    stats.totalBrackets = NUM_TIERS * 2;  // 4 tiers per faction
 
     // Calculate Alliance stats
-    for (auto const& bracket : m_allianceBrackets)
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        uint32 count = bracket.GetCount();
+        uint32 count = m_allianceTiers[i].GetCount();
         stats.allianceBots += count;
         stats.totalBots += count;
     }
 
     // Calculate Horde stats
-    for (auto const& bracket : m_hordeBrackets)
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        uint32 count = bracket.GetCount();
+        uint32 count = m_hordeTiers[i].GetCount();
         stats.hordeBots += count;
         stats.totalBots += count;
     }
@@ -503,44 +436,40 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
     // Calculate deviation statistics
     ::std::vector<float> deviations;
     float maxDeviation = 0.0f;
-    float maxDevBracket = 0.0f;
+    float maxDevValue = 0.0f;
     ::std::string maxDevName;
 
-    for (auto const& bracket : m_allianceBrackets)
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        if (bracket.IsWithinTolerance(stats.allianceBots))
+        LevelBracket const& tier = m_allianceTiers[i];
+        if (tier.IsWithinTolerance(stats.allianceBots))
             ++stats.bracketsWithinTolerance;
 
-        float deviation = ::std::abs(bracket.GetDeviation(stats.allianceBots));
+        float deviation = ::std::abs(tier.GetDeviation(stats.allianceBots));
         deviations.push_back(deviation);
 
         if (deviation > maxDeviation)
         {
             maxDeviation = deviation;
-            maxDevBracket = bracket.GetDeviation(stats.allianceBots);
-            maxDevName = "Alliance L";
-            maxDevName += ::std::to_string(bracket.minLevel);
-            maxDevName += "-";
-            maxDevName += ::std::to_string(bracket.maxLevel);
+            maxDevValue = tier.GetDeviation(stats.allianceBots);
+            maxDevName = "Alliance " + tier.GetTierName();
         }
     }
 
-    for (auto const& bracket : m_hordeBrackets)
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        if (bracket.IsWithinTolerance(stats.hordeBots))
+        LevelBracket const& tier = m_hordeTiers[i];
+        if (tier.IsWithinTolerance(stats.hordeBots))
             ++stats.bracketsWithinTolerance;
 
-        float deviation = ::std::abs(bracket.GetDeviation(stats.hordeBots));
+        float deviation = ::std::abs(tier.GetDeviation(stats.hordeBots));
         deviations.push_back(deviation);
 
         if (deviation > maxDeviation)
         {
             maxDeviation = deviation;
-            maxDevBracket = bracket.GetDeviation(stats.hordeBots);
-            maxDevName = "Horde L";
-            maxDevName += ::std::to_string(bracket.minLevel);
-            maxDevName += "-";
-            maxDevName += ::std::to_string(bracket.maxLevel);
+            maxDevValue = tier.GetDeviation(stats.hordeBots);
+            maxDevName = "Horde " + tier.GetTierName();
         }
     }
 
@@ -548,7 +477,7 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
         ::std::accumulate(deviations.begin(), deviations.end(), 0.0f) / deviations.size();
     stats.maxDeviation = maxDeviation;
 
-    if (maxDevBracket > 0.0f)
+    if (maxDevValue > 0.0f)
         stats.mostOverpopulatedBracket = maxDevName;
     else
         stats.mostUnderpopulatedBracket = maxDevName;
@@ -559,18 +488,19 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
 ::std::vector<LevelBracket const*> BotLevelDistribution::GetUnderpopulatedBrackets(TeamId faction) const
 {
     ::std::vector<LevelBracket const*> result;
-    auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
+    auto const& tiers = (faction == TEAM_ALLIANCE) ? m_allianceTiers : m_hordeTiers;
 
-    uint32 totalBots = ::std::accumulate(brackets.begin(), brackets.end(), 0u,
-        [](uint32 sum, LevelBracket const& bracket) { return sum + bracket.GetCount(); });
+    uint32 totalBots = 0;
+    for (size_t i = 0; i < NUM_TIERS; ++i)
+        totalBots += tiers[i].GetCount();
 
     if (totalBots == 0)
         return result;
 
-    for (auto const& bracket : brackets)
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        if (!bracket.IsWithinTolerance(totalBots) && bracket.GetDeviation(totalBots) < 0.0f)
-            result.push_back(&bracket);
+        if (!tiers[i].IsWithinTolerance(totalBots) && tiers[i].GetDeviation(totalBots) < 0.0f)
+            result.push_back(&tiers[i]);
     }
 
     // Sort by priority (most underpopulated first)
@@ -585,18 +515,19 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
 ::std::vector<LevelBracket const*> BotLevelDistribution::GetOverpopulatedBrackets(TeamId faction) const
 {
     ::std::vector<LevelBracket const*> result;
-    auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
+    auto const& tiers = (faction == TEAM_ALLIANCE) ? m_allianceTiers : m_hordeTiers;
 
-    uint32 totalBots = ::std::accumulate(brackets.begin(), brackets.end(), 0u,
-        [](uint32 sum, LevelBracket const& bracket) { return sum + bracket.GetCount(); });
+    uint32 totalBots = 0;
+    for (size_t i = 0; i < NUM_TIERS; ++i)
+        totalBots += tiers[i].GetCount();
 
     if (totalBots == 0)
         return result;
 
-    for (auto const& bracket : brackets)
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        if (!bracket.IsWithinTolerance(totalBots) && bracket.GetDeviation(totalBots) > 0.0f)
-            result.push_back(&bracket);
+        if (!tiers[i].IsWithinTolerance(totalBots) && tiers[i].GetDeviation(totalBots) > 0.0f)
+            result.push_back(&tiers[i]);
     }
 
     // Sort by deviation (most overpopulated first)
@@ -610,16 +541,18 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
 
 bool BotLevelDistribution::IsDistributionBalanced(TeamId faction) const
 {
-    auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
+    auto const& tiers = (faction == TEAM_ALLIANCE) ? m_allianceTiers : m_hordeTiers;
 
-    uint32 totalBots = ::std::accumulate(brackets.begin(), brackets.end(), 0u,
-        [](uint32 sum, LevelBracket const& bracket) { return sum + bracket.GetCount(); });
+    uint32 totalBots = 0;
+    for (size_t i = 0; i < NUM_TIERS; ++i)
+        totalBots += tiers[i].GetCount();
 
     if (totalBots == 0)
         return true;  // Empty is considered balanced
-    for (auto const& bracket : brackets)
+
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        if (!bracket.IsWithinTolerance(totalBots))
+        if (!tiers[i].IsWithinTolerance(totalBots))
             return false;
     }
 
@@ -628,38 +561,39 @@ bool BotLevelDistribution::IsDistributionBalanced(TeamId faction) const
 
 void BotLevelDistribution::PrintDistributionReport() const
 {
-    TC_LOG_INFO("playerbot", "====================================");
-    TC_LOG_INFO("playerbot", "Bot Level Distribution Configuration");
-    TC_LOG_INFO("playerbot", "====================================");
+    TC_LOG_INFO("playerbot", "==============================================");
+    TC_LOG_INFO("playerbot", "Bot Level Distribution (Expansion Tier-Based)");
+    TC_LOG_INFO("playerbot", "==============================================");
     TC_LOG_INFO("playerbot", "Enabled: {}", m_enabled ? "YES" : "NO");
-    TC_LOG_INFO("playerbot", "Brackets: {}", m_numBrackets);
+    TC_LOG_INFO("playerbot", "Tiers: {} (ContentTuning DB2-based)", NUM_TIERS);
     TC_LOG_INFO("playerbot", "Dynamic Distribution: {}", m_dynamicDistribution ? "YES" : "NO");
     TC_LOG_INFO("playerbot", "Tolerance: ±15%");
     TC_LOG_INFO("playerbot", "");
 
-    // Alliance brackets
-    TC_LOG_INFO("playerbot", "Alliance Brackets:");
-    for (auto const& bracket : m_allianceBrackets)
+    // Alliance tiers
+    TC_LOG_INFO("playerbot", "Alliance Tiers:");
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        TC_LOG_INFO("playerbot", "  L{}-{}: {:.1f}% {} {}",
-            bracket.minLevel, bracket.maxLevel, bracket.targetPercentage,
-            bracket.IsNaturalLeveling() ? "[NATURAL]" : "",
-            bracket.SupportsDualSpec() ? "[DUAL-SPEC]" : "");
+        LevelBracket const& tier = m_allianceTiers[i];
+        TC_LOG_INFO("playerbot", "  {} (L{}-{}): {:.1f}%",
+            tier.GetTierName(), tier.minLevel, tier.maxLevel, tier.targetPercentage);
     }
 
     TC_LOG_INFO("playerbot", "");
 
-    // Horde brackets
-    TC_LOG_INFO("playerbot", "Horde Brackets:");
-    for (auto const& bracket : m_hordeBrackets)
+    // Horde tiers
+    TC_LOG_INFO("playerbot", "Horde Tiers:");
+    for (size_t i = 0; i < NUM_TIERS; ++i)
     {
-        TC_LOG_INFO("playerbot", "  L{}-{}: {:.1f}% {} {}",
-            bracket.minLevel, bracket.maxLevel, bracket.targetPercentage,
-            bracket.IsNaturalLeveling() ? "[NATURAL]" : "",
-            bracket.SupportsDualSpec() ? "[DUAL-SPEC]" : "");
+        LevelBracket const& tier = m_hordeTiers[i];
+        TC_LOG_INFO("playerbot", "  {} (L{}-{}): {:.1f}%",
+            tier.GetTierName(), tier.minLevel, tier.maxLevel, tier.targetPercentage);
     }
 
-    TC_LOG_INFO("playerbot", "====================================");
+    TC_LOG_INFO("playerbot", "");
+    TC_LOG_INFO("playerbot", "Zone Level Data: {} zones cached (via ContentTuning DB2)",
+        sZoneLevelHelper.GetCachedZoneCount());
+    TC_LOG_INFO("playerbot", "==============================================");
 }
 
 ::std::string BotLevelDistribution::GetDistributionSummary() const
@@ -670,10 +604,37 @@ void BotLevelDistribution::PrintDistributionReport() const
     oss << "Total Bots: " << stats.totalBots
         << " | Alliance: " << stats.allianceBots
         << " | Horde: " << stats.hordeBots
-        << " | Balanced: " << stats.bracketsWithinTolerance << "/" << stats.totalBrackets
+        << " | Balanced Tiers: " << stats.bracketsWithinTolerance << "/" << stats.totalBrackets
         << " | Avg Deviation: " << ::std::fixed << ::std::setprecision(1) << (stats.averageDeviation * 100.0f) << "%";
 
     return oss.str();
+}
+
+LevelBracket const* BotLevelDistribution::SelectByPriority(::std::vector<LevelBracket> const& brackets) const
+{
+    if (brackets.empty())
+        return nullptr;
+
+    // Calculate total bots
+    uint32 totalBots = 0;
+    for (auto const& bracket : brackets)
+        totalBots += bracket.GetCount();
+
+    // Find bracket with highest priority (most underpopulated)
+    LevelBracket const* best = &brackets[0];
+    float bestPriority = best->GetSelectionPriority(totalBots);
+
+    for (size_t i = 1; i < brackets.size(); ++i)
+    {
+        float priority = brackets[i].GetSelectionPriority(totalBots);
+        if (priority > bestPriority)
+        {
+            bestPriority = priority;
+            best = &brackets[i];
+        }
+    }
+
+    return best;
 }
 
 } // namespace Playerbot

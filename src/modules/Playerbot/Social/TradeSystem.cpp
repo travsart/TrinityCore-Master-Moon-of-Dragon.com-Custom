@@ -38,6 +38,7 @@
 #include "Cells/CellImpl.h"
 #include "Grids/Notifiers/GridNotifiers.h"
 #include "Grids/Notifiers/GridNotifiersImpl.h"
+#include "Config/PlayerbotTradeConfig.h"
 #include <algorithm>
 #include <cmath>
 
@@ -58,9 +59,20 @@ TradeSystem::TradeSystem(Player* bot) : _bot(bot)
     // Load vendor database on construction
     LoadVendorDatabase();
 
-    // Initialize default configuration
-    TradeConfiguration defaultConfig;
-    _playerConfigs[_bot->GetGUID().GetCounter()] = defaultConfig;
+    // Initialize configuration from PlayerbotTradeConfig for consistency
+    TradeConfiguration config;
+    config.autoAcceptTrades = PlayerbotTradeConfig::IsTradeAutoAcceptEnabled();
+    config.autoDeclineTrades = !PlayerbotTradeConfig::IsTradeEnabled();
+    config.acceptTradesFromGuildMembers = PlayerbotTradeConfig::IsTradeAutoAcceptGuildEnabled();
+    config.acceptTradesFromFriends = PlayerbotTradeConfig::IsTradeAutoAcceptWhitelistEnabled();
+    config.maxTradeValue = static_cast<uint32>(PlayerbotTradeConfig::GetTradeMaxGoldAmount());
+    config.acceptanceThreshold = 1.0f - PlayerbotTradeConfig::GetTradeValueTolerance();
+    config.requireItemAnalysis = PlayerbotTradeConfig::IsTradeScamProtectionEnabled();
+    config.enableTradeHistory = PlayerbotTradeConfig::IsStatisticsTrackingEnabled();
+    _playerConfigs[_bot->GetGUID().GetCounter()] = config;
+
+    TC_LOG_DEBUG("bot.trade", "TradeSystem created for bot {} with config from PlayerbotTradeConfig",
+        _bot->GetGUID().GetCounter());
 }
 
 TradeSystem::~TradeSystem()
@@ -110,8 +122,8 @@ bool TradeSystem::InitiateTrade(Player* initiator, Player* target)
     // Use TrinityCore's trade initiation
     initiator->InitiateTrade(target);
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Initiated trade session %u between %s and %s",
-                sessionId, initiator->GetName().c_str(), target->GetName().c_str());
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Initiated trade session {} between {} and {}",
+                sessionId, initiator->GetName(), target->GetName());
 
     return true;
 }
@@ -121,7 +133,7 @@ void TradeSystem::ProcessTradeRequest(uint32 sessionId, TradeDecision decision)
     auto it = _activeTrades.find(sessionId);
     if (it == _activeTrades.end())
     {
-        TC_LOG_ERROR("playerbot", "TradeSystem: Session %u not found", sessionId);
+        TC_LOG_ERROR("playerbot", "TradeSystem: Session {} not found", sessionId);
         return;
     }
 
@@ -231,7 +243,7 @@ void TradeSystem::CompleteTradeSession(uint32 sessionId)
     // Remove from active trades
     _activeTrades.erase(sessionId);
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Completed trade session %u", sessionId);
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Completed trade session {}", sessionId);
 }
 
 void TradeSystem::CancelTradeSession(uint32 sessionId)
@@ -261,7 +273,7 @@ void TradeSystem::CancelTradeSession(uint32 sessionId)
     // Remove from active trades
     _activeTrades.erase(sessionId);
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Cancelled trade session %u", sessionId);
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Cancelled trade session {}", sessionId);
 }
 
 // Player-to-player trading
@@ -365,7 +377,7 @@ void TradeSystem::LoadVendorDatabase()
     LoadInnkeepersFromDatabase();
     LoadRepairVendorsFromDatabase();
 
-    TC_LOG_INFO("playerbot", "TradeSystem: Loaded %zu vendors", _vendorDatabase.size());
+    TC_LOG_INFO("playerbot", "TradeSystem: Loaded {} vendors", _vendorDatabase.size());
 }
 
 std::vector<VendorInfo> TradeSystem::FindNearbyVendors(float radius)
@@ -483,15 +495,15 @@ void TradeSystem::ProcessVendorBuy(uint32 vendorGuid, uint32 itemId, uint32 coun
 
     if (!found)
     {
-        TC_LOG_ERROR("playerbot", "TradeSystem: Item %u not found in vendor %u", itemId, vendorGuid);
+        TC_LOG_ERROR("playerbot", "TradeSystem: Item {} not found in vendor {}", itemId, vendorGuid);
         return;
     }
 
     // Use TrinityCore's buy function
     _bot->BuyItemFromVendorSlot(vendor->GetGUID(), slot, itemId, count, 0, 0);
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot %s bought %u x %u from vendor %u",
-                _bot->GetName().c_str(), count, itemId, vendorGuid);
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot {} bought {} x {} from vendor {}",
+                _bot->GetName(), count, itemId, vendorGuid);
 }
 
 void TradeSystem::ProcessVendorSell(uint32 vendorGuid, uint32 itemGuid, uint32 count)
@@ -537,8 +549,8 @@ void TradeSystem::ProcessVendorSell(uint32 vendorGuid, uint32 itemGuid, uint32 c
     // Add money to player
     _bot->ModifyMoney(price);
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot %s sold %u x item to vendor %u for %u copper",
-                _bot->GetName().c_str(), count, vendorGuid, price);
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot {} sold {} x item to vendor {} for {} copper",
+                _bot->GetName(), count, vendorGuid, price);
 }
 
 bool TradeSystem::CanBuyFromVendor(uint32 vendorGuid, uint32 itemId)
@@ -584,7 +596,7 @@ void TradeSystem::AutoRepairEquipment()
     // Check if bot has enough money
     if (_bot->GetMoney() < repairCost)
     {
-        TC_LOG_DEBUG("playerbot", "TradeSystem: Not enough money for repairs (need %u, have %u)",
+        TC_LOG_DEBUG("playerbot", "TradeSystem: Not enough money for repairs (need {}, have {})",
                     repairCost, _bot->GetMoney());
         return;
     }
@@ -670,8 +682,8 @@ void TradeSystem::ProcessEquipmentRepair(uint32 vendorGuid)
     // Update metrics
     _globalMetrics.repairTransactions.fetch_add(1);
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot %s repaired equipment at vendor %u",
-                _bot->GetName().c_str(), vendorGuid);
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot {} repaired equipment at vendor {}",
+                _bot->GetName(), vendorGuid);
 }
 
 // Innkeeper services
@@ -697,8 +709,8 @@ void TradeSystem::InteractWithInnkeeper(uint32 innkeeperGuid)
         SetHearthstone(innkeeperGuid);
     }
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot %s interacted with innkeeper %u",
-                _bot->GetName().c_str(), innkeeperGuid);
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot {} interacted with innkeeper {}",
+                _bot->GetName(), innkeeperGuid);
 }
 
 std::vector<uint32> TradeSystem::FindNearbyInnkeepers(float radius)
@@ -989,8 +1001,8 @@ void TradeSystem::SetTradeConfiguration(const TradeConfiguration& config)
 
     _playerConfigs[_bot->GetGUID().GetCounter()] = config;
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Updated trade configuration for bot %s",
-                _bot->GetName().c_str());
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Updated trade configuration for bot {}",
+                _bot->GetName());
 }
 
 TradeConfiguration TradeSystem::GetTradeConfiguration()
@@ -1011,8 +1023,8 @@ void TradeSystem::Update(uint32 diff)
     static uint32 updateTimer = 0;
     updateTimer += diff;
 
-    // Process active trades every second
-    if (updateTimer >= TRADE_UPDATE_INTERVAL)
+    // Process active trades at configured interval
+    if (updateTimer >= PlayerbotTradeConfig::GetTradeUpdateInterval())
     {
         ProcessActiveTrades();
         CleanupExpiredTradeSessions();
@@ -1116,7 +1128,7 @@ VendorType TradeSystem::DetermineVendorType(const Creature* creature)
 void TradeSystem::InitializeTradeSession(TradeSession& session)
 {
     session.sessionStartTime = GameTime::GetGameTimeMS();
-    session.sessionTimeout = session.sessionStartTime + TRADE_SESSION_TIMEOUT;
+    session.sessionTimeout = session.sessionStartTime + PlayerbotTradeConfig::GetTradeTimeout();
     session.isActive = true;
 }
 
@@ -1209,10 +1221,10 @@ void TradeSystem::NotifyTradeParticipants(const TradeSession& session, const std
     Player* target = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(session.targetGuid));
 
     // Log the notification instead of sending system message
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Trade notification - %s (Session %u between %s and %s)",
-                message.c_str(), session.sessionId,
-                initiator ? initiator->GetName().c_str() : "Unknown",
-                target ? target->GetName().c_str() : "Unknown");
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Trade notification - {} (Session {} between {} and {})",
+                message, session.sessionId,
+                initiator ? initiator->GetName() : "Unknown",
+                target ? target->GetName() : "Unknown");
 }
 
 bool TradeSystem::NavigateToVendor(uint32 vendorGuid)
@@ -1256,7 +1268,7 @@ void TradeSystem::AnalyzeVendorInventory(const VendorInfo& vendor)
         if (proto)
         {
             // Store useful items for future reference
-            TC_LOG_DEBUG("playerbot", "TradeSystem: Vendor %u sells %s (id: %u)",
+            TC_LOG_DEBUG("playerbot", "TradeSystem: Vendor {} sells {} (id: {})",
                         vendor.creatureGuid, proto->GetDefaultLocaleName(), vItem.item);
         }
     }
@@ -1456,7 +1468,7 @@ void TradeSystem::UpdateScamDetectionDatabase(uint32 suspectedScammer)
     auto& history = _playerTradeHistory[_bot->GetGUID().GetCounter()];
     history.partnerTrustLevels[suspectedScammer] = 0.0f;
 
-    TC_LOG_WARN("playerbot", "TradeSystem: Player %u marked as suspected scammer", suspectedScammer);
+    TC_LOG_WARN("playerbot", "TradeSystem: Player {} marked as suspected scammer", suspectedScammer);
 }
 
 void TradeSystem::RefreshVendorData()
@@ -1554,9 +1566,9 @@ void TradeSystem::LogTradeTransaction(const TradeSession& session)
     std::string initiatorName = initiator ? initiator->GetName() : "Unknown";
     std::string targetName = target ? target->GetName() : "Unknown";
 
-    TC_LOG_INFO("playerbot", "TradeSystem: Trade completed - Session %u, %s <-> %s, "
-                "Items: %zu/%zu, Gold: %u/%u",
-                session.sessionId, initiatorName.c_str(), targetName.c_str(),
+    TC_LOG_INFO("playerbot", "TradeSystem: Trade completed - Session {}, {} <-> {}, "
+                "Items: {}/{}, Gold: {}/{}",
+                session.sessionId, initiatorName, targetName,
                 session.initiatorItems.size(), session.targetItems.size(),
                 session.initiatorGold, session.targetGold);
 }
@@ -1569,7 +1581,7 @@ void TradeSystem::HandleTradeTimeout(uint32 sessionId)
 
     TradeSession& session = it->second;
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Trade session %u timed out", sessionId);
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Trade session {} timed out", sessionId);
 
     // Update metrics
     auto& history = _playerTradeHistory[_bot->GetGUID().GetCounter()];
@@ -1685,8 +1697,8 @@ void TradeSystem::SetHearthstone(uint32 innkeeperGuid)
     // Set home bind
     _bot->SetHomebind(_bot->GetWorldLocation(), _bot->GetAreaId());
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot %s set hearthstone at innkeeper %u",
-                _bot->GetName().c_str(), innkeeperGuid);
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot {} set hearthstone at innkeeper {}",
+                _bot->GetName(), innkeeperGuid);
 }
 
 bool TradeSystem::CanUseInnkeeperServices(uint32 innkeeperGuid)
@@ -1738,8 +1750,8 @@ void TradeSystem::GenerateTradeRecommendation(uint32 sessionId)
         recommendation = "Trade neutral - consider negotiating";
     }
 
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Session %u recommendation: %s",
-                sessionId, recommendation.c_str());
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Session {} recommendation: {}",
+                sessionId, recommendation);
 }
 
 TradeDecision TradeSystem::MakeAutomatedTradeDecision(uint32 sessionId)
@@ -1756,8 +1768,8 @@ void TradeSystem::HandleTradeScamAttempt(Player* victim, Player* scammer)
     UpdateScamDetectionDatabase(scammer->GetGUID().GetCounter());
 
     // Log the attempt
-    TC_LOG_WARN("playerbot", "TradeSystem: Scam attempt detected - Victim: %s, Scammer: %s",
-                victim->GetName().c_str(), scammer->GetName().c_str());
+    TC_LOG_WARN("playerbot", "TradeSystem: Scam attempt detected - Victim: {}, Scammer: {}",
+                victim->GetName(), scammer->GetName());
 
     // Cancel any active trades with scammer
     for (auto& [sessionId, session] : _activeTrades)
@@ -1873,8 +1885,8 @@ void TradeSystem::HandleGuildBankInteraction(uint32 guildBankGuid)
         return;
 
     // This would interact with guild bank
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot %s interacting with guild bank",
-                _bot->GetName().c_str());
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot {} interacting with guild bank",
+                _bot->GetName());
 }
 
 void TradeSystem::ProcessGuildBankDeposit(uint32 itemGuid, uint32 count)
@@ -1891,8 +1903,8 @@ void TradeSystem::ProcessGuildBankDeposit(uint32 itemGuid, uint32 count)
         return;
 
     // This would deposit to guild bank
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot %s depositing item to guild bank",
-                _bot->GetName().c_str());
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot {} depositing item to guild bank",
+                _bot->GetName());
 }
 
 void TradeSystem::ProcessGuildBankWithdrawal(uint32 itemId, uint32 count)
@@ -1905,8 +1917,8 @@ void TradeSystem::ProcessGuildBankWithdrawal(uint32 itemId, uint32 count)
         return;
 
     // This would withdraw from guild bank
-    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot %s withdrawing from guild bank",
-                _bot->GetName().c_str());
+    TC_LOG_DEBUG("playerbot", "TradeSystem: Bot {} withdrawing from guild bank",
+                _bot->GetName());
 }
 
 bool TradeSystem::CanAccessGuildBank()
@@ -1950,7 +1962,7 @@ float TradeSystem::GetPlayerTrustLevel(uint32 targetGuid)
 
 void TradeSystem::HandleTradeError(uint32 sessionId, const std::string& error)
 {
-    TC_LOG_ERROR("playerbot", "TradeSystem: Session %u error: %s", sessionId, error.c_str());
+    TC_LOG_ERROR("playerbot", "TradeSystem: Session {} error: {}", sessionId, error);
 
     auto it = _activeTrades.find(sessionId);
     if (it != _activeTrades.end())

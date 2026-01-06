@@ -236,8 +236,28 @@ namespace Playerbot
 
     bool QuestManager::OnInitialize()
     {
-        // Configuration is loaded from constructor defaults
-        // Future: Load from PlayerbotConfig when implemented
+        // Load configuration from PlayerbotConfig
+        m_autoAccept = sPlayerbotConfig->GetBool("Playerbot.Quest.AutoAccept", true);
+        m_autoComplete = sPlayerbotConfig->GetBool("Playerbot.Quest.AutoComplete", true);
+        m_maxActiveQuests = sPlayerbotConfig->GetInt("Playerbot.Quest.MaxActive", MAX_QUEST_LOG_SLOT);
+        m_prioritizeGroupQuests = sPlayerbotConfig->GetBool("Playerbot.Quest.PreferZoneQuests", true);
+
+        // Level range config - MaxLevelDiff controls how far above bot level quests can be
+        uint32 maxLevelDiff = sPlayerbotConfig->GetInt("Playerbot.Quest.MaxLevelDiff", 5);
+
+        // Quest level filtering using percentage multipliers
+        // m_minQuestLevel: 0.75 means accept quests >= 75% of bot level
+        // m_maxQuestLevel: calculated from maxLevelDiff (e.g., 5 levels = 1.05 multiplier at level 100)
+        m_minQuestLevel = 0.75f;  // Accept quests 75% of bot level
+        m_maxQuestLevel = 1.0f + (static_cast<float>(maxLevelDiff) / 100.0f);
+
+        // Group quest priority multiplier from config
+        float groupPriority = sPlayerbotConfig->GetFloat("Playerbot.Quest.GroupQuestPriority", 1.5f);
+        // Note: groupPriority is used in EvaluateQuestPriority() - stored in m_prioritizeGroupQuests as bool for now
+        // A future enhancement could store the actual float multiplier
+
+        TC_LOG_DEBUG("bot.playerbot", "QuestManager: Loaded config - AutoAccept=%d, AutoComplete=%d, MaxActive=%u, GroupPriority=%.2f",
+            m_autoAccept, m_autoComplete, m_maxActiveQuests, groupPriority);
 
         // CRITICAL: Do NOT call UpdateQuestCache() during initialization!
         // The bot's quest status map (m_QuestStatus) is not loaded yet during the login

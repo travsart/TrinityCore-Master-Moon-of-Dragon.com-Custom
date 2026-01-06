@@ -35,6 +35,16 @@ namespace Playerbot
         uint32 burstWindowMs = 10000;            ///< Burst detection window (10 seconds)
         uint32 maxBurstsPerWindow = 50;          ///< Max spawn bursts per window
 
+        // ============================================================================
+        // CRITICAL FIX: Per-update-cycle spawn limit to prevent visibility update hang
+        // ============================================================================
+        // When multiple bots spawn in the same Map::Update cycle, their visibility
+        // updates accumulate and are processed together in Map::ProcessRelocationNotifies().
+        // This causes O(n^2) processing time with many bots + creatures.
+        // Limiting spawns per update cycle spreads visibility updates across cycles.
+        // ============================================================================
+        uint32 maxSpawnsPerUpdateCycle = 1;      ///< Max bots spawned per update cycle (1-2 recommended)
+
         bool enableAdaptiveThrottling = true;    ///< Master enable for adaptive throttling
         bool enableCircuitBreaker = true;        ///< Enable circuit breaker protection
         bool enableBurstPrevention = true;       ///< Enable burst prevention
@@ -58,6 +68,8 @@ namespace Playerbot
         CircuitState circuitState = CircuitState::CLOSED;
 
         uint32 spawnsSinceLastUpdate = 0;        ///< Spawns in last update cycle
+        uint32 spawnsThisUpdateCycle = 0;        ///< Spawns in current update cycle (before reset)
+        uint32 updateCycleThrottleBlocks = 0;    ///< Times per-cycle limit blocked a spawn
         uint32 totalSpawnsThrottled = 0;         ///< Total spawns delayed/blocked
         uint32 burstPreventionTriggers = 0;      ///< Times burst prevention activated
 
@@ -139,8 +151,9 @@ namespace Playerbot
          *
          * Checks:
          * 1. Circuit breaker allows spawn (not OPEN)
-         * 2. Enough time passed since last spawn (interval check)
-         * 3. Not in burst prevention mode
+         * 2. Per-update-cycle spawn limit not exceeded (CRITICAL for visibility update performance)
+         * 3. Enough time passed since last spawn (interval check)
+         * 4. Not in burst prevention mode
          */
         bool CanSpawnNow() const;
 
@@ -259,6 +272,10 @@ namespace Playerbot
         // Metrics
         uint32 _totalSpawnsThrottled = 0;        ///< Total spawns delayed/blocked
         uint32 _spawnsSinceLastUpdate = 0;       ///< Spawns in last update cycle
+
+        // Per-update-cycle tracking (CRITICAL FIX for visibility update hang)
+        mutable uint32 _spawnsThisUpdateCycle = 0;     ///< Spawns in current update cycle
+        uint32 _updateCycleThrottleBlocks = 0;   ///< Times per-cycle limit blocked a spawn
 
         // State
         bool _initialized = false;
