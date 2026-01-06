@@ -76,9 +76,16 @@ bool PlayerbotModule::Initialize()
     InitializeLogging();
 
     // Initialize Playerbot Database
+    // CRITICAL: If this fails, the server MUST NOT start when Playerbot is enabled
     if (!InitializeDatabase())
     {
-        _lastError = "Failed to initialize Playerbot Database";
+        // _lastError is already set by InitializeDatabase() with detailed information
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  >>> SERVER STARTUP ABORTED <<<");
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Playerbot module failed to initialize due to database connection failure.");
+        TC_LOG_ERROR("server.loading", "  Error: {}", _lastError);
+        TC_LOG_ERROR("server.loading", "");
         return false;
     }
 
@@ -483,7 +490,6 @@ void PlayerbotModule::InitializeLogging()
 
 bool PlayerbotModule::InitializeDatabase()
 {
-
     // Get individual database settings from configuration
     std::string host = sPlayerbotConfig->GetString("Playerbot.Database.Host", "127.0.0.1");
     uint32 port = sPlayerbotConfig->GetInt("Playerbot.Database.Port", 3306);
@@ -491,30 +497,73 @@ bool PlayerbotModule::InitializeDatabase()
     std::string password = sPlayerbotConfig->GetString("Playerbot.Database.Password", "trinity");
     std::string database = sPlayerbotConfig->GetString("Playerbot.Database.Name", "characters");
 
-
     // Construct connection string in format: hostname;port;username;password;database
     std::string dbString = Trinity::StringFormat("{};{};{};{};{}", host, port, user, password, database);
 
-
     TC_LOG_INFO("server.loading", "Playerbot Database: Connecting to {}:{}/{}", host, port, database);
-
 
     // Initialize database connection using our custom manager
     if (!sPlayerbotDatabase->Initialize(dbString))
     {
-        TC_LOG_ERROR("server.loading", "Playerbot Database: Failed to initialize connection");
+        // ============================================================================
+        // CRITICAL DATABASE CONNECTION FAILURE - BLOCK SERVER STARTUP
+        // ============================================================================
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "================================================================================");
+        TC_LOG_ERROR("server.loading", "  PLAYERBOT DATABASE CONNECTION FAILED - SERVER STARTUP BLOCKED");
+        TC_LOG_ERROR("server.loading", "================================================================================");
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Playerbot is ENABLED but cannot connect to its database.");
+        TC_LOG_ERROR("server.loading", "  The server cannot start safely without a working database connection.");
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Current Configuration:");
+        TC_LOG_ERROR("server.loading", "    Host:     {}", host);
+        TC_LOG_ERROR("server.loading", "    Port:     {}", port);
+        TC_LOG_ERROR("server.loading", "    User:     {}", user);
+        TC_LOG_ERROR("server.loading", "    Database: {}", database);
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Possible Causes:");
+        TC_LOG_ERROR("server.loading", "    1. MySQL server is not running");
+        TC_LOG_ERROR("server.loading", "    2. Wrong hostname or port in configuration");
+        TC_LOG_ERROR("server.loading", "    3. Invalid username or password");
+        TC_LOG_ERROR("server.loading", "    4. Database '{}' does not exist", database);
+        TC_LOG_ERROR("server.loading", "    5. User '{}' has no access to database '{}'", user, database);
+        TC_LOG_ERROR("server.loading", "    6. Firewall blocking connection to port {}", port);
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Solutions:");
+        TC_LOG_ERROR("server.loading", "    - Check worldserver.conf for Playerbot.Database.* settings");
+        TC_LOG_ERROR("server.loading", "    - Verify MySQL server is running: mysql -u {} -p -h {} -P {}", user, host, port);
+        TC_LOG_ERROR("server.loading", "    - Create database if missing: CREATE DATABASE {};", database);
+        TC_LOG_ERROR("server.loading", "    - Or disable Playerbot: set Playerbot.Enable = 0");
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "================================================================================");
+        TC_LOG_ERROR("server.loading", "");
+
+        _lastError = Trinity::StringFormat(
+            "CRITICAL: Playerbot database connection failed! "
+            "Cannot connect to {}:{}/{} as user '{}'. "
+            "Check your Playerbot.Database.* configuration or disable Playerbot (Playerbot.Enable = 0)",
+            host, port, database, user);
+
         return false;
     }
 
-
-    TC_LOG_INFO("server.loading", "Playerbot Database: Successfully connected");
+    TC_LOG_INFO("server.loading", "Playerbot Database: Successfully connected to {}:{}/{}", host, port, database);
 
     // Validate database schema
     TC_LOG_INFO("server.loading", "Validating Playerbot Database Schema...");
     if (!sPlayerbotDatabase->ValidateSchema())
     {
-        TC_LOG_WARN("server.loading", "Playerbot Database: Schema validation failed - some features may not work correctly");
-        TC_LOG_WARN("server.loading", "Consider running database migrations or checking table structures");
+        TC_LOG_WARN("server.loading", "");
+        TC_LOG_WARN("server.loading", "================================================================================");
+        TC_LOG_WARN("server.loading", "  PLAYERBOT DATABASE SCHEMA WARNING");
+        TC_LOG_WARN("server.loading", "================================================================================");
+        TC_LOG_WARN("server.loading", "  Database schema validation failed - some tables may be missing or outdated.");
+        TC_LOG_WARN("server.loading", "  Playerbot will continue but some features may not work correctly.");
+        TC_LOG_WARN("server.loading", "");
+        TC_LOG_WARN("server.loading", "  Solution: Run the database migrations in sql/playerbot/ directory");
+        TC_LOG_WARN("server.loading", "================================================================================");
+        TC_LOG_WARN("server.loading", "");
     }
 
     return true;

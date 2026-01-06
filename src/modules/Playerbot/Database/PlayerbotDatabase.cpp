@@ -55,6 +55,15 @@ QueryResult PlayerbotDatabaseManager::Query(std::string const& sql)
 {
     TC_LOG_INFO("server.loading", "PlayerbotDatabaseManager::Query called with SQL: {}", sql);
 
+    // CRITICAL: Check for NULL connection before dereferencing
+    // This can happen if database initialization failed (wrong config, server unreachable, etc.)
+    if (!_connection)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager: Database connection is NULL - database was not initialized!");
+        TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager: Check your Playerbot.Database.* configuration settings");
+        return nullptr;
+    }
+
     if (!_connection->IsConnected())
     {
         TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager: Connection is not active");
@@ -78,6 +87,19 @@ QueryResult PlayerbotDatabaseManager::Query(std::string const& sql)
 
 bool PlayerbotDatabaseManager::Execute(std::string const& sql)
 {
+    // CRITICAL: Check for NULL connection before dereferencing
+    if (!_connection)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager::Execute: Database connection is NULL - database was not initialized!");
+        TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager::Execute: Check your Playerbot.Database.* configuration settings");
+        return false;
+    }
+
+    if (!_connection->IsConnected())
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager::Execute: Connection is not active");
+        return false;
+    }
 
     return _connection->Execute(sql);
 }
