@@ -539,6 +539,10 @@ public:
     Statistics GetStatistics() const;
     uint32 GetPopulationCount() const;
 
+    // Map pointer management (for SpatialGridManager)
+    void SetMap(Map* map) { _map = map; }
+    Map* GetMap() const { return _map; }
+
 private:
     // Populate write buffer from Map entities
     void PopulateBufferFromMap();
@@ -574,6 +578,7 @@ private:
 
     // Data members
     Map* _map;
+    uint32 _mapId;  // Cached for safe logging (doesn't change during grid lifetime)
     mutable GridBuffer _buffers[2];  // Mutable to allow updates from const methods
     mutable ::std::atomic<uint32> _readBufferIndex{0};
 

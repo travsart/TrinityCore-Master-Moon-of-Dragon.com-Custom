@@ -16,11 +16,19 @@ void SpatialGridManager::CreateGrid(Map* map)
 
     uint32 mapId = map->GetId();
 
-    if (_grids.find(mapId) != _grids.end())
+    auto it = _grids.find(mapId);
+    if (it != _grids.end())
     {
-        TC_LOG_WARN("playerbot.spatial",
-            "Spatial grid already exists for map {} ({})",
-            mapId, map->GetMapName());
+        // CRITICAL FIX: Update the Map pointer to the new Map instance
+        // When a Map is destroyed and recreated (same mapId, new Map object),
+        // we must update the grid's Map pointer to avoid dangling pointer crashes
+        if (it->second->GetMap() != map)
+        {
+            TC_LOG_INFO("playerbot.spatial",
+                "Updating spatial grid Map pointer for map {} ({}) - Map object changed",
+                mapId, map->GetMapName());
+            it->second->SetMap(map);
+        }
         return;
     }
 

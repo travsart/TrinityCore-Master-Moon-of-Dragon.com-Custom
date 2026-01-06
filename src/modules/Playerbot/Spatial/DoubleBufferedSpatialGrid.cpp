@@ -215,22 +215,24 @@ namespace Playerbot
 
 DoubleBufferedSpatialGrid::DoubleBufferedSpatialGrid(Map* map)
     : _map(map)
+    , _mapId(map ? map->GetId() : 0)
     , _startTime(::std::chrono::steady_clock::now())
 {
     ASSERT(map, "DoubleBufferedSpatialGrid requires valid Map pointer");
 
     TC_LOG_INFO("playerbot.spatial",
         "DoubleBufferedSpatialGrid created for map {} ({})",
-        map->GetId(), map->GetMapName());
+        _mapId, map->GetMapName());
 }
 
 DoubleBufferedSpatialGrid::~DoubleBufferedSpatialGrid()
 {
     Stop();
 
+    // Note: _map may be invalid at destruction time, so we don't dereference it
     TC_LOG_INFO("playerbot.spatial",
-        "DoubleBufferedSpatialGrid destroyed for map {} - Total queries: {}, Updates: {}, Swaps: {}",
-        _map->GetId(), _totalQueries.load(), _totalUpdates.load(), _totalSwaps.load());
+        "DoubleBufferedSpatialGrid destroyed - Total queries: {}, Updates: {}, Swaps: {}",
+        _totalQueries.load(), _totalUpdates.load(), _totalSwaps.load());
 }
 
 void DoubleBufferedSpatialGrid::Start()
@@ -240,21 +242,28 @@ void DoubleBufferedSpatialGrid::Start()
     // causing deadlocks with main thread and bot threads
     // Solution: Spatial grid now updated synchronously from Map::Update
 
-    TC_LOG_INFO("playerbot.spatial",
-        "Spatial grid initialized for map {} (synchronous updates, no background thread)",
-        _map->GetId());
+    if (_map)
+    {
+        TC_LOG_INFO("playerbot.spatial",
+            "Spatial grid initialized for map {} (synchronous updates, no background thread)",
+            _mapId);
 
-    // Do initial population
-    PopulateBufferFromMap();
-    SwapBuffers();
+        // Do initial population
+        PopulateBufferFromMap();
+        SwapBuffers();
+    }
+    else
+    {
+        TC_LOG_ERROR("playerbot.spatial",
+            "Spatial grid Start() called with null Map pointer!");
+    }
 }
 
 void DoubleBufferedSpatialGrid::Stop()
 {
     // CRITICAL DEADLOCK FIX: No background thread to stop anymore
     TC_LOG_INFO("playerbot.spatial",
-        "Spatial grid stopped for map {} (synchronous mode, no thread to join)",
-        _map->GetId());
+        "Spatial grid stopped (synchronous mode, no thread to join)");
 }
 
 bool DoubleBufferedSpatialGrid::ShouldUpdate() const
@@ -266,6 +275,13 @@ bool DoubleBufferedSpatialGrid::ShouldUpdate() const
 
 void DoubleBufferedSpatialGrid::Update() const
 {
+    // CRITICAL SAFETY CHECK: Verify map pointer is valid before any operations
+    if (!_map)
+    {
+        TC_LOG_ERROR("playerbot.spatial", "Update() called with null map pointer - skipping update");
+        return;
+    }
+
     // CRITICAL DEADLOCK FIX: On-demand synchronous update with rate limiting
     // Only one thread can update at a time (mutex protected)
     // Other threads will skip if update is already in progress
@@ -282,10 +298,19 @@ void DoubleBufferedSpatialGrid::Update() const
     if (!ShouldUpdate())
         return;
 
+    // Cache mapId before potentially long operations (in case _map becomes invalid)
+    uint32 mapId = _map->GetId();
     auto cycleStart = ::std::chrono::steady_clock::now();
 
     try
     {
+        // Re-check map validity before population (could have changed during lock acquisition)
+        if (!_map)
+        {
+            TC_LOG_WARN("playerbot.spatial", "Map pointer became null during update - skipping");
+            return;
+        }
+
         // Populate inactive buffer from Map entities
         const_cast<DoubleBufferedSpatialGrid*>(this)->PopulateBufferFromMap();
 
@@ -299,7 +324,7 @@ void DoubleBufferedSpatialGrid::Update() const
     {
         TC_LOG_ERROR("playerbot.spatial",
             "Exception in spatial grid update for map {}: {}",
-            _map->GetId(), ex.what());
+            mapId, ex.what());
     }
 
     auto cycleEnd = ::std::chrono::steady_clock::now();
@@ -308,7 +333,7 @@ void DoubleBufferedSpatialGrid::Update() const
     if (elapsed.count() > 10)  // Warn if update takes >10ms
         TC_LOG_WARN("playerbot.spatial",
             "Spatial grid update took {}ms for map {}",
-            elapsed.count(), _map->GetId());
+            elapsed.count(), mapId);
 }
 
 void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
@@ -319,6 +344,10 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         TC_LOG_ERROR("playerbot.spatial", "PopulateBufferFromMap called with null map pointer!");
         return;
     }
+
+    // CRITICAL FIX: Cache mapId IMMEDIATELY at function start for safe logging
+    // This prevents crash if _map becomes invalid during execution (rare but possible)
+    uint32 cachedMapId = _map->GetId();
 
     auto start = ::std::chrono::high_resolution_clock::now();
 
@@ -371,7 +400,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         {
             TC_LOG_WARN("playerbot.spatial",
                 "ACCESS_VIOLATION during creature iteration for map {} - skipping creature population this cycle",
-                _map->GetId());
+                cachedMapId);
             goto done_creatures;
         }
 
@@ -528,7 +557,7 @@ done_creatures:
     {
         TC_LOG_WARN("playerbot.spatial",
             "ACCESS_VIOLATION during player iteration for map {} - skipping player population this cycle",
-            _map->GetId());
+            cachedMapId);
         goto done_players;
     }
 
@@ -688,7 +717,7 @@ done_players:
         {
             TC_LOG_WARN("playerbot.spatial",
                 "ACCESS_VIOLATION during game object iteration for map {} - skipping game object population this cycle",
-                _map->GetId());
+                cachedMapId);
             goto done_gameobjects;
         }
 
@@ -911,7 +940,7 @@ done_gameobjects:
 
     TC_LOG_TRACE("playerbot.spatial",
         "PopulateBufferFromMap: map {} - {} creatures, {} players, {} gameobjects, {} dynobjects, {} areatriggers in {}?s",
-        _map->GetId(), creatureCount, playerCount, gameObjectCount, dynamicObjectCount, areaTriggerCount, duration.count());
+        cachedMapId, creatureCount, playerCount, gameObjectCount, dynamicObjectCount, areaTriggerCount, duration.count());
 }
 
 void DoubleBufferedSpatialGrid::SwapBuffers()
@@ -923,7 +952,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
 
     TC_LOG_TRACE("playerbot.spatial",
         "SwapBuffers: map {} - Read buffer now {}, swap #{}",
-        _map->GetId(), _readBufferIndex.load(), _totalSwaps.load());
+        _mapId, _readBufferIndex.load(), _totalSwaps.load());
 }
 
 // ===========================================================================
