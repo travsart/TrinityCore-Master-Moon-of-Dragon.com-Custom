@@ -254,7 +254,8 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                     else
                     {
                         // FALLBACK: Direct MotionMaster call if arbiter not available
-                        _bot->GetMotionMaster()->MoveJump(jumpTarget.GetPositionX(), jumpTarget.GetPositionY(), jumpTarget.GetPositionZ(), 10.0f, 10.0f);
+                        // TrinityCore 11.2.7 API: MoveJump(id, pos, speedOrTime, minHeight, maxHeight)
+                        _bot->GetMotionMaster()->MoveJump(EVENT_JUMP, jumpTarget, 10.0f);
                     }
                 }
                 break;
