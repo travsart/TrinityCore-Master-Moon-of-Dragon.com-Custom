@@ -1998,8 +1998,8 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
         // These ARE able to cross continent/map boundaries
         if (!travelInitiated)
         {
-            // Find nearest taxi node on target map to quest ender
-            uint32 destinationTaxiNode = FlightMasterManager::FindNearestTaxiNode(location.position, location.targetMapId);
+            // Find nearest taxi node on target map to quest ender (faction-aware)
+            uint32 destinationTaxiNode = FlightMasterManager::FindNearestTaxiNode(location.position, location.targetMapId, bot);
 
             if (destinationTaxiNode != 0)
             {

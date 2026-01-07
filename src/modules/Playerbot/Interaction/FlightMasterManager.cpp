@@ -12,6 +12,7 @@
 #include "Creature.h"
 #include "ObjectMgr.h"
 #include "DB2Stores.h"
+#include "DB2Structure.h"
 #include "TaxiPathGraph.h"
 #include "Log.h"
 #include "World.h"
@@ -300,9 +301,26 @@ namespace Playerbot
         TaxiPathGraph::GetReachableNodesMask(currentNode, &reachableNodes);
 
         // Build destination list
-    for (TaxiNodesEntry const* node : sTaxiNodesStore)
+        for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
             if (!node || node->ID == currentNodeId)
+                continue;
+
+            // FACTION CHECK: Only include taxi nodes visible to bot's faction
+            // This prevents Horde bots from seeing Alliance-only flight points and vice versa
+            bool isVisibleForFaction = false;
+            switch (m_bot->GetTeam())
+            {
+                case HORDE:
+                    isVisibleForFaction = node->GetFlags().HasFlag(TaxiNodeFlags::ShowOnHordeMap);
+                    break;
+                case ALLIANCE:
+                    isVisibleForFaction = node->GetFlags().HasFlag(TaxiNodeFlags::ShowOnAllianceMap);
+                    break;
+                default:
+                    break;
+            }
+            if (!isVisibleForFaction)
                 continue;
 
             // Check if reachable
@@ -466,6 +484,23 @@ namespace Playerbot
         for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
             if (!node || node->ContinentID != mapId)
+                continue;
+
+            // FACTION CHECK: Only consider taxi nodes visible to bot's faction
+            // This prevents Horde bots from selecting Alliance flight points and vice versa
+            bool isVisibleForFaction = false;
+            switch (m_bot->GetTeam())
+            {
+                case HORDE:
+                    isVisibleForFaction = node->GetFlags().HasFlag(TaxiNodeFlags::ShowOnHordeMap);
+                    break;
+                case ALLIANCE:
+                    isVisibleForFaction = node->GetFlags().HasFlag(TaxiNodeFlags::ShowOnAllianceMap);
+                    break;
+                default:
+                    break;
+            }
+            if (!isVisibleForFaction)
                 continue;
 
             // Calculate distance to target

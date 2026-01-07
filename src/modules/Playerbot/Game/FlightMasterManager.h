@@ -207,18 +207,23 @@ namespace Playerbot
             float maxDistance = 0.0f);
 
         /**
-         * @brief Finds nearest taxi node to position
+         * @brief Finds nearest taxi node to position (faction-aware)
          *
          * @param position Target position
-         * @param map Map to search on
-         * @return Nearest taxi node ID, or 0 if none found
+         * @param mapId Map to search on
+         * @param player Player for faction filtering (optional, nullptr = no faction check)
+         * @return Nearest taxi node ID for player's faction, or 0 if none found
+         *
+         * Note: When player is provided, only returns taxi nodes that match
+         * the player's faction (using TaxiNodeFlags::ShowOnHordeMap/ShowOnAllianceMap)
          *
          * Performance: O(n) where n = taxi nodes, ~0.5ms typical
          * Thread-safety: Thread-safe (read-only DBC access)
          */
         [[nodiscard]] static uint32 FindNearestTaxiNode(
             Position const& position,
-            uint32 map);
+            uint32 mapId,
+            Player const* player = nullptr);
 
         /**
          * @brief Calculates taxi flight path between two nodes

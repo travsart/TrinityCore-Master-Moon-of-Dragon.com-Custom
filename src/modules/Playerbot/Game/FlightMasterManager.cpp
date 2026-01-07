@@ -69,8 +69,8 @@ namespace Playerbot
         FlightMasterLocation const& flightMaster = *flightMasterOpt;
         uint32 sourceNode = flightMaster.taxiNode;
 
-        // Find nearest taxi node to destination
-        uint32 destinationNode = FindNearestTaxiNode(destination, player->GetMapId());
+        // Find nearest taxi node to destination (faction-aware)
+        uint32 destinationNode = FindNearestTaxiNode(destination, player->GetMapId(), player);
         if (destinationNode == 0)
         {
             TC_LOG_ERROR("playerbot.flight",
@@ -201,7 +201,12 @@ namespace Playerbot
                 continue;
 
             // Check if creature is a flight master
-    if (!creature->IsTaxi())
+            if (!creature->IsTaxi())
+                continue;
+
+            // FACTION CHECK: Ensure flight master is friendly to player
+            // This prevents Horde bots from selecting Alliance flight masters and vice versa
+            if (creature->IsHostileTo(player) || (!creature->IsFriendlyTo(player) && !creature->IsNeutralToAll()))
                 continue;
 
             // Calculate distance to player
@@ -253,24 +258,45 @@ namespace Playerbot
 
     uint32 FlightMasterManager::FindNearestTaxiNode(
         Position const& position,
-        uint32 mapId)
+        uint32 mapId,
+        Player const* player)
     {
         TaxiNodesEntry const* nearestNode = nullptr;
         float minDistance = ::std::numeric_limits<float>::max();
 
         // Iterate all taxi nodes
-    for (TaxiNodesEntry const* node : sTaxiNodesStore)
+        for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
             if (!node)
                 continue;
 
             // Check if taxi node is on same map
-    if (node->ContinentID != mapId)
+            if (node->ContinentID != mapId)
                 continue;
 
             // Only consider nodes part of taxi network
-    if (!node->IsPartOfTaxiNetwork())
+            if (!node->IsPartOfTaxiNetwork())
                 continue;
+
+            // FACTION CHECK: If player is provided, verify taxi node is available for their faction
+            // This uses the same TaxiNodeFlags that TrinityCore's TaxiPathGraph uses
+            if (player)
+            {
+                bool isVisibleForFaction = false;
+                switch (player->GetTeam())
+                {
+                    case HORDE:
+                        isVisibleForFaction = node->GetFlags().HasFlag(TaxiNodeFlags::ShowOnHordeMap);
+                        break;
+                    case ALLIANCE:
+                        isVisibleForFaction = node->GetFlags().HasFlag(TaxiNodeFlags::ShowOnAllianceMap);
+                        break;
+                    default:
+                        break;
+                }
+                if (!isVisibleForFaction)
+                    continue;
+            }
 
             // Calculate distance to position
             float dx = position.GetPositionX() - node->Pos.X;

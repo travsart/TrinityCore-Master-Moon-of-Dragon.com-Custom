@@ -1788,9 +1788,9 @@ bool TravelRouteManager::BuildRoute(TravelRoute& route, uint32 fromMapId, Positi
 
 bool TravelRouteManager::AddTaxiLeg(TravelRoute& route, uint32 mapId, Position const& from, Position const& to)
 {
-    // Find taxi nodes for start and end positions
-    uint32 startNode = FlightMasterManager::FindNearestTaxiNode(from, mapId);
-    uint32 endNode = FlightMasterManager::FindNearestTaxiNode(to, mapId);
+    // Find taxi nodes for start and end positions (faction-aware)
+    uint32 startNode = FlightMasterManager::FindNearestTaxiNode(from, mapId, m_bot);
+    uint32 endNode = FlightMasterManager::FindNearestTaxiNode(to, mapId, m_bot);
 
     // If we can't find valid taxi nodes, leg creation fails
     if (startNode == 0 || endNode == 0)
