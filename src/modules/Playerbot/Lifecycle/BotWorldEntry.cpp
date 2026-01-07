@@ -633,10 +633,14 @@ bool BotWorldEntry::FinalizeBotActivation()
     }
 
     // ========================================================================
-    // LEARN ALL FLIGHT PATHS
+    // LEARN ALL FACTION FLIGHT PATHS
     // ========================================================================
     // Bots spawn across all zones, so they need to know all flight paths
-    // to be able to travel around the world properly.
+    // for their faction to travel around the world properly.
+    // NOTE: We use faction-specific masks (not all nodes) because flying to
+    // enemy faction flight points would get the bot killed immediately.
+    // NOTE: Cross-map travel (e.g., Stormwind -> Dornogal) requires portals,
+    // not flight paths - taxi system only works within the same continent/map.
     // ========================================================================
     {
         // Get the faction-appropriate taxi mask

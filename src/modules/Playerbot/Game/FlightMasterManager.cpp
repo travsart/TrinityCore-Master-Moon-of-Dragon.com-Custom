@@ -334,6 +334,16 @@ namespace Playerbot
             return ::std::nullopt;
         }
 
+        // CRITICAL: Flight paths only work within the same continent/map!
+        // Cross-map travel requires portals, ships, or zeppelins - not flight paths.
+        if (from->ContinentID != to->ContinentID)
+        {
+            TC_LOG_DEBUG("playerbot.flight",
+                "FlightMasterManager: Cannot fly between different maps (source map: {}, dest map: {}) - use portal/ship instead",
+                from->ContinentID, to->ContinentID);
+            return ::std::nullopt;
+        }
+
         // Use TaxiPathGraph to find shortest path
         ::std::vector<uint32> shortestPath;
         ::std::size_t pathCost = TaxiPathGraph::GetCompleteNodeRoute(from, to, player, shortestPath);
@@ -351,7 +361,9 @@ namespace Playerbot
         pathInfo.sourceNode = sourceNode;
         pathInfo.destinationNode = destinationNode;
         pathInfo.nodes = shortestPath;
-        pathInfo.stopCount = static_cast<uint32>(shortestPath.size()) - 2; // Exclude source and dest
+        // FIX: Prevent underflow when path has fewer than 2 nodes
+        // stopCount = intermediate stops (excluding source and destination)
+        pathInfo.stopCount = shortestPath.size() > 2 ? static_cast<uint32>(shortestPath.size() - 2) : 0;
         pathInfo.totalDistance = CalculateFlightDistance(shortestPath);
         pathInfo.flightTime = EstimateFlightTime(shortestPath);
         pathInfo.goldCost = CalculateFlightCost(player, shortestPath);

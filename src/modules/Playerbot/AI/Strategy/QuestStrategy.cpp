@@ -2016,52 +2016,70 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
                     TC_LOG_ERROR("module.playerbot.quest", "✈️ TurnInQuest: Bot {} found flight master '{}' (node {}) at {:.1f} yards - checking path to node {}",
                                  bot->GetName(), fm.name, fm.taxiNode, fm.distanceFromPlayer, destinationTaxiNode);
 
-                    // Check if a taxi path exists (this includes zeppelin/ship routes)
-                    auto pathOpt = FlightMasterManager::CalculateFlightPath(bot, fm.taxiNode, destinationTaxiNode, FlightPathStrategy::SHORTEST_DISTANCE);
+                    // CRITICAL FIX: Check if player has discovered the destination taxi node BEFORE
+                    // deciding to navigate to flight master. This prevents the infinite loop where:
+                    // 1. Bot walks to flight master
+                    // 2. Flight fails with NODE_UNKNOWN (node not discovered)
+                    // 3. Falls back to portal route, walks toward portal
+                    // 4. Next update sees flight master is far, walks BACK to flight master
+                    // 5. Repeat forever
+                    bool destinationNodeDiscovered = FlightMasterManager::HasTaxiNode(bot, destinationTaxiNode);
 
-                    if (pathOpt.has_value())
+                    if (!destinationNodeDiscovered)
                     {
-                        FlightPathInfo const& path = pathOpt.value();
+                        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TurnInQuest: Bot {} has NOT discovered destination taxi node {} - skipping direct flight, will use multi-station travel (portal/ship/etc)",
+                                     bot->GetName(), destinationTaxiNode);
+                        // Don't set travelInitiated - fall through to multi-station travel below
+                    }
+                    else
+                    {
+                        // Check if a taxi path exists (this includes zeppelin/ship routes)
+                        auto pathOpt = FlightMasterManager::CalculateFlightPath(bot, fm.taxiNode, destinationTaxiNode, FlightPathStrategy::SHORTEST_DISTANCE);
 
-                        TC_LOG_ERROR("module.playerbot.quest", "✈️ TurnInQuest: Bot {} found transport route with {} stops, cost {} copper, ~{} seconds",
-                                     bot->GetName(), path.stopCount, path.goldCost, path.flightTime);
-
-                        // Check if bot is close enough to interact with flight master
-                        if (fm.distanceFromPlayer < 10.0f)
+                        if (pathOpt.has_value())
                         {
-                            // Bot is at flight master - initiate the flight
-                            FlightResult result = FlightMasterManager().FlyToTaxiNode(bot, destinationTaxiNode, FlightPathStrategy::SHORTEST_DISTANCE);
-                            if (result == FlightResult::SUCCESS)
+                            FlightPathInfo const& path = pathOpt.value();
+
+                            TC_LOG_ERROR("module.playerbot.quest", "✈️ TurnInQuest: Bot {} found transport route with {} stops, cost {} copper, ~{} seconds",
+                                         bot->GetName(), path.stopCount, path.goldCost, path.flightTime);
+
+                            // Check if bot is close enough to interact with flight master
+                            if (fm.distanceFromPlayer < 10.0f)
                             {
-                                TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} initiated transport to MAP {} via taxi node {}",
-                                             bot->GetName(), location.targetMapId, destinationTaxiNode);
-                                travelInitiated = true;
+                                // Bot is at flight master - initiate the flight
+                                FlightResult result = FlightMasterManager().FlyToTaxiNode(bot, destinationTaxiNode, FlightPathStrategy::SHORTEST_DISTANCE);
+                                if (result == FlightResult::SUCCESS)
+                                {
+                                    TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} initiated transport to MAP {} via taxi node {}",
+                                                 bot->GetName(), location.targetMapId, destinationTaxiNode);
+                                    travelInitiated = true;
+                                }
+                                else
+                                {
+                                    TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} failed to initiate flight: {}",
+                                                 bot->GetName(), FlightMasterManager::GetResultString(result));
+                                }
                             }
                             else
                             {
-                                TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} failed to initiate flight: {}",
-                                             bot->GetName(), FlightMasterManager::GetResultString(result));
+                                // Navigate to flight master first
+                                TC_LOG_ERROR("module.playerbot.quest", "🚶 TurnInQuest: Bot {} navigating to flight master '{}' at ({:.1f}, {:.1f}, {:.1f})",
+                                             bot->GetName(), fm.name,
+                                             fm.position.GetPositionX(), fm.position.GetPositionY(), fm.position.GetPositionZ());
+
+                                if (BotMovementUtil::MoveToPosition(bot, fm.position))
+                                {
+                                    TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} moving to flight master - will take transport to MAP {} after arrival",
+                                                 bot->GetName(), location.targetMapId);
+                                    travelInitiated = true;
+                                }
                             }
                         }
                         else
                         {
-                            // Navigate to flight master first
-                            TC_LOG_ERROR("module.playerbot.quest", "🚶 TurnInQuest: Bot {} navigating to flight master '{}' at ({:.1f}, {:.1f}, {:.1f})",
-                                         bot->GetName(), fm.name,
-                                         fm.position.GetPositionX(), fm.position.GetPositionY(), fm.position.GetPositionZ());
-
-                            if (BotMovementUtil::MoveToPosition(bot, fm.position))
-                            {
-                                TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} moving to flight master - will take transport to MAP {} after arrival",
-                                             bot->GetName(), location.targetMapId);
-                                travelInitiated = true;
-                            }
+                            TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} no transport route found from node {} to node {} (may need to discover nodes or use portal)",
+                                         bot->GetName(), fm.taxiNode, destinationTaxiNode);
                         }
-                    }
-                    else
-                    {
-                        TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} no transport route found from node {} to node {} (may need to discover nodes or use portal)",
-                                     bot->GetName(), fm.taxiNode, destinationTaxiNode);
                     }
                 }
                 else
