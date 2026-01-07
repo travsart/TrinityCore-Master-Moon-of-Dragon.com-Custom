@@ -2013,7 +2013,6 @@ void TravelRouteManager::UpdateLegState(TravelLeg& leg, uint32 /*diff*/)
     switch (leg.type)
     {
         case TransportType::WALK:
-        case TransportType::TAXI_FLIGHT:
         {
             // Check if we've arrived
             if (IsNearPosition(leg.endPosition, 15.0f))
@@ -2023,12 +2022,16 @@ void TravelRouteManager::UpdateLegState(TravelLeg& leg, uint32 /*diff*/)
             else if (leg.currentState == TravelState::IDLE || leg.currentState == TravelState::WALKING_TO_TRANSPORT)
             {
                 // Start movement
-                if (leg.type == TransportType::WALK)
-                {
-                    m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
-                }
-                leg.currentState = (leg.type == TransportType::TAXI_FLIGHT) ? TravelState::TAXI_FLIGHT : TravelState::WALKING_TO_TRANSPORT;
+                m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                leg.currentState = TravelState::WALKING_TO_TRANSPORT;
             }
+            break;
+        }
+
+        case TransportType::TAXI_FLIGHT:
+        {
+            // Use dedicated taxi flight handler with proper state machine
+            HandleTaxiFlight(leg);
             break;
         }
 
@@ -2509,6 +2512,219 @@ void TravelRouteManager::HandleHearthstone(TravelLeg& leg)
         }
 
         default:
+            break;
+    }
+}
+
+void TravelRouteManager::HandleTaxiFlight(TravelLeg& leg)
+{
+    // ========================================================================
+    // ENTERPRISE-GRADE TAXI FLIGHT HANDLING
+    // ========================================================================
+    // Implements proper taxi flight execution:
+    // 1. Walk to nearest flight master
+    // 2. Activate taxi flight via FlightMasterManager
+    // 3. Monitor flight progress via IsInFlight()
+    // 4. Detect arrival when flight completes
+    // ========================================================================
+
+    if (!m_bot)
+    {
+        leg.currentState = TravelState::FAILED;
+        return;
+    }
+
+    uint32 now = static_cast<uint32>(GameTime::GetGameTimeMS());
+
+    switch (leg.currentState)
+    {
+        case TravelState::IDLE:
+        case TravelState::WALKING_TO_TRANSPORT:
+        {
+            // Check if already at destination
+            if (IsNearPosition(leg.endPosition, 50.0f))
+            {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "HandleTaxiFlight: Bot {} already at destination, skipping taxi",
+                    m_bot->GetName());
+                leg.currentState = TravelState::COMPLETED;
+                break;
+            }
+
+            // Check if already in flight (perhaps from a previous partial attempt)
+            if (m_bot->IsInFlight())
+            {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "HandleTaxiFlight: Bot {} already in flight, monitoring...",
+                    m_bot->GetName());
+                leg.currentState = TravelState::TAXI_FLIGHT;
+                leg.stateStartTime = now;
+                break;
+            }
+
+            // Find nearest flight master
+            auto flightMasterOpt = FlightMasterManager::FindNearestFlightMaster(m_bot, 0.0f);
+            if (!flightMasterOpt.has_value())
+            {
+                TC_LOG_WARN("module.playerbot.travel",
+                    "HandleTaxiFlight: No flight master found near bot {}",
+                    m_bot->GetName());
+                leg.currentState = TravelState::FAILED;
+                break;
+            }
+
+            FlightMasterLocation const& fm = *flightMasterOpt;
+
+            // If too far from flight master, walk to it
+            if (fm.distanceFromPlayer > 15.0f)
+            {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "HandleTaxiFlight: Bot {} walking to flight master {} ({:.1f} yards away)",
+                    m_bot->GetName(), fm.name, fm.distanceFromPlayer);
+
+                m_bot->GetMotionMaster()->MovePoint(0, fm.position);
+                leg.currentState = TravelState::WALKING_TO_TRANSPORT;
+                leg.stateStartTime = now;
+                break;
+            }
+
+            // At flight master - activate the taxi flight
+            TC_LOG_INFO("module.playerbot.travel",
+                "HandleTaxiFlight: Bot {} at flight master {}, activating taxi to node {}",
+                m_bot->GetName(), fm.name, leg.taxiEndNode);
+
+            FlightMasterManager flightMgr;
+            FlightResult result = flightMgr.FlyToTaxiNode(
+                m_bot,
+                leg.taxiEndNode,
+                FlightPathStrategy::SHORTEST_DISTANCE);
+
+            if (result == FlightResult::SUCCESS)
+            {
+                TC_LOG_INFO("module.playerbot.travel",
+                    "HandleTaxiFlight: Bot {} taxi flight activated successfully",
+                    m_bot->GetName());
+                leg.currentState = TravelState::TAXI_FLIGHT;
+                leg.stateStartTime = now;
+            }
+            else
+            {
+                TC_LOG_WARN("module.playerbot.travel",
+                    "HandleTaxiFlight: Bot {} failed to activate taxi: {}",
+                    m_bot->GetName(), FlightMasterManager::GetResultString(result));
+
+                // If flight fails due to node not discovered, fall back to walking
+                if (result == FlightResult::NODE_UNKNOWN ||
+                    result == FlightResult::PATH_NOT_FOUND)
+                {
+                    TC_LOG_INFO("module.playerbot.travel",
+                        "HandleTaxiFlight: Falling back to walking for bot {}",
+                        m_bot->GetName());
+                    m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                    leg.currentState = TravelState::WALKING_TO_TRANSPORT;
+                    leg.stateStartTime = now;
+                }
+                else
+                {
+                    leg.currentState = TravelState::FAILED;
+                }
+            }
+            break;
+        }
+
+        case TravelState::TAXI_FLIGHT:
+        {
+            // Monitor flight progress
+            if (!m_bot->IsInFlight())
+            {
+                // Flight ended - check if we arrived
+                if (IsNearPosition(leg.endPosition, 100.0f))
+                {
+                    TC_LOG_INFO("module.playerbot.travel",
+                        "HandleTaxiFlight: Bot {} arrived at destination via taxi",
+                        m_bot->GetName());
+                    leg.currentState = TravelState::COMPLETED;
+                }
+                else
+                {
+                    // Flight ended but not at destination - might have been interrupted
+                    // or took a different route. Check if we made progress.
+                    float distToEnd = m_bot->GetExactDist(&leg.endPosition);
+
+                    TC_LOG_DEBUG("module.playerbot.travel",
+                        "HandleTaxiFlight: Bot {} flight ended, {:.1f} yards from destination",
+                        m_bot->GetName(), distToEnd);
+
+                    if (distToEnd < 200.0f)
+                    {
+                        // Close enough, walk the rest
+                        m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                        leg.currentState = TravelState::ARRIVING;
+                        leg.stateStartTime = now;
+                    }
+                    else
+                    {
+                        // Need another taxi or we failed
+                        TC_LOG_WARN("module.playerbot.travel",
+                            "HandleTaxiFlight: Bot {} landed far from destination, retrying...",
+                            m_bot->GetName());
+                        leg.currentState = TravelState::IDLE;
+                        leg.stateStartTime = now;
+                    }
+                }
+            }
+            else
+            {
+                // Still in flight - check for timeout
+                uint32 elapsed = now - leg.stateStartTime;
+                uint32 maxFlightTime = (leg.estimatedTimeSeconds + 300) * 1000; // Add 5 min buffer
+
+                if (elapsed > maxFlightTime)
+                {
+                    TC_LOG_ERROR("module.playerbot.travel",
+                        "HandleTaxiFlight: Bot {} flight timeout after {}s (expected {}s)",
+                        m_bot->GetName(), elapsed / 1000, leg.estimatedTimeSeconds);
+                    // Let flight system handle it - don't force interrupt
+                }
+                else if (elapsed % 60000 < 500) // Log every minute
+                {
+                    TC_LOG_DEBUG("module.playerbot.travel",
+                        "HandleTaxiFlight: Bot {} in flight - {}s elapsed",
+                        m_bot->GetName(), elapsed / 1000);
+                }
+            }
+            break;
+        }
+
+        case TravelState::ARRIVING:
+        {
+            // Walking from landing spot to final destination
+            if (IsNearPosition(leg.endPosition, 15.0f))
+            {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "HandleTaxiFlight: Bot {} arrived at final destination",
+                    m_bot->GetName());
+                leg.currentState = TravelState::COMPLETED;
+            }
+            else
+            {
+                // Check walking timeout
+                uint32 elapsed = now - leg.stateStartTime;
+                if (elapsed > 120000) // 2 minute walking timeout
+                {
+                    TC_LOG_WARN("module.playerbot.travel",
+                        "HandleTaxiFlight: Bot {} walking timeout, marking as completed",
+                        m_bot->GetName());
+                    leg.currentState = TravelState::COMPLETED;
+                }
+            }
+            break;
+        }
+
+        default:
+            TC_LOG_WARN("module.playerbot.travel",
+                "HandleTaxiFlight: Bot {} in unexpected state {}",
+                m_bot->GetName(), static_cast<int>(leg.currentState));
             break;
     }
 }
