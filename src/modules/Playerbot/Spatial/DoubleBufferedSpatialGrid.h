@@ -14,7 +14,7 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
-#include <array>
+#include <unordered_map>
 #include <vector>
 #include <thread>
 #include <atomic>
@@ -33,31 +33,86 @@ namespace Playerbot
 {
 
 /**
- * @class DoubleBufferedSpatialGrid
- * @brief Lock-free spatial grid for 5000+ concurrent bot queries with ZERO TrinityCore core modifications
+ * @brief Efficient cell key for sparse grid storage
  *
- * ARCHITECTURE:
- * - Two complete world grids (Buffer A and Buffer B)
- * - Background worker thread updates inactive buffer every 100ms
- * - Reads Map entities using ObjectAccessor (thread-safe)
+ * Combines X and Y coordinates into a single 64-bit key for O(1) hash lookup.
+ * Memory-efficient: Only populated cells are stored (sparse representation).
+ *
+ * OLD APPROACH (DENSE): 512x512 array = 262,144 cells × 120 bytes = 31.46 MB per buffer
+ * NEW APPROACH (SPARSE): Only ~1,000-5,000 populated cells × 120 bytes = 0.12-0.6 MB per buffer
+ *
+ * MEMORY SAVINGS: ~98% reduction (from ~63 MB to ~1.2 MB per map)
+ */
+struct CellKey
+{
+    uint32 x{0};
+    uint32 y{0};
+
+    CellKey() = default;
+    CellKey(uint32 cellX, uint32 cellY) : x(cellX), y(cellY) {}
+
+    bool operator==(CellKey const& other) const
+    {
+        return x == other.x && y == other.y;
+    }
+
+    // Pack into uint64 for efficient storage/comparison
+    uint64 ToPackedKey() const
+    {
+        return (static_cast<uint64>(x) << 32) | static_cast<uint64>(y);
+    }
+
+    static CellKey FromPackedKey(uint64 packed)
+    {
+        return CellKey(
+            static_cast<uint32>(packed >> 32),
+            static_cast<uint32>(packed & 0xFFFFFFFF)
+        );
+    }
+};
+
+/**
+ * @brief Hash function for CellKey (for use in unordered_map)
+ */
+struct CellKeyHash
+{
+    size_t operator()(CellKey const& key) const noexcept
+    {
+        // Use packed key directly as hash (perfect distribution for grid coordinates)
+        return static_cast<size_t>(key.ToPackedKey());
+    }
+};
+
+/**
+ * @class DoubleBufferedSpatialGrid
+ * @brief Lock-free SPARSE spatial grid for 5000+ concurrent bot queries with ZERO TrinityCore core modifications
+ *
+ * ARCHITECTURE (v2 - MEMORY OPTIMIZED):
+ * - SPARSE storage: Only populated cells are allocated (saves ~98% memory)
+ * - Two sparse hash maps (Buffer A and Buffer B) for double buffering
+ * - Synchronous updates from Map::Update (no background thread)
  * - Atomic buffer swap after update complete
  * - Bots query active buffer with zero lock contention
  *
+ * MEMORY COMPARISON:
+ * - OLD (Dense):  512×512×2 buffers × 120 bytes = 62.9 MB per map (EMPTY!)
+ * - NEW (Sparse): ~2,000 cells × 120 bytes × 2 = ~0.5 MB per map (typical)
+ * - SAVINGS: 62.4 MB per map → ~3.1 GB saved across 50 maps!
+ *
  * PERFORMANCE TARGETS:
- * - Query latency: 1-5μs per bot
- * - Memory: ~500MB for double buffers
- * - Update overhead: 2-5ms per 100ms tick
+ * - Query latency: 1-5μs per bot (unchanged)
+ * - Memory: ~0.5-2 MB per map (was ~63 MB)
+ * - Update overhead: 2-5ms per 100ms tick (unchanged)
  * - Scales linearly to 10,000+ bots
  *
  * THREAD SAFETY:
- * - Worker thread: Reads Map data, writes to inactive buffer
+ * - Main thread: Updates inactive buffer during Map::Update
  * - Bot threads: Read from active buffer (atomic load, no locks)
- * - Main thread: Never blocks, never touched by spatial grid
+ * - Buffer swap: Atomic pointer exchange
  *
  * MODULE INTEGRATION:
  * - Lives in src/modules/Playerbot/Spatial/ (NO core files modified)
  * - Created by BotWorldSessionMgr::Initialize()
- * - Auto-stops worker thread in destructor
  * - Uses TrinityCore's existing ObjectAccessor for thread-safe reads
  */
 class TC_GAME_API DoubleBufferedSpatialGrid
@@ -473,26 +528,73 @@ public:
     };
 
     /**
-     * @brief One complete spatial grid buffer
-     * 512x512 cells = 262,144 cells covering entire map
+     * @brief One complete spatial grid buffer - SPARSE STORAGE
+     *
+     * MEMORY OPTIMIZATION: Uses unordered_map instead of dense 512x512 array
+     *
+     * OLD (Dense):  512×512 = 262,144 cells always allocated = 31.46 MB per buffer
+     * NEW (Sparse): Only populated cells allocated = typically 0.1-0.5 MB per buffer
+     *
+     * Trade-off: Slightly slower cell lookup (hash vs array index) but ~99% memory savings
      */
     struct GridBuffer
     {
-        ::std::array<::std::array<CellContents, TOTAL_CELLS>, TOTAL_CELLS> cells;
+        // SPARSE storage: Only cells with entities are stored
+        ::std::unordered_map<CellKey, CellContents, CellKeyHash> cells;
+
         uint32 populationCount{0};
+        uint32 activeCellCount{0};  // Number of cells with entities
         ::std::chrono::steady_clock::time_point lastUpdate;
 
         void Clear()
         {
-            for (auto& row : cells)
-                for (auto& cell : row)
-                    cell.Clear();
+            cells.clear();
             populationCount = 0;
+            activeCellCount = 0;
+        }
+
+        // Get or create cell at coordinates (for write operations)
+        CellContents& GetOrCreateCell(uint32 x, uint32 y)
+        {
+            CellKey key(x, y);
+            auto it = cells.find(key);
+            if (it == cells.end())
+            {
+                it = cells.emplace(key, CellContents{}).first;
+                ++activeCellCount;
+            }
+            return it->second;
+        }
+
+        // Get cell at coordinates (for read operations, returns nullptr if not found)
+        CellContents const* GetCell(uint32 x, uint32 y) const
+        {
+            CellKey key(x, y);
+            auto it = cells.find(key);
+            return (it != cells.end()) ? &it->second : nullptr;
+        }
+
+        // Calculate memory usage in bytes
+        size_t GetMemoryUsageBytes() const
+        {
+            size_t total = sizeof(GridBuffer);
+            // Hash map overhead: ~32 bytes per entry (key + value pointer + bucket)
+            total += cells.size() * (sizeof(CellKey) + sizeof(CellContents) + 32);
+
+            // Add snapshot memory
+            for (auto const& [key, cell] : cells)
+            {
+                total += cell.GetMemoryUsageBytes();
+                // Vector capacity overhead
+                total += cell.areaTriggers.capacity() * sizeof(AreaTriggerSnapshot);
+                total += cell.dynamicObjects.capacity() * sizeof(DynamicObjectSnapshot);
+            }
+            return total;
         }
     };
 
     /**
-     * @brief Query statistics for monitoring
+     * @brief Query statistics for monitoring - ENHANCED with memory tracking
      */
     struct Statistics
     {
@@ -501,7 +603,14 @@ public:
         uint64_t totalSwaps{0};
         uint32 lastUpdateDurationUs{0};
         uint32 currentPopulation{0};
+        uint32 activeCellCount{0};      // NEW: Number of populated cells
+        size_t memoryUsageBytes{0};     // NEW: Total memory usage
+        size_t peakMemoryUsageBytes{0}; // NEW: Peak memory usage
         ::std::chrono::steady_clock::time_point startTime;
+
+        // Helper for human-readable memory display
+        float GetMemoryUsageMB() const { return static_cast<float>(memoryUsageBytes) / (1024.0f * 1024.0f); }
+        float GetPeakMemoryUsageMB() const { return static_cast<float>(peakMemoryUsageBytes) / (1024.0f * 1024.0f); }
     };
 
     // Constructor/Destructor
@@ -590,6 +699,10 @@ private:
     mutable ::std::atomic<uint64_t> _totalUpdates{0};
     mutable ::std::atomic<uint64_t> _totalSwaps{0};
     mutable ::std::atomic<uint32> _lastUpdateDurationUs{0};
+
+    // Memory tracking
+    mutable ::std::atomic<size_t> _currentMemoryUsage{0};
+    mutable ::std::atomic<size_t> _peakMemoryUsage{0};
 
     ::std::chrono::steady_clock::time_point _startTime;
 

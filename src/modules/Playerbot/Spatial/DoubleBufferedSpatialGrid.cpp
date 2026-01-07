@@ -534,7 +534,8 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].creatures.push_back(::std::move(snapshot));
+                // SPARSE STORAGE: Use GetOrCreateCell() to allocate only populated cells
+                writeBuffer.GetOrCreateCell(x, y).creatures.push_back(::std::move(snapshot));
                 ++creatureCount;
             }
             }
@@ -688,7 +689,8 @@ done_creatures:
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].players.push_back(::std::move(snapshot));
+                // SPARSE STORAGE: Use GetOrCreateCell() to allocate only populated cells
+                writeBuffer.GetOrCreateCell(x, y).players.push_back(::std::move(snapshot));
                 ++playerCount;
             }
         }
@@ -788,7 +790,8 @@ done_players:
                 auto [x, y] = GetCellCoords(snapshot.position);
                 if (x < TOTAL_CELLS && y < TOTAL_CELLS)
                 {
-                    writeBuffer.cells[x][y].gameObjects.push_back(::std::move(snapshot));
+                    // SPARSE STORAGE: Use GetOrCreateCell() to allocate only populated cells
+                    writeBuffer.GetOrCreateCell(x, y).gameObjects.push_back(::std::move(snapshot));
                     ++gameObjectCount;
                 }
             }
@@ -842,7 +845,8 @@ done_gameobjects:
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].dynamicObjects.push_back(::std::move(snapshot));
+                // SPARSE STORAGE: Use GetOrCreateCell() to allocate only populated cells
+                writeBuffer.GetOrCreateCell(x, y).dynamicObjects.push_back(::std::move(snapshot));
                 ++dynamicObjectCount;
             }
         }
@@ -924,7 +928,8 @@ done_gameobjects:
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].areaTriggers.push_back(::std::move(snapshot));
+                // SPARSE STORAGE: Use GetOrCreateCell() to allocate only populated cells
+                writeBuffer.GetOrCreateCell(x, y).areaTriggers.push_back(::std::move(snapshot));
                 ++areaTriggerCount;
             }
         }
@@ -934,13 +939,31 @@ done_gameobjects:
                                    dynamicObjectCount + areaTriggerCount;
     writeBuffer.lastUpdate = ::std::chrono::steady_clock::now();
 
+    // Update memory tracking
+    size_t currentMemory = writeBuffer.GetMemoryUsageBytes();
+    _currentMemoryUsage.store(currentMemory, ::std::memory_order_relaxed);
+
+    // Update peak memory if exceeded
+    size_t currentPeak = _peakMemoryUsage.load(::std::memory_order_relaxed);
+    while (currentMemory > currentPeak &&
+           !_peakMemoryUsage.compare_exchange_weak(currentPeak, currentMemory,
+                                                    ::std::memory_order_relaxed,
+                                                    ::std::memory_order_relaxed))
+    {
+        // Retry with updated currentPeak
+    }
+
     auto end = ::std::chrono::high_resolution_clock::now();
     auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
     _lastUpdateDurationUs.store(static_cast<uint32>(duration.count()), ::std::memory_order_relaxed);
 
     TC_LOG_TRACE("playerbot.spatial",
-        "PopulateBufferFromMap: map {} - {} creatures, {} players, {} gameobjects, {} dynobjects, {} areatriggers in {}?s",
-        cachedMapId, creatureCount, playerCount, gameObjectCount, dynamicObjectCount, areaTriggerCount, duration.count());
+        "PopulateBufferFromMap: map {} - {} creatures, {} players, {} gameobjects, {} dynobjects, {} areatriggers "
+        "in {} cells, {:.2f} MB, {}us",
+        cachedMapId, creatureCount, playerCount, gameObjectCount, dynamicObjectCount, areaTriggerCount,
+        writeBuffer.activeCellCount,
+        static_cast<float>(currentMemory) / (1024.0f * 1024.0f),
+        duration.count());
 }
 
 void DoubleBufferedSpatialGrid::SwapBuffers()
@@ -979,11 +1002,14 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         if (x >= TOTAL_CELLS || y >= TOTAL_CELLS)
             continue;
 
-        auto const& cell = readBuffer.cells[x][y];
+        // SPARSE STORAGE: Use GetCell() which returns nullptr for empty cells
+        CellContents const* cell = readBuffer.GetCell(x, y);
+        if (!cell)
+            continue;  // Cell is empty in sparse storage
 
         // Add creatures from this cell with accurate distance filtering
         // Note: Cells are coarse (66 yards), so we need exact distance checks
-    for (CreatureSnapshot const& snapshot : cell.creatures)
+        for (CreatureSnapshot const& snapshot : cell->creatures)
         {
             // Accurate distance check using snapshot position
             float distSq = pos.GetExactDistSq(snapshot.position);
@@ -995,7 +1021,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
     }
 
     TC_LOG_TRACE("playerbot.spatial",
-        "QueryNearbyCreatures: pos({:.1f},{:.1f}) radius {:.1f} ? {} results",
+        "QueryNearbyCreatures: pos({:.1f},{:.1f}) radius {:.1f} -> {} results",
         pos.GetPositionX(), pos.GetPositionY(), radius, results.size());
 
     return results;
@@ -1016,10 +1042,13 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         if (x >= TOTAL_CELLS || y >= TOTAL_CELLS)
             continue;
 
-        auto const& cell = readBuffer.cells[x][y];
+        // SPARSE STORAGE: Use GetCell() which returns nullptr for empty cells
+        CellContents const* cell = readBuffer.GetCell(x, y);
+        if (!cell)
+            continue;  // Cell is empty in sparse storage
 
         // Add players from this cell with accurate distance filtering
-    for (PlayerSnapshot const& snapshot : cell.players)
+        for (PlayerSnapshot const& snapshot : cell->players)
         {
             float distSq = pos.GetExactDistSq(snapshot.position);
             if (distSq <= radiusSq)
@@ -1030,7 +1059,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
     }
 
     TC_LOG_TRACE("playerbot.spatial",
-        "QueryNearbyPlayers: pos({:.1f},{:.1f}) radius {:.1f} ? {} results",
+        "QueryNearbyPlayers: pos({:.1f},{:.1f}) radius {:.1f} -> {} results",
         pos.GetPositionX(), pos.GetPositionY(), radius, results.size());
 
     return results;
@@ -1051,10 +1080,13 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         if (x >= TOTAL_CELLS || y >= TOTAL_CELLS)
             continue;
 
-        auto const& cell = readBuffer.cells[x][y];
+        // SPARSE STORAGE: Use GetCell() which returns nullptr for empty cells
+        CellContents const* cell = readBuffer.GetCell(x, y);
+        if (!cell)
+            continue;  // Cell is empty in sparse storage
 
         // Add game objects from this cell with accurate distance filtering
-    for (GameObjectSnapshot const& snapshot : cell.gameObjects)
+        for (GameObjectSnapshot const& snapshot : cell->gameObjects)
         {
             float distSq = pos.GetExactDistSq(snapshot.position);
             if (distSq <= radiusSq)
@@ -1065,7 +1097,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
     }
 
     TC_LOG_TRACE("playerbot.spatial",
-        "QueryNearbyGameObjects: pos({:.1f},{:.1f}) radius {:.1f} ? {} results",
+        "QueryNearbyGameObjects: pos({:.1f},{:.1f}) radius {:.1f} -> {} results",
         pos.GetPositionX(), pos.GetPositionY(), radius, results.size());
 
     return results;
@@ -1086,10 +1118,13 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         if (x >= TOTAL_CELLS || y >= TOTAL_CELLS)
             continue;
 
-        auto const& cell = readBuffer.cells[x][y];
+        // SPARSE STORAGE: Use GetCell() which returns nullptr for empty cells
+        CellContents const* cell = readBuffer.GetCell(x, y);
+        if (!cell)
+            continue;  // Cell is empty in sparse storage
 
         // Add area triggers from this cell with accurate distance filtering
-    for (AreaTriggerSnapshot const& snapshot : cell.areaTriggers)
+        for (AreaTriggerSnapshot const& snapshot : cell->areaTriggers)
         {
             float distSq = pos.GetExactDistSq(snapshot.position);
             if (distSq <= radiusSq)
@@ -1100,7 +1135,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
     }
 
     TC_LOG_TRACE("playerbot.spatial",
-        "QueryNearbyAreaTriggers: pos({:.1f},{:.1f}) radius {:.1f} ? {} results",
+        "QueryNearbyAreaTriggers: pos({:.1f},{:.1f}) radius {:.1f} -> {} results",
         pos.GetPositionX(), pos.GetPositionY(), radius, results.size());
 
     return results;
@@ -1121,10 +1156,13 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         if (x >= TOTAL_CELLS || y >= TOTAL_CELLS)
             continue;
 
-        auto const& cell = readBuffer.cells[x][y];
+        // SPARSE STORAGE: Use GetCell() which returns nullptr for empty cells
+        CellContents const* cell = readBuffer.GetCell(x, y);
+        if (!cell)
+            continue;  // Cell is empty in sparse storage
 
         // Add dynamic objects from this cell with accurate distance filtering
-    for (DynamicObjectSnapshot const& snapshot : cell.dynamicObjects)
+        for (DynamicObjectSnapshot const& snapshot : cell->dynamicObjects)
         {
             float distSq = pos.GetExactDistSq(snapshot.position);
             if (distSq <= radiusSq)
@@ -1135,7 +1173,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
     }
 
     TC_LOG_TRACE("playerbot.spatial",
-        "QueryNearbyDynamicObjects: pos({:.1f},{:.1f}) radius {:.1f} ? {} results",
+        "QueryNearbyDynamicObjects: pos({:.1f},{:.1f}) radius {:.1f} -> {} results",
         pos.GetPositionX(), pos.GetPositionY(), radius, results.size());
 
     return results;
@@ -1184,13 +1222,16 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
 DoubleBufferedSpatialGrid::CellContents const& DoubleBufferedSpatialGrid::GetCell(
     uint32 x, uint32 y) const
 {
-    static CellContents emptyCell;
+    // Thread-local static for empty cell return (avoids allocation)
+    static thread_local CellContents emptyCell;
 
     if (x >= TOTAL_CELLS || y >= TOTAL_CELLS)
         return emptyCell;
 
+    // SPARSE STORAGE: Use GetCell() which returns nullptr for empty cells
     auto const& readBuffer = GetReadBuffer();
-    return readBuffer.cells[x][y];
+    CellContents const* cell = readBuffer.GetCell(x, y);
+    return cell ? *cell : emptyCell;
 }
 
 DoubleBufferedSpatialGrid::Statistics DoubleBufferedSpatialGrid::GetStatistics() const
@@ -1200,7 +1241,13 @@ DoubleBufferedSpatialGrid::Statistics DoubleBufferedSpatialGrid::GetStatistics()
     stats.totalUpdates = _totalUpdates.load(::std::memory_order_relaxed);
     stats.totalSwaps = _totalSwaps.load(::std::memory_order_relaxed);
     stats.lastUpdateDurationUs = _lastUpdateDurationUs.load(::std::memory_order_relaxed);
-    stats.currentPopulation = GetReadBuffer().populationCount;
+
+    // SPARSE STORAGE: Include active cell count and memory usage
+    auto const& readBuffer = GetReadBuffer();
+    stats.currentPopulation = readBuffer.populationCount;
+    stats.activeCellCount = readBuffer.activeCellCount;
+    stats.memoryUsageBytes = _currentMemoryUsage.load(::std::memory_order_relaxed);
+    stats.peakMemoryUsageBytes = _peakMemoryUsage.load(::std::memory_order_relaxed);
     stats.startTime = _startTime;
 
     return stats;

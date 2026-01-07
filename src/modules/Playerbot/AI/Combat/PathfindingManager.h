@@ -13,6 +13,7 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
+#include "Core/LRUCache.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -380,15 +381,15 @@ private:
     bool _enableDangerAvoidance;
 
     // Pathfinding state
-    ::std::vector<DangerZone> _dangerZones;
+    BoundedHistory<DangerZone> _dangerZones{MAX_DANGER_ZONES};  // Bounded danger zones
     uint32 _lastDangerUpdate;
 
-    // Cache system
-    ::std::unordered_map<::std::string, PathCacheEntry> _pathCache;
-    uint32 _lastCacheCleanup;
+    // Cache system - NOW USES LRU CACHE for automatic memory management
+    LRUCache<::std::string, PathCacheEntry> _pathCache{MAX_CACHE_SIZE,
+        ::std::chrono::milliseconds(DEFAULT_CACHE_DURATION)};  // LRU with TTL
 
-    // Async pathfinding
-    ::std::unordered_map<uint32, PathResult> _asyncResults;
+    // Async pathfinding - bounded to prevent unbounded growth
+    BoundedMap<uint32, PathResult> _asyncResults{MAX_ASYNC_RESULTS};
     ::std::atomic<uint32> _nextRequestId{1};
 
     // Performance metrics
@@ -399,12 +400,14 @@ private:
 
     // Constants
     static constexpr float DEFAULT_NODE_SPACING = 1.0f;     // 1 yard between nodes
-    static constexpr uint32 DEFAULT_MAX_NODES = 500;       // Maximum nodes in path
-    static constexpr uint32 DEFAULT_TIMEOUT = 100;         // 100ms timeout
-    static constexpr uint32 DEFAULT_CACHE_DURATION = 5000; // 5 seconds
+    static constexpr uint32 DEFAULT_MAX_NODES = 500;        // Maximum nodes in path
+    static constexpr uint32 DEFAULT_TIMEOUT = 100;          // 100ms timeout
+    static constexpr uint32 DEFAULT_CACHE_DURATION = 5000;  // 5 seconds
     static constexpr uint32 CACHE_CLEANUP_INTERVAL = 10000; // 10 seconds
     static constexpr uint32 DANGER_UPDATE_INTERVAL = 1000;  // 1 second
-    static constexpr size_t MAX_CACHE_SIZE = 200;          // Maximum cache entries
+    static constexpr size_t MAX_CACHE_SIZE = 200;           // Maximum cache entries
+    static constexpr size_t MAX_DANGER_ZONES = 50;          // Maximum tracked danger zones
+    static constexpr size_t MAX_ASYNC_RESULTS = 100;        // Maximum pending async results
 };
 
 // Pathfinding utilities

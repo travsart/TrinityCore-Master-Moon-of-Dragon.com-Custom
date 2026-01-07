@@ -13,6 +13,7 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
+#include "Core/LRUCache.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -285,8 +286,8 @@ public:
     // Cache management
     void ClearCache();
     void ClearExpiredCacheEntries();
-    void SetCacheDuration(uint32 durationMs) { _cacheDuration = durationMs; }
-    uint32 GetCacheDuration() const { return _cacheDuration; }
+    void SetCacheDuration(uint32 durationMs) { _losCache.SetTTL(::std::chrono::milliseconds(durationMs)); }
+    uint32 GetCacheDuration() const { return static_cast<uint32>(_losCache.GetTTL().count()); }
 
     // Performance monitoring
     LoSMetrics const& GetMetrics() const { return _metrics; }
@@ -355,10 +356,12 @@ private:
 private:
     Player* _bot;
 
-    // Cache system (using struct key eliminates string allocations)
-    ::std::unordered_map<LoSCacheKey, LoSCacheEntry, LoSCacheKeyHash> _losCache;
-    uint32 _cacheDuration;
-    uint32 _lastCacheCleanup;
+    // Cache system - NOW USES LRU CACHE for automatic memory management
+    // (using struct key eliminates string allocations, combined with LRU for eviction)
+    LRUCache<LoSCacheKey, LoSCacheEntry, LoSCacheKeyHash> _losCache{
+        MAX_CACHE_SIZE,
+        ::std::chrono::milliseconds(DEFAULT_CACHE_DURATION)
+    };
 
     // Configuration
     float _maxRange;
@@ -367,8 +370,8 @@ private:
     bool _enableCaching;
     bool _profilingEnabled;
 
-    // Dynamic obstruction tracking
-    ::std::unordered_map<ObjectGuid, GameObject*> _dynamicObstructions;
+    // Dynamic obstruction tracking - bounded to prevent unbounded growth
+    BoundedMap<ObjectGuid, GameObject*> _dynamicObstructions{MAX_DYNAMIC_OBSTRUCTIONS};
     uint32 _lastObstructionUpdate;
 
     // Performance metrics
@@ -378,12 +381,13 @@ private:
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
-    static constexpr uint32 DEFAULT_CACHE_DURATION = 1000;      // 1 second
-    static constexpr float DEFAULT_MAX_RANGE = 100.0f;         // 100 yards
-    static constexpr float DEFAULT_HEIGHT_TOLERANCE = 10.0f;   // 10 yards
-    static constexpr uint32 CACHE_CLEANUP_INTERVAL = 5000;     // 5 seconds
-    static constexpr uint32 OBSTRUCTION_UPDATE_INTERVAL = 2000; // 2 seconds
-    static constexpr size_t MAX_CACHE_SIZE = 1000;             // Maximum cache entries
+    static constexpr uint32 DEFAULT_CACHE_DURATION = 1000;       // 1 second
+    static constexpr float DEFAULT_MAX_RANGE = 100.0f;           // 100 yards
+    static constexpr float DEFAULT_HEIGHT_TOLERANCE = 10.0f;     // 10 yards
+    static constexpr uint32 CACHE_CLEANUP_INTERVAL = 5000;       // 5 seconds
+    static constexpr uint32 OBSTRUCTION_UPDATE_INTERVAL = 2000;  // 2 seconds
+    static constexpr size_t MAX_CACHE_SIZE = 1000;               // Maximum LOS cache entries
+    static constexpr size_t MAX_DYNAMIC_OBSTRUCTIONS = 100;      // Maximum tracked obstructions
 };
 
 // Line of sight utilities

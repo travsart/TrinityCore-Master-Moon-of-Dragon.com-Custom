@@ -14,6 +14,7 @@
 #include "Bag.h"
 #include "ItemTemplate.h"
 #include "SpellInfo.h"
+#include "SpellAuraDefines.h"
 #include "Log.h"
 #include "SpellMgr.h"
 #include "GameTime.h"
@@ -171,9 +172,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     }
 
     // Start eating if needed
-    // CRITICAL: Check IsSitState() to avoid applying food aura when already sitting/eating
-    // This prevents the assertion failure: HasEffect(effIndex) == (!apply)
-    if (NeedsFood(ai) && !_isEating && !bot->IsSitState())
+    // CRITICAL FIX: Check for existing food aura (SPELL_AURA_OBS_MOD_HEALTH = 20) to prevent assertion failure
+    // The assertion "HasEffect(effIndex) == (!apply)" fails when trying to apply an aura that already exists
+    // This can happen when _isEating flag gets out of sync with actual aura state
+    bool hasFoodAura = bot->HasAuraType(SPELL_AURA_OBS_MOD_HEALTH);
+    if (NeedsFood(ai) && !_isEating && !bot->IsSitState() && !hasFoodAura)
     {
         Item* food = FindFood(ai);
         if (food)
@@ -201,17 +204,19 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                          bot->GetName());
         }
     }
-    // If already sitting but _isEating is false, sync the flag
-    else if (bot->IsSitState() && !_isEating && NeedsFood(ai))
+    // If already has food aura but _isEating is false, sync the flag
+    else if ((bot->IsSitState() || hasFoodAura) && !_isEating && NeedsFood(ai))
     {
         _isEating = true;
-        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} already sitting, syncing eat flag", bot->GetName());
+        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} already eating (has aura), syncing eat flag", bot->GetName());
     }
 
     // Start drinking if needed
-    // CRITICAL: Check IsSitState() to avoid applying drink aura when already sitting/drinking
-    // This prevents the assertion failure: HasEffect(effIndex) == (!apply)
-    if (NeedsDrink(ai) && !_isDrinking && !bot->IsSitState())
+    // CRITICAL FIX: Check for existing drink aura (SPELL_AURA_OBS_MOD_POWER = 21) to prevent assertion failure
+    // The assertion "HasEffect(effIndex) == (!apply)" fails when trying to apply an aura that already exists
+    // This can happen when _isDrinking flag gets out of sync with actual aura state
+    bool hasDrinkAura = bot->HasAuraType(SPELL_AURA_OBS_MOD_POWER);
+    if (NeedsDrink(ai) && !_isDrinking && !bot->IsSitState() && !hasDrinkAura)
     {
         Item* drink = FindDrink(ai);
         if (drink)
@@ -240,11 +245,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                          bot->GetName());
         }
     }
-    // If already sitting but _isDrinking is false, sync the flag
-    else if (bot->IsSitState() && !_isDrinking && NeedsDrink(ai))
+    // If already has drink aura but _isDrinking is false, sync the flag
+    else if ((bot->IsSitState() || hasDrinkAura) && !_isDrinking && NeedsDrink(ai))
     {
         _isDrinking = true;
-        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} already sitting, syncing drink flag", bot->GetName());
+        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} already drinking (has aura), syncing drink flag", bot->GetName());
     }
 
     // Use bandage if health critical and no food

@@ -1105,10 +1105,21 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
 
         // Periodic enterprise logging (every 60 seconds)
-    if (_tickCounter % 1200 == 0)
+        if (_tickCounter % 1200 == 0)
         {
             sBotPriorityMgr->LogPriorityDistribution();
             sBotPerformanceMon->LogPerformanceReport();
+
+            // MEMORY MANAGEMENT: Clean up inactive spatial grids and log memory stats
+            // This prevents unbounded memory growth from grids created for maps that bots
+            // have since left. Grids inactive for 5+ minutes with zero population are freed.
+            size_t cleaned = sSpatialGridManager.CleanupInactiveGrids();
+            if (cleaned > 0)
+            {
+                TC_LOG_INFO("module.playerbot.session",
+                    "Memory cleanup: {} inactive spatial grids freed", cleaned);
+            }
+            sSpatialGridManager.LogMemoryStats();
         }
     }
 }

@@ -14,6 +14,7 @@
 #include "ObjectGuid.h"
 #include "Position.h"
 #include "GameTime.h"
+#include "Core/LRUCache.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -258,9 +259,9 @@ private:
     Player* _bot;
     ThreatRole _botRole;
 
-    // Threat storage
-    ::std::unordered_map<ObjectGuid, ThreatInfo> _threatMap;
-    ::std::unordered_map<ObjectGuid, ::std::vector<float>> _threatHistory;
+    // Threat storage - bounded to prevent unbounded memory growth
+    BoundedMap<ObjectGuid, ThreatInfo> _threatMap{MAX_THREAT_ENTRIES};
+    BoundedMap<ObjectGuid, BoundedHistory<float>> _threatHistory{MAX_THREAT_ENTRIES};
 
     // Configuration
     uint32 _updateInterval;
@@ -281,7 +282,8 @@ private:
     // Constants
     static constexpr uint32 DEFAULT_UPDATE_INTERVAL = 500;  // 500ms
     static constexpr float DEFAULT_THREAT_RADIUS = 50.0f;   // 50 yards
-    static constexpr uint32 THREAT_HISTORY_SIZE = 10;       // Keep last 10 values
+    static constexpr uint32 THREAT_HISTORY_SIZE = 10;       // Keep last 10 values per target
+    static constexpr size_t MAX_THREAT_ENTRIES = 50;        // Maximum tracked threat targets
     static constexpr uint32 ANALYSIS_CACHE_DURATION = 250;  // 250ms cache
     static constexpr float EMERGENCY_THREAT_THRESHOLD = 150.0f; // 150% threat = emergency
 };

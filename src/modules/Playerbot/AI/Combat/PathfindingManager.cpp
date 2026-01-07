@@ -29,9 +29,8 @@ namespace Playerbot
 PathfindingManager::PathfindingManager(Player* bot)
     : _bot(bot), _defaultNodeSpacing(DEFAULT_NODE_SPACING), _maxNodes(DEFAULT_MAX_NODES),
       _pathfindingTimeout(DEFAULT_TIMEOUT), _cacheDuration(DEFAULT_CACHE_DURATION),
-      _enableCaching(true), _enableDangerAvoidance(true), _lastDangerUpdate(0), _lastCacheCleanup(0)
+      _enableCaching(true), _enableDangerAvoidance(true), _lastDangerUpdate(0)
 {
-
     TC_LOG_DEBUG("playerbot.pathfinding", "PathfindingManager initialized for bot {}", _bot->GetName());
 }
 
@@ -58,16 +57,17 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
 
         if (_enableCaching)
         {
-            PathCacheEntry* cacheEntry = FindCacheEntry(request.startPos, request.goalPos);
-            if (cacheEntry && !cacheEntry->IsExpired(GameTime::GetGameTimeMS()))
+            ::std::string cacheKey = GenerateCacheKey(request.startPos, request.goalPos);
+            auto cachedEntry = _pathCache.Get(cacheKey);
+            if (cachedEntry.has_value() && cachedEntry->IsValid(request.startPos, request.goalPos))
             {
+                // LRUCache handles TTL automatically - entry is valid if returned
                 _metrics.cacheHits++;
                 result.success = true;
-                result.waypoints = cacheEntry->waypoints;
-                result.quality = cacheEntry->quality;
+                result.waypoints = cachedEntry->waypoints;
+                result.quality = cachedEntry->quality;
                 result.totalDistance = PathfindingUtils::CalculatePathLength(result.waypoints);
                 result.estimatedTime = result.totalDistance / _bot->GetSpeed(MOVE_RUN);
-                cacheEntry->accessCount++;
 
                 auto endTime = ::std::chrono::steady_clock::now();
                 auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
@@ -576,7 +576,8 @@ float PathfindingManager::CalculateTerrainCost(const Position& pos)
 void PathfindingManager::RegisterDangerZone(const DangerZone& zone)
 {
     // No lock needed - pathfinding data is per-bot instance data
-    _dangerZones.push_back(zone);
+    // BoundedHistory automatically evicts oldest entries when full
+    _dangerZones.Push(zone);
 
     TC_LOG_DEBUG("playerbot.pathfinding", "Registered danger zone for bot {} at ({:.2f}, {:.2f}) radius {:.2f}",
                _bot->GetName(), zone.center.GetPositionX(), zone.center.GetPositionY(), zone.radius);
@@ -593,12 +594,15 @@ void PathfindingManager::UpdateDangerZones(uint32 currentTime)
 
 void PathfindingManager::ClearExpiredDangerZones(uint32 currentTime)
 {
-    _dangerZones.erase(
-        ::std::remove_if(_dangerZones.begin(), _dangerZones.end(),
+    // BoundedHistory doesn't support erase - rebuild by keeping only active zones
+    // Use the underlying Data() vector for filtering
+    ::std::vector<DangerZone>& data = _dangerZones.Data();
+    data.erase(
+        ::std::remove_if(data.begin(), data.end(),
             [currentTime](const DangerZone& zone) {
                 return !zone.isActive || currentTime > zone.startTime + zone.duration;
             }),
-        _dangerZones.end()
+        data.end()
     );
 }
 
@@ -670,26 +674,20 @@ bool PathfindingManager::RequiresJump(const Position& from, const Position& to)
     return heightDiff > 1.0f && heightDiff <= 5.0f;
 }
 
-PathCacheEntry* PathfindingManager::FindCacheEntry(const Position& start, const Position& goal)
+PathCacheEntry* PathfindingManager::FindCacheEntry(const Position& /*start*/, const Position& /*goal*/)
 {
-    ::std::string key = GenerateCacheKey(start, goal);
-    auto it = _pathCache.find(key);
-
-    if (it != _pathCache.end() && it->second.IsValid(start, goal))
-        return &it->second;
-
+    // DEPRECATED: This method is no longer used - LRUCache uses Get() which returns optional<Value>
+    // Callers should use _pathCache.Get(key) directly which returns std::optional<PathCacheEntry>
+    // Keeping this method stub for ABI compatibility, but it always returns nullptr
     return nullptr;
 }
 
 void PathfindingManager::AddCacheEntry(const PathCacheEntry& entry)
 {
-    if (_pathCache.size() >= MAX_CACHE_SIZE)
-    {
-        ClearExpiredCacheEntries();
-    }
-
+    // LRUCache handles capacity management automatically - no need to check size
+    // The cache will evict LRU entries when full
     ::std::string key = GenerateCacheKey(entry.startPos, entry.goalPos);
-    _pathCache[key] = entry;
+    _pathCache.Put(key, entry);
 }
 
 ::std::string PathfindingManager::GenerateCacheKey(const Position& start, const Position& goal)
@@ -702,22 +700,14 @@ void PathfindingManager::AddCacheEntry(const PathCacheEntry& entry)
 
 void PathfindingManager::ClearExpiredCacheEntries()
 {
-    // No lock needed - pathfinding data is per-bot instance data
-
-    uint32 currentTime = GameTime::GetGameTimeMS();
-    if (currentTime - _lastCacheCleanup < CACHE_CLEANUP_INTERVAL)
-        return;
-
-    auto it = _pathCache.begin();
-    while (it != _pathCache.end())
+    // LRUCache handles TTL-based expiration automatically on access
+    // This method provides explicit cleanup for maintenance purposes
+    size_t removed = _pathCache.RemoveExpired();
+    if (removed > 0)
     {
-        if (it->second.IsExpired(currentTime))
-            it = _pathCache.erase(it);
-        else
-            ++it;
+        TC_LOG_DEBUG("playerbot.pathfinding", "Path cache cleanup: {} expired entries removed for bot {}",
+                    removed, _bot->GetName());
     }
-
-    _lastCacheCleanup = currentTime;
 }
 
 void PathfindingManager::TrackPerformance(::std::chrono::microseconds duration, bool successful, bool cached)

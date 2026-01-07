@@ -29,12 +29,10 @@ namespace Playerbot
 {
 
 LineOfSightManager::LineOfSightManager(Player* bot)
-    : _bot(bot), _cacheDuration(DEFAULT_CACHE_DURATION), _lastCacheCleanup(0),
-      _maxRange(DEFAULT_MAX_RANGE), _heightTolerance(DEFAULT_HEIGHT_TOLERANCE),
+    : _bot(bot), _maxRange(DEFAULT_MAX_RANGE), _heightTolerance(DEFAULT_HEIGHT_TOLERANCE),
       _angleTolerance(M_PI/3), _enableCaching(true), _profilingEnabled(false),
       _lastObstructionUpdate(0)
 {
-
     TC_LOG_DEBUG("playerbot.los", "LineOfSightManager initialized for bot {}", _bot->GetName());
 }
 
@@ -59,14 +57,16 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
         ObjectGuid targetGuid = context.target->GetGUID();
         if (_enableCaching)
         {
-            LoSCacheEntry* cacheEntry = FindCacheEntry(sourceGuid, targetGuid, context.checkType);
-            if (cacheEntry && cacheEntry->IsValid(GameTime::GetGameTimeMS()))
+            LoSCacheKey key(sourceGuid, targetGuid, context.checkType);
+            auto cachedEntry = _losCache.Get(key);
+            if (cachedEntry.has_value())
             {
+                // LRUCache handles TTL automatically - entry is valid if returned
                 _metrics.cacheHits++;
                 auto endTime = ::std::chrono::steady_clock::now();
                 auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
-                TrackPerformance(duration, true, cacheEntry->result.hasLineOfSight);
-                return cacheEntry->result;
+                TrackPerformance(duration, true, cachedEntry->result.hasLineOfSight);
+                return cachedEntry->result;
             }
         }
 
@@ -81,7 +81,8 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
             cacheEntry.targetGuid = targetGuid;
             cacheEntry.result = result;
             cacheEntry.timestamp = GameTime::GetGameTimeMS();
-            cacheEntry.expirationTime = cacheEntry.timestamp + _cacheDuration;
+            // expirationTime is set for backward compatibility but LRUCache handles TTL automatically
+            cacheEntry.expirationTime = cacheEntry.timestamp + DEFAULT_CACHE_DURATION;
             cacheEntry.checkType = context.checkType;
 
             AddCacheEntry(cacheEntry);
@@ -450,28 +451,20 @@ bool LineOfSightManager::HasElevationAdvantage(Unit* target)
 void LineOfSightManager::ClearCache()
 {
     // No lock needed - line of sight cache is per-bot instance data
-    _losCache.clear();
+    _losCache.Clear();
     TC_LOG_DEBUG("playerbot.los", "LoS cache cleared for bot {}", _bot->GetName());
 }
 
 void LineOfSightManager::ClearExpiredCacheEntries()
 {
-    // No lock needed - line of sight cache is per-bot instance data
-
-    uint32 currentTime = GameTime::GetGameTimeMS();
-    if (currentTime - _lastCacheCleanup < CACHE_CLEANUP_INTERVAL)
-        return;
-
-    auto it = _losCache.begin();
-    while (it != _losCache.end())
+    // LRUCache handles TTL-based expiration automatically on access
+    // This method provides explicit cleanup for maintenance purposes
+    size_t removed = _losCache.RemoveExpired();
+    if (removed > 0)
     {
-        if (it->second.IsExpired(currentTime))
-            it = _losCache.erase(it);
-        else
-            ++it;
+        TC_LOG_DEBUG("playerbot.los", "LoS cache cleanup: {} expired entries removed for bot {}",
+                    removed, _bot->GetName());
     }
-
-    _lastCacheCleanup = currentTime;
 }
 
 LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
@@ -682,22 +675,20 @@ bool LineOfSightManager::CheckWaterBlocking(const Position& from, const Position
     return fromInWater != toInWater;
 }
 
-LoSCacheEntry* LineOfSightManager::FindCacheEntry(ObjectGuid sourceGuid, ObjectGuid targetGuid, LoSCheckType checkType)
+LoSCacheEntry* LineOfSightManager::FindCacheEntry(ObjectGuid /*sourceGuid*/, ObjectGuid /*targetGuid*/, LoSCheckType /*checkType*/)
 {
-    LoSCacheKey key(sourceGuid, targetGuid, checkType);
-    auto it = _losCache.find(key);
-    return (it != _losCache.end()) ? &it->second : nullptr;
+    // DEPRECATED: This method is no longer used - LRUCache uses Get() which returns optional<Value>
+    // Callers should use _losCache.Get(key) directly which returns std::optional<LoSCacheEntry>
+    // Keeping this method stub for ABI compatibility, but it always returns nullptr
+    return nullptr;
 }
 
 void LineOfSightManager::AddCacheEntry(const LoSCacheEntry& entry)
 {
-    if (_losCache.size() >= MAX_CACHE_SIZE)
-    {
-        ClearExpiredCacheEntries();
-    }
-
+    // LRUCache handles capacity management automatically - no need to check size
+    // The cache will evict LRU entries when full
     LoSCacheKey key(entry.sourceGuid, entry.targetGuid, entry.checkType);
-    _losCache[key] = entry;
+    _losCache.Put(key, entry);
 }
 
 float LineOfSightManager::CalculateDistance3D(const Position& from, const Position& to)

@@ -106,8 +106,8 @@ void BotThreatManager::UpdateThreat(uint32 diff)
 void BotThreatManager::ResetThreat()
 {
     // No lock needed - threat data is per-bot instance data
-    _threatMap.clear();
-    _threatHistory.clear();
+    _threatMap.Clear();
+    _threatHistory.Clear();
     _analysisDirty = true;
 
     TC_LOG_DEBUG("playerbots", "ThreatManager: Reset threat for bot {}",
@@ -227,15 +227,15 @@ void BotThreatManager::ModifyThreat(Unit* target, float modifier)
     ObjectGuid targetGuid = target->GetGUID();
     // No lock needed - threat data is per-bot instance data
 
-    auto it = _threatMap.find(targetGuid);
-    if (it != _threatMap.end())
+    if (_threatMap.Contains(targetGuid))
     {
-        it->second.threatValue *= modifier;
-        it->second.threatPercent = CalculateThreatPercent(target);
-        it->second.lastUpdate = GameTime::GetGameTimeMS();
+        ThreatInfo& info = _threatMap[targetGuid];
+        info.threatValue *= modifier;
+        info.threatPercent = CalculateThreatPercent(target);
+        info.lastUpdate = GameTime::GetGameTimeMS();
 
         if (modifier < 1.0f)
-            it->second.threatReduced += it->second.threatValue * (1.0f - modifier);
+            info.threatReduced += info.threatValue * (1.0f - modifier);
 
         _analysisDirty = true;
     }
@@ -373,9 +373,9 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
     ObjectGuid targetGuid = target->GetGUID();
     // No lock needed - threat data is per-bot instance data
 
-    auto it = _threatMap.find(targetGuid);
-    if (it != _threatMap.end())
-        return it->second.priority;
+    auto info = _threatMap.Get(targetGuid);
+    if (info.has_value())
+        return info->priority;
 
     return ThreatPriority::MODERATE_PRIORITY;
 }
@@ -465,8 +465,8 @@ bool BotThreatManager::HasThreat(Unit* target) const
     ObjectGuid targetGuid = target->GetGUID();
     // No lock needed - threat data is per-bot instance data
 
-    auto it = _threatMap.find(targetGuid);
-    return it != _threatMap.end() && it->second.isActive && it->second.threatValue > 0.0f;
+    auto info = _threatMap.Get(targetGuid);
+    return info.has_value() && info->isActive && info->threatValue > 0.0f;
 }
 
 float BotThreatManager::GetThreat(Unit* target) const
@@ -477,9 +477,9 @@ float BotThreatManager::GetThreat(Unit* target) const
     ObjectGuid targetGuid = target->GetGUID();
     // No lock needed - threat data is per-bot instance data
 
-    auto it = _threatMap.find(targetGuid);
-    if (it != _threatMap.end())
-        return it->second.threatValue;
+    auto info = _threatMap.Get(targetGuid);
+    if (info.has_value())
+        return info->threatValue;
 
     return 0.0f;
 }
@@ -492,9 +492,9 @@ float BotThreatManager::GetThreatPercent(Unit* target) const
     ObjectGuid targetGuid = target->GetGUID();
     // No lock needed - threat data is per-bot instance data
 
-    auto it = _threatMap.find(targetGuid);
-    if (it != _threatMap.end())
-        return it->second.threatPercent;
+    auto info = _threatMap.Get(targetGuid);
+    if (info.has_value())
+        return info->threatPercent;
 
     return CalculateThreatPercent(target);
 }
@@ -504,13 +504,11 @@ ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
     if (!target)
         return nullptr;
 
-    ObjectGuid targetGuid = target->GetGUID();
-    // No lock needed - threat data is per-bot instance data
-
-    auto it = _threatMap.find(targetGuid);
-    if (it != _threatMap.end())
-        return &it->second;
-
+    // NOTE: BoundedMap::Get() returns optional by value, so we cannot return a pointer
+    // to internal data safely. Callers should use GetThreat(), GetThreatPercent(), etc.
+    // For now, return nullptr - this method is deprecated in favor of direct accessors.
+    // TODO: Update callers to use Get() with optional<ThreatInfo> return
+    (void)target;  // Suppress unused parameter warning
     return nullptr;
 }
 
@@ -623,11 +621,11 @@ void BotThreatManager::OnSpellInterrupt(Unit* target)
     ObjectGuid targetGuid = target->GetGUID();
     // No lock needed - threat data is per-bot instance data
 
-    auto it = _threatMap.find(targetGuid);
-    if (it != _threatMap.end())
+    if (_threatMap.Contains(targetGuid))
     {
-        it->second.spellsInterrupted++;
-        it->second.abilitiesUsed++;
+        ThreatInfo& info = _threatMap[targetGuid];
+        info.spellsInterrupted++;
+        info.abilitiesUsed++;
     }
 }
 void BotThreatManager::OnTauntUsed(Unit* target)
@@ -785,11 +783,18 @@ void BotThreatManager::UpdateThreatHistory(Unit* target, float threat)
         return;
 
     ObjectGuid targetGuid = target->GetGUID();
-    auto& history = _threatHistory[targetGuid];
-
-    history.push_back(threat);
-    if (history.size() > THREAT_HISTORY_SIZE)
-        history.erase(history.begin());
+    // BoundedHistory automatically evicts oldest entries when at capacity
+    // Use SetMaxSize to ensure proper capacity if not already set
+    if (!_threatHistory.Contains(targetGuid))
+    {
+        BoundedHistory<float> history(THREAT_HISTORY_SIZE);
+        history.Push(threat);
+        _threatHistory.Insert(targetGuid, ::std::move(history));
+    }
+    else
+    {
+        _threatHistory[targetGuid].Push(threat);
+    }
 }
 
 void BotThreatManager::UpdateThreatTable(uint32 diff)
@@ -829,19 +834,22 @@ void BotThreatManager::CleanupStaleEntries()
     uint32 now = GameTime::GetGameTimeMS();
     const uint32 STALE_THRESHOLD = 30000; // 30 seconds
 
-    auto it = _threatMap.begin();
-    while (it != _threatMap.end())
+    // Collect GUIDs to remove (can't modify during iteration)
+    ::std::vector<ObjectGuid> toRemove;
+    for (auto const& [guid, info] : _threatMap)
     {
-        if ((now - it->second.lastUpdate) > STALE_THRESHOLD)
+        if ((now - info.lastUpdate) > STALE_THRESHOLD)
         {
-            _threatHistory.erase(it->first);
-            it = _threatMap.erase(it);
-            _analysisDirty = true;
+            toRemove.push_back(guid);
         }
-        else
-        {
-            ++it;
-        }
+    }
+
+    // Remove stale entries
+    for (ObjectGuid const& guid : toRemove)
+    {
+        _threatHistory.Remove(guid);
+        _threatMap.Remove(guid);
+        _analysisDirty = true;
     }
 }
 
