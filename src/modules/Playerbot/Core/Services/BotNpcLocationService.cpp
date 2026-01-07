@@ -701,8 +701,41 @@ NpcLocationResult BotNpcLocationService::FindNearestFromCache(
     for (auto const& loc : locations)
     {
         // Filter by bot's map
-    if (loc.mapId != bot->GetMapId())
+        if (loc.mapId != bot->GetMapId())
             continue;
+
+        // FACTION CHECK: For service NPCs (especially flight masters), check faction compatibility
+        // This prevents Horde bots from being directed to Alliance NPCs and vice versa
+        CreatureTemplate const* cInfo = sObjectMgr->GetCreatureTemplate(loc.entry);
+        if (cInfo)
+        {
+            FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(cInfo->faction);
+            if (factionTemplate)
+            {
+                // Check if this NPC's faction is hostile to the bot
+                // FriendGroup: 1 = Horde, 2 = Alliance
+                // We need to check if this NPC would be hostile to the bot
+                uint32 botTeam = bot->GetTeam();
+                bool isHostile = false;
+
+                // Check enemy factions - if bot's faction group is in the NPC's enemy list, skip
+                if (botTeam == HORDE)
+                {
+                    // Horde bot - check if NPC is Alliance-only (FriendGroup has Alliance bit)
+                    if ((factionTemplate->FriendGroup & 2) && !(factionTemplate->FriendGroup & 1))
+                        isHostile = true;
+                }
+                else if (botTeam == ALLIANCE)
+                {
+                    // Alliance bot - check if NPC is Horde-only (FriendGroup has Horde bit)
+                    if ((factionTemplate->FriendGroup & 1) && !(factionTemplate->FriendGroup & 2))
+                        isHostile = true;
+                }
+
+                if (isHostile)
+                    continue;
+            }
+        }
 
         float distance = bot->GetDistance(loc.position);
         if (distance < closestDistance)

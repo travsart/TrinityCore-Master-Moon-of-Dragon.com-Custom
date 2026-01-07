@@ -724,6 +724,13 @@ namespace Playerbot
 
                 if (creature)
                 {
+                    // FACTION CHECK: Verify flight master is friendly to bot
+                    // This prevents Horde bots from selecting Alliance flight masters
+                    if (creature->IsHostileTo(m_bot))
+                        continue;
+                    if (!creature->IsFriendlyTo(m_bot) && !creature->IsNeutralToAll())
+                        continue;
+
                     minDistance = npcInfo.distance;
                     nearest = creature;
                 }
@@ -1290,6 +1297,16 @@ namespace Playerbot
     for (Creature* creature : creatures)
         {
             if (!creature)
+                continue;
+
+            // FACTION CHECK: Skip hostile NPCs - bots cannot interact with enemies
+            // This prevents Horde bots from trying to use Alliance flight masters and vice versa
+            if (creature->IsHostileTo(m_bot))
+                continue;
+
+            // For service NPCs (vendors, trainers, flight masters), also verify friendliness
+            // Neutral NPCs are allowed, but hostile NPCs should never be in the interaction list
+            if (!creature->IsFriendlyTo(m_bot) && !creature->IsNeutralToAll())
                 continue;
 
             NPCType type = DetermineNPCType(creature);
