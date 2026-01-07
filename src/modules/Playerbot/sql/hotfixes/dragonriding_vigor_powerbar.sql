@@ -86,23 +86,22 @@ INSERT INTO unit_power_bar (
 );
 
 -- ============================================================================
--- STEP 2: REGISTER HOTFIX FOR UNIT_POWER_BAR
+-- STEP 2: HOTFIX REGISTRATION (AUTOMATIC)
 -- ============================================================================
--- The hotfix_data table tells the server to send this DB2 entry to the client.
+-- NOTE: Hotfix registration is now handled AUTOMATICALLY by the server!
 --
--- IMPORTANT: The table hash must match sUnitPowerBarStore.GetTableHash()
--- Check your server log at startup for:
---   ">>> PLAYERBOT DRAGONRIDING: UnitPowerBar table hash: 0xXXXXXXXX"
+-- The PlayerbotDragonridingScript.cpp dynamically registers the hotfix using
+-- sDB2Manager.InsertNewHotfix(sUnitPowerBarStore.GetTableHash(), 631)
+-- This uses the correct table hash from the loaded DB2 store, avoiding
+-- hardcoded hash mismatches.
 --
--- If the hash in the log differs from below, update the TableHash value!
+-- You do NOT need to manually insert into hotfix_data anymore.
+-- Just run this SQL to create the unit_power_bar entry, and the server
+-- will automatically register the hotfix at startup.
 -- ============================================================================
 
-DELETE FROM hotfix_data WHERE RecordId = 631;
-
--- Insert hotfix entry (Status = 1 means Valid)
--- NOTE: TableHash will be logged at server startup - update if different!
-INSERT INTO hotfix_data (Id, UniqueId, TableHash, RecordId, Status, VerifiedBuild)
-VALUES (900631, 900631, 0x1C9F16FB, 631, 1, 64978);
+-- Clean up any old manual hotfix_data entries (no longer needed)
+DELETE FROM hotfix_data WHERE RecordId = 631 AND Id = 900631;
 
 -- ============================================================================
 -- VERIFICATION QUERIES
@@ -121,14 +120,12 @@ SELECT * FROM hotfix_data WHERE RecordId = 631;
 -- ============================================================================
 -- If the vigor UI still doesn't display:
 --
--- 1. Check server log for the correct UnitPowerBar table hash:
---    Look for: ">>> PLAYERBOT DRAGONRIDING: UnitPowerBar table hash: 0xXXXXXXXX"
---    Update the TableHash value in the INSERT statement above if different.
+-- 1. Ensure you ran this SQL in your HOTFIXES database (e.g., hotfixes_11)
 --
--- 2. Verify the hotfix_data entry has Status = 1 (Valid):
---    SELECT * FROM hotfix_data WHERE RecordId = 631;
+-- 2. Restart worldserver after running this SQL
 --
--- 3. Ensure you restarted worldserver after running this SQL.
+-- 3. Check server log for successful hotfix registration:
+--    Look for: ">>> PLAYERBOT DRAGONRIDING: Registered hotfix for UnitPowerBar 631"
 --
 -- 4. Verify the Dragonrider Energy aura (372773) is applied when Soar activates:
 --    Check server log for: "Dragonrider Energy aura CONFIRMED APPLIED"
@@ -140,11 +137,4 @@ SELECT * FROM hotfix_data WHERE RecordId = 631;
 --    - BarType 0: Default power bar
 --    - BarType 2: Alternative style
 --    - BarType 4: Widget style
---
--- Status values reference:
---   0 = NotSet
---   1 = Valid      (use this!)
---   2 = RecordRemoved
---   3 = Invalid
---   4 = NotPublic
 -- ============================================================================

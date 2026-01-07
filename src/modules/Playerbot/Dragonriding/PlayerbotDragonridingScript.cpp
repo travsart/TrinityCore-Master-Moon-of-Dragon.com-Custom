@@ -32,6 +32,7 @@
 #include "DragonridingDefines.h"
 #include "DragonridingMgr.h"
 #include "DB2Stores.h"
+#include "DB2HotfixGenerator.h"
 #include "UnitDefines.h"
 #include "DB2Structure.h"
 #include "Log.h"
@@ -1225,10 +1226,9 @@ void AddSC_playerbot_dragonriding()
             OVERRIDE_SPELL_DATA_SOAR);
     }
 
-    // DEBUG: Log UnitPowerBar table hash for hotfix_data entry
-    // This is needed to push UnitPowerBar 631 (Vigor) changes to the client
-    TC_LOG_ERROR("server.loading", ">>> PLAYERBOT DRAGONRIDING: UnitPowerBar table hash: 0x{:X} (use this in hotfix_data SQL!)",
-        sUnitPowerBarStore.GetTableHash());
+    // Get the correct UnitPowerBar table hash dynamically
+    uint32 unitPowerBarHash = sUnitPowerBarStore.GetTableHash();
+    TC_LOG_ERROR("server.loading", ">>> PLAYERBOT DRAGONRIDING: UnitPowerBar table hash: 0x{:X}", unitPowerBarHash);
 
     // Check if UnitPowerBar 631 (Vigor) is loaded correctly
     if (UnitPowerBarEntry const* vigorBar = sUnitPowerBarStore.LookupEntry(631))
@@ -1237,10 +1237,16 @@ void AddSC_playerbot_dragonriding()
         TC_LOG_ERROR("server.loading", ">>>   Name: {}, MinPower: {}, MaxPower: {}, StartPower: {}",
             vigorBar->Name.Str[LOCALE_enUS], vigorBar->MinPower, vigorBar->MaxPower, vigorBar->StartPower);
         TC_LOG_ERROR("server.loading", ">>>   BarType: {}, Flags: {}", vigorBar->BarType, vigorBar->Flags);
+
+        // Dynamically register the hotfix using the correct table hash
+        // This replaces the need for SQL hotfix_data with hardcoded hash
+        DB2HotfixGeneratorBase::AddClientHotfix(unitPowerBarHash, 631);
+        TC_LOG_ERROR("server.loading", ">>> PLAYERBOT DRAGONRIDING: Registered hotfix for UnitPowerBar 631 with hash 0x{:X}", unitPowerBarHash);
     }
     else
     {
         TC_LOG_ERROR("server.loading", ">>> PLAYERBOT DRAGONRIDING: WARNING - UnitPowerBar 631 (Vigor) NOT FOUND!");
+        TC_LOG_ERROR("server.loading", ">>>   Import sql/hotfixes/dragonriding_vigor_powerbar.sql into hotfixes database!");
         TC_LOG_ERROR("server.loading", ">>>   The vigor UI will NOT display without this entry!");
     }
 }
