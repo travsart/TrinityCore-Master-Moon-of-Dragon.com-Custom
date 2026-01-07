@@ -5,6 +5,7 @@
  */
 
 #include "TravelRouteManager.h"
+#include "PortalDatabase.h"
 #include "Player.h"
 #include "ObjectAccessor.h"
 #include "MotionMaster.h"
@@ -12,12 +13,15 @@
 #include "GameTime.h"
 #include "SpellHistory.h"
 #include "Spell.h"
+#include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "ObjectMgr.h"
 #include "Transport.h"
 #include "TransportMgr.h"
 #include "Map.h"
 #include "WorldSession.h"
+#include "GameObject.h"
+#include "GameObjectData.h"
 #include "../Game/FlightMasterManager.h"
 #include <queue>
 #include <algorithm>
@@ -2336,32 +2340,147 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
 void TravelRouteManager::HandlePortal(TravelLeg& leg)
 {
     // ========================================================================
-    // ENTERPRISE-GRADE PORTAL HANDLING
+    // ENTERPRISE-GRADE PORTAL HANDLING WITH DATABASE LOOKUP
     // ========================================================================
-    // Implements proper portal usage with validation:
-    // 1. Walk to portal location
-    // 2. Validate portal exists (optional - for city portals we just teleport)
-    // 3. Use portal spell or direct teleport for static portals
-    // 4. Validate arrival at destination
+    // Priority order for finding portal locations:
+    // 1. PortalDatabase lookup (accurate spawn positions from DB)
+    // 2. Dynamic runtime search (FindNearbyPortalObjects)
+    // 3. Fallback to connection data (hardcoded coordinates)
+    //
+    // Steps:
+    // 1. Walk to portal location (determined by priority above)
+    // 2. Use portal spell OR interact with portal GameObject
+    // 3. Validate arrival at destination
     // ========================================================================
 
-    if (!m_bot || !leg.connection)
+    if (!m_bot)
     {
         leg.currentState = TravelState::FAILED;
         return;
     }
 
-    // Re-validate faction before using portal
-    if (!CanUseConnection(leg.connection))
-    {
-        TC_LOG_WARN("module.playerbot.travel",
-            "HandlePortal: Bot {} can no longer use portal {} (faction/level changed)",
-            m_bot->GetName(), leg.connection->name);
-        leg.currentState = TravelState::FAILED;
-        return;
-    }
+    // Get connection name for logging (may be nullptr)
+    std::string portalName = leg.connection ? leg.connection->name : "Unknown Portal";
 
     uint32 now = static_cast<uint32>(GameTime::GetGameTimeMS());
+
+    // ========================================================================
+    // PORTAL POSITION RESOLUTION
+    // ========================================================================
+    // On first entry (IDLE state), resolve actual portal position using:
+    // 1. PortalDatabase (most accurate)
+    // 2. Dynamic search (fallback)
+    // 3. Connection data (last resort)
+    // ========================================================================
+
+    if (leg.currentState == TravelState::IDLE)
+    {
+        Position resolvedPortalPos = leg.startPosition;  // Default to connection data
+        Position resolvedDestPos = leg.endPosition;
+        bool foundPortal = false;
+
+        // === STEP 1: Try PortalDatabase ===
+        PortalDatabase& portalDb = PortalDatabase::Instance();
+        if (portalDb.IsInitialized())
+        {
+            // Look for best portal to our destination
+            PortalInfo const* portalInfo = portalDb.GetBestPortalForDestination(
+                m_bot, leg.endMapId, leg.endPosition);
+
+            if (portalInfo && portalInfo->CanPlayerUse(m_bot))
+            {
+                resolvedPortalPos = portalInfo->sourcePosition;
+                resolvedDestPos = portalInfo->destinationPosition;
+                portalName = portalInfo->name;
+                foundPortal = true;
+
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "HandlePortal: Bot {} found portal '{}' (entry {}) in database at ({:.1f}, {:.1f}, {:.1f})",
+                    m_bot->GetName(), portalInfo->name, portalInfo->gameObjectEntry,
+                    resolvedPortalPos.GetPositionX(), resolvedPortalPos.GetPositionY(), resolvedPortalPos.GetPositionZ());
+            }
+        }
+
+        // === STEP 2: Dynamic search fallback ===
+        if (!foundPortal)
+        {
+            // Search for portal GameObjects near connection's estimated position
+            std::vector<GameObject*> nearbyPortals = portalDb.FindNearbyPortalObjects(m_bot, 200.0f);
+
+            for (GameObject* go : nearbyPortals)
+            {
+                if (!go || !go->isSpawned())
+                    continue;
+
+                // Get the spell from this portal
+                GameObjectTemplate const* goTemplate = go->GetGOInfo();
+                if (!goTemplate)
+                    continue;
+
+                uint32 portalSpellId = 0;
+                if (goTemplate->type == GAMEOBJECT_TYPE_SPELLCASTER)
+                    portalSpellId = goTemplate->spellCaster.spell;
+                else if (goTemplate->type == GAMEOBJECT_TYPE_GOOBER)
+                    portalSpellId = goTemplate->goober.spell;
+
+                if (portalSpellId == 0)
+                    continue;
+
+                // Check if this portal leads to our destination map
+                auto destOpt = portalDb.GetPortalDestination(portalSpellId);
+                if (destOpt && destOpt->GetMapId() == leg.endMapId)
+                {
+                    resolvedPortalPos.Relocate(go->GetPositionX(), go->GetPositionY(), go->GetPositionZ());
+                    resolvedDestPos.Relocate(destOpt->GetPositionX(), destOpt->GetPositionY(), destOpt->GetPositionZ());
+                    portalName = goTemplate->name;
+                    foundPortal = true;
+
+                    TC_LOG_DEBUG("module.playerbot.travel",
+                        "HandlePortal: Bot {} found portal '{}' dynamically at ({:.1f}, {:.1f}, {:.1f})",
+                        m_bot->GetName(), portalName,
+                        resolvedPortalPos.GetPositionX(), resolvedPortalPos.GetPositionY(), resolvedPortalPos.GetPositionZ());
+                    break;
+                }
+            }
+        }
+
+        // === STEP 3: Use connection data as last resort ===
+        if (!foundPortal && leg.connection)
+        {
+            TC_LOG_DEBUG("module.playerbot.travel",
+                "HandlePortal: Bot {} using fallback connection data for portal '{}' at ({:.1f}, {:.1f}, {:.1f})",
+                m_bot->GetName(), leg.connection->name,
+                leg.startPosition.GetPositionX(), leg.startPosition.GetPositionY(), leg.startPosition.GetPositionZ());
+            // Keep default positions from leg
+        }
+        else if (!foundPortal)
+        {
+            TC_LOG_ERROR("module.playerbot.travel",
+                "HandlePortal: Bot {} has no portal source - no database entry, no dynamic portal, no connection data",
+                m_bot->GetName());
+            leg.currentState = TravelState::FAILED;
+            return;
+        }
+
+        // Update leg with resolved positions
+        leg.startPosition = resolvedPortalPos;
+        leg.endPosition = resolvedDestPos;
+        leg.description = portalName;
+
+        // Re-validate faction if connection exists
+        if (leg.connection && !CanUseConnection(leg.connection))
+        {
+            TC_LOG_WARN("module.playerbot.travel",
+                "HandlePortal: Bot {} can no longer use portal {} (faction/level changed)",
+                m_bot->GetName(), portalName);
+            leg.currentState = TravelState::FAILED;
+            return;
+        }
+    }
+
+    // ========================================================================
+    // STATE MACHINE
+    // ========================================================================
 
     switch (leg.currentState)
     {
@@ -2376,20 +2495,21 @@ void TravelRouteManager::HandlePortal(TravelLeg& leg)
                 if (leg.currentState != TravelState::WALKING_TO_TRANSPORT)
                 {
                     TC_LOG_DEBUG("module.playerbot.travel",
-                        "HandlePortal: Bot {} walking to portal {} at ({:.1f}, {:.1f}, {:.1f}) - distance {:.1f}",
-                        m_bot->GetName(), leg.connection->name,
+                        "HandlePortal: Bot {} walking to portal '{}' at ({:.1f}, {:.1f}, {:.1f}) - distance {:.1f}",
+                        m_bot->GetName(), leg.description,
                         leg.startPosition.GetPositionX(), leg.startPosition.GetPositionY(), leg.startPosition.GetPositionZ(),
                         distToPortal);
                 }
                 m_bot->GetMotionMaster()->MovePoint(0, leg.startPosition);
                 leg.currentState = TravelState::WALKING_TO_TRANSPORT;
+                leg.stateStartTime = now;
             }
             else
             {
                 // At portal - use it
                 TC_LOG_INFO("module.playerbot.travel",
-                    "HandlePortal: Bot {} using portal {} to MAP {}",
-                    m_bot->GetName(), leg.connection->name, leg.endMapId);
+                    "HandlePortal: Bot {} using portal '{}' to MAP {}",
+                    m_bot->GetName(), leg.description, leg.endMapId);
 
                 // Validate destination is safe (not in void)
                 if (leg.endPosition.GetPositionX() == 0.0f &&
@@ -2397,8 +2517,8 @@ void TravelRouteManager::HandlePortal(TravelLeg& leg)
                     leg.endPosition.GetPositionZ() == 0.0f)
                 {
                     TC_LOG_ERROR("module.playerbot.travel",
-                        "HandlePortal: Bot {} - portal {} has invalid destination (0,0,0)! Cannot teleport.",
-                        m_bot->GetName(), leg.connection->name);
+                        "HandlePortal: Bot {} - portal '{}' has invalid destination (0,0,0)! Cannot teleport.",
+                        m_bot->GetName(), leg.description);
                     leg.currentState = TravelState::FAILED;
                     return;
                 }
@@ -2416,8 +2536,8 @@ void TravelRouteManager::HandlePortal(TravelLeg& leg)
                 else
                 {
                     TC_LOG_ERROR("module.playerbot.travel",
-                        "HandlePortal: Bot {} - TeleportTo failed for portal {}",
-                        m_bot->GetName(), leg.connection->name);
+                        "HandlePortal: Bot {} - TeleportTo failed for portal '{}'",
+                        m_bot->GetName(), leg.description);
                     leg.currentState = TravelState::FAILED;
                 }
             }
@@ -2430,8 +2550,8 @@ void TravelRouteManager::HandlePortal(TravelLeg& leg)
             if (m_bot->GetMapId() == leg.endMapId && IsNearPosition(leg.endPosition, 50.0f))
             {
                 TC_LOG_DEBUG("module.playerbot.travel",
-                    "HandlePortal: Bot {} successfully arrived via portal {}",
-                    m_bot->GetName(), leg.connection->name);
+                    "HandlePortal: Bot {} successfully arrived via portal '{}'",
+                    m_bot->GetName(), leg.description);
                 leg.currentState = TravelState::COMPLETED;
             }
             else
@@ -2440,10 +2560,21 @@ void TravelRouteManager::HandlePortal(TravelLeg& leg)
                 uint32 elapsed = now - leg.stateStartTime;
                 if (elapsed > 30000) // 30 second timeout for portal
                 {
-                    TC_LOG_WARN("module.playerbot.travel",
-                        "HandlePortal: Bot {} timed out waiting for portal teleport to complete",
-                        m_bot->GetName());
-                    leg.currentState = TravelState::FAILED;
+                    // May have arrived but at different position - check if on correct map
+                    if (m_bot->GetMapId() == leg.endMapId)
+                    {
+                        TC_LOG_DEBUG("module.playerbot.travel",
+                            "HandlePortal: Bot {} arrived on map {} (position differs from expected), marking complete",
+                            m_bot->GetName(), leg.endMapId);
+                        leg.currentState = TravelState::COMPLETED;
+                    }
+                    else
+                    {
+                        TC_LOG_WARN("module.playerbot.travel",
+                            "HandlePortal: Bot {} timed out waiting for portal teleport to complete",
+                            m_bot->GetName());
+                        leg.currentState = TravelState::FAILED;
+                    }
                 }
             }
             break;

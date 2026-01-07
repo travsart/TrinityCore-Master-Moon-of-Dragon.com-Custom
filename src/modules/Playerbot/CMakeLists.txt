@@ -876,6 +876,9 @@ set(PLAYERBOT_SOURCES
     # - Hearthstone -> FlightMaster -> Zeppelin -> FlightMaster
     ${CMAKE_CURRENT_SOURCE_DIR}/Travel/TravelRouteManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Travel/TravelRouteManager.h
+    # Portal Database - Loads portal GameObjects from database for accurate portal navigation
+    ${CMAKE_CURRENT_SOURCE_DIR}/Travel/PortalDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Travel/PortalDatabase.h
 
     # Phase 3: Game System Integration - Quest System Completion
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestCompletion.cpp
@@ -1476,6 +1479,8 @@ source_group("Interaction" FILES
 source_group("Travel" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Travel/TravelRouteManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Travel/TravelRouteManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Travel/PortalDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Travel/PortalDatabase.h
 )
 
 source_group("Commands" FILES

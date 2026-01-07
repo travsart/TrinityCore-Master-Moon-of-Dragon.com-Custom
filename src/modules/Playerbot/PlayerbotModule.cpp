@@ -32,6 +32,7 @@
 #include "Professions/AuctionMaterialsBridge.h"
 #include "Banking/BankingManager.h"
 #include "Quest/QuestHubDatabase.h"
+#include "Travel/PortalDatabase.h"
 #include "Equipment/BotGearFactory.h"
 #include "AI/ClassAI/ClassBehaviorTreeRegistry.h"
 #include "PlayerbotModuleAdapter.h"
@@ -241,6 +242,20 @@ bool PlayerbotModule::Initialize()
     }
     TC_LOG_INFO("server.loading", "Quest Hub Database initialized successfully - {} quest hubs loaded",
         Playerbot::QuestHubDatabase::Instance().GetQuestHubCount());
+
+    // Initialize Portal Database (portal GameObject positions loaded from gameobject/spell tables)
+    TC_LOG_INFO("server.loading", "Initializing Portal Database...");
+    if (!Playerbot::PortalDatabase::Instance().Initialize())
+    {
+        // Non-fatal - portals will fall back to hardcoded coordinates or dynamic search
+        TC_LOG_WARN("server.loading", "Portal Database initialization incomplete - using fallback portal detection");
+    }
+    else
+    {
+        auto stats = Playerbot::PortalDatabase::Instance().GetStatistics();
+        TC_LOG_INFO("server.loading", "Portal Database initialized successfully - {} portals loaded ({} static, {} dungeon, {} expansion)",
+            stats.totalPortals, stats.staticPortals, stats.dungeonPortals, stats.expansionPortals);
+    }
 
     // Initialize Bot Gear Factory (automated gear generation for instant level-up)
     TC_LOG_INFO("server.loading", "Initializing Bot Gear Factory...");
