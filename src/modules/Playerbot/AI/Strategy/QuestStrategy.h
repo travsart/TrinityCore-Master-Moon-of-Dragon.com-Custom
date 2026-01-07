@@ -15,6 +15,7 @@
 #include "Player.h"
 #include "QuestDef.h"
 #include "../../Game/QuestAcceptanceManager.h"
+#include "../../Travel/TravelRouteManager.h"
 #include <vector>
 
 namespace Playerbot
@@ -202,6 +203,13 @@ private:
     // Key: questId, Value: consecutive failure count
     ::std::unordered_map<uint32, uint32> _questTurnInFailures;
     static constexpr uint32 MAX_QUEST_TURNIN_FAILURES = 3; // Abandon quest after 3 consecutive failures
+
+    // ========================================================================
+    // PERSISTENT TRAVEL MANAGER (for multi-step transport journeys)
+    // ========================================================================
+    // Required for ship/zeppelin boarding - state must persist across update ticks
+    ::std::unique_ptr<TravelRouteManager> _travelManager;
+    uint32 _lastTravelQuestId = 0;  // Track which quest initiated the travel
 };
 
 } // namespace Playerbot
