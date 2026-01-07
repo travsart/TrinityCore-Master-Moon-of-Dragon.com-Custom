@@ -43,6 +43,7 @@
 
 class Player;
 class Creature;
+class Transport;  // Forward declaration in global namespace (TrinityCore's Transport class)
 
 namespace Playerbot
 {
@@ -449,10 +450,22 @@ private:
      */
     void InitializeTransportConnections();
 
+    /**
+     * @brief Find transport at a specific position
+     * @param pos Position to search near
+     * @param transportEntry Optional specific transport entry to find
+     * @param range Search range in yards
+     * @return Transport if found, nullptr otherwise
+     */
+    ::Transport* FindTransportAtPosition(Position const& pos, uint32 transportEntry, float range) const;
+
     // Member Variables
     Player* m_bot;
     std::unique_ptr<TravelRoute> m_activeRoute;
     Statistics m_stats;
+
+    // Current transport tracking (for ship/zeppelin boarding)
+    ObjectGuid m_currentTransportGuid;
 
     // Transport connections database (static, shared across all managers)
     static std::vector<TransportConnection> s_transportConnections;
