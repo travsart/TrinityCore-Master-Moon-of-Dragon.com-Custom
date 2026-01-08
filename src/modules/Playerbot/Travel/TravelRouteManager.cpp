@@ -2247,8 +2247,30 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
 
         case TravelState::WAITING_FOR_TRANSPORT:
         {
+            // DIAGNOSTIC: Log what we're searching for
+            TC_LOG_DEBUG("module.playerbot.travel",
+                "🔍 WAITING_FOR_TRANSPORT: Bot {} searching for transport entry {} within 100yd of ({:.1f}, {:.1f}, {:.1f})",
+                m_bot->GetName(), leg.connection->transportEntry,
+                leg.startPosition.GetPositionX(), leg.startPosition.GetPositionY(), leg.startPosition.GetPositionZ());
+
             // Look for transport at departure dock
             ::Transport* transport = FindTransportAtPosition(leg.startPosition, leg.connection->transportEntry, 100.0f);
+
+            // DIAGNOSTIC: Log search result
+            if (transport)
+            {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "🔍 WAITING_FOR_TRANSPORT: Bot {} FOUND transport entry {} at ({:.1f}, {:.1f}, {:.1f}) - IsStopped={}",
+                    m_bot->GetName(), transport->GetEntry(),
+                    transport->GetPositionX(), transport->GetPositionY(), transport->GetPositionZ(),
+                    transport->IsStopped() ? "YES" : "NO");
+            }
+            else
+            {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "🔍 WAITING_FOR_TRANSPORT: Bot {} NO transport found (entry {} not within range)",
+                    m_bot->GetName(), leg.connection->transportEntry);
+            }
 
             if (transport && transport->IsStopped())
             {
@@ -2402,7 +2424,17 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
 ::Transport* TravelRouteManager::FindTransportAtPosition(Position const& /*pos*/, uint32 transportEntry, float range) const
 {
     if (!m_bot || !m_bot->GetMap())
+    {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "🔍 FindTransportAtPosition: No bot or map - returning nullptr");
         return nullptr;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "🔍 FindTransportAtPosition: Bot {} at ({:.1f}, {:.1f}, {:.1f}) searching for entry {} within {:.0f}yd",
+        m_bot->GetName(),
+        m_bot->GetPositionX(), m_bot->GetPositionY(), m_bot->GetPositionZ(),
+        transportEntry, range);
 
     // Method 1: If we have a specific transport entry, search by entry
     if (transportEntry != 0)
@@ -2411,11 +2443,30 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
         GameObject* go = m_bot->FindNearestGameObject(transportEntry, range, false);
         if (go)
         {
+            TC_LOG_DEBUG("module.playerbot.travel",
+                "🔍 FindTransportAtPosition: Found GameObject entry {} at ({:.1f}, {:.1f}, {:.1f}), type={}",
+                go->GetEntry(),
+                go->GetPositionX(), go->GetPositionY(), go->GetPositionZ(),
+                static_cast<int>(go->GetGoType()));
+
             // ToTransport() returns Transport* if GO type is GAMEOBJECT_TYPE_MAP_OBJ_TRANSPORT
             if (::Transport* transport = go->ToTransport())
             {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "🔍 FindTransportAtPosition: Successfully cast to Transport*");
                 return transport;
             }
+            else
+            {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "🔍 FindTransportAtPosition: GameObject is NOT a Transport (ToTransport returned nullptr)");
+            }
+        }
+        else
+        {
+            TC_LOG_DEBUG("module.playerbot.travel",
+                "🔍 FindTransportAtPosition: FindNearestGameObject(entry {}) returned nullptr",
+                transportEntry);
         }
     }
 
@@ -2424,9 +2475,15 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
     GameObject* go = m_bot->FindNearestGameObjectOfType(GAMEOBJECT_TYPE_MAP_OBJ_TRANSPORT, range);
     if (go)
     {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "🔍 FindTransportAtPosition: Found transport by type - entry {} at ({:.1f}, {:.1f}, {:.1f})",
+            go->GetEntry(),
+            go->GetPositionX(), go->GetPositionY(), go->GetPositionZ());
         return go->ToTransport();
     }
 
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "🔍 FindTransportAtPosition: No transport found by any method");
     return nullptr;
 }
 
