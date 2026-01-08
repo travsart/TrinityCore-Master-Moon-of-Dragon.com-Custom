@@ -92,6 +92,12 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     if (!GetBot() || !GetBot()->IsAlive())
         return;
 
+    // CRITICAL FIX: Safety check for worker thread access during bot destruction
+    // CombatManager::SetInCombatWith crashes when accessing combat refs if bot
+    // has been removed from the world but pointer is still valid
+    if (!GetBot()->IsInWorld())
+        return;
+
     // CRITICAL: Execute pending spell if ready (every frame, like players)
     // This mirrors Player::Update() which calls CanExecutePendingSpellCastRequest()
     // and ExecutePendingSpellCastRequest() every frame - see Player.cpp:946-947
@@ -192,7 +198,10 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     }
 
     // Class-specific combat updates
-    if (_currentCombatTarget)
+    // CRITICAL FIX: Safety check for worker thread access during target destruction
+    // CombatManager::SetInCombatWith crashes when accessing _pvpRefs map if target
+    // has been removed from the world but pointer is still valid
+    if (_currentCombatTarget && _currentCombatTarget->IsInWorld())
     {
         TC_LOG_TRACE("module.playerbot", "Calling UpdateRotation for {} (class {}) with target {}",
                      GetBot()->GetName(), GetBot()->GetClass(), _currentCombatTarget->GetName());
@@ -233,7 +242,7 @@ void ClassAI::OnCombatUpdate(uint32 diff)
         // interfering with the smooth chase motion and causing stuttering.
         // This was the ROOT CAUSE of low-level bot combat stuttering.
         // ========================================================================
-        if (_currentCombatTarget)
+        // Note: IsInWorld() check already done at outer scope (line 198)
         {
             // Check if bot is already chasing - ChaseMovementGenerator handles facing
             ::MotionMaster* motionMaster = GetBot()->GetMotionMaster();

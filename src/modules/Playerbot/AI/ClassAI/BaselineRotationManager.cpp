@@ -69,6 +69,12 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
     if (!bot || !target || !target->IsAlive())
         return false;
 
+    // CRITICAL FIX: Safety check for worker thread access during bot/target destruction
+    // CombatManager::SetInCombatWith (line 194) crashes when accessing _pvpRefs map
+    // if the target has been removed from the world but pointer is still valid
+    if (!bot->IsInWorld() || !target->IsInWorld())
+        return false;
+
     // CRITICAL FIX: Ensure auto-attack is active before attempting rotation
     // Many low-level bots (level 1-9) don't have spells yet and rely on auto-attack
     // Even when spells are available, auto-attack should always be active in combat
