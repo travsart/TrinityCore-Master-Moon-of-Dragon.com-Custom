@@ -1522,6 +1522,7 @@ TravelRouteManager::TravelRouteManager(Player* bot)
     : m_bot(bot)
     , m_lastRoutePlanTime(0)
     , m_lastStateUpdateTime(0)
+    , m_transportStationaryStartTime(0)
 {
     // Initialize static transport connections on first instance
     if (!s_connectionsInitialized)
@@ -2253,44 +2254,72 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
             // Ships/zeppelins don't use IsStopped() for natural dock pauses.
             // IsStopped() only works for player-requested stops.
             //
-            // Instead, we check if the transport is close to the dock position:
-            // - Transport within ~50yd of dock = ship is at dock
-            // - Bot within ~30yd of transport = bot can board
-            // This mimics how real players board - they walk onto the ship when it's at dock.
+            // We use TWO methods to detect when transport is at dock:
+            // 1. Distance-based: Transport within 50yd of dock position
+            // 2. Movement-based: Transport hasn't moved for 2+ seconds (safety check)
+            //
+            // Bot boarding range: 30yd (based on observed minimum of ~18.7yd)
             // ========================================================================
 
-            // Look for transport near dock (100yd search radius to find it even if approaching)
+            // Look for transport (150yd radius to track it even when sailing)
             ::Transport* transport = FindTransportAtPosition(leg.startPosition, leg.connection->transportEntry, 150.0f);
 
             if (transport)
             {
-                // Calculate transport's distance from dock position
+                // Get current transport position
+                Position currentTransportPos = transport->GetPosition();
+
+                // Calculate distances
                 float transportToDockDist = transport->GetDistance(leg.startPosition);
-                // Calculate bot's distance to transport
                 float botToTransportDist = m_bot->GetDistance(transport);
+
+                // ====================================================================
+                // MOVEMENT TRACKING: Check if transport has stopped moving
+                // ====================================================================
+                float distanceMoved = m_lastTransportPosition.GetExactDist(&currentTransportPos);
+                bool transportHasMoved = distanceMoved > TRANSPORT_MOVEMENT_THRESHOLD;
+
+                if (transportHasMoved)
+                {
+                    // Transport is moving - reset stationary timer
+                    m_transportStationaryStartTime = now;
+                    m_lastTransportPosition = currentTransportPos;
+                }
+
+                // Calculate how long transport has been stationary
+                uint32 stationaryDuration = now - m_transportStationaryStartTime;
+                bool transportIsStopped = (stationaryDuration >= TRANSPORT_STOPPED_DURATION_MS);
 
                 TC_LOG_DEBUG("module.playerbot.travel",
                     "WAITING_FOR_TRANSPORT: Bot {} - transport {} at ({:.1f}, {:.1f}, {:.1f}), "
-                    "dock dist={:.1f}yd, bot-to-transport={:.1f}yd",
+                    "dock={:.1f}yd, bot={:.1f}yd, moved={:.2f}yd, stationary={}ms, stopped={}",
                     m_bot->GetName(), transport->GetEntry(),
                     transport->GetPositionX(), transport->GetPositionY(), transport->GetPositionZ(),
-                    transportToDockDist, botToTransportDist);
+                    transportToDockDist, botToTransportDist, distanceMoved, stationaryDuration,
+                    transportIsStopped ? "YES" : "NO");
 
-                // Check if transport is at dock (within 50yd of dock position)
-                // Ships pause at docks for ~60 seconds, plenty of time to board
+                // ====================================================================
+                // BOARDING CONDITIONS
+                // ====================================================================
+                // Primary: Transport within 50yd of dock AND stopped for 2+ seconds
+                // Fallback: Transport within 30yd of dock (very close = definitely at dock)
                 constexpr float TRANSPORT_AT_DOCK_RANGE = 50.0f;
-                constexpr float BOT_BOARDING_RANGE = 40.0f;
+                constexpr float TRANSPORT_VERY_CLOSE_RANGE = 30.0f;
+                constexpr float BOT_BOARDING_RANGE = 30.0f;  // Based on observed ~18.7yd minimum
 
-                if (transportToDockDist <= TRANSPORT_AT_DOCK_RANGE)
+                bool transportAtDock = (transportToDockDist <= TRANSPORT_AT_DOCK_RANGE && transportIsStopped) ||
+                                       (transportToDockDist <= TRANSPORT_VERY_CLOSE_RANGE);
+
+                if (transportAtDock)
                 {
                     // Transport is at dock! Now check if bot is close enough to board
                     if (botToTransportDist <= BOT_BOARDING_RANGE)
                     {
                         // BOARD THE TRANSPORT!
                         TC_LOG_INFO("module.playerbot.travel",
-                            "HandleOnTransport: Bot {} BOARDING {} (entry {}) - transport at dock ({:.1f}yd), bot at {:.1f}yd",
+                            "HandleOnTransport: Bot {} BOARDING {} (entry {}) - dock={:.1f}yd, bot={:.1f}yd, stopped={}",
                             m_bot->GetName(), leg.connection->name, transport->GetEntry(),
-                            transportToDockDist, botToTransportDist);
+                            transportToDockDist, botToTransportDist, transportIsStopped ? "YES" : "NO");
 
                         // Calculate offset position on the transport
                         Position offset = transport->GetPositionOffsetTo(*m_bot);
@@ -2301,6 +2330,9 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
                         // Store transport GUID for tracking
                         m_currentTransportGuid = transport->GetGUID();
 
+                        // Reset tracking for next transport
+                        m_transportStationaryStartTime = 0;
+
                         leg.currentState = TravelState::ON_TRANSPORT;
                         leg.stateStartTime = now;
                     }
@@ -2308,7 +2340,7 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
                     {
                         // Transport at dock but bot too far - walk to transport
                         TC_LOG_DEBUG("module.playerbot.travel",
-                            "HandleOnTransport: Bot {} - transport at dock but bot too far ({:.1f}yd), walking closer",
+                            "HandleOnTransport: Bot {} - transport at dock, walking closer ({:.1f}yd)",
                             m_bot->GetName(), botToTransportDist);
 
                         // Move towards the transport
@@ -2320,14 +2352,16 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
                 {
                     // Transport not at dock yet - still sailing
                     TC_LOG_DEBUG("module.playerbot.travel",
-                        "HandleOnTransport: Bot {} - transport not at dock yet ({:.1f}yd away), waiting...",
-                        m_bot->GetName(), transportToDockDist);
+                        "HandleOnTransport: Bot {} - transport not at dock ({:.1f}yd, stopped={})",
+                        m_bot->GetName(), transportToDockDist, transportIsStopped ? "YES" : "NO");
                 }
             }
             else
             {
+                // Transport not found - reset tracking
+                m_transportStationaryStartTime = now;
                 TC_LOG_DEBUG("module.playerbot.travel",
-                    "WAITING_FOR_TRANSPORT: Bot {} - transport entry {} not found within range",
+                    "WAITING_FOR_TRANSPORT: Bot {} - transport entry {} not found",
                     m_bot->GetName(), leg.connection->transportEntry);
             }
 

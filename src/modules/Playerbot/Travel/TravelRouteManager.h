@@ -467,6 +467,12 @@ private:
     // Current transport tracking (for ship/zeppelin boarding)
     ObjectGuid m_currentTransportGuid;
 
+    // Transport movement tracking (for detecting when transport has stopped)
+    Position m_lastTransportPosition;
+    uint32 m_transportStationaryStartTime;  // GameTime when transport stopped moving
+    static constexpr float TRANSPORT_MOVEMENT_THRESHOLD = 1.0f;  // Consider stopped if moved <1yd
+    static constexpr uint32 TRANSPORT_STOPPED_DURATION_MS = 2000; // 2 seconds stationary = stopped
+
     // Transport connections database (static, shared across all managers)
     static std::vector<TransportConnection> s_transportConnections;
     static std::unordered_map<uint32, std::vector<size_t>> s_connectionsByDepartureMap;
