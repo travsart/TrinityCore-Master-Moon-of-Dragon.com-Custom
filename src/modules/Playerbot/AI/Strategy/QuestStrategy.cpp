@@ -209,6 +209,21 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // If we have an active multi-leg travel route (ships, zeppelins, portals),
     // we must update it every tick to progress through the journey states:
     // WALKING_TO_TRANSPORT -> WAITING_FOR_TRANSPORT -> ON_TRANSPORT -> ARRIVING
+
+    // DIAGNOSTIC: Log travel manager state BEFORE checking IsTraveling
+    if (_travelManager)
+    {
+        bool isTraveling = _travelManager->IsTraveling();
+        TravelState currentState = _travelManager->GetCurrentState();
+        TravelRoute const* route = _travelManager->GetCurrentRoute();
+        uint32 legCount = route ? route->totalLegs : 0;
+        uint32 currentLegIdx = route ? route->currentLegIndex : 0;
+
+        TC_LOG_DEBUG("module.playerbot.quest",
+            "🔍 UpdateBehavior PRE-CHECK: Bot {} - manager exists, IsTraveling={}, state={}, legs={}, currentLeg={}, quest={}",
+            bot->GetName(), isTraveling, static_cast<int>(currentState), legCount, currentLegIdx, _lastTravelQuestId);
+    }
+
     if (_travelManager && _travelManager->IsTraveling())
     {
         TC_LOG_DEBUG("module.playerbot.quest",

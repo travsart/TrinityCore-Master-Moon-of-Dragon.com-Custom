@@ -1925,6 +1925,27 @@ bool TravelRouteManager::StartRoute(TravelRoute&& route)
         return false;
     }
 
+    // DIAGNOSTIC: Log incoming route details BEFORE moving
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "🔍 StartRoute: Bot {} - incoming route has {} legs, overallState={}",
+        m_bot ? m_bot->GetName() : "NULL",
+        route.legs.size(),
+        static_cast<int>(route.overallState));
+
+    for (size_t i = 0; i < route.legs.size(); ++i)
+    {
+        auto const& leg = route.legs[i];
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "🔍 StartRoute: Bot {} - leg {} type={} desc='{}' state={} start=({:.1f},{:.1f},{:.1f}) end=({:.1f},{:.1f},{:.1f})",
+            m_bot ? m_bot->GetName() : "NULL",
+            i,
+            static_cast<int>(leg.type),
+            leg.description,
+            static_cast<int>(leg.currentState),
+            leg.startPosition.GetPositionX(), leg.startPosition.GetPositionY(), leg.startPosition.GetPositionZ(),
+            leg.endPosition.GetPositionX(), leg.endPosition.GetPositionY(), leg.endPosition.GetPositionZ());
+    }
+
     m_activeRoute = std::make_unique<TravelRoute>(std::move(route));
     m_activeRoute->overallState = TravelState::WALKING_TO_TRANSPORT;
     m_activeRoute->routeStartTime = static_cast<uint32>(GameTime::GetGameTimeMS());
@@ -1946,8 +1967,25 @@ bool TravelRouteManager::StartRoute(TravelRoute&& route)
 
 bool TravelRouteManager::Update(uint32 diff)
 {
+    // DIAGNOSTIC: Log entry state
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "🔍 Update ENTRY: Bot {} - activeRoute={}, IsActive={}, overallState={}, legs={}, currentLegIdx={}",
+        m_bot ? m_bot->GetName() : "NULL",
+        m_activeRoute ? "YES" : "NO",
+        m_activeRoute ? (m_activeRoute->IsActive() ? "YES" : "NO") : "N/A",
+        m_activeRoute ? static_cast<int>(m_activeRoute->overallState) : -1,
+        m_activeRoute ? m_activeRoute->legs.size() : 0,
+        m_activeRoute ? m_activeRoute->currentLegIndex : 0);
+
     if (!m_activeRoute || !m_activeRoute->IsActive())
+    {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "🔍 Update returning FALSE (no active route): Bot {} - activeRoute={}, IsActive={}",
+            m_bot ? m_bot->GetName() : "NULL",
+            m_activeRoute ? "YES" : "NO",
+            m_activeRoute ? (m_activeRoute->IsActive() ? "YES" : "NO") : "N/A");
         return false;
+    }
 
     uint32 now = static_cast<uint32>(GameTime::GetGameTimeMS());
     if (now - m_lastStateUpdateTime < STATE_UPDATE_INTERVAL_MS)
@@ -1963,8 +2001,10 @@ bool TravelRouteManager::Update(uint32 diff)
         m_stats.routesCompleted++;
         m_stats.totalTravelTimeMs += now - m_activeRoute->routeStartTime;
 
-        TC_LOG_INFO("module.playerbot.travel", "TravelRouteManager: Route completed for {}",
-                    m_bot ? m_bot->GetName() : "NULL");
+        TC_LOG_INFO("module.playerbot.travel",
+            "TravelRouteManager: Route completed for {} (no more legs - legIdx {} >= size {})",
+            m_bot ? m_bot->GetName() : "NULL",
+            m_activeRoute->currentLegIndex, m_activeRoute->legs.size());
 
         if (m_activeRoute->onCompleted)
             m_activeRoute->onCompleted(*m_activeRoute);
@@ -1972,14 +2012,41 @@ bool TravelRouteManager::Update(uint32 diff)
         return false;
     }
 
+    // DIAGNOSTIC: Log leg state BEFORE UpdateLegState
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "🔍 Update BEFORE UpdateLegState: Bot {} - leg {} type={} state={}",
+        m_bot ? m_bot->GetName() : "NULL",
+        currentLeg->legIndex,
+        static_cast<int>(currentLeg->type),
+        static_cast<int>(currentLeg->currentState));
+
     // Update current leg state
     UpdateLegState(*currentLeg, diff);
+
+    // DIAGNOSTIC: Log leg state AFTER UpdateLegState
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "🔍 Update AFTER UpdateLegState: Bot {} - leg {} state={}",
+        m_bot ? m_bot->GetName() : "NULL",
+        currentLeg->legIndex,
+        static_cast<int>(currentLeg->currentState));
 
     // Check if current leg completed
     if (currentLeg->currentState == TravelState::COMPLETED)
     {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "🔍 Update: Bot {} leg {} COMPLETED, advancing to next leg",
+            m_bot ? m_bot->GetName() : "NULL", currentLeg->legIndex);
         m_stats.totalLegsCompleted++;
         AdvanceToNextLeg();
+
+        // DIAGNOSTIC: Check if route completed after advancing
+        if (m_activeRoute->overallState == TravelState::COMPLETED)
+        {
+            TC_LOG_DEBUG("module.playerbot.travel",
+                "🔍 Update: Bot {} route COMPLETED after AdvanceToNextLeg (currentLegIdx={}, legs={})",
+                m_bot ? m_bot->GetName() : "NULL",
+                m_activeRoute->currentLegIndex, m_activeRoute->legs.size());
+        }
     }
     else if (currentLeg->currentState == TravelState::FAILED)
     {
@@ -1995,6 +2062,17 @@ bool TravelRouteManager::Update(uint32 diff)
         return false;
     }
 
+    // DIAGNOSTIC: Final check - did route state change during this update?
+    bool stillActive = m_activeRoute->IsActive();
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "🔍 Update returning TRUE (still processing): Bot {} - overallState={}, stillActive={}",
+        m_bot ? m_bot->GetName() : "NULL",
+        static_cast<int>(m_activeRoute->overallState),
+        stillActive ? "YES" : "NO");
+
+    // NOTE: Always return true here. If route just completed via AdvanceToNextLeg,
+    // the NEXT Update() call will detect IsActive()=false and return false properly.
+    // This gives one more tick to process the state change.
     return true;
 }
 
@@ -2019,8 +2097,14 @@ void TravelRouteManager::UpdateLegState(TravelLeg& leg, uint32 /*diff*/)
         case TransportType::WALK:
         {
             // Check if we've arrived
-            if (IsNearPosition(leg.endPosition, 15.0f))
+            bool atDestination = IsNearPosition(leg.endPosition, 15.0f);
+            if (atDestination)
             {
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "🔍 WALK leg {} COMPLETED: Bot {} at ({:.1f}, {:.1f}, {:.1f}) is within 15 yards of destination ({:.1f}, {:.1f}, {:.1f})",
+                    leg.legIndex, m_bot->GetName(),
+                    m_bot->GetPositionX(), m_bot->GetPositionY(), m_bot->GetPositionZ(),
+                    leg.endPosition.GetPositionX(), leg.endPosition.GetPositionY(), leg.endPosition.GetPositionZ());
                 leg.currentState = TravelState::COMPLETED;
             }
             else if (leg.currentState == TravelState::IDLE || leg.currentState == TravelState::WALKING_TO_TRANSPORT)
@@ -2070,10 +2154,19 @@ void TravelRouteManager::AdvanceToNextLeg()
     if (!m_activeRoute)
         return;
 
+    uint32 prevLegIndex = m_activeRoute->currentLegIndex;
     m_activeRoute->currentLegIndex++;
+
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "🔍 AdvanceToNextLeg: Bot {} - advanced from leg {} to leg {}, totalLegs={}",
+        m_bot ? m_bot->GetName() : "NULL",
+        prevLegIndex, m_activeRoute->currentLegIndex, m_activeRoute->legs.size());
 
     if (m_activeRoute->currentLegIndex >= m_activeRoute->legs.size())
     {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "🔍 AdvanceToNextLeg: Bot {} - NO MORE LEGS, marking route COMPLETED",
+            m_bot ? m_bot->GetName() : "NULL");
         m_activeRoute->overallState = TravelState::COMPLETED;
         return;
     }
