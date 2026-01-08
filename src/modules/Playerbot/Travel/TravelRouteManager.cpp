@@ -2426,64 +2426,110 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
     if (!m_bot || !m_bot->GetMap())
     {
         TC_LOG_DEBUG("module.playerbot.travel",
-            "🔍 FindTransportAtPosition: No bot or map - returning nullptr");
+            "FindTransportAtPosition: No bot or map - returning nullptr");
         return nullptr;
     }
 
     TC_LOG_DEBUG("module.playerbot.travel",
-        "🔍 FindTransportAtPosition: Bot {} at ({:.1f}, {:.1f}, {:.1f}) searching for entry {} within {:.0f}yd",
+        "FindTransportAtPosition: Bot {} at ({:.1f}, {:.1f}, {:.1f}) searching for entry {} within {:.0f}yd",
         m_bot->GetName(),
         m_bot->GetPositionX(), m_bot->GetPositionY(), m_bot->GetPositionZ(),
         transportEntry, range);
 
-    // Method 1: If we have a specific transport entry, search by entry
+    // ========================================================================
+    // TRANSPORT LOOKUP - CORRECT METHOD
+    // ========================================================================
+    // Transports (ships, zeppelins) are NOT stored in the regular GameObject grid!
+    // They are managed by TransportMgr and stored in Map::_transports.
+    // FindNearestGameObject() will NOT find them!
+    //
+    // Correct approach: Use Player::m_visibleTransports which contains GUIDs
+    // of all transports visible to the player, then look them up via Map::GetTransport()
+    // ========================================================================
+
+    Map* map = m_bot->GetMap();
+    ::Transport* bestTransport = nullptr;
+    float bestDistance = range;
+
+    // Method 1: Search through visible transports (CORRECT for ships/zeppelins)
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "FindTransportAtPosition: Bot {} has {} visible transports",
+        m_bot->GetName(), m_bot->m_visibleTransports.size());
+
+    for (ObjectGuid const& transportGuid : m_bot->m_visibleTransports)
+    {
+        ::Transport* transport = map->GetTransport(transportGuid);
+        if (!transport)
+        {
+            TC_LOG_DEBUG("module.playerbot.travel",
+                "FindTransportAtPosition: Transport GUID {} not found on map",
+                transportGuid.ToString());
+            continue;
+        }
+
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "FindTransportAtPosition: Checking transport entry {} '{}' at ({:.1f}, {:.1f}, {:.1f})",
+            transport->GetEntry(),
+            transport->GetName(),
+            transport->GetPositionX(), transport->GetPositionY(), transport->GetPositionZ());
+
+        // Check entry match if specified
+        if (transportEntry != 0 && transport->GetEntry() != transportEntry)
+        {
+            TC_LOG_DEBUG("module.playerbot.travel",
+                "FindTransportAtPosition: Entry mismatch - wanted {}, got {}",
+                transportEntry, transport->GetEntry());
+            continue;
+        }
+
+        // Check distance
+        float dist = m_bot->GetDistance(transport);
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "FindTransportAtPosition: Transport {} distance={:.1f}, range={:.1f}",
+            transport->GetEntry(), dist, range);
+
+        if (dist <= bestDistance)
+        {
+            bestDistance = dist;
+            bestTransport = transport;
+            TC_LOG_DEBUG("module.playerbot.travel",
+                "FindTransportAtPosition: New best candidate - entry {} at {:.1f}yd",
+                transport->GetEntry(), dist);
+        }
+    }
+
+    if (bestTransport)
+    {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "FindTransportAtPosition: FOUND transport entry {} '{}' at {:.1f}yd - IsStopped={}",
+            bestTransport->GetEntry(), bestTransport->GetName(), bestDistance,
+            bestTransport->IsStopped() ? "YES" : "NO");
+        return bestTransport;
+    }
+
+    // Method 2: Fallback - try FindNearestGameObject (rarely works for transports, but try anyway)
+    // This might work for some static transport-like objects
     if (transportEntry != 0)
     {
-        // FindNearestGameObject finds a GameObject with given entry within range of the bot
         GameObject* go = m_bot->FindNearestGameObject(transportEntry, range, false);
         if (go)
         {
             TC_LOG_DEBUG("module.playerbot.travel",
-                "🔍 FindTransportAtPosition: Found GameObject entry {} at ({:.1f}, {:.1f}, {:.1f}), type={}",
-                go->GetEntry(),
-                go->GetPositionX(), go->GetPositionY(), go->GetPositionZ(),
-                static_cast<int>(go->GetGoType()));
+                "FindTransportAtPosition: Fallback found GameObject entry {} type={}",
+                go->GetEntry(), static_cast<int>(go->GetGoType()));
 
-            // ToTransport() returns Transport* if GO type is GAMEOBJECT_TYPE_MAP_OBJ_TRANSPORT
             if (::Transport* transport = go->ToTransport())
             {
                 TC_LOG_DEBUG("module.playerbot.travel",
-                    "🔍 FindTransportAtPosition: Successfully cast to Transport*");
+                    "FindTransportAtPosition: Fallback GameObject is a Transport");
                 return transport;
             }
-            else
-            {
-                TC_LOG_DEBUG("module.playerbot.travel",
-                    "🔍 FindTransportAtPosition: GameObject is NOT a Transport (ToTransport returned nullptr)");
-            }
         }
-        else
-        {
-            TC_LOG_DEBUG("module.playerbot.travel",
-                "🔍 FindTransportAtPosition: FindNearestGameObject(entry {}) returned nullptr",
-                transportEntry);
-        }
-    }
-
-    // Method 2: Search for any nearby transport by type
-    // GAMEOBJECT_TYPE_MAP_OBJ_TRANSPORT (15) is the type for ships/zeppelins
-    GameObject* go = m_bot->FindNearestGameObjectOfType(GAMEOBJECT_TYPE_MAP_OBJ_TRANSPORT, range);
-    if (go)
-    {
-        TC_LOG_DEBUG("module.playerbot.travel",
-            "🔍 FindTransportAtPosition: Found transport by type - entry {} at ({:.1f}, {:.1f}, {:.1f})",
-            go->GetEntry(),
-            go->GetPositionX(), go->GetPositionY(), go->GetPositionZ());
-        return go->ToTransport();
     }
 
     TC_LOG_DEBUG("module.playerbot.travel",
-        "🔍 FindTransportAtPosition: No transport found by any method");
+        "FindTransportAtPosition: No transport found - visibleTransports={}, entry={}",
+        m_bot->m_visibleTransports.size(), transportEntry);
     return nullptr;
 }
 
