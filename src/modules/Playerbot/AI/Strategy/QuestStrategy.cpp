@@ -247,12 +247,22 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             TC_LOG_INFO("module.playerbot.quest",
                 "✅ UpdateBehavior: Bot {} completed multi-leg travel route for quest {}",
                 bot->GetName(), _lastTravelQuestId);
+
+            // Clear failure tracking on success
+            _travelFailures.erase(_lastTravelQuestId);
         }
         else
         {
+            // Track travel failure to prevent infinite retry loops
+            uint32 now = GameTime::GetGameTimeMS();
+            auto& failInfo = _travelFailures[_lastTravelQuestId];
+            failInfo.lastFailureTime = now;
+            failInfo.failureCount++;
+
             TC_LOG_WARN("module.playerbot.quest",
-                "❌ UpdateBehavior: Bot {} travel route ended with state {} for quest {}",
-                bot->GetName(), static_cast<int>(finalState), _lastTravelQuestId);
+                "❌ UpdateBehavior: Bot {} travel route FAILED (attempt {}/{}) for quest {} - cooldown {} minutes",
+                bot->GetName(), failInfo.failureCount, MAX_TRAVEL_FAILURES,
+                _lastTravelQuestId, TRAVEL_FAILURE_COOLDOWN_MS / 60000);
         }
 
         // Clean up travel manager
@@ -2162,6 +2172,34 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
         // WALKING_TO_TRANSPORT -> WAITING_FOR_TRANSPORT -> ON_TRANSPORT -> ARRIVING
         if (!travelInitiated)
         {
+            // Check for travel failure cooldown to prevent infinite loops
+            uint32 now = GameTime::GetGameTimeMS();
+            auto failIt = _travelFailures.find(questId);
+            if (failIt != _travelFailures.end())
+            {
+                TravelFailureInfo& failInfo = failIt->second;
+
+                // Check if max failures reached
+                if (failInfo.failureCount >= MAX_TRAVEL_FAILURES)
+                {
+                    TC_LOG_WARN("module.playerbot.quest",
+                        "⛔ TurnInQuest: Bot {} giving up on quest {} travel - max failures ({}) reached",
+                        bot->GetName(), questId, MAX_TRAVEL_FAILURES);
+                    return; // Skip this quest, try other quests
+                }
+
+                // Check cooldown
+                uint32 timeSinceFailure = now - failInfo.lastFailureTime;
+                if (timeSinceFailure < TRAVEL_FAILURE_COOLDOWN_MS)
+                {
+                    uint32 remainingCooldown = (TRAVEL_FAILURE_COOLDOWN_MS - timeSinceFailure) / 1000;
+                    TC_LOG_DEBUG("module.playerbot.quest",
+                        "⏳ TurnInQuest: Bot {} travel for quest {} on cooldown - {}s remaining (attempt {}/{})",
+                        bot->GetName(), questId, remainingCooldown, failInfo.failureCount, MAX_TRAVEL_FAILURES);
+                    return; // On cooldown, try other quests
+                }
+            }
+
             TC_LOG_ERROR("module.playerbot.quest", "🚢 TurnInQuest: Bot {} attempting multi-station travel planning to MAP {}",
                          bot->GetName(), location.targetMapId);
 

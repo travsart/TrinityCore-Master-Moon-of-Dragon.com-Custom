@@ -268,6 +268,25 @@ namespace Playerbot
          */
         [[nodiscard]] static char const* GetResultString(FlightResult result);
 
+        /**
+         * @brief Checks if a valid taxi path exists between two nodes
+         *
+         * Uses TaxiPathGraph to verify a route exists. This should be called
+         * BEFORE creating taxi legs to prevent invalid cross-continent routes.
+         *
+         * @param startNode Source taxi node ID
+         * @param endNode Destination taxi node ID
+         * @param player Player for faction/condition checks
+         * @return true if a valid path exists, false otherwise
+         *
+         * Performance: O(V + E) graph traversal, ~2ms typical
+         * Thread-safety: Thread-safe (read-only graph access)
+         */
+        [[nodiscard]] static bool HasValidFlightPath(
+            uint32 startNode,
+            uint32 endNode,
+            Player const* player);
+
     private:
         /**
          * @brief Validates flight activation preconditions

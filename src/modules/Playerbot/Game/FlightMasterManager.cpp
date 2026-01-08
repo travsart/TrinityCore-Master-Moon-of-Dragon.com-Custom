@@ -149,14 +149,11 @@ namespace Playerbot
 
         FlightPathInfo const& pathInfo = *pathInfoOpt;
 
-        // Check if player can afford flight
-    if (pathInfo.goldCost > player->GetMoney())
-        {
-            TC_LOG_WARN("playerbot.flight",
-                "FlightMasterManager: Player {} cannot afford flight ({} copper cost, {} copper available)",
-                player->GetName(), pathInfo.goldCost, player->GetMoney());
-            return FlightResult::INSUFFICIENT_GOLD;
-        }
+        // BOTS FLY FREE: Skip gold check for bots - they shouldn't be hindered by gold
+        // This is the Playerbot FlightMasterManager, so all users are bots
+        TC_LOG_DEBUG("playerbot.flight",
+            "FlightMasterManager: Bot {} flying free (cost would be {} copper, has {} copper)",
+            player->GetName(), pathInfo.goldCost, player->GetMoney());
 
         // Activate taxi path using TrinityCore API
         bool success = player->ActivateTaxiPathTo(pathInfo.nodes);
@@ -415,6 +412,76 @@ namespace Playerbot
             default:
                 return "UNKNOWN";
         }
+    }
+
+    bool FlightMasterManager::HasValidFlightPath(
+        uint32 startNode,
+        uint32 endNode,
+        Player const* player)
+    {
+        // Same node - trivially valid
+        if (startNode == endNode)
+            return true;
+
+        // Get taxi node entries
+        TaxiNodesEntry const* fromNode = sTaxiNodesStore.LookupEntry(startNode);
+        TaxiNodesEntry const* toNode = sTaxiNodesStore.LookupEntry(endNode);
+
+        if (!fromNode || !toNode)
+        {
+            TC_LOG_DEBUG("playerbot.flight",
+                "HasValidFlightPath: Invalid node IDs - from {} ({}), to {} ({})",
+                startNode, fromNode ? "valid" : "invalid",
+                endNode, toNode ? "valid" : "invalid");
+            return false;
+        }
+
+        // Quick check: if nodes are on different continents AND neither has cross-map flag,
+        // there's definitely no path (saves expensive graph traversal)
+        if (fromNode->ContinentID != toNode->ContinentID)
+        {
+            TC_LOG_DEBUG("playerbot.flight",
+                "HasValidFlightPath: Nodes {} (map {}) and {} (map {}) are on different continents",
+                startNode, fromNode->ContinentID, endNode, toNode->ContinentID);
+            // Could still have a path via special cross-continent routes (e.g., Exodar-Darnassus)
+            // Let the graph check handle this
+        }
+
+        // Use TaxiPathGraph to check if a route exists
+        std::vector<uint32> shortestPath;
+        std::size_t pathLength = TaxiPathGraph::GetCompleteNodeRoute(fromNode, toNode, player, shortestPath);
+
+        if (pathLength == 0 || shortestPath.empty())
+        {
+            TC_LOG_DEBUG("playerbot.flight",
+                "HasValidFlightPath: No path from node {} to node {} for player {}",
+                startNode, endNode, player ? player->GetName().c_str() : "nullptr");
+            return false;
+        }
+
+        // Validate the path is a proper route (at least 2 nodes: source and destination)
+        // When Dijkstra can't find a path, it returns just [endNode] or [startNode]
+        // A valid path must: have at least 2 nodes, start with source, end with destination
+        if (shortestPath.size() < 2)
+        {
+            TC_LOG_DEBUG("playerbot.flight",
+                "HasValidFlightPath: Path has {} nodes (need at least 2) - no valid route from {} to {}",
+                shortestPath.size(), startNode, endNode);
+            return false;
+        }
+
+        if (shortestPath.front() != startNode || shortestPath.back() != endNode)
+        {
+            TC_LOG_DEBUG("playerbot.flight",
+                "HasValidFlightPath: Path endpoints wrong - expected [{}...{}], got [{}...{}]",
+                startNode, endNode, shortestPath.front(), shortestPath.back());
+            return false;
+        }
+
+        TC_LOG_DEBUG("playerbot.flight",
+            "HasValidFlightPath: Valid {}-hop path exists from node {} to node {}",
+            shortestPath.size() - 1, startNode, endNode);
+        return true;
     }
 
     // ============================================================================

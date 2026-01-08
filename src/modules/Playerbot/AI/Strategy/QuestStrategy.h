@@ -210,6 +210,19 @@ private:
     // Required for ship/zeppelin boarding - state must persist across update ticks
     ::std::unique_ptr<TravelRouteManager> _travelManager;
     uint32 _lastTravelQuestId = 0;  // Track which quest initiated the travel
+
+    // ========================================================================
+    // TRAVEL FAILURE COOLDOWN (prevent infinite back-and-forth loops)
+    // ========================================================================
+    // Key: questId, Value: {lastFailureTime, failureCount}
+    struct TravelFailureInfo
+    {
+        uint32 lastFailureTime = 0;
+        uint32 failureCount = 0;
+    };
+    ::std::unordered_map<uint32, TravelFailureInfo> _travelFailures;
+    static constexpr uint32 TRAVEL_FAILURE_COOLDOWN_MS = 300000;  // 5 minute cooldown after failure
+    static constexpr uint32 MAX_TRAVEL_FAILURES = 3;              // Give up after 3 failures
 };
 
 } // namespace Playerbot
