@@ -200,10 +200,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     }
 
     // Start eating if needed
-    // CRITICAL FIX: Check for existing food aura (SPELL_AURA_OBS_MOD_HEALTH = 20) to prevent assertion failure
-    // The assertion "HasEffect(effIndex) == (!apply)" fails when trying to apply an aura that already exists
+    // CRITICAL FIX: Check for existing food aura to prevent assertion failure in AuraApplication::_HandleEffect
+    // Food auras can use EITHER SPELL_AURA_OBS_MOD_HEALTH OR SPELL_AURA_MOD_REGEN (see SpellInfo.cpp:2788)
+    // The assertion "!(_effectMask & (1<<effIndex))" fails when trying to apply an aura effect that already exists
     // This can happen when _isEating flag gets out of sync with actual aura state
-    bool hasFoodAura = bot->HasAuraType(SPELL_AURA_OBS_MOD_HEALTH);
+    bool hasFoodAura = bot->HasAuraType(SPELL_AURA_OBS_MOD_HEALTH) || bot->HasAuraType(SPELL_AURA_MOD_REGEN);
     if (NeedsFood(ai) && !_isEating && !bot->IsSitState() && !hasFoodAura)
     {
         Item* food = FindFood(ai);
@@ -240,10 +241,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     }
 
     // Start drinking if needed
-    // CRITICAL FIX: Check for existing drink aura (SPELL_AURA_OBS_MOD_POWER = 21) to prevent assertion failure
-    // The assertion "HasEffect(effIndex) == (!apply)" fails when trying to apply an aura that already exists
+    // CRITICAL FIX: Check for existing drink aura to prevent assertion failure in AuraApplication::_HandleEffect
+    // Drink auras can use EITHER SPELL_AURA_OBS_MOD_POWER OR SPELL_AURA_MOD_POWER_REGEN (see SpellInfo.cpp:2793)
+    // The assertion "!(_effectMask & (1<<effIndex))" fails when trying to apply an aura effect that already exists
     // This can happen when _isDrinking flag gets out of sync with actual aura state
-    bool hasDrinkAura = bot->HasAuraType(SPELL_AURA_OBS_MOD_POWER);
+    bool hasDrinkAura = bot->HasAuraType(SPELL_AURA_OBS_MOD_POWER) || bot->HasAuraType(SPELL_AURA_MOD_POWER_REGEN);
     if (NeedsDrink(ai) && !_isDrinking && !bot->IsSitState() && !hasDrinkAura)
     {
         Item* drink = FindDrink(ai);
