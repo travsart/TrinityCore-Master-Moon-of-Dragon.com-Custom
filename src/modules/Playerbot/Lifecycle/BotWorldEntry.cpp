@@ -633,26 +633,25 @@ bool BotWorldEntry::FinalizeBotActivation()
     }
 
     // ========================================================================
-    // LEARN ALL FACTION FLIGHT PATHS
+    // LEARN ALL FLIGHT PATHS (using sTaxiNodesMask for complete coverage)
     // ========================================================================
-    // Bots spawn across all zones, so they need to know all flight paths
-    // for their faction to travel around the world properly.
-    // NOTE: We use faction-specific masks (not all nodes) because flying to
-    // enemy faction flight points would get the bot killed immediately.
-    // NOTE: Cross-map travel (e.g., Stormwind -> Dornogal) requires portals,
-    // not flight paths - taxi system only works within the same continent/map.
+    // Bots spawn across all zones and need complete taxi knowledge for the
+    // multi-station travel system to work. Using sTaxiNodesMask (ALL nodes)
+    // instead of faction masks to ensure bots can reach all destinations.
+    //
+    // NOTE: Faction masks (sHordeTaxiNodesMask/sAllianceTaxiNodesMask) only
+    // include nodes with ShowOnHordeMap/ShowOnAllianceMap flags, which
+    // excludes many neutral and expansion-specific nodes like Draenor 1476.
     // ========================================================================
     {
-        // Get the faction-appropriate taxi mask
-        TaxiMask const& factionMask = _player->GetTeam() == HORDE
-            ? sHordeTaxiNodesMask
-            : sAllianceTaxiNodesMask;
+        // Use the complete taxi mask (all valid taxi network nodes)
+        TaxiMask const& allNodesMask = sTaxiNodesMask;
 
-        // Learn all taxi nodes for the bot's faction
+        // Learn ALL taxi nodes for comprehensive travel capability
         uint32 nodesLearned = 0;
-        for (size_t i = 0; i < factionMask.size(); ++i)
+        for (size_t i = 0; i < allNodesMask.size(); ++i)
         {
-            TaxiMask::value_type mask = factionMask[i];
+            TaxiMask::value_type mask = allNodesMask[i];
             if (mask == 0)
                 continue;
 
@@ -673,11 +672,10 @@ bool BotWorldEntry::FinalizeBotActivation()
             }
         }
 
-        TC_LOG_DEBUG("module.playerbot.worldentry",
-                    "Bot {} learned {} flight paths ({} faction)",
+        TC_LOG_INFO("module.playerbot.worldentry",
+                    "Bot {} learned {} flight paths (ALL nodes)",
                     _player->GetName(),
-                    nodesLearned,
-                    _player->GetTeam() == HORDE ? "Horde" : "Alliance");
+                    nodesLearned);
     }
 
     // ========================================================================

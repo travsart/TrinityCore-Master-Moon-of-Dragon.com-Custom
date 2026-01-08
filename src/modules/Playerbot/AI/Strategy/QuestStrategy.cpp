@@ -215,32 +215,35 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             "🚢 UpdateBehavior: Bot {} updating active travel route (quest {})",
             bot->GetName(), _lastTravelQuestId);
 
-        bool completed = _travelManager->Update(diff);
+        // Update() returns true while route is still active, false when done
+        bool stillTraveling = _travelManager->Update(diff);
 
-        if (completed)
-        {
-            TC_LOG_INFO("module.playerbot.quest",
-                "✅ UpdateBehavior: Bot {} completed multi-leg travel route for quest {}",
-                bot->GetName(), _lastTravelQuestId);
-            _travelManager.reset();
-            _lastTravelQuestId = 0;
-            // Continue to normal quest processing - we arrived at destination
-        }
-        else if (_travelManager->GetCurrentState() == TravelState::FAILED)
-        {
-            TC_LOG_WARN("module.playerbot.quest",
-                "❌ UpdateBehavior: Bot {} travel route failed for quest {}",
-                bot->GetName(), _lastTravelQuestId);
-            _travelManager.reset();
-            _lastTravelQuestId = 0;
-            // Continue to normal quest processing - will try alternative travel
-        }
-        else
+        if (stillTraveling)
         {
             // Route still in progress - don't do normal quest processing
             // Let the travel system handle movement
             return;
         }
+
+        // Route finished - check if completed or failed
+        TravelState finalState = _travelManager->GetCurrentState();
+        if (finalState == TravelState::COMPLETED)
+        {
+            TC_LOG_INFO("module.playerbot.quest",
+                "✅ UpdateBehavior: Bot {} completed multi-leg travel route for quest {}",
+                bot->GetName(), _lastTravelQuestId);
+        }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.quest",
+                "❌ UpdateBehavior: Bot {} travel route ended with state {} for quest {}",
+                bot->GetName(), static_cast<int>(finalState), _lastTravelQuestId);
+        }
+
+        // Clean up travel manager
+        _travelManager.reset();
+        _lastTravelQuestId = 0;
+        // Continue to normal quest processing
     }
 
     // Update objective tracker periodically
