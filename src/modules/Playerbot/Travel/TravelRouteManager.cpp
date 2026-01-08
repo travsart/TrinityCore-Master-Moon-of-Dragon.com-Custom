@@ -2247,70 +2247,106 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
 
         case TravelState::WAITING_FOR_TRANSPORT:
         {
-            // DIAGNOSTIC: Log what we're searching for
-            TC_LOG_DEBUG("module.playerbot.travel",
-                "🔍 WAITING_FOR_TRANSPORT: Bot {} searching for transport entry {} within 100yd of ({:.1f}, {:.1f}, {:.1f})",
-                m_bot->GetName(), leg.connection->transportEntry,
-                leg.startPosition.GetPositionX(), leg.startPosition.GetPositionY(), leg.startPosition.GetPositionZ());
+            // ========================================================================
+            // TRANSPORT BOARDING LOGIC
+            // ========================================================================
+            // Ships/zeppelins don't use IsStopped() for natural dock pauses.
+            // IsStopped() only works for player-requested stops.
+            //
+            // Instead, we check if the transport is close to the dock position:
+            // - Transport within ~50yd of dock = ship is at dock
+            // - Bot within ~30yd of transport = bot can board
+            // This mimics how real players board - they walk onto the ship when it's at dock.
+            // ========================================================================
 
-            // Look for transport at departure dock
-            ::Transport* transport = FindTransportAtPosition(leg.startPosition, leg.connection->transportEntry, 100.0f);
+            // Look for transport near dock (100yd search radius to find it even if approaching)
+            ::Transport* transport = FindTransportAtPosition(leg.startPosition, leg.connection->transportEntry, 150.0f);
 
-            // DIAGNOSTIC: Log search result
             if (transport)
             {
+                // Calculate transport's distance from dock position
+                float transportToDockDist = transport->GetDistance(leg.startPosition);
+                // Calculate bot's distance to transport
+                float botToTransportDist = m_bot->GetDistance(transport);
+
                 TC_LOG_DEBUG("module.playerbot.travel",
-                    "🔍 WAITING_FOR_TRANSPORT: Bot {} FOUND transport entry {} at ({:.1f}, {:.1f}, {:.1f}) - IsStopped={}",
+                    "WAITING_FOR_TRANSPORT: Bot {} - transport {} at ({:.1f}, {:.1f}, {:.1f}), "
+                    "dock dist={:.1f}yd, bot-to-transport={:.1f}yd",
                     m_bot->GetName(), transport->GetEntry(),
                     transport->GetPositionX(), transport->GetPositionY(), transport->GetPositionZ(),
-                    transport->IsStopped() ? "YES" : "NO");
+                    transportToDockDist, botToTransportDist);
+
+                // Check if transport is at dock (within 50yd of dock position)
+                // Ships pause at docks for ~60 seconds, plenty of time to board
+                constexpr float TRANSPORT_AT_DOCK_RANGE = 50.0f;
+                constexpr float BOT_BOARDING_RANGE = 40.0f;
+
+                if (transportToDockDist <= TRANSPORT_AT_DOCK_RANGE)
+                {
+                    // Transport is at dock! Now check if bot is close enough to board
+                    if (botToTransportDist <= BOT_BOARDING_RANGE)
+                    {
+                        // BOARD THE TRANSPORT!
+                        TC_LOG_INFO("module.playerbot.travel",
+                            "HandleOnTransport: Bot {} BOARDING {} (entry {}) - transport at dock ({:.1f}yd), bot at {:.1f}yd",
+                            m_bot->GetName(), leg.connection->name, transport->GetEntry(),
+                            transportToDockDist, botToTransportDist);
+
+                        // Calculate offset position on the transport
+                        Position offset = transport->GetPositionOffsetTo(*m_bot);
+
+                        // Board the transport
+                        transport->AddPassenger(m_bot, offset);
+
+                        // Store transport GUID for tracking
+                        m_currentTransportGuid = transport->GetGUID();
+
+                        leg.currentState = TravelState::ON_TRANSPORT;
+                        leg.stateStartTime = now;
+                    }
+                    else
+                    {
+                        // Transport at dock but bot too far - walk to transport
+                        TC_LOG_DEBUG("module.playerbot.travel",
+                            "HandleOnTransport: Bot {} - transport at dock but bot too far ({:.1f}yd), walking closer",
+                            m_bot->GetName(), botToTransportDist);
+
+                        // Move towards the transport
+                        m_bot->GetMotionMaster()->MovePoint(0, transport->GetPositionX(),
+                            transport->GetPositionY(), transport->GetPositionZ() + 2.0f);
+                    }
+                }
+                else
+                {
+                    // Transport not at dock yet - still sailing
+                    TC_LOG_DEBUG("module.playerbot.travel",
+                        "HandleOnTransport: Bot {} - transport not at dock yet ({:.1f}yd away), waiting...",
+                        m_bot->GetName(), transportToDockDist);
+                }
             }
             else
             {
                 TC_LOG_DEBUG("module.playerbot.travel",
-                    "🔍 WAITING_FOR_TRANSPORT: Bot {} NO transport found (entry {} not within range)",
+                    "WAITING_FOR_TRANSPORT: Bot {} - transport entry {} not found within range",
                     m_bot->GetName(), leg.connection->transportEntry);
             }
 
-            if (transport && transport->IsStopped())
+            // Check for timeout
+            uint32 elapsed = now - leg.stateStartTime;
+            uint32 maxWaitTime = (leg.connection->waitTimeSeconds + 180) * 1000; // Add 3 min buffer
+
+            if (elapsed > maxWaitTime)
             {
-                // Transport is here and stopped - BOARD IT!
-                TC_LOG_INFO("module.playerbot.travel",
-                    "HandleOnTransport: Bot {} boarding {} (transport entry {})",
-                    m_bot->GetName(), leg.connection->name, transport->GetEntry());
-
-                // Calculate offset position on the transport (center of transport)
-                Position offset = transport->GetPositionOffsetTo(*m_bot);
-
-                // Board the transport
-                transport->AddPassenger(m_bot, offset);
-
-                // Store transport GUID for tracking
-                m_currentTransportGuid = transport->GetGUID();
-
-                leg.currentState = TravelState::ON_TRANSPORT;
-                leg.stateStartTime = now;
+                TC_LOG_WARN("module.playerbot.travel",
+                    "HandleOnTransport: Bot {} timed out waiting for {} after {}s",
+                    m_bot->GetName(), leg.connection->name, elapsed / 1000);
+                leg.currentState = TravelState::FAILED;
             }
-            else
+            else if (elapsed % 30000 < 500) // Log every 30 seconds
             {
-                // Transport not here yet - check for timeout
-                uint32 elapsed = now - leg.stateStartTime;
-                uint32 maxWaitTime = (leg.connection->waitTimeSeconds + 120) * 1000; // Add 2 min buffer
-
-                if (elapsed > maxWaitTime)
-                {
-                    TC_LOG_WARN("module.playerbot.travel",
-                        "HandleOnTransport: Bot {} timed out waiting for {} after {}s",
-                        m_bot->GetName(), leg.connection->name, elapsed / 1000);
-                    leg.currentState = TravelState::FAILED;
-                }
-                else if (elapsed % 30000 < 500) // Log every 30 seconds
-                {
-                    TC_LOG_DEBUG("module.playerbot.travel",
-                        "HandleOnTransport: Bot {} waiting for {} - {}s elapsed, transport {}",
-                        m_bot->GetName(), leg.connection->name, elapsed / 1000,
-                        transport ? "nearby but moving" : "not found");
-                }
+                TC_LOG_DEBUG("module.playerbot.travel",
+                    "HandleOnTransport: Bot {} waiting for {} - {}s elapsed",
+                    m_bot->GetName(), leg.connection->name, elapsed / 1000);
             }
             break;
         }
