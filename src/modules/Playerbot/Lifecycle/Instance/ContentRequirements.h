@@ -471,6 +471,13 @@ private:
         GroupState const& groupState,
         BotsNeeded& result) const;
 
+    /**
+     * @brief Get a random actual BG requirement for Random Battleground
+     * @note Must be called with mutex already held (shared_lock)
+     * @return Random BG requirement (AV, WSG, AB, etc.)
+     */
+    ContentRequirement const* GetRandomBattlegroundRequirement_Locked() const;
+
     // ========================================================================
     // DATA MEMBERS
     // ========================================================================
