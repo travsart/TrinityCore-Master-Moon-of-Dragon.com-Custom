@@ -761,8 +761,8 @@ bool BotCloneEngine::CreatePlayerObject(
 
     trans->Append(stmt);
 
-    // Commit transaction
-    CharacterDatabase.CommitTransaction(trans);
+    // Commit transaction SYNCHRONOUSLY - must complete before warmup can query the character
+    CharacterDatabase.DirectCommitTransaction(trans);
 
     TC_LOG_DEBUG("playerbot.clone", "BotCloneEngine::CreatePlayerObject - "
         "Character record created with {} parameters", index);
