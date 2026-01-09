@@ -138,6 +138,9 @@ void InstanceBotPool::Update(uint32 diff)
         // Process reservation timeouts
         ProcessReservations();
 
+        // Retry warming bots that failed initial warmup (async DB commit delay)
+        ProcessWarmingRetries();
+
         // Check hourly reset
         CheckHourlyReset();
     }
@@ -1334,6 +1337,40 @@ bool InstanceBotPool::AssignBot(ObjectGuid botGuid, uint32 instanceId,
 // ============================================================================
 // INTERNAL METHODS - Pool Maintenance
 // ============================================================================
+
+void InstanceBotPool::ProcessWarmingRetries()
+{
+    // Retry warmup for bots stuck in Warming state
+    // This handles the async database commit delay - character might not be
+    // queryable immediately after creation
+    std::vector<ObjectGuid> botsToWarm;
+
+    {
+        std::shared_lock lock(_slotsMutex);
+        for (auto const& [guid, slot] : _slots)
+        {
+            if (slot.state == PoolSlotState::Warming)
+            {
+                // Only retry after 1 second to allow DB commit to complete
+                auto timeSinceStateChange = slot.TimeSinceStateChange();
+                if (timeSinceStateChange >= std::chrono::seconds(1))
+                {
+                    botsToWarm.push_back(guid);
+                }
+            }
+        }
+    }
+
+    // Try to warm each bot (outside the lock to avoid deadlock)
+    for (ObjectGuid const& guid : botsToWarm)
+    {
+        if (WarmUpBot(guid))
+        {
+            TC_LOG_DEBUG("playerbot.pool", "ProcessWarmingRetries - Successfully warmed bot {}",
+                guid.ToString());
+        }
+    }
+}
 
 void InstanceBotPool::ProcessCooldowns()
 {

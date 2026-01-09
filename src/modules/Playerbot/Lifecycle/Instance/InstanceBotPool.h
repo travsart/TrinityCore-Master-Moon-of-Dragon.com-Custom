@@ -563,6 +563,11 @@ private:
     // ========================================================================
 
     /**
+     * @brief Retry warmup for bots stuck in Warming state (async DB commit delay)
+     */
+    void ProcessWarmingRetries();
+
+    /**
      * @brief Process cooldown expirations
      */
     void ProcessCooldowns();
