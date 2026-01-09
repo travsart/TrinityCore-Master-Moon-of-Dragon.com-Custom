@@ -718,6 +718,21 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     deepwind.estimatedDurationMinutes = 15;
 
     AddRequirement(std::move(deepwind));
+
+    // Random Battleground (variable size - defaults to 15v15)
+    ContentRequirement randomBg;
+    randomBg.contentId = 32;  // BG_RB - Random Battleground
+    randomBg.contentName = "Random Battleground";
+    randomBg.type = InstanceType::Battleground;
+    randomBg.minPlayers = 1;
+    randomBg.maxPlayers = 30;
+    randomBg.minLevel = 10;
+    randomBg.maxLevel = 80;
+    randomBg.requiresBothFactions = true;
+    randomBg.playersPerFaction = 15;  // Default to 15v15
+    randomBg.estimatedDurationMinutes = 20;
+
+    AddRequirement(std::move(randomBg));
 }
 
 void ContentRequirementDatabase::CreateDefaultArenas()
