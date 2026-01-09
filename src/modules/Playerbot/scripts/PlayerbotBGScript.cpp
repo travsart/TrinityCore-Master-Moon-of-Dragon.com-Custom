@@ -21,6 +21,7 @@
 #include "GameTime.h"
 #include "BattlegroundMgr.h"
 #include "Battleground.h"
+#include "DB2Stores.h"
 #include "../Session/BotWorldSessionMgr.h"
 #include "../Core/PlayerBotHooks.h"
 #include "../PvP/BGBotManager.h"
@@ -176,12 +177,41 @@ private:
         }
 
         TC_LOG_INFO("module.playerbot.bg",
-            "PlayerbotBGScript: Detected player {} joined BG queue (Type: {})",
-            player->GetName(), static_cast<uint32>(bgTypeId));
+            "PlayerbotBGScript: Detected player {} (level {}) joined BG queue (Type: {})",
+            player->GetName(), player->GetLevel(), static_cast<uint32>(bgTypeId));
 
-        // Get bracket - use max level bracket for simplicity
-        // In a full implementation, this would query the actual bracket from queue
-        BattlegroundBracketId bracket = BG_BRACKET_ID_LAST;
+        // Get bracket from player level using BG template map
+        BattlegroundBracketId bracket = BG_BRACKET_ID_LAST;  // Default fallback
+
+        // Get the BG template to find the map ID for bracket lookup
+        BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);
+        if (bgTemplate && !bgTemplate->MapIDs.empty())
+        {
+            // Use DB2Manager to get the correct bracket for player's level
+            PVPDifficultyEntry const* bracketEntry = DB2Manager::GetBattlegroundBracketByLevel(
+                bgTemplate->MapIDs.front(), player->GetLevel());
+
+            if (bracketEntry)
+            {
+                bracket = BattlegroundBracketId(bracketEntry->RangeIndex);
+                TC_LOG_INFO("module.playerbot.bg",
+                    "PlayerbotBGScript: Player {} level {} -> Bracket {} (range {}-{})",
+                    player->GetName(), player->GetLevel(), static_cast<uint32>(bracket),
+                    bracketEntry->MinLevel, bracketEntry->MaxLevel);
+            }
+            else
+            {
+                TC_LOG_WARN("module.playerbot.bg",
+                    "PlayerbotBGScript: No bracket found for level {}, using max bracket",
+                    player->GetLevel());
+            }
+        }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.bg",
+                "PlayerbotBGScript: No BG template for type {}, using max bracket",
+                static_cast<uint32>(bgTypeId));
+        }
 
         // HYBRID APPROACH: Use both new and old systems
         //
@@ -190,8 +220,8 @@ private:
         if (InstanceBotHooks::IsEnabled())
         {
             TC_LOG_INFO("module.playerbot.bg",
-                "PlayerbotBGScript: Triggering Instance Bot System for player {} (BG Type: {})",
-                player->GetName(), static_cast<uint32>(bgTypeId));
+                "PlayerbotBGScript: Triggering Instance Bot System for player {} (BG Type: {}, Bracket: {})",
+                player->GetName(), static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
 
             InstanceBotHooks::OnPlayerJoinBattleground(
                 player,

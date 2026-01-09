@@ -169,7 +169,8 @@ struct TC_GAME_API RaidRequest : public OrchestratorRequest
 struct TC_GAME_API BattlegroundRequest : public OrchestratorRequest
 {
     uint32 bgTypeId = 0;                ///< Battleground type
-    uint32 bracketLevel = 80;           ///< Level bracket
+    uint32 bracketId = 0;                ///< Bracket ID (from PVPDifficultyEntry)
+    uint32 playerLevel = 80;            ///< Player's actual level (for bot scaling)
     uint32 currentAlliancePlayers = 0;  ///< Current Alliance count
     uint32 currentHordePlayers = 0;     ///< Current Horde count
     Faction playerFaction = Faction::Alliance;  ///< Human player's faction
@@ -198,7 +199,8 @@ struct TC_GAME_API BattlegroundRequest : public OrchestratorRequest
 struct TC_GAME_API ArenaRequest : public OrchestratorRequest
 {
     uint32 arenaType = 0;               ///< Arena type (2, 3, 5)
-    uint32 bracketLevel = 80;           ///< Level bracket
+    uint32 bracketId = 0;                ///< Bracket ID (from PVPDifficultyEntry)
+    uint32 playerLevel = 80;            ///< Player's actual level (for bot scaling)
     ObjectGuid playerGuid;              ///< Player GUID
     Faction playerFaction = Faction::Alliance;  ///< Player's faction
     std::vector<ObjectGuid> existingTeammates;  ///< Already on team

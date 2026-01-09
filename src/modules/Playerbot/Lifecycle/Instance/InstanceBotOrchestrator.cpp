@@ -929,7 +929,7 @@ bool InstanceBotOrchestrator::FulfillBattlegroundRequest(BattlegroundRequest& re
     FactoryRequest factoryReq;
     factoryReq.instanceType = InstanceType::Battleground;
     factoryReq.contentId = request.bgTypeId;
-    factoryReq.playerLevel = request.bracketLevel;
+    factoryReq.playerLevel = request.playerLevel;
     factoryReq.playerFaction = request.playerFaction;
     factoryReq.allianceNeeded = needed.allianceNeeded;
     factoryReq.hordeNeeded = needed.hordeNeeded;

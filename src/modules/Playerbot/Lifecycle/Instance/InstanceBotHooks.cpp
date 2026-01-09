@@ -334,7 +334,8 @@ void InstanceBotHooks::OnPlayerJoinBattleground(
         // Create battleground request for orchestrator
         BattlegroundRequest request;
         request.bgTypeId = bgTypeId;
-        request.bracketLevel = bracketId;
+        request.bracketId = bracketId;
+        request.playerLevel = player->GetLevel();
         request.currentAlliancePlayers = player->GetTeam() == ALLIANCE ? 1 : 0;
         request.currentHordePlayers = player->GetTeam() == HORDE ? 1 : 0;
         request.playerFaction = player->GetTeam() == ALLIANCE ? Faction::Alliance : Faction::Horde;
@@ -479,7 +480,8 @@ void InstanceBotHooks::OnBattlegroundStarting(
     // Request bots from orchestrator (already should be reserved)
     BattlegroundRequest request;
     request.bgTypeId = bgTypeId;
-    request.bracketLevel = bg->GetBracketId();
+    request.bracketId = bg->GetBracketId();
+    // TODO: Get player level from content requirement or use bracket min level
     request.currentAlliancePlayers = allianceCount;
     request.currentHordePlayers = hordeCount;
     request.playerFaction = allianceCount > 0 ? Faction::Alliance : Faction::Horde;
@@ -566,7 +568,8 @@ void InstanceBotHooks::OnPlayerJoinArena(
     // Create arena request
     ArenaRequest request;
     request.arenaType = arenaType;
-    request.bracketLevel = bracketId;
+    request.bracketId = bracketId;
+        request.playerLevel = player->GetLevel();
     request.playerGuid = player->GetGUID();
     request.playerFaction = player->GetTeam() == ALLIANCE ? Faction::Alliance : Faction::Horde;
     request.existingTeammates = teamMembers;
