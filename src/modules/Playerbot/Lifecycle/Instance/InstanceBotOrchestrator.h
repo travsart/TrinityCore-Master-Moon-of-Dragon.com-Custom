@@ -116,7 +116,7 @@ struct TC_GAME_API DungeonRequest : public OrchestratorRequest
     ObjectGuid playerGuid;              ///< Requesting player
     uint32 dungeonId = 0;               ///< LFG dungeon ID
     uint8 playerRole = 0;               ///< Player's selected role
-    uint32 playerLevel = 80;            ///< Player's level (for bot scaling)
+    uint32 playerLevel = 1;             ///< Player's level - MUST be set by caller
     Faction playerFaction = Faction::Alliance;  ///< Player's faction
 
     /// Called when bots are ready
@@ -143,7 +143,7 @@ struct TC_GAME_API RaidRequest : public OrchestratorRequest
 {
     ObjectGuid leaderGuid;              ///< Raid leader
     uint32 raidId = 0;                  ///< Raid map ID
-    uint32 playerLevel = 80;            ///< Raid leader's level (for bot scaling)
+    uint32 playerLevel = 1;             ///< Raid leader's level - MUST be set by caller
     Faction playerFaction = Faction::Alliance;  ///< Raid leader's faction
     std::vector<ObjectGuid> currentGroupMembers;  ///< Existing members
     std::map<ObjectGuid, uint8> memberRoles;      ///< GUID -> role mapping
@@ -171,8 +171,8 @@ struct TC_GAME_API RaidRequest : public OrchestratorRequest
 struct TC_GAME_API BattlegroundRequest : public OrchestratorRequest
 {
     uint32 bgTypeId = 0;                ///< Battleground type
-    uint32 bracketId = 0;                ///< Bracket ID (from PVPDifficultyEntry)
-    uint32 playerLevel = 80;            ///< Player's actual level (for bot scaling)
+    uint32 bracketId = 0;               ///< Bracket ID (from PVPDifficultyEntry)
+    uint32 playerLevel = 1;             ///< Player's level - MUST be set by caller
     uint32 currentAlliancePlayers = 0;  ///< Current Alliance count
     uint32 currentHordePlayers = 0;     ///< Current Horde count
     Faction playerFaction = Faction::Alliance;  ///< Human player's faction
@@ -201,8 +201,8 @@ struct TC_GAME_API BattlegroundRequest : public OrchestratorRequest
 struct TC_GAME_API ArenaRequest : public OrchestratorRequest
 {
     uint32 arenaType = 0;               ///< Arena type (2, 3, 5)
-    uint32 bracketId = 0;                ///< Bracket ID (from PVPDifficultyEntry)
-    uint32 playerLevel = 80;            ///< Player's actual level (for bot scaling)
+    uint32 bracketId = 0;               ///< Bracket ID (from PVPDifficultyEntry)
+    uint32 playerLevel = 1;             ///< Player's level - MUST be set by caller
     ObjectGuid playerGuid;              ///< Player GUID
     Faction playerFaction = Faction::Alliance;  ///< Player's faction
     std::vector<ObjectGuid> existingTeammates;  ///< Already on team
