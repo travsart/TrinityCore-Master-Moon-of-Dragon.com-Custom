@@ -24,6 +24,7 @@
 #include "Session/BotWorldSessionMgr.h"
 #include "Core/PlayerBotHooks.h"
 #include "LFG/LFGBotManager.h"
+#include "Lifecycle/Instance/InstanceBotHooks.h"
 #include "Log.h"
 #include <unordered_set>
 #include <unordered_map>
@@ -302,6 +303,10 @@ private:
 
     /**
      * @brief Handle a player joining the LFG queue
+     *
+     * Uses the Hybrid Instance Bot System:
+     * 1. Triggers InstanceBotHooks to create/reserve bots from pool
+     * 2. Falls back to LFGBotManager to use existing online bots
      */
     void HandlePlayerJoinedQueue(Player* player)
     {
@@ -329,7 +334,23 @@ private:
             return;
         }
 
-        // Call LFGBotManager to populate queue with bots
+        // HYBRID APPROACH: Use both new and old systems
+        //
+        // Step 1: Trigger the new Instance Bot System to create/reserve bots
+        // This ensures bots exist (created via BotCloneEngine) and are being warmed up
+        if (InstanceBotHooks::IsEnabled())
+        {
+            TC_LOG_INFO("module.playerbot.lfg",
+                "PlayerbotLFGScript: Triggering Instance Bot System for player {}", player->GetName());
+
+            // Convert lfg::LfgDungeonSet to std::set<uint32>
+            std::set<uint32> dungeonSet(dungeons.begin(), dungeons.end());
+
+            InstanceBotHooks::OnPlayerJoinLfg(player, dungeonSet, roles);
+        }
+
+        // Step 2: Use LFGBotManager to add CURRENTLY ONLINE bots to queue
+        // This handles the case where pool bots are already warmed up
         sLFGBotManager->OnPlayerJoinQueue(player, roles, dungeons);
 
         // Mark player as processed

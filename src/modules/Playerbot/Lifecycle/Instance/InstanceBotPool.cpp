@@ -9,7 +9,10 @@
 
 #include "InstanceBotPool.h"
 #include "InstanceBotOrchestrator.h"
+#include "BotCloneEngine.h"
+#include "BotTemplateRepository.h"
 #include "Config/PlayerbotConfig.h"
+#include "Session/BotWorldSessionMgr.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "Timer.h"
@@ -1130,34 +1133,91 @@ void InstanceBotPool::SetOverflowNeededCallback(OverflowNeededCallback callback)
 
 ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, PoolType poolType, uint32 level)
 {
-    // TODO: Integrate with BotFactory to actually create the bot
-    // For now, just create an empty slot
+    // Use BotCloneEngine to create an actual bot character
+    Faction faction = GetFactionForPoolType(poolType);
 
-    ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(
-        static_cast<uint64>(std::hash<uint64>{}(
-            std::chrono::steady_clock::now().time_since_epoch().count())));
+    // Clone a bot using the template repository and clone engine
+    CloneResult result = sBotCloneEngine->Clone(role, faction, level, 0);
 
+    if (!result.success)
+    {
+        TC_LOG_WARN("playerbot.pool", "InstanceBotPool::CreatePoolBot - Failed to create bot: {}",
+            result.errorMessage);
+        return ObjectGuid::Empty;
+    }
+
+    TC_LOG_INFO("playerbot.pool", "InstanceBotPool::CreatePoolBot - Created bot {} ({}), Level {}, Role {}",
+        result.botName, result.botGuid.ToString(), level, BotRoleToString(role));
+
+    // Create slot for the newly created bot
     InstanceBotSlot slot;
-    slot.Initialize(guid, 0, "PoolBot", poolType, role);
+    slot.Initialize(result.botGuid, result.accountId, result.botName, poolType, role);
     slot.level = level;
-    slot.faction = GetFactionForPoolType(poolType);
-    slot.ForceState(PoolSlotState::Ready); // Skip warmup for now
+    slot.faction = faction;
+    slot.gearScore = result.gearScore;
+    slot.playerClass = result.playerClass;
+    slot.specId = result.specId;
+    slot.ForceState(PoolSlotState::Warming); // Bot needs to be logged in
 
     {
         std::unique_lock lock(_slotsMutex);
-        _slots[guid] = std::move(slot);
+        _slots[result.botGuid] = std::move(slot);
     }
 
-    ++_stats.activity.warmupsThisHour;
-    _statsDirty.store(true);
+    // Queue the bot for login via BotWorldSessionMgr
+    // The bot will be marked Ready once login is complete
+    if (!WarmUpBot(result.botGuid))
+    {
+        TC_LOG_WARN("playerbot.pool", "InstanceBotPool::CreatePoolBot - Failed to queue bot {} for warmup",
+            result.botGuid.ToString());
+        // Still return the GUID - bot exists in database, can be warmed later
+    }
 
-    return guid;
+    _statsDirty.store(true);
+    return result.botGuid;
 }
 
-bool InstanceBotPool::WarmUpBot(ObjectGuid /*botGuid*/)
+bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
 {
-    // TODO: Integrate with BotSession to login the bot
-    return true;
+    // Log the bot into the world via BotWorldSessionMgr
+    // This queues the bot for rate-limited spawning
+    if (!sBotWorldSessionMgr || !sBotWorldSessionMgr->IsEnabled())
+    {
+        TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - BotWorldSessionMgr not available");
+        return false;
+    }
+
+    // Get account ID from slot
+    uint32 accountId = 0;
+    {
+        std::shared_lock lock(_slotsMutex);
+        auto it = _slots.find(botGuid);
+        if (it != _slots.end())
+            accountId = it->second.accountId;
+    }
+
+    if (accountId == 0)
+    {
+        TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - No account ID for bot {}",
+            botGuid.ToString());
+        return false;
+    }
+
+    // Queue bot for login - BotWorldSessionMgr handles rate limiting
+    bool queued = sBotWorldSessionMgr->AddPlayerBot(botGuid, accountId);
+
+    if (queued)
+    {
+        TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Queued bot {} for login",
+            botGuid.ToString());
+    }
+    else
+    {
+        TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - Failed to queue bot {} for login",
+            botGuid.ToString());
+    }
+
+    return queued;
 }
 
 void InstanceBotPool::OnBotWarmupComplete(ObjectGuid botGuid, bool success)

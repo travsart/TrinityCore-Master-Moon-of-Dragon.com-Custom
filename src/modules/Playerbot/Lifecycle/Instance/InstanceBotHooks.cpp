@@ -25,6 +25,7 @@
 #include "Battleground.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
+#include "LFGMgr.h"
 
 namespace Playerbot
 {
@@ -120,11 +121,55 @@ void InstanceBotHooks::OnPlayerJoinLfg(
     request.dungeonId = dungeonId;
     request.playerRole = roles;
 
-    // Set up callbacks
-    request.onBotsReady = [playerGuid = player->GetGUID()](std::vector<ObjectGuid> const& bots)
+    // Set up callbacks - capture context needed for LFG queue join
+    request.onBotsReady = [playerGuid = player->GetGUID(), dungeonId, roles](std::vector<ObjectGuid> const& bots)
     {
-        TC_LOG_DEBUG("playerbots.instance", "Dungeon bots ready for player {}: {} bots assigned",
+        TC_LOG_INFO("playerbots.instance", "Dungeon bots ready for player {}: {} bots assigned",
             playerGuid.ToString(), bots.size());
+
+        // Add each bot to the LFG queue
+        uint32 botsAdded = 0;
+        for (ObjectGuid const& botGuid : bots)
+        {
+            Player* bot = ObjectAccessor::FindPlayer(botGuid);
+            if (!bot)
+            {
+                TC_LOG_DEBUG("playerbots.instance", "Bot {} not online yet, skipping LFG queue add",
+                    botGuid.ToString());
+                continue;
+            }
+
+            // Determine bot role based on spec (opposite of what player needs)
+            uint8 botRoles = lfg::PLAYER_ROLE_DAMAGE; // Default to DPS
+
+            // If player is tank/healer, bot should be DPS; if player is DPS, bots fill tank/healer
+            if (!(roles & lfg::PLAYER_ROLE_TANK))
+                botRoles |= lfg::PLAYER_ROLE_TANK;
+            if (!(roles & lfg::PLAYER_ROLE_HEALER))
+                botRoles |= lfg::PLAYER_ROLE_HEALER;
+
+            // Create dungeon set for the bot
+            lfg::LfgDungeonSet dungeonSet;
+            dungeonSet.insert(dungeonId);
+
+            try
+            {
+                // Add bot to LFG queue
+                sLFGMgr->JoinLfg(bot, botRoles, dungeonSet);
+                botsAdded++;
+
+                TC_LOG_DEBUG("playerbots.instance", "Added bot {} to LFG queue for dungeon {} with roles {}",
+                    bot->GetName(), dungeonId, botRoles);
+            }
+            catch (std::exception const& e)
+            {
+                TC_LOG_ERROR("playerbots.instance", "Failed to add bot {} to LFG queue: {}",
+                    bot->GetName(), e.what());
+            }
+        }
+
+        TC_LOG_INFO("playerbots.instance", "Added {}/{} bots to LFG queue for dungeon {}",
+            botsAdded, bots.size(), dungeonId);
 
         // Notify any registered callbacks
         std::lock_guard<std::mutex> lock(_callbackMutex);
