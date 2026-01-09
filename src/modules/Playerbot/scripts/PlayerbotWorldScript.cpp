@@ -365,6 +365,9 @@ namespace Playerbot { void AddSC_PlayerbotLFGScript(); }
 void AddSC_playerbot_dragonriding();
 void AddSC_playerbot_dragonriding_glyphs();
 
+// Forward declaration for Instance Bot system scripts
+namespace Playerbot { void RegisterInstanceBotScripts(); }
+
 // Script registration function
 void AddSC_playerbot_world()
 {
@@ -386,5 +389,8 @@ void AddSC_playerbot_world()
     // Dragonriding System: Register Soar, boost abilities, and glyph collection scripts
     AddSC_playerbot_dragonriding();
     AddSC_playerbot_dragonriding_glyphs();
+
+    // Instance Bot System: Register pool management and LFG/BG integration scripts
+    Playerbot::RegisterInstanceBotScripts();
     #endif
 }

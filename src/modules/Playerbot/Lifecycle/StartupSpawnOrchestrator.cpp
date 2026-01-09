@@ -16,10 +16,10 @@ namespace Playerbot
 {
 
 // ============================================================================
-// OrchestratorConfig Implementation
+// StartupOrchestratorConfig Implementation
 // ============================================================================
 
-void OrchestratorConfig::LoadFromConfig()
+void StartupOrchestratorConfig::LoadFromConfig()
 {
     enablePhasedStartup = sPlayerbotConfig->GetBool("Playerbot.Startup.EnablePhased", true);
     enableParallelLoading = sPlayerbotConfig->GetBool("Playerbot.Startup.EnableParallelLoading", false);
@@ -34,7 +34,7 @@ void OrchestratorConfig::LoadFromConfig()
         enablePhasedStartup, enableParallelLoading, initialDelaySeconds, phases.size());
 }
 
-void OrchestratorConfig::InitializeDefaultPhases()
+void StartupOrchestratorConfig::InitializeDefaultPhases()
 {
     phases.clear();
 

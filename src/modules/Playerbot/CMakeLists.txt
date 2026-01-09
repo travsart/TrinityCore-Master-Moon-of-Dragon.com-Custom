@@ -574,6 +574,65 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotFactory.h
 
+    # Population Lifecycle Protection System (Bot Protection Registry)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Protection/ProtectionReason.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Protection/ProtectionStatus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Protection/IProtectionProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Protection/BotProtectionRegistry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Protection/BotProtectionRegistry.h
+
+    # Population Lifecycle Retirement System (Bot Retirement Manager)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Retirement/RetirementState.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Retirement/RetirementCandidate.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Retirement/GracefulExitHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Retirement/GracefulExitHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Retirement/BotRetirementManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Retirement/BotRetirementManager.h
+
+    # Population Lifecycle Prediction System (Bracket Flow Predictor)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Prediction/BracketFlowPredictor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Prediction/BracketFlowPredictor.h
+
+    # Population Lifecycle Demand System (Player Activity & Demand Calculator)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/PlayerActivityTracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/PlayerActivityTracker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/DemandCalculator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/DemandCalculator.h
+
+    # Population Lifecycle Controller (Master Orchestrator)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/PopulationLifecycleController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/PopulationLifecycleController.h
+
+    # Instance Bot Pool System (Hybrid Warm Pool + Elastic Overflow)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/PoolSlotState.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotSlot.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/PoolConfiguration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/PoolStatistics.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotPool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotPool.h
+
+    # JIT Bot Factory System (Elastic Overflow for Large Content)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotTemplateRepository.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotTemplateRepository.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotCloneEngine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotCloneEngine.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/JITBotFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/JITBotFactory.h
+
+    # Instance Bot Orchestrator (Master Controller for Instance Bots)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/ContentRequirements.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/ContentRequirements.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotOrchestrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotOrchestrator.h
+
+    # Instance Bot Hooks (Core Integration Points)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotHooks.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotHooks.h
+
+    # Instance Bot Scripts (TrinityCore ScriptMgr Integration - NO CORE MODIFICATIONS!)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotScripts.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotScripts.h
+
     # Performance Optimization System (Phase 5)
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ObjectPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PacketPoolManager.h

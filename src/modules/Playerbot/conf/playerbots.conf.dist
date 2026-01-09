@@ -140,9 +140,9 @@ Playerbot.UseOrchestrator = 1
 #
 #  Playerbot.Database.Host
 #    Description: MySQL server hostname or IP address
-#    Default:     "127.0.0.1"
+#    Default:     127.0.0.1
 #
-Playerbot.Database.Host = "127.0.0.1"
+Playerbot.Database.Host = 127.0.0.1
 
 #
 #  Playerbot.Database.Port
@@ -154,24 +154,24 @@ Playerbot.Database.Port = 3306
 #
 #  Playerbot.Database.Name
 #    Description: Database name for Playerbot data
-#    Default:     "playerbot_playerbot"
+#    Default:     "playerbot"
 #    Note:        Database auto-created if it doesn't exist
 #
-Playerbot.Database.Name = "playerbot_playerbot"
+Playerbot.Database.Name = playerbot
 
 #
 #  Playerbot.Database.User
 #    Description: MySQL username
-#    Default:     "trinity"
+#    Default:     trinity
 #
-Playerbot.Database.User = "trinity"
+Playerbot.Database.User = trinity
 
 #
 #  Playerbot.Database.Password
 #    Description: MySQL password
-#    Default:     "trinity"
+#    Default:     trinity
 #
-Playerbot.Database.Password = "trinity"
+Playerbot.Database.Password = trinity
 
 ###############################################################################
 # A3. BOT SPAWNING SYSTEM
@@ -952,6 +952,603 @@ Playerbot.Population.Tier.Dragonflight.Pct = 25.0
 Playerbot.Population.Tier.TheWarWithin.Pct = 30.0
 
 ###############################################################################
+# B10A. POPULATION LIFECYCLE MANAGEMENT [WIRED]
+#
+#     Status: WIRED (2026-01-08) - Config loaded in BotProtectionRegistry::LoadConfig()
+#     Files:  Lifecycle/Protection/BotProtectionRegistry.cpp
+#
+#     Purpose: Manages bot protection from deletion based on social connections,
+#              retirement queue for graceful bot removal, and level bracket flow.
+#
+###############################################################################
+
+#
+#  Playerbot.Lifecycle.Protection.Guild
+#    Description: Protect bots that are members of any guild
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Protection.Guild = 1
+
+#
+#  Playerbot.Lifecycle.Protection.FriendList
+#    Description: Protect bots that are on any player's friend list
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Protection.FriendList = 1
+
+#
+#  Playerbot.Lifecycle.Protection.RecentGroup
+#    Description: Protect bots that were recently in a group with a real player
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Protection.RecentGroup = 1
+
+#
+#  Playerbot.Lifecycle.Protection.Interaction
+#    Description: Protect bots with recent player interaction (trade, whisper, etc.)
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Protection.Interaction = 1
+
+#
+#  Playerbot.Lifecycle.Protection.InteractionWindowHours
+#    Description: How many hours of inactivity before RecentInteraction protection expires
+#    Default:     24
+#    Range:       1-168
+#
+Playerbot.Lifecycle.Protection.InteractionWindowHours = 24
+
+#
+#  Playerbot.Lifecycle.Protection.Mail
+#    Description: Protect bots that have pending mail items
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Protection.Mail = 1
+
+#
+#  Playerbot.Lifecycle.Protection.Auction
+#    Description: Protect bots that have active auction house listings
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Protection.Auction = 1
+
+#
+#  Playerbot.Lifecycle.Protection.DbSyncEnabled
+#    Description: Enable periodic saving of protection status to database
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Protection.DbSyncEnabled = 1
+
+#
+#  Playerbot.Lifecycle.Protection.DbSyncIntervalMs
+#    Description: How often to sync protection status to database (milliseconds)
+#    Default:     60000 (1 minute)
+#    Range:       5000-600000
+#
+Playerbot.Lifecycle.Protection.DbSyncIntervalMs = 60000
+
+###############################################################################
+# B10B. BOT RETIREMENT MANAGEMENT [WIRED]
+#
+#     Status: WIRED (2026-01-08) - Config loaded in BotRetirementManager::LoadConfig()
+#     Files:  Lifecycle/Retirement/BotRetirementManager.cpp
+#
+#     Purpose: Manages graceful retirement of unprotected bots to maintain
+#              level distribution and prevent overcrowding at max level.
+#
+###############################################################################
+
+#
+#  Playerbot.Lifecycle.Retirement.Enable
+#    Description: Enable bot retirement system
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Retirement.Enable = 1
+
+#
+#  Playerbot.Lifecycle.Retirement.CoolingPeriodDays
+#    Description: Days a bot stays in "cooling" before deletion (can be rescued)
+#    Default:     7
+#    Range:       1-30
+#
+Playerbot.Lifecycle.Retirement.CoolingPeriodDays = 7
+
+#
+#  Playerbot.Lifecycle.Retirement.MaxPerHour
+#    Description: Maximum bots that can be retired per hour
+#    Default:     10
+#    Range:       1-100
+#
+Playerbot.Lifecycle.Retirement.MaxPerHour = 10
+
+#
+#  Playerbot.Lifecycle.Retirement.MaxPerDay
+#    Description: Maximum bots that can be retired per day
+#    Default:     100
+#    Range:       10-1000
+#
+Playerbot.Lifecycle.Retirement.MaxPerDay = 100
+
+#
+#  Playerbot.Lifecycle.Retirement.PeakHourStart
+#    Description: Start hour for peak time (no retirements during peak)
+#    Default:     18 (6 PM)
+#    Range:       0-23
+#
+Playerbot.Lifecycle.Retirement.PeakHourStart = 18
+
+#
+#  Playerbot.Lifecycle.Retirement.PeakHourEnd
+#    Description: End hour for peak time
+#    Default:     23 (11 PM)
+#    Range:       0-23
+#
+Playerbot.Lifecycle.Retirement.PeakHourEnd = 23
+
+#
+#  Playerbot.Lifecycle.Retirement.AvoidPeakHours
+#    Description: Skip retirements during peak hours
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Retirement.AvoidPeakHours = 1
+
+#
+#  Playerbot.Lifecycle.Retirement.GracefulExit
+#    Description: Enable graceful exit (leave guild, clear mail, etc.)
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Retirement.GracefulExit = 1
+
+#
+#  Playerbot.Lifecycle.Retirement.MinOverpopulation
+#    Description: Minimum bracket overpopulation % before retirement kicks in
+#    Default:     0.15 (15% overpopulated)
+#    Range:       0.05-0.50
+#
+Playerbot.Lifecycle.Retirement.MinOverpopulation = 0.15
+
+#
+#  Playerbot.Lifecycle.Retirement.MinPlaytimeMinutes
+#    Description: Minimum playtime (minutes) before a bot can be retired
+#    Default:     60 (1 hour)
+#    Range:       0-1440
+#
+Playerbot.Lifecycle.Retirement.MinPlaytimeMinutes = 60
+
+#
+#  Playerbot.Lifecycle.Retirement.PersistToDatabase
+#    Description: Save retirement queue to database
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Retirement.PersistToDatabase = 1
+
+#
+#  Playerbot.Lifecycle.Retirement.DbSyncIntervalMs
+#    Description: How often to sync retirement queue to database
+#    Default:     60000 (1 minute)
+#    Range:       5000-600000
+#
+Playerbot.Lifecycle.Retirement.DbSyncIntervalMs = 60000
+
+###############################################################################
+# B10C. BRACKET FLOW PREDICTION [WIRED]
+#
+#     Status: WIRED (2026-01-08) - Config loaded in BracketFlowPredictor::LoadConfig()
+#     Files:  Lifecycle/Prediction/BracketFlowPredictor.cpp
+#
+#     Purpose: Tracks and predicts bot transitions between level brackets
+#              to enable proactive population management decisions.
+#
+###############################################################################
+
+#
+#  Playerbot.Lifecycle.Prediction.Enable
+#    Description: Enable bracket flow prediction system
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Prediction.Enable = 1
+
+#
+#  Playerbot.Lifecycle.Prediction.MinSamples
+#    Description: Minimum samples needed before making predictions
+#    Default:     10
+#    Range:       5-100
+#
+Playerbot.Lifecycle.Prediction.MinSamples = 10
+
+#
+#  Playerbot.Lifecycle.Prediction.ConfidenceThreshold
+#    Description: Minimum confidence level for predictions (0.0-1.0)
+#    Default:     0.5
+#    Range:       0.1-1.0
+#
+Playerbot.Lifecycle.Prediction.ConfidenceThreshold = 0.5
+
+#
+#  Playerbot.Lifecycle.Prediction.PersistToDatabase
+#    Description: Save transition statistics to database
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Prediction.PersistToDatabase = 1
+
+#
+#  Playerbot.Lifecycle.Prediction.DbSyncIntervalMs
+#    Description: How often to sync statistics to database
+#    Default:     60000 (1 minute)
+#    Range:       5000-600000
+#
+Playerbot.Lifecycle.Prediction.DbSyncIntervalMs = 60000
+
+#
+#  Playerbot.Lifecycle.Prediction.MaxHistoryDays
+#    Description: Days to keep transition history in database
+#    Default:     30
+#    Range:       7-365
+#
+Playerbot.Lifecycle.Prediction.MaxHistoryDays = 30
+
+#
+#  Default average time in bracket (hours) - used when no data
+#
+Playerbot.Lifecycle.Prediction.DefaultTimeStarting = 2
+Playerbot.Lifecycle.Prediction.DefaultTimeChromie = 24
+Playerbot.Lifecycle.Prediction.DefaultTimeDragonflight = 12
+Playerbot.Lifecycle.Prediction.DefaultTimeTWW = 0
+
+###############################################################################
+# B10D. PLAYER ACTIVITY TRACKER [WIRED]
+#
+#     Status: WIRED (2026-01-08) - Config loaded in PlayerActivityTracker::LoadConfig()
+#     Files:  Lifecycle/Demand/PlayerActivityTracker.cpp
+#
+#     Purpose: Tracks real player activity (zones, levels, groups) to enable
+#              demand-driven bot spawning. Bots spawn where players are playing.
+#
+###############################################################################
+
+#
+#  Playerbot.Lifecycle.Activity.Enable
+#    Description: Enable player activity tracking system
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Activity.Enable = 1
+
+#
+#  Playerbot.Lifecycle.Activity.StaleThresholdSeconds
+#    Description: Time after which a player's activity data is considered stale
+#    Default:     300 (5 minutes)
+#    Range:       60-3600
+#
+Playerbot.Lifecycle.Activity.StaleThresholdSeconds = 300
+
+#
+#  Playerbot.Lifecycle.Activity.UpdateIntervalMs
+#    Description: How often to update player activity status
+#    Default:     10000 (10 seconds)
+#    Range:       1000-60000
+#
+Playerbot.Lifecycle.Activity.UpdateIntervalMs = 10000
+
+#
+#  Playerbot.Lifecycle.Activity.CleanupIntervalMs
+#    Description: How often to cleanup stale player entries
+#    Default:     60000 (1 minute)
+#    Range:       10000-300000
+#
+Playerbot.Lifecycle.Activity.CleanupIntervalMs = 60000
+
+#
+#  Playerbot.Lifecycle.Activity.TrackInstances
+#    Description: Track player activity in dungeons/raids
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Activity.TrackInstances = 1
+
+#
+#  Playerbot.Lifecycle.Activity.TrackBattlegrounds
+#    Description: Track player activity in battlegrounds
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Activity.TrackBattlegrounds = 1
+
+#
+#  Playerbot.Lifecycle.Activity.LogChanges
+#    Description: Log detailed activity changes (DEBUG level logging)
+#    Default:     0 (disabled - can be verbose)
+#
+Playerbot.Lifecycle.Activity.LogChanges = 0
+
+###############################################################################
+# B10E. DEMAND CALCULATOR [WIRED]
+#
+#     Status: WIRED (2026-01-08) - Config loaded in DemandCalculator::LoadConfig()
+#     Files:  Lifecycle/Demand/DemandCalculator.cpp
+#
+#     Purpose: Calculates bot spawn demand based on player activity, bracket
+#              deficits, and flow predictions. Generates prioritized spawn
+#              requests for the spawner system.
+#
+###############################################################################
+
+#
+#  Playerbot.Lifecycle.Demand.Enable
+#    Description: Enable demand calculation system
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Demand.Enable = 1
+
+#
+#  Demand weight factors (higher = more influential)
+#
+
+#
+#  Playerbot.Lifecycle.Demand.PlayerProximityWeight
+#    Description: Weight for spawning bots near player activity
+#    Default:     100.0
+#    Range:       0-500
+#
+Playerbot.Lifecycle.Demand.PlayerProximityWeight = 100.0
+
+#
+#  Playerbot.Lifecycle.Demand.BracketDeficitWeight
+#    Description: Weight for bracket population deficit
+#    Default:     50.0
+#    Range:       0-500
+#
+Playerbot.Lifecycle.Demand.BracketDeficitWeight = 50.0
+
+#
+#  Playerbot.Lifecycle.Demand.QuestHubBonus
+#    Description: Bonus score for quest hub zones
+#    Default:     30.0
+#    Range:       0-100
+#
+Playerbot.Lifecycle.Demand.QuestHubBonus = 30.0
+
+#
+#  Playerbot.Lifecycle.Demand.FlowPredictionWeight
+#    Description: Weight for flow prediction adjustments
+#    Default:     25.0
+#    Range:       0-100
+#
+Playerbot.Lifecycle.Demand.FlowPredictionWeight = 25.0
+
+#
+#  Demand thresholds
+#
+
+#
+#  Playerbot.Lifecycle.Demand.MinDeficitForSpawn
+#    Description: Minimum deficit before triggering spawn requests
+#    Default:     5
+#    Range:       1-50
+#
+Playerbot.Lifecycle.Demand.MinDeficitForSpawn = 5
+
+#
+#  Playerbot.Lifecycle.Demand.MinUrgencyForSpawn
+#    Description: Minimum urgency score (0.0-1.0) for spawn requests
+#    Default:     0.1
+#    Range:       0.0-1.0
+#
+Playerbot.Lifecycle.Demand.MinUrgencyForSpawn = 0.1
+
+#
+#  Spawn distribution settings
+#
+
+#
+#  Playerbot.Lifecycle.Demand.PrioritizePlayerZones
+#    Description: Prioritize zones where players are active
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Demand.PrioritizePlayerZones = 1
+
+#
+#  Playerbot.Lifecycle.Demand.AvoidOverpopulatedZones
+#    Description: Avoid spawning in zones with too many bots
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Demand.AvoidOverpopulatedZones = 1
+
+#
+#  Playerbot.Lifecycle.Demand.MaxBotsPerZone
+#    Description: Maximum bots to spawn in a single zone
+#    Default:     50
+#    Range:       10-200
+#
+Playerbot.Lifecycle.Demand.MaxBotsPerZone = 50
+
+#
+#  Playerbot.Lifecycle.Demand.RecalculateIntervalMs
+#    Description: How often to recalculate demands
+#    Default:     30000 (30 seconds)
+#    Range:       5000-120000
+#
+Playerbot.Lifecycle.Demand.RecalculateIntervalMs = 30000
+
+###############################################################################
+# B10F. POPULATION LIFECYCLE CONTROLLER [WIRED]
+#
+#     Status: WIRED (2026-01-08) - Config loaded in PopulationLifecycleController::LoadConfig()
+#     Files:  Lifecycle/PopulationLifecycleController.cpp
+#
+#     Purpose: Master orchestrator coordinating all lifecycle systems to maintain
+#              healthy bot population distribution. Combines protection, retirement,
+#              flow prediction, activity tracking, and demand calculation.
+#
+###############################################################################
+
+#
+#  Playerbot.Lifecycle.Controller.Enable
+#    Description: Enable population lifecycle controller
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Controller.Enable = 1
+
+#
+#  Playerbot.Lifecycle.TargetPopulation
+#    Description: Target total bot population to maintain
+#    Default:     500
+#    Range:       50-5000
+#
+Playerbot.Lifecycle.TargetPopulation = 500
+
+#
+#  Bracket Distribution Percentages
+#  These control how bots are distributed across level brackets.
+#  Must total 100 for best results.
+#
+
+#
+#  Playerbot.Lifecycle.Bracket.Starting.Pct
+#    Description: Percentage of bots in Starting bracket (L1-10)
+#    Default:     15
+#    Range:       5-40
+#
+Playerbot.Lifecycle.Bracket.Starting.Pct = 15
+
+#
+#  Playerbot.Lifecycle.Bracket.ChromieTime.Pct
+#    Description: Percentage of bots in Chromie Time bracket (L10-60)
+#    Default:     45
+#    Range:       20-70
+#
+Playerbot.Lifecycle.Bracket.ChromieTime.Pct = 45
+
+#
+#  Playerbot.Lifecycle.Bracket.Dragonflight.Pct
+#    Description: Percentage of bots in Dragonflight bracket (L60-70)
+#    Default:     20
+#    Range:       10-40
+#
+Playerbot.Lifecycle.Bracket.Dragonflight.Pct = 20
+
+#
+#  Playerbot.Lifecycle.Bracket.TheWarWithin.Pct
+#    Description: Percentage of bots in The War Within bracket (L70-80)
+#    Default:     20
+#    Range:       10-50
+#
+Playerbot.Lifecycle.Bracket.TheWarWithin.Pct = 20
+
+#
+#  Creation Settings
+#
+
+#
+#  Playerbot.Lifecycle.Creation.MaxPerHour
+#    Description: Maximum new bots to create per hour
+#    Default:     30
+#    Range:       5-100
+#
+Playerbot.Lifecycle.Creation.MaxPerHour = 30
+
+#
+#  Playerbot.Lifecycle.Creation.MinDeficit
+#    Description: Minimum deficit before creating new bots
+#    Default:     5
+#    Range:       1-50
+#
+Playerbot.Lifecycle.Creation.MinDeficit = 5
+
+#
+#  Playerbot.Lifecycle.Creation.PrioritizeDemand
+#    Description: Prioritize spawning where players are active
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Creation.PrioritizeDemand = 1
+
+#
+#  Retirement Settings
+#
+
+#
+#  Playerbot.Lifecycle.Retirement.MaxPerHour
+#    Description: Maximum bots to retire per hour
+#    Default:     10
+#    Range:       1-50
+#
+Playerbot.Lifecycle.Retirement.MaxPerHour = 10
+
+#
+#  Playerbot.Lifecycle.Retirement.MinSurplus
+#    Description: Minimum surplus before retiring bots
+#    Default:     5
+#    Range:       1-50
+#
+Playerbot.Lifecycle.Retirement.MinSurplus = 5
+
+#
+#  Playerbot.Lifecycle.Retirement.PauseDuringPeak
+#    Description: Pause retirements during peak hours
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Retirement.PauseDuringPeak = 1
+
+#
+#  Playerbot.Lifecycle.Retirement.PeakHourStart
+#    Description: Peak hours start (24-hour format)
+#    Default:     18 (6 PM)
+#    Range:       0-23
+#
+Playerbot.Lifecycle.Retirement.PeakHourStart = 18
+
+#
+#  Playerbot.Lifecycle.Retirement.PeakHourEnd
+#    Description: Peak hours end (24-hour format)
+#    Default:     23 (11 PM)
+#    Range:       0-23
+#
+Playerbot.Lifecycle.Retirement.PeakHourEnd = 23
+
+#
+#  Update Intervals
+#
+
+#
+#  Playerbot.Lifecycle.Controller.AnalysisIntervalMs
+#    Description: How often to analyze population state
+#    Default:     60000 (1 minute)
+#    Range:       10000-300000
+#
+Playerbot.Lifecycle.Controller.AnalysisIntervalMs = 60000
+
+#
+#  Playerbot.Lifecycle.Controller.ReportIntervalMs
+#    Description: How often to log status reports (if detailed logging enabled)
+#    Default:     300000 (5 minutes)
+#    Range:       60000-600000
+#
+Playerbot.Lifecycle.Controller.ReportIntervalMs = 300000
+
+#
+#  Playerbot.Lifecycle.Controller.BalancingIntervalMs
+#    Description: How often to check for major rebalancing needs
+#    Default:     300000 (5 minutes)
+#    Range:       60000-600000
+#
+Playerbot.Lifecycle.Controller.BalancingIntervalMs = 300000
+
+#
+#  Logging
+#
+
+#
+#  Playerbot.Lifecycle.Controller.LogDecisions
+#    Description: Log lifecycle decisions (spawns, retirements)
+#    Default:     1 (enabled)
+#
+Playerbot.Lifecycle.Controller.LogDecisions = 1
+
+#
+#  Playerbot.Lifecycle.Controller.LogDetailedStats
+#    Description: Log detailed statistics periodically
+#    Default:     0 (disabled - can be verbose)
+#
+Playerbot.Lifecycle.Controller.LogDetailedStats = 0
+
+###############################################################################
 # B11. WORLD POSITIONER [WIRED]
 #
 #     Status: WIRED (2026-01-06) - Converted sConfigMgr to sPlayerbotConfig
@@ -1521,15 +2118,422 @@ Playerbot.Dragonriding.ThrillSpeedThreshold = 100.0
 #
 Playerbot.Dragonriding.GroundSkimHeight = 5.0
 
+###############################################################################
+# B27. INSTANCE BOT POOL
+#
+#     Status: NEW (2026-01-08)
+#     Files:  Lifecycle/Instance/InstanceBotPool.cpp
+#             Lifecycle/Instance/JITBotFactory.cpp
+#             Lifecycle/Instance/InstanceBotOrchestrator.cpp
+#
+#     Purpose: Pre-warmed pool of bots ready for instant instance assignment
+#              with elastic overflow for large content (40v40 BGs)
+#
+###############################################################################
+
+#
+#  Playerbot.Instance.Pool.Enable
+#    Description: Enable instance bot pool for instant dungeon/raid/pvp filling
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Enable = 1
+
+#
+#  Pool Size Configuration (per faction)
+#  These determine the warm pool size for instant assignment
+#
+
+#
+#  Playerbot.Instance.Pool.Alliance.Tanks
+#    Description: Number of Alliance tank bots in warm pool
+#    Default:     20
+#
+Playerbot.Instance.Pool.Alliance.Tanks = 20
+
+#
+#  Playerbot.Instance.Pool.Alliance.Healers
+#    Description: Number of Alliance healer bots in warm pool
+#    Default:     30
+#
+Playerbot.Instance.Pool.Alliance.Healers = 30
+
+#
+#  Playerbot.Instance.Pool.Alliance.DPS
+#    Description: Number of Alliance DPS bots in warm pool
+#    Default:     50
+#
+Playerbot.Instance.Pool.Alliance.DPS = 50
+
+#
+#  Playerbot.Instance.Pool.Horde.Tanks
+#    Description: Number of Horde tank bots in warm pool
+#    Default:     20
+#
+Playerbot.Instance.Pool.Horde.Tanks = 20
+
+#
+#  Playerbot.Instance.Pool.Horde.Healers
+#    Description: Number of Horde healer bots in warm pool
+#    Default:     30
+#
+Playerbot.Instance.Pool.Horde.Healers = 30
+
+#
+#  Playerbot.Instance.Pool.Horde.DPS
+#    Description: Number of Horde DPS bots in warm pool
+#    Default:     50
+#
+Playerbot.Instance.Pool.Horde.DPS = 50
+
+#
+#  Playerbot.Instance.Pool.CooldownSeconds
+#    Description: Cooldown between bot assignments (prevents rapid reuse)
+#    Default:     300 (5 minutes)
+#
+Playerbot.Instance.Pool.CooldownSeconds = 300
+
+#
+#  Playerbot.Instance.Pool.ReservationTimeoutSeconds
+#    Description: How long a reservation is valid before expiring
+#    Default:     60 (1 minute)
+#
+Playerbot.Instance.Pool.ReservationTimeoutSeconds = 60
+
+#
+#  Playerbot.Instance.Pool.AutoReplenish
+#    Description: Automatically replenish pool when bots are assigned
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.AutoReplenish = 1
+
+#
+#  Playerbot.Instance.Pool.PersistToDatabase
+#    Description: Persist pool state to database for crash recovery
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.PersistToDatabase = 1
+
+#
+#  Playerbot.Instance.Pool.DbSyncIntervalMs
+#    Description: Interval for database synchronization (milliseconds)
+#    Default:     60000 (1 minute)
+#
+Playerbot.Instance.Pool.DbSyncIntervalMs = 60000
+
+###############################################################################
+# B28. JIT BOT FACTORY (Elastic Overflow)
+#
+#     Status: NEW (2026-01-08)
+#     Files:  Lifecycle/Instance/JITBotFactory.cpp
+#             Lifecycle/Instance/BotCloneEngine.cpp
+#             Lifecycle/Instance/BotTemplateRepository.cpp
+#
+#     Purpose: Creates bots on-demand when warm pool is exhausted
+#              Enables support for large content like 40v40 Alterac Valley
+#
+###############################################################################
+
+#
+#  Playerbot.Instance.JIT.Enable
+#    Description: Enable JIT (Just-In-Time) bot factory for overflow
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.JIT.Enable = 1
+
+#
+#  Playerbot.Instance.JIT.MaxConcurrentCreations
+#    Description: Maximum parallel bot creations
+#    Default:     10
+#
+Playerbot.Instance.JIT.MaxConcurrentCreations = 10
+
+#
+#  Playerbot.Instance.JIT.RecycleTimeoutMinutes
+#    Description: How long to keep recycled bots available for reuse
+#    Default:     5
+#
+Playerbot.Instance.JIT.RecycleTimeoutMinutes = 5
+
+#
+#  Playerbot.Instance.JIT.MaxRecycledBots
+#    Description: Maximum number of recycled bots to keep
+#    Default:     100
+#
+Playerbot.Instance.JIT.MaxRecycledBots = 100
+
+#
+#  Priority settings (lower = higher priority)
+#
+
+#
+#  Playerbot.Instance.JIT.DungeonPriority
+#    Description: Processing priority for dungeon requests
+#    Default:     1 (highest)
+#
+Playerbot.Instance.JIT.DungeonPriority = 1
+
+#
+#  Playerbot.Instance.JIT.ArenaPriority
+#    Description: Processing priority for arena requests
+#    Default:     2
+#
+Playerbot.Instance.JIT.ArenaPriority = 2
+
+#
+#  Playerbot.Instance.JIT.RaidPriority
+#    Description: Processing priority for raid requests
+#    Default:     3
+#
+Playerbot.Instance.JIT.RaidPriority = 3
+
+#
+#  Playerbot.Instance.JIT.BattlegroundPriority
+#    Description: Processing priority for battleground requests
+#    Default:     4 (lowest)
+#
+Playerbot.Instance.JIT.BattlegroundPriority = 4
+
+#
+#  Timeout settings (milliseconds)
+#
+
+#
+#  Playerbot.Instance.JIT.DungeonTimeoutMs
+#    Description: Timeout for dungeon bot creation requests
+#    Default:     30000 (30 seconds)
+#
+Playerbot.Instance.JIT.DungeonTimeoutMs = 30000
+
+#
+#  Playerbot.Instance.JIT.RaidTimeoutMs
+#    Description: Timeout for raid bot creation requests
+#    Default:     60000 (1 minute)
+#
+Playerbot.Instance.JIT.RaidTimeoutMs = 60000
+
+#
+#  Playerbot.Instance.JIT.BattlegroundTimeoutMs
+#    Description: Timeout for battleground bot creation requests
+#    Default:     120000 (2 minutes)
+#
+Playerbot.Instance.JIT.BattlegroundTimeoutMs = 120000
+
+#
+#  Playerbot.Instance.JIT.ArenaTimeoutMs
+#    Description: Timeout for arena bot creation requests
+#    Default:     15000 (15 seconds)
+#
+Playerbot.Instance.JIT.ArenaTimeoutMs = 15000
+
+###############################################################################
+# B29. INSTANCE BOT ORCHESTRATOR
+#
+#     Status: NEW (2026-01-08)
+#     Files:  Lifecycle/Instance/InstanceBotOrchestrator.cpp
+#             Lifecycle/Instance/ContentRequirements.cpp
+#
+#     Purpose: Coordinates pool, factory, and queue systems for all
+#              instance types (dungeons, raids, battlegrounds, arenas)
+#
+###############################################################################
+
+#
+#  Playerbot.Instance.Orchestrator.Enable
+#    Description: Enable the instance bot orchestrator
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Orchestrator.Enable = 1
+
+#
+#  Playerbot.Instance.Orchestrator.OverflowThresholdPct
+#    Description: Use JIT overflow when pool falls below this percentage
+#    Default:     80 (use JIT when pool < 20% remaining)
+#
+Playerbot.Instance.Orchestrator.OverflowThresholdPct = 80
+
+#
+#  Playerbot.Instance.Orchestrator.PreferPoolBots
+#    Description: Prefer warm pool bots over JIT creation
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Orchestrator.PreferPoolBots = 1
+
+#
+#  Playerbot.Instance.Orchestrator.AllowPartialFill
+#    Description: Start instance with partial bot count if full not available
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Orchestrator.AllowPartialFill = 1
+
+#
+#  Playerbot.Instance.Orchestrator.PartialFillMinPct
+#    Description: Minimum percentage of bots required for partial fill
+#    Default:     60 (at least 60% of requested bots)
+#
+Playerbot.Instance.Orchestrator.PartialFillMinPct = 60
+
+#
+#  Playerbot.Instance.Orchestrator.LogRequests
+#    Description: Log bot requests to server log
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Orchestrator.LogRequests = 1
+
+#
+#  Playerbot.Instance.Orchestrator.LogAssignments
+#    Description: Log bot assignments to server log
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Orchestrator.LogAssignments = 1
+
+#
+#  Request timeouts (milliseconds)
+#
+
+#
+#  Playerbot.Instance.Orchestrator.DungeonTimeoutMs
+#    Description: Timeout for dungeon requests
+#    Default:     30000 (30 seconds)
+#
+Playerbot.Instance.Orchestrator.DungeonTimeoutMs = 30000
+
+#
+#  Playerbot.Instance.Orchestrator.RaidTimeoutMs
+#    Description: Timeout for raid requests
+#    Default:     60000 (1 minute)
+#
+Playerbot.Instance.Orchestrator.RaidTimeoutMs = 60000
+
+#
+#  Playerbot.Instance.Orchestrator.BattlegroundTimeoutMs
+#    Description: Timeout for battleground requests
+#    Default:     120000 (2 minutes)
+#
+Playerbot.Instance.Orchestrator.BattlegroundTimeoutMs = 120000
+
+#
+#  Playerbot.Instance.Orchestrator.ArenaTimeoutMs
+#    Description: Timeout for arena requests
+#    Default:     15000 (15 seconds)
+#
+Playerbot.Instance.Orchestrator.ArenaTimeoutMs = 15000
+
+###############################################################################
+# B30. BOT CLONE ENGINE
+#
+#     Status: NEW (2026-01-08)
+#     Files:  Lifecycle/Instance/BotCloneEngine.cpp
+#
+#     Purpose: Fast bot creation using template cloning
+#
+###############################################################################
+
+#
+#  Playerbot.Instance.Clone.AccountPoolStart
+#    Description: Starting account ID for bot accounts
+#    Default:     100000
+#
+Playerbot.Instance.Clone.AccountPoolStart = 100000
+
+#
+#  Playerbot.Instance.Clone.AccountPoolSize
+#    Description: Number of accounts reserved for bots
+#    Default:     1000
+#
+Playerbot.Instance.Clone.AccountPoolSize = 1000
+
+# B31. BOT TEMPLATE REPOSITORY
+#
+#     Status: WIRED - Config loaded in BotTemplateRepository::Initialize()
+#     Files:  Lifecycle/Instance/BotTemplateRepository.cpp
+#
+#     Purpose: Pre-defined bot templates for fast JIT cloning
+#
+###############################################################################
+
+#
+#  Playerbot.Instance.Template.Enable
+#    Description: Enable the bot template repository
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Template.Enable = 1
+
+#
+#  Playerbot.Instance.Template.LoadFromDatabase
+#    Description: Load custom templates from database
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Template.LoadFromDatabase = 1
+
+#
+#  Playerbot.Instance.Template.CreateDefaults
+#    Description: Create default templates for all class/spec combinations on startup
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Template.CreateDefaults = 1
+
+#
+#  Playerbot.Instance.Template.PreSerialize
+#    Description: Pre-serialize template data for faster cloning
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Template.PreSerialize = 1
+
+#
+#  Playerbot.Instance.Template.LogUsage
+#    Description: Log template usage statistics
+#    Default:     0 (disabled for performance)
+#
+Playerbot.Instance.Template.LogUsage = 0
+
+#
+#  Playerbot.Instance.Template.LogCreation
+#    Description: Log template creation details
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Template.LogCreation = 1
+
+#
+#  Gear Level Configuration
+#  Templates are pre-generated with gear sets for these item levels
+#
+
+#
+#  Playerbot.Instance.Template.GearLevels
+#    Description: Comma-separated list of item levels to generate gear sets for
+#    Default:     400,450,480,510,545,580 (heroic dungeon through mythic raid)
+#    Note:        Each template will have a gear set for each of these levels
+#
+Playerbot.Instance.Template.GearLevels = 400,450,480,510,545,580
+
+#
+#  Playerbot.Instance.Template.DefaultGearLevel
+#    Description: Default item level for newly created bots
+#    Default:     450 (mythic dungeon starter gear)
+#
+Playerbot.Instance.Template.DefaultGearLevel = 450
+
+#
+#  Playerbot.Instance.Template.ScaleGearToContent
+#    Description: Automatically scale bot gear to match content difficulty
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Template.ScaleGearToContent = 1
+
 ################################################################################
 #
 #                    ===== END OF CONFIGURATION FILE =====
 #
 #  Summary:
 #    Section A (Active):  Core settings, spawning, database, and AI
-#    Section B (Wired):   Subsystem-specific configuration (B1-B26)
+#    Section B (Wired):   Subsystem-specific configuration (B1-B31)
+#      B27: Instance Bot Pool - Warm pool for instant instance filling
+#      B28: JIT Bot Factory - Elastic overflow for large content (40v40)
+#      B29: Instance Bot Orchestrator - Master controller for instance bots
+#      B30: Bot Clone Engine - Fast bot creation via template cloning
+#      B31: Bot Template Repository - Pre-defined templates for fast cloning
 #
-#  Config Status: 26 subsystems wired, 43% complete
+#  Config Status: 31 subsystems wired, 50% complete
 #
 #  For implementation plans and feature roadmap, see:
 #    docs/PLAYERBOT_IMPLEMENTATION_ROADMAP.md

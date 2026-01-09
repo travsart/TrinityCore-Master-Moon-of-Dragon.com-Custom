@@ -20,7 +20,23 @@
 #include "Database/PlayerbotCharacterDBInterface.h"
 #include "Database/PlayerbotMigrationMgr.h"
 #include "Lifecycle/BotSpawner.h"
+#include "Lifecycle/Protection/BotProtectionRegistry.h"
+#include "Lifecycle/Retirement/BotRetirementManager.h"
+#include "Lifecycle/Prediction/BracketFlowPredictor.h"
+#include "Lifecycle/Demand/PlayerActivityTracker.h"
+#include "Lifecycle/Demand/DemandCalculator.h"
+#include "Lifecycle/PopulationLifecycleController.h"
 // #include "Lifecycle/BotLifecycleMgr.h"
+
+// Instance Bot Pool System (Hybrid Warm Pool + Elastic Overflow)
+#include "Lifecycle/Instance/InstanceBotPool.h"
+#include "Lifecycle/Instance/InstanceBotOrchestrator.h"
+#include "Lifecycle/Instance/InstanceBotHooks.h"
+#include "Lifecycle/Instance/ContentRequirements.h"
+#include "Lifecycle/Instance/JITBotFactory.h"
+#include "Lifecycle/Instance/BotTemplateRepository.h"
+#include "Lifecycle/Instance/BotCloneEngine.h"
+
 #include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Session/BotPacketRelay.h"
@@ -275,6 +291,169 @@ bool PlayerbotModule::Initialize()
     sBotActionMgr->Initialize();
     TC_LOG_INFO("server.loading", "Bot Action Manager initialized successfully");
 
+    // Initialize Bot Protection Registry for lifecycle management
+    TC_LOG_INFO("server.loading", "Initializing Bot Protection Registry...");
+    if (!sBotProtectionRegistry->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Bot Protection Registry initialization failed - continuing without protection tracking");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Bot Protection Registry initialized successfully");
+    }
+
+    // Initialize Bot Retirement Manager for lifecycle management
+    TC_LOG_INFO("server.loading", "Initializing Bot Retirement Manager...");
+    sBotRetirementManager->SetProtectionRegistry(sBotProtectionRegistry);
+    if (!sBotRetirementManager->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Bot Retirement Manager initialization failed - continuing without retirement processing");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Bot Retirement Manager initialized successfully");
+    }
+
+    // Initialize Bracket Flow Predictor for level bracket analysis
+    TC_LOG_INFO("server.loading", "Initializing Bracket Flow Predictor...");
+    if (!sBracketFlowPredictor->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Bracket Flow Predictor initialization failed - continuing without flow prediction");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Bracket Flow Predictor initialized successfully");
+    }
+
+    // Initialize Player Activity Tracker for demand-driven spawning
+    TC_LOG_INFO("server.loading", "Initializing Player Activity Tracker...");
+    if (!sPlayerActivityTracker->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Player Activity Tracker initialization failed - continuing without activity tracking");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Player Activity Tracker initialized successfully");
+    }
+
+    // Initialize Demand Calculator for spawn request generation
+    TC_LOG_INFO("server.loading", "Initializing Demand Calculator...");
+    if (!sDemandCalculator->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Demand Calculator initialization failed - continuing without demand calculation");
+    }
+    else
+    {
+        // Wire up dependencies for demand calculator
+        sDemandCalculator->SetActivityTracker(sPlayerActivityTracker);
+        sDemandCalculator->SetProtectionRegistry(sBotProtectionRegistry);
+        sDemandCalculator->SetFlowPredictor(sBracketFlowPredictor);
+        TC_LOG_INFO("server.loading", "Demand Calculator initialized successfully");
+    }
+
+    // Initialize Population Lifecycle Controller (master orchestrator)
+    TC_LOG_INFO("server.loading", "Initializing Population Lifecycle Controller...");
+    if (!sPopulationLifecycleController->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Population Lifecycle Controller initialization failed - continuing without lifecycle orchestration");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Population Lifecycle Controller initialized successfully");
+    }
+
+    // ==========================================================================
+    // INSTANCE BOT POOL SYSTEM - Hybrid Warm Pool + Elastic Overflow
+    // ==========================================================================
+
+    // Initialize Content Requirements Database (required by all instance systems)
+    TC_LOG_INFO("server.loading", "Initializing Content Requirements Database...");
+    if (!sContentRequirementDb->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Content Requirements Database initialization failed - instance bots may not have content info");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Content Requirements Database initialized successfully");
+    }
+
+    // Initialize Bot Template Repository (used by BotCloneEngine)
+    TC_LOG_INFO("server.loading", "Initializing Bot Template Repository...");
+    if (!sBotTemplateRepository->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Bot Template Repository initialization failed - JIT bot creation may be slower");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Bot Template Repository initialized with {} templates",
+            sBotTemplateRepository->GetTemplateCount());
+    }
+
+    // Initialize Bot Clone Engine (fast bot creation from templates)
+    TC_LOG_INFO("server.loading", "Initializing Bot Clone Engine...");
+    if (!sBotCloneEngine->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Bot Clone Engine initialization failed - JIT bot creation disabled");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Bot Clone Engine initialized successfully");
+    }
+
+    // Initialize Instance Bot Pool (warm pool of pre-logged bots)
+    TC_LOG_INFO("server.loading", "Initializing Instance Bot Pool...");
+    if (!sInstanceBotPool->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Instance Bot Pool initialization failed - instance bots will use JIT only");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Instance Bot Pool initialized - {} total capacity",
+            sInstanceBotPool->GetTotalPoolSize());
+    }
+
+    // Initialize JIT Bot Factory (elastic overflow for large content)
+    TC_LOG_INFO("server.loading", "Initializing JIT Bot Factory...");
+    if (!sJITBotFactory->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "JIT Bot Factory initialization failed - large content may have delays");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "JIT Bot Factory initialized successfully");
+    }
+
+    // Initialize Instance Bot Orchestrator (master coordinator)
+    TC_LOG_INFO("server.loading", "Initializing Instance Bot Orchestrator...");
+    if (!sInstanceBotOrchestrator->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Instance Bot Orchestrator initialization failed - instance bot system disabled");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Instance Bot Orchestrator initialized successfully");
+    }
+
+    // Initialize Instance Bot Hooks (core integration points)
+    TC_LOG_INFO("server.loading", "Initializing Instance Bot Hooks...");
+    if (!Playerbot::InstanceBotHooks::Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Instance Bot Hooks initialization failed - core integration disabled");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Instance Bot Hooks initialized - core integration active");
+    }
+
+    // Note: Instance Bot Scripts are registered in AddSC_playerbot_world()
+    // during the proper script loading phase (see PlayerbotWorldScript.cpp)
+
+    // Warm the Instance Bot Pool (create and login bots) - deferred to OnWorldLoad
+    // Pool warming happens after world is fully loaded to avoid database contention
+    TC_LOG_INFO("server.loading", "Instance Bot Pool warming will occur after world load");
+
+    // ==========================================================================
+
     // Register with the shared ModuleUpdateManager for world updates
     if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
     {
@@ -301,6 +480,72 @@ void PlayerbotModule::Shutdown()
     // Shutdown Bot Action Manager
     sBotActionMgr->Shutdown();
     TC_LOG_INFO("server.loading", "Bot Action Manager shutdown complete");
+
+    // Shutdown Population Lifecycle Controller (depends on all lifecycle components)
+    TC_LOG_INFO("server.loading", "Shutting down Population Lifecycle Controller...");
+    sPopulationLifecycleController->Shutdown();
+    TC_LOG_INFO("server.loading", "Population Lifecycle Controller shutdown complete");
+
+    // ==========================================================================
+    // INSTANCE BOT POOL SYSTEM SHUTDOWN
+    // ==========================================================================
+
+    // Shutdown Instance Bot Hooks (stops core integration first)
+    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Hooks...");
+    Playerbot::InstanceBotHooks::Shutdown();
+    TC_LOG_INFO("server.loading", "Instance Bot Hooks shutdown complete");
+
+    // Shutdown Instance Bot Orchestrator (coordinates all instance bot operations)
+    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Orchestrator...");
+    sInstanceBotOrchestrator->Shutdown();
+    TC_LOG_INFO("server.loading", "Instance Bot Orchestrator shutdown complete");
+
+    // Shutdown JIT Bot Factory (stop async creation)
+    TC_LOG_INFO("server.loading", "Shutting down JIT Bot Factory...");
+    sJITBotFactory->Shutdown();
+    TC_LOG_INFO("server.loading", "JIT Bot Factory shutdown complete");
+
+    // Shutdown Instance Bot Pool (logout pool bots)
+    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Pool...");
+    sInstanceBotPool->Shutdown();
+    TC_LOG_INFO("server.loading", "Instance Bot Pool shutdown complete");
+
+    // Shutdown Bot Clone Engine (stop async cloning)
+    TC_LOG_INFO("server.loading", "Shutting down Bot Clone Engine...");
+    sBotCloneEngine->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Clone Engine shutdown complete");
+
+    // Shutdown Bot Template Repository
+    TC_LOG_INFO("server.loading", "Shutting down Bot Template Repository...");
+    sBotTemplateRepository->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Template Repository shutdown complete");
+
+    // ==========================================================================
+
+    // Shutdown Demand Calculator (depends on ActivityTracker, ProtectionRegistry, FlowPredictor)
+    TC_LOG_INFO("server.loading", "Shutting down Demand Calculator...");
+    sDemandCalculator->Shutdown();
+    TC_LOG_INFO("server.loading", "Demand Calculator shutdown complete");
+
+    // Shutdown Player Activity Tracker
+    TC_LOG_INFO("server.loading", "Shutting down Player Activity Tracker...");
+    sPlayerActivityTracker->Shutdown();
+    TC_LOG_INFO("server.loading", "Player Activity Tracker shutdown complete");
+
+    // Shutdown Bracket Flow Predictor
+    TC_LOG_INFO("server.loading", "Shutting down Bracket Flow Predictor...");
+    sBracketFlowPredictor->Shutdown();
+    TC_LOG_INFO("server.loading", "Bracket Flow Predictor shutdown complete");
+
+    // Shutdown Bot Retirement Manager (before Protection Registry)
+    TC_LOG_INFO("server.loading", "Shutting down Bot Retirement Manager...");
+    sBotRetirementManager->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Retirement Manager shutdown complete");
+
+    // Shutdown Bot Protection Registry
+    TC_LOG_INFO("server.loading", "Shutting down Bot Protection Registry...");
+    sBotProtectionRegistry->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Protection Registry shutdown complete");
 
     // Unregister hooks
     UnregisterHooks();
@@ -441,21 +686,63 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     Playerbot::GroupEventBus::instance()->ProcessEvents(diff);
     auto t6 = std::chrono::high_resolution_clock::now();
     auto groupEventTime = std::chrono::duration_cast<std::chrono::microseconds>(t6 - lastTime).count();
+    lastTime = t6;
+
+    // Update BotProtectionRegistry for periodic maintenance
+    sBotProtectionRegistry->Update(diff);
+    auto t7 = std::chrono::high_resolution_clock::now();
+    auto protectionTime = std::chrono::duration_cast<std::chrono::microseconds>(t7 - lastTime).count();
+    lastTime = t7;
+
+    // Update BotRetirementManager for retirement queue processing
+    sBotRetirementManager->Update(diff);
+    auto t8 = std::chrono::high_resolution_clock::now();
+    auto retirementTime = std::chrono::duration_cast<std::chrono::microseconds>(t8 - lastTime).count();
+    lastTime = t8;
+
+    // Update BracketFlowPredictor for flow tracking
+    sBracketFlowPredictor->Update(diff);
+    auto t9 = std::chrono::high_resolution_clock::now();
+    auto predictionTime = std::chrono::duration_cast<std::chrono::microseconds>(t9 - lastTime).count();
+    lastTime = t9;
+
+    // Update PlayerActivityTracker for player location tracking
+    sPlayerActivityTracker->Update(diff);
+    auto t10 = std::chrono::high_resolution_clock::now();
+    auto activityTime = std::chrono::duration_cast<std::chrono::microseconds>(t10 - lastTime).count();
+    lastTime = t10;
+
+    // Update DemandCalculator for spawn demand analysis
+    sDemandCalculator->Update(diff);
+    auto t11 = std::chrono::high_resolution_clock::now();
+    auto demandTime = std::chrono::duration_cast<std::chrono::microseconds>(t11 - lastTime).count();
+    lastTime = t11;
+
+    // Update PopulationLifecycleController for lifecycle orchestration
+    sPopulationLifecycleController->Update(diff);
+    auto t12 = std::chrono::high_resolution_clock::now();
+    auto lifecycleTime = std::chrono::duration_cast<std::chrono::microseconds>(t12 - lastTime).count();
 
     // Calculate total time
-    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t6 - timeStart).count();
+    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t12 - timeStart).count();
 
     // Log if total time exceeds 100ms
     if (totalUpdateTime > 100000) // 100ms in microseconds
     {
-        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, SessionMgr:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms",
+        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, SessionMgr:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms, Protection:{:.2f}ms, Retirement:{:.2f}ms, Prediction:{:.2f}ms, Activity:{:.2f}ms, Demand:{:.2f}ms, Lifecycle:{:.2f}ms",
             totalUpdateTime / 1000.0f,
             accountTime / 1000.0f,
             spawnerTime / 1000.0f,
             sessionMgrTime / 1000.0f,
             worldSessionTime / 1000.0f,
             charDBTime / 1000.0f,
-            groupEventTime / 1000.0f);
+            groupEventTime / 1000.0f,
+            protectionTime / 1000.0f,
+            retirementTime / 1000.0f,
+            predictionTime / 1000.0f,
+            activityTime / 1000.0f,
+            demandTime / 1000.0f,
+            lifecycleTime / 1000.0f);
     }
 
     }

@@ -53,7 +53,7 @@ namespace Playerbot
     /**
      * @brief Configuration for startup spawn orchestration
      */
-    struct TC_GAME_API OrchestratorConfig
+    struct TC_GAME_API StartupOrchestratorConfig
     {
         bool enablePhasedStartup = true;      ///< Master enable for phased startup
         bool enableParallelLoading = false;   ///< Allow database preloading during spawning
@@ -268,7 +268,7 @@ namespace Playerbot
 
     private:
         // Configuration
-        OrchestratorConfig _config;
+        StartupOrchestratorConfig _config;
 
         // Dependencies (not owned)
         SpawnPriorityQueue* _priorityQueue = nullptr;
