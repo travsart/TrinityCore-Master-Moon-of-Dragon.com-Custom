@@ -242,48 +242,62 @@ void InstanceBotPool::WarmPool()
 
     _warmingInProgress.store(true);
 
-    TC_LOG_INFO("playerbot.pool", "Starting pool warming...");
+    TC_LOG_INFO("playerbot.pool", "Starting pool warming with level bracket distribution...");
 
     uint32 totalToCreate = _config.poolSize.GetTotalWarmPool();
     uint32 created = 0;
 
-    // Create Alliance bots
-    for (uint32 i = 0; i < _config.poolSize.allianceTanks; ++i)
-    {
-        if (CreatePoolBot(BotRole::Tank, PoolType::PvP_Alliance, 80) != ObjectGuid::Empty)
-            ++created;
-    }
-    for (uint32 i = 0; i < _config.poolSize.allianceHealers; ++i)
-    {
-        if (CreatePoolBot(BotRole::Healer, PoolType::PvP_Alliance, 80) != ObjectGuid::Empty)
-            ++created;
-    }
-    for (uint32 i = 0; i < _config.poolSize.allianceDPS; ++i)
-    {
-        if (CreatePoolBot(BotRole::DPS, PoolType::PvP_Alliance, 80) != ObjectGuid::Empty)
-            ++created;
-    }
+    // Helper lambda to get a representative level for a bracket
+    auto getLevelForBracket = [](uint32 bracket) -> uint32 {
+        uint32 minLevel, maxLevel;
+        PoolLevelConfig::GetLevelRange(bracket, minLevel, maxLevel);
+        // Use middle of the bracket for representative level
+        return (minLevel + maxLevel) / 2;
+    };
 
-    // Create Horde bots
-    for (uint32 i = 0; i < _config.poolSize.hordeTanks; ++i)
-    {
-        if (CreatePoolBot(BotRole::Tank, PoolType::PvP_Horde, 80) != ObjectGuid::Empty)
-            ++created;
-    }
-    for (uint32 i = 0; i < _config.poolSize.hordeHealers; ++i)
-    {
-        if (CreatePoolBot(BotRole::Healer, PoolType::PvP_Horde, 80) != ObjectGuid::Empty)
-            ++created;
-    }
-    for (uint32 i = 0; i < _config.poolSize.hordeDPS; ++i)
-    {
-        if (CreatePoolBot(BotRole::DPS, PoolType::PvP_Horde, 80) != ObjectGuid::Empty)
-            ++created;
-    }
+    // Helper lambda to create bots for a role distributed across level brackets
+    auto createBotsForRole = [&](BotRole role, PoolType poolType, uint32 totalCount) {
+        // Distribute bots across all 4 level brackets according to config
+        for (uint32 bracket = 0; bracket < 4; ++bracket)
+        {
+            uint32 countForBracket = static_cast<uint32>(totalCount * _config.levelConfig.bracketDistribution[bracket]);
+            // Ensure at least 1 bot per bracket if total count > 4
+            if (countForBracket == 0 && totalCount > 4)
+                countForBracket = 1;
+
+            uint32 level = getLevelForBracket(bracket);
+
+            TC_LOG_DEBUG("playerbot.pool", "WarmPool: Creating {} {} bots at level {} (bracket {})",
+                countForBracket, BotRoleToString(role), level, bracket);
+
+            for (uint32 i = 0; i < countForBracket; ++i)
+            {
+                if (CreatePoolBot(role, poolType, level) != ObjectGuid::Empty)
+                    ++created;
+            }
+        }
+    };
+
+    // Create Alliance bots distributed across level brackets
+    TC_LOG_INFO("playerbot.pool", "Creating Alliance pool bots...");
+    createBotsForRole(BotRole::Tank, PoolType::PvP_Alliance, _config.poolSize.allianceTanks);
+    createBotsForRole(BotRole::Healer, PoolType::PvP_Alliance, _config.poolSize.allianceHealers);
+    createBotsForRole(BotRole::DPS, PoolType::PvP_Alliance, _config.poolSize.allianceDPS);
+
+    // Create Horde bots distributed across level brackets
+    TC_LOG_INFO("playerbot.pool", "Creating Horde pool bots...");
+    createBotsForRole(BotRole::Tank, PoolType::PvP_Horde, _config.poolSize.hordeTanks);
+    createBotsForRole(BotRole::Healer, PoolType::PvP_Horde, _config.poolSize.hordeHealers);
+    createBotsForRole(BotRole::DPS, PoolType::PvP_Horde, _config.poolSize.hordeDPS);
 
     _warmingInProgress.store(false);
 
-    TC_LOG_INFO("playerbot.pool", "Pool warming complete: created {} of {} bots", created, totalToCreate);
+    TC_LOG_INFO("playerbot.pool", "Pool warming complete: created {} of {} bots across 4 level brackets", created, totalToCreate);
+    TC_LOG_INFO("playerbot.pool", "Level bracket distribution: 1-10 ({}%), 10-60 ({}%), 60-70 ({}%), 70-80 ({}%)",
+        static_cast<uint32>(_config.levelConfig.bracketDistribution[0] * 100),
+        static_cast<uint32>(_config.levelConfig.bracketDistribution[1] * 100),
+        static_cast<uint32>(_config.levelConfig.bracketDistribution[2] * 100),
+        static_cast<uint32>(_config.levelConfig.bracketDistribution[3] * 100));
 
     _statsDirty.store(true);
 }

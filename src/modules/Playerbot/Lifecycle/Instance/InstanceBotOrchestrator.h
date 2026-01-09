@@ -116,6 +116,8 @@ struct TC_GAME_API DungeonRequest : public OrchestratorRequest
     ObjectGuid playerGuid;              ///< Requesting player
     uint32 dungeonId = 0;               ///< LFG dungeon ID
     uint8 playerRole = 0;               ///< Player's selected role
+    uint32 playerLevel = 80;            ///< Player's level (for bot scaling)
+    Faction playerFaction = Faction::Alliance;  ///< Player's faction
 
     /// Called when bots are ready
     std::function<void(std::vector<ObjectGuid> const& bots)> onBotsReady;

@@ -120,6 +120,12 @@ void InstanceBotHooks::OnPlayerJoinLfg(
     request.playerGuid = player->GetGUID();
     request.dungeonId = dungeonId;
     request.playerRole = roles;
+    request.playerLevel = player->GetLevel();  // Use actual player level for bot matching
+    request.playerFaction = player->GetTeam() == ALLIANCE ? Faction::Alliance : Faction::Horde;
+
+    TC_LOG_INFO("playerbots.instance", "OnPlayerJoinLfg: Player {} (level {}, {}) queued for dungeon {}",
+        player->GetName(), request.playerLevel,
+        request.playerFaction == Faction::Alliance ? "Alliance" : "Horde", dungeonId);
 
     // Set up callbacks - capture context needed for LFG queue join
     request.onBotsReady = [playerGuid = player->GetGUID(), dungeonId, roles](std::vector<ObjectGuid> const& bots)
