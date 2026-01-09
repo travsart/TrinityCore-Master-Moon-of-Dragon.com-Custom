@@ -143,6 +143,8 @@ struct TC_GAME_API RaidRequest : public OrchestratorRequest
 {
     ObjectGuid leaderGuid;              ///< Raid leader
     uint32 raidId = 0;                  ///< Raid map ID
+    uint32 playerLevel = 80;            ///< Raid leader's level (for bot scaling)
+    Faction playerFaction = Faction::Alliance;  ///< Raid leader's faction
     std::vector<ObjectGuid> currentGroupMembers;  ///< Existing members
     std::map<ObjectGuid, uint8> memberRoles;      ///< GUID -> role mapping
 

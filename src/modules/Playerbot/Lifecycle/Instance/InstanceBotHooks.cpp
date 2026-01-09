@@ -569,7 +569,7 @@ void InstanceBotHooks::OnPlayerJoinArena(
     ArenaRequest request;
     request.arenaType = arenaType;
     request.bracketId = bracketId;
-        request.playerLevel = player->GetLevel();
+    request.playerLevel = player->GetLevel();
     request.playerGuid = player->GetGUID();
     request.playerFaction = player->GetTeam() == ALLIANCE ? Faction::Alliance : Faction::Horde;
     request.existingTeammates = teamMembers;
@@ -773,6 +773,8 @@ void InstanceBotHooks::OnRaidNeedsBots(
     RaidRequest request;
     request.leaderGuid = leader->GetGUID();
     request.raidId = raidId;
+    request.playerLevel = leader->GetLevel();
+    request.playerFaction = leader->GetTeam() == ALLIANCE ? Faction::Alliance : Faction::Horde;
     request.currentGroupMembers = currentMembers;
     request.memberRoles = memberRoles;
 

@@ -874,8 +874,8 @@ bool InstanceBotOrchestrator::FulfillRaidRequest(RaidRequest& request)
     FactoryRequest factoryReq;
     factoryReq.instanceType = InstanceType::Raid;
     factoryReq.contentId = request.raidId;
-    factoryReq.playerLevel = 80;
-    factoryReq.playerFaction = Faction::Alliance;
+    factoryReq.playerLevel = request.playerLevel;
+    factoryReq.playerFaction = request.playerFaction;
     factoryReq.tanksNeeded = needed.tanksNeeded;
     factoryReq.healersNeeded = needed.healersNeeded;
     factoryReq.dpsNeeded = needed.dpsNeeded;
@@ -996,6 +996,9 @@ bool InstanceBotOrchestrator::FulfillArenaRequest(ArenaRequest& request)
     std::vector<ObjectGuid> teammates;
     std::vector<ObjectGuid> opponents;
 
+    // Use player's actual level for bot selection
+    uint32 playerLevel = request.playerLevel;
+
     // Get teammates (same faction)
     uint32 teammatesNeeded = request.arenaType - 1 - static_cast<uint32>(request.existingTeammates.size());
     if (teammatesNeeded > 0)
@@ -1003,14 +1006,14 @@ bool InstanceBotOrchestrator::FulfillArenaRequest(ArenaRequest& request)
         // Prefer 1 healer, rest DPS for arena
         if (teammatesNeeded >= 2)
         {
-            auto healer = SelectBotsFromPool(BotRole::Healer, 1, request.playerFaction, 80, needed.minGearScore);
+            auto healer = SelectBotsFromPool(BotRole::Healer, 1, request.playerFaction, playerLevel, needed.minGearScore);
             teammates.insert(teammates.end(), healer.begin(), healer.end());
             --teammatesNeeded;
         }
 
         if (teammatesNeeded > 0)
         {
-            auto dps = SelectBotsFromPool(BotRole::DPS, teammatesNeeded, request.playerFaction, 80, needed.minGearScore);
+            auto dps = SelectBotsFromPool(BotRole::DPS, teammatesNeeded, request.playerFaction, playerLevel, needed.minGearScore);
             teammates.insert(teammates.end(), dps.begin(), dps.end());
         }
     }
@@ -1023,12 +1026,12 @@ bool InstanceBotOrchestrator::FulfillArenaRequest(ArenaRequest& request)
         // Mirror team composition
         if (request.arenaType >= 3)
         {
-            auto healer = SelectBotsFromPool(BotRole::Healer, 1, opponentFaction, 80, needed.minGearScore);
+            auto healer = SelectBotsFromPool(BotRole::Healer, 1, opponentFaction, playerLevel, needed.minGearScore);
             opponents.insert(opponents.end(), healer.begin(), healer.end());
         }
 
         uint32 opponentDpsNeeded = request.arenaType - static_cast<uint32>(opponents.size());
-        auto dps = SelectBotsFromPool(BotRole::DPS, opponentDpsNeeded, opponentFaction, 80, needed.minGearScore);
+        auto dps = SelectBotsFromPool(BotRole::DPS, opponentDpsNeeded, opponentFaction, playerLevel, needed.minGearScore);
         opponents.insert(opponents.end(), dps.begin(), dps.end());
     }
 
