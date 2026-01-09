@@ -1221,7 +1221,9 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     }
 
     // Queue bot for login - BotWorldSessionMgr handles rate limiting
-    bool queued = sBotWorldSessionMgr->AddPlayerBot(botGuid, accountId);
+    // Pass bypassLimit=true to allow pool bots to exceed MaxBots limit
+    // (level distribution system will balance totals over time)
+    bool queued = sBotWorldSessionMgr->AddPlayerBot(botGuid, accountId, true /* bypassLimit */);
 
     if (queued)
     {

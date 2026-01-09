@@ -34,7 +34,8 @@ public:
     virtual void Shutdown() = 0;
 
     // Bot session management
-    virtual bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0) = 0;
+    // bypassLimit: If true, allows this bot to exceed MaxBots limit (used by Instance Bot Pool)
+    virtual bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0, bool bypassLimit = false) = 0;
     virtual void RemovePlayerBot(ObjectGuid playerGuid) = 0;
     virtual void UpdateSessions(uint32 diff) = 0;
 

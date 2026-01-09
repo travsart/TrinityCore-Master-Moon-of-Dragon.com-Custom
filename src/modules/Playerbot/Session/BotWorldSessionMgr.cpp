@@ -191,7 +191,7 @@ void BotWorldSessionMgr::Shutdown()
     _initialized.store(false);
 }
 
-bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId)
+bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId, bool bypassLimit)
 {
     if (!_enabled.load() || !_initialized.load())
     {
@@ -252,15 +252,23 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         }
     }
 
-    // CRITICAL FIX: Enforce MaxBots limit
-    uint32 maxBots = sPlayerbotConfig->GetInt("Playerbot.MaxBots", 100);
-    uint32 totalBots = static_cast<uint32>(_botSessions.size() + _pendingSpawns.size());
-    if (totalBots >= maxBots)
+    // CRITICAL FIX: Enforce MaxBots limit (unless bypassed for Instance Bot Pool)
+    if (!bypassLimit)
     {
-        TC_LOG_WARN("module.playerbot.session",
-            "?? MAX BOTS LIMIT: Cannot queue bot {} - already at limit ({}/{} bots)",
-            playerGuid.ToString(), totalBots, maxBots);
-        return false;
+        uint32 maxBots = sPlayerbotConfig->GetInt("Playerbot.MaxBots", 100);
+        uint32 totalBots = static_cast<uint32>(_botSessions.size() + _pendingSpawns.size());
+        if (totalBots >= maxBots)
+        {
+            TC_LOG_WARN("module.playerbot.session",
+                "?? MAX BOTS LIMIT: Cannot queue bot {} - already at limit ({}/{} bots)",
+                playerGuid.ToString(), totalBots, maxBots);
+            return false;
+        }
+    }
+    else
+    {
+        TC_LOG_DEBUG("module.playerbot.session",
+            "?? Bypassing MaxBots limit for pool bot {}", playerGuid.ToString());
     }
 
     // CRITICAL FIX V3: RATE-LIMITED SPAWN QUEUE

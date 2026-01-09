@@ -47,7 +47,7 @@ public:
     void Shutdown() override;
 
     // Bot management using TrinityCore''s native login
-    bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0) override;
+    bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0, bool bypassLimit = false) override;
     void RemovePlayerBot(ObjectGuid playerGuid) override;
     Player* GetPlayerBot(ObjectGuid playerGuid) const;
 
