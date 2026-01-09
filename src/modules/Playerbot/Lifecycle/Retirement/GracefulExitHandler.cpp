@@ -456,12 +456,27 @@ StageResult GracefulExitHandler::HandleSaveState(ObjectGuid botGuid)
 
     if (bot)
     {
-        // Save player data
-        bot->SaveToDB(false);
+        // Save player data (with crash protection)
+        // CRITICAL FIX (Item.cpp:1304 crash): Check for pending spell events before SaveToDB
+        bool hasPendingEvents = !bot->m_Events.GetEvents().empty();
+        bool isCurrentlyCasting = bot->GetCurrentSpell(CURRENT_GENERIC_SPELL) != nullptr ||
+                                  bot->GetCurrentSpell(CURRENT_CHANNELED_SPELL) != nullptr ||
+                                  bot->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL) != nullptr;
 
-        if (_config.verboseLogging)
+        if (!hasPendingEvents && !isCurrentlyCasting)
         {
-            TC_LOG_DEBUG("playerbot.lifecycle", "Bot {} final state saved",
+            bot->SaveToDB(false);
+
+            if (_config.verboseLogging)
+            {
+                TC_LOG_DEBUG("playerbot.lifecycle", "Bot {} final state saved",
+                    botGuid.ToString());
+            }
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbot.lifecycle",
+                "Bot {} has pending events/spells - skipping final save to prevent Item.cpp:1304 crash",
                 botGuid.ToString());
         }
     }

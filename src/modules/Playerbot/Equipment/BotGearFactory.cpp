@@ -350,7 +350,27 @@ bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
     }
 
     // Phase 4: Save to database
-    player->SaveToDB();
+    // ========================================================================
+    // CRITICAL FIX (Item.cpp:1304 crash): Check for pending spell events
+    // ========================================================================
+    // Problem: If the player has pending SpellEvents, calling SaveToDB() can
+    //          corrupt m_itemUpdateQueue. Defer save if player has pending events.
+    // ========================================================================
+    bool hasPendingEvents = !player->m_Events.GetEvents().empty();
+    bool isCurrentlyCasting = player->GetCurrentSpell(CURRENT_GENERIC_SPELL) != nullptr ||
+                              player->GetCurrentSpell(CURRENT_CHANNELED_SPELL) != nullptr ||
+                              player->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL) != nullptr;
+
+    if (hasPendingEvents || isCurrentlyCasting)
+    {
+        TC_LOG_DEBUG("playerbot.gear",
+            "BotGearFactory: Deferring SaveToDB for {} (pending events: {}, casting: {}) to prevent Item.cpp:1304 crash",
+            player->GetName(), hasPendingEvents, isCurrentlyCasting);
+    }
+    else
+    {
+        player->SaveToDB();
+    }
 
     // Log summary
     TC_LOG_INFO("playerbot.gear", "BotGearFactory: Applied gear set to player {} (class {} level {}): {} items equipped, {} bags, {} consumables ({}failed)",

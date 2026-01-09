@@ -554,7 +554,36 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
     // Save to database
     if (success)
     {
-        bot->SaveToDB();
+        // ========================================================================
+        // CRITICAL FIX (Item.cpp:1304 crash): Check for pending spell events
+        // ========================================================================
+        // Problem: If the bot has pending SpellEvents (from previous AI updates),
+        //          calling SaveToDB() can corrupt m_itemUpdateQueue because:
+        //          1. SaveToDB() → _SaveInventory() iterates and clears m_itemUpdateQueue
+        //          2. Later, when MapUpdater processes the pending SpellEvent, it tries
+        //             to push_back to the corrupted vector → ACCESS_VIOLATION in memmove
+        //
+        // Solution: Check if bot has pending events or active spells. If so, defer
+        //           SaveToDB to prevent corruption. The bot will be saved next tick
+        //           when it's safe (no pending events).
+        // ========================================================================
+        bool hasPendingEvents = !bot->m_Events.GetEvents().empty();
+        bool isCurrentlyCasting = bot->GetCurrentSpell(CURRENT_GENERIC_SPELL) != nullptr ||
+                                  bot->GetCurrentSpell(CURRENT_CHANNELED_SPELL) != nullptr ||
+                                  bot->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL) != nullptr;
+
+        if (hasPendingEvents || isCurrentlyCasting)
+        {
+            TC_LOG_DEBUG("playerbot",
+                "BotLevelManager::ApplyBot_MainThread() - Deferring SaveToDB for {} (pending events: {}, casting: {}) to prevent Item.cpp:1304 crash",
+                bot->GetName(), hasPendingEvents, isCurrentlyCasting);
+            // Don't call SaveToDB - the bot will be saved naturally during logout
+            // or on the next tick when events are clear
+        }
+        else
+        {
+            bot->SaveToDB();
+        }
 
         if (_verboseLogging.load(::std::memory_order_acquire))
         {

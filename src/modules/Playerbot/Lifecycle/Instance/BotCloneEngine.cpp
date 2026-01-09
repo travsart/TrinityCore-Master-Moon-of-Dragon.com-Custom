@@ -761,7 +761,7 @@ bool BotCloneEngine::CreatePlayerObject(
 
     trans->Append(stmt);
 
-    // Commit transaction - async but we'll handle warmup retry in the pool
+    // Async commit - InstanceBotPool will retry warmup via ProcessWarmingRetries()
     CharacterDatabase.CommitTransaction(trans);
 
     TC_LOG_DEBUG("playerbot.clone", "BotCloneEngine::CreatePlayerObject - "

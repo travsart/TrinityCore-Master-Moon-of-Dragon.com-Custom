@@ -1367,9 +1367,10 @@ void InstanceBotPool::ProcessWarmingRetries()
         {
             if (slot.state == PoolSlotState::Warming)
             {
-                // Only retry after 1 second to allow DB commit to complete
+                // Retry after 3 seconds to allow async DB commit to complete
+                // (async commits can take longer during pool warming with many bots)
                 auto timeSinceStateChange = slot.TimeSinceStateChange();
-                if (timeSinceStateChange >= std::chrono::seconds(1))
+                if (timeSinceStateChange >= std::chrono::seconds(3))
                 {
                     botsToWarm.push_back(guid);
                 }
@@ -1377,14 +1378,34 @@ void InstanceBotPool::ProcessWarmingRetries()
         }
     }
 
+    // Log how many bots need retry
+    if (!botsToWarm.empty())
+    {
+        TC_LOG_INFO("playerbot.pool", "ProcessWarmingRetries - Retrying warmup for {} bots",
+            botsToWarm.size());
+    }
+
     // Try to warm each bot (outside the lock to avoid deadlock)
+    uint32 successCount = 0;
     for (ObjectGuid const& guid : botsToWarm)
     {
         if (WarmUpBot(guid))
         {
-            TC_LOG_DEBUG("playerbot.pool", "ProcessWarmingRetries - Successfully warmed bot {}",
+            ++successCount;
+            TC_LOG_DEBUG("playerbot.pool", "ProcessWarmingRetries - Successfully queued bot {} for warmup",
                 guid.ToString());
         }
+        else
+        {
+            TC_LOG_DEBUG("playerbot.pool", "ProcessWarmingRetries - Failed to queue bot {} (will retry later)",
+                guid.ToString());
+        }
+    }
+
+    if (!botsToWarm.empty())
+    {
+        TC_LOG_INFO("playerbot.pool", "ProcessWarmingRetries - Queued {}/{} bots for warmup",
+            successCount, botsToWarm.size());
     }
 }
 

@@ -727,8 +727,8 @@ bool BotWorldEntry::FinalizeBotActivation()
                         "Bot {} equipped with {} items (avg ilvl: {:.1f})",
                         _player->GetName(), gearSet.items.size(), gearSet.averageIlvl);
 
-                    // Save bot to database with new gear
-                    _player->SaveToDB();
+                    // Note: ApplyGearSet already calls SaveToDB (with Item.cpp:1304 crash protection)
+                    // No need for duplicate save here
                 }
                 else
                 {

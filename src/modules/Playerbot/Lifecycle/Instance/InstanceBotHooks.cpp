@@ -325,10 +325,11 @@ void InstanceBotHooks::OnPlayerJoinBattleground(
         return;
     }
 
-    // For large BGs (AV, IoC), start JIT creation immediately
-    if (requirement->requiresBothFactions && requirement->playersPerFaction >= 20)
+    // For ALL BGs that require both factions, start JIT creation immediately
+    // This ensures bots are available for BGs of all sizes (10v10, 15v15, 40v40)
+    if (requirement->requiresBothFactions)
     {
-        TC_LOG_INFO("playerbots.instance", "Large battleground {} detected - preparing JIT bots for {}/faction",
+        TC_LOG_INFO("playerbots.instance", "Battleground {} detected - preparing JIT bots for {}/faction",
             bgTypeId, requirement->playersPerFaction);
 
         // Create battleground request for orchestrator

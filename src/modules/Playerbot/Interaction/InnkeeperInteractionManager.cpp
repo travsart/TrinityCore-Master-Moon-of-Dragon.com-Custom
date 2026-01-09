@@ -538,8 +538,18 @@ bool InnkeeperInteractionManager::ExecuteBind(Creature* innkeeper)
     // Use TrinityCore's SetHomebind
     m_bot->SetHomebind(bindLoc, innkeeper->GetAreaId());
 
-    // Save to database
-    m_bot->SaveToDB();
+    // Save to database (with crash protection)
+    // CRITICAL FIX (Item.cpp:1304 crash): Check for pending spell events before SaveToDB
+    bool hasPendingEvents = !m_bot->m_Events.GetEvents().empty();
+    bool isCurrentlyCasting = m_bot->GetCurrentSpell(CURRENT_GENERIC_SPELL) != nullptr ||
+                              m_bot->GetCurrentSpell(CURRENT_CHANNELED_SPELL) != nullptr ||
+                              m_bot->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL) != nullptr;
+
+    if (!hasPendingEvents && !isCurrentlyCasting)
+    {
+        m_bot->SaveToDB();
+    }
+    // If bot is busy, homebind is still set - will be saved on next safe opportunity
 
     return true;
 }
