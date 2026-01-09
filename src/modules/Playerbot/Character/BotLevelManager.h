@@ -76,6 +76,9 @@ struct BotCreationTask
     // Zone data (prepared in worker thread)
     ZonePlacement const* zonePlacement;
 
+    // Level change tracking (set during ApplyLevel)
+    bool levelChanged = false;  // True if level was actually modified (up or down)
+
     // Task metadata
     uint64 taskId;
     ::std::chrono::steady_clock::time_point createdAt;

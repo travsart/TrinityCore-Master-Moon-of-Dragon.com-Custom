@@ -98,7 +98,11 @@ private:
     uint32 _totalUpdateTime = 0;
     uint32 _updateCount = 0;
 
+    // Level distribution rebalancing timer
+    uint32 _lastRebalanceCheck = 0;
+
     static constexpr uint32 METRIC_UPDATE_INTERVAL = 60000; // 1 minute
+    static constexpr uint32 REBALANCE_INTERVAL = 300000;    // 5 minutes
 };
 
 /**

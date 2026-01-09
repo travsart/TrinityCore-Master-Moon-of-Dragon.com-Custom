@@ -595,7 +595,8 @@ void BotTemplateRepository::LoadFromDatabase()
         tmpl->templateName = fields[1].GetString();
         tmpl->playerClass = fields[2].GetUInt8();
         tmpl->specId = fields[3].GetUInt32();
-        tmpl->role = StringToBotRole(fields[4].GetString());
+        // Note: Database stores role as TINYINT (0=Tank, 1=Healer, 2=DPS), not string
+        tmpl->role = static_cast<BotRole>(fields[4].GetUInt8());
 
         // Get class and spec names
         tmpl->className = GetClassName(tmpl->playerClass);

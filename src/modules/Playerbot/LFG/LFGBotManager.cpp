@@ -20,6 +20,8 @@
 #include "LFGBotSelector.h"
 #include "LFGRoleDetector.h"
 #include "LFGGroupCoordinator.h"
+#include "../Lifecycle/Instance/JITBotFactory.h"
+#include "../Lifecycle/Instance/PoolSlotState.h"
 #include "Player.h"
 #include "LFGMgr.h"
 #include "LFG.h"
@@ -430,6 +432,13 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
     CalculateNeededRoles(humanRole, tanksNeeded, healersNeeded, dpsNeeded);
 
     uint32 botsQueued = 0;
+    uint32 tanksQueued = 0;
+    uint32 healersQueued = 0;
+    uint32 dpsQueued = 0;
+
+    // ========================================================================
+    // PHASE 1: Try to find existing online bots
+    // ========================================================================
 
     // Queue tanks
     if ((neededRoles & lfg::PLAYER_ROLE_TANK) && tanksNeeded > 0)
@@ -442,6 +451,7 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
             {
                 RegisterBotAssignment(playerGuid, tank->GetGUID(), lfg::PLAYER_ROLE_TANK, dungeons);
                 ++botsQueued;
+                ++tanksQueued;
                 TC_LOG_INFO("playerbot.lfg", "Queued tank bot {} (level {}) for human player {}",
                     tank->GetName(), tank->GetLevel(), humanPlayer->GetName());
             }
@@ -459,6 +469,7 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
             {
                 RegisterBotAssignment(playerGuid, healer->GetGUID(), lfg::PLAYER_ROLE_HEALER, dungeons);
                 ++botsQueued;
+                ++healersQueued;
                 TC_LOG_INFO("playerbot.lfg", "Queued healer bot {} (level {}) for human player {}",
                     healer->GetName(), healer->GetLevel(), humanPlayer->GetName());
             }
@@ -476,14 +487,93 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
             {
                 RegisterBotAssignment(playerGuid, dpsPlayer->GetGUID(), lfg::PLAYER_ROLE_DAMAGE, dungeons);
                 ++botsQueued;
+                ++dpsQueued;
                 TC_LOG_INFO("playerbot.lfg", "Queued DPS bot {} (level {}) for human player {}",
                     dpsPlayer->GetName(), dpsPlayer->GetLevel(), humanPlayer->GetName());
             }
         }
     }
 
-    // Register human player if we queued any bots
-    if (botsQueued > 0)
+    // ========================================================================
+    // PHASE 2: JIT Bot Creation - Create new bots if not enough found
+    // ========================================================================
+
+    uint32 tanksStillNeeded = (tanksNeeded > tanksQueued) ? (tanksNeeded - tanksQueued) : 0;
+    uint32 healersStillNeeded = (healersNeeded > healersQueued) ? (healersNeeded - healersQueued) : 0;
+    uint32 dpsStillNeeded = (dpsNeeded > dpsQueued) ? (dpsNeeded - dpsQueued) : 0;
+
+    if (tanksStillNeeded > 0 || healersStillNeeded > 0 || dpsStillNeeded > 0)
+    {
+        TC_LOG_INFO("playerbot.lfg", "LFGBotManager::PopulateQueue - Not enough online bots found. "
+            "Still need: {} tanks, {} healers, {} DPS. Submitting JIT creation request.",
+            tanksStillNeeded, healersStillNeeded, dpsStillNeeded);
+
+        // Create JIT request with the human player's level (centered in the dungeon's level range)
+        uint32 targetLevel = humanPlayer->GetLevel();
+
+        // Capture necessary data for the callbacks
+        ObjectGuid capturedPlayerGuid = playerGuid;
+        lfg::LfgDungeonSet capturedDungeons = dungeons;
+
+        Playerbot::FactoryRequest jitRequest;
+        jitRequest.instanceType = Playerbot::InstanceType::Dungeon;
+        jitRequest.contentId = dungeonId;
+        jitRequest.playerLevel = targetLevel;
+        jitRequest.playerFaction = (humanPlayer->GetTeam() == ALLIANCE) ? Playerbot::Faction::Alliance : Playerbot::Faction::Horde;
+        jitRequest.tanksNeeded = tanksStillNeeded;
+        jitRequest.healersNeeded = healersStillNeeded;
+        jitRequest.dpsNeeded = dpsStillNeeded;
+        jitRequest.priority = 1;  // High priority for LFG
+        jitRequest.timeout = std::chrono::milliseconds(60000);  // 60 second timeout
+        jitRequest.createdAt = std::chrono::system_clock::now();
+
+        // Callback when bots are created - queue them for the human player
+        jitRequest.onComplete = [this, capturedPlayerGuid, capturedDungeons](std::vector<ObjectGuid> const& createdBots)
+        {
+            TC_LOG_INFO("playerbot.lfg", "LFGBotManager JIT callback - {} bots created for player {}",
+                createdBots.size(), capturedPlayerGuid.ToString());
+
+            // Queue each created bot
+            for (ObjectGuid botGuid : createdBots)
+            {
+                if (Player* bot = ObjectAccessor::FindPlayer(botGuid))
+                {
+                    // Detect the bot's role based on spec
+                    uint8 botRole = sLFGRoleDetector->DetectBotRole(bot);
+
+                    if (QueueBot(bot, botRole, capturedDungeons))
+                    {
+                        std::lock_guard lock(_mutex);
+                        RegisterBotAssignment(capturedPlayerGuid, botGuid, botRole, capturedDungeons);
+                        TC_LOG_INFO("playerbot.lfg", "JIT: Queued newly created bot {} (level {}) as role {} for player {}",
+                            bot->GetName(), bot->GetLevel(), botRole, capturedPlayerGuid.ToString());
+                    }
+                }
+            }
+        };
+
+        // Callback on failure
+        jitRequest.onFailed = [capturedPlayerGuid](std::string const& error)
+        {
+            TC_LOG_ERROR("playerbot.lfg", "LFGBotManager JIT failed for player {}: {}",
+                capturedPlayerGuid.ToString(), error);
+        };
+
+        // Callback on progress (optional, just for logging)
+        jitRequest.onProgress = [capturedPlayerGuid](float progress)
+        {
+            TC_LOG_DEBUG("playerbot.lfg", "LFGBotManager JIT progress for player {}: {:.1f}%",
+                capturedPlayerGuid.ToString(), progress * 100.0f);
+        };
+
+        // Submit the JIT request
+        uint32 requestId = sJITBotFactory->SubmitRequest(std::move(jitRequest));
+        TC_LOG_INFO("playerbot.lfg", "LFGBotManager::PopulateQueue - Submitted JIT request {} for player {}",
+            requestId, humanPlayer->GetName());
+    }
+
+    // Register human player if we queued any bots (or if JIT request was submitted)
+    if (botsQueued > 0 || tanksStillNeeded > 0 || healersStillNeeded > 0 || dpsStillNeeded > 0)
     {
         auto& humanInfo = _humanPlayers[playerGuid];
         humanInfo.playerRole = humanRole;

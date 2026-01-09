@@ -23,6 +23,7 @@
 #include "../Professions/ProfessionManager.h"
 #include "../Companion/MountManager.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
+#include "../Session/BotWorldSessionMgr.h"
 #include "Player.h"
 #include "Config/PlayerbotConfig.h"
 #include "Log.h"
@@ -527,12 +528,27 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
             success = false;
         }
     }
-    // Apply zone placement
-    if (!ApplyZone(bot, task))
+
+    // ========================================================================
+    // CRITICAL FIX: Only apply zone placement when level actually changed
+    // ========================================================================
+    // User feedback: Repositioning bots that didn't change level wastes time
+    // (they have to travel) and causes quest log spam with irrelevant quests.
+    // Only teleport bots to a new zone when their level changed.
+    // ========================================================================
+    if (task->levelChanged)
     {
-        TC_LOG_ERROR("playerbot", "BotLevelManager::ApplyBot_MainThread() - Zone placement failed for {}",
+        if (!ApplyZone(bot, task))
+        {
+            TC_LOG_ERROR("playerbot", "BotLevelManager::ApplyBot_MainThread() - Zone placement failed for {}",
+                bot->GetName());
+            success = false;
+        }
+    }
+    else
+    {
+        TC_LOG_DEBUG("playerbot", "BotLevelManager::ApplyBot_MainThread() - Skipping zone placement for {} (level unchanged)",
             bot->GetName());
-        success = false;
     }
 
     // Save to database
@@ -542,8 +558,16 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
 
         if (_verboseLogging.load(::std::memory_order_acquire))
         {
-            TC_LOG_INFO("playerbot", "BotLevelManager::ApplyBot_MainThread() - Bot {} fully created (L{}, Spec {}, Zone {})",
-                bot->GetName(), task->targetLevel, task->primarySpec, task->zonePlacement->zoneName);
+            if (task->levelChanged && task->zonePlacement)
+            {
+                TC_LOG_INFO("playerbot", "BotLevelManager::ApplyBot_MainThread() - Bot {} fully created (L{}, Spec {}, Zone {})",
+                    bot->GetName(), task->targetLevel, task->primarySpec, task->zonePlacement->zoneName);
+            }
+            else
+            {
+                TC_LOG_INFO("playerbot", "BotLevelManager::ApplyBot_MainThread() - Bot {} updated (L{}, Spec {}, same position)",
+                    bot->GetName(), task->targetLevel, task->primarySpec);
+            }
         }
     }
 
@@ -557,21 +581,47 @@ bool BotLevelManager::ApplyLevel(Player* bot, BotCreationTask* task)
 
     // Get current level
     uint32 currentLevel = bot->GetLevel();
-    // Skip if already at target level
-    if (currentLevel >= task->targetLevel)
-        return true;
 
-    // Apply level-ups
-    for (uint32 level = currentLevel + 1; level <= task->targetLevel; ++level)
+    // Skip if already at exact target level - no change needed
+    if (currentLevel == task->targetLevel)
     {
-        bot->GiveLevel(level);
+        task->levelChanged = false;
+        return true;
+    }
+
+    // Track that level is changing
+    task->levelChanged = true;
+
+    if (currentLevel < task->targetLevel)
+    {
+        // Level UP: Use GiveLevel() for proper stat scaling and spell learning
+        for (uint32 level = currentLevel + 1; level <= task->targetLevel; ++level)
+        {
+            bot->GiveLevel(level);
+        }
+
+        TC_LOG_INFO("playerbot", "BotLevelManager::ApplyLevel() - Bot {} leveled UP {} -> {}",
+            bot->GetName(), currentLevel, task->targetLevel);
+    }
+    else
+    {
+        // Level DOWN: Use SetLevel() + InitStatsForLevel() for de-leveling
+        // This is needed for level redistribution to work properly
+        bot->SetLevel(static_cast<uint8>(task->targetLevel));
+        bot->InitStatsForLevel(true);  // Reapply mods for new level
+
+        // Re-initialize talents for the new (lower) level
+        bot->InitTalentForLevel();
+
+        TC_LOG_INFO("playerbot", "BotLevelManager::ApplyLevel() - Bot {} leveled DOWN {} -> {} (redistribution)",
+            bot->GetName(), currentLevel, task->targetLevel);
     }
 
     ++_stats.totalLevelUps;
 
     if (_verboseLogging.load(::std::memory_order_acquire))
     {
-        TC_LOG_DEBUG("playerbot", "BotLevelManager::ApplyLevel() - Bot {} leveled to {}",
+        TC_LOG_DEBUG("playerbot", "BotLevelManager::ApplyLevel() - Bot {} now at level {}",
             bot->GetName(), task->targetLevel);
     }
 
@@ -890,10 +940,78 @@ void BotLevelManager::RebalanceFaction(TeamId faction)
         spawnRequestsCreated += toSpawn;
     }
 
-    // Handle overpopulated brackets by marking excess bots for despawn
-    // This is a gentler approach - we don't force despawn, just reduce spawn priority
-    if (!overpopulated.empty())
+    // ========================================================================
+    // CRITICAL FIX: Actually relevel bots from overpopulated to underpopulated brackets
+    // ========================================================================
+    // Instead of just logging overpopulation, we now actively relevel excess bots
+    // from overpopulated brackets. The CreateBotAsync() flow will:
+    // 1. Select a new bracket using weighted selection (favoring underpopulated)
+    // 2. ApplyLevel() will de-level the bot if needed (with our fix)
+    // 3. ApplyZone() will teleport them to an appropriate zone (only if level changed)
+    // ========================================================================
+    uint32 botsReleveled = 0;
+    if (!overpopulated.empty() && !underpopulated.empty())
     {
+        auto stats = _distribution->GetDistributionStats();
+        uint32 totalFactionBots = (faction == TEAM_ALLIANCE) ? stats.allianceBots : stats.hordeBots;
+
+        // Get all online bots for this faction
+        auto allBots = Playerbot::sBotWorldSessionMgr->GetAllBotPlayers();
+
+        for (auto const* bracket : overpopulated)
+        {
+            if (botsReleveled >= botsToProcess)
+                break;
+
+            if (totalFactionBots == 0)
+                continue;
+
+            uint32 target = bracket->GetTargetCount(totalFactionBots);
+            uint32 current = bracket->GetCount();
+
+            if (current <= target)
+                continue;
+
+            uint32 excess = current - target;
+            uint32 toRelevel = ::std::min(excess, botsToProcess - botsReleveled);
+
+            TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceFaction() - {} bracket L{}-{} has {} excess bots, releveling {}",
+                faction == TEAM_ALLIANCE ? "Alliance" : "Horde",
+                bracket->minLevel, bracket->maxLevel,
+                excess, toRelevel);
+
+            // Find bots in this overpopulated bracket and relevel them
+            uint32 releveled = 0;
+            for (Player* bot : allBots)
+            {
+                if (!bot || releveled >= toRelevel)
+                    break;
+
+                // Check faction
+                if (bot->GetTeamId() != faction)
+                    continue;
+
+                // Check if bot is in this overpopulated bracket
+                uint32 botLevel = bot->GetLevel();
+                if (botLevel < bracket->minLevel || botLevel > bracket->maxLevel)
+                    continue;
+
+                // Submit bot for releveling - CreateBotAsync will select a new bracket
+                // using weighted selection (favoring underpopulated brackets)
+                uint64 taskId = CreateBotAsync(bot);
+                if (taskId > 0)
+                {
+                    ++releveled;
+                    ++botsReleveled;
+                    TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceFaction() - Submitted {} (L{}) for releveling (task {})",
+                        bot->GetName(), botLevel, taskId);
+                }
+            }
+        }
+    }
+    else if (!overpopulated.empty())
+    {
+        // Just log overpopulation if there are no underpopulated brackets to move to
         auto stats = _distribution->GetDistributionStats();
         uint32 totalFactionBots = (faction == TEAM_ALLIANCE) ? stats.allianceBots : stats.hordeBots;
 
@@ -910,23 +1028,17 @@ void BotLevelManager::RebalanceFaction(TeamId faction)
 
             uint32 excess = current - target;
 
-            // Log the overpopulation for monitoring
-            TC_LOG_DEBUG("playerbot", "BotLevelManager::RebalanceFaction() - {} bracket L{}-{} has {} excess bots (current: {}, target: {})",
+            TC_LOG_DEBUG("playerbot", "BotLevelManager::RebalanceFaction() - {} bracket L{}-{} has {} excess bots (no underpopulated brackets)",
                 faction == TEAM_ALLIANCE ? "Alliance" : "Horde",
-                bracket->minLevel, bracket->maxLevel,
-                excess, current, target);
-
-            // Note: We don't force despawn here as it would be disruptive
-            // Instead, the weighted selection in SelectBracketWeighted() will
-            // naturally stop spawning bots in overpopulated brackets
+                bracket->minLevel, bracket->maxLevel, excess);
         }
     }
 
     // Trigger recalculation to update counters
     _distribution->RecalculateDistribution();
 
-    TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceFaction() - {} rebalancing: {} spawn requests queued",
-        faction == TEAM_ALLIANCE ? "Alliance" : "Horde", spawnRequestsCreated);
+    TC_LOG_INFO("playerbot", "BotLevelManager::RebalanceFaction() - {} rebalancing complete: {} spawn requests, {} bots releveled",
+        faction == TEAM_ALLIANCE ? "Alliance" : "Horde", spawnRequestsCreated, botsReleveled);
 }
 
 // ====================================================================
