@@ -24,6 +24,7 @@
 #include "../Session/BotWorldSessionMgr.h"
 #include "../Core/PlayerBotHooks.h"
 #include "../PvP/BGBotManager.h"
+#include "../Lifecycle/Instance/InstanceBotHooks.h"
 #include "Log.h"
 #include <unordered_set>
 #include <unordered_map>
@@ -182,25 +183,54 @@ private:
         // In a full implementation, this would query the actual bracket from queue
         BattlegroundBracketId bracket = BG_BRACKET_ID_LAST;
 
-        // Call BGBotManager to populate queue with bots
+        // HYBRID APPROACH: Use both new and old systems
+        //
+        // Step 1: Trigger the new Instance Bot System to create/reserve bots
+        // This will create bots if needed and add them to the BG queue
+        if (InstanceBotHooks::IsEnabled())
+        {
+            TC_LOG_INFO("module.playerbot.bg",
+                "PlayerbotBGScript: Triggering Instance Bot System for player {} (BG Type: {})",
+                player->GetName(), static_cast<uint32>(bgTypeId));
+
+            InstanceBotHooks::OnPlayerJoinBattleground(
+                player,
+                static_cast<uint32>(bgTypeId),
+                static_cast<uint32>(bracket),
+                player->GetGroup() != nullptr
+            );
+        }
+
+        // Step 2: Use BGBotManager to add CURRENTLY ONLINE bots to queue
+        // This provides immediate bot coverage while Instance Bot System creates new bots
         sBGBotManager->OnPlayerJoinQueue(player, bgTypeId, bracket, player->GetGroup() != nullptr);
 
         // Mark as processed
         _processedPlayers.insert(playerGuid);
         _processedPlayerTimes[playerGuid] = GameTime::GetGameTimeMS();
+
+        TC_LOG_INFO("module.playerbot.bg",
+            "PlayerbotBGScript: Triggered bot recruitment for player {} (BG Type: {}, Bracket: {})",
+            player->GetName(), static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
     }
 
     /**
      * @brief Handle a player leaving the BG queue
      */
-    void HandlePlayerLeftQueue(Player* player)
+    void HandlePlayerLeftQueue(Player* player, BattlegroundTypeId bgTypeId = BATTLEGROUND_TYPE_NONE)
     {
         ObjectGuid playerGuid = player->GetGUID();
 
         TC_LOG_INFO("module.playerbot.bg",
             "PlayerbotBGScript: Player {} left BG queue", player->GetName());
 
-        // Notify BGBotManager
+        // Notify Instance Bot Hooks (new system)
+        if (InstanceBotHooks::IsEnabled())
+        {
+            InstanceBotHooks::OnPlayerLeaveBattlegroundQueue(player, static_cast<uint32>(bgTypeId));
+        }
+
+        // Notify BGBotManager (old system)
         sBGBotManager->OnPlayerLeaveQueue(playerGuid);
 
         // Remove from processed set
