@@ -722,14 +722,31 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     sPopulationLifecycleController->Update(diff);
     auto t12 = std::chrono::high_resolution_clock::now();
     auto lifecycleTime = std::chrono::duration_cast<std::chrono::microseconds>(t12 - lastTime).count();
+    lastTime = t12;
+
+    // Update Instance Bot Systems (Hybrid Warm Pool + Elastic Overflow)
+    // These systems handle JIT bot creation for dungeons, raids, BGs, and arenas
+    sInstanceBotPool->Update(diff);
+    auto t13 = std::chrono::high_resolution_clock::now();
+    auto instancePoolTime = std::chrono::duration_cast<std::chrono::microseconds>(t13 - lastTime).count();
+    lastTime = t13;
+
+    sInstanceBotOrchestrator->Update(diff);
+    auto t14 = std::chrono::high_resolution_clock::now();
+    auto orchestratorTime = std::chrono::duration_cast<std::chrono::microseconds>(t14 - lastTime).count();
+    lastTime = t14;
+
+    sJITBotFactory->Update(diff);
+    auto t15 = std::chrono::high_resolution_clock::now();
+    auto jitFactoryTime = std::chrono::duration_cast<std::chrono::microseconds>(t15 - lastTime).count();
 
     // Calculate total time
-    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t12 - timeStart).count();
+    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t15 - timeStart).count();
 
     // Log if total time exceeds 100ms
     if (totalUpdateTime > 100000) // 100ms in microseconds
     {
-        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, SessionMgr:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms, Protection:{:.2f}ms, Retirement:{:.2f}ms, Prediction:{:.2f}ms, Activity:{:.2f}ms, Demand:{:.2f}ms, Lifecycle:{:.2f}ms",
+        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, SessionMgr:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms, Protection:{:.2f}ms, Retirement:{:.2f}ms, Prediction:{:.2f}ms, Activity:{:.2f}ms, Demand:{:.2f}ms, Lifecycle:{:.2f}ms, InstPool:{:.2f}ms, Orchestrator:{:.2f}ms, JITFactory:{:.2f}ms",
             totalUpdateTime / 1000.0f,
             accountTime / 1000.0f,
             spawnerTime / 1000.0f,
@@ -742,7 +759,10 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
             predictionTime / 1000.0f,
             activityTime / 1000.0f,
             demandTime / 1000.0f,
-            lifecycleTime / 1000.0f);
+            lifecycleTime / 1000.0f,
+            instancePoolTime / 1000.0f,
+            orchestratorTime / 1000.0f,
+            jitFactoryTime / 1000.0f);
     }
 
     }

@@ -300,8 +300,39 @@ uint32 BGBotManager::PopulateQueue(ObjectGuid playerGuid, BattlegroundTypeId bgT
         return 0;
     }
 
-    uint8 minLevel = 0, maxLevel = 0;
-    GetBracketLevelRange(bracket, minLevel, maxLevel);
+    // Get level range from DB2 data (proper approach using PVPDifficultyEntry)
+    uint8 minLevel = 10, maxLevel = 80;  // Default fallback
+
+    BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);
+    if (bgTemplate && !bgTemplate->MapIDs.empty())
+    {
+        PVPDifficultyEntry const* bracketEntry = DB2Manager::GetBattlegroundBracketById(
+            bgTemplate->MapIDs.front(), bracket);
+        if (bracketEntry)
+        {
+            minLevel = bracketEntry->MinLevel;
+            maxLevel = bracketEntry->MaxLevel;
+            TC_LOG_DEBUG("module.playerbot.bg",
+                "BGBotManager::PopulateQueue - Using DB2 level range for bracket {}: {}-{}",
+                static_cast<uint32>(bracket), minLevel, maxLevel);
+        }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.bg",
+                "BGBotManager::PopulateQueue - No PVPDifficultyEntry for bracket {} on map {}, using fallback",
+                static_cast<uint32>(bracket), bgTemplate->MapIDs.front());
+        }
+    }
+    else
+    {
+        TC_LOG_WARN("module.playerbot.bg",
+            "BGBotManager::PopulateQueue - No BG template for type {}, using fallback level range",
+            static_cast<uint32>(bgTypeId));
+    }
+
+    TC_LOG_INFO("module.playerbot.bg",
+        "BGBotManager::PopulateQueue - Looking for bots level {}-{} for bracket {}",
+        minLevel, maxLevel, static_cast<uint32>(bracket));
 
     uint32 botsQueued = 0;
 
@@ -585,6 +616,13 @@ std::vector<Player*> BGBotManager::FindAvailableBots(Team team, uint8 minLevel, 
     std::vector<Player*> result;
     result.reserve(count);
 
+    // Diagnostic counters
+    uint32 totalBots = 0;
+    uint32 wrongFaction = 0;
+    uint32 wrongLevel = 0;
+    uint32 unavailable = 0;
+    uint32 alreadyQueued = 0;
+
     // Iterate through all online sessions and find bots
     for (auto const& [accountId, session] : sWorld->GetAllSessions())
     {
@@ -599,27 +637,53 @@ std::vector<Player*> BGBotManager::FindAvailableBots(Team team, uint8 minLevel, 
         if (!PlayerBotHooks::IsPlayerBot(player))
             continue;
 
+        ++totalBots;
+
         // Check faction
         if (player->GetTeam() != team)
+        {
+            ++wrongFaction;
             continue;
+        }
 
         // Check level
         uint8 level = player->GetLevel();
         if (level < minLevel || level > maxLevel)
+        {
+            ++wrongLevel;
             continue;
+        }
 
         // Check availability
         if (!IsBotAvailable(player))
+        {
+            ++unavailable;
             continue;
+        }
 
         // Check if already queued
         if (IsBotQueued(player->GetGUID()))
+        {
+            ++alreadyQueued;
             continue;
+        }
 
         result.push_back(player);
 
         if (result.size() >= count)
             break;
+    }
+
+    // Log diagnostics if we didn't find enough bots
+    if (result.size() < count)
+    {
+        TC_LOG_WARN("module.playerbot.bg",
+            "BGBotManager::FindAvailableBots - Found only {}/{} bots for {} (level {}-{}). "
+            "Stats: totalBots={}, wrongFaction={}, wrongLevel={}, unavailable={}, alreadyQueued={}",
+            result.size(), count,
+            team == ALLIANCE ? "Alliance" : "Horde",
+            minLevel, maxLevel,
+            totalBots, wrongFaction, wrongLevel, unavailable, alreadyQueued);
     }
 
     return result;
