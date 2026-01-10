@@ -15,6 +15,7 @@
 #include "JITBotFactory.h"
 #include "BotCloneEngine.h"
 #include "BotTemplateRepository.h"
+#include "Account/BotAccountMgr.h"
 #include "Config/PlayerbotConfig.h"
 #include "Log.h"
 #include <fmt/format.h>
@@ -411,6 +412,23 @@ bool JITBotFactory::CanHandleRequest(FactoryRequest const& request) const
     return true;
 }
 
+uint32 JITBotFactory::GetAccountForBot(ObjectGuid botGuid) const
+{
+    std::lock_guard<std::mutex> lock(_accountMapMutex);
+    auto it = _botAccountMap.find(botGuid);
+    if (it != _botAccountMap.end())
+        return it->second;
+    return 0;
+}
+
+void JITBotFactory::StoreAccountForBot(ObjectGuid botGuid, uint32 accountId)
+{
+    std::lock_guard<std::mutex> lock(_accountMapMutex);
+    _botAccountMap[botGuid] = accountId;
+    TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::StoreAccountForBot - Stored account {} for bot {}",
+        accountId, botGuid.ToString());
+}
+
 // ============================================================================
 // STATISTICS
 // ============================================================================
@@ -533,12 +551,19 @@ void JITBotFactory::WorkerThread()
                 {
                     it->second.progress = progress;
 
-                    // If completed, call callback and remove
-                    if (progress.status == RequestStatus::Completed)
+                    // Call appropriate callback based on status
+                    if (progress.status == RequestStatus::Completed ||
+                        progress.status == RequestStatus::PartiallyCompleted)
                     {
+                        // Both complete and partial success call onComplete with the created bots
                         if (request.onComplete)
                             request.onComplete(progress.createdBots);
-                        _completedThisHour.fetch_add(1);
+
+                        if (progress.status == RequestStatus::Completed)
+                            _completedThisHour.fetch_add(1);
+                        else
+                            TC_LOG_INFO("playerbot.jit", "JITBotFactory::WorkerThread - Partial success accepted: {}", progress.errorMessage);
+
                         _activeRequests.erase(it);
                     }
                     else if (progress.status == RequestStatus::Failed)
@@ -585,6 +610,19 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
 
     try
     {
+        // CRITICAL: Ensure we have enough account capacity BEFORE trying to create bots
+        // Each bot needs an account, so we need at least totalNeeded accounts available
+        // Adding 20% buffer to avoid running out mid-creation
+        uint32 accountsNeeded = static_cast<uint32>(progress.totalNeeded * 1.2) + 5;
+        if (!sBotAccountMgr->EnsureAccountCapacity(accountsNeeded))
+        {
+            TC_LOG_ERROR("playerbot.jit", "JITBotFactory::ProcessRequest - Cannot ensure account capacity for {} accounts",
+                accountsNeeded);
+            progress.status = RequestStatus::Failed;
+            progress.errorMessage = "Failed to ensure account capacity";
+            return progress;
+        }
+
         std::vector<ObjectGuid> createdBots;
 
         if (request.IsPvP())
@@ -598,11 +636,25 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
 
         progress.createdBots = std::move(createdBots);
         progress.created = static_cast<uint32>(progress.createdBots.size());
-        progress.status = (progress.created >= progress.totalNeeded) ?
-            RequestStatus::Completed : RequestStatus::Failed;
 
-        if (progress.status == RequestStatus::Failed)
-            progress.errorMessage = fmt::format("Only created {}/{} bots", progress.created, progress.totalNeeded);
+        // Determine status - require all bots or very close (allow 1 missing for large requests)
+        // For dungeons/arenas: must be exact
+        // For BGs/raids: allow 1 missing if > 10 total needed
+        uint32 allowedMissing = (progress.totalNeeded > 10) ? 1 : 0;
+        if (progress.created >= progress.totalNeeded)
+        {
+            progress.status = RequestStatus::Completed;
+        }
+        else if (progress.created + allowedMissing >= progress.totalNeeded)
+        {
+            progress.status = RequestStatus::PartiallyCompleted;
+            progress.errorMessage = fmt::format("Near complete: {}/{} bots created", progress.created, progress.totalNeeded);
+        }
+        else
+        {
+            progress.status = RequestStatus::Failed;
+            progress.errorMessage = fmt::format("Failed to create enough bots: {}/{}", progress.created, progress.totalNeeded);
+        }
 
         auto endTime = std::chrono::system_clock::now();
         progress.elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - progress.startTime);
@@ -622,11 +674,80 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
     return progress;
 }
 
+// ============================================================================
+// BATCH CLONE WITH RETRY
+// ============================================================================
+
+std::vector<ObjectGuid> JITBotFactory::BatchCloneWithRetry(
+    BatchCloneRequest const& baseReq,
+    uint32 maxRetries,
+    RequestProgress& progress)
+{
+    std::vector<ObjectGuid> result;
+    uint32 remaining = baseReq.count;
+    uint32 retryCount = 0;
+
+    while (remaining > 0 && retryCount <= maxRetries)
+    {
+        if (retryCount > 0)
+        {
+            TC_LOG_DEBUG("playerbot.jit", "BatchCloneWithRetry - Retry {}/{} for {} {} bots",
+                retryCount, maxRetries, remaining, BotRoleToString(baseReq.role));
+
+            // Brief delay between retries to allow account releases
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
+        BatchCloneRequest cloneReq = baseReq;
+        cloneReq.count = remaining;
+
+        auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
+
+        uint32 successCount = 0;
+        for (auto const& cr : cloneResults)
+        {
+            if (cr.success)
+            {
+                result.push_back(cr.botGuid);
+                progress.fromClone++;
+                _botsCreatedThisHour.fetch_add(1);
+                successCount++;
+
+                // Store the account ID mapping for later lookup
+                // This is critical because database commits are async
+                StoreAccountForBot(cr.botGuid, cr.accountId);
+            }
+        }
+
+        remaining -= successCount;
+
+        if (successCount == 0)
+        {
+            // No progress made, increment retry counter
+            retryCount++;
+        }
+        else
+        {
+            // Made progress, reset retry counter but continue for remaining
+            retryCount = 0;
+        }
+    }
+
+    if (remaining > 0)
+    {
+        TC_LOG_WARN("playerbot.jit", "BatchCloneWithRetry - Failed to create {} {} bots after {} retries",
+            remaining, BotRoleToString(baseReq.role), maxRetries);
+    }
+
+    return result;
+}
+
 std::vector<ObjectGuid> JITBotFactory::CreatePvEBots(
     FactoryRequest const& request,
     RequestProgress& progress)
 {
     std::vector<ObjectGuid> result;
+    constexpr uint32 MAX_RETRIES = 3;
 
     // Create tanks
     if (request.tanksNeeded > 0)
@@ -647,16 +768,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvEBots(
             cloneReq.faction = request.playerFaction;
             cloneReq.minGearScore = request.minGearScore;
 
-            auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-            for (auto const& cr : cloneResults)
-            {
-                if (cr.success)
-                {
-                    result.push_back(cr.botGuid);
-                    progress.fromClone++;
-                    _botsCreatedThisHour.fetch_add(1);
-                }
-            }
+            auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+            result.insert(result.end(), clonedBots.begin(), clonedBots.end());
         }
 
         // Report progress
@@ -684,16 +797,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvEBots(
             cloneReq.faction = request.playerFaction;
             cloneReq.minGearScore = request.minGearScore;
 
-            auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-            for (auto const& cr : cloneResults)
-            {
-                if (cr.success)
-                {
-                    result.push_back(cr.botGuid);
-                    progress.fromClone++;
-                    _botsCreatedThisHour.fetch_add(1);
-                }
-            }
+            auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+            result.insert(result.end(), clonedBots.begin(), clonedBots.end());
         }
 
         progress.created = static_cast<uint32>(result.size());
@@ -720,16 +825,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvEBots(
             cloneReq.faction = request.playerFaction;
             cloneReq.minGearScore = request.minGearScore;
 
-            auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-            for (auto const& cr : cloneResults)
-            {
-                if (cr.success)
-                {
-                    result.push_back(cr.botGuid);
-                    progress.fromClone++;
-                    _botsCreatedThisHour.fetch_add(1);
-                }
-            }
+            auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+            result.insert(result.end(), clonedBots.begin(), clonedBots.end());
         }
 
         progress.created = static_cast<uint32>(result.size());
@@ -745,6 +842,7 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
     RequestProgress& progress)
 {
     std::vector<ObjectGuid> result;
+    constexpr uint32 MAX_RETRIES = 3;
 
     // Create Alliance bots
     if (request.allianceNeeded > 0)
@@ -774,16 +872,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.faction = Faction::Alliance;
                 cloneReq.minGearScore = request.minGearScore;
 
-                auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-                for (auto const& cr : cloneResults)
-                {
-                    if (cr.success)
-                    {
-                        result.push_back(cr.botGuid);
-                        progress.fromClone++;
-                        _botsCreatedThisHour.fetch_add(1);
-                    }
-                }
+                auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+                result.insert(result.end(), clonedBots.begin(), clonedBots.end());
             }
         }
 
@@ -804,16 +894,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.faction = Faction::Alliance;
                 cloneReq.minGearScore = request.minGearScore;
 
-                auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-                for (auto const& cr : cloneResults)
-                {
-                    if (cr.success)
-                    {
-                        result.push_back(cr.botGuid);
-                        progress.fromClone++;
-                        _botsCreatedThisHour.fetch_add(1);
-                    }
-                }
+                auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+                result.insert(result.end(), clonedBots.begin(), clonedBots.end());
             }
         }
 
@@ -834,16 +916,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.faction = Faction::Alliance;
                 cloneReq.minGearScore = request.minGearScore;
 
-                auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-                for (auto const& cr : cloneResults)
-                {
-                    if (cr.success)
-                    {
-                        result.push_back(cr.botGuid);
-                        progress.fromClone++;
-                        _botsCreatedThisHour.fetch_add(1);
-                    }
-                }
+                auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+                result.insert(result.end(), clonedBots.begin(), clonedBots.end());
             }
         }
 
@@ -879,16 +953,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.faction = Faction::Horde;
                 cloneReq.minGearScore = request.minGearScore;
 
-                auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-                for (auto const& cr : cloneResults)
-                {
-                    if (cr.success)
-                    {
-                        result.push_back(cr.botGuid);
-                        progress.fromClone++;
-                        _botsCreatedThisHour.fetch_add(1);
-                    }
-                }
+                auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+                result.insert(result.end(), clonedBots.begin(), clonedBots.end());
             }
         }
 
@@ -909,16 +975,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.faction = Faction::Horde;
                 cloneReq.minGearScore = request.minGearScore;
 
-                auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-                for (auto const& cr : cloneResults)
-                {
-                    if (cr.success)
-                    {
-                        result.push_back(cr.botGuid);
-                        progress.fromClone++;
-                        _botsCreatedThisHour.fetch_add(1);
-                    }
-                }
+                auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+                result.insert(result.end(), clonedBots.begin(), clonedBots.end());
             }
         }
 
@@ -939,16 +997,8 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.faction = Faction::Horde;
                 cloneReq.minGearScore = request.minGearScore;
 
-                auto cloneResults = sBotCloneEngine->BatchClone(cloneReq);
-                for (auto const& cr : cloneResults)
-                {
-                    if (cr.success)
-                    {
-                        result.push_back(cr.botGuid);
-                        progress.fromClone++;
-                        _botsCreatedThisHour.fetch_add(1);
-                    }
-                }
+                auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
+                result.insert(result.end(), clonedBots.begin(), clonedBots.end());
             }
         }
 

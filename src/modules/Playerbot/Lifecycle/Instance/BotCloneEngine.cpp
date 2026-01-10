@@ -750,7 +750,7 @@ bool BotCloneEngine::CreatePlayerObject(
 
     trans->Append(stmt);
 
-    // Async commit - InstanceBotPool will retry warmup via ProcessWarmingRetries()
+    // Async commit - account ID is passed through CloneResult, not queried from DB
     CharacterDatabase.CommitTransaction(trans);
 
     TC_LOG_DEBUG("playerbot.clone", "BotCloneEngine::CreatePlayerObject - "

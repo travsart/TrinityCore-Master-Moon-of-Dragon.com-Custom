@@ -14,6 +14,7 @@
 
 #include "InstanceBotOrchestrator.h"
 #include "InstanceBotPool.h"
+#include "InstanceBotHooks.h"
 #include "JITBotFactory.h"
 #include "ContentRequirements.h"
 #include "Config/PlayerbotConfig.h"
@@ -109,6 +110,10 @@ void InstanceBotOrchestrator::Update(uint32 diff)
 {
     if (!_initialized.load() || !_config.enabled)
         return;
+
+    // CRITICAL: Process pending BG queue (bots waiting to login and queue)
+    // This runs on every update to ensure bots are logged in and queued promptly
+    InstanceBotHooks::Update(diff);
 
     _updateAccumulator += diff;
     if (_updateAccumulator < UPDATE_INTERVAL_MS)

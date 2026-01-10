@@ -192,6 +192,61 @@ uint32 BotAccountMgr::GetRequiredAccountCount() const
     return _requiredAccounts.load();
 }
 
+bool BotAccountMgr::EnsureAccountCapacity(uint32 additionalNeeded)
+{
+    if (additionalNeeded == 0)
+        return true;
+
+    // Check if auto-creation is enabled
+    if (!_autoCreateAccounts.load())
+    {
+        TC_LOG_WARN("module.playerbot.account",
+            "EnsureAccountCapacity: Cannot ensure capacity - auto-creation is disabled");
+        return false;
+    }
+
+    // Calculate how many more accounts we need beyond current limit
+    uint32 currentTotal = _totalAccounts.load();
+    uint32 currentLimit = _requiredAccounts.load();
+    uint32 neededTotal = currentTotal + additionalNeeded;
+
+    // If we already have enough capacity, we're good
+    if (neededTotal <= currentLimit)
+    {
+        TC_LOG_DEBUG("module.playerbot.account",
+            "EnsureAccountCapacity: Already have capacity ({}/{} limit, need {})",
+            currentTotal, currentLimit, additionalNeeded);
+        return true;
+    }
+
+    // Increase the limit to accommodate the new accounts
+    // Add 20% buffer to avoid frequent increases
+    uint32 newLimit = static_cast<uint32>(neededTotal * 1.2);
+
+    // Use compare_exchange to ensure thread-safe update (only increase, never decrease)
+    uint32 expected = currentLimit;
+    while (newLimit > expected)
+    {
+        if (_requiredAccounts.compare_exchange_weak(expected, newLimit))
+        {
+            TC_LOG_INFO("module.playerbot.account",
+                "EnsureAccountCapacity: Increased account limit from {} to {} (need {} additional)",
+                currentLimit, newLimit, additionalNeeded);
+            return true;
+        }
+        // If someone else increased it, check if it's now enough
+        if (expected >= neededTotal)
+        {
+            TC_LOG_DEBUG("module.playerbot.account",
+                "EnsureAccountCapacity: Limit already increased to {} by another thread",
+                expected);
+            return true;
+        }
+    }
+
+    return true;
+}
+
 uint32 BotAccountMgr::CreateBotAccount(::std::string const& requestedEmail)
 {
     // Check if auto-creation is disabled

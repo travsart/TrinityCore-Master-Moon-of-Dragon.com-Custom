@@ -218,12 +218,13 @@ struct TC_GAME_API FactoryRequest
  */
 enum class RequestStatus : uint8
 {
-    Pending,        ///< Waiting to be processed
-    InProgress,     ///< Currently creating bots
-    Completed,      ///< All bots created successfully
-    Failed,         ///< Request failed
-    Cancelled,      ///< Request was cancelled
-    TimedOut        ///< Request timed out
+    Pending,            ///< Waiting to be processed
+    InProgress,         ///< Currently creating bots
+    Completed,          ///< All bots created successfully
+    PartiallyCompleted, ///< Some bots created (enough to proceed)
+    Failed,             ///< Request failed (no bots or too few)
+    Cancelled,          ///< Request was cancelled
+    TimedOut            ///< Request timed out
 };
 
 /**
@@ -236,6 +237,7 @@ inline char const* RequestStatusToString(RequestStatus status)
         case RequestStatus::Pending: return "Pending";
         case RequestStatus::InProgress: return "InProgress";
         case RequestStatus::Completed: return "Completed";
+        case RequestStatus::PartiallyCompleted: return "PartiallyCompleted";
         case RequestStatus::Failed: return "Failed";
         case RequestStatus::Cancelled: return "Cancelled";
         case RequestStatus::TimedOut: return "TimedOut";
@@ -467,6 +469,23 @@ public:
      */
     bool CanHandleRequest(FactoryRequest const& request) const;
 
+    /**
+     * @brief Get account ID for a bot created by this factory
+     * @param botGuid Bot GUID to look up
+     * @return Account ID or 0 if not found
+     *
+     * Since database commits are async, we store the account ID from CloneResult
+     * so callbacks can log in bots without waiting for database to commit.
+     */
+    uint32 GetAccountForBot(ObjectGuid botGuid) const;
+
+    /**
+     * @brief Store account ID mapping for a created bot
+     * @param botGuid Bot GUID
+     * @param accountId Account ID
+     */
+    void StoreAccountForBot(ObjectGuid botGuid, uint32 accountId);
+
     // ========================================================================
     // STATISTICS
     // ========================================================================
@@ -546,6 +565,18 @@ private:
         RequestProgress& progress);
 
     /**
+     * @brief Clone bots with retry logic
+     * @param baseReq Base clone request parameters
+     * @param maxRetries Maximum retry attempts
+     * @param progress Progress tracker to update
+     * @return Vector of successfully created bot GUIDs
+     */
+    std::vector<ObjectGuid> BatchCloneWithRetry(
+        BatchCloneRequest const& baseReq,
+        uint32 maxRetries,
+        RequestProgress& progress);
+
+    /**
      * @brief Try to get recycled bots for role
      */
     std::vector<ObjectGuid> GetRecycledBotsForRole(
@@ -604,6 +635,16 @@ private:
 
     std::vector<RecycledBot> _recycledBots;
     mutable std::mutex _recycleMutex;
+
+    // ========================================================================
+    // DATA MEMBERS - Bot Account Mapping
+    // ========================================================================
+
+    /// Map of bot GUID → account ID for bots created by this factory
+    /// Needed because database commits are async, so we can't query account
+    /// immediately after creation. Stored here for callback use.
+    std::unordered_map<ObjectGuid, uint32> _botAccountMap;
+    mutable std::mutex _accountMapMutex;
 
     // ========================================================================
     // DATA MEMBERS - Worker Thread

@@ -551,7 +551,7 @@ void BotTemplateRepository::LoadFromDatabase()
     std::unordered_map<uint64, std::vector<uint8>> classRaceMatrix; // (class << 8 | faction) -> races
 
     QueryResult raceResult = sPlayerbotDatabase->Query(
-        "SELECT class_id, race_id, faction FROM playerbot_class_race_matrix ORDER BY popularity_weight DESC");
+        "SELECT class_id, race_id, faction FROM playerbot_class_race_matrix ORDER BY weight DESC");
 
     if (raceResult)
     {
@@ -560,7 +560,10 @@ void BotTemplateRepository::LoadFromDatabase()
             Field* fields = raceResult->Fetch();
             uint8 classId = fields[0].GetUInt8();
             uint8 raceId = fields[1].GetUInt8();
-            uint8 faction = fields[2].GetUInt8();
+            std::string factionStr = fields[2].GetString();
+
+            // Convert faction string to numeric value: 0 = Alliance, 1 = Horde
+            uint8 faction = (factionStr == "HORDE" || factionStr == "Horde") ? 1 : 0;
 
             uint64 key = (static_cast<uint64>(classId) << 8) | faction;
             classRaceMatrix[key].push_back(raceId);

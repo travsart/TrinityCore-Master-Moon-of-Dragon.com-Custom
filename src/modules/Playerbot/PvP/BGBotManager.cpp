@@ -519,6 +519,25 @@ uint32 BGBotManager::GetBGMinPlayers(BattlegroundTypeId bgTypeId) const
     }
 }
 
+bool BGBotManager::QueueBotForBG(Player* bot, BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket)
+{
+    // Public wrapper for JIT bot integration
+    // The bot must already be logged in and in world before calling this
+    if (!bot || !bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.bg", "QueueBotForBG: Bot is null or not in world");
+        return false;
+    }
+
+    if (!_enabled || !_initialized)
+    {
+        TC_LOG_WARN("module.playerbot.bg", "QueueBotForBG: BGBotManager not enabled/initialized");
+        return false;
+    }
+
+    return QueueBot(bot, bgTypeId, bracket);
+}
+
 void BGBotManager::CalculateNeededBots(BattlegroundTypeId bgTypeId, Team humanTeam,
                                         uint32& allianceNeeded, uint32& hordeNeeded) const
 {

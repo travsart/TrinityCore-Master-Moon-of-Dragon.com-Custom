@@ -99,6 +99,18 @@ public:
      */
     uint32 GetBGMinPlayers(BattlegroundTypeId bgTypeId) const;
 
+    /**
+     * @brief Queue a specific bot for battleground (used by InstanceBotHooks)
+     * @param bot The bot player object (must be logged in and in world)
+     * @param bgTypeId The battleground type
+     * @param bracket The BG bracket
+     * @return true if successfully queued
+     *
+     * NOTE: This is a public wrapper for JIT bot integration.
+     * The bot must already be logged in before calling this.
+     */
+    bool QueueBotForBG(Player* bot, BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket);
+
 private:
     // ============================================================================
     // HELPER METHODS

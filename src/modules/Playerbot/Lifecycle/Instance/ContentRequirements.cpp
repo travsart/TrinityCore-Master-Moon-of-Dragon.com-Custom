@@ -762,6 +762,21 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
 
     AddRequirement(std::move(deepwind));
 
+    // Deephaul Ravine (10v10) - The War Within
+    ContentRequirement deephaul;
+    deephaul.contentId = 1014;  // BG_DEEPHAUL_RAVINE
+    deephaul.contentName = "Deephaul Ravine";
+    deephaul.type = InstanceType::Battleground;
+    deephaul.minPlayers = 1;
+    deephaul.maxPlayers = 20;
+    deephaul.minLevel = 10;
+    deephaul.maxLevel = 80;
+    deephaul.requiresBothFactions = true;
+    deephaul.playersPerFaction = 10;
+    deephaul.estimatedDurationMinutes = 25;
+
+    AddRequirement(std::move(deephaul));
+
     // NOTE: Random Battleground (32) is handled dynamically in GetBattlegroundRequirement()
     // by selecting a random actual BG (AV, WSG, AB, etc.) so proper team sizes are used.
 }

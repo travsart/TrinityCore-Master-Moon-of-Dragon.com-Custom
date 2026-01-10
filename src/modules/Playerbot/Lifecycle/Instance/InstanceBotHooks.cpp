@@ -23,9 +23,13 @@
 #include "Player.h"
 #include "Group.h"
 #include "Battleground.h"
+#include "BattlegroundMgr.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
 #include "LFGMgr.h"
+#include "Session/BotWorldSessionMgr.h"
+#include "PvP/BGBotManager.h"
+#include "DatabaseEnv.h"
 
 namespace Playerbot
 {
@@ -39,6 +43,9 @@ std::atomic<bool> InstanceBotHooks::_enabled{false};
 std::mutex InstanceBotHooks::_callbackMutex;
 std::unordered_map<ObjectGuid, InstanceBotHooks::BotAssignmentCallback> InstanceBotHooks::_dungeonCallbacks;
 std::unordered_map<uint64, InstanceBotHooks::PvPBotAssignmentCallback> InstanceBotHooks::_bgCallbacks;
+std::mutex InstanceBotHooks::_pendingBGMutex;
+std::vector<InstanceBotHooks::PendingBGQueueEntry> InstanceBotHooks::_pendingBGQueue;
+uint32 InstanceBotHooks::_updateAccumulator{0};
 
 // ============================================================================
 // INITIALIZATION
@@ -87,6 +94,16 @@ void InstanceBotHooks::Shutdown()
         std::lock_guard<std::mutex> lock(_callbackMutex);
         _dungeonCallbacks.clear();
         _bgCallbacks.clear();
+    }
+
+    // Clear pending BG queue
+    {
+        std::lock_guard<std::mutex> lock(_pendingBGMutex);
+        if (!_pendingBGQueue.empty())
+        {
+            TC_LOG_INFO("playerbots.instance", "Clearing {} pending BG queue entries", _pendingBGQueue.size());
+            _pendingBGQueue.clear();
+        }
     }
 
     TC_LOG_INFO("playerbots.instance", "Instance Bot Hooks shutdown complete");
@@ -345,10 +362,86 @@ void InstanceBotHooks::OnPlayerJoinBattleground(
             std::vector<ObjectGuid> const& alliance,
             std::vector<ObjectGuid> const& horde)
         {
-            TC_LOG_INFO("playerbots.instance", "BG {} bots ready: {} Alliance, {} Horde",
+            TC_LOG_INFO("playerbots.instance", "BG {} bots ready: {} Alliance, {} Horde - Adding to login queue",
                 bgTypeId, alliance.size(), horde.size());
 
-            // Notify any registered callbacks
+            // ================================================================
+            // CRITICAL FIX: JIT creates DATABASE RECORDS, not logged-in Player objects
+            // We must:
+            // 1. Get account ID for each bot
+            // 2. Add to pending queue for login
+            // 3. ProcessPendingBGQueues will login them and queue for BG
+            // ================================================================
+
+            auto now = std::chrono::steady_clock::now();
+            uint32 addedCount = 0;
+
+            // Add Alliance bots to pending queue
+            for (auto const& botGuid : alliance)
+            {
+                // Get account ID from JITBotFactory (stored during creation)
+                // We use this instead of database query because commits are async
+                uint32 accountId = sJITBotFactory->GetAccountForBot(botGuid);
+
+                if (accountId == 0)
+                {
+                    TC_LOG_WARN("playerbots.instance", "BG {} - Could not find account for bot {} in JITBotFactory",
+                        bgTypeId, botGuid.ToString());
+                    continue;
+                }
+
+                PendingBGQueueEntry entry;
+                entry.botGuid = botGuid;
+                entry.accountId = accountId;
+                entry.bgTypeId = bgTypeId;
+                entry.bracketId = bracketId;
+                entry.team = TEAM_ALLIANCE;
+                entry.createdAt = now;
+                entry.loginQueued = false;
+                entry.retryCount = 0;
+
+                {
+                    std::lock_guard<std::mutex> lock(_pendingBGMutex);
+                    _pendingBGQueue.push_back(entry);
+                }
+                ++addedCount;
+            }
+
+            // Add Horde bots to pending queue
+            for (auto const& botGuid : horde)
+            {
+                // Get account ID from JITBotFactory (stored during creation)
+                // We use this instead of database query because commits are async
+                uint32 accountId = sJITBotFactory->GetAccountForBot(botGuid);
+
+                if (accountId == 0)
+                {
+                    TC_LOG_WARN("playerbots.instance", "BG {} - Could not find account for bot {} in JITBotFactory",
+                        bgTypeId, botGuid.ToString());
+                    continue;
+                }
+
+                PendingBGQueueEntry entry;
+                entry.botGuid = botGuid;
+                entry.accountId = accountId;
+                entry.bgTypeId = bgTypeId;
+                entry.bracketId = bracketId;
+                entry.team = TEAM_HORDE;
+                entry.createdAt = now;
+                entry.loginQueued = false;
+                entry.retryCount = 0;
+
+                {
+                    std::lock_guard<std::mutex> lock(_pendingBGMutex);
+                    _pendingBGQueue.push_back(entry);
+                }
+                ++addedCount;
+            }
+
+            TC_LOG_INFO("playerbots.instance", "BG {} - Added {} bots to pending login queue (total pending: {})",
+                bgTypeId, addedCount, _pendingBGQueue.size());
+
+            // Notify any registered callbacks (for legacy compatibility)
             std::lock_guard<std::mutex> lock(_callbackMutex);
             uint64 key = MakeBGCallbackKey(bgTypeId, bracketId);
             auto it = _bgCallbacks.find(key);
@@ -894,6 +987,141 @@ void InstanceBotHooks::RegisterBattlegroundCallback(
     std::lock_guard<std::mutex> lock(_callbackMutex);
     uint64 key = MakeBGCallbackKey(bgTypeId, bracketId);
     _bgCallbacks[key] = std::move(callback);
+}
+
+// ============================================================================
+// UPDATE / PROCESSING
+// ============================================================================
+
+void InstanceBotHooks::Update(uint32 diff)
+{
+    if (!IsEnabled())
+        return;
+
+    _updateAccumulator += diff;
+    if (_updateAccumulator < UPDATE_INTERVAL_MS)
+        return;
+
+    _updateAccumulator = 0;
+
+    // Process bots waiting to be logged in and queued for BG
+    ProcessPendingBGQueues();
+}
+
+void InstanceBotHooks::ProcessPendingBGQueues()
+{
+    std::lock_guard<std::mutex> lock(_pendingBGMutex);
+
+    if (_pendingBGQueue.empty())
+        return;
+
+    uint32 processed = 0;
+    uint32 loginsQueued = 0;
+    uint32 botsQueued = 0;
+    uint32 expired = 0;
+
+    // Process pending entries
+    auto it = _pendingBGQueue.begin();
+    while (it != _pendingBGQueue.end())
+    {
+        auto& entry = *it;
+
+        // Check for expiration
+        if (entry.IsExpired())
+        {
+            TC_LOG_WARN("playerbots.instance", "BG pending entry expired for bot {} (BG {})",
+                entry.botGuid.ToString(), entry.bgTypeId);
+            it = _pendingBGQueue.erase(it);
+            ++expired;
+            continue;
+        }
+
+        // Step 1: If login not yet queued, queue login
+        if (!entry.loginQueued)
+        {
+            // Check if BotWorldSessionMgr is available
+            if (!sBotWorldSessionMgr || !sBotWorldSessionMgr->IsEnabled())
+            {
+                TC_LOG_DEBUG("playerbots.instance", "BotWorldSessionMgr not available for bot {}",
+                    entry.botGuid.ToString());
+                ++it;
+                continue;
+            }
+
+            // Queue the bot for login
+            bool queued = sBotWorldSessionMgr->AddPlayerBot(entry.botGuid, entry.accountId, true /* bypassLimit */);
+            if (queued)
+            {
+                entry.loginQueued = true;
+                entry.loginQueuedAt = std::chrono::steady_clock::now();
+                ++loginsQueued;
+                TC_LOG_DEBUG("playerbots.instance", "Queued bot {} for login (BG {}, team {})",
+                    entry.botGuid.ToString(), entry.bgTypeId, entry.team == TEAM_ALLIANCE ? "Alliance" : "Horde");
+            }
+            else
+            {
+                ++entry.retryCount;
+                if (entry.retryCount > 10)
+                {
+                    TC_LOG_WARN("playerbots.instance", "Failed to queue bot {} for login after 10 retries",
+                        entry.botGuid.ToString());
+                    it = _pendingBGQueue.erase(it);
+                    continue;
+                }
+            }
+            ++it;
+            continue;
+        }
+
+        // Step 2: Check if login timed out
+        if (entry.IsLoginTimedOut())
+        {
+            TC_LOG_WARN("playerbots.instance", "Login timeout for bot {} (BG {})",
+                entry.botGuid.ToString(), entry.bgTypeId);
+            it = _pendingBGQueue.erase(it);
+            continue;
+        }
+
+        // Step 3: Check if bot is now logged in (in world)
+        Player* bot = ObjectAccessor::FindPlayer(entry.botGuid);
+        if (!bot || !bot->IsInWorld())
+        {
+            // Not yet logged in, check next iteration
+            ++it;
+            continue;
+        }
+
+        // Step 4: Bot is logged in - queue for BG!
+        TC_LOG_INFO("playerbots.instance", "Bot {} is now logged in, queueing for BG {} (team {})",
+            bot->GetName(), entry.bgTypeId, entry.team == TEAM_ALLIANCE ? "Alliance" : "Horde");
+
+        // Use BGBotManager to queue the bot
+        BattlegroundTypeId bgTypeId = static_cast<BattlegroundTypeId>(entry.bgTypeId);
+        BattlegroundBracketId bracketId = static_cast<BattlegroundBracketId>(entry.bracketId);
+
+        if (sBGBotManager->QueueBotForBG(bot, bgTypeId, bracketId))
+        {
+            TC_LOG_INFO("playerbots.instance", "Successfully queued bot {} for BG {} bracket {}",
+                bot->GetName(), entry.bgTypeId, entry.bracketId);
+            ++botsQueued;
+        }
+        else
+        {
+            TC_LOG_WARN("playerbots.instance", "Failed to queue bot {} for BG {} bracket {}",
+                bot->GetName(), entry.bgTypeId, entry.bracketId);
+        }
+
+        // Remove from pending queue (success or fail, we're done with this entry)
+        it = _pendingBGQueue.erase(it);
+        ++processed;
+    }
+
+    if (processed > 0 || loginsQueued > 0 || expired > 0)
+    {
+        TC_LOG_INFO("playerbots.instance",
+            "ProcessPendingBGQueues: processed={}, loginsQueued={}, botsQueued={}, expired={}, remaining={}",
+            processed, loginsQueued, botsQueued, expired, _pendingBGQueue.size());
+    }
 }
 
 } // namespace Playerbot

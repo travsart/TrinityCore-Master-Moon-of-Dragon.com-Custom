@@ -20,7 +20,9 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "SharedDefines.h"  // For TeamId enum (TEAM_ALLIANCE, TEAM_HORDE)
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -475,6 +477,27 @@ public:
         PvPBotAssignmentCallback callback
     );
 
+    // ========================================================================
+    // UPDATE / PROCESSING
+    // ========================================================================
+
+    /**
+     * @brief Update method called periodically to process pending bot queues
+     * @param diff Time since last update in ms
+     *
+     * This processes bots that have been created by JIT and need to:
+     * 1. Be logged in
+     * 2. Be queued for their respective BG after login completes
+     */
+    static void Update(uint32 diff);
+
+    /**
+     * @brief Process pending BG queue entries
+     *
+     * Checks if JIT-created bots are now logged in and queues them for BG.
+     */
+    static void ProcessPendingBGQueues();
+
 private:
     InstanceBotHooks() = delete;
     ~InstanceBotHooks() = delete;
@@ -493,6 +516,49 @@ private:
     {
         return (static_cast<uint64>(bgTypeId) << 32) | bracketId;
     }
+
+    // ========================================================================
+    // PENDING BG QUEUE - Bots waiting to login and be queued for BG
+    // ========================================================================
+
+    /**
+     * @struct PendingBGQueueEntry
+     * @brief Tracks a bot that needs to be logged in and queued for BG
+     *
+     * JIT creates bot character records, but they need to be:
+     * 1. Logged in via BotWorldSessionMgr
+     * 2. Queued for BG once they're in world
+     */
+    struct PendingBGQueueEntry
+    {
+        ObjectGuid botGuid;                         ///< Bot's character GUID
+        uint32 accountId = 0;                       ///< Bot's account ID
+        uint32 bgTypeId = 0;                        ///< Target battleground type
+        uint32 bracketId = 0;                       ///< BG bracket
+        TeamId team = TEAM_ALLIANCE;                ///< Bot's team
+        std::chrono::steady_clock::time_point createdAt;  ///< When entry was created
+        std::chrono::steady_clock::time_point loginQueuedAt;  ///< When login was queued
+        bool loginQueued = false;                   ///< Has login been queued?
+        uint32 retryCount = 0;                      ///< Number of queue attempts
+
+        bool IsExpired() const
+        {
+            auto elapsed = std::chrono::steady_clock::now() - createdAt;
+            return elapsed > std::chrono::minutes(2);  // 2 minute timeout
+        }
+
+        bool IsLoginTimedOut() const
+        {
+            if (!loginQueued) return false;
+            auto elapsed = std::chrono::steady_clock::now() - loginQueuedAt;
+            return elapsed > std::chrono::seconds(30);  // 30 second login timeout
+        }
+    };
+
+    static std::mutex _pendingBGMutex;
+    static std::vector<PendingBGQueueEntry> _pendingBGQueue;
+    static uint32 _updateAccumulator;
+    static constexpr uint32 UPDATE_INTERVAL_MS = 500;  // Check every 500ms
 };
 
 } // namespace Playerbot

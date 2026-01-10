@@ -164,6 +164,14 @@ public:
      */
     bool IsAutoCreateEnabled() const override { return _autoCreateAccounts; }
 
+    /**
+     * Ensure we have capacity to create additional accounts
+     * Dynamically increases _requiredAccounts limit if needed
+     * @param additionalNeeded Number of additional accounts we need to create
+     * @return true if capacity is now available
+     */
+    bool EnsureAccountCapacity(uint32 additionalNeeded);
+
 private:
     BotAccountMgr() = default;
     ~BotAccountMgr() = default;
