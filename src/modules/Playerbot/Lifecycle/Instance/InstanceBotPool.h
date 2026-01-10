@@ -504,9 +504,10 @@ private:
      * @param role Bot role
      * @param poolType Pool type
      * @param level Target level
+     * @param deferWarmup If true, skip immediate login attempt (ProcessWarmingRetries will handle it gradually)
      * @return Bot GUID (empty if failed)
      */
-    ObjectGuid CreatePoolBot(BotRole role, PoolType poolType, uint32 level);
+    ObjectGuid CreatePoolBot(BotRole role, PoolType poolType, uint32 level, bool deferWarmup = false);
 
     /**
      * @brief Warm up a single bot (login)

@@ -243,6 +243,7 @@ void InstanceBotPool::WarmPool()
     _warmingInProgress.store(true);
 
     TC_LOG_INFO("playerbot.pool", "Starting pool warming with level bracket distribution...");
+    TC_LOG_INFO("playerbot.pool", "Bots will be created now and logged in gradually via ProcessWarmingRetries");
 
     uint32 totalToCreate = _config.poolSize.GetTotalWarmPool();
     uint32 created = 0;
@@ -256,6 +257,8 @@ void InstanceBotPool::WarmPool()
     };
 
     // Helper lambda to create bots for a role distributed across level brackets
+    // NOTE: deferWarmup=true to prevent flooding the login system with 200 simultaneous login requests
+    // ProcessWarmingRetries will gradually log in bots at a rate the system can handle
     auto createBotsForRole = [&](BotRole role, PoolType poolType, uint32 totalCount) {
         // Distribute bots across all 4 level brackets according to config
         for (uint32 bracket = 0; bracket < 4; ++bracket)
@@ -272,7 +275,8 @@ void InstanceBotPool::WarmPool()
 
             for (uint32 i = 0; i < countForBracket; ++i)
             {
-                if (CreatePoolBot(role, poolType, level) != ObjectGuid::Empty)
+                // deferWarmup=true: Don't immediately queue login, let ProcessWarmingRetries handle it
+                if (CreatePoolBot(role, poolType, level, true /* deferWarmup */) != ObjectGuid::Empty)
                     ++created;
             }
         }
@@ -293,6 +297,7 @@ void InstanceBotPool::WarmPool()
     _warmingInProgress.store(false);
 
     TC_LOG_INFO("playerbot.pool", "Pool warming complete: created {} of {} bots across 4 level brackets", created, totalToCreate);
+    TC_LOG_INFO("playerbot.pool", "Bots are in Warming state - ProcessWarmingRetries will log them in gradually (5 bots/sec)");
     TC_LOG_INFO("playerbot.pool", "Level bracket distribution: 1-10 ({}%), 10-60 ({}%), 60-70 ({}%), 70-80 ({}%)",
         static_cast<uint32>(_config.levelConfig.bracketDistribution[0] * 100),
         static_cast<uint32>(_config.levelConfig.bracketDistribution[1] * 100),
@@ -1148,7 +1153,7 @@ void InstanceBotPool::SetOverflowNeededCallback(OverflowNeededCallback callback)
 // INTERNAL METHODS - Bot Creation
 // ============================================================================
 
-ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, PoolType poolType, uint32 level)
+ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, PoolType poolType, uint32 level, bool deferWarmup)
 {
     // Use BotCloneEngine to create an actual bot character
     Faction faction = GetFactionForPoolType(poolType);
@@ -1163,8 +1168,9 @@ ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, PoolType poolType, uint3
         return ObjectGuid::Empty;
     }
 
-    TC_LOG_INFO("playerbot.pool", "InstanceBotPool::CreatePoolBot - Created bot {} ({}), Level {}, Role {}",
-        result.botName, result.botGuid.ToString(), level, BotRoleToString(role));
+    TC_LOG_INFO("playerbot.pool", "InstanceBotPool::CreatePoolBot - Created bot {} ({}), Level {}, Role {}{}",
+        result.botName, result.botGuid.ToString(), level, BotRoleToString(role),
+        deferWarmup ? " (warmup deferred)" : "");
 
     // Create slot for the newly created bot
     InstanceBotSlot slot;
@@ -1182,12 +1188,16 @@ ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, PoolType poolType, uint3
     }
 
     // Queue the bot for login via BotWorldSessionMgr
-    // The bot will be marked Ready once login is complete
-    if (!WarmUpBot(result.botGuid))
+    // If deferWarmup is true, ProcessWarmingRetries will handle login gradually
+    // This prevents flooding the login system during pool initialization
+    if (!deferWarmup)
     {
-        TC_LOG_WARN("playerbot.pool", "InstanceBotPool::CreatePoolBot - Failed to queue bot {} for warmup",
-            result.botGuid.ToString());
-        // Still return the GUID - bot exists in database, can be warmed later
+        if (!WarmUpBot(result.botGuid))
+        {
+            TC_LOG_WARN("playerbot.pool", "InstanceBotPool::CreatePoolBot - Failed to queue bot {} for warmup",
+                result.botGuid.ToString());
+            // Still return the GUID - bot exists in database, can be warmed later
+        }
     }
 
     _statsDirty.store(true);
@@ -1356,6 +1366,10 @@ bool InstanceBotPool::AssignBot(ObjectGuid botGuid, uint32 instanceId,
 
 void InstanceBotPool::ProcessWarmingRetries()
 {
+    // RATE LIMITING: Only process a small batch per update to avoid flooding the login system
+    // The BotWorldSessionMgr can only handle so many concurrent login requests
+    constexpr uint32 MAX_WARMUP_BATCH_SIZE = 5;
+
     // Retry warmup for bots stuck in Warming state
     // This handles the async database commit delay - character might not be
     // queryable immediately after creation
@@ -1373,15 +1387,18 @@ void InstanceBotPool::ProcessWarmingRetries()
                 if (timeSinceStateChange >= std::chrono::seconds(3))
                 {
                     botsToWarm.push_back(guid);
+                    // Rate limit: only queue up to MAX_WARMUP_BATCH_SIZE bots per update
+                    if (botsToWarm.size() >= MAX_WARMUP_BATCH_SIZE)
+                        break;
                 }
             }
         }
     }
 
-    // Log how many bots need retry
+    // Log how many bots need retry (only if we have work to do)
     if (!botsToWarm.empty())
     {
-        TC_LOG_INFO("playerbot.pool", "ProcessWarmingRetries - Retrying warmup for {} bots",
+        TC_LOG_DEBUG("playerbot.pool", "ProcessWarmingRetries - Processing batch of {} bots (rate limited)",
             botsToWarm.size());
     }
 
@@ -1402,9 +1419,9 @@ void InstanceBotPool::ProcessWarmingRetries()
         }
     }
 
-    if (!botsToWarm.empty())
+    if (!botsToWarm.empty() && successCount > 0)
     {
-        TC_LOG_INFO("playerbot.pool", "ProcessWarmingRetries - Queued {}/{} bots for warmup",
+        TC_LOG_DEBUG("playerbot.pool", "ProcessWarmingRetries - Queued {}/{} bots for warmup",
             successCount, botsToWarm.size());
     }
 }
