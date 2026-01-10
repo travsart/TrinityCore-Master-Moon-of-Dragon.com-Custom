@@ -970,19 +970,27 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
             if (!shouldWaitForGroup)
             {
                 TC_LOG_DEBUG("module.playerbot.session",
-                    "Bot {} completing far teleport via HandleMoveWorldportAck() (TargetInstanceId={})",
+                    "Bot {} completing far teleport via deferred HandleMoveWorldportAck() (TargetInstanceId={})",
                     bot->GetName(), targetInstanceId);
 
-                // Complete the far teleport by calling the worldport ack handler
-                // This adds the bot to the new map
-                HandleMoveWorldportAck();
+                // ============================================================================
+                // CRITICAL FIX: Defer HandleMoveWorldportAck to main thread
+                // ============================================================================
+                // The crash at Creature::AddToWorld (unordered_map::try_emplace during rehash)
+                // occurs because HandleMoveWorldportAck() calls Map::AddPlayerToMap() which
+                // triggers grid loading and creature spawning. These Map operations are NOT
+                // thread-safe and must run on the main thread.
+                //
+                // Solution: Queue CMSG_WORLD_PORT_RESPONSE packet to deferred queue.
+                // This packet will be processed by ProcessDeferredPackets() on the main thread
+                // during World::UpdateSessions(), ensuring thread safety with Map::Update().
+                // ============================================================================
+                auto worldportPacket = ::std::make_unique<WorldPacket>(CMSG_WORLD_PORT_RESPONSE, 0);
+                QueueDeferredPacket(::std::move(worldportPacket));
 
                 TC_LOG_DEBUG("module.playerbot.session",
-                    "Bot {} far teleport completed, now IsInWorld={}, MapId={}, InstanceId={}",
-                    bot->GetName(),
-                    bot->IsInWorld(),
-                    bot->GetMapId(),
-                    bot->GetInstanceId());
+                    "Bot {} queued CMSG_WORLD_PORT_RESPONSE for main thread processing",
+                    bot->GetName());
             }
         }
 
