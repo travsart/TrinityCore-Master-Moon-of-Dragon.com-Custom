@@ -16,6 +16,7 @@
 
 #include "BotCloneEngine.h"
 #include "BotTemplateRepository.h"
+#include "Account/BotAccountMgr.h"
 #include "Config/PlayerbotConfig.h"
 #include "Database/PlayerbotDatabase.h"
 #include "DatabaseEnv.h"
@@ -76,18 +77,10 @@ bool BotCloneEngine::Initialize()
     // Load name pool
     LoadNamePool();
 
-    // Initialize account pool
-    _accountPoolStart = sPlayerbotConfig->GetInt("Playerbot.Instance.Clone.AccountPoolStart", 100000);
-    _accountPoolSize = sPlayerbotConfig->GetInt("Playerbot.Instance.Clone.AccountPoolSize", 1000);
-
-    // Fill available accounts queue
-    for (uint32 i = 0; i < _accountPoolSize; ++i)
-    {
-        _availableAccounts.push(_accountPoolStart + i);
-    }
-
-    TC_LOG_INFO("playerbot.clone", "BotCloneEngine::Initialize - Account pool: {} accounts starting at {}",
-        _accountPoolSize, _accountPoolStart);
+    // NOTE: Account management is now delegated to BotAccountMgr
+    // AllocateAccount() will use sBotAccountMgr->AcquireAccount() to get real accounts
+    // that exist in the auth database, ensuring bots can actually login
+    TC_LOG_INFO("playerbot.clone", "BotCloneEngine::Initialize - Using BotAccountMgr for account allocation");
 
     // Initialize statistics
     _hourStart = std::chrono::system_clock::now();
@@ -129,12 +122,7 @@ void BotCloneEngine::Shutdown()
             _asyncBatchQueue.pop();
     }
 
-    // Clear account pool
-    {
-        std::lock_guard<std::mutex> lock(_accountMutex);
-        while (!_availableAccounts.empty())
-            _availableAccounts.pop();
-    }
+    // NOTE: Account management is delegated to BotAccountMgr, no cleanup needed here
 
     _initialized.store(false);
     TC_LOG_INFO("playerbot.clone", "BotCloneEngine::Shutdown - Shutdown complete");
@@ -420,11 +408,9 @@ BotCloneEngine::Statistics BotCloneEngine::GetStatistics() const
     stats.peakCreationTime = _peakCreationTime;
     stats.pendingAsyncOperations = GetPendingCloneCount();
 
-    {
-        std::lock_guard<std::mutex> lock(_accountMutex);
-        stats.accountPoolSize = _accountPoolSize;
-        stats.availableAccounts = static_cast<uint32>(_availableAccounts.size());
-    }
+    // Get account info from BotAccountMgr
+    stats.accountPoolSize = sBotAccountMgr->GetTotalAccountCount();
+    stats.availableAccounts = sBotAccountMgr->GetPoolSize();
 
     return stats;
 }
@@ -457,17 +443,18 @@ ObjectGuid BotCloneEngine::AllocateGuid()
 
 uint32 BotCloneEngine::AllocateAccount()
 {
-    std::lock_guard<std::mutex> lock(_accountMutex);
+    // Use BotAccountMgr for real accounts instead of fake pool
+    // This ensures accounts exist in the auth database and can be used for login
+    uint32 accountId = sBotAccountMgr->AcquireAccount();
 
-    if (_availableAccounts.empty())
+    if (accountId == 0)
     {
-        TC_LOG_ERROR("playerbot.clone", "BotCloneEngine::AllocateAccount - Account pool exhausted!");
+        TC_LOG_ERROR("playerbot.clone", "BotCloneEngine::AllocateAccount - Failed to acquire account from BotAccountMgr!");
         return 0;
     }
 
-    uint32 accountId = _availableAccounts.front();
-    _availableAccounts.pop();
-
+    TC_LOG_DEBUG("playerbot.clone", "BotCloneEngine::AllocateAccount - Acquired account {} from BotAccountMgr",
+        accountId);
     return accountId;
 }
 
@@ -476,8 +463,10 @@ void BotCloneEngine::ReleaseAccount(uint32 accountId)
     if (accountId == 0)
         return;
 
-    std::lock_guard<std::mutex> lock(_accountMutex);
-    _availableAccounts.push(accountId);
+    // Return account to BotAccountMgr pool
+    sBotAccountMgr->ReleaseAccount(accountId);
+    TC_LOG_DEBUG("playerbot.clone", "BotCloneEngine::ReleaseAccount - Released account {} to BotAccountMgr",
+        accountId);
 }
 
 std::string BotCloneEngine::GenerateUniqueName(uint8 race, uint8 gender)

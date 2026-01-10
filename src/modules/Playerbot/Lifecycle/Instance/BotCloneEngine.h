@@ -463,13 +463,11 @@ private:
     mutable std::mutex _nameMutex;
 
     // ========================================================================
-    // DATA MEMBERS - Account Pool
+    // DATA MEMBERS - Account Pool (Delegated to BotAccountMgr)
     // ========================================================================
-
-    std::queue<uint32> _availableAccounts;
-    mutable std::mutex _accountMutex;
-    uint32 _accountPoolStart = 0;
-    uint32 _accountPoolSize = 0;
+    // NOTE: Account management is now handled by BotAccountMgr
+    // AllocateAccount() uses sBotAccountMgr->AcquireAccount()
+    // ReleaseAccount() uses sBotAccountMgr->ReleaseAccount()
 
     // ========================================================================
     // DATA MEMBERS - Statistics
