@@ -620,29 +620,11 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
     // Update solo behaviors (questing, gathering, autonomous combat, etc.)
     // Only runs when bot is in solo play mode (not in group or following)
 
-    // DIAGNOSTIC: Log why UpdateSoloBehaviors might not be running
-    static uint32 lastSoloBehaviorLog = 0;
-    uint32 soloCheckTime = GameTime::GetGameTimeMS();
-    if (soloCheckTime - lastSoloBehaviorLog > 5000) // Every 5 seconds
-    {
-        TC_LOG_ERROR("module.playerbot", "🔍 UpdateSoloBehaviors check: Bot {} - IsInCombat()={}, IsFollowing()={}, _aiState={}, InGroup={}",_bot->GetName(),
-                     IsInCombat(),
-                     IsFollowing(),
-                     static_cast<uint32>(_aiState),
-                     _bot->GetGroup() != nullptr);lastSoloBehaviorLog = soloCheckTime;
-    }
-
+    // Solo behaviors update (questing, gathering, autonomous activities)
     if (!IsInCombat() && !IsFollowing())
     {
-        TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateSoloBehaviors for bot {}", _bot->GetName());
+        TC_LOG_TRACE("module.playerbot", "UpdateSoloBehaviors for bot {}", _bot->GetName());
         UpdateSoloBehaviors(diff);
-    }
-    else
-    {
-        if (soloCheckTime - lastSoloBehaviorLog < 100) // Only log once per 5-second window
-        {
-            TC_LOG_ERROR("module.playerbot", "⚠️ SKIPPING UpdateSoloBehaviors for bot {} - IsInCombat={}, IsFollowing={}",_bot->GetName(), IsInCombat(), IsFollowing());
-        }
     }
 
     // ========================================================================

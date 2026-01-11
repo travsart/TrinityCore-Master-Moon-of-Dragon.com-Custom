@@ -86,93 +86,59 @@ void QuestStrategy::InitializeValues()
 bool QuestStrategy::IsActive(BotAI* ai) const
 {
     bool activeFlag = _active.load();
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 QuestStrategy::IsActive ENTRY: ai={}, _active={}",
-                 (void*)ai, activeFlag);
 
     if (!ai || !ai->GetBot())
-    {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ QuestStrategy::IsActive: NULL check failed, returning false");
         return false;
-    }
 
     Player* bot = ai->GetBot();
     // NOT active during combat (combat takes priority)
     if (bot->IsInCombat())
-    {
-        TC_LOG_ERROR("module.playerbot.quest", "⚔️ QuestStrategy::IsActive: Bot {} in combat, returning false", bot->GetName());
         return false;
-    }
 
     // Active for ALL levels - questing is always valuable
     // - Below max level: Quest for XP (high priority)
     // - At max level: Quest for gold, reputation, achievements (lower priority)
-    TC_LOG_ERROR("module.playerbot.quest", "📋 QuestStrategy::IsActive: Bot {} - _active={}, returning {}",
-                 bot->GetName(), activeFlag, activeFlag);
     return activeFlag;
 }
 
 float QuestStrategy::GetRelevance(BotAI* ai) const
 {
-    // CRITICAL DEBUG: Force ERROR level logging to see this!
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 QuestStrategy::GetRelevance ENTRY: ai={}, ai->GetBot()={}",
-                 (void*)ai, ai ? (void*)ai->GetBot() : nullptr);
-
     if (!ai || !ai->GetBot())
-    {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ QuestStrategy::GetRelevance: NULL check failed, returning 0.0f");
         return 0.0f;
-    }
 
     Player* bot = ai->GetBot();
     // Combat has higher priority - return 0 if in combat
     if (bot->IsInCombat())
-    {
-        TC_LOG_ERROR("module.playerbot.quest", "⚔️ QuestStrategy::GetRelevance: Bot {} in combat, returning 0.0f", bot->GetName());
         return 0.0f;
-    }
 
     bool isMaxLevel = (bot->GetLevel() >= sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL));
     bool hasObjectives = HasActiveObjectives(ai);
-
-    TC_LOG_ERROR("module.playerbot.quest", "📊 QuestStrategy::GetRelevance: Bot {} - Level={}, MaxLevel={}, hasObjectives={}",
-                 bot->GetName(), bot->GetLevel(), isMaxLevel, hasObjectives);
 
     // HIGH PRIORITY: Has active quest objectives to complete
     if (hasObjectives)
     {
         // Pre-max level: Very high priority (quest for XP)
         // Max level: Medium-high priority (quest for gold/rep)
-        float relevance = isMaxLevel ? 60.0f : 70.0f;
-        TC_LOG_ERROR("module.playerbot.quest", "✅ QuestStrategy::GetRelevance: Bot {} has objectives, returning {:.1f}",
-                     bot->GetName(), relevance);
-        return relevance;
+        return isMaxLevel ? 60.0f : 70.0f;
     }
 
     // MEDIUM/LOW PRIORITY: No active quests - search for quest givers
-    float relevance;
     if (isMaxLevel)
     {
         // Max level: Lower priority (quests are optional for gold/rep)
-        relevance = 30.0f; // Lower than loot=60, solo=10-50
+        return 30.0f; // Lower than loot=60, solo=10-50
     }
     else
     {
         // Pre-max level: Medium-high priority (actively seek quests to level up)
-        relevance = 50.0f; // Higher than solo, actively search for quests
+        return 50.0f; // Higher than solo, actively search for quests
     }
-
-    TC_LOG_ERROR("module.playerbot.quest", "📍 QuestStrategy::GetRelevance: Bot {} (Level {}, MaxLevel={}) no objectives, returning {:.1f}",
-                 bot->GetName(), bot->GetLevel(), isMaxLevel, relevance);
-    return relevance;
 }
 
 void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 {
     if (!ai || !ai->GetBot())
-    {
-        TC_LOG_ERROR("module.playerbot.quest", "UpdateBehavior: NULL ai or bot");
         return;
-    }
 
     Player* bot = ai->GetBot();
 
@@ -182,26 +148,9 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     if (!bot->IsInWorld())
         return;
 
-    TC_LOG_ERROR("module.playerbot.quest", "UpdateBehavior: Bot {} starting quest behavior update", bot->GetName());
-
-    // DIAGNOSTIC: Log quest status for all quests in log
-    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
-    {
-        uint32 qId = bot->GetQuestSlotQuestId(slot);
-        if (qId != 0)
-        {
-            QuestStatus qStatus = bot->GetQuestStatus(qId);
-            TC_LOG_ERROR("module.playerbot.quest", "📋 QUEST_DIAG: Bot {} Slot {} Quest {} Status {}",
-                         bot->GetName(), slot, qId, static_cast<uint32>(qStatus));
-        }
-    }
-
     // Don't interrupt combat
     if (bot->IsInCombat())
-    {
-        TC_LOG_ERROR("module.playerbot.quest", "⚔️ UpdateBehavior: Bot {} in combat, skipping", bot->GetName());
         return;
-    }
 
     // ========================================================================
     // PERSISTENT TRAVEL MANAGER UPDATE

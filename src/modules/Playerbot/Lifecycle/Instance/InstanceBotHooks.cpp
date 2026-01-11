@@ -1039,6 +1039,18 @@ void InstanceBotHooks::ProcessPendingBGQueues()
         // Step 1: If login not yet queued, queue login
         if (!entry.loginQueued)
         {
+            // CRITICAL: Wait for database commit before attempting login
+            // JIT bot creation uses async CommitTransaction, so we must wait
+            // for the transaction to be applied before querying character data
+            constexpr auto DB_COMMIT_DELAY = std::chrono::milliseconds(500);
+            auto timeSinceCreation = std::chrono::steady_clock::now() - entry.createdAt;
+            if (timeSinceCreation < DB_COMMIT_DELAY)
+            {
+                // Not enough time has passed for DB commit, skip for now
+                ++it;
+                continue;
+            }
+
             // Check if BotWorldSessionMgr is available
             if (!sBotWorldSessionMgr || !sBotWorldSessionMgr->IsEnabled())
             {

@@ -1767,10 +1767,52 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
         // Use the async query holder to load character data
         // This uses the proper async connection pool, preventing the assertion failure
+        // DEBUG: Log session info before LoadFromDB - the account mismatch check is at line 17874 of Player.cpp
+        TC_LOG_INFO("module.playerbot.session", "LoadFromDB: Attempting load for {}, session accountId={}, holder accountId={}",
+                    characterGuid.ToString(), GetAccountId(), holder.GetAccountId());
+
+        // DEBUG: Check critical query results before LoadFromDB
+        // PLAYER_LOGIN_QUERY_LOAD_FROM = 0 - Main character data
+        // PLAYER_LOGIN_QUERY_LOAD_BANNED = 6 - Ban check
+        // PLAYER_LOGIN_QUERY_LOAD_HOME_BIND = 7 - Home bind position
+        // PLAYER_LOGIN_QUERY_LOAD_CUSTOMIZATIONS = 1 - Customization data
+        auto mainResult = holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_FROM);
+        auto banResult = holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_BANNED);
+        auto homeBindResult = holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_HOME_BIND);
+        auto customizationsResult = holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_CUSTOMIZATIONS);
+
+        TC_LOG_INFO("module.playerbot.session", "LoadFromDB: Query results - LOAD_FROM={}, BANNED={}, HOME_BIND={}, CUSTOMIZATIONS={}",
+                    mainResult ? "valid" : "NULL",
+                    banResult ? "HAS_BAN" : "not_banned",
+                    homeBindResult ? "valid" : "NULL",
+                    customizationsResult ? "valid" : "NULL");
+
+        // If main result is null, character doesn't exist in database
+        if (!mainResult)
+        {
+            TC_LOG_ERROR("module.playerbot.session", "LoadFromDB: CRITICAL - PLAYER_LOGIN_QUERY_LOAD_FROM returned NULL for {}! Character may not exist.",
+                        characterGuid.ToString());
+        }
+
+        // If banned, login will fail
+        if (banResult)
+        {
+            TC_LOG_ERROR("module.playerbot.session", "LoadFromDB: Character {} is BANNED - login will fail",
+                        characterGuid.ToString());
+        }
+
+        // If no home bind, first login flag may be needed
+        if (!homeBindResult)
+        {
+            TC_LOG_WARN("module.playerbot.session", "LoadFromDB: No home bind for {} - may cause issues if not AT_LOGIN_FIRST",
+                       characterGuid.ToString());
+        }
+
     if (!pCurrChar->LoadFromDB(characterGuid, holder))
         {
             delete pCurrChar;
-            TC_LOG_ERROR("module.playerbot.session", "Failed to load bot character {} from database", characterGuid.ToString());
+            TC_LOG_ERROR("module.playerbot.session", "Failed to load bot character {} from database - LoadFromDB returned false",
+                        characterGuid.ToString());
             _loginState.store(LoginState::LOGIN_FAILED);
             m_playerLoading.Clear();
             return;

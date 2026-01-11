@@ -162,7 +162,7 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         ? (bot->GetPower(POWER_MANA) * 100.0f / bot->GetMaxPower(POWER_MANA))
         : 100.0f;
 
-    TC_LOG_ERROR("module.playerbot.strategy", "RestStrategy::UpdateBehavior: Bot {} health={:.1f}%, mana={:.1f}%, needsFood={}, needsDrink={}",
+    TC_LOG_TRACE("module.playerbot.strategy", "RestStrategy::UpdateBehavior: Bot {} health={:.1f}%, mana={:.1f}%, needsFood={}, needsDrink={}",
                  bot->GetName(), healthPct, manaPct, NeedsFood(ai), NeedsDrink(ai));
 
     uint32 currentTime = GameTime::GetGameTimeMS();
