@@ -15,6 +15,7 @@
 #include "Session/BotWorldSessionMgr.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
+#include "Player.h"
 #include "Timer.h"
 #include "World.h"
 #include <algorithm>
@@ -95,6 +96,26 @@ void InstanceBotPool::Shutdown()
     if (_config.behavior.persistToDatabase)
     {
         SyncToDatabase();
+    }
+
+    // Delete all pool bot characters from database to prevent orphaned records
+    // Pool bots are created fresh each startup, so we must clean them up on shutdown
+    {
+        std::shared_lock lock(_slotsMutex);
+        uint32 deletedCount = 0;
+
+        TC_LOG_INFO("playerbot.pool", "Deleting {} pool bot characters from database...", _slots.size());
+
+        for (auto const& [guid, slot] : _slots)
+        {
+            // Use TrinityCore's proper character deletion to clean up all related tables
+            // deleteFinally=true ensures immediate deletion without respecting CharDelete.KeepDays
+            // updateRealmChars=false since these are bot accounts
+            Player::DeleteFromDB(guid, slot.accountId, false /* updateRealmChars */, true /* deleteFinally */);
+            ++deletedCount;
+        }
+
+        TC_LOG_INFO("playerbot.pool", "Deleted {} pool bot characters", deletedCount);
     }
 
     // Clear all slots
