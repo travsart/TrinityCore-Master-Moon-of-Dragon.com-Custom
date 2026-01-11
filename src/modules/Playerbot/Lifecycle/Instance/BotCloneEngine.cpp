@@ -20,11 +20,14 @@
 #include "Config/PlayerbotConfig.h"
 #include "Database/PlayerbotDatabase.h"
 #include "DatabaseEnv.h"
+#include "DB2Stores.h"
 #include "GameTime.h"
 #include "Item.h"
 #include "Log.h"
 #include "ObjectMgr.h"
 #include "Player.h"
+#include "TerrainMgr.h"
+#include "PhasingHandler.h"
 #include "World.h"
 #include "WorldSession.h"
 #include "StringFormat.h"
@@ -750,11 +753,82 @@ bool BotCloneEngine::CreatePlayerObject(
 
     trans->Append(stmt);
 
+    // ========================================================================
+    // FIX (2026-01-11): Add character_homebind record
+    // Required for Player::_LoadHomeBind() to succeed
+    // ========================================================================
+    {
+        // Calculate zone ID from starting position
+        WorldLocation homebindLoc(mapId, posX, posY, posZ, orientation);
+        uint16 zoneId = sTerrainMgr.GetAreaId(PhasingHandler::GetEmptyPhaseShift(), homebindLoc);
+
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_PLAYER_HOMEBIND);
+        stmt->setUInt64(0, guid.GetCounter());                       // guid
+        stmt->setUInt16(1, static_cast<uint16>(mapId));              // mapId
+        stmt->setUInt16(2, zoneId);                                  // zoneId
+        stmt->setFloat(3, posX);                                     // posX
+        stmt->setFloat(4, posY);                                     // posY
+        stmt->setFloat(5, posZ);                                     // posZ
+        stmt->setFloat(6, orientation);                              // orientation
+        trans->Append(stmt);
+
+        TC_LOG_DEBUG("playerbot.clone", "BotCloneEngine::CreatePlayerObject - "
+            "Added homebind: Map={}, Zone={}, Pos=({:.1f}, {:.1f}, {:.1f})",
+            mapId, zoneId, posX, posY, posZ);
+    }
+
+    // ========================================================================
+    // FIX (2026-01-11): Add character_customizations records
+    // Required for ValidateAppearance() during Player::LoadFromDB()
+    // ========================================================================
+    {
+        // Get customization options for this race/gender from DB2
+        std::vector<ChrCustomizationOptionEntry const*> const* options =
+            sDB2Manager.GetCustomiztionOptions(race, gender);
+
+        uint32 customizationCount = 0;
+
+        if (options && !options->empty())
+        {
+            // For each customization option, pick the first valid choice
+            for (ChrCustomizationOptionEntry const* option : *options)
+            {
+                if (!option)
+                    continue;
+
+                // Get available choices for this option
+                std::vector<ChrCustomizationChoiceEntry const*> const* choices =
+                    sDB2Manager.GetCustomiztionChoices(option->ID);
+
+                if (!choices || choices->empty())
+                    continue;
+
+                // Pick the first available choice (index 0 is typically default)
+                ChrCustomizationChoiceEntry const* choice = choices->front();
+                if (!choice)
+                    continue;
+
+                // Insert customization record
+                stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHARACTER_CUSTOMIZATION);
+                stmt->setUInt64(0, guid.GetCounter());               // guid
+                stmt->setUInt32(1, option->ID);                      // chrCustomizationOptionID
+                stmt->setUInt32(2, choice->ID);                      // chrCustomizationChoiceID
+                trans->Append(stmt);
+
+                ++customizationCount;
+            }
+        }
+
+        TC_LOG_DEBUG("playerbot.clone", "BotCloneEngine::CreatePlayerObject - "
+            "Added {} customizations for race {} gender {}",
+            customizationCount, race, gender);
+    }
+
     // Async commit - account ID is passed through CloneResult, not queried from DB
     CharacterDatabase.CommitTransaction(trans);
 
     TC_LOG_DEBUG("playerbot.clone", "BotCloneEngine::CreatePlayerObject - "
-        "Character record created with {} parameters", index);
+        "Character record created with {} parameters, homebind and customizations added", index);
 
     return true;
 }
