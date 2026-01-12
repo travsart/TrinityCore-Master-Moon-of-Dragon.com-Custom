@@ -616,6 +616,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotTemplateRepository.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotCloneEngine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotCloneEngine.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotPostLoginConfigurator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotPostLoginConfigurator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/JITBotFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/JITBotFactory.h
 
@@ -824,6 +826,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestPickup.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicSpawnHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicSpawnHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestHubDatabase.cpp
@@ -1428,6 +1432,8 @@ source_group("Economy" FILES
 source_group("Quest" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicSpawnHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicSpawnHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestPickup.cpp

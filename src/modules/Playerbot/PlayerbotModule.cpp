@@ -36,6 +36,7 @@
 #include "Lifecycle/Instance/JITBotFactory.h"
 #include "Lifecycle/Instance/BotTemplateRepository.h"
 #include "Lifecycle/Instance/BotCloneEngine.h"
+#include "Lifecycle/Instance/BotPostLoginConfigurator.h"
 
 #include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
@@ -400,6 +401,17 @@ bool PlayerbotModule::Initialize()
         TC_LOG_INFO("server.loading", "Bot Clone Engine initialized successfully");
     }
 
+    // Initialize Bot Post-Login Configurator (applies level/gear/talents after bot enters world)
+    TC_LOG_INFO("server.loading", "Initializing Bot Post-Login Configurator...");
+    if (!sBotPostLoginConfigurator->Initialize())
+    {
+        TC_LOG_WARN("server.loading", "Bot Post-Login Configurator initialization failed - JIT bots may spawn with incorrect setup");
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "Bot Post-Login Configurator initialized successfully");
+    }
+
     // Initialize Instance Bot Pool (warm pool of pre-logged bots)
     TC_LOG_INFO("server.loading", "Initializing Instance Bot Pool...");
     if (!sInstanceBotPool->Initialize())
@@ -514,6 +526,11 @@ void PlayerbotModule::Shutdown()
     TC_LOG_INFO("server.loading", "Shutting down Bot Clone Engine...");
     sBotCloneEngine->Shutdown();
     TC_LOG_INFO("server.loading", "Bot Clone Engine shutdown complete");
+
+    // Shutdown Bot Post-Login Configurator (clear pending configs)
+    TC_LOG_INFO("server.loading", "Shutting down Bot Post-Login Configurator...");
+    sBotPostLoginConfigurator->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Post-Login Configurator shutdown complete");
 
     // Shutdown Bot Template Repository
     TC_LOG_INFO("server.loading", "Shutting down Bot Template Repository...");

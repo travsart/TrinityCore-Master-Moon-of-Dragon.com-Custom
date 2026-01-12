@@ -57,6 +57,7 @@
 #include "SharedDefines.h" // For MIN_SPECIALIZATION_LEVEL, LOCALE_enUS (auto-spec fix)
 #include "LFGMgr.h"        // For sLFGMgr->UpdateProposal (LFG auto-accept)
 #include "LFGPacketsCommon.h" // For RideTicket parsing (LFG auto-accept)
+#include "Lifecycle/Instance/BotPostLoginConfigurator.h"  // Post-login configuration for JIT bots
 
 namespace Playerbot {
 
@@ -1950,6 +1951,30 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         TC_LOG_INFO("module.playerbot.session", " Bot {} phase initialization complete (TrinityCore pattern + packet simulation) - Phases: [{}]",
             pCurrChar->GetName(), botPhases);
         TC_LOG_INFO("module.playerbot.session", "Bot player {} successfully added to world", pCurrChar->GetName());
+
+        // ============================================================================
+        // POST-LOGIN CONFIGURATION (JIT Bot Setup)
+        // ============================================================================
+        // For JIT-created bots, apply pending configuration (level, spec, talents, gear)
+        // using proper Player APIs now that the bot is fully in the world.
+        // This must happen BEFORE BotAI creation so the bot has correct stats/abilities.
+        // ============================================================================
+        if (sBotPostLoginConfigurator->HasPendingConfiguration(characterGuid))
+        {
+            TC_LOG_INFO("module.playerbot.session", "Bot {} has pending JIT configuration - applying post-login setup",
+                pCurrChar->GetName());
+
+            if (sBotPostLoginConfigurator->ApplyPendingConfiguration(pCurrChar))
+            {
+                TC_LOG_INFO("module.playerbot.session", "Bot {} post-login configuration applied successfully (Level={}, GS={})",
+                    pCurrChar->GetName(), pCurrChar->GetLevel(), 0); // TODO: Get actual gear score
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.session", "Bot {} post-login configuration FAILED - bot may have incomplete setup",
+                    pCurrChar->GetName());
+            }
+        }
 
         // Create and assign BotAI to take control of the character
     if (GetPlayer())
