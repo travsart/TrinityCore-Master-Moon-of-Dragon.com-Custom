@@ -1270,6 +1270,27 @@ namespace TransportDB
             conn.requiresLevel = false;
             conn.minLevel = 0;
             connections.push_back(conn);
+
+            // Stormwind -> Exodar (portal in Stormwind portal room - added Cataclysm+)
+            conn.connectionId = nextId++;
+            conn.name = "Stormwind to Exodar Portal";
+            conn.departureMapId = MAP_EASTERN_KINGDOMS;
+            conn.departurePosition.Relocate(-8838.0f, 626.0f, 94.0f);     // Stormwind portal room
+            conn.arrivalMapId = MAP_OUTLAND;  // Exodar shares Outland map ID
+            conn.arrivalPosition.Relocate(-4014.0f, -11897.0f, -1.3f);    // Exodar
+            conn.allianceOnly = true;
+            conn.requiresLevel = false;
+            conn.minLevel = 0;
+            connections.push_back(conn);
+
+            // Ironforge -> Exodar (portal in Ironforge - added Cataclysm+)
+            conn.connectionId = nextId++;
+            conn.name = "Ironforge to Exodar Portal";
+            conn.departureMapId = MAP_EASTERN_KINGDOMS;
+            conn.departurePosition.Relocate(-4613.0f, -915.0f, 501.0f);   // Ironforge (Mystic Ward)
+            conn.arrivalMapId = MAP_OUTLAND;  // Exodar shares Outland map ID
+            conn.arrivalPosition.Relocate(-4014.0f, -11897.0f, -1.3f);    // Exodar
+            connections.push_back(conn);
         }
 
         // ====================================================================
@@ -1546,9 +1567,83 @@ TravelRouteManager::~TravelRouteManager()
 
 void TravelRouteManager::InitializeTransportConnections()
 {
+    // Step 1: Load hardcoded connections (ships, zeppelins, known portals)
     TransportDB::InitializeConnections(s_transportConnections);
+    uint32 hardcodedCount = static_cast<uint32>(s_transportConnections.size());
 
-    // Build lookup indices
+    // Step 2: Supplement with database-driven portal connections from PortalDatabase
+    // This ensures we pick up any portals that exist in the database but weren't hardcoded
+    PortalDatabase& portalDb = PortalDatabase::Instance();
+    if (portalDb.IsInitialized())
+    {
+        uint32 dbPortalCount = 0;
+        uint32 nextId = static_cast<uint32>(s_transportConnections.size()) + 1000; // Offset to avoid ID conflicts
+
+        // Get all portals from the database
+        for (uint32 mapId = 0; mapId <= 2600; ++mapId) // Check all map IDs
+        {
+            auto portalsOnMap = portalDb.GetPortalsOnMap(mapId);
+            for (PortalInfo const* portal : portalsOnMap)
+            {
+                if (!portal || portal->destinationMapId == 0)
+                    continue;
+
+                // Skip if same source and destination map (not cross-map)
+                if (portal->sourceMapId == portal->destinationMapId)
+                    continue;
+
+                // Check if we already have this connection
+                bool alreadyExists = false;
+                for (auto const& existing : s_transportConnections)
+                {
+                    if (existing.departureMapId == portal->sourceMapId &&
+                        existing.arrivalMapId == portal->destinationMapId)
+                    {
+                        // Check if positions are close (within 100 yards)
+                        float dist = existing.departurePosition.GetExactDist(portal->sourcePosition);
+                        if (dist < 100.0f)
+                        {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (alreadyExists)
+                    continue;
+
+                // Create new connection from database portal
+                TransportConnection conn;
+                conn.connectionId = nextId++;
+                conn.type = TransportType::PORTAL;
+                conn.name = portal->name;
+                conn.departureMapId = portal->sourceMapId;
+                conn.departurePosition = portal->sourcePosition;
+                conn.arrivalMapId = portal->destinationMapId;
+                conn.arrivalPosition = portal->destinationPosition;
+                conn.waitTimeSeconds = 0;
+                conn.travelTimeSeconds = 5;
+                conn.allianceOnly = (portal->faction == PortalFaction::ALLIANCE);
+                conn.hordeOnly = (portal->faction == PortalFaction::HORDE);
+                conn.requiresLevel = (portal->minLevel > 0);
+                conn.minLevel = portal->minLevel;
+
+                s_transportConnections.push_back(conn);
+                ++dbPortalCount;
+            }
+        }
+
+        TC_LOG_INFO("module.playerbot.travel",
+            "TravelRouteManager: Added {} portal connections from database (total: {} hardcoded + {} from DB)",
+            dbPortalCount, hardcodedCount, dbPortalCount);
+    }
+    else
+    {
+        TC_LOG_WARN("module.playerbot.travel",
+            "TravelRouteManager: PortalDatabase not initialized - using only hardcoded connections");
+    }
+
+    // Step 3: Build lookup indices
     s_connectionsByDepartureMap.clear();
     s_connectionsByArrivalMap.clear();
     s_mapConnectivityGraph.clear();
@@ -1563,8 +1658,8 @@ void TravelRouteManager::InitializeTransportConnections()
         s_mapConnectivityGraph[conn.departureMapId].emplace_back(conn.arrivalMapId, &conn);
     }
 
-    TC_LOG_INFO("module.playerbot.travel", "TravelRouteManager: Built connectivity graph for {} maps",
-                s_mapConnectivityGraph.size());
+    TC_LOG_INFO("module.playerbot.travel", "TravelRouteManager: Built connectivity graph for {} maps with {} total connections",
+                s_mapConnectivityGraph.size(), s_transportConnections.size());
 }
 
 // ============================================================================
@@ -3295,9 +3390,14 @@ bool TravelRouteManager::CanReachMap(uint32 fromMapId, uint32 toMapId) const
     if (fromMapId == toMapId)
         return true;
 
+    TC_LOG_DEBUG("module.playerbot.travel", "CanReachMap: Checking route from MAP {} to MAP {} for {}",
+                 fromMapId, toMapId, m_bot ? m_bot->GetName() : "NULL");
+
     // BFS to check reachability
     std::queue<uint32> bfsQueue;
     std::unordered_set<uint32> visited;
+    uint32 connectionsChecked = 0;
+    uint32 connectionsRejected = 0;
 
     bfsQueue.push(fromMapId);
     visited.insert(fromMapId);
@@ -3309,21 +3409,42 @@ bool TravelRouteManager::CanReachMap(uint32 fromMapId, uint32 toMapId) const
 
         auto it = s_mapConnectivityGraph.find(currentMap);
         if (it == s_mapConnectivityGraph.end())
+        {
+            TC_LOG_DEBUG("module.playerbot.travel", "CanReachMap: No connections from MAP {}", currentMap);
             continue;
+        }
 
         for (auto const& [neighborMap, conn] : it->second)
         {
-            if (neighborMap == toMapId)
-                return true;
+            connectionsChecked++;
 
-            if (visited.find(neighborMap) == visited.end() && CanUseConnection(conn))
+            // CRITICAL FIX: Check if bot can use this connection BEFORE accepting it
+            if (!CanUseConnection(conn))
+            {
+                connectionsRejected++;
+                TC_LOG_DEBUG("module.playerbot.travel", "CanReachMap: Rejected '{}' (MAP {} -> MAP {}): bot cannot use (faction/level)",
+                             conn->name, currentMap, neighborMap);
+                continue;
+            }
+
+            if (neighborMap == toMapId)
+            {
+                TC_LOG_DEBUG("module.playerbot.travel", "CanReachMap: Found route via '{}' - {} connections checked, {} rejected",
+                             conn->name, connectionsChecked, connectionsRejected);
+                return true;
+            }
+
+            if (visited.find(neighborMap) == visited.end())
             {
                 visited.insert(neighborMap);
                 bfsQueue.push(neighborMap);
+                TC_LOG_DEBUG("module.playerbot.travel", "CanReachMap: Added MAP {} via '{}'", neighborMap, conn->name);
             }
         }
     }
 
+    TC_LOG_WARN("module.playerbot.travel", "CanReachMap: No route from MAP {} to MAP {} for {} - {} connections checked, {} rejected",
+                fromMapId, toMapId, m_bot ? m_bot->GetName() : "NULL", connectionsChecked, connectionsRejected);
     return false;
 }
 
