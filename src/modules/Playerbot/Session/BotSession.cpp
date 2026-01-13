@@ -1959,6 +1959,11 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // using proper Player APIs now that the bot is fully in the world.
         // This must happen BEFORE BotAI creation so the bot has correct stats/abilities.
         // ============================================================================
+
+        // DIAGNOSTIC: Log bot state BEFORE config check
+        TC_LOG_INFO("module.playerbot.session", "JIT CONFIG CHECK: Bot {} (GUID={}) PRE-CONFIG state: Level={}, Class={}, Race={}",
+            pCurrChar->GetName(), characterGuid.ToString(), pCurrChar->GetLevel(), pCurrChar->GetClass(), pCurrChar->GetRace());
+
         if (sBotPostLoginConfigurator->HasPendingConfiguration(characterGuid))
         {
             TC_LOG_INFO("module.playerbot.session", "Bot {} has pending JIT configuration - applying post-login setup",
@@ -1974,6 +1979,12 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                 TC_LOG_ERROR("module.playerbot.session", "Bot {} post-login configuration FAILED - bot may have incomplete setup",
                     pCurrChar->GetName());
             }
+        }
+        else
+        {
+            // No pending config found - this is normal for regular bots, but for JIT bots it's a problem
+            TC_LOG_WARN("module.playerbot.session", "JIT CONFIG CHECK: Bot {} (GUID={}) has NO PENDING CONFIG - Level stays at {}",
+                pCurrChar->GetName(), characterGuid.ToString(), pCurrChar->GetLevel());
         }
 
         // Create and assign BotAI to take control of the character

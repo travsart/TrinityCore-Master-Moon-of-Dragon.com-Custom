@@ -1048,10 +1048,7 @@ void InstanceBotHooks::ProcessPendingBGQueues()
             // CRITICAL: Wait for database commit before attempting login
             // JIT bot creation uses async CommitTransaction, so we must wait
             // for the transaction to be applied before querying character data
-            // RELIABILITY FIX: Reduced from 500ms to 150ms - most DB operations complete in <100ms
-            // The previous 500ms delay combined with polling intervals caused cascading delays
-            // that resulted in BG needing 2 queue starts before bots were ready
-            constexpr auto DB_COMMIT_DELAY = std::chrono::milliseconds(150);
+            constexpr auto DB_COMMIT_DELAY = std::chrono::milliseconds(500);
             auto timeSinceCreation = std::chrono::steady_clock::now() - entry.createdAt;
             if (timeSinceCreation < DB_COMMIT_DELAY)
             {
@@ -1124,7 +1121,27 @@ void InstanceBotHooks::ProcessPendingBGQueues()
             continue;
         }
 
-        // Step 4: Bot is logged in - queue for BG!
+        // Step 3.5: Mark login as completed if this is first time we see the bot in world
+        if (!entry.loginCompleted)
+        {
+            entry.loginCompleted = true;
+            entry.loginCompletedAt = std::chrono::steady_clock::now();
+            TC_LOG_DEBUG("playerbots.instance", "Bot {} appeared in world, starting stabilization delay",
+                entry.botGuid.ToString());
+            ++it;
+            continue;
+        }
+
+        // Step 3.6: Wait for stabilization delay before queueing
+        // This ensures bot AI, strategies, and session state are fully initialized
+        if (!entry.IsReadyForBGQueue())
+        {
+            // Still stabilizing, check next iteration
+            ++it;
+            continue;
+        }
+
+        // Step 4: Bot is logged in AND stabilized - queue for BG!
         TC_LOG_INFO("playerbots.instance", "Bot {} is now logged in, queueing for BG {} (team {}, tracking human {})",
             bot->GetName(), entry.bgTypeId, entry.team == TEAM_ALLIANCE ? "Alliance" : "Horde",
             entry.humanPlayerGuid.ToString());

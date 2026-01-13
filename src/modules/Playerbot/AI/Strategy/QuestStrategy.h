@@ -11,6 +11,7 @@
 
 #include "Strategy.h"
 #include "../../Quest/ObjectiveTracker.h"
+#include "../../Quest/DynamicSpawnHandler.h"
 #include "Movement/BotMovementUtil.h"
 #include "Player.h"
 #include "QuestDef.h"
@@ -204,12 +205,39 @@ private:
     ::std::unordered_map<uint32, uint32> _questTurnInFailures;
     static constexpr uint32 MAX_QUEST_TURNIN_FAILURES = 3; // Abandon quest after 3 consecutive failures
 
+    // Failed quest objective tracking (prevent infinite loops on unreachable objectives)
+    // Key: questId << 8 | objectiveIndex, Value: {failureCount, lastFailureTime}
+    struct ObjectiveFailureInfo
+    {
+        uint32 failureCount = 0;
+        uint32 lastFailureTime = 0;
+    };
+    ::std::unordered_map<uint32, ObjectiveFailureInfo> _questObjectiveFailures;
+    static constexpr uint32 MAX_QUEST_OBJECTIVE_FAILURES = 10; // Skip objective after 10 consecutive failures
+    static constexpr uint32 OBJECTIVE_FAILURE_RESET_TIME_MS = 300000; // Reset failures after 5 minutes of not trying
+
+    // Helper to get/set objective failure key
+    static uint32 MakeObjectiveKey(uint32 questId, uint8 objectiveIndex) { return (questId << 8) | objectiveIndex; }
+    uint32 GetObjectiveFailures(uint32 questId, uint8 objectiveIndex);
+    void IncrementObjectiveFailures(uint32 questId, uint8 objectiveIndex);
+    void ResetObjectiveFailures(uint32 questId, uint8 objectiveIndex);
+    bool IsObjectiveBlacklisted(uint32 questId, uint8 objectiveIndex);
+
     // ========================================================================
     // PERSISTENT TRAVEL MANAGER (for multi-step transport journeys)
     // ========================================================================
     // Required for ship/zeppelin boarding - state must persist across update ticks
     ::std::unique_ptr<TravelRouteManager> _travelManager;
     uint32 _lastTravelQuestId = 0;  // Track which quest initiated the travel
+
+    // ========================================================================
+    // DYNAMIC SPAWN HANDLER (for quests with dynamically-spawned NPCs)
+    // ========================================================================
+    // Enables bots to trigger spawns via area triggers, gossip, etc.
+    ::std::unique_ptr<DynamicSpawnHandler> _dynamicSpawnHandler;
+
+    // Helper to check/trigger dynamic spawns for objectives
+    bool TryTriggerDynamicSpawn(BotAI* ai, ObjectiveState const& objective);
 
     // ========================================================================
     // TRAVEL FAILURE COOLDOWN (prevent infinite back-and-forth loops)

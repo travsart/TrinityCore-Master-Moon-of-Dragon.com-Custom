@@ -264,7 +264,13 @@ void PlayerbotCharacterDBInterface::CommitTransaction(CharacterDatabaseTransacti
 
     _metrics.totalQueries.fetch_add(1);
 
-    if (async && !IsAsyncContext())
+    // CRITICAL FIX: When in async context (worker thread), we MUST use async commit
+    // because DirectCommitTransaction uses synchronous connections which don't have
+    // async-only prepared statements loaded (like those in Player::SaveToDB).
+    // Only use DirectCommitTransaction when we're on the main thread AND async is explicitly false.
+    bool useAsyncCommit = async || IsAsyncContext();
+
+    if (useAsyncCommit)
     {
         CharacterDatabase.CommitTransaction(trans);
         _metrics.asyncQueries.fetch_add(1);

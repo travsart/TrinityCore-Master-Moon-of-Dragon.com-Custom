@@ -316,10 +316,7 @@ private:
     }
 
     // Configuration
-    // RELIABILITY FIX: Reduced from 1000ms to 250ms for faster BG queue detection
-    // The previous 1000ms delay meant up to 1 second before detecting player queue join,
-    // which combined with JIT bot creation time caused the first BG start to fail.
-    static constexpr uint32 BG_POLL_INTERVAL = 250; // 250ms for responsive detection
+    static constexpr uint32 BG_POLL_INTERVAL = 1000; // 1 second polling interval
     static constexpr uint32 CLEANUP_INTERVAL = 5 * MINUTE * IN_MILLISECONDS;
 
     // State tracking

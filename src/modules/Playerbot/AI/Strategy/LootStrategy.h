@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "ObjectGuid.h"
 #include <vector>
+#include <unordered_map>
 
 class Creature;
 class GameObject;
@@ -112,10 +113,44 @@ private:
     uint32 _lootAttempts = 0;
     uint32 _maxLootAttempts = 3;
 
+    // Blacklist for unreachable objects (GUID -> expiry time in ms)
+    mutable ::std::unordered_map<ObjectGuid, uint32> _blacklistedObjects;
+    uint32 _blacklistDuration = 60000; // Blacklist for 60 seconds
+
+    // Per-object attempt tracking (GUID -> attempt count)
+    mutable ::std::unordered_map<ObjectGuid, uint32> _objectAttempts;
+    uint32 _maxObjectAttempts = 5; // Max attempts before blacklisting
+
     // Performance tracking
     uint32 _itemsLooted = 0;
     uint32 _corpseLooted = 0;
     uint32 _goldLooted = 0;
+
+    /**
+     * @brief Check if an object is blacklisted
+     * @param guid Object GUID to check
+     * @return true if blacklisted and not expired
+     */
+    bool IsBlacklisted(ObjectGuid guid) const;
+
+    /**
+     * @brief Add object to blacklist
+     * @param guid Object GUID to blacklist
+     */
+    void BlacklistObject(ObjectGuid guid);
+
+    /**
+     * @brief Increment attempt counter for object
+     * @param guid Object GUID
+     * @return Current attempt count after increment
+     */
+    uint32 IncrementAttempts(ObjectGuid guid);
+
+    /**
+     * @brief Clear attempt counter for object (on success)
+     * @param guid Object GUID
+     */
+    void ClearAttempts(ObjectGuid guid);
 };
 
 } // namespace Playerbot

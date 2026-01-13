@@ -21,6 +21,7 @@
 #include "DB2Stores.h"
 #include "DatabaseEnv.h"
 #include "QueryResult.h"
+#include "../Core/PlayerBotHooks.h"
 
 namespace Playerbot
 {
@@ -123,6 +124,59 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
     // Convert to LFG group if not already
     if (!group->isLFGGroup())
         group->ConvertToLFG();
+
+    // ========================================================================
+    // CRITICAL FIX: Transfer leadership to human player if a bot is leader
+    // ========================================================================
+    // When LFG forms a group, the first queued player often becomes leader.
+    // Since bots may queue before humans, a bot can become the leader.
+    // This breaks bot follow behavior (bots don't follow themselves) and
+    // causes dungeons to get stuck at the entrance.
+    //
+    // Solution: Find the human player and make them the leader.
+    // ========================================================================
+    ObjectGuid currentLeaderGuid = group->GetLeaderGUID();
+    Player* currentLeader = ObjectAccessor::FindPlayer(currentLeaderGuid);
+
+    // Check if current leader is a bot
+    bool leaderIsBot = currentLeader && PlayerBotHooks::IsPlayerBot(currentLeader);
+
+    if (leaderIsBot)
+    {
+        // Find a human player to be the leader
+        Player* humanPlayer = nullptr;
+        for (auto const& slot : group->GetMemberSlots())
+        {
+            Player* member = ObjectAccessor::FindPlayer(slot.guid);
+            if (member && !PlayerBotHooks::IsPlayerBot(member))
+            {
+                humanPlayer = member;
+                break;
+            }
+        }
+
+        if (humanPlayer)
+        {
+            TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Transferring leadership from bot {} to human {}",
+                currentLeader->GetName(), humanPlayer->GetName());
+
+            // Transfer leadership to the human player
+            group->ChangeLeader(humanPlayer->GetGUID());
+
+            TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Leadership transferred successfully to {}",
+                humanPlayer->GetName());
+        }
+        else
+        {
+            TC_LOG_WARN("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - No human player found in group {} to take leadership",
+                groupGuid.ToString());
+        }
+    }
+    else
+    {
+        TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Leader {} is not a bot, no transfer needed",
+            currentLeaderGuid.ToString());
+    }
 
     TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Group formation tracked for {}",
         groupGuid.ToString());

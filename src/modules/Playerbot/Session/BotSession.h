@@ -349,8 +349,9 @@ private:
     uint32 _bnetAccountId;
     uint32 _simulatedLatency{50};
 
-    // Player loading state for async operations
-    ObjectGuid m_playerLoading;
+    // NOTE: Player loading state (m_playerLoading) is inherited from WorldSession
+    // BotSession is a friend class so it can access the base class's private member
+    // DO NOT redeclare m_playerLoading here - it shadows the base class and breaks WHO list!
 
     // Thread-safe pending facing target
     // Worker threads set this, main thread processes it

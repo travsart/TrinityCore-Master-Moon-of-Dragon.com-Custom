@@ -21,6 +21,7 @@
 #include "ScriptMgr.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "../Session/BotSession.h"
 #include "Data/WoW112CharacterCreation.h"
 #include "CharacterPackets.h"
 #include <random>
@@ -85,30 +86,73 @@ bool BotCharacterCreator::CanCreateCharacter(uint32 accountId, uint32& currentCo
 
 ::std::string BotCharacterCreator::GenerateDefaultBotName(uint8 race, uint8 gender)
 {
-    // Simple name generator - can be enhanced with race-specific names
-    static const ::std::vector<::std::string> prefixes = {
-        "Bot", "AI", "Auto", "Servo", "Mech", "Cyber", "Droid"
+    // WoW character names must be 2-12 characters, alphabetic only (no numbers!)
+    // Generate fantasy-style names for better immersion
+
+    static const ::std::vector<::std::string> malePrefixes = {
+        "Thal", "Gor", "Drak", "Var", "Kael", "Zul", "Mor", "Fen", "Bran", "Tor",
+        "Rath", "Grim", "Vex", "Ash", "Bolt", "Thun", "Blaze", "Storm", "Dark", "Iron",
+        "Stone", "Frost", "Shadow", "Fire", "Thunder", "Wind", "Earth", "Light", "Steel", "Night"
     };
 
-    static const ::std::vector<::std::string> suffixes = {
-        "warrior", "mage", "hunter", "rogue", "priest", "knight", "slayer"
+    static const ::std::vector<::std::string> femalePrefixes = {
+        "Ael", "Syl", "Myr", "Lyr", "Cel", "Ara", "Isa", "Nia", "Ela", "Tia",
+        "Luna", "Nova", "Aura", "Star", "Rose", "Ivy", "Dawn", "Moon", "Snow", "Jade",
+        "Amber", "Crystal", "Pearl", "Ruby", "Silv", "Gold", "Azure", "Coral", "Fern", "Lily"
+    };
+
+    static const ::std::vector<::std::string> maleSuffixes = {
+        "gor", "dan", "rak", "las", "mund", "rek", "vok", "mar", "thor", "gar",
+        "ax", "ox", "ion", "eon", "ian", "us", "or", "ar", "er", "on",
+        "heim", "dale", "rock", "blade", "fang", "claw", "horn", "heart", "soul", "mind"
+    };
+
+    static const ::std::vector<::std::string> femaleSuffixes = {
+        "ira", "ana", "elle", "ria", "sia", "lyn", "wen", "dra", "leth", "nara",
+        "ia", "ea", "ara", "ora", "ura", "ina", "ena", "una", "ala", "ela",
+        "belle", "grace", "hope", "faith", "dawn", "rose", "leaf", "song", "light", "star"
+    };
+
+    // Random suffix for extra uniqueness (all alphabetic)
+    static const ::std::vector<::std::string> uniqueSuffixes = {
+        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+        "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+        "ax", "ex", "ix", "ox", "ux", "az", "ez", "iz", "oz", "uz",
+        "an", "en", "in", "on", "un", "ar", "er", "ir", "or", "ur"
     };
 
     ::std::random_device rd;
     ::std::mt19937 gen(rd());
+
+    const auto& prefixes = (gender == GENDER_FEMALE) ? femalePrefixes : malePrefixes;
+    const auto& suffixes = (gender == GENDER_FEMALE) ? femaleSuffixes : maleSuffixes;
+
     ::std::uniform_int_distribution<> prefixDist(0, prefixes.size() - 1);
     ::std::uniform_int_distribution<> suffixDist(0, suffixes.size() - 1);
-    ::std::uniform_int_distribution<> numberDist(1, 9999);
+    ::std::uniform_int_distribution<> uniqueDist(0, uniqueSuffixes.size() - 1);
 
     ::std::string name;
-    name.reserve(32); // Pre-allocate reasonable size for name
+    name.reserve(12); // Max WoW name length
+
+    // Build name: Prefix + Suffix + UniqueSuffix
     name = prefixes[prefixDist(gen)];
     name += suffixes[suffixDist(gen)];
-    name += ::std::to_string(numberDist(gen));
 
-    // Capitalize first letter
+    // Only add unique suffix if name is short enough (keep under 12 chars)
+    if (name.length() < 10)
+        name += uniqueSuffixes[uniqueDist(gen)];
+
+    // Ensure name isn't too long
+    if (name.length() > 12)
+        name = name.substr(0, 12);
+
+    // Capitalize first letter, lowercase rest
     if (!name.empty())
+    {
         name[0] = ::std::toupper(name[0]);
+        for (size_t i = 1; i < name.length(); ++i)
+            name[i] = ::std::tolower(name[i]);
+    }
 
     return name;
 }
@@ -218,45 +262,11 @@ BotCharacterCreator::CreateResult BotCharacterCreator::ValidateCreationRequest(
         return CreateResult::REALM_LIMIT;
     }
 
-    // 7. Check hero class limits (Evoker/DH)
-    if (classId == CLASS_EVOKER || classId == CLASS_DEMON_HUNTER)
-    {
-        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_CREATE_INFO);
-        stmt->setUInt32(0, accountId);
-        stmt->setUInt32(1, 1200); // Max chars per realm + deleted
-
-        PreparedQueryResult result = CharacterDatabase.Query(stmt);
-
-        if (result)
-        {
-            uint32 evokerCount = 0;
-            uint32 dhCount = 0;
-
-            do
-            {
-                Field* fields = result->Fetch();
-                uint8 accClass = fields[2].GetUInt8();
-
-                if (accClass == CLASS_EVOKER)
-                    ++evokerCount;
-                else if (accClass == CLASS_DEMON_HUNTER)
-                    ++dhCount;
-
-            } while (result->NextRow());
-
-            if (classId == CLASS_EVOKER && evokerCount >= CharacterCreation::MAX_EVOKERS_PER_REALM)
-            {
-                outErrorMsg = "Maximum Evokers per realm reached";
-                return CreateResult::EVOKER_LIMIT;
-            }
-
-            if (classId == CLASS_DEMON_HUNTER && dhCount >= CharacterCreation::MAX_DEMON_HUNTERS_PER_REALM)
-            {
-                outErrorMsg = "Maximum Demon Hunters per realm reached";
-                return CreateResult::DEMON_HUNTER_LIMIT;
-            }
-        }
-    }
+    // 7. Skip hero class limits for bot accounts
+    // Note: CHAR_SEL_CHAR_CREATE_INFO is registered as CONNECTION_ASYNC only,
+    // but bot creation runs synchronously. Since bots are controlled accounts
+    // without player-facing limits, we skip this check entirely.
+    // For real players, the WorldSession login process handles these limits.
 
     return CreateResult::SUCCESS;
 }
@@ -270,26 +280,11 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreatePlayerObject(
     ObjectGuid& outGuid,
     ::std::string& outErrorMsg)
 {
-    // Create a minimal WorldSession for character creation
-    // Note: This is a temporary session just for the creation process
-    ::std::shared_ptr<WorldSession> tempSession = ::std::make_shared<WorldSession>(
-        accountId,                                  // Account ID
-        ::std::string(""),                          // Account name (battle tag)
-        0,                                          // Battle.net account ID
-        ::std::string(""),                          // Battle.net account email (new in 11.2.7)
-        ::std::shared_ptr<WorldSocket>(),           // No socket (empty shared_ptr for bots)
-        AccountTypes::SEC_PLAYER,                   // Security level
-        CURRENT_EXPANSION,                          // Expansion
-        0,                                          // Mute time
-        ::std::string(""),                          // OS string
-        ::std::chrono::minutes(0),                  // Timezone offset
-        0,                                          // Build
-        ClientBuild::VariantId{},                   // Client build variant
-        DEFAULT_LOCALE,                             // Locale
-        0,                                          // Recruiter ID
-        false,                                      // Is AR recruiter
-        true                                        // is_bot flag
-    );
+    // Create a BotSession for character creation
+    // CRITICAL: Must use BotSession (not WorldSession) because BotSession overrides
+    // SendPacket() to handle the null socket case. Using raw WorldSession would cause
+    // "non existent socket" errors during Player::Create() which sends packets.
+    ::std::shared_ptr<BotSession> tempSession = BotSession::Create(accountId);
 
     // Build CharacterCreateInfo structure
     auto createInfo = ::std::make_shared<WorldPackets::Character::CharacterCreateInfo>();

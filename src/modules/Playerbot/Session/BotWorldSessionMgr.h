@@ -74,6 +74,10 @@ public:
     // All-bots operations (for LFG, BG, etc.)
     ::std::vector<Player*> GetAllBotPlayers() const override;
 
+    // Check if a bot is currently in the loading queue
+    // Used by ProcessPendingBGQueues to avoid double-queuing race conditions
+    bool IsBotLoading(ObjectGuid botGuid) const;
+
 private:
     BotWorldSessionMgr() = default;
     ~BotWorldSessionMgr() = default;

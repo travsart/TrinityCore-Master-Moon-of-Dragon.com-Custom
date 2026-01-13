@@ -532,13 +532,16 @@ private:
     struct PendingBGQueueEntry
     {
         ObjectGuid botGuid;                         ///< Bot's character GUID
+        ObjectGuid humanPlayerGuid;                 ///< Human player this bot is assigned to (for tracking)
         uint32 accountId = 0;                       ///< Bot's account ID
         uint32 bgTypeId = 0;                        ///< Target battleground type
         uint32 bracketId = 0;                       ///< BG bracket
         TeamId team = TEAM_ALLIANCE;                ///< Bot's team
         std::chrono::steady_clock::time_point createdAt;  ///< When entry was created
         std::chrono::steady_clock::time_point loginQueuedAt;  ///< When login was queued
+        std::chrono::steady_clock::time_point loginCompletedAt;  ///< When bot was first seen in-world
         bool loginQueued = false;                   ///< Has login been queued?
+        bool loginCompleted = false;                ///< Has bot appeared in world?
         uint32 retryCount = 0;                      ///< Number of queue attempts
 
         bool IsExpired() const
@@ -552,6 +555,15 @@ private:
             if (!loginQueued) return false;
             auto elapsed = std::chrono::steady_clock::now() - loginQueuedAt;
             return elapsed > std::chrono::seconds(30);  // 30 second login timeout
+        }
+
+        /// Check if bot has stabilized after login (ready for BG queue)
+        /// Wait 1 second after bot appears in world to ensure full initialization
+        bool IsReadyForBGQueue() const
+        {
+            if (!loginCompleted) return false;
+            auto elapsed = std::chrono::steady_clock::now() - loginCompletedAt;
+            return elapsed > std::chrono::milliseconds(1000);  // 1 second stabilization delay
         }
     };
 

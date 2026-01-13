@@ -664,6 +664,7 @@ private:
     std::atomic<bool> _initialized{false};
     std::atomic<bool> _warmingInProgress{false};
     std::atomic<bool> _shuttingDown{false};
+    std::atomic<bool> _warmupPending{false};  // Deferred warmup until world is running
 
     // ========================================================================
     // DATA MEMBERS - Callbacks

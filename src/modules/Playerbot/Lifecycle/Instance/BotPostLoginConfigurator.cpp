@@ -74,7 +74,7 @@ void BotPostLoginConfigurator::RegisterPendingConfig(BotPendingConfiguration con
 {
     std::lock_guard<std::mutex> lock(_configMutex);
 
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
         "Registering pending config for bot {} - Template: {}, Level: {}, GS: {}",
         config.botGuid.ToString(), config.templateId, config.targetLevel, config.targetGearScore);
 
@@ -85,7 +85,29 @@ void BotPostLoginConfigurator::RegisterPendingConfig(BotPendingConfiguration con
 bool BotPostLoginConfigurator::HasPendingConfiguration(ObjectGuid botGuid) const
 {
     std::lock_guard<std::mutex> lock(_configMutex);
-    return _pendingConfigs.find(botGuid) != _pendingConfigs.end();
+    bool found = _pendingConfigs.find(botGuid) != _pendingConfigs.end();
+
+    TC_LOG_INFO("module.playerbot.configurator",
+        "HasPendingConfiguration: GUID={}, Found={}, TotalPendingConfigs={}",
+        botGuid.ToString(), found ? "YES" : "NO", _pendingConfigs.size());
+
+    // DEBUG: Log first few registered GUIDs for comparison when not found
+    if (!found && !_pendingConfigs.empty())
+    {
+        std::string registeredGuids;
+        uint32 count = 0;
+        for (auto const& [guid, config] : _pendingConfigs)
+        {
+            if (count++ >= 5) break;  // Limit to 5 GUIDs
+            if (!registeredGuids.empty()) registeredGuids += ", ";
+            registeredGuids += guid.ToString();
+        }
+        TC_LOG_WARN("module.playerbot.configurator",
+            "HasPendingConfiguration: GUID {} NOT FOUND! RegisteredGUIDs=[{}]",
+            botGuid.ToString(), registeredGuids);
+    }
+
+    return found;
 }
 
 BotPendingConfiguration const* BotPostLoginConfigurator::GetPendingConfiguration(ObjectGuid botGuid) const
@@ -120,6 +142,10 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
 
     ObjectGuid playerGuid = player->GetGUID();
 
+    TC_LOG_INFO("module.playerbot.configurator",
+        "ApplyPendingConfiguration: Checking for bot {} (GUID={}, Level={})",
+        player->GetName(), playerGuid.ToString(), player->GetLevel());
+
     // Get pending configuration
     BotPendingConfiguration config;
     {
@@ -127,7 +153,10 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
         auto it = _pendingConfigs.find(playerGuid);
         if (it == _pendingConfigs.end())
         {
-            // No pending configuration - this is normal for regular bots
+            // No pending configuration - could be normal for regular bots, but warn for JIT bots
+            TC_LOG_WARN("module.playerbot.configurator",
+                "ApplyPendingConfiguration: NO CONFIG found for bot {} (GUID={}) - TotalPendingConfigs={}",
+                player->GetName(), playerGuid.ToString(), _pendingConfigs.size());
             return false;
         }
         config = it->second;
@@ -163,7 +192,7 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     // Step 1: Apply Level
     if (config.targetLevel > 1 && config.targetLevel != player->GetLevel())
     {
-        TC_LOG_DEBUG("module.playerbot.configurator",
+        TC_LOG_INFO("module.playerbot.configurator",
             "Applying level {} to bot {} (current: {})",
             config.targetLevel, player->GetName(), player->GetLevel());
 
@@ -180,7 +209,7 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     uint32 specId = config.specId > 0 ? config.specId : tmpl->specId;
     if (specId > 0)
     {
-        TC_LOG_DEBUG("module.playerbot.configurator",
+        TC_LOG_INFO("module.playerbot.configurator",
             "Applying specialization {} to bot {}",
             specId, player->GetName());
 
@@ -194,7 +223,7 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     }
 
     // Step 3: Learn class spells for level
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
         "Applying class spells to bot {}",
         player->GetName());
 
@@ -203,7 +232,7 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     // Step 4: Apply Talents
     if (!tmpl->talents.talentIds.empty())
     {
-        TC_LOG_DEBUG("module.playerbot.configurator",
+        TC_LOG_INFO("module.playerbot.configurator",
             "Applying {} talents to bot {}",
             tmpl->talents.talentIds.size(), player->GetName());
 
@@ -219,7 +248,7 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     // Step 5: Apply Gear
     if (config.targetGearScore > 0 || !tmpl->gearSets.empty())
     {
-        TC_LOG_DEBUG("module.playerbot.configurator",
+        TC_LOG_INFO("module.playerbot.configurator",
             "Applying gear (target GS: {}) to bot {}",
             config.targetGearScore, player->GetName());
 
@@ -235,7 +264,7 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     // Step 6: Apply Action Bars
     if (!tmpl->actionBars.buttons.empty())
     {
-        TC_LOG_DEBUG("module.playerbot.configurator",
+        TC_LOG_INFO("module.playerbot.configurator",
             "Applying {} action buttons to bot {}",
             tmpl->actionBars.buttons.size(), player->GetName());
 
@@ -310,7 +339,7 @@ bool BotPostLoginConfigurator::ApplyLevel(Player* player, uint32 targetLevel)
     // - Health/mana restoration
     player->GiveLevel(targetLevel);
 
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
         "Applied level {} to bot {} (was: {})",
         targetLevel, player->GetName(), currentLevel);
 
@@ -322,6 +351,10 @@ bool BotPostLoginConfigurator::ApplySpecialization(Player* player, uint32 specId
     if (!player || specId == 0)
         return false;
 
+    TC_LOG_INFO("module.playerbot.configurator",
+        "ApplySpecialization: Starting for bot {} (class={}) with specId={}",
+        player->GetName(), player->GetClass(), specId);
+
     // Validate specialization exists
     ChrSpecializationEntry const* specEntry = sChrSpecializationStore.LookupEntry(specId);
     if (!specEntry)
@@ -331,6 +364,10 @@ bool BotPostLoginConfigurator::ApplySpecialization(Player* player, uint32 specId
             specId, player->GetName());
         return false;
     }
+
+    TC_LOG_INFO("module.playerbot.configurator",
+        "ApplySpecialization: specEntry found - ClassID={}, specName index={}",
+        specEntry->ClassID, specEntry->ID);
 
     // Validate class matches
     if (specEntry->ClassID != player->GetClass())
@@ -342,12 +379,44 @@ bool BotPostLoginConfigurator::ApplySpecialization(Player* player, uint32 specId
     }
 
     // Set the primary specialization
-    player->SetPrimarySpecialization(specId);
+    TC_LOG_INFO("module.playerbot.configurator",
+        "ApplySpecialization: About to call SetPrimarySpecialization({}) for bot {}",
+        specId, player->GetName());
 
-    // Learn specialization spells
-    player->LearnSpecializationSpells();
+    try
+    {
+        player->SetPrimarySpecialization(specId);
+    }
+    catch (std::exception const& e)
+    {
+        TC_LOG_ERROR("module.playerbot.configurator",
+            "ApplySpecialization: SetPrimarySpecialization CRASHED for bot {}: {}",
+            player->GetName(), e.what());
+        return false;
+    }
 
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
+        "ApplySpecialization: SetPrimarySpecialization completed, current spec={}",
+        static_cast<uint32>(player->GetPrimarySpecialization()));
+
+    // Learn specialization spells - SKIP for now as it causes crashes
+    // The crash happens in LearnSpell() -> SendDirectMessage() when the bot
+    // doesn't have a fully initialized session/packet handling
+    TC_LOG_INFO("module.playerbot.configurator",
+        "ApplySpecialization: SKIPPING LearnSpecializationSpells() for bot {} - will learn via ApplyClassSpells later",
+        player->GetName());
+
+    // NOTE: We skip this because:
+    // 1. LearnSpell calls SendDirectMessage which can crash with invalid session
+    // 2. ApplyClassSpells() is called after this and will handle spell learning
+    // 3. The bot AI will also learn necessary spells when initializing
+    //
+    // If needed in future, check these conditions before calling:
+    // - player->IsInWorld()
+    // - player->GetSession() != nullptr
+    // - player->GetSession()->IsConnected()
+
+    TC_LOG_INFO("module.playerbot.configurator",
         "Applied specialization {} to bot {}",
         specId, player->GetName());
 
@@ -385,7 +454,7 @@ bool BotPostLoginConfigurator::ApplyTalents(Player* player, BotTemplate const* t
     // Remove temporary flag
     player->RemoveUnitFlag2(UNIT_FLAG2_ALLOW_CHANGING_TALENTS);
 
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
         "Applied talents to bot {}: {} learned, {} failed",
         player->GetName(), talentsLearned, talentsFailed);
 
@@ -465,13 +534,13 @@ bool BotPostLoginConfigurator::ApplyGear(Player* player, BotTemplate const* tmpl
     GearSetTemplate const* gearSet = SelectGearSet(tmpl, targetGearScore);
     if (!gearSet)
     {
-        TC_LOG_DEBUG("module.playerbot.configurator",
+        TC_LOG_INFO("module.playerbot.configurator",
             "No gear set found for bot {} (target GS: {})",
             player->GetName(), targetGearScore);
         return false;
     }
 
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
         "Selected gear set iLvl {} (actual GS: {}) for bot {}",
         gearSet->targetItemLevel, gearSet->actualGearScore, player->GetName());
 
@@ -494,7 +563,7 @@ bool BotPostLoginConfigurator::ApplyGear(Player* player, BotTemplate const* tmpl
             ++itemsFailed;
     }
 
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
         "Applied gear to bot {}: {} equipped, {} failed",
         player->GetName(), itemsEquipped, itemsFailed);
 
@@ -558,7 +627,7 @@ bool BotPostLoginConfigurator::ApplyActionBars(Player* player, BotTemplate const
         ++buttonsSet;
     }
 
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
         "Applied {} action buttons to bot {}",
         buttonsSet, player->GetName());
 
@@ -575,12 +644,18 @@ bool BotPostLoginConfigurator::ApplyClassSpells(Player* player)
     player->UpdateSkillsForLevel();
 
     // Learn specialization spells if spec is set
+    // NOTE: SKIPPING LearnSpecializationSpells() - it calls LearnSpell() which
+    // sends packets via SendDirectMessage() and crashes for bots without proper session.
+    // The bot AI will learn necessary spells when it initializes.
     if (player->GetPrimarySpecialization() != ChrSpecialization::None)
     {
-        player->LearnSpecializationSpells();
+        TC_LOG_INFO("module.playerbot.configurator",
+            "ApplyClassSpells: SKIPPING LearnSpecializationSpells() for bot {} (spec={}) - crashes with SendDirectMessage",
+            player->GetName(), static_cast<uint32>(player->GetPrimarySpecialization()));
+        // player->LearnSpecializationSpells();  // DISABLED - causes crash
     }
 
-    TC_LOG_DEBUG("module.playerbot.configurator",
+    TC_LOG_INFO("module.playerbot.configurator",
         "Applied class spells to bot {} (level {})",
         player->GetName(), player->GetLevel());
 

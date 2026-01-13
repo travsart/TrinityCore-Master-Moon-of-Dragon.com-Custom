@@ -292,6 +292,15 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 continue; // Not our loot
         }
 
+        // Skip blacklisted corpses (unreachable or failed too many times)
+        if (IsBlacklisted(creature->GetGUID()))
+        {
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                "FindLootableCorpses: Skipping blacklisted corpse {}",
+                creature->GetGUID().ToString());
+            continue;
+        }
+
         // Add to lootable list
         lootableCorpses.push_back(creature->GetGUID());
     }
@@ -362,6 +371,15 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             continue;
         }
 
+        // Skip blacklisted objects (unreachable or failed too many times)
+        if (IsBlacklisted(snapshot.guid))
+        {
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                "FindLootableObjects: Skipping blacklisted object {}",
+                snapshot.guid.ToString());
+            continue;
+        }
+
         // Add to lootable list
         lootableObjects.push_back(snapshot.guid);
     }
@@ -417,6 +435,18 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
 
     if (distance > INTERACTION_DISTANCE)
     {
+        // Track attempts - blacklist if too many failures
+        uint32 attempts = IncrementAttempts(corpseGuid);
+        if (attempts >= _maxObjectAttempts)
+        {
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                "LootCorpse: Bot {} failed to reach corpse {} after {} attempts - blacklisting",
+                bot->GetName(), corpseGuid.ToString(), attempts);
+            BlacklistObject(corpseGuid);
+            ClearAttempts(corpseGuid);
+            return false;
+        }
+
         // Move closer to creature - MUST use arbiter (thread-safe)
         // Direct MotionMaster calls are NOT thread-safe from worker threads!
         Position pos = creature->GetPosition();
@@ -430,13 +460,13 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
                 "Moving to corpse for looting",
                 "LootStrategy");
 
-            TC_LOG_DEBUG("module.playerbot.strategy", "LootCorpse: Bot {} movement request {} (arbiter available)",
-                         bot->GetName(), accepted ? "ACCEPTED" : "REJECTED");
+            TC_LOG_DEBUG("module.playerbot.strategy", "LootCorpse: Bot {} movement request {} (attempt {}/{}, distance {:.1f})",
+                         bot->GetName(), accepted ? "ACCEPTED" : "REJECTED", attempts, _maxObjectAttempts, distance);
         }
         else
         {
-            TC_LOG_DEBUG("module.playerbot.strategy", "LootCorpse: Bot {} NO arbiter available (gameSystems={}), cannot move!",
-                         bot->GetName(), ai->GetUnifiedMovementCoordinator() != nullptr);
+            TC_LOG_DEBUG("module.playerbot.strategy", "LootCorpse: Bot {} NO movement coordinator - cannot reach corpse (attempt {}/{})",
+                         bot->GetName(), attempts, _maxObjectAttempts);
         }
         return false;
     }
@@ -456,6 +486,9 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
 
     // Queue the loot target for main thread processing
     botSession->QueueLootTarget(corpseGuid);
+
+    // Clear attempt counter on successful queue
+    ClearAttempts(corpseGuid);
 
     TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} queued corpse {} for looting on main thread",
                  bot->GetName(), corpseGuid.ToString());
@@ -501,6 +534,18 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
     float distance = bot->GetExactDist(objectSnapshot->position);
     if (distance > INTERACTION_DISTANCE)
     {
+        // Track attempts - blacklist if too many failures
+        uint32 attempts = IncrementAttempts(objectGuid);
+        if (attempts >= _maxObjectAttempts)
+        {
+            TC_LOG_DEBUG("module.playerbot.strategy",
+                "LootStrategy: Bot {} failed to reach object {} after {} attempts - blacklisting",
+                bot->GetName(), objectGuid.ToString(), attempts);
+            BlacklistObject(objectGuid);
+            ClearAttempts(objectGuid);
+            return false;
+        }
+
         // Move closer - MUST use arbiter (thread-safe)
         // Direct MotionMaster calls are NOT thread-safe from worker threads!
         Position pos;
@@ -517,9 +562,19 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
 
             if (accepted)
             {
-                TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to object at distance {:.1f}",
-                             bot->GetName(), distance);
+                TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to object at distance {:.1f} (attempt {}/{})",
+                             bot->GetName(), distance, attempts, _maxObjectAttempts);
             }
+            else
+            {
+                TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} movement REJECTED for object at distance {:.1f} (attempt {}/{})",
+                             bot->GetName(), distance, attempts, _maxObjectAttempts);
+            }
+        }
+        else
+        {
+            TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} has no movement coordinator - cannot reach object (attempt {}/{})",
+                         bot->GetName(), attempts, _maxObjectAttempts);
         }
         // No fallback - direct MotionMaster calls crash from worker threads
         return false;
@@ -539,6 +594,9 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
 
     // Queue the object for main thread Use()
     botSession->QueueObjectUse(objectGuid);
+
+    // Clear attempt counter on successful queue
+    ClearAttempts(objectGuid);
 
     TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} queued object {} (entry {}) for Use() on main thread",
                  bot->GetName(), objectGuid.ToString(), objectSnapshot->entry);
@@ -627,6 +685,43 @@ bool LootStrategy::HasInventorySpace(BotAI* ai) const
         });
 
     return prioritized;
+}
+
+bool LootStrategy::IsBlacklisted(ObjectGuid guid) const
+{
+    auto it = _blacklistedObjects.find(guid);
+    if (it == _blacklistedObjects.end())
+        return false;
+
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    if (currentTime >= it->second)
+    {
+        // Expired - remove from blacklist
+        _blacklistedObjects.erase(it);
+        return false;
+    }
+
+    return true;
+}
+
+void LootStrategy::BlacklistObject(ObjectGuid guid)
+{
+    uint32 expiryTime = GameTime::GetGameTimeMS() + _blacklistDuration;
+    _blacklistedObjects[guid] = expiryTime;
+
+    TC_LOG_DEBUG("module.playerbot.strategy",
+        "LootStrategy: Blacklisted object {} for {}ms (too many failed attempts)",
+        guid.ToString(), _blacklistDuration);
+}
+
+uint32 LootStrategy::IncrementAttempts(ObjectGuid guid)
+{
+    return ++_objectAttempts[guid];
+}
+
+void LootStrategy::ClearAttempts(ObjectGuid guid)
+{
+    _objectAttempts.erase(guid);
 }
 
 } // namespace Playerbot

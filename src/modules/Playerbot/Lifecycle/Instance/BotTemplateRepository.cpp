@@ -1510,6 +1510,11 @@ std::vector<uint8> BotTemplateRepository::GetValidRaces(uint8 playerClass, Facti
 
     // WoW 11.2 (The War Within) class/race combinations
     // This is a comprehensive list including all allied races
+    //
+    // NOTE (2026-01-12): Earthen races (85=Alliance, 84=Horde) are DISABLED
+    // because playercreateinfo table doesn't have proper entries for them yet.
+    // Player::Create() fails with "No PlayerInfo for race X class Y" errors.
+    // Re-enable when database is updated with Earthen starting positions.
 
     if (faction == Faction::Alliance)
     {
@@ -1519,56 +1524,53 @@ std::vector<uint8> BotTemplateRepository::GetValidRaces(uint8 playerClass, Facti
                 races = {Races::HUMAN, Races::DWARF, Races::NIGHT_ELF, Races::GNOME,
                         Races::DRAENEI, Races::WORGEN, Races::PANDAREN_ALLIANCE,
                         Races::VOID_ELF, Races::LIGHTFORGED, Races::DARK_IRON,
-                        Races::KUL_TIRAN, Races::MECHAGNOME, Races::EARTHEN_ALLIANCE};
+                        Races::KUL_TIRAN, Races::MECHAGNOME};
                 break;
             case Classes::PALADIN:
                 races = {Races::HUMAN, Races::DWARF, Races::DRAENEI,
-                        Races::LIGHTFORGED, Races::DARK_IRON, Races::EARTHEN_ALLIANCE};
+                        Races::LIGHTFORGED, Races::DARK_IRON};
                 break;
             case Classes::HUNTER:
                 races = {Races::HUMAN, Races::DWARF, Races::NIGHT_ELF, Races::GNOME,
                         Races::DRAENEI, Races::WORGEN, Races::PANDAREN_ALLIANCE,
                         Races::VOID_ELF, Races::LIGHTFORGED, Races::DARK_IRON,
-                        Races::KUL_TIRAN, Races::MECHAGNOME, Races::EARTHEN_ALLIANCE};
+                        Races::KUL_TIRAN, Races::MECHAGNOME};
                 break;
             case Classes::ROGUE:
                 races = {Races::HUMAN, Races::DWARF, Races::NIGHT_ELF, Races::GNOME,
                         Races::WORGEN, Races::PANDAREN_ALLIANCE, Races::VOID_ELF,
-                        Races::DARK_IRON, Races::KUL_TIRAN, Races::MECHAGNOME,
-                        Races::EARTHEN_ALLIANCE};
+                        Races::DARK_IRON, Races::KUL_TIRAN, Races::MECHAGNOME};
                 break;
             case Classes::PRIEST:
                 races = {Races::HUMAN, Races::DWARF, Races::NIGHT_ELF, Races::GNOME,
                         Races::DRAENEI, Races::WORGEN, Races::PANDAREN_ALLIANCE,
                         Races::VOID_ELF, Races::LIGHTFORGED, Races::DARK_IRON,
-                        Races::KUL_TIRAN, Races::MECHAGNOME, Races::EARTHEN_ALLIANCE};
+                        Races::KUL_TIRAN, Races::MECHAGNOME};
                 break;
             case Classes::DEATH_KNIGHT:
                 races = {Races::HUMAN, Races::DWARF, Races::NIGHT_ELF, Races::GNOME,
                         Races::DRAENEI, Races::WORGEN, Races::PANDAREN_ALLIANCE,
                         Races::VOID_ELF, Races::LIGHTFORGED, Races::DARK_IRON,
-                        Races::KUL_TIRAN, Races::MECHAGNOME, Races::EARTHEN_ALLIANCE};
+                        Races::KUL_TIRAN, Races::MECHAGNOME};
                 break;
             case Classes::SHAMAN:
                 races = {Races::DWARF, Races::DRAENEI, Races::PANDAREN_ALLIANCE,
-                        Races::DARK_IRON, Races::KUL_TIRAN, Races::EARTHEN_ALLIANCE};
+                        Races::DARK_IRON, Races::KUL_TIRAN};
                 break;
             case Classes::MAGE:
                 races = {Races::HUMAN, Races::DWARF, Races::NIGHT_ELF, Races::GNOME,
                         Races::DRAENEI, Races::WORGEN, Races::PANDAREN_ALLIANCE,
                         Races::VOID_ELF, Races::LIGHTFORGED, Races::DARK_IRON,
-                        Races::KUL_TIRAN, Races::MECHAGNOME, Races::EARTHEN_ALLIANCE};
+                        Races::KUL_TIRAN, Races::MECHAGNOME};
                 break;
             case Classes::WARLOCK:
                 races = {Races::HUMAN, Races::DWARF, Races::GNOME, Races::WORGEN,
-                        Races::VOID_ELF, Races::DARK_IRON, Races::MECHAGNOME,
-                        Races::EARTHEN_ALLIANCE};
+                        Races::VOID_ELF, Races::DARK_IRON, Races::MECHAGNOME};
                 break;
             case Classes::MONK:
                 races = {Races::HUMAN, Races::DWARF, Races::NIGHT_ELF, Races::GNOME,
                         Races::DRAENEI, Races::PANDAREN_ALLIANCE, Races::VOID_ELF,
-                        Races::DARK_IRON, Races::KUL_TIRAN, Races::MECHAGNOME,
-                        Races::EARTHEN_ALLIANCE};
+                        Races::DARK_IRON, Races::KUL_TIRAN, Races::MECHAGNOME};
                 break;
             case Classes::DRUID:
                 races = {Races::NIGHT_ELF, Races::WORGEN, Races::KUL_TIRAN};
@@ -1589,56 +1591,52 @@ std::vector<uint8> BotTemplateRepository::GetValidRaces(uint8 playerClass, Facti
                 races = {Races::ORC, Races::UNDEAD, Races::TAUREN, Races::TROLL,
                         Races::GOBLIN, Races::BLOOD_ELF, Races::PANDAREN_HORDE,
                         Races::NIGHTBORNE, Races::HIGHMOUNTAIN, Races::MAGHAR,
-                        Races::ZANDALARI, Races::VULPERA, Races::EARTHEN_HORDE};
+                        Races::ZANDALARI, Races::VULPERA};
                 break;
             case Classes::PALADIN:
-                races = {Races::TAUREN, Races::BLOOD_ELF, Races::ZANDALARI,
-                        Races::EARTHEN_HORDE};
+                races = {Races::TAUREN, Races::BLOOD_ELF, Races::ZANDALARI};
                 break;
             case Classes::HUNTER:
                 races = {Races::ORC, Races::UNDEAD, Races::TAUREN, Races::TROLL,
                         Races::GOBLIN, Races::BLOOD_ELF, Races::PANDAREN_HORDE,
                         Races::NIGHTBORNE, Races::HIGHMOUNTAIN, Races::MAGHAR,
-                        Races::ZANDALARI, Races::VULPERA, Races::EARTHEN_HORDE};
+                        Races::ZANDALARI, Races::VULPERA};
                 break;
             case Classes::ROGUE:
                 races = {Races::ORC, Races::UNDEAD, Races::TROLL, Races::GOBLIN,
                         Races::BLOOD_ELF, Races::PANDAREN_HORDE, Races::NIGHTBORNE,
-                        Races::MAGHAR, Races::ZANDALARI, Races::VULPERA,
-                        Races::EARTHEN_HORDE};
+                        Races::MAGHAR, Races::ZANDALARI, Races::VULPERA};
                 break;
             case Classes::PRIEST:
                 races = {Races::UNDEAD, Races::TAUREN, Races::TROLL, Races::GOBLIN,
                         Races::BLOOD_ELF, Races::PANDAREN_HORDE, Races::NIGHTBORNE,
-                        Races::ZANDALARI, Races::VULPERA, Races::EARTHEN_HORDE};
+                        Races::ZANDALARI, Races::VULPERA};
                 break;
             case Classes::DEATH_KNIGHT:
                 races = {Races::ORC, Races::UNDEAD, Races::TAUREN, Races::TROLL,
                         Races::GOBLIN, Races::BLOOD_ELF, Races::PANDAREN_HORDE,
                         Races::NIGHTBORNE, Races::HIGHMOUNTAIN, Races::MAGHAR,
-                        Races::ZANDALARI, Races::VULPERA, Races::EARTHEN_HORDE};
+                        Races::ZANDALARI, Races::VULPERA};
                 break;
             case Classes::SHAMAN:
                 races = {Races::ORC, Races::TAUREN, Races::TROLL, Races::GOBLIN,
                         Races::PANDAREN_HORDE, Races::HIGHMOUNTAIN, Races::MAGHAR,
-                        Races::ZANDALARI, Races::VULPERA, Races::EARTHEN_HORDE};
+                        Races::ZANDALARI, Races::VULPERA};
                 break;
             case Classes::MAGE:
                 races = {Races::ORC, Races::UNDEAD, Races::TROLL, Races::GOBLIN,
                         Races::BLOOD_ELF, Races::PANDAREN_HORDE, Races::NIGHTBORNE,
-                        Races::MAGHAR, Races::ZANDALARI, Races::VULPERA,
-                        Races::EARTHEN_HORDE};
+                        Races::MAGHAR, Races::ZANDALARI, Races::VULPERA};
                 break;
             case Classes::WARLOCK:
                 races = {Races::ORC, Races::UNDEAD, Races::TROLL, Races::GOBLIN,
-                        Races::BLOOD_ELF, Races::NIGHTBORNE, Races::VULPERA,
-                        Races::EARTHEN_HORDE};
+                        Races::BLOOD_ELF, Races::NIGHTBORNE, Races::VULPERA};
                 break;
             case Classes::MONK:
                 races = {Races::ORC, Races::UNDEAD, Races::TAUREN, Races::TROLL,
                         Races::BLOOD_ELF, Races::PANDAREN_HORDE, Races::NIGHTBORNE,
                         Races::HIGHMOUNTAIN, Races::MAGHAR, Races::ZANDALARI,
-                        Races::VULPERA, Races::EARTHEN_HORDE};
+                        Races::VULPERA};
                 break;
             case Classes::DRUID:
                 races = {Races::TAUREN, Races::TROLL, Races::HIGHMOUNTAIN,

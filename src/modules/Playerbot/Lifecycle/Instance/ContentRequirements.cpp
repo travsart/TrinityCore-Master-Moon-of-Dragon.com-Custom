@@ -15,6 +15,7 @@
 #include "ContentRequirements.h"
 #include "Database/PlayerbotDatabase.h"
 #include "DatabaseEnv.h"
+#include "DB2Stores.h"
 #include "Log.h"
 #include "Random.h"
 #include <fmt/format.h>
@@ -146,7 +147,19 @@ ContentRequirement const* ContentRequirementDatabase::GetDungeonRequirement(uint
 {
     std::shared_lock<std::shared_mutex> lock(_mutex);
     auto it = _dungeons.find(dungeonId);
-    return it != _dungeons.end() ? &it->second : nullptr;
+    if (it != _dungeons.end())
+        return &it->second;
+
+    // Fall back to generic dungeon template (ID 0) for unknown dungeons
+    auto genericIt = _dungeons.find(0);
+    if (genericIt != _dungeons.end())
+    {
+        TC_LOG_DEBUG("playerbot.content", "GetDungeonRequirement - Using generic template for dungeon {}",
+            dungeonId);
+        return &genericIt->second;
+    }
+
+    return nullptr;
 }
 
 ContentRequirement const* ContentRequirementDatabase::GetRaidRequirement(uint32 raidId) const
@@ -474,50 +487,77 @@ void ContentRequirementDatabase::LoadFromDatabase()
 
 void ContentRequirementDatabase::CreateDefaultDungeons()
 {
-    TC_LOG_DEBUG("playerbot.content", "ContentRequirementDatabase::CreateDefaultDungeons - Creating defaults");
+    TC_LOG_INFO("playerbot.content", "ContentRequirementDatabase::CreateDefaultDungeons - Loading from LFGDungeons.db2");
 
-    // The War Within Season 1 Mythic+ Dungeons
-    std::vector<std::pair<uint32, std::string>> twwDungeons = {
-        {2651, "The Stonevault"},
-        {2652, "The Dawnbreaker"},
-        {2660, "Ara-Kara, City of Echoes"},
-        {2662, "City of Threads"},
-        {2669, "Priory of the Sacred Flame"},
-        {2773, "The Rookery"},
-        {2652, "Cinderbrew Meadery"},
-        {2680, "Darkflame Cleft"}
-    };
+    uint32 loadedCount = 0;
 
-    for (auto const& [id, name] : twwDungeons)
+    // Load all dungeons from DB2
+    for (uint32 i = 0; i < sLFGDungeonsStore.GetNumRows(); ++i)
     {
+        LFGDungeonsEntry const* dungeon = sLFGDungeonsStore.LookupEntry(i);
+        if (!dungeon)
+            continue;
+
+        // TypeID 1 = Dungeon (5-man), TypeID 2 = Raid
+        // Skip non-dungeon entries (raids handled separately)
+        if (dungeon->TypeID != 1)
+            continue;
+
         ContentRequirement req;
-        req.contentId = id;
-        req.contentName = name;
+        req.contentId = dungeon->ID;
+        req.contentName = dungeon->Name[LOCALE_enUS];
         req.type = InstanceType::Dungeon;
         req.minPlayers = 1;
         req.maxPlayers = 5;
-        req.minLevel = 70;
-        req.maxLevel = 80;
-        req.recommendedLevel = 80;
-        req.minTanks = 1;
-        req.maxTanks = 1;
-        req.recommendedTanks = 1;
-        req.minHealers = 1;
-        req.maxHealers = 1;
-        req.recommendedHealers = 1;
-        req.minDPS = 3;
-        req.maxDPS = 3;
-        req.recommendedDPS = 3;
-        req.minGearScore = 580;
-        req.recommendedGearScore = 600;
+
+        // Level requirements - use a reasonable range based on expansion
+        // ExpansionLevel: 0=Classic, 1=TBC, 2=WotLK, etc.
+        switch (dungeon->ExpansionLevel)
+        {
+            case 0: req.minLevel = 10; req.maxLevel = 60; req.recommendedLevel = 60; break;
+            case 1: req.minLevel = 58; req.maxLevel = 70; req.recommendedLevel = 70; break;
+            case 2: req.minLevel = 68; req.maxLevel = 80; req.recommendedLevel = 80; break;
+            case 3: req.minLevel = 80; req.maxLevel = 85; req.recommendedLevel = 85; break;
+            case 4: req.minLevel = 85; req.maxLevel = 90; req.recommendedLevel = 90; break;
+            case 5: req.minLevel = 90; req.maxLevel = 100; req.recommendedLevel = 100; break;
+            case 6: req.minLevel = 98; req.maxLevel = 110; req.recommendedLevel = 110; break;
+            case 7: req.minLevel = 110; req.maxLevel = 120; req.recommendedLevel = 120; break;
+            case 8: req.minLevel = 50; req.maxLevel = 60; req.recommendedLevel = 60; break;
+            case 9: req.minLevel = 60; req.maxLevel = 70; req.recommendedLevel = 70; break;
+            case 10: req.minLevel = 70; req.maxLevel = 80; req.recommendedLevel = 80; break;
+            default: req.minLevel = 1; req.maxLevel = 80; req.recommendedLevel = 80; break;
+        }
+
+        // Role requirements from DB2
+        req.minTanks = dungeon->MinCountTank > 0 ? dungeon->MinCountTank : 1;
+        req.maxTanks = dungeon->CountTank > 0 ? dungeon->CountTank : 1;
+        req.recommendedTanks = dungeon->CountTank > 0 ? dungeon->CountTank : 1;
+
+        req.minHealers = dungeon->MinCountHealer > 0 ? dungeon->MinCountHealer : 1;
+        req.maxHealers = dungeon->CountHealer > 0 ? dungeon->CountHealer : 1;
+        req.recommendedHealers = dungeon->CountHealer > 0 ? dungeon->CountHealer : 1;
+
+        req.minDPS = dungeon->MinCountDamage > 0 ? dungeon->MinCountDamage : 3;
+        req.maxDPS = dungeon->CountDamage > 0 ? dungeon->CountDamage : 3;
+        req.recommendedDPS = dungeon->CountDamage > 0 ? dungeon->CountDamage : 3;
+
+        // Gear requirements from DB2
+        req.minGearScore = static_cast<uint32>(dungeon->MinGear);
+        req.recommendedGearScore = static_cast<uint32>(dungeon->MinGear);
+
         req.estimatedDurationMinutes = 30;
+        req.difficulty = dungeon->DifficultyID;
 
         AddRequirement(std::move(req));
+        ++loadedCount;
     }
 
-    // Generic dungeon template for dynamic creation
+    TC_LOG_INFO("playerbot.content", "ContentRequirementDatabase::CreateDefaultDungeons - Loaded {} dungeons from DB2",
+        loadedCount);
+
+    // Generic dungeon template for any dungeons not in DB2
     ContentRequirement genericDungeon;
-    genericDungeon.contentId = 0;  // Special ID for generic
+    genericDungeon.contentId = 0;  // Special ID for generic fallback
     genericDungeon.contentName = "Generic Dungeon";
     genericDungeon.type = InstanceType::Dungeon;
     genericDungeon.minPlayers = 1;

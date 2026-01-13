@@ -24,6 +24,7 @@
 #include "../Companion/MountManager.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
 #include "../Session/BotWorldSessionMgr.h"
+#include "../Lifecycle/Instance/InstanceBotOrchestrator.h"  // For IsManagedBot() - skip JIT bots
 #include "Player.h"
 #include "Config/PlayerbotConfig.h"
 #include "Log.h"
@@ -1019,6 +1020,16 @@ void BotLevelManager::RebalanceFaction(TeamId faction)
                 // Check faction
                 if (bot->GetTeamId() != faction)
                     continue;
+
+                // CRITICAL: Skip JIT bots managed by InstanceBotOrchestrator
+                // These bots were created for specific content at a specific level
+                // and should NOT be redistributed to maintain their level for BG/dungeon/raid
+                if (sInstanceBotOrchestrator->IsManagedBot(bot->GetGUID()))
+                {
+                    TC_LOG_DEBUG("playerbot", "BotLevelManager::RebalanceFaction() - Skipping {} (L{}) - managed by orchestrator (JIT bot)",
+                        bot->GetName(), bot->GetLevel());
+                    continue;
+                }
 
                 // Check if bot is in this overpopulated bracket
                 uint32 botLevel = bot->GetLevel();

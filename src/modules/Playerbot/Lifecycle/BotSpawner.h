@@ -181,6 +181,15 @@ public:
     // Chat command support - Create new bot character and spawn it
     bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid);
 
+    // Create bot character (database record) using async-safe path via sPlayerbotCharDB
+    // Used by InstanceBotPool for pool warmup when BotCharacterCreator would crash
+    ObjectGuid CreateBotCharacter(uint32 accountId);
+
+    // Create bot character with specific parameters (template-based creation)
+    // Used by BotCloneEngine/JITBotFactory for creating bots from templates
+    // Uses async-safe path via sPlayerbotCharDB to avoid crashes on async-only statements
+    ObjectGuid CreateBotCharacter(uint32 accountId, uint8 race, uint8 classId, uint8 gender, ::std::string const& name);
+
     // Allow adapter access to constructor
     friend class ::std::unique_ptr<BotSpawner>;
     friend class ::std::default_delete<BotSpawner>;
@@ -208,7 +217,7 @@ private:
 
     // Character creation
     ObjectGuid CreateCharacterForAccount(uint32 accountId, SpawnRequest const& request);
-    ObjectGuid CreateBotCharacter(uint32 accountId);
+    // NOTE: CreateBotCharacter moved to public section for InstanceBotPool access
 
     // Population calculations
     void CalculateZoneTargets();

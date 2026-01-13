@@ -601,6 +601,15 @@ private:
      */
     void ProcessTimeouts();
 
+    /**
+     * @brief Clean up orphaned bot characters from previous runs
+     *
+     * Called during Initialize() to delete any characters on bot accounts
+     * that were not properly cleaned up (e.g., due to server crash).
+     * This prevents the "Account already has 10 characters" error.
+     */
+    void CleanupOrphanedBotCharacters();
+
     // ========================================================================
     // DATA MEMBERS - Request Management
     // ========================================================================

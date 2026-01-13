@@ -228,6 +228,12 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         _lastObjectiveUpdate = currentTime;
     }
 
+    // Update dynamic spawn handler (processes area triggers, etc.)
+    if (_dynamicSpawnHandler)
+    {
+        _dynamicSpawnHandler->Update(diff);
+    }
+
     // Check if bot has active quests
     bool hasActiveQuests = false;
     for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
@@ -546,6 +552,40 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
         // No complete quests - search for new quests
         TC_LOG_INFO("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} has no incomplete/complete quests - searching for quest givers",
                     bot->GetName());
+        SearchForQuestGivers(ai);
+        return;
+    }
+
+    // CRITICAL FIX: Check if this objective is blacklisted (too many failures)
+    // This prevents infinite loops on quests with unreachable/dynamically-spawned objectives
+    if (IsObjectiveBlacklisted(objective.questId, objective.objectiveIndex))
+    {
+        TC_LOG_WARN("module.playerbot.quest", "🚫 ProcessQuestObjectives: Bot {} - Quest {} objective {} is BLACKLISTED (unreachable) - skipping to next quest/objective",
+                    bot->GetName(), objective.questId, objective.objectiveIndex);
+
+        // Check if ALL objectives for this quest are blacklisted - if so, abandon the quest
+        bool allBlacklisted = true;
+        for (uint8 i = 0; i < quest->Objectives.size(); ++i)
+        {
+            if (!IsObjectiveBlacklisted(objective.questId, i))
+            {
+                allBlacklisted = false;
+                break;
+            }
+        }
+
+        if (allBlacklisted && quest->Objectives.size() > 0)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🗑️ ProcessQuestObjectives: Bot {} - ALL objectives for quest {} ({}) are blacklisted - ABANDONING quest",
+                         bot->GetName(), objective.questId, quest->GetLogTitle());
+            bot->AbandonQuest(objective.questId);
+
+            // Blacklist this quest to prevent re-accepting
+            if (_acceptanceManager)
+                _acceptanceManager->BlacklistQuest(objective.questId);
+        }
+
+        // Search for other quests or quest givers
         SearchForQuestGivers(ai);
         return;
     }
@@ -957,9 +997,29 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
             }
         }
 
-        // No friendly NPC found either - wait for respawns or navigate to quest area
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - NO target found (waiting for respawns)",
-                     bot->GetName());
+        // No friendly NPC found either - check if dynamic spawn is needed
+        // DYNAMIC SPAWN HANDLER: Try to trigger spawn for dynamically-spawned NPCs
+        if (TryTriggerDynamicSpawn(ai, objective))
+        {
+            TC_LOG_DEBUG("module.playerbot.quest",
+                "🔮 EngageQuestTargets: Bot {} - Attempting dynamic spawn trigger for quest {} objective {}",
+                bot->GetName(), objective.questId, objective.objectiveIndex);
+            return;  // Dynamic spawn triggered - wait for next update to check for target
+        }
+
+        // Track failure and wait for respawns
+        IncrementObjectiveFailures(objective.questId, objective.objectiveIndex);
+        uint32 failures = GetObjectiveFailures(objective.questId, objective.objectiveIndex);
+
+        if (failures >= MAX_QUEST_OBJECTIVE_FAILURES)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🚫 EngageQuestTargets: Bot {} - Quest {} objective {} BLACKLISTED after {} failures (target unreachable/doesn't exist)",
+                         bot->GetName(), objective.questId, objective.objectiveIndex, failures);
+            return; // Stop trying this objective, let priority system pick next one
+        }
+
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - NO target found (failure {}/{}, waiting for respawns)",
+                     bot->GetName(), failures, MAX_QUEST_OBJECTIVE_FAILURES);
 
         // CRITICAL FIX: Check if quest has an area to wander in
         // If quest has multiple POI points defining an area, wander through it to search for spawns
@@ -1003,6 +1063,9 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
 
     TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} found target {} (Entry: {}) at distance {:.1f}",
                  bot->GetName(), target->GetName(), target->GetEntry(), std::sqrt(bot->GetExactDistSq(target)));
+
+    // Target found - reset objective failure counter
+    ResetObjectiveFailures(objective.questId, objective.objectiveIndex);
 
     // Check if we should engage this target
     if (!ShouldEngageTarget(ai, target, objective))
@@ -3400,21 +3463,48 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
         return false;
     }
 
-    // Find the blob on the same map as bot
+    // Find the blob on the same map as bot (prefer same-map, but track other-map as fallback)
     QuestPOIBlobData const* validBlob = nullptr;
+    QuestPOIBlobData const* otherMapBlob = nullptr;
 
     for (auto const& blob : poiData->Blobs)
     {
         if (blob.MapID == static_cast<int32>(bot->GetMapId()))
         {
             validBlob = &blob;
-            break;
+            break;  // Found same-map blob, use it
+        }
+        else if (!otherMapBlob && !blob.Points.empty())
+        {
+            // Track first valid other-map blob as fallback
+            otherMapBlob = &blob;
         }
     }
 
     if (!validBlob || validBlob->Points.empty())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 2 FAILED: Quest POI data exists but no valid points on map {}, falling back to TIER 3",
+        // No same-map blob found - check for other-map blob
+        if (otherMapBlob && !otherMapBlob->Points.empty())
+        {
+            // Quest ender is on a DIFFERENT map - use POI from other map
+            QuestPOIBlobPoint const& point = otherMapBlob->Points[0];
+            location.position.Relocate(
+                static_cast<float>(point.X),
+                static_cast<float>(point.Y),
+                static_cast<float>(point.Z)
+            );
+            location.targetMapId = static_cast<uint32>(otherMapBlob->MapID);
+            location.isOnDifferentMap = true;
+            location.foundViaPOI = true;
+
+            TC_LOG_ERROR("module.playerbot.quest", "🗺️ TIER 2 CROSS-MAP: Quest ender for quest {} is on MAP {} at ({:.1f}, {:.1f}, {:.1f}) - bot on map {}",
+                         questId, location.targetMapId,
+                         location.position.GetPositionX(), location.position.GetPositionY(), location.position.GetPositionZ(),
+                         bot->GetMapId());
+            return true;
+        }
+
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ TIER 2 FAILED: Quest POI data exists but no valid points on map {} or any other map, falling back to TIER 3",
                      bot->GetMapId());
 
         location.requiresSearch = true;
@@ -3455,8 +3545,21 @@ bool QuestStrategy::NavigateToQuestEnder(BotAI* ai, QuestEnderLocation const& lo
     }
 
     // SAFETY CHECK: Prevent navigation to invalid (0,0,0) positions
+    // But if requiresSearch is true, perform a local search instead
     if (!location.HasValidPosition())
     {
+        if (location.requiresSearch && location.objectEntry != 0)
+        {
+            // No valid position but we have an entry to search for - perform local search
+            TC_LOG_ERROR("module.playerbot.quest", "🔍 NavigateToQuestEnder: Bot {} performing LOCAL SEARCH (150yd radius) for {} {} - no spawn/POI data available",
+                         bot->GetName(),
+                         location.IsGameObject() ? "GameObject" : "NPC",
+                         location.objectEntry);
+
+            // Directly check for quest ender in range (within 50 yards)
+            return CheckForQuestEnderInRange(ai, location);
+        }
+
         TC_LOG_ERROR("module.playerbot.quest", "⚠️ NavigateToQuestEnder: SAFETY CHECK - Bot {} attempted navigation to invalid position (0,0,0) for {} {} - aborting",
                      bot->GetName(),
                      location.IsGameObject() ? "GameObject" : "NPC",
@@ -3543,10 +3646,10 @@ bool QuestStrategy::CheckForCreatureQuestEnderInRange(BotAI* ai, uint32 creature
     TC_LOG_TRACE("module.playerbot.quest", "CheckForCreatureQuestEnderInRange: Bot {} scanning for NPC entry {}",
                  bot->GetName(), creatureEntry);
 
-    // Scan for quest ender NPC in 50-yard radius
+    // Scan for quest ender NPC in 150-yard radius (extended for requiresSearch mode)
     // Use SafeGridOperations with SEH protection - grid ops from worker threads can cause ACCESS_VIOLATION
     std::list<Creature*> nearbyCreatures;
-    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, creatureEntry, 50.0f))
+    if (!SafeGridOperations::GetCreatureListSafe(bot, nearbyCreatures, creatureEntry, 150.0f))
     {
         TC_LOG_TRACE("module.playerbot.quest", "CheckForCreatureQuestEnderInRange: Grid search failed for bot {}",
                      bot->GetName());
@@ -3769,7 +3872,7 @@ bool QuestStrategy::CheckForGameObjectQuestEnderInRange(BotAI* ai, uint32 gameob
         return false;
     }
 
-    TC_LOG_TRACE("module.playerbot.quest", "CheckForGameObjectQuestEnderInRange: Bot {} scanning 50-yard radius for GameObject entry {}",
+    TC_LOG_TRACE("module.playerbot.quest", "CheckForGameObjectQuestEnderInRange: Bot {} scanning 150-yard radius for GameObject entry {}",
                  bot->GetName(), gameobjectEntry);
 
     // CRITICAL FIX: Validate Map pointer before grid operations to prevent crash
@@ -3784,13 +3887,13 @@ bool QuestStrategy::CheckForGameObjectQuestEnderInRange(BotAI* ai, uint32 gameob
     // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
     // Grid operations from worker threads can cause ACCESS_VIOLATION when map is modified
     std::list<GameObject*> nearbyGameObjects;
-    if (!SafeGridOperations::GetGameObjectListSafe(bot, nearbyGameObjects, gameobjectEntry, 50.0f))
+    if (!SafeGridOperations::GetGameObjectListSafe(bot, nearbyGameObjects, gameobjectEntry, 150.0f))
     {
         TC_LOG_TRACE("module.playerbot.quest", "CheckForGameObjectQuestEnderInRange: Grid search failed for bot {}", bot->GetName());
         return false;
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "📊 CheckForGameObjectQuestEnderInRange: Bot {} found {} gameobjects with entry {} in 50-yard radius",
+    TC_LOG_ERROR("module.playerbot.quest", "📊 CheckForGameObjectQuestEnderInRange: Bot {} found {} gameobjects with entry {} in 150-yard radius",
                  bot->GetName(), nearbyGameObjects.size(), gameobjectEntry);
 
     if (nearbyGameObjects.empty())
@@ -4654,6 +4757,150 @@ bool QuestStrategy::RequiresSpellClickInteraction(uint32 creatureEntry) const
                  creatureEntry, hasSpellClick ? "HAS" : "does NOT have");
 
     return hasSpellClick;
+}
+
+// ============================================================================
+// OBJECTIVE FAILURE TRACKING (prevent infinite loops on unreachable objectives)
+// ============================================================================
+
+uint32 QuestStrategy::GetObjectiveFailures(uint32 questId, uint8 objectiveIndex)
+{
+    uint32 key = MakeObjectiveKey(questId, objectiveIndex);
+    auto it = _questObjectiveFailures.find(key);
+    if (it == _questObjectiveFailures.end())
+        return 0;
+
+    // Check if failures should be reset (timeout expired)
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    if (currentTime - it->second.lastFailureTime > OBJECTIVE_FAILURE_RESET_TIME_MS)
+    {
+        _questObjectiveFailures.erase(it);
+        return 0;
+    }
+
+    return it->second.failureCount;
+}
+
+void QuestStrategy::IncrementObjectiveFailures(uint32 questId, uint8 objectiveIndex)
+{
+    uint32 key = MakeObjectiveKey(questId, objectiveIndex);
+    auto& info = _questObjectiveFailures[key];
+    info.failureCount++;
+    info.lastFailureTime = GameTime::GetGameTimeMS();
+}
+
+void QuestStrategy::ResetObjectiveFailures(uint32 questId, uint8 objectiveIndex)
+{
+    uint32 key = MakeObjectiveKey(questId, objectiveIndex);
+    _questObjectiveFailures.erase(key);
+}
+
+bool QuestStrategy::IsObjectiveBlacklisted(uint32 questId, uint8 objectiveIndex)
+{
+    uint32 failures = GetObjectiveFailures(questId, objectiveIndex);
+    return failures >= MAX_QUEST_OBJECTIVE_FAILURES;
+}
+
+// ============================================================================
+// DYNAMIC SPAWN HANDLER INTEGRATION
+// ============================================================================
+
+bool QuestStrategy::TryTriggerDynamicSpawn(BotAI* ai, ObjectiveState const& objective)
+{
+    if (!ai || !ai->GetBot())
+        return false;
+
+    Player* bot = ai->GetBot();
+
+    // Initialize dynamic spawn handler if not already done
+    if (!_dynamicSpawnHandler)
+    {
+        _dynamicSpawnHandler = std::make_unique<DynamicSpawnHandler>(bot);
+        _dynamicSpawnHandler->PreloadQuestSpawnData();
+
+        TC_LOG_DEBUG("module.playerbot.quest",
+            "🔮 TryTriggerDynamicSpawn: Initialized DynamicSpawnHandler for bot {}",
+            bot->GetName());
+    }
+
+    // Check if this objective requires a dynamic spawn
+    auto spawnInfo = _dynamicSpawnHandler->GetSpawnInfoForObjective(objective.questId, objective.objectiveIndex);
+    if (!spawnInfo || !spawnInfo->IsValid())
+    {
+        TC_LOG_TRACE("module.playerbot.quest",
+            "TryTriggerDynamicSpawn: Bot {} - No dynamic spawn required for quest {} objective {}",
+            bot->GetName(), objective.questId, objective.objectiveIndex);
+        return false;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.quest",
+        "🔮 TryTriggerDynamicSpawn: Bot {} - Quest {} objective {} requires dynamic spawn of creature {} (trigger type {})",
+        bot->GetName(), objective.questId, objective.objectiveIndex,
+        spawnInfo->creatureEntry, static_cast<uint8>(spawnInfo->triggerType));
+
+    // Check trigger type and handle accordingly
+    switch (spawnInfo->triggerType)
+    {
+        case SpawnTriggerType::AREA_TRIGGER:
+        {
+            // Check if we're already in the area trigger
+            if (_dynamicSpawnHandler->IsInAreaTrigger(spawnInfo->areaTriggerDBC))
+            {
+                // Try to trigger it
+                if (_dynamicSpawnHandler->TriggerAreaTrigger(spawnInfo->areaTriggerDBC))
+                {
+                    TC_LOG_DEBUG("module.playerbot.quest",
+                        "✅ TryTriggerDynamicSpawn: Bot {} triggered area trigger {}",
+                        bot->GetName(), spawnInfo->areaTriggerDBC);
+                    return true;
+                }
+            }
+            else
+            {
+                // Need to move to the area trigger
+                Position atPos = _dynamicSpawnHandler->GetAreaTriggerPosition(spawnInfo->areaTriggerDBC);
+                if (atPos.GetPositionX() != 0.0f || atPos.GetPositionY() != 0.0f)
+                {
+                    TC_LOG_DEBUG("module.playerbot.quest",
+                        "📍 TryTriggerDynamicSpawn: Bot {} moving to area trigger {} at ({:.1f}, {:.1f}, {:.1f})",
+                        bot->GetName(), spawnInfo->areaTriggerDBC,
+                        atPos.GetPositionX(), atPos.GetPositionY(), atPos.GetPositionZ());
+
+                    BotMovementUtil::MoveToPosition(bot, atPos);
+                    return true;
+                }
+            }
+            break;
+        }
+
+        case SpawnTriggerType::QUEST_ACCEPT:
+            // Quest accept spawns happen automatically when quest is accepted
+            // If we're here, the spawn should have already happened
+            TC_LOG_DEBUG("module.playerbot.quest",
+                "🤔 TryTriggerDynamicSpawn: Bot {} - Quest accept spawn for quest {} (creature {} should already be spawned)",
+                bot->GetName(), objective.questId, spawnInfo->creatureEntry);
+            return false;
+
+        case SpawnTriggerType::GOSSIP_SELECT:
+            // Would need gossip interaction - complex to implement
+            TC_LOG_DEBUG("module.playerbot.quest",
+                "⚠️ TryTriggerDynamicSpawn: Bot {} - Gossip spawn not yet supported (creature {} for quest {})",
+                bot->GetName(), spawnInfo->creatureEntry, objective.questId);
+            return false;
+
+        case SpawnTriggerType::PHASE_SHIFT:
+            // Phase-based spawns require meeting phase conditions
+            // The NPC should be visible if bot has correct phase
+            TC_LOG_DEBUG("module.playerbot.quest",
+                "⚠️ TryTriggerDynamicSpawn: Bot {} - Phase spawn (creature {} may require phase conditions)",
+                bot->GetName(), spawnInfo->creatureEntry);
+            return false;
+
+        default:
+            break;
+    }
+
+    return false;
 }
 
 } // namespace Playerbot

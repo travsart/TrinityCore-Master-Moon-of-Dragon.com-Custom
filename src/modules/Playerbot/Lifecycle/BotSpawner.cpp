@@ -1792,18 +1792,21 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         }
         TC_LOG_TRACE("module.playerbot.spawner", "Race/class validation succeeded");
 
-        // Create a bot session for character creation - Player needs valid session for account association
-        BotSession* botSession = sBotSessionMgr->CreateSession(accountId);
-        if (!botSession)
+        // Create a TEMPORARY bot session for character creation only
+        // CRITICAL: Use BotSession::Create() NOT sBotSessionMgr->CreateSession()
+        // BotSession::Create() creates a standalone session not added to any update loop
+        // sBotSessionMgr->CreateSession() adds to _activeSessions causing infinite update loop
+        ::std::shared_ptr<BotSession> tempSession = BotSession::Create(accountId);
+        if (!tempSession)
         {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to create bot session for character creation (Account: {})", accountId);
+            TC_LOG_ERROR("module.playerbot.spawner", "Failed to create temp bot session for character creation (Account: {})", accountId);
             sBotNameMgr->ReleaseName(name);
             return ObjectGuid::Empty;
         }
-        TC_LOG_TRACE("module.playerbot.spawner", "Bot session created successfully for account {}", accountId);
+        TC_LOG_TRACE("module.playerbot.spawner", "Temporary bot session created for character creation");
 
         // Use smart pointer with proper RAII cleanup to prevent memory leaks
-        ::std::unique_ptr<Player> newChar = ::std::make_unique<Player>(botSession);
+        ::std::unique_ptr<Player> newChar = ::std::make_unique<Player>(tempSession.get());
 
         // REMOVED: MotionMaster initialization - this will be handled automatically during Player::Create()
         // The MotionMaster needs the Player to be fully constructed before initialization
@@ -1813,7 +1816,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         {
             TC_LOG_ERROR("module.playerbot.spawner", "Failed to create Player object for bot character (Race: {}, Class: {})", race, classId);
             sBotNameMgr->ReleaseName(name);
-            // Cleanup will be handled automatically by unique_ptr
+            // Cleanup will be handled automatically by unique_ptr and shared_ptr
             return ObjectGuid::Empty;
         }
         TC_LOG_TRACE("module.playerbot.spawner", "Player::Create() succeeded");
@@ -1896,12 +1899,49 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         {
             TC_LOG_ERROR("module.playerbot.spawner", "Failed to commit transactions: {}", e.what());
             sBotNameMgr->ReleaseName(name);
+            // No need to release session - we used BotSession::Create() which doesn't add to any manager
             return ObjectGuid::Empty;
         }
 
         // Clean up the Player object properly before returning
         newChar->CleanupsBeforeDelete();
         newChar.reset(); // Explicit cleanup
+        // tempSession will be automatically cleaned up when shared_ptr goes out of scope
+
+        // CRITICAL: Wait for async commit to complete before returning
+        // The async commit is queued but not instant - we must verify the character
+        // exists in the database before returning, otherwise subsequent operations
+        // (gear scaling, talents, login) will fail because the character doesn't exist yet.
+        bool characterExists = false;
+        for (int retry = 0; retry < 100; ++retry)  // 100 * 50ms = 5 seconds max
+        {
+            // Use direct SQL query to check if character exists (avoids prepared statement issues)
+            ::std::string checkSql = Trinity::StringFormat(
+                "SELECT 1 FROM characters WHERE guid = {}",
+                characterGuid.GetCounter());
+
+            QueryResult checkResult = CharacterDatabase.Query(checkSql.c_str());
+            if (checkResult)
+            {
+                characterExists = true;
+                TC_LOG_TRACE("module.playerbot.spawner",
+                    "Bot character {} verified in database after {} retries",
+                    name, retry);
+                break;
+            }
+
+            // Wait a bit for async commit to complete
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
+        }
+
+        if (!characterExists)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Bot character {} ({}) was not found in database after 5 seconds - async commit may have failed",
+                name, characterGuid.ToString());
+            sBotNameMgr->ReleaseName(name);
+            return ObjectGuid::Empty;
+        }
 
         TC_LOG_INFO("module.playerbot.spawner", "Successfully created bot character: {} ({}) - Race: {}, Class: {}, Level: {} for account {}",
             name, characterGuid.ToString(), uint32(race), uint32(classId), uint32(startLevel), accountId);
@@ -1911,6 +1951,199 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
     catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.spawner", "Exception during bot character creation for account {}: {}", accountId, e.what());
+        // No need to release session - we used BotSession::Create() which doesn't add to any manager
+        return ObjectGuid::Empty;
+    }
+}
+
+// =============================================================================
+// CreateBotCharacter - Template-based overload with specific race/class/gender/name
+// =============================================================================
+// This overload allows BotCloneEngine and JITBotFactory to create bots from templates
+// using the async-safe database path (sPlayerbotCharDB) instead of crashing
+// BotCharacterCreator path.
+// =============================================================================
+ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 classId, uint8 gender, ::std::string const& name)
+{
+    TC_LOG_TRACE("module.playerbot.spawner", "Creating bot character for account {} with template: race={}, class={}, gender={}, name={}",
+        accountId, race, classId, gender, name);
+
+    try
+    {
+        // ACCOUNT EXISTENCE VALIDATION
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_BY_ID);
+        stmt->setUInt32(0, accountId);
+        PreparedQueryResult accountCheck = LoginDatabase.Query(stmt);
+
+        // Check current character count for this account (prepared statement)
+        CharacterDatabasePreparedStatement* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_SUM_CHARS);
+        charStmt->setUInt32(0, accountId);
+        PreparedQueryResult charCountResult = CharacterDatabase.Query(charStmt);
+
+        if (charCountResult)
+        {
+            Field* fields = charCountResult->Fetch();
+            uint32 currentCharCount = fields[0].GetUInt32();
+
+            if (currentCharCount >= 10)
+            {
+                TC_LOG_WARN("module.playerbot.spawner",
+                    "Account {} already has {} characters (limit: 10). Cannot create more.",
+                    accountId, currentCharCount);
+                return ObjectGuid::Empty;
+            }
+        }
+
+        // Validate race/class combination
+        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(classId);
+        ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race);
+
+        if (!classEntry || !raceEntry)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner", "Invalid race ({}) or class ({}) for bot character creation", race, classId);
+            return ObjectGuid::Empty;
+        }
+
+        // Generate character GUID
+        ObjectGuid::LowType guidLow = sObjectMgr->GetGenerator<HighGuid::Player>().Generate();
+        ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(guidLow);
+
+        // Create character info structure
+        auto createInfo = ::std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
+        createInfo->Name = name;
+        createInfo->Race = race;
+        createInfo->Class = classId;
+        createInfo->Sex = gender;
+        createInfo->UseNPE = false;
+        createInfo->Customizations.clear();
+
+        uint8 startLevel = 1;
+
+        // Create a TEMPORARY bot session for character creation only
+        // CRITICAL: Use BotSession::Create() NOT sBotSessionMgr->CreateSession()
+        // BotSession::Create() creates a standalone session not added to any update loop
+        // sBotSessionMgr->CreateSession() adds to _activeSessions causing infinite update loop
+        ::std::shared_ptr<BotSession> tempSession = BotSession::Create(accountId);
+        if (!tempSession)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner", "Failed to create temp bot session for template-based character creation (Account: {})", accountId);
+            return ObjectGuid::Empty;
+        }
+
+        // Use smart pointer with proper RAII cleanup
+        ::std::unique_ptr<Player> newChar = ::std::make_unique<Player>(tempSession.get());
+
+        TC_LOG_TRACE("module.playerbot.spawner", "Creating Player object with GUID {} (template-based)", guidLow);
+        if (!newChar->Create(guidLow, createInfo.get()))
+        {
+            TC_LOG_ERROR("module.playerbot.spawner", "Failed to create Player object for template-based bot (Race: {}, Class: {})", race, classId);
+            // No need to release session - we used BotSession::Create() which doesn't add to any manager
+            return ObjectGuid::Empty;
+        }
+
+        // Set starting level if different from 1
+        if (startLevel > 1)
+        {
+            newChar->SetLevel(startLevel);
+        }
+
+        newChar->setCinematic(1);
+        newChar->SetAtLoginFlag(AT_LOGIN_FIRST);
+
+        // POSITION VALIDATION FIX
+        if (newChar->GetPositionX() == 0.0f && newChar->GetPositionY() == 0.0f && newChar->GetPositionZ() == 0.0f)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "POSITION BUG DETECTED: Template bot {} has (0,0,0) position! Fixing.",
+                name);
+
+            PlayerInfo const* info = sObjectMgr->GetPlayerInfo(race, classId);
+            if (info)
+            {
+                PlayerInfo::CreatePosition const& startPos = info->createPosition;
+                newChar->Relocate(startPos.Loc);
+                newChar->SetHomebind(startPos.Loc, newChar->GetAreaId());
+            }
+        }
+
+        // Save to database using async-safe PlayerbotCharacterDBInterface
+        CharacterDatabaseTransaction characterTransaction = sPlayerbotCharDB->BeginTransaction();
+        LoginDatabaseTransaction loginTransaction = LoginDatabase.BeginTransaction();
+
+        newChar->SaveToDB(loginTransaction, characterTransaction, true);
+
+        // Update character count for account
+        LoginDatabasePreparedStatement* charCountStmt = GetSafeLoginPreparedStatement(LOGIN_REP_REALM_CHARACTERS, "LOGIN_REP_REALM_CHARACTERS");
+        if (!charCountStmt)
+        {
+            return ObjectGuid::Empty;
+        }
+        charCountStmt->setUInt32(0, 1);
+        charCountStmt->setUInt32(1, accountId);
+        charCountStmt->setUInt32(2, sRealmList->GetCurrentRealmId().Realm);
+        loginTransaction->Append(charCountStmt);
+
+        // Commit transactions using async-safe path
+        try
+        {
+            sPlayerbotCharDB->CommitTransaction(characterTransaction);
+            LoginDatabase.CommitTransaction(loginTransaction);
+        }
+        catch (::std::exception const& e)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner", "Failed to commit template bot transactions: {}", e.what());
+            // No need to release session - we used BotSession::Create() which doesn't add to any manager
+            return ObjectGuid::Empty;
+        }
+
+        // Clean up the Player object properly
+        newChar->CleanupsBeforeDelete();
+        newChar.reset();
+        // tempSession will be automatically cleaned up when shared_ptr goes out of scope
+
+        // CRITICAL: Wait for async commit to complete before returning
+        // The async commit is queued but not instant - we must verify the character
+        // exists in the database before returning, otherwise subsequent operations
+        // (gear scaling, talents, login) will fail because the character doesn't exist yet.
+        bool characterExists = false;
+        for (int retry = 0; retry < 100; ++retry)  // 100 * 50ms = 5 seconds max
+        {
+            // Use direct SQL query to check if character exists (avoids prepared statement issues)
+            ::std::string checkSql = Trinity::StringFormat(
+                "SELECT 1 FROM characters WHERE guid = {}",
+                characterGuid.GetCounter());
+
+            QueryResult checkResult = CharacterDatabase.Query(checkSql.c_str());
+            if (checkResult)
+            {
+                characterExists = true;
+                TC_LOG_TRACE("module.playerbot.spawner",
+                    "Template bot character {} verified in database after {} retries",
+                    name, retry);
+                break;
+            }
+
+            // Wait a bit for async commit to complete
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
+        }
+
+        if (!characterExists)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Template bot character {} ({}) was not found in database after 5 seconds - async commit may have failed",
+                name, characterGuid.ToString());
+            return ObjectGuid::Empty;
+        }
+
+        TC_LOG_INFO("module.playerbot.spawner", "Successfully created template-based bot character: {} ({}) - Race: {}, Class: {} for account {}",
+            name, characterGuid.ToString(), uint32(race), uint32(classId), accountId);
+
+        return characterGuid;
+    }
+    catch (::std::exception const& e)
+    {
+        TC_LOG_ERROR("module.playerbot.spawner", "Exception during template-based bot character creation for account {}: {}", accountId, e.what());
+        // No need to release session - we used BotSession::Create() which doesn't add to any manager
         return ObjectGuid::Empty;
     }
 }

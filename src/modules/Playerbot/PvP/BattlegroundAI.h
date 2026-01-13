@@ -61,9 +61,9 @@ enum class BGRole : uint8
 };
 
 /**
- * @brief Objective priority
+ * @brief Battleground objective priority (renamed to avoid conflict with quest ObjectivePriority)
  */
-enum class ObjectivePriority : uint8
+enum class BGObjectivePriority : uint8
 {
     CRITICAL = 0,          // Must complete immediately
     HIGH = 1,              // Important but not urgent
@@ -96,13 +96,13 @@ struct BGObjective
     BGObjectiveType type;
     Position location;
     ObjectGuid objectGuid;  // Flag, base, NPC, etc.
-    ObjectivePriority priority;
+    BGObjectivePriority priority;
     uint32 playersRequired;
     uint32 playersAssigned;
     bool isCompleted;
     uint32 timeRemaining;   // Seconds until objective expires
 
-    BGObjective() : type(BGObjectiveType::CAPTURE_FLAG), priority(ObjectivePriority::NONE),
+    BGObjective() : type(BGObjectiveType::CAPTURE_FLAG), priority(BGObjectivePriority::NONE),
         playersRequired(1), playersAssigned(0), isCompleted(false), timeRemaining(0) {}
 };
 

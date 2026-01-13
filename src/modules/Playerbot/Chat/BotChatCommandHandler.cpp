@@ -1083,12 +1083,12 @@ void BotChatCommandHandler::RegisterDefaultCommands()
     // Attack command
     ChatCommand attack;
     attack.name = "attack";
-    attack.description = "Make bot attack target";
-    attack.syntax = "@bot attack <target>";
+    attack.description = "Make bot attack your current target";
+    attack.syntax = "@bot attack [target]";
     attack.permission = CommandPermission::GROUP_MEMBER;
     attack.handler = HandleAttackCommand;
     attack.aliases = {"a"};
-    attack.minArgs = 1;
+    attack.minArgs = 0;  // Target is optional - uses sender's current target if not specified
     attack.maxArgs = 1;
     attack.cooldownMs = 1000; // 1 second cooldown
     RegisterCommand(attack);

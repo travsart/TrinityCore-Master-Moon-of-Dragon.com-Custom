@@ -111,6 +111,20 @@ public:
      */
     bool QueueBotForBG(Player* bot, BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket);
 
+    /**
+     * @brief Queue a specific bot for battleground with human player tracking
+     * @param bot The bot player object (must be logged in and in world)
+     * @param bgTypeId The battleground type
+     * @param bracket The BG bracket
+     * @param humanPlayerGuid The human player this bot is associated with (for invitation tracking)
+     * @return true if successfully queued
+     *
+     * This version registers the bot in _queuedBots so that OnInvitationReceived
+     * will properly auto-accept the BG invitation and the bot will enter the BG.
+     */
+    bool QueueBotForBGWithTracking(Player* bot, BattlegroundTypeId bgTypeId,
+                                    BattlegroundBracketId bracket, ObjectGuid humanPlayerGuid);
+
 private:
     // ============================================================================
     // HELPER METHODS
@@ -227,14 +241,32 @@ private:
     /// Update accumulator for periodic cleanup
     uint32 _updateAccumulator;
 
+    /// Update accumulator for invitation polling
+    uint32 _invitationCheckAccumulator;
+
     /// Cleanup interval (5 minutes)
     static constexpr uint32 CLEANUP_INTERVAL = 5 * MINUTE * IN_MILLISECONDS;
+
+    /// Invitation check interval (1 second - frequent check for quick BG entry)
+    static constexpr uint32 INVITATION_CHECK_INTERVAL = 1 * IN_MILLISECONDS;
 
     /// Maximum queue time before considered stale (30 minutes)
     static constexpr time_t MAX_QUEUE_TIME = 30 * MINUTE;
 
     /// Whether initialized
     bool _initialized;
+
+    // ============================================================================
+    // INVITATION PROCESSING
+    // ============================================================================
+
+    /**
+     * @brief Process pending BG invitations for queued bots
+     *
+     * Since the core BG system doesn't notify the bot module when bots are invited,
+     * we poll all queued bots to check if they have pending invitations and auto-accept.
+     */
+    void ProcessPendingInvitations();
 };
 
 } // namespace Playerbot

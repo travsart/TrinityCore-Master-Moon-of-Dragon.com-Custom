@@ -1718,6 +1718,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES)
             $<$<CONFIG:Release>:/GL>                    # Whole program optimization (Release only)
             $<$<CONFIG:Release>:/fp:fast>               # Fast floating point (Release only)
             $<$<CONFIG:Release>:/arch:AVX2>             # Enable AVX2 if available (Release only)
+            /Gy                                         # Function-level linking (reduces object size)
+            /Gw                                         # Optimize global data (reduces object size)
         )
         # Apply link-time optimizations only for Release builds
         target_link_options(playerbot PRIVATE $<$<CONFIG:Release>:/LTCG>)

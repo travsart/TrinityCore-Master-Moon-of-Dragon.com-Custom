@@ -23,6 +23,8 @@
 #include "../Spatial/SpatialGridScheduler.h"
 #include "../AI/BotAI.h"
 #include "../Lifecycle/DeathRecoveryManager.h"
+#include "../Lifecycle/Instance/BotPostLoginConfigurator.h"  // For HasPendingConfiguration - skip JIT bots
+#include "../Lifecycle/Instance/InstanceBotOrchestrator.h"   // For IsManagedBot - skip JIT bots from LevelManager
 #include <chrono>
 #include <queue>
 #include "GameTime.h"
@@ -559,18 +561,39 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     // When LevelManager is enabled, newly logged-in bots need to be
                     // submitted for level assignment, talent setup, gear, and zone placement.
                     // Without this, bots spawn at level 1 and never get leveled up.
+                    //
+                    // CRITICAL: SKIP JIT bots - they have pending configuration from
+                    // BotPostLoginConfigurator which sets their level specifically for
+                    // the content they were created for (BG, dungeon, raid).
+                    // BotLevelManager would override that level with distribution-based
+                    // redistribution, causing JIT bots to get wrong levels.
                     // ================================================================
                     if (sBotLevelManager->IsReady())
                     {
                         Player* bot = session->GetPlayer();
                         if (bot)
                         {
-                            uint64 taskId = sBotLevelManager->CreateBotAsync(bot);
-                            if (taskId > 0)
+                            // CRITICAL: Skip JIT bots - they're configured by BotPostLoginConfigurator
+                            // Check both:
+                            // 1. HasPendingConfiguration - config not yet applied
+                            // 2. IsManagedBot - config already applied, bot managed by orchestrator
+                            if (sBotPostLoginConfigurator->HasPendingConfiguration(guid) ||
+                                sInstanceBotOrchestrator->IsManagedBot(guid))
                             {
                                 TC_LOG_INFO("module.playerbot.session",
-                                    "Bot {} submitted to LevelManager (task {})",
-                                    bot->GetName(), taskId);
+                                    "Bot {} is JIT-configured - SKIPPING LevelManager submission to preserve target level",
+                                    bot->GetName());
+                            }
+                            else
+                            {
+                                // Regular pool bot - submit to LevelManager for distribution-based leveling
+                                uint64 taskId = sBotLevelManager->CreateBotAsync(bot);
+                                if (taskId > 0)
+                                {
+                                    TC_LOG_INFO("module.playerbot.session",
+                                        "Bot {} submitted to LevelManager (task {})",
+                                        bot->GetName(), taskId);
+                                }
                             }
                         }
                     }
@@ -1379,6 +1402,12 @@ uint32 BotWorldSessionMgr::GetBotCountByAccount(uint32 accountId) const
                  bots.size(), _botSessions.size());
 
     return bots;
+}
+
+bool BotWorldSessionMgr::IsBotLoading(ObjectGuid botGuid) const
+{
+    ::std::lock_guard lock(_sessionsMutex);
+    return _botsLoading.find(botGuid) != _botsLoading.end();
 }
 
 } // namespace Playerbot
