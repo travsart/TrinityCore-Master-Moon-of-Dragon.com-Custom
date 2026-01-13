@@ -22,6 +22,153 @@
 namespace Playerbot
 {
 
+namespace
+{
+    // CC spell info for availability checks
+    struct CCSpellInfo
+    {
+        uint32 spellId;
+        CrowdControlType ccType;
+    };
+
+    // Class-specific CC spell database (used for both GetAvailableCCSpells and HasCCAvailable)
+    static const std::unordered_map<uint8, std::vector<CCSpellInfo>> classCCSpells = {
+        // Mage
+        {CLASS_MAGE, {
+            {118, CrowdControlType::INCAPACITATE},      // Polymorph
+            {82691, CrowdControlType::INCAPACITATE},    // Ring of Frost
+            {122, CrowdControlType::ROOT},              // Frost Nova
+            {31661, CrowdControlType::DISORIENT},       // Dragon's Breath
+        }},
+        // Rogue
+        {CLASS_ROGUE, {
+            {6770, CrowdControlType::INCAPACITATE},     // Sap
+            {1776, CrowdControlType::STUN},             // Gouge
+            {2094, CrowdControlType::DISORIENT},        // Blind
+            {408, CrowdControlType::STUN},              // Kidney Shot
+        }},
+        // Hunter
+        {CLASS_HUNTER, {
+            {187650, CrowdControlType::INCAPACITATE},   // Freezing Trap
+            {19386, CrowdControlType::INCAPACITATE},    // Wyvern Sting
+            {213691, CrowdControlType::INCAPACITATE},   // Scatter Shot
+            {109248, CrowdControlType::STUN},           // Binding Shot
+        }},
+        // Warlock
+        {CLASS_WARLOCK, {
+            {5782, CrowdControlType::DISORIENT},        // Fear
+            {710, CrowdControlType::INCAPACITATE},      // Banish
+            {6789, CrowdControlType::DISORIENT},        // Mortal Coil
+            {30283, CrowdControlType::STUN},            // Shadowfury
+        }},
+        // Priest
+        {CLASS_PRIEST, {
+            {9484, CrowdControlType::INCAPACITATE},     // Shackle Undead
+            {605, CrowdControlType::INCAPACITATE},      // Mind Control
+            {8122, CrowdControlType::DISORIENT},        // Psychic Scream
+            {200196, CrowdControlType::STUN},           // Holy Word: Chastise
+        }},
+        // Druid
+        {CLASS_DRUID, {
+            {339, CrowdControlType::ROOT},              // Entangling Roots
+            {2637, CrowdControlType::INCAPACITATE},     // Hibernate
+            {99, CrowdControlType::DISORIENT},          // Incapacitating Roar
+            {5211, CrowdControlType::STUN},             // Mighty Bash
+            {102359, CrowdControlType::ROOT},           // Mass Entanglement
+        }},
+        // Shaman
+        {CLASS_SHAMAN, {
+            {51514, CrowdControlType::INCAPACITATE},    // Hex
+            {118905, CrowdControlType::STUN},           // Static Charge
+            {197214, CrowdControlType::STUN},           // Sundering
+        }},
+        // Paladin
+        {CLASS_PALADIN, {
+            {20066, CrowdControlType::INCAPACITATE},    // Repentance
+            {853, CrowdControlType::STUN},              // Hammer of Justice
+            {115750, CrowdControlType::STUN},           // Blinding Light
+            {10326, CrowdControlType::DISORIENT},       // Turn Evil
+        }},
+        // Death Knight
+        {CLASS_DEATH_KNIGHT, {
+            {108194, CrowdControlType::STUN},           // Asphyxiate
+            {91807, CrowdControlType::STUN},            // Shambling Rush (Ghoul)
+            {207167, CrowdControlType::DISORIENT},      // Blinding Sleet
+        }},
+        // Monk
+        {CLASS_MONK, {
+            {115078, CrowdControlType::INCAPACITATE},   // Paralysis
+            {119381, CrowdControlType::STUN},           // Leg Sweep
+            {198909, CrowdControlType::DISORIENT},      // Song of Chi-Ji
+        }},
+        // Warrior
+        {CLASS_WARRIOR, {
+            {5246, CrowdControlType::DISORIENT},        // Intimidating Shout
+            {132168, CrowdControlType::STUN},           // Shockwave
+            {132169, CrowdControlType::STUN},           // Storm Bolt
+        }},
+        // Demon Hunter
+        {CLASS_DEMON_HUNTER, {
+            {217832, CrowdControlType::INCAPACITATE},   // Imprison
+            {179057, CrowdControlType::STUN},           // Chaos Nova
+            {211881, CrowdControlType::STUN},           // Fel Eruption
+        }},
+        // Evoker
+        {CLASS_EVOKER, {
+            {360806, CrowdControlType::INCAPACITATE},   // Sleep Walk
+            {357210, CrowdControlType::ROOT},           // Deep Breath knockback
+        }},
+    };
+
+    /**
+     * @brief Check if a player has any CC spell available (not on cooldown, has mana)
+     * @param player Player to check
+     * @return true if player has at least one CC spell ready to use
+     */
+    bool HasCCAvailable(Player* player)
+    {
+        if (!player)
+            return false;
+
+        uint8 playerClass = player->GetClass();
+        auto classIt = classCCSpells.find(playerClass);
+        if (classIt == classCCSpells.end())
+            return false;
+
+        for (const CCSpellInfo& ccInfo : classIt->second)
+        {
+            // Check if player knows the spell
+            if (!player->HasSpell(ccInfo.spellId))
+                continue;
+
+            // Check if spell is on cooldown
+            if (player->GetSpellHistory()->HasCooldown(ccInfo.spellId))
+                continue;
+
+            // Check if player has enough power to cast
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ccInfo.spellId, DIFFICULTY_NONE);
+            if (!spellInfo)
+                continue;
+
+            std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(player, spellInfo->GetSchoolMask());
+            bool hasPower = true;
+            for (SpellPowerCost const& cost : costs)
+            {
+                if (player->GetPower(cost.Power) < cost.Amount)
+                {
+                    hasPower = false;
+                    break;
+                }
+            }
+
+            if (hasPower)
+                return true;  // Found at least one available CC spell
+        }
+
+        return false;
+    }
+} // anonymous namespace
+
 CrowdControlManager::CrowdControlManager(Player* bot)
     : _bot(bot)
     , _lastUpdate(0)
@@ -193,24 +340,28 @@ Player* CrowdControlManager::GetChainCCBot(Unit* target)
     if (cc->GetRemainingTime() > CHAIN_CC_WINDOW)
         return nullptr;
 
-    // In group? Assign to another bot
+    // In group? Assign to another bot with available CC
     Group* group = _bot->GetGroup();
     if (group)
     {
-        // Find another player with CC
-    for (GroupReference& ref : group->GetMembers())
+        // Find another player with CC available
+        for (GroupReference& ref : group->GetMembers())
         {
             Player* member = ref.GetSource();
             if (!member || member == cc->appliedBy)
                 continue;
 
-            // TODO: Check if member has CC available
-            return member;
+            // Check if member has a CC spell available (not on cooldown, has resources)
+            if (HasCCAvailable(member))
+                return member;
         }
     }
 
-    // Solo or no other CCer: bot reapplies
-    return _bot;
+    // Solo or no other CCer: bot reapplies if they have CC available
+    if (HasCCAvailable(_bot))
+        return _bot;
+
+    return nullptr;
 }
 
 bool CrowdControlManager::IsTargetCCd(Unit* target) const
@@ -360,103 +511,7 @@ float CrowdControlManager::CalculateCCPriority(Unit* target) const
     if (!_bot)
         return spells;
 
-    // Class-specific CC spell database
-    // Maps class to list of CC spell IDs
-    struct CCSpellInfo
-    {
-        uint32 spellId;
-        CrowdControlType ccType;
-    };
-
-    static const std::unordered_map<uint8, std::vector<CCSpellInfo>> classCCSpells = {
-        // Mage
-        {CLASS_MAGE, {
-            {118, CrowdControlType::INCAPACITATE},      // Polymorph
-            {82691, CrowdControlType::INCAPACITATE},    // Ring of Frost
-            {122, CrowdControlType::ROOT},              // Frost Nova
-            {31661, CrowdControlType::DISORIENT},       // Dragon's Breath
-        }},
-        // Rogue
-        {CLASS_ROGUE, {
-            {6770, CrowdControlType::INCAPACITATE},     // Sap
-            {1776, CrowdControlType::STUN},             // Gouge
-            {2094, CrowdControlType::DISORIENT},        // Blind
-            {408, CrowdControlType::STUN},              // Kidney Shot
-        }},
-        // Hunter
-        {CLASS_HUNTER, {
-            {187650, CrowdControlType::INCAPACITATE},   // Freezing Trap
-            {19386, CrowdControlType::INCAPACITATE},    // Wyvern Sting
-            {213691, CrowdControlType::INCAPACITATE},   // Scatter Shot
-            {109248, CrowdControlType::STUN},           // Binding Shot
-        }},
-        // Warlock
-        {CLASS_WARLOCK, {
-            {5782, CrowdControlType::DISORIENT},        // Fear
-            {710, CrowdControlType::INCAPACITATE},      // Banish
-            {6789, CrowdControlType::DISORIENT},        // Mortal Coil
-            {30283, CrowdControlType::STUN},            // Shadowfury
-        }},
-        // Priest
-        {CLASS_PRIEST, {
-            {9484, CrowdControlType::INCAPACITATE},     // Shackle Undead
-            {605, CrowdControlType::INCAPACITATE},      // Mind Control
-            {8122, CrowdControlType::DISORIENT},        // Psychic Scream
-            {200196, CrowdControlType::STUN},           // Holy Word: Chastise
-        }},
-        // Druid
-        {CLASS_DRUID, {
-            {339, CrowdControlType::ROOT},              // Entangling Roots
-            {2637, CrowdControlType::INCAPACITATE},     // Hibernate
-            {99, CrowdControlType::DISORIENT},          // Incapacitating Roar
-            {5211, CrowdControlType::STUN},             // Mighty Bash
-            {102359, CrowdControlType::ROOT},           // Mass Entanglement
-        }},
-        // Shaman
-        {CLASS_SHAMAN, {
-            {51514, CrowdControlType::INCAPACITATE},    // Hex
-            {118905, CrowdControlType::STUN},           // Static Charge
-            {197214, CrowdControlType::STUN},           // Sundering
-        }},
-        // Paladin
-        {CLASS_PALADIN, {
-            {20066, CrowdControlType::INCAPACITATE},    // Repentance
-            {853, CrowdControlType::STUN},              // Hammer of Justice
-            {115750, CrowdControlType::STUN},           // Blinding Light
-            {10326, CrowdControlType::DISORIENT},       // Turn Evil
-        }},
-        // Death Knight
-        {CLASS_DEATH_KNIGHT, {
-            {108194, CrowdControlType::STUN},           // Asphyxiate
-            {91807, CrowdControlType::STUN},            // Shambling Rush (Ghoul)
-            {207167, CrowdControlType::DISORIENT},      // Blinding Sleet
-        }},
-        // Monk
-        {CLASS_MONK, {
-            {115078, CrowdControlType::INCAPACITATE},   // Paralysis
-            {119381, CrowdControlType::STUN},           // Leg Sweep
-            {198909, CrowdControlType::DISORIENT},      // Song of Chi-Ji
-        }},
-        // Warrior
-        {CLASS_WARRIOR, {
-            {5246, CrowdControlType::DISORIENT},        // Intimidating Shout
-            {132168, CrowdControlType::STUN},           // Shockwave
-            {132169, CrowdControlType::STUN},           // Storm Bolt
-        }},
-        // Demon Hunter
-        {CLASS_DEMON_HUNTER, {
-            {217832, CrowdControlType::INCAPACITATE},   // Imprison
-            {179057, CrowdControlType::STUN},           // Chaos Nova
-            {211881, CrowdControlType::STUN},           // Fel Eruption
-        }},
-        // Evoker
-        {CLASS_EVOKER, {
-            {360806, CrowdControlType::INCAPACITATE},   // Sleep Walk
-            {357210, CrowdControlType::ROOT},           // Deep Breath knockback
-        }},
-    };
-
-    // Get spells for bot's class
+    // Get spells for bot's class using shared classCCSpells from anonymous namespace
     uint8 botClass = _bot->GetClass();
     auto classIt = classCCSpells.find(botClass);
     if (classIt == classCCSpells.end())

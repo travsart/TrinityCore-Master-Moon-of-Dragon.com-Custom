@@ -194,7 +194,6 @@ public:
     bool HasThreat(Unit* target) const;
     float GetThreat(Unit* target) const;
     float GetThreatPercent(Unit* target) const;
-    ThreatInfo const* GetThreatInfo(Unit* target) const;
 
     // Multi-target threat management
     ::std::vector<Unit*> GetAllThreatTargets();

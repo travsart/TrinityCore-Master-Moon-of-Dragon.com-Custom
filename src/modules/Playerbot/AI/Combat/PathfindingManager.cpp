@@ -674,14 +674,6 @@ bool PathfindingManager::RequiresJump(const Position& from, const Position& to)
     return heightDiff > 1.0f && heightDiff <= 5.0f;
 }
 
-PathCacheEntry* PathfindingManager::FindCacheEntry(const Position& /*start*/, const Position& /*goal*/)
-{
-    // DEPRECATED: This method is no longer used - LRUCache uses Get() which returns optional<Value>
-    // Callers should use _pathCache.Get(key) directly which returns std::optional<PathCacheEntry>
-    // Keeping this method stub for ABI compatibility, but it always returns nullptr
-    return nullptr;
-}
-
 void PathfindingManager::AddCacheEntry(const PathCacheEntry& entry)
 {
     // LRUCache handles capacity management automatically - no need to check size

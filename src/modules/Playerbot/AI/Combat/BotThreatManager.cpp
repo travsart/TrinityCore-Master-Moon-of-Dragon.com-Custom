@@ -499,19 +499,6 @@ float BotThreatManager::GetThreatPercent(Unit* target) const
     return CalculateThreatPercent(target);
 }
 
-ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
-{
-    if (!target)
-        return nullptr;
-
-    // NOTE: BoundedMap::Get() returns optional by value, so we cannot return a pointer
-    // to internal data safely. Callers should use GetThreat(), GetThreatPercent(), etc.
-    // For now, return nullptr - this method is deprecated in favor of direct accessors.
-    // TODO: Update callers to use Get() with optional<ThreatInfo> return
-    (void)target;  // Suppress unused parameter warning
-    return nullptr;
-}
-
 ::std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
 {
     ::std::vector<Unit*> targets;

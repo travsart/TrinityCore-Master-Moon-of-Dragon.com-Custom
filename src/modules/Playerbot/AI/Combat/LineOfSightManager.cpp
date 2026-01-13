@@ -675,14 +675,6 @@ bool LineOfSightManager::CheckWaterBlocking(const Position& from, const Position
     return fromInWater != toInWater;
 }
 
-LoSCacheEntry* LineOfSightManager::FindCacheEntry(ObjectGuid /*sourceGuid*/, ObjectGuid /*targetGuid*/, LoSCheckType /*checkType*/)
-{
-    // DEPRECATED: This method is no longer used - LRUCache uses Get() which returns optional<Value>
-    // Callers should use _losCache.Get(key) directly which returns std::optional<LoSCacheEntry>
-    // Keeping this method stub for ABI compatibility, but it always returns nullptr
-    return nullptr;
-}
-
 void LineOfSightManager::AddCacheEntry(const LoSCacheEntry& entry)
 {
     // LRUCache handles capacity management automatically - no need to check size

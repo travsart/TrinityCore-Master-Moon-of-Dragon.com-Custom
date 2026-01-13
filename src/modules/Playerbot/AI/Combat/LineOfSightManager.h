@@ -327,7 +327,6 @@ private:
     bool CheckWaterBlocking(const Position& from, const Position& to);
 
     // Cache management methods
-    LoSCacheEntry* FindCacheEntry(ObjectGuid sourceGuid, ObjectGuid targetGuid, LoSCheckType checkType);
     void AddCacheEntry(const LoSCacheEntry& entry);
     void CleanupCache();
 

@@ -23,6 +23,8 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "SpellHistory.h"
+#include "Spell.h"
+#include "Item.h"
 #include "Timer.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
@@ -326,17 +328,80 @@ bool CombatBehaviorIntegration::HandleEmergencies()
         }
     }
 
-    // Use health consumables
-    // CRITICAL FIX: Only return true if we ACTUALLY use a consumable.
-    // Previously this returned true just for needing healing, which blocked the rotation
-    // without actually doing anything!
+    // Use health consumables when HP is critically low
+    // Only return true if we ACTUALLY use a consumable to avoid blocking rotation
     if (metrics.personalHealthPercent < 30.0f)
     {
-        // TODO: Actually implement health potion/healthstone usage here
-        // For now, just log and continue to rotation (don't block it)
+        // Healthstone item IDs by expansion (Warlocks create these)
+        static const uint32 HEALTHSTONE_IDS[] = {
+            224464,  // Healthstone (TWW)
+            207030,  // Healthstone (Dragonflight)
+            177278,  // Healthstone (Shadowlands)
+            156438,  // Healthstone (BfA)
+            152303,  // Healthstone (Legion)
+            5512,    // Healthstone (generic modern)
+            36889,   // Fel Healthstone
+            36892,   // Demonic Healthstone
+        };
+
+        // TWW 11.2 healing potion item IDs
+        static const uint32 HEALING_POTION_IDS[] = {
+            191380,  // Potion of Withering Dreams
+            191381,  // Dreamwalker's Healing Potion
+            191383,  // Potion of Withering Vitality
+            171267,  // Spiritual Healing Potion
+            171270,  // Potion of Spectral Healing
+            127834,  // Ancient Healing Potion
+            33447,   // Runic Healing Potion
+            22829,   // Super Healing Potion
+            13446,   // Major Healing Potion
+            3928,    // Superior Healing Potion
+            1710,    // Greater Healing Potion
+            929,     // Healing Potion
+            118,     // Minor Healing Potion
+        };
+
+        // Check healthstone cooldown spell ID (47875 = Healthstone)
+        static constexpr uint32 HEALTHSTONE_COOLDOWN_SPELL = 47875;
+        // Check potion cooldown (potions share a spell school cooldown)
+        static constexpr uint32 POTION_COOLDOWN_SPELL = 17619;
+
+        // Try healthstone first (higher priority, shorter cooldown)
+        if (!_bot->GetSpellHistory()->HasCooldown(HEALTHSTONE_COOLDOWN_SPELL))
+        {
+            for (uint32 healthstoneId : HEALTHSTONE_IDS)
+            {
+                if (Item* item = _bot->GetItemByEntry(healthstoneId))
+                {
+                    _bot->CastItemUseSpell(item, SpellCastTargets(), ObjectGuid::Empty, nullptr);
+                    if (_detailedLogging)
+                        TC_LOG_DEBUG("bot.playerbot", "Bot {} used Healthstone (item {})",
+                            _bot->GetName(), healthstoneId);
+                    return true;
+                }
+            }
+        }
+
+        // Try healing potion
+        if (!_bot->GetSpellHistory()->HasCooldown(POTION_COOLDOWN_SPELL))
+        {
+            for (uint32 potionId : HEALING_POTION_IDS)
+            {
+                if (Item* item = _bot->GetItemByEntry(potionId))
+                {
+                    _bot->CastItemUseSpell(item, SpellCastTargets(), ObjectGuid::Empty, nullptr);
+                    if (_detailedLogging)
+                        TC_LOG_DEBUG("bot.playerbot", "Bot {} used Health Potion (item {})",
+                            _bot->GetName(), potionId);
+                    return true;
+                }
+            }
+        }
+
+        // No consumables available, continue to rotation
         if (_detailedLogging)
-            TC_LOG_DEBUG("bot.playerbot", "Bot {} needs emergency healing (not implemented)", _bot->GetName());
-        // return true;  // REMOVED: Don't block rotation without doing anything
+            TC_LOG_DEBUG("bot.playerbot", "Bot {} needs emergency healing but no consumables available",
+                _bot->GetName());
     }
 
     // Emergency movement

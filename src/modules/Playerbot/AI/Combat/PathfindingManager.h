@@ -357,7 +357,6 @@ private:
     bool IsInDangerousArea(const Position& pos);
 
     // Cache management helpers
-    PathCacheEntry* FindCacheEntry(const Position& start, const Position& goal);
     void AddCacheEntry(const PathCacheEntry& entry);
     ::std::string GenerateCacheKey(const Position& start, const Position& goal);
 
