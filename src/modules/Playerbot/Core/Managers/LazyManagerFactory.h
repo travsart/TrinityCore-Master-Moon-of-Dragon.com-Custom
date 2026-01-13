@@ -31,7 +31,6 @@ namespace Playerbot
 {
 
 class BotAI;
-class QuestManager;
 class TradeManager;
 class GatheringManager;
 class AuctionManager;
@@ -96,15 +95,6 @@ public:
     // ========================================================================
     // LAZY MANAGER GETTERS - Create on first use
     // ========================================================================
-
-    /**
-     * @brief Get or create QuestManager
-     * @return QuestManager instance (never null after first call)
-     *
-     * First call: Creates manager + subscribes to 16 quest events (~10ms)
-     * Subsequent calls: Returns cached instance (<0.001ms)
-     */
-    QuestManager* GetQuestManager();
 
     /**
      * @brief Get or create TradeManager
@@ -247,7 +237,6 @@ private:
     BotAI* _ai;                             ///< Bot AI controller
 
     // Manager instances (created on-demand)
-    ::std::unique_ptr<QuestManager> _questManager;
     ::std::unique_ptr<TradeManager> _tradeManager;
     ::std::unique_ptr<GatheringManager> _gatheringManager;
     ::std::unique_ptr<AuctionManager> _auctionManager;
@@ -255,7 +244,6 @@ private:
     ::std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
 
     // Initialization flags (lock-free fast path)
-    ::std::atomic<bool> _questManagerInit{false};
     ::std::atomic<bool> _tradeManagerInit{false};
     ::std::atomic<bool> _gatheringManagerInit{false};
     ::std::atomic<bool> _auctionManagerInit{false};

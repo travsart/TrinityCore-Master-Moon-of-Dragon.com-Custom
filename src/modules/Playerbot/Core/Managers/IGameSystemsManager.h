@@ -53,7 +53,6 @@ namespace Playerbot
 {
 
 // Forward declarations for all manager types
-class QuestManager;
 class ObjectiveTracker;
 class QuestCompletion;
 class QuestPickup;
@@ -144,12 +143,6 @@ public:
     // ========================================================================
     // GAME SYSTEM ACCESS (Core Managers)
     // ========================================================================
-
-    /**
-     * @brief Get quest management system
-     * @return Non-owning pointer to QuestManager (owned by facade)
-     */
-    virtual QuestManager* GetQuestManager() const = 0;
 
     /**
      * @brief Get objective tracker for quest progress

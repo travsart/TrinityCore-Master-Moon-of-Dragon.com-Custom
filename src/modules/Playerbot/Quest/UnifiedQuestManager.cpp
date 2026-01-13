@@ -438,7 +438,12 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuestPrerequisites(uint32 qu
     return {};
 }
 
-// ValidateQuestChainPosition removed - not in interface
+bool UnifiedQuestManager::ValidationModule::ValidateQuestChain(uint32 questId, Player* bot)
+{
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetQuestValidation()->ValidateQuestChainPosition(questId, bot);
+    return {};
+}
 
 bool UnifiedQuestManager::ValidationModule::HasCompletedPrerequisites(uint32 questId, Player* bot)
 {

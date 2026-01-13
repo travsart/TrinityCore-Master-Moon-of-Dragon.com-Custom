@@ -63,7 +63,6 @@
 #include "AI/BotAI.h"
 #include "AI/BehaviorManager.h"
 #include "AI/Strategy/SoloStrategy.h"
-#include "Game/QuestManager.h"
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
 #include "Economy/AuctionManager.h"
@@ -125,12 +124,11 @@ public:
         , m_active(true)
         , m_updateManagersCalls(0)
     {
-        // PHASE 2.4: Initialize all 4 managers in constructor
+        // PHASE 2.4: Initialize 3 managers in constructor (QuestManager removed)
         // This simulates real BotAI::BotAI(Player* bot) constructor
         Player* playerPtr = reinterpret_cast<Player*>(bot);
         BotAI* aiPtr = reinterpret_cast<BotAI*>(this);
 
-        m_questManager = ::std::make_unique<QuestManager>(playerPtr, aiPtr);
         m_tradeManager = ::std::make_unique<TradeManager>(playerPtr, aiPtr);
         m_gatheringManager = ::std::make_unique<GatheringManager>(playerPtr, aiPtr);
         m_auctionManager = ::std::make_unique<AuctionManager>(playerPtr, aiPtr);
@@ -143,9 +141,6 @@ public:
     {
         m_updateManagersCalls++;
 
-        if (m_questManager)
-            m_questManager->Update(diff);
-
         if (m_tradeManager)
             m_tradeManager->Update(diff);
 
@@ -157,9 +152,6 @@ public:
     }
 
     // Manager accessors
-    QuestManager* GetQuestManager() { return m_questManager.get(); }
-    QuestManager const* GetQuestManager() const { return m_questManager.get(); }
-
     TradeManager* GetTradeManager() { return m_tradeManager.get(); }
     TradeManager const* GetTradeManager() const { return m_tradeManager.get(); }
 
@@ -180,8 +172,7 @@ private:
     bool m_active;
     uint32 m_updateManagersCalls;
 
-    // The 4 managers from Phase 2.4
-    ::std::unique_ptr<QuestManager> m_questManager;
+    // The 3 managers (QuestManager removed, now in Quest/* modules)
     ::std::unique_ptr<TradeManager> m_tradeManager;
     ::std::unique_ptr<GatheringManager> m_gatheringManager;
     ::std::unique_ptr<AuctionManager> m_auctionManager;
@@ -250,24 +241,14 @@ protected:
 // ============================================================================
 
 /**
- * @test All 4 managers initialize correctly in BotAI constructor
+ * @test All 3 managers initialize correctly in BotAI constructor
+ * Note: QuestManager removed - now using Quest/* modules
  */
 TEST_F(Phase2IntegrationTest, Initialization_AllManagers_InitializedInConstructor)
 {
-    ASSERT_NE(mockAI->GetQuestManager(), nullptr);
     ASSERT_NE(mockAI->GetTradeManager(), nullptr);
     ASSERT_NE(mockAI->GetGatheringManager(), nullptr);
     ASSERT_NE(mockAI->GetAuctionManager(), nullptr);
-}
-
-/**
- * @test QuestManager initialized with correct throttle interval (2s)
- */
-TEST_F(Phase2IntegrationTest, Initialization_QuestManager_CorrectThrottleInterval)
-{
-    QuestManager* mgr = mockAI->GetQuestManager();
-    ASSERT_NE(mgr, nullptr);
-    EXPECT_EQ(mgr->GetUpdateInterval(), 2000u);
 }
 
 /**
@@ -305,7 +286,6 @@ TEST_F(Phase2IntegrationTest, Initialization_AuctionManager_CorrectThrottleInter
  */
 TEST_F(Phase2IntegrationTest, Initialization_AllManagers_EnabledByDefault)
 {
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetTradeManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetGatheringManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetAuctionManager()->IsEnabled());
@@ -316,7 +296,6 @@ TEST_F(Phase2IntegrationTest, Initialization_AllManagers_EnabledByDefault)
  */
 TEST_F(Phase2IntegrationTest, Initialization_AllManagers_NotInitializedBeforeFirstUpdate)
 {
-    EXPECT_FALSE(mockAI->GetQuestManager()->IsInitialized());
     EXPECT_FALSE(mockAI->GetTradeManager()->IsInitialized());
     EXPECT_FALSE(mockAI->GetGatheringManager()->IsInitialized());
     EXPECT_FALSE(mockAI->GetAuctionManager()->IsInitialized());
@@ -330,7 +309,6 @@ TEST_F(Phase2IntegrationTest, Initialization_AllManagers_InitializedAfterFirstUp
     // Trigger first update for all managers
     SimulateTime(10000, 100); // 10 seconds, enough for all managers
 
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetTradeManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetGatheringManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetAuctionManager()->IsInitialized());
@@ -341,7 +319,8 @@ TEST_F(Phase2IntegrationTest, Initialization_AllManagers_InitializedAfterFirstUp
 // ============================================================================
 
 /**
- * @test SoloStrategy can query all 4 manager states atomically
+ * @test SoloStrategy can query all 3 manager states atomically
+ * Note: QuestManager removed - quest state queried via BotAI helpers
  */
 TEST_F(Phase2IntegrationTest, ObserverPattern_SoloStrategy_QueriesAllManagerStates)
 {
@@ -352,13 +331,11 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_SoloStrategy_QueriesAllManagerStat
     BotAI* ai = reinterpret_cast<BotAI*>(mockAI.get());
 
     // SoloStrategy should be able to query all manager states
-    bool questingActive = ai->GetQuestManager() && ai->GetQuestManager()->IsQuestingActive();
     bool gatheringActive = ai->GetGatheringManager() && ai->GetGatheringManager()->IsGathering();
     bool tradingActive = ai->GetTradeManager() && ai->GetTradeManager()->IsTradingActive();
     bool auctionsActive = ai->GetAuctionManager() && ai->GetAuctionManager()->HasActiveAuctions();
 
     // Initially all should be false (no active work)
-    EXPECT_FALSE(questingActive);
     EXPECT_FALSE(gatheringActive);
     EXPECT_FALSE(tradingActive);
     EXPECT_FALSE(auctionsActive);
@@ -374,15 +351,14 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_AtomicQueries_UnderOneMicrosecond)
 
     BotAI* ai = reinterpret_cast<BotAI*>(mockAI.get());
 
-    // Measure 10000 atomic state queries
+    // Measure 10000 atomic state queries (3 managers)
     auto duration = MeasureTimeMicroseconds([&]() {
         for (int i = 0; i < 10000; ++i)
         {
-            volatile bool q = ai->GetQuestManager()->IsQuestingActive();
             volatile bool g = ai->GetGatheringManager()->IsGathering();
             volatile bool t = ai->GetTradeManager()->IsTradingActive();
             volatile bool a = ai->GetAuctionManager()->HasActiveAuctions();
-            (void)q; (void)g; (void)t; (void)a; // Prevent optimization
+            (void)g; (void)t; (void)a; // Prevent optimization
         }
     });
 
@@ -424,7 +400,7 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_SoloStrategyQueries_DoNotBlockMana
 
     BotAI* ai = reinterpret_cast<BotAI*>(mockAI.get());
 
-    uint32 questUpdatesBefore = mockAI->GetQuestManager()->GetUpdateInterval();
+    uint32 tradeUpdatesBefore = mockAI->GetTradeManager()->GetUpdateInterval();
 
     // Query states from SoloStrategy while managers are updating
     for (int i = 0; i < 100; ++i)
@@ -434,8 +410,8 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_SoloStrategyQueries_DoNotBlockMana
     }
 
     // Managers should still be functioning normally
-    uint32 questUpdatesAfter = mockAI->GetQuestManager()->GetUpdateInterval();
-    EXPECT_EQ(questUpdatesBefore, questUpdatesAfter);
+    uint32 tradeUpdatesAfter = mockAI->GetTradeManager()->GetUpdateInterval();
+    EXPECT_EQ(tradeUpdatesBefore, tradeUpdatesAfter);
 }
 
 /**
@@ -446,18 +422,18 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_StateChanges_VisibleImmediately)
     // Initialize managers
     SimulateTime(10000, 100);
 
-    QuestManager* questMgr = mockAI->GetQuestManager();
+    TradeManager* tradeMgr = mockAI->GetTradeManager();
 
     // Verify initial state
-    EXPECT_FALSE(questMgr->IsQuestingActive());
+    EXPECT_FALSE(tradeMgr->IsTradingActive());
 
-    // Simulate quest activation by updating manager state
+    // Simulate trade activation by updating manager state
     // Note: In real implementation, this would happen in OnUpdate()
     // For testing, we verify the atomic query works correctly
 
     // The atomic query should always reflect current state
-    bool state1 = questMgr->IsQuestingActive();
-    bool state2 = questMgr->IsQuestingActive();
+    bool state1 = tradeMgr->IsTradingActive();
+    bool state2 = tradeMgr->IsTradingActive();
     EXPECT_EQ(state1, state2); // Consistency check
 }
 
@@ -511,9 +487,9 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_LockFree_NoDeadlocks)
 // ============================================================================
 
 /**
- * @test BotAI::UpdateManagers() calls all 4 managers
+ * @test BotAI::UpdateManagers() calls all 3 managers
  */
-TEST_F(Phase2IntegrationTest, UpdateChain_UpdateManagers_CallsAllFourManagers)
+TEST_F(Phase2IntegrationTest, UpdateChain_UpdateManagers_CallsAllThreeManagers)
 {
     // Call UpdateManagers once
     mockAI->UpdateManagers(100);
@@ -523,7 +499,6 @@ TEST_F(Phase2IntegrationTest, UpdateChain_UpdateManagers_CallsAllFourManagers)
 
     // All managers should have received Update() call
     // (Initialization happens on first call)
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetTradeManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetGatheringManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetAuctionManager()->IsInitialized());
@@ -534,18 +509,18 @@ TEST_F(Phase2IntegrationTest, UpdateChain_UpdateManagers_CallsAllFourManagers)
  */
 TEST_F(Phase2IntegrationTest, UpdateChain_ManagerThrottling_WorksCorrectly)
 {
-    QuestManager* questMgr = mockAI->GetQuestManager();
-    ASSERT_NE(questMgr, nullptr);
+    TradeManager* tradeMgr = mockAI->GetTradeManager();
+    ASSERT_NE(tradeMgr, nullptr);
 
-    // Quest manager throttles at 2000ms
-    // Call Update() 20 times with 100ms each (2000ms total)
-    for (int i = 0; i < 20; ++i)
+    // Trade manager throttles at 5000ms
+    // Call Update() 50 times with 100ms each (5000ms total)
+    for (int i = 0; i < 50; ++i)
     {
         mockAI->UpdateManagers(100);
     }
 
-    // Quest manager should have been initialized (counts as first OnUpdate)
-    EXPECT_TRUE(questMgr->IsInitialized());
+    // Trade manager should have been initialized (counts as first OnUpdate)
+    EXPECT_TRUE(tradeMgr->IsInitialized());
 }
 
 /**
@@ -554,16 +529,14 @@ TEST_F(Phase2IntegrationTest, UpdateChain_ManagerThrottling_WorksCorrectly)
 TEST_F(Phase2IntegrationTest, UpdateChain_ManagerUpdateOrder_Consistent)
 {
     // The order in MockBotAI::UpdateManagers() is:
-    // 1. QuestManager
-    // 2. TradeManager
-    // 3. GatheringManager
-    // 4. AuctionManager
+    // 1. TradeManager
+    // 2. GatheringManager
+    // 3. AuctionManager
 
     // Call UpdateManagers
     mockAI->UpdateManagers(100);
 
     // All should initialize in the same call
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetTradeManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetGatheringManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetAuctionManager()->IsInitialized());
@@ -594,17 +567,17 @@ TEST_F(Phase2IntegrationTest, UpdateChain_ThrottledManagers_SkipUpdates)
  */
 TEST_F(Phase2IntegrationTest, UpdateChain_DisabledManagers_HandledGracefully)
 {
-    QuestManager* questMgr = mockAI->GetQuestManager();
-    ASSERT_NE(questMgr, nullptr);
+    TradeManager* tradeMgr = mockAI->GetTradeManager();
+    ASSERT_NE(tradeMgr, nullptr);
 
-    // Disable quest manager
-    questMgr->SetEnabled(false);
+    // Disable trade manager
+    tradeMgr->SetEnabled(false);
 
     // Update should not crash
     EXPECT_NO_THROW(mockAI->UpdateManagers(100));
 
     // Manager should remain disabled
-    EXPECT_FALSE(questMgr->IsEnabled());
+    EXPECT_FALSE(tradeMgr->IsEnabled());
 }
 
 /**
@@ -661,7 +634,6 @@ TEST_F(Phase2IntegrationTest, UpdateChain_VaryingDeltas_HandledCorrectly)
     }
 
     // All managers should still be functional
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetTradeManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetGatheringManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetAuctionManager()->IsEnabled());
@@ -670,41 +642,6 @@ TEST_F(Phase2IntegrationTest, UpdateChain_VaryingDeltas_HandledCorrectly)
 // ============================================================================
 // CATEGORY 4: ATOMIC STATE TRANSITION TESTS
 // ============================================================================
-
-/**
- * @test QuestManager _hasActiveQuests atomic state transitions
- */
-TEST_F(Phase2IntegrationTest, AtomicState_QuestManager_HasActiveQuestsTransitions)
-{
-    QuestManager* questMgr = mockAI->GetQuestManager();
-    ASSERT_NE(questMgr, nullptr);
-
-    // Initial state: no active quests
-    EXPECT_FALSE(questMgr->IsQuestingActive());
-
-    // Note: In real implementation, accepting a quest would set this to true
-    // For now, we verify the atomic query is consistent
-    bool state1 = questMgr->IsQuestingActive();
-    bool state2 = questMgr->IsQuestingActive();
-    EXPECT_EQ(state1, state2);
-}
-
-/**
- * @test QuestManager GetActiveQuestCount atomic counter
- */
-TEST_F(Phase2IntegrationTest, AtomicState_QuestManager_ActiveQuestCountAtomic)
-{
-    QuestManager* questMgr = mockAI->GetQuestManager();
-    ASSERT_NE(questMgr, nullptr);
-
-    // Initial count should be 0
-    EXPECT_EQ(questMgr->GetActiveQuestCount(), 0u);
-
-    // Verify atomic consistency
-    uint32 count1 = questMgr->GetActiveQuestCount();
-    uint32 count2 = questMgr->GetActiveQuestCount();
-    EXPECT_EQ(count1, count2);
-}
 
 /**
  * @test GatheringManager _isGathering atomic state transitions
@@ -850,13 +787,11 @@ TEST_F(Phase2IntegrationTest, AtomicState_AllManagers_MemoryOrderingCorrect)
     // Test that atomic operations use correct memory ordering
     // acquire/release semantics ensure visibility across threads
 
-    QuestManager* questMgr = mockAI->GetQuestManager();
     TradeManager* tradeMgr = mockAI->GetTradeManager();
     GatheringManager* gatherMgr = mockAI->GetGatheringManager();
     AuctionManager* auctionMgr = mockAI->GetAuctionManager();
 
     // All atomic queries should be consistent
-    EXPECT_EQ(questMgr->IsQuestingActive(), questMgr->IsQuestingActive());
     EXPECT_EQ(tradeMgr->IsTradingActive(), tradeMgr->IsTradingActive());
     EXPECT_EQ(gatherMgr->IsGathering(), gatherMgr->IsGathering());
     EXPECT_EQ(auctionMgr->HasActiveAuctions(), auctionMgr->HasActiveAuctions());
@@ -867,9 +802,9 @@ TEST_F(Phase2IntegrationTest, AtomicState_AllManagers_MemoryOrderingCorrect)
 // ============================================================================
 
 /**
- * @test UpdateManagers performance with all 4 managers under 1ms
+ * @test UpdateManagers performance with all 3 managers under 1ms
  */
-TEST_F(Phase2IntegrationTest, Performance_UpdateManagers_AllFourManagersUnderOneMillisecond)
+TEST_F(Phase2IntegrationTest, Performance_UpdateManagers_AllThreeManagersUnderOneMillisecond)
 {
     // Initialize all managers
     SimulateTime(10000, 100);
@@ -918,13 +853,13 @@ TEST_F(Phase2IntegrationTest, Performance_SingleAtomicQuery_UnderOneMicrosecond)
     // Initialize managers
     SimulateTime(10000, 100);
 
-    QuestManager* questMgr = mockAI->GetQuestManager();
+    TradeManager* tradeMgr = mockAI->GetTradeManager();
 
     // Measure 100000 atomic queries
     auto duration = MeasureTimeMicroseconds([&]() {
         for (int i = 0; i < 100000; ++i)
         {
-            volatile bool state = questMgr->IsQuestingActive();
+            volatile bool state = tradeMgr->IsTradingActive();
             (void)state; // Prevent optimization
         }
     });
@@ -995,7 +930,7 @@ TEST_F(Phase2IntegrationTest, Performance_ConcurrentBots_NoInterference)
     // All bots should remain functional
     for (auto& ai : ais)
     {
-        EXPECT_TRUE(ai->GetQuestManager()->IsEnabled());
+        EXPECT_TRUE(ai->GetTradeManager()->IsEnabled());
         EXPECT_TRUE(ai->GetTradeManager()->IsEnabled());
         EXPECT_TRUE(ai->GetGatheringManager()->IsEnabled());
         EXPECT_TRUE(ai->GetAuctionManager()->IsEnabled());
@@ -1007,17 +942,17 @@ TEST_F(Phase2IntegrationTest, Performance_ConcurrentBots_NoInterference)
  */
 TEST_F(Phase2IntegrationTest, Performance_AtomicOperations_LockFree)
 {
-    QuestManager* questMgr = mockAI->GetQuestManager();
     TradeManager* tradeMgr = mockAI->GetTradeManager();
+    GatheringManager* gatherMgr = mockAI->GetGatheringManager();
 
     // Atomic operations should not block
     ::std::atomic<uint32> queryCount{0};
     ::std::thread queryThread([&]() {
         for (int i = 0; i < 100000; ++i)
         {
-            volatile bool q = questMgr->IsQuestingActive();
             volatile bool t = tradeMgr->IsTradingActive();
-            (void)q; (void)t;
+            volatile bool g = gatherMgr->IsGathering();
+            (void)t; (void)g;
             queryCount.fetch_add(1);
         }
     });
@@ -1057,11 +992,10 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_ConcurrentQueries_NoDeadlocks)
             uint32 localQueries = 0;
             while (!testComplete.load())
             {
-                volatile bool q = mockAI->GetQuestManager()->IsQuestingActive();
                 volatile bool g = mockAI->GetGatheringManager()->IsGathering();
                 volatile bool t = mockAI->GetTradeManager()->IsTradingActive();
                 volatile bool a = mockAI->GetAuctionManager()->HasActiveAuctions();
-                (void)q; (void)g; (void)t; (void)a;
+                (void)g; (void)t; (void)a;
                 localQueries++;
             }
             totalQueries.fetch_add(localQueries);
@@ -1134,7 +1068,7 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_MemoryOrdering_Correct)
     ::std::atomic<bool> writerDone{false};
     ::std::atomic<uint32> readValue{0};
 
-    QuestManager* questMgr = mockAI->GetQuestManager();
+    TradeManager* tradeMgr = mockAI->GetTradeManager();
 
     // Writer thread (simulates manager updates)
     ::std::thread writer([&]() {
@@ -1148,7 +1082,7 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_MemoryOrdering_Correct)
     ::std::thread reader([&]() {
         while (!writerDone.load(::std::memory_order_acquire))
         {
-            volatile bool state = questMgr->IsQuestingActive();
+            volatile bool state = tradeMgr->IsTradingActive();
             (void)state;
             readValue.fetch_add(1);
         }
@@ -1177,8 +1111,8 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_ManagerUpdates_DontBlockQueries)
     ::std::thread queryThread([&]() {
         while (!testComplete.load())
         {
-            volatile bool q = mockAI->GetQuestManager()->IsQuestingActive();
-            (void)q;
+            volatile bool t = mockAI->GetTradeManager()->IsTradingActive();
+            (void)t;
             queryCount.fetch_add(1);
         }
     });
@@ -1218,7 +1152,7 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_DataRaces_None)
     // Multiple threads accessing different managers
     ::std::thread t1([&]() {
         while (!done.load())
-            volatile bool state = mockAI->GetQuestManager()->IsQuestingActive();
+            volatile bool state = mockAI->GetTradeManager()->IsTradingActive();
     });
 
     ::std::thread t2([&]() {
@@ -1279,7 +1213,7 @@ TEST_F(Phase2IntegrationTest, EdgeCase_AIInactive_ManagersContinue)
     EXPECT_NO_THROW(mockAI->UpdateManagers(100));
 
     // Managers should still be enabled
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsEnabled());
+    EXPECT_TRUE(mockAI->GetTradeManager()->IsEnabled());
 }
 
 /**
@@ -1326,7 +1260,7 @@ TEST_F(Phase2IntegrationTest, EdgeCase_ManagerShutdown_CleanupCorrect)
     // New managers should initialize cleanly
     SimulateTime(10000, 100);
 
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsInitialized());
+    EXPECT_TRUE(mockAI->GetTradeManager()->IsInitialized());
 }
 
 /**
@@ -1344,7 +1278,7 @@ TEST_F(Phase2IntegrationTest, EdgeCase_ZeroDiff_HandledCorrectly)
     }
 
     // Managers should remain stable
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsEnabled());
+    EXPECT_TRUE(mockAI->GetTradeManager()->IsEnabled());
 }
 
 /**
@@ -1359,28 +1293,29 @@ TEST_F(Phase2IntegrationTest, EdgeCase_VeryLargeDiff_NoOverflow)
     EXPECT_NO_THROW(mockAI->UpdateManagers(0xFFFFFFFF));
 
     // Managers should still be functional
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsEnabled());
+    EXPECT_TRUE(mockAI->GetTradeManager()->IsEnabled());
 }
 
 /**
  * @test Rapid enable/disable cycles
+ * Note: Tests TradeManager rapid state changes (QuestManager removed)
  */
 TEST_F(Phase2IntegrationTest, EdgeCase_RapidEnableDisable_Stable)
 {
     // Initialize managers
     SimulateTime(10000, 100);
 
-    QuestManager* questMgr = mockAI->GetQuestManager();
+    TradeManager* tradeMgr = mockAI->GetTradeManager();
 
     // Rapid enable/disable
     for (int i = 0; i < 100; ++i)
     {
-        questMgr->SetEnabled(i % 2 == 0);
+        tradeMgr->SetEnabled(i % 2 == 0);
         mockAI->UpdateManagers(10);
     }
 
     // Manager should be in valid state
-    EXPECT_TRUE(questMgr->IsEnabled() || !questMgr->IsEnabled()); // Tautology but checks no corruption
+    EXPECT_TRUE(tradeMgr->IsEnabled() || !tradeMgr->IsEnabled()); // Tautology but checks no corruption
 }
 
 /**
@@ -1392,7 +1327,7 @@ TEST_F(Phase2IntegrationTest, EdgeCase_AllManagersDisabled_NoErrors)
     SimulateTime(10000, 100);
 
     // Disable all managers
-    mockAI->GetQuestManager()->SetEnabled(false);
+    mockAI->GetTradeManager()->SetEnabled(false);
     mockAI->GetTradeManager()->SetEnabled(false);
     mockAI->GetGatheringManager()->SetEnabled(false);
     mockAI->GetAuctionManager()->SetEnabled(false);
@@ -1401,7 +1336,7 @@ TEST_F(Phase2IntegrationTest, EdgeCase_AllManagersDisabled_NoErrors)
     EXPECT_NO_THROW(mockAI->UpdateManagers(100));
 
     // All should remain disabled
-    EXPECT_FALSE(mockAI->GetQuestManager()->IsEnabled());
+    EXPECT_FALSE(mockAI->GetTradeManager()->IsEnabled());
     EXPECT_FALSE(mockAI->GetTradeManager()->IsEnabled());
     EXPECT_FALSE(mockAI->GetGatheringManager()->IsEnabled());
     EXPECT_FALSE(mockAI->GetAuctionManager()->IsEnabled());
@@ -1433,13 +1368,13 @@ TEST_F(Phase2IntegrationTest, Scenario_FullLifecycle_OneMinuteRuntime)
 
     // After 1 minute, all managers should be:
     // 1. Initialized
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsInitialized());
+    EXPECT_TRUE(mockAI->GetTradeManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetTradeManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetGatheringManager()->IsInitialized());
     EXPECT_TRUE(mockAI->GetAuctionManager()->IsInitialized());
 
     // 2. Enabled
-    EXPECT_TRUE(mockAI->GetQuestManager()->IsEnabled());
+    EXPECT_TRUE(mockAI->GetTradeManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetTradeManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetGatheringManager()->IsEnabled());
     EXPECT_TRUE(mockAI->GetAuctionManager()->IsEnabled());
@@ -1492,7 +1427,7 @@ TEST_F(Phase2IntegrationTest, Scenario_HundredBots_TenSecondsStressTest)
     // All bots should remain functional
     for (auto& ai : ais)
     {
-        EXPECT_TRUE(ai->GetQuestManager()->IsEnabled());
+        EXPECT_TRUE(ai->GetTradeManager()->IsEnabled());
         EXPECT_TRUE(ai->GetTradeManager()->IsEnabled());
         EXPECT_TRUE(ai->GetGatheringManager()->IsEnabled());
         EXPECT_TRUE(ai->GetAuctionManager()->IsEnabled());

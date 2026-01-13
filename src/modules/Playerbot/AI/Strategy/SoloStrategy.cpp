@@ -12,7 +12,7 @@
 #include "BotAI.h"
 #include "Player.h"
 #include "Log.h"
-#include "Game/QuestManager.h"
+#include "Quest/UnifiedQuestManager.h"
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
 #include "Economy/AuctionManager.h"
@@ -47,32 +47,30 @@ public:
         if (!ai || !ai->GetBot())
             return false;
 
-        // Can quest if not in combat and quest manager exists
+        // Can quest if not in combat
         Player* bot = ai->GetBot();
-        return !bot->IsInCombat() && ai->GetQuestManager() != nullptr;
+        return !bot->IsInCombat();
     }
 
     bool IsUseful(BotAI* ai) const override
     {
-        if (!ai || !ai->GetQuestManager())
+        if (!ai)
             return false;
 
         // Useful if there are active quests to progress
-        // Uses GetActiveQuestCount() as the reliable method for checking active quests
-        return ai->GetQuestManager()->GetActiveQuestCount() > 0;
+        return ai->GetActiveQuestCount() > 0;
     }
 
     ActionResult Execute(BotAI* ai, ActionContext const& context) override
     {
-        if (!ai || !ai->GetQuestManager())
+        if (!ai || !ai->GetBot())
             return ActionResult::IMPOSSIBLE;
 
-        // Delegate to quest manager for actual quest progression
-        QuestManager* questMgr = ai->GetQuestManager();
-        // Uses UpdateQuestProgress() which handles all quest progression logic
-        questMgr->UpdateQuestProgress();
+        // Delegate to UnifiedQuestManager for quest progression
+        Player* bot = ai->GetBot();
+        UnifiedQuestManager::instance()->UpdateQuestProgress(bot);
         TC_LOG_DEBUG("module.playerbot", "QuestAction: Bot {} progressing quests",
-            ai->GetBot()->GetName());
+            bot->GetName());
         return ActionResult::IN_PROGRESS;
     }
 };
@@ -335,20 +333,21 @@ public:
 
     bool Check(BotAI* ai) const override
     {
-        if (!ai || !ai->GetQuestManager())
+        if (!ai || !ai->GetBot())
             return false;
 
-        // Uses IsQuestGiverNearby() which scans for nearby NPCs with available quests
-        return ai->GetQuestManager()->IsQuestGiverNearby();
+        // Check for nearby quest givers via UnifiedQuestManager
+        auto questGivers = UnifiedQuestManager::instance()->ScanForQuestGivers(ai->GetBot(), 30.0f);
+        return !questGivers.empty();
     }
 
     float CalculateUrgency(BotAI* ai) const override
     {
         // Higher urgency if bot has few active quests
-        if (!ai || !ai->GetQuestManager())
+        if (!ai)
             return 0.5f;
 
-        uint32 activeQuests = ai->GetQuestManager()->GetActiveQuestCount();
+        uint32 activeQuests = ai->GetActiveQuestCount();
         return activeQuests < 5 ? 0.8f : 0.4f;
     }
 };
@@ -364,12 +363,11 @@ public:
 
     bool Check(BotAI* ai) const override
     {
-        if (!ai || !ai->GetQuestManager())
+        if (!ai)
             return false;
 
-        // Uses GetCompletableQuests() which returns quests ready to turn in
-        auto completableQuests = ai->GetQuestManager()->GetCompletableQuests();
-        return !completableQuests.empty();
+        // Use BotAI helper method for completable quests
+        return ai->HasCompletableQuests();
     }
 
     float CalculateUrgency(BotAI* ai) const override
@@ -490,7 +488,7 @@ public:
             return false;
 
         // Bot is idle if no managers are active
-        bool isQuesting = ai->GetQuestManager() && ai->GetQuestManager()->IsQuestingActive();
+        bool isQuesting = ai->IsQuestingActive();
         bool isGathering = ai->GetGatheringManager() && ai->GetGatheringManager()->IsGathering();
         bool isTrading = ai->GetTradeManager() && ai->GetTradeManager()->IsTradingActive();
 
@@ -725,7 +723,7 @@ void SoloStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // ========================================================================
 
     // Query manager states atomically (lock-free, <0.001ms per query)
-    bool isQuesting = ai->GetQuestManager() && ai->GetQuestManager()->IsQuestingActive();
+    bool isQuesting = ai->IsQuestingActive();
     bool isGathering = ai->GetGatheringManager() && ai->GetGatheringManager()->IsGathering();
     bool isTrading = ai->GetTradeManager() && ai->GetTradeManager()->IsTradingActive();
     bool hasAuctions = ai->GetAuctionManager() && ai->GetAuctionManager()->HasActiveAuctions();

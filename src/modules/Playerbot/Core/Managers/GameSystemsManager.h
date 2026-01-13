@@ -21,7 +21,6 @@
 #include <memory>
 
 // Manager includes
-#include "Game/QuestManager.h"
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
 #include "Professions/ProfessionManager.h"
@@ -160,7 +159,6 @@ public:
     // GAME SYSTEM ACCESS (IGameSystemsManager interface)
     // ========================================================================
 
-    QuestManager* GetQuestManager() const override { return _questManager.get(); }
     TradeManager* GetTradeManager() const override { return _tradeManager.get(); }
     GatheringManager* GetGatheringManager() const override { return _gatheringManager.get(); }
     ProfessionManager* GetProfessionManager() const override { return _professionManager.get(); }
@@ -223,11 +221,10 @@ public:
 
 private:
     // ========================================================================
-    // MANAGER INSTANCES - All 27 managers owned by facade
+    // MANAGER INSTANCES - All 26 managers owned by facade
     // ========================================================================
 
     // Core game systems
-    std::unique_ptr<QuestManager> _questManager;
     std::unique_ptr<TradeManager> _tradeManager;
     std::unique_ptr<GatheringManager> _gatheringManager;
     std::unique_ptr<ProfessionManager> _professionManager;

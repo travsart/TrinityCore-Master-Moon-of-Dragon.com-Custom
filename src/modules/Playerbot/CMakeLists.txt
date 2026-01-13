@@ -837,9 +837,7 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestHubDatabase.h
 
     # Game Systems - Integrated Quest, Inventory, Trade Management
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager_Events.cpp
+    # QuestManager REMOVED - Replaced by Quest/* modules (UnifiedQuestManager facade)
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestAcceptanceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestAcceptanceManager.h
     # NPCInteractionManager REMOVED - Duplicate of Interaction/Core/InteractionManager (production system)
@@ -1450,9 +1448,7 @@ source_group("Quest" FILES
 )
 
 source_group("Game" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager_Events.cpp
+    # QuestManager REMOVED - Replaced by Quest/* modules (UnifiedQuestManager facade)
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp

@@ -35,7 +35,6 @@
 #include "NPC/NPCEventBus.h"
 #include "Instance/InstanceEventBus.h"
 #include "Professions/ProfessionEventBus.h"
-#include "Game/QuestManager.h"
 #include "Social/TradeManager.h"
 #include "Economy/AuctionManager.h"
 #include "Advanced/GroupCoordinator.h"
@@ -527,20 +526,16 @@ void BotAI::OnQuestEvent(QuestEvent const& event)
     if (!_bot)
         return;
 
-    // Delegate all quest events to QuestManager
-    if (GetGameSystems()->GetQuestManager())
-    {
-        // QuestManager will handle quest acceptance, completion, and progress tracking
-        TC_LOG_TRACE("playerbot.events.quest", "Bot {}: Quest event {} for quest {}",
-            _bot->GetName(), static_cast<uint32>(event.type), event.questId);
+    // Log quest event and process
+    TC_LOG_TRACE("playerbot.events.quest", "Bot {}: Quest event {} for quest {}",
+        _bot->GetName(), static_cast<uint32>(event.type), event.questId);
 
-        ProcessQuestProgress(event);
-    }
+    ProcessQuestProgress(event);
 }
 
 void BotAI::ProcessQuestProgress(QuestEvent const& event)
 {
-    if (!_bot || !GetGameSystems()->GetQuestManager())
+    if (!_bot)
         return;
 
     switch (event.type)

@@ -3,7 +3,6 @@
  */
 
 #include "LazyManagerFactory.h"
-#include "Game/QuestManager.h"
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
 #include "Economy/AuctionManager.h"
@@ -45,33 +44,6 @@ LazyManagerFactory::~LazyManagerFactory()
 // ============================================================================
 // LAZY MANAGER GETTERS - Double-checked locking pattern
 // ============================================================================
-
-QuestManager* LazyManagerFactory::GetQuestManager()
-{
-    return GetOrCreate<QuestManager>(
-        _questManager,
-        _questManagerInit,
-        [this]() -> ::std::unique_ptr<QuestManager> {
-            auto start = ::std::chrono::steady_clock::now();
-            TC_LOG_DEBUG("module.playerbot.lazy", "Creating QuestManager for bot {}", _bot->GetName());
-            auto manager = ::std::make_unique<QuestManager>(_bot, _ai);
-            // Initialize manager (calls OnInitialize())
-    if (!manager->Initialize())
-            {
-                TC_LOG_ERROR("module.playerbot.lazy", "Failed to initialize QuestManager for bot {}", _bot->GetName());
-                return nullptr;
-            }
-
-            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
-                ::std::chrono::steady_clock::now() - start);
-
-            RecordInitTime("QuestManager", duration);
-            TC_LOG_INFO("module.playerbot.lazy", " QuestManager created for bot {} in {}ms", _bot->GetName(), duration.count());
-
-            return manager;
-        }
-    );
-}
 
 TradeManager* LazyManagerFactory::GetTradeManager()
 {
@@ -258,12 +230,6 @@ T* LazyManagerFactory::GetOrCreate(
 // ============================================================================
 
 template<>
-bool LazyManagerFactory::IsInitialized<QuestManager>() const
-{
-    return _questManagerInit.load(::std::memory_order_acquire);
-}
-
-template<>
 bool LazyManagerFactory::IsInitialized<TradeManager>() const
 {
     return _tradeManagerInit.load(::std::memory_order_acquire);
@@ -312,9 +278,6 @@ void LazyManagerFactory::Update(uint32 diff)
     // Only update managers that have been initialized (zero overhead for uninit)
     ::std::shared_lock lock(_mutex);
 
-    if (_questManager)
-        _questManager->Update(diff);
-
     if (_tradeManager)
         _tradeManager->Update(diff);
 
@@ -337,13 +300,6 @@ void LazyManagerFactory::ShutdownAll()
 
     TC_LOG_DEBUG("module.playerbot.lazy", "Shutting down {} managers for bot {}",
                  _initCount.load(), _bot ? _bot->GetName() : "Unknown");
-
-    if (_questManager)
-    {
-        _questManager->Shutdown();
-        _questManager.reset();
-        TC_LOG_DEBUG("module.playerbot.lazy", "QuestManager shutdown complete");
-    }
 
     if (_tradeManager)
     {
@@ -381,7 +337,6 @@ void LazyManagerFactory::ShutdownAll()
     }
 
     // Reset flags
-    _questManagerInit.store(false, ::std::memory_order_release);
     _tradeManagerInit.store(false, ::std::memory_order_release);
     _gatheringManagerInit.store(false, ::std::memory_order_release);
     _auctionManagerInit.store(false, ::std::memory_order_release);
@@ -397,7 +352,6 @@ void LazyManagerFactory::InitializeAll()
 
     auto start = ::std::chrono::steady_clock::now();
 
-    GetQuestManager();
     GetTradeManager();
     GetGatheringManager();
     GetAuctionManager();
@@ -425,11 +379,6 @@ void LazyManagerFactory::RecordInitTime(::std::string const& managerName, ::std:
 }
 
 // Explicit template instantiations for all manager types
-template QuestManager* LazyManagerFactory::GetOrCreate(
-    ::std::unique_ptr<QuestManager>&,
-    ::std::atomic<bool>&,
-    ::std::function<::std::unique_ptr<QuestManager>()>);
-
 template TradeManager* LazyManagerFactory::GetOrCreate(
     ::std::unique_ptr<TradeManager>&,
     ::std::atomic<bool>&,

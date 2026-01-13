@@ -362,9 +362,12 @@ public:
     IGameSystemsManager* GetGameSystems() { return _gameSystems.get(); }
     IGameSystemsManager const* GetGameSystems() const { return _gameSystems.get(); }
 
-    // Legacy individual getters for backward compatibility
-    QuestManager* GetQuestManager() { return _gameSystems ? _gameSystems->GetQuestManager() : nullptr; }
-    QuestManager const* GetQuestManager() const { return _gameSystems ? _gameSystems->GetQuestManager() : nullptr; }
+    // Quest helper methods - direct player data access (replaces Game/QuestManager)
+    // These provide fast, simple quest state queries without the overhead of QuestManager
+    uint32 GetActiveQuestCount() const;      // Count of active quests from player slots
+    bool IsQuestingActive() const;           // True if bot has any active quests
+    bool HasCompletableQuests() const;       // True if any quests are ready for turn-in
+    std::vector<uint32> GetCompletableQuestIds() const;  // Quest IDs ready for turn-in
 
     TradeManager* GetTradeManager() { return _gameSystems ? _gameSystems->GetTradeManager() : nullptr; }
     TradeManager const* GetTradeManager() const { return _gameSystems ? _gameSystems->GetTradeManager() : nullptr; }

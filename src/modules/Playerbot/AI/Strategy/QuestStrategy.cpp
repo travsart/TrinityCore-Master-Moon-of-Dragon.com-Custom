@@ -2128,7 +2128,8 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
                             if (fm.distanceFromPlayer < 10.0f)
                             {
                                 // Bot is at flight master - initiate the flight
-                                FlightResult result = FlightMasterManager().FlyToTaxiNode(bot, destinationTaxiNode, FlightPathStrategy::SHORTEST_DISTANCE);
+                                FlightMasterManager flightMgr(bot);
+                                FlightResult result = flightMgr.FlyToTaxiNode(bot, destinationTaxiNode, FlightPathStrategy::SHORTEST_DISTANCE);
                                 if (result == FlightResult::SUCCESS)
                                 {
                                     TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} initiated transport to MAP {} via taxi node {}",

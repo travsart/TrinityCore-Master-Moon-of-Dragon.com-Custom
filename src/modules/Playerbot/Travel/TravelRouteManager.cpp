@@ -3189,7 +3189,7 @@ void TravelRouteManager::HandleTaxiFlight(TravelLeg& leg)
             }
 
             // Find nearest flight master
-            auto flightMasterOpt = FlightMasterManager::FindNearestFlightMaster(m_bot, 0.0f);
+            auto flightMasterOpt = FlightMasterManager::FindNearestFlightMaster(m_bot);
             if (!flightMasterOpt.has_value())
             {
                 TC_LOG_WARN("module.playerbot.travel",
@@ -3208,7 +3208,7 @@ void TravelRouteManager::HandleTaxiFlight(TravelLeg& leg)
                     "HandleTaxiFlight: Bot {} walking to flight master {} ({:.1f} yards away)",
                     m_bot->GetName(), fm.name, fm.distanceFromPlayer);
 
-                m_bot->GetMotionMaster()->MovePoint(0, fm.position);
+                m_bot->GetMotionMaster()->MovePoint(0, fm.position.GetPositionX(), fm.position.GetPositionY(), fm.position.GetPositionZ());
                 leg.currentState = TravelState::WALKING_TO_TRANSPORT;
                 leg.stateStartTime = now;
                 break;
@@ -3219,7 +3219,7 @@ void TravelRouteManager::HandleTaxiFlight(TravelLeg& leg)
                 "HandleTaxiFlight: Bot {} at flight master {}, activating taxi to node {}",
                 m_bot->GetName(), fm.name, leg.taxiEndNode);
 
-            FlightMasterManager flightMgr;
+            FlightMasterManager flightMgr(m_bot);
             FlightResult result = flightMgr.FlyToTaxiNode(
                 m_bot,
                 leg.taxiEndNode,

@@ -72,7 +72,6 @@ GameSystemsManager::~GameSystemsManager()
     _unifiedMovementCoordinator.reset();
 
     // 2. Game system managers
-    _questManager.reset();
     _tradeManager.reset();
     _gatheringManager.reset();
     _professionManager.reset();
@@ -132,7 +131,6 @@ void GameSystemsManager::Initialize(Player* bot)
     _targetScanner = std::make_unique<TargetScanner>(_bot);
 
     // Game system managers
-    _questManager = std::make_unique<QuestManager>(_bot, _botAI);
     _tradeManager = std::make_unique<TradeManager>(_bot, _botAI);
     _gatheringManager = std::make_unique<GatheringManager>(_bot, _botAI);
     _professionManager = std::make_unique<ProfessionManager>(_bot);
@@ -228,12 +226,6 @@ void GameSystemsManager::Initialize(Player* bot)
     if (_managerRegistry && _eventDispatcher)
     {
         // Initialize managers through IManagerBase interface
-        if (_questManager)
-        {
-            _questManager->Initialize();
-            TC_LOG_INFO("module.playerbot.managers", "✅ QuestManager initialized via IManagerBase");
-        }
-
         if (_tradeManager)
         {
             _tradeManager->Initialize();
@@ -354,28 +346,6 @@ void GameSystemsManager::InitializeHybridAI()
 
 void GameSystemsManager::SubscribeManagersToEvents()
 {
-    // Subscribe QuestManager to quest events
-    if (_questManager && _eventDispatcher)
-    {
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_ACCEPTED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_COMPLETED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_TURNED_IN, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_ABANDONED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_FAILED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_STATUS_CHANGED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_OBJECTIVE_COMPLETE, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_OBJECTIVE_PROGRESS, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_ITEM_COLLECTED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_CREATURE_KILLED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_EXPLORATION, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_REWARD_RECEIVED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_REWARD_CHOSEN, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_EXPERIENCE_GAINED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_REPUTATION_GAINED, _questManager.get());
-        _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_CHAIN_ADVANCED, _questManager.get());
-        TC_LOG_INFO("module.playerbot.managers", "🔗 QuestManager subscribed to 16 quest events");
-    }
-
     // Subscribe TradeManager to trade events
     if (_tradeManager && _eventDispatcher)
     {
@@ -481,10 +451,6 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // ========================================================================
     // MANAGER UPDATES - Legacy direct updates during Phase 7 transition
     // ========================================================================
-
-    // Quest manager handles quest acceptance, turn-in, and tracking
-    if (_questManager)
-        _questManager->Update(diff);
 
     // Trade manager handles vendor interactions, repairs, and consumables
     if (_tradeManager)

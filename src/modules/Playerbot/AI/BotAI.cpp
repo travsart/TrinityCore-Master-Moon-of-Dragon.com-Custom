@@ -62,6 +62,60 @@ bool TriggerResultComparator::operator()(TriggerResult const& a, TriggerResult c
 }
 
 // ============================================================================
+// QUEST HELPER METHODS - Direct player data access (replaces Game/QuestManager)
+// ============================================================================
+
+static constexpr uint8 MAX_QUEST_LOG_SLOT = 25;  // Maximum quest log size
+
+uint32 BotAI::GetActiveQuestCount() const
+{
+    if (!_bot || !_bot->IsInWorld())
+        return 0;
+
+    uint32 count = 0;
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
+    {
+        if (_bot->GetQuestSlotQuestId(slot) != 0)
+            ++count;
+    }
+    return count;
+}
+
+bool BotAI::IsQuestingActive() const
+{
+    return GetActiveQuestCount() > 0;
+}
+
+bool BotAI::HasCompletableQuests() const
+{
+    if (!_bot || !_bot->IsInWorld())
+        return false;
+
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
+    {
+        uint32 questId = _bot->GetQuestSlotQuestId(slot);
+        if (questId != 0 && _bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+            return true;
+    }
+    return false;
+}
+
+std::vector<uint32> BotAI::GetCompletableQuestIds() const
+{
+    std::vector<uint32> result;
+    if (!_bot || !_bot->IsInWorld())
+        return result;
+
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
+    {
+        uint32 questId = _bot->GetQuestSlotQuestId(slot);
+        if (questId != 0 && _bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+            result.push_back(questId);
+    }
+    return result;
+}
+
+// ============================================================================
 // CONSTRUCTOR / DESTRUCTOR
 // ============================================================================
 

@@ -18,6 +18,7 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "GameTime.h"
+#include "Map.h"
 #include <cmath>
 #include <algorithm>
 
@@ -703,6 +704,244 @@ namespace Playerbot
         memory += m_priorityCache.size() * (sizeof(uint32) + sizeof(DestinationPriority));
         memory += m_knownPathsCache.size() * sizeof(uint32);
         return memory;
+    }
+
+    // ========================================================================
+    // STATIC UTILITY METHODS IMPLEMENTATION
+    // ========================================================================
+
+    uint32 FlightMasterManager::FindNearestTaxiNode(Position const& pos, uint32 mapId, Player* player)
+    {
+        if (!player)
+            return 0;
+
+        // Use TrinityCore's sObjectMgr->GetNearestTaxiNode with faction awareness
+        uint32 teamId = player->GetTeam();
+        uint32 nodeId = sObjectMgr->GetNearestTaxiNode(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), mapId, teamId);
+
+        return nodeId;
+    }
+
+    ::std::optional<FlightMasterLocation> FlightMasterManager::FindNearestFlightMaster(Player* player)
+    {
+        if (!player)
+            return ::std::nullopt;
+
+        Map* map = player->GetMap();
+        if (!map)
+            return ::std::nullopt;
+
+        // Search for nearest flight master NPC
+        float searchRadius = 1000.0f;
+        Creature* nearestFM = nullptr;
+        float nearestDist = searchRadius;
+
+        // Search for creatures with UNIT_NPC_FLAG_FLIGHTMASTER
+        // Note: This is a simplified approach - in production you'd use Grid::Visitor
+        auto const& creatures = map->GetCreatureBySpawnIdStore();
+        for (auto const& pair : creatures)
+        {
+            Creature* creature = pair.second;
+            if (!creature || !creature->IsAlive())
+                continue;
+
+            if (!creature->HasNpcFlag(UNIT_NPC_FLAG_FLIGHTMASTER))
+                continue;
+
+            float dist = player->GetDistance(creature);
+            if (dist < nearestDist)
+            {
+                nearestDist = dist;
+                nearestFM = creature;
+            }
+        }
+
+        if (!nearestFM)
+            return ::std::nullopt;
+
+        FlightMasterLocation loc;
+        loc.name = nearestFM->GetName();
+        loc.guid = nearestFM->GetGUID();
+        loc.distanceFromPlayer = nearestDist;
+        loc.position = Position(nearestFM->GetPositionX(), nearestFM->GetPositionY(), nearestFM->GetPositionZ());
+
+        // Get the taxi node at this flight master's location
+        loc.taxiNode = sObjectMgr->GetNearestTaxiNode(
+            nearestFM->GetPositionX(), nearestFM->GetPositionY(), nearestFM->GetPositionZ(),
+            nearestFM->GetMapId(), player->GetTeam());
+
+        return loc;
+    }
+
+    bool FlightMasterManager::HasTaxiNode(Player* player, uint32 nodeId)
+    {
+        if (!player || nodeId == 0)
+            return false;
+
+        return player->m_taxi.IsTaximaskNodeKnown(nodeId);
+    }
+
+    bool FlightMasterManager::HasValidFlightPath(uint32 startNode, uint32 endNode, Player* player)
+    {
+        if (!player || startNode == 0 || endNode == 0)
+            return false;
+
+        // Same node - no path needed
+        if (startNode == endNode)
+            return false;
+
+        // Get node entries
+        TaxiNodesEntry const* startEntry = sTaxiNodesStore.LookupEntry(startNode);
+        TaxiNodesEntry const* endEntry = sTaxiNodesStore.LookupEntry(endNode);
+
+        if (!startEntry || !endEntry)
+            return false;
+
+        // Check if nodes are on same continent (ContinentID field)
+        if (startEntry->ContinentID != endEntry->ContinentID)
+            return false;
+
+        // Check if player knows both nodes
+        if (!player->m_taxi.IsTaximaskNodeKnown(startNode) ||
+            !player->m_taxi.IsTaximaskNodeKnown(endNode))
+            return false;
+
+        // Use TaxiPathGraph to check if a route exists
+        ::std::vector<uint32> route;
+        uint32 cost = 0;
+        if (!TaxiPathGraph::GetCompleteNodeRoute(startEntry, endEntry, player, route))
+            return false;
+
+        return !route.empty();
+    }
+
+    ::std::optional<FlightPathInfo> FlightMasterManager::CalculateFlightPath(
+        Player* player, uint32 startNode, uint32 endNode, FlightPathStrategy /*strategy*/)
+    {
+        if (!player || startNode == 0 || endNode == 0)
+            return ::std::nullopt;
+
+        TaxiNodesEntry const* startEntry = sTaxiNodesStore.LookupEntry(startNode);
+        TaxiNodesEntry const* endEntry = sTaxiNodesStore.LookupEntry(endNode);
+
+        if (!startEntry || !endEntry)
+            return ::std::nullopt;
+
+        // Calculate route using TaxiPathGraph
+        ::std::vector<uint32> route;
+        if (!TaxiPathGraph::GetCompleteNodeRoute(startEntry, endEntry, player, route))
+            return ::std::nullopt;
+
+        if (route.empty())
+            return ::std::nullopt;
+
+        FlightPathInfo info;
+        info.nodes = route;
+        info.stopCount = static_cast<uint32>(route.size());
+        info.crossesContinent = (startEntry->ContinentID != endEntry->ContinentID);
+
+        // Calculate cost and time
+        float totalDistance = 0.0f;
+        for (size_t i = 0; i < route.size() - 1; ++i)
+        {
+            TaxiNodesEntry const* node1 = sTaxiNodesStore.LookupEntry(route[i]);
+            TaxiNodesEntry const* node2 = sTaxiNodesStore.LookupEntry(route[i + 1]);
+            if (node1 && node2)
+            {
+                float dx = node2->Pos.X - node1->Pos.X;
+                float dy = node2->Pos.Y - node1->Pos.Y;
+                float dz = node2->Pos.Z - node1->Pos.Z;
+                totalDistance += std::sqrt(dx * dx + dy * dy + dz * dz);
+            }
+        }
+
+        info.goldCost = static_cast<uint32>(FLIGHT_COST_BASE + totalDistance * FLIGHT_COST_PER_YARD);
+        info.flightTime = static_cast<uint32>(totalDistance / FLIGHT_SPEED_NORMAL);
+
+        return info;
+    }
+
+    FlightResult FlightMasterManager::FlyToTaxiNode(Player* player, uint32 destinationNode, FlightPathStrategy /*strategy*/)
+    {
+        if (!player)
+            return FlightResult::INTERNAL_ERROR;
+
+        if (!m_bot)
+            m_bot = player;
+
+        // Check if already flying
+        if (player->IsInFlight())
+            return FlightResult::ALREADY_FLYING;
+
+        // Check destination node validity
+        TaxiNodesEntry const* destEntry = sTaxiNodesStore.LookupEntry(destinationNode);
+        if (!destEntry)
+            return FlightResult::INVALID_NODE;
+
+        // Check if player knows destination
+        if (!player->m_taxi.IsTaximaskNodeKnown(destinationNode))
+            return FlightResult::NODE_UNKNOWN;
+
+        // Get current taxi node (player must be at a flight master)
+        uint32 currentNode = sObjectMgr->GetNearestTaxiNode(
+            player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(),
+            player->GetMapId(), player->GetTeam());
+
+        if (currentNode == 0)
+            return FlightResult::NOT_AT_NODE;
+
+        TaxiNodesEntry const* currentEntry = sTaxiNodesStore.LookupEntry(currentNode);
+        if (!currentEntry)
+            return FlightResult::INTERNAL_ERROR;
+
+        // Calculate route
+        ::std::vector<uint32> route;
+        if (!TaxiPathGraph::GetCompleteNodeRoute(currentEntry, destEntry, player, route))
+            return FlightResult::PATH_NOT_FOUND;
+
+        if (route.empty())
+            return FlightResult::PATH_NOT_FOUND;
+
+        // Calculate cost
+        uint32 cost = 0;
+        for (size_t i = 0; i < route.size() - 1; ++i)
+        {
+            uint32 path, pathCost;
+            sObjectMgr->GetTaxiPath(route[i], route[i + 1], path, pathCost);
+            cost += pathCost;
+        }
+
+        // Check if player can afford
+        if (!player->HasEnoughMoney(static_cast<uint64>(cost)))
+            return FlightResult::INSUFFICIENT_GOLD;
+
+        // Initiate flight
+        player->ModifyMoney(-static_cast<int64>(cost));
+        player->ActivateTaxiPathTo(route);
+
+        // Update statistics
+        m_stats.flightsTaken++;
+        m_stats.totalGoldSpent += cost;
+
+        return FlightResult::SUCCESS;
+    }
+
+    ::std::string FlightMasterManager::GetResultString(FlightResult result)
+    {
+        switch (result)
+        {
+            case FlightResult::SUCCESS:           return "Flight initiated successfully";
+            case FlightResult::ALREADY_FLYING:    return "Already in flight";
+            case FlightResult::NO_FLIGHT_MASTER:  return "No flight master nearby";
+            case FlightResult::NODE_UNKNOWN:      return "Destination node not discovered";
+            case FlightResult::PATH_NOT_FOUND:    return "No valid path found";
+            case FlightResult::INSUFFICIENT_GOLD: return "Insufficient gold";
+            case FlightResult::INVALID_NODE:      return "Invalid taxi node";
+            case FlightResult::CROSS_CONTINENT:   return "Cannot fly across continents";
+            case FlightResult::NOT_AT_NODE:       return "Not at a taxi node";
+            case FlightResult::INTERNAL_ERROR:    return "Internal error";
+            default:                              return "Unknown error";
+        }
     }
 
 } // namespace Playerbot

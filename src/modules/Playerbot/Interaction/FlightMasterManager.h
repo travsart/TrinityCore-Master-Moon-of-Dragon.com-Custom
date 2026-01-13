@@ -11,17 +11,83 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Position.h"
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <optional>
+#include <string>
 
 class Player;
 class Creature;
 struct TaxiNodesEntry;
-struct Position;
 
 namespace Playerbot
 {
+
+/**
+ * @enum FlightResult
+ * @brief Result codes for flight operations
+ */
+enum class FlightResult : uint8
+{
+    SUCCESS = 0,          // Flight initiated successfully
+    ALREADY_FLYING,       // Bot is already in flight
+    NO_FLIGHT_MASTER,     // No flight master nearby
+    NODE_UNKNOWN,         // Destination taxi node not discovered
+    PATH_NOT_FOUND,       // No valid path between nodes
+    INSUFFICIENT_GOLD,    // Cannot afford flight
+    INVALID_NODE,         // Invalid taxi node ID
+    CROSS_CONTINENT,      // Nodes on different continents (no direct path)
+    NOT_AT_NODE,          // Bot not at a taxi node
+    INTERNAL_ERROR        // Internal error
+};
+
+/**
+ * @enum FlightPathStrategy
+ * @brief Strategy options for flight path calculation
+ */
+enum class FlightPathStrategy : uint8
+{
+    SHORTEST_DISTANCE = 0,  // Minimize total distance
+    CHEAPEST_COST,          // Minimize gold cost
+    FEWEST_STOPS,           // Minimize number of stops
+    FASTEST_TIME            // Minimize travel time
+};
+
+/**
+ * @struct FlightMasterLocation
+ * @brief Information about a nearby flight master
+ */
+struct FlightMasterLocation
+{
+    ::std::string name;            // Flight master name
+    uint32 taxiNode;               // Associated taxi node ID
+    float distanceFromPlayer;      // Distance from player
+    Position position;             // World position
+    ObjectGuid guid;               // Creature GUID
+
+    FlightMasterLocation()
+        : name(), taxiNode(0), distanceFromPlayer(0.0f), position()
+    { }
+};
+
+/**
+ * @struct FlightPathInfo
+ * @brief Information about a calculated flight path
+ */
+struct FlightPathInfo
+{
+    uint32 stopCount;              // Number of stops in path
+    uint32 goldCost;               // Total cost in copper
+    uint32 flightTime;             // Estimated time in seconds
+    ::std::vector<uint32> nodes;     // Node IDs in path
+    bool crossesContinent;         // Whether path crosses continents
+
+    FlightPathInfo()
+        : stopCount(0), goldCost(0), flightTime(0), crossesContinent(false)
+    { }
+};
 
 /**
  * @class FlightMasterManager
@@ -271,6 +337,72 @@ public:
 
     float GetCPUUsage() const { return m_cpuUsage; }
     size_t GetMemoryUsage() const;
+
+    // ========================================================================
+    // STATIC UTILITY METHODS (for use without instance)
+    // ========================================================================
+
+    /**
+     * @brief Find nearest taxi node to a position (static utility)
+     * @param pos Position to search near
+     * @param mapId Map ID
+     * @param player Player for faction filtering
+     * @return Taxi node ID, or 0 if none found
+     *
+     * Uses sObjectMgr->GetNearestTaxiNode() with faction awareness.
+     */
+    static uint32 FindNearestTaxiNode(Position const& pos, uint32 mapId, Player* player);
+
+    /**
+     * @brief Find nearest flight master to a player (static utility)
+     * @param player The player to search near
+     * @return Optional FlightMasterLocation with info, empty if none found
+     */
+    static ::std::optional<FlightMasterLocation> FindNearestFlightMaster(Player* player);
+
+    /**
+     * @brief Check if player has discovered a taxi node (static utility)
+     * @param player The player to check
+     * @param nodeId Taxi node ID
+     * @return True if the player knows this taxi node
+     */
+    static bool HasTaxiNode(Player* player, uint32 nodeId);
+
+    /**
+     * @brief Check if a valid flight path exists between two nodes (static utility)
+     * @param startNode Starting taxi node ID
+     * @param endNode Ending taxi node ID
+     * @param player Player for faction/discovery checking
+     * @return True if a valid path exists
+     */
+    static bool HasValidFlightPath(uint32 startNode, uint32 endNode, Player* player);
+
+    /**
+     * @brief Calculate flight path between nodes (static utility)
+     * @param player The player
+     * @param startNode Starting taxi node ID
+     * @param endNode Ending taxi node ID
+     * @param strategy Path calculation strategy
+     * @return Optional FlightPathInfo, empty if no path found
+     */
+    static ::std::optional<FlightPathInfo> CalculateFlightPath(
+        Player* player, uint32 startNode, uint32 endNode, FlightPathStrategy strategy);
+
+    /**
+     * @brief Initiate flight to a taxi node
+     * @param player The player to fly
+     * @param destinationNode Destination taxi node ID
+     * @param strategy Path calculation strategy
+     * @return FlightResult indicating success or failure reason
+     */
+    FlightResult FlyToTaxiNode(Player* player, uint32 destinationNode, FlightPathStrategy strategy);
+
+    /**
+     * @brief Get human-readable string for a FlightResult
+     * @param result The result code
+     * @return String description of the result
+     */
+    static ::std::string GetResultString(FlightResult result);
 
 private:
     // Internal Helper Methods
