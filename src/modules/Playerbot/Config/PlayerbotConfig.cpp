@@ -132,12 +132,12 @@ int32 PlayerbotConfig::GetInt(std::string const& key, int32 defaultValue) const
 
     try {
         return std::stoi(it->second);
-    } catch (const std::invalid_argument& e)
+    } catch (const std::invalid_argument&)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Invalid integer value '{}' for key '{}', using default {}",
                     it->second, key, defaultValue);
         return defaultValue;
-    } catch (const std::out_of_range& e)
+    } catch (const std::out_of_range&)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Integer value '{}' for key '{}' out of range, using default {}",
                     it->second, key, defaultValue);
@@ -154,12 +154,12 @@ uint32 PlayerbotConfig::GetUInt(std::string const& key, uint32 defaultValue) con
 
     try {
         return static_cast<uint32>(std::stoul(it->second));
-    } catch (const std::invalid_argument& e)
+    } catch (const std::invalid_argument&)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Invalid unsigned integer value '{}' for key '{}', using default {}",
                     it->second, key, defaultValue);
         return defaultValue;
-    } catch (const std::out_of_range& e)
+    } catch (const std::out_of_range&)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Unsigned integer value '{}' for key '{}' out of range, using default {}",
                     it->second, key, defaultValue);
@@ -176,12 +176,12 @@ float PlayerbotConfig::GetFloat(std::string const& key, float defaultValue) cons
 
     try {
         return std::stof(it->second);
-    } catch (const std::invalid_argument& e)
+    } catch (const std::invalid_argument&)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Invalid float value '{}' for key '{}', using default {}",
                     it->second, key, defaultValue);
         return defaultValue;
-    } catch (const std::out_of_range& e)
+    } catch (const std::out_of_range&)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Float value '{}' for key '{}' out of range, using default {}",
                     it->second, key, defaultValue);

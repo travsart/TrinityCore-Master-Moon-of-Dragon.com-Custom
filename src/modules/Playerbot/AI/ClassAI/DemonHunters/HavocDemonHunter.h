@@ -443,7 +443,7 @@ public:
 
             // Normal positioning - behind target
 
-            float angle = target->GetOrientation() + M_PI;
+            float angle = target->GetOrientation() + static_cast<float>(M_PI);
             float distance = 3.0f;
 
 
@@ -803,10 +803,10 @@ private:
         float bestAngle = this->GetBot()->GetRelativeAngle(target);
         uint32 bestHits = 1;
 
-        for (float angle = 0; angle < 2 * M_PI; angle += M_PI / 12) // Check 24 angles
+        for (float angle = 0; angle < 2.0f * static_cast<float>(M_PI); angle += static_cast<float>(M_PI) / 12.0f) // Check 24 angles
         {
 
-            uint32 hits = CountEnemiesInCone(angle, 20.0f, M_PI / 6);
+            uint32 hits = CountEnemiesInCone(angle, 20.0f, static_cast<float>(M_PI) / 6.0f);
 
             if (hits > bestHits)
 
@@ -941,9 +941,9 @@ private:
 
             // Normalize angle difference
 
-            if (angleDiff > M_PI)
+            if (angleDiff > static_cast<float>(M_PI))
 
-                angleDiff = 2 * M_PI - angleDiff;
+                angleDiff = 2.0f * static_cast<float>(M_PI) - angleDiff;
 
 
             if (angleDiff <= arc / 2)

@@ -127,7 +127,7 @@ AoEDecisionManager::~AoEDecisionManager() = default;
 // CORE UPDATE
 // ============================================================================
 
-void AoEDecisionManager::Update(uint32 diff)
+void AoEDecisionManager::Update(uint32 /*diff*/)
 {
     if (!_bot || !_bot->IsAlive() || !_bot->IsInCombat())
     {
@@ -394,7 +394,7 @@ float AoEDecisionManager::GetBestCleaveAngle(float coneAngle) const
     uint32 maxTargets = 1;
 
     // Test different angles
-    for (float testAngle = 0; testAngle < 2 * M_PI; testAngle += M_PI / 8)
+    for (float testAngle = 0; testAngle < 2.0f * static_cast<float>(M_PI); testAngle += static_cast<float>(M_PI) / 8.0f)
     {
         uint32 targetsInCone = 0;
 
@@ -404,8 +404,8 @@ float AoEDecisionManager::GetBestCleaveAngle(float coneAngle) const
             float angleDiff = ::std::abs(angleToTarget - testAngle);
 
             // Normalize angle difference
-    if (angleDiff > M_PI)
-                angleDiff = 2 * M_PI - angleDiff;
+    if (angleDiff > static_cast<float>(M_PI))
+                angleDiff = 2.0f * static_cast<float>(M_PI) - angleDiff;
 
             if (angleDiff <= coneAngle / 2)
                 ++targetsInCone;

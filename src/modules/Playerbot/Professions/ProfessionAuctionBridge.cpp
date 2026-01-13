@@ -94,7 +94,7 @@ void ProfessionAuctionBridge::Initialize()
     // Logging with bot identity deferred to first Update() call.
 }
 
-void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
+void ProfessionAuctionBridge::Update(::Player* player, uint32 /*diff*/)
 {
     if (!_bot || !IsEnabled(player))
         return;
@@ -131,7 +131,7 @@ void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
     }
 }
 
-void ProfessionAuctionBridge::SetEnabled(::Player* player, bool enabled)
+void ProfessionAuctionBridge::SetEnabled(::Player* /*player*/, bool enabled)
 {
     if (!_bot)
         return;
@@ -150,17 +150,17 @@ void ProfessionAuctionBridge::SetEnabled(::Player* player, bool enabled)
     _profile.autoSellEnabled = enabled;
 }
 
-bool ProfessionAuctionBridge::IsEnabled(::Player* player) const
+bool ProfessionAuctionBridge::IsEnabled(::Player* /*player*/) const
 {
     return _bot && _profile.autoSellEnabled;
 }
 
-void ProfessionAuctionBridge::SetAuctionProfile(uint32 playerGuid, ProfessionAuctionProfile const& profile)
+void ProfessionAuctionBridge::SetAuctionProfile(uint32 /*playerGuid*/, ProfessionAuctionProfile const& profile)
 {
     _profile = profile;
 }
 
-ProfessionAuctionProfile ProfessionAuctionBridge::GetAuctionProfile(uint32 playerGuid) const
+ProfessionAuctionProfile ProfessionAuctionBridge::GetAuctionProfile(uint32 /*playerGuid*/) const
 {
     return _profile;
 }

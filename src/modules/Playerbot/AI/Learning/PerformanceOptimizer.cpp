@@ -118,7 +118,7 @@ StrategyChromosome StrategyChromosome::Crossover(const StrategyChromosome& other
 
     ::std::random_device rd;
     ::std::mt19937 gen(rd());
-    ::std::uniform_int_distribution<> crossoverPoint(1, genes.size() - 1);
+    ::std::uniform_int_distribution<size_t> crossoverPoint(1, genes.size() - 1);
 
     // Two-point crossover
     size_t point1 = crossoverPoint(gen);
@@ -497,7 +497,7 @@ StrategyChromosome EvolutionaryOptimizer::TournamentSelection(size_t tournamentS
 
     ::std::random_device rd;
     ::std::mt19937 gen(rd());
-    ::std::uniform_int_distribution<> dist(0, _population.size() - 1);
+    ::std::uniform_int_distribution<size_t> dist(0, _population.size() - 1);
 
     size_t bestIdx = dist(gen);
     float bestFitness = _population[bestIdx].fitness;

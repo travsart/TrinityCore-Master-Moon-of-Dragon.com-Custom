@@ -175,7 +175,7 @@ namespace Events
 
         // Core observer methods
         virtual void OnEvent(const BotEvent& event) = 0;
-        virtual bool ShouldReceiveEvent(const BotEvent& event) const { return true; }
+        virtual bool ShouldReceiveEvent(const BotEvent& /*event*/) const { return true; }
         virtual uint8 GetObserverPriority() const { return 100; }
     };
 

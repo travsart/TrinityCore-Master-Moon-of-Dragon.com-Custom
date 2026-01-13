@@ -460,7 +460,7 @@ void DeathRecoveryManager::HandlePendingTeleportAck(uint32 diff)
     TransitionToState(DeathRecoveryState::GHOST_DECIDING, "Teleport ack completed, proceeding to decision");
 }
 
-void DeathRecoveryManager::HandleGhostDeciding(uint32 diff)
+void DeathRecoveryManager::HandleGhostDeciding(uint32 /*diff*/)
 {
     TC_LOG_ERROR("playerbot.death", " Bot {} deciding resurrection method...", m_bot->GetName());
     // Check for special cases first (battlegrounds, arenas, etc)
@@ -728,7 +728,7 @@ void DeathRecoveryManager::HandleFindingSpiritHealer(uint32 diff)
     }
 }
 
-void DeathRecoveryManager::HandleMovingToSpiritHealer(uint32 diff)
+void DeathRecoveryManager::HandleMovingToSpiritHealer(uint32 /*diff*/)
 {
     // PHASE 5D: Thread-safe spatial grid validation
     auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_spiritHealerGuid);
@@ -1632,7 +1632,7 @@ bool DeathRecoveryManager::TriggerSpiritHealerResurrection()
     return true;
 }
 
-bool DeathRecoveryManager::AcceptBattleResurrection(ObjectGuid casterGuid, uint32 spellId)
+bool DeathRecoveryManager::AcceptBattleResurrection(ObjectGuid casterGuid, uint32 /*spellId*/)
 {
     if (!m_config.allowBattleResurrection)
         return false;

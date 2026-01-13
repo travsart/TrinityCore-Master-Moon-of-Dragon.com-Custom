@@ -320,7 +320,7 @@ void InstanceCoordination::AdaptFormationToTerrain(Group* group, const Position&
     // Analyze terrain complexity using pathfinding and height checks
     // Check multiple directions around the location to assess passage width
     static constexpr float PROBE_DISTANCES[] = { 5.0f, 10.0f, 15.0f };
-    static constexpr float ANGLE_STEP = M_PI / 4.0f; // 45 degrees
+    static constexpr float ANGLE_STEP = static_cast<float>(M_PI) / 4.0f; // 45 degrees
 
     for (float probeDistance : PROBE_DISTANCES)
     {
@@ -1522,13 +1522,13 @@ void InstanceCoordination::ResetCoordinationState(Group* group)
 // Update and Maintenance
 // ============================================================================
 
-void InstanceCoordination::Update(uint32 diff)
+void InstanceCoordination::Update(uint32 /*diff*/)
 {
     // Update all active group coordinations
     CleanupInactiveCoordinations();
 }
 
-void InstanceCoordination::UpdateGroupCoordination(Group* group, uint32 diff)
+void InstanceCoordination::UpdateGroupCoordination(Group* group, uint32 /*diff*/)
 {
     if (!group)
         return;
@@ -1704,8 +1704,8 @@ void InstanceCoordination::SynchronizeGroupMovement(Group* group, const Position
             else // DPS
             {
                 // DPS on sides in V shape
-                float sideAngle = (memberIndex % 2 == 0) ? M_PI / 4.0f : -M_PI / 4.0f;
-                float rotatedAngle = formationAngle + M_PI + sideAngle;
+                float sideAngle = (memberIndex % 2 == 0) ? static_cast<float>(M_PI) / 4.0f : -static_cast<float>(M_PI) / 4.0f;
+                float rotatedAngle = formationAngle + static_cast<float>(M_PI) + sideAngle;
                 offsetX = std::cos(rotatedAngle) * offsetDistance;
                 offsetY = std::sin(rotatedAngle) * offsetDistance;
             }
@@ -1719,7 +1719,7 @@ void InstanceCoordination::SynchronizeGroupMovement(Group* group, const Position
         else if (formation.formationType == "spread")
         {
             // Spread formation: Distributed around destination
-            float spreadAngle = (2.0f * M_PI * memberIndex) / totalMembers;
+            float spreadAngle = (2.0f * static_cast<float>(M_PI) * memberIndex) / totalMembers;
             offsetX = std::cos(spreadAngle) * offsetDistance;
             offsetY = std::sin(spreadAngle) * offsetDistance;
         }

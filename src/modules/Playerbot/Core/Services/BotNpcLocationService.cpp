@@ -715,7 +715,7 @@ NpcLocationResult BotNpcLocationService::FindNearestFromCache(
                 // Check if this NPC's faction is hostile to the bot
                 // FriendGroup: 1 = Horde, 2 = Alliance
                 // We need to check if this NPC would be hostile to the bot
-                uint32 botTeam = bot->GetTeam();
+                Team botTeam = bot->GetTeam();
                 bool isHostile = false;
 
                 // Check enemy factions - if bot's faction group is in the NPC's enemy list, skip

@@ -29,7 +29,7 @@ class Unit;
 class GameObject;
 class WorldPacket;
 class SpellInfo;
-struct SpellCastTargets;
+class SpellCastTargets;
 
 namespace WorldPackets
 {

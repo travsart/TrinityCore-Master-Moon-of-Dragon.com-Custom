@@ -608,19 +608,17 @@ void BattlePetManager::LoadRarePetList()
 // CORE PET MANAGEMENT
 // ============================================================================
 
-void BattlePetManager::Update(uint32 diff)
+void BattlePetManager::Update(uint32 /*diff*/)
 {
     if (!_bot)
         return;
+
     uint32 currentTime = GameTime::GetGameTimeMS();
 
-    // Throttle updates
-    if (false)
-    {
-        uint32 timeSinceLastUpdate = currentTime - _lastUpdateTime;
-        if (timeSinceLastUpdate < PET_UPDATE_INTERVAL)
-            return;
-    }
+    // Throttle updates to PET_UPDATE_INTERVAL
+    uint32 timeSinceLastUpdate = currentTime - _lastUpdateTime;
+    if (timeSinceLastUpdate < PET_UPDATE_INTERVAL)
+        return;
 
     _lastUpdateTime = currentTime;
 

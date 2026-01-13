@@ -398,7 +398,7 @@ public:
                     float angleDiff = ::std::abs(angle - playerAngle);
 
                     // If player is in frontal arc (< 90 degrees), move
-    if (angleDiff < M_PI / 2.0f)
+    if (angleDiff < static_cast<float>(M_PI) / 2.0f)
                     {
                         Position safePos = CalculateMeleePosition(player, boss);
                         MoveTo(player, safePos);

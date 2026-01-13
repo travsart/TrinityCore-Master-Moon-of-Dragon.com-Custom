@@ -101,7 +101,6 @@ bool SpellInterruptAction::IsPossible(BotAI* ai) const
         return false;
 
     // Must have interrupt abilities available
-    Player* bot = ai->GetBot();
     uint32 bestInterrupt = GetBestInterruptSpell(ai, nullptr);
     if (bestInterrupt == 0)
         return false;
@@ -455,7 +454,6 @@ ActionResult SpellInterruptAction::MoveToInterruptRange(BotAI* ai, ::Unit* targe
         return ActionResult::SUCCESS;
 
     // Calculate position to move to
-    float moveDistance = currentDistance - requiredRange + 1.0f; // Move to 1 yard within range
     float deltaX = bot->GetPositionX() - target->GetPositionX();
     float deltaY = bot->GetPositionY() - target->GetPositionY();
     float angle = atan2(deltaY, deltaX);

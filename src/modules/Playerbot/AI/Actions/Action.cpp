@@ -341,7 +341,7 @@ bool MovementAction::IsPossible(BotAI* ai) const
     return true;
 }
 
-ActionResult MovementAction::Execute(BotAI* ai, ActionContext const& context)
+ActionResult MovementAction::Execute(BotAI* ai, ActionContext const& /*context*/)
 {
     if (!IsPossible(ai))
         return ActionResult::IMPOSSIBLE;
@@ -439,7 +439,7 @@ void ActionFactory::RegisterAction(::std::string const& name,
     return nullptr;
 }
 
-::std::vector<::std::shared_ptr<Action>> ActionFactory::CreateClassActions(uint8 classId, uint8 spec)
+::std::vector<::std::shared_ptr<Action>> ActionFactory::CreateClassActions(uint8 /*classId*/, uint8 /*spec*/)
 {
     ::std::vector<::std::shared_ptr<Action>> actions;
 
@@ -449,7 +449,7 @@ void ActionFactory::RegisterAction(::std::string const& name,
     return actions;
 }
 
-::std::vector<::std::shared_ptr<Action>> ActionFactory::CreateCombatActions(uint8 classId)
+::std::vector<::std::shared_ptr<Action>> ActionFactory::CreateCombatActions(uint8 /*classId*/)
 {
     ::std::vector<::std::shared_ptr<Action>> actions;
 

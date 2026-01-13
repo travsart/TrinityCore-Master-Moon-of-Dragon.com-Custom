@@ -210,7 +210,7 @@ namespace Playerbot
             return false;
 
         // Calculate flee direction (opposite of threat)
-        float angle = threat->GetAbsoluteAngle(bot) + M_PI;
+        float angle = threat->GetAbsoluteAngle(bot) + static_cast<float>(M_PI);
         angle = Position::NormalizeOrientation(angle);
 
         // Try to find a valid flee position
@@ -220,7 +220,7 @@ namespace Playerbot
         // Try multiple angles if direct opposite is blocked
         for (int i = 0; i < 8; ++i)
         {
-            float tryAngle = angle + (i % 2 == 0 ? i/2 * M_PI/4 : -i/2 * M_PI/4);
+            float tryAngle = angle + (i % 2 == 0 ? i/2 * static_cast<float>(M_PI)/4 : -i/2 * static_cast<float>(M_PI)/4);
             tryAngle = Position::NormalizeOrientation(tryAngle);
 
             fleePos = bot->GetNearPosition(distance, tryAngle);
@@ -408,7 +408,7 @@ namespace Playerbot
         {
             for (int i = 0; i < steps; ++i)
             {
-                float angle = (2 * M_PI * i) / steps;
+                float angle = (2.0f * static_cast<float>(M_PI) * i) / steps;
                 Position testPos;
                 testPos.m_positionX = position.GetPositionX() + radius * cos(angle);
                 testPos.m_positionY = position.GetPositionY() + radius * sin(angle);

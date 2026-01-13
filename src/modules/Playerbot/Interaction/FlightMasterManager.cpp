@@ -716,8 +716,7 @@ namespace Playerbot
             return 0;
 
         // Use TrinityCore's sObjectMgr->GetNearestTaxiNode with faction awareness
-        uint32 teamId = player->GetTeam();
-        uint32 nodeId = sObjectMgr->GetNearestTaxiNode(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), mapId, teamId);
+        uint32 nodeId = sObjectMgr->GetNearestTaxiNode(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), mapId, player->GetTeam());
 
         return nodeId;
     }

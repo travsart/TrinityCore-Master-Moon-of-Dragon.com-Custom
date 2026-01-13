@@ -8,7 +8,7 @@
 #include <vector>
 
 class Player;
-class Position;
+struct Position;
 
 namespace Playerbot
 {

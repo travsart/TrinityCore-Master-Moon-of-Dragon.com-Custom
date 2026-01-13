@@ -282,7 +282,7 @@ public:
         if (!bot || !target)
             return false;
 
-        return target->IsWithinMeleeRange(bot) && target->HasInArc(M_PI, bot);
+        return target->IsWithinMeleeRange(bot) && target->HasInArc(static_cast<float>(M_PI), bot);
     }
 
     /**

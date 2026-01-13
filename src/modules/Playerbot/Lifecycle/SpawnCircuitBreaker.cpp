@@ -65,7 +65,7 @@ bool SpawnCircuitBreaker::Initialize()
     return true;
 }
 
-void SpawnCircuitBreaker::Update(uint32 diff)
+void SpawnCircuitBreaker::Update(uint32 /*diff*/)
 {
     if (!_initialized)
         return;

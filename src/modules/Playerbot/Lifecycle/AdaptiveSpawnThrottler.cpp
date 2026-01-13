@@ -87,7 +87,7 @@ bool AdaptiveSpawnThrottler::Initialize(ResourceMonitor* resourceMonitor, SpawnC
     return true;
 }
 
-void AdaptiveSpawnThrottler::Update(uint32 diff)
+void AdaptiveSpawnThrottler::Update(uint32 /*diff*/)
 {
     if (!_initialized)
         return;

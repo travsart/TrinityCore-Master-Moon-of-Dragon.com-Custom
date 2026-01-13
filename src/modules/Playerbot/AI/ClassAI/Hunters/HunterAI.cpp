@@ -1222,7 +1222,7 @@ void HunterAI::CommandPetFollow()
     Pet* pet = GetPet();
     if (pet)
     {
-        pet->GetMotionMaster()->MoveFollow(_bot, 2.0f, M_PI);
+        pet->GetMotionMaster()->MoveFollow(_bot, 2.0f, static_cast<float>(M_PI));
         _lastPetCommand = GameTime::GetGameTimeMS();
     }
 }

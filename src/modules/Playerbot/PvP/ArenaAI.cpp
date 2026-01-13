@@ -345,7 +345,7 @@ void ArenaAI::LoadRingOfValorPillars()
     _arenaPillars[mapId] = pillars;
 }
 
-void ArenaAI::Update(uint32 diff)
+void ArenaAI::Update(uint32 /*diff*/)
 {
     if (!_bot || !_bot->IsInWorld())
         return;
@@ -713,7 +713,6 @@ void ArenaAI::AdaptStrategy()
         {
             // Find target that hasn't been damaged recently
             ::Unit* freshTarget = nullptr;
-            uint32 oldestDamageTime = GameTime::GetGameTimeMS();
 
             for (::Unit* enemy : enemies)
             {

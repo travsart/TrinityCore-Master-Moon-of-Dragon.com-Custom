@@ -425,11 +425,16 @@ private:
 // Convenience macros for profiling
 #define sProfiler BotProfiler::Instance()
 
+// Only define if not already defined by another profiler header
+#ifndef PROFILE_FUNCTION
 #define PROFILE_FUNCTION() \
     ScopedProfiler _prof(__FUNCTION__, __FILE__, __LINE__)
+#endif
 
+#ifndef PROFILE_SCOPE
 #define PROFILE_SCOPE(name) \
     ScopedProfiler _prof(name, __FILE__, __LINE__)
+#endif
 
 #define PROFILE_HOTSPOT(name, impact) \
     ScopedProfiler _prof(name, __FILE__, __LINE__); \

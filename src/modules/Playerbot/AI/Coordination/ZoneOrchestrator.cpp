@@ -330,7 +330,7 @@ void ZoneOrchestrator::UpdateRaids(uint32 diff)
     }
 }
 
-void ZoneOrchestrator::UpdateObjectives(uint32 diff)
+void ZoneOrchestrator::UpdateObjectives(uint32 /*diff*/)
 {
     CleanupExpiredObjectives();
 
@@ -344,7 +344,7 @@ void ZoneOrchestrator::UpdateObjectives(uint32 diff)
     }
 }
 
-void ZoneOrchestrator::UpdateThreatAssessment(uint32 diff)
+void ZoneOrchestrator::UpdateThreatAssessment(uint32 /*diff*/)
 {
     ScanForThreats();
     DetectWorldBoss();
@@ -366,7 +366,7 @@ void ZoneOrchestrator::UpdateThreatAssessment(uint32 diff)
     }
 }
 
-void ZoneOrchestrator::UpdateBotActivity(uint32 diff)
+void ZoneOrchestrator::UpdateBotActivity(uint32 /*diff*/)
 {
     // Monitor bot activity and adjust zone activity accordingly
     uint32 combatBots = 0;
@@ -395,7 +395,7 @@ void ZoneOrchestrator::UpdateBotActivity(uint32 diff)
     }
 }
 
-void ZoneOrchestrator::UpdateLoadBalancing(uint32 diff)
+void ZoneOrchestrator::UpdateLoadBalancing(uint32 /*diff*/)
 {
     // Periodically rebalance raids every 30s
     static uint32 lastBalance = 0;

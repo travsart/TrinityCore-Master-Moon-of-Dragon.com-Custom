@@ -935,7 +935,7 @@ std::vector<BankingTransaction> BankingManager::GetRecentTransactions(uint32 cou
 {
     std::vector<BankingTransaction> result;
 
-    uint32 start = _transactionHistory.size() > count ? _transactionHistory.size() - count : 0;
+    size_t start = _transactionHistory.size() > static_cast<size_t>(count) ? _transactionHistory.size() - static_cast<size_t>(count) : 0;
     result.assign(_transactionHistory.begin() + start, _transactionHistory.end());
 
     return result;

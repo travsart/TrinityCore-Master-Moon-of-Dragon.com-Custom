@@ -26,7 +26,6 @@
 #include "Professions/GatheringMaterialsBridge.h"
 #include "Professions/ProfessionAuctionBridge.h"
 #include "Professions/AuctionMaterialsBridge.h"
-// #include "Spatial/BlackboardManager.h"  // TODO: File does not exist
 
 // Manager implementations (for unique_ptr destruction)
 #include "AI/BehaviorPriorityManager.h"  // For unique_ptr<BehaviorPriorityManager> destruction

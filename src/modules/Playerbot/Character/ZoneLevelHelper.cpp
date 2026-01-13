@@ -335,9 +335,10 @@ std::vector<uint32> ZoneLevelHelper::GetZonesForLevel(int16 level, uint32 maxCou
     std::iota(indices.begin(), indices.end(), 0);
 
     // Fisher-Yates shuffle for first maxCount elements
-    for (uint32 i = 0; i < maxCount && i < indices.size(); ++i)
+    size_t loopMax = std::min(static_cast<size_t>(maxCount), indices.size());
+    for (size_t i = 0; i < loopMax; ++i)
     {
-        uint32 j = urand(i, static_cast<uint32>(indices.size() - 1));
+        uint32 j = urand(static_cast<uint32>(i), static_cast<uint32>(indices.size() - 1));
         std::swap(indices[i], indices[j]);
         result.push_back(zones[indices[i]]);
     }

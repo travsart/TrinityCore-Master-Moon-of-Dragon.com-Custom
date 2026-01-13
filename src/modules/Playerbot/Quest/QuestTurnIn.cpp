@@ -59,8 +59,6 @@ bool QuestTurnIn::TurnInQuest(uint32 questId, Player* bot)
     if (!bot || !questId)
         return false;
 
-    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
-
     // Validate quest is ready for turn-in
     if (!IsQuestReadyForTurnIn(questId, bot))
     {
@@ -539,7 +537,7 @@ uint32 QuestTurnIn::SelectOptimalReward(const std::vector<QuestRewardItem>& rewa
             return SelectClassAppropriateReward(rewards, bot);
 
         case RewardSelectionStrategy::RANDOM_SELECTION:
-            return urand(0, rewards.size() - 1);
+            return urand(0, static_cast<uint32>(rewards.size() - 1));
 
         default:
             return SelectBestUpgradeReward(rewards, bot);
@@ -980,7 +978,7 @@ void QuestTurnIn::ValidateTurnInState(Player* bot, uint32 questId)
  * @brief Update turn-in system
  * @param diff Time difference
  */
-void QuestTurnIn::Update(uint32 diff)
+void QuestTurnIn::Update(uint32 /*diff*/)
 {
     ProcessScheduledTurnIns();
     CleanupCompletedTurnIns();
@@ -1753,11 +1751,7 @@ void QuestTurnIn::ExecuteBatchTurnInStrategy(Player* bot)
     if (completedQuests.empty())
         return;
 
-    uint32 botGuid = bot->GetGUID().GetCounter();
     uint32 threshold = BATCH_TURNIN_THRESHOLD;
-
-    // Check if bot has custom threshold
-    auto& queue = _botTurnInQueues[botGuid];
 
     // Only process if we have enough quests for a batch
     if (completedQuests.size() >= threshold)

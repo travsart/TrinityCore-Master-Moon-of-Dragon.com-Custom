@@ -81,7 +81,7 @@ Position TankPositioning::CalculateOffTankPosition(Unit* target, Player* mainTan
     // Off-tank positions opposite of main tank for swap mechanics
     Position mainTankPos = mainTank->GetPosition();
     float angleToMainTank = target->GetRelativeAngle(&mainTankPos);
-    float offTankAngle = Position::NormalizeOrientation(angleToMainTank + M_PI);
+    float offTankAngle = Position::NormalizeOrientation(angleToMainTank + static_cast<float>(M_PI));
 
     // Calculate position at swap distance
     Position offTankPos;
@@ -92,7 +92,7 @@ Position TankPositioning::CalculateOffTankPosition(Unit* target, Player* mainTan
     if (!ValidateTankPosition(offTankPos, target, context))
     {
         // Try alternative positions
-    for (float adjustment = 0.1f; adjustment <= M_PI / 2; adjustment += 0.1f)
+    for (float adjustment = 0.1f; adjustment <= static_cast<float>(M_PI) / 2.0f; adjustment += 0.1f)
         {
             for (int direction : {1, -1})
             {
@@ -124,7 +124,7 @@ void TankPositioning::HandleThreatPositioning(Player* tank, Unit* target)
 
     // Check if boss needs to be rotated
     float currentFacing = target->GetOrientation();
-    float desiredFacing = tank->GetRelativeAngle(target) + M_PI;
+    float desiredFacing = tank->GetRelativeAngle(target) + static_cast<float>(M_PI);
     if (ShouldRotateBoss(target, currentFacing, desiredFacing))
     {
         // Tank should reposition to rotate boss
@@ -173,14 +173,14 @@ float TankPositioning::CalculateOptimalFacing(Unit* target, const ::std::vector<
     groupCenter.m_positionZ = target->GetPositionZ();
     // Boss should face opposite of group center
     float angleToGroup = target->GetRelativeAngle(&groupCenter);
-    return Position::NormalizeOrientation(angleToGroup + M_PI);
+    return Position::NormalizeOrientation(angleToGroup + static_cast<float>(M_PI));
 }
 bool TankPositioning::ShouldRotateBoss(Unit* target, float currentFacing, float desiredFacing)
 {
     float angleDiff = ::std::abs(Position::NormalizeOrientation(currentFacing - desiredFacing));
 
     // Only rotate if angle difference is significant (> 30 degrees)
-    return angleDiff > (M_PI / 6);
+    return angleDiff > (static_cast<float>(M_PI) / 6.0f);
 }
 
 void TankPositioning::ManageCleaveMechanics(Unit* target, const ::std::vector<Player*>& groupMembers)
@@ -188,7 +188,7 @@ void TankPositioning::ManageCleaveMechanics(Unit* target, const ::std::vector<Pl
     if (!_config.handleCleave || !target)
         return;
 
-    float cleaveAngle = _config.cleaveAngle * (M_PI / 180.0f);
+    float cleaveAngle = _config.cleaveAngle * (static_cast<float>(M_PI) / 180.0f);
 
     for (Player* member : groupMembers)
     {
@@ -210,7 +210,7 @@ void TankPositioning::ManageCleaveMechanics(Unit* target, const ::std::vector<Pl
 Position TankPositioning::CalculateCleaveAvoidancePosition(Unit* target, float cleaveAngle)
 {
     // Calculate position that puts cleave cone away from predicted group location
-    float safeAngle = Position::NormalizeOrientation(target->GetOrientation() + M_PI + (cleaveAngle / 2) + CLEAVE_SAFETY_MARGIN);
+    float safeAngle = Position::NormalizeOrientation(target->GetOrientation() + static_cast<float>(M_PI) + (cleaveAngle / 2) + CLEAVE_SAFETY_MARGIN);
     Position safePos;
     safePos.m_positionX = target->GetPositionX() + _config.optimalDistance * cos(safeAngle);
     safePos.m_positionY = target->GetPositionY() + _config.optimalDistance * sin(safeAngle);
@@ -242,7 +242,7 @@ Position TankPositioning::CalculateTankSwapPosition(Player* currentTank, Player*
     Position swapPos;
 
     // Swap tank should position at 90 degrees from current tank
-    float angleOffset = M_PI / 2;
+    float angleOffset = static_cast<float>(M_PI) / 2.0f;
     float swapAngle = target->GetRelativeAngle(&currentPos) + angleOffset;
 
     swapPos.m_positionX = target->GetPositionX() + _config.swapDistance * cos(swapAngle);
@@ -261,7 +261,7 @@ bool TankPositioning::IsInSwapPosition(Player* tank, Player* otherTank, Unit* ta
     // Tanks should be at correct distance and angle for swap
     return distance >= _config.swapDistance * 0.8f &&
            distance <= _config.swapDistance * 1.2f &&
-           angleiBetween >= (M_PI / 3);  // At least 60 degrees apart
+           angleiBetween >= (static_cast<float>(M_PI) / 3.0f);  // At least 60 degrees apart
 }
 
 Position TankPositioning::FindOptimalTankSpot(Unit* target, float minDistance, float maxDistance)
@@ -275,7 +275,7 @@ Position TankPositioning::FindOptimalTankSpot(Unit* target, float minDistance, f
     // Generate candidate positions
     for (int angle = 0; angle < 360; angle += 15)
     {
-        float radians = angle * (M_PI / 180.0f);
+        float radians = angle * (static_cast<float>(M_PI) / 180.0f);
         float distance = (minDistance + maxDistance) / 2;
 
         Position candidatePos;
@@ -323,7 +323,7 @@ Position TankPositioning::FindOptimalTankSpot(Unit* target, float minDistance, f
     if (EnumFlag<PositionalRequirement>(context.requirements).HasFlag(PositionalRequirement::FRONT_OF_TARGET))
             {
                 float angle = context.primaryTarget->GetRelativeAngle(&pos);
-                if (angle < M_PI / 4 || angle > 7 * M_PI / 4)
+                if (angle < static_cast<float>(M_PI) / 4.0f || angle > 7.0f * static_cast<float>(M_PI) / 4.0f)
                     score.metRequirements = static_cast<PositionalRequirement>(static_cast<uint32>(score.metRequirements) | static_cast<uint32>(PositionalRequirement::FRONT_OF_TARGET));
                 else
                     score.failedRequirements = static_cast<PositionalRequirement>(static_cast<uint32>(score.failedRequirements) | static_cast<uint32>(PositionalRequirement::FRONT_OF_TARGET));
@@ -370,7 +370,7 @@ float TankPositioning::CalculateThreatAngle(const Position& tankPos, const Posit
     float tankAngle = ::std::atan2(tankPos.m_positionY - targetPos.m_positionY,
                                  tankPos.m_positionX - targetPos.m_positionX);
 
-    return ::std::abs(Position::NormalizeOrientation(tankAngle - avgGroupAngle - M_PI));
+    return ::std::abs(Position::NormalizeOrientation(tankAngle - avgGroupAngle - static_cast<float>(M_PI)));
 }
 
 bool TankPositioning::ValidateTankPosition(const Position& pos, Unit* target,
@@ -386,7 +386,7 @@ bool TankPositioning::ValidateTankPosition(const Position& pos, Unit* target,
 
     // Check if position is in front of target
     float angle = target->GetRelativeAngle(&pos);
-    if (angle > M_PI / 3 && angle < 2 * M_PI - M_PI / 3)
+    if (angle > static_cast<float>(M_PI) / 3.0f && angle < 2.0f * static_cast<float>(M_PI) - static_cast<float>(M_PI) / 3.0f)
         return false;
 
     // Additional validation would include walkable checks, LOS, etc.
@@ -407,7 +407,7 @@ float TankPositioning::ScoreTankPosition(const Position& pos, const CombatPositi
 
     // Threat angle score (facing boss away from group)
     float threatAngle = CalculateThreatAngle(pos, context.primaryTarget->GetPosition(), context.tanks);
-    float angleScore = (1.0f - (threatAngle / M_PI)) * 100.0f;
+    float angleScore = (1.0f - (threatAngle / static_cast<float>(M_PI))) * 100.0f;
     score += angleScore * 0.4f;
 
     // Stability score (minimize movement)
@@ -499,7 +499,7 @@ Position HealerPositioning::CalculateTankHealerPosition(Player* tank, Unit* thre
 
     // Position behind and to the side of tank for optimal LOS
     float tankFacing = tank->GetOrientation();
-    float healerAngle = Position::NormalizeOrientation(tankFacing + 3 * M_PI / 4);
+    float healerAngle = Position::NormalizeOrientation(tankFacing + 3.0f * static_cast<float>(M_PI) / 4.0f);
 
     healerPos.m_positionX = tank->GetPositionX() + _config.optimalRange * cos(healerAngle);
     healerPos.m_positionY = tank->GetPositionY() + _config.optimalRange * sin(healerAngle);
@@ -561,7 +561,7 @@ Position HealerPositioning::OptimizeHealingCoverage(Player* healer, const ::std:
         for (float distance = 5.0f; distance <= 15.0f; distance += 5.0f)
         {
             Position testPos;
-            float radians = angle * (M_PI / 180.0f);
+            float radians = angle * (static_cast<float>(M_PI) / 180.0f);
             testPos.m_positionX = optimalPos.m_positionX + distance * cos(radians);
             testPos.m_positionY = optimalPos.m_positionY + distance * sin(radians);
             testPos.m_positionZ = optimalPos.m_positionZ;
@@ -601,7 +601,7 @@ Position HealerPositioning::FindSafeHealingSpot(Player* healer, Unit* threat,
         {
             for (int direction : {1, -1})
             {
-                float testAngle = Position::NormalizeOrientation(angleFromThreat + (angleOffset * direction * M_PI / 180.0f));
+                float testAngle = Position::NormalizeOrientation(angleFromThreat + (angleOffset * direction * static_cast<float>(M_PI) / 180.0f));
                 safePos.m_positionX = threat->GetPositionX() + safeDistance * cos(testAngle);
                 safePos.m_positionY = threat->GetPositionY() + safeDistance * sin(testAngle);
 
@@ -693,7 +693,7 @@ Position HealerPositioning::FindBestLOSPosition(Player* healer, const ::std::vec
     // Search for position with best LOS
     for (int angle = 0; angle < 360; angle += 30)
     {
-        float radians = angle * (M_PI / 180.0f);
+        float radians = angle * (static_cast<float>(M_PI) / 180.0f);
         Position testPos;
         testPos.m_positionX = healer->GetPositionX() + 10.0f * cos(radians);
         testPos.m_positionY = healer->GetPositionY() + 10.0f * sin(radians);
@@ -722,8 +722,8 @@ Position HealerPositioning::FindBestLOSPosition(Player* healer, const ::std::vec
     if (healers.empty() || group.empty())
         return positions;
     // Divide healing assignments
-    int healersPerSection = ::std::max(1, (int)healers.size());
-    int playersPerHealer = group.size() / healersPerSection;
+    size_t healersPerSection = ::std::max(static_cast<size_t>(1), healers.size());
+    size_t playersPerHealer = group.size() / healersPerSection;
 
     // Assign positions based on coverage zones
     for (size_t i = 0; i < healers.size(); ++i)
@@ -906,7 +906,7 @@ Position DPSPositioning::CalculateMeleeDPSPosition(Unit* target, Player* tank,
     else
     {
         // Default melee position
-        float angle = target->GetOrientation() + M_PI;
+        float angle = target->GetOrientation() + static_cast<float>(M_PI);
         dpsPos = RotateAroundTarget(target, angle, _config.meleeOptimalDistance);
     }
 
@@ -926,7 +926,7 @@ Position DPSPositioning::CalculateBackstabPosition(Unit* target, float requiredA
 
     // Calculate position behind target
     float targetFacing = target->GetOrientation();
-    float backstabAngle = Position::NormalizeOrientation(targetFacing + M_PI);
+    float backstabAngle = Position::NormalizeOrientation(targetFacing + static_cast<float>(M_PI));
     return RotateAroundTarget(target, backstabAngle, _config.meleeOptimalDistance);
 }
 
@@ -937,7 +937,7 @@ Position DPSPositioning::CalculateFlankPosition(Unit* target, bool leftFlank)
 
     float targetFacing = target->GetOrientation();
     float flankAngle = Position::NormalizeOrientation(
-        targetFacing + (leftFlank ? -M_PI/2 : M_PI/2));
+        targetFacing + (leftFlank ? -static_cast<float>(M_PI)/2.0f : static_cast<float>(M_PI)/2.0f));
 
     return RotateAroundTarget(target, flankAngle, _config.meleeOptimalDistance);
 }
@@ -949,8 +949,8 @@ void DPSPositioning::DistributeMeleePositions(const ::std::vector<Player*>& mele
         return;
 
     // Calculate available angles (avoiding front if tank is present)
-    float startAngle = tank ? M_PI/3 : 0;  // Start 60 degrees from front if tanked
-    float endAngle = tank ? 5*M_PI/3 : 2*M_PI;  // End 60 degrees from front
+    float startAngle = tank ? static_cast<float>(M_PI)/3.0f : 0;  // Start 60 degrees from front if tanked
+    float endAngle = tank ? 5.0f*static_cast<float>(M_PI)/3.0f : 2.0f*static_cast<float>(M_PI);  // End 60 degrees from front
     float angleRange = endAngle - startAngle;
     float angleStep = angleRange / meleeDPS.size();
 
@@ -992,7 +992,7 @@ Position DPSPositioning::CalculateRangedDPSPosition(Unit* target, float optimalR
     Position rangedPos;
 
     // Start with base position at optimal range
-    float baseAngle = target->GetOrientation() + M_PI;
+    float baseAngle = target->GetOrientation() + static_cast<float>(M_PI);
     rangedPos = RotateAroundTarget(target, baseAngle, optimalRange);
     // Apply spread if required
     if (_config.maintainSpread && context.requiresSpread)
@@ -1024,8 +1024,8 @@ void DPSPositioning::SpreadRangedPositions(const ::std::vector<Player*>& rangedD
         return;
 
     // Distribute ranged DPS in an arc behind the boss
-    float arcStart = 2*M_PI/3;   // 120 degrees
-    float arcEnd = 4*M_PI/3;     // 240 degrees
+    float arcStart = 2.0f*static_cast<float>(M_PI)/3.0f;   // 120 degrees
+    float arcEnd = 4.0f*static_cast<float>(M_PI)/3.0f;     // 240 degrees
     float arcRange = arcEnd - arcStart;
     float angleStep = rangedDPS.size() > 1 ? arcRange / (rangedDPS.size() - 1) : 0;
 
@@ -1126,7 +1126,7 @@ void DPSPositioning::AvoidTailSwipe(Player* dps, Unit* target, float swipeAngle)
         return;
 
     float angleToTarget = target->GetRelativeAngle(dps);
-    float targetRear = Position::NormalizeOrientation(target->GetOrientation() + M_PI);
+    float targetRear = Position::NormalizeOrientation(target->GetOrientation() + static_cast<float>(M_PI));
     float angleDiff = ::std::abs(Position::NormalizeOrientation(angleToTarget - targetRear));
 
     // Check if in tail swipe danger zone
@@ -1217,9 +1217,9 @@ Position DPSPositioning::FindPositionForRequirement(Unit* target, PositionalRequ
 
     float angle = target->GetOrientation();
     if (EnumFlag<PositionalRequirement>(req).HasFlag(PositionalRequirement::BEHIND_TARGET))
-        angle += M_PI;
+        angle += static_cast<float>(M_PI);
     else if (EnumFlag<PositionalRequirement>(req).HasFlag(PositionalRequirement::FLANK_TARGET))
-        angle += M_PI / 2;
+        angle += static_cast<float>(M_PI) / 2.0f;
 
     return RotateAroundTarget(target, angle, _config.meleeOptimalDistance);
 }
@@ -1304,7 +1304,7 @@ Position DPSPositioning::CalculateCleaveDPSPosition(Player* dps, const ::std::ve
     Unit* target2 = targets[1];
 
     float angleBetween = target1->GetRelativeAngle(target2);
-    float cleaveAngle = Position::NormalizeOrientation(angleBetween + M_PI/2);
+    float cleaveAngle = Position::NormalizeOrientation(angleBetween + static_cast<float>(M_PI)/2.0f);
 
     cleavePos.m_positionX = target1->GetPositionX() + _config.meleeOptimalDistance * cos(cleaveAngle);
     cleavePos.m_positionY = target1->GetPositionY() + _config.meleeOptimalDistance * sin(cleaveAngle);
@@ -1682,7 +1682,7 @@ bool RoleBasedCombatPositioning::ValidatePositionalRequirements(const Position& 
         float angle = context.primaryTarget->GetRelativeAngle(&pos);
         float facing = context.primaryTarget->GetOrientation();
         float diff = ::std::abs(Position::NormalizeOrientation(angle - facing));
-        if (diff < M_PI / 3)  // In frontal cone
+        if (diff < static_cast<float>(M_PI) / 3.0f)  // In frontal cone
             return false;
     }
 
@@ -2090,7 +2090,7 @@ Position RoleBasedCombatPositioning::CalculatePositionByStrategy(Player* bot,
     // Generate circular positions
     for (int angle = 0; angle < 360; angle += 15)
     {
-        float radians = angle * (M_PI / 180.0f);
+        float radians = angle * (static_cast<float>(M_PI) / 180.0f);
         Position pos;
         pos.m_positionX = center.m_positionX + baseDistance * cos(radians);
         pos.m_positionY = center.m_positionY + baseDistance * sin(radians);
@@ -2234,7 +2234,7 @@ void RoleBasedCombatPositioning::IdentifyDangerZones(Unit* target, CombatPositio
     // Add tail swipe zone if applicable
     if (context.tailSwipeAngle > 0)
     {
-        float rearAngle = Position::NormalizeOrientation(target->GetOrientation() + M_PI);
+        float rearAngle = Position::NormalizeOrientation(target->GetOrientation() + static_cast<float>(M_PI));
         Position tailZone;
         tailZone.m_positionX = target->GetPositionX() + 5.0f * cos(rearAngle);
         tailZone.m_positionY = target->GetPositionY() + 5.0f * sin(rearAngle);

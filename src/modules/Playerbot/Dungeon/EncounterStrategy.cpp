@@ -357,7 +357,7 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
         if (distance < radius)
         {
             // Calculate safe position away from danger
-            float angle = dangerZone.GetAngle(player) + M_PI; // Opposite direction
+            float angle = dangerZone.GetAngle(player) + static_cast<float>(M_PI); // Opposite direction
             Position safePos = dangerZone;
             safePos.RelocateOffset({::std::cos(angle) * (radius + 5.0f), ::std::sin(angle) * (radius + 5.0f), 0.0f});
 
@@ -585,7 +585,7 @@ void EncounterStrategy::AvoidMechanicAreas(Group* group, const ::std::vector<Pos
             if (distance < 10.0f)
             {
                 // Move away from danger
-                float angle = dangerZone.GetAngle(player) + M_PI;
+                float angle = dangerZone.GetAngle(player) + static_cast<float>(M_PI);
                 Position safePos = dangerZone;
                 safePos.RelocateOffset({::std::cos(angle) * 15.0f, ::std::sin(angle) * 15.0f, 0.0f});
 
@@ -1421,7 +1421,7 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
 
         case DungeonRole::MELEE_DPS:
             // Melee: Behind boss
-            angle = boss->GetOrientation() + M_PI; // Opposite direction
+            angle = boss->GetOrientation() + static_cast<float>(M_PI); // Opposite direction
             distance = 5.0f;
             targetPos = boss->GetPosition();
             targetPos.RelocateOffset({::std::cos(angle) * distance, ::std::sin(angle) * distance, 0.0f});

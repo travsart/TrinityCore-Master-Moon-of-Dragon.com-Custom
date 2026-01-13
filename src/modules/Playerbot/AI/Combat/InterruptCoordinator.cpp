@@ -159,14 +159,14 @@ void InterruptCoordinatorFixed::OnEnemyCastInterrupted(ObjectGuid casterGuid, ui
     }
 }
 
-void InterruptCoordinatorFixed::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId)
+void InterruptCoordinatorFixed::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 /*spellId*/)
 {
     // Thread-safe removal with SINGLE LOCK
     ::std::lock_guard lock(_stateMutex);
     _state.activeCasts.erase(casterGuid);
 }
 
-void InterruptCoordinatorFixed::Update(uint32 diff)
+void InterruptCoordinatorFixed::Update(uint32 /*diff*/)
 {
     if (!_active || !_group)
         return;
@@ -370,7 +370,7 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
     }
 }
 
-::std::vector<ObjectGuid> InterruptCoordinatorFixed::GetAvailableInterrupters(CastingSpellInfo const& castInfo) const
+::std::vector<ObjectGuid> InterruptCoordinatorFixed::GetAvailableInterrupters(CastingSpellInfo const& /*castInfo*/) const
 {
     ::std::vector<ObjectGuid> available;
 
@@ -528,7 +528,7 @@ void InterruptCoordinatorFixed::ResetMetrics()
     return ss.str();
 }
 
-float InterruptCoordinatorFixed::GetBotDistanceToTarget(ObjectGuid botGuid, ObjectGuid targetGuid) const
+float InterruptCoordinatorFixed::GetBotDistanceToTarget(ObjectGuid /*botGuid*/, ObjectGuid /*targetGuid*/) const
 {
     // This would integrate with actual position tracking
     // For now, return a placeholder

@@ -25,8 +25,8 @@
 // Forward declarations
 class Player;
 class Item;
-class ItemTemplate;
-struct ObjectGuid;
+struct ItemTemplate;
+class ObjectGuid;
 
 namespace Playerbot
 {

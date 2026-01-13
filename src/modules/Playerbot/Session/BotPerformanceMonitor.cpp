@@ -231,7 +231,7 @@ void BotPerformanceMonitor::EndTick(uint32 currentTime, uint32 botsUpdated, uint
     _histogram.RecordTime(tickDuration);
 }
 
-void BotPerformanceMonitor::RecordBotUpdateTime(uint32 microseconds)
+void BotPerformanceMonitor::RecordBotUpdateTime(uint32 /*microseconds*/)
 {
     // PERFORMANCE FIX: Skip histogram recording to reduce overhead
     // Histogram adds significant mutex contention with 778+ bots

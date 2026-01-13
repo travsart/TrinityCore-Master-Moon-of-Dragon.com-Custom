@@ -1516,7 +1516,6 @@ bool LootDistribution::IsItemUsefulForOffSpec(const LootItem& item)
     ChrSpecialization mainSpec = _bot->GetPrimarySpecialization();
     uint8 playerClass = _bot->GetClass();
     uint8 itemClass = item.itemTemplate->GetClass();
-    uint8 itemSubClass = item.itemTemplate->GetSubClass();
     uint8 invType = item.itemTemplate->GetInventoryType();
 
     // Define potential off-specs for each class and check if item is useful
@@ -2090,7 +2089,7 @@ void LootDistribution::UpdateLootMetrics(const LootRoll& roll, bool wasWinner)
     metrics.lastUpdate = std::chrono::steady_clock::now();
 }
 
-void LootDistribution::Update(uint32 diff)
+void LootDistribution::Update(uint32 /*diff*/)
 {
     static uint32 lastUpdate = 0;
     uint32 currentTime = GameTime::GetGameTimeMS();

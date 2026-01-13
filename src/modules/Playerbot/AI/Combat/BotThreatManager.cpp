@@ -784,7 +784,7 @@ void BotThreatManager::UpdateThreatHistory(Unit* target, float threat)
     }
 }
 
-void BotThreatManager::UpdateThreatTable(uint32 diff)
+void BotThreatManager::UpdateThreatTable(uint32 /*diff*/)
 {
     uint32 now = GameTime::GetGameTimeMS();
 

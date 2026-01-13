@@ -78,7 +78,7 @@ public:
     void SetRelevance(float relevance) { _relevance = relevance; }
 
     // Cost calculation
-    virtual float GetCost(BotAI* ai) const { return 1.0f; }
+    virtual float GetCost(BotAI* /*ai*/) const { return 1.0f; }
     virtual float GetCooldown() const { return 0.0f; }
     bool IsOnCooldown() const;
 
@@ -100,7 +100,7 @@ public:
     uint32 GetPriority() const { return static_cast<uint32>(_relevance * 100); }
     void SetPriority(uint32 priority) { _relevance = priority / 100.0f; }
     bool IsExecuting() const { return _executing; }
-    void SetCooldown(uint32 cooldownMs) { /* handled by cooldown system */ }
+    void SetCooldown(uint32 /*cooldownMs*/) { /* handled by cooldown system */ }
 
 protected:
     // Helper methods for derived classes
@@ -161,7 +161,7 @@ public:
     virtual bool IsUseful(BotAI* ai) const override;
 
     // Combat-specific methods
-    virtual float GetThreat(BotAI* ai) const { return 0.0f; }
+    virtual float GetThreat(BotAI* /*ai*/) const { return 0.0f; }
     virtual bool RequiresFacing() const { return true; }
     virtual float GetRange() const { return 5.0f; }
     virtual bool BreaksCC() const { return false; }

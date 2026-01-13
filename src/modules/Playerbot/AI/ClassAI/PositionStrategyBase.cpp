@@ -77,7 +77,7 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     ::std::vector<Position> candidates;
     candidates.reserve(16);
 
-    float angleStep = 2.0f * M_PI / 8.0f;  // 8 positions around target
+    float angleStep = 2.0f * static_cast<float>(M_PI) / 8.0f;  // 8 positions around target
     for (int ring = 0; ring < 2; ++ring)
     {
         float range = preferredRange + (ring * 3.0f);
@@ -642,7 +642,7 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
         }
         return;
     }
-    float perpAngle = angle + M_PI / 2.0f;
+    float perpAngle = angle + static_cast<float>(M_PI) / 2.0f;
 
     int32 halfCount = bots.size() / 2;
 
@@ -668,7 +668,7 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
     if (bots.empty() || !target)
         return positions;
 
-    float angleStep = 2.0f * M_PI / bots.size();
+    float angleStep = 2.0f * static_cast<float>(M_PI) / bots.size();
 
     for (size_t i = 0; i < bots.size(); ++i)    {
         float angle = i * angleStep;
@@ -1085,7 +1085,7 @@ void PositionStrategyBase::UpdateFormationPositions(::std::vector<Player*> bots,
     float baseAngle = target->GetOrientation();
     uint32 rows = static_cast<uint32>(::std::sqrt(bots.size())) + 1;
     float rowSpacing = 5.0f;
-    float angleRad = angle * M_PI / 180.0f;
+    float angleRad = angle * static_cast<float>(M_PI) / 180.0f;
 
     size_t botIndex = 0;
     for (uint32 row = 0; row < rows && botIndex < bots.size(); ++row)
@@ -1124,7 +1124,7 @@ void PositionStrategyBase::UpdateFormationPositions(::std::vector<Player*> bots,
         return positions;
 
     // Use Fibonacci spiral for even distribution
-    float goldenAngle = M_PI * (3.0f - ::std::sqrt(5.0f));  // Golden angle in radians
+    float goldenAngle = static_cast<float>(M_PI) * (3.0f - ::std::sqrt(5.0f));  // Golden angle in radians
     for (size_t i = 0; i < bots.size(); ++i)
     {
         float angle = i * goldenAngle;
@@ -1211,15 +1211,15 @@ Position MeleePositionStrategy::CalculateOptimalPosition(Player* bot, Unit* targ
 
 Position MeleePositionStrategy::GetBackstabPosition(Unit* target) const
 {
-    float angle = target->GetOrientation() + M_PI;  // Behind target    float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();    float z = target->GetPositionZ();    _map->GetHeight(nullptr, x, y, z);
-    return Position(x, y, z, angle - M_PI);  // Face the target
+    float angle = target->GetOrientation() + static_cast<float>(M_PI);  // Behind target    float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();    float z = target->GetPositionZ();    _map->GetHeight(nullptr, x, y, z);
+    return Position(x, y, z, angle - static_cast<float>(M_PI));  // Face the target
 }
 
 Position MeleePositionStrategy::GetFlankPosition(Unit* target, bool leftSide) const
 {
-    float angle = target->GetOrientation() + (leftSide ? M_PI / 2.0f : -M_PI / 2.0f);
+    float angle = target->GetOrientation() + (leftSide ? static_cast<float>(M_PI) / 2.0f : -static_cast<float>(M_PI) / 2.0f);
     float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();    float z = target->GetPositionZ();    _map->GetHeight(nullptr, x, y, z);
-    return Position(x, y, z, angle + (leftSide ? -M_PI / 2.0f : M_PI / 2.0f));
+    return Position(x, y, z, angle + (leftSide ? -static_cast<float>(M_PI) / 2.0f : static_cast<float>(M_PI) / 2.0f));
 }
 
 bool MeleePositionStrategy::CanReachPosition(Player* bot, const Position& pos, float timeLimit) const
@@ -1240,7 +1240,7 @@ float MeleePositionStrategy::EvaluatePositionScore(const Position& pos, Player* 
         baseScore += 30.0f;
 
     // Penalty for being in front (for non-tanks)
-    if (bot->GetClass() != CLASS_WARRIOR && target->HasInArc(static_cast<float>(M_PI / 4.0f), &pos))        baseScore -= 20.0f;
+    if (bot->GetClass() != CLASS_WARRIOR && target->HasInArc(static_cast<float>(M_PI) / 4.0f, &pos))        baseScore -= 20.0f;
 
     return baseScore;
 }

@@ -253,7 +253,7 @@ public:
         : BTLeaf("FollowLeader"), _followDistance(followDistance), _movementStarted(false)
     {}
 
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
+    BTStatus Tick(BotAI* ai, BTBlackboard& /*blackboard*/) override
     {
         if (!ai)
         {
@@ -334,7 +334,7 @@ class TC_GAME_API BTStopMovement : public BTAction
 public:
     BTStopMovement()
         : BTAction("StopMovement",
-            [](BotAI* ai, BTBlackboard& blackboard) -> BTStatus
+            [](BotAI* ai, BTBlackboard& /*blackboard*/) -> BTStatus
             {
                 if (!ai)
                     return BTStatus::INVALID;
@@ -360,7 +360,7 @@ class TC_GAME_API BTCheckIsMoving : public BTCondition
 public:
     BTCheckIsMoving()
         : BTCondition("CheckIsMoving",
-            [](BotAI* ai, BTBlackboard& blackboard) -> bool
+            [](BotAI* ai, BTBlackboard& /*blackboard*/) -> bool
             {
                 if (!ai)
                     return false;
@@ -460,7 +460,7 @@ public:
         : BTLeaf("MoveToHealerRange"), _maxRange(maxRange), _movementStarted(false)
     {}
 
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
+    BTStatus Tick(BotAI* ai, BTBlackboard& /*blackboard*/) override
     {
         if (!ai)
         {
@@ -605,7 +605,7 @@ public:
         // Move to position behind target
         if (!_movementStarted)
         {
-            float angle = target->GetOrientation() + M_PI; // 180 degrees behind
+            float angle = target->GetOrientation() + static_cast<float>(M_PI); // 180 degrees behind
             float x = target->GetPositionX() + _distance * ::std::cos(angle);
             float y = target->GetPositionY() + _distance * ::std::sin(angle);
             float z = target->GetPositionZ();
@@ -671,7 +671,7 @@ public:
         // - Calculate safe positions outside detected AoE radius
         // - Account for multiple overlapping AoE effects
         // For now, find position away from current location
-        float angle = frand(0.0f, 2.0f * M_PI);
+        float angle = frand(0.0f, 2.0f * static_cast<float>(M_PI));
         float distance = frand(_searchRadius * 0.5f, _searchRadius);
 
         float x = bot->GetPositionX() + distance * ::std::cos(angle);
@@ -701,7 +701,7 @@ public:
         : BTLeaf("CheckTooFarFromGroup"), _maxDistance(maxDistance)
     {}
 
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
+    BTStatus Tick(BotAI* ai, BTBlackboard& /*blackboard*/) override
     {
         if (!ai)
         {

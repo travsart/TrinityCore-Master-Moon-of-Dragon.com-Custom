@@ -959,7 +959,8 @@ float CombatTestFramework::GetScenarioSuccessRate(const ::std::string& scenarioN
         [](const auto& a, const auto& b) { return a.second > b.second; });
 
     ::std::vector<::std::string> result;
-    for (uint32 i = 0; i < ::std::min(count, static_cast<uint32>(failureRates.size())); ++i)
+    size_t maxCount = ::std::min(static_cast<size_t>(count), failureRates.size());
+    for (size_t i = 0; i < maxCount; ++i)
         result.push_back(failureRates[i].first);
 
     return result;
@@ -1167,7 +1168,7 @@ bool CombatTestFramework::SpawnEnemy(const TestParticipant& participant, TestCon
     return true;
 }
 
-void CombatTestFramework::UpdateParticipant(TestParticipant& participant, uint32 diff)
+void CombatTestFramework::UpdateParticipant(TestParticipant& participant, uint32 /*diff*/)
 {
     // Update participant state
     if (participant.isAlive && participant.health <= 0)
@@ -1205,7 +1206,7 @@ void CombatTestFramework::CleanupEnvironment(TestContext& context)
 Position CombatTestFramework::GenerateRandomPosition(const Position& center, float radius, float minDistance) const
 {
     // Use TrinityCore's thread-safe random functions instead of static generators
-    float angle = frand(0.0f, 2.0f * M_PI);
+    float angle = frand(0.0f, 2.0f * static_cast<float>(M_PI));
     float dist = frand(minDistance, radius);
 
     float x = center.GetPositionX() + dist * ::std::cos(angle);
@@ -1215,7 +1216,7 @@ Position CombatTestFramework::GenerateRandomPosition(const Position& center, flo
     return Position(x, y, z);
 }
 
-void CombatTestFramework::MonitorCombatSystems(TestContext& context, uint32 diff)
+void CombatTestFramework::MonitorCombatSystems(TestContext& context, uint32 /*diff*/)
 {
     // Monitor registered combat systems performance
     for (const auto& [name, system] : _registeredSystems)

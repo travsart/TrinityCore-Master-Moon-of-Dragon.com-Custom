@@ -848,7 +848,7 @@ void DungeonBehavior::AvoidDangerousAreas(Player* player, const ::std::vector<Po
             inDanger = true;
 
             // Calculate safe position away from danger
-            float angle = dangerZone.GetAngle(&currentPos) + M_PI; // Opposite direction
+            float angle = dangerZone.GetAngle(&currentPos) + static_cast<float>(M_PI); // Opposite direction
             nearestSafeSpot.RelocateOffset({::std::cos(angle) * 15.0f, ::std::sin(angle) * 15.0f, 0.0f});
             break;
         }

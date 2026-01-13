@@ -342,7 +342,7 @@ void GroupCoordination::HandleEmergencySituation(ThreatLevel level)
     }
 }
 
-void GroupCoordination::Update(uint32 diff)
+void GroupCoordination::Update(uint32 /*diff*/)
 {
     if (!_isActive.load())
         return;
@@ -551,7 +551,7 @@ void GroupCoordination::ExecuteCommandInternal(const CoordinationCommandData& co
             // Move away from current position
             {
                 Position retreatPos = _formationCenter;
-                retreatPos.SetOrientation(retreatPos.GetOrientation() + M_PI); // Turn around
+                retreatPos.SetOrientation(retreatPos.GetOrientation() + static_cast<float>(M_PI)); // Turn around
                 retreatPos.m_positionX += 20.0f * ::std::cos(retreatPos.GetOrientation());
                 retreatPos.m_positionY += 20.0f * ::std::sin(retreatPos.GetOrientation());
                 MoveToPosition(retreatPos, true);

@@ -507,8 +507,8 @@ AvoidanceManeuver ObstacleAvoidanceManager::GenerateDirectAvoidance(const Collis
     float angle = ::std::atan2(obstaclePos.GetPositionY() - botPos.GetPositionY(),
                            obstaclePos.GetPositionX() - botPos.GetPositionX());
 
-    float leftAngle = angle + M_PI/2;
-    float rightAngle = angle - M_PI/2;
+    float leftAngle = angle + static_cast<float>(M_PI) / 2.0f;
+    float rightAngle = angle - static_cast<float>(M_PI) / 2.0f;
 
     Position leftAvoidance;
     leftAvoidance.m_positionX = obstaclePos.GetPositionX() + avoidanceRadius * ::std::cos(leftAngle);
@@ -550,7 +550,7 @@ AvoidanceManeuver ObstacleAvoidanceManager::GenerateCircumnavigation(const Colli
 
     for (int i = 1; i <= 4; ++i)
     {
-        float angle = (2.0f * M_PI * i) / 4.0f;
+        float angle = (2.0f * static_cast<float>(M_PI) * i) / 4.0f;
         Position waypoint;
         waypoint.m_positionX = obstaclePos.GetPositionX() + radius * ::std::cos(angle);
         waypoint.m_positionY = obstaclePos.GetPositionY() + radius * ::std::sin(angle);
@@ -559,7 +559,7 @@ AvoidanceManeuver ObstacleAvoidanceManager::GenerateCircumnavigation(const Colli
     }
 
     maneuver.waypoints = circumWaypoints;
-    maneuver.executionTime = (radius * M_PI * 2) / GetBotSpeed();
+    maneuver.executionTime = (radius * static_cast<float>(M_PI) * 2.0f) / GetBotSpeed();
     maneuver.successProbability = 0.9f;
     maneuver.energyCost = maneuver.executionTime * 0.2f;
     maneuver.description = "Circumnavigate around obstacle";

@@ -1045,7 +1045,7 @@ Position PaladinAI::CalculateOptimalMeleePosition(::Unit* target)
         return Position();
 
     // Get behind target for Retribution DPS
-    float angle = target->GetOrientation() + M_PI;  // Behind target
+    float angle = target->GetOrientation() + static_cast<float>(M_PI);  // Behind target
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
         angle = target->GetOrientation();  // Face target for tanking
 

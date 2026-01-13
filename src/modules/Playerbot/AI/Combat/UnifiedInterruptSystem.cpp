@@ -1208,7 +1208,7 @@ bool UnifiedInterruptSystem::ExecuteLOSBreak(Player* bot, Unit* target)
     // Find position behind obstacle
     Position targetPos = target->GetPosition();
     Position botPos = bot->GetPosition();
-    float angle = targetPos.GetAngle(&botPos) + M_PI; // Opposite direction
+    float angle = targetPos.GetAngle(&botPos) + static_cast<float>(M_PI); // Opposite direction
 
     Position losPos;
     losPos.Relocate(
@@ -1244,7 +1244,7 @@ bool UnifiedInterruptSystem::ExecuteRangeEscape(Player* bot, Unit* target)
 
     Position targetPos = target->GetPosition();
     Position botPos = bot->GetPosition();
-    float angle = targetPos.GetAngle(&botPos) + M_PI; // Away from target
+    float angle = targetPos.GetAngle(&botPos) + static_cast<float>(M_PI); // Away from target
 
     Position escapePos;
     escapePos.Relocate(

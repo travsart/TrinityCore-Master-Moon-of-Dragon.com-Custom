@@ -175,8 +175,6 @@ public:
 
     void Update()
     {
-        uint32 now = GameTime::GetGameTimeMS();
-
         // Clean up expired DoTs
         for (auto targetIt = _activeDots.begin(); targetIt != _activeDots.end();)
         {

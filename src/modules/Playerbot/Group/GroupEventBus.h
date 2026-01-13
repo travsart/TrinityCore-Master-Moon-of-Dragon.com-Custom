@@ -71,18 +71,18 @@ public:
         EventBus<GroupEvent>::instance()->Unsubscribe(subscriber);
     }
 
-    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 100) override
+    uint32 ProcessEvents(uint32 /*diff*/, uint32 maxEvents = 100) override
     {
         return EventBus<GroupEvent>::instance()->ProcessEvents(maxEvents);
     }
 
-    uint32 ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff) override
+    uint32 ProcessGroupEvents(ObjectGuid /*groupGuid*/, uint32 diff) override
     {
         // Group-specific filtering not implemented in template
         return ProcessEvents(diff, 50);
     }
 
-    void ClearGroupEvents(ObjectGuid groupGuid) override
+    void ClearGroupEvents(ObjectGuid /*groupGuid*/) override
     {
         // Not implemented in template - use ClearQueue() for full clear
     }
@@ -103,12 +103,12 @@ public:
         EventBus<GroupEvent>::instance()->SetMaxQueueSize(size);
     }
 
-    void SetEventTTL(uint32 ttlMs) override
+    void SetEventTTL(uint32 /*ttlMs*/) override
     {
         // Template doesn't track TTL separately
     }
 
-    void SetBatchSize(uint32 size) override
+    void SetBatchSize(uint32 /*size*/) override
     {
         // Template processes maxEvents parameter
     }

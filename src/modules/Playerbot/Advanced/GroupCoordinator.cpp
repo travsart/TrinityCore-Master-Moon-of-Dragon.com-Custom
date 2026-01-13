@@ -42,10 +42,13 @@ namespace Advanced
     static constexpr uint32 TARGET_UPDATE_INTERVAL = 500;  // 0.5 seconds
 
     GroupCoordinator::GroupCoordinator(Player* bot, BotAI* ai)
-        : m_bot(bot)
+        : m_currentState(GroupState::IDLE)
+        , m_targetUpdateTime(0)
+        , m_readyCheckActive(false)
+        , m_readyCheckTime(0)
+        , m_bot(bot)
         , m_ai(ai)
         , m_enabled(true)
-        , m_currentState(GroupState::IDLE)
         , m_assignedRole(GroupRole::UNDEFINED)
         , m_preferredRole(GroupRole::UNDEFINED)
         , m_currentGroup(nullptr)
@@ -56,9 +59,6 @@ namespace Advanced
         , m_smartLootRolls(true)
         , m_inviteResponseDelay(INVITE_RESPONSE_DELAY)
         , m_lastLootRoll(0)
-        , m_readyCheckActive(false)
-        , m_readyCheckTime(0)
-        , m_targetUpdateTime(0)
         , m_totalUpdateTime(0)
         , m_updateCount(0)
         , m_cpuUsage(0.0f)
@@ -637,7 +637,7 @@ namespace Advanced
         if (!group)
             return false;
 
-        return m_readyMembers.size() >= group->GetMembersCount();
+        return m_readyMembers.size() >= static_cast<size_t>(group->GetMembersCount());
     }
 
     void GroupCoordinator::WaitForGroupReady()
@@ -771,7 +771,7 @@ namespace Advanced
     }
 
     // Private Methods
-    void GroupCoordinator::UpdateGroupState(uint32 diff)
+    void GroupCoordinator::UpdateGroupState(uint32 /*diff*/)
     {
         Group* group = GetGroup();
 
@@ -1042,11 +1042,12 @@ namespace Advanced
         if (!m_queueInfo.isQueued)
             return;
 
-        uint32 timeInQueue = GameTime::GetGameTimeMS() - m_queueInfo.queueTime;
+        // Calculate time in queue for potential future use in estimated wait time
+        // For now, use a simple 5-minute estimate
         m_queueInfo.estimatedWait = 300000; // 5 minutes estimate
     }
 
-    void GroupCoordinator::ProcessPendingInvites(uint32 diff)
+    void GroupCoordinator::ProcessPendingInvites(uint32 /*diff*/)
     {
         for (auto it = m_pendingInvites.begin(); it != m_pendingInvites.end();)
         {
@@ -1122,7 +1123,7 @@ namespace Advanced
             FocusTarget(target);
     }
 
-    void GroupCoordinator::ProcessReadyCheck(uint32 diff)
+    void GroupCoordinator::ProcessReadyCheck(uint32 /*diff*/)
     {
         if (GameTime::GetGameTimeMS() - m_readyCheckTime > READY_CHECK_TIMEOUT)
         {
@@ -1141,17 +1142,17 @@ namespace Advanced
         m_stats.raidsCompleted++;
     }
 
-    void GroupCoordinator::RecordQuestShare(uint32 questId)
+    void GroupCoordinator::RecordQuestShare(uint32 /*questId*/)
     {
         m_stats.questsShared++;
     }
 
-    void GroupCoordinator::RecordLootRoll(uint32 itemId, LootDecision decision)
+    void GroupCoordinator::RecordLootRoll(uint32 /*itemId*/, LootDecision /*decision*/)
     {
         m_stats.lootRolls++;
     }
 
-    void GroupCoordinator::RecordLootWon(uint32 itemId)
+    void GroupCoordinator::RecordLootWon(uint32 /*itemId*/)
     {
         m_stats.lootWon++;
     }

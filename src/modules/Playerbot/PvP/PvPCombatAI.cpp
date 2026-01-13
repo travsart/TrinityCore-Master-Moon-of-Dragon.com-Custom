@@ -76,7 +76,7 @@ void PvPCombatAI::Initialize()
     TC_LOG_INFO("playerbot", "PvPCombatAI: Initialization complete");
 }
 
-void PvPCombatAI::Update(uint32 diff)
+void PvPCombatAI::Update(uint32 /*diff*/)
 {
     if (!_bot || !_bot->IsInWorld())
         return;

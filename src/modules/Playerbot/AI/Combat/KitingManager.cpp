@@ -44,7 +44,7 @@ KitingManager::KitingManager(Player* bot)
     TC_LOG_DEBUG("playerbot.kiting", "KitingManager initialized for bot {}", _bot->GetName());
 }
 
-void KitingManager::UpdateKiting(uint32 diff)
+void KitingManager::UpdateKiting(uint32 /*diff*/)
 {
     // No lock needed - kiting state is per-bot instance data
 
@@ -456,12 +456,12 @@ KitingResult KitingManager::ExecuteCircularKiting(const KitingContext& context)
     float angle = ::std::atan2(_bot->GetPositionY() - targetPos.GetPositionY(),
                            _bot->GetPositionX() - targetPos.GetPositionX());
 
-    angle += M_PI / 4;
+    angle += static_cast<float>(M_PI) / 4.0f;
     Position kitingPos = GetCircularKitingPosition(target, angle);
 
     if (!IsPositionSafe(kitingPos, context.threats))
     {
-        angle += M_PI / 2;
+        angle += static_cast<float>(M_PI) / 2.0f;
         kitingPos = GetCircularKitingPosition(target, angle);
     }
 
@@ -663,7 +663,7 @@ Position KitingManager::CalculateKitingPosition(Unit* target, KitingType type)
             {
                 float angle = ::std::atan2(botPos.GetPositionY() - targetPos.GetPositionY(),
                                        botPos.GetPositionX() - targetPos.GetPositionX());
-                return GetCircularKitingPosition(target, angle + M_PI/6);
+                return GetCircularKitingPosition(target, angle + static_cast<float>(M_PI) / 6.0f);
             }
 
         case KitingType::LINE_KITING:
@@ -868,7 +868,7 @@ void KitingManager::ExecuteCurrentPattern()
 
     for (uint32 i = 0; i < points; ++i)
     {
-        float angle = (2.0f * M_PI * i) / points;
+        float angle = (2.0f * static_cast<float>(M_PI) * i) / points;
         Position waypoint;
         waypoint.m_positionX = centerPos.GetPositionX() + radius * ::std::cos(angle);
         waypoint.m_positionY = centerPos.GetPositionY() + radius * ::std::sin(angle);
@@ -890,7 +890,7 @@ void KitingManager::ExecuteCurrentPattern()
 
     for (uint32 i = 0; i < points; ++i)
     {
-        float t = (2.0f * M_PI * i) / points;
+        float t = (2.0f * static_cast<float>(M_PI) * i) / points;
         float x = radius * ::std::sin(t);
         float y = radius * ::std::sin(t) * ::std::cos(t);
 

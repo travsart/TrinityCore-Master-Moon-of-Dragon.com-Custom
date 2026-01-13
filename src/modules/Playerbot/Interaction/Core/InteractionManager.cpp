@@ -579,7 +579,7 @@ namespace Playerbot
         return InteractionResult::NotAvailable;
     }
 
-    InteractionResult InteractionManager::UseFlight(Player* bot, Creature* flightMaster, uint32 destinationNode)
+    InteractionResult InteractionManager::UseFlight(Player* bot, Creature* flightMaster, uint32 /*destinationNode*/)
     {
         if (!bot || !flightMaster)
             return InteractionResult::InvalidTarget;
@@ -640,7 +640,7 @@ namespace Playerbot
         return InteractionResult::NotAvailable;
     }
 
-    InteractionResult InteractionManager::CheckMail(Player* bot, GameObject* mailbox, bool takeAll)
+    InteractionResult InteractionManager::CheckMail(Player* bot, GameObject* mailbox, bool /*takeAll*/)
     {
         if (!bot || !mailbox)
             return InteractionResult::InvalidTarget;
@@ -675,7 +675,7 @@ namespace Playerbot
         m_gossipHandler->ProcessGossipMenu(bot, menuId, target, context->type);
     }
 
-    void InteractionManager::SelectGossipOption(Player* bot, uint32 optionIndex, WorldObject* target)
+    void InteractionManager::SelectGossipOption(Player* bot, uint32 /*optionIndex*/, WorldObject* target)
     {
         if (!bot || !target)
             return;
@@ -855,7 +855,7 @@ namespace Playerbot
         return true;
     }
 
-    void InteractionManager::HandleVendorList(Player* bot, WorldPacket const& packet)
+    void InteractionManager::HandleVendorList(Player* bot, WorldPacket const& /*packet*/)
     {
         if (!bot)
             return;
@@ -869,7 +869,7 @@ namespace Playerbot
         // Access via: VendorInteractionManager::Instance()->HandleVendorList(bot, packet);
     }
 
-    void InteractionManager::HandleTrainerList(Player* bot, WorldPacket const& packet)
+    void InteractionManager::HandleTrainerList(Player* bot, WorldPacket const& /*packet*/)
     {
         if (!bot)
             return;
@@ -896,7 +896,7 @@ namespace Playerbot
         m_gossipHandler->HandleGossipPacket(bot, packet, context->type);
     }
 
-    InteractionResult InteractionManager::RouteToHandler(Player* bot, WorldObject* target, InteractionType type)
+    InteractionResult InteractionManager::RouteToHandler(Player* /*bot*/, WorldObject* /*target*/, InteractionType type)
     {
         // RouteToHandler serves as the routing layer for the InteractionManager facade.
         // Each interaction type is implemented in a dedicated Manager singleton class.
@@ -948,7 +948,7 @@ namespace Playerbot
         }
     }
 
-    bool InteractionManager::UpdateInteraction(Player* bot, InteractionContext& context, uint32 diff)
+    bool InteractionManager::UpdateInteraction(Player* bot, InteractionContext& context, uint32 /*diff*/)
     {
         // Check timeout
     if (CheckTimeout(context))

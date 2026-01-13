@@ -146,7 +146,7 @@ namespace Playerbot
         }
 
         // Fallback: simple random position
-        float angle = dist(gen) * 2 * M_PI;
+        float angle = dist(gen) * 2.0f * static_cast<float>(M_PI);
         float distance = dist(gen) * radius;
         result.m_positionX = center.GetPositionX() + distance * cos(angle);
         result.m_positionY = center.GetPositionY() + distance * sin(angle);
@@ -528,7 +528,7 @@ namespace Playerbot
         // Try multiple angles if direct opposite is blocked
     for (int i = 0; i < 8; ++i)
         {
-            float tryAngle = angle + (i % 2 == 0 ? i/2 * M_PI/4 : -i/2 * M_PI/4);
+            float tryAngle = angle + (i % 2 == 0 ? i/2 * static_cast<float>(M_PI)/4 : -i/2 * static_cast<float>(M_PI)/4);
             tryAngle = Position::NormalizeOrientation(tryAngle);
 
             if (GetPositionInDirection(map, position, tryAngle, avoidRadius, result))

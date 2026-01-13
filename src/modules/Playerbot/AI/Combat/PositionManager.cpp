@@ -362,15 +362,15 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
             {
                 Position currentPos = _bot->GetPosition();
                 float angle = PositionUtils::CalculateAngleBetween(targetPos, currentPos);
-                candidates = GenerateArcPositions(targetPos, context.preferredRange, angle - M_PI/3, angle + M_PI/3, 8);
+                candidates = GenerateArcPositions(targetPos, context.preferredRange, angle - static_cast<float>(M_PI) / 3.0f, angle + static_cast<float>(M_PI) / 3.0f, 8);
             }
             break;
 
         case PositionType::FLANKING:
             {
                 float targetAngle = context.target->GetOrientation();
-                float leftFlankAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI/2);
-                float rightFlankAngle = PositionUtils::NormalizeAngle(targetAngle - M_PI/2);
+                float leftFlankAngle = PositionUtils::NormalizeAngle(targetAngle + static_cast<float>(M_PI) / 2.0f);
+                float rightFlankAngle = PositionUtils::NormalizeAngle(targetAngle - static_cast<float>(M_PI) / 2.0f);
 
                 candidates.push_back(PositionUtils::CalculatePositionAtAngle(targetPos, 6.0f, leftFlankAngle));
                 candidates.push_back(PositionUtils::CalculatePositionAtAngle(targetPos, 6.0f, rightFlankAngle));
@@ -380,8 +380,8 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
         case PositionType::TANKING:
             {
                 float targetAngle = context.target->GetOrientation();
-                float frontAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI);
-                candidates = GenerateArcPositions(targetPos, 5.0f, frontAngle - M_PI/6, frontAngle + M_PI/6, 6);
+                float frontAngle = PositionUtils::NormalizeAngle(targetAngle + static_cast<float>(M_PI));
+                candidates = GenerateArcPositions(targetPos, 5.0f, frontAngle - static_cast<float>(M_PI) / 6.0f, frontAngle + static_cast<float>(M_PI) / 6.0f, 6);
             }
             break;
 
@@ -407,7 +407,7 @@ Position PositionManager::FindMeleePosition(Unit* target, bool preferBehind)
     float targetAngle = target->GetOrientation();
     if (preferBehind)
     {
-        float behindAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI);
+        float behindAngle = PositionUtils::NormalizeAngle(targetAngle + static_cast<float>(M_PI));
         return PositionUtils::CalculatePositionAtAngle(targetPos, 3.5f, behindAngle);
     }
     else
@@ -480,7 +480,7 @@ Position PositionManager::FindKitingPosition(Unit* threat, float minDistance)
     ::std::vector<Position> escapePositions;
     for (int i = -2; i <= 2; ++i)
     {
-        float angle = PositionUtils::NormalizeAngle(escapeAngle + (i * M_PI/6));
+        float angle = PositionUtils::NormalizeAngle(escapeAngle + (i * static_cast<float>(M_PI) / 6.0f));
         Position escapePos = PositionUtils::CalculatePositionAtAngle(threatPos, minDistance * 1.5f, angle);
         escapePositions.push_back(escapePos);
     }
@@ -596,7 +596,7 @@ Position PositionManager::FindHealerPosition(const std::vector<Player*>& groupMe
                 spatialGrid->QueryNearbyPlayers(_bot->GetPosition(), 40.0f);
 
             // Test different positions around the group center
-            for (float testAngle = 0; testAngle < 2 * M_PI; testAngle += static_cast<float>(M_PI / 4))
+            for (float testAngle = 0; testAngle < 2.0f * static_cast<float>(M_PI); testAngle += static_cast<float>(M_PI) / 4.0f)
             {
                 Position testPos = PositionUtils::CalculatePositionAtAngle(groupCenter, healerDistance, testAngle);
 
@@ -881,9 +881,9 @@ float PositionManager::CalculateAngleScore(const Position& pos, const MovementCo
         case PositionType::MELEE_COMBAT:
         case PositionType::FLANKING:
             {
-                float behindAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI);
+                float behindAngle = PositionUtils::NormalizeAngle(targetAngle + static_cast<float>(M_PI));
                 float angleDiff = ::std::abs(PositionUtils::NormalizeAngle(positionAngle - behindAngle));
-                if (angleDiff < M_PI/6)  // Within 30 degrees behind
+                if (angleDiff < static_cast<float>(M_PI) / 6.0f)  // Within 30 degrees behind
                     score += 30.0f;
             }
             break;
@@ -892,7 +892,7 @@ float PositionManager::CalculateAngleScore(const Position& pos, const MovementCo
             {
                 float frontAngle = targetAngle;
                 float angleDiff = ::std::abs(PositionUtils::NormalizeAngle(positionAngle - frontAngle));
-                if (angleDiff < M_PI/6)  // Within 30 degrees in front
+                if (angleDiff < static_cast<float>(M_PI) / 6.0f)  // Within 30 degrees in front
                     score += 30.0f;
             }
             break;
@@ -945,7 +945,7 @@ float PositionManager::GetOptimalGroupDistance(ThreatRole role)
 
     for (uint32 i = 0; i < count; ++i)
     {
-        float angle = (2.0f * M_PI * i) / count;
+        float angle = (2.0f * static_cast<float>(M_PI) * i) / count;
         Position pos = PositionUtils::CalculatePositionAtAngle(center, radius, angle);
         positions.push_back(pos);
     }
@@ -1121,10 +1121,10 @@ float PositionUtils::CalculateAngleBetween(const Position& from, const Position&
 
 float PositionUtils::NormalizeAngle(float angle)
 {
-    while (angle > M_PI)
-        angle -= 2.0f * M_PI;
-    while (angle < -M_PI)
-        angle += 2.0f * M_PI;
+    while (angle > static_cast<float>(M_PI))
+        angle -= 2.0f * static_cast<float>(M_PI);
+    while (angle < -static_cast<float>(M_PI))
+        angle += 2.0f * static_cast<float>(M_PI);
 
     return angle;
 }
@@ -1265,7 +1265,7 @@ Position PositionManager::FindRangePosition(Unit* target, float minRange, float 
 
     float angle = preferredAngle;
     if (preferredAngle == 0.0f)
-        angle = target->GetOrientation() + float(M_PI);
+        angle = target->GetOrientation() + static_cast<float>(M_PI);
 
     Position candidatePos;
     candidatePos.Relocate(
@@ -1279,7 +1279,7 @@ Position PositionManager::FindRangePosition(Unit* target, float minRange, float 
 
     for (int i = 1; i <= 8; ++i)
     {
-        float testAngle = angle + (i * float(M_PI) / 4.0f);
+        float testAngle = angle + (i * static_cast<float>(M_PI) / 4.0f);
         candidatePos.Relocate(
             targetPos.GetPositionX() + std::cos(testAngle) * preferredRange,
             targetPos.GetPositionY() + std::sin(testAngle) * preferredRange,
@@ -1464,13 +1464,13 @@ Position PositionManager::FindFormationPosition(const ::std::vector<Player*>& gr
         default: offset = 4.0f; break;
     }
 
-    uint32 myIndex = 0;
-    for (uint32 i = 0; i < groupMembers.size(); ++i)
+    size_t myIndex = 0;
+    for (size_t i = 0; i < groupMembers.size(); ++i)
     {
         if (groupMembers[i] == _bot) { myIndex = i; break; }
     }
 
-    float angle = (2.0f * float(M_PI) * myIndex) / static_cast<float>(validMembers);
+    float angle = (2.0f * static_cast<float>(M_PI) * static_cast<float>(myIndex)) / static_cast<float>(validMembers);
     Position formationPos;
     formationPos.Relocate(center.GetPositionX() + std::cos(angle) * offset,
                          center.GetPositionY() + std::sin(angle) * offset,
@@ -1524,7 +1524,7 @@ Position PositionManager::CalculateStrafePosition(Unit* target, bool strafeLeft)
     std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_mutex);
 
     float currentAngle = _bot->GetAbsoluteAngle(target);
-    float strafeAngle = strafeLeft ? (currentAngle + float(M_PI) / 4.0f) : (currentAngle - float(M_PI) / 4.0f);
+    float strafeAngle = strafeLeft ? (currentAngle + static_cast<float>(M_PI) / 4.0f) : (currentAngle - static_cast<float>(M_PI) / 4.0f);
     float distance = _bot->GetExactDist(target);
 
     Position strafePos;

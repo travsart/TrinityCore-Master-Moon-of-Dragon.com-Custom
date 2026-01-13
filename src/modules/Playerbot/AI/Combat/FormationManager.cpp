@@ -163,7 +163,7 @@ bool FormationManager::ChangeFormation(FormationType newFormation)
     return true;
 }
 
-void FormationManager::UpdateFormation(uint32 diff)
+void FormationManager::UpdateFormation(uint32 /*diff*/)
 {
     // No lock needed - all formation data is per-bot instance
     if (!_inFormation)
@@ -480,8 +480,8 @@ void FormationManager::TransitionToCombatFormation(const ::std::vector<Unit*>& e
         float offset = (static_cast<float>(i) - static_cast<float>(_members.size() - 1) * 0.5f) * _formationSpacing;
 
         Position pos;
-        pos.m_positionX = leaderPos.GetPositionX() + offset * ::std::cos(orientation + M_PI/2);
-        pos.m_positionY = leaderPos.GetPositionY() + offset * ::std::sin(orientation + M_PI/2);
+        pos.m_positionX = leaderPos.GetPositionX() + offset * ::std::cos(orientation + static_cast<float>(M_PI) / 2.0f);
+        pos.m_positionY = leaderPos.GetPositionY() + offset * ::std::sin(orientation + static_cast<float>(M_PI) / 2.0f);
         pos.m_positionZ = leaderPos.GetPositionZ();
 
         positions.push_back(pos);
@@ -523,7 +523,7 @@ void FormationManager::TransitionToCombatFormation(const ::std::vector<Unit*>& e
         float posInRow = i - (row * (row + 1.0f) / 2.0f);
         bool isLeft = (static_cast<int>(posInRow) % 2) == 1;
 
-        float angle = orientation + (isLeft ? -M_PI/6 : M_PI/6);
+        float angle = orientation + (isLeft ? -static_cast<float>(M_PI) / 6.0f : static_cast<float>(M_PI) / 6.0f);
         float distance = (row + 1.0f) * _formationSpacing;
 
         Position pos;
@@ -547,7 +547,7 @@ void FormationManager::TransitionToCombatFormation(const ::std::vector<Unit*>& e
     if (_members.size() > 1)
     {
         float radius = _formationSpacing;
-        float angleIncrement = 2.0f * M_PI / (_members.size() - 1);
+        float angleIncrement = 2.0f * static_cast<float>(M_PI) / (_members.size() - 1);
 
         for (size_t i = 1; i < _members.size(); ++i)
         {
@@ -601,22 +601,22 @@ Position FormationManager::CalculateRoleBasedPosition(FormationRole role, const 
 
         case FormationRole::MELEE_DPS:
             distance = _formationSpacing;
-            angle = orientation + M_PI/4;
+            angle = orientation + static_cast<float>(M_PI) / 4.0f;
             break;
 
         case FormationRole::RANGED_DPS:
             distance = _formationSpacing * 1.5f;
-            angle = orientation + M_PI;
+            angle = orientation + static_cast<float>(M_PI);
             break;
 
         case FormationRole::HEALER:
             distance = _formationSpacing * 1.2f;
-            angle = orientation + M_PI + M_PI/3;
+            angle = orientation + static_cast<float>(M_PI) + static_cast<float>(M_PI) / 3.0f;
             break;
 
         case FormationRole::SUPPORT:
             distance = _formationSpacing;
-            angle = orientation + M_PI/2;
+            angle = orientation + static_cast<float>(M_PI) / 2.0f;
             break;
 
         default:
@@ -980,7 +980,7 @@ std::vector<Position> FormationManager::CalculateDiamondFormation(const Position
         return positions;
 
     // Position 3: Left (West) - DPS position
-    float leftAngle = orientation - M_PI/2;
+    float leftAngle = orientation - static_cast<float>(M_PI) / 2.0f;
     Position leftPos;
     leftPos.m_positionX = leaderPos.GetPositionX() + spacing * std::sin(leftAngle);
     leftPos.m_positionY = leaderPos.GetPositionY() + spacing * std::cos(leftAngle);
@@ -991,7 +991,7 @@ std::vector<Position> FormationManager::CalculateDiamondFormation(const Position
         return positions;
 
     // Position 4: Right (East) - DPS position
-    float rightAngle = orientation + M_PI/2;
+    float rightAngle = orientation + static_cast<float>(M_PI) / 2.0f;
     Position rightPos;
     rightPos.m_positionX = leaderPos.GetPositionX() + spacing * std::sin(rightAngle);
     rightPos.m_positionY = leaderPos.GetPositionY() + spacing * std::cos(rightAngle);
@@ -1004,7 +1004,7 @@ std::vector<Position> FormationManager::CalculateDiamondFormation(const Position
 
     for (size_t i = 0; i < remainingMembers; ++i)
     {
-        float angle = orientation + (i / static_cast<float>(remainingMembers)) * 2.0f * M_PI;
+        float angle = orientation + (i / static_cast<float>(remainingMembers)) * 2.0f * static_cast<float>(M_PI);
 
         Position pos;
         pos.m_positionX = leaderPos.GetPositionX() + innerRadius * std::sin(angle);
@@ -1387,7 +1387,7 @@ void FormationManager::ActivateEmergencyScatter()
             continue;
 
         // Calculate angle based on member index to spread evenly
-        float angle = (2.0f * M_PI * i) / _members.size();
+        float angle = (2.0f * static_cast<float>(M_PI) * i) / _members.size();
         float x = leaderPos.GetPositionX() + scatterDistance * std::cos(angle);
         float y = leaderPos.GetPositionY() + scatterDistance * std::sin(angle);
         float z = leaderPos.GetPositionZ();

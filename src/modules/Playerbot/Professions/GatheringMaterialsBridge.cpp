@@ -92,7 +92,7 @@ void GatheringMaterialsBridge::Initialize()
     // Initialization complete - event subscriptions active
 }
 
-void GatheringMaterialsBridge::Update(uint32 diff)
+void GatheringMaterialsBridge::Update(uint32 /*diff*/)
 {
     if (!_bot || !_enabled)
         return;

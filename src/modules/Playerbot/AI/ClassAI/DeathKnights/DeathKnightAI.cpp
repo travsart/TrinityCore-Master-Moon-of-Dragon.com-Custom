@@ -329,7 +329,7 @@ public:
 
                 {
 
-                    float angle = target->GetOrientation() + M_PI; // Behind target
+                    float angle = target->GetOrientation() + static_cast<float>(M_PI); // Behind target
                     optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;
                     optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 3.0f;
                     optimalPos.m_positionZ = target->GetPositionZ();

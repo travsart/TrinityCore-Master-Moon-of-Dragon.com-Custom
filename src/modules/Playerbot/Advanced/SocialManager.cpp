@@ -35,7 +35,14 @@ namespace Playerbot
 {
 
 SocialManager::SocialManager(Player* bot, BotAI* ai)
-    : m_bot(bot)
+    : m_nextChatTime(0)
+    , m_minChatDelay(2000)
+    , m_maxChatDelay(10000)
+    , m_nextEmoteTime(0)
+    , m_emoteInterval(60000)
+    , m_guild(nullptr)
+    , m_lastGuildChatTime(0)
+    , m_bot(bot)
     , m_ai(ai)
     , m_enabled(true)
     , m_chatEnabled(false)
@@ -52,13 +59,6 @@ SocialManager::SocialManager(Player* bot, BotAI* ai)
     , m_lastChatUpdate(0)
     , m_lastEmoteUpdate(0)
     , m_lastReputationUpdate(0)
-    , m_nextChatTime(0)
-    , m_minChatDelay(2000)
-    , m_maxChatDelay(10000)
-    , m_nextEmoteTime(0)
-    , m_emoteInterval(60000)
-    , m_guild(nullptr)
-    , m_lastGuildChatTime(0)
     , m_updateCount(0)
     , m_cpuUsage(0.0f)
 {
@@ -296,7 +296,7 @@ void SocialManager::ProcessIncomingChat(Player* sender, ::std::string const& mes
         {
             if (!word.responses.empty())
             {
-                uint32 index = urand(0, word.responses.size() - 1);
+                uint32 index = urand(0, static_cast<uint32>(word.responses.size() - 1));
                 m_responseCooldowns[word.trigger] = GameTime::GetGameTimeMS() + word.cooldown;
                 return word.responses[index];
             }
@@ -354,7 +354,7 @@ void SocialManager::ProcessIncomingChat(Player* sender, ::std::string const& mes
 
     if (!genericResponses.empty())
     {
-        uint32 index = urand(0, genericResponses.size() - 1);
+        uint32 index = urand(0, static_cast<uint32>(genericResponses.size() - 1));
         return genericResponses[index];
     }
 
@@ -889,7 +889,7 @@ bool SocialManager::HasResponseTemplate(::std::string const& trigger) const
     {
         if (templ.trigger == trigger && !templ.responses.empty())
         {
-            uint32 index = urand(0, templ.responses.size() - 1);
+            uint32 index = urand(0, static_cast<uint32>(templ.responses.size() - 1));
             return templ.responses[index];
         }
     }
@@ -915,7 +915,7 @@ void SocialManager::GreetPlayer(Player* player)
         "Hey!"
     };
 
-    uint32 index = urand(0, greetings.size() - 1);
+    uint32 index = urand(0, static_cast<uint32>(greetings.size() - 1));
     SendChatMessage(ChatType::SAY, greetings[index]);
     PerformEmote(EmoteType::WAVE);
 
@@ -934,7 +934,7 @@ void SocialManager::FarewellPlayer(Player* player)
         "Take care!"
     };
 
-    uint32 index = urand(0, farewells.size() - 1);
+    uint32 index = urand(0, static_cast<uint32>(farewells.size() - 1));
     SendChatMessage(ChatType::SAY, farewells[index]);
     PerformEmote(EmoteType::WAVE);
 }
@@ -1033,7 +1033,7 @@ bool SocialManager::IsInChannel(::std::string const& channelName) const
 // PRIVATE HELPER METHODS
 // ============================================================================
 
-void SocialManager::ProcessChatQueue(uint32 diff)
+void SocialManager::ProcessChatQueue(uint32 /*diff*/)
 {
     // Chat queue processing for delayed responses
     // Framework in place for future enhancement
@@ -1100,7 +1100,7 @@ void SocialManager::ScheduleNextChat()
     m_nextChatTime = GameTime::GetGameTimeMS() + urand(m_minChatDelay, m_maxChatDelay);
 }
 
-void SocialManager::ProcessEmoteQueue(uint32 diff)
+void SocialManager::ProcessEmoteQueue(uint32 /*diff*/)
 {
     // Emote queue processing
     // Framework in place for future enhancement
@@ -1124,7 +1124,7 @@ SocialManager::EmoteType SocialManager::SelectRandomEmote() const
         EmoteType::APPLAUD
     };
 
-    uint32 index = urand(0, emotes.size() - 1);
+    uint32 index = urand(0, static_cast<uint32>(emotes.size() - 1));
     return emotes[index];
 }
 
@@ -1174,7 +1174,7 @@ void SocialManager::SaveReputations()
     // Framework in place for future database integration
 }
 
-void SocialManager::DecayReputations(uint32 diff)
+void SocialManager::DecayReputations(uint32 /*diff*/)
 {
     uint32 now = time(nullptr);
 
@@ -1204,7 +1204,7 @@ bool SocialManager::IsOnCooldown(::std::string const& trigger) const
     return false;
 }
 
-void SocialManager::UpdateCooldowns(uint32 diff)
+void SocialManager::UpdateCooldowns(uint32 /*diff*/)
 {
     uint32 now = GameTime::GetGameTimeMS();
 
@@ -1231,7 +1231,7 @@ void SocialManager::TrackChat(::std::string const& message)
         m_recentChats.erase(m_recentChats.begin());
 }
 
-void SocialManager::CleanupOldChats(uint32 diff)
+void SocialManager::CleanupOldChats(uint32 /*diff*/)
 {
     uint32 now = GameTime::GetGameTimeMS();
 
@@ -1264,12 +1264,12 @@ void SocialManager::RecordMessageReceived(ChatType type)
         m_stats.whispersReceived++;
 }
 
-void SocialManager::RecordEmote(EmoteType type)
+void SocialManager::RecordEmote(EmoteType /*type*/)
 {
     m_stats.emotesPerformed++;
 }
 
-void SocialManager::RecordFriendAdded(ObjectGuid playerGuid)
+void SocialManager::RecordFriendAdded(ObjectGuid /*playerGuid*/)
 {
     m_stats.friendsAdded++;
 }

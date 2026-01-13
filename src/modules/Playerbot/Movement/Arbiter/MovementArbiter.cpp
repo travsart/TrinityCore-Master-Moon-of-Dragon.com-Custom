@@ -211,7 +211,7 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
 // MovementArbiter - Update (World Thread Only)
 // ============================================================================
 
-void MovementArbiter::Update(uint32 diff)
+void MovementArbiter::Update(uint32 /*diff*/)
 {
     // Update deduplication cache (remove expired entries)
     if (_config.enableDeduplication)

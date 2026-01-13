@@ -760,7 +760,7 @@ protected:
         if (target)
         {
 
-            float angle = target->GetOrientation() + M_PI; // Behind target
+            float angle = target->GetOrientation() + static_cast<float>(M_PI); // Behind target
 
             float distance = 3.0f; // Close but not too close
 
@@ -863,7 +863,7 @@ protected:
      * Get position for kiting away from target     */
     Position GetKitePosition(::Unit* target) const
     {
-        float angle = this->GetBot()->GetRelativeAngle(target) + M_PI; // Away from target
+        float angle = this->GetBot()->GetRelativeAngle(target) + static_cast<float>(M_PI); // Away from target
 
         Position pos;
         pos.m_positionX = this->GetBot()->GetPositionX() + cos(angle) * _kiteDistance;
@@ -940,7 +940,7 @@ protected:
 
             float angleToGroup = target->GetAbsoluteAngle(&groupCenter);
 
-            float optimalAngle = angleToGroup + M_PI; // Opposite of group
+            float optimalAngle = angleToGroup + static_cast<float>(M_PI); // Opposite of group
 
 
             Position pos;
@@ -1189,7 +1189,7 @@ protected:
         {
             // Move away from enemies while staying near allies
 
-            float angleFromEnemies = allyCenter.GetRelativeAngle(&enemyCenter) + M_PI;
+            float angleFromEnemies = allyCenter.GetRelativeAngle(&enemyCenter) + static_cast<float>(M_PI);
 
             Position pos;
 

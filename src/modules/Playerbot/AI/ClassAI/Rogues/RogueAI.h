@@ -11,7 +11,6 @@
 #define ROGUE_AI_H
 
 #include "../ClassAI.h"
-// #include "EnergyManager.h"  // REMOVED - Legacy file deleted
 #include "Position.h"
 #include "Unit.h"
 #include "../Combat/BotThreatManager.h"
@@ -59,10 +58,10 @@ public:
         float angleToMe = target->GetAbsoluteAngle(_bot);
         float diff = ::std::abs(targetFacing - angleToMe);
 
-        if (diff > M_PI)
-            diff = 2 * M_PI - diff;
+        if (diff > static_cast<float>(M_PI))
+            diff = 2.0f * static_cast<float>(M_PI) - diff;
 
-        return diff < (M_PI / 3); // Within 60 degrees behind
+        return diff < (static_cast<float>(M_PI) / 3.0f); // Within 60 degrees behind
     }
 
     float GetOptimalRange(RogueSpec spec) const;

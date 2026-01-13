@@ -38,8 +38,6 @@
 #include "AI/BehaviorTree/BehaviorTree.h"
 #include "AI/BehaviorTree/BehaviorTreeFactory.h"
 #include "AI/HybridAIController.h"
-// TODO: Update test after GroupCoordinator consolidation (old AI/Coordination/GroupCoordinator removed)
-// #include "AI/Coordination/GroupCoordinator.h"
 #include "AI/Coordination/RaidOrchestrator.h"
 #include "AI/Coordination/ZoneOrchestrator.h"
 #include "AI/Blackboard/SharedBlackboard.h"

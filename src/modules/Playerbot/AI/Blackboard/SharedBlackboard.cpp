@@ -251,7 +251,7 @@ void BlackboardManager::ClearAll()
     TC_LOG_INFO("playerbot.blackboard", "Cleared all blackboards");
 }
 
-void BlackboardManager::PropagateToGroup(ObjectGuid botGuid, uint32 groupId, ::std::string const& key)
+void BlackboardManager::PropagateToGroup(ObjectGuid botGuid, uint32 groupId, ::std::string const& /*key*/)
 {
     SharedBlackboard* botBoard = GetBotBlackboard(botGuid);
     SharedBlackboard* groupBoard = GetGroupBlackboard(groupId);
@@ -261,18 +261,15 @@ void BlackboardManager::PropagateToGroup(ObjectGuid botGuid, uint32 groupId, ::s
 
     // Get all keys from bot blackboard and copy to group
     auto keys = botBoard->GetKeys();
-    for (auto const& k : keys)
+    for ([[maybe_unused]] auto const& k : keys)
     {
-        if (key.empty() || k == key)
-        {
-            // Would need template magic to copy any type
-            // For now, this is a placeholder
-            // In real implementation, would use type erasure or visitor pattern
-        }
+        // Would need template magic to copy any type
+        // For now, this is a placeholder
+        // In real implementation, would use type erasure or visitor pattern
     }
 }
 
-void BlackboardManager::PropagateToRaid(uint32 groupId, uint32 raidId, ::std::string const& key)
+void BlackboardManager::PropagateToRaid(uint32 groupId, uint32 raidId, ::std::string const& /*key*/)
 {
     SharedBlackboard* groupBoard = GetGroupBlackboard(groupId);
     SharedBlackboard* raidBoard = GetRaidBlackboard(raidId);
@@ -284,7 +281,7 @@ void BlackboardManager::PropagateToRaid(uint32 groupId, uint32 raidId, ::std::st
     raidBoard->MergeFrom(*groupBoard, false); // Don't overwrite existing raid data
 }
 
-void BlackboardManager::PropagateToZone(uint32 raidId, uint32 zoneId, ::std::string const& key)
+void BlackboardManager::PropagateToZone(uint32 raidId, uint32 zoneId, ::std::string const& /*key*/)
 {
     SharedBlackboard* raidBoard = GetRaidBlackboard(raidId);
     SharedBlackboard* zoneBoard = GetZoneBlackboard(zoneId);

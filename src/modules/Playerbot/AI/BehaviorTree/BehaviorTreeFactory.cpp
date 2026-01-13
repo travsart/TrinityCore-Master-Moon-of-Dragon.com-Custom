@@ -64,7 +64,7 @@ namespace Playerbot
 
     // Branch 1: Flee if critically wounded
     auto fleeCondition = ::std::make_shared<BTCondition>("CriticalHealth",
-        [](BotAI* ai, BTBlackboard& bb) {
+        [](BotAI* ai, BTBlackboard& /*bb*/) {
             if (!ai) return false;
             Player* bot = ai->GetBot();
             if (!bot) return false;
@@ -85,7 +85,7 @@ namespace Playerbot
     // Use defensive cooldowns if low health
     auto defensiveSelector = ::std::make_shared<BTSelector>("DefensiveCooldowns");
     defensiveSelector->AddChild(::std::make_shared<BTCondition>("HighHealth",
-        [](BotAI* ai, BTBlackboard& bb) {
+        [](BotAI* ai, BTBlackboard& /*bb*/) {
             if (!ai) return false;
             Player* bot = ai->GetBot();
             return bot && bot->GetHealthPct() > 50.0f;
@@ -200,14 +200,14 @@ namespace Playerbot
     // Flee if critically wounded
     auto fleeSequence = ::std::make_shared<BTSequence>("FleeIfCritical");
     fleeSequence->AddChild(::std::make_shared<BTCondition>("CriticalHealth",
-        [](BotAI* ai, BTBlackboard& bb) {
+        [](BotAI* ai, BTBlackboard& /*bb*/) {
             if (!ai) return false;
             Player* bot = ai->GetBot();
             return bot && bot->GetHealthPct() < 20.0f && bot->IsInCombat();
         }
     ));
     fleeSequence->AddChild(::std::make_shared<BTAction>("StartFleeing",
-        [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
+        [](BotAI* /*ai*/, BTBlackboard& bb) -> BTStatus {
             bb.Set<bool>("ShouldFlee", true);
             return BTStatus::SUCCESS;
         }
@@ -1029,7 +1029,6 @@ namespace Playerbot
             uint32 specId = spec ? spec->ID : 0;
             uint32 selectedHealSpell = 0;
             bool isCritical = targetHealthPct < 0.30f;
-            bool isUrgent = targetHealthPct < 0.50f;
 
             switch (playerClass)
             {
@@ -1171,7 +1170,7 @@ namespace Playerbot
             bool hasEnoughPower = true;
             for (SpellPowerCost const& cost : powerCosts)
             {
-                if (cost.Amount > 0 && bot->GetPower(cost.Power) < static_cast<uint32>(cost.Amount))
+                if (cost.Amount > 0 && bot->GetPower(cost.Power) < cost.Amount)
                 {
                     hasEnoughPower = false;
                     break;
@@ -1226,7 +1225,7 @@ namespace Playerbot
     auto selfHealSequence = ::std::make_shared<BTSequence>("SelfHeal");
     selfHealSequence->AddChild(::std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
     selfHealSequence->AddChild(::std::make_shared<BTAction>("HealSelf",
-        [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
+        [](BotAI* /*ai*/, BTBlackboard& /*bb*/) -> BTStatus {
             // DESIGN NOTE: Class-specific self-healing spell implementation required
             // When implementing per-class healing, add logic here for:
             // - Priests: Flash Heal, Renew, Desperate Prayer
@@ -1259,7 +1258,7 @@ namespace Playerbot
     // - Shamans: Chain Heal (1064), Healing Rain (73920), Healing Tide Totem (108280)
     // - Monks: Revival (115310), Essence Font (191837), Chi Burst (123986)
     aoeHealSequence->AddChild(::std::make_shared<BTAction>("CastAoEHeal",
-        [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
+        [](BotAI* /*ai*/, BTBlackboard& /*bb*/) -> BTStatus {
             // Safe no-op for generic tree - class-specific AI implements actual casting
             return BTStatus::SUCCESS;
         }
@@ -1325,7 +1324,7 @@ namespace Playerbot
 
     // Check too far from leader (>10 yards)
     root->AddChild(::std::make_shared<BTCondition>("TooFarFromLeader",
-        [](BotAI* ai, BTBlackboard& bb) {
+        [](BotAI* ai, BTBlackboard& /*bb*/) {
             if (!ai) return false;
 
             Player* bot = ai->GetBot();
@@ -1358,7 +1357,7 @@ namespace Playerbot
     // Melee positioning
     auto meleeSequence = ::std::make_shared<BTSequence>("MeleePositioning");
     meleeSequence->AddChild(::std::make_shared<BTCondition>("IsMeleeClass",
-        [](BotAI* ai, BTBlackboard& bb) {
+        [](BotAI* ai, BTBlackboard& /*bb*/) {
             if (!ai) return false;
             Player* bot = ai->GetBot();
             if (!bot) return false;
@@ -1422,7 +1421,7 @@ namespace Playerbot
     // Ranged positioning
     auto rangedSequence = ::std::make_shared<BTSequence>("RangedPositioning");
     rangedSequence->AddChild(::std::make_shared<BTCondition>("IsRangedClass",
-        [](BotAI* ai, BTBlackboard& bb) {
+        [](BotAI* ai, BTBlackboard& /*bb*/) {
             if (!ai) return false;
             Player* bot = ai->GetBot();
             if (!bot) return false;
@@ -1522,7 +1521,7 @@ namespace Playerbot
         ::std::make_shared<BTCheckInCombat>()
     ));
     canBuffSelector->AddChild(::std::make_shared<BTCondition>("EarlyCombat",
-        [](BotAI* ai, BTBlackboard& bb) {
+        [](BotAI* ai, BTBlackboard& bb) -> bool {
             if (!ai) return false;
             Player* bot = ai->GetBot();
             if (!bot || !bot->IsInCombat()) return false;
@@ -1682,7 +1681,7 @@ namespace Playerbot
 
     // Use consumable
     consumableSequence->AddChild(::std::make_shared<BTAction>("UseConsumable",
-        [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
+        [](BotAI* /*ai*/, BTBlackboard& /*bb*/) -> BTStatus {
             // DESIGN NOTE: Consumable item usage implementation required
             // When implementing consumable usage, add logic here to:
             // - Search bot's inventory for appropriate consumables (mana/health potions, food, drink)
@@ -1705,7 +1704,7 @@ namespace Playerbot
 
     // Avoid expensive spells
     conserveSequence->AddChild(::std::make_shared<BTAction>("AvoidExpensiveSpells",
-        [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
+        [](BotAI* /*ai*/, BTBlackboard& bb) -> BTStatus {
             bb.Set<bool>("ConserveMana", true);
             return BTStatus::SUCCESS;
         }

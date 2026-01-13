@@ -484,11 +484,11 @@ void PopulationLifecycleController::PrintDecisionHistory(uint32 maxDecisions) co
 
     TC_LOG_INFO("playerbot.lifecycle", "=== Recent Lifecycle Decisions ===");
 
-    uint32 count = std::min(maxDecisions, static_cast<uint32>(_decisionHistory.size()));
-    uint32 startIdx = _decisionHistory.size() > maxDecisions ?
-                     static_cast<uint32>(_decisionHistory.size()) - maxDecisions : 0;
+    size_t count = std::min(static_cast<size_t>(maxDecisions), _decisionHistory.size());
+    size_t startIdx = _decisionHistory.size() > static_cast<size_t>(maxDecisions) ?
+                     _decisionHistory.size() - static_cast<size_t>(maxDecisions) : 0;
 
-    for (uint32 i = startIdx; i < _decisionHistory.size(); ++i)
+    for (size_t i = startIdx; i < _decisionHistory.size(); ++i)
     {
         LifecycleDecision const& decision = _decisionHistory[i];
         const char* typeNames[] = {"SpawnBot", "RetireBot", "CancelRetirement",

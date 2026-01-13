@@ -270,7 +270,7 @@ Position CombatSpecializationBase::GetOptimalPosition(::Unit* target)
     if (_role == CombatRole::MELEE_DPS)
     {
         // Try to get behind target
-        angle = target->GetOrientation() + M_PI;
+        angle = target->GetOrientation() + static_cast<float>(M_PI);
         
     }
     else if (_role == CombatRole::TANK)

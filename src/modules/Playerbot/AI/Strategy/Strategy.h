@@ -63,7 +63,7 @@ public:
     // Strategy evaluation
     virtual float GetRelevance(BotAI* ai) const;
     virtual StrategyRelevance CalculateRelevance(BotAI* ai) const;
-    virtual bool IsActive(BotAI* ai) const { return _active; }
+    virtual bool IsActive(BotAI* /*ai*/) const { return _active; }
 
     // Action management
     void AddAction(::std::string const& name, ::std::shared_ptr<Action> action);
@@ -84,14 +84,14 @@ public:
     void SetPriority(uint32 priority) { _priority = priority; }
 
     // Activation control
-    virtual void OnActivate(BotAI* ai) {}
-    virtual void OnDeactivate(BotAI* ai) {}
+    virtual void OnActivate(BotAI* /*ai*/) {}
+    virtual void OnDeactivate(BotAI* /*ai*/) {}
     void SetActive(bool active) { _active = active; }
 
     // Update method for every-frame behavior updates
     // Called from BotAI::UpdateStrategies() every frame when strategy is active
     // No throttling - runs at full frame rate for smooth behavior
-    virtual void UpdateBehavior(BotAI* ai, uint32 diff) {}
+    virtual void UpdateBehavior(BotAI* /*ai*/, uint32 /*diff*/) {}
 
 protected:
     ::std::string _name;

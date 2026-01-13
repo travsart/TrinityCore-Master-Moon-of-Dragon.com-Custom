@@ -404,7 +404,7 @@ void CombatStateAnalyzer::UpdateThreatData()
     }
 }
 
-void CombatStateAnalyzer::UpdateBossTimers(uint32 diff)
+void CombatStateAnalyzer::UpdateBossTimers(uint32 /*diff*/)
 {
     // Update known mechanic cooldowns
     for (BossMechanic& mechanic : _knownMechanics)
@@ -915,8 +915,8 @@ Position CombatStateAnalyzer::GetSafePosition() const
 
                 // Move away from center
                 float angle = _bot->GetRelativeAngle(centerX, centerY);
-                float newX = _bot->GetPositionX() + cos(angle + M_PI) * 10.0f;
-                                float newY = _bot->GetPositionY() + sin(angle + M_PI) * 10.0f;
+                float newX = _bot->GetPositionX() + cos(angle + static_cast<float>(M_PI)) * 10.0f;
+                                float newY = _bot->GetPositionY() + sin(angle + static_cast<float>(M_PI)) * 10.0f;
                                                             pos.Relocate(newX, newY, _bot->GetPositionZ());
             }
         }

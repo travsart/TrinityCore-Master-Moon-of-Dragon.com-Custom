@@ -97,9 +97,9 @@ struct GroupFormationData
     {
         // Default formation positions
         rolePositions[GroupRole::TANK] = Position(0, 2, 0, 3.0f, 0);
-        rolePositions[GroupRole::HEALER] = Position(0, -8, 0, 10.0f, M_PI);
-        rolePositions[GroupRole::DPS] = Position(-3, -3, 0, 5.0f, M_PI * 0.75f);
-        rolePositions[GroupRole::SUPPORT] = Position(3, -3, 0, 5.0f, M_PI * 0.25f);
+        rolePositions[GroupRole::HEALER] = Position(0, -8, 0, 10.0f, static_cast<float>(M_PI));
+        rolePositions[GroupRole::DPS] = Position(-3, -3, 0, 5.0f, static_cast<float>(M_PI) * 0.75f);
+        rolePositions[GroupRole::SUPPORT] = Position(3, -3, 0, 5.0f, static_cast<float>(M_PI) * 0.25f);
     }
 };
 

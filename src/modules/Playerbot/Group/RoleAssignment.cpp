@@ -302,7 +302,7 @@ std::vector<GroupRole> RoleAssignment::GetMissingRoles(Group* group)
     return missingRoles;
 }
 
-bool RoleAssignment::CanPlayerSwitchRole( GroupRole newRole, Group* group)
+bool RoleAssignment::CanPlayerSwitchRole( GroupRole newRole, Group* /*group*/)
 {
     if (!_bot)
         return false;
@@ -1293,7 +1293,7 @@ bool RoleAssignment::ValidateRoleAssignment(Group* group)
     return IsCompositionViable(composition);
 }
 
-void RoleAssignment::NotifyRoleAssignment( GroupRole role, Group* group)
+void RoleAssignment::NotifyRoleAssignment( GroupRole role, Group* /*group*/)
 {
     if (!_bot)
         return;
@@ -1532,7 +1532,7 @@ void RoleAssignment::OptimizeForPvP(Group* group, uint32 battlegroundId)
     ExecutePvPStrategy(group);
 }
 
-void RoleAssignment::OptimizeForQuesting(Group* group, uint32 questId)
+void RoleAssignment::OptimizeForQuesting(Group* group, uint32 /*questId*/)
 {
     if (!group)
         return;

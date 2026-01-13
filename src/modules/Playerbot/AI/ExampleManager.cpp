@@ -98,7 +98,7 @@ namespace Playerbot
         LogDebug("Shutdown complete - processed {} tasks total", m_completedTasks.load());
     }
 
-    void ExampleManager::OnUpdate(uint32 elapsed)
+    void ExampleManager::OnUpdate(uint32 /*elapsed*/)
     {
         // Performance: This method aims to complete within 5-10ms
         uint32 updateStartTime = GameTime::GetGameTimeMS();

@@ -120,7 +120,7 @@ bool StartupSpawnOrchestrator::Initialize(SpawnPriorityQueue* priorityQueue, Ada
     return true;
 }
 
-void StartupSpawnOrchestrator::Update(uint32 diff)
+void StartupSpawnOrchestrator::Update(uint32 /*diff*/)
 {
     if (!_initialized || !_startupBegun)
         return;

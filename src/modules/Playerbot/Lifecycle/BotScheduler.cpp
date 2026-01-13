@@ -7,7 +7,9 @@
  * option) any later version.
  */
 
+#ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 
 #include "BotScheduler.h"
@@ -77,13 +79,12 @@ void BotScheduler::Shutdown()
     TC_LOG_INFO("module.playerbot.scheduler", "Bot Scheduler shutdown complete");
 }
 
-void BotScheduler::Update(uint32 diff)
+void BotScheduler::Update(uint32 /*diff*/)
 {
     if (!_config.enabled)
         return;
 
     auto currentTime = ::std::chrono::steady_clock::now();
-    auto deltaTime = ::std::chrono::duration_cast<::std::chrono::milliseconds>(currentTime - _lastUpdate);
     _lastUpdate = currentTime;
 
     // Process scheduled actions

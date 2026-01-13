@@ -869,7 +869,7 @@ void BotAI::UpdateStrategies(uint32 diff)
 // MOVEMENT UPDATES - Strategy-controlled movement
 // ============================================================================
 
-void BotAI::UpdateMovement(uint32 diff)
+void BotAI::UpdateMovement(uint32 /*diff*/)
 {
     // CRITICAL: Movement is controlled by strategies (especially follow)
     // This method just ensures movement commands are processed
@@ -1945,33 +1945,6 @@ void BotAI::UpdateValues(uint32 diff)
     // Update cached values used by triggers and actions
     // This includes distances, health percentages, resource levels, etc.
 }
-
-// ============================================================================
-// LEGACY UPDATEMANAGERS - Now handled by GameSystemsManager facade
-// ============================================================================
-// This function is deprecated and kept only for reference.
-// All functionality moved to GameSystemsManager::UpdateManagers()
-//
-// Phase 6 Migration:
-// - All manager updates → GameSystemsManager::UpdateManagers()
-// - All timers → GameSystemsManager member variables
-// - EventDispatcher processing → GameSystemsManager::UpdateManagers()
-// - ManagerRegistry updates → GameSystemsManager::UpdateManagers()
-
-void BotAI::UpdateManagers(uint32 diff)
-{
-    // DEPRECATED: This function is no longer used.
-    // All manager updates are now handled by:
-    //   _gameSystems->Update(diff)
-    //
-    // See GameSystemsManager::UpdateManagers() for the actual implementation.
-    TC_LOG_WARN("module.playerbot", "BotAI::UpdateManagers called but deprecated - using facade instead");
-}
-
-// ============================================================================
-// UNIFIED MOVEMENT COORDINATOR INTEGRATION - Convenience Methods
-// ============================================================================
-// Phase 2 Migration: Migrated from MovementArbiter to UnifiedMovementCoordinator
 
 // ============================================================================
 // UNIFIED MOVEMENT COORDINATOR DELEGATION - Phase 6 Facade Pattern

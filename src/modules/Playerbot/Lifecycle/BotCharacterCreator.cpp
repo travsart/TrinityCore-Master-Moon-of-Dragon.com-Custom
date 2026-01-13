@@ -127,9 +127,9 @@ bool BotCharacterCreator::CanCreateCharacter(uint32 accountId, uint32& currentCo
     const auto& prefixes = (gender == GENDER_FEMALE) ? femalePrefixes : malePrefixes;
     const auto& suffixes = (gender == GENDER_FEMALE) ? femaleSuffixes : maleSuffixes;
 
-    ::std::uniform_int_distribution<> prefixDist(0, prefixes.size() - 1);
-    ::std::uniform_int_distribution<> suffixDist(0, suffixes.size() - 1);
-    ::std::uniform_int_distribution<> uniqueDist(0, uniqueSuffixes.size() - 1);
+    ::std::uniform_int_distribution<size_t> prefixDist(0, prefixes.size() - 1);
+    ::std::uniform_int_distribution<size_t> suffixDist(0, suffixes.size() - 1);
+    ::std::uniform_int_distribution<size_t> uniqueDist(0, uniqueSuffixes.size() - 1);
 
     ::std::string name;
     name.reserve(12); // Max WoW name length

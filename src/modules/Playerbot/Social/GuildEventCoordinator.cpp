@@ -1637,7 +1637,7 @@ uint32 GuildEventCoordinator::FindOptimalEventTime(uint32 guildId, GuildEventTyp
         // Pick a random popular time slot
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, scheduler.popularTimes.size() - 1);
+        std::uniform_int_distribution<size_t> dis(0, scheduler.popularTimes.size() - 1);
         auto& timeSlot = scheduler.popularTimes[dis(gen)];
 
         // Adjust to next occurrence of this time
@@ -1857,7 +1857,7 @@ void GuildEventCoordinator::CoordinateSocialEvent(Player* leader, uint32 eventId
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, activities.size() - 1);
+    std::uniform_int_distribution<size_t> dis(0, activities.size() - 1);
 
     BroadcastEventUpdates(eventId, "Today's activity: " + activities[dis(gen)]);
 }

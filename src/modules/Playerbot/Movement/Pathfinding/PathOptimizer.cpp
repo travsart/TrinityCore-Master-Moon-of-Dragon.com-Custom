@@ -21,7 +21,7 @@ namespace Playerbot
           _maxPathLength(200.0f),
           _minWaypointDistance(2.0f),
           _maxWaypointDistance(20.0f),
-          _cornerCutThreshold(15.0f * M_PI / 180.0f), // 15 degrees
+          _cornerCutThreshold(15.0f * static_cast<float>(M_PI) / 180.0f), // 15 degrees
           _smoothingIterations(3),
           _totalPathsOptimized(0),
           _totalPointsRemoved(0),
@@ -217,7 +217,7 @@ namespace Playerbot
             float angleDiff = ::std::abs(Position::NormalizeOrientation(angle2 - angle1));
 
             // Check if this is a sharp corner worth cutting
-    if (angleDiff > _cornerCutThreshold && angleDiff < M_PI - _cornerCutThreshold)
+    if (angleDiff > _cornerCutThreshold && angleDiff < static_cast<float>(M_PI) - _cornerCutThreshold)
             {
                 // Calculate cut position
                 float cutFactor = 0.3f; // Cut 30% into the corner
@@ -267,7 +267,7 @@ namespace Playerbot
         case MovementGeneratorType::MOVEMENT_CHASE:
             // For chasing, prioritize direct paths
             _optimizationLevel = OPTIMIZATION_AGGRESSIVE;
-            _cornerCutThreshold = 30.0f * M_PI / 180.0f; // More aggressive corner cutting
+            _cornerCutThreshold = 30.0f * static_cast<float>(M_PI) / 180.0f; // More aggressive corner cutting
             break;
 
         case MovementGeneratorType::MOVEMENT_FLEE:
@@ -283,7 +283,7 @@ namespace Playerbot
         case MovementGeneratorType::MOVEMENT_FORMATION:
             // For formation, maintain predictable paths
             _optimizationLevel = OPTIMIZATION_BASIC;
-            _cornerCutThreshold = 10.0f * M_PI / 180.0f; // Less aggressive
+            _cornerCutThreshold = 10.0f * static_cast<float>(M_PI) / 180.0f; // Less aggressive
             break;
 
         default:

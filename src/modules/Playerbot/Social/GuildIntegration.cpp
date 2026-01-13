@@ -250,7 +250,7 @@ void GuildIntegration::ShareGuildInformation( const std::string& topic)
     {
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, infoMessages.size() - 1);
+        std::uniform_int_distribution<size_t> dis(0, infoMessages.size() - 1);
 
         SendGuildChatMessage(infoMessages[dis(gen)]);
     }
@@ -754,7 +754,7 @@ std::string GuildIntegration::GenerateConversationStarter()
     {
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, starters.size() - 1);
+        std::uniform_int_distribution<size_t> dis(0, starters.size() - 1);
         return starters[dis(gen)];
     }
 
@@ -981,7 +981,7 @@ std::string GuildIntegration::SelectResponseTemplate(const std::string& category
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, it->second.size() - 1);
+    std::uniform_int_distribution<size_t> dis(0, it->second.size() - 1);
 
     return it->second[dis(gen)];
 }
@@ -1246,7 +1246,7 @@ void GuildIntegration::OfferGuildAssistance( const std::string& assistance)
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, helpMessages.size() - 1);
+    std::uniform_int_distribution<size_t> dis(0, helpMessages.size() - 1);
 
     SendGuildChatMessage( helpMessages[dis(gen)]);
 }
@@ -1306,7 +1306,7 @@ void GuildIntegration::UpdateGuildMetrics(GuildActivityType activity, bool wasSu
     _globalMetrics.lastUpdate = std::chrono::steady_clock::now();
 }
 
-void GuildIntegration::Update(uint32 diff)
+void GuildIntegration::Update(uint32 /*diff*/)
 {
     static uint32 lastUpdate = 0;
     uint32 currentTime = GameTime::GetGameTimeMS();
@@ -1357,7 +1357,7 @@ void GuildIntegration::CleanupGuildData()
     // Clean up old participation data for inactive players
     for (auto it = _playerParticipation.begin(); it != _playerParticipation.end();)
     {
-        if (currentTime - it->second.lastActivity > 30 * 86400000) // 30 days
+        if (currentTime - it->second.lastActivity > 30U * 86400000U) // 30 days
         {
             it = _playerParticipation.erase(it);
         }
@@ -1447,7 +1447,7 @@ void GuildIntegration::OrganizePvPEvents()
     TC_LOG_DEBUG("playerbot.guild", "GuildIntegration::OrganizePvPEvents called");
 }
 
-void GuildIntegration::AnalyzeGuildDynamics(Guild* guild)
+void GuildIntegration::AnalyzeGuildDynamics(Guild* /*guild*/)
 {
     // Analyze guild dynamics
     TC_LOG_DEBUG("playerbot.guild", "GuildIntegration::AnalyzeGuildDynamics called");
@@ -1459,7 +1459,7 @@ void GuildIntegration::AdaptToGuildCulture()
     TC_LOG_DEBUG("playerbot.guild", "GuildIntegration::AdaptToGuildCulture called");
 }
 
-void GuildIntegration::DetectGuildMoodAndTone(Guild* guild)
+void GuildIntegration::DetectGuildMoodAndTone(Guild* /*guild*/)
 {
     // Detect guild mood and tone
     TC_LOG_DEBUG("playerbot.guild", "GuildIntegration::DetectGuildMoodAndTone called");

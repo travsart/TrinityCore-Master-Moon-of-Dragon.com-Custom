@@ -180,7 +180,7 @@ public:
      * - Throttle updates (causes following issues)
      * - Call base UpdateAI (would cause recursion)
      */
-    virtual void OnCombatUpdate(uint32 diff) {}
+    virtual void OnCombatUpdate(uint32 /*diff*/) {}
 
     /**
      * Virtual method for class-specific NON-COMBAT updates
@@ -197,7 +197,7 @@ public:
      * - Throttle updates (causes following issues)
      * - Call base UpdateAI (would cause recursion)
      */
-    virtual void OnNonCombatUpdate(uint32 diff) {}
+    virtual void OnNonCombatUpdate(uint32 /*diff*/) {}
 
     // ========================================================================
     // STATE TRANSITIONS - Clean lifecycle management
@@ -836,11 +836,6 @@ protected:
      * Update internal values and caches
      */
     void UpdateValues(uint32 diff);
-
-    /**
-     * Update all BehaviorManager-based managers
-     */
-    void UpdateManagers(uint32 diff);
 
     // ========================================================================
     // HELPER METHODS - Utilities for derived classes

@@ -63,7 +63,6 @@
 #include "Chat/BotChatCommandHandler.h"  // PHASE 4: Command processing
 #include "Session/BotSession.h"          // PHASE 4: BotSession for command context
 #include "Session/BotPriorityManager.h"  // CRITICAL: Immediate priority escalation on combat
-// #include "Scripting/BotResurrectionScript.h"  // DEPRECATED: Script disabled - bypassed graveyard teleport
 
 using namespace Playerbot::Events;
 using namespace Playerbot::StateMachine;

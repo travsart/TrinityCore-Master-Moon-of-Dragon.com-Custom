@@ -839,7 +839,7 @@ bool GrindStrategy::WanderToNewArea(BotAI* ai)
     Player* bot = ai->GetBot();
 
     // Generate random position within wander distance
-    float angle = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;
+    float angle = static_cast<float>(rand()) / RAND_MAX * 2.0f * static_cast<float>(M_PI);
     float distance = WANDER_DISTANCE * 0.5f + (static_cast<float>(rand()) / RAND_MAX * WANDER_DISTANCE * 0.5f);
 
     float x = bot->GetPositionX() + distance * std::cos(angle);

@@ -870,7 +870,7 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveState const& objecti
     // Generate random offset within 15-yard radius
     // Use bot GUID as seed for deterministic but unique positioning per bot
     uint32 botSeed = bot->GetGUID().GetCounter();
-    float randomAngle = (botSeed % 360) * (M_PI / 180.0f); // Convert bot GUID to angle
+    float randomAngle = (botSeed % 360) * (static_cast<float>(M_PI) / 180.0f); // Convert bot GUID to angle
     float randomDistance = 5.0f + ((botSeed % 1000) / 1000.0f) * 10.0f; // 5-15 yards
 
     randomizedPos.Relocate(
@@ -880,7 +880,7 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveState const& objecti
     );
 
     TC_LOG_ERROR("module.playerbot.quest", "🎲 NavigateToObjective: Bot {} - Randomized position offset: angle={:.1f}°, distance={:.1f}yd → ({:.1f}, {:.1f}, {:.1f})",
-                 bot->GetName(), randomAngle * (180.0f / M_PI), randomDistance,
+                 bot->GetName(), randomAngle * (180.0f / static_cast<float>(M_PI)), randomDistance,
                  randomizedPos.GetPositionX(), randomizedPos.GetPositionY(), randomizedPos.GetPositionZ());
 
     // Move to randomized objective location

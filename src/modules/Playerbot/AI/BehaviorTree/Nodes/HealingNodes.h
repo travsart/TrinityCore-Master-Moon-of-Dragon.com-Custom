@@ -560,7 +560,7 @@ public:
         : BTLeaf("CastAoEHeal"), _spellId(spellId), _castStartTime(0)
     {}
 
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
+    BTStatus Tick(BotAI* ai, BTBlackboard& /*blackboard*/) override
     {
         if (!ai)
         {
@@ -697,7 +697,7 @@ class TC_GAME_API BTCheckIsHealer : public BTCondition
 public:
     BTCheckIsHealer()
         : BTCondition("CheckIsHealer",
-            [](BotAI* ai, BTBlackboard& blackboard) -> bool
+            [](BotAI* ai, BTBlackboard& /*blackboard*/) -> bool
             {
                 if (!ai)
                     return false;

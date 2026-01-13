@@ -37,7 +37,7 @@ ThreatCoordinator::ThreatCoordinator(Group* group)
     TC_LOG_DEBUG("playerbots", "ThreatCoordinator: Initialized for group");
 }
 
-void ThreatCoordinator::Update(uint32 diff)
+void ThreatCoordinator::Update(uint32 /*diff*/)
 {
     auto startTime = ::std::chrono::high_resolution_clock::now();
 
@@ -328,7 +328,7 @@ bool ThreatCoordinator::ExecuteTaunt(ObjectGuid tankGuid, Unit* target)
     return false;
 }
 
-bool ThreatCoordinator::ExecuteThreatReduction(ObjectGuid botGuid, float reductionPercent)
+bool ThreatCoordinator::ExecuteThreatReduction(ObjectGuid botGuid, float /*reductionPercent*/)
 {
     auto it = _botAssignments.find(botGuid);
     if (it == _botAssignments.end())
@@ -925,7 +925,7 @@ void ThreatCoordinator::CleanupExpiredResponses()
     );
 }
 
-float ThreatCoordinator::CalculateOptimalThreatPercent(ObjectGuid botGuid, ThreatRole role) const
+float ThreatCoordinator::CalculateOptimalThreatPercent(ObjectGuid /*botGuid*/, ThreatRole role) const
 {
     switch (role)
     {
@@ -961,7 +961,7 @@ bool ThreatCoordinator::ShouldUseThreatAbility(BotThreatAssignment const& assign
     return false;
 }
 
-void ThreatCoordinator::TrackPerformance(::std::chrono::microseconds duration, ::std::string const& operation)
+void ThreatCoordinator::TrackPerformance(::std::chrono::microseconds duration, ::std::string const& /*operation*/)
 {
     _metrics.maxUpdateTime = ::std::max(_metrics.maxUpdateTime, duration);
 

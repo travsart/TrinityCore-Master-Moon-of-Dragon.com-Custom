@@ -192,7 +192,7 @@ public:
 
     // Allow adapter access to constructor
     friend class ::std::unique_ptr<BotSpawner>;
-    friend class ::std::default_delete<BotSpawner>;
+    friend struct ::std::default_delete<BotSpawner>;
 
 private:
     BotSpawner();  // Explicit constructor for debugging

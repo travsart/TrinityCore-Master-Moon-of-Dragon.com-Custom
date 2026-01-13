@@ -241,7 +241,7 @@ public:
      * @param target Combat target
      * @return Preferred combat range
      */
-    virtual float GetOptimalRange(::Unit* target)
+    virtual float GetOptimalRange(::Unit* /*target*/)
     {
         // Default implementation for base ClassAI
         // Melee classes (Warrior, Rogue, DK, etc.) use 5.0f

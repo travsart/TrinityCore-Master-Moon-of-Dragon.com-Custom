@@ -524,7 +524,7 @@ Position LeaderFollowBehavior::CalculateFormationPosition(Player* leader, uint32
         return Position();
 
     float baseAngle = leader->GetOrientation();
-    float angleStep = (2.0f * M_PI) / totalMembers;
+    float angleStep = (2.0f * static_cast<float>(M_PI)) / totalMembers;
     float memberAngle = baseAngle + (angleStep * memberIndex);
 
     // Normalize angle
@@ -919,7 +919,7 @@ Position LeaderFollowBehavior::FindAlternativePosition(Player* bot, const Positi
     float baseDistance = 5.0f;
     for (int i = 0; i < 8; ++i)
     {
-        float angle = (M_PI * 2.0f * i) / 8.0f;
+        float angle = (static_cast<float>(M_PI) * 2.0f * i) / 8.0f;
         Position testPos;
         testPos.m_positionX = targetPos.GetPositionX() + cos(angle) * baseDistance;
         testPos.m_positionY = targetPos.GetPositionY() + sin(angle) * baseDistance;
@@ -1001,7 +1001,7 @@ void LeaderFollowBehavior::OptimizePath(::std::vector<Position>& path)
                                  path[i+1].GetPositionX() - path[i].GetPositionX());
 
         float angleDiff = ::std::abs(angle1 - angle2);
-        if (angleDiff > M_PI / 6) // 30 degree threshold
+        if (angleDiff > static_cast<float>(M_PI) / 6.0f) // 30 degree threshold
         {
             optimized.push_back(path[i]);
         }
@@ -1065,7 +1065,7 @@ Position LeaderFollowBehavior::CalculateCombatPosition(Player* bot, Player* lead
         case FormationRole::MELEE_DPS:
             // Behind or to the side of target
             {
-                float angle = target->GetOrientation() + M_PI;
+                float angle = target->GetOrientation() + static_cast<float>(M_PI);
                 combatPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;
                 combatPos.m_positionY = target->GetPositionY() + sin(angle) * 3.0f;
                 combatPos.m_positionZ = target->GetPositionZ();  // Will be corrected below
@@ -1172,25 +1172,25 @@ FollowFormationPosition LeaderFollowBehavior::GetFormationPosition(FormationRole
             break;
 
         case FormationRole::MELEE_DPS:
-            pos.angle = M_PI / 4;    // 45 degrees
+            pos.angle = static_cast<float>(M_PI) / 4.0f;    // 45 degrees
             pos.distance = 7.0f;
             pos.maintainOrientation = false;
             break;
 
         case FormationRole::RANGED_DPS:
-            pos.angle = M_PI / 2;    // 90 degrees
+            pos.angle = static_cast<float>(M_PI) / 2.0f;    // 90 degrees
             pos.distance = 15.0f;
             pos.maintainOrientation = false;
             break;
 
         case FormationRole::HEALER:
-            pos.angle = M_PI;        // Behind
+            pos.angle = static_cast<float>(M_PI);        // Behind
             pos.distance = 20.0f;
             pos.maintainOrientation = true;
             break;
 
         default:
-            pos.angle = M_PI * 3 / 4; // 135 degrees
+            pos.angle = static_cast<float>(M_PI) * 3.0f / 4.0f; // 135 degrees
             pos.distance = 10.0f;
             pos.maintainOrientation = false;
             break;
@@ -1247,13 +1247,13 @@ float LeaderFollowBehavior::GetRoleBasedAngle(FormationRole role)
         case FormationRole::TANK:
             return 0;
         case FormationRole::MELEE_DPS:
-            return M_PI / 6;  // 30 degrees
+            return static_cast<float>(M_PI) / 6.0f;  // 30 degrees
         case FormationRole::RANGED_DPS:
-            return M_PI / 3;  // 60 degrees
+            return static_cast<float>(M_PI) / 3.0f;  // 60 degrees
         case FormationRole::HEALER:
-            return M_PI;      // 180 degrees
+            return static_cast<float>(M_PI);      // 180 degrees
         default:
-            return M_PI / 2;  // 90 degrees
+            return static_cast<float>(M_PI) / 2.0f;  // 90 degrees
     }
 }
 
@@ -1276,10 +1276,10 @@ float LeaderFollowBehavior::GetRoleBasedDistance(FormationRole role) const
 
 float LeaderFollowBehavior::NormalizeAngle(float angle)
 {
-    while (angle > 2 * M_PI)
-        angle -= 2 * M_PI;
+    while (angle > 2.0f * static_cast<float>(M_PI))
+        angle -= 2.0f * static_cast<float>(M_PI);
     while (angle < 0)
-        angle += 2 * M_PI;
+        angle += 2.0f * static_cast<float>(M_PI);
     return angle;
 }
 bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destination)
@@ -1308,7 +1308,7 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
         float followDist = _config.minDistance;
 
         // Calculate angle based on formation role to spread bots around leader
-        float followAngle = (_groupPosition * M_PI / 4.0f); // Spread around leader in formation
+        float followAngle = (_groupPosition * static_cast<float>(M_PI) / 4.0f); // Spread around leader in formation
 
         // CRITICAL FIX: Only issue MoveFollow if NOT already following
         // Re-issuing every frame causes speed-up and blinking issues

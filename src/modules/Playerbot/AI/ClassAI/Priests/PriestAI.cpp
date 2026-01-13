@@ -247,7 +247,7 @@ Position PriestAI::GetOptimalPosition(::Unit* target)
     float angle = GetBot()->GetAbsoluteAngle(target);
 
     // Position behind and to the side for safety
-    angle += M_PI / 4; // 45 degrees offset
+    angle += static_cast<float>(M_PI) / 4.0f; // 45 degrees offset
 
     float x = target->GetPositionX() - optimalRange * ::std::cos(angle);
     float y = target->GetPositionY() - optimalRange * ::std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);

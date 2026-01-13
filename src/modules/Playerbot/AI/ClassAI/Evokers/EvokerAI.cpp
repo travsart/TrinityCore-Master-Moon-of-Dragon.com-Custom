@@ -518,7 +518,7 @@ Position EvokerAI::GetOptimalPosition(::Unit* target)
     if (distance > optimalRange || distance < optimalRange * 0.8f)
     {
         pos = target->GetPosition();
-        pos.m_positionX += optimalRange * cos(target->GetOrientation() + M_PI);        pos.m_positionY += optimalRange * sin(target->GetOrientation() + M_PI);    }
+        pos.m_positionX += optimalRange * cos(target->GetOrientation() + static_cast<float>(M_PI));        pos.m_positionY += optimalRange * sin(target->GetOrientation() + static_cast<float>(M_PI));    }
 
     return pos;
 }

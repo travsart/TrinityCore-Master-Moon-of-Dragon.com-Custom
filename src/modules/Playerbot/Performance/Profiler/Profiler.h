@@ -130,11 +130,16 @@ public:
 };
 
 // Convenience macro for profiling
+// Only define if not already defined by another profiler header
+#ifndef PROFILE_SCOPE
 #define PROFILE_SCOPE(name) \
     Playerbot::Performance::Profiler::ScopedTimer _prof_##__LINE__(name)
+#endif
 
+#ifndef PROFILE_FUNCTION
 #define PROFILE_FUNCTION() \
     PROFILE_SCOPE(__FUNCTION__)
+#endif
 
 } // namespace Performance
 } // namespace Playerbot

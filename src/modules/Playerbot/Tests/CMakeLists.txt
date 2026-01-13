@@ -51,7 +51,8 @@ if(BUILD_PLAYERBOT_TESTS)
 
         # Phase 4: Unified Interrupt System Tests (Phase 4B Integration)
         # 32 comprehensive tests for interrupt coordination and rotation system
-        # UnifiedInterruptSystemTest.cpp  # TODO Phase 4D: Re-enable after completing UnifiedInterruptSystem
+        # 5 tests enabled, 27 disabled (awaiting mock setup)
+        UnifiedInterruptSystemTest.cpp
     )
 
     # Create test executable

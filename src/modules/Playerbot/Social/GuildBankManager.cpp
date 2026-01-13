@@ -207,20 +207,25 @@ bool GuildBankManager::CanAccessGuildBank(uint32 tabId)
     if (tabId >= GUILD_BANK_MAX_TABS)
         return false;
 
-    // Cannot access private GetMember
-    if (false)
+    // Verify bot is a guild member using public API
+    if (!guild->IsMember(_bot->GetGUID()))
+    {
+        TC_LOG_DEBUG("playerbot", "GuildBankManager: Bot {} is not a member of guild {}",
+            _bot->GetName(), guild->GetName());
         return false;
+    }
 
-    // Full implementation for guild bank access validation
-    // Verifies member rank permissions and withdrawal limits
-    // Current behavior: Always returns true (permits all access)
-    // Full implementation should:
-    // - Query Guild::GetMember() for player's rank permissions
-    // - Check tab-specific deposit/withdraw rights via Guild::GetBankRights()
-    // - Validate daily withdrawal limits haven't been exceeded
-    // - Verify player is online and in guild
-    // - Check if tab is purchased and available
-    // Reference: Guild::GetBankRights(), Guild::GetMemberSlotWithdrawRem()
+    // Guild master always has full access
+    if (guild->GetLeaderGUID() == _bot->GetGUID())
+        return true;
+
+    // For regular members, verify membership and allow access
+    // Actual permission checks are handled by Guild::SwapItems/SwapItemsWithInventory
+    // which will fail gracefully if the member lacks permissions for this tab
+    // Note: Guild::_MemberHasTabRights is private, so we defer to the Guild's internal checks
+    TC_LOG_DEBUG("playerbot", "GuildBankManager: Bot {} granted access to guild bank tab {} (member verified)",
+        _bot->GetName(), tabId);
+
     return true;
 }
 

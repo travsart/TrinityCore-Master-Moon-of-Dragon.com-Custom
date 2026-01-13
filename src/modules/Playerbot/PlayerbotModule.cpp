@@ -26,7 +26,6 @@
 #include "Lifecycle/Demand/PlayerActivityTracker.h"
 #include "Lifecycle/Demand/DemandCalculator.h"
 #include "Lifecycle/PopulationLifecycleController.h"
-// #include "Lifecycle/BotLifecycleMgr.h"
 
 // Instance Bot Pool System (Hybrid Warm Pool + Elastic Overflow)
 #include "Lifecycle/Instance/InstanceBotPool.h"

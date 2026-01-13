@@ -70,7 +70,7 @@ void FarmingCoordinator::Initialize()
     // Logging deferred to first Update() call when bot is fully in world.
 }
 
-void FarmingCoordinator::Update(::Player* player, uint32 diff)
+void FarmingCoordinator::Update(::Player* /*player*/, uint32 diff)
 {
     if (!_bot || !_enabled)
         return;
@@ -318,7 +318,7 @@ bool FarmingCoordinator::HasActiveFarmingSession() const
     return _activeSession.isActive;
 }
 
-void FarmingCoordinator::UpdateFarmingSession(uint32 diff)
+void FarmingCoordinator::UpdateFarmingSession(uint32 /*diff*/)
 {
     if (!_bot || !_activeSession.isActive)
         return;

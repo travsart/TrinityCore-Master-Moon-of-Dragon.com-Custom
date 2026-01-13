@@ -150,13 +150,13 @@ BotAIFactory* BotAIFactory::instance()
     }
 }
 
-::std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId, uint8 spec)
+::std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId, uint8 /*spec*/)
 {
     // For now, create based on class and let the class AI handle specialization internally
     return CreateClassAI(bot, classId);
 }
 
-::std::unique_ptr<BotAI> BotAIFactory::CreateSpecializedAI(Player* bot, ::std::string const& type)
+::std::unique_ptr<BotAI> BotAIFactory::CreateSpecializedAI(Player* bot, ::std::string const& /*type*/)
 {
 
     // Implement specialized AI types as needed

@@ -204,7 +204,7 @@ DefensiveBehaviorManager::DefensiveBehaviorManager(BotAI* ai)
 DefensiveBehaviorManager::~DefensiveBehaviorManager() = default;
 
 // Main update method
-void DefensiveBehaviorManager::Update(uint32 diff)
+void DefensiveBehaviorManager::Update(uint32 /*diff*/)
 {
     if (!_bot || !_bot->IsAlive())
         return;

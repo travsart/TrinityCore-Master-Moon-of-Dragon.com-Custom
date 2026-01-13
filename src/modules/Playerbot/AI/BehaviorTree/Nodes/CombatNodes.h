@@ -134,7 +134,7 @@ public:
                 if (!blackboard.Get<Unit*>("CurrentTarget", target) || !target)
                     return false;
 
-                return bot->HasInArc(M_PI / 6.0f, target); // 30 degree arc
+                return bot->HasInArc(static_cast<float>(M_PI) / 6.0f, target); // 30 degree arc
             })
     {}
 };
@@ -321,7 +321,7 @@ class TC_GAME_API BTWaitForGCD : public BTAction
 public:
     BTWaitForGCD()
         : BTAction("WaitForGCD",
-            [](BotAI* ai, BTBlackboard& blackboard) -> BTStatus
+            [](BotAI* ai, BTBlackboard& /*blackboard*/) -> BTStatus
             {
                 if (!ai)
                     return BTStatus::INVALID;
@@ -400,7 +400,7 @@ public:
         : BTLeaf("CheckHealthPercent"), _threshold(threshold), _comparison(comparison)
     {}
 
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
+    BTStatus Tick(BotAI* ai, BTBlackboard& /*blackboard*/) override
     {
         if (!ai)
         {
@@ -461,7 +461,7 @@ public:
         : BTLeaf("CheckResourcePercent"), _powerType(powerType), _threshold(threshold), _comparison(comparison)
     {}
 
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
+    BTStatus Tick(BotAI* ai, BTBlackboard& /*blackboard*/) override
     {
         if (!ai)
         {
@@ -550,7 +550,7 @@ class TC_GAME_API BTCheckInCombat : public BTCondition
 public:
     BTCheckInCombat()
         : BTCondition("CheckInCombat",
-            [](BotAI* ai, BTBlackboard& blackboard) -> bool
+            [](BotAI* ai, BTBlackboard& /*blackboard*/) -> bool
             {
                 if (!ai)
                     return false;
@@ -574,7 +574,7 @@ public:
         : BTLeaf("UseDefensiveCooldown"), _spellId(spellId), _healthThreshold(healthThreshold)
     {}
 
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
+    BTStatus Tick(BotAI* ai, BTBlackboard& /*blackboard*/) override
     {
         if (!ai)
         {

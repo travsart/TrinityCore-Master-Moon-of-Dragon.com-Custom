@@ -33,7 +33,7 @@ bool MoveToPositionAction::IsPossible(BotAI* ai) const
     return bot && !bot->IsInCombat() && !bot->HasUnitState(UNIT_STATE_ROOT);
 }
 
-bool MoveToPositionAction::IsUseful(BotAI* ai) const
+bool MoveToPositionAction::IsUseful(BotAI* /*ai*/) const
 {
     return true; // Always useful if possible
 }
@@ -94,7 +94,7 @@ bool FollowAction::IsUseful(BotAI* ai) const
     return followTarget != nullptr;
 }
 
-ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
+ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& /*context*/)
 {
     Player* bot = ai->GetBot();
     ::Unit* target = GetFollowTarget(ai);
@@ -353,7 +353,7 @@ bool BuffAction::IsUseful(BotAI* ai) const
     return false;
 }
 
-ActionResult BuffAction::Execute(BotAI* ai, ActionContext const& context)
+ActionResult BuffAction::Execute(BotAI* ai, ActionContext const& /*context*/)
 {
     Player* bot = ai->GetBot();
     if (!bot)

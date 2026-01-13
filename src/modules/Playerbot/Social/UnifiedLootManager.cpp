@@ -505,7 +505,7 @@ std::vector<std::pair<uint32, float>> UnifiedLootManager::AnalysisModule::GetSta
 // COORDINATION MODULE IMPLEMENTATION
 // ============================================================================
 
-void UnifiedLootManager::CoordinationModule::InitiateLootSession(Group* group, Loot* loot)
+void UnifiedLootManager::CoordinationModule::InitiateLootSession(Group* group, Loot* /*loot*/)
 {
     std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
 

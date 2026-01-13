@@ -97,7 +97,7 @@ public:
      * All cache population is done via Set* methods
      * @deprecated Use Set* methods instead
      */
-    void RefreshCache(Player* bot) { /* NO-OP - cache is populated via Set* methods */ }
+    void RefreshCache(Player* /*bot*/) { /* NO-OP - cache is populated via Set* methods */ }
 
     /**
      * Force immediate cache invalidation

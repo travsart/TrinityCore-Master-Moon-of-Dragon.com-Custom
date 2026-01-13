@@ -168,8 +168,6 @@ private:
         if (!bot)
             return 0;
 
-        uint32 count = 0;
-
         // Use Trinity's SearcherInRange to find nearby hostile units
         ::std::list<Unit*> targets;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, range);

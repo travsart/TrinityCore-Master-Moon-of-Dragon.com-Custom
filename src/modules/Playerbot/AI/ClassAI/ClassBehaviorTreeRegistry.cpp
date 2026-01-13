@@ -716,57 +716,57 @@ void ClassBehaviorTreeRegistry::InitializeEvoker()
 // ============================================================================
 
 // Warrior nodes
-BTStatus BTWarriorExecute::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTWarriorExecute::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would check target health < 20% and cast Execute
     return BTStatus::SUCCESS;
 }
 
-BTStatus BTWarriorShieldBlock::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTWarriorShieldBlock::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would check if taking damage and cast Shield Block
     return BTStatus::SUCCESS;
 }
 
-BTStatus BTWarriorRecklessness::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTWarriorRecklessness::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would cast Recklessness (burst CD)
     return BTStatus::SUCCESS;
 }
 
 // Priest nodes
-BTStatus BTPriestPowerWordShield::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTPriestPowerWordShield::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would cast Power Word: Shield on target
     return BTStatus::SUCCESS;
 }
 
-BTStatus BTPriestPrayerOfMending::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTPriestPrayerOfMending::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would cast Prayer of Mending
     return BTStatus::SUCCESS;
 }
 
-BTStatus BTPriestShadowWordPain::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTPriestShadowWordPain::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would cast Shadow Word: Pain (DoT)
     return BTStatus::SUCCESS;
 }
 
 // Mage nodes
-BTStatus BTMageArcaneBlast::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTMageArcaneBlast::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would cast Arcane Blast
     return BTStatus::SUCCESS;
 }
 
-BTStatus BTMagePolymorph::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTMagePolymorph::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would cast Polymorph for CC
     return BTStatus::SUCCESS;
 }
 
-BTStatus BTMageArcaneIntellect::Tick(BotAI* ai, BTBlackboard& blackboard)
+BTStatus BTMageArcaneIntellect::Tick(BotAI* /*ai*/, BTBlackboard& /*blackboard*/)
 {
     // Would cast Arcane Intellect buff
     return BTStatus::SUCCESS;

@@ -420,7 +420,6 @@ CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalSta
 
     StackWindow bestWindow;
     uint32 windowStart = now;
-    uint32 windowEnd = now + lookAheadMs;
 
     // Find all available cooldowns in the window
     ::std::vector<uint32> availableCooldowns;

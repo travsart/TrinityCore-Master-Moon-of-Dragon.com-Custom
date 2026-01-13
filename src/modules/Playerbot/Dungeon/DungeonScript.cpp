@@ -328,7 +328,7 @@ void DungeonScript::MoveAwayFromGroundEffect(::Player* player, ::DynamicObject* 
         return;
 
     // Calculate safe position (15 yards away from ground effect)
-    float angle = player->GetAngle(obj) + M_PI; // Opposite direction
+    float angle = player->GetAngle(obj) + static_cast<float>(M_PI); // Opposite direction
     float x = player->GetPositionX() + 15.0f * cos(angle);
     float y = player->GetPositionY() + 15.0f * sin(angle);
     float z = player->GetPositionZ();
@@ -378,7 +378,7 @@ Position DungeonScript::CalculateMeleePosition(::Player* player, ::Creature* bos
         return player->GetPosition();
 
     // Melee position: Behind boss
-    float angle = boss->GetOrientation() + M_PI; // Behind
+    float angle = boss->GetOrientation() + static_cast<float>(M_PI); // Behind
     float x = boss->GetPositionX() + 5.0f * cos(angle);
     float y = boss->GetPositionY() + 5.0f * sin(angle);
     float z = boss->GetPositionZ();

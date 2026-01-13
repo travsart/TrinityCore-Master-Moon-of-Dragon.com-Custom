@@ -59,7 +59,7 @@ bool AOEZone::IsPointInZone(const Position& point, uint32 currentTime) const
                                       point.m_positionX - center.m_positionX);
         float angleDiff = ::std::abs(Position::NormalizeOrientation(pointAngle - orientation));
 
-        return angleDiff <= (angle * M_PI / 360.0f);  // Convert to radians and check half angle
+        return angleDiff <= (angle * static_cast<float>(M_PI) / 360.0f);  // Convert to radians and check half angle
     }
 }
 
@@ -156,7 +156,7 @@ bool CleaveMechanic::IsPositionSafe(const Position& pos) const
     float sourceface = source->GetOrientation();
     float angleDiff = ::std::abs(Position::NormalizeOrientation(targetAngle - sourceface));
 
-    return angleDiff > (angle / 2.0f * M_PI / 180.0f);
+    return angleDiff > (angle / 2.0f * static_cast<float>(M_PI) / 180.0f);
 }
 
 float CleaveMechanic::GetSafeAngle(bool preferLeft) const
@@ -164,7 +164,7 @@ float CleaveMechanic::GetSafeAngle(bool preferLeft) const
     if (!source)
         return 0.0f;
 
-    float safeAngle = angle / 2.0f * M_PI / 180.0f + 0.1f;  // Add small buffer
+    float safeAngle = angle / 2.0f * static_cast<float>(M_PI) / 180.0f + 0.1f;  // Add small buffer
     float baseAngle = source->GetOrientation();
     return Position::NormalizeOrientation(baseAngle + (preferLeft ? -safeAngle : safeAngle));
 }
@@ -377,7 +377,7 @@ void MechanicAwareness::HandleProjectile(const ProjectileInfo& projectile, Playe
         // Simple dodge: move perpendicular to projectile path
         float projectileAngle = ::std::atan2(projectile.destination.m_positionY - projectile.origin.m_positionY,
                                           projectile.destination.m_positionX - projectile.origin.m_positionX);
-        float dodgeAngle = Position::NormalizeOrientation(projectileAngle + M_PI/2);
+        float dodgeAngle = Position::NormalizeOrientation(projectileAngle + static_cast<float>(M_PI) / 2.0f);
 
         dodgePos.m_positionX += 5.0f * cos(dodgeAngle);
         dodgePos.m_positionY += 5.0f * sin(dodgeAngle);
@@ -487,7 +487,7 @@ Position MechanicAwareness::FindSafeSpot(Player* bot, const AOEZone& danger, flo
     // Generate positions in a circle around current position
     for (int angle = 0; angle < 360; angle += 30)
     {
-        float radians = angle * M_PI / 180.0f;
+        float radians = angle * static_cast<float>(M_PI) / 180.0f;
 
         for (float distance = 5.0f; distance <= searchRadius; distance += 5.0f)
         {
@@ -856,8 +856,8 @@ void MechanicAwareness::CoordinateGroupResponse(const MechanicInfo& mechanic, ::
     centerZ /= group.size();
 
     // Distribute players in a circle
-    float angleStep = 2 * M_PI / group.size();
-    float radius = minDistance * group.size() / (2 * M_PI);
+    float angleStep = 2.0f * static_cast<float>(M_PI) / group.size();
+    float radius = minDistance * group.size() / (2.0f * static_cast<float>(M_PI));
 
     for (size_t i = 0; i < group.size(); ++i)
     {

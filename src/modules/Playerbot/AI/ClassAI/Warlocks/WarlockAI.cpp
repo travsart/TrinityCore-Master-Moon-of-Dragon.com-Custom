@@ -1891,13 +1891,13 @@ void WarlockAI::OptimizePetPositioning()
     {
         // Anti-caster pet - position near casters
         distance = 5.0f;
-        optimalPos = target->GetNearPosition(distance, M_PI / 4);
+        optimalPos = target->GetNearPosition(distance, static_cast<float>(M_PI) / 4.0f);
     }
     else // Imp or Voidwalker
     {
         // Ranged or tank pet - position at medium range
         distance = 15.0f;
-        optimalPos = target->GetNearPosition(distance, M_PI / 2);
+        optimalPos = target->GetNearPosition(distance, static_cast<float>(M_PI) / 2.0f);
     }
 
     // Command pet to move if needed

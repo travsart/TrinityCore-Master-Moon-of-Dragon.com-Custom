@@ -186,7 +186,7 @@ struct LoSContext
 
     LoSContext() : bot(nullptr), source(nullptr), target(nullptr),
                   checkType(LoSCheckType::BASIC), validationFlags(LoSValidation::BASIC_LOS),
-                  maxRange(100.0f), maxHeightDiff(50.0f), viewAngleTolerance(M_PI/3),
+                  maxRange(100.0f), maxHeightDiff(50.0f), viewAngleTolerance(static_cast<float>(M_PI) / 3.0f),
                   spellId(0), ignoreUnits(false), allowPartialBlocking(false) {}
 };
 
@@ -260,7 +260,7 @@ public:
     float EstimateTimeUntilClearPath(Unit* target);
 
     // Angle and positioning
-    bool IsWithinViewingAngle(Unit* target, float maxAngle = M_PI/3);
+    bool IsWithinViewingAngle(Unit* target, float maxAngle = static_cast<float>(M_PI) / 3.0f);
     float CalculateViewingAngle(Unit* target);
     bool RequiresFacing(Unit* target, LoSCheckType checkType);
     Position CalculateOptimalViewingPosition(Unit* target);

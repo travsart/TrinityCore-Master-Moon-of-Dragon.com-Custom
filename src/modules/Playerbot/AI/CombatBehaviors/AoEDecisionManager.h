@@ -134,7 +134,7 @@ public:
      * @param coneAngle Angle of the cone in radians
      * @return Optimal facing angle for maximum targets
      */
-    float GetBestCleaveAngle(float coneAngle = M_PI / 4) const;
+    float GetBestCleaveAngle(float coneAngle = static_cast<float>(M_PI) / 4) const;
 
     // ========================================================================
     // AOE EFFICIENCY

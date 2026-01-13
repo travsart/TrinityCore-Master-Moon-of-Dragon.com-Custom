@@ -827,8 +827,8 @@ bool PathfindingUtils::CanWalkBetween(const Position& a, const Position& b, Map*
                                 next.GetPositionX() - current.GetPositionX());
 
         float angleDiff = ::std::abs(angle2 - angle1);
-        if (angleDiff > M_PI)
-            angleDiff = 2.0f * M_PI - angleDiff;
+        if (angleDiff > static_cast<float>(M_PI))
+            angleDiff = 2.0f * static_cast<float>(M_PI) - angleDiff;
 
         if (angleDiff > 0.1f)
         {
@@ -856,7 +856,7 @@ Position PathfindingUtils::CalculateFormationPosition(const Position& leaderPos,
 
     for (uint32 i = 0; i < memberCount; ++i)
     {
-        float angle = (2.0f * M_PI * i) / memberCount;
+        float angle = (2.0f * static_cast<float>(M_PI) * i) / memberCount;
         Position pos = CalculateFormationPosition(center, angle, spacing);
         positions.push_back(pos);
     }

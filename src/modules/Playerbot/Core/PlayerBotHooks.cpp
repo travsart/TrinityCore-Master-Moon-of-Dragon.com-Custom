@@ -16,7 +16,6 @@
 #include "BotAI.h"
 #include "ObjectAccessor.h"
 #include "Core/Services/BotNpcLocationService.h"
-// #include "Scripting/BotResurrectionScript.h"  // DEPRECATED: Script disabled - bypassed graveyard teleport
 #include <sstream>
 
 namespace Playerbot

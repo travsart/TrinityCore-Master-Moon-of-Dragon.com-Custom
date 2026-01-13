@@ -80,7 +80,7 @@ public:
     void SetAction(::std::string const& actionName) { _actionName = actionName; }
 
     // Urgency calculation
-    virtual float CalculateUrgency(BotAI* ai) const { return 0.5f; }
+    virtual float CalculateUrgency(BotAI* /*ai*/) const { return 0.5f; }
 
     // Trigger conditions
     void AddCondition(::std::function<bool(BotAI*)> condition);

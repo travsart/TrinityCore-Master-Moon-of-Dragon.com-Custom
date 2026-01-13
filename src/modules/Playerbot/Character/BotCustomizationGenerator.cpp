@@ -2,7 +2,9 @@
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  */
 
+#ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 
 #include "BotCustomizationGenerator.h"
@@ -200,7 +202,7 @@ uint32 BotCustomizationGenerator::GetRandomChoice(::std::vector<uint32> const& c
     }
 
     // Use Trinity's random number generator for consistency
-    uint32 index = urand(0, choices.size() - 1);
+    uint32 index = urand(0, static_cast<uint32>(choices.size() - 1));
     return choices[index];
 }
 

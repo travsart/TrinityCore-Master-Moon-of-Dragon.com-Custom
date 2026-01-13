@@ -43,7 +43,7 @@ InterruptAwareness::InterruptAwareness(Player* observer)
                  observer ? observer->GetName().c_str() : "nullptr");
 }
 
-SpellScanResult InterruptAwareness::Update(uint32 diff)
+SpellScanResult InterruptAwareness::Update(uint32 /*diff*/)
 {
     SpellScanResult result;
 
@@ -527,7 +527,7 @@ bool InterruptAwareness::ShouldDetectSpell(Unit* caster, Spell const* spell) con
         return false;
 
     // Check cast time minimum
-    if (spellInfo->CastTimeEntry->Base < _config.minCastTime && !spellInfo->IsChanneled())
+    if (spellInfo->CastTimeEntry->Base < static_cast<int32>(_config.minCastTime) && !spellInfo->IsChanneled())
         return false;
 
     // Check if we should detect instant casts

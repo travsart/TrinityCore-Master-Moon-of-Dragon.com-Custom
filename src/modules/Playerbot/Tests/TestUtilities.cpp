@@ -126,7 +126,7 @@ Position TestEnvironment::GetRandomPosition(const Position& center, float radius
 {
     static ::std::random_device rd;
     static ::std::mt19937 gen(rd());
-    ::std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * M_PI);
+    ::std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * static_cast<float>(M_PI));
     ::std::uniform_real_distribution<float> radiusDist(0.0f, radius);
 
     float angle = angleDist(gen);
@@ -141,7 +141,7 @@ Position TestEnvironment::GetRandomPosition(const Position& center, float radius
 Position TestEnvironment::GetFormationPosition(const Position& leaderPos, uint8 memberIndex, float distance)
 {
     // Create a formation pattern around the leader
-    float angleOffset = (2.0f * M_PI / 4.0f) * memberIndex; // 4 cardinal positions
+    float angleOffset = (2.0f * static_cast<float>(M_PI) / 4.0f) * memberIndex; // 4 cardinal positions
     float x = leaderPos.GetPositionX() + distance * cos(angleOffset);
     float y = leaderPos.GetPositionY() + distance * sin(angleOffset);
 

@@ -334,7 +334,7 @@ namespace Playerbot
         if (data.unstuckAttempts <= 3)
         {
             // Strategy 1: Move backward
-            float angle = bot->GetOrientation() + M_PI;
+            float angle = bot->GetOrientation() + static_cast<float>(M_PI);
             float distance = 5.0f + data.unstuckAttempts * 2.0f;
             unstuckPos = bot->GetNearPosition(distance, angle);
             foundPosition = ValidateDestination(bot, unstuckPos);
@@ -547,7 +547,7 @@ namespace Playerbot
 
         ::std::random_device rd;
         ::std::mt19937 gen(rd());
-        ::std::uniform_real_distribution<float> angleDist(0.0f, 2 * M_PI);
+        ::std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * static_cast<float>(M_PI));
         ::std::uniform_real_distribution<float> distDist(5.0f, 15.0f);
 
         // Try random positions around the bot

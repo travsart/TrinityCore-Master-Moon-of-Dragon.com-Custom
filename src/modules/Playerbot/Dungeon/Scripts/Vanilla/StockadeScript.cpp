@@ -191,7 +191,7 @@ public:
     if (player->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED)) // Blind-like effect
                 {
                     // Move away briefly
-                    float angle = boss->GetAngle(player) + M_PI; // Away from boss
+                    float angle = boss->GetAngle(player) + static_cast<float>(M_PI); // Away from boss
                     float x = player->GetPositionX() + 5.0f * ::std::cos(angle);
                     float y = player->GetPositionY() + 5.0f * ::std::sin(angle);
                     float z = player->GetPositionZ();

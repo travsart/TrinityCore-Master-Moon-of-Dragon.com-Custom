@@ -74,7 +74,7 @@ void TacticalCoordinator::Initialize()
     TC_LOG_DEBUG("playerbot", "TacticalCoordinator::Initialize() - Initialization complete");
 }
 
-void TacticalCoordinator::Update(uint32 diff)
+void TacticalCoordinator::Update(uint32 /*diff*/)
 {
     if (!m_group)
         return;
@@ -722,7 +722,7 @@ ObjectGuid TacticalCoordinator::GetNextInterrupter() const
     return ObjectGuid::Empty;
 }
 
-ObjectGuid TacticalCoordinator::FindBestDispeller(ObjectGuid targetGuid) const
+ObjectGuid TacticalCoordinator::FindBestDispeller(ObjectGuid /*targetGuid*/) const
 {
     // Called with lock already held
 

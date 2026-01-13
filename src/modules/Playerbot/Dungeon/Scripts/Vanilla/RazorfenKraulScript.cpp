@@ -386,7 +386,7 @@ public:
                     float angleDiff = ::std::abs(angle - bossAngle);
 
                     // If not behind (within 90 degrees of back), move
-    if (angleDiff > M_PI / 2)
+    if (angleDiff > static_cast<float>(M_PI) / 2.0f)
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenKraulScript: Positioning behind Overlord Ramtusk to avoid cleave");
                         MoveTo(player, behindPos);

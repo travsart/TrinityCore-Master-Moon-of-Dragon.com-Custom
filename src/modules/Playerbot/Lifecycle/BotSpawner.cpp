@@ -31,7 +31,9 @@
  * ===========================================================================
  */
 
+#ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 
 #include "BotSpawner.h"
@@ -1052,7 +1054,7 @@ void BotSpawner::SelectCharacterAsyncRecursive(::std::vector<uint32> accounts, s
         {
             TC_LOG_INFO("module.playerbot.spawner", " Found {} existing characters for account {}", characters.size(), accounts[index]);
             // Pick a random character from available ones
-            uint32 charIndex = urand(0, characters.size() - 1);
+            uint32 charIndex = urand(0, static_cast<uint32>(characters.size() - 1));
             ObjectGuid selectedGuid = characters[charIndex];
             TC_LOG_INFO("module.playerbot.spawner", " Selected character {} for spawning", selectedGuid.ToString());
             callback(selectedGuid);

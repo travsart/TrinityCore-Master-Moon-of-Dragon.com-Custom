@@ -243,7 +243,7 @@ bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
     return outOfPosition;
 }
 
-void GroupFormation::Update(uint32 diff)
+void GroupFormation::Update(uint32 /*diff*/)
 {
     if (!_isActive.load())
         return;
@@ -508,11 +508,11 @@ void GroupFormation::UpdateMemberPositions()
         return positions;
     }
 
-    float radius = spacing * memberCount / (2.0f * M_PI);
+    float radius = spacing * memberCount / (2.0f * static_cast<float>(M_PI));
     radius = ::std::max(radius, 3.0f); // Minimum radius
     for (uint32 i = 0; i < memberCount; ++i)
     {
-        float angle = (2.0f * M_PI * i) / memberCount;
+        float angle = (2.0f * static_cast<float>(M_PI) * i) / memberCount;
         float x = radius * ::std::cos(angle);
         float y = radius * ::std::sin(angle);
         positions.emplace_back(x, y, 0);

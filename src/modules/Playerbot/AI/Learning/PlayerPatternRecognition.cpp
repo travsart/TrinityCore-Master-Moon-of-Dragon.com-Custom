@@ -556,13 +556,13 @@ void BehaviorCluster::InitializeCentroids()
 
     ::std::random_device rd;
     ::std::mt19937 gen(rd());
-    ::std::uniform_int_distribution<> dis(0, profileVec.size() - 1);
+    ::std::uniform_int_distribution<size_t> dis(0, profileVec.size() - 1);
 
     // Choose first centroid randomly
     _clusters[0].centroid = profileVec[dis(gen)];
 
     // Choose remaining centroids with probability proportional to distance
-    for (uint32_t i = 1; i < _k; ++i)
+    for (size_t i = 1; i < _k; ++i)
     {
         ::std::vector<float> distances;
         float totalDistance = 0;
@@ -595,9 +595,9 @@ void BehaviorCluster::AssignToClusters()
     for (const auto& [guid, profile] : _profiles)
     {
         float maxSimilarity = -1.0f;
-        uint32_t bestCluster = 0;
+        size_t bestCluster = 0;
 
-        for (uint32_t i = 0; i < _clusters.size(); ++i)
+        for (size_t i = 0; i < _clusters.size(); ++i)
         {
             if (!_clusters[i].centroid)
                 continue;

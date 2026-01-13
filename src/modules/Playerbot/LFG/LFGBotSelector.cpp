@@ -64,7 +64,7 @@ std::vector<Player*> LFGBotSelector::FindAvailableTanks(
 
     if (humanPlayer)
     {
-        uint32 humanFaction = humanPlayer->GetTeam();
+        Team humanFaction = humanPlayer->GetTeam();
 
         // Filter by faction - bots must be same faction as human player
         tanks.erase(
@@ -75,7 +75,7 @@ std::vector<Player*> LFGBotSelector::FindAvailableTanks(
             tanks.end());
 
         TC_LOG_INFO("module.playerbot.lfg", "FindAvailableTanks: Human {} faction={}, before filter={}, after faction filter={}",
-                    humanPlayer->GetName(), humanFaction == 67 ? "HORDE" : "ALLIANCE", beforeFactionFilter, tanks.size());
+                    humanPlayer->GetName(), humanFaction == HORDE ? "HORDE" : "ALLIANCE", beforeFactionFilter, tanks.size());
 
         // Filter out bots already grouped with the human player
         if (humanPlayer->GetGroup())
@@ -111,7 +111,7 @@ std::vector<Player*> LFGBotSelector::FindAvailableHealers(
 
     if (humanPlayer)
     {
-        uint32 humanFaction = humanPlayer->GetTeam();
+        Team humanFaction = humanPlayer->GetTeam();
 
         // Filter by faction - bots must be same faction as human player
         healers.erase(
@@ -122,7 +122,7 @@ std::vector<Player*> LFGBotSelector::FindAvailableHealers(
             healers.end());
 
         TC_LOG_INFO("module.playerbot.lfg", "FindAvailableHealers: Human {} faction={}, before filter={}, after faction filter={}",
-                    humanPlayer->GetName(), humanFaction == 67 ? "HORDE" : "ALLIANCE", beforeFactionFilter, healers.size());
+                    humanPlayer->GetName(), humanFaction == HORDE ? "HORDE" : "ALLIANCE", beforeFactionFilter, healers.size());
 
         // Filter out bots already grouped with the human player
         if (humanPlayer->GetGroup())
@@ -158,7 +158,7 @@ std::vector<Player*> LFGBotSelector::FindAvailableDPS(
 
     if (humanPlayer)
     {
-        uint32 humanFaction = humanPlayer->GetTeam();
+        Team humanFaction = humanPlayer->GetTeam();
 
         // Filter by faction - bots must be same faction as human player
         dps.erase(
@@ -169,7 +169,7 @@ std::vector<Player*> LFGBotSelector::FindAvailableDPS(
             dps.end());
 
         TC_LOG_INFO("module.playerbot.lfg", "FindAvailableDPS: Human {} faction={}, before filter={}, after faction filter={}",
-                    humanPlayer->GetName(), humanFaction == 67 ? "HORDE" : "ALLIANCE", beforeFactionFilter, dps.size());
+                    humanPlayer->GetName(), humanFaction == HORDE ? "HORDE" : "ALLIANCE", beforeFactionFilter, dps.size());
 
         // Filter out bots already grouped with the human player
         if (humanPlayer->GetGroup())

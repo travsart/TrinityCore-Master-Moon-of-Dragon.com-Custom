@@ -113,7 +113,7 @@ namespace Playerbot
         TC_LOG_INFO("playerbot", "BotMonitor: Shutdown complete");
     }
 
-    void BotMonitor::Update(uint32 diff)
+    void BotMonitor::Update(uint32 /*diff*/)
     {
         ::std::lock_guard lock(_mutex);
 
@@ -284,7 +284,7 @@ namespace Playerbot
         _botActivityState[botGuid] = "idle";
     }
 
-    void BotMonitor::RecordBotUpdateTime(ObjectGuid botGuid, double updateTimeMs)
+    void BotMonitor::RecordBotUpdateTime(ObjectGuid /*botGuid*/, double updateTimeMs)
     {
         ::std::lock_guard lock(_mutex);
 
@@ -306,7 +306,7 @@ namespace Playerbot
         }
     }
 
-    void BotMonitor::RecordAIDecisionTime(ObjectGuid botGuid, double decisionTimeMs)
+    void BotMonitor::RecordAIDecisionTime(ObjectGuid /*botGuid*/, double decisionTimeMs)
     {
         ::std::lock_guard lock(_mutex);
 

@@ -48,7 +48,7 @@ InterruptManager::InterruptManager(Player* bot)
     // Also no logging with _bot->GetName() - concurrent access issue.
 }
 
-void InterruptManager::UpdateInterruptSystem(uint32 diff)
+void InterruptManager::UpdateInterruptSystem(uint32 /*diff*/)
 {
     // No lock needed - interrupt tracking is per-bot instance data
 

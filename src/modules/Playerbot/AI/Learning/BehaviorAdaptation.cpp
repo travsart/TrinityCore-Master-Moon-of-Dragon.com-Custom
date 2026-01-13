@@ -157,11 +157,11 @@ void NeuralNetwork::Train(const ::std::vector<float>& input, const ::std::vector
     _lastLoss /= target.size();
 
     // Backpropagation
-    for (int i = _layers.size() - 1; i >= 0; --i)
+    for (int i = static_cast<int>(_layers.size()) - 1; i >= 0; --i)
     {
-        auto& layer = _layers[i];
+        auto& layer = _layers[static_cast<size_t>(i)];
 
-        if (i == _layers.size() - 1)
+        if (static_cast<size_t>(i) == _layers.size() - 1)
         {
             // Output layer
             layer.gradients = error;
@@ -170,7 +170,7 @@ void NeuralNetwork::Train(const ::std::vector<float>& input, const ::std::vector
         {
             // Hidden layers
             ::std::vector<float> nextError(layer.outputs.size(), 0.0f);
-            auto& nextLayer = _layers[i + 1];
+            auto& nextLayer = _layers[static_cast<size_t>(i + 1)];
 
             for (size_t j = 0; j < layer.outputs.size(); ++j)
             {

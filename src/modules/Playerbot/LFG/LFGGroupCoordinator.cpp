@@ -467,8 +467,12 @@ uint32 LFGGroupCoordinator::GetDungeonMapId(uint32 dungeonId) const
 
 bool LFGGroupCoordinator::ValidateEntranceData(uint32 mapId, float x, float y, float z) const
 {
-    // Check if map exists
-    MapEntry const* mapEntry = sMapStore.LookupEntry(mapId);
+    // Check if map exists - validates mapId is a known map
+    if (!sMapStore.LookupEntry(mapId))
+    {
+        TC_LOG_ERROR("lfg.playerbot", "Invalid map ID {} - map does not exist", mapId);
+        return false;
+    }
 
     // Check if coordinates are valid (not 0,0,0)
     if (x == 0.0f && y == 0.0f && z == 0.0f)

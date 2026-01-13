@@ -38,7 +38,8 @@ namespace Playerbot
 {
 
 AdvancedBehaviorManager::AdvancedBehaviorManager(Player* bot, BotAI* ai)
-    : m_bot(bot)
+    : m_currentBossFight(nullptr)  // unique_ptr default constructs to nullptr (declared first in header)
+    , m_bot(bot)
     , m_ai(ai)
     , m_enabled(true)
     , m_dungeonEnabled(true)
@@ -49,7 +50,6 @@ AdvancedBehaviorManager::AdvancedBehaviorManager(Player* bot, BotAI* ai)
     , m_dungeonRole(DungeonRole::UNDEFINED)
     , m_currentBattleground(BattlegroundType::NONE)
     , m_activeEvent(WorldEventType::NONE)
-    , m_currentBossFight(nullptr)  // unique_ptr default constructs to nullptr
     , m_dungeonUpdateInterval(1000)
     , m_pvpUpdateInterval(500)
     , m_eventUpdateInterval(5000)
@@ -186,7 +186,7 @@ void AdvancedBehaviorManager::Shutdown()
 // DUNGEON SYSTEM
 // ============================================================================
 
-bool AdvancedBehaviorManager::EnterDungeon(uint32 dungeonId)
+bool AdvancedBehaviorManager::EnterDungeon(uint32 /*dungeonId*/)
 {
     if (!m_bot || !m_dungeonEnabled)
         return false;
@@ -379,7 +379,7 @@ void AdvancedBehaviorManager::InterruptBossCast(Creature* boss, uint32 spellId)
         m_bot->CastSpell(boss, interruptSpell, CastSpellExtraArgs());
 }
 
-void AdvancedBehaviorManager::DispelBossDebuff(uint32 spellId)
+void AdvancedBehaviorManager::DispelBossDebuff(uint32 /*spellId*/)
 {
     if (!m_bot)
         return;
@@ -540,7 +540,7 @@ void AdvancedBehaviorManager::HandlePatrolAvoidance()
 // PVP SYSTEM
 // ============================================================================
 
-bool AdvancedBehaviorManager::QueueForBattleground(BattlegroundType type)
+bool AdvancedBehaviorManager::QueueForBattleground(BattlegroundType /*type*/)
 {
     if (!m_bot || !m_pvpEnabled)
         return false;
@@ -855,7 +855,7 @@ void AdvancedBehaviorManager::FocusPvPTarget(Player* target)
     m_bot->SetSelection(target->GetGUID());
 }
 
-void AdvancedBehaviorManager::CallForBackup(Position const& location)
+void AdvancedBehaviorManager::CallForBackup(Position const& /*location*/)
 {
     if (!m_bot)
         return;
@@ -1014,7 +1014,7 @@ bool AdvancedBehaviorManager::ParticipateInWorldEvent(WorldEventType type)
     return true;
 }
 
-void AdvancedBehaviorManager::CompleteEventQuests(WorldEventType type)
+void AdvancedBehaviorManager::CompleteEventQuests(WorldEventType /*type*/)
 {
     if (!m_bot)
         return;
@@ -1023,7 +1023,7 @@ void AdvancedBehaviorManager::CompleteEventQuests(WorldEventType type)
     // Framework in place for quest integration
 }
 
-void AdvancedBehaviorManager::VisitEventVendors(WorldEventType type)
+void AdvancedBehaviorManager::VisitEventVendors(WorldEventType /*type*/)
 {
     if (!m_bot)
         return;
@@ -1067,7 +1067,7 @@ void AdvancedBehaviorManager::PursueAchievement(uint32 achievementId)
     return achievements;
 }
 
-void AdvancedBehaviorManager::CheckAchievementProgress(uint32 achievementId)
+void AdvancedBehaviorManager::CheckAchievementProgress(uint32 /*achievementId*/)
 {
     if (!m_bot)
         return;
@@ -1238,7 +1238,7 @@ void AdvancedBehaviorManager::BattlePets()
 // PRIVATE HELPER METHODS
 // ============================================================================
 
-void AdvancedBehaviorManager::UpdateDungeonBehavior(uint32 diff)
+void AdvancedBehaviorManager::UpdateDungeonBehavior(uint32 /*diff*/)
 {
     if (!IsInDungeon())
         return;
@@ -1339,7 +1339,7 @@ void AdvancedBehaviorManager::EndBossFight(bool victory)
     m_currentBossFight.reset();
 }
 
-void AdvancedBehaviorManager::UpdateBossFight(uint32 diff)
+void AdvancedBehaviorManager::UpdateBossFight(uint32 /*diff*/)
 {
     if (!m_currentBossFight)
         return;
@@ -1367,7 +1367,7 @@ void AdvancedBehaviorManager::AdvanceBossPhase()
     m_currentBossFight->phase++;
 }
 
-void AdvancedBehaviorManager::UpdatePvPBehavior(uint32 diff)
+void AdvancedBehaviorManager::UpdatePvPBehavior(uint32 /*diff*/)
 {
     if (!IsInBattleground())
         return;
@@ -1476,7 +1476,7 @@ Player* AdvancedBehaviorManager::SelectPvPTarget()
     return bestTarget;
 }
 
-void AdvancedBehaviorManager::UpdateEventBehavior(uint32 diff)
+void AdvancedBehaviorManager::UpdateEventBehavior(uint32 /*diff*/)
 {
     UpdateEventStatus();
 
@@ -1510,7 +1510,7 @@ bool AdvancedBehaviorManager::IsEventActive(WorldEventType type) const
     return false;
 }
 
-void AdvancedBehaviorManager::UpdateAchievementProgress(uint32 diff)
+void AdvancedBehaviorManager::UpdateAchievementProgress(uint32 /*diff*/)
 {
     for (uint32 achievementId : m_pursuingAchievements)
         CheckAchievementProgress(achievementId);
@@ -1522,7 +1522,7 @@ void AdvancedBehaviorManager::CalculateAchievementPriority()
     // Framework in place for priority algorithm
 }
 
-void AdvancedBehaviorManager::UpdateExploration(uint32 diff)
+void AdvancedBehaviorManager::UpdateExploration(uint32 /*diff*/)
 {
     if (!m_bot)
         return;
@@ -1534,7 +1534,7 @@ void AdvancedBehaviorManager::UpdateExploration(uint32 diff)
     DiscoverFlightPaths();
 }
 
-void AdvancedBehaviorManager::UpdateRareTracking(uint32 diff)
+void AdvancedBehaviorManager::UpdateRareTracking(uint32 /*diff*/)
 {
     if (!m_rareHunting)
         return;
@@ -1589,7 +1589,7 @@ void AdvancedBehaviorManager::ScanForRares()
     }
 }
 
-void AdvancedBehaviorManager::UpdateTreasureHunting(uint32 diff)
+void AdvancedBehaviorManager::UpdateTreasureHunting(uint32 /*diff*/)
 {
     ScanForTreasures();
 }
@@ -1647,7 +1647,7 @@ void AdvancedBehaviorManager::ScanForTreasures()
     }
 }
 
-void AdvancedBehaviorManager::UpdateDangerZones(uint32 diff)
+void AdvancedBehaviorManager::UpdateDangerZones(uint32 /*diff*/)
 {
     uint32 now = GameTime::GetGameTimeMS();
 
@@ -1675,7 +1675,7 @@ bool AdvancedBehaviorManager::IsInDangerZone(Position const& pos) const
 Position AdvancedBehaviorManager::FindSafePosition(Position const& currentPos) const
 {
     // Find position outside all danger zones
-    float angle = frand(0.0f, 2.0f * M_PI);
+    float angle = frand(0.0f, 2.0f * static_cast<float>(M_PI));
     float distance = 20.0f;
 
     Position safePos;
@@ -1690,7 +1690,7 @@ Position AdvancedBehaviorManager::FindSafePosition(Position const& currentPos) c
     // Try multiple angles if first attempt failed
     for (uint32 i = 0; i < 8; ++i)
     {
-        angle = (i * 45.0f) * (M_PI / 180.0f);
+        angle = (i * 45.0f) * (static_cast<float>(M_PI) / 180.0f);
         safePos.m_positionX = currentPos.GetPositionX() + distance * ::std::cos(angle);
         safePos.m_positionY = currentPos.GetPositionY() + distance * ::std::sin(angle);
 
@@ -1731,12 +1731,12 @@ void AdvancedBehaviorManager::RecordObjectiveCapture()
     m_stats.objectivesCaptured++;
 }
 
-void AdvancedBehaviorManager::RecordEventParticipation(WorldEventType type)
+void AdvancedBehaviorManager::RecordEventParticipation(WorldEventType /*type*/)
 {
     m_stats.eventsParticipated++;
 }
 
-void AdvancedBehaviorManager::RecordAchievement(uint32 achievementId)
+void AdvancedBehaviorManager::RecordAchievement(uint32 /*achievementId*/)
 {
     m_stats.achievementsEarned++;
 }

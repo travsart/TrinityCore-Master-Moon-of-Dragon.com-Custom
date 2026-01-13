@@ -410,7 +410,7 @@ public:
                     float angleDiff = ::std::abs(angle - bossAngle);
 
                     // If not behind, move
-    if (angleDiff > M_PI / 2)
+    if (angleDiff > static_cast<float>(M_PI) / 2.0f)
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenDownsScript: Positioning behind Ragglesnout to avoid cleave");
                         MoveTo(player, behindPos);

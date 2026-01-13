@@ -30,7 +30,7 @@ namespace Playerbot
 
 LineOfSightManager::LineOfSightManager(Player* bot)
     : _bot(bot), _maxRange(DEFAULT_MAX_RANGE), _heightTolerance(DEFAULT_HEIGHT_TOLERANCE),
-      _angleTolerance(M_PI/3), _enableCaching(true), _profilingEnabled(false),
+      _angleTolerance(static_cast<float>(M_PI) / 3.0f), _enableCaching(true), _profilingEnabled(false),
       _lastObstructionUpdate(0)
 {
     TC_LOG_DEBUG("playerbot.los", "LineOfSightManager initialized for bot {}", _bot->GetName());
@@ -234,7 +234,7 @@ bool LineOfSightManager::CanMoveToPosition(const Position& pos)
 
     Position targetPos = target->GetPosition();
     Position botPos = _bot->GetPosition();
-    for (float angle = 0.0f; angle < 2.0f * M_PI; angle += M_PI / 8.0f)
+    for (float angle = 0.0f; angle < 2.0f * static_cast<float>(M_PI); angle += static_cast<float>(M_PI) / 8.0f)
     {
         for (float distance = radius * 0.5f; distance <= radius; distance += radius * 0.25f)
         {
@@ -716,7 +716,7 @@ bool LineOfSightManager::CheckSpellSpecificRequirements(Unit* target, uint32 spe
         return true;
 
     float angle = _bot->GetRelativeAngle(target);
-    return ::std::abs(angle) <= M_PI/3;
+    return ::std::abs(angle) <= static_cast<float>(M_PI) / 3.0f;
 }
 
 bool LineOfSightManager::CheckInterruptLineOfSight(Unit* target)

@@ -198,7 +198,7 @@ ContentRequirement const* ContentRequirementDatabase::GetRandomBattlegroundRequi
     };
 
     // Pick a random BG
-    uint32 randomIndex = urand(0, actualBGs.size() - 1);
+    uint32 randomIndex = urand(0, static_cast<uint32>(actualBGs.size() - 1));
     uint32 selectedBgId = actualBGs[randomIndex];
 
     auto it = _battlegrounds.find(selectedBgId);

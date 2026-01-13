@@ -88,7 +88,7 @@ void AuctionMaterialsBridge::Initialize()
     // Logging with bot identity deferred to first Update() call.
 }
 
-void AuctionMaterialsBridge::Update(uint32 diff)
+void AuctionMaterialsBridge::Update(uint32 /*diff*/)
 {
     if (!_bot)
         return;

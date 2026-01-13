@@ -478,7 +478,7 @@ void EnhancedBotAI::UpdateSolo(uint32 diff)
 
         if (leader && GetBot()->GetExactDist2d(leader) > 10.0f)
         {
-            GetBot()->GetMotionMaster()->MoveFollow(leader, 5.0f, M_PI / 2);
+            GetBot()->GetMotionMaster()->MoveFollow(leader, 5.0f, static_cast<float>(M_PI) / 2.0f);
             TransitionToState(BotAIState::FOLLOWING);
         }
     }

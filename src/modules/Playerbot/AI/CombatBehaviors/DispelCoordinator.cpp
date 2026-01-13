@@ -354,7 +354,7 @@ const DispelCoordinator::PurgeableBuff* DispelCoordinator::GetPurgeableBuffData(
 // Core Update Functions
 // ============================================================================
 
-void DispelCoordinator::Update(uint32 diff)
+void DispelCoordinator::Update(uint32 /*diff*/)
 {
     if (!m_bot || !m_group)
         return;

@@ -332,7 +332,7 @@ void RaidOrchestrator::UpdateRoleCoordinators(uint32 diff)
     _roleCoordinatorManager.Update(nullptr, diff); // Pass null for group, use raid instead
 }
 
-void RaidOrchestrator::UpdateDirectives(uint32 diff)
+void RaidOrchestrator::UpdateDirectives(uint32 /*diff*/)
 {
     // Clean up expired directives
     _activeDirectives.erase(
@@ -361,7 +361,7 @@ void RaidOrchestrator::UpdateDirectives(uint32 diff)
     }
 }
 
-void RaidOrchestrator::UpdateFormation(uint32 diff)
+void RaidOrchestrator::UpdateFormation(uint32 /*diff*/)
 {
     // Formation-specific positioning logic
     switch (_currentFormation)
@@ -389,7 +389,7 @@ void RaidOrchestrator::UpdateFormation(uint32 diff)
     }
 }
 
-void RaidOrchestrator::UpdateEncounterPhase(uint32 diff)
+void RaidOrchestrator::UpdateEncounterPhase(uint32 /*diff*/)
 {
     if (!_inCombat)
         return;
