@@ -38,7 +38,7 @@
 #include "UnitAI.h"
 #include <limits>
 #include "GameTime.h"
-#include "../../Game/FlightMasterManager.h"     // Cross-map travel via flight paths
+#include "../../Interaction/FlightMasterManager.h"     // Cross-map travel via flight paths
 #include "../../Travel/TravelRouteManager.h"     // Multi-station travel planning
 #include "SpellHistory.h"                        // For hearthstone cooldown check
 #include "Spell.h"                               // For casting hearthstone spell

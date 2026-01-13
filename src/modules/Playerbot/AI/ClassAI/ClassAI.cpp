@@ -14,7 +14,7 @@
 #include "GameTime.h"
 #include "Movement/BotMovementUtil.h"
 #include "ActionPriority.h"
-#include "CooldownManager.h"
+#include "Common/CooldownManager.h"
 #include "ResourceManager.h"
 #include "../Combat/CombatBehaviorIntegration.h"
 #include "SpellMgr.h"

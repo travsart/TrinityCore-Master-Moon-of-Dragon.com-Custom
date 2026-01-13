@@ -17,7 +17,7 @@
 #include "../Combat/TargetSelector.h"
 #include "../Combat/PositionManager.h"
 #include "../Combat/InterruptManager.h"
-#include "../CooldownManager.h"
+#include "../Common/CooldownManager.h"
 #include <memory>
 #include <atomic>
 #include <chrono>

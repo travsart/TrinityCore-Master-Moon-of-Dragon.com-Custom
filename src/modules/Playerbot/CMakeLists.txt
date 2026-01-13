@@ -243,8 +243,7 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ActionPriority.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ActionPriority.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CooldownManager.cpp  # PHASE 47: Removed - using Common/CooldownManager.h (header-only)
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CooldownManager.h
+    # CooldownManager.h REMOVED - redirect file deleted, using Common/CooldownManager.h directly
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.h
 
@@ -843,14 +842,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager_Events.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestAcceptanceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestAcceptanceManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
+    # NPCInteractionManager REMOVED - Duplicate of Interaction/Core/InteractionManager (production system)
+    # FlightMasterManager REMOVED - Duplicate of Interaction/FlightMasterManager (production system)
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/VendorPurchaseManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/VendorPurchaseManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/FlightMasterManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/FlightMasterManager.h
     # Config files commented out - incomplete implementations
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotInventoryConfig.h
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.cpp

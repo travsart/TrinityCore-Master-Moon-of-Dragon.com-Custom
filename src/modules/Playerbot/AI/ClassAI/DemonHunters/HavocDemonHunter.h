@@ -23,7 +23,6 @@
 #include "Creature.h"
 #include "Map.h"
 #include "../ResourceTypes.h"
-#include "../CombatSpecializationTemplates.h"
 #include "Unit.h"
 #include "SpellHistory.h"
 #include <unordered_map>

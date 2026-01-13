@@ -23,7 +23,7 @@
 #include "GameObject.h"
 #include "GameObjectData.h"
 #include "MovementPackets.h"
-#include "../Game/FlightMasterManager.h"
+#include "../Interaction/FlightMasterManager.h"
 #include <queue>
 #include <algorithm>
 #include <cmath>

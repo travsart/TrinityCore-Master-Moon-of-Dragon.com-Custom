@@ -19,7 +19,6 @@
 #define PLAYERBOT_DISCIPLINEPRIESTREFACTORED_H
 
 #include "../CombatSpecializationTemplates.h"
-#include "../CooldownManager.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
