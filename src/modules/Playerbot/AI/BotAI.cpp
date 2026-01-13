@@ -46,6 +46,7 @@
 #include "DatabaseEnv.h"
 #include "QueryResult.h"
 #include "Core/PlayerBotHooks.h"
+#include "../PvP/BattlegroundAI.h"
 #include <chrono>
 #include <set>
 #include <unordered_map>
@@ -442,6 +443,54 @@ void BotAI::UpdateAI(uint32 diff)
     {
 
     // ========================================================================
+    // BATTLEGROUND AI CONTEXT - Priority handler for BG situations
+    // ========================================================================
+    // CRITICAL: If bot is in an active battleground, use BattlegroundAI instead
+    // of normal solo/group strategies. The BG AI handles all BG-specific logic:
+    // - WSG/TP flag capture and defense
+    // - AB/BfG base capture and defense
+    // - AV tower/graveyard capture, boss kills
+    // - EOTS flag + base hybrid strategy
+    // - Siege weapon operation (SotA/IoC)
+    // - Team coordination and objective-based play
+    //
+    // This check MUST be before solo/group strategy activation to prevent
+    // bots from using dungeon-like follow behavior in battlegrounds.
+    if (_bot->InBattleground())
+    {
+        ::Battleground* bg = _bot->GetBattleground();
+        if (bg && bg->GetStatus() == STATUS_IN_PROGRESS)
+        {
+            // DIAGNOSTIC: Log BG AI activation (throttled to once per 10 seconds per bot)
+            static std::unordered_map<uint32, uint32> lastBGLog;
+            uint32 botId = _bot->GetGUID().GetCounter();
+            uint32 nowMs = GameTime::GetGameTimeMS();
+            if (!lastBGLog.count(botId) || (nowMs - lastBGLog[botId] > 10000))
+            {
+                TC_LOG_INFO("module.playerbot.bg", "🎮 BG AI ACTIVE: Bot {} in {} (Instance: {}, Status: IN_PROGRESS)",
+                    _bot->GetName(),
+                    bg->GetName(),
+                    bg->GetInstanceID());
+                lastBGLog[botId] = nowMs;
+            }
+
+            // Delegate to BattlegroundAI for all BG decision-making
+            BattlegroundAI::instance()->Update(_bot, diff);
+
+            // Still process combat for PvP engagements
+            UpdateCombatState(diff);
+            if (IsInCombat())
+            {
+                OnCombatUpdate(diff);
+            }
+
+            // Skip solo/group strategies - BG AI handles everything
+            // Jump directly to game systems update (Phase 6)
+            goto bg_update_complete;
+        }
+    }
+
+    // ========================================================================
     // SOLO STRATEGY ACTIVATION - Once per bot after first login
     // ========================================================================
     // For bots not in a group, activate solo-relevant strategies on first UpdateAI() call
@@ -587,6 +636,7 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
 
     }  // End of if (!isInDeathRecovery) block - normal AI skipped when dead
 
+bg_update_complete:
     // ========================================================================
     // PHASE 6: GAME SYSTEMS FACADE - All manager updates delegated to facade
     // ========================================================================

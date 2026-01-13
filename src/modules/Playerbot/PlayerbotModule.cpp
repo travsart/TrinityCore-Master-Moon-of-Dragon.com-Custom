@@ -38,6 +38,9 @@
 #include "Lifecycle/Instance/BotCloneEngine.h"
 #include "Lifecycle/Instance/BotPostLoginConfigurator.h"
 
+// Enterprise-Grade Diagnostics System
+#include "Core/Diagnostics/BotOperationTracker.h"
+
 #include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Session/BotPacketRelay.h"
@@ -465,6 +468,15 @@ bool PlayerbotModule::Initialize()
     TC_LOG_INFO("server.loading", "Instance Bot Pool warming will occur after world load");
 
     // ==========================================================================
+    // ENTERPRISE-GRADE DIAGNOSTICS SYSTEM
+    // ==========================================================================
+
+    // Initialize Bot Operation Tracker (comprehensive error tracking and metrics)
+    TC_LOG_INFO("server.loading", "Initializing Bot Operation Tracker...");
+    sBotOperationTracker->Initialize();
+    TC_LOG_INFO("server.loading", "Bot Operation Tracker initialized - tracking all bot operations");
+
+    // ==========================================================================
 
     // Register with the shared ModuleUpdateManager for world updates
     if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
@@ -536,6 +548,16 @@ void PlayerbotModule::Shutdown()
     TC_LOG_INFO("server.loading", "Shutting down Bot Template Repository...");
     sBotTemplateRepository->Shutdown();
     TC_LOG_INFO("server.loading", "Bot Template Repository shutdown complete");
+
+    // ==========================================================================
+    // ENTERPRISE-GRADE DIAGNOSTICS SYSTEM SHUTDOWN
+    // ==========================================================================
+
+    // Shutdown Bot Operation Tracker - print final status report before shutdown
+    TC_LOG_INFO("server.loading", "Shutting down Bot Operation Tracker...");
+    sBotOperationTracker->PrintStatus();  // Print final diagnostics report
+    sBotOperationTracker->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Operation Tracker shutdown complete");
 
     // ==========================================================================
 

@@ -211,6 +211,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Services/BotNpcLocationService.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Services/BotNpcLocationService.h
 
+    # Enterprise-Grade Diagnostics System - Bot Operation Tracking and Error Analytics
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotOperationTracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotOperationTracker.h
+
     # Phase 7.3: Event System - Streamlined Architecture (Legacy code eliminated)
     ${CMAKE_CURRENT_SOURCE_DIR}/Events/BotEventData.h
     # BotEventSystem.cpp/h - DELETED (legacy singleton removed)

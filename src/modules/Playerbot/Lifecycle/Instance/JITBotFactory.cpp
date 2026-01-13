@@ -17,8 +17,16 @@
 #include "BotTemplateRepository.h"
 #include "Account/BotAccountMgr.h"
 #include "Config/PlayerbotConfig.h"
+#include "Session/BotWorldSessionMgr.h"
+#include "Database/PlayerbotDatabase.h"
+#include "Core/Diagnostics/BotOperationTracker.h"
+#include "Player.h"
 #include "Log.h"
+#include "DatabaseEnv.h"
+#include "CharacterDatabase.h"
+#include "LoginDatabase.h"
 #include <fmt/format.h>
+#include <cmath>
 
 namespace Playerbot
 {
@@ -56,6 +64,18 @@ bool JITBotFactory::Initialize()
         _initialized.store(true);
         return true;
     }
+
+    // CRITICAL FIX: Clean up orphaned bot characters from previous runs
+    // This prevents the "Account already has 10 characters" error that occurs when:
+    // 1. Server crashes without clean shutdown
+    // 2. JIT bot characters weren't deleted properly
+    // 3. Accounts accumulate orphaned characters across restarts
+    //
+    // This cleanup is safe because:
+    // - Bot accounts (@playerbot.local) are only used for transient bots
+    // - Pool bots haven't been created yet (WarmPool runs after Initialize)
+    // - Any characters on bot accounts from previous runs are orphans
+    CleanupOrphanedBotCharacters();
 
     // Initialize statistics
     _hourStart = std::chrono::system_clock::now();
@@ -107,6 +127,44 @@ void JITBotFactory::Shutdown()
     {
         std::lock_guard<std::mutex> lock(_recycleMutex);
         _recycledBots.clear();
+    }
+
+    // CRITICAL FIX: Delete all JIT bot characters from database to prevent orphaned records
+    // JIT bots are created on-demand and must be cleaned up on shutdown to prevent:
+    // 1. Orphaned character records accumulating in the database
+    // 2. Bot accounts hitting the 10-character-per-account limit
+    // 3. Future JIT bot creation failures due to "Account already has 10 characters"
+    {
+        std::lock_guard<std::mutex> lock(_accountMapMutex);
+        uint32 deletedCount = 0;
+
+        TC_LOG_INFO("playerbot.jit", "JITBotFactory::Shutdown - Deleting {} JIT bot characters from database...", _botAccountMap.size());
+
+        for (auto const& [botGuid, accountId] : _botAccountMap)
+        {
+            // Use TrinityCore's proper character deletion to clean up all related tables
+            // deleteFinally=true ensures immediate deletion without respecting CharDelete.KeepDays
+            // updateRealmChars=false since these are bot accounts
+            Player::DeleteFromDB(botGuid, accountId, false /* updateRealmChars */, true /* deleteFinally */);
+            ++deletedCount;
+        }
+
+        TC_LOG_INFO("playerbot.jit", "JITBotFactory::Shutdown - Deleted {} JIT bot characters", deletedCount);
+
+        _botAccountMap.clear();
+
+        // Also clear the tracking table since we've deleted all JIT bots
+        // This ensures a clean state for the next server start
+        // NOTE: playerbot_jit_bots is in the PLAYERBOT database, not characters
+        try
+        {
+            sPlayerbotDatabase->Execute("TRUNCATE TABLE playerbot_jit_bots");
+            TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::Shutdown - Cleared JIT bot tracking table");
+        }
+        catch (std::exception const& e)
+        {
+            TC_LOG_WARN("playerbot.jit", "JITBotFactory::Shutdown - Failed to clear JIT bot tracking table: {}", e.what());
+        }
     }
 
     _initialized.store(false);
@@ -427,6 +485,26 @@ void JITBotFactory::StoreAccountForBot(ObjectGuid botGuid, uint32 accountId)
     _botAccountMap[botGuid] = accountId;
     TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::StoreAccountForBot - Stored account {} for bot {}",
         accountId, botGuid.ToString());
+
+    // CRITICAL FIX: Register JIT bot in tracking table so cleanup doesn't delete BotSpawner's characters
+    // This table allows CleanupOrphanedBotCharacters() to target ONLY JIT-created bots
+    // NOTE: playerbot_jit_bots is in the PLAYERBOT database, not characters
+    try
+    {
+        sPlayerbotDatabase->Execute(Trinity::StringFormat(
+            "INSERT INTO playerbot_jit_bots (bot_guid, account_id, instance_type, request_id) "
+            "VALUES ({}, {}, 'DUNGEON', 0) "
+            "ON DUPLICATE KEY UPDATE created_at = CURRENT_TIMESTAMP",
+            botGuid.GetCounter(), accountId));
+
+        TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::StoreAccountForBot - Registered JIT bot {} in tracking table",
+            botGuid.ToString());
+    }
+    catch (std::exception const& e)
+    {
+        TC_LOG_WARN("playerbot.jit", "JITBotFactory::StoreAccountForBot - Failed to register JIT bot {} in tracking table: {}",
+            botGuid.ToString(), e.what());
+    }
 }
 
 // ============================================================================
@@ -618,6 +696,11 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
         {
             TC_LOG_ERROR("playerbot.jit", "JITBotFactory::ProcessRequest - Cannot ensure account capacity for {} accounts",
                 accountsNeeded);
+            BOT_TRACK_CREATION_ERROR(
+                CreationErrorCode::ACCOUNT_ALLOCATION_FAILED,
+                fmt::format("Cannot ensure account capacity for {} accounts", accountsNeeded),
+                ObjectGuid::Empty,
+                0);
             progress.status = RequestStatus::Failed;
             progress.errorMessage = "Failed to ensure account capacity";
             return progress;
@@ -637,23 +720,59 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
         progress.createdBots = std::move(createdBots);
         progress.created = static_cast<uint32>(progress.createdBots.size());
 
-        // Determine status - require all bots or very close (allow 1 missing for large requests)
-        // For dungeons/arenas: must be exact
-        // For BGs/raids: allow 1 missing if > 10 total needed
-        uint32 allowedMissing = (progress.totalNeeded > 10) ? 1 : 0;
+        // LOGIN BOTS: After character creation, login each bot so they're available in-world
+        // This is CRITICAL for the onComplete callback to find them via ObjectAccessor::FindPlayer()
+        uint32 loginSuccessCount = 0;
+        for (ObjectGuid const& botGuid : progress.createdBots)
+        {
+            // Get the account ID we stored during creation
+            uint32 accountId = GetAccountForBot(botGuid);
+            if (accountId == 0)
+            {
+                TC_LOG_WARN("playerbot.jit", "JITBotFactory::ProcessRequest - No account ID stored for bot {}",
+                    botGuid.ToString());
+                BOT_TRACK_SPAWN_ERROR(
+                    SpawnErrorCode::NO_ACCOUNT_AVAILABLE,
+                    fmt::format("No account ID stored for bot {}", botGuid.ToString()),
+                    botGuid,
+                    0);
+                continue;
+            }
+
+            // Login the bot using BotWorldSessionMgr
+            if (sBotWorldSessionMgr->AddPlayerBot(botGuid, accountId, true))  // bypassLimit=true for JIT bots
+            {
+                ++loginSuccessCount;
+                TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in bot {} (account {})",
+                    botGuid.ToString(), accountId);
+                BOT_TRACK_SUCCESS(BotOperationCategory::SPAWN, "JITBotFactory::LoginBot", botGuid);
+            }
+            else
+            {
+                TC_LOG_WARN("playerbot.jit", "JITBotFactory::ProcessRequest - Failed to login bot {} (account {})",
+                    botGuid.ToString(), accountId);
+                BOT_TRACK_SPAWN_ERROR(
+                    SpawnErrorCode::LOGIN_FAILED,
+                    fmt::format("Failed to login JIT bot {} (account {})", botGuid.ToString(), accountId),
+                    botGuid,
+                    accountId);
+            }
+        }
+
+        TC_LOG_INFO("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in {}/{} bots",
+            loginSuccessCount, progress.created);
+
+        // Determine status - STRICT requirements to ensure full groups
+        // With proper JIT bot cleanup on shutdown, all bots should be creatable
+        // If this fails, there's an underlying issue that needs fixing, not masking
         if (progress.created >= progress.totalNeeded)
         {
             progress.status = RequestStatus::Completed;
         }
-        else if (progress.created + allowedMissing >= progress.totalNeeded)
-        {
-            progress.status = RequestStatus::PartiallyCompleted;
-            progress.errorMessage = fmt::format("Near complete: {}/{} bots created", progress.created, progress.totalNeeded);
-        }
         else
         {
             progress.status = RequestStatus::Failed;
-            progress.errorMessage = fmt::format("Failed to create enough bots: {}/{}", progress.created, progress.totalNeeded);
+            progress.errorMessage = fmt::format("Failed to create all bots: {}/{}", progress.created, progress.totalNeeded);
         }
 
         auto endTime = std::chrono::system_clock::now();
@@ -669,6 +788,11 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
         progress.errorMessage = fmt::format("Exception: {}", e.what());
         TC_LOG_ERROR("playerbot.jit", "JITBotFactory::ProcessRequest - Request {} failed with exception: {}",
             request.requestId, e.what());
+        BOT_TRACK_CREATION_ERROR(
+            CreationErrorCode::CLONE_ENGINE_FAILED,
+            fmt::format("JIT request {} failed with exception: {}", request.requestId, e.what()),
+            ObjectGuid::Empty,
+            0);
     }
 
     return progress;
@@ -737,6 +861,15 @@ std::vector<ObjectGuid> JITBotFactory::BatchCloneWithRetry(
     {
         TC_LOG_WARN("playerbot.jit", "BatchCloneWithRetry - Failed to create {} {} bots after {} retries",
             remaining, BotRoleToString(baseReq.role), maxRetries);
+        // Track each failed bot creation attempt
+        for (uint32 i = 0; i < remaining; ++i)
+        {
+            BOT_TRACK_CREATION_ERROR(
+                CreationErrorCode::CLONE_ENGINE_FAILED,
+                fmt::format("Failed to clone {} bot after {} retries", BotRoleToString(baseReq.role), maxRetries),
+                ObjectGuid::Empty,
+                0);
+        }
     }
 
     return result;
@@ -1093,6 +1226,82 @@ void JITBotFactory::ProcessTimeouts()
         {
             ++it;
         }
+    }
+}
+
+// ============================================================================
+// ORPHANED CHARACTER CLEANUP
+// ============================================================================
+
+void JITBotFactory::CleanupOrphanedBotCharacters()
+{
+    TC_LOG_INFO("playerbot.jit", "JITBotFactory::CleanupOrphanedBotCharacters - Starting cleanup of orphaned JIT bot characters");
+
+    // CRITICAL FIX: Only delete characters that are registered in the playerbot_jit_bots tracking table.
+    // This preserves BotSpawner's world population characters which are designed to be REUSED.
+    //
+    // Previous implementation deleted ALL characters on @playerbot.local accounts, which:
+    // 1. Destroyed BotSpawner's reusable character pool
+    // 2. Caused unnecessary database churn on every restart
+    // 3. Defeated the purpose of BotSpawner's character reuse optimization
+    //
+    // Now we ONLY delete JIT bots (tracked in playerbot_jit_bots) - BotSpawner bots are preserved.
+
+    uint32 jitBotsDeleted = 0;
+
+    try
+    {
+        // Step 1: Query the JIT bot tracking table for orphaned JIT bots
+        // These are bots that were created by JITBotFactory but not cleaned up
+        // (e.g., due to server crash before proper shutdown)
+        // NOTE: playerbot_jit_bots is in the PLAYERBOT database, not characters
+        QueryResult jitBotResult = sPlayerbotDatabase->Query(
+            "SELECT jb.bot_guid, jb.account_id FROM playerbot_jit_bots jb");
+
+        if (!jitBotResult)
+        {
+            TC_LOG_INFO("playerbot.jit", "JITBotFactory::CleanupOrphanedBotCharacters - No orphaned JIT bots found in tracking table");
+            return;
+        }
+
+        // Collect JIT bot GUIDs to delete
+        std::vector<std::pair<ObjectGuid, uint32>> jitBotsToDelete;
+        do
+        {
+            Field* fields = jitBotResult->Fetch();
+            ObjectGuid::LowType guidLow = fields[0].GetUInt64();
+            uint32 accountId = fields[1].GetUInt32();
+            ObjectGuid botGuid = ObjectGuid::Create<HighGuid::Player>(guidLow);
+            jitBotsToDelete.push_back({botGuid, accountId});
+        } while (jitBotResult->NextRow());
+
+        TC_LOG_INFO("playerbot.jit", "JITBotFactory::CleanupOrphanedBotCharacters - Found {} orphaned JIT bots to clean up",
+            jitBotsToDelete.size());
+
+        // Step 2: Delete each JIT bot character
+        for (auto const& [botGuid, accountId] : jitBotsToDelete)
+        {
+            // Delete the character using TrinityCore's proper deletion
+            // This handles all related tables (inventory, spells, skills, etc.)
+            Player::DeleteFromDB(botGuid, accountId, false /* updateRealmChars */, true /* deleteFinally */);
+            ++jitBotsDeleted;
+
+            TC_LOG_DEBUG("playerbot.jit",
+                "JITBotFactory::CleanupOrphanedBotCharacters - Deleted orphaned JIT bot {} from account {}",
+                botGuid.ToString(), accountId);
+        }
+
+        // Step 3: Clear the tracking table since we've deleted all tracked bots
+        sPlayerbotDatabase->Execute("TRUNCATE TABLE playerbot_jit_bots");
+
+        TC_LOG_INFO("playerbot.jit",
+            "JITBotFactory::CleanupOrphanedBotCharacters - Cleanup complete: deleted {} orphaned JIT bots (BotSpawner characters preserved)",
+            jitBotsDeleted);
+    }
+    catch (std::exception const& e)
+    {
+        TC_LOG_ERROR("playerbot.jit",
+            "JITBotFactory::CleanupOrphanedBotCharacters - Exception during cleanup: {}", e.what());
     }
 }
 

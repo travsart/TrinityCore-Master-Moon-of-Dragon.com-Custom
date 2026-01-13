@@ -10,6 +10,7 @@
 #include "BGBotManager.h"
 #include "../Core/PlayerBotHooks.h"
 #include "../Core/PlayerBotHelpers.h"
+#include "../Core/Diagnostics/BotOperationTracker.h"
 #include "../Session/BotWorldSessionMgr.h"
 #include "Player.h"
 #include "Group.h"
@@ -33,6 +34,7 @@ namespace Playerbot
 BGBotManager::BGBotManager()
     : _enabled(false)
     , _updateAccumulator(0)
+    , _invitationCheckAccumulator(0)
     , _initialized(false)
 {
 }
@@ -68,6 +70,7 @@ void BGBotManager::Initialize()
     _humanPlayers.clear();
     _bgInstanceBots.clear();
     _updateAccumulator = 0;
+    _invitationCheckAccumulator = 0;
 
     _enabled = true;
     _initialized = true;
@@ -109,11 +112,21 @@ void BGBotManager::Update(uint32 diff)
         return;
 
     _updateAccumulator += diff;
+    _invitationCheckAccumulator += diff;
 
+    // Periodic cleanup (every 5 minutes)
     if (_updateAccumulator >= CLEANUP_INTERVAL)
     {
         CleanupStaleAssignments();
         _updateAccumulator = 0;
+    }
+
+    // Frequent invitation check (every 1 second)
+    // This is necessary because the core BG system doesn't notify us when bots are invited
+    if (_invitationCheckAccumulator >= INVITATION_CHECK_INTERVAL)
+    {
+        ProcessPendingInvitations();
+        _invitationCheckAccumulator = 0;
     }
 }
 
@@ -538,6 +551,57 @@ bool BGBotManager::QueueBotForBG(Player* bot, BattlegroundTypeId bgTypeId, Battl
     return QueueBot(bot, bgTypeId, bracket);
 }
 
+bool BGBotManager::QueueBotForBGWithTracking(Player* bot, BattlegroundTypeId bgTypeId,
+                                              BattlegroundBracketId bracket, ObjectGuid humanPlayerGuid)
+{
+    // Extended version that registers bot in _queuedBots for proper invitation handling
+    if (!bot || !bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot.bg", "QueueBotForBGWithTracking: Bot is null or not in world");
+        BOT_TRACK_BG_ERROR(
+            BGQueueErrorCode::BOT_UNAVAILABLE,
+            "Bot is null or not in world for BG queue",
+            ObjectGuid::Empty,
+            humanPlayerGuid,
+            static_cast<uint32>(bgTypeId));
+        return false;
+    }
+
+    if (!_enabled || !_initialized)
+    {
+        TC_LOG_WARN("module.playerbot.bg", "QueueBotForBGWithTracking: BGBotManager not enabled/initialized");
+        BOT_TRACK_BG_ERROR(
+            BGQueueErrorCode::BOT_UNAVAILABLE,
+            "BGBotManager not enabled/initialized",
+            bot->GetGUID(),
+            humanPlayerGuid,
+            static_cast<uint32>(bgTypeId));
+        return false;
+    }
+
+    // Queue the bot in the BG queue
+    if (!QueueBot(bot, bgTypeId, bracket))
+    {
+        TC_LOG_WARN("module.playerbot.bg", "QueueBotForBGWithTracking: Failed to queue bot {} for BG {}",
+            bot->GetName(), static_cast<uint32>(bgTypeId));
+        // Error already tracked in QueueBot
+        return false;
+    }
+
+    // CRITICAL: Register the bot in _queuedBots so OnInvitationReceived will process it
+    std::lock_guard lock(_mutex);
+    RegisterBotAssignment(humanPlayerGuid, bot->GetGUID(), bgTypeId, bot->GetTeam());
+
+    TC_LOG_INFO("module.playerbot.bg",
+        "QueueBotForBGWithTracking: Bot {} queued and registered for BG {} (tracking human {})",
+        bot->GetName(), static_cast<uint32>(bgTypeId), humanPlayerGuid.ToString());
+
+    // Track success
+    BOT_TRACK_SUCCESS(BotOperationCategory::BG_QUEUE, "BGBotManager::QueueBotForBGWithTracking", bot->GetGUID());
+
+    return true;
+}
+
 void BGBotManager::CalculateNeededBots(BattlegroundTypeId bgTypeId, Team humanTeam,
                                         uint32& allianceNeeded, uint32& hordeNeeded) const
 {
@@ -564,19 +628,47 @@ bool BGBotManager::QueueBot(Player* bot, BattlegroundTypeId bgTypeId, Battlegrou
 
     // Get the BG template to find the map ID
     BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);
-    if (!bgTemplate || bgTemplate->MapIDs.empty())
+    if (!bgTemplate)
     {
         TC_LOG_ERROR("module.playerbot.bg", "BGBotManager::QueueBot - No template for BG type {}", static_cast<uint32>(bgTypeId));
+        BOT_TRACK_BG_ERROR(
+            BGQueueErrorCode::BG_TEMPLATE_NOT_FOUND,
+            fmt::format("No BG template for type {}", static_cast<uint32>(bgTypeId)),
+            bot ? bot->GetGUID() : ObjectGuid::Empty,
+            ObjectGuid::Empty,
+            static_cast<uint32>(bgTypeId));
         return false;
     }
 
-    // Get the bracket entry for this bot's level
-    PVPDifficultyEntry const* bracketEntry = DB2Manager::GetBattlegroundBracketByLevel(
-        bgTemplate->MapIDs.front(), bot->GetLevel());
+    // CRITICAL FIX: For Random BG and other meta-queues, MapIDs might be empty
+    // We need to get bracket from PvpDifficulty directly if no map is available
+    PVPDifficultyEntry const* bracketEntry = nullptr;
+
+    if (!bgTemplate->MapIDs.empty())
+    {
+        // Normal BG with dedicated map
+        bracketEntry = DB2Manager::GetBattlegroundBracketByLevel(
+            bgTemplate->MapIDs.front(), bot->GetLevel());
+    }
+    else
+    {
+        // Random BG or meta-queue - use any available BG's bracket for this level
+        // Get bracket from WSG (map 489) as a fallback since it covers all levels
+        bracketEntry = DB2Manager::GetBattlegroundBracketByLevel(489, bot->GetLevel());
+        TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::QueueBot - Using fallback bracket for meta-queue BG type {} (bot level {})",
+                     static_cast<uint32>(bgTypeId), bot->GetLevel());
+    }
+
     if (!bracketEntry)
     {
         TC_LOG_ERROR("module.playerbot.bg", "BGBotManager::QueueBot - No bracket entry for bot {} at level {}",
                      bot->GetName(), bot->GetLevel());
+        BOT_TRACK_BG_ERROR(
+            BGQueueErrorCode::BRACKET_NOT_FOUND,
+            fmt::format("No PVP bracket for bot {} at level {}", bot->GetName(), bot->GetLevel()),
+            bot->GetGUID(),
+            ObjectGuid::Empty,
+            static_cast<uint32>(bgTypeId));
         return false;
     }
 
@@ -589,8 +681,33 @@ bool BGBotManager::QueueBot(Player* bot, BattlegroundTypeId bgTypeId, Battlegrou
         0       // TeamSize (0 for regular BG)
     );
 
+    // CRITICAL FIX: Check if bot is already in this queue (prevents duplicate adds)
+    if (bot->GetBattlegroundQueueIndex(bgQueueTypeId) < PLAYER_MAX_BATTLEGROUND_QUEUES)
+    {
+        TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::QueueBot - Bot {} already in queue for BG type {}",
+                     bot->GetName(), static_cast<uint32>(bgTypeId));
+        return true;  // Already queued, consider it success
+    }
+
+    // Check if bot has free queue slots
+    if (!bot->HasFreeBattlegroundQueueId())
+    {
+        TC_LOG_WARN("module.playerbot.bg", "BGBotManager::QueueBot - Bot {} has no free BG queue slots",
+                    bot->GetName());
+        BOT_TRACK_BG_ERROR(
+            BGQueueErrorCode::BOT_QUEUE_FULL,
+            fmt::format("Bot {} has no free BG queue slots", bot->GetName()),
+            bot->GetGUID(),
+            ObjectGuid::Empty,
+            static_cast<uint32>(bgTypeId));
+        return false;
+    }
+
+    // Get the BG queue
+    BattlegroundQueue& bgQueue = sBattlegroundMgr->GetBattlegroundQueue(bgQueueTypeId);
+
     // AddGroup takes 7 params: (leader, group, team, bracketEntry, isPremade, ArenaRating, MatchmakerRating)
-    GroupQueueInfo* ginfo = sBattlegroundMgr->GetBattlegroundQueue(bgQueueTypeId).AddGroup(
+    GroupQueueInfo* ginfo = bgQueue.AddGroup(
         bot,
         nullptr,        // No group
         bot->GetTeam(),
@@ -602,11 +719,28 @@ bool BGBotManager::QueueBot(Player* bot, BattlegroundTypeId bgTypeId, Battlegrou
 
     if (ginfo)
     {
-        TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::QueueBot - Bot {} queued for BG type {}",
-                     bot->GetName(), static_cast<uint32>(bgTypeId));
+        // CRITICAL FIX: Update bot's player state to know it's in the queue
+        // This is required for the BG system to properly track the bot
+        uint32 queueSlot = bot->AddBattlegroundQueueId(bgQueueTypeId);
+
+        TC_LOG_INFO("module.playerbot.bg", "BGBotManager::QueueBot - Bot {} queued for BG type {} in slot {} (bracket {})",
+                     bot->GetName(), static_cast<uint32>(bgTypeId), queueSlot, static_cast<uint32>(bracketEntry->GetBracketId()));
+
+        // CRITICAL FIX: Schedule queue update to trigger match-making
+        // Without this, the queue won't be processed to start the BG
+        sBattlegroundMgr->ScheduleQueueUpdate(0, bgQueueTypeId, bracketEntry->GetBracketId());
+
         return true;
     }
 
+    TC_LOG_ERROR("module.playerbot.bg", "BGBotManager::QueueBot - AddGroup failed for bot {} (BG type {})",
+                 bot->GetName(), static_cast<uint32>(bgTypeId));
+    BOT_TRACK_BG_ERROR(
+        BGQueueErrorCode::ADD_GROUP_FAILED,
+        fmt::format("BG queue AddGroup failed for bot {} (BG type {})", bot->GetName(), static_cast<uint32>(bgTypeId)),
+        bot->GetGUID(),
+        ObjectGuid::Empty,
+        static_cast<uint32>(bgTypeId));
     return false;
 }
 
@@ -615,17 +749,24 @@ void BGBotManager::RemoveBotFromQueue(Player* bot)
     if (!bot)
         return;
 
-    // Remove from all BG queues
-    for (uint8 i = 0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
+    // Remove from all BG queues - iterate backwards since we're modifying the array
+    for (int8 i = PLAYER_MAX_BATTLEGROUND_QUEUES - 1; i >= 0; --i)
     {
         BattlegroundQueueTypeId bgQueueTypeId = bot->GetBattlegroundQueueTypeId(i);
         if (bgQueueTypeId != BATTLEGROUND_QUEUE_NONE)
         {
+            TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::RemoveBotFromQueue - Removing bot {} from queue slot {} (BG type {})",
+                         bot->GetName(), i, bgQueueTypeId.BattlemasterListId);
+
+            // Remove from the queue system
             sBattlegroundMgr->GetBattlegroundQueue(bgQueueTypeId).RemovePlayer(bot->GetGUID(), false);
+
+            // Clear the bot's queue slot
+            bot->RemoveBattlegroundQueueId(bgQueueTypeId);
         }
     }
 
-    TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::RemoveBotFromQueue - Bot {} removed from queue",
+    TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::RemoveBotFromQueue - Bot {} removed from all BG queues",
                  bot->GetName());
 }
 
@@ -642,18 +783,16 @@ std::vector<Player*> BGBotManager::FindAvailableBots(Team team, uint8 minLevel, 
     uint32 unavailable = 0;
     uint32 alreadyQueued = 0;
 
-    // Iterate through all online sessions and find bots
-    for (auto const& [accountId, session] : sWorld->GetAllSessions())
+    // CRITICAL FIX: Use BotWorldSessionMgr to get bots, not sWorld->GetAllSessions()
+    // Bot sessions are stored in BotWorldSessionMgr::_botSessions, NOT in World's session map
+    std::vector<Player*> allBots = sBotWorldSessionMgr->GetAllBotPlayers();
+
+    TC_LOG_DEBUG("module.playerbot.bg",
+        "BGBotManager::FindAvailableBots - Got {} bots from BotWorldSessionMgr", allBots.size());
+
+    for (Player* player : allBots)
     {
-        if (!session)
-            continue;
-
-        Player* player = session->GetPlayer();
         if (!player || !player->IsInWorld())
-            continue;
-
-        // Check if this is a bot
-        if (!PlayerBotHooks::IsPlayerBot(player))
             continue;
 
         ++totalBots;
@@ -816,6 +955,160 @@ bool BGBotManager::IsBotAvailable(Player* bot) const
         return false;
 
     return true;
+}
+
+// ============================================================================
+// INVITATION PROCESSING
+// ============================================================================
+
+void BGBotManager::ProcessPendingInvitations()
+{
+    std::lock_guard lock(_mutex);
+
+    if (_queuedBots.empty())
+        return;
+
+    // Collect bots that need to accept invitations
+    // We collect first to avoid modifying _queuedBots while iterating
+    std::vector<std::pair<ObjectGuid, BotQueueInfo>> botsToAccept;
+
+    for (auto const& [botGuid, queueInfo] : _queuedBots)
+    {
+        // Skip bots that already have a BG instance assigned (already accepted)
+        if (queueInfo.bgInstanceGuid != 0)
+            continue;
+
+        Player* bot = ObjectAccessor::FindPlayer(botGuid);
+        if (!bot || !bot->IsInWorld())
+            continue;
+
+        // Check all BG queue slots for pending invitations
+        for (uint8 i = 0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
+        {
+            BattlegroundQueueTypeId bgQueueTypeId = bot->GetBattlegroundQueueTypeId(i);
+            if (bgQueueTypeId == BATTLEGROUND_QUEUE_NONE)
+                continue;
+
+            // Check if bot is invited for this queue type
+            if (bot->IsInvitedForBattlegroundQueueType(bgQueueTypeId))
+            {
+                botsToAccept.push_back({botGuid, queueInfo});
+                break;  // Only need to find one invitation
+            }
+        }
+    }
+
+    // Now process the bots that need to accept invitations
+    for (auto const& [botGuid, queueInfo] : botsToAccept)
+    {
+        Player* bot = ObjectAccessor::FindPlayer(botGuid);
+        if (!bot || !bot->IsInWorld())
+            continue;
+
+        // Find the queue slot with the invitation
+        for (uint8 queueSlot = 0; queueSlot < PLAYER_MAX_BATTLEGROUND_QUEUES; ++queueSlot)
+        {
+            BattlegroundQueueTypeId bgQueueTypeId = bot->GetBattlegroundQueueTypeId(queueSlot);
+            if (bgQueueTypeId == BATTLEGROUND_QUEUE_NONE)
+                continue;
+
+            if (!bot->IsInvitedForBattlegroundQueueType(bgQueueTypeId))
+                continue;
+
+            // Get queue info to find the BG instance
+            BattlegroundQueue& bgQueue = sBattlegroundMgr->GetBattlegroundQueue(bgQueueTypeId);
+
+            GroupQueueInfo ginfo;
+            if (!bgQueue.GetPlayerGroupInfoData(bot->GetGUID(), &ginfo))
+            {
+                TC_LOG_WARN("module.playerbot.bg",
+                    "ProcessPendingInvitations - Bot {} has invitation but no GroupQueueInfo",
+                    bot->GetName());
+                continue;
+            }
+
+            if (!ginfo.IsInvitedToBGInstanceGUID)
+            {
+                TC_LOG_WARN("module.playerbot.bg",
+                    "ProcessPendingInvitations - Bot {} IsInvited=true but IsInvitedToBGInstanceGUID=0",
+                    bot->GetName());
+                continue;
+            }
+
+            BattlegroundTypeId bgTypeId = BattlegroundTypeId(bgQueueTypeId.BattlemasterListId);
+            Battleground* bg = sBattlegroundMgr->GetBattleground(
+                ginfo.IsInvitedToBGInstanceGUID,
+                bgTypeId == BATTLEGROUND_AA ? BATTLEGROUND_TYPE_NONE : bgTypeId);
+
+            if (!bg)
+            {
+                TC_LOG_WARN("module.playerbot.bg",
+                    "ProcessPendingInvitations - Bot {} invited to BG instance {} but BG not found",
+                    bot->GetName(), ginfo.IsInvitedToBGInstanceGUID);
+                continue;
+            }
+
+            TC_LOG_INFO("module.playerbot.bg",
+                "ProcessPendingInvitations - Bot {} auto-accepting BG {} (instance {}, type {})",
+                bot->GetName(), bg->GetName(), bg->GetInstanceID(), static_cast<uint32>(bgTypeId));
+
+            // =================================================================
+            // AUTO-ACCEPT LOGIC (mirrors HandleBattleFieldPortOpcode)
+            // =================================================================
+
+            // Check for Freeze debuff
+            if (bot->HasAura(9454))
+            {
+                TC_LOG_DEBUG("module.playerbot.bg",
+                    "ProcessPendingInvitations - Bot {} has Freeze aura, skipping",
+                    bot->GetName());
+                continue;
+            }
+
+            // Set battleground entry point (for return after BG ends)
+            if (!bot->InBattleground())
+                bot->SetBattlegroundEntryPoint();
+
+            // Resurrect if dead
+            if (!bot->IsAlive())
+            {
+                bot->ResurrectPlayer(1.0f);
+                bot->SpawnCorpseBones();
+            }
+
+            // Stop taxi flight
+            bot->FinishTaxiFlight();
+
+            // Remove from queue
+            bgQueue.RemovePlayer(bot->GetGUID(), false);
+
+            // If bot was in another BG, remove from it
+            if (Battleground* currentBg = bot->GetBattleground())
+                currentBg->RemovePlayerAtLeave(bot->GetGUID(), false, true);
+
+            // Set destination BG
+            bot->SetBattlegroundId(bg->GetInstanceID(), bg->GetTypeID(), bgQueueTypeId);
+            bot->SetBGTeam(ginfo.Team);
+
+            // Update our tracking
+            auto itr = _queuedBots.find(botGuid);
+            if (itr != _queuedBots.end())
+            {
+                itr->second.bgInstanceGuid = bg->GetInstanceID();
+            }
+            _bgInstanceBots[bg->GetInstanceID()].insert(botGuid);
+
+            // Teleport to battleground
+            BattlegroundMgr::SendToBattleground(bot, bg);
+
+            TC_LOG_INFO("module.playerbot.bg",
+                "ProcessPendingInvitations - Bot {} teleporting to BG {} (Team: {})",
+                bot->GetName(), bg->GetName(),
+                ginfo.Team == ALLIANCE ? "Alliance" : "Horde");
+
+            break;  // Only process one queue slot per bot per update
+        }
+    }
 }
 
 } // namespace Playerbot

@@ -8,6 +8,7 @@
 
 #include "BotGearFactory.h"
 #include "EquipmentManager.h"
+#include "../Core/Diagnostics/BotOperationTracker.h"
 #include "Player.h"
 #include "Item.h"
 #include "Bag.h"
@@ -183,6 +184,11 @@ GearSet BotGearFactory::BuildGearSet(uint8 cls, uint32 specId, uint32 level, Tea
     if (!IsReady())
     {
         TC_LOG_ERROR("playerbot.gear", "BotGearFactory: Not ready, cache not built");
+        BOT_TRACK_EQUIPMENT_ERROR(
+            EquipmentErrorCode::CACHE_NOT_READY,
+            "BotGearFactory cache not ready - cannot build gear set",
+            ObjectGuid::Empty,
+            0, 0);
         return GearSet();
     }
 
@@ -242,6 +248,11 @@ bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
         if (!proto)
         {
             TC_LOG_ERROR("playerbot.gear", "BotGearFactory: Invalid item entry {} for slot {}", itemEntry, slot);
+            BOT_TRACK_EQUIPMENT_ERROR(
+                EquipmentErrorCode::ITEM_TEMPLATE_NOT_FOUND,
+                fmt::format("Invalid item template {} for slot {}", itemEntry, slot),
+                player->GetGUID(),
+                itemEntry, slot);
             ++itemsFailed;
             continue;
         }
@@ -255,6 +266,11 @@ bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
         {
             TC_LOG_WARN("playerbot.gear", "BotGearFactory: Cannot equip item {} (entry {}) in slot {} for player {}: error {}",
                         proto->GetDefaultLocaleName(), itemEntry, slot, player->GetName(), uint32(equipResult));
+            BOT_TRACK_EQUIPMENT_ERROR(
+                EquipmentErrorCode::CANNOT_EQUIP_ITEM,
+                fmt::format("Cannot equip {} (entry {}) in slot {}: error {}", proto->GetDefaultLocaleName(), itemEntry, slot, uint32(equipResult)),
+                player->GetGUID(),
+                itemEntry, slot);
             ++itemsFailed;
             continue;
         }
@@ -268,11 +284,17 @@ bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
             TC_LOG_DEBUG("playerbot.gear", "BotGearFactory: Equipped {} (entry {}, ilvl {}) in slot {} for player {}",
                          proto->GetDefaultLocaleName(), itemEntry, proto->GetBaseItemLevel(), slot, player->GetName());
             ++itemsEquipped;
+            BOT_TRACK_SUCCESS(BotOperationCategory::EQUIPMENT, "BotGearFactory::EquipItem", player->GetGUID());
         }
         else
         {
             TC_LOG_ERROR("playerbot.gear", "BotGearFactory: EquipNewItem failed for item {} in slot {} for player {}",
                          itemEntry, slot, player->GetName());
+            BOT_TRACK_EQUIPMENT_ERROR(
+                EquipmentErrorCode::EQUIP_FAILED,
+                fmt::format("EquipNewItem failed for {} in slot {}", itemEntry, slot),
+                player->GetGUID(),
+                itemEntry, slot);
             ++itemsFailed;
         }
     }
@@ -534,6 +556,11 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
     {
         TC_LOG_WARN("playerbot.gear", "BotGearFactory::SelectBestItem - No appropriate items for class {} level {} slot {}",
                     cls, level, slot);
+        BOT_TRACK_EQUIPMENT_ERROR(
+            EquipmentErrorCode::NO_ITEMS_FOR_SLOT,
+            fmt::format("No appropriate items for class {} level {} slot {} (checked {} candidates)", cls, level, slot, items->size()),
+            ObjectGuid::Empty,
+            0, slot);
         return 0;
     }
 
@@ -580,7 +607,9 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
         case EQUIPMENT_SLOT_TRINKET2:   return { INVTYPE_TRINKET };
         case EQUIPMENT_SLOT_BACK:       return { INVTYPE_CLOAK };
         case EQUIPMENT_SLOT_MAINHAND:   return { INVTYPE_WEAPON, INVTYPE_2HWEAPON, INVTYPE_WEAPONMAINHAND, INVTYPE_RANGEDRIGHT };
-        case EQUIPMENT_SLOT_OFFHAND:    return { INVTYPE_SHIELD, INVTYPE_HOLDABLE, INVTYPE_WEAPONOFFHAND };
+        // CRITICAL FIX: Include INVTYPE_WEAPON for dual-wield classes (Rogue, Enh Shaman, Fury Warrior, etc.)
+        // Most one-hand weapons are INVTYPE_WEAPON, not INVTYPE_WEAPONOFFHAND
+        case EQUIPMENT_SLOT_OFFHAND:    return { INVTYPE_WEAPON, INVTYPE_SHIELD, INVTYPE_HOLDABLE, INVTYPE_WEAPONOFFHAND };
         case EQUIPMENT_SLOT_TABARD:     return { INVTYPE_TABARD };
         default:
             TC_LOG_WARN("playerbot.gear", "BotGearFactory::GetInventoryTypesForSlot - Unknown slot {}", slot);
@@ -739,15 +768,13 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
             };
 
         case CLASS_ROGUE:
+            // CRITICAL FIX: Modern WoW (The War Within) - Rogues can only use melee weapons
+            // Ranged weapons (bow, gun, crossbow, thrown) were removed when ranged slot was eliminated
             return {
                 ITEM_SUBCLASS_WEAPON_DAGGER,
                 ITEM_SUBCLASS_WEAPON_SWORD,
                 ITEM_SUBCLASS_WEAPON_MACE,
-                ITEM_SUBCLASS_WEAPON_FIST_WEAPON,
-                ITEM_SUBCLASS_WEAPON_BOW,
-                ITEM_SUBCLASS_WEAPON_GUN,
-                ITEM_SUBCLASS_WEAPON_CROSSBOW,
-                ITEM_SUBCLASS_WEAPON_THROWN
+                ITEM_SUBCLASS_WEAPON_FIST_WEAPON
             };
 
         case CLASS_PRIEST:

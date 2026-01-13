@@ -18,6 +18,7 @@
 #ifndef _LFGBOTMANAGER_H
 #define _LFGBOTMANAGER_H
 
+#include <chrono>
 #include "Common.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
@@ -312,6 +313,33 @@ private:
 
     /// Update accumulator for periodic cleanup
     uint32 _updateAccumulator;
+
+    /// Pending JIT bot info - bots that were created but need to be queued once loaded
+    struct PendingJITBot
+    {
+        ObjectGuid botGuid;
+        ObjectGuid humanPlayerGuid;
+        lfg::LfgDungeonSet dungeons;
+        std::chrono::steady_clock::time_point createdAt;
+        uint32 retryCount = 0;
+    };
+
+    /// Pending JIT bots waiting to be queued
+    std::vector<PendingJITBot> _pendingJITBots;
+
+    /// Process pending JIT bots in Update
+    void ProcessPendingJITBots();
+
+    /// Max retries for pending bot queue
+    // RELIABILITY FIX: Increased from 30 (3s) to 100 (10s) to allow JIT bots more time to load
+    // JIT bots need time to: create character -> login -> apply gear -> be findable via ObjectAccessor
+    static constexpr uint32 MAX_PENDING_RETRIES = 100;  // ~10 seconds at 100ms interval
+
+    /// Pending check interval
+    static constexpr uint32 PENDING_CHECK_INTERVAL = 100;  // 100ms
+
+    /// Pending check accumulator
+    uint32 _pendingCheckAccumulator = 0;
 
     /// Cleanup interval in milliseconds (5 minutes)
     static constexpr uint32 CLEANUP_INTERVAL = 5 * MINUTE * IN_MILLISECONDS;

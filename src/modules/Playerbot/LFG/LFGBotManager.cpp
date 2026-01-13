@@ -17,6 +17,7 @@
 
 #include "LFGBotManager.h"
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
+#include "../Core/Diagnostics/BotOperationTracker.h"
 #include "LFGBotSelector.h"
 #include "LFGRoleDetector.h"
 #include "LFGGroupCoordinator.h"
@@ -31,6 +32,9 @@
 #include "Group.h"
 #include "GroupMgr.h"
 #include "../Core/PlayerBotHooks.h"
+
+// Use Playerbot namespace for error tracking enums and macros
+using namespace Playerbot;
 
 // Constructor
 LFGBotManager::LFGBotManager()
@@ -115,12 +119,89 @@ void LFGBotManager::Update(uint32 diff)
         return;
 
     _updateAccumulator += diff;
+    _pendingCheckAccumulator += diff;
+
+    // Process pending JIT bots frequently (every 100ms)
+    if (_pendingCheckAccumulator >= PENDING_CHECK_INTERVAL)
+    {
+        ProcessPendingJITBots();
+        _pendingCheckAccumulator = 0;
+    }
 
     // Periodic cleanup every CLEANUP_INTERVAL
     if (_updateAccumulator >= CLEANUP_INTERVAL)
     {
         CleanupStaleAssignments();
         _updateAccumulator = 0;
+    }
+}
+
+void LFGBotManager::ProcessPendingJITBots()
+{
+    if (_pendingJITBots.empty())
+        return;
+
+    std::lock_guard lock(_mutex);
+
+    auto it = _pendingJITBots.begin();
+    while (it != _pendingJITBots.end())
+    {
+        PendingJITBot& pending = *it;
+        pending.retryCount++;
+
+        // Check if bot is now loaded
+        if (Player* bot = ObjectAccessor::FindPlayer(pending.botGuid))
+        {
+            // Bot is loaded! Queue it for LFG
+            uint8 botRole = sLFGRoleDetector->DetectBotRole(bot);
+
+            if (QueueBot(bot, botRole, pending.dungeons))
+            {
+                RegisterBotAssignment(pending.humanPlayerGuid, pending.botGuid, botRole, pending.dungeons);
+                TC_LOG_INFO("playerbot.lfg", "ProcessPendingJITBots: Queued bot {} (level {}) as role {} for player {} after {} retries",
+                    bot->GetName(), bot->GetLevel(), botRole, pending.humanPlayerGuid.ToString(), pending.retryCount);
+            }
+            else
+            {
+                TC_LOG_WARN("playerbot.lfg", "ProcessPendingJITBots: Failed to queue bot {} for player {}",
+                    bot->GetName(), pending.humanPlayerGuid.ToString());
+
+                // Track queue failure (specific error already logged in QueueBot)
+                BOT_TRACK_LFG_ERROR(
+                    LFGQueueErrorCode::JOIN_LFG_FAILED,
+                    fmt::format("JIT bot {} failed to queue after loading for player {}",
+                        bot->GetName(), pending.humanPlayerGuid.ToString()),
+                    pending.botGuid,
+                    pending.humanPlayerGuid,
+                    pending.dungeons.empty() ? 0 : *pending.dungeons.begin());
+            }
+
+            it = _pendingJITBots.erase(it);
+        }
+        else if (pending.retryCount >= MAX_PENDING_RETRIES)
+        {
+            // Too many retries, give up
+            TC_LOG_WARN("playerbot.lfg", "ProcessPendingJITBots: Gave up on bot {} after {} retries ({}ms) - not loaded",
+                pending.botGuid.ToString(), pending.retryCount, pending.retryCount * PENDING_CHECK_INTERVAL);
+
+            // Track this failure for diagnostics
+            BOT_TRACK_LFG_ERROR(
+                LFGQueueErrorCode::JIT_BOT_TIMEOUT,
+                fmt::format("JIT bot {} failed to load after {}ms ({} retries) for player {}",
+                    pending.botGuid.ToString(),
+                    pending.retryCount * PENDING_CHECK_INTERVAL,
+                    pending.retryCount,
+                    pending.humanPlayerGuid.ToString()),
+                pending.botGuid,
+                pending.humanPlayerGuid,
+                pending.dungeons.empty() ? 0 : *pending.dungeons.begin());
+
+            it = _pendingJITBots.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
 }
 
@@ -413,6 +494,12 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
     if (!GetDungeonLevelRange(dungeonId, minLevel, maxLevel))
     {
         TC_LOG_ERROR("module.playerbot", "LFGBotManager::PopulateQueue - Could not get level range for dungeon {}", dungeonId);
+        BOT_TRACK_LFG_ERROR(
+            LFGQueueErrorCode::DUNGEON_NOT_FOUND,
+            fmt::format("Could not get level range for dungeon {}", dungeonId),
+            ObjectGuid::Empty,
+            playerGuid,
+            dungeonId);
         return 0;
     }
 
@@ -423,6 +510,12 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
     if (!humanPlayer)
     {
         TC_LOG_ERROR("module.playerbot", "LFGBotManager::PopulateQueue - Could not find player {}", playerGuid.ToString());
+        BOT_TRACK_LFG_ERROR(
+            LFGQueueErrorCode::HUMAN_PLAYER_NOT_FOUND,
+            fmt::format("Could not find player {} for LFG queue", playerGuid.ToString()),
+            ObjectGuid::Empty,
+            playerGuid,
+            dungeonId);
         return 0;
     }
 
@@ -533,21 +626,22 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
             TC_LOG_INFO("playerbot.lfg", "LFGBotManager JIT callback - {} bots created for player {}",
                 createdBots.size(), capturedPlayerGuid.ToString());
 
-            // Queue each created bot
-            for (ObjectGuid botGuid : createdBots)
+            // Add bots to pending list - they need time to login before we can queue them
+            // The Update() function will process pending bots once they're fully loaded
             {
-                if (Player* bot = ObjectAccessor::FindPlayer(botGuid))
+                std::lock_guard lock(_mutex);
+                for (ObjectGuid botGuid : createdBots)
                 {
-                    // Detect the bot's role based on spec
-                    uint8 botRole = sLFGRoleDetector->DetectBotRole(bot);
-
-                    if (QueueBot(bot, botRole, capturedDungeons))
-                    {
-                        std::lock_guard lock(_mutex);
-                        RegisterBotAssignment(capturedPlayerGuid, botGuid, botRole, capturedDungeons);
-                        TC_LOG_INFO("playerbot.lfg", "JIT: Queued newly created bot {} (level {}) as role {} for player {}",
-                            bot->GetName(), bot->GetLevel(), botRole, capturedPlayerGuid.ToString());
-                    }
+                    PendingJITBot pending;
+                    pending.botGuid = botGuid;
+                    pending.humanPlayerGuid = capturedPlayerGuid;
+                    pending.dungeons = capturedDungeons;
+                    pending.createdAt = std::chrono::steady_clock::now();
+                    pending.retryCount = 0;
+                    _pendingJITBots.push_back(std::move(pending));
+                    
+                    TC_LOG_INFO("playerbot.lfg", "JIT: Added bot {} to pending queue for player {}",
+                        botGuid.ToString(), capturedPlayerGuid.ToString());
                 }
             }
         };
@@ -557,6 +651,12 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
         {
             TC_LOG_ERROR("playerbot.lfg", "LFGBotManager JIT failed for player {}: {}",
                 capturedPlayerGuid.ToString(), error);
+            BOT_TRACK_LFG_ERROR(
+                LFGQueueErrorCode::JIT_BOT_TIMEOUT,
+                fmt::format("JIT bot creation failed for player {}: {}", capturedPlayerGuid.ToString(), error),
+                ObjectGuid::Empty,
+                capturedPlayerGuid,
+                0);
         };
 
         // Callback on progress (optional, just for logging)
@@ -754,12 +854,24 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
     {
         TC_LOG_DEBUG("module.playerbot", "LFGBotManager::QueueBot - Bot {} is level {} (minimum {} required for LFG)",
                      bot->GetName(), bot->GetLevel(), MIN_LFG_LEVEL);
+        BOT_TRACK_LFG_ERROR(
+            LFGQueueErrorCode::ROLE_VALIDATION_FAILED,  // Using role validation as closest error type
+            fmt::format("Bot {} level {} below minimum {} for LFG", bot->GetName(), bot->GetLevel(), MIN_LFG_LEVEL),
+            bot->GetGUID(),
+            ObjectGuid::Empty,
+            dungeons.empty() ? 0 : *dungeons.begin());
         return false;
     }
 
     if (bot->GetGroup())
     {
         TC_LOG_WARN("module.playerbot", "LFGBotManager::QueueBot - Bot {} is already in a group", bot->GetName());
+        BOT_TRACK_LFG_ERROR(
+            LFGQueueErrorCode::BOT_IN_GROUP,
+            fmt::format("Bot {} is already in a group", bot->GetName()),
+            bot->GetGUID(),
+            ObjectGuid::Empty,
+            dungeons.empty() ? 0 : *dungeons.begin());
         return false;
     }
 
@@ -767,6 +879,12 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
     if (bot->HasAura(lfg::LFG_SPELL_DUNGEON_DESERTER))
     {
         TC_LOG_DEBUG("module.playerbot", "LFGBotManager::QueueBot - Bot {} has deserter debuff", bot->GetName());
+        BOT_TRACK_LFG_ERROR(
+            LFGQueueErrorCode::BOT_HAS_DESERTER,
+            fmt::format("Bot {} has deserter debuff", bot->GetName()),
+            bot->GetGUID(),
+            ObjectGuid::Empty,
+            dungeons.empty() ? 0 : *dungeons.begin());
         return false;
     }
 
@@ -775,6 +893,8 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
     if (botState == lfg::LFG_STATE_QUEUED || botState == lfg::LFG_STATE_PROPOSAL || botState == lfg::LFG_STATE_ROLECHECK)
     {
         TC_LOG_DEBUG("module.playerbot", "LFGBotManager::QueueBot - Bot {} is already queued (state: {})", bot->GetName(), botState);
+        // Track as info (not error) - this is expected in some race conditions
+        BOT_TRACK_SUCCESS(BotOperationCategory::LFG_QUEUE, "BotAlreadyQueued", bot->GetGUID());
         return false;
     }
 
@@ -782,6 +902,12 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
     if (!sLFGRoleDetector->CanPerformRole(bot, role))
     {
         TC_LOG_WARN("module.playerbot", "LFGBotManager::QueueBot - Bot {} cannot perform role {}", bot->GetName(), role);
+        BOT_TRACK_LFG_ERROR(
+            LFGQueueErrorCode::ROLE_VALIDATION_FAILED,
+            fmt::format("Bot {} (class {}) cannot perform role {}", bot->GetName(), bot->GetClass(), role),
+            bot->GetGUID(),
+            ObjectGuid::Empty,
+            dungeons.empty() ? 0 : *dungeons.begin());
         return false;
     }
     uint8 validatedRole = role;
@@ -800,6 +926,9 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
                  bot->GetName(), validatedRole, dungeonsCopy.size(), bot->GetTeam());
 
     sLFGMgr->JoinLfg(bot, validatedRole, dungeonsCopy);
+
+    // Track successful queue operation
+    BOT_TRACK_SUCCESS(BotOperationCategory::LFG_QUEUE, "QueueBot", bot->GetGUID());
 
     return true;
 }
