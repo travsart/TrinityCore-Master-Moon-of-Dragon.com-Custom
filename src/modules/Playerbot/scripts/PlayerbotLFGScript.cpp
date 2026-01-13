@@ -21,6 +21,7 @@
 #include "GameTime.h"
 #include "LFGMgr.h"
 #include "LFG.h"
+#include "Group.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Core/PlayerBotHooks.h"
 #include "LFG/LFGBotManager.h"
@@ -64,6 +65,17 @@ public:
         // Poll for proposals that need bot acceptance
         PollProposals();
 
+        // CRITICAL FIX: Poll for newly formed groups to transfer leadership to human
+        // When LFG forms a group, the first queued player becomes leader.
+        // If a bot queued first, it becomes leader which breaks dungeon progression.
+        // This detects group formation and triggers leadership transfer.
+        PollGroupFormation();
+
+        // CRITICAL FIX: Poll for bots that need to teleport to dungeon
+        // When LFG group is formed, bots enter LFG_STATE_DUNGEON but may not
+        // complete teleportation if they missed the initial TeleportPlayer() call
+        PollDungeonTeleports();
+
         // Cleanup stale tracking data periodically
         CleanupStaleData();
     }
@@ -98,6 +110,9 @@ public:
         _processedProposals.clear();
         _lastQueueState.clear();
         _botProposalAcceptTimes.clear();
+        _botDungeonTeleportTimes.clear();
+        _processedGroups.clear();
+        _processedGroupTimes.clear();
     }
 
 private:
@@ -302,6 +317,243 @@ private:
     }
 
     /**
+     * @brief CRITICAL FIX: Poll for bots that need to teleport to dungeon
+     *
+     * When LFG forms a group, bots transition to LFG_STATE_DUNGEON and should
+     * be teleported. However, due to timing issues (async bot login, race conditions),
+     * bots may miss the initial TeleportPlayer() call in MakeNewGroup().
+     *
+     * This polling mechanism ensures bots eventually teleport by:
+     * 1. Detecting bots in LFG_STATE_DUNGEON state
+     * 2. Checking if they're in an LFG group with a dungeon assignment
+     * 3. Verifying they're not already in the correct dungeon
+     * 4. Forcing teleport via sLFGMgr->TeleportPlayer()
+     */
+    void PollDungeonTeleports()
+    {
+        // Get all online bots via BotWorldSessionMgr
+        std::vector<Player*> bots = Playerbot::sBotWorldSessionMgr->GetAllBotPlayers();
+
+        for (Player* bot : bots)
+        {
+            if (!bot || !bot->IsInWorld())
+                continue;
+
+            ObjectGuid botGuid = bot->GetGUID();
+
+            // Check if bot is in dungeon state
+            lfg::LfgState state = sLFGMgr->GetState(botGuid);
+            if (state != lfg::LFG_STATE_DUNGEON)
+                continue;
+
+            // Get the bot's group
+            Group* group = bot->GetGroup();
+            if (!group || !group->isLFGGroup())
+                continue;
+
+            // Get the dungeon map ID for this LFG group using public API
+            uint32 dungeonMapId = sLFGMgr->GetDungeonMapId(group->GetGUID());
+            if (dungeonMapId == 0)
+                continue;
+
+            // Check if bot is already in the correct dungeon
+            if (bot->GetMapId() == dungeonMapId)
+            {
+                // Already in dungeon, nothing to do
+                continue;
+            }
+
+            // Debounce: Check if we've tried to teleport this bot recently
+            uint32 now = GameTime::GetGameTimeMS();
+            auto lastTeleportIt = _botDungeonTeleportTimes.find(botGuid);
+            if (lastTeleportIt != _botDungeonTeleportTimes.end() &&
+                (now - lastTeleportIt->second) < 3000)  // 3 second cooldown between attempts
+            {
+                continue;
+            }
+
+            // Check if bot is currently being teleported (waiting for far teleport completion)
+            if (bot->IsBeingTeleportedFar() || bot->IsBeingTeleportedNear())
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "PollDungeonTeleports: Bot {} is already being teleported, waiting...",
+                    bot->GetName());
+                continue;
+            }
+
+            // Additional state checks before teleporting
+            if (!bot->IsAlive())
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "PollDungeonTeleports: Bot {} is dead, cannot teleport",
+                    bot->GetName());
+                continue;
+            }
+
+            // Record teleport attempt time
+            _botDungeonTeleportTimes[botGuid] = now;
+
+            TC_LOG_INFO("module.playerbot.lfg",
+                "PollDungeonTeleports: Forcing dungeon teleport for bot {} (map {} -> {})",
+                bot->GetName(), bot->GetMapId(), dungeonMapId);
+
+            // Force teleport using LFGMgr (same method used in MakeNewGroup)
+            sLFGMgr->TeleportPlayer(bot, false /* out */, false /* fromOpcode */);
+        }
+
+        // Cleanup old teleport attempt records (older than 1 minute)
+        if (!_botDungeonTeleportTimes.empty())
+        {
+            uint32 now = GameTime::GetGameTimeMS();
+            constexpr uint32 TELEPORT_RECORD_TIMEOUT = 60 * IN_MILLISECONDS;
+
+            std::vector<ObjectGuid> toRemove;
+            for (auto const& pair : _botDungeonTeleportTimes)
+            {
+                if (now - pair.second > TELEPORT_RECORD_TIMEOUT)
+                    toRemove.push_back(pair.first);
+            }
+
+            for (ObjectGuid const& guid : toRemove)
+                _botDungeonTeleportTimes.erase(guid);
+        }
+    }
+
+    /**
+     * @brief CRITICAL FIX: Detect when LFG groups are formed and trigger leadership transfer
+     *
+     * ROOT CAUSE: LFGBotManager::OnGroupFormed() is NEVER CALLED.
+     * The leadership transfer code EXISTS in LFGGroupCoordinator::OnGroupFormed() but the
+     * call chain is broken - no one invokes LFGBotManager::OnGroupFormed() when LFG finishes.
+     *
+     * This method detects when human players transition to LFG_STATE_DUNGEON, which indicates
+     * the LFG system has formed a group and begun the dungeon instance. At this point:
+     * 1. The group exists and has members assigned
+     * 2. The first player who joined (often a bot) is the default leader
+     * 3. We need to transfer leadership to the human player
+     *
+     * SOLUTION: Detect LFG_STATE_DUNGEON transition and call sLFGBotManager->OnGroupFormed()
+     * which triggers the leadership transfer via LFGGroupCoordinator::OnGroupFormed().
+     */
+    void PollGroupFormation()
+    {
+        SessionMap const& sessions = sWorld->GetAllSessions();
+        uint32 now = GameTime::GetGameTimeMS();
+
+        for (auto const& pair : sessions)
+        {
+            WorldSession* session = pair.second;
+            if (!session)
+                continue;
+
+            Player* player = session->GetPlayer();
+            if (!player || !player->IsInWorld())
+                continue;
+
+            // Only process human players
+            if (IsPlayerBotCheck(player))
+                continue;
+
+            ObjectGuid playerGuid = player->GetGUID();
+
+            // Get player's current LFG state
+            lfg::LfgState state = sLFGMgr->GetState(playerGuid);
+
+            // We're looking for players who just entered LFG_STATE_DUNGEON
+            if (state != lfg::LFG_STATE_DUNGEON)
+                continue;
+
+            // Check previous state - only process transition TO dungeon state
+            auto lastStateIt = _lastQueueState.find(playerGuid);
+            if (lastStateIt == _lastQueueState.end())
+            {
+                // No previous state tracked, but player is in dungeon - still process
+                // This handles edge cases where state tracking was missed
+            }
+            else if (lastStateIt->second == lfg::LFG_STATE_DUNGEON)
+            {
+                // Already in dungeon state, not a new transition
+                continue;
+            }
+
+            // Get the group GUID from LFG system
+            ObjectGuid groupGuid = sLFGMgr->GetGroup(playerGuid);
+            if (groupGuid.IsEmpty())
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "PollGroupFormation: Human {} in LFG_STATE_DUNGEON but no group GUID",
+                    player->GetName());
+                continue;
+            }
+
+            // Check if we've already processed this group
+            if (_processedGroups.count(groupGuid))
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "PollGroupFormation: Group {} already processed for human {}",
+                    groupGuid.ToString(), player->GetName());
+                continue;
+            }
+
+            // Get the actual Group object to verify it's valid
+            Group* group = player->GetGroup();
+            if (!group)
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "PollGroupFormation: Human {} has LFG group GUID but no Group object",
+                    player->GetName());
+                continue;
+            }
+
+            // Verify this is an LFG group
+            if (!group->isLFGGroup())
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "PollGroupFormation: Group for human {} is not an LFG group",
+                    player->GetName());
+                continue;
+            }
+
+            // Mark group as processed BEFORE calling OnGroupFormed to prevent re-entry
+            _processedGroups.insert(groupGuid);
+            _processedGroupTimes[groupGuid] = now;
+
+            TC_LOG_INFO("module.playerbot.lfg",
+                "PollGroupFormation: DETECTED LFG group formed! Human: {}, Group: {}, triggering leadership transfer",
+                player->GetName(), groupGuid.ToString());
+
+            // CRITICAL: Call LFGBotManager::OnGroupFormed() to trigger leadership transfer
+            // This was the MISSING CALL that caused bots to remain as leaders
+            sLFGBotManager->OnGroupFormed(groupGuid);
+        }
+
+        // Cleanup old processed groups (older than 30 minutes is stale)
+        if (!_processedGroupTimes.empty())
+        {
+            constexpr uint32 GROUP_RECORD_TIMEOUT = 30 * MINUTE * IN_MILLISECONDS;
+
+            std::vector<ObjectGuid> toRemove;
+            for (auto const& groupPair : _processedGroupTimes)
+            {
+                if (now - groupPair.second > GROUP_RECORD_TIMEOUT)
+                    toRemove.push_back(groupPair.first);
+            }
+
+            for (ObjectGuid const& guid : toRemove)
+            {
+                _processedGroups.erase(guid);
+                _processedGroupTimes.erase(guid);
+            }
+
+            if (!toRemove.empty())
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "PollGroupFormation: Cleaned up {} stale group records", toRemove.size());
+            }
+        }
+    }
+
+    /**
      * @brief Handle a player joining the LFG queue
      *
      * Uses the Hybrid Instance Bot System:
@@ -466,7 +718,10 @@ private:
     }
 
     // Configuration
-    static constexpr uint32 LFG_POLL_INTERVAL = 1000; // 1 second
+    // RELIABILITY FIX: Reduced from 1000ms to 500ms for faster queue detection
+    // While LFG is less time-sensitive than BG, faster detection still improves
+    // the user experience by reducing wait time for bots to join
+    static constexpr uint32 LFG_POLL_INTERVAL = 500; // 500ms for responsive detection
     static constexpr uint32 CLEANUP_INTERVAL = 5 * MINUTE * IN_MILLISECONDS;
 
     // State tracking
@@ -486,8 +741,15 @@ private:
     // Bot proposal acceptance tracking (debounce)
     std::unordered_map<ObjectGuid, uint32> _botProposalAcceptTimes;
 
+    // Bot dungeon teleport tracking (debounce for PollDungeonTeleports)
+    std::unordered_map<ObjectGuid, uint32> _botDungeonTeleportTimes;
+
     // Track highest proposal ID seen for efficient scanning
     uint32 _highestProposalIdSeen = 0;
+
+    // Processed LFG groups (to avoid duplicate OnGroupFormed calls)
+    std::unordered_set<ObjectGuid> _processedGroups;
+    std::unordered_map<ObjectGuid, uint32> _processedGroupTimes;
 };
 
 void AddSC_PlayerbotLFGScript()

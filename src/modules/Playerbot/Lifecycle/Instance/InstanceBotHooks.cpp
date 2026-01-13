@@ -358,12 +358,15 @@ void InstanceBotHooks::OnPlayerJoinBattleground(
         request.currentHordePlayers = player->GetTeam() == HORDE ? 1 : 0;
         request.playerFaction = player->GetTeam() == ALLIANCE ? Faction::Alliance : Faction::Horde;
 
-        request.onBotsReady = [bgTypeId, bracketId](
+        // CRITICAL FIX: Capture player GUID for bot tracking (enables invitation auto-accept)
+        ObjectGuid playerGuid = player->GetGUID();
+
+        request.onBotsReady = [bgTypeId, bracketId, playerGuid](
             std::vector<ObjectGuid> const& alliance,
             std::vector<ObjectGuid> const& horde)
         {
-            TC_LOG_INFO("playerbots.instance", "BG {} bots ready: {} Alliance, {} Horde - Adding to login queue",
-                bgTypeId, alliance.size(), horde.size());
+            TC_LOG_INFO("playerbots.instance", "BG {} bots ready: {} Alliance, {} Horde - Adding to login queue (tracking human {})",
+                bgTypeId, alliance.size(), horde.size(), playerGuid.ToString());
 
             // ================================================================
             // CRITICAL FIX: JIT creates DATABASE RECORDS, not logged-in Player objects
@@ -371,6 +374,7 @@ void InstanceBotHooks::OnPlayerJoinBattleground(
             // 1. Get account ID for each bot
             // 2. Add to pending queue for login
             // 3. ProcessPendingBGQueues will login them and queue for BG
+            // 4. Store humanPlayerGuid so bots are tracked for invitation handling
             // ================================================================
 
             auto now = std::chrono::steady_clock::now();
@@ -392,6 +396,7 @@ void InstanceBotHooks::OnPlayerJoinBattleground(
 
                 PendingBGQueueEntry entry;
                 entry.botGuid = botGuid;
+                entry.humanPlayerGuid = playerGuid;  // CRITICAL: Track human for invitation handling
                 entry.accountId = accountId;
                 entry.bgTypeId = bgTypeId;
                 entry.bracketId = bracketId;
@@ -423,6 +428,7 @@ void InstanceBotHooks::OnPlayerJoinBattleground(
 
                 PendingBGQueueEntry entry;
                 entry.botGuid = botGuid;
+                entry.humanPlayerGuid = playerGuid;  // CRITICAL: Track human for invitation handling
                 entry.accountId = accountId;
                 entry.bgTypeId = bgTypeId;
                 entry.bracketId = bracketId;
@@ -1042,7 +1048,10 @@ void InstanceBotHooks::ProcessPendingBGQueues()
             // CRITICAL: Wait for database commit before attempting login
             // JIT bot creation uses async CommitTransaction, so we must wait
             // for the transaction to be applied before querying character data
-            constexpr auto DB_COMMIT_DELAY = std::chrono::milliseconds(500);
+            // RELIABILITY FIX: Reduced from 500ms to 150ms - most DB operations complete in <100ms
+            // The previous 500ms delay combined with polling intervals caused cascading delays
+            // that resulted in BG needing 2 queue starts before bots were ready
+            constexpr auto DB_COMMIT_DELAY = std::chrono::milliseconds(150);
             auto timeSinceCreation = std::chrono::steady_clock::now() - entry.createdAt;
             if (timeSinceCreation < DB_COMMIT_DELAY)
             {
@@ -1072,13 +1081,25 @@ void InstanceBotHooks::ProcessPendingBGQueues()
             }
             else
             {
-                ++entry.retryCount;
-                if (entry.retryCount > 10)
+                // CRITICAL FIX: Check if bot is already in the loading queue (queued by JITBotFactory)
+                // If so, treat it as "already queued" instead of a failure
+                if (sBotWorldSessionMgr->IsBotLoading(entry.botGuid))
                 {
-                    TC_LOG_WARN("playerbots.instance", "Failed to queue bot {} for login after 10 retries",
-                        entry.botGuid.ToString());
-                    it = _pendingBGQueue.erase(it);
-                    continue;
+                    entry.loginQueued = true;
+                    entry.loginQueuedAt = std::chrono::steady_clock::now();
+                    TC_LOG_DEBUG("playerbots.instance", "Bot {} already in loading queue - treating as queued (BG {}, team {})",
+                        entry.botGuid.ToString(), entry.bgTypeId, entry.team == TEAM_ALLIANCE ? "Alliance" : "Horde");
+                }
+                else
+                {
+                    ++entry.retryCount;
+                    if (entry.retryCount > 10)
+                    {
+                        TC_LOG_WARN("playerbots.instance", "Failed to queue bot {} for login after 10 retries",
+                            entry.botGuid.ToString());
+                        it = _pendingBGQueue.erase(it);
+                        continue;
+                    }
                 }
             }
             ++it;
@@ -1104,16 +1125,19 @@ void InstanceBotHooks::ProcessPendingBGQueues()
         }
 
         // Step 4: Bot is logged in - queue for BG!
-        TC_LOG_INFO("playerbots.instance", "Bot {} is now logged in, queueing for BG {} (team {})",
-            bot->GetName(), entry.bgTypeId, entry.team == TEAM_ALLIANCE ? "Alliance" : "Horde");
+        TC_LOG_INFO("playerbots.instance", "Bot {} is now logged in, queueing for BG {} (team {}, tracking human {})",
+            bot->GetName(), entry.bgTypeId, entry.team == TEAM_ALLIANCE ? "Alliance" : "Horde",
+            entry.humanPlayerGuid.ToString());
 
-        // Use BGBotManager to queue the bot
+        // Use BGBotManager to queue the bot WITH TRACKING for invitation auto-accept
         BattlegroundTypeId bgTypeId = static_cast<BattlegroundTypeId>(entry.bgTypeId);
         BattlegroundBracketId bracketId = static_cast<BattlegroundBracketId>(entry.bracketId);
 
-        if (sBGBotManager->QueueBotForBG(bot, bgTypeId, bracketId))
+        // CRITICAL FIX: Use QueueBotForBGWithTracking to register in _queuedBots
+        // This ensures OnInvitationReceived will process the invitation and add bot to BG
+        if (sBGBotManager->QueueBotForBGWithTracking(bot, bgTypeId, bracketId, entry.humanPlayerGuid))
         {
-            TC_LOG_INFO("playerbots.instance", "Successfully queued bot {} for BG {} bracket {}",
+            TC_LOG_INFO("playerbots.instance", "Successfully queued bot {} for BG {} bracket {} (with invitation tracking)",
                 bot->GetName(), entry.bgTypeId, entry.bracketId);
             ++botsQueued;
         }
