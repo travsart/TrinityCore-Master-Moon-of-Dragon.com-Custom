@@ -47,6 +47,8 @@
 #include "QueryResult.h"
 #include "Core/PlayerBotHooks.h"
 #include "../PvP/BattlegroundAI.h"
+#include "../Lifecycle/Instance/BotPostLoginConfigurator.h"
+#include "../Lifecycle/Instance/InstanceBotOrchestrator.h"
 #include <chrono>
 #include <set>
 #include <unordered_map>
@@ -119,10 +121,38 @@ std::vector<uint32> BotAI::GetCompletableQuestIds() const
 // CONSTRUCTOR / DESTRUCTOR
 // ============================================================================
 
-BotAI::BotAI(Player* bot) : _bot(bot)
+BotAI::BotAI(Player* bot, bool instanceOnlyMode) : _bot(bot), _instanceOnlyMode(instanceOnlyMode)
 {
     // Initialize performance tracking
     _performanceMetrics.lastUpdate = std::chrono::steady_clock::now();
+
+    // ========================================================================
+    // INSTANCE-ONLY MODE - For JIT bots created for BG/LFG queues
+    // ========================================================================
+    // When instanceOnlyMode is true, GameSystemsManager will skip creating
+    // expensive non-essential managers (questing, professions, AH, banking).
+    // This significantly reduces CPU overhead for bots that only need combat.
+    //
+    // AUTO-DETECTION: If not explicitly set, detect JIT bots by checking
+    // if they have pending configuration (JITBotFactory creates these) or
+    // are managed by the InstanceBotOrchestrator.
+    if (!_instanceOnlyMode && _bot)
+    {
+        ObjectGuid botGuid = _bot->GetGUID();
+        bool isJITBot = sBotPostLoginConfigurator->HasPendingConfiguration(botGuid) ||
+                        sInstanceBotOrchestrator->IsManagedBot(botGuid);
+        if (isJITBot)
+        {
+            _instanceOnlyMode = true;
+            TC_LOG_INFO("module.playerbot.ai", "BotAI: Auto-detected JIT bot {} - enabling INSTANCE-ONLY mode",
+                botGuid.ToString());
+        }
+    }
+
+    if (_instanceOnlyMode)
+    {
+        TC_LOG_DEBUG("module.playerbot.ai", "BotAI: Creating bot in INSTANCE-ONLY mode (lightweight)");
+    }
 
     // ========================================================================
     // PHASE 6: GAME SYSTEMS FACADE - Consolidate all 17 manager instances

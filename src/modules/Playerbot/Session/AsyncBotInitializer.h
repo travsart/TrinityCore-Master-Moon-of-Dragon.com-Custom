@@ -149,6 +149,19 @@ public:
     bool InitializeAsync(Player* bot, InitCallback callback);
 
     /**
+     * @brief Initialize a bot asynchronously with instance-only mode option
+     * @param bot Bot player to initialize
+     * @param callback Callback when initialization complete
+     * @param instanceOnlyMode If true, creates lightweight bot for instances only
+     *        (skips questing, professions, AH managers to reduce CPU overhead)
+     * @return true if queued successfully, false if queue full or shutting down
+     *
+     * Use instanceOnlyMode=true for JIT bots created to fill BG/LFG queues.
+     * These bots only need combat capabilities, not full world interaction.
+     */
+    bool InitializeAsync(Player* bot, InitCallback callback, bool instanceOnlyMode);
+
+    /**
      * @brief Process completed initializations (call from main thread)
      * @param maxToProcess Maximum number of callbacks to process
      * @return Number of callbacks processed
@@ -250,9 +263,11 @@ private:
         Player* bot;                       ///< Bot to initialize
         InitCallback callback;             ///< Completion callback
         ::std::chrono::steady_clock::time_point queueTime;  ///< When queued
+        bool instanceOnlyMode;             ///< True for JIT bots that skip non-essential managers
 
-        InitTask(Player* b, InitCallback cb)
+        InitTask(Player* b, InitCallback cb, bool instanceOnly = false)
             : bot(b), callback(::std::move(cb)), queueTime(::std::chrono::steady_clock::now())
+            , instanceOnlyMode(instanceOnly)
         {}
     };
 
@@ -292,9 +307,10 @@ private:
     /**
      * @brief Create BotAI with lazy initialization (the actual heavy work)
      * @param bot Bot player
+     * @param instanceOnlyMode If true, creates lightweight bot for instances
      * @return Initialized BotAI instance (ownership transferred)
      */
-    BotAI* CreateBotAI(Player* bot);
+    BotAI* CreateBotAI(Player* bot, bool instanceOnlyMode = false);
 
     // ========================================================================
     // THREAD MANAGEMENT

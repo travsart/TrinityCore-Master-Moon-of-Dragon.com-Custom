@@ -145,7 +145,14 @@ class TC_GAME_API BotAI : public IEventHandler<LootEvent>,
                            public IEventHandler<ProfessionEvent>
 {
 public:
-    explicit BotAI(Player* bot);
+    /**
+     * @brief Construct BotAI for a player bot
+     * @param bot The player bot to control
+     * @param instanceOnlyMode If true, creates a lightweight bot for instances only
+     *        that skips expensive non-essential managers (questing, professions, AH).
+     *        Used for JIT bots created to fill BG/LFG queues.
+     */
+    explicit BotAI(Player* bot, bool instanceOnlyMode = false);
     virtual ~BotAI();
 
     // ========================================================================
@@ -276,6 +283,36 @@ public:
     bool IsInCombat() const { return _aiState == BotAIState::COMBAT; }
     bool IsSolo() const { return _aiState == BotAIState::SOLO; }
     bool IsFollowing() const { return _aiState == BotAIState::FOLLOWING; }
+
+    // ========================================================================
+    // INSTANCE-ONLY MODE - JIT bot optimization
+    // ========================================================================
+
+    /**
+     * @brief Check if bot is in instance-only mode
+     *
+     * Instance-only bots skip expensive non-essential behaviors like:
+     * - Questing (DynamicQuestSystem, ObjectiveTracker, QuestPickup, etc.)
+     * - Professions (ProfessionManager, GatheringManager, FarmingCoordinator)
+     * - Auction House (AuctionManager, AuctionHouse, AuctionMaterialsBridge)
+     * - Banking (BankingManager, GuildBankManager)
+     *
+     * This significantly reduces CPU overhead for JIT bots that only exist
+     * to fill BG/LFG queues and will be recycled after the instance ends.
+     *
+     * @return true if bot is in instance-only mode
+     */
+    bool IsInstanceOnlyMode() const { return _instanceOnlyMode; }
+
+    /**
+     * @brief Set instance-only mode for this bot
+     *
+     * IMPORTANT: This should be called BEFORE Initialize() is called on
+     * the GameSystemsManager, as it affects which managers are created.
+     *
+     * @param enabled true to enable instance-only mode
+     */
+    void SetInstanceOnlyMode(bool enabled) { _instanceOnlyMode = enabled; }
 
     // ========================================================================
     // BOT ACCESS - Core entity access
@@ -925,6 +962,15 @@ protected:
 
     // Lifecycle manager (owned by BotFactory, not by BotAI)
     BotInitStateManager* _lifecycleManager = nullptr;
+
+    // ========================================================================
+    // INSTANCE-ONLY MODE - Optimized for JIT/instance bots
+    // ========================================================================
+    // When true, this bot is a JIT-created bot for instances only and skips
+    // expensive non-essential behaviors like questing, professions, and AH.
+    // This reduces server overhead significantly for bots that only exist
+    // to fill BG/LFG queues and will be recycled after the instance.
+    bool _instanceOnlyMode = false;
 
     // ========================================================================
     // PHASE 6: GAME SYSTEMS FACADE - Consolidates all 17 manager instances

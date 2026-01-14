@@ -90,6 +90,11 @@ void AsyncBotInitializer::Shutdown()
 
 bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback)
 {
+    return InitializeAsync(bot, ::std::move(callback), false);
+}
+
+bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback, bool instanceOnlyMode)
+{
     if (!bot || !callback)
     {
         TC_LOG_ERROR("module.playerbot.async", "InitializeAsync called with null parameter");
@@ -114,15 +119,15 @@ bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback)
     // Queue the task
     {
         ::std::lock_guard lock(_pendingMutex);
-        _pendingTasks.emplace(bot, ::std::move(callback));
+        _pendingTasks.emplace(bot, ::std::move(callback), instanceOnlyMode);
         _pendingCount.fetch_add(1, ::std::memory_order_relaxed);
     }
     // Wake up a worker thread
     _pendingCV.notify_one();
 
     TC_LOG_DEBUG("module.playerbot.async",
-                 "Bot {} queued for async initialization (queue depth: {})",
-                 bot->GetName(), _pendingCount.load());
+                 "Bot {} queued for async initialization (queue depth: {}, instanceOnly: {})",
+                 bot->GetName(), _pendingCount.load(), instanceOnlyMode);
 
     return true;
 }
@@ -231,7 +236,7 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
 
     try
     {
-        ai = CreateBotAI(task.bot);
+        ai = CreateBotAI(task.bot, task.instanceOnlyMode);
         success = (ai != nullptr);
     }
     catch (::std::exception const& e)
@@ -286,12 +291,16 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
     return InitResult(task.bot, ai, ::std::move(task.callback), duration, success);
 }
 
-BotAI* AsyncBotInitializer::CreateBotAI(Player* bot)
+BotAI* AsyncBotInitializer::CreateBotAI(Player* bot, bool instanceOnlyMode)
 {
     // This is the actual heavy work - happens off main thread!
     // Uses LazyManagerFactory so managers created on-demand
 
-    BotAI* ai = new BotAI(bot);  // Fast constructor with lazy init
+    // When instanceOnlyMode is true, the BotAI constructor will skip creating
+    // expensive non-essential managers (questing, professions, AH, banking).
+    // This significantly reduces CPU overhead for JIT bots created to fill
+    // BG/LFG queues that only need combat capabilities.
+    BotAI* ai = new BotAI(bot, instanceOnlyMode);
 
     // Event dispatcher already created in BotAI constructor
     // Managers will be created lazily when first accessed
