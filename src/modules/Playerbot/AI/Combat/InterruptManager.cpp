@@ -1167,11 +1167,218 @@ bool InterruptManager::IsInterruptExecutable(const InterruptPlan& plan)
 
 bool InterruptManager::AttemptLoSInterrupt(Unit* target)
 {
-    // Simple LoS interrupt - move behind cover if possible
-    if (!target)
+    // LoS interrupt - break line of sight with caster to interrupt spell
+    if (!target || !_bot)
         return false;
 
-    // For now, just return false - complex pathfinding needed
+    // Check if target is casting
+    if (!target->HasUnitState(UNIT_STATE_CASTING))
+    {
+        TC_LOG_TRACE("module.playerbot.interrupt",
+            "AttemptLoSInterrupt: Target {} is not casting",
+            target->GetName());
+        return false;
+    }
+
+    Spell* currentSpell = target->GetCurrentSpell(CURRENT_GENERIC_SPELL);
+    if (!currentSpell)
+    {
+        // Try channeled spell
+        currentSpell = target->GetCurrentSpell(CURRENT_CHANNELED_SPELL);
+    }
+
+    if (!currentSpell)
+    {
+        TC_LOG_TRACE("module.playerbot.interrupt",
+            "AttemptLoSInterrupt: Could not get current spell for {}",
+            target->GetName());
+        return false;
+    }
+
+    SpellInfo const* spellInfo = currentSpell->GetSpellInfo();
+    if (!spellInfo)
+        return false;
+
+    // Check if spell ignores LoS - if so, LoS interrupt won't work
+    if (spellInfo->HasAttribute(SPELL_ATTR2_IGNORE_LINE_OF_SIGHT))
+    {
+        TC_LOG_TRACE("module.playerbot.interrupt",
+            "AttemptLoSInterrupt: Spell {} ignores LoS, cannot interrupt via positioning",
+            spellInfo->SpellName[0]);
+        return false;
+    }
+
+    // Calculate remaining cast time
+    float castTimeRemainingMs = static_cast<float>(currentSpell->GetTimer());
+    float castTimeRemainingSec = castTimeRemainingMs / 1000.0f;
+
+    // Find a cover position that breaks LoS
+    Position coverPos;
+    if (!FindCoverPosition(target, coverPos))
+    {
+        TC_LOG_TRACE("module.playerbot.interrupt",
+            "AttemptLoSInterrupt: Cannot find cover position for bot {}",
+            _bot->GetName());
+        return false;
+    }
+
+    // Calculate time needed to reach cover
+    float distToCover = _bot->GetDistance2d(coverPos.GetPositionX(), coverPos.GetPositionY());
+    float runSpeed = _bot->GetSpeed(MOVE_RUN);
+    float timeToReachSec = distToCover / runSpeed;
+
+    // Add buffer time for movement latency
+    constexpr float MOVEMENT_BUFFER_SEC = 0.5f;
+    timeToReachSec += MOVEMENT_BUFFER_SEC;
+
+    if (timeToReachSec >= castTimeRemainingSec)
+    {
+        TC_LOG_TRACE("module.playerbot.interrupt",
+            "AttemptLoSInterrupt: Bot {} cannot reach cover in time ({:.1f}s vs {:.1f}s remaining)",
+            _bot->GetName(), timeToReachSec, castTimeRemainingSec);
+        return false;
+    }
+
+    // Move to cover using Movement Arbiter if available
+    BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+    if (botAI && botAI->GetUnifiedMovementCoordinator())
+    {
+        botAI->RequestPointMovement(
+            PlayerBotMovementPriority::INTERRUPT_POSITIONING,
+            coverPos,
+            "LoS interrupt - breaking line of sight",
+            "InterruptManager");
+
+        TC_LOG_DEBUG("module.playerbot.interrupt",
+            "AttemptLoSInterrupt: Bot {} moving to cover at ({:.1f}, {:.1f}, {:.1f}) to break LoS with {}",
+            _bot->GetName(), coverPos.GetPositionX(), coverPos.GetPositionY(), coverPos.GetPositionZ(),
+            target->GetName());
+    }
+    else
+    {
+        // Fallback to direct MotionMaster
+        _bot->GetMotionMaster()->MovePoint(0, coverPos.GetPositionX(), coverPos.GetPositionY(), coverPos.GetPositionZ());
+
+        TC_LOG_DEBUG("module.playerbot.interrupt",
+            "AttemptLoSInterrupt: Bot {} (fallback) moving to cover for LoS interrupt",
+            _bot->GetName());
+    }
+
+    return true;
+}
+
+bool InterruptManager::FindCoverPosition(Unit* target, Position& outPos)
+{
+    if (!target || !_bot)
+        return false;
+
+    Position botPos = _bot->GetPosition();
+    Position targetPos = target->GetPosition();
+
+    // Strategy 1: Move behind the bot's current position relative to target
+    // This creates distance and potentially breaks LoS with terrain
+    float angleFromTarget = target->GetAbsoluteAngle(&botPos);
+
+    // Try multiple distances to find valid cover
+    constexpr float COVER_DISTANCES[] = { 15.0f, 20.0f, 25.0f, 10.0f };
+    constexpr int NUM_ANGLES_TO_TRY = 8;
+
+    Map* map = _bot->GetMap();
+    if (!map)
+        return false;
+
+    for (float distance : COVER_DISTANCES)
+    {
+        // Try different angles around the retreat direction
+        for (int i = 0; i < NUM_ANGLES_TO_TRY; ++i)
+        {
+            // Spread angles: 0, +22.5, -22.5, +45, -45, +67.5, -67.5, +90
+            float angleOffset = (i == 0) ? 0.0f :
+                               ((i % 2 == 1) ? 1.0f : -1.0f) * (((i + 1) / 2) * M_PI / 8.0f);
+
+            float testAngle = angleFromTarget + angleOffset;
+
+            Position testPos;
+            testPos.m_positionX = botPos.GetPositionX() + distance * ::std::cos(testAngle);
+            testPos.m_positionY = botPos.GetPositionY() + distance * ::std::sin(testAngle);
+            testPos.m_positionZ = botPos.GetPositionZ();
+
+            // Get proper ground height
+            float groundZ = map->GetHeight(_bot->GetPhaseMask(),
+                                          testPos.GetPositionX(),
+                                          testPos.GetPositionY(),
+                                          testPos.GetPositionZ() + 5.0f);
+
+            if (groundZ != INVALID_HEIGHT)
+            {
+                testPos.m_positionZ = groundZ;
+            }
+
+            // Check if this position breaks LoS with target
+            if (!target->IsWithinLOS(testPos.GetPositionX(), testPos.GetPositionY(),
+                                    testPos.GetPositionZ() + 2.0f))  // +2 for character height
+            {
+                // This position breaks LoS - check if it's reachable
+                if (_bot->IsWithinLOS(testPos.GetPositionX(), testPos.GetPositionY(),
+                                     testPos.GetPositionZ() + 2.0f))
+                {
+                    outPos = testPos;
+                    TC_LOG_TRACE("module.playerbot.interrupt",
+                        "FindCoverPosition: Found cover at ({:.1f}, {:.1f}, {:.1f}) at distance {:.1f}",
+                        testPos.GetPositionX(), testPos.GetPositionY(), testPos.GetPositionZ(), distance);
+                    return true;
+                }
+            }
+        }
+    }
+
+    // Strategy 2: If no natural cover found, try to use world geometry
+    // Check for nearby pillars, walls, or other objects
+    // This is a simplified approach - ideally would query static obstacles
+
+    // Try perpendicular movement (strafe left/right)
+    float perpAngle1 = angleFromTarget + M_PI / 2.0f;
+    float perpAngle2 = angleFromTarget - M_PI / 2.0f;
+
+    for (float distance = 10.0f; distance <= 30.0f; distance += 5.0f)
+    {
+        for (float perpAngle : { perpAngle1, perpAngle2 })
+        {
+            Position testPos;
+            testPos.m_positionX = botPos.GetPositionX() + distance * ::std::cos(perpAngle);
+            testPos.m_positionY = botPos.GetPositionY() + distance * ::std::sin(perpAngle);
+            testPos.m_positionZ = botPos.GetPositionZ();
+
+            float groundZ = map->GetHeight(_bot->GetPhaseMask(),
+                                          testPos.GetPositionX(),
+                                          testPos.GetPositionY(),
+                                          testPos.GetPositionZ() + 5.0f);
+
+            if (groundZ != INVALID_HEIGHT)
+            {
+                testPos.m_positionZ = groundZ;
+            }
+
+            if (!target->IsWithinLOS(testPos.GetPositionX(), testPos.GetPositionY(),
+                                    testPos.GetPositionZ() + 2.0f))
+            {
+                if (_bot->IsWithinLOS(testPos.GetPositionX(), testPos.GetPositionY(),
+                                     testPos.GetPositionZ() + 2.0f))
+                {
+                    outPos = testPos;
+                    TC_LOG_TRACE("module.playerbot.interrupt",
+                        "FindCoverPosition: Found perpendicular cover at ({:.1f}, {:.1f}, {:.1f})",
+                        testPos.GetPositionX(), testPos.GetPositionY(), testPos.GetPositionZ());
+                    return true;
+                }
+            }
+        }
+    }
+
+    TC_LOG_TRACE("module.playerbot.interrupt",
+        "FindCoverPosition: No cover position found for bot {} against {}",
+        _bot->GetName(), target->GetName());
+
     return false;
 }
 

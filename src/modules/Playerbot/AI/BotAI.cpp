@@ -1233,6 +1233,13 @@ void BotAI::OnDeath()
     while (!_actionQueue.empty())
         _actionQueue.pop();
 
+    // Pause quest completion (Phase 0 hook integration)
+    if (auto* questCompletion = GetQuestCompletion())
+    {
+        questCompletion->PauseQuestCompletion(_bot->GetGUID().GetCounter());
+        TC_LOG_DEBUG("playerbots.ai", "Bot {} died - quest completion paused", _bot->GetName());
+    }
+
     // Initiate death recovery process
     if (auto* deathRecoveryManager = GetDeathRecoveryManager())
     {
@@ -1256,6 +1263,13 @@ void BotAI::OnRespawn()
     // Complete death recovery process
     if (auto* deathRecoveryManager = GetDeathRecoveryManager())
         deathRecoveryManager->OnResurrection();
+
+    // Resume quest completion (Phase 0 hook integration)
+    if (auto* questCompletion = GetQuestCompletion())
+    {
+        questCompletion->ResumeQuestCompletion(_bot->GetGUID().GetCounter());
+        TC_LOG_DEBUG("playerbots.ai", "Bot {} respawned - quest completion resumed", _bot->GetName());
+    }
 
     TC_LOG_DEBUG("playerbots.ai", "Bot {} respawned, AI reset, death recovery completed", _bot->GetName());
 }

@@ -1079,8 +1079,93 @@ float CombatSpecializationBase::GetResourcePercent() const
 
 void CombatSpecializationBase::RefreshExpiringBuffs()
 {
-    // Implementation would check and refresh buffs about to expire
-    // This is a placeholder for derived class implementation
+    if (!_bot || !_bot->IsInWorld())
+        return;
+
+    uint32 currentTime = GameTime::GetGameTimeMS();
+
+    // Get all positive auras on the bot that we might want to refresh
+    Unit::AuraMap const& auras = _bot->GetOwnedAuras();
+
+    for (auto const& [spellId, aura] : auras)
+    {
+        if (!aura || !aura->IsPositive())
+            continue;
+
+        // Skip passive/permanent auras
+        int32 maxDuration = aura->GetMaxDuration();
+        if (maxDuration == -1 || maxDuration == 0)
+            continue;
+
+        // Check remaining duration
+        int32 remainingTime = aura->GetDuration();
+        if (remainingTime <= 0 || remainingTime > static_cast<int32>(BUFF_REFRESH_THRESHOLD_MS))
+            continue;
+
+        // Only refresh buffs we can cast ourselves
+        if (!_bot->HasSpell(spellId))
+            continue;
+
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap() ? _bot->GetMap()->GetDifficultyID() : DIFFICULTY_NONE);
+        if (!spellInfo)
+            continue;
+
+        // Verify it's a self-buff (can target self)
+        bool canTargetSelf = false;
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        {
+            SpellEffectInfo const& effect = spellInfo->GetEffect(SpellEffIndex(i));
+            if (effect.TargetA.GetTarget() == TARGET_UNIT_CASTER ||
+                effect.TargetB.GetTarget() == TARGET_UNIT_CASTER ||
+                effect.TargetA.GetTarget() == TARGET_UNIT_TARGET_ALLY)
+            {
+                canTargetSelf = true;
+                break;
+            }
+        }
+
+        if (!canTargetSelf)
+            continue;
+
+        // Check if we're on GCD
+        if (HasGlobalCooldown())
+            break;  // Can't cast anything right now
+
+        // Check spell cooldown
+        if (_bot->GetSpellHistory()->HasCooldown(spellId))
+            continue;
+
+        // Check resource cost
+        SpellPowerCost powerCost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+        Powers powerType = powerCost.empty() ? POWER_MANA : powerCost[0].Power;
+        int32 cost = powerCost.empty() ? 0 : powerCost[0].Amount;
+
+        if (cost > 0 && _bot->GetPower(powerType) < cost)
+            continue;
+
+        // Check if we're casting something else
+        if (IsCasting() || IsChanneling())
+            break;  // Don't interrupt current casts
+
+        // Cast the refresh spell
+        if (CastSpell(spellId, _bot))
+        {
+            // Update our tracking
+            _buffExpirationTimes[spellId] = currentTime + static_cast<uint32>(maxDuration);
+
+            TC_LOG_DEBUG("module.playerbot.buff",
+                "CombatSpecializationBase: Bot {} refreshed buff {} ({} ms remaining)",
+                _bot->GetName(), spellInfo->SpellName[0], remainingTime);
+
+            // Only refresh one buff per update to avoid GCD conflicts
+            break;
+        }
+    }
+
+    // Clean up expired tracking entries
+    std::erase_if(_buffExpirationTimes, [currentTime](const auto& pair) {
+        return pair.second < currentTime;
+    });
 }
 
 bool CombatSpecializationBase::HasBuff(uint32 spellId) const

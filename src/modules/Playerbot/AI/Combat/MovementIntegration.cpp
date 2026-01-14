@@ -188,12 +188,39 @@ void MovementIntegration::MoveToPosition(const Position& pos, bool urgent)
     }
 
     // Execute movement
-    TC_LOG_DEBUG("playerbot", "MovementIntegration: {} moving to ({}, {}) - Urgent: {}",
-        _bot->GetName(), pos.GetPositionX(), pos.GetPositionY(), urgent ? "YES" : "NO");
+    TC_LOG_DEBUG("playerbot", "MovementIntegration: {} moving to ({}, {}, {}) - Urgent: {}",
+        _bot->GetName(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), urgent ? "YES" : "NO");
 
-    // TODO: Integrate with bot movement system
-    // This is a placeholder that should be replaced with actual movement command
-    // _bot->GetMotionMaster()->MovePoint(0, pos, urgent);
+    // Stop current movement if urgent
+    if (urgent)
+    {
+        // Clear current movement to immediately respond to emergency
+        _bot->GetMotionMaster()->Clear(MOTION_PRIORITY_NORMAL);
+
+        // Stop any casting for emergency movement
+        if (_bot->HasUnitState(UNIT_STATE_CASTING))
+        {
+            _bot->InterruptNonMeleeSpells(false);
+            TC_LOG_DEBUG("playerbot", "MovementIntegration: {} interrupted cast for emergency movement",
+                _bot->GetName());
+        }
+
+        // Use highest priority for emergency movement
+        _bot->GetMotionMaster()->MovePoint(MOTION_PRIORITY_HIGHEST, pos, true);
+    }
+    else
+    {
+        // Normal priority movement - doesn't interrupt current actions
+        _bot->GetMotionMaster()->MovePoint(0, pos);
+    }
+
+    // Update current command tracking
+    _currentCommand.destination = pos;
+    _currentCommand.urgency = urgent ? MovementUrgency::EMERGENCY : MovementUrgency::MEDIUM;
+    _currentCommand.expiryTime = GameTime::GetGameTimeMS() + 10000; // 10 second timeout
+
+    TC_LOG_DEBUG("playerbot", "MovementIntegration: {} movement command issued - distance: {:.1f} yards",
+        _bot->GetName(), _bot->GetExactDist2d(&pos));
 }
 
 void MovementIntegration::RegisterDangerZone(const Position& center, float radius, uint32 duration, float dangerLevel)

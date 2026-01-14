@@ -50,6 +50,7 @@ class AuctionManager;
 class GroupCoordinator; // Advanced/GroupCoordinator
 class DeathRecoveryManager;
 class UnifiedMovementCoordinator; // Phase 2: Unified Movement System (Week 3 complete)
+class QuestCompletion;            // Quest completion system (Phase 0: Hook integration)
 class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
@@ -433,6 +434,13 @@ public:
 
     DeathRecoveryManager* GetDeathRecoveryManager() { return _gameSystems ? _gameSystems->GetDeathRecoveryManager() : nullptr; }
     DeathRecoveryManager const* GetDeathRecoveryManager() const { return _gameSystems ? _gameSystems->GetDeathRecoveryManager() : nullptr; }
+
+    // ========================================================================
+    // QUEST COMPLETION - Phase 0 Hook Integration (Lifecycle management)
+    // ========================================================================
+
+    QuestCompletion* GetQuestCompletion() { return _gameSystems ? _gameSystems->GetQuestCompletion() : nullptr; }
+    QuestCompletion const* GetQuestCompletion() const { return _gameSystems ? _gameSystems->GetQuestCompletion() : nullptr; }
 
     // ========================================================================
     // UNIFIED MOVEMENT COORDINATOR - Phase 2 Migration / Phase 6 Facade Delegation

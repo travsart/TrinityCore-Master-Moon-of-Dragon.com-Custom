@@ -251,21 +251,46 @@ void BlackboardManager::ClearAll()
     TC_LOG_INFO("playerbot.blackboard", "Cleared all blackboards");
 }
 
-void BlackboardManager::PropagateToGroup(ObjectGuid botGuid, uint32 groupId, ::std::string const& /*key*/)
+void BlackboardManager::PropagateToGroup(ObjectGuid botGuid, uint32 groupId, ::std::string const& key)
 {
     SharedBlackboard* botBoard = GetBotBlackboard(botGuid);
     SharedBlackboard* groupBoard = GetGroupBlackboard(groupId);
 
     if (!botBoard || !groupBoard)
-        return;
-
-    // Get all keys from bot blackboard and copy to group
-    auto keys = botBoard->GetKeys();
-    for ([[maybe_unused]] auto const& k : keys)
     {
-        // Would need template magic to copy any type
-        // For now, this is a placeholder
-        // In real implementation, would use type erasure or visitor pattern
+        TC_LOG_TRACE("module.playerbot.blackboard",
+            "PropagateToGroup: Bot or group blackboard not found (bot: {}, group: {})",
+            botGuid.GetCounter(), groupId);
+        return;
+    }
+
+    if (key.empty())
+    {
+        // Propagate all bot data to group
+        groupBoard->MergeFrom(*botBoard, true);
+
+        TC_LOG_DEBUG("module.playerbot.blackboard",
+            "PropagateToGroup: Propagated all keys from bot {} to group {}",
+            botGuid.GetCounter(), groupId);
+    }
+    else
+    {
+        // Propagate specific key using type-erased transfer
+        // The SharedBlackboard stores std::any internally, so we can use CopyKeyFrom
+        if (botBoard->Has(key))
+        {
+            groupBoard->CopyKeyFrom(*botBoard, key);
+
+            TC_LOG_DEBUG("module.playerbot.blackboard",
+                "PropagateToGroup: Propagated key '{}' from bot {} to group {}",
+                key, botGuid.GetCounter(), groupId);
+        }
+        else
+        {
+            TC_LOG_TRACE("module.playerbot.blackboard",
+                "PropagateToGroup: Key '{}' not found in bot {} blackboard",
+                key, botGuid.GetCounter());
+        }
     }
 }
 

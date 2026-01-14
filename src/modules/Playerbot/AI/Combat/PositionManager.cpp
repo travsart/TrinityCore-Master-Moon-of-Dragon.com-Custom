@@ -1087,9 +1087,27 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
     }
 
     // Penalty for positions in AoE zones
-    // TODO: Implement IsInAoEZone function
-    // if (IsInAoEZone(pos))
-    //     score -= 40.0f;
+    if (IsInDangerZone(pos))
+    {
+        score -= 40.0f;
+        TC_LOG_TRACE("module.playerbot.position",
+            "ScorePositionForCombat: Position ({:.1f}, {:.1f}) is in AoE danger zone, -40 penalty",
+            pos.GetPositionX(), pos.GetPositionY());
+    }
+
+    // Check for nearby dynamic objects (ground effects, AoE spells)
+    if (_bot && _bot->GetMap())
+    {
+        // Scan for hostile ground effects near this position
+        float aoePenalty = CalculateAoEThreat(pos);
+        if (aoePenalty > 0.0f)
+        {
+            score -= aoePenalty;
+            TC_LOG_TRACE("module.playerbot.position",
+                "ScorePositionForCombat: Position ({:.1f}, {:.1f}) near AoE, -{:.1f} penalty",
+                pos.GetPositionX(), pos.GetPositionY(), aoePenalty);
+        }
+    }
 
     // Penalty for positions too close to walls/obstacles
     MovementContext tempContext;
@@ -1558,6 +1576,69 @@ void PositionManager::RecordPositionFailure(const Position& /* pos */, const ::s
 float PositionManager::GetPositionSuccessRate(const Position& /* pos */, float /* radius */)
 {
     return 0.5f;
+}
+
+float PositionManager::CalculateAoEThreat(const Position& pos)
+{
+    if (!_bot || !_bot->GetMap())
+        return 0.0f;
+
+    float totalThreat = 0.0f;
+    uint32 currentTime = GameTime::GetGameTimeMS();
+
+    // Check registered AoE zones for proximity threat
+    for (const AoEZone& zone : _activeZones)
+    {
+        if (!zone.isActive || currentTime > zone.startTime + zone.duration)
+            continue;
+
+        float distToCenter = pos.GetExactDist(&zone.center);
+
+        // If inside the zone, max threat
+        if (distToCenter <= zone.radius)
+        {
+            totalThreat += zone.damageRating * 10.0f;  // Heavy penalty for being inside
+        }
+        // If near the edge, scaled threat
+        else if (distToCenter <= zone.radius + 5.0f)
+        {
+            float edgeProximity = 1.0f - ((distToCenter - zone.radius) / 5.0f);
+            totalThreat += zone.damageRating * edgeProximity * 5.0f;  // Scaled penalty near edge
+        }
+    }
+
+    // Scan for dynamic objects (ground effects) that aren't in our registered zones
+    Map* map = _bot->GetMap();
+
+    // Check for lava/slime/water hazards at position
+    LiquidData liquidData;
+    ZLiquidStatus liquidStatus = map->GetLiquidStatus(
+        _bot->GetPhaseMask(),
+        pos.GetPositionX(),
+        pos.GetPositionY(),
+        pos.GetPositionZ() + 2.0f,
+        {},  // All liquid types
+        &liquidData
+    );
+
+    if (liquidStatus != LIQUID_MAP_NO_WATER)
+    {
+        // Check for dangerous liquids
+        if (liquidData.type_flags & (MAP_LIQUID_TYPE_MAGMA | MAP_LIQUID_TYPE_SLIME))
+        {
+            totalThreat += 50.0f;  // Very high threat for lava/slime
+        }
+        else if (liquidData.type_flags & MAP_LIQUID_TYPE_WATER)
+        {
+            // Deep water is dangerous for non-swimming classes
+            if (liquidData.depth_level > 2.0f)
+            {
+                totalThreat += 10.0f;  // Moderate threat for deep water
+            }
+        }
+    }
+
+    return totalThreat;
 }
 
 } // namespace Playerbot

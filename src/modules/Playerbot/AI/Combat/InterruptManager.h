@@ -405,6 +405,7 @@ private:
     bool AttemptLoSInterrupt(Unit* target);
     bool AttemptMovementInterrupt(Unit* target);
     void HandleInterruptFailure(const InterruptPlan& plan);
+    bool FindCoverPosition(Unit* target, Position& outPos);
 
     // Timing calculations
     float CalculateReactionDelay();

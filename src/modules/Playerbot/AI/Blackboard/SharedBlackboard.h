@@ -214,6 +214,75 @@ public:
         }
     }
 
+    /**
+     * @brief Copy a specific key from another blackboard (thread-safe)
+     * @param other Source blackboard
+     * @param key Key to copy
+     * @return True if key was found and copied
+     */
+    bool CopyKeyFrom(SharedBlackboard const& other, ::std::string const& key)
+    {
+        ::std::shared_lock otherLock(other._mutex);
+
+        auto it = other._data.find(key);
+        if (it == other._data.end())
+            return false;
+
+        ::std::any oldValue;
+        {
+            ::std::unique_lock thisLock(_mutex);
+
+            // Get old value for change event
+            auto existingIt = _data.find(key);
+            if (existingIt != _data.end())
+                oldValue = existingIt->second;
+
+            _data[key] = it->second;
+        }
+
+        // Notify listeners outside lock
+        NotifyChange(key, oldValue, it->second);
+        return true;
+    }
+
+    /**
+     * @brief Get raw std::any value for a key (thread-safe)
+     * @param key Data key
+     * @param outValue Output value
+     * @return True if key exists
+     */
+    bool GetAny(::std::string const& key, ::std::any& outValue) const
+    {
+        ::std::shared_lock lock(_mutex);
+
+        auto it = _data.find(key);
+        if (it == _data.end())
+            return false;
+
+        outValue = it->second;
+        return true;
+    }
+
+    /**
+     * @brief Set raw std::any value (thread-safe)
+     * @param key Data key
+     * @param value Value to store
+     */
+    void SetAny(::std::string const& key, ::std::any const& value)
+    {
+        ::std::unique_lock lock(_mutex);
+
+        ::std::any oldValue;
+        auto it = _data.find(key);
+        if (it != _data.end())
+            oldValue = it->second;
+
+        _data[key] = value;
+
+        lock.unlock();
+        NotifyChange(key, oldValue, value);
+    }
+
 private:
     void NotifyChange(::std::string const& key, ::std::any const& oldValue, ::std::any const& newValue);
 

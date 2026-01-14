@@ -13,8 +13,11 @@
 #include "World.h"
 #include "Log.h"
 #include "Map.h"
+#include "ObjectAccessor.h"
+#include "Unit.h"
 #include <algorithm>
 #include <execution>
+#include <limits>
 #include "GameTime.h"
 
 namespace Playerbot
@@ -528,11 +531,63 @@ void InterruptCoordinatorFixed::ResetMetrics()
     return ss.str();
 }
 
-float InterruptCoordinatorFixed::GetBotDistanceToTarget(ObjectGuid /*botGuid*/, ObjectGuid /*targetGuid*/) const
+float InterruptCoordinatorFixed::GetBotDistanceToTarget(ObjectGuid botGuid, ObjectGuid targetGuid) const
 {
-    // This would integrate with actual position tracking
-    // For now, return a placeholder
-    return 10.0f;
+    // Need a reference world object for ObjectAccessor
+    // Try to get from our registered bots first
+    WorldObject* refObject = nullptr;
+
+    {
+        ::std::lock_guard lock(_stateMutex);
+        auto aiIt = _state.botAI.find(botGuid);
+        if (aiIt != _state.botAI.end() && aiIt->second)
+        {
+            refObject = aiIt->second->GetBot();
+        }
+    }
+
+    // If we couldn't find a reference from bot, try to use the group leader
+    if (!refObject && _group)
+    {
+        refObject = ObjectAccessor::FindPlayer(_group->GetLeaderGUID());
+    }
+
+    if (!refObject)
+    {
+        TC_LOG_TRACE("module.playerbot.interrupt",
+            "GetBotDistanceToTarget: No reference object available for GUID resolution");
+        return ::std::numeric_limits<float>::max();
+    }
+
+    // Resolve bot and target GUIDs to Unit pointers
+    Unit* bot = ObjectAccessor::GetUnit(*refObject, botGuid);
+    Unit* target = ObjectAccessor::GetUnit(*refObject, targetGuid);
+
+    if (!bot || !target)
+    {
+        TC_LOG_TRACE("module.playerbot.interrupt",
+            "GetBotDistanceToTarget: Could not resolve bot ({}) or target ({}) GUIDs",
+            botGuid.GetCounter(), targetGuid.GetCounter());
+        return ::std::numeric_limits<float>::max();
+    }
+
+    // Check if they're on the same map
+    if (bot->GetMapId() != target->GetMapId())
+    {
+        TC_LOG_TRACE("module.playerbot.interrupt",
+            "GetBotDistanceToTarget: Bot and target on different maps ({} vs {})",
+            bot->GetMapId(), target->GetMapId());
+        return ::std::numeric_limits<float>::max();
+    }
+
+    // Calculate actual 3D distance
+    float distance = bot->GetDistance(target);
+
+    TC_LOG_TRACE("module.playerbot.interrupt",
+        "GetBotDistanceToTarget: Distance from {} to {} is {:.1f} yards",
+        bot->GetName(), target->GetName(), distance);
+
+    return distance;
 }
 
 bool InterruptCoordinatorFixed::IsBotInRange(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 range) const

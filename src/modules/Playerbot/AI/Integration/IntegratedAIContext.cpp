@@ -95,21 +95,52 @@ void IntegratedAIContext::PropagateToGroup(::std::string const& key)
         return;
 
     SharedBlackboard* groupBoard = GetGroupBlackboard();
-    if (!groupBoard)
+    if (!groupBoard || !_localBlackboard)
         return;
 
     if (key.empty())
     {
-        // TODO: Propagate all keys (selective based on naming convention)
-        // BTBlackboard doesn't expose GetKeys() method
-        // Would need type-erased copy here - placeholder removed for compilation
-        // See: https://github.com/TrinityCore/TrinityCore/issues/xxxxx
-        return;
+        // Propagate keys that should be shared with the group
+        // Use naming convention: keys prefixed with "group_" are propagated
+        auto keys = _localBlackboard->GetKeys();
+        uint32 propagatedCount = 0;
+
+        for (auto const& k : keys)
+        {
+            // Only propagate keys intended for group sharing
+            if (k.find("group_") == 0 || k.find("shared_") == 0)
+            {
+                ::std::any value;
+                if (_localBlackboard->GetAny(k, value))
+                {
+                    groupBoard->SetAny(k, value);
+                    ++propagatedCount;
+                }
+            }
+        }
+
+        TC_LOG_DEBUG("module.playerbot.blackboard",
+            "PropagateToGroup: Propagated {} keys from bot {} to group {}",
+            propagatedCount, GetBotGuid().GetCounter(), GetGroupId());
     }
     else
     {
-        // Propagate specific key
-        // Would need template specialization or type registry
+        // Propagate specific key using type-erased transfer
+        ::std::any value;
+        if (_localBlackboard->GetAny(key, value))
+        {
+            groupBoard->SetAny(key, value);
+
+            TC_LOG_DEBUG("module.playerbot.blackboard",
+                "PropagateToGroup: Propagated key '{}' from bot {} to group {}",
+                key, GetBotGuid().GetCounter(), GetGroupId());
+        }
+        else
+        {
+            TC_LOG_TRACE("module.playerbot.blackboard",
+                "PropagateToGroup: Key '{}' not found in local blackboard",
+                key);
+        }
     }
 }
 
@@ -119,21 +150,47 @@ void IntegratedAIContext::PullFromGroup(::std::string const& key)
         return;
 
     SharedBlackboard* groupBoard = GetGroupBlackboard();
-    if (!groupBoard)
+    if (!groupBoard || !_localBlackboard)
         return;
 
     if (key.empty())
     {
-        // Pull all relevant keys from group
+        // Pull all keys from group
         auto keys = groupBoard->GetKeys();
+        uint32 pulledCount = 0;
+
         for (auto const& k : keys)
         {
-            // Would copy from group to local
+            ::std::any value;
+            if (groupBoard->GetAny(k, value))
+            {
+                _localBlackboard->SetAny(k, value);
+                ++pulledCount;
+            }
         }
+
+        TC_LOG_DEBUG("module.playerbot.blackboard",
+            "PullFromGroup: Pulled {} keys from group {} to bot {}",
+            pulledCount, GetGroupId(), GetBotGuid().GetCounter());
     }
     else
     {
         // Pull specific key
+        ::std::any value;
+        if (groupBoard->GetAny(key, value))
+        {
+            _localBlackboard->SetAny(key, value);
+
+            TC_LOG_DEBUG("module.playerbot.blackboard",
+                "PullFromGroup: Pulled key '{}' from group {} to bot {}",
+                key, GetGroupId(), GetBotGuid().GetCounter());
+        }
+        else
+        {
+            TC_LOG_TRACE("module.playerbot.blackboard",
+                "PullFromGroup: Key '{}' not found in group blackboard",
+                key);
+        }
     }
 }
 

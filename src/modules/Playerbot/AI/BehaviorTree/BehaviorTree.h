@@ -99,6 +99,44 @@ public:
         _data.clear();
     }
 
+    /**
+     * @brief Get all keys in the blackboard
+     * @return Vector of all key names
+     */
+    ::std::vector<::std::string> GetKeys() const
+    {
+        ::std::vector<::std::string> keys;
+        keys.reserve(_data.size());
+        for (auto const& pair : _data)
+            keys.push_back(pair.first);
+        return keys;
+    }
+
+    /**
+     * @brief Get raw std::any value for a key
+     * @param key Data key
+     * @param outValue Output value
+     * @return True if key exists
+     */
+    bool GetAny(::std::string const& key, ::std::any& outValue) const
+    {
+        auto it = _data.find(key);
+        if (it == _data.end())
+            return false;
+        outValue = it->second;
+        return true;
+    }
+
+    /**
+     * @brief Set raw std::any value
+     * @param key Data key
+     * @param value Value to store
+     */
+    void SetAny(::std::string const& key, ::std::any const& value)
+    {
+        _data[key] = value;
+    }
+
 private:
     ::std::unordered_map<::std::string, ::std::any> _data;
 };
