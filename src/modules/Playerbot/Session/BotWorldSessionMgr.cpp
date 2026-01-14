@@ -1236,6 +1236,10 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
         // Process pending object use requests (GameObject::Use crash fix)
         // Use() modifies game object state and triggers Map updates - requires main thread
         session->ProcessPendingObjectUse();
+
+        // Process pending LFG proposal accepts (re-entrant crash fix)
+        // UpdateProposal() must not be called from within LFGMgr iteration
+        session->ProcessPendingLfgProposalAccepts();
     }
 
     // Log statistics if significant activity

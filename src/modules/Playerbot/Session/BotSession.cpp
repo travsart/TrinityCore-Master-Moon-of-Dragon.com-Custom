@@ -609,13 +609,16 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
 
                 if (shouldAccept)
                 {
-                    TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Auto-accepting LFG proposal {} for bot {}",
+                    TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Queuing LFG proposal {} accept for bot {} (deferred to main thread)",
                                 proposalId, bot->GetName());
 
-                    // Auto-accept the proposal
-                    sLFGMgr->UpdateProposal(proposalId, bot->GetGUID(), true);
+                    // RE-ENTRANT CRASH FIX: Do NOT call UpdateProposal() here!
+                    // We are inside LFGMgr::UpdateProposal() iteration when this packet is sent.
+                    // Calling UpdateProposal() again would invalidate the iterator and crash.
+                    // Instead, queue the accept to be processed on main thread later.
+                    QueueLfgProposalAccept(proposalId);
 
-                    TC_LOG_INFO("module.playerbot.lfg", "✅ BotSession: Auto-accepted LFG proposal {} for bot {}",
+                    TC_LOG_INFO("module.playerbot.lfg", "✅ BotSession: Queued LFG proposal {} for bot {} (will accept on main thread)",
                                 proposalId, bot->GetName());
                 }
                 else
@@ -2798,6 +2801,79 @@ bool BotSession::ProcessPendingObjectUse()
     }
 
     return usedAny;
+}
+
+// ============================================================================
+// THREAD-SAFE LFG PROPOSAL AUTO-ACCEPT (Re-entrant Crash Fix)
+// ============================================================================
+
+void BotSession::QueueLfgProposalAccept(uint32 proposalId)
+{
+    std::lock_guard<std::mutex> lock(_pendingLfgAcceptsMutex);
+    _pendingLfgProposalAccepts.push_back(proposalId);
+
+    Player* bot = GetPlayer();
+    TC_LOG_DEBUG("module.playerbot.lfg",
+                 "QueueLfgProposalAccept: Bot {} queued proposal {} for main thread accept",
+                 bot ? bot->GetName() : "unknown", proposalId);
+}
+
+bool BotSession::HasPendingLfgProposalAccepts() const
+{
+    std::lock_guard<std::mutex> lock(_pendingLfgAcceptsMutex);
+    return !_pendingLfgProposalAccepts.empty();
+}
+
+bool BotSession::ProcessPendingLfgProposalAccepts()
+{
+    // Move pending accepts to local vector to minimize lock time
+    std::vector<uint32> proposalsToAccept;
+    {
+        std::lock_guard<std::mutex> lock(_pendingLfgAcceptsMutex);
+        proposalsToAccept = std::move(_pendingLfgProposalAccepts);
+        _pendingLfgProposalAccepts.clear();
+    }
+
+    if (proposalsToAccept.empty())
+        return false;
+
+    Player* bot = GetPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("module.playerbot.lfg",
+                     "ProcessPendingLfgProposalAccepts: Bot player is nullptr");
+        return false;
+    }
+
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.lfg",
+                    "ProcessPendingLfgProposalAccepts: Bot {} not in world, skipping {} proposals",
+                    bot->GetName(), proposalsToAccept.size());
+        return false;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.lfg",
+                 "ProcessPendingLfgProposalAccepts: Bot {} processing {} proposals on main thread",
+                 bot->GetName(), proposalsToAccept.size());
+
+    bool acceptedAny = false;
+    for (uint32 proposalId : proposalsToAccept)
+    {
+        TC_LOG_INFO("module.playerbot.lfg",
+                    "ProcessPendingLfgProposalAccepts: Bot {} accepting proposal {} (SAFE - main thread)",
+                    bot->GetName(), proposalId);
+
+        // SAFE: Now on main thread, outside of LFGMgr iteration
+        sLFGMgr->UpdateProposal(proposalId, bot->GetGUID(), true);
+        acceptedAny = true;
+
+        TC_LOG_INFO("module.playerbot.lfg",
+                    "ProcessPendingLfgProposalAccepts: Bot {} accepted proposal {}",
+                    bot->GetName(), proposalId);
+    }
+
+    return acceptedAny;
 }
 
 } // namespace Playerbot
