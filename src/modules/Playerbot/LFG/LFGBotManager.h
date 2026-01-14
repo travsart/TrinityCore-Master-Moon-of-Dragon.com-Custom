@@ -185,6 +185,16 @@ public:
      */
     void CleanupStaleAssignments() override;
 
+    /**
+     * @brief Queue a JIT-created bot for a specific dungeon
+     * Public interface for QueueStatePoller to queue bots after JIT creation
+     *
+     * @param bot The bot player object
+     * @param dungeonId The dungeon ID to queue for
+     * @return true if successfully queued, false otherwise
+     */
+    bool QueueJITBot(Player* bot, uint32 dungeonId);
+
 private:
     /**
      * @brief Calculate which roles are needed to complete a group

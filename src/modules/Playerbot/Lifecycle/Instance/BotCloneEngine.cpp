@@ -273,7 +273,8 @@ std::vector<CloneResult> BotCloneEngine::BatchClone(BatchCloneRequest const& req
     for (uint32 i = 0; i < request.count; ++i)
     {
         BotTemplate const* tmpl = validTemplates[dist(gen)];
-        CloneResult result = ExecuteClone(tmpl, request.targetLevel, request.faction, request.minGearScore);
+        CloneResult result = ExecuteClone(tmpl, request.targetLevel, request.faction, request.minGearScore,
+            request.dungeonIdToQueue, request.battlegroundIdToQueue, request.arenaTypeToQueue);
         results.push_back(std::move(result));
     }
 
@@ -514,7 +515,10 @@ CloneResult BotCloneEngine::ExecuteClone(
     BotTemplate const* tmpl,
     uint32 targetLevel,
     Faction faction,
-    uint32 targetGearScore)
+    uint32 targetGearScore,
+    uint32 dungeonIdToQueue,
+    uint32 battlegroundIdToQueue,
+    uint32 arenaTypeToQueue)
 {
     auto startTime = std::chrono::steady_clock::now();
     CloneResult result;
@@ -611,6 +615,10 @@ CloneResult BotCloneEngine::ExecuteClone(
     pendingConfig.targetGearScore = targetGearScore;
     pendingConfig.specId = tmpl->specId;
     pendingConfig.templatePtr = tmpl;
+    // JIT Queue configuration - bot will queue for content after login
+    pendingConfig.dungeonIdToQueue = dungeonIdToQueue;
+    pendingConfig.battlegroundIdToQueue = battlegroundIdToQueue;
+    pendingConfig.arenaTypeToQueue = arenaTypeToQueue;
 
     sBotPostLoginConfigurator->RegisterPendingConfig(std::move(pendingConfig));
 

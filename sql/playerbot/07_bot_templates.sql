@@ -321,7 +321,14 @@ CREATE TABLE `playerbot_bot_templates` (
     INDEX `idx_validated` (`validated`),
     INDEX `idx_class_role` (`class_id`, `role`),
     CONSTRAINT `fk_template_spec` FOREIGN KEY (`spec_id`)
-        REFERENCES `playerbot_spec_info`(`spec_id`) ON DELETE CASCADE
+        REFERENCES `playerbot_spec_info`(`spec_id`) ON DELETE CASCADE,
+
+    -- CHECK constraints to prevent invalid entries (MySQL 8.0.16+)
+    -- These prevent the class_id=0 bug that caused JIT bot creation failures
+    CONSTRAINT `chk_valid_class_id` CHECK (`class_id` >= 1 AND `class_id` <= 13),
+    CONSTRAINT `chk_valid_spec_id` CHECK (`spec_id` > 0),
+    CONSTRAINT `chk_valid_role` CHECK (`role` >= 0 AND `role` <= 2),
+    CONSTRAINT `chk_valid_template_name` CHECK (LENGTH(`template_name`) > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Main bot template registry';
 
@@ -335,6 +342,67 @@ SELECT
     1 AS `enabled`
 FROM `playerbot_spec_info`
 WHERE `enabled` = 1;
+
+-- ============================================================================
+-- TRIGGER: Validate template data before insert
+-- ============================================================================
+-- Provides comprehensive validation beyond CHECK constraints to ensure
+-- class_id matches spec_id in the spec_info table.
+-- ============================================================================
+
+DELIMITER //
+
+DROP TRIGGER IF EXISTS `trg_bot_templates_before_insert`//
+
+CREATE TRIGGER `trg_bot_templates_before_insert`
+BEFORE INSERT ON `playerbot_bot_templates`
+FOR EACH ROW
+BEGIN
+    -- Validate class_id (WoW classes are 1-13)
+    IF NEW.class_id < 1 OR NEW.class_id > 13 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid class_id: must be between 1 and 13 (valid WoW class IDs)';
+    END IF;
+
+    -- Validate spec_id exists in spec_info
+    IF NOT EXISTS (SELECT 1 FROM playerbot_spec_info WHERE spec_id = NEW.spec_id) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid spec_id: must reference a valid entry in playerbot_spec_info';
+    END IF;
+
+    -- Validate class_id matches spec_info (critical: prevents mismatched class/spec)
+    IF NOT EXISTS (SELECT 1 FROM playerbot_spec_info
+                   WHERE spec_id = NEW.spec_id AND class_id = NEW.class_id) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'class_id does not match the class for the given spec_id in playerbot_spec_info';
+    END IF;
+END//
+
+DROP TRIGGER IF EXISTS `trg_bot_templates_before_update`//
+
+CREATE TRIGGER `trg_bot_templates_before_update`
+BEFORE UPDATE ON `playerbot_bot_templates`
+FOR EACH ROW
+BEGIN
+    -- Same validations as insert
+    IF NEW.class_id < 1 OR NEW.class_id > 13 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid class_id: must be between 1 and 13 (valid WoW class IDs)';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM playerbot_spec_info WHERE spec_id = NEW.spec_id) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid spec_id: must reference a valid entry in playerbot_spec_info';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM playerbot_spec_info
+                   WHERE spec_id = NEW.spec_id AND class_id = NEW.class_id) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'class_id does not match the class for the given spec_id in playerbot_spec_info';
+    END IF;
+END//
+
+DELIMITER ;
 
 -- ============================================================================
 -- TABLE: playerbot_template_gear_sets

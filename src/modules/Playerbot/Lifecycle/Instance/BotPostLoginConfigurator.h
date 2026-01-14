@@ -41,6 +41,11 @@ struct BotPendingConfiguration
     // Template pointer (cached for quick access)
     BotTemplate const* templatePtr = nullptr;
 
+    // JIT Queue Configuration (set when bot is created for queue filling)
+    uint32 dungeonIdToQueue = 0;     // If > 0, queue bot for this dungeon after configuration
+    uint32 battlegroundIdToQueue = 0; // If > 0, queue bot for this BG after configuration
+    uint32 arenaTypeToQueue = 0;      // If > 0, queue bot for this arena type after configuration
+
     // Timing
     std::chrono::steady_clock::time_point createdAt;
 

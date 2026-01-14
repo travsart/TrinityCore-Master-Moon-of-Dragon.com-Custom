@@ -258,6 +258,35 @@ public:
     void UnregisterActiveArenaQueue(uint8 arenaType, BattlegroundBracketId bracket);
 
     // ========================================================================
+    // LFG ROLE COUNT UPDATES
+    // ========================================================================
+
+    /**
+     * @brief Update LFG role counts when a bot is queued
+     *
+     * Called by LFGBotManager when a bot is successfully queued for a dungeon.
+     * This keeps the QueueStatePoller's snapshot accurate so it doesn't
+     * trigger unnecessary JIT requests.
+     *
+     * @param dungeonId The dungeon the bot was queued for
+     * @param role The role the bot was queued as (PLAYER_ROLE_TANK/HEALER/DAMAGE)
+     * @param increment True to increment count (bot queued), false to decrement (bot left)
+     */
+    void UpdateLFGRoleCount(uint32 dungeonId, uint8 role, bool increment = true);
+
+    /**
+     * @brief Update LFG needed role counts based on dungeon requirements
+     *
+     * Called when a human player joins an LFG queue to set the required counts.
+     *
+     * @param dungeonId The dungeon ID
+     * @param tanksNeeded Number of tanks needed
+     * @param healersNeeded Number of healers needed
+     * @param dpsNeeded Number of DPS needed
+     */
+    void SetLFGNeededCounts(uint32 dungeonId, uint32 tanksNeeded, uint32 healersNeeded, uint32 dpsNeeded);
+
+    // ========================================================================
     // MANUAL POLL TRIGGERS
     // ========================================================================
 

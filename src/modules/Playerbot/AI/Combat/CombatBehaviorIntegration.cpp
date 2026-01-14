@@ -361,40 +361,31 @@ bool CombatBehaviorIntegration::HandleEmergencies()
             118,     // Minor Healing Potion
         };
 
-        // Check healthstone cooldown spell ID (47875 = Healthstone)
-        static constexpr uint32 HEALTHSTONE_COOLDOWN_SPELL = 47875;
-        // Check potion cooldown (potions share a spell school cooldown)
-        static constexpr uint32 POTION_COOLDOWN_SPELL = 17619;
-
-        // Try healthstone first (higher priority, shorter cooldown)
-        if (!_bot->GetSpellHistory()->HasCooldown(HEALTHSTONE_COOLDOWN_SPELL))
+        // Try healthstone first (higher priority)
+        // Note: Don't check cooldown via HasCooldown() as hardcoded spell IDs may not exist in 11.2
+        // Item use will fail gracefully if the item is on cooldown
+        for (uint32 healthstoneId : HEALTHSTONE_IDS)
         {
-            for (uint32 healthstoneId : HEALTHSTONE_IDS)
+            if (Item* item = _bot->GetItemByEntry(healthstoneId))
             {
-                if (Item* item = _bot->GetItemByEntry(healthstoneId))
-                {
-                    _bot->CastItemUseSpell(item, SpellCastTargets(), ObjectGuid::Empty, nullptr);
-                    if (_detailedLogging)
-                        TC_LOG_DEBUG("bot.playerbot", "Bot {} used Healthstone (item {})",
-                            _bot->GetName(), healthstoneId);
-                    return true;
-                }
+                _bot->CastItemUseSpell(item, SpellCastTargets(), ObjectGuid::Empty, nullptr);
+                if (_detailedLogging)
+                    TC_LOG_DEBUG("bot.playerbot", "Bot {} used Healthstone (item {})",
+                        _bot->GetName(), healthstoneId);
+                return true;
             }
         }
 
         // Try healing potion
-        if (!_bot->GetSpellHistory()->HasCooldown(POTION_COOLDOWN_SPELL))
+        for (uint32 potionId : HEALING_POTION_IDS)
         {
-            for (uint32 potionId : HEALING_POTION_IDS)
+            if (Item* item = _bot->GetItemByEntry(potionId))
             {
-                if (Item* item = _bot->GetItemByEntry(potionId))
-                {
-                    _bot->CastItemUseSpell(item, SpellCastTargets(), ObjectGuid::Empty, nullptr);
-                    if (_detailedLogging)
-                        TC_LOG_DEBUG("bot.playerbot", "Bot {} used Health Potion (item {})",
-                            _bot->GetName(), potionId);
-                    return true;
-                }
+                _bot->CastItemUseSpell(item, SpellCastTargets(), ObjectGuid::Empty, nullptr);
+                if (_detailedLogging)
+                    TC_LOG_DEBUG("bot.playerbot", "Bot {} used Health Potion (item {})",
+                        _bot->GetName(), potionId);
+                return true;
             }
         }
 

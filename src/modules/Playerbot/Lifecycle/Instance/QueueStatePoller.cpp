@@ -11,8 +11,12 @@
 #include "JITBotFactory.h"
 #include "PvP/BGBotManager.h"
 #include "LFG/LFGBotManager.h"
+#include "LFG/LFGRoleDetector.h"
 #include "BattlegroundMgr.h"
 #include "BattlegroundQueue.h"
+#include "ObjectAccessor.h"
+#include "LFGMgr.h"
+#include "Player.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -289,6 +293,76 @@ void QueueStatePoller::UnregisterActiveArenaQueue(uint8 arenaType, BattlegroundB
 
     TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Unregistered Arena queue (type={}, bracket={})",
         arenaType, static_cast<uint32>(bracket));
+}
+
+// ============================================================================
+// LFG ROLE COUNT UPDATES
+// ============================================================================
+
+void QueueStatePoller::UpdateLFGRoleCount(uint32 dungeonId, uint8 role, bool increment)
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    // Create snapshot if it doesn't exist
+    LFGQueueSnapshot& snapshot = _lfgSnapshots[dungeonId];
+    snapshot.dungeonId = dungeonId;
+    snapshot.timestamp = time(nullptr);
+
+    // Update the appropriate role count
+    // Role values: PLAYER_ROLE_TANK = 2, PLAYER_ROLE_HEALER = 4, PLAYER_ROLE_DAMAGE = 8
+    if (role & 2)  // PLAYER_ROLE_TANK
+    {
+        if (increment)
+            ++snapshot.tankCount;
+        else if (snapshot.tankCount > 0)
+            --snapshot.tankCount;
+
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Updated LFG Tank count for dungeon {} to {}/{}",
+            dungeonId, snapshot.tankCount, snapshot.tankNeeded);
+    }
+    else if (role & 4)  // PLAYER_ROLE_HEALER
+    {
+        if (increment)
+            ++snapshot.healerCount;
+        else if (snapshot.healerCount > 0)
+            --snapshot.healerCount;
+
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Updated LFG Healer count for dungeon {} to {}/{}",
+            dungeonId, snapshot.healerCount, snapshot.healerNeeded);
+    }
+    else if (role & 8)  // PLAYER_ROLE_DAMAGE
+    {
+        if (increment)
+            ++snapshot.dpsCount;
+        else if (snapshot.dpsCount > 0)
+            --snapshot.dpsCount;
+
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Updated LFG DPS count for dungeon {} to {}/{}",
+            dungeonId, snapshot.dpsCount, snapshot.dpsNeeded);
+    }
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: LFG Queue Status for dungeon {}: T:{}/{} H:{}/{} D:{}/{} (HasShortage={})",
+        dungeonId,
+        snapshot.tankCount, snapshot.tankNeeded,
+        snapshot.healerCount, snapshot.healerNeeded,
+        snapshot.dpsCount, snapshot.dpsNeeded,
+        snapshot.HasShortage() ? "YES" : "no");
+}
+
+void QueueStatePoller::SetLFGNeededCounts(uint32 dungeonId, uint32 tanksNeeded, uint32 healersNeeded, uint32 dpsNeeded)
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    // Create snapshot if it doesn't exist
+    LFGQueueSnapshot& snapshot = _lfgSnapshots[dungeonId];
+    snapshot.dungeonId = dungeonId;
+    snapshot.tankNeeded = tanksNeeded;
+    snapshot.healerNeeded = healersNeeded;
+    snapshot.dpsNeeded = dpsNeeded;
+    snapshot.timestamp = time(nullptr);
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Set LFG needed counts for dungeon {}: {} tanks, {} healers, {} DPS",
+        dungeonId, tanksNeeded, healersNeeded, dpsNeeded);
 }
 
 // ============================================================================
@@ -583,8 +657,15 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     request.priority = priority;
     request.createdAt = std::chrono::system_clock::now();
 
+    // Set dungeon ID for post-login queueing
+    // The BotPostLoginConfigurator will queue bots AFTER they're fully logged in
+    // This avoids the timing issue where ObjectAccessor::FindPlayer returns nullptr
+    // because the bots haven't entered the world yet when onComplete fires.
+    request.dungeonIdToQueue = snapshot.dungeonId;
+
+    // Optional: Log callback for debugging (bots queue via pendingConfig, not here)
     request.onComplete = [dungeonId = snapshot.dungeonId](std::vector<ObjectGuid> const& botGuids) {
-        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: {} bots ready for dungeon {}",
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: {} bots created for dungeon {} - they will auto-queue after login",
             botGuids.size(), dungeonId);
     };
 

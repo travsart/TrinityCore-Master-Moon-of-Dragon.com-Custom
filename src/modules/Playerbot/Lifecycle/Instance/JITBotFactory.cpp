@@ -900,6 +900,10 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvEBots(
             cloneReq.targetLevel = request.playerLevel;
             cloneReq.faction = request.playerFaction;
             cloneReq.minGearScore = request.minGearScore;
+            // Pass queue configuration for JIT-created bots
+            cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+            cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+            cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
             auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
             result.insert(result.end(), clonedBots.begin(), clonedBots.end());
@@ -929,6 +933,10 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvEBots(
             cloneReq.targetLevel = request.playerLevel;
             cloneReq.faction = request.playerFaction;
             cloneReq.minGearScore = request.minGearScore;
+            // Pass queue configuration for JIT-created bots
+            cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+            cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+            cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
             auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
             result.insert(result.end(), clonedBots.begin(), clonedBots.end());
@@ -957,6 +965,10 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvEBots(
             cloneReq.targetLevel = request.playerLevel;
             cloneReq.faction = request.playerFaction;
             cloneReq.minGearScore = request.minGearScore;
+            // Pass queue configuration for JIT-created bots
+            cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+            cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+            cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
             auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
             result.insert(result.end(), clonedBots.begin(), clonedBots.end());
@@ -1004,6 +1016,9 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.targetLevel = request.playerLevel;
                 cloneReq.faction = Faction::Alliance;
                 cloneReq.minGearScore = request.minGearScore;
+                cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+                cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+                cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
                 auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
                 result.insert(result.end(), clonedBots.begin(), clonedBots.end());
@@ -1026,6 +1041,9 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.targetLevel = request.playerLevel;
                 cloneReq.faction = Faction::Alliance;
                 cloneReq.minGearScore = request.minGearScore;
+                cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+                cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+                cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
                 auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
                 result.insert(result.end(), clonedBots.begin(), clonedBots.end());
@@ -1048,6 +1066,9 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.targetLevel = request.playerLevel;
                 cloneReq.faction = Faction::Alliance;
                 cloneReq.minGearScore = request.minGearScore;
+                cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+                cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+                cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
                 auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
                 result.insert(result.end(), clonedBots.begin(), clonedBots.end());
@@ -1085,6 +1106,9 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.targetLevel = request.playerLevel;
                 cloneReq.faction = Faction::Horde;
                 cloneReq.minGearScore = request.minGearScore;
+                cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+                cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+                cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
                 auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
                 result.insert(result.end(), clonedBots.begin(), clonedBots.end());
@@ -1107,6 +1131,9 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.targetLevel = request.playerLevel;
                 cloneReq.faction = Faction::Horde;
                 cloneReq.minGearScore = request.minGearScore;
+                cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+                cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+                cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
                 auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
                 result.insert(result.end(), clonedBots.begin(), clonedBots.end());
@@ -1129,6 +1156,9 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
                 cloneReq.targetLevel = request.playerLevel;
                 cloneReq.faction = Faction::Horde;
                 cloneReq.minGearScore = request.minGearScore;
+                cloneReq.dungeonIdToQueue = request.dungeonIdToQueue;
+                cloneReq.battlegroundIdToQueue = request.battlegroundIdToQueue;
+                cloneReq.arenaTypeToQueue = request.arenaTypeToQueue;
 
                 auto clonedBots = BatchCloneWithRetry(cloneReq, MAX_RETRIES, progress);
                 result.insert(result.end(), clonedBots.begin(), clonedBots.end());

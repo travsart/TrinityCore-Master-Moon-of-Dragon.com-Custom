@@ -283,34 +283,43 @@ void BotNameMgr::LoadNamesFromDatabase()
 {
     QueryResult result = sPlayerbotDatabase->Query(
         "SELECT name_id, name, gender FROM playerbots_names");
-    
+
+    if (!result)
+    {
+        TC_LOG_ERROR("module.playerbot.names",
+            "Failed to load names from playerbots_names table - table may not exist or be empty! "
+            "Bot character creation will fail without names.");
+        return;
+    }
+
     uint32 count = 0;
     do
     {
         Field* fields = result->Fetch();
-        
+
         NameEntry entry;
         entry.nameId = fields[0].GetUInt32();
         entry.name = fields[1].GetString();
         entry.gender = fields[2].GetUInt8();
         entry.used = false;
         entry.usedByGuid = 0;
-        
+
         _names[entry.nameId] = entry;
         _nameToId[entry.name] = entry.nameId;
-        
+
         // Add to available names (will be adjusted when loading used names)
-    if (entry.gender == 0)
+        if (entry.gender == 0)
             _availableMaleNames.insert(entry.nameId);
         else if (entry.gender == 1)
             _availableFemaleNames.insert(entry.nameId);
-        
+
         ++count;
-        
+
     } while (result->NextRow());
-    
-    TC_LOG_INFO("module.playerbot.names", 
-        "Loaded {} names from database", count);
+
+    TC_LOG_INFO("module.playerbot.names",
+        "Loaded {} names from database ({} male, {} female)",
+        count, _availableMaleNames.size(), _availableFemaleNames.size());
 }
 
 void BotNameMgr::LoadUsedNames()

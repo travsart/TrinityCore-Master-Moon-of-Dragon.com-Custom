@@ -601,6 +601,27 @@ void BotTemplateRepository::LoadFromDatabase()
         // Note: Database stores role as TINYINT (0=Tank, 1=Healer, 2=DPS), not string
         tmpl->role = static_cast<BotRole>(fields[4].GetUInt8());
 
+        // VALIDATION: Skip invalid templates with class_id=0 (not a valid WoW class)
+        // This can happen due to corrupt database entries
+        if (tmpl->playerClass == 0 || tmpl->playerClass > 13)
+        {
+            TC_LOG_ERROR("playerbot.template",
+                "SKIPPING INVALID TEMPLATE: id={}, name='{}' has invalid class_id={} (valid: 1-13). "
+                "Run fix_corrupt_template_entry.sql to clean up database.",
+                tmpl->templateId, tmpl->templateName, tmpl->playerClass);
+            continue;
+        }
+
+        // Also validate spec_id is not 0
+        if (tmpl->specId == 0)
+        {
+            TC_LOG_ERROR("playerbot.template",
+                "SKIPPING INVALID TEMPLATE: id={}, name='{}' has invalid spec_id=0. "
+                "Run fix_corrupt_template_entry.sql to clean up database.",
+                tmpl->templateId, tmpl->templateName);
+            continue;
+        }
+
         // Get class and spec names
         tmpl->className = GetClassName(tmpl->playerClass);
         tmpl->specName = GetSpecName(tmpl->specId);
@@ -638,19 +659,61 @@ void BotTemplateRepository::LoadFromDatabase()
         uint64 allianceKey = (static_cast<uint64>(tmpl->playerClass) << 8) | 0; // Alliance = 0
         uint64 hordeKey = (static_cast<uint64>(tmpl->playerClass) << 8) | 1;    // Horde = 1
 
+        bool usedDBForAlliance = false, usedDBForHorde = false;
         auto alIt = classRaceMatrix.find(allianceKey);
         if (alIt != classRaceMatrix.end())
+        {
             tmpl->allianceRaces = alIt->second;
+            usedDBForAlliance = true;
+        }
 
         auto hIt = classRaceMatrix.find(hordeKey);
         if (hIt != classRaceMatrix.end())
+        {
             tmpl->hordeRaces = hIt->second;
+            usedDBForHorde = true;
+        }
 
         // If no races from database, use fallback
+        bool usedFallbackForAlliance = false, usedFallbackForHorde = false;
         if (tmpl->allianceRaces.empty())
+        {
             tmpl->allianceRaces = GetValidRaces(tmpl->playerClass, Faction::Alliance);
+            usedFallbackForAlliance = true;
+        }
         if (tmpl->hordeRaces.empty())
+        {
             tmpl->hordeRaces = GetValidRaces(tmpl->playerClass, Faction::Horde);
+            usedFallbackForHorde = true;
+        }
+
+        // Log race source info for tank templates to help debug JIT failure
+        if (tmpl->role == BotRole::Tank && (tmpl->allianceRaces.empty() || tmpl->hordeRaces.empty()))
+        {
+            TC_LOG_ERROR("playerbot.template",
+                "TANK {} (class={}) has EMPTY races after loading! Alliance: {} (DB={}, Fallback={}), Horde: {} (DB={}, Fallback={})",
+                tmpl->templateName, tmpl->playerClass,
+                tmpl->allianceRaces.size(), usedDBForAlliance, usedFallbackForAlliance,
+                tmpl->hordeRaces.size(), usedDBForHorde, usedFallbackForHorde);
+        }
+
+        // DEBUG: Log ALL tank templates (role=0) specifically to debug JIT creation failure
+        if (tmpl->role == BotRole::Tank)
+        {
+            TC_LOG_INFO("playerbot.template",
+                "TANK Template loaded: {} (id={}, class={}, spec={}) - AllianceRaces={}, HordeRaces={}",
+                tmpl->templateName, tmpl->templateId, tmpl->playerClass, tmpl->specId,
+                tmpl->allianceRaces.size(), tmpl->hordeRaces.size());
+        }
+        // Also log first 3 templates regardless of role for general debugging
+        else if (loadedTemplates < 3)
+        {
+            TC_LOG_INFO("playerbot.template",
+                "Template {} ({}): class={}, role={}, allianceRaces={}, hordeRaces={}",
+                tmpl->templateName, tmpl->templateId, tmpl->playerClass,
+                static_cast<uint8>(tmpl->role),
+                tmpl->allianceRaces.size(), tmpl->hordeRaces.size());
+        }
 
         // Index the template
         uint64 classSpecKey = MakeTemplateKey(tmpl->playerClass, tmpl->specId);
@@ -877,6 +940,28 @@ void BotTemplateRepository::LoadFromDatabase()
     TC_LOG_INFO("playerbot.template",
         "Database load complete: {} templates, {} gear sets, {} talents, {} action buttons",
         loadedTemplates, loadedGearSets, loadedTalents, loadedActions);
+
+    // Log role distribution for debugging pool creation
+    auto tankIt = _roleIndex.find(BotRole::Tank);
+    auto healerIt = _roleIndex.find(BotRole::Healer);
+    auto dpsIt = _roleIndex.find(BotRole::DPS);
+
+    TC_LOG_INFO("playerbot.template",
+        "Role distribution: Tank={}, Healer={}, DPS={}",
+        tankIt != _roleIndex.end() ? tankIt->second.size() : 0,
+        healerIt != _roleIndex.end() ? healerIt->second.size() : 0,
+        dpsIt != _roleIndex.end() ? dpsIt->second.size() : 0);
+
+    // Check for templates with valid races
+    uint32 allianceValid = 0, hordeValid = 0;
+    for (auto const& [id, tmpl] : _templates)
+    {
+        if (!tmpl->allianceRaces.empty()) ++allianceValid;
+        if (!tmpl->hordeRaces.empty()) ++hordeValid;
+    }
+    TC_LOG_INFO("playerbot.template",
+        "Templates with valid races: Alliance={}, Horde={}",
+        allianceValid, hordeValid);
 }
 
 void BotTemplateRepository::SaveToDatabase()
@@ -1192,7 +1277,16 @@ BotTemplate const* BotTemplateRepository::SelectRandomTemplate(
 {
     auto templates = GetTemplatesForRole(role);
     if (templates.empty())
+    {
+        TC_LOG_ERROR("playerbot.template",
+            "SelectRandomTemplate FAILED: No templates found for role {} (_roleIndex[{}] is empty or missing)",
+            BotRoleToString(role), static_cast<uint8>(role));
         return nullptr;
+    }
+
+    TC_LOG_INFO("playerbot.template",
+        "SelectRandomTemplate: Found {} templates for role {}, filtering for faction {}",
+        templates.size(), BotRoleToString(role), FactionToString(faction));
 
     // Filter by faction
     std::vector<BotTemplate const*> validTemplates;
@@ -1201,11 +1295,25 @@ BotTemplate const* BotTemplateRepository::SelectRandomTemplate(
         auto const& races = (faction == Faction::Alliance) ?
                            tmpl->allianceRaces : tmpl->hordeRaces;
         if (!races.empty())
+        {
             validTemplates.push_back(tmpl);
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot.template",
+                "SelectRandomTemplate: Template {} ({}) rejected - no races for faction {} (Alliance: {}, Horde: {})",
+                tmpl->templateName, tmpl->templateId, FactionToString(faction),
+                tmpl->allianceRaces.size(), tmpl->hordeRaces.size());
+        }
     }
 
     if (validTemplates.empty())
+    {
+        TC_LOG_ERROR("playerbot.template",
+            "SelectRandomTemplate FAILED: All {} templates for role {} have empty races for faction {}!",
+            templates.size(), BotRoleToString(role), FactionToString(faction));
         return nullptr;
+    }
 
     static thread_local std::mt19937 gen(std::random_device{}());
     std::uniform_int_distribution<size_t> dist(0, validTemplates.size() - 1);
@@ -1581,6 +1689,10 @@ std::vector<uint8> BotTemplateRepository::GetValidRaces(uint8 playerClass, Facti
             case Classes::EVOKER:
                 races = {Races::DRACTHYR_ALLIANCE};
                 break;
+            default:
+                TC_LOG_ERROR("playerbot.template",
+                    "GetValidRaces: Unknown Alliance class {} - no races available!", playerClass);
+                break;
         }
     }
     else // Horde
@@ -1648,7 +1760,19 @@ std::vector<uint8> BotTemplateRepository::GetValidRaces(uint8 playerClass, Facti
             case Classes::EVOKER:
                 races = {Races::DRACTHYR_HORDE};
                 break;
+            default:
+                TC_LOG_ERROR("playerbot.template",
+                    "GetValidRaces: Unknown Horde class {} - no races available!", playerClass);
+                break;
         }
+    }
+
+    // Log warning if no races were found
+    if (races.empty())
+    {
+        TC_LOG_ERROR("playerbot.template",
+            "GetValidRaces returned empty for class {} faction {} - this will cause template selection failures!",
+            playerClass, static_cast<uint8>(faction));
     }
 
     return races;

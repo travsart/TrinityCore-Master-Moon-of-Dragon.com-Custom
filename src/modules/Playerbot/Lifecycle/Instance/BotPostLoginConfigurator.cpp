@@ -9,6 +9,7 @@
 
 #include "BotPostLoginConfigurator.h"
 #include "BotTemplateRepository.h"
+#include "LFG/LFGBotManager.h"
 #include "Player.h"
 #include "Item.h"
 #include "Log.h"
@@ -288,6 +289,31 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
         if (player->GetMaxPower(power) > 0)
             player->SetFullPower(power);
     }
+
+    // Step 7: Queue for content if this was a JIT-created bot
+    if (config.dungeonIdToQueue > 0)
+    {
+        TC_LOG_INFO("module.playerbot.configurator",
+            "Queueing JIT bot {} for dungeon {} after configuration",
+            player->GetName(), config.dungeonIdToQueue);
+
+        if (sLFGBotManager->QueueJITBot(player, config.dungeonIdToQueue))
+        {
+            TC_LOG_INFO("module.playerbot.configurator",
+                "Successfully queued bot {} for dungeon {}",
+                player->GetName(), config.dungeonIdToQueue);
+        }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.configurator",
+                "Failed to queue bot {} for dungeon {}",
+                player->GetName(), config.dungeonIdToQueue);
+        }
+    }
+
+    // TODO: Add battleground and arena queueing when needed
+    // if (config.battlegroundIdToQueue > 0) { ... }
+    // if (config.arenaTypeToQueue > 0) { ... }
 
     // Calculate timing
     auto endTime = std::chrono::steady_clock::now();

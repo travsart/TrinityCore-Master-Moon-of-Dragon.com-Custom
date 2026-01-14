@@ -131,6 +131,19 @@ struct TC_GAME_API FactoryRequest
     uint32 minGearScore = 0;                ///< Minimum gear score required
 
     // ========================================================================
+    // POST-CREATION QUEUE CONFIGURATION
+    // ========================================================================
+
+    /// If > 0, bots will queue for this dungeon after login
+    uint32 dungeonIdToQueue = 0;
+
+    /// If > 0, bots will queue for this BG after login
+    uint32 battlegroundIdToQueue = 0;
+
+    /// If > 0, bots will queue for this arena type after login
+    uint32 arenaTypeToQueue = 0;
+
+    // ========================================================================
     // CALLBACKS
     // ========================================================================
 

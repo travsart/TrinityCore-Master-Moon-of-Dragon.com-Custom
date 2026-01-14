@@ -138,6 +138,11 @@ struct BatchCloneRequest
     uint8 preferredClass = 0;               ///< Preferred class (0 = any)
     bool async = false;                     ///< Use async creation
 
+    // Post-creation queue configuration
+    uint32 dungeonIdToQueue = 0;            ///< If > 0, queue bot for this dungeon after login
+    uint32 battlegroundIdToQueue = 0;       ///< If > 0, queue bot for this BG after login
+    uint32 arenaTypeToQueue = 0;            ///< If > 0, queue bot for this arena type after login
+
     /**
      * @brief Validate request parameters
      */
@@ -358,7 +363,10 @@ private:
         BotTemplate const* tmpl,
         uint32 targetLevel,
         Faction faction,
-        uint32 targetGearScore);
+        uint32 targetGearScore,
+        uint32 dungeonIdToQueue = 0,
+        uint32 battlegroundIdToQueue = 0,
+        uint32 arenaTypeToQueue = 0);
 
     /**
      * @brief Create the Player object

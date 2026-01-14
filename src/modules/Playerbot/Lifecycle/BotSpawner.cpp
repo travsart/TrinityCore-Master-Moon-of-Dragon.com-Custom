@@ -1714,33 +1714,42 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
     try
     {
-        // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character (prepared statement)
+        // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_BY_ID);
         stmt->setUInt32(0, accountId);
         PreparedQueryResult accountCheck = LoginDatabase.Query(stmt);
 
-        // Check current character count for this account (enforce 10 character limit) (prepared statement)
+        if (!accountCheck)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Account {} does not exist in login database! Cannot create bot character.",
+                accountId);
+            return ObjectGuid::Empty;
+        }
+
+        // Check current character count for this account (enforce 10 character limit)
         CharacterDatabasePreparedStatement* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_SUM_CHARS);
         charStmt->setUInt32(0, accountId);
         PreparedQueryResult charCountResult = CharacterDatabase.Query(charStmt);
 
+        uint32 currentCharCount = 0;
         if (charCountResult)
         {
             Field* fields = charCountResult->Fetch();
-            uint32 currentCharCount = fields[0].GetUInt32();
-
-            if (currentCharCount >= 10)
-            {
-                TC_LOG_WARN("module.playerbot.spawner",
-                    " Account {} already has {} characters (limit: 10). Cannot create more.",
-                    accountId, currentCharCount);
-                return ObjectGuid::Empty;
-            }
-
-            TC_LOG_DEBUG("module.playerbot.spawner",
-                " Account {} validated: exists in database, has {}/10 characters",
-                accountId, currentCharCount);
+            currentCharCount = fields[0].GetUInt32();
         }
+
+        if (currentCharCount >= 10)
+        {
+            TC_LOG_WARN("module.playerbot.spawner",
+                "Account {} already has {} characters (limit: 10). Cannot create more.",
+                accountId, currentCharCount);
+            return ObjectGuid::Empty;
+        }
+
+        TC_LOG_DEBUG("module.playerbot.spawner",
+            "Account {} validated: exists in database, has {}/10 characters",
+            accountId, currentCharCount);
 
         // Get race/class distribution
         auto [race, classId] = sBotCharacterDistribution->GetRandomRaceClassByDistribution();
@@ -1977,24 +1986,37 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
         stmt->setUInt32(0, accountId);
         PreparedQueryResult accountCheck = LoginDatabase.Query(stmt);
 
-        // Check current character count for this account (prepared statement)
+        if (!accountCheck)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Account {} does not exist in login database! Cannot create bot character (template).",
+                accountId);
+            return ObjectGuid::Empty;
+        }
+
+        // Check current character count for this account
         CharacterDatabasePreparedStatement* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_SUM_CHARS);
         charStmt->setUInt32(0, accountId);
         PreparedQueryResult charCountResult = CharacterDatabase.Query(charStmt);
 
+        uint32 currentCharCount = 0;
         if (charCountResult)
         {
             Field* fields = charCountResult->Fetch();
-            uint32 currentCharCount = fields[0].GetUInt32();
-
-            if (currentCharCount >= 10)
-            {
-                TC_LOG_WARN("module.playerbot.spawner",
-                    "Account {} already has {} characters (limit: 10). Cannot create more.",
-                    accountId, currentCharCount);
-                return ObjectGuid::Empty;
-            }
+            currentCharCount = fields[0].GetUInt32();
         }
+
+        if (currentCharCount >= 10)
+        {
+            TC_LOG_WARN("module.playerbot.spawner",
+                "Account {} already has {} characters (limit: 10). Cannot create more.",
+                accountId, currentCharCount);
+            return ObjectGuid::Empty;
+        }
+
+        TC_LOG_DEBUG("module.playerbot.spawner",
+            "Account {} validated for template creation: {}/10 characters",
+            accountId, currentCharCount);
 
         // Validate race/class combination
         ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(classId);
