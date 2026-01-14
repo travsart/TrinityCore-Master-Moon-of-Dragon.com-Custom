@@ -213,6 +213,45 @@ void QueueStatePoller::RegisterActiveLFGQueue(uint32 dungeonId, uint8 minLevel, 
     DoPollLFGQueue(dungeonId, minLevel, maxLevel);
 }
 
+void QueueStatePoller::RegisterActiveLFGQueue(uint32 dungeonId)
+{
+    // Use expansion-based level ranges as defaults
+    // The exact level range isn't critical for JIT bot creation
+    // Bots will be created with appropriate levels based on the content
+    uint8 minLevel = 10;
+    uint8 maxLevel = 80;
+
+    // Estimate level range based on dungeon ID ranges
+    // Classic dungeons: ~1-999, TBC: ~1000-1999, WotLK: ~2000-2999, etc.
+    if (dungeonId < 1000)
+    {
+        minLevel = 15;
+        maxLevel = 60;
+    }
+    else if (dungeonId < 2000)
+    {
+        minLevel = 58;
+        maxLevel = 70;
+    }
+    else if (dungeonId < 3000)
+    {
+        minLevel = 68;
+        maxLevel = 80;
+    }
+    else
+    {
+        // Modern content - use dynamic level range
+        minLevel = 10;
+        maxLevel = 80;
+    }
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Registering LFG queue {} with estimated levels {}-{}",
+        dungeonId, minLevel, maxLevel);
+
+    // Call the full implementation
+    RegisterActiveLFGQueue(dungeonId, minLevel, maxLevel);
+}
+
 void QueueStatePoller::UnregisterActiveLFGQueue(uint32 dungeonId)
 {
     std::lock_guard<decltype(_mutex)> lock(_mutex);

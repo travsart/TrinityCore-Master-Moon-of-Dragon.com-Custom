@@ -57,8 +57,8 @@
 #pragma once
 
 #include "Define.h"
-#include "Core/Managers/IManagerBase.h"
 #include "Core/Events/QueueEventData.h"
+#include "Core/Events/BotEventTypes.h"
 #include "Threading/LockHierarchy.h"
 #include <unordered_map>
 #include <chrono>
@@ -66,9 +66,6 @@
 
 namespace Playerbot
 {
-
-// Forward declaration
-namespace Events { class EventDispatcher; }
 
 /**
  * @brief Subscribes to queue shortage events and triggers JIT bot creation
@@ -82,7 +79,7 @@ namespace Events { class EventDispatcher; }
  * - Uses OrderedRecursiveMutex for internal state protection
  * - Throttling uses atomic operations for performance
  */
-class TC_GAME_API QueueShortageSubscriber : public IManagerBase
+class TC_GAME_API QueueShortageSubscriber
 {
 private:
     QueueShortageSubscriber();
@@ -95,23 +92,23 @@ public:
     static QueueShortageSubscriber* Instance();
 
     // ========================================================================
-    // IManagerBase INTERFACE
+    // LIFECYCLE
     // ========================================================================
 
     /**
      * @brief Initialize and subscribe to events
      */
-    bool Initialize() override;
+    bool Initialize();
 
     /**
      * @brief Unsubscribe and cleanup
      */
-    void Shutdown() override;
+    void Shutdown();
 
     /**
      * @brief Periodic update (process deferred work)
      */
-    void Update(uint32 diff) override;
+    void Update(uint32 diff);
 
     /**
      * @brief Handle shortage events from EventDispatcher

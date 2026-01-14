@@ -1204,7 +1204,7 @@ bool InterruptManager::AttemptLoSInterrupt(Unit* target)
     {
         TC_LOG_TRACE("module.playerbot.interrupt",
             "AttemptLoSInterrupt: Spell {} ignores LoS, cannot interrupt via positioning",
-            spellInfo->SpellName[0]);
+            spellInfo->SpellName->Str[0]);
         return false;
     }
 
@@ -1304,7 +1304,7 @@ bool InterruptManager::FindCoverPosition(Unit* target, Position& outPos)
             testPos.m_positionZ = botPos.GetPositionZ();
 
             // Get proper ground height
-            float groundZ = map->GetHeight(_bot->GetPhaseMask(),
+            float groundZ = map->GetHeight(_bot->GetPhaseShift(),
                                           testPos.GetPositionX(),
                                           testPos.GetPositionY(),
                                           testPos.GetPositionZ() + 5.0f);
@@ -1349,7 +1349,7 @@ bool InterruptManager::FindCoverPosition(Unit* target, Position& outPos)
             testPos.m_positionY = botPos.GetPositionY() + distance * ::std::sin(perpAngle);
             testPos.m_positionZ = botPos.GetPositionZ();
 
-            float groundZ = map->GetHeight(_bot->GetPhaseMask(),
+            float groundZ = map->GetHeight(_bot->GetPhaseShift(),
                                           testPos.GetPositionX(),
                                           testPos.GetPositionY(),
                                           testPos.GetPositionZ() + 5.0f);

@@ -12,6 +12,7 @@
 #include "Player.h"
 #include "Unit.h"
 #include "Map.h"
+#include "MapDefines.h"
 #include "Log.h"
 #include "Group.h"
 #include "GridNotifiers.h"
@@ -1613,7 +1614,7 @@ float PositionManager::CalculateAoEThreat(const Position& pos)
     // Check for lava/slime/water hazards at position
     LiquidData liquidData;
     ZLiquidStatus liquidStatus = map->GetLiquidStatus(
-        _bot->GetPhaseMask(),
+        _bot->GetPhaseShift(),
         pos.GetPositionX(),
         pos.GetPositionY(),
         pos.GetPositionZ() + 2.0f,
@@ -1624,11 +1625,13 @@ float PositionManager::CalculateAoEThreat(const Position& pos)
     if (liquidStatus != LIQUID_MAP_NO_WATER)
     {
         // Check for dangerous liquids
-        if (liquidData.type_flags & (MAP_LIQUID_TYPE_MAGMA | MAP_LIQUID_TYPE_SLIME))
+        if (liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Magma) ||
+            liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Slime))
         {
             totalThreat += 50.0f;  // Very high threat for lava/slime
         }
-        else if (liquidData.type_flags & MAP_LIQUID_TYPE_WATER)
+        else if (liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Water) ||
+                 liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Ocean))
         {
             // Deep water is dangerous for non-swimming classes
             if (liquidData.depth_level > 2.0f)

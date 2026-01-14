@@ -34,6 +34,7 @@ namespace Paladin
     constexpr uint32 HAMMER_OF_WRATH = 24275;
     constexpr uint32 REBUKE = 96231; // Interrupt
     constexpr uint32 CLEANSE = 4987; // Dispel
+    constexpr uint32 CLEANSE_TOXINS = 213644; // Dispel poison/disease
     constexpr uint32 CRUSADER_STRIKE = 35395;
     constexpr uint32 JUDGMENT = 20271;
     constexpr uint32 HAND_OF_RECKONING = 62124; // Taunt
@@ -41,6 +42,12 @@ namespace Paladin
     constexpr uint32 BLINDING_LIGHT = 115750;
     constexpr uint32 CONSECRATION = 26573;
     constexpr uint32 AVENGING_WRATH = 31884;
+
+    // Auras
+    constexpr uint32 DEVOTION_AURA = 465;
+    constexpr uint32 CRUSADER_AURA = 32223;
+    constexpr uint32 RETRIBUTION_AURA = 183435;
+    constexpr uint32 CONCENTRATION_AURA = 317920;
 
     // Holy Specialization
     namespace Holy
@@ -321,6 +328,7 @@ namespace Rogue
     constexpr uint32 PICK_POCKET = 921;
     constexpr uint32 SHADOWSTEP = 36554;
     constexpr uint32 SHIV = 5938;
+    constexpr uint32 FEINT = 1966;
 
     // Poisons
     constexpr uint32 INSTANT_POISON = 315584;
@@ -475,6 +483,7 @@ namespace Shaman
     constexpr uint32 ANCESTRAL_SPIRIT = 2008; // Resurrect
     constexpr uint32 WIND_RUSH_TOTEM = 192077;
     constexpr uint32 SPIRIT_WALK = 58875;
+    constexpr uint32 ASTRAL_SHIFT = 108271; // Defensive cooldown
 
     // Elemental Specialization
     namespace Elemental
@@ -624,6 +633,8 @@ namespace Warlock
     constexpr uint32 BURNING_RUSH = 111400;
     constexpr uint32 DEMONIC_GATEWAY = 111771;
     constexpr uint32 SOULSTONE = 20707;
+    constexpr uint32 DEMONIC_CIRCLE = 48018; // Alias to summon circle
+    constexpr uint32 UNENDING_BREATH = 5697; // Water breathing
 
     // Affliction Specialization
     namespace Affliction
@@ -759,6 +770,7 @@ namespace Warrior
     constexpr uint32 TAUNT = 355; // Warrior Taunt
     constexpr uint32 HAMSTRING = 1715;
     constexpr uint32 PIERCING_HOWL = 12323;
+    constexpr uint32 VICTORY_RUSH = 34428; // After killing enemy that yields XP/honor
 
     // Arms Specialization
     namespace Arms

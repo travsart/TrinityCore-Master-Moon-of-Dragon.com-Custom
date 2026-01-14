@@ -34,6 +34,8 @@ namespace DeathKnight
     constexpr uint32 SACRIFICIAL_PACT = 327574;
     constexpr uint32 DEATH_COIL = 47541;
     constexpr uint32 DARK_COMMAND = 56222; // Taunt
+    constexpr uint32 RAISE_ALLY = 61999; // Battle resurrection
+    constexpr uint32 CONTROL_UNDEAD = 111673; // Control undead minion
 
     // Blood Specialization
     namespace Blood
@@ -171,6 +173,7 @@ namespace DemonHunter
     constexpr uint32 SIGIL_OF_FLAME = 204596;
     constexpr uint32 SIGIL_OF_MISERY = 207684;
     constexpr uint32 SIGIL_OF_SILENCE = 202137;
+    constexpr uint32 BLUR = 198589; // Defensive dodge ability
 
     // Havoc Specialization
     namespace Havoc
@@ -268,6 +271,8 @@ namespace Druid
     constexpr uint32 INNERVATE = 29166;
     constexpr uint32 SOLAR_BEAM = 78675; // Interrupt (Balance)
     constexpr uint32 SKULL_BASH = 106839; // Interrupt (Feral/Guardian)
+    constexpr uint32 SURVIVAL_INSTINCTS = 61336; // Major defensive cooldown
+    constexpr uint32 MARK_OF_THE_WILD = 1126; // Buff
 
     // Balance Specialization
     namespace Balance
@@ -438,6 +443,10 @@ namespace Evoker
     constexpr uint32 VERDANT_EMBRACE = 360995;
     constexpr uint32 LANDSLIDE = 358385; // Root
     constexpr uint32 SLEEP_WALK = 360806; // CC
+    constexpr uint32 OBSIDIAN_SCALES = 363916; // Defensive ability
+    constexpr uint32 RENEWING_BLAZE = 374348; // Self heal over time
+    constexpr uint32 OPPRESSING_ROAR = 372048; // AoE enrage dispel
+    constexpr uint32 SOURCE_OF_MAGIC = 369459; // Mana buff
 
     // Devastation Specialization
     namespace Devastation
@@ -549,6 +558,12 @@ namespace Hunter
     constexpr uint32 FEIGN_DEATH = 5384;
     constexpr uint32 TRANQUILIZING_SHOT = 19801; // Dispel
     constexpr uint32 INTIMIDATION = 19577; // Pet stun
+
+    // Pet Management (All Specs)
+    constexpr uint32 CALL_PET_1 = 883;
+    constexpr uint32 DISMISS_PET = 2641;
+    constexpr uint32 REVIVE_PET = 982;
+    constexpr uint32 MEND_PET = 136;
 
     // Beast Mastery Specialization
     namespace BeastMastery

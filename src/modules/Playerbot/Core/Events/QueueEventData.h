@@ -25,10 +25,10 @@
 #include "ObjectGuid.h"
 #include <ctime>
 
-// Forward declarations
-enum BattlegroundTypeId : uint8;
-enum BattlegroundBracketId : uint8;
-enum Team : uint8;
+// Forward declarations - must match actual TrinityCore types
+enum BattlegroundTypeId : uint32;  // SharedDefines.h
+enum BattlegroundBracketId;        // DBCEnums.h - no explicit type (defaults to int)
+enum Team;                         // SharedDefines.h - no explicit type (defaults to int)
 
 namespace Playerbot
 {

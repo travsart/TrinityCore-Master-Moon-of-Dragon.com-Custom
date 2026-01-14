@@ -33,7 +33,7 @@
 #include "Lifecycle/Instance/QueueStatePoller.h"
 #include "Lifecycle/Instance/JITBotFactory.h"
 #include "LFG/LFGBotManager.h"
-#include "BotMgr.h"
+#include "Session/BotPacketRelay.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -48,7 +48,7 @@ namespace Playerbot
  */
 static bool IsBot(Player* player)
 {
-    return player && sBotMgr->IsBot(player);
+    return BotPacketRelay::IsBot(player);
 }
 
 /**

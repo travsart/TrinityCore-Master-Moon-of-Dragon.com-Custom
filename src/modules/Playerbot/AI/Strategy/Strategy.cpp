@@ -645,7 +645,7 @@ void StrategyFactory::RegisterStrategy(::std::string const& name,
                 };
                 strategies.push_back(::std::make_unique<OutlawComboStrategy>());
             }
-            else if (specEnum == ChrSpecialization::RogueSubtlety)
+            else if (specEnum == ChrSpecialization::RogueSubtely)
             {
                 class SubtletyShadowStrategy : public CombatStrategy
                 {

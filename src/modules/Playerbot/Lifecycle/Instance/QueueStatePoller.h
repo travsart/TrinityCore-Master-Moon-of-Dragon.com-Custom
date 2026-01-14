@@ -58,10 +58,10 @@
 #include <chrono>
 #include <mutex>
 
-// Forward declarations - TrinityCore types
-enum BattlegroundTypeId : uint8;
-enum BattlegroundBracketId : uint8;
-enum Team : uint8;
+// Forward declarations - TrinityCore types (must match actual types in core headers)
+enum BattlegroundTypeId : uint32;  // SharedDefines.h
+enum BattlegroundBracketId;        // DBCEnums.h - no explicit type (defaults to int)
+enum Team;                         // SharedDefines.h - no explicit type (defaults to int)
 
 namespace Playerbot
 {
@@ -236,6 +236,11 @@ public:
      * @brief Register an LFG queue as active
      */
     void RegisterActiveLFGQueue(uint32 dungeonId, uint8 minLevel, uint8 maxLevel);
+
+    /**
+     * @brief Register an LFG queue as active (auto-detects level range from LFGDungeonEntry)
+     */
+    void RegisterActiveLFGQueue(uint32 dungeonId);
 
     /**
      * @brief Unregister an LFG queue

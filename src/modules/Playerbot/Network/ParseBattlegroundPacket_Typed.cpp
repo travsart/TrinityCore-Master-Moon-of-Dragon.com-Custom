@@ -34,7 +34,7 @@
 #include "Lifecycle/Instance/JITBotFactory.h"
 #include "PvP/BGBotManager.h"
 #include "PvP/ArenaBotManager.h"
-#include "BotMgr.h"
+#include "Session/BotPacketRelay.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -49,7 +49,7 @@ namespace Playerbot
  */
 static bool IsBot(Player* player)
 {
-    return player && sBotMgr->IsBot(player);
+    return BotPacketRelay::IsBot(player);
 }
 
 /**
