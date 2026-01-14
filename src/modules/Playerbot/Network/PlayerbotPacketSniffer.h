@@ -37,6 +37,8 @@ void RegisterSocialPacketHandlers();
 void RegisterAuctionPacketHandlers();
 void RegisterNPCPacketHandlers();
 void RegisterInstancePacketHandlers();
+void RegisterBattlegroundPacketHandlers();
+void RegisterLFGPacketHandlers();
 
 /**
  * @enum PacketCategory
@@ -55,7 +57,9 @@ enum class PacketCategory : uint8
     AUCTION     = 8,   // AH operations
     NPC         = 9,   // Gossip, vendors, trainers
     INSTANCE    = 10,  // Dungeon, raid, scenario
-    UNKNOWN     = 11,  // Uncategorized packets
+    BATTLEGROUND = 11, // BG/Arena queue, status, invitations
+    LFG         = 12,  // LFG queue, proposals, roles
+    UNKNOWN     = 13,  // Uncategorized packets
 
     MAX_CATEGORY
 };
@@ -212,6 +216,8 @@ private:
     friend void RegisterAuctionPacketHandlers();
     friend void RegisterNPCPacketHandlers();
     friend void RegisterInstancePacketHandlers();
+    friend void RegisterBattlegroundPacketHandlers();
+    friend void RegisterLFGPacketHandlers();
 };
 
 // Template implementation (must be in header)

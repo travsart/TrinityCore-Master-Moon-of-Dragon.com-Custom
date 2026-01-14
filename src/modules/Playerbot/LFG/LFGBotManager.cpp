@@ -23,6 +23,7 @@
 #include "LFGGroupCoordinator.h"
 #include "../Lifecycle/Instance/JITBotFactory.h"
 #include "../Lifecycle/Instance/PoolSlotState.h"
+#include "../Lifecycle/Instance/QueueStatePoller.h"
 #include "Player.h"
 #include "LFGMgr.h"
 #include "LFG.h"
@@ -268,6 +269,16 @@ void LFGBotManager::OnPlayerJoinQueue(Player* player, uint8 playerRole, lfg::Lfg
         TC_LOG_INFO("module.playerbot", "LFGBotManager::OnPlayerJoinQueue - Successfully queued {} bots for player {}",
                     botsQueued, player->GetName());
     }
+
+    // Register dungeons with QueueStatePoller for shortage detection
+    for (uint32 dungeonId : dungeons)
+    {
+        sQueueStatePoller->RegisterActiveLFGQueue(dungeonId);
+    }
+
+    // Trigger immediate poll to detect any remaining shortages
+    // This allows the JIT system to create additional bots if needed
+    sQueueStatePoller->PollLFGQueues();
 }
 
 void LFGBotManager::OnPlayerLeaveQueue(ObjectGuid playerGuid)

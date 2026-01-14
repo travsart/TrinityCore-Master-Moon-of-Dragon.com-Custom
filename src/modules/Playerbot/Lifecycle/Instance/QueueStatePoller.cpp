@@ -1,0 +1,755 @@
+/*
+ * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ */
+
+#include "QueueStatePoller.h"
+#include "JITBotFactory.h"
+#include "PvP/BGBotManager.h"
+#include "LFG/LFGBotManager.h"
+#include "BattlegroundMgr.h"
+#include "BattlegroundQueue.h"
+#include "Log.h"
+
+namespace Playerbot
+{
+
+// ============================================================================
+// BGQueueSnapshot IMPLEMENTATION
+// ============================================================================
+
+BGQueueSnapshot::BGQueueSnapshot()
+    : bgTypeId(BATTLEGROUND_TYPE_NONE)
+    , bracketId(BG_BRACKET_ID_FIRST)
+    , allianceCount(0)
+    , hordeCount(0)
+    , minPlayersPerTeam(0)
+    , maxPlayersPerTeam(0)
+    , allianceShortage(0)
+    , hordeShortage(0)
+    , timestamp(0)
+{
+}
+
+uint32 BGQueueSnapshot::GetTotalShortage() const
+{
+    uint32 total = 0;
+    if (allianceShortage > 0)
+        total += static_cast<uint32>(allianceShortage);
+    if (hordeShortage > 0)
+        total += static_cast<uint32>(hordeShortage);
+    return total;
+}
+
+// ============================================================================
+// LFGQueueSnapshot IMPLEMENTATION
+// ============================================================================
+
+LFGQueueSnapshot::LFGQueueSnapshot()
+    : dungeonId(0)
+    , minLevel(0)
+    , maxLevel(0)
+    , tankCount(0)
+    , healerCount(0)
+    , dpsCount(0)
+    , tankNeeded(1)
+    , healerNeeded(1)
+    , dpsNeeded(3)
+    , timestamp(0)
+{
+}
+
+bool LFGQueueSnapshot::HasShortage() const
+{
+    return (tankCount < tankNeeded) ||
+           (healerCount < healerNeeded) ||
+           (dpsCount < dpsNeeded);
+}
+
+uint8 LFGQueueSnapshot::GetMostUrgentRole() const
+{
+    // Priority: tank > healer > dps
+    if (tankCount < tankNeeded)
+        return 0;  // Tank
+    if (healerCount < healerNeeded)
+        return 1;  // Healer
+    if (dpsCount < dpsNeeded)
+        return 2;  // DPS
+    return 255;    // None needed
+}
+
+// ============================================================================
+// ArenaQueueSnapshot IMPLEMENTATION
+// ============================================================================
+
+ArenaQueueSnapshot::ArenaQueueSnapshot()
+    : arenaType(0)
+    , bracketId(BG_BRACKET_ID_FIRST)
+    , allianceTeamsInQueue(0)
+    , hordeTeamsInQueue(0)
+    , playersPerTeam(0)
+    , timestamp(0)
+{
+}
+
+bool ArenaQueueSnapshot::HasShortage() const
+{
+    // Arena needs at least one team from each faction (or same faction for skirmish)
+    return (allianceTeamsInQueue == 0 || hordeTeamsInQueue == 0);
+}
+
+// ============================================================================
+// QueueStatePoller IMPLEMENTATION
+// ============================================================================
+
+QueueStatePoller::QueueStatePoller()
+    : _enabled(true)
+    , _pollingInterval(DEFAULT_POLLING_INTERVAL)
+    , _jitThrottleSeconds(DEFAULT_JIT_THROTTLE_SECONDS)
+    , _updateAccumulator(0)
+    , _pollCount(0)
+    , _bgShortagesDetected(0)
+    , _lfgShortagesDetected(0)
+    , _arenaShortagesDetected(0)
+    , _jitRequestsTriggered(0)
+{
+}
+
+QueueStatePoller::~QueueStatePoller() = default;
+
+QueueStatePoller* QueueStatePoller::Instance()
+{
+    static QueueStatePoller instance;
+    return &instance;
+}
+
+bool QueueStatePoller::Initialize()
+{
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Initialized (polling interval: {}ms, JIT throttle: {}s)",
+        _pollingInterval, _jitThrottleSeconds);
+    return true;
+}
+
+void QueueStatePoller::Shutdown()
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    _activeBGQueues.clear();
+    _activeLFGQueues.clear();
+    _activeArenaQueues.clear();
+    _bgSnapshots.clear();
+    _lfgSnapshots.clear();
+    _arenaSnapshots.clear();
+    _lastJITTime.clear();
+    _lfgQueueInfo.clear();
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Shutdown complete");
+}
+
+void QueueStatePoller::Update(uint32 diff)
+{
+    if (!_enabled)
+        return;
+
+    _updateAccumulator += diff;
+    if (_updateAccumulator < _pollingInterval)
+        return;
+
+    _updateAccumulator = 0;
+    ++_pollCount;
+
+    // Poll all active queues
+    PollBGQueues();
+    PollLFGQueues();
+    PollArenaQueues();
+}
+
+// ============================================================================
+// QUEUE REGISTRATION
+// ============================================================================
+
+void QueueStatePoller::RegisterActiveBGQueue(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket)
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    uint64 key = MakeBGKey(bgTypeId, bracket);
+    _activeBGQueues.insert(key);
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Registered active BG queue (type={}, bracket={})",
+        static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
+
+    // Trigger immediate poll for this queue
+    DoPollBGQueue(bgTypeId, bracket);
+}
+
+void QueueStatePoller::UnregisterActiveBGQueue(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket)
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    uint64 key = MakeBGKey(bgTypeId, bracket);
+    _activeBGQueues.erase(key);
+    _bgSnapshots.erase(key);
+    _lastJITTime.erase(key);
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Unregistered BG queue (type={}, bracket={})",
+        static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
+}
+
+void QueueStatePoller::RegisterActiveLFGQueue(uint32 dungeonId, uint8 minLevel, uint8 maxLevel)
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    _activeLFGQueues.insert(dungeonId);
+    _lfgQueueInfo[dungeonId] = {minLevel, maxLevel};
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Registered active LFG queue (dungeon={}, levels={}-{})",
+        dungeonId, minLevel, maxLevel);
+
+    // Trigger immediate poll
+    DoPollLFGQueue(dungeonId, minLevel, maxLevel);
+}
+
+void QueueStatePoller::UnregisterActiveLFGQueue(uint32 dungeonId)
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    _activeLFGQueues.erase(dungeonId);
+    _lfgSnapshots.erase(dungeonId);
+    _lfgQueueInfo.erase(dungeonId);
+    _lastJITTime.erase(dungeonId);  // Using dungeonId as key for LFG
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Unregistered LFG queue (dungeon={})", dungeonId);
+}
+
+void QueueStatePoller::RegisterActiveArenaQueue(uint8 arenaType, BattlegroundBracketId bracket)
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    uint64 key = MakeArenaKey(arenaType, bracket);
+    _activeArenaQueues.insert(key);
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Registered active Arena queue (type={}, bracket={})",
+        arenaType, static_cast<uint32>(bracket));
+
+    // Trigger immediate poll
+    DoPollArenaQueue(arenaType, bracket);
+}
+
+void QueueStatePoller::UnregisterActiveArenaQueue(uint8 arenaType, BattlegroundBracketId bracket)
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    uint64 key = MakeArenaKey(arenaType, bracket);
+    _activeArenaQueues.erase(key);
+    _arenaSnapshots.erase(key);
+    _lastJITTime.erase(key);
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Unregistered Arena queue (type={}, bracket={})",
+        arenaType, static_cast<uint32>(bracket));
+}
+
+// ============================================================================
+// MANUAL POLL TRIGGERS
+// ============================================================================
+
+void QueueStatePoller::PollBGQueues()
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    for (uint64 key : _activeBGQueues)
+    {
+        BattlegroundTypeId bgTypeId = static_cast<BattlegroundTypeId>(key >> 32);
+        BattlegroundBracketId bracket = static_cast<BattlegroundBracketId>(key & 0xFFFFFFFF);
+        DoPollBGQueue(bgTypeId, bracket);
+    }
+}
+
+void QueueStatePoller::PollLFGQueues()
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    for (uint32 dungeonId : _activeLFGQueues)
+    {
+        auto it = _lfgQueueInfo.find(dungeonId);
+        if (it != _lfgQueueInfo.end())
+        {
+            DoPollLFGQueue(dungeonId, it->second.minLevel, it->second.maxLevel);
+        }
+    }
+}
+
+void QueueStatePoller::PollArenaQueues()
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    for (uint64 key : _activeArenaQueues)
+    {
+        uint8 arenaType = static_cast<uint8>(key >> 32);
+        BattlegroundBracketId bracket = static_cast<BattlegroundBracketId>(key & 0xFFFFFFFF);
+        DoPollArenaQueue(arenaType, bracket);
+    }
+}
+
+// ============================================================================
+// INTERNAL POLL METHODS
+// ============================================================================
+
+void QueueStatePoller::DoPollBGQueue(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket)
+{
+    // Get queue from BattlegroundMgr (READ-ONLY access)
+    BattlegroundQueueTypeId queueTypeId = BattlegroundMgr::BGQueueTypeId(
+        static_cast<uint16>(bgTypeId),
+        BattlegroundQueueIdType::Battleground,
+        false,  // not rated
+        0       // team size N/A for BGs
+    );
+
+    if (!BattlegroundMgr::IsValidQueueId(queueTypeId))
+    {
+        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Invalid queue ID for BG type {}", static_cast<uint32>(bgTypeId));
+        return;
+    }
+
+    BattlegroundQueue& queue = sBattlegroundMgr->GetBattlegroundQueue(queueTypeId);
+
+    // Read queue counts (READ-ONLY API)
+    uint32 allianceCount = queue.GetPlayersInQueue(TEAM_ALLIANCE);
+    uint32 hordeCount = queue.GetPlayersInQueue(TEAM_HORDE);
+
+    // Get requirements from template (READ-ONLY)
+    BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);
+    if (!bgTemplate)
+    {
+        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: No template for BG type {}", static_cast<uint32>(bgTypeId));
+        return;
+    }
+
+    uint32 minPlayers = bgTemplate->GetMinPlayersPerTeam();
+    uint32 maxPlayers = bgTemplate->GetMaxPlayersPerTeam();
+
+    // Build snapshot
+    uint64 key = MakeBGKey(bgTypeId, bracket);
+    BGQueueSnapshot& snapshot = _bgSnapshots[key];
+    snapshot.bgTypeId = bgTypeId;
+    snapshot.bracketId = bracket;
+    snapshot.allianceCount = allianceCount;
+    snapshot.hordeCount = hordeCount;
+    snapshot.minPlayersPerTeam = minPlayers;
+    snapshot.maxPlayersPerTeam = maxPlayers;
+    snapshot.allianceShortage = static_cast<int32>(minPlayers) - static_cast<int32>(allianceCount);
+    snapshot.hordeShortage = static_cast<int32>(minPlayers) - static_cast<int32>(hordeCount);
+    snapshot.timestamp = time(nullptr);
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: BG Poll - Type={} Bracket={} Alliance={}/{} Horde={}/{} Shortage=A:{}/H:{}",
+        static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket),
+        allianceCount, minPlayers, hordeCount, minPlayers,
+        snapshot.allianceShortage, snapshot.hordeShortage);
+
+    // Process shortage if detected
+    if (snapshot.HasShortage())
+    {
+        ProcessBGShortage(snapshot);
+    }
+}
+
+void QueueStatePoller::DoPollLFGQueue(uint32 dungeonId, uint8 minLevel, uint8 maxLevel)
+{
+    // LFG queue polling is more complex and requires LFGMgr access
+    // For now, we rely on packet sniffer and script hooks for LFG data
+    // The snapshot will be updated by those systems
+
+    // Create or update snapshot with basic info
+    LFGQueueSnapshot& snapshot = _lfgSnapshots[dungeonId];
+    snapshot.dungeonId = dungeonId;
+    snapshot.minLevel = minLevel;
+    snapshot.maxLevel = maxLevel;
+    snapshot.timestamp = time(nullptr);
+
+    // Note: Role counts are updated by packet handlers (ParseLFGPacket_Typed.cpp)
+    // or by LFGBotManager when it receives queue updates
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: LFG Poll - Dungeon={} Levels={}-{} T:{}/{} H:{}/{} D:{}/{}",
+        dungeonId, minLevel, maxLevel,
+        snapshot.tankCount, snapshot.tankNeeded,
+        snapshot.healerCount, snapshot.healerNeeded,
+        snapshot.dpsCount, snapshot.dpsNeeded);
+
+    if (snapshot.HasShortage())
+    {
+        ProcessLFGShortage(snapshot);
+    }
+}
+
+void QueueStatePoller::DoPollArenaQueue(uint8 arenaType, BattlegroundBracketId bracket)
+{
+    // Arena queue polling - similar to BG but for arena-specific queue type
+    // Arenas need teams from both factions (or same faction for skirmish)
+
+    uint64 key = MakeArenaKey(arenaType, bracket);
+    ArenaQueueSnapshot& snapshot = _arenaSnapshots[key];
+    snapshot.arenaType = arenaType;
+    snapshot.bracketId = bracket;
+    snapshot.playersPerTeam = arenaType;  // 2v2, 3v3, or 5v5
+    snapshot.timestamp = time(nullptr);
+
+    // Note: Arena team counts are typically updated by packet handlers
+    // or ArenaBotManager when queue events occur
+
+    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Arena Poll - Type={}v{} Bracket={} Alliance={} Horde={}",
+        arenaType, arenaType, static_cast<uint32>(bracket),
+        snapshot.allianceTeamsInQueue, snapshot.hordeTeamsInQueue);
+
+    if (snapshot.HasShortage())
+    {
+        ProcessArenaShortage(snapshot);
+    }
+}
+
+// ============================================================================
+// SHORTAGE PROCESSING
+// ============================================================================
+
+void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
+{
+    uint64 key = MakeBGKey(snapshot.bgTypeId, snapshot.bracketId);
+
+    // Check throttling
+    if (IsJITThrottled(key))
+    {
+        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: BG shortage throttled for type={}", static_cast<uint32>(snapshot.bgTypeId));
+        return;
+    }
+
+    ++_bgShortagesDetected;
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: BG Shortage detected - Type={} Alliance need={} Horde need={}",
+        static_cast<uint32>(snapshot.bgTypeId), snapshot.allianceShortage, snapshot.hordeShortage);
+
+    // Calculate priority based on queue fill rate
+    // Higher fill = higher priority (closer to starting)
+    float allianceFill = snapshot.minPlayersPerTeam > 0
+        ? static_cast<float>(snapshot.allianceCount) / snapshot.minPlayersPerTeam
+        : 0.0f;
+    float hordeFill = snapshot.minPlayersPerTeam > 0
+        ? static_cast<float>(snapshot.hordeCount) / snapshot.minPlayersPerTeam
+        : 0.0f;
+    float avgFill = (allianceFill + hordeFill) / 2.0f;
+
+    // Priority 1-10, higher fill = lower number (higher priority)
+    uint8 priority = static_cast<uint8>(std::clamp(10.0f - (avgFill * 9.0f), 1.0f, 10.0f));
+
+    // Submit JIT requests for each faction that needs bots
+    if (snapshot.allianceShortage > 0)
+    {
+        FactoryRequest request;
+        request.instanceType = InstanceType::Battleground;
+        request.contentId = static_cast<uint32>(snapshot.bgTypeId);
+        request.playerFaction = Faction::Alliance;
+        request.allianceNeeded = static_cast<uint32>(snapshot.allianceShortage);
+        request.hordeNeeded = 0;
+        request.priority = priority;
+        request.createdAt = std::chrono::system_clock::now();
+
+        // Callback to queue the bot for BG after creation
+        request.onComplete = [bgTypeId = snapshot.bgTypeId, bracket = snapshot.bracketId](std::vector<ObjectGuid> const& botGuids) {
+            for (ObjectGuid const& guid : botGuids)
+            {
+                // The bot needs to be queued for the BG
+                // BGBotManager will handle the actual queueing when the bot is ready
+                TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Alliance bot {} ready for BG type {}",
+                    guid.ToString(), static_cast<uint32>(bgTypeId));
+            }
+        };
+
+        uint32 requestId = sJITBotFactory->SubmitRequest(std::move(request));
+        if (requestId > 0)
+        {
+            ++_jitRequestsTriggered;
+            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Submitted Alliance JIT request {} for {} bots (priority {})",
+                requestId, snapshot.allianceShortage, priority);
+        }
+    }
+
+    if (snapshot.hordeShortage > 0)
+    {
+        FactoryRequest request;
+        request.instanceType = InstanceType::Battleground;
+        request.contentId = static_cast<uint32>(snapshot.bgTypeId);
+        request.playerFaction = Faction::Horde;
+        request.allianceNeeded = 0;
+        request.hordeNeeded = static_cast<uint32>(snapshot.hordeShortage);
+        request.priority = priority;
+        request.createdAt = std::chrono::system_clock::now();
+
+        request.onComplete = [bgTypeId = snapshot.bgTypeId, bracket = snapshot.bracketId](std::vector<ObjectGuid> const& botGuids) {
+            for (ObjectGuid const& guid : botGuids)
+            {
+                TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Horde bot {} ready for BG type {}",
+                    guid.ToString(), static_cast<uint32>(bgTypeId));
+            }
+        };
+
+        uint32 requestId = sJITBotFactory->SubmitRequest(std::move(request));
+        if (requestId > 0)
+        {
+            ++_jitRequestsTriggered;
+            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Submitted Horde JIT request {} for {} bots (priority {})",
+                requestId, snapshot.hordeShortage, priority);
+        }
+    }
+
+    // Record JIT request time for throttling
+    RecordJITRequest(key);
+}
+
+void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
+{
+    // Check throttling using dungeonId as key
+    if (IsJITThrottled(snapshot.dungeonId))
+    {
+        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: LFG shortage throttled for dungeon={}", snapshot.dungeonId);
+        return;
+    }
+
+    ++_lfgShortagesDetected;
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: LFG Shortage detected - Dungeon={} Tank:{}/{} Healer:{}/{} DPS:{}/{}",
+        snapshot.dungeonId,
+        snapshot.tankCount, snapshot.tankNeeded,
+        snapshot.healerCount, snapshot.healerNeeded,
+        snapshot.dpsCount, snapshot.dpsNeeded);
+
+    // Calculate shortages
+    uint32 tanksShort = snapshot.tankNeeded > snapshot.tankCount ? snapshot.tankNeeded - snapshot.tankCount : 0;
+    uint32 healersShort = snapshot.healerNeeded > snapshot.healerCount ? snapshot.healerNeeded - snapshot.healerCount : 0;
+    uint32 dpsShort = snapshot.dpsNeeded > snapshot.dpsCount ? snapshot.dpsNeeded - snapshot.dpsCount : 0;
+
+    if (tanksShort == 0 && healersShort == 0 && dpsShort == 0)
+        return;
+
+    // LFG gets high priority (7 out of 10)
+    uint8 priority = 7;
+
+    FactoryRequest request;
+    request.instanceType = InstanceType::Dungeon;
+    request.contentId = snapshot.dungeonId;
+    request.playerLevel = (snapshot.minLevel + snapshot.maxLevel) / 2;  // Average level
+    request.tanksNeeded = tanksShort;
+    request.healersNeeded = healersShort;
+    request.dpsNeeded = dpsShort;
+    request.priority = priority;
+    request.createdAt = std::chrono::system_clock::now();
+
+    request.onComplete = [dungeonId = snapshot.dungeonId](std::vector<ObjectGuid> const& botGuids) {
+        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: {} bots ready for dungeon {}",
+            botGuids.size(), dungeonId);
+    };
+
+    uint32 requestId = sJITBotFactory->SubmitRequest(std::move(request));
+    if (requestId > 0)
+    {
+        ++_jitRequestsTriggered;
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Submitted LFG JIT request {} for T:{}/H:{}/D:{} bots",
+            requestId, tanksShort, healersShort, dpsShort);
+    }
+
+    RecordJITRequest(snapshot.dungeonId);
+}
+
+void QueueStatePoller::ProcessArenaShortage(ArenaQueueSnapshot const& snapshot)
+{
+    uint64 key = MakeArenaKey(snapshot.arenaType, snapshot.bracketId);
+
+    if (IsJITThrottled(key))
+    {
+        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Arena shortage throttled for type={}v{}", snapshot.arenaType, snapshot.arenaType);
+        return;
+    }
+
+    ++_arenaShortagesDetected;
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Arena Shortage detected - Type={}v{} Alliance:{} Horde:{}",
+        snapshot.arenaType, snapshot.arenaType,
+        snapshot.allianceTeamsInQueue, snapshot.hordeTeamsInQueue);
+
+    // Arena gets medium priority (5 out of 10)
+    uint8 priority = 5;
+
+    // For arena, we need complete teams
+    uint32 allianceTeamsNeeded = snapshot.allianceTeamsInQueue == 0 ? 1 : 0;
+    uint32 hordeTeamsNeeded = snapshot.hordeTeamsInQueue == 0 ? 1 : 0;
+
+    if (allianceTeamsNeeded > 0)
+    {
+        FactoryRequest request;
+        request.instanceType = InstanceType::Arena;
+        request.contentId = snapshot.arenaType;  // 2, 3, or 5 for arena type
+        request.playerFaction = Faction::Alliance;
+        request.allianceNeeded = allianceTeamsNeeded * snapshot.playersPerTeam;
+        request.priority = priority;
+        request.createdAt = std::chrono::system_clock::now();
+
+        request.onComplete = [arenaType = snapshot.arenaType](std::vector<ObjectGuid> const& botGuids) {
+            TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: {} Alliance arena bots ready for {}v{}",
+                botGuids.size(), arenaType, arenaType);
+        };
+
+        uint32 requestId = sJITBotFactory->SubmitRequest(std::move(request));
+        if (requestId > 0)
+        {
+            ++_jitRequestsTriggered;
+        }
+    }
+
+    if (hordeTeamsNeeded > 0)
+    {
+        FactoryRequest request;
+        request.instanceType = InstanceType::Arena;
+        request.contentId = snapshot.arenaType;
+        request.playerFaction = Faction::Horde;
+        request.hordeNeeded = hordeTeamsNeeded * snapshot.playersPerTeam;
+        request.priority = priority;
+        request.createdAt = std::chrono::system_clock::now();
+
+        request.onComplete = [arenaType = snapshot.arenaType](std::vector<ObjectGuid> const& botGuids) {
+            TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: {} Horde arena bots ready for {}v{}",
+                botGuids.size(), arenaType, arenaType);
+        };
+
+        uint32 requestId = sJITBotFactory->SubmitRequest(std::move(request));
+        if (requestId > 0)
+        {
+            ++_jitRequestsTriggered;
+        }
+    }
+
+    RecordJITRequest(key);
+}
+
+// ============================================================================
+// THROTTLING
+// ============================================================================
+
+bool QueueStatePoller::IsJITThrottled(uint64 queueKey) const
+{
+    auto it = _lastJITTime.find(queueKey);
+    if (it == _lastJITTime.end())
+        return false;
+
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - it->second);
+    return elapsed.count() < static_cast<int64>(_jitThrottleSeconds);
+}
+
+void QueueStatePoller::RecordJITRequest(uint64 queueKey)
+{
+    _lastJITTime[queueKey] = std::chrono::steady_clock::now();
+}
+
+// ============================================================================
+// KEY GENERATION
+// ============================================================================
+
+uint64 QueueStatePoller::MakeBGKey(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket)
+{
+    return (static_cast<uint64>(bgTypeId) << 32) | static_cast<uint32>(bracket);
+}
+
+uint64 QueueStatePoller::MakeArenaKey(uint8 arenaType, BattlegroundBracketId bracket)
+{
+    // Use high bit to distinguish from BG keys
+    return (static_cast<uint64>(0x80000000 | arenaType) << 32) | static_cast<uint32>(bracket);
+}
+
+// ============================================================================
+// SNAPSHOT ACCESS
+// ============================================================================
+
+BGQueueSnapshot QueueStatePoller::GetBGSnapshot(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket) const
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    uint64 key = MakeBGKey(bgTypeId, bracket);
+    auto it = _bgSnapshots.find(key);
+    if (it != _bgSnapshots.end())
+        return it->second;
+    return BGQueueSnapshot();
+}
+
+LFGQueueSnapshot QueueStatePoller::GetLFGSnapshot(uint32 dungeonId) const
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    auto it = _lfgSnapshots.find(dungeonId);
+    if (it != _lfgSnapshots.end())
+        return it->second;
+    return LFGQueueSnapshot();
+}
+
+ArenaQueueSnapshot QueueStatePoller::GetArenaSnapshot(uint8 arenaType, BattlegroundBracketId bracket) const
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    uint64 key = MakeArenaKey(arenaType, bracket);
+    auto it = _arenaSnapshots.find(key);
+    if (it != _arenaSnapshots.end())
+        return it->second;
+    return ArenaQueueSnapshot();
+}
+
+// ============================================================================
+// SHORTAGE QUERIES
+// ============================================================================
+
+bool QueueStatePoller::HasBGShortage(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket) const
+{
+    BGQueueSnapshot snapshot = GetBGSnapshot(bgTypeId, bracket);
+    return snapshot.HasShortage();
+}
+
+bool QueueStatePoller::HasLFGShortage(uint32 dungeonId) const
+{
+    LFGQueueSnapshot snapshot = GetLFGSnapshot(dungeonId);
+    return snapshot.HasShortage();
+}
+
+bool QueueStatePoller::HasArenaShortage(uint8 arenaType, BattlegroundBracketId bracket) const
+{
+    ArenaQueueSnapshot snapshot = GetArenaSnapshot(arenaType, bracket);
+    return snapshot.HasShortage();
+}
+
+// ============================================================================
+// STATISTICS
+// ============================================================================
+
+QueueStatePoller::Statistics QueueStatePoller::GetStatistics() const
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    Statistics stats;
+    stats.pollCount = _pollCount;
+    stats.bgShortagesDetected = _bgShortagesDetected;
+    stats.lfgShortagesDetected = _lfgShortagesDetected;
+    stats.arenaShortagesDetected = _arenaShortagesDetected;
+    stats.jitRequestsTriggered = _jitRequestsTriggered;
+    stats.activeBGQueues = static_cast<uint32>(_activeBGQueues.size());
+    stats.activeLFGQueues = static_cast<uint32>(_activeLFGQueues.size());
+    stats.activeArenaQueues = static_cast<uint32>(_activeArenaQueues.size());
+    return stats;
+}
+
+void QueueStatePoller::ResetStatistics()
+{
+    _pollCount = 0;
+    _bgShortagesDetected = 0;
+    _lfgShortagesDetected = 0;
+    _arenaShortagesDetected = 0;
+    _jitRequestsTriggered = 0;
+}
+
+} // namespace Playerbot

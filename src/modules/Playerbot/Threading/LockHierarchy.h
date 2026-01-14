@@ -83,6 +83,7 @@ enum class LockOrder : uint32
     // Layer 7: Group/Raid coordination
     // Group management and role assignment
     GROUP_MANAGER = 6000,
+    QUEUE_MONITOR = 6050,        // Queue state polling for JIT bot creation
     RAID_COORDINATOR = 6100,
     ROLE_ASSIGNMENT = 6200,
 

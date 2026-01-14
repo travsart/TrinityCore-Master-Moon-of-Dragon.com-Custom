@@ -206,6 +206,7 @@ set(PLAYERBOT_SOURCES
 
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/QueueEventData.h
 
     # Core Services - Enterprise Infrastructure
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Services/BotNpcLocationService.cpp
@@ -439,6 +440,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuctionPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseNPCPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseInstancePacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseBattlegroundPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLFGPacket_Typed.cpp
 
     # Phase 4: Complete Event Bus System (All 11 Buses)
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.h
@@ -623,6 +626,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/BotPostLoginConfigurator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/JITBotFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/JITBotFactory.h
+
+    # JIT Queue Systems (Queue Polling + Shortage Detection for JIT Bot Creation)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/QueueStatePoller.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/QueueStatePoller.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/QueueShortageSubscriber.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/QueueShortageSubscriber.h
 
     # Instance Bot Orchestrator (Master Controller for Instance Bots)
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/ContentRequirements.cpp
@@ -1195,6 +1204,8 @@ source_group("Network" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuctionPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseNPCPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseInstancePacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseBattlegroundPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLFGPacket_Typed.cpp
 )
 
 source_group("Movement" FILES

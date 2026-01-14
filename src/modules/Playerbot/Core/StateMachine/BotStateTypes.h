@@ -421,6 +421,30 @@ namespace StateMachine
         TELEPORT_REQUIRED     = 457, ///< Mechanic requires teleport
         SAFE_SPOT_NEEDED      = 458, ///< Need to move to safe area
 
+        // Queue events (471-496) - JIT Bot Creation
+        // BG Queue events
+        BG_QUEUE_JOIN         = 471, ///< Player joined BG queue
+        BG_QUEUE_LEAVE        = 472, ///< Player left BG queue
+        BG_QUEUE_SHORTAGE     = 473, ///< BG queue shortage detected
+        BG_INVITATION_RECEIVED = 474, ///< BG invitation received
+        BG_QUEUE_UPDATE       = 475, ///< BG queue status update
+
+        // LFG Queue events
+        LFG_QUEUE_JOIN        = 480, ///< Player joined LFG queue
+        LFG_QUEUE_LEAVE       = 481, ///< Player left LFG queue
+        LFG_QUEUE_SHORTAGE    = 482, ///< LFG role shortage detected
+        LFG_QUEUE_UPDATE      = 483, ///< LFG queue status update
+        LFG_PROPOSAL          = 484, ///< LFG group proposal received
+        LFG_PROPOSAL_ACCEPTED = 485, ///< LFG proposal accepted
+        LFG_PROPOSAL_DECLINED = 486, ///< LFG proposal declined
+
+        // Arena Queue events
+        ARENA_QUEUE_JOIN      = 490, ///< Player joined Arena queue
+        ARENA_QUEUE_LEAVE     = 491, ///< Player left Arena queue
+        ARENA_QUEUE_SHORTAGE  = 492, ///< Arena queue shortage detected
+        ARENA_INVITATION_RECEIVED = 493, ///< Arena invitation received
+        ARENA_QUEUE_UPDATE    = 494, ///< Arena queue status update
+
         // Custom events (1000+)
         CUSTOM_BASE           = 1000 ///< Base for user-defined events
     };
@@ -846,6 +870,24 @@ namespace StateMachine
             case EventType::EMOTE_RECEIVED:
             return "EMOTE_RECEIVED";
 
+            // Queue events (JIT Bot Creation)
+            case EventType::BG_QUEUE_JOIN:         return "BG_QUEUE_JOIN";
+            case EventType::BG_QUEUE_LEAVE:        return "BG_QUEUE_LEAVE";
+            case EventType::BG_QUEUE_SHORTAGE:     return "BG_QUEUE_SHORTAGE";
+            case EventType::BG_INVITATION_RECEIVED: return "BG_INVITATION_RECEIVED";
+            case EventType::BG_QUEUE_UPDATE:       return "BG_QUEUE_UPDATE";
+            case EventType::LFG_QUEUE_JOIN:        return "LFG_QUEUE_JOIN";
+            case EventType::LFG_QUEUE_LEAVE:       return "LFG_QUEUE_LEAVE";
+            case EventType::LFG_QUEUE_SHORTAGE:    return "LFG_QUEUE_SHORTAGE";
+            case EventType::LFG_QUEUE_UPDATE:      return "LFG_QUEUE_UPDATE";
+            case EventType::LFG_PROPOSAL:          return "LFG_PROPOSAL";
+            case EventType::LFG_PROPOSAL_ACCEPTED: return "LFG_PROPOSAL_ACCEPTED";
+            case EventType::LFG_PROPOSAL_DECLINED: return "LFG_PROPOSAL_DECLINED";
+            case EventType::ARENA_QUEUE_JOIN:      return "ARENA_QUEUE_JOIN";
+            case EventType::ARENA_QUEUE_LEAVE:     return "ARENA_QUEUE_LEAVE";
+            case EventType::ARENA_QUEUE_SHORTAGE:  return "ARENA_QUEUE_SHORTAGE";
+            case EventType::ARENA_INVITATION_RECEIVED: return "ARENA_INVITATION_RECEIVED";
+            case EventType::ARENA_QUEUE_UPDATE:    return "ARENA_QUEUE_UPDATE";
 
             default:
 

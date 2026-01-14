@@ -23,6 +23,7 @@
 #include "WorldSession.h"
 #include "GameTime.h"
 #include "DB2Stores.h"
+#include "../Lifecycle/Instance/QueueStatePoller.h"
 
 namespace Playerbot
 {
@@ -170,6 +171,10 @@ void BGBotManager::OnPlayerJoinQueue(Player* player, BattlegroundTypeId bgTypeId
 
     TC_LOG_INFO("module.playerbot.bg", "BGBotManager::OnPlayerJoinQueue - Queued {} bots for player {}",
                 botsQueued, player->GetName());
+
+    // Trigger immediate poll to detect any remaining shortages
+    // This allows the JIT system to create additional bots if needed
+    sQueueStatePoller->PollBGQueues();
 }
 
 void BGBotManager::OnPlayerLeaveQueue(ObjectGuid playerGuid)

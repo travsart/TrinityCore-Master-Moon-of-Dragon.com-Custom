@@ -26,6 +26,7 @@
 #include "../Core/PlayerBotHooks.h"
 #include "../PvP/BGBotManager.h"
 #include "../Lifecycle/Instance/InstanceBotHooks.h"
+#include "../Lifecycle/Instance/QueueStatePoller.h"
 #include "Log.h"
 #include <unordered_set>
 #include <unordered_map>
@@ -234,6 +235,10 @@ private:
         // Step 2: Use BGBotManager to add CURRENTLY ONLINE bots to queue
         // This provides immediate bot coverage while Instance Bot System creates new bots
         sBGBotManager->OnPlayerJoinQueue(player, bgTypeId, bracket, player->GetGroup() != nullptr);
+
+        // Step 3: Register queue with QueueStatePoller for shortage detection
+        // This enables periodic polling to detect and fill any shortages
+        sQueueStatePoller->RegisterActiveBGQueue(bgTypeId, bracket);
 
         // Mark as processed
         _processedPlayers.insert(playerGuid);
