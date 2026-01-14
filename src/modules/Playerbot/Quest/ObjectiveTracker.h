@@ -128,6 +128,10 @@ public:
 private:
     Player* _bot;
 
+    // Thread safety - MUST be locked when accessing any member maps
+    // Using recursive_mutex to allow nested calls from the same thread
+    mutable std::recursive_mutex _mutex;
+
     // Tracking data storage
     std::unordered_map<uint32, std::vector<ObjectiveState>> _botObjectiveStates; // botGuid -> objectives
     std::unordered_map<uint32, std::vector<ObjectivePriority>> _botObjectivePriorities; // botGuid -> priorities

@@ -83,6 +83,8 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
 
     size_t objectiveCount = 0;
     {
+        // Thread safety: lock before modifying _botObjectiveStates
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         _botObjectiveStates[botGuid].push_back(state);
         objectiveCount = _botObjectiveStates[botGuid].size();
     }
@@ -100,6 +102,10 @@ void ObjectiveTracker::StopTrackingObjective(Player* bot, uint32 questId, uint32
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+
+    // Thread safety: lock before modifying _botObjectiveStates
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return;
@@ -123,6 +129,10 @@ void ObjectiveTracker::UpdateObjectiveTracking(Player* bot, uint32 diff)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+
+    // Thread safety: lock before accessing _botObjectiveStates
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return;
@@ -167,6 +177,10 @@ void ObjectiveTracker::RefreshObjectiveStates(Player* bot)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+
+    // Thread safety: lock before accessing _botObjectiveStates
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return;
@@ -204,6 +218,10 @@ void ObjectiveTracker::UpdateProgressMetrics(Player* bot, const QuestObjectiveDa
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+
+    // Thread safety: lock before accessing _botAnalytics
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     // Update bot-specific analytics
     auto& analytics = _botAnalytics[botGuid];
     analytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
@@ -398,6 +416,10 @@ ObjectiveState ObjectiveTracker::GetObjectiveState(Player* bot, uint32 questId, 
         return ObjectiveState(0, 0);
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+
+    // Thread safety: lock before accessing _botObjectiveStates
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return ObjectiveState(0, 0);
@@ -417,6 +439,10 @@ void ObjectiveTracker::UpdateObjectiveState(Player* bot, const ObjectiveState& s
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+
+    // Thread safety: lock before accessing _botObjectiveStates
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return;
@@ -440,6 +466,10 @@ std::vector<ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
         return activeObjectives;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+
+    // Thread safety: lock before accessing _botObjectiveStates
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return activeObjectives;
@@ -587,6 +617,10 @@ void ObjectiveTracker::TrackTargetAvailability(Player* bot, uint32 questId, uint
 {
     if (!bot)
         return;
+
+    // Thread safety: lock before accessing _targetTracking
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto& trackingData = _targetTracking[targetId];
     trackingData.targetId = targetId;
     trackingData.lastSeenTime = GameTime::GetGameTimeMS();
@@ -604,6 +638,9 @@ void ObjectiveTracker::TrackTargetAvailability(Player* bot, uint32 questId, uint
 
 bool ObjectiveTracker::IsTargetAvailable(uint32 targetId, const Position& location, float radius)
 {
+    // Thread safety: lock before accessing _targetTracking
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto trackingIt = _targetTracking.find(targetId);
     if (trackingIt == _targetTracking.end())
         return false;
@@ -633,6 +670,9 @@ uint32 ObjectiveTracker::GetTargetRespawnTime(uint32 targetId)
 
 Position ObjectiveTracker::GetOptimalTargetLocation(uint32 targetId, const Position& playerPosition)
 {
+    // Thread safety: lock before accessing _targetTracking
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto trackingIt = _targetTracking.find(targetId);
     if (trackingIt == _targetTracking.end())
         return playerPosition;
@@ -662,6 +702,10 @@ void ObjectiveTracker::MonitorTargetCompetition(Player* bot, uint32 targetId)
 {
     if (!bot)
         return;
+
+    // Thread safety: lock before accessing _targetTracking
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto& trackingData = _targetTracking[targetId];
 
     // THREAD-SAFE: Use SafeGridOperations with SEH protection to catch access violations
@@ -685,6 +729,9 @@ void ObjectiveTracker::MonitorTargetCompetition(Player* bot, uint32 targetId)
 
 bool ObjectiveTracker::IsTargetContested(uint32 targetId, float radius)
 {
+    // Thread safety: lock before accessing _targetTracking
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto trackingIt = _targetTracking.find(targetId);
     if (trackingIt == _targetTracking.end())
         return false;
@@ -711,6 +758,9 @@ void ObjectiveTracker::HandleTargetCompetition(Player* bot, uint32 targetId)
 std::vector<Position> ObjectiveTracker::FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation)
 {
     std::vector<Position> alternatives;
+
+    // Thread safety: lock before accessing _targetTracking
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto trackingIt = _targetTracking.find(targetId);
     if (trackingIt == _targetTracking.end())
@@ -809,6 +859,9 @@ void ObjectiveTracker::HandleObjectiveConflicts(Group* group, uint32 questId, ui
 
 const ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botGuid)
 {
+    // Thread safety: lock before accessing _botAnalytics
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto it = _botAnalytics.find(botGuid);
     if (it != _botAnalytics.end())
         return it->second;
@@ -1280,6 +1333,9 @@ void ObjectiveTracker::ResolveObjectiveConflicts(Group* group, uint32 questId, u
 
 void ObjectiveTracker::UpdateTrackingAnalytics(uint32 botGuid, const ObjectiveState& state, bool wasSuccessful)
 {
+    // Thread safety: lock before accessing _botAnalytics
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
     auto& analytics = _botAnalytics[botGuid];
 
     if (wasSuccessful)
@@ -1325,6 +1381,9 @@ void ObjectiveTracker::UpdateBotTracking(Player* bot, uint32 diff)
 void ObjectiveTracker::CleanupInactiveTracking()
 {
     uint32 currentTime = GameTime::GetGameTimeMS();
+
+    // Thread safety: lock before modifying maps
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Clean up old objective states
     for (auto it = _botObjectiveStates.begin(); it != _botObjectiveStates.end();)
