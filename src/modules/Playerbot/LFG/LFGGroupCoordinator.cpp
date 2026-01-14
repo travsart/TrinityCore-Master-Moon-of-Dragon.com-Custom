@@ -134,14 +134,39 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
     // causes dungeons to get stuck at the entrance.
     //
     // Solution: Find the human player and make them the leader.
+    //
+    // IMPORTANT: The leader may not be loaded into the world yet (async login),
+    // so we must handle the case where ObjectAccessor::FindPlayer() returns null.
+    // In that case, we assume it's a bot and still transfer leadership to human.
     // ========================================================================
     ObjectGuid currentLeaderGuid = group->GetLeaderGUID();
     Player* currentLeader = ObjectAccessor::FindPlayer(currentLeaderGuid);
 
     // Check if current leader is a bot
-    bool leaderIsBot = currentLeader && PlayerBotHooks::IsPlayerBot(currentLeader);
+    // NOTE: If currentLeader is null, the player isn't loaded yet.
+    // Since JIT bots are created asynchronously, the bot leader may not be
+    // accessible via ObjectAccessor yet. In this case, we STILL want to
+    // transfer leadership to the human player.
+    bool leaderIsBot = false;
+    bool leaderNotFound = false;
 
-    if (leaderIsBot)
+    if (currentLeader)
+    {
+        leaderIsBot = PlayerBotHooks::IsPlayerBot(currentLeader);
+    }
+    else
+    {
+        // Leader not found via ObjectAccessor - could be a JIT bot that's still loading
+        // Check if the GUID belongs to a bot account by checking BotWorldSessionMgr
+        leaderNotFound = true;
+        // Conservative approach: if leader not found and we have a human in the group,
+        // transfer leadership to the human to be safe
+        TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Leader {} not found in ObjectAccessor, will check for human to transfer",
+            currentLeaderGuid.ToString());
+    }
+
+    // Transfer leadership if: leader is a bot, OR leader wasn't found (possibly async bot)
+    if (leaderIsBot || leaderNotFound)
     {
         // Find a human player to be the leader
         Player* humanPlayer = nullptr;
@@ -157,14 +182,24 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
 
         if (humanPlayer)
         {
-            TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Transferring leadership from bot {} to human {}",
-                currentLeader->GetName(), humanPlayer->GetName());
+            // Don't transfer if human is already the leader
+            if (humanPlayer->GetGUID() == currentLeaderGuid)
+            {
+                TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Human {} is already the leader",
+                    humanPlayer->GetName());
+            }
+            else
+            {
+                std::string leaderName = currentLeader ? currentLeader->GetName() : currentLeaderGuid.ToString();
+                TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Transferring leadership from {} to human {}",
+                    leaderName, humanPlayer->GetName());
 
-            // Transfer leadership to the human player
-            group->ChangeLeader(humanPlayer->GetGUID());
+                // Transfer leadership to the human player
+                group->ChangeLeader(humanPlayer->GetGUID());
 
-            TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Leadership transferred successfully to {}",
-                humanPlayer->GetName());
+                TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Leadership transferred successfully to {}",
+                    humanPlayer->GetName());
+            }
         }
         else
         {
