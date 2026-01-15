@@ -17,6 +17,7 @@
 #include "Config/PlayerbotConfig.h"
 #include <random>
 #include <algorithm>
+#include <sstream>
 
 BotNameMgr* BotNameMgr::instance()
 {
@@ -128,17 +129,24 @@ std::string BotNameMgr::AllocateName(uint8 gender, uint32 characterGuid)
     // Update mappings
     _guidToNameId[characterGuid] = selectedNameId;
     _nameIdToGuid[selectedNameId] = characterGuid;
-    
-    // Update database - TODO: Implement with PBDB_ statements
-    // PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_INS_NAME_USED);
-    // stmt->setUInt32(0, selectedNameId);
-    // stmt->setUInt32(1, characterGuid);
-    // PlayerbotDatabase.Execute(stmt);
-    
-    TC_LOG_INFO("module.playerbot.names", 
-        "Allocated name '{}' (ID: {}) to character {}", 
+
+    // Persist to database - INSERT INTO playerbots_names_used
+    std::ostringstream ss;
+    ss << "INSERT INTO playerbots_names_used (name_id, character_guid) VALUES ("
+       << selectedNameId << ", " << characterGuid << ") "
+       << "ON DUPLICATE KEY UPDATE character_guid = VALUES(character_guid)";
+
+    if (!sPlayerbotDatabase->Execute(ss.str()))
+    {
+        TC_LOG_ERROR("module.playerbot.names",
+            "Failed to persist name allocation to database: name_id={}, character_guid={}",
+            selectedNameId, characterGuid);
+    }
+
+    TC_LOG_INFO("module.playerbot.names",
+        "Allocated name '{}' (ID: {}) to character {}",
         allocatedName, selectedNameId, characterGuid);
-    
+
     return allocatedName;
 }
 
@@ -181,11 +189,16 @@ void BotNameMgr::ReleaseName(uint32 characterGuid)
     // Remove from mappings
     _guidToNameId.erase(characterGuid);
     _nameIdToGuid.erase(nameId);
-    
-    // Update database - TODO: Implement with PBDB_ statements
-    // PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_DEL_NAME_USED);
-    // stmt->setUInt32(0, nameId);
-    // PlayerbotDatabase.Execute(stmt);
+
+    // Persist to database - DELETE FROM playerbots_names_used
+    std::ostringstream ss;
+    ss << "DELETE FROM playerbots_names_used WHERE name_id = " << nameId;
+
+    if (!sPlayerbotDatabase->Execute(ss.str()))
+    {
+        TC_LOG_ERROR("module.playerbot.names",
+            "Failed to remove name allocation from database: name_id={}", nameId);
+    }
 }
 
 void BotNameMgr::ReleaseName(std::string const& name)
@@ -211,16 +224,103 @@ void BotNameMgr::ReleaseName(std::string const& name)
 bool BotNameMgr::IsNameAvailable(std::string const& name) const
 {
     std::lock_guard lock(_mutex);
-    
+
     auto it = _nameToId.find(name);
     if (it == _nameToId.end())
         return false; // Name not in pool
-    
+
     auto nameIt = _names.find(it->second);
     if (nameIt == _names.end())
         return false;
-    
+
     return !nameIt->second.used;
+}
+
+bool BotNameMgr::IsNameInUseAnywhere(std::string const& name) const
+{
+    // Check 1: Is name in use in our internal pool?
+    {
+        std::lock_guard lock(_mutex);
+        auto it = _nameToId.find(name);
+        if (it != _nameToId.end())
+        {
+            auto nameIt = _names.find(it->second);
+            if (nameIt != _names.end() && nameIt->second.used)
+                return true;
+        }
+    }
+
+    // Check 2: Is name in use in the characters table?
+    if (sCharacterCache->GetCharacterCacheByName(name))
+        return true;
+
+    return false;
+}
+
+std::string BotNameMgr::GenerateUniqueName(uint8 gender, uint32 maxRetries) const
+{
+    // Fantasy name components
+    static const std::vector<std::string> malePrefixes = {
+        "Thar", "Grim", "Kael", "Vor", "Zan", "Drak", "Thor", "Gor", "Bael", "Mor",
+        "Kar", "Vex", "Jor", "Ren", "Lok", "Ash", "Zul", "Kor", "Mal", "Skar"
+    };
+    static const std::vector<std::string> femalePrefixes = {
+        "Aela", "Luna", "Sera", "Lyra", "Nova", "Mira", "Zara", "Kira", "Vela", "Nyla",
+        "Aria", "Eris", "Thea", "Iris", "Vera", "Cora", "Syla", "Nera", "Faye", "Myra"
+    };
+    static const std::vector<std::string> suffixes = {
+        "ion", "ius", "an", "or", "us", "ax", "en", "ar", "on", "is",
+        "oth", "ak", "ir", "ul", "os", "ek", "im", "as", "ur", "ok"
+    };
+    static const std::vector<std::string> uniqueSuffixes = {
+        "a", "o", "i", "e", "u", "y", "", "", "", ""
+    };
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    std::vector<std::string> const& prefixes = (gender == 0) ? malePrefixes : femalePrefixes;
+    std::uniform_int_distribution<> prefixDist(0, prefixes.size() - 1);
+    std::uniform_int_distribution<> suffixDist(0, suffixes.size() - 1);
+    std::uniform_int_distribution<> uniqueDist(0, uniqueSuffixes.size() - 1);
+
+    for (uint32 attempt = 0; attempt < maxRetries; ++attempt)
+    {
+        std::string name;
+        name.reserve(12);
+
+        // Build name: Prefix + Suffix + UniqueSuffix
+        name = prefixes[prefixDist(gen)];
+        name += suffixes[suffixDist(gen)];
+
+        // Only add unique suffix if name is short enough
+        if (name.length() < 10)
+            name += uniqueSuffixes[uniqueDist(gen)];
+
+        // Ensure name isn't too long
+        if (name.length() > 12)
+            name = name.substr(0, 12);
+
+        // Capitalize properly
+        if (!name.empty())
+        {
+            name[0] = std::toupper(name[0]);
+            for (size_t i = 1; i < name.length(); ++i)
+                name[i] = std::tolower(name[i]);
+        }
+
+        // Check if this name is available
+        if (!IsNameInUseAnywhere(name))
+        {
+            TC_LOG_DEBUG("module.playerbot.names",
+                "Generated unique name '{}' after {} attempts", name, attempt + 1);
+            return name;
+        }
+    }
+
+    TC_LOG_ERROR("module.playerbot.names",
+        "Failed to generate unique name after {} attempts", maxRetries);
+    return "";
 }
 
 std::string BotNameMgr::GetCharacterName(uint32 characterGuid) const

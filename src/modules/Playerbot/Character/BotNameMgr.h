@@ -43,8 +43,30 @@ public:
     void ReleaseName(uint32 characterGuid) override;
     void ReleaseName(std::string const& name) override;
 
-    // Check if name is available
+    // Check if name is available in the name pool
     bool IsNameAvailable(std::string const& name) const override;
+
+    /**
+     * @brief Check if a name is in use anywhere (pool + characters table)
+     * @param name The name to check
+     * @return true if name is already in use
+     *
+     * Checks both:
+     * - The internal name pool (playerbots_names_used)
+     * - The characters cache (existing characters in database)
+     */
+    bool IsNameInUseAnywhere(std::string const& name) const;
+
+    /**
+     * @brief Generate a unique fantasy name that isn't in use
+     * @param gender 0=male, 1=female
+     * @param maxRetries Maximum attempts to generate unique name (default 100)
+     * @return Unique name, or empty string if all retries exhausted
+     *
+     * Generates random fantasy-style names and verifies they're not in use
+     * in the characters table before returning.
+     */
+    std::string GenerateUniqueName(uint8 gender, uint32 maxRetries = 100) const;
 
     // Get name for existing character
     std::string GetCharacterName(uint32 characterGuid) const override;

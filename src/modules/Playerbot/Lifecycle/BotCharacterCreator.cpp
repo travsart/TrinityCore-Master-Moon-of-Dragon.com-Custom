@@ -8,6 +8,7 @@
  */
 
 #include "BotCharacterCreator.h"
+#include "Character/BotNameMgr.h"
 #include "CharacterCache.h"
 #include "CharacterDatabase.h"
 #include "DatabaseEnv.h"
@@ -86,75 +87,23 @@ bool BotCharacterCreator::CanCreateCharacter(uint32 accountId, uint32& currentCo
 
 ::std::string BotCharacterCreator::GenerateDefaultBotName(uint8 race, uint8 gender)
 {
-    // WoW character names must be 2-12 characters, alphabetic only (no numbers!)
-    // Generate fantasy-style names for better immersion
+    // Delegate to BotNameMgr which handles:
+    // 1. Name generation with fantasy-style prefixes/suffixes
+    // 2. Collision detection against characters table
+    // 3. Automatic retry on collision (up to 100 attempts)
+    //
+    // This prevents duplicate name errors when creating bots
 
-    static const ::std::vector<::std::string> malePrefixes = {
-        "Thal", "Gor", "Drak", "Var", "Kael", "Zul", "Mor", "Fen", "Bran", "Tor",
-        "Rath", "Grim", "Vex", "Ash", "Bolt", "Thun", "Blaze", "Storm", "Dark", "Iron",
-        "Stone", "Frost", "Shadow", "Fire", "Thunder", "Wind", "Earth", "Light", "Steel", "Night"
-    };
+    std::string uniqueName = sBotNameMgr->GenerateUniqueName(gender);
 
-    static const ::std::vector<::std::string> femalePrefixes = {
-        "Ael", "Syl", "Myr", "Lyr", "Cel", "Ara", "Isa", "Nia", "Ela", "Tia",
-        "Luna", "Nova", "Aura", "Star", "Rose", "Ivy", "Dawn", "Moon", "Snow", "Jade",
-        "Amber", "Crystal", "Pearl", "Ruby", "Silv", "Gold", "Azure", "Coral", "Fern", "Lily"
-    };
-
-    static const ::std::vector<::std::string> maleSuffixes = {
-        "gor", "dan", "rak", "las", "mund", "rek", "vok", "mar", "thor", "gar",
-        "ax", "ox", "ion", "eon", "ian", "us", "or", "ar", "er", "on",
-        "heim", "dale", "rock", "blade", "fang", "claw", "horn", "heart", "soul", "mind"
-    };
-
-    static const ::std::vector<::std::string> femaleSuffixes = {
-        "ira", "ana", "elle", "ria", "sia", "lyn", "wen", "dra", "leth", "nara",
-        "ia", "ea", "ara", "ora", "ura", "ina", "ena", "una", "ala", "ela",
-        "belle", "grace", "hope", "faith", "dawn", "rose", "leaf", "song", "light", "star"
-    };
-
-    // Random suffix for extra uniqueness (all alphabetic)
-    static const ::std::vector<::std::string> uniqueSuffixes = {
-        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
-        "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-        "ax", "ex", "ix", "ox", "ux", "az", "ez", "iz", "oz", "uz",
-        "an", "en", "in", "on", "un", "ar", "er", "ir", "or", "ur"
-    };
-
-    ::std::random_device rd;
-    ::std::mt19937 gen(rd());
-
-    const auto& prefixes = (gender == GENDER_FEMALE) ? femalePrefixes : malePrefixes;
-    const auto& suffixes = (gender == GENDER_FEMALE) ? femaleSuffixes : maleSuffixes;
-
-    ::std::uniform_int_distribution<size_t> prefixDist(0, prefixes.size() - 1);
-    ::std::uniform_int_distribution<size_t> suffixDist(0, suffixes.size() - 1);
-    ::std::uniform_int_distribution<size_t> uniqueDist(0, uniqueSuffixes.size() - 1);
-
-    ::std::string name;
-    name.reserve(12); // Max WoW name length
-
-    // Build name: Prefix + Suffix + UniqueSuffix
-    name = prefixes[prefixDist(gen)];
-    name += suffixes[suffixDist(gen)];
-
-    // Only add unique suffix if name is short enough (keep under 12 chars)
-    if (name.length() < 10)
-        name += uniqueSuffixes[uniqueDist(gen)];
-
-    // Ensure name isn't too long
-    if (name.length() > 12)
-        name = name.substr(0, 12);
-
-    // Capitalize first letter, lowercase rest
-    if (!name.empty())
+    if (uniqueName.empty())
     {
-        name[0] = ::std::toupper(name[0]);
-        for (size_t i = 1; i < name.length(); ++i)
-            name[i] = ::std::tolower(name[i]);
+        TC_LOG_ERROR("module.playerbot",
+            "BotCharacterCreator: Failed to generate unique name for race={} gender={}",
+            race, gender);
     }
 
-    return name;
+    return uniqueName;
 }
 
 uint8 BotCharacterCreator::GetStartingLevel(uint8 race, uint8 classId)
