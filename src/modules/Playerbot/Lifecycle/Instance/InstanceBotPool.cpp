@@ -147,10 +147,19 @@ void InstanceBotPool::Shutdown()
         _reservations.clear();
     }
 
-    // Clear ready index
+    // Clear ready index (reset all vectors in the std::array structure)
     {
         std::unique_lock lock(_readyIndexMutex);
-        _readyIndex.clear();
+        for (auto& roleMap : _readyIndex)
+            for (auto& factionMap : roleMap)
+                for (auto& bracketVec : factionMap)
+                    bracketVec.clear();
+    }
+
+    // Clear bracket counts
+    {
+        std::unique_lock lock(_bracketCountsMutex);
+        _bracketCounts.Reset();
     }
 
     _initialized.store(false);
@@ -290,70 +299,86 @@ void InstanceBotPool::WarmPool()
     _warmingInProgress.store(true);
 
     // ========================================================================
-    // REFACTORED (2026-01-12): Pool bots are DATABASE RECORDS ONLY
-    // Bots are NOT logged in until actually needed (when assigned to BG/dungeon)
-    // This saves server resources - idle pool bots don't consume CPU/memory
-    // We have 1-2 minutes of queue time to login bots when actually needed
+    // REFACTORED (2026-01-15): Per-bracket pool system
+    // 8 level brackets × 2 factions × 50 bots = 800 total
+    // Each bracket has: 10 tanks, 15 healers, 25 DPS per faction
+    //
+    // Pool bots are DATABASE RECORDS ONLY - NOT logged in until needed
+    // We have 1-2 minutes of queue time to login bots when assigned
     // ========================================================================
 
-    TC_LOG_INFO("playerbot.pool", "Creating pool bot characters (database records only - NOT logged in)...");
+    TC_LOG_INFO("playerbot.pool", "Creating per-bracket pool bot characters (database records only - NOT logged in)...");
 
-    uint32 totalToCreate = _config.poolSize.GetTotalWarmPool();
+    // Initialize bracket pools from configuration
+    _config.poolSize.InitializeDefaultBracketPools();
+
+    uint32 totalToCreate = _config.poolSize.GetTotalBotsAcrossAllBrackets();
     uint32 created = 0;
 
-    // Helper lambda to get a representative level for a bracket
-    auto getLevelForBracket = [](uint32 bracket) -> uint32 {
-        uint32 minLevel, maxLevel;
-        PoolLevelConfig::GetLevelRange(bracket, minLevel, maxLevel);
-        // Use middle of the bracket for representative level
-        return (minLevel + maxLevel) / 2;
-    };
+    // Create bots for each bracket
+    for (uint8 bracketIdx = 0; bracketIdx < NUM_LEVEL_BRACKETS; ++bracketIdx)
+    {
+        PoolBracket bracket = static_cast<PoolBracket>(bracketIdx);
+        BracketPoolConfig const& bracketConfig = _config.poolSize.bracketPools[bracketIdx];
 
-    // Helper lambda to create bots for a role distributed across level brackets
-    auto createBotsForRole = [&](BotRole role, PoolType poolType, uint32 totalCount) {
-        // Distribute bots across all 4 level brackets according to config
-        for (uint32 bracket = 0; bracket < 4; ++bracket)
+        if (!bracketConfig.enabled)
         {
-            uint32 countForBracket = static_cast<uint32>(totalCount * _config.levelConfig.bracketDistribution[bracket]);
-            // Ensure at least 1 bot per bracket if total count > 4
-            if (countForBracket == 0 && totalCount > 4)
-                countForBracket = 1;
-
-            uint32 level = getLevelForBracket(bracket);
-
-            TC_LOG_DEBUG("playerbot.pool", "WarmPool: Creating {} {} bots at level {} (bracket {})",
-                countForBracket, BotRoleToString(role), level, bracket);
-
-            for (uint32 i = 0; i < countForBracket; ++i)
-            {
-                if (CreatePoolBot(role, poolType, level) != ObjectGuid::Empty)
-                    ++created;
-            }
+            TC_LOG_DEBUG("playerbot.pool", "Bracket {} is disabled, skipping", bracketIdx);
+            continue;
         }
-    };
 
-    // Create Alliance bots distributed across level brackets
-    TC_LOG_INFO("playerbot.pool", "Creating Alliance pool bot characters...");
-    createBotsForRole(BotRole::Tank, PoolType::PvP_Alliance, _config.poolSize.allianceTanks);
-    createBotsForRole(BotRole::Healer, PoolType::PvP_Alliance, _config.poolSize.allianceHealers);
-    createBotsForRole(BotRole::DPS, PoolType::PvP_Alliance, _config.poolSize.allianceDPS);
+        uint32 minLevel, maxLevel;
+        GetBracketLevelRange(bracket, minLevel, maxLevel);
 
-    // Create Horde bots distributed across level brackets
-    TC_LOG_INFO("playerbot.pool", "Creating Horde pool bot characters...");
-    createBotsForRole(BotRole::Tank, PoolType::PvP_Horde, _config.poolSize.hordeTanks);
-    createBotsForRole(BotRole::Healer, PoolType::PvP_Horde, _config.poolSize.hordeHealers);
-    createBotsForRole(BotRole::DPS, PoolType::PvP_Horde, _config.poolSize.hordeDPS);
+        TC_LOG_INFO("playerbot.pool", "Creating bots for bracket {} (level {}-{}): A[T={}/H={}/D={}] H[T={}/H={}/D={}]",
+            bracketIdx, minLevel, maxLevel,
+            bracketConfig.alliance.tanks, bracketConfig.alliance.healers, bracketConfig.alliance.dps,
+            bracketConfig.horde.tanks, bracketConfig.horde.healers, bracketConfig.horde.dps);
+
+        // Create Alliance bots for this bracket
+        for (uint32 i = 0; i < bracketConfig.alliance.tanks; ++i)
+        {
+            if (CreatePoolBot(BotRole::Tank, Faction::Alliance, bracket) != ObjectGuid::Empty)
+                ++created;
+        }
+        for (uint32 i = 0; i < bracketConfig.alliance.healers; ++i)
+        {
+            if (CreatePoolBot(BotRole::Healer, Faction::Alliance, bracket) != ObjectGuid::Empty)
+                ++created;
+        }
+        for (uint32 i = 0; i < bracketConfig.alliance.dps; ++i)
+        {
+            if (CreatePoolBot(BotRole::DPS, Faction::Alliance, bracket) != ObjectGuid::Empty)
+                ++created;
+        }
+
+        // Create Horde bots for this bracket
+        for (uint32 i = 0; i < bracketConfig.horde.tanks; ++i)
+        {
+            if (CreatePoolBot(BotRole::Tank, Faction::Horde, bracket) != ObjectGuid::Empty)
+                ++created;
+        }
+        for (uint32 i = 0; i < bracketConfig.horde.healers; ++i)
+        {
+            if (CreatePoolBot(BotRole::Healer, Faction::Horde, bracket) != ObjectGuid::Empty)
+                ++created;
+        }
+        for (uint32 i = 0; i < bracketConfig.horde.dps; ++i)
+        {
+            if (CreatePoolBot(BotRole::DPS, Faction::Horde, bracket) != ObjectGuid::Empty)
+                ++created;
+        }
+    }
+
+    // Rebuild ready index after mass creation
+    RebuildReadyIndex();
 
     _warmingInProgress.store(false);
 
     TC_LOG_INFO("playerbot.pool", "Pool creation complete: {} of {} bot characters created (database records only)",
         created, totalToCreate);
     TC_LOG_INFO("playerbot.pool", "Pool bots are READY but NOT logged in - they will login via BotSpawner when needed");
-    TC_LOG_INFO("playerbot.pool", "Level bracket distribution: 1-10 ({}%), 10-60 ({}%), 60-70 ({}%), 70-80 ({}%)",
-        static_cast<uint32>(_config.levelConfig.bracketDistribution[0] * 100),
-        static_cast<uint32>(_config.levelConfig.bracketDistribution[1] * 100),
-        static_cast<uint32>(_config.levelConfig.bracketDistribution[2] * 100),
-        static_cast<uint32>(_config.levelConfig.bracketDistribution[3] * 100));
+    TC_LOG_INFO("playerbot.pool", "Per-bracket distribution: 8 brackets × 2 factions × 50 bots = 800 total");
 
     _statsDirty.store(true);
 }
@@ -363,85 +388,77 @@ void InstanceBotPool::ReplenishPool()
     if (_warmingInProgress.load())
         return;
 
-    std::shared_lock lock(_slotsMutex);
+    // ========================================================================
+    // REFACTORED (2026-01-15): Per-bracket replenishment
+    // Check each bracket independently and request JIT bots for shortages
+    // Uses BracketCounts for O(1) shortage detection
+    // ========================================================================
 
-    // Count current ready bots per faction/role
-    uint32 allianceTanksReady = 0, allianceHealersReady = 0, allianceDPSReady = 0;
-    uint32 hordeTanksReady = 0, hordeHealersReady = 0, hordeDPSReady = 0;
+    if (!_config.behavior.enableJITFactory || !_overflowNeededCallback)
+        return;
 
-    for (auto const& [guid, slot] : _slots)
-    {
-        if (slot.state != PoolSlotState::Ready)
-            continue;
+    std::vector<PoolBracket> bracketsWithShortage = GetBracketsWithShortage();
 
-        if (slot.faction == Faction::Alliance)
-        {
-            switch (slot.role)
-            {
-                case BotRole::Tank:   ++allianceTanksReady; break;
-                case BotRole::Healer: ++allianceHealersReady; break;
-                case BotRole::DPS:    ++allianceDPSReady; break;
-                default: break;
-            }
-        }
-        else
-        {
-            switch (slot.role)
-            {
-                case BotRole::Tank:   ++hordeTanksReady; break;
-                case BotRole::Healer: ++hordeHealersReady; break;
-                case BotRole::DPS:    ++hordeDPSReady; break;
-                default: break;
-            }
-        }
-    }
-
-    lock.unlock();
-
-    // Check if replenishment is needed
-    bool needReplenish = false;
-    if (allianceTanksReady < _config.behavior.minBotsPerRole ||
-        allianceHealersReady < _config.behavior.minBotsPerRole ||
-        allianceDPSReady < _config.behavior.minBotsPerRole ||
-        hordeTanksReady < _config.behavior.minBotsPerRole ||
-        hordeHealersReady < _config.behavior.minBotsPerRole ||
-        hordeDPSReady < _config.behavior.minBotsPerRole)
-    {
-        needReplenish = true;
-    }
-
-    if (!needReplenish)
+    if (bracketsWithShortage.empty())
         return;
 
     if (_config.logging.logPoolChanges)
     {
-        TC_LOG_INFO("playerbot.pool", "Pool replenishment needed - Alliance: T={}/H={}/D={}, Horde: T={}/H={}/D={}",
-            allianceTanksReady, allianceHealersReady, allianceDPSReady,
-            hordeTanksReady, hordeHealersReady, hordeDPSReady);
+        TC_LOG_INFO("playerbot.pool", "Pool replenishment needed - {} brackets have shortages",
+            bracketsWithShortage.size());
     }
 
-    // Request overflow bots if JIT factory is enabled
-    if (_config.behavior.enableJITFactory && _overflowNeededCallback)
+    // Request JIT bots for each bracket with shortage
+    for (PoolBracket bracket : bracketsWithShortage)
     {
-        if (allianceTanksReady < _config.behavior.minBotsPerRole)
-            _overflowNeededCallback(BotRole::Tank, Faction::Alliance, 80,
-                _config.behavior.minBotsPerRole - allianceTanksReady);
-        if (allianceHealersReady < _config.behavior.minBotsPerRole)
-            _overflowNeededCallback(BotRole::Healer, Faction::Alliance, 80,
-                _config.behavior.minBotsPerRole - allianceHealersReady);
-        if (allianceDPSReady < _config.behavior.minBotsPerRole)
-            _overflowNeededCallback(BotRole::DPS, Faction::Alliance, 80,
-                _config.behavior.minBotsPerRole - allianceDPSReady);
+        PoolBracketStats stats = GetBracketStatistics(bracket);
+        BracketPoolConfig const& config = _config.poolSize.bracketPools[static_cast<size_t>(bracket)];
 
-        if (hordeTanksReady < _config.behavior.minBotsPerRole)
-            _overflowNeededCallback(BotRole::Tank, Faction::Horde, 80,
-                _config.behavior.minBotsPerRole - hordeTanksReady);
-        if (hordeHealersReady < _config.behavior.minBotsPerRole)
-            _overflowNeededCallback(BotRole::Healer, Faction::Horde, 80,
-                _config.behavior.minBotsPerRole - hordeHealersReady);
-        if (hordeDPSReady < _config.behavior.minBotsPerRole)
-            _overflowNeededCallback(BotRole::DPS, Faction::Horde, 80,
-                _config.behavior.minBotsPerRole - hordeDPSReady);
+        if (!config.enabled)
+            continue;
+
+        // Check Alliance shortages by role
+        std::shared_lock lock(_bracketCountsMutex);
+        uint32 allianceTanksReady = _bracketCounts.GetReadyByRole(bracket, Faction::Alliance, BotRole::Tank);
+        uint32 allianceHealersReady = _bracketCounts.GetReadyByRole(bracket, Faction::Alliance, BotRole::Healer);
+        uint32 allianceDPSReady = _bracketCounts.GetReadyByRole(bracket, Faction::Alliance, BotRole::DPS);
+
+        uint32 hordeTanksReady = _bracketCounts.GetReadyByRole(bracket, Faction::Horde, BotRole::Tank);
+        uint32 hordeHealersReady = _bracketCounts.GetReadyByRole(bracket, Faction::Horde, BotRole::Healer);
+        uint32 hordeDPSReady = _bracketCounts.GetReadyByRole(bracket, Faction::Horde, BotRole::DPS);
+        lock.unlock();
+
+        // Request Alliance JIT bots
+        if (allianceTanksReady < config.alliance.tanks)
+            _overflowNeededCallback(BotRole::Tank, Faction::Alliance, bracket,
+                config.alliance.tanks - allianceTanksReady);
+        if (allianceHealersReady < config.alliance.healers)
+            _overflowNeededCallback(BotRole::Healer, Faction::Alliance, bracket,
+                config.alliance.healers - allianceHealersReady);
+        if (allianceDPSReady < config.alliance.dps)
+            _overflowNeededCallback(BotRole::DPS, Faction::Alliance, bracket,
+                config.alliance.dps - allianceDPSReady);
+
+        // Request Horde JIT bots
+        if (hordeTanksReady < config.horde.tanks)
+            _overflowNeededCallback(BotRole::Tank, Faction::Horde, bracket,
+                config.horde.tanks - hordeTanksReady);
+        if (hordeHealersReady < config.horde.healers)
+            _overflowNeededCallback(BotRole::Healer, Faction::Horde, bracket,
+                config.horde.healers - hordeHealersReady);
+        if (hordeDPSReady < config.horde.dps)
+            _overflowNeededCallback(BotRole::DPS, Faction::Horde, bracket,
+                config.horde.dps - hordeDPSReady);
+
+        if (_config.logging.logPoolChanges)
+        {
+            uint32 minLevel, maxLevel;
+            GetBracketLevelRange(bracket, minLevel, maxLevel);
+            TC_LOG_DEBUG("playerbot.pool", "Bracket {}-{} shortage: A[T={}/H={}/D={}] H[T={}/H={}/D={}]",
+                minLevel, maxLevel,
+                allianceTanksReady, allianceHealersReady, allianceDPSReady,
+                hordeTanksReady, hordeHealersReady, hordeDPSReady);
+        }
     }
 }
 
@@ -678,78 +695,86 @@ BGAssignment InstanceBotPool::AssignForBattleground(
 
     BGAssignment result;
 
-    // Select Alliance bots (mixed roles)
-    uint32 allianceCount = allianceNeeded;
-    while (allianceCount > 0)
-    {
-        // Distribute roles: roughly 15% tanks, 25% healers, 60% DPS
-        BotRole role = BotRole::DPS;
-        if (allianceCount > allianceNeeded * 0.85f)
-            role = BotRole::Tank;
-        else if (allianceCount > allianceNeeded * 0.60f)
-            role = BotRole::Healer;
+    // ========================================================================
+    // REFACTORED (2026-01-15): Per-bracket selection with O(1) lookup
+    // Uses ReadyIndex[role][faction][bracket] for fast bot retrieval
+    // Role distribution: 15% tanks, 25% healers, 60% DPS
+    // ========================================================================
 
-        ObjectGuid guid = SelectBestBot(role, Faction::Alliance, bracketLevel, 0);
-        if (guid != ObjectGuid::Empty)
+    PoolBracket bracket = GetBracketForLevel(bracketLevel);
+
+    // Calculate role distribution for Alliance
+    uint32 allianceTanks = static_cast<uint32>(allianceNeeded * 0.15f);
+    uint32 allianceHealers = static_cast<uint32>(allianceNeeded * 0.25f);
+    uint32 allianceDPS = allianceNeeded - allianceTanks - allianceHealers;
+
+    // Select Alliance bots by role using bracket-aware selection
+    auto allianceTankBots = SelectBotsFromBracket(BotRole::Tank, Faction::Alliance, bracket, allianceTanks);
+    result.allianceBots.insert(result.allianceBots.end(), allianceTankBots.begin(), allianceTankBots.end());
+
+    auto allianceHealerBots = SelectBotsFromBracket(BotRole::Healer, Faction::Alliance, bracket, allianceHealers);
+    result.allianceBots.insert(result.allianceBots.end(), allianceHealerBots.begin(), allianceHealerBots.end());
+
+    auto allianceDPSBots = SelectBotsFromBracket(BotRole::DPS, Faction::Alliance, bracket, allianceDPS);
+    result.allianceBots.insert(result.allianceBots.end(), allianceDPSBots.begin(), allianceDPSBots.end());
+
+    // If not enough bots, try to fill from other roles
+    uint32 allianceStillNeeded = allianceNeeded - static_cast<uint32>(result.allianceBots.size());
+    if (allianceStillNeeded > 0)
+    {
+        for (uint8 r = 0; r < static_cast<uint8>(BotRole::Max) && allianceStillNeeded > 0; ++r)
         {
-            result.allianceBots.push_back(guid);
-            --allianceCount;
-        }
-        else
-        {
-            // Try any role
-            for (uint8 r = 0; r < static_cast<uint8>(BotRole::Max); ++r)
-            {
-                guid = SelectBestBot(static_cast<BotRole>(r), Faction::Alliance, bracketLevel, 0);
-                if (guid != ObjectGuid::Empty)
-                {
-                    result.allianceBots.push_back(guid);
-                    --allianceCount;
-                    break;
-                }
-            }
-            if (guid == ObjectGuid::Empty)
-                break; // No more Alliance bots available
+            auto extraBots = SelectBotsFromBracket(static_cast<BotRole>(r), Faction::Alliance, bracket, allianceStillNeeded);
+            result.allianceBots.insert(result.allianceBots.end(), extraBots.begin(), extraBots.end());
+            allianceStillNeeded -= static_cast<uint32>(extraBots.size());
         }
     }
 
-    // Select Horde bots (mixed roles)
-    uint32 hordeCount = hordeNeeded;
-    while (hordeCount > 0)
-    {
-        BotRole role = BotRole::DPS;
-        if (hordeCount > hordeNeeded * 0.85f)
-            role = BotRole::Tank;
-        else if (hordeCount > hordeNeeded * 0.60f)
-            role = BotRole::Healer;
+    // Calculate role distribution for Horde
+    uint32 hordeTanks = static_cast<uint32>(hordeNeeded * 0.15f);
+    uint32 hordeHealers = static_cast<uint32>(hordeNeeded * 0.25f);
+    uint32 hordeDPS = hordeNeeded - hordeTanks - hordeHealers;
 
-        ObjectGuid guid = SelectBestBot(role, Faction::Horde, bracketLevel, 0);
-        if (guid != ObjectGuid::Empty)
+    // Select Horde bots by role using bracket-aware selection
+    auto hordeTankBots = SelectBotsFromBracket(BotRole::Tank, Faction::Horde, bracket, hordeTanks);
+    result.hordeBots.insert(result.hordeBots.end(), hordeTankBots.begin(), hordeTankBots.end());
+
+    auto hordeHealerBots = SelectBotsFromBracket(BotRole::Healer, Faction::Horde, bracket, hordeHealers);
+    result.hordeBots.insert(result.hordeBots.end(), hordeHealerBots.begin(), hordeHealerBots.end());
+
+    auto hordeDPSBots = SelectBotsFromBracket(BotRole::DPS, Faction::Horde, bracket, hordeDPS);
+    result.hordeBots.insert(result.hordeBots.end(), hordeDPSBots.begin(), hordeDPSBots.end());
+
+    // If not enough bots, try to fill from other roles
+    uint32 hordeStillNeeded = hordeNeeded - static_cast<uint32>(result.hordeBots.size());
+    if (hordeStillNeeded > 0)
+    {
+        for (uint8 r = 0; r < static_cast<uint8>(BotRole::Max) && hordeStillNeeded > 0; ++r)
         {
-            result.hordeBots.push_back(guid);
-            --hordeCount;
-        }
-        else
-        {
-            // Try any role
-            for (uint8 r = 0; r < static_cast<uint8>(BotRole::Max); ++r)
-            {
-                guid = SelectBestBot(static_cast<BotRole>(r), Faction::Horde, bracketLevel, 0);
-                if (guid != ObjectGuid::Empty)
-                {
-                    result.hordeBots.push_back(guid);
-                    --hordeCount;
-                    break;
-                }
-            }
-            if (guid == ObjectGuid::Empty)
-                break;
+            auto extraBots = SelectBotsFromBracket(static_cast<BotRole>(r), Faction::Horde, bracket, hordeStillNeeded);
+            result.hordeBots.insert(result.hordeBots.end(), extraBots.begin(), extraBots.end());
+            hordeStillNeeded -= static_cast<uint32>(extraBots.size());
         }
     }
 
     // Check success
     result.success = (result.allianceBots.size() >= allianceNeeded &&
                      result.hordeBots.size() >= hordeNeeded);
+
+    // Request JIT if insufficient bots
+    if (!result.success && _overflowNeededCallback)
+    {
+        if (result.allianceBots.size() < allianceNeeded)
+        {
+            uint32 shortage = allianceNeeded - static_cast<uint32>(result.allianceBots.size());
+            _overflowNeededCallback(BotRole::DPS, Faction::Alliance, bracket, shortage);
+        }
+        if (result.hordeBots.size() < hordeNeeded)
+        {
+            uint32 shortage = hordeNeeded - static_cast<uint32>(result.hordeBots.size());
+            _overflowNeededCallback(BotRole::DPS, Faction::Horde, bracket, shortage);
+        }
+    }
 
     // Assign all selected bots
     for (ObjectGuid guid : result.allianceBots)
@@ -775,9 +800,11 @@ BGAssignment InstanceBotPool::AssignForBattleground(
 
     if (_config.logging.logAssignments)
     {
+        uint32 minLevel, maxLevel;
+        GetBracketLevelRange(bracket, minLevel, maxLevel);
         TC_LOG_INFO("playerbot.pool",
-            "BG {} assignment: Alliance={}/{}, Horde={}/{}, success={}, {}µs",
-            bgTypeId, result.allianceBots.size(), allianceNeeded,
+            "BG {} bracket {}-{} assignment: Alliance={}/{}, Horde={}/{}, success={}, {}µs",
+            bgTypeId, minLevel, maxLevel, result.allianceBots.size(), allianceNeeded,
             result.hordeBots.size(), hordeNeeded, result.success, duration.count());
     }
 
@@ -849,24 +876,51 @@ void InstanceBotPool::ReleaseBots(std::vector<ObjectGuid> const& bots)
 
 void InstanceBotPool::ReleaseBot(ObjectGuid botGuid, bool success)
 {
-    std::unique_lock lock(_slotsMutex);
+    BotRole role;
+    Faction faction;
+    uint32 level;
+    PoolSlotState newState;
 
-    auto it = _slots.find(botGuid);
-    if (it == _slots.end())
-        return;
+    {
+        std::unique_lock lock(_slotsMutex);
 
-    if (it->second.state != PoolSlotState::Assigned)
-        return;
+        auto it = _slots.find(botGuid);
+        if (it == _slots.end())
+            return;
 
-    it->second.ReleaseFromInstance(success);
+        if (it->second.state != PoolSlotState::Assigned)
+            return;
+
+        // Store slot info before state change
+        role = it->second.role;
+        faction = it->second.faction;
+        level = it->second.level;
+
+        it->second.ReleaseFromInstance(success);
+        newState = it->second.state;
+    }
+
+    // If bot transitioned to Ready (or Cooldown that will become Ready),
+    // add back to ready index
+    if (newState == PoolSlotState::Ready)
+    {
+        PoolBracket bracket = GetBracketForLevel(level);
+        AddToReadyIndex(botGuid, role, faction, bracket);
+
+        // Update bracket counts
+        {
+            std::unique_lock bracketLock(_bracketCountsMutex);
+            _bracketCounts.IncrementReady(bracket, faction, role);
+        }
+    }
 
     ++_stats.activity.releasesThisHour;
     ++_stats.activity.releasesToday;
 
     if (_config.logging.logAssignments)
     {
-        TC_LOG_DEBUG("playerbot.pool", "Released bot {} from instance (success={})",
-            botGuid.ToString(), success);
+        TC_LOG_DEBUG("playerbot.pool", "Released bot {} from instance (success={}, newState={})",
+            botGuid.ToString(), success, static_cast<int>(newState));
     }
 
     _statsDirty.store(true);
@@ -1204,20 +1258,21 @@ void InstanceBotPool::SetOverflowNeededCallback(OverflowNeededCallback callback)
 // INTERNAL METHODS - Bot Creation
 // ============================================================================
 
-ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, PoolType poolType, uint32 level, bool /*deferWarmup*/)
+ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, Faction faction, PoolBracket bracket, bool /*deferWarmup*/)
 {
-    Faction faction = GetFactionForPoolType(poolType);
-
     // ========================================================================
-    // REFACTORED (2026-01-12): Pool bots are DATABASE RECORDS ONLY
-    // They are NOT logged in until needed (when assigned to instance/BG)
-    // This avoids unnecessary server overhead from idle bots doing AI ticks
+    // REFACTORED (2026-01-15): Per-bracket pool bot creation
+    // Pool bots are DATABASE RECORDS ONLY - NOT logged in until needed
+    // Bot level is set to bracket midpoint (e.g., bracket 20-29 = level 25)
     //
     // Flow:
     // 1. CreatePoolBot: Create character in database, store in _slots as Ready
     // 2. AssignFor*: When needed, login via BotSpawner (we have 1-2 min queue time)
     // 3. ReleaseBot: Log out and return to Ready pool
     // ========================================================================
+
+    // Get level for this bracket (midpoint)
+    uint32 level = GetBracketMidpointLevel(bracket);
 
     // Step 1: Get template for class/spec info using SelectRandomTemplate
     BotTemplate const* tmpl = sBotTemplateRepository->SelectRandomTemplate(role, faction);
@@ -1262,8 +1317,14 @@ ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, PoolType poolType, uint3
     std::string name = charInfo ? charInfo->Name : "Unknown";
     uint8 actualClass = charInfo ? charInfo->Class : tmpl->playerClass;
 
-    TC_LOG_INFO("playerbot.pool", "InstanceBotPool::CreatePoolBot - Created pool bot {} ({}), Role {}, Class {}, Level {} (NOT logged in - database record only)",
-        name, botGuid.ToString(), BotRoleToString(role), actualClass, level);
+    // Determine pool type for compatibility
+    PoolType poolType = (faction == Faction::Alliance) ? PoolType::PvP_Alliance : PoolType::PvP_Horde;
+
+    uint32 minLevel, maxLevel;
+    GetBracketLevelRange(bracket, minLevel, maxLevel);
+
+    TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::CreatePoolBot - Created pool bot {} ({}), Role {}, Bracket {}-{}, Level {} (NOT logged in)",
+        name, botGuid.ToString(), BotRoleToString(role), minLevel, maxLevel, level);
 
     // Create slot for the newly created bot - mark as READY (not logged in)
     // Bot will be logged in via BotSpawner when actually needed for an instance/BG
@@ -1281,13 +1342,26 @@ ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, PoolType poolType, uint3
         _slots[botGuid] = std::move(slot);
     }
 
-    // NOTE: Bot is NOT logged in here! They are database records only.
-    // When needed (AssignForDungeon, AssignForBattleground, etc.),
-    // the assignment function will login the bot via BotSpawner.
-    // This saves server resources - we have 1-2 minutes of queue time anyway.
+    // Add to ready index for O(1) lookup
+    AddToReadyIndex(botGuid, role, faction, bracket);
+
+    // Update bracket counts
+    {
+        std::unique_lock lock(_bracketCountsMutex);
+        _bracketCounts.IncrementReady(bracket, faction, role);
+        _bracketCounts.IncrementTotal(bracket, faction);
+    }
 
     _statsDirty.store(true);
     return botGuid;
+}
+
+ObjectGuid InstanceBotPool::CreatePoolBotLegacy(BotRole role, PoolType poolType, uint32 level, bool deferWarmup)
+{
+    // Legacy wrapper - convert to per-bracket call
+    Faction faction = GetFactionForPoolType(poolType);
+    PoolBracket bracket = GetBracketForLevel(level);
+    return CreatePoolBot(role, faction, bracket, deferWarmup);
 }
 
 bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
@@ -1623,25 +1697,44 @@ void InstanceBotPool::ProcessWarmingRetries()
 
 void InstanceBotPool::ProcessCooldowns()
 {
-    std::unique_lock lock(_slotsMutex);
+    std::vector<std::tuple<ObjectGuid, BotRole, Faction, uint32>> expiredBots;
 
-    auto cooldownDuration = _config.timing.cooldownDuration;
-
-    for (auto& [guid, slot] : _slots)
     {
-        if (slot.state == PoolSlotState::Cooldown)
-        {
-            if (slot.IsCooldownExpired(cooldownDuration))
-            {
-                slot.TransitionTo(PoolSlotState::Ready);
-                ++_stats.activity.cooldownsExpiredThisHour;
+        std::unique_lock lock(_slotsMutex);
 
-                if (_config.logging.logCooldowns)
+        auto cooldownDuration = _config.timing.cooldownDuration;
+
+        for (auto& [guid, slot] : _slots)
+        {
+            if (slot.state == PoolSlotState::Cooldown)
+            {
+                if (slot.IsCooldownExpired(cooldownDuration))
                 {
-                    TC_LOG_DEBUG("playerbot.pool", "Bot {} cooldown expired, now ready",
-                        guid.ToString());
+                    // Store info before transition
+                    expiredBots.emplace_back(guid, slot.role, slot.faction, slot.level);
+                    slot.TransitionTo(PoolSlotState::Ready);
+                    ++_stats.activity.cooldownsExpiredThisHour;
+
+                    if (_config.logging.logCooldowns)
+                    {
+                        TC_LOG_DEBUG("playerbot.pool", "Bot {} cooldown expired, now ready",
+                            guid.ToString());
+                    }
                 }
             }
+        }
+    }
+
+    // Add expired bots back to ready index
+    for (auto const& [guid, role, faction, level] : expiredBots)
+    {
+        PoolBracket bracket = GetBracketForLevel(level);
+        AddToReadyIndex(guid, role, faction, bracket);
+
+        // Update bracket counts
+        {
+            std::unique_lock bracketLock(_bracketCountsMutex);
+            _bracketCounts.IncrementReady(bracket, faction, role);
         }
     }
 
@@ -1705,6 +1798,19 @@ void InstanceBotPool::UpdateStatistics()
     // Reset slot stats
     _stats.slotStats.Reset();
 
+    // Reset bracket stats
+    for (auto& bracketStat : _stats.bracketStats.brackets)
+    {
+        bracketStat.totalSlots = 0;
+        bracketStat.readySlots = 0;
+        bracketStat.assignedSlots = 0;
+        bracketStat.allianceReady = 0;
+        bracketStat.hordeReady = 0;
+        bracketStat.tanksReady = 0;
+        bracketStat.healersReady = 0;
+        bracketStat.dpsReady = 0;
+    }
+
     // Count slots by state
     for (auto const& [guid, slot] : _slots)
     {
@@ -1741,6 +1847,40 @@ void InstanceBotPool::UpdateStatistics()
                 ++_stats.factionStats[factionIdx].readySlots;
             else if (slot.state == PoolSlotState::Assigned)
                 ++_stats.factionStats[factionIdx].assignedSlots;
+        }
+
+        // Update per-bracket stats
+        PoolBracket bracket = GetBracketForLevel(slot.level);
+        auto bracketIdx = static_cast<size_t>(bracket);
+        if (bracketIdx < NUM_LEVEL_BRACKETS)
+        {
+            PoolBracketStats& bs = _stats.bracketStats.brackets[bracketIdx];
+            bs.bracket = bracket;
+            ++bs.totalSlots;
+
+            if (slot.state == PoolSlotState::Ready)
+            {
+                ++bs.readySlots;
+                if (slot.faction == Faction::Alliance)
+                    ++bs.allianceReady;
+                else
+                    ++bs.hordeReady;
+
+                switch (slot.role)
+                {
+                    case BotRole::Tank:   ++bs.tanksReady; break;
+                    case BotRole::Healer: ++bs.healersReady; break;
+                    case BotRole::DPS:    ++bs.dpsReady; break;
+                    default: break;
+                }
+            }
+            else if (slot.state == PoolSlotState::Assigned)
+            {
+                ++bs.assignedSlots;
+            }
+
+            // Set configured slots from config
+            bs.configuredSlots = _config.poolSize.bracketPools[bracketIdx].GetTotalBots();
         }
     }
 
@@ -1793,6 +1933,323 @@ void InstanceBotPool::LoadFromDatabase()
 {
     // TODO: Implement database loading
     // This would restore pool state from playerbot_instance_pool table
+}
+
+// ============================================================================
+// PER-BRACKET POOL QUERIES
+// ============================================================================
+
+uint32 InstanceBotPool::GetAvailableCountForBracket(PoolBracket bracket, Faction faction, BotRole role) const
+{
+    std::shared_lock lock(_bracketCountsMutex);
+
+    if (role == BotRole::Max)
+    {
+        // All roles
+        return _bracketCounts.GetReady(bracket, faction);
+    }
+    else
+    {
+        return _bracketCounts.GetReadyByRole(bracket, faction, role);
+    }
+}
+
+PoolBracketStats InstanceBotPool::GetBracketStatistics(PoolBracket bracket) const
+{
+    PoolBracketStats stats;
+    stats.bracket = bracket;
+
+    auto bracketIdx = static_cast<size_t>(bracket);
+    if (bracketIdx >= NUM_LEVEL_BRACKETS)
+        return stats;
+
+    BracketPoolConfig const& config = _config.poolSize.bracketPools[bracketIdx];
+    stats.configuredSlots = config.GetTotalBots();
+
+    std::shared_lock bracketLock(_bracketCountsMutex);
+    stats.allianceReady = _bracketCounts.allianceReady[bracketIdx];
+    stats.hordeReady = _bracketCounts.hordeReady[bracketIdx];
+    stats.readySlots = stats.allianceReady + stats.hordeReady;
+
+    stats.totalSlots = _bracketCounts.allianceTotal[bracketIdx] + _bracketCounts.hordeTotal[bracketIdx];
+    stats.assignedSlots = stats.totalSlots - stats.readySlots;
+
+    // Get per-role counts
+    stats.tanksReady = _bracketCounts.GetReadyByRole(bracket, Faction::Alliance, BotRole::Tank) +
+                       _bracketCounts.GetReadyByRole(bracket, Faction::Horde, BotRole::Tank);
+    stats.healersReady = _bracketCounts.GetReadyByRole(bracket, Faction::Alliance, BotRole::Healer) +
+                         _bracketCounts.GetReadyByRole(bracket, Faction::Horde, BotRole::Healer);
+    stats.dpsReady = _bracketCounts.GetReadyByRole(bracket, Faction::Alliance, BotRole::DPS) +
+                     _bracketCounts.GetReadyByRole(bracket, Faction::Horde, BotRole::DPS);
+
+    return stats;
+}
+
+AllPoolBracketStats InstanceBotPool::GetAllBracketStatistics() const
+{
+    AllPoolBracketStats allStats;
+
+    for (uint8 i = 0; i < NUM_LEVEL_BRACKETS; ++i)
+    {
+        allStats.brackets[i] = GetBracketStatistics(static_cast<PoolBracket>(i));
+    }
+
+    return allStats;
+}
+
+bool InstanceBotPool::CanBracketSupportDungeon(PoolBracket bracket, Faction faction) const
+{
+    std::shared_lock lock(_bracketCountsMutex);
+
+    // Need 1 tank, 1 healer, 3 DPS minimum for a dungeon
+    uint32 tanks = _bracketCounts.GetReadyByRole(bracket, faction, BotRole::Tank);
+    uint32 healers = _bracketCounts.GetReadyByRole(bracket, faction, BotRole::Healer);
+    uint32 dps = _bracketCounts.GetReadyByRole(bracket, faction, BotRole::DPS);
+
+    return (tanks >= 1 && healers >= 1 && dps >= 3);
+}
+
+bool InstanceBotPool::CanBracketSupportBG(PoolBracket bracket, uint32 allianceNeeded, uint32 hordeNeeded) const
+{
+    std::shared_lock lock(_bracketCountsMutex);
+
+    uint32 allianceReady = _bracketCounts.GetReady(bracket, Faction::Alliance);
+    uint32 hordeReady = _bracketCounts.GetReady(bracket, Faction::Horde);
+
+    return (allianceReady >= allianceNeeded && hordeReady >= hordeNeeded);
+}
+
+std::vector<PoolBracket> InstanceBotPool::GetBracketsWithShortage() const
+{
+    std::vector<PoolBracket> result;
+
+    for (uint8 i = 0; i < NUM_LEVEL_BRACKETS; ++i)
+    {
+        PoolBracket bracket = static_cast<PoolBracket>(i);
+        PoolBracketStats stats = GetBracketStatistics(bracket);
+
+        // Consider shortage if below 80% of configured capacity
+        if (stats.HasShortage())
+        {
+            result.push_back(bracket);
+        }
+    }
+
+    return result;
+}
+
+PoolBracket InstanceBotPool::GetMostDepletedBracket() const
+{
+    PoolBracket mostDepleted = PoolBracket::Bracket_80_Max;
+    float lowestPct = 100.0f;
+
+    for (uint8 i = 0; i < NUM_LEVEL_BRACKETS; ++i)
+    {
+        PoolBracket bracket = static_cast<PoolBracket>(i);
+        PoolBracketStats stats = GetBracketStatistics(bracket);
+        float availPct = stats.GetAvailabilityPct();
+
+        if (availPct < lowestPct)
+        {
+            lowestPct = availPct;
+            mostDepleted = bracket;
+        }
+    }
+
+    return mostDepleted;
+}
+
+// ============================================================================
+// PER-BRACKET BOT SELECTION
+// ============================================================================
+
+ObjectGuid InstanceBotPool::SelectBestBotFromBracket(BotRole role, Faction faction, PoolBracket bracket)
+{
+    std::unique_lock indexLock(_readyIndexMutex);
+
+    auto roleIdx = static_cast<size_t>(role);
+    auto factionIdx = static_cast<size_t>(faction);
+    auto bracketIdx = static_cast<size_t>(bracket);
+
+    if (roleIdx >= static_cast<size_t>(BotRole::Max) ||
+        factionIdx >= static_cast<size_t>(Faction::Max) ||
+        bracketIdx >= NUM_LEVEL_BRACKETS)
+    {
+        return ObjectGuid::Empty;
+    }
+
+    std::vector<ObjectGuid>& bracketBots = _readyIndex[roleIdx][factionIdx][bracketIdx];
+
+    if (bracketBots.empty())
+        return ObjectGuid::Empty;
+
+    // Take the first available bot (could add scoring later)
+    ObjectGuid selected = bracketBots.back();
+    bracketBots.pop_back();
+
+    indexLock.unlock();
+
+    // Update bracket counts
+    {
+        std::unique_lock bracketLock(_bracketCountsMutex);
+        _bracketCounts.DecrementReady(bracket, faction, role);
+    }
+
+    return selected;
+}
+
+std::vector<ObjectGuid> InstanceBotPool::SelectBotsFromBracket(BotRole role, Faction faction,
+                                                                PoolBracket bracket, uint32 count)
+{
+    std::vector<ObjectGuid> result;
+    result.reserve(count);
+
+    std::unique_lock indexLock(_readyIndexMutex);
+
+    auto roleIdx = static_cast<size_t>(role);
+    auto factionIdx = static_cast<size_t>(faction);
+    auto bracketIdx = static_cast<size_t>(bracket);
+
+    if (roleIdx >= static_cast<size_t>(BotRole::Max) ||
+        factionIdx >= static_cast<size_t>(Faction::Max) ||
+        bracketIdx >= NUM_LEVEL_BRACKETS)
+    {
+        return result;
+    }
+
+    std::vector<ObjectGuid>& bracketBots = _readyIndex[roleIdx][factionIdx][bracketIdx];
+
+    uint32 available = static_cast<uint32>(bracketBots.size());
+    uint32 toSelect = std::min(count, available);
+
+    for (uint32 i = 0; i < toSelect; ++i)
+    {
+        result.push_back(bracketBots.back());
+        bracketBots.pop_back();
+    }
+
+    indexLock.unlock();
+
+    // Update bracket counts
+    {
+        std::unique_lock bracketLock(_bracketCountsMutex);
+        for (uint32 i = 0; i < toSelect; ++i)
+        {
+            _bracketCounts.DecrementReady(bracket, faction, role);
+        }
+    }
+
+    return result;
+}
+
+// ============================================================================
+// READY INDEX MANAGEMENT
+// ============================================================================
+
+void InstanceBotPool::AddToReadyIndex(ObjectGuid botGuid, BotRole role, Faction faction, PoolBracket bracket)
+{
+    std::unique_lock lock(_readyIndexMutex);
+
+    auto roleIdx = static_cast<size_t>(role);
+    auto factionIdx = static_cast<size_t>(faction);
+    auto bracketIdx = static_cast<size_t>(bracket);
+
+    if (roleIdx >= static_cast<size_t>(BotRole::Max) ||
+        factionIdx >= static_cast<size_t>(Faction::Max) ||
+        bracketIdx >= NUM_LEVEL_BRACKETS)
+    {
+        return;
+    }
+
+    _readyIndex[roleIdx][factionIdx][bracketIdx].push_back(botGuid);
+}
+
+void InstanceBotPool::RemoveFromReadyIndex(ObjectGuid botGuid, BotRole role, Faction faction, PoolBracket bracket)
+{
+    std::unique_lock lock(_readyIndexMutex);
+
+    auto roleIdx = static_cast<size_t>(role);
+    auto factionIdx = static_cast<size_t>(faction);
+    auto bracketIdx = static_cast<size_t>(bracket);
+
+    if (roleIdx >= static_cast<size_t>(BotRole::Max) ||
+        factionIdx >= static_cast<size_t>(Faction::Max) ||
+        bracketIdx >= NUM_LEVEL_BRACKETS)
+    {
+        return;
+    }
+
+    auto& vec = _readyIndex[roleIdx][factionIdx][bracketIdx];
+    vec.erase(std::remove(vec.begin(), vec.end(), botGuid), vec.end());
+}
+
+void InstanceBotPool::RebuildReadyIndex()
+{
+    TC_LOG_INFO("playerbot.pool", "Rebuilding ready index from {} slots...", _slots.size());
+
+    // Clear existing index
+    {
+        std::unique_lock lock(_readyIndexMutex);
+        for (auto& roleMap : _readyIndex)
+            for (auto& factionMap : roleMap)
+                for (auto& bracketVec : factionMap)
+                    bracketVec.clear();
+    }
+
+    // Clear bracket counts
+    {
+        std::unique_lock lock(_bracketCountsMutex);
+        _bracketCounts.Reset();
+    }
+
+    // Rebuild from slots
+    std::shared_lock slotLock(_slotsMutex);
+    uint32 readyCount = 0;
+
+    for (auto const& [guid, slot] : _slots)
+    {
+        // Update total counts
+        PoolBracket bracket = GetBracketForLevel(slot.level);
+        {
+            std::unique_lock lock(_bracketCountsMutex);
+            _bracketCounts.IncrementTotal(bracket, slot.faction);
+        }
+
+        if (slot.state != PoolSlotState::Ready)
+            continue;
+
+        // Add to ready index
+        AddToReadyIndex(guid, slot.role, slot.faction, bracket);
+
+        // Update ready counts
+        {
+            std::unique_lock lock(_bracketCountsMutex);
+            _bracketCounts.IncrementReady(bracket, slot.faction, slot.role);
+        }
+
+        ++readyCount;
+    }
+
+    TC_LOG_INFO("playerbot.pool", "Ready index rebuilt: {} ready bots indexed", readyCount);
+}
+
+void InstanceBotPool::UpdateBracketCounts()
+{
+    // Recalculate bracket counts from slots
+    std::unique_lock bracketLock(_bracketCountsMutex);
+    _bracketCounts.Reset();
+
+    std::shared_lock slotLock(_slotsMutex);
+    for (auto const& [guid, slot] : _slots)
+    {
+        PoolBracket bracket = GetBracketForLevel(slot.level);
+        _bracketCounts.IncrementTotal(bracket, slot.faction);
+
+        if (slot.state == PoolSlotState::Ready)
+        {
+            _bracketCounts.IncrementReady(bracket, slot.faction, slot.role);
+        }
+    }
 }
 
 // ============================================================================

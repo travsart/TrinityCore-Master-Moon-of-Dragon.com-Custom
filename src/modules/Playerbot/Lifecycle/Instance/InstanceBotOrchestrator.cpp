@@ -16,6 +16,7 @@
 #include "InstanceBotPool.h"
 #include "InstanceBotHooks.h"
 #include "JITBotFactory.h"
+#include "PoolConfiguration.h"
 #include "ContentRequirements.h"
 #include "Config/PlayerbotConfig.h"
 #include "Session/BotWorldSessionMgr.h"
@@ -68,6 +69,34 @@ bool InstanceBotOrchestrator::Initialize()
     _arenasFilledThisHour.store(0);
     _requestsSucceeded.store(0);
     _requestsFailed.store(0);
+
+    // Wire up pool overflow callback to JIT factory
+    // When pool needs more bots than available, JIT factory creates them on-demand
+    sInstanceBotPool->SetOverflowNeededCallback(
+        [](BotRole role, Faction faction, PoolBracket bracket, uint32 count)
+        {
+            TC_LOG_INFO("playerbot.orchestrator", "Pool overflow: {} {} {} bots needed for bracket {}",
+                count, FactionToString(faction), BotRoleToString(role), PoolBracketToString(bracket));
+
+            // Submit bracket-based JIT request
+            sJITBotFactory->SubmitBracketRequest(
+                role, faction, bracket, count,
+                InstanceType::Dungeon,  // Default type, pool manages routing
+                0,  // No specific content ID
+                [bracket, role, faction](std::vector<ObjectGuid> const& bots)
+                {
+                    TC_LOG_INFO("playerbot.orchestrator", "JIT created {} bots for bracket {} - adding to pool",
+                        bots.size(), PoolBracketToString(bracket));
+
+                    // Add newly created bots back to the pool as Ready
+                    for (ObjectGuid guid : bots)
+                    {
+                        sInstanceBotPool->AddToReadyIndex(guid, role, faction, bracket);
+                    }
+                });
+        });
+
+    TC_LOG_INFO("playerbot.orchestrator", "InstanceBotOrchestrator::Initialize - Pool overflow callback wired to JIT factory");
 
     _initialized.store(true);
     TC_LOG_INFO("playerbot.orchestrator", "InstanceBotOrchestrator::Initialize - Initialization complete");

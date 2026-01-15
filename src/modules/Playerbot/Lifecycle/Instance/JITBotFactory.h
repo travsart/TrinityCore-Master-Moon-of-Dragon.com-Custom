@@ -101,13 +101,21 @@ struct TC_GAME_API FactoryRequest
     uint32 requestId = 0;                   ///< Unique request ID
     InstanceType instanceType = InstanceType::Dungeon;  ///< Type of instance
     uint32 contentId = 0;                   ///< Specific content ID (dungeon/raid/bg)
-    uint32 playerLevel = 80;                ///< Player level for bot matching
+    uint32 playerLevel = 80;                ///< Player level for bot matching (legacy)
+
+    // ========================================================================
+    // BRACKET (Per-Bracket Pool System)
+    // ========================================================================
+
+    PoolBracket bracket = PoolBracket::Bracket_80_Max;  ///< Target bracket for bot creation
+    bool useBracketMatching = true;         ///< Use bracket-based matching (default: true)
 
     // ========================================================================
     // FACTION
     // ========================================================================
 
     Faction playerFaction = Faction::Alliance;  ///< Requesting player's faction
+    Faction targetFaction = Faction::Alliance;  ///< Target faction for created bots (for PvP)
 
     // ========================================================================
     // PVE REQUIREMENTS
@@ -168,6 +176,12 @@ struct TC_GAME_API FactoryRequest
     // ========================================================================
 
     uint8 priority = 5;                     ///< 1 = highest, 10 = lowest
+
+    // ========================================================================
+    // SOURCE
+    // ========================================================================
+
+    std::string source;                     ///< Source of request (for logging/debugging)
 
     // ========================================================================
     // METHODS
@@ -306,12 +320,29 @@ struct RecycledBot
     BotRole role = BotRole::DPS;            ///< Bot's role
     Faction faction = Faction::Alliance;    ///< Bot's faction
     uint32 level = 80;                      ///< Bot's level
+    PoolBracket bracket = PoolBracket::Bracket_80_Max;  ///< Bot's bracket
     uint32 gearScore = 0;                   ///< Bot's gear score
     uint8 playerClass = 0;                  ///< Bot's class
     std::chrono::system_clock::time_point recycleTime;  ///< When bot was recycled
 
     /**
-     * @brief Check if recycled bot matches requirements
+     * @brief Check if recycled bot matches requirements (bracket-based)
+     */
+    bool MatchesBracket(BotRole role, Faction faction, PoolBracket bracket, uint32 minGearScore) const
+    {
+        if (this->role != role)
+            return false;
+        if (this->faction != faction)
+            return false;
+        if (this->bracket != bracket)
+            return false;
+        if (minGearScore > 0 && this->gearScore < minGearScore)
+            return false;
+        return true;
+    }
+
+    /**
+     * @brief Check if recycled bot matches requirements (legacy level-based)
      */
     bool Matches(BotRole role, Faction faction, uint32 level, uint32 minGearScore) const
     {
@@ -321,7 +352,7 @@ struct RecycledBot
             return false;
         if (this->level < level - 5 || this->level > level + 5)
             return false;
-        if (this->gearScore < minGearScore)
+        if (minGearScore > 0 && this->gearScore < minGearScore)
             return false;
         return true;
     }
@@ -384,6 +415,26 @@ public:
     uint32 SubmitRequest(FactoryRequest request);
 
     /**
+     * @brief Submit a bracket-based overflow request
+     * @param role Role needed
+     * @param faction Faction needed
+     * @param bracket Level bracket
+     * @param count Number of bots needed
+     * @param instanceType Type of content
+     * @param contentId Content ID
+     * @param onComplete Callback when bots are ready
+     * @return Request ID for tracking
+     */
+    uint32 SubmitBracketRequest(
+        BotRole role,
+        Faction faction,
+        PoolBracket bracket,
+        uint32 count,
+        InstanceType instanceType,
+        uint32 contentId,
+        std::function<void(std::vector<ObjectGuid> const&)> onComplete);
+
+    /**
      * @brief Cancel a pending request
      * @param requestId Request to cancel
      */
@@ -415,7 +466,26 @@ public:
     // ========================================================================
 
     /**
-     * @brief Recycle a bot for potential reuse
+     * @brief Recycle a bot for potential reuse (bracket-based)
+     * @param botGuid Bot to recycle
+     * @param role Bot's role
+     * @param faction Bot's faction
+     * @param bracket Bot's bracket
+     * @param level Bot's level
+     * @param gearScore Bot's gear score
+     * @param playerClass Bot's class
+     */
+    void RecycleBot(
+        ObjectGuid botGuid,
+        BotRole role,
+        Faction faction,
+        PoolBracket bracket,
+        uint32 level,
+        uint32 gearScore,
+        uint8 playerClass);
+
+    /**
+     * @brief Recycle a bot (legacy level-based, auto-determines bracket)
      * @param botGuid Bot to recycle
      * @param role Bot's role
      * @param faction Bot's faction
@@ -423,7 +493,7 @@ public:
      * @param gearScore Bot's gear score
      * @param playerClass Bot's class
      */
-    void RecycleBot(
+    void RecycleBotLegacy(
         ObjectGuid botGuid,
         BotRole role,
         Faction faction,
@@ -438,7 +508,37 @@ public:
     void RecycleBots(std::vector<ObjectGuid> const& bots);
 
     /**
-     * @brief Get a recycled bot if available
+     * @brief Get a recycled bot if available (bracket-based)
+     * @param role Required role
+     * @param faction Required faction
+     * @param bracket Required bracket
+     * @param minGearScore Minimum gear score (0 = any)
+     * @return Bot GUID or empty if none available
+     */
+    ObjectGuid GetRecycledBotForBracket(
+        BotRole role,
+        Faction faction,
+        PoolBracket bracket,
+        uint32 minGearScore = 0);
+
+    /**
+     * @brief Get multiple recycled bots for a bracket
+     * @param role Required role
+     * @param faction Required faction
+     * @param bracket Required bracket
+     * @param count Number of bots needed
+     * @param minGearScore Minimum gear score (0 = any)
+     * @return Vector of bot GUIDs (may be less than count if not enough available)
+     */
+    std::vector<ObjectGuid> GetRecycledBotsForBracket(
+        BotRole role,
+        Faction faction,
+        PoolBracket bracket,
+        uint32 count,
+        uint32 minGearScore = 0);
+
+    /**
+     * @brief Get a recycled bot if available (legacy level-based)
      * @param role Required role
      * @param faction Required faction
      * @param level Required level
@@ -515,6 +615,15 @@ public:
         uint32 botsRecycledThisHour = 0;
         std::chrono::milliseconds avgCreationTime{0};
         std::chrono::milliseconds avgRequestTime{0};
+
+        // Per-bracket statistics
+        struct BracketStats
+        {
+            uint32 created = 0;
+            uint32 recycled = 0;
+            uint32 requestsFulfilled = 0;
+        };
+        std::array<BracketStats, NUM_LEVEL_BRACKETS> bracketStats;
     };
 
     /**
@@ -590,7 +699,17 @@ private:
         RequestProgress& progress);
 
     /**
-     * @brief Try to get recycled bots for role
+     * @brief Try to get recycled bots for role (bracket-based internal)
+     */
+    std::vector<ObjectGuid> GetRecycledBotsForRoleBracket(
+        BotRole role,
+        Faction faction,
+        PoolBracket bracket,
+        uint32 minGearScore,
+        uint32 count);
+
+    /**
+     * @brief Try to get recycled bots for role (legacy level-based internal)
      */
     std::vector<ObjectGuid> GetRecycledBotsForRole(
         BotRole role,
@@ -695,6 +814,15 @@ private:
     uint32 _creationTimeSamples = 0;
     uint32 _requestTimeSamples = 0;
     mutable std::mutex _statsMutex;
+
+    // Per-bracket statistics
+    struct BracketStatData
+    {
+        std::atomic<uint32> created{0};
+        std::atomic<uint32> recycled{0};
+        std::atomic<uint32> requestsFulfilled{0};
+    };
+    std::array<BracketStatData, NUM_LEVEL_BRACKETS> _bracketStats;
 
     std::chrono::system_clock::time_point _hourStart;
 

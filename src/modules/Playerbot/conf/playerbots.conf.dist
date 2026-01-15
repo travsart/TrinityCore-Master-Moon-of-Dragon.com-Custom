@@ -2119,71 +2119,39 @@ Playerbot.Dragonriding.ThrillSpeedThreshold = 100.0
 Playerbot.Dragonriding.GroundSkimHeight = 5.0
 
 ###############################################################################
-# B27. INSTANCE BOT POOL
+# B27. INSTANCE BOT POOL - PER-BRACKET SYSTEM
 #
-#     Status: NEW (2026-01-08)
+#     Status: REFACTORED (2026-01-15)
 #     Files:  Lifecycle/Instance/InstanceBotPool.cpp
+#             Lifecycle/Instance/PoolConfiguration.h
 #             Lifecycle/Instance/JITBotFactory.cpp
 #             Lifecycle/Instance/InstanceBotOrchestrator.cpp
 #
-#     Purpose: Pre-warmed pool of bots ready for instant instance assignment
-#              with elastic overflow for large content (40v40 BGs)
+#     Purpose: Pre-warmed pool of bots organized by level bracket for instant
+#              assignment to BGs, dungeons, and raids. Each bracket maintains
+#              faction-balanced pools matching WoW's PvP bracket system.
+#
+#     Architecture:
+#       - 8 Level Brackets: 10-19, 20-29, 30-39, 40-49, 50-59, 60-69, 70-79, 80+
+#       - 2 Factions: Alliance, Horde
+#       - 3 Roles: Tank, Healer, DPS
+#       - Default: 50 bots per faction per bracket (800 total)
+#       - Role Distribution: 10 Tanks, 15 Healers, 25 DPS per faction per bracket
+#
+#     Capacity Calculation:
+#       - Supports 2 dungeon groups per bracket (10 bots)
+#       - Supports AV 40v40 per faction (40 bots)
+#       - Overhead for parallel content (~10 bots)
+#       - Total per faction per bracket: 50 bots
 #
 ###############################################################################
 
 #
 #  Playerbot.Instance.Pool.Enable
-#    Description: Enable instance bot pool for instant dungeon/raid/pvp filling
+#    Description: Master switch for the instance bot pool system
 #    Default:     1 (enabled)
 #
 Playerbot.Instance.Pool.Enable = 1
-
-#
-#  Pool Size Configuration (per faction)
-#  These determine the warm pool size for instant assignment
-#
-
-#
-#  Playerbot.Instance.Pool.Alliance.Tanks
-#    Description: Number of Alliance tank bots in warm pool
-#    Default:     20
-#
-Playerbot.Instance.Pool.Alliance.Tanks = 20
-
-#
-#  Playerbot.Instance.Pool.Alliance.Healers
-#    Description: Number of Alliance healer bots in warm pool
-#    Default:     30
-#
-Playerbot.Instance.Pool.Alliance.Healers = 30
-
-#
-#  Playerbot.Instance.Pool.Alliance.DPS
-#    Description: Number of Alliance DPS bots in warm pool
-#    Default:     50
-#
-Playerbot.Instance.Pool.Alliance.DPS = 50
-
-#
-#  Playerbot.Instance.Pool.Horde.Tanks
-#    Description: Number of Horde tank bots in warm pool
-#    Default:     20
-#
-Playerbot.Instance.Pool.Horde.Tanks = 20
-
-#
-#  Playerbot.Instance.Pool.Horde.Healers
-#    Description: Number of Horde healer bots in warm pool
-#    Default:     30
-#
-Playerbot.Instance.Pool.Horde.Healers = 30
-
-#
-#  Playerbot.Instance.Pool.Horde.DPS
-#    Description: Number of Horde DPS bots in warm pool
-#    Default:     50
-#
-Playerbot.Instance.Pool.Horde.DPS = 50
 
 #
 #  Playerbot.Instance.Pool.CooldownSeconds
@@ -2219,6 +2187,512 @@ Playerbot.Instance.Pool.PersistToDatabase = 1
 #    Default:     60000 (1 minute)
 #
 Playerbot.Instance.Pool.DbSyncIntervalMs = 60000
+
+#
+#  Playerbot.Instance.Pool.WarmupBatchSize
+#    Description: Number of bots to create per warmup batch during startup
+#    Default:     50
+#    Note:        Lower values reduce startup spike, higher values faster warmup
+#
+Playerbot.Instance.Pool.WarmupBatchSize = 50
+
+#
+#  Playerbot.Instance.Pool.WarmupDelayMs
+#    Description: Delay between warmup batches in milliseconds
+#    Default:     100
+#
+Playerbot.Instance.Pool.WarmupDelayMs = 100
+
+###############################################################################
+# B27.1 PER-BRACKET POOL CONFIGURATION
+#
+#     Each bracket can be individually enabled/disabled and configured.
+#     Brackets match WoW's PvP bracket system for proper level matching.
+#
+#     Default Role Distribution per Faction per Bracket:
+#       - Tanks:   10 (20% - supports 2 dungeon groups)
+#       - Healers: 15 (30% - supports healing in dungeons and BGs)
+#       - DPS:     25 (50% - majority role for all content)
+#       - Total:   50 per faction per bracket
+#
+#     Total Bots: 8 brackets × 2 factions × 50 = 800 bots
+#
+###############################################################################
+
+# ============================================================================
+# BRACKET 10-19 (Starting zones, first dungeons like RFC, Deadmines)
+# ============================================================================
+
+#
+#  Playerbot.Instance.Pool.Bracket.10_19.Enable
+#    Description: Enable pool for level 10-19 bracket
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Bracket.10_19.Enable = 1
+
+#
+#  Playerbot.Instance.Pool.Bracket.10_19.Alliance.Tanks
+#    Description: Number of Alliance tank bots in 10-19 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.10_19.Alliance.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.10_19.Alliance.Healers
+#    Description: Number of Alliance healer bots in 10-19 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.10_19.Alliance.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.10_19.Alliance.DPS
+#    Description: Number of Alliance DPS bots in 10-19 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.10_19.Alliance.DPS = 25
+
+#
+#  Playerbot.Instance.Pool.Bracket.10_19.Horde.Tanks
+#    Description: Number of Horde tank bots in 10-19 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.10_19.Horde.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.10_19.Horde.Healers
+#    Description: Number of Horde healer bots in 10-19 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.10_19.Horde.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.10_19.Horde.DPS
+#    Description: Number of Horde DPS bots in 10-19 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.10_19.Horde.DPS = 25
+
+# ============================================================================
+# BRACKET 20-29 (SFK, BFD, Stockades, WSG prime bracket)
+# ============================================================================
+
+#
+#  Playerbot.Instance.Pool.Bracket.20_29.Enable
+#    Description: Enable pool for level 20-29 bracket
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Bracket.20_29.Enable = 1
+
+#
+#  Playerbot.Instance.Pool.Bracket.20_29.Alliance.Tanks
+#    Description: Number of Alliance tank bots in 20-29 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.20_29.Alliance.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.20_29.Alliance.Healers
+#    Description: Number of Alliance healer bots in 20-29 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.20_29.Alliance.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.20_29.Alliance.DPS
+#    Description: Number of Alliance DPS bots in 20-29 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.20_29.Alliance.DPS = 25
+
+#
+#  Playerbot.Instance.Pool.Bracket.20_29.Horde.Tanks
+#    Description: Number of Horde tank bots in 20-29 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.20_29.Horde.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.20_29.Horde.Healers
+#    Description: Number of Horde healer bots in 20-29 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.20_29.Horde.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.20_29.Horde.DPS
+#    Description: Number of Horde DPS bots in 20-29 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.20_29.Horde.DPS = 25
+
+# ============================================================================
+# BRACKET 30-39 (SM, RFK, RFD, Gnomeregan, AB unlocks at 30)
+# ============================================================================
+
+#
+#  Playerbot.Instance.Pool.Bracket.30_39.Enable
+#    Description: Enable pool for level 30-39 bracket
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Bracket.30_39.Enable = 1
+
+#
+#  Playerbot.Instance.Pool.Bracket.30_39.Alliance.Tanks
+#    Description: Number of Alliance tank bots in 30-39 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.30_39.Alliance.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.30_39.Alliance.Healers
+#    Description: Number of Alliance healer bots in 30-39 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.30_39.Alliance.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.30_39.Alliance.DPS
+#    Description: Number of Alliance DPS bots in 30-39 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.30_39.Alliance.DPS = 25
+
+#
+#  Playerbot.Instance.Pool.Bracket.30_39.Horde.Tanks
+#    Description: Number of Horde tank bots in 30-39 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.30_39.Horde.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.30_39.Horde.Healers
+#    Description: Number of Horde healer bots in 30-39 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.30_39.Horde.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.30_39.Horde.DPS
+#    Description: Number of Horde DPS bots in 30-39 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.30_39.Horde.DPS = 25
+
+# ============================================================================
+# BRACKET 40-49 (Uldaman, ZF, Maraudon, AV unlocks at 45)
+# ============================================================================
+
+#
+#  Playerbot.Instance.Pool.Bracket.40_49.Enable
+#    Description: Enable pool for level 40-49 bracket
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Bracket.40_49.Enable = 1
+
+#
+#  Playerbot.Instance.Pool.Bracket.40_49.Alliance.Tanks
+#    Description: Number of Alliance tank bots in 40-49 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.40_49.Alliance.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.40_49.Alliance.Healers
+#    Description: Number of Alliance healer bots in 40-49 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.40_49.Alliance.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.40_49.Alliance.DPS
+#    Description: Number of Alliance DPS bots in 40-49 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.40_49.Alliance.DPS = 25
+
+#
+#  Playerbot.Instance.Pool.Bracket.40_49.Horde.Tanks
+#    Description: Number of Horde tank bots in 40-49 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.40_49.Horde.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.40_49.Horde.Healers
+#    Description: Number of Horde healer bots in 40-49 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.40_49.Horde.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.40_49.Horde.DPS
+#    Description: Number of Horde DPS bots in 40-49 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.40_49.Horde.DPS = 25
+
+# ============================================================================
+# BRACKET 50-59 (ST, BRD, LBRS, UBRS - Classic endgame prep)
+# ============================================================================
+
+#
+#  Playerbot.Instance.Pool.Bracket.50_59.Enable
+#    Description: Enable pool for level 50-59 bracket
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Bracket.50_59.Enable = 1
+
+#
+#  Playerbot.Instance.Pool.Bracket.50_59.Alliance.Tanks
+#    Description: Number of Alliance tank bots in 50-59 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.50_59.Alliance.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.50_59.Alliance.Healers
+#    Description: Number of Alliance healer bots in 50-59 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.50_59.Alliance.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.50_59.Alliance.DPS
+#    Description: Number of Alliance DPS bots in 50-59 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.50_59.Alliance.DPS = 25
+
+#
+#  Playerbot.Instance.Pool.Bracket.50_59.Horde.Tanks
+#    Description: Number of Horde tank bots in 50-59 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.50_59.Horde.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.50_59.Horde.Healers
+#    Description: Number of Horde healer bots in 50-59 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.50_59.Horde.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.50_59.Horde.DPS
+#    Description: Number of Horde DPS bots in 50-59 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.50_59.Horde.DPS = 25
+
+# ============================================================================
+# BRACKET 60-69 (Classic max level, BC leveling - Hellfire, etc.)
+# ============================================================================
+
+#
+#  Playerbot.Instance.Pool.Bracket.60_69.Enable
+#    Description: Enable pool for level 60-69 bracket
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Bracket.60_69.Enable = 1
+
+#
+#  Playerbot.Instance.Pool.Bracket.60_69.Alliance.Tanks
+#    Description: Number of Alliance tank bots in 60-69 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.60_69.Alliance.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.60_69.Alliance.Healers
+#    Description: Number of Alliance healer bots in 60-69 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.60_69.Alliance.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.60_69.Alliance.DPS
+#    Description: Number of Alliance DPS bots in 60-69 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.60_69.Alliance.DPS = 25
+
+#
+#  Playerbot.Instance.Pool.Bracket.60_69.Horde.Tanks
+#    Description: Number of Horde tank bots in 60-69 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.60_69.Horde.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.60_69.Horde.Healers
+#    Description: Number of Horde healer bots in 60-69 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.60_69.Horde.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.60_69.Horde.DPS
+#    Description: Number of Horde DPS bots in 60-69 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.60_69.Horde.DPS = 25
+
+# ============================================================================
+# BRACKET 70-79 (BC max level, WotLK leveling - Northrend)
+# ============================================================================
+
+#
+#  Playerbot.Instance.Pool.Bracket.70_79.Enable
+#    Description: Enable pool for level 70-79 bracket
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Bracket.70_79.Enable = 1
+
+#
+#  Playerbot.Instance.Pool.Bracket.70_79.Alliance.Tanks
+#    Description: Number of Alliance tank bots in 70-79 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.70_79.Alliance.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.70_79.Alliance.Healers
+#    Description: Number of Alliance healer bots in 70-79 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.70_79.Alliance.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.70_79.Alliance.DPS
+#    Description: Number of Alliance DPS bots in 70-79 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.70_79.Alliance.DPS = 25
+
+#
+#  Playerbot.Instance.Pool.Bracket.70_79.Horde.Tanks
+#    Description: Number of Horde tank bots in 70-79 bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.70_79.Horde.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.70_79.Horde.Healers
+#    Description: Number of Horde healer bots in 70-79 bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.70_79.Horde.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.70_79.Horde.DPS
+#    Description: Number of Horde DPS bots in 70-79 bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.70_79.Horde.DPS = 25
+
+# ============================================================================
+# BRACKET 80+ (Max level - WotLK endgame, all expansions max level content)
+# ============================================================================
+
+#
+#  Playerbot.Instance.Pool.Bracket.80Plus.Enable
+#    Description: Enable pool for level 80+ bracket (max level content)
+#    Default:     1 (enabled)
+#
+Playerbot.Instance.Pool.Bracket.80Plus.Enable = 1
+
+#
+#  Playerbot.Instance.Pool.Bracket.80Plus.Alliance.Tanks
+#    Description: Number of Alliance tank bots in 80+ bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.80Plus.Alliance.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.80Plus.Alliance.Healers
+#    Description: Number of Alliance healer bots in 80+ bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.80Plus.Alliance.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.80Plus.Alliance.DPS
+#    Description: Number of Alliance DPS bots in 80+ bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.80Plus.Alliance.DPS = 25
+
+#
+#  Playerbot.Instance.Pool.Bracket.80Plus.Horde.Tanks
+#    Description: Number of Horde tank bots in 80+ bracket
+#    Default:     10
+#
+Playerbot.Instance.Pool.Bracket.80Plus.Horde.Tanks = 10
+
+#
+#  Playerbot.Instance.Pool.Bracket.80Plus.Horde.Healers
+#    Description: Number of Horde healer bots in 80+ bracket
+#    Default:     15
+#
+Playerbot.Instance.Pool.Bracket.80Plus.Horde.Healers = 15
+
+#
+#  Playerbot.Instance.Pool.Bracket.80Plus.Horde.DPS
+#    Description: Number of Horde DPS bots in 80+ bracket
+#    Default:     25
+#
+Playerbot.Instance.Pool.Bracket.80Plus.Horde.DPS = 25
+
+###############################################################################
+# B27.2 LEGACY POOL CONFIGURATION (DEPRECATED)
+#
+#     These settings are DEPRECATED and will be removed in a future version.
+#     They are kept for backward compatibility only.
+#     Use the per-bracket configuration above instead.
+#
+###############################################################################
+
+#
+#  Playerbot.Instance.Pool.Alliance.Tanks (DEPRECATED)
+#    Description: Legacy total Alliance tanks (use per-bracket instead)
+#    Default:     80 (sum of all brackets)
+#
+Playerbot.Instance.Pool.Alliance.Tanks = 80
+
+#
+#  Playerbot.Instance.Pool.Alliance.Healers (DEPRECATED)
+#    Description: Legacy total Alliance healers (use per-bracket instead)
+#    Default:     120 (sum of all brackets)
+#
+Playerbot.Instance.Pool.Alliance.Healers = 120
+
+#
+#  Playerbot.Instance.Pool.Alliance.DPS (DEPRECATED)
+#    Description: Legacy total Alliance DPS (use per-bracket instead)
+#    Default:     200 (sum of all brackets)
+#
+Playerbot.Instance.Pool.Alliance.DPS = 200
+
+#
+#  Playerbot.Instance.Pool.Horde.Tanks (DEPRECATED)
+#    Description: Legacy total Horde tanks (use per-bracket instead)
+#    Default:     80 (sum of all brackets)
+#
+Playerbot.Instance.Pool.Horde.Tanks = 80
+
+#
+#  Playerbot.Instance.Pool.Horde.Healers (DEPRECATED)
+#    Description: Legacy total Horde healers (use per-bracket instead)
+#    Default:     120 (sum of all brackets)
+#
+Playerbot.Instance.Pool.Horde.Healers = 120
+
+#
+#  Playerbot.Instance.Pool.Horde.DPS (DEPRECATED)
+#    Description: Legacy total Horde DPS (use per-bracket instead)
+#    Default:     200 (sum of all brackets)
+#
+Playerbot.Instance.Pool.Horde.DPS = 200
 
 ###############################################################################
 # B28. JIT BOT FACTORY (Elastic Overflow)

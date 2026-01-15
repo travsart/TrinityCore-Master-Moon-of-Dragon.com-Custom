@@ -9,45 +9,53 @@
 
 /**
  * @file InstanceBotPool.h
- * @brief Pre-warmed bot pool for instant instance assignment
+ * @brief Pre-warmed per-bracket bot pool for instant instance assignment
  *
- * The InstanceBotPool maintains a pool of pre-logged-in bots ready for
- * instant assignment to dungeons, raids, battlegrounds, and arenas.
+ * The InstanceBotPool maintains per-bracket pools of pre-created bots ready for
+ * instant assignment to dungeons, raids, battlegrounds, and arenas at any level.
  *
- * Architecture:
+ * NEW PER-BRACKET ARCHITECTURE (v2.0):
  * ┌─────────────────────────────────────────────────────────────────────────┐
- * │                        INSTANCE BOT POOL                                │
+ * │                    PER-BRACKET INSTANCE BOT POOL                        │
  * ├─────────────────────────────────────────────────────────────────────────┤
  * │                                                                         │
- * │   WARM POOL (~200 bots)                                                 │
- * │   ┌─────────────────────────────────────────────────────────────────┐   │
- * │   │  Alliance (100)          │  Horde (100)                        │   │
- * │   │  ├── Tanks: 20           │  ├── Tanks: 20                      │   │
- * │   │  ├── Healers: 30         │  ├── Healers: 30                    │   │
- * │   │  └── DPS: 50             │  └── DPS: 50                        │   │
- * │   └─────────────────────────────────────────────────────────────────┘   │
+ * │   8 LEVEL BRACKETS × 2 FACTIONS × 50 BOTS = 800 TOTAL                  │
+ * │                                                                         │
+ * │   Bracket 10-19:  A[50] + H[50] = 100 bots (10T, 15H, 25D per faction) │
+ * │   Bracket 20-29:  A[50] + H[50] = 100 bots                             │
+ * │   Bracket 30-39:  A[50] + H[50] = 100 bots                             │
+ * │   Bracket 40-49:  A[50] + H[50] = 100 bots                             │
+ * │   Bracket 50-59:  A[50] + H[50] = 100 bots                             │
+ * │   Bracket 60-69:  A[50] + H[50] = 100 bots                             │
+ * │   Bracket 70-79:  A[50] + H[50] = 100 bots                             │
+ * │   Bracket 80+:    A[50] + H[50] = 100 bots                             │
+ * │                                                                         │
+ * │   SUPPORTS PER BRACKET:                                                 │
+ * │   - 2 full dungeon groups (10 players)                                  │
+ * │   - 1 Alterac Valley (40 per faction)                                   │
+ * │   - Parallel dungeon + BG content                                       │
+ * │                                                                         │
+ * │   READY INDEX (O(1) lookup):                                            │
+ * │   _readyIndex[Role][Faction][Bracket] → vector<ObjectGuid>             │
  * │                                                                         │
  * │   SLOT STATES:                                                          │
  * │   [Ready] ──assign──> [Assigned] ──release──> [Cooldown] ──expire──>   │
  * │      ↑                                                              │   │
  * │      └──────────────────────────────────────────────────────────────┘   │
  * │                                                                         │
- * │   RESERVATION SYSTEM:                                                   │
- * │   - Pre-reserve bots for upcoming large content                         │
- * │   - Prevents pool exhaustion during BG/raid formation                   │
- * │   - Auto-cancel on timeout                                              │
- * │                                                                         │
  * └─────────────────────────────────────────────────────────────────────────┘
  *
  * Thread Safety:
  * - All public methods are thread-safe
- * - Uses parallel_flat_hash_map with internal sharding
+ * - Uses unordered_map with shared_mutex for thread safety
+ * - ReadyIndex provides O(1) bracket lookup
  * - Statistics are atomic or protected by shared mutex
  *
  * Performance:
  * - O(1) bot lookup by GUID
- * - O(n) bot selection by criteria (with early termination)
- * - Assignment target: <100ms for 5-man group
+ * - O(1) bracket lookup via ReadyIndex (role → faction → bracket)
+ * - O(k) bot selection where k = bots in bracket (typically <50)
+ * - Assignment target: <50ms for 5-man group
  */
 
 #pragma once
@@ -194,6 +202,62 @@ public:
      */
     uint32 GetAvailableCountForLevel(BotRole role, Faction faction,
                                       uint32 level, uint32 range = 5) const;
+
+    // ========================================================================
+    // PER-BRACKET POOL QUERIES
+    // ========================================================================
+
+    /**
+     * @brief Get count of available bots in a specific bracket
+     * @param bracket Level bracket
+     * @param faction Faction
+     * @param role Bot role (BotRole::Max for all roles)
+     * @return Number of ready bots in bracket
+     */
+    uint32 GetAvailableCountForBracket(PoolBracket bracket, Faction faction,
+                                        BotRole role = BotRole::Max) const;
+
+    /**
+     * @brief Get statistics for a specific bracket
+     * @param bracket Level bracket
+     * @return PoolBracketStats for the bracket
+     */
+    PoolBracketStats GetBracketStatistics(PoolBracket bracket) const;
+
+    /**
+     * @brief Get statistics for all brackets
+     * @return AllPoolBracketStats containing all bracket info
+     */
+    AllPoolBracketStats GetAllBracketStatistics() const;
+
+    /**
+     * @brief Check if bracket has sufficient bots for a dungeon
+     * @param bracket Level bracket
+     * @param faction Faction
+     * @return true if bracket can support 1 tank, 1 healer, 3 DPS
+     */
+    bool CanBracketSupportDungeon(PoolBracket bracket, Faction faction) const;
+
+    /**
+     * @brief Check if bracket has sufficient bots for a battleground
+     * @param bracket Level bracket
+     * @param allianceNeeded Alliance bots needed
+     * @param hordeNeeded Horde bots needed
+     * @return true if bracket can support the BG
+     */
+    bool CanBracketSupportBG(PoolBracket bracket, uint32 allianceNeeded, uint32 hordeNeeded) const;
+
+    /**
+     * @brief Get brackets with shortages (below 80% capacity)
+     * @return Vector of brackets that need replenishment
+     */
+    std::vector<PoolBracket> GetBracketsWithShortage() const;
+
+    /**
+     * @brief Get the most depleted bracket
+     * @return Bracket with lowest availability percentage
+     */
+    PoolBracket GetMostDepletedBracket() const;
 
     /**
      * @brief Get total pool size
@@ -481,15 +545,20 @@ public:
     void SetAssignmentFailedCallback(AssignmentFailedCallback callback);
 
     /// Callback for when pool needs overflow (JIT)
-    using OverflowNeededCallback = std::function<void(BotRole, Faction, uint32, uint32)>;
+    /// Parameters: role, faction, bracket, count
+    using OverflowNeededCallback = std::function<void(BotRole, Faction, PoolBracket, uint32)>;
 
     /**
      * @brief Set callback for overflow requirements
-     * @param callback Callback function (role, faction, level, count)
+     * @param callback Callback function (role, faction, bracket, count)
      */
     void SetOverflowNeededCallback(OverflowNeededCallback callback);
 
 private:
+    // Friend classes that need internal access
+    friend class InstanceBotOrchestrator;
+    friend class JITBotFactory;
+
     InstanceBotPool() = default;
     ~InstanceBotPool() = default;
     InstanceBotPool(InstanceBotPool const&) = delete;
@@ -500,14 +569,24 @@ private:
     // ========================================================================
 
     /**
-     * @brief Create a new pool bot
+     * @brief Create a new pool bot for a specific bracket
      * @param role Bot role
-     * @param poolType Pool type
-     * @param level Target level
+     * @param faction Faction (Alliance/Horde)
+     * @param bracket Target level bracket
      * @param deferWarmup If true, skip immediate login attempt (ProcessWarmingRetries will handle it gradually)
      * @return Bot GUID (empty if failed)
      */
-    ObjectGuid CreatePoolBot(BotRole role, PoolType poolType, uint32 level, bool deferWarmup = false);
+    ObjectGuid CreatePoolBot(BotRole role, Faction faction, PoolBracket bracket, bool deferWarmup = false);
+
+    /**
+     * @brief Create a new pool bot (legacy signature for compatibility)
+     * @param role Bot role
+     * @param poolType Pool type
+     * @param level Target level
+     * @param deferWarmup If true, skip immediate login attempt
+     * @return Bot GUID (empty if failed)
+     */
+    ObjectGuid CreatePoolBotLegacy(BotRole role, PoolType poolType, uint32 level, bool deferWarmup = false);
 
     /**
      * @brief Warm up a single bot (login)
@@ -538,6 +617,15 @@ private:
     ObjectGuid SelectBestBot(BotRole role, Faction faction, uint32 level, uint32 minGearScore);
 
     /**
+     * @brief Select best bot from a specific bracket (O(1) lookup)
+     * @param role Required role
+     * @param faction Required faction
+     * @param bracket Target level bracket
+     * @return Best matching bot GUID (empty if none available)
+     */
+    ObjectGuid SelectBestBotFromBracket(BotRole role, Faction faction, PoolBracket bracket);
+
+    /**
      * @brief Select multiple bots matching criteria
      * @param role Required role
      * @param faction Required faction
@@ -550,6 +638,17 @@ private:
                                         uint32 level, uint32 count, uint32 minGearScore);
 
     /**
+     * @brief Select multiple bots from a specific bracket (O(k) where k = bots in bracket)
+     * @param role Required role
+     * @param faction Required faction
+     * @param bracket Target level bracket
+     * @param count Number of bots needed
+     * @return Vector of selected bot GUIDs
+     */
+    std::vector<ObjectGuid> SelectBotsFromBracket(BotRole role, Faction faction,
+                                                   PoolBracket bracket, uint32 count);
+
+    /**
      * @brief Assign bot to instance
      * @param botGuid Bot GUID
      * @param instanceId Instance ID
@@ -559,6 +658,38 @@ private:
      * @return true if assignment succeeded
      */
     bool AssignBot(ObjectGuid botGuid, uint32 instanceId, uint32 contentId, InstanceType type, uint32 targetLevel);
+
+    // ========================================================================
+    // INTERNAL METHODS - ReadyIndex Management
+    // ========================================================================
+
+    /**
+     * @brief Add bot to ready index for O(1) lookup
+     * @param botGuid Bot GUID
+     * @param role Bot role
+     * @param faction Bot faction
+     * @param bracket Level bracket
+     */
+    void AddToReadyIndex(ObjectGuid botGuid, BotRole role, Faction faction, PoolBracket bracket);
+
+    /**
+     * @brief Remove bot from ready index
+     * @param botGuid Bot GUID
+     * @param role Bot role
+     * @param faction Bot faction
+     * @param bracket Level bracket
+     */
+    void RemoveFromReadyIndex(ObjectGuid botGuid, BotRole role, Faction faction, PoolBracket bracket);
+
+    /**
+     * @brief Rebuild entire ready index from _slots (after load or corruption)
+     */
+    void RebuildReadyIndex();
+
+    /**
+     * @brief Update bracket counts from ready index
+     */
+    void UpdateBracketCounts();
 
     // ========================================================================
     // INTERNAL METHODS - Pool Maintenance
@@ -618,13 +749,129 @@ private:
     std::unordered_map<ObjectGuid, InstanceBotSlot> _slots;
     mutable std::shared_mutex _slotsMutex;
 
-    /// Quick lookup indices
+    /// Quick lookup indices for O(1) bracket lookup
     /// role -> faction -> level bracket -> list of ready bot GUIDs
-    using ReadyIndex = std::unordered_map<BotRole,
-                       std::unordered_map<Faction,
-                       std::unordered_map<uint32, std::vector<ObjectGuid>>>>;
+    ///
+    /// Example access: _readyIndex[BotRole::Tank][Faction::Alliance][PoolBracket::Bracket_20_29]
+    /// Returns: vector of ready tank GUIDs for Alliance level 20-29 bracket
+    using BracketGuidMap = std::array<std::vector<ObjectGuid>, NUM_LEVEL_BRACKETS>;
+    using FactionBracketMap = std::array<BracketGuidMap, static_cast<size_t>(Faction::Max)>;
+    using ReadyIndex = std::array<FactionBracketMap, static_cast<size_t>(BotRole::Max)>;
     ReadyIndex _readyIndex;
     mutable std::shared_mutex _readyIndexMutex;
+
+    // ========================================================================
+    // DATA MEMBERS - Per-Bracket Tracking
+    // ========================================================================
+
+    /// Per-bracket bot counts (for quick availability checks without iteration)
+    struct BracketCounts
+    {
+        // Per-faction ready counts
+        std::array<uint32, NUM_LEVEL_BRACKETS> allianceReady{};
+        std::array<uint32, NUM_LEVEL_BRACKETS> hordeReady{};
+        std::array<uint32, NUM_LEVEL_BRACKETS> allianceTotal{};
+        std::array<uint32, NUM_LEVEL_BRACKETS> hordeTotal{};
+
+        // Per-role ready counts [bracket][role]
+        static constexpr size_t NUM_ROLES = static_cast<size_t>(BotRole::Max);
+        std::array<std::array<uint32, NUM_ROLES>, NUM_LEVEL_BRACKETS> allianceRoleReady{};
+        std::array<std::array<uint32, NUM_ROLES>, NUM_LEVEL_BRACKETS> hordeRoleReady{};
+
+        void Reset()
+        {
+            allianceReady.fill(0);
+            hordeReady.fill(0);
+            allianceTotal.fill(0);
+            hordeTotal.fill(0);
+            for (auto& bracket : allianceRoleReady)
+                bracket.fill(0);
+            for (auto& bracket : hordeRoleReady)
+                bracket.fill(0);
+        }
+
+        uint32 GetReady(PoolBracket bracket, Faction faction) const
+        {
+            auto idx = static_cast<size_t>(bracket);
+            return (faction == Faction::Alliance) ? allianceReady[idx] : hordeReady[idx];
+        }
+
+        uint32 GetTotal(PoolBracket bracket, Faction faction) const
+        {
+            auto idx = static_cast<size_t>(bracket);
+            return (faction == Faction::Alliance) ? allianceTotal[idx] : hordeTotal[idx];
+        }
+
+        uint32 GetReadyByRole(PoolBracket bracket, Faction faction, BotRole role) const
+        {
+            auto bracketIdx = static_cast<size_t>(bracket);
+            auto roleIdx = static_cast<size_t>(role);
+            if (roleIdx >= NUM_ROLES) return 0;
+            return (faction == Faction::Alliance)
+                ? allianceRoleReady[bracketIdx][roleIdx]
+                : hordeRoleReady[bracketIdx][roleIdx];
+        }
+
+        void IncrementReady(PoolBracket bracket, Faction faction, BotRole role)
+        {
+            auto bracketIdx = static_cast<size_t>(bracket);
+            auto roleIdx = static_cast<size_t>(role);
+            if (faction == Faction::Alliance)
+            {
+                ++allianceReady[bracketIdx];
+                if (roleIdx < NUM_ROLES)
+                    ++allianceRoleReady[bracketIdx][roleIdx];
+            }
+            else
+            {
+                ++hordeReady[bracketIdx];
+                if (roleIdx < NUM_ROLES)
+                    ++hordeRoleReady[bracketIdx][roleIdx];
+            }
+        }
+
+        void DecrementReady(PoolBracket bracket, Faction faction, BotRole role)
+        {
+            auto bracketIdx = static_cast<size_t>(bracket);
+            auto roleIdx = static_cast<size_t>(role);
+            if (faction == Faction::Alliance)
+            {
+                if (allianceReady[bracketIdx] > 0) --allianceReady[bracketIdx];
+                if (roleIdx < NUM_ROLES && allianceRoleReady[bracketIdx][roleIdx] > 0)
+                    --allianceRoleReady[bracketIdx][roleIdx];
+            }
+            else
+            {
+                if (hordeReady[bracketIdx] > 0) --hordeReady[bracketIdx];
+                if (roleIdx < NUM_ROLES && hordeRoleReady[bracketIdx][roleIdx] > 0)
+                    --hordeRoleReady[bracketIdx][roleIdx];
+            }
+        }
+
+        void IncrementTotal(PoolBracket bracket, Faction faction)
+        {
+            auto idx = static_cast<size_t>(bracket);
+            if (faction == Faction::Alliance)
+                ++allianceTotal[idx];
+            else
+                ++hordeTotal[idx];
+        }
+
+        void DecrementTotal(PoolBracket bracket, Faction faction)
+        {
+            auto idx = static_cast<size_t>(bracket);
+            if (faction == Faction::Alliance)
+            {
+                if (allianceTotal[idx] > 0) --allianceTotal[idx];
+            }
+            else
+            {
+                if (hordeTotal[idx] > 0) --hordeTotal[idx];
+            }
+        }
+    };
+    BracketCounts _bracketCounts;
+    mutable std::shared_mutex _bracketCountsMutex;
 
     // ========================================================================
     // DATA MEMBERS - Reservations

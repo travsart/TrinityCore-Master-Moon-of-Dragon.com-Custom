@@ -263,6 +263,87 @@ uint32 JITBotFactory::SubmitRequest(FactoryRequest request)
     return request.requestId;
 }
 
+uint32 JITBotFactory::SubmitBracketRequest(
+    BotRole role,
+    Faction faction,
+    PoolBracket bracket,
+    uint32 count,
+    InstanceType instanceType,
+    uint32 contentId,
+    std::function<void(std::vector<ObjectGuid> const&)> onComplete)
+{
+    if (count == 0)
+    {
+        TC_LOG_WARN("playerbot.jit", "JITBotFactory::SubmitBracketRequest - Zero bots requested");
+        return 0;
+    }
+
+    FactoryRequest request;
+    request.instanceType = instanceType;
+    request.contentId = contentId;
+    request.bracket = bracket;
+    request.useBracketMatching = true;
+    request.targetFaction = faction;
+    request.playerFaction = faction;
+    request.source = fmt::format("BracketOverflow:{}", PoolBracketToString(bracket));
+
+    // Get level for the bracket (use midpoint)
+    request.playerLevel = GetBracketMidpointLevel(bracket);
+
+    // Set role-based requirements
+    switch (role)
+    {
+        case BotRole::Tank:
+            if (instanceType == InstanceType::Battleground || instanceType == InstanceType::Arena)
+            {
+                // PvP: set faction-based
+                if (faction == Faction::Alliance)
+                    request.allianceNeeded = count;
+                else
+                    request.hordeNeeded = count;
+            }
+            else
+            {
+                request.tanksNeeded = count;
+            }
+            break;
+        case BotRole::Healer:
+            if (instanceType == InstanceType::Battleground || instanceType == InstanceType::Arena)
+            {
+                if (faction == Faction::Alliance)
+                    request.allianceNeeded = count;
+                else
+                    request.hordeNeeded = count;
+            }
+            else
+            {
+                request.healersNeeded = count;
+            }
+            break;
+        case BotRole::DPS:
+        default:
+            if (instanceType == InstanceType::Battleground || instanceType == InstanceType::Arena)
+            {
+                if (faction == Faction::Alliance)
+                    request.allianceNeeded = count;
+                else
+                    request.hordeNeeded = count;
+            }
+            else
+            {
+                request.dpsNeeded = count;
+            }
+            break;
+    }
+
+    request.onComplete = std::move(onComplete);
+
+    TC_LOG_INFO("playerbot.jit", "JITBotFactory::SubmitBracketRequest - {} {} {} bots for bracket {}",
+        count, FactionToString(faction), BotRoleToString(role), PoolBracketToString(bracket));
+
+    return SubmitRequest(std::move(request));
+}
+
 void JITBotFactory::CancelRequest(uint32 requestId)
 {
     TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::CancelRequest - Cancelling request {}", requestId);
@@ -333,6 +414,7 @@ void JITBotFactory::RecycleBot(
     ObjectGuid botGuid,
     BotRole role,
     Faction faction,
+    PoolBracket bracket,
     uint32 level,
     uint32 gearScore,
     uint8 playerClass)
@@ -365,6 +447,7 @@ void JITBotFactory::RecycleBot(
     bot.guid = botGuid;
     bot.role = role;
     bot.faction = faction;
+    bot.bracket = bracket;
     bot.level = level;
     bot.gearScore = gearScore;
     bot.playerClass = playerClass;
@@ -373,8 +456,26 @@ void JITBotFactory::RecycleBot(
     _recycledBots.push_back(std::move(bot));
     _botsRecycledThisHour.fetch_add(1);
 
-    TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::RecycleBot - Bot {} recycled (total: {})",
-        botGuid.ToString(), _recycledBots.size());
+    // Update per-bracket statistics
+    uint8 bracketIdx = static_cast<uint8>(bracket);
+    if (bracketIdx < NUM_LEVEL_BRACKETS)
+        _bracketStats[bracketIdx].recycled.fetch_add(1);
+
+    TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::RecycleBot - Bot {} recycled (bracket={}, total: {})",
+        botGuid.ToString(), PoolBracketToString(bracket), _recycledBots.size());
+}
+
+void JITBotFactory::RecycleBotLegacy(
+    ObjectGuid botGuid,
+    BotRole role,
+    Faction faction,
+    uint32 level,
+    uint32 gearScore,
+    uint8 playerClass)
+{
+    // Auto-determine bracket from level
+    PoolBracket bracket = GetBracketForLevel(level);
+    RecycleBot(botGuid, role, faction, bracket, level, gearScore, playerClass);
 }
 
 void JITBotFactory::RecycleBots(std::vector<ObjectGuid> const& bots)
@@ -383,8 +484,67 @@ void JITBotFactory::RecycleBots(std::vector<ObjectGuid> const& bots)
     // In a full implementation, we'd look up bot details from the pool
     for (auto const& guid : bots)
     {
-        RecycleBot(guid, BotRole::DPS, Faction::Alliance, 80, 400, 1);
+        RecycleBotLegacy(guid, BotRole::DPS, Faction::Alliance, 80, 400, 1);
     }
+}
+
+ObjectGuid JITBotFactory::GetRecycledBotForBracket(
+    BotRole role,
+    Faction faction,
+    PoolBracket bracket,
+    uint32 minGearScore)
+{
+    std::lock_guard<std::mutex> lock(_recycleMutex);
+
+    for (auto it = _recycledBots.begin(); it != _recycledBots.end(); ++it)
+    {
+        if (it->MatchesBracket(role, faction, bracket, minGearScore))
+        {
+            ObjectGuid guid = it->guid;
+            _recycledBots.erase(it);
+
+            TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::GetRecycledBotForBracket - Found recycled bot {} for bracket {}",
+                guid.ToString(), PoolBracketToString(bracket));
+            return guid;
+        }
+    }
+
+    return ObjectGuid::Empty;
+}
+
+std::vector<ObjectGuid> JITBotFactory::GetRecycledBotsForBracket(
+    BotRole role,
+    Faction faction,
+    PoolBracket bracket,
+    uint32 count,
+    uint32 minGearScore)
+{
+    std::vector<ObjectGuid> result;
+    result.reserve(count);
+
+    std::lock_guard<std::mutex> lock(_recycleMutex);
+
+    auto it = _recycledBots.begin();
+    while (it != _recycledBots.end() && result.size() < count)
+    {
+        if (it->MatchesBracket(role, faction, bracket, minGearScore))
+        {
+            result.push_back(it->guid);
+            it = _recycledBots.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+    if (!result.empty())
+    {
+        TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::GetRecycledBotsForBracket - Found {} recycled bots for bracket {}",
+            result.size(), PoolBracketToString(bracket));
+    }
+
+    return result;
 }
 
 ObjectGuid JITBotFactory::GetRecycledBot(
@@ -393,22 +553,9 @@ ObjectGuid JITBotFactory::GetRecycledBot(
     uint32 level,
     uint32 minGearScore)
 {
-    std::lock_guard<std::mutex> lock(_recycleMutex);
-
-    for (auto it = _recycledBots.begin(); it != _recycledBots.end(); ++it)
-    {
-        if (it->Matches(role, faction, level, minGearScore))
-        {
-            ObjectGuid guid = it->guid;
-            _recycledBots.erase(it);
-
-            TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::GetRecycledBot - Found recycled bot {}",
-                guid.ToString());
-            return guid;
-        }
-    }
-
-    return ObjectGuid::Empty;
+    // Legacy level-based lookup - convert to bracket-based
+    PoolBracket bracket = GetBracketForLevel(level);
+    return GetRecycledBotForBracket(role, faction, bracket, minGearScore);
 }
 
 uint32 JITBotFactory::GetRecycledBotCount() const
@@ -533,6 +680,14 @@ JITBotFactory::FactoryStatistics JITBotFactory::GetStatistics() const
     stats.botsRecycledThisHour = _botsRecycledThisHour.load();
     stats.avgCreationTime = _avgCreationTime;
     stats.avgRequestTime = _avgRequestTime;
+
+    // Per-bracket statistics
+    for (uint8 i = 0; i < NUM_LEVEL_BRACKETS; ++i)
+    {
+        stats.bracketStats[i].created = _bracketStats[i].created.load();
+        stats.bracketStats[i].recycled = _bracketStats[i].recycled.load();
+        stats.bracketStats[i].requestsFulfilled = _bracketStats[i].requestsFulfilled.load();
+    }
 
     return stats;
 }
@@ -1173,10 +1328,10 @@ std::vector<ObjectGuid> JITBotFactory::CreatePvPBots(
     return result;
 }
 
-std::vector<ObjectGuid> JITBotFactory::GetRecycledBotsForRole(
+std::vector<ObjectGuid> JITBotFactory::GetRecycledBotsForRoleBracket(
     BotRole role,
     Faction faction,
-    uint32 level,
+    PoolBracket bracket,
     uint32 minGearScore,
     uint32 count)
 {
@@ -1188,7 +1343,7 @@ std::vector<ObjectGuid> JITBotFactory::GetRecycledBotsForRole(
     auto it = _recycledBots.begin();
     while (it != _recycledBots.end() && result.size() < count)
     {
-        if (it->Matches(role, faction, level, minGearScore))
+        if (it->MatchesBracket(role, faction, bracket, minGearScore))
         {
             result.push_back(it->guid);
             it = _recycledBots.erase(it);
@@ -1201,11 +1356,23 @@ std::vector<ObjectGuid> JITBotFactory::GetRecycledBotsForRole(
 
     if (!result.empty())
     {
-        TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::GetRecycledBotsForRole - Found {} recycled bots for {} {}",
-            result.size(), BotRoleToString(role), FactionToString(faction));
+        TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::GetRecycledBotsForRoleBracket - Found {} recycled bots for {} {} bracket {}",
+            result.size(), BotRoleToString(role), FactionToString(faction), PoolBracketToString(bracket));
     }
 
     return result;
+}
+
+std::vector<ObjectGuid> JITBotFactory::GetRecycledBotsForRole(
+    BotRole role,
+    Faction faction,
+    uint32 level,
+    uint32 minGearScore,
+    uint32 count)
+{
+    // Legacy level-based - convert to bracket-based
+    PoolBracket bracket = GetBracketForLevel(level);
+    return GetRecycledBotsForRoleBracket(role, faction, bracket, minGearScore, count);
 }
 
 uint8 JITBotFactory::GetPriorityForType(InstanceType type) const
