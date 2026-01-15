@@ -175,11 +175,40 @@ void InstanceBotPool::Update(uint32 diff)
 
     // Deferred warmup - runs once after world is fully loaded
     // This ensures async database threads are operational before we create bots
+    //
+    // IMPORTANT: We use INCREMENTAL warmup to prevent freeze detector!
+    // Creating 800 bots synchronously would block the world thread for 60+ seconds.
+    // Instead, we create WARMUP_BOTS_PER_TICK bots per Update() tick.
     if (_warmupPending.load())
     {
         _warmupPending.store(false);
-        TC_LOG_INFO("playerbot.pool", "Starting deferred pool warmup (world is now running)...");
-        WarmPool();
+
+        // Initialize configuration and calculate total target
+        _config.poolSize.InitializeDefaultBracketPools();
+        _warmupTotalTarget = _config.poolSize.GetTotalBotsAcrossAllBrackets();
+
+        // Reset incremental warmup state
+        _warmupBracketIndex = 0;
+        _warmupFactionPhase = 0;
+        _warmupRoleIndex = 0;
+        _warmupRoleCount = 0;
+        _warmupTotalCreated = 0;
+
+        // Start incremental warmup
+        _warmingInProgress.store(true);
+        _incrementalWarmupActive.store(true);
+
+        TC_LOG_INFO("playerbot.pool", "Deferred pool warmup starting (incremental mode: {} bots/tick to prevent freeze detector)",
+            WARMUP_BOTS_PER_TICK);
+        TC_LOG_INFO("playerbot.pool", "Target: {} total bots (8 brackets × 2 factions × 50 bots)",
+            _warmupTotalTarget);
+    }
+
+    // Process incremental warmup - creates WARMUP_BOTS_PER_TICK bots per tick
+    // This spreads the 800 bot creation over ~160 update ticks instead of blocking
+    if (_incrementalWarmupActive.load())
+    {
+        ProcessIncrementalWarmup();
     }
 
     // Main update at configured interval
@@ -381,6 +410,136 @@ void InstanceBotPool::WarmPool()
     TC_LOG_INFO("playerbot.pool", "Per-bracket distribution: 8 brackets × 2 factions × 50 bots = 800 total");
 
     _statsDirty.store(true);
+}
+
+void InstanceBotPool::ProcessIncrementalWarmup()
+{
+    // ========================================================================
+    // INCREMENTAL WARMUP (2026-01-15): Batched bot creation to prevent freeze
+    //
+    // Problem: Creating 800 bots synchronously blocks the world thread for 60+ seconds,
+    // triggering the TrinityCore freeze detector which crashes the server.
+    //
+    // Solution: Create WARMUP_BOTS_PER_TICK bots (default 5) per Update() tick.
+    // At ~100ms per update cycle and 5 bots/tick, we create 50 bots/second.
+    // Total warmup time: 800 bots / 50 bots/sec = ~16 seconds spread across ticks.
+    //
+    // State machine:
+    // - _warmupBracketIndex: Current bracket (0-7)
+    // - _warmupFactionPhase: 0=Alliance, 1=Horde
+    // - _warmupRoleIndex: 0=Tank, 1=Healer, 2=DPS
+    // - _warmupRoleCount: Bots created for current role
+    // ========================================================================
+
+    if (!_incrementalWarmupActive.load())
+        return;
+
+    // Track how many bots we create this tick
+    uint32 botsThisTick = 0;
+
+    // Log start of incremental warmup (first tick)
+    if (_warmupTotalCreated == 0)
+    {
+        TC_LOG_INFO("playerbot.pool", "Starting incremental pool warmup ({} bots/tick to prevent freeze detector)...",
+            WARMUP_BOTS_PER_TICK);
+    }
+
+    while (botsThisTick < WARMUP_BOTS_PER_TICK)
+    {
+        // Check if warmup is complete
+        if (_warmupBracketIndex >= NUM_LEVEL_BRACKETS)
+        {
+            // Warmup complete - rebuild indices and finish
+            RebuildReadyIndex();
+            _warmingInProgress.store(false);
+            _incrementalWarmupActive.store(false);
+
+            TC_LOG_INFO("playerbot.pool", "Incremental pool warmup complete: {} of {} bots created",
+                _warmupTotalCreated, _warmupTotalTarget);
+            TC_LOG_INFO("playerbot.pool", "Pool bots are READY but NOT logged in - they will login via BotSpawner when needed");
+            _statsDirty.store(true);
+            return;
+        }
+
+        PoolBracket bracket = static_cast<PoolBracket>(_warmupBracketIndex);
+        BracketPoolConfig const& bracketConfig = _config.poolSize.bracketPools[_warmupBracketIndex];
+
+        // Skip disabled brackets
+        if (!bracketConfig.enabled)
+        {
+            _warmupBracketIndex++;
+            _warmupFactionPhase = 0;
+            _warmupRoleIndex = 0;
+            _warmupRoleCount = 0;
+            continue;
+        }
+
+        // Determine current faction and target count for current role
+        Faction faction = (_warmupFactionPhase == 0) ? Faction::Alliance : Faction::Horde;
+        BracketRoleDistribution const& factionConfig = (_warmupFactionPhase == 0)
+            ? bracketConfig.alliance
+            : bracketConfig.horde;
+
+        uint32 targetForRole = 0;
+        BotRole role = BotRole::Tank;
+
+        switch (_warmupRoleIndex)
+        {
+            case 0:  // Tank
+                targetForRole = factionConfig.tanks;
+                role = BotRole::Tank;
+                break;
+            case 1:  // Healer
+                targetForRole = factionConfig.healers;
+                role = BotRole::Healer;
+                break;
+            case 2:  // DPS
+                targetForRole = factionConfig.dps;
+                role = BotRole::DPS;
+                break;
+            default:
+                // Move to next faction or bracket
+                if (_warmupFactionPhase == 0)
+                {
+                    _warmupFactionPhase = 1;  // Switch to Horde
+                    _warmupRoleIndex = 0;
+                    _warmupRoleCount = 0;
+                }
+                else
+                {
+                    _warmupBracketIndex++;    // Next bracket
+                    _warmupFactionPhase = 0;
+                    _warmupRoleIndex = 0;
+                    _warmupRoleCount = 0;
+                }
+                continue;
+        }
+
+        // Create bot for current role if more needed
+        if (_warmupRoleCount < targetForRole)
+        {
+            if (CreatePoolBot(role, faction, bracket) != ObjectGuid::Empty)
+            {
+                ++_warmupTotalCreated;
+            }
+            ++_warmupRoleCount;
+            ++botsThisTick;
+        }
+        else
+        {
+            // Move to next role
+            _warmupRoleIndex++;
+            _warmupRoleCount = 0;
+        }
+    }
+
+    // Log progress every 100 bots
+    if (_warmupTotalCreated > 0 && (_warmupTotalCreated % 100 == 0))
+    {
+        float pct = static_cast<float>(_warmupTotalCreated) / static_cast<float>(_warmupTotalTarget) * 100.0f;
+        TC_LOG_INFO("playerbot.pool", "Incremental warmup progress: {}/{} bots ({:.1f}%)",
+            _warmupTotalCreated, _warmupTotalTarget, pct);
+    }
 }
 
 void InstanceBotPool::ReplenishPool()

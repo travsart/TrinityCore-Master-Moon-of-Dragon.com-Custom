@@ -696,6 +696,14 @@ private:
     // ========================================================================
 
     /**
+     * @brief Process incremental warmup (batched bot creation to prevent freeze detector)
+     *
+     * Creates WARMUP_BOTS_PER_TICK bots per Update() tick instead of all 800 at once.
+     * This prevents blocking the world thread for 60+ seconds which triggers the freeze detector.
+     */
+    void ProcessIncrementalWarmup();
+
+    /**
      * @brief Retry warmup for bots stuck in Warming state (async DB commit delay)
      */
     void ProcessWarmingRetries();
@@ -913,6 +921,21 @@ private:
     std::atomic<bool> _warmingInProgress{false};
     std::atomic<bool> _shuttingDown{false};
     std::atomic<bool> _warmupPending{false};  // Deferred warmup until world is running
+
+    // ========================================================================
+    // DATA MEMBERS - Incremental Warmup State
+    // ========================================================================
+    // Batched warmup to prevent freeze detector (creates ~5-10 bots per tick)
+    // instead of all 800 at once which would block the world thread for 60+ seconds
+
+    std::atomic<bool> _incrementalWarmupActive{false};  // Currently in incremental warmup phase
+    uint8 _warmupBracketIndex{0};                        // Current bracket (0-7)
+    uint8 _warmupFactionPhase{0};                        // 0=Alliance, 1=Horde
+    uint8 _warmupRoleIndex{0};                           // 0=Tank, 1=Healer, 2=DPS
+    uint32 _warmupRoleCount{0};                          // Bots created for current role
+    uint32 _warmupTotalCreated{0};                       // Total bots created so far
+    uint32 _warmupTotalTarget{0};                        // Total bots to create
+    static constexpr uint32 WARMUP_BOTS_PER_TICK = 5;    // Bots to create per Update() tick
 
     // ========================================================================
     // DATA MEMBERS - Callbacks
