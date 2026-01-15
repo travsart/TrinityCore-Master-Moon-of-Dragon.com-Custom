@@ -555,9 +555,10 @@ private:
      * @param instanceId Instance ID
      * @param contentId Content ID
      * @param type Instance type
+     * @param targetLevel Target level for the bot (player's level to match)
      * @return true if assignment succeeded
      */
-    bool AssignBot(ObjectGuid botGuid, uint32 instanceId, uint32 contentId, InstanceType type);
+    bool AssignBot(ObjectGuid botGuid, uint32 instanceId, uint32 contentId, InstanceType type, uint32 targetLevel);
 
     // ========================================================================
     // INTERNAL METHODS - Pool Maintenance

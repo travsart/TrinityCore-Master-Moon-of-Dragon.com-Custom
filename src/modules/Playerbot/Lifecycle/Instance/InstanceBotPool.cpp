@@ -11,6 +11,7 @@
 #include "InstanceBotOrchestrator.h"
 #include "BotCloneEngine.h"
 #include "BotTemplateRepository.h"
+#include "BotPostLoginConfigurator.h"
 #include "BotCharacterCreator.h"
 #include "BotSpawner.h"
 #include "Account/BotAccountMgr.h"
@@ -579,7 +580,7 @@ std::vector<ObjectGuid> InstanceBotPool::AssignForDungeon(
     // Assign all selected bots
     for (ObjectGuid guid : result)
     {
-        AssignBot(guid, 0, dungeonId, InstanceType::Dungeon);
+        AssignBot(guid, 0, dungeonId, InstanceType::Dungeon, playerLevel);
     }
 
     // Record timing
@@ -636,7 +637,7 @@ std::vector<ObjectGuid> InstanceBotPool::AssignForRaid(
     // Assign all selected bots
     for (ObjectGuid guid : result)
     {
-        AssignBot(guid, 0, raidId, InstanceType::Raid);
+        AssignBot(guid, 0, raidId, InstanceType::Raid, playerLevel);
     }
 
     // Record timing
@@ -752,9 +753,9 @@ BGAssignment InstanceBotPool::AssignForBattleground(
 
     // Assign all selected bots
     for (ObjectGuid guid : result.allianceBots)
-        AssignBot(guid, 0, bgTypeId, InstanceType::Battleground);
+        AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel);
     for (ObjectGuid guid : result.hordeBots)
-        AssignBot(guid, 0, bgTypeId, InstanceType::Battleground);
+        AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel);
 
     // Record timing
     auto endTime = std::chrono::steady_clock::now();
@@ -806,9 +807,9 @@ ArenaAssignment InstanceBotPool::AssignForArena(
 
     // Assign all selected bots
     for (ObjectGuid guid : result.teammates)
-        AssignBot(guid, 0, arenaType, InstanceType::Arena);
+        AssignBot(guid, 0, arenaType, InstanceType::Arena, bracketLevel);
     for (ObjectGuid guid : result.opponents)
-        AssignBot(guid, 0, arenaType, InstanceType::Arena);
+        AssignBot(guid, 0, arenaType, InstanceType::Arena, bracketLevel);
 
     // Record timing
     auto endTime = std::chrono::steady_clock::now();
@@ -1295,10 +1296,16 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     // REFACTORED (2026-01-12): Login bot via BotSpawner when ACTUALLY NEEDED
     // Pool bots are NOT pre-logged-in. This method is called when assigning
     // a bot to an instance/BG - we have 1-2 minutes of queue time to login.
+    //
+    // FIX (2026-01-15): Register pending configuration BEFORE login so that
+    // BotPostLoginConfigurator applies the correct level. Previously, pool bots
+    // stayed at level 1 because no pending config was registered.
     // ========================================================================
 
-    // Get account ID from slot
+    // Get slot info (accountId and target level)
     uint32 accountId = 0;
+    uint32 targetLevel = 1;
+    uint32 specId = 0;
     {
         std::shared_lock lock(_slotsMutex);
         auto it = _slots.find(botGuid);
@@ -1309,6 +1316,8 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
             return false;
         }
         accountId = it->second.accountId;
+        targetLevel = it->second.level;  // Level from pool slot metadata
+        specId = it->second.specId;
     }
 
     if (accountId == 0)
@@ -1317,6 +1326,22 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
             botGuid.ToString());
         return false;
     }
+
+    // ========================================================================
+    // CRITICAL: Register pending configuration BEFORE bot logs in
+    // This ensures BotPostLoginConfigurator::ApplyPendingConfiguration()
+    // will apply the correct level when the bot enters the world.
+    // ========================================================================
+    BotPendingConfiguration pendingConfig;
+    pendingConfig.botGuid = botGuid;
+    pendingConfig.targetLevel = targetLevel;
+    pendingConfig.specId = specId;
+    pendingConfig.createdAt = std::chrono::steady_clock::now();
+
+    sBotPostLoginConfigurator->RegisterPendingConfig(std::move(pendingConfig));
+
+    TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Registered pending config for bot {} targetLevel={}",
+        botGuid.ToString(), targetLevel);
 
     // Use BotSpawner to spawn the bot (same flow as regular bots)
     // This uses the proven workflow: SpawnBot -> async character selection -> login
@@ -1491,12 +1516,15 @@ std::vector<ObjectGuid> InstanceBotPool::SelectBots(BotRole role, Faction factio
 }
 
 bool InstanceBotPool::AssignBot(ObjectGuid botGuid, uint32 instanceId,
-                                 uint32 contentId, InstanceType type)
+                                 uint32 contentId, InstanceType type, uint32 targetLevel)
 {
     // ========================================================================
     // REFACTORED (2026-01-12): Pool bots login on-demand via BotSpawner
     // When assigning a bot, we need to actually log them in since they're
     // stored as database records only (not pre-logged-in)
+    //
+    // FIX (2026-01-15): Store targetLevel in slot so WarmUpBot can register
+    // the correct level in pending configuration (not the bracket level).
     // ========================================================================
 
     {
@@ -1510,6 +1538,12 @@ bool InstanceBotPool::AssignBot(ObjectGuid botGuid, uint32 instanceId,
         it->second.currentInstanceId = instanceId;
         it->second.currentContentId = contentId;
         it->second.currentInstanceType = type;
+
+        // FIX: Update slot.level to target level so WarmUpBot uses correct level
+        // for pending configuration. Pool bots are created at bracket midpoint
+        // (5, 35, 65, 75) but need to be leveled to match the player.
+        if (targetLevel > 0)
+            it->second.level = targetLevel;
     }
 
     // Initiate login via BotSpawner (this uses the proven regular bot workflow)
