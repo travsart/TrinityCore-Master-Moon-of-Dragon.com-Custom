@@ -547,6 +547,22 @@ bool RestStrategy::EatFood(BotAI* ai, Item* food)
 
     Player* bot = ai->GetBot();
 
+    // ========================================================================
+    // CRITICAL FIX (2026-01-15): Prevent duplicate aura assertion crash
+    // Check for existing food aura INSIDE this function (not just in caller)
+    // to prevent race conditions where another thread/process applies food
+    // between the caller's check and this function's execution.
+    //
+    // Crash: SpellAuras.cpp:174 ASSERTION FAILED: !(_effectMask & (1<<effIndex))
+    // Cause: Food spell applied while already having food aura
+    // ========================================================================
+    if (bot->HasAuraType(SPELL_AURA_OBS_MOD_HEALTH) || bot->HasAuraType(SPELL_AURA_MOD_REGEN))
+    {
+        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy::EatFood: Bot {} already has food aura, skipping",
+                     bot->GetName());
+        return false;
+    }
+
     // Use the food item
     SpellCastTargets targets;
     targets.SetUnitTarget(bot);
@@ -566,6 +582,21 @@ bool RestStrategy::DrinkWater(BotAI* ai, Item* drink)
         return false;
 
     Player* bot = ai->GetBot();
+
+    // ========================================================================
+    // CRITICAL FIX (2026-01-15): Prevent duplicate aura assertion crash
+    // Check for existing drink aura INSIDE this function to prevent race
+    // conditions. Drink auras use SPELL_AURA_OBS_MOD_POWER (mana regen)
+    // or SPELL_AURA_MOD_POWER_REGEN.
+    //
+    // Crash: SpellAuras.cpp:174 ASSERTION FAILED: !(_effectMask & (1<<effIndex))
+    // ========================================================================
+    if (bot->HasAuraType(SPELL_AURA_OBS_MOD_POWER) || bot->HasAuraType(SPELL_AURA_MOD_POWER_REGEN))
+    {
+        TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy::DrinkWater: Bot {} already has drink aura, skipping",
+                     bot->GetName());
+        return false;
+    }
 
     // Use the drink item
     SpellCastTargets targets;
