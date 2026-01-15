@@ -53,7 +53,11 @@ void PlayerbotDatabaseManager::Close()
 
 QueryResult PlayerbotDatabaseManager::Query(std::string const& sql)
 {
-    TC_LOG_INFO("server.loading", "PlayerbotDatabaseManager::Query called with SQL: {}", sql);
+    // Thread safety: Lock mutex to prevent concurrent access from multiple threads
+    // This is required because CreateBotAccountsBatch runs in a separate thread
+    std::lock_guard<std::mutex> lock(_connectionMutex);
+
+    TC_LOG_DEBUG("server.loading", "PlayerbotDatabaseManager::Query called with SQL: {}", sql);
 
     // CRITICAL: Check for NULL connection before dereferencing
     // This can happen if database initialization failed (wrong config, server unreachable, etc.)
@@ -70,16 +74,16 @@ QueryResult PlayerbotDatabaseManager::Query(std::string const& sql)
         return nullptr;
     }
 
-    TC_LOG_INFO("server.loading", "PlayerbotDatabaseManager: Forwarding query to connection");
+    TC_LOG_DEBUG("server.loading", "PlayerbotDatabaseManager: Forwarding query to connection");
     QueryResult result = _connection->Query(sql);
 
     if (!result)
     {
-        TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager: Query returned null result");
+        TC_LOG_DEBUG("server.loading", "PlayerbotDatabaseManager: Query returned null result");
     }
     else
     {
-        TC_LOG_INFO("server.loading", "PlayerbotDatabaseManager: Query returned valid result");
+        TC_LOG_DEBUG("server.loading", "PlayerbotDatabaseManager: Query returned valid result");
     }
 
     return result;
@@ -87,6 +91,10 @@ QueryResult PlayerbotDatabaseManager::Query(std::string const& sql)
 
 bool PlayerbotDatabaseManager::Execute(std::string const& sql)
 {
+    // Thread safety: Lock mutex to prevent concurrent access from multiple threads
+    // This is required because CreateBotAccountsBatch runs in a separate thread
+    std::lock_guard<std::mutex> lock(_connectionMutex);
+
     // CRITICAL: Check for NULL connection before dereferencing
     if (!_connection)
     {
@@ -106,6 +114,7 @@ bool PlayerbotDatabaseManager::Execute(std::string const& sql)
 
 bool PlayerbotDatabaseManager::IsConnected() const
 {
+    std::lock_guard<std::mutex> lock(_connectionMutex);
     return _connection && _connection->IsConnected();
 }
 

@@ -14,6 +14,7 @@
 #include "Define.h"
 #include "Core/DI/Interfaces/IPlayerbotDatabaseManager.h"
 #include <memory>
+#include <mutex>
 
 /**
  * @class PlayerbotDatabaseManager
@@ -71,6 +72,10 @@ private:
     ~PlayerbotDatabaseManager() = default;
 
     std::unique_ptr<PlayerbotDatabaseConnection> _connection;
+
+    /// Mutex to protect database operations from concurrent access
+    /// Required because CreateBotAccountsBatch runs in a separate thread
+    mutable std::mutex _connectionMutex;
 };
 
 #define sPlayerbotDatabase PlayerbotDatabaseManager::instance()
