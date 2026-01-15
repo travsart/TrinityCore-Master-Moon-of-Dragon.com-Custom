@@ -224,7 +224,11 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastObjectiveUpdate > 2000) // Every 2 seconds
     {
-        (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->UpdateBotTracking(bot, diff) : (void)0);
+        // CRITICAL FIX: Check BOTH GameSystems AND ObjectiveTracker for null
+        // ObjectiveTracker is NOT created in instance-only mode (JIT bots for BG/LFG)
+        auto* gameSystems = ai->GetGameSystems();
+        if (gameSystems && gameSystems->GetObjectiveTracker())
+            gameSystems->GetObjectiveTracker()->UpdateBotTracking(bot, diff);
         _lastObjectiveUpdate = currentTime;
     }
 
@@ -315,7 +319,15 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     // CRITICAL FIX: Use ai->GetGameSystems() directly instead of GetGameSystems(bot)
     // The helper function GetGameSystems(bot) goes through player->GetAI() which may return
     // nullptr if the AI is being accessed from a different context (e.g., worker thread)
-    ObjectivePriority priority = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
+    // CRITICAL FIX #2: Check BOTH GameSystems AND ObjectiveTracker for null
+    // ObjectiveTracker is NOT created in instance-only mode (JIT bots for BG/LFG)
+    ObjectivePriority priority(0, 0);
+    {
+        auto* gameSystems = ai->GetGameSystems();
+        auto* tracker = gameSystems ? gameSystems->GetObjectiveTracker() : nullptr;
+        if (tracker)
+            priority = tracker->GetHighestPriorityObjective(bot);
+    }
 
     TC_LOG_ERROR("module.playerbot.quest", "🎯 ProcessQuestObjectives: Bot {} - priority.questId={}, priority.objectiveIndex={}",
                  bot->GetName(), priority.questId, priority.objectiveIndex);
@@ -384,7 +396,13 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             }
         }
         // Try again after initialization
-        priority = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
+        // CRITICAL FIX: Check BOTH GameSystems AND ObjectiveTracker for null
+        {
+            auto* gameSystems = ai->GetGameSystems();
+            auto* tracker = gameSystems ? gameSystems->GetObjectiveTracker() : nullptr;
+            if (tracker)
+                priority = tracker->GetHighestPriorityObjective(bot);
+        }
         TC_LOG_ERROR("module.playerbot.quest", "🔄 ProcessQuestObjectives: Bot {} after initialization - priority.questId={}, priority.objectiveIndex={}",
                      bot->GetName(), priority.questId, priority.objectiveIndex);
 
@@ -505,7 +523,14 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     }
 
     // Get objective state
-    ObjectiveState objective = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetObjectiveState(bot, priority.questId, priority.objectiveIndex) : ObjectiveState());
+    // CRITICAL FIX: Check BOTH GameSystems AND ObjectiveTracker for null
+    ObjectiveState objective;
+    {
+        auto* gameSystems = ai->GetGameSystems();
+        auto* tracker = gameSystems ? gameSystems->GetObjectiveTracker() : nullptr;
+        if (tracker)
+            objective = tracker->GetObjectiveState(bot, priority.questId, priority.objectiveIndex);
+    }
 
     // Cache current objective info
     _currentQuestId = objective.questId;
@@ -2346,8 +2371,19 @@ ObjectivePriority QuestStrategy::GetCurrentObjective(BotAI* ai) const
     if (!ai || !ai->GetBot())
         return ObjectivePriority(0, 0);
 
+    // CRITICAL FIX: Check BOTH GameSystems AND ObjectiveTracker for null
+    // ObjectiveTracker is NOT created in instance-only mode (JIT bots for BG/LFG)
+    // This prevents ACCESS_VIOLATION crash when ObjectiveTracker is null or destroyed
+    auto* gameSystems = ai->GetGameSystems();
+    if (!gameSystems)
+        return ObjectivePriority(0, 0);
+
+    auto* tracker = gameSystems->GetObjectiveTracker();
+    if (!tracker)
+        return ObjectivePriority(0, 0);
+
     Player* bot = ai->GetBot();
-    return (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
+    return tracker->GetHighestPriorityObjective(bot);
 }
 
 bool QuestStrategy::HasActiveObjectives(BotAI* ai) const
@@ -2546,7 +2582,14 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
                                       static_cast<QuestObjectiveType>(questObjective.Type),
                                       questObjective.ObjectID, questObjective.Amount);
 
-            Position newPos = (ai->GetGameSystems() ? ai->GetGameSystems()->GetObjectiveTracker()->FindObjectiveTargetLocation(bot, objData) : Position());
+            // CRITICAL FIX: Check BOTH GameSystems AND ObjectiveTracker for null
+            Position newPos;
+            {
+                auto* gameSystems = ai->GetGameSystems();
+                auto* tracker = gameSystems ? gameSystems->GetObjectiveTracker() : nullptr;
+                if (tracker)
+                    newPos = tracker->FindObjectiveTargetLocation(bot, objData);
+            }
             // Check if we got a valid position
             if (newPos.GetExactDist2d(0.0f, 0.0f) > 0.1f)
             {
