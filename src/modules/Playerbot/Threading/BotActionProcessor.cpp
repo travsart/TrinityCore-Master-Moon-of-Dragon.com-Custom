@@ -379,8 +379,11 @@ BotActionResult BotActionProcessor::ExecuteUseItem(Player* bot, BotAction const&
 
     // Use the item (casts the item's spell)
     // CastItemUseSpell signature: (Item* item, SpellCastTargets const& targets, ObjectGuid castCount, int32* misc)
+    // CRITICAL: Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
+    // Passing nullptr causes ACCESS_VIOLATION crash at Player.cpp:8853
     SpellCastTargets targets;
-    bot->CastItemUseSpell(item, targets, ObjectGuid::Empty, nullptr);
+    int32 misc[2] = { 0, 0 };
+    bot->CastItemUseSpell(item, targets, ObjectGuid::Empty, misc);
 
     TC_LOG_TRACE("playerbot.action",
         "Bot {} used item {} ({})",

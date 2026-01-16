@@ -1369,15 +1369,16 @@ bool WarlockAI::UseHealthstone()
     uint32 healthstones[] = { 5512, 5511, 5509, 5510, 9421, 19013 };
     for (uint32 itemId : healthstones)
     {
-        if (Item* item = bot->GetItemByEntry(itemId))        {
+        if (Item* item = bot->GetItemByEntry(itemId))
+        {
             // Use modern TrinityCore CastItemUseSpell API
-
             SpellCastTargets targets;
-
             targets.SetUnitTarget(bot); // Use healthstone on self
 
-            bot->CastItemUseSpell(item, targets, ObjectGuid::Empty, nullptr);
-
+            // CRITICAL: Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
+            // Passing nullptr causes ACCESS_VIOLATION crash at Player.cpp:8853
+            int32 misc[2] = { 0, 0 };
+            bot->CastItemUseSpell(item, targets, ObjectGuid::Empty, misc);
 
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} used healthstone {}", bot->GetName(), itemId);
 
