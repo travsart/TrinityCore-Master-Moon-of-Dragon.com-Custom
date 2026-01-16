@@ -49,6 +49,7 @@
 #include "BotCharacterDistribution.h"
 #include "BotNameMgr.h"
 #include "BotCharacterCreator.h"
+#include "CharacterCache.h"
 #include "Config/PlayerbotLog.h"
 #include "World.h"
 #include "MapManager.h"
@@ -1954,6 +1955,21 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             return ObjectGuid::Empty;
         }
 
+        // CRITICAL FIX: Add to CharacterCache so name queries work properly
+        // Without this, the group UI shows "??" for bot names because
+        // PlayerGuidLookupData::Initialize() returns false when the guid
+        // is not in CharacterCache (even if the player is online).
+        sCharacterCache->AddCharacterCacheEntry(
+            characterGuid,
+            accountId,
+            name,
+            gender,
+            race,
+            classId,
+            startLevel,
+            false // Not deleted
+        );
+
         TC_LOG_INFO("module.playerbot.spawner", "Successfully created bot character: {} ({}) - Race: {}, Class: {}, Level: {} for account {}",
             name, characterGuid.ToString(), uint32(race), uint32(classId), uint32(startLevel), accountId);
 
@@ -2158,6 +2174,21 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
                 name, characterGuid.ToString());
             return ObjectGuid::Empty;
         }
+
+        // CRITICAL FIX: Add to CharacterCache so name queries work properly
+        // Without this, the group UI shows "??" for bot names because
+        // PlayerGuidLookupData::Initialize() returns false when the guid
+        // is not in CharacterCache (even if the player is online).
+        sCharacterCache->AddCharacterCacheEntry(
+            characterGuid,
+            accountId,
+            name,
+            gender,
+            race,
+            classId,
+            startLevel,
+            false // Not deleted
+        );
 
         TC_LOG_INFO("module.playerbot.spawner", "Successfully created template-based bot character: {} ({}) - Race: {}, Class: {} for account {}",
             name, characterGuid.ToString(), uint32(race), uint32(classId), accountId);

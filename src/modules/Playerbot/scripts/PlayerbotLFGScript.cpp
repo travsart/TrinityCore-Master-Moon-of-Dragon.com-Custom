@@ -447,7 +447,15 @@ private:
                 continue;
 
             Player* player = session->GetPlayer();
-            if (!player || !player->IsInWorld())
+            if (!player)
+                continue;
+
+            // FIX: Allow players who are being teleported (not in world but connected)
+            // During LFG dungeon teleport, IsInWorld() returns false but we still need to
+            // detect group formation to transfer leadership to the human player.
+            // The player is valid, just being teleported between maps.
+            bool isBeingTeleported = player->IsBeingTeleportedFar() || player->IsBeingTeleportedNear();
+            if (!player->IsInWorld() && !isBeingTeleported)
                 continue;
 
             // Only process human players
@@ -459,6 +467,16 @@ private:
             // Get player's current LFG state
             lfg::LfgState state = sLFGMgr->GetState(playerGuid);
 
+            // ENHANCED DIAGNOSTICS: Log state for all players in DUNGEON or teleporting state
+            if (state == lfg::LFG_STATE_DUNGEON || isBeingTeleported)
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "PollGroupFormation: Checking human {} - State: {} - IsInWorld: {} - Teleporting: {} (Far:{} Near:{})",
+                    player->GetName(), static_cast<uint32>(state),
+                    player->IsInWorld(), isBeingTeleported,
+                    player->IsBeingTeleportedFar(), player->IsBeingTeleportedNear());
+            }
+
             // We're looking for players who just entered LFG_STATE_DUNGEON
             if (state != lfg::LFG_STATE_DUNGEON)
                 continue;
@@ -469,19 +487,31 @@ private:
             {
                 // No previous state tracked, but player is in dungeon - still process
                 // This handles edge cases where state tracking was missed
+                TC_LOG_INFO("module.playerbot.lfg",
+                    "PollGroupFormation: Human {} in DUNGEON state, no previous state tracked - processing as new transition",
+                    player->GetName());
             }
             else if (lastStateIt->second == lfg::LFG_STATE_DUNGEON)
             {
                 // Already in dungeon state, not a new transition
                 continue;
             }
+            else
+            {
+                TC_LOG_INFO("module.playerbot.lfg",
+                    "PollGroupFormation: Human {} transitioned from state {} to DUNGEON",
+                    player->GetName(), static_cast<uint32>(lastStateIt->second));
+            }
+
+            // Update tracked state BEFORE potential continues
+            _lastQueueState[playerGuid] = state;
 
             // Get the group GUID from LFG system
             ObjectGuid groupGuid = sLFGMgr->GetGroup(playerGuid);
             if (groupGuid.IsEmpty())
             {
-                TC_LOG_DEBUG("module.playerbot.lfg",
-                    "PollGroupFormation: Human {} in LFG_STATE_DUNGEON but no group GUID",
+                TC_LOG_WARN("module.playerbot.lfg",
+                    "PollGroupFormation: Human {} in LFG_STATE_DUNGEON but no group GUID - LFGMgr::GetGroup returned empty",
                     player->GetName());
                 continue;
             }
@@ -499,18 +529,18 @@ private:
             Group* group = player->GetGroup();
             if (!group)
             {
-                TC_LOG_DEBUG("module.playerbot.lfg",
-                    "PollGroupFormation: Human {} has LFG group GUID but no Group object",
-                    player->GetName());
+                TC_LOG_WARN("module.playerbot.lfg",
+                    "PollGroupFormation: Human {} has LFG group GUID {} but player->GetGroup() returned null",
+                    player->GetName(), groupGuid.ToString());
                 continue;
             }
 
             // Verify this is an LFG group
             if (!group->isLFGGroup())
             {
-                TC_LOG_DEBUG("module.playerbot.lfg",
-                    "PollGroupFormation: Group for human {} is not an LFG group",
-                    player->GetName());
+                TC_LOG_WARN("module.playerbot.lfg",
+                    "PollGroupFormation: Group {} for human {} is not an LFG group (isLFGGroup() = false)",
+                    groupGuid.ToString(), player->GetName());
                 continue;
             }
 
@@ -518,9 +548,11 @@ private:
             _processedGroups.insert(groupGuid);
             _processedGroupTimes[groupGuid] = now;
 
+            // Get current leader for diagnostic logging
+            ObjectGuid currentLeader = group->GetLeaderGUID();
             TC_LOG_INFO("module.playerbot.lfg",
-                "PollGroupFormation: DETECTED LFG group formed! Human: {}, Group: {}, triggering leadership transfer",
-                player->GetName(), groupGuid.ToString());
+                "PollGroupFormation: ✅ DETECTED LFG group formed! Human: {} ({}), Group: {}, Current Leader: {} - triggering leadership transfer",
+                player->GetName(), playerGuid.ToString(), groupGuid.ToString(), currentLeader.ToString());
 
             // CRITICAL: Call LFGBotManager::OnGroupFormed() to trigger leadership transfer
             // This was the MISSING CALL that caused bots to remain as leaders

@@ -896,10 +896,16 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 Group* group = bot->GetGroup();
                 if (group && group->isLFGGroup())
                 {
+                    TC_LOG_DEBUG("module.playerbot.session",
+                        "Bot {} instance sync check: DestMap={}, GroupSize={}, LfgDungeonId={}",
+                        bot->GetName(), dest.Location.GetMapId(), group->GetMembersCount(),
+                        dest.LfgDungeonsId.value_or(0));
+
                     // Check if any group member is already in the destination dungeon
                     bool groupMemberInDungeon = false;
                     bool hasHumanWaitingToTeleport = false;
                     bool thisIsFirstBot = true; // Used when all members are bots
+                    uint32 membersFound = 0;
 
                     for (GroupReference const& ref : group->GetMembers())
                     {
@@ -907,12 +913,22 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         if (!member || member == bot)
                             continue;
 
+                        membersFound++;
+                        WorldSession* memberSession = member->GetSession();
+                        bool isBot = memberSession ? memberSession->IsBot() : false;
+
+                        TC_LOG_DEBUG("module.playerbot.session",
+                            "Bot {} checking member {}: IsInWorld={}, MapId={}, IsBeingTeleportedFar={}, IsBot={}",
+                            bot->GetName(), member->GetName(),
+                            member->IsInWorld(), member->GetMapId(),
+                            member->IsBeingTeleportedFar(), isBot);
+
                         // Check if member is already in the dungeon
                         if (member->IsInWorld() && member->GetMapId() == dest.Location.GetMapId())
                         {
                             groupMemberInDungeon = true;
                             targetInstanceId = member->GetInstanceId();
-                            TC_LOG_DEBUG("module.playerbot.session",
+                            TC_LOG_INFO("module.playerbot.session",
                                 "Bot {} found group member {} already in dungeon (MapId={}, InstanceId={})",
                                 bot->GetName(), member->GetName(), member->GetMapId(), targetInstanceId);
                             break;
@@ -940,9 +956,13 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         }
                     }
 
+                    TC_LOG_DEBUG("module.playerbot.session",
+                        "Bot {} instance sync summary: MembersFound={}, InDungeon={}, HumanWaiting={}, FirstBot={}",
+                        bot->GetName(), membersFound, groupMemberInDungeon, hasHumanWaitingToTeleport, thisIsFirstBot);
+
                     // Decide whether to wait:
                     // - If a group member is already in dungeon: DON'T wait (join their instance)
-                    // - If a human is waiting to teleport: WAIT for them
+                    // - If a human is waiting to teleport: WAIT for them (with timeout)
                     // - If only bots are waiting: First bot (by GUID) goes, others wait
                     if (!groupMemberInDungeon)
                     {
@@ -967,6 +987,47 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                                 bot->GetName(), dest.Location.GetMapId());
                         }
                     }
+
+                    // TIMEOUT SAFETY: If waiting too long, proceed anyway to avoid being stuck
+                    // This handles edge cases like human disconnecting during teleport
+                    constexpr uint32 INSTANCE_SYNC_TIMEOUT_MS = 30 * IN_MILLISECONDS; // 30 seconds
+                    uint32 currentTimeMs = GameTime::GetGameTimeMS();
+
+                    if (shouldWaitForGroup)
+                    {
+                        // Start tracking wait time if not already waiting
+                        uint32 waitStart = _instanceSyncWaitStartMs.load();
+                        if (waitStart == 0)
+                        {
+                            _instanceSyncWaitStartMs.store(currentTimeMs);
+                            TC_LOG_DEBUG("module.playerbot.session",
+                                "Bot {} started instance sync wait at {}ms",
+                                bot->GetName(), currentTimeMs);
+                        }
+                        else
+                        {
+                            uint32 waitDuration = currentTimeMs - waitStart;
+                            if (waitDuration >= INSTANCE_SYNC_TIMEOUT_MS)
+                            {
+                                TC_LOG_WARN("module.playerbot.session",
+                                    "Bot {} instance sync TIMEOUT after {}ms - proceeding anyway (MapId={})",
+                                    bot->GetName(), waitDuration, dest.Location.GetMapId());
+                                shouldWaitForGroup = false;
+                                _instanceSyncWaitStartMs.store(0); // Reset for next teleport
+                            }
+                            else
+                            {
+                                TC_LOG_DEBUG("module.playerbot.session",
+                                    "Bot {} waiting for instance sync ({}ms / {}ms)",
+                                    bot->GetName(), waitDuration, INSTANCE_SYNC_TIMEOUT_MS);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Not waiting anymore, reset timer
+                        _instanceSyncWaitStartMs.store(0);
+                    }
                 }
             }
 
@@ -974,11 +1035,15 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
             // 1. Not a dungeon (no instance sync needed)
             // 2. Not in an LFG group (no sync needed)
             // 3. A group member is already in the dungeon (instance exists)
+            // 4. Timeout exceeded (safety mechanism)
             if (!shouldWaitForGroup)
             {
-                TC_LOG_DEBUG("module.playerbot.session",
-                    "Bot {} completing far teleport via deferred HandleMoveWorldportAck() (TargetInstanceId={})",
-                    bot->GetName(), targetInstanceId);
+                // Reset wait timer since we're proceeding
+                _instanceSyncWaitStartMs.store(0);
+
+                TC_LOG_INFO("module.playerbot.session",
+                    "Bot {} completing far teleport via deferred HandleMoveWorldportAck() (TargetInstanceId={}, MapId={})",
+                    bot->GetName(), targetInstanceId, dest.Location.GetMapId());
 
                 // ============================================================================
                 // CRITICAL FIX: Defer HandleMoveWorldportAck to main thread
@@ -2881,8 +2946,9 @@ bool BotSession::ProcessPendingLfgProposalAccepts()
         lfg::LfgState currentState = sLFGMgr->GetState(bot->GetGUID());
 
         TC_LOG_INFO("module.playerbot.lfg",
-                    "ProcessPendingLfgProposalAccepts: Bot {} ({}) accepting proposal {} - LFG state: {}",
-                    bot->GetName(), bot->GetGUID().ToString(), proposalId, static_cast<uint32>(currentState));
+                    "ProcessPendingLfgProposalAccepts: Bot {} ({}) accepting proposal {} - LFG state: {} - IsInWorld: {} - MapId: {}",
+                    bot->GetName(), bot->GetGUID().ToString(), proposalId, static_cast<uint32>(currentState),
+                    bot->IsInWorld(), bot->GetMapId());
 
         // SAFE: Now on main thread, outside of LFGMgr iteration
         sLFGMgr->UpdateProposal(proposalId, bot->GetGUID(), true);
@@ -2890,9 +2956,57 @@ bool BotSession::ProcessPendingLfgProposalAccepts()
         // Post-validation: Check state after accept
         lfg::LfgState newState = sLFGMgr->GetState(bot->GetGUID());
 
+        // ENHANCED DIAGNOSTICS: Check if teleport was initiated
+        bool isBeingTeleportedFar = bot->IsBeingTeleportedFar();
+        bool isBeingTeleportedNear = bot->IsBeingTeleportedNear();
+        Group* group = bot->GetGroup();
+        bool hasGroup = group != nullptr;
+        bool isLfgGroup = hasGroup && group->isLFGGroup();
+
         TC_LOG_INFO("module.playerbot.lfg",
-                    "ProcessPendingLfgProposalAccepts: Bot {} called UpdateProposal - state changed: {} -> {}",
-                    bot->GetName(), static_cast<uint32>(currentState), static_cast<uint32>(newState));
+                    "ProcessPendingLfgProposalAccepts: Bot {} post-accept - state: {} -> {} - IsInWorld: {} - TeleportFar: {} - TeleportNear: {} - HasGroup: {} - IsLfgGroup: {}",
+                    bot->GetName(), static_cast<uint32>(currentState), static_cast<uint32>(newState),
+                    bot->IsInWorld(), isBeingTeleportedFar, isBeingTeleportedNear, hasGroup, isLfgGroup);
+
+        // If state changed to DUNGEON, teleport should have been triggered
+        if (newState == lfg::LFG_STATE_DUNGEON && !isBeingTeleportedFar && !isBeingTeleportedNear)
+        {
+            TC_LOG_WARN("module.playerbot.lfg",
+                        "⚠️ ProcessPendingLfgProposalAccepts: Bot {} state is DUNGEON but NOT teleporting! "
+                        "This indicates TeleportPlayer() was not called or failed. Checking ObjectAccessor...",
+                        bot->GetName());
+
+            // Diagnostic: Check if bot is findable by ObjectAccessor
+            Player* foundByFind = ObjectAccessor::FindPlayer(bot->GetGUID());
+            Player* foundByConnected = ObjectAccessor::FindConnectedPlayer(bot->GetGUID());
+            TC_LOG_WARN("module.playerbot.lfg",
+                        "⚠️ ObjectAccessor diagnostic: FindPlayer={}, FindConnectedPlayer={}",
+                        foundByFind != nullptr, foundByConnected != nullptr);
+
+            // WORKAROUND: If bot wasn't teleported by LFGMgr (possibly due to ObjectAccessor::FindPlayer
+            // failing because bot's IsInWorld() was false during iteration), manually trigger teleport
+            if (bot->IsInWorld() && isLfgGroup)
+            {
+                TC_LOG_INFO("module.playerbot.lfg",
+                            "🔧 ProcessPendingLfgProposalAccepts: Manually triggering TeleportPlayer for bot {}",
+                            bot->GetName());
+                sLFGMgr->TeleportPlayer(bot, false);
+
+                // Check if teleport was initiated after manual trigger
+                if (bot->IsBeingTeleportedFar() || bot->IsBeingTeleportedNear())
+                {
+                    TC_LOG_INFO("module.playerbot.lfg",
+                                "✅ ProcessPendingLfgProposalAccepts: Manual teleport succeeded for bot {} - TeleportFar: {} TeleportNear: {}",
+                                bot->GetName(), bot->IsBeingTeleportedFar(), bot->IsBeingTeleportedNear());
+                }
+                else
+                {
+                    TC_LOG_ERROR("module.playerbot.lfg",
+                                "❌ ProcessPendingLfgProposalAccepts: Manual TeleportPlayer FAILED for bot {} - TeleportPlayer returned but teleport state not set",
+                                bot->GetName());
+                }
+            }
+        }
 
         acceptedAny = true;
     }

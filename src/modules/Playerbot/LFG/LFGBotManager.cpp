@@ -18,6 +18,7 @@
 #include "LFGBotManager.h"
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "../Core/Diagnostics/BotOperationTracker.h"
+#include "../Core/BotReadinessChecker.h"  // Comprehensive bot readiness validation
 #include "LFGBotSelector.h"
 #include "LFGRoleDetector.h"
 #include "LFGGroupCoordinator.h"
@@ -151,16 +152,35 @@ void LFGBotManager::ProcessPendingJITBots()
         PendingJITBot& pending = *it;
         pending.retryCount++;
 
-        // Check if bot is now loaded
-        if (Player* bot = ObjectAccessor::FindPlayer(pending.botGuid))
+        // ========================================================================
+        // COMPREHENSIVE BOT READINESS CHECK
+        // ========================================================================
+        // Instead of just checking ObjectAccessor::FindPlayer(), we now use
+        // BotReadinessChecker to verify ALL conditions are met:
+        // - Bot is in ObjectAccessor (HashMapHolder)
+        // - Bot is in CharacterCache (prevents "??" level display)
+        // - Bot is in world with valid map and session
+        // - Bot is not being teleported
+        // - BotAI is initialized
+        // - Bot is not already in a queue
+        //
+        // This prevents race conditions where bots are queued before they're
+        // fully initialized, causing issues like "offline" display in group UI.
+        // ========================================================================
+
+        BotReadinessResult readiness = BotReadinessChecker::Check(pending.botGuid, BotReadinessFlag::LFG_READY);
+
+        if (readiness.IsLFGReady())
         {
-            // Bot is loaded! Queue it for LFG
+            Player* bot = readiness.player;
+
+            // Bot is fully ready! Queue it for LFG
             uint8 botRole = sLFGRoleDetector->DetectBotRole(bot);
 
             if (QueueBot(bot, botRole, pending.dungeons))
             {
                 RegisterBotAssignment(pending.humanPlayerGuid, pending.botGuid, botRole, pending.dungeons);
-                TC_LOG_INFO("playerbot.lfg", "ProcessPendingJITBots: Queued bot {} (level {}) as role {} for player {} after {} retries",
+                TC_LOG_INFO("playerbot.lfg", "ProcessPendingJITBots: ✅ Queued bot {} (level {}) as role {} for player {} after {} retries",
                     bot->GetName(), bot->GetLevel(), botRole, pending.humanPlayerGuid.ToString(), pending.retryCount);
             }
             else
@@ -183,17 +203,19 @@ void LFGBotManager::ProcessPendingJITBots()
         else if (pending.retryCount >= MAX_PENDING_RETRIES)
         {
             // Too many retries, give up
-            TC_LOG_WARN("playerbot.lfg", "ProcessPendingJITBots: Gave up on bot {} after {} retries ({}ms) - not loaded",
-                pending.botGuid.ToString(), pending.retryCount, pending.retryCount * PENDING_CHECK_INTERVAL);
+            TC_LOG_WARN("playerbot.lfg", "ProcessPendingJITBots: Gave up on bot {} after {} retries ({}ms) - not ready. {}",
+                pending.botGuid.ToString(), pending.retryCount, pending.retryCount * PENDING_CHECK_INTERVAL,
+                readiness.GetFailureReport());
 
             // Track this failure for diagnostics
             BOT_TRACK_LFG_ERROR(
                 LFGQueueErrorCode::JIT_BOT_TIMEOUT,
-                fmt::format("JIT bot {} failed to load after {}ms ({} retries) for player {}",
+                fmt::format("JIT bot {} not ready after {}ms ({} retries) for player {}: {}",
                     pending.botGuid.ToString(),
                     pending.retryCount * PENDING_CHECK_INTERVAL,
                     pending.retryCount,
-                    pending.humanPlayerGuid.ToString()),
+                    pending.humanPlayerGuid.ToString(),
+                    readiness.GetSummary()),
                 pending.botGuid,
                 pending.humanPlayerGuid,
                 pending.dungeons.empty() ? 0 : *pending.dungeons.begin());
@@ -202,6 +224,13 @@ void LFGBotManager::ProcessPendingJITBots()
         }
         else
         {
+            // Not ready yet, log debug info periodically
+            if (pending.retryCount % 5 == 0)  // Every 5 retries (~1.5 seconds)
+            {
+                TC_LOG_DEBUG("playerbot.lfg", "ProcessPendingJITBots: Bot {} retry {}/{} - {}",
+                    pending.botGuid.ToString(), pending.retryCount, MAX_PENDING_RETRIES,
+                    readiness.GetSummary());
+            }
             ++it;
         }
     }

@@ -426,6 +426,11 @@ private:
     mutable std::mutex _pendingLfgAcceptsMutex;
     std::vector<uint32> _pendingLfgProposalAccepts;
 
+    // LFG instance sync timeout tracking
+    // Tracks when bot started waiting for group members to enter dungeon first
+    // After timeout (30 seconds), bot proceeds anyway to avoid being stuck forever
+    std::atomic<uint32> _instanceSyncWaitStartMs{0};
+
     // Deleted copy operations
     BotSession(BotSession const&) = delete;
     BotSession& operator=(BotSession const&) = delete;

@@ -135,12 +135,16 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
     //
     // Solution: Find the human player and make them the leader.
     //
-    // IMPORTANT: The leader may not be loaded into the world yet (async login),
-    // so we must handle the case where ObjectAccessor::FindPlayer() returns null.
-    // In that case, we assume it's a bot and still transfer leadership to human.
+    // IMPORTANT: Use FindConnectedPlayer instead of FindPlayer!
+    // During LFG dungeon teleport, players are not "in world" so FindPlayer()
+    // returns null. FindConnectedPlayer() returns connected players regardless
+    // of IsInWorld() state, which is what we need during teleport.
     // ========================================================================
     ObjectGuid currentLeaderGuid = group->GetLeaderGUID();
-    Player* currentLeader = ObjectAccessor::FindPlayer(currentLeaderGuid);
+    Player* currentLeader = ObjectAccessor::FindConnectedPlayer(currentLeaderGuid);
+
+    TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Current leader: {} (found: {})",
+        currentLeaderGuid.ToString(), currentLeader != nullptr);
 
     // Check if current leader is a bot
     // NOTE: If currentLeader is null, the player isn't loaded yet.
@@ -169,12 +173,18 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
     if (leaderIsBot || leaderNotFound)
     {
         // Find a human player to be the leader
+        // FIX: Use FindConnectedPlayer instead of FindPlayer - during LFG dungeon teleport,
+        // players are not "in world" so FindPlayer() returns null. FindConnectedPlayer()
+        // returns connected players regardless of IsInWorld() state.
         Player* humanPlayer = nullptr;
         for (auto const& slot : group->GetMemberSlots())
         {
-            Player* member = ObjectAccessor::FindPlayer(slot.guid);
+            Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
             if (member && !PlayerBotHooks::IsPlayerBot(member))
             {
+                TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Found human {} (InWorld: {}, TeleportFar: {}, TeleportNear: {})",
+                    member->GetName(), member->IsInWorld(),
+                    member->IsBeingTeleportedFar(), member->IsBeingTeleportedNear());
                 humanPlayer = member;
                 break;
             }
@@ -191,14 +201,24 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
             else
             {
                 std::string leaderName = currentLeader ? currentLeader->GetName() : currentLeaderGuid.ToString();
-                TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Transferring leadership from {} to human {}",
+                TC_LOG_INFO("lfg.playerbot", "✅ LFGGroupCoordinator::OnGroupFormed - Transferring leadership from {} to human {}",
                     leaderName, humanPlayer->GetName());
 
                 // Transfer leadership to the human player
                 group->ChangeLeader(humanPlayer->GetGUID());
 
-                TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Leadership transferred successfully to {}",
-                    humanPlayer->GetName());
+                // Verify the transfer
+                ObjectGuid newLeader = group->GetLeaderGUID();
+                if (newLeader == humanPlayer->GetGUID())
+                {
+                    TC_LOG_INFO("lfg.playerbot", "✅ LFGGroupCoordinator::OnGroupFormed - Leadership transferred successfully to {} ({})",
+                        humanPlayer->GetName(), newLeader.ToString());
+                }
+                else
+                {
+                    TC_LOG_ERROR("lfg.playerbot", "❌ LFGGroupCoordinator::OnGroupFormed - Leadership transfer FAILED! Expected: {}, Actual: {}",
+                        humanPlayer->GetGUID().ToString(), newLeader.ToString());
+                }
             }
         }
         else

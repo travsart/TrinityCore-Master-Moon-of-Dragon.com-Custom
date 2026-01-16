@@ -87,6 +87,8 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerBotHelpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/References/SafeObjectReference.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/References/SafeObjectReference.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/BotReadinessChecker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/BotReadinessChecker.h
 
     # Core Managers
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/IManagerBase.h
