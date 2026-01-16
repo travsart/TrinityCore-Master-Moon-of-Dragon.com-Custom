@@ -19,6 +19,7 @@
 #include "Session/BotWorldSessionMgr.h"
 #include "CharacterCache.h"
 #include "DatabaseEnv.h"
+#include "Database/PlayerbotDatabase.h"
 #include "Log.h"
 #include "Player.h"
 #include "Timer.h"
@@ -2182,7 +2183,7 @@ void InstanceBotPool::SyncToDatabase()
         }
 
         // Use REPLACE INTO to insert or update
-        // Note: Trinity::StringFormat must be used since CharacterDatabase.Execute doesn't accept fmt-style args
+        // Note: Trinity::StringFormat is used to build the query string
         std::string query = Trinity::StringFormat(
             "REPLACE INTO `playerbot_instance_pool` "
             "(`bot_guid`, `account_id`, `bot_name`, `role`, `faction`, `player_class`, "
@@ -2205,7 +2206,7 @@ void InstanceBotPool::SyncToDatabase()
             slot.earlyExits,
             slot.totalInstanceTime
         );
-        CharacterDatabase.Execute(query.c_str());
+        sPlayerbotDatabase->Execute(query.c_str());
 
         ++syncedCount;
     }
@@ -2232,15 +2233,16 @@ void InstanceBotPool::LoadFromDatabase()
 
     TC_LOG_INFO("playerbot.pool", "Loading warm pool bots from database...");
 
-    QueryResult result = CharacterDatabase.Query(
-        "SELECT p.`bot_guid`, p.`account_id`, p.`bot_name`, p.`role`, p.`faction`, "
-        "p.`player_class`, p.`spec_id`, p.`level`, p.`bracket`, p.`gear_score`, "
-        "p.`slot_state`, p.`assignment_count`, p.`successful_completions`, "
-        "p.`early_exits`, p.`total_instance_time` "
-        "FROM `playerbot_instance_pool` p "
-        "INNER JOIN `characters` c ON p.`bot_guid` = c.`guid` "
-        "WHERE p.`is_warm_pool` = 1 "
-        "ORDER BY p.`bracket`, p.`faction`, p.`role`"
+    // Query playerbot database (NOT characters database)
+    // Character existence is verified via CharacterCache after loading
+    QueryResult result = sPlayerbotDatabase->Query(
+        "SELECT `bot_guid`, `account_id`, `bot_name`, `role`, `faction`, "
+        "`player_class`, `spec_id`, `level`, `bracket`, `gear_score`, "
+        "`slot_state`, `assignment_count`, `successful_completions`, "
+        "`early_exits`, `total_instance_time` "
+        "FROM `playerbot_instance_pool` "
+        "WHERE `is_warm_pool` = 1 "
+        "ORDER BY `bracket`, `faction`, `role`"
     );
 
     if (!result)
@@ -2253,6 +2255,7 @@ void InstanceBotPool::LoadFromDatabase()
 
     uint32 loadedCount = 0;
     uint32 orphanedCount = 0;
+    std::vector<uint64> orphanedGuids; // Collect orphaned GUIDs for cleanup
 
     do
     {
@@ -2261,11 +2264,12 @@ void InstanceBotPool::LoadFromDatabase()
         uint64 guidLow = fields[0].GetUInt64();
         ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(guidLow);
 
-        // Verify character exists (the INNER JOIN should handle this, but double-check)
+        // Verify character exists in CharacterCache (cross-database check)
         if (!sCharacterCache->HasCharacterCacheEntry(guid))
         {
             TC_LOG_WARN("playerbot.pool", "Warm pool bot {} not found in character cache, skipping",
                 guid.ToString());
+            orphanedGuids.push_back(guidLow);
             ++orphanedCount;
             continue;
         }
@@ -2326,15 +2330,20 @@ void InstanceBotPool::LoadFromDatabase()
     // Rebuild ready index with loaded bots
     RebuildReadyIndex();
 
-    // Clean up orphaned entries (bots in pool table but not in characters)
-    if (orphanedCount > 0)
+    // Clean up orphaned entries (bots in pool table but character deleted)
+    if (!orphanedGuids.empty())
     {
-        TC_LOG_WARN("playerbot.pool", "Cleaning up {} orphaned warm pool entries from database", orphanedCount);
-        CharacterDatabase.Execute(
-            "DELETE p FROM `playerbot_instance_pool` p "
-            "LEFT JOIN `characters` c ON p.`bot_guid` = c.`guid` "
-            "WHERE c.`guid` IS NULL AND p.`is_warm_pool` = 1"
-        );
+        TC_LOG_WARN("playerbot.pool", "Cleaning up {} orphaned warm pool entries from database", orphanedGuids.size());
+
+        // Delete each orphaned entry from playerbot database by GUID
+        for (uint64 orphanedGuid : orphanedGuids)
+        {
+            std::string query = Trinity::StringFormat(
+                "DELETE FROM `playerbot_instance_pool` WHERE `bot_guid` = {}",
+                orphanedGuid
+            );
+            sPlayerbotDatabase->Execute(query.c_str());
+        }
     }
 
     TC_LOG_INFO("playerbot.pool", "Loaded {} warm pool bots from database ({} orphaned removed)",
