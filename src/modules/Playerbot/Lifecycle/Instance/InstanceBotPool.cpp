@@ -2342,6 +2342,79 @@ void InstanceBotPool::RemoveFromReadyIndex(ObjectGuid botGuid, BotRole role, Fac
     vec.erase(std::remove(vec.begin(), vec.end(), botGuid), vec.end());
 }
 
+void InstanceBotPool::RegisterJITBot(ObjectGuid botGuid, uint32 accountId, BotRole role, Faction faction, PoolBracket bracket)
+{
+    // ========================================================================
+    // FIX (2026-01-15): Properly integrate JIT-created bots with pool tracking
+    //
+    // Problem: The overflow callback only called AddToReadyIndex() without
+    // updating _slots or _bracketCounts. This caused ReplenishPool() to
+    // continuously detect shortages and create more JIT bots (1200 bots bug).
+    //
+    // Solution: This method performs the SAME tracking as CreatePoolBot():
+    // 1. Create InstanceBotSlot entry
+    // 2. Add to _slots map
+    // 3. Add to ready index
+    // 4. Update _bracketCounts (ready + total)
+    // ========================================================================
+
+    // Check if bot already registered (prevent double registration)
+    {
+        std::shared_lock lock(_slotsMutex);
+        if (_slots.find(botGuid) != _slots.end())
+        {
+            TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::RegisterJITBot - Bot {} already registered",
+                botGuid.ToString());
+            return;
+        }
+    }
+
+    // Get bot info from character cache
+    CharacterCacheEntry const* charInfo = sCharacterCache->GetCharacterCacheByGuid(botGuid);
+    std::string name = charInfo ? charInfo->Name : "JITBot";
+    uint8 playerClass = charInfo ? charInfo->Class : 0;
+
+    // Get level for this bracket (midpoint)
+    uint32 level = GetBracketMidpointLevel(bracket);
+
+    // Determine pool type
+    PoolType poolType = (faction == Faction::Alliance) ? PoolType::PvP_Alliance : PoolType::PvP_Horde;
+
+    // Create slot for the JIT-created bot
+    InstanceBotSlot slot;
+    slot.Initialize(botGuid, accountId, name, poolType, role);
+    slot.level = level;
+    slot.faction = faction;
+    slot.gearScore = 0;
+    slot.playerClass = playerClass;
+    slot.specId = 0;
+    slot.ForceState(PoolSlotState::Ready); // JIT bots are already logged in and ready
+
+    // Add to slots map
+    {
+        std::unique_lock lock(_slotsMutex);
+        _slots[botGuid] = std::move(slot);
+    }
+
+    // Add to ready index for O(1) lookup
+    AddToReadyIndex(botGuid, role, faction, bracket);
+
+    // Update bracket counts (CRITICAL - this was missing in the overflow callback!)
+    {
+        std::unique_lock lock(_bracketCountsMutex);
+        _bracketCounts.IncrementReady(bracket, faction, role);
+        _bracketCounts.IncrementTotal(bracket, faction);
+    }
+
+    _statsDirty.store(true);
+
+    uint32 minLevel, maxLevel;
+    GetBracketLevelRange(bracket, minLevel, maxLevel);
+
+    TC_LOG_INFO("playerbot.pool", "InstanceBotPool::RegisterJITBot - Registered JIT bot {} ({}), Role {}, Bracket {}-{}, Level {}",
+        name, botGuid.ToString(), BotRoleToString(role), minLevel, maxLevel, level);
+}
+
 void InstanceBotPool::RebuildReadyIndex()
 {
     TC_LOG_INFO("playerbot.pool", "Rebuilding ready index from {} slots...", _slots.size());

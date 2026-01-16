@@ -20,6 +20,7 @@
 
 #include "AI/BehaviorTree/BehaviorTree.h"
 #include "AI/BotAI.h"
+#include "AI/Cache/AuraStateCache.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"
@@ -679,7 +680,11 @@ public:
             return _status;
         }
 
-        bool hasHoT = healTarget->HasAura(_spellId, bot->GetGUID());
+        // THREAD-SAFETY: Use AuraStateCache instead of direct HasAura() call.
+        // The cache is populated from the main thread and provides thread-safe
+        // read access for worker threads. This prevents race conditions with
+        // Unit::_appliedAuras that caused ACCESS_VIOLATION crashes.
+        bool hasHoT = sAuraStateCache->HasCachedAura(healTarget->GetGUID(), _spellId, bot->GetGUID());
 
         _status = hasHoT ? BTStatus::SUCCESS : BTStatus::FAILURE;
         return _status;

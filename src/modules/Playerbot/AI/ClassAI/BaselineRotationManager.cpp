@@ -20,6 +20,7 @@
 #include "MotionMaster.h"  // For MoveChase - low-level bot movement
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
+#include "../Cache/AuraStateCache.h"  // Thread-safe aura state cache for worker threads
 #include "GameTime.h"
 
 namespace Playerbot
@@ -45,6 +46,64 @@ BaselineRotationManager::BaselineRotationManager()
     InitializeDruidBaseline();
     InitializeDemonHunterBaseline();
     InitializeEvokerBaseline();
+}
+
+// ============================================================================
+// THREAD-SAFE SPELL CASTING
+// ============================================================================
+// CRITICAL FIX (2026-01-16): Fixed thread safety crash caused by bot worker threads
+// calling bot->CastSpell() directly, which modifies Unit aura state while main thread
+// (AreaTrigger::Update → Unit::HasAura) is iterating _appliedAuras.
+//
+// This method uses SpellPacketBuilder to queue a CMSG_CAST_SPELL packet that will
+// be processed safely on the main thread.
+// ============================================================================
+
+bool BaselineRotationManager::QueueSpellCast(Player* bot, uint32 spellId, ::Unit* target)
+{
+    if (!bot || !spellId)
+        return false;
+
+    // Default to self-cast if no target specified
+    if (!target)
+        target = bot;
+
+    // Get session for packet queueing
+    WorldSession* session = bot->GetSession();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.baseline", "QueueSpellCast: Bot {} has no session, cannot queue spell {}",
+                     bot->GetName(), spellId);
+        return false;
+    }
+
+    // Build packet with validation
+    SpellPacketBuilder::BuildOptions options;
+    options.skipGcdCheck = false;      // Respect GCD
+    options.skipResourceCheck = false; // Check mana/energy/rage
+    options.skipRangeCheck = false;    // Check spell range
+    options.logFailures = true;        // Log validation failures
+
+    auto result = SpellPacketBuilder::BuildCastSpellPacket(bot, spellId, target, options);
+
+    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+    {
+        if (result.packet)
+        {
+            // QueuePacket takes ownership of the raw pointer
+            session->QueuePacket(result.packet.release());
+            TC_LOG_TRACE("playerbot.baseline", "QueueSpellCast: Bot {} queued spell {} on {}",
+                         bot->GetName(), spellId, target->GetName());
+            return true;
+        }
+    }
+    else
+    {
+        TC_LOG_TRACE("playerbot.baseline", "QueueSpellCast: Spell {} validation failed for bot {}: {}",
+                     spellId, bot->GetName(), result.failureReason);
+    }
+
+    return false;
 }
 
 bool BaselineRotationManager::ShouldUseBaselineRotation(Player* bot)
@@ -556,51 +615,56 @@ void BaselineRotationManager::InitializeWarriorBaseline()
 
 bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, BaselineRotationManager& manager)
 {
+    // THREAD-SAFETY FIX (2026-01-16): Use QueueSpellCast instead of bot->CastSpell()
+    // Direct CastSpell calls from worker threads cause race conditions with main thread
+    // Unit::HasAura() iteration, causing ACCESS_VIOLATION crashes.
+
     // Charge if not in melee range (using squared distance for comparison)
     float distSq = bot->GetExactDistSq(target);
     if (distSq > (8.0f * 8.0f) && distSq < (25.0f * 25.0f)) // 64.0f and 625.0f
     {
-        // FIX: Use HasSpell check correctly
-    if (bot->HasSpell(CHARGE))
+        if (bot->HasSpell(CHARGE))
         {
-
-            bot->CastSpell(CastSpellTargetArg(target), CHARGE);
-
-            return true;
+            if (BaselineRotationManager::QueueSpellCast(bot, CHARGE, target))
+                return true;
         }
     }
 
     // Execute if target below 20% health
-    if (target->GetHealthPct() <= 20.0f && bot->HasSpell(EXECUTE))    {
-        if (bot->GetPower(POWER_RAGE) >= 15)        {
-
-            bot->CastSpell(CastSpellTargetArg(target), EXECUTE);
-
-            return true;
+    if (target->GetHealthPct() <= 20.0f && bot->HasSpell(EXECUTE))
+    {
+        if (bot->GetPower(POWER_RAGE) >= 15)
+        {
+            if (BaselineRotationManager::QueueSpellCast(bot, EXECUTE, target))
+                return true;
         }
     }
 
-    // Victory Rush for healing
-    if (bot->HasSpell(VICTORY_RUSH) && bot->HasAura(32216)) // Victory Rush proc
+    // Victory Rush for healing (requires Victorious proc)
+    // THREAD-SAFETY: Use AuraStateCache instead of direct HasAura() call
+    // The cache is populated from main thread before worker threads execute
+    constexpr uint32 VICTORIOUS_BUFF = 32216;
+    if (bot->HasSpell(VICTORY_RUSH) &&
+        sAuraStateCache->HasCachedAura(bot->GetGUID(), VICTORIOUS_BUFF, ObjectGuid::Empty))
     {
-        bot->CastSpell(CastSpellTargetArg(target), VICTORY_RUSH);
-        return true;
+        if (BaselineRotationManager::QueueSpellCast(bot, VICTORY_RUSH, target))
+            return true;
     }
 
     // Slam as rage dump
-    if (bot->HasSpell(SLAM) && bot->GetPower(POWER_RAGE) >= 20)    {
-        bot->CastSpell(CastSpellTargetArg(target), SLAM);
-        return true;
+    if (bot->HasSpell(SLAM) && bot->GetPower(POWER_RAGE) >= 20)
+    {
+        if (BaselineRotationManager::QueueSpellCast(bot, SLAM, target))
+            return true;
     }
 
     // Hamstring to prevent fleeing
-    if (bot->HasSpell(HAMSTRING) && bot->GetPower(POWER_RAGE) >= 10)    {
+    if (bot->HasSpell(HAMSTRING) && bot->GetPower(POWER_RAGE) >= 10)
+    {
         if (target->GetHealthPct() < 30.0f)
         {
-
-            bot->CastSpell(CastSpellTargetArg(target), HAMSTRING);
-
-            return true;
+            if (BaselineRotationManager::QueueSpellCast(bot, HAMSTRING, target))
+                return true;
         }
     }
 
@@ -609,10 +673,13 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
 
 void WarriorBaselineRotation::ApplyBuffs(Player* bot)
 {
-    // Battle Shout
-    if (bot->HasSpell(BATTLE_SHOUT) && !bot->HasAura(BATTLE_SHOUT))
+    // Battle Shout - only cast if not already buffed
+    // THREAD-SAFETY: Use AuraStateCache instead of direct HasAura() call
+    // The cache is populated from main thread before worker threads execute
+    if (bot->HasSpell(BATTLE_SHOUT) &&
+        !sAuraStateCache->HasCachedAura(bot->GetGUID(), BATTLE_SHOUT, ObjectGuid::Empty))
     {
-        bot->CastSpell(CastSpellTargetArg(bot), BATTLE_SHOUT);
+        BaselineRotationManager::QueueSpellCast(bot, BATTLE_SHOUT, bot);
     }
 }
 
@@ -826,6 +893,8 @@ void WarlockBaselineRotation::ApplyBuffs(Player* bot)
     // Pet summons have 6 second cast time - impossible in combat!
     // Level 3: Imp (ranged fire DPS)
     // Level 10: Voidwalker (melee tank - preferred for solo leveling)
+    //
+    // THREAD-SAFETY FIX (2026-01-16): Use QueueSpellCast instead of bot->CastSpell()
     // ========================================================================
 
     // Warlock pet spell IDs (WoW 11.2)
@@ -845,7 +914,7 @@ void WarlockBaselineRotation::ApplyBuffs(Player* bot)
     {
         TC_LOG_INFO("playerbot.baseline", "WarlockApplyBuffs: {} summoning Voidwalker (out of combat)",
                     bot->GetName());
-        bot->CastSpell(bot, SUMMON_VOIDWALKER, false);
+        BaselineRotationManager::QueueSpellCast(bot, SUMMON_VOIDWALKER, bot);
         return;
     }
 
@@ -854,7 +923,7 @@ void WarlockBaselineRotation::ApplyBuffs(Player* bot)
     {
         TC_LOG_INFO("playerbot.baseline", "WarlockApplyBuffs: {} summoning Imp (out of combat)",
                     bot->GetName());
-        bot->CastSpell(bot, SUMMON_IMP, false);
+        BaselineRotationManager::QueueSpellCast(bot, SUMMON_IMP, bot);
         return;
     }
 

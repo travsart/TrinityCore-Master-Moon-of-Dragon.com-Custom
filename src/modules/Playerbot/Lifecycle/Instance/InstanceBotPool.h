@@ -673,6 +673,25 @@ private:
     void AddToReadyIndex(ObjectGuid botGuid, BotRole role, Faction faction, PoolBracket bracket);
 
     /**
+     * @brief Register a JIT-created bot with the pool tracking system
+     * @param botGuid Bot GUID (must already be logged in via JITBotFactory)
+     * @param accountId Bot's account ID
+     * @param role Bot role
+     * @param faction Bot faction
+     * @param bracket Target level bracket
+     *
+     * CRITICAL: This method properly integrates JIT bots with the pool by:
+     * 1. Creating InstanceBotSlot entry
+     * 2. Adding to _slots map
+     * 3. Adding to ready index
+     * 4. Updating _bracketCounts
+     *
+     * Without this, ReplenishPool() would keep detecting shortages and
+     * trigger infinite JIT bot creation (the 1200 bots bug).
+     */
+    void RegisterJITBot(ObjectGuid botGuid, uint32 accountId, BotRole role, Faction faction, PoolBracket bracket);
+
+    /**
      * @brief Remove bot from ready index
      * @param botGuid Bot GUID
      * @param role Bot role

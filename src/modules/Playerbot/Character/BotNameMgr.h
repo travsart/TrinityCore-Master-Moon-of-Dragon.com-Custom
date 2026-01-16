@@ -82,9 +82,10 @@ public:
 private:
     BotNameMgr() = default;
     ~BotNameMgr() = default;
-    
+
     void LoadNamesFromDatabase();
     void LoadUsedNames();
+    void SyncWithCharactersTable();  // Cross-reference names with existing characters
     
     struct NameEntry
     {

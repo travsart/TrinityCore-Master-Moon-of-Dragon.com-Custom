@@ -255,6 +255,10 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTreeFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTreeFactory.h
 
+    # AI Cache (Thread-safe state caching for worker threads)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Cache/AuraStateCache.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Cache/AuraStateCache.h
+
     # AI Coordination
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RoleCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RoleCoordinator.h

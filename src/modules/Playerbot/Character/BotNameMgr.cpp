@@ -41,6 +41,10 @@ bool BotNameMgr::Initialize()
     LoadNamesFromDatabase();
     LoadUsedNames();
 
+    // CRITICAL: Cross-reference with actual characters table to prevent duplicate key errors
+    // Names may exist in characters table from previous sessions that weren't properly tracked
+    SyncWithCharactersTable();
+
     TC_LOG_INFO("module.playerbot.names",
         "Loaded {} names ({} male, {} female), {} in use",
         _names.size(),
@@ -365,18 +369,23 @@ uint32 BotNameMgr::GetUsedNameCount() const
 void BotNameMgr::ReloadNames()
 {
     TC_LOG_INFO("module.playerbot.names", "Reloading name pool from database");
-    
+
     std::lock_guard lock(_mutex);
-    
-    // Clear current data
+
+    // Clear ALL current data including mappings
     _names.clear();
     _availableMaleNames.clear();
     _availableFemaleNames.clear();
     _nameToId.clear();
-    
-    // Reload
+    _guidToNameId.clear();
+    _nameIdToGuid.clear();
+
+    // Reload from database
     LoadNamesFromDatabase();
     LoadUsedNames();
+
+    // Sync with actual characters to catch any orphaned names
+    SyncWithCharactersTable();
 }
 
 void BotNameMgr::LoadNamesFromDatabase()
@@ -466,6 +475,87 @@ void BotNameMgr::LoadUsedNames()
         
     } while (result->NextRow());
     
-    TC_LOG_INFO("module.playerbot.names", 
+    TC_LOG_INFO("module.playerbot.names",
         "Loaded {} used names", count);
+}
+
+void BotNameMgr::SyncWithCharactersTable()
+{
+    // Query ALL character names from the characters table
+    // This catches names that exist but weren't tracked in playerbots_names_used
+    // (e.g., from crashed sessions, manual testing, or orphaned records)
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT guid, name FROM characters");
+
+    if (!result)
+    {
+        TC_LOG_DEBUG("module.playerbot.names", "No characters found in database");
+        return;
+    }
+
+    uint32 syncCount = 0;
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 charGuid = fields[0].GetUInt32();
+        std::string charName = fields[1].GetString();
+
+        // Check if this name is in our name pool
+        auto nameIt = _nameToId.find(charName);
+        if (nameIt == _nameToId.end())
+            continue;  // Not one of our managed names
+
+        uint32 nameId = nameIt->second;
+
+        // Check if this name is already marked as used
+        auto entryIt = _names.find(nameId);
+        if (entryIt == _names.end())
+            continue;
+
+        NameEntry& entry = entryIt->second;
+
+        // If already marked as used by the same character, skip
+        if (entry.used && entry.usedByGuid == charGuid)
+            continue;
+
+        // If already marked as used by a DIFFERENT character, we have a conflict
+        // The actual character in the database takes precedence
+        if (entry.used && entry.usedByGuid != charGuid)
+        {
+            TC_LOG_WARN("module.playerbot.names",
+                "Name '{}' (ID: {}) was tracked to guid {} but actually belongs to guid {} - fixing",
+                charName, nameId, entry.usedByGuid, charGuid);
+
+            // Remove old mapping
+            _guidToNameId.erase(entry.usedByGuid);
+        }
+
+        // Mark as used by the actual character
+        entry.used = true;
+        entry.usedByGuid = charGuid;
+
+        // Remove from available names
+        if (entry.gender == 0)
+            _availableMaleNames.erase(nameId);
+        else if (entry.gender == 1)
+            _availableFemaleNames.erase(nameId);
+
+        // Update mappings
+        _guidToNameId[charGuid] = nameId;
+        _nameIdToGuid[nameId] = charGuid;
+
+        ++syncCount;
+
+        TC_LOG_DEBUG("module.playerbot.names",
+            "Synced name '{}' (ID: {}) to existing character {}",
+            charName, nameId, charGuid);
+
+    } while (result->NextRow());
+
+    if (syncCount > 0)
+    {
+        TC_LOG_INFO("module.playerbot.names",
+            "Synced {} names with existing characters table (available: {} male, {} female)",
+            syncCount, _availableMaleNames.size(), _availableFemaleNames.size());
+    }
 }

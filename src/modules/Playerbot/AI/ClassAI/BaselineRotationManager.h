@@ -98,6 +98,22 @@ public:
      */
     static float GetBaselineOptimalRange(Player* bot);
 
+    /**
+     * THREAD-SAFE spell casting via packet queue
+     *
+     * CRITICAL: This method is safe to call from worker threads.
+     * It uses SpellPacketBuilder to queue a CMSG_CAST_SPELL packet
+     * that will be processed on the main thread.
+     *
+     * DO NOT use bot->CastSpell() directly from worker threads!
+     *
+     * @param bot Player bot casting the spell
+     * @param spellId Spell ID to cast
+     * @param target Target unit (can be bot itself for self-cast)
+     * @return true if packet was successfully queued
+     */
+    static bool QueueSpellCast(Player* bot, uint32 spellId, ::Unit* target);
+
 private:
     // Initialize baseline abilities for each class
     void InitializeWarriorBaseline();

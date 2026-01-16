@@ -20,6 +20,9 @@
 #include "ContentRequirements.h"
 #include "Config/PlayerbotConfig.h"
 #include "Session/BotWorldSessionMgr.h"
+#include "ObjectAccessor.h"
+#include "WorldSession.h"
+#include "Player.h"
 #include "Log.h"
 #include <fmt/format.h>
 
@@ -85,13 +88,27 @@ bool InstanceBotOrchestrator::Initialize()
                 0,  // No specific content ID
                 [bracket, role, faction](std::vector<ObjectGuid> const& bots)
                 {
-                    TC_LOG_INFO("playerbot.orchestrator", "JIT created {} bots for bracket {} - adding to pool",
+                    TC_LOG_INFO("playerbot.orchestrator", "JIT created {} bots for bracket {} - registering with pool",
                         bots.size(), PoolBracketToString(bracket));
 
-                    // Add newly created bots back to the pool as Ready
+                    // FIX (2026-01-15): Use RegisterJITBot() instead of just AddToReadyIndex()
+                    // This properly integrates JIT bots with the pool tracking by:
+                    // 1. Creating InstanceBotSlot entries
+                    // 2. Adding to _slots map
+                    // 3. Adding to ready index
+                    // 4. Updating _bracketCounts
+                    // Without this, ReplenishPool() kept detecting shortages and triggered
+                    // infinite JIT bot creation (the 1200 bots bug).
                     for (ObjectGuid guid : bots)
                     {
-                        sInstanceBotPool->AddToReadyIndex(guid, role, faction, bracket);
+                        // Get account ID from the logged-in bot's session
+                        uint32 accountId = 0;
+                        if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                        {
+                            if (WorldSession* session = bot->GetSession())
+                                accountId = session->GetAccountId();
+                        }
+                        sInstanceBotPool->RegisterJITBot(guid, accountId, role, faction, bracket);
                     }
                 });
         });

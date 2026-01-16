@@ -22,6 +22,7 @@
 #include "../Spatial/SpatialGridManager.h"
 #include "../Spatial/SpatialGridScheduler.h"
 #include "../AI/BotAI.h"
+#include "../AI/Cache/AuraStateCache.h"
 #include "../Lifecycle/DeathRecoveryManager.h"
 #include "../Lifecycle/Instance/BotPostLoginConfigurator.h"  // For HasPendingConfiguration - skip JIT bots
 #include "../Lifecycle/Instance/InstanceBotOrchestrator.h"   // For IsManagedBot - skip JIT bots from LevelManager
@@ -731,6 +732,50 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             return;  // Skip this update cycle to let workers catch up
         }
     }
+
+    // ========================================================================
+    // THREAD-SAFETY: Pre-populate AuraStateCache on main thread BEFORE worker dispatch
+    // ========================================================================
+    //
+    // CRITICAL: BehaviorTree nodes execute on ThreadPool worker threads and need
+    // to query aura state. Unit::HasAura() is NOT thread-safe - it accesses
+    // _appliedAuras which is also accessed by main thread (AreaTrigger::Update).
+    //
+    // Solution: Cache aura state here on main thread. Worker threads read from cache.
+    //
+    // Performance: ~0.1ms per bot for cache update (negligible vs 7x parallel speedup)
+    //
+    if (useThreadPool)
+    {
+        // Periodic cleanup of expired cache entries (every 10 ticks)
+        static uint32 cacheCleanupCounter = 0;
+        if (++cacheCleanupCounter >= 10)
+        {
+            sAuraStateCache->CleanupExpired();
+            cacheCleanupCounter = 0;
+        }
+
+        // Pre-populate aura cache for all active bots
+        for (auto& [guid, botSession] : sessionsToUpdate)
+        {
+            if (!botSession || !botSession->IsActive() || !botSession->IsLoginComplete())
+                continue;
+
+            Player* bot = botSession->GetPlayer();
+            if (!bot || !bot->IsInWorld())
+                continue;
+
+            // Update bot's own auras (buffs, debuffs on self)
+            sAuraStateCache->UpdateBotAuras(bot);
+
+            // Update target's auras (debuffs applied BY bot TO target)
+            if (Unit* target = bot->GetVictim())
+            {
+                sAuraStateCache->UpdateTargetAuras(bot, target);
+            }
+        }
+    }
+
     for (auto& [guid, botSession] : sessionsToUpdate)
     {
         // Validate session before submitting task
@@ -1183,21 +1228,41 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
         ::std::lock_guard lock(_sessionsMutex);
         sessionsToProcess.reserve(_botSessions.size());
 
+        uint32 lfgPendingCount = 0;  // Track how many sessions have pending LFG accepts
         for (auto const& [guid, session] : _botSessions)
         {
             // CRITICAL FIX: Check ALL main-thread-only operations, not just deferred packets!
             // Safe resurrection uses atomic flag (_pendingSafeResurrection), not deferred queue
             // Pending loot uses mutex-protected queue (_pendingLootTargets)
             // Pending object use uses mutex-protected queue (_pendingObjectUseTargets)
+            // LFG proposal accepts use mutex-protected queue (_pendingLfgProposalAccepts)
+            bool hasLfgPending = session && session->HasPendingLfgProposalAccepts();
+            if (hasLfgPending)
+            {
+                ++lfgPendingCount;
+                TC_LOG_DEBUG("module.playerbot.lfg",
+                    "ProcessAllDeferredPackets: Bot {} has pending LFG proposal accepts",
+                    session->GetPlayerName());
+            }
+
             if (session && (session->HasDeferredPackets() ||
                            session->HasPendingFacing() ||
                            session->HasPendingStopMovement() ||
                            session->HasPendingSafeResurrection() ||
                            session->HasPendingLoot() ||
-                           session->HasPendingObjectUse()))
+                           session->HasPendingObjectUse() ||
+                           hasLfgPending))
             {
                 sessionsToProcess.push_back(session);
             }
+        }
+
+        // Log summary of LFG pending accepts
+        if (lfgPendingCount > 0)
+        {
+            TC_LOG_INFO("module.playerbot.lfg",
+                "ProcessAllDeferredPackets: Found {} bot sessions with pending LFG proposal accepts",
+                lfgPendingCount);
         }
     } // Release mutex before processing
 

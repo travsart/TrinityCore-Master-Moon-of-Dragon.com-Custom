@@ -563,75 +563,78 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
     if (packet->GetOpcode() == SMSG_LFG_PROPOSAL_UPDATE)
     {
         Player* bot = GetPlayer();
-        if (bot)
+        if (!bot)
         {
-            try
+            TC_LOG_ERROR("module.playerbot.lfg", "❌ BotSession: Received SMSG_LFG_PROPOSAL_UPDATE but GetPlayer() is NULL!");
+            return;
+        }
+
+        try
+        {
+            // Clone the packet data for reading (packet is const)
+            WorldPacket packetCopy(*packet);
+            packetCopy.rpos(0);
+
+            // Parse the packet structure:
+            // 1. RideTicket (RequesterGuid + Id + Type + Time + IsCrossFaction)
+            // 2. uint64 InstanceID
+            // 3. uint32 ProposalID
+
+            // Read RideTicket
+            WorldPackets::LFG::RideTicket ticket;
+            packetCopy >> ticket;
+
+            // Read InstanceID
+            uint64 instanceId;
+            packetCopy >> instanceId;
+
+            // Read ProposalID
+            uint32 proposalId;
+            packetCopy >> proposalId;
+
+            // INFINITE LOOP FIX: Check if we've already auto-accepted this proposal
+            bool shouldAccept = false;
             {
-                // Clone the packet data for reading (packet is const)
-                WorldPacket packetCopy(*packet);
-                packetCopy.rpos(0);
-
-                // Parse the packet structure:
-                // 1. RideTicket (RequesterGuid + Id + Type + Time + IsCrossFaction)
-                // 2. uint64 InstanceID
-                // 3. uint32 ProposalID
-
-                // Read RideTicket
-                WorldPackets::LFG::RideTicket ticket;
-                packetCopy >> ticket;
-
-                // Read InstanceID
-                uint64 instanceId;
-                packetCopy >> instanceId;
-
-                // Read ProposalID
-                uint32 proposalId;
-                packetCopy >> proposalId;
-
-                // INFINITE LOOP FIX: Check if we've already auto-accepted this proposal
-                bool shouldAccept = false;
+                std::lock_guard<std::mutex> lock(_lfgProposalMutex);
+                if (_autoAcceptedProposals.count(proposalId) == 0)
                 {
-                    std::lock_guard<std::mutex> lock(_lfgProposalMutex);
-                    if (_autoAcceptedProposals.count(proposalId) == 0)
-                    {
-                        // First time seeing this proposal - mark it and accept
-                        _autoAcceptedProposals.insert(proposalId);
-                        shouldAccept = true;
+                    // First time seeing this proposal - mark it and accept
+                    _autoAcceptedProposals.insert(proposalId);
+                    shouldAccept = true;
 
-                        // Cleanup: Limit set size to prevent memory growth (keep last 10 proposals)
-                        if (_autoAcceptedProposals.size() > 10)
-                        {
-                            _autoAcceptedProposals.clear();
-                            _autoAcceptedProposals.insert(proposalId);
-                        }
+                    // Cleanup: Limit set size to prevent memory growth (keep last 10 proposals)
+                    if (_autoAcceptedProposals.size() > 10)
+                    {
+                        _autoAcceptedProposals.clear();
+                        _autoAcceptedProposals.insert(proposalId);
                     }
                 }
-
-                if (shouldAccept)
-                {
-                    TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Queuing LFG proposal {} accept for bot {} (deferred to main thread)",
-                                proposalId, bot->GetName());
-
-                    // RE-ENTRANT CRASH FIX: Do NOT call UpdateProposal() here!
-                    // We are inside LFGMgr::UpdateProposal() iteration when this packet is sent.
-                    // Calling UpdateProposal() again would invalidate the iterator and crash.
-                    // Instead, queue the accept to be processed on main thread later.
-                    QueueLfgProposalAccept(proposalId);
-
-                    TC_LOG_INFO("module.playerbot.lfg", "✅ BotSession: Queued LFG proposal {} for bot {} (will accept on main thread)",
-                                proposalId, bot->GetName());
-                }
-                else
-                {
-                    TC_LOG_DEBUG("module.playerbot.lfg", "BotSession: Skipping already-processed LFG proposal {} for bot {}",
-                                proposalId, bot->GetName());
-                }
             }
-            catch (ByteBufferPositionException const& ex)
+
+            if (shouldAccept)
             {
-                TC_LOG_ERROR("module.playerbot.lfg", "❌ BotSession: Failed to parse LFG proposal packet for bot {}: {}",
-                             bot->GetName(), ex.what());
+                TC_LOG_INFO("module.playerbot.lfg", "🎮 BotSession: Queuing LFG proposal {} accept for bot {} (deferred to main thread)",
+                            proposalId, bot->GetName());
+
+                // RE-ENTRANT CRASH FIX: Do NOT call UpdateProposal() here!
+                // We are inside LFGMgr::UpdateProposal() iteration when this packet is sent.
+                // Calling UpdateProposal() again would invalidate the iterator and crash.
+                // Instead, queue the accept to be processed on main thread later.
+                QueueLfgProposalAccept(proposalId);
+
+                TC_LOG_INFO("module.playerbot.lfg", "✅ BotSession: Queued LFG proposal {} for bot {} (will accept on main thread)",
+                            proposalId, bot->GetName());
             }
+            else
+            {
+                TC_LOG_DEBUG("module.playerbot.lfg", "BotSession: Skipping already-processed LFG proposal {} for bot {}",
+                            proposalId, bot->GetName());
+            }
+        }
+        catch (ByteBufferPositionException const& ex)
+        {
+            TC_LOG_ERROR("module.playerbot.lfg", "❌ BotSession: Failed to parse LFG proposal packet for bot {}: {}",
+                         bot->GetName(), ex.what());
         }
     }
 
@@ -2841,15 +2844,28 @@ bool BotSession::ProcessPendingLfgProposalAccepts()
     if (!bot)
     {
         TC_LOG_ERROR("module.playerbot.lfg",
-                     "ProcessPendingLfgProposalAccepts: Bot player is nullptr");
+                     "ProcessPendingLfgProposalAccepts: Bot player is nullptr, re-queuing {} proposals",
+                     proposalsToAccept.size());
+        // Re-queue proposals for next attempt
+        {
+            std::lock_guard<std::mutex> lock(_pendingLfgAcceptsMutex);
+            for (uint32 proposalId : proposalsToAccept)
+                _pendingLfgProposalAccepts.push_back(proposalId);
+        }
         return false;
     }
 
     if (!bot->IsInWorld())
     {
         TC_LOG_DEBUG("module.playerbot.lfg",
-                    "ProcessPendingLfgProposalAccepts: Bot {} not in world, skipping {} proposals",
+                    "ProcessPendingLfgProposalAccepts: Bot {} not in world, re-queuing {} proposals",
                     bot->GetName(), proposalsToAccept.size());
+        // Re-queue proposals for next attempt instead of discarding
+        {
+            std::lock_guard<std::mutex> lock(_pendingLfgAcceptsMutex);
+            for (uint32 proposalId : proposalsToAccept)
+                _pendingLfgProposalAccepts.push_back(proposalId);
+        }
         return false;
     }
 
@@ -2860,17 +2876,25 @@ bool BotSession::ProcessPendingLfgProposalAccepts()
     bool acceptedAny = false;
     for (uint32 proposalId : proposalsToAccept)
     {
+        // Pre-validation: Check if proposal still exists and bot is in it
+        // UpdateProposal() silently returns if these conditions aren't met
+        lfg::LfgState currentState = sLFGMgr->GetState(bot->GetGUID());
+
         TC_LOG_INFO("module.playerbot.lfg",
-                    "ProcessPendingLfgProposalAccepts: Bot {} accepting proposal {} (SAFE - main thread)",
-                    bot->GetName(), proposalId);
+                    "ProcessPendingLfgProposalAccepts: Bot {} ({}) accepting proposal {} - LFG state: {}",
+                    bot->GetName(), bot->GetGUID().ToString(), proposalId, static_cast<uint32>(currentState));
 
         // SAFE: Now on main thread, outside of LFGMgr iteration
         sLFGMgr->UpdateProposal(proposalId, bot->GetGUID(), true);
-        acceptedAny = true;
+
+        // Post-validation: Check state after accept
+        lfg::LfgState newState = sLFGMgr->GetState(bot->GetGUID());
 
         TC_LOG_INFO("module.playerbot.lfg",
-                    "ProcessPendingLfgProposalAccepts: Bot {} accepted proposal {}",
-                    bot->GetName(), proposalId);
+                    "ProcessPendingLfgProposalAccepts: Bot {} called UpdateProposal - state changed: {} -> {}",
+                    bot->GetName(), static_cast<uint32>(currentState), static_cast<uint32>(newState));
+
+        acceptedAny = true;
     }
 
     return acceptedAny;
