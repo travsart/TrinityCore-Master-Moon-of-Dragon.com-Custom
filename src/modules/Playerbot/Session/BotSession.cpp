@@ -2987,6 +2987,37 @@ bool BotSession::ProcessPendingLfgProposalAccepts()
             // failing because bot's IsInWorld() was false during iteration), manually trigger teleport
             if (bot->IsInWorld() && isLfgGroup)
             {
+                // COMPREHENSIVE DIAGNOSTICS: Check all LFGMgr::TeleportPlayer conditions
+                uint32 dungeonId = sLFGMgr->GetDungeon(group->GetGUID());
+                uint32 dungeonMapId = sLFGMgr->GetDungeonMapId(group->GetGUID());
+
+                TC_LOG_INFO("module.playerbot.lfg",
+                    "🔧 ProcessPendingLfgProposalAccepts: TELEPORT PRE-CHECK for bot {}:\n"
+                    "   - GroupGUID: {}\n"
+                    "   - isLFGGroup: {}\n"
+                    "   - DungeonId: {}\n"
+                    "   - DungeonMapId: {}\n"
+                    "   - Bot conditions: IsAlive={}, IsFalling={}, IsJumping={}, InVehicle={}, IsCharmed={}\n"
+                    "   - Bot MapId: {}, Session: {}",
+                    bot->GetName(),
+                    group->GetGUID().ToString(),
+                    group->isLFGGroup(),
+                    dungeonId,
+                    dungeonMapId,
+                    bot->IsAlive(),
+                    bot->IsFalling(),
+                    bot->HasUnitState(UNIT_STATE_JUMPING),
+                    bot->GetVehicle() != nullptr,
+                    !bot->GetCharmedGUID().IsEmpty(),
+                    bot->GetMapId(),
+                    bot->GetSession() ? "VALID" : "NULL");
+
+                if (dungeonId == 0)
+                {
+                    TC_LOG_ERROR("module.playerbot.lfg",
+                        "❌ TELEPORT WILL FAIL: DungeonId is 0. LFGMgr::TeleportPlayer requires valid dungeon.");
+                }
+
                 TC_LOG_INFO("module.playerbot.lfg",
                             "🔧 ProcessPendingLfgProposalAccepts: Manually triggering TeleportPlayer for bot {}",
                             bot->GetName());
@@ -3004,6 +3035,58 @@ bool BotSession::ProcessPendingLfgProposalAccepts()
                     TC_LOG_ERROR("module.playerbot.lfg",
                                 "❌ ProcessPendingLfgProposalAccepts: Manual TeleportPlayer FAILED for bot {} - TeleportPlayer returned but teleport state not set",
                                 bot->GetName());
+
+                    // FALLBACK: Query database for dungeon entrance and do direct teleport
+                    if (dungeonId != 0)
+                    {
+                        TC_LOG_INFO("module.playerbot.lfg",
+                            "🔧 Attempting FALLBACK: Query lfg_dungeon_template for dungeon {} entrance",
+                            dungeonId);
+
+                        QueryResult result = WorldDatabase.PQuery(
+                            "SELECT position_x, position_y, position_z, orientation FROM lfg_dungeon_template WHERE dungeonId = {}",
+                            dungeonId);
+
+                        if (result)
+                        {
+                            Field* fields = result->Fetch();
+                            float x = fields[0].GetFloat();
+                            float y = fields[1].GetFloat();
+                            float z = fields[2].GetFloat();
+                            float o = fields[3].GetFloat();
+
+                            TC_LOG_INFO("module.playerbot.lfg",
+                                "🔧 Attempting FALLBACK: Direct TeleportTo for bot {} to Map {} ({:.1f}, {:.1f}, {:.1f})",
+                                bot->GetName(), dungeonMapId, x, y, z);
+
+                            // Store entry point before teleport
+                            if (!bot->GetMap()->IsDungeon())
+                                bot->SetBattlegroundEntryPoint();
+
+                            bool teleportResult = bot->TeleportTo(
+                                { .Location = WorldLocation(dungeonMapId, x, y, z, o),
+                                  .LfgDungeonsId = dungeonId });
+
+                            if (teleportResult)
+                            {
+                                TC_LOG_INFO("module.playerbot.lfg",
+                                    "✅ FALLBACK TeleportTo succeeded for bot {}",
+                                    bot->GetName());
+                            }
+                            else
+                            {
+                                TC_LOG_ERROR("module.playerbot.lfg",
+                                    "❌ FALLBACK TeleportTo ALSO FAILED for bot {}",
+                                    bot->GetName());
+                            }
+                        }
+                        else
+                        {
+                            TC_LOG_ERROR("module.playerbot.lfg",
+                                "❌ FALLBACK: No entrance data found for dungeon {} in lfg_dungeon_template",
+                                dungeonId);
+                        }
+                    }
                 }
             }
         }
