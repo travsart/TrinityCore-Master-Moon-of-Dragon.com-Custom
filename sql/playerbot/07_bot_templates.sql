@@ -25,6 +25,9 @@
 --
 -- ============================================================================
 
+-- Disable foreign key checks to allow dropping tables in any order
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- ============================================================================
 -- TABLE: playerbot_spec_info
 -- ============================================================================
@@ -575,7 +578,8 @@ INSERT INTO `playerbot_template_config` (`config_key`, `config_value`, `descript
 -- ============================================================================
 
 -- Complete template view with spec info
-CREATE OR REPLACE VIEW `v_template_details` AS
+DROP VIEW IF EXISTS `v_template_details`;
+CREATE VIEW `v_template_details` AS
 SELECT
     t.`template_id`,
     t.`template_name`,
@@ -597,7 +601,8 @@ JOIN `playerbot_spec_info` s ON t.`spec_id` = s.`spec_id`
 LEFT JOIN `playerbot_template_statistics` ts ON t.`template_id` = ts.`template_id`;
 
 -- Templates by role view
-CREATE OR REPLACE VIEW `v_templates_by_role` AS
+DROP VIEW IF EXISTS `v_templates_by_role`;
+CREATE VIEW `v_templates_by_role` AS
 SELECT
     s.`role`,
     COUNT(*) as `template_count`,
@@ -608,7 +613,8 @@ JOIN `playerbot_spec_info` s ON t.`spec_id` = s.`spec_id`
 GROUP BY s.`role`;
 
 -- Gear sets overview
-CREATE OR REPLACE VIEW `v_gear_sets_overview` AS
+DROP VIEW IF EXISTS `v_gear_sets_overview`;
+CREATE VIEW `v_gear_sets_overview` AS
 SELECT
     t.`template_name`,
     gs.`target_ilvl`,
@@ -719,6 +725,9 @@ BEGIN
 END //
 
 DELIMITER ;
+
+-- Re-enable foreign key checks
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================================
 -- DONE

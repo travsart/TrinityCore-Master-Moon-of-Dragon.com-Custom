@@ -20,6 +20,9 @@
 --
 -- ============================================================================
 
+-- Disable foreign key checks to allow dropping tables in any order
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- ============================================================================
 -- TABLE: playerbot_instance_pool
 -- ============================================================================
@@ -235,31 +238,59 @@ INSERT INTO `playerbot_pool_config` (`config_key`, `config_value`, `description`
 ('log_reservations', '1', 'Log reservation operations');
 
 -- ============================================================================
--- TABLE: playerbot_content_requirements
+-- TABLE: playerbot_content_requirements (OVERRIDE TABLE)
 -- ============================================================================
--- Content-specific requirements for dungeons, raids, battlegrounds, arenas.
--- Defines how many bots of each role are needed for each content type.
+--
+-- PURPOSE: Custom overrides for content requirements
+--
+-- IMPORTANT: This table is an OVERRIDE mechanism, NOT the primary data source!
+--
+-- Data Loading Order:
+--   1. PRIMARY: DB2 files are loaded first (LFGDungeons.db2, etc.)
+--      - Dungeons: Loaded from LFGDungeons.db2 (TypeID=1)
+--      - Raids: Loaded from LFGDungeons.db2 (TypeID=2)
+--      - Battlegrounds: Loaded from BattlemasterList.db2
+--      - Arenas: Hardcoded defaults
+--
+--   2. OVERRIDE: This table is loaded second and REPLACES any matching entries
+--      - Entries here will override the DB2 defaults
+--      - Use this to customize specific dungeons/raids/BGs
+--
+-- RECOMMENDATION: Leave this table EMPTY unless you need to customize specific
+-- content. The DB2 data provides correct values for all standard content.
+--
+-- Example use cases for adding entries:
+--   - Override recommended gear score for a specific dungeon
+--   - Adjust role counts (e.g., need 3 tanks for a specific raid boss)
+--   - Change level requirements for custom server configurations
+--
+-- See: ContentRequirementDatabase::Initialize() in ContentRequirements.cpp
 -- ============================================================================
 
 DROP TABLE IF EXISTS `playerbot_content_requirements`;
 CREATE TABLE `playerbot_content_requirements` (
     `content_id` INT UNSIGNED NOT NULL COMMENT 'Dungeon/Raid/BG/Arena ID',
-    `content_type` ENUM('DUNGEON', 'RAID', 'BATTLEGROUND', 'ARENA') NOT NULL COMMENT 'Type of content',
     `content_name` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'Human-readable name',
+    `instance_type` TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Type: 0=Dungeon, 1=Raid, 2=Battleground, 3=Arena',
+    `difficulty` TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Difficulty (0=Normal, 1=Heroic, 2=Mythic, etc.)',
 
     -- Player Requirements
     `min_players` INT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Minimum players',
     `max_players` INT UNSIGNED NOT NULL DEFAULT 5 COMMENT 'Maximum players',
     `min_level` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Minimum level',
     `max_level` TINYINT UNSIGNED NOT NULL DEFAULT 80 COMMENT 'Maximum level',
+    `recommended_level` TINYINT UNSIGNED NOT NULL DEFAULT 80 COMMENT 'Recommended level',
 
     -- Role Requirements
     `min_tanks` INT UNSIGNED NOT NULL DEFAULT 1,
     `max_tanks` INT UNSIGNED NOT NULL DEFAULT 1,
+    `recommended_tanks` INT UNSIGNED NOT NULL DEFAULT 1,
     `min_healers` INT UNSIGNED NOT NULL DEFAULT 1,
     `max_healers` INT UNSIGNED NOT NULL DEFAULT 1,
+    `recommended_healers` INT UNSIGNED NOT NULL DEFAULT 1,
     `min_dps` INT UNSIGNED NOT NULL DEFAULT 3,
     `max_dps` INT UNSIGNED NOT NULL DEFAULT 3,
+    `recommended_dps` INT UNSIGNED NOT NULL DEFAULT 3,
 
     -- Gear Requirements
     `min_gear_score` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -272,58 +303,31 @@ CREATE TABLE `playerbot_content_requirements` (
     -- Timing
     `estimated_duration_minutes` INT UNSIGNED NOT NULL DEFAULT 30 COMMENT 'Expected duration',
 
-    PRIMARY KEY (`content_id`, `content_type`),
-    INDEX `idx_content_type` (`content_type`),
+    PRIMARY KEY (`content_id`, `instance_type`, `difficulty`),
+    INDEX `idx_instance_type` (`instance_type`),
     INDEX `idx_level_range` (`min_level`, `max_level`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Instance Bot Pool - Content requirements for dungeons/raids/BGs';
+COMMENT='Override table for content requirements - see header comment';
 
--- Insert some default content requirements
-
--- Dungeons (5-man)
-INSERT INTO `playerbot_content_requirements`
-    (`content_id`, `content_type`, `content_name`, `min_players`, `max_players`, `min_level`, `max_level`,
-     `min_tanks`, `max_tanks`, `min_healers`, `max_healers`, `min_dps`, `max_dps`,
-     `min_gear_score`, `recommended_gear_score`, `estimated_duration_minutes`) VALUES
--- TWW Dungeons
-(2773, 'DUNGEON', 'Ara-Kara, City of Echoes', 1, 5, 70, 80, 1, 1, 1, 1, 3, 3, 400, 450, 30),
-(2779, 'DUNGEON', 'Cinderbrew Meadery', 1, 5, 70, 80, 1, 1, 1, 1, 3, 3, 400, 450, 30),
-(2786, 'DUNGEON', 'The Rookery', 1, 5, 70, 80, 1, 1, 1, 1, 3, 3, 400, 450, 30),
-(2789, 'DUNGEON', 'Priory of the Sacred Flame', 1, 5, 70, 80, 1, 1, 1, 1, 3, 3, 400, 450, 30),
-(2790, 'DUNGEON', 'The Stonevault', 1, 5, 70, 80, 1, 1, 1, 1, 3, 3, 400, 450, 30),
-(2793, 'DUNGEON', 'Darkflame Cleft', 1, 5, 70, 80, 1, 1, 1, 1, 3, 3, 400, 450, 30),
-(2796, 'DUNGEON', 'City of Threads', 1, 5, 70, 80, 1, 1, 1, 1, 3, 3, 400, 450, 30),
-(2799, 'DUNGEON', 'The Dawnbreaker', 1, 5, 70, 80, 1, 1, 1, 1, 3, 3, 400, 450, 30);
-
--- Raids
-INSERT INTO `playerbot_content_requirements`
-    (`content_id`, `content_type`, `content_name`, `min_players`, `max_players`, `min_level`, `max_level`,
-     `min_tanks`, `max_tanks`, `min_healers`, `max_healers`, `min_dps`, `max_dps`,
-     `min_gear_score`, `recommended_gear_score`, `estimated_duration_minutes`) VALUES
--- TWW Raid
-(2769, 'RAID', 'Nerub-ar Palace (Normal)', 1, 20, 80, 80, 2, 2, 4, 5, 13, 14, 480, 510, 180),
-(2769, 'RAID', 'Nerub-ar Palace (Heroic)', 1, 20, 80, 80, 2, 3, 5, 6, 12, 13, 510, 540, 240);
-
--- Battlegrounds
-INSERT INTO `playerbot_content_requirements`
-    (`content_id`, `content_type`, `content_name`, `min_players`, `max_players`, `min_level`, `max_level`,
-     `min_tanks`, `max_tanks`, `min_healers`, `max_healers`, `min_dps`, `max_dps`,
-     `requires_both_factions`, `players_per_faction`, `estimated_duration_minutes`) VALUES
-(2, 'BATTLEGROUND', 'Warsong Gulch', 10, 10, 10, 80, 1, 2, 2, 3, 5, 7, 1, 10, 20),
-(3, 'BATTLEGROUND', 'Arathi Basin', 15, 15, 10, 80, 1, 3, 3, 4, 8, 11, 1, 15, 25),
-(7, 'BATTLEGROUND', 'Eye of the Storm', 15, 15, 35, 80, 1, 3, 3, 4, 8, 11, 1, 15, 20),
-(9, 'BATTLEGROUND', 'Strand of the Ancients', 15, 15, 65, 80, 2, 3, 3, 4, 8, 10, 1, 15, 20),
-(30, 'BATTLEGROUND', 'Alterac Valley', 40, 40, 45, 80, 4, 6, 8, 10, 24, 28, 1, 40, 40),
-(32, 'BATTLEGROUND', 'Isle of Conquest', 40, 40, 75, 80, 4, 6, 8, 10, 24, 28, 1, 40, 30);
-
--- Arenas
-INSERT INTO `playerbot_content_requirements`
-    (`content_id`, `content_type`, `content_name`, `min_players`, `max_players`, `min_level`, `max_level`,
-     `min_tanks`, `max_tanks`, `min_healers`, `max_healers`, `min_dps`, `max_dps`,
-     `requires_both_factions`, `players_per_faction`, `estimated_duration_minutes`) VALUES
-(1, 'ARENA', '2v2 Arena', 2, 2, 70, 80, 0, 1, 0, 1, 1, 2, 1, 2, 10),
-(2, 'ARENA', '3v3 Arena', 3, 3, 70, 80, 0, 1, 1, 1, 1, 2, 1, 3, 10),
-(3, 'ARENA', '5v5 Arena', 5, 5, 70, 80, 0, 1, 1, 2, 2, 4, 1, 5, 15);
+-- ============================================================================
+-- NO DEFAULT DATA - This table is intentionally empty!
+-- ============================================================================
+-- Primary data comes from DB2 files. Only add entries here to OVERRIDE defaults.
+--
+-- EXAMPLE: To override Nerub-ar Palace to require 3 tanks instead of 2:
+--
+-- INSERT INTO `playerbot_content_requirements`
+--     (`content_id`, `content_name`, `instance_type`, `difficulty`,
+--      `min_players`, `max_players`, `min_level`, `max_level`, `recommended_level`,
+--      `min_tanks`, `max_tanks`, `recommended_tanks`,
+--      `min_healers`, `max_healers`, `recommended_healers`,
+--      `min_dps`, `max_dps`, `recommended_dps`,
+--      `min_gear_score`, `recommended_gear_score`, `estimated_duration_minutes`) VALUES
+-- (2769, 'Nerub-ar Palace (Mythic)', 1, 2, 1, 20, 80, 80, 80, 3, 3, 3, 5, 6, 5, 11, 12, 12, 540, 570, 300);
+--
+-- instance_type values: 0=Dungeon, 1=Raid, 2=Battleground, 3=Arena
+-- difficulty values: 0=Normal, 1=Heroic, 2=Mythic, etc.
+-- ============================================================================
 
 -- ============================================================================
 -- CLEANUP PROCEDURES
@@ -350,52 +354,97 @@ DELIMITER ;
 -- ============================================================================
 
 -- Current pool status view
-CREATE OR REPLACE VIEW `v_pool_status` AS
+DROP VIEW IF EXISTS `v_pool_status`;
+CREATE VIEW `v_pool_status` AS
 SELECT
     `slot_state`,
     COUNT(*) as `count`,
     ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM `playerbot_instance_pool`), 2) as `percentage`
 FROM `playerbot_instance_pool`
-GROUP BY `slot_state`
-ORDER BY FIELD(`slot_state`, 'READY', 'ASSIGNED', 'RESERVED', 'COOLDOWN', 'WARMING', 'CREATING', 'MAINTENANCE', 'EMPTY');
+GROUP BY `slot_state`;
 
 -- Role distribution view
-CREATE OR REPLACE VIEW `v_pool_roles` AS
+DROP VIEW IF EXISTS `v_pool_roles`;
+CREATE VIEW `v_pool_roles` AS
 SELECT
     `faction`,
     `role`,
     `slot_state`,
     COUNT(*) as `count`
 FROM `playerbot_instance_pool`
-GROUP BY `faction`, `role`, `slot_state`
-ORDER BY `faction`, `role`, `slot_state`;
+GROUP BY `faction`, `role`, `slot_state`;
 
--- Recent assignments view
-CREATE OR REPLACE VIEW `v_recent_assignments` AS
-SELECT
-    `instance_type`,
-    `content_id`,
-    `bot_role`,
-    `completion_status`,
-    `duration_seconds`,
-    `assigned_at`,
-    `released_at`
-FROM `playerbot_pool_assignments`
-ORDER BY `assigned_at` DESC
-LIMIT 100;
+-- Recent assignments (use stored procedure instead - LIMIT not allowed in views)
+DROP VIEW IF EXISTS `v_recent_assignments`;
+DROP PROCEDURE IF EXISTS `GetRecentAssignments`;
+DELIMITER //
+CREATE PROCEDURE `GetRecentAssignments`(IN p_limit INT)
+BEGIN
+    IF p_limit IS NULL OR p_limit <= 0 THEN
+        SET p_limit = 100;
+    END IF;
+
+    SET @sql = CONCAT(
+        'SELECT `instance_type`, `content_id`, `bot_role`, `completion_status`, ',
+        '`duration_seconds`, `assigned_at`, `released_at` ',
+        'FROM `playerbot_pool_assignments` ',
+        'ORDER BY `assigned_at` DESC LIMIT ', p_limit
+    );
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END //
+DELIMITER ;
 
 -- ============================================================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================================================
 
--- Ensure efficient queries for common access patterns
-CREATE INDEX IF NOT EXISTS `idx_pool_ready_faction_role`
-    ON `playerbot_instance_pool`(`slot_state`, `faction`, `role`)
-    COMMENT 'Fast lookup of ready bots by faction and role';
+-- Helper procedure to add index if not exists (MySQL-compatible)
+DROP PROCEDURE IF EXISTS `pb_add_index_if_not_exists`;
+DELIMITER //
+CREATE PROCEDURE `pb_add_index_if_not_exists`(
+    IN p_table VARCHAR(64),
+    IN p_index VARCHAR(64),
+    IN p_columns VARCHAR(255)
+)
+BEGIN
+    DECLARE index_exists INT DEFAULT 0;
 
-CREATE INDEX IF NOT EXISTS `idx_assignments_recent`
-    ON `playerbot_pool_assignments`(`assigned_at` DESC)
-    COMMENT 'Fast recent assignments query';
+    SELECT COUNT(*) INTO index_exists
+    FROM `information_schema`.`STATISTICS`
+    WHERE `TABLE_SCHEMA` = DATABASE()
+      AND `TABLE_NAME` = p_table
+      AND `INDEX_NAME` = p_index;
+
+    IF index_exists = 0 THEN
+        SET @sql = CONCAT('CREATE INDEX `', p_index, '` ON `', p_table, '`(', p_columns, ')');
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END //
+DELIMITER ;
+
+-- Fast lookup of ready bots by faction and role
+CALL `pb_add_index_if_not_exists`(
+    'playerbot_instance_pool',
+    'idx_pool_ready_faction_role',
+    '`slot_state`, `faction`, `role`'
+);
+
+-- Fast recent assignments query
+CALL `pb_add_index_if_not_exists`(
+    'playerbot_pool_assignments',
+    'idx_assignments_recent',
+    '`assigned_at`'
+);
+
+-- Clean up helper procedure
+DROP PROCEDURE IF EXISTS `pb_add_index_if_not_exists`;
+
+-- Re-enable foreign key checks
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================================
 -- DONE

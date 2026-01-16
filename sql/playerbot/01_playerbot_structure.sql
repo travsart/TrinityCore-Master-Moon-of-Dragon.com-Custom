@@ -239,8 +239,36 @@ DELIMITER ;
 -- Indexes for Performance
 -- --------------------------------------------------------
 
-CREATE INDEX IF NOT EXISTS idx_playerbots_names_gender ON playerbots_names(gender);
-CREATE INDEX IF NOT EXISTS idx_playerbots_names_name_gender ON playerbots_names(name, gender);
+-- Helper procedure to add index if not exists (MySQL-compatible)
+DROP PROCEDURE IF EXISTS `pb_safe_add_index`;
+DELIMITER //
+CREATE PROCEDURE `pb_safe_add_index`(
+    IN p_table VARCHAR(64),
+    IN p_index VARCHAR(64),
+    IN p_columns VARCHAR(255)
+)
+BEGIN
+    DECLARE index_exists INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO index_exists
+    FROM `information_schema`.`STATISTICS`
+    WHERE `TABLE_SCHEMA` = DATABASE()
+      AND `TABLE_NAME` = p_table
+      AND `INDEX_NAME` = p_index;
+
+    IF index_exists = 0 THEN
+        SET @sql = CONCAT('CREATE INDEX `', p_index, '` ON `', p_table, '`(', p_columns, ')');
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END //
+DELIMITER ;
+
+CALL `pb_safe_add_index`('playerbots_names', 'idx_playerbots_names_gender', 'gender');
+CALL `pb_safe_add_index`('playerbots_names', 'idx_playerbots_names_name_gender', 'name, gender');
+
+DROP PROCEDURE IF EXISTS `pb_safe_add_index`;
 
 -- --------------------------------------------------------
 -- Views for Statistics and Monitoring
@@ -248,8 +276,9 @@ CREATE INDEX IF NOT EXISTS idx_playerbots_names_name_gender ON playerbots_names(
 
 -- View: v_available_names
 -- Purpose: Show available names by gender
-CREATE OR REPLACE VIEW v_available_names AS
-SELECT 
+DROP VIEW IF EXISTS v_available_names;
+CREATE VIEW v_available_names AS
+SELECT
     pn.name_id,
     pn.name,
     pn.gender,
@@ -259,23 +288,25 @@ LEFT JOIN playerbots_names_used pnu ON pn.name_id = pnu.name_id;
 
 -- View: v_name_usage_stats
 -- Purpose: Name usage statistics
-CREATE OR REPLACE VIEW v_name_usage_stats AS
-SELECT 
+DROP VIEW IF EXISTS v_name_usage_stats;
+CREATE VIEW v_name_usage_stats AS
+SELECT
     (SELECT COUNT(*) FROM playerbots_names) AS total_names,
     (SELECT COUNT(*) FROM playerbots_names WHERE gender = 0) AS total_male_names,
     (SELECT COUNT(*) FROM playerbots_names WHERE gender = 1) AS total_female_names,
     (SELECT COUNT(*) FROM playerbots_names_used) AS used_names,
-    (SELECT COUNT(*) FROM playerbots_names pn 
-     LEFT JOIN playerbots_names_used pnu ON pn.name_id = pnu.name_id 
+    (SELECT COUNT(*) FROM playerbots_names pn
+     LEFT JOIN playerbots_names_used pnu ON pn.name_id = pnu.name_id
      WHERE pnu.name_id IS NULL AND pn.gender = 0) AS available_male_names,
-    (SELECT COUNT(*) FROM playerbots_names pn 
-     LEFT JOIN playerbots_names_used pnu ON pn.name_id = pnu.name_id 
+    (SELECT COUNT(*) FROM playerbots_names pn
+     LEFT JOIN playerbots_names_used pnu ON pn.name_id = pnu.name_id
      WHERE pnu.name_id IS NULL AND pn.gender = 1) AS available_female_names;
 
 -- View: v_bot_account_stats
 -- Purpose: Bot account statistics
-CREATE OR REPLACE VIEW v_bot_account_stats AS
-SELECT 
+DROP VIEW IF EXISTS v_bot_account_stats;
+CREATE VIEW v_bot_account_stats AS
+SELECT
     COUNT(*) AS total_accounts,
     SUM(is_active) AS active_accounts,
     SUM(character_count) AS total_characters,
@@ -287,15 +318,15 @@ WHERE is_bot = 1;
 
 -- View: v_bot_character_distribution
 -- Purpose: Show distribution of bot characters by race and class
-CREATE OR REPLACE VIEW v_bot_character_distribution AS
-SELECT 
+DROP VIEW IF EXISTS v_bot_character_distribution;
+CREATE VIEW v_bot_character_distribution AS
+SELECT
     race,
     class,
     COUNT(*) as count,
     AVG(level) as avg_level
 FROM playerbot_characters
-GROUP BY race, class
-ORDER BY count DESC;
+GROUP BY race, class;
 
 -- --------------------------------------------------------
 -- Stored Procedures for Name Management

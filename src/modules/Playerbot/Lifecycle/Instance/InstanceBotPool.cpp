@@ -109,31 +109,33 @@ void InstanceBotPool::Shutdown()
 
     _shuttingDown.store(true);
 
-    // Save to database if configured
+    // ========================================================================
+    // WARM POOL PERSISTENCE (2026-01-16)
+    //
+    // CRITICAL CHANGE: Warm pool bots are NO LONGER deleted on shutdown!
+    //
+    // Old behavior: Delete ALL pool bot characters from database
+    // New behavior: Persist warm pool bots to database for reuse on next startup
+    //
+    // - Warm Pool Bots: PERSIST in database, restored at next startup
+    // - JIT Bots: Deleted on shutdown by JITBotFactory (separate system)
+    //
+    // This fixes the issue where 800 bots were being recreated on every restart.
+    // ========================================================================
+
+    // Save warm pool state to database for persistence across restarts
     if (_config.behavior.persistToDatabase)
     {
         SyncToDatabase();
+        TC_LOG_INFO("playerbot.pool", "Warm pool bot state saved to database ({} bots)", _slots.size());
     }
 
-    // Delete all pool bot characters from database to prevent orphaned records
-    // Pool bots are created fresh each startup, so we must clean them up on shutdown
-    {
-        std::shared_lock lock(_slotsMutex);
-        uint32 deletedCount = 0;
-
-        TC_LOG_INFO("playerbot.pool", "Deleting {} pool bot characters from database...", _slots.size());
-
-        for (auto const& [guid, slot] : _slots)
-        {
-            // Use TrinityCore's proper character deletion to clean up all related tables
-            // deleteFinally=true ensures immediate deletion without respecting CharDelete.KeepDays
-            // updateRealmChars=false since these are bot accounts
-            Player::DeleteFromDB(guid, slot.accountId, false /* updateRealmChars */, true /* deleteFinally */);
-            ++deletedCount;
-        }
-
-        TC_LOG_INFO("playerbot.pool", "Deleted {} pool bot characters", deletedCount);
-    }
+    // DO NOT delete warm pool bot characters!
+    // They persist in the database and will be loaded at next startup.
+    // This prevents the 800-bot recreation on every server restart.
+    //
+    // Note: JIT bots are deleted separately by JITBotFactory::Shutdown()
+    TC_LOG_INFO("playerbot.pool", "Warm pool bots preserved in database for next startup ({} bots)", _slots.size());
 
     // Clear all slots
     {
@@ -176,9 +178,16 @@ void InstanceBotPool::Update(uint32 diff)
     // Deferred warmup - runs once after world is fully loaded
     // This ensures async database threads are operational before we create bots
     //
-    // IMPORTANT: We use INCREMENTAL warmup to prevent freeze detector!
-    // Creating 800 bots synchronously would block the world thread for 60+ seconds.
-    // Instead, we create WARMUP_BOTS_PER_TICK bots per Update() tick.
+    // ========================================================================
+    // WARM POOL RECONCILIATION (2026-01-16)
+    //
+    // Instead of always creating fresh bots, we now:
+    // 1. Check how many bots were loaded from database (LoadFromDatabase)
+    // 2. Calculate the shortage per bracket/faction/role
+    // 3. Only create missing bots to reach target distribution
+    //
+    // This prevents the 800-bot recreation on every server restart.
+    // ========================================================================
     if (_warmupPending.load())
     {
         _warmupPending.store(false);
@@ -187,6 +196,24 @@ void InstanceBotPool::Update(uint32 diff)
         _config.poolSize.InitializeDefaultBracketPools();
         _warmupTotalTarget = _config.poolSize.GetTotalBotsAcrossAllBrackets();
 
+        // Count how many bots we already have from LoadFromDatabase()
+        uint32 existingBots = GetTotalPoolSize();
+
+        if (existingBots >= _warmupTotalTarget)
+        {
+            // We have enough warm pool bots from database - no creation needed!
+            TC_LOG_INFO("playerbot.pool", "Warm pool already at target capacity ({}/{} bots) - skipping creation",
+                existingBots, _warmupTotalTarget);
+            TC_LOG_INFO("playerbot.pool", "Warm pool bots loaded from database are ready for assignment");
+            _statsDirty.store(true);
+            return; // Skip warmup entirely
+        }
+
+        uint32 botsToCreate = _warmupTotalTarget - existingBots;
+
+        TC_LOG_INFO("playerbot.pool", "Warm pool reconciliation: {} existing bots, {} target, creating {} new bots",
+            existingBots, _warmupTotalTarget, botsToCreate);
+
         // Reset incremental warmup state
         _warmupBracketIndex = 0;
         _warmupFactionPhase = 0;
@@ -194,14 +221,12 @@ void InstanceBotPool::Update(uint32 diff)
         _warmupRoleCount = 0;
         _warmupTotalCreated = 0;
 
-        // Start incremental warmup
+        // Start incremental warmup (only creates missing bots)
         _warmingInProgress.store(true);
         _incrementalWarmupActive.store(true);
 
-        TC_LOG_INFO("playerbot.pool", "Deferred pool warmup starting (incremental mode: {} bots/tick to prevent freeze detector)",
+        TC_LOG_INFO("playerbot.pool", "Starting incremental warmup ({} bots/tick to prevent freeze detector)",
             WARMUP_BOTS_PER_TICK);
-        TC_LOG_INFO("playerbot.pool", "Target: {} total bots (8 brackets × 2 factions × 50 bots)",
-            _warmupTotalTarget);
     }
 
     // Process incremental warmup - creates WARMUP_BOTS_PER_TICK bots per tick
@@ -415,20 +440,22 @@ void InstanceBotPool::WarmPool()
 void InstanceBotPool::ProcessIncrementalWarmup()
 {
     // ========================================================================
-    // INCREMENTAL WARMUP (2026-01-15): Batched bot creation to prevent freeze
+    // INCREMENTAL WARMUP WITH RECONCILIATION (2026-01-16)
+    //
+    // RECONCILIATION MODE: This method now checks existing bots before creating.
+    // If bots were loaded from database, it skips creation for filled slots.
     //
     // Problem: Creating 800 bots synchronously blocks the world thread for 60+ seconds,
     // triggering the TrinityCore freeze detector which crashes the server.
     //
     // Solution: Create WARMUP_BOTS_PER_TICK bots (default 5) per Update() tick.
     // At ~100ms per update cycle and 5 bots/tick, we create 50 bots/second.
-    // Total warmup time: 800 bots / 50 bots/sec = ~16 seconds spread across ticks.
     //
     // State machine:
     // - _warmupBracketIndex: Current bracket (0-7)
     // - _warmupFactionPhase: 0=Alliance, 1=Horde
     // - _warmupRoleIndex: 0=Tank, 1=Healer, 2=DPS
-    // - _warmupRoleCount: Bots created for current role
+    // - _warmupRoleCount: Bots processed for current role (may be skipped if already exist)
     // ========================================================================
 
     if (!_incrementalWarmupActive.load())
@@ -438,9 +465,11 @@ void InstanceBotPool::ProcessIncrementalWarmup()
     uint32 botsThisTick = 0;
 
     // Log start of incremental warmup (first tick)
-    if (_warmupTotalCreated == 0)
+    static bool firstTickLogged = false;
+    if (!firstTickLogged && _warmupTotalCreated == 0)
     {
-        TC_LOG_INFO("playerbot.pool", "Starting incremental pool warmup ({} bots/tick to prevent freeze detector)...",
+        firstTickLogged = true;
+        TC_LOG_INFO("playerbot.pool", "Starting incremental pool reconciliation ({} bots/tick to prevent freeze detector)...",
             WARMUP_BOTS_PER_TICK);
     }
 
@@ -453,9 +482,11 @@ void InstanceBotPool::ProcessIncrementalWarmup()
             RebuildReadyIndex();
             _warmingInProgress.store(false);
             _incrementalWarmupActive.store(false);
+            firstTickLogged = false; // Reset for next time
 
-            TC_LOG_INFO("playerbot.pool", "Incremental pool warmup complete: {} of {} bots created",
-                _warmupTotalCreated, _warmupTotalTarget);
+            uint32 totalBots = GetTotalPoolSize();
+            TC_LOG_INFO("playerbot.pool", "Incremental pool reconciliation complete: {} new bots created, {} total in pool",
+                _warmupTotalCreated, totalBots);
             TC_LOG_INFO("playerbot.pool", "Pool bots are READY but NOT logged in - they will login via BotSpawner when needed");
             _statsDirty.store(true);
             return;
@@ -515,8 +546,14 @@ void InstanceBotPool::ProcessIncrementalWarmup()
                 continue;
         }
 
+        // RECONCILIATION: Check how many bots we ALREADY have for this bracket/faction/role
+        uint32 existingCount = GetAvailableCountForBracket(bracket, faction, role);
+
+        // Calculate how many more bots we need for this role
+        uint32 botsNeeded = (existingCount < targetForRole) ? (targetForRole - existingCount) : 0;
+
         // Create bot for current role if more needed
-        if (_warmupRoleCount < targetForRole)
+        if (_warmupRoleCount < botsNeeded)
         {
             if (CreatePoolBot(role, faction, bracket) != ObjectGuid::Empty)
             {
@@ -527,18 +564,25 @@ void InstanceBotPool::ProcessIncrementalWarmup()
         }
         else
         {
-            // Move to next role
+            // This role is filled (either existing bots or newly created) - move to next role
+            if (existingCount >= targetForRole && _warmupRoleCount == 0)
+            {
+                TC_LOG_DEBUG("playerbot.pool", "Bracket {} {} {} already has {}/{} bots - skipping",
+                    PoolBracketToString(bracket), FactionToString(faction), BotRoleToString(role),
+                    existingCount, targetForRole);
+            }
             _warmupRoleIndex++;
             _warmupRoleCount = 0;
         }
     }
 
-    // Log progress every 100 bots
-    if (_warmupTotalCreated > 0 && (_warmupTotalCreated % 100 == 0))
+    // Log progress every 50 bots created (not just processed)
+    if (_warmupTotalCreated > 0 && (_warmupTotalCreated % 50 == 0))
     {
-        float pct = static_cast<float>(_warmupTotalCreated) / static_cast<float>(_warmupTotalTarget) * 100.0f;
-        TC_LOG_INFO("playerbot.pool", "Incremental warmup progress: {}/{} bots ({:.1f}%)",
-            _warmupTotalCreated, _warmupTotalTarget, pct);
+        uint32 totalBots = GetTotalPoolSize();
+        float pct = static_cast<float>(totalBots) / static_cast<float>(_warmupTotalTarget) * 100.0f;
+        TC_LOG_INFO("playerbot.pool", "Reconciliation progress: {} new bots created, {}/{} total ({:.1f}%)",
+            _warmupTotalCreated, totalBots, _warmupTotalTarget, pct);
     }
 }
 
@@ -2084,14 +2128,217 @@ void InstanceBotPool::CheckHourlyReset()
 
 void InstanceBotPool::SyncToDatabase()
 {
-    // TODO: Implement database persistence
-    // This would save pool state to playerbot_instance_pool table
+    // ========================================================================
+    // WARM POOL PERSISTENCE (2026-01-16)
+    // Save warm pool bot state to database for persistence across restarts.
+    //
+    // Warm pool bots PERSIST in the database:
+    // - Character data remains in standard character tables
+    // - Pool metadata (role, bracket, state) is saved to playerbot_instance_pool
+    //
+    // JIT bots are NOT saved here - they are tracked separately in
+    // playerbot_jit_bots and deleted on shutdown.
+    // ========================================================================
+
+    std::shared_lock lock(_slotsMutex);
+
+    if (_slots.empty())
+    {
+        TC_LOG_DEBUG("playerbot.pool", "SyncToDatabase: No warm pool slots to sync");
+        return;
+    }
+
+    TC_LOG_INFO("playerbot.pool", "Syncing {} warm pool bot slots to database...", _slots.size());
+
+    uint32 syncedCount = 0;
+    uint32 errorCount = 0;
+
+    for (auto const& [guid, slot] : _slots)
+    {
+        // Skip JIT bots (they are tracked separately and deleted on shutdown)
+        // Warm pool bots have their slot in our _slots map
+        if (slot.botGuid.IsEmpty())
+            continue;
+
+        // Determine bracket from level
+        PoolBracket bracket = GetBracketForLevel(slot.level);
+
+        // Convert enums to database strings
+        std::string factionStr = (slot.faction == Faction::Alliance) ? "ALLIANCE" : "HORDE";
+        std::string roleStr;
+        switch (slot.role)
+        {
+            case BotRole::Tank:   roleStr = "TANK"; break;
+            case BotRole::Healer: roleStr = "HEALER"; break;
+            default:              roleStr = "DPS"; break;
+        }
+        std::string stateStr;
+        switch (slot.state)
+        {
+            case PoolSlotState::Ready:    stateStr = "READY"; break;
+            case PoolSlotState::Assigned: stateStr = "ASSIGNED"; break;
+            case PoolSlotState::Cooldown: stateStr = "COOLDOWN"; break;
+            default:                      stateStr = "READY"; break;
+        }
+
+        // Use REPLACE INTO to insert or update
+        // Note: Trinity::StringFormat must be used since CharacterDatabase.Execute doesn't accept fmt-style args
+        std::string query = Trinity::StringFormat(
+            "REPLACE INTO `playerbot_instance_pool` "
+            "(`bot_guid`, `account_id`, `bot_name`, `role`, `faction`, `player_class`, "
+            "`spec_id`, `level`, `bracket`, `is_warm_pool`, `gear_score`, `slot_state`, "
+            "`assignment_count`, `successful_completions`, `early_exits`, `total_instance_time`) "
+            "VALUES ({}, {}, '{}', '{}', '{}', {}, {}, {}, {}, 1, {}, '{}', {}, {}, {}, {})",
+            slot.botGuid.GetCounter(),
+            slot.accountId,
+            slot.botName,
+            roleStr,
+            factionStr,
+            slot.playerClass,
+            slot.specId,
+            slot.level,
+            static_cast<uint8>(bracket),
+            slot.gearScore,
+            stateStr,
+            slot.assignmentCount,
+            slot.successfulCompletions,
+            slot.earlyExits,
+            slot.totalInstanceTime
+        );
+        CharacterDatabase.Execute(query.c_str());
+
+        ++syncedCount;
+    }
+
+    TC_LOG_INFO("playerbot.pool", "SyncToDatabase complete: {} bots synced, {} errors",
+        syncedCount, errorCount);
 }
 
 void InstanceBotPool::LoadFromDatabase()
 {
-    // TODO: Implement database loading
-    // This would restore pool state from playerbot_instance_pool table
+    // ========================================================================
+    // WARM POOL PERSISTENCE (2026-01-16)
+    // Load existing warm pool bots from database and restore their slots.
+    //
+    // This method:
+    // 1. Queries playerbot_instance_pool for warm pool bots
+    // 2. Verifies each character still exists in characters table
+    // 3. Restores the InstanceBotSlot with saved metadata
+    // 4. Adds to ready index for fast assignment lookup
+    //
+    // After loading, ReconcileBracketDistribution() should be called to
+    // create missing bots or remove excess bots to match target distribution.
+    // ========================================================================
+
+    TC_LOG_INFO("playerbot.pool", "Loading warm pool bots from database...");
+
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT p.`bot_guid`, p.`account_id`, p.`bot_name`, p.`role`, p.`faction`, "
+        "p.`player_class`, p.`spec_id`, p.`level`, p.`bracket`, p.`gear_score`, "
+        "p.`slot_state`, p.`assignment_count`, p.`successful_completions`, "
+        "p.`early_exits`, p.`total_instance_time` "
+        "FROM `playerbot_instance_pool` p "
+        "INNER JOIN `characters` c ON p.`bot_guid` = c.`guid` "
+        "WHERE p.`is_warm_pool` = 1 "
+        "ORDER BY p.`bracket`, p.`faction`, p.`role`"
+    );
+
+    if (!result)
+    {
+        TC_LOG_INFO("playerbot.pool", "No existing warm pool bots found in database");
+        return;
+    }
+
+    std::unique_lock lock(_slotsMutex);
+
+    uint32 loadedCount = 0;
+    uint32 orphanedCount = 0;
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        uint64 guidLow = fields[0].GetUInt64();
+        ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(guidLow);
+
+        // Verify character exists (the INNER JOIN should handle this, but double-check)
+        if (!sCharacterCache->HasCharacterCacheEntry(guid))
+        {
+            TC_LOG_WARN("playerbot.pool", "Warm pool bot {} not found in character cache, skipping",
+                guid.ToString());
+            ++orphanedCount;
+            continue;
+        }
+
+        // Create and populate slot
+        InstanceBotSlot slot;
+        slot.botGuid = guid;
+        slot.accountId = fields[1].GetUInt32();
+        slot.botName = fields[2].GetString();
+
+        // Parse role enum
+        std::string roleStr = fields[3].GetString();
+        if (roleStr == "TANK")
+            slot.role = BotRole::Tank;
+        else if (roleStr == "HEALER")
+            slot.role = BotRole::Healer;
+        else
+            slot.role = BotRole::DPS;
+
+        // Parse faction enum
+        std::string factionStr = fields[4].GetString();
+        slot.faction = (factionStr == "HORDE") ? Faction::Horde : Faction::Alliance;
+
+        slot.playerClass = fields[5].GetUInt8();
+        slot.specId = fields[6].GetUInt32();
+        slot.level = fields[7].GetUInt8();
+
+        // Bracket is stored in DB but we recalculate from level for safety
+        // PoolBracket bracket = static_cast<PoolBracket>(fields[8].GetUInt8());
+
+        slot.gearScore = fields[9].GetUInt32();
+
+        // Parse state enum - always start as Ready for warm pool bots
+        // (previous Assigned/Cooldown states are stale after restart)
+        slot.state = PoolSlotState::Ready;
+        slot.stateChangeTime = std::chrono::steady_clock::now();
+
+        slot.assignmentCount = fields[11].GetUInt32();
+        slot.successfulCompletions = fields[12].GetUInt32();
+        slot.earlyExits = fields[13].GetUInt32();
+        slot.totalInstanceTime = fields[14].GetUInt32();
+
+        // Determine pool type based on faction (for PvP content)
+        slot.poolType = (slot.faction == Faction::Alliance) ? PoolType::PvP_Alliance : PoolType::PvP_Horde;
+
+        // Add to slots map
+        _slots[guid] = slot;
+        ++loadedCount;
+
+        TC_LOG_DEBUG("playerbot.pool", "Loaded warm pool bot: {} ({}) Role={} Faction={} Level={}",
+            slot.botName, guid.ToString(),
+            BotRoleToString(slot.role), FactionToString(slot.faction), slot.level);
+
+    } while (result->NextRow());
+
+    lock.unlock();
+
+    // Rebuild ready index with loaded bots
+    RebuildReadyIndex();
+
+    // Clean up orphaned entries (bots in pool table but not in characters)
+    if (orphanedCount > 0)
+    {
+        TC_LOG_WARN("playerbot.pool", "Cleaning up {} orphaned warm pool entries from database", orphanedCount);
+        CharacterDatabase.Execute(
+            "DELETE p FROM `playerbot_instance_pool` p "
+            "LEFT JOIN `characters` c ON p.`bot_guid` = c.`guid` "
+            "WHERE c.`guid` IS NULL AND p.`is_warm_pool` = 1"
+        );
+    }
+
+    TC_LOG_INFO("playerbot.pool", "Loaded {} warm pool bots from database ({} orphaned removed)",
+        loadedCount, orphanedCount);
 }
 
 // ============================================================================
