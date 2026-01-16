@@ -415,6 +415,9 @@ void AddSC_playerbot_dragonriding_glyphs();
 namespace Playerbot { void AddSC_PlayerbotBGScript(); }
 namespace Playerbot { void AddSC_PlayerbotArenaScript(); }
 
+// Forward declaration for spell script fixes (null-safety patches for TrinityCore bugs)
+void AddSC_playerbot_spell_fixes();
+
 // Forward declaration for Instance Bot system scripts
 namespace Playerbot { void RegisterInstanceBotScripts(); }
 
@@ -446,5 +449,8 @@ void AddSC_playerbot_world()
 
     // Instance Bot System: Register pool management and LFG/BG integration scripts
     Playerbot::RegisterInstanceBotScripts();
+
+    // Spell Script Fixes: Override buggy TrinityCore scripts with null-safe versions
+    AddSC_playerbot_spell_fixes();
     #endif
 }

@@ -891,6 +891,7 @@ set(PLAYERBOT_PVP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotLFGScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotBGScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotArenaScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotSpellFixes.cpp
 
     # Performance Optimization
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.cpp
