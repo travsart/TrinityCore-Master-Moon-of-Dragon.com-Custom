@@ -26,6 +26,8 @@
 #include "World.h"
 #include <algorithm>
 #include <random>
+#include <sstream>
+#include <thread>
 
 namespace Playerbot
 {
@@ -2139,80 +2141,173 @@ void InstanceBotPool::SyncToDatabase()
     //
     // JIT bots are NOT saved here - they are tracked separately in
     // playerbot_jit_bots and deleted on shutdown.
+    //
+    // IMPORTANT: This method builds a BATCHED query to avoid blocking the
+    // main thread. Individual INSERT/REPLACE per bot caused 60+ second
+    // freezes with large pools (freeze detector crash).
     // ========================================================================
 
-    std::shared_lock lock(_slotsMutex);
+    // Take a snapshot of the slots under lock, then release lock before DB operations
+    std::vector<std::tuple<ObjectGuid, uint32, std::string, BotRole, Faction, uint8, uint32, uint8, uint32, PoolSlotState, uint32, uint32, uint32, uint32>> slotSnapshot;
 
-    if (_slots.empty())
     {
-        TC_LOG_DEBUG("playerbot.pool", "SyncToDatabase: No warm pool slots to sync");
+        std::shared_lock lock(_slotsMutex);
+
+        if (_slots.empty())
+        {
+            TC_LOG_DEBUG("playerbot.pool", "SyncToDatabase: No warm pool slots to sync");
+            return;
+        }
+
+        slotSnapshot.reserve(_slots.size());
+
+        for (auto const& [guid, slot] : _slots)
+        {
+            if (slot.botGuid.IsEmpty())
+                continue;
+
+            slotSnapshot.emplace_back(
+                slot.botGuid,
+                slot.accountId,
+                slot.botName,
+                slot.role,
+                slot.faction,
+                slot.playerClass,
+                slot.specId,
+                slot.level,
+                slot.gearScore,
+                slot.state,
+                slot.assignmentCount,
+                slot.successfulCompletions,
+                slot.earlyExits,
+                slot.totalInstanceTime
+            );
+        }
+    }
+
+    if (slotSnapshot.empty())
+    {
+        TC_LOG_DEBUG("playerbot.pool", "SyncToDatabase: No valid warm pool slots to sync");
         return;
     }
 
-    TC_LOG_INFO("playerbot.pool", "Syncing {} warm pool bot slots to database...", _slots.size());
+    TC_LOG_DEBUG("playerbot.pool", "SyncToDatabase: Preparing batch sync for {} bots", slotSnapshot.size());
 
-    uint32 syncedCount = 0;
-    uint32 errorCount = 0;
-
-    for (auto const& [guid, slot] : _slots)
-    {
-        // Skip JIT bots (they are tracked separately and deleted on shutdown)
-        // Warm pool bots have their slot in our _slots map
-        if (slot.botGuid.IsEmpty())
-            continue;
-
-        // Determine bracket from level
-        PoolBracket bracket = GetBracketForLevel(slot.level);
-
-        // Convert enums to database strings
-        std::string factionStr = (slot.faction == Faction::Alliance) ? "ALLIANCE" : "HORDE";
-        std::string roleStr;
-        switch (slot.role)
+    // Run database sync in a background thread to avoid blocking world thread
+    // This prevents freeze detector crashes when syncing large pools
+    std::thread([snapshot = std::move(slotSnapshot)]() mutable {
+        try
         {
-            case BotRole::Tank:   roleStr = "TANK"; break;
-            case BotRole::Healer: roleStr = "HEALER"; break;
-            default:              roleStr = "DPS"; break;
+            // Build a batched multi-row INSERT query
+            // Use INSERT ... ON DUPLICATE KEY UPDATE for better performance than REPLACE
+            std::ostringstream query;
+            query << "INSERT INTO `playerbot_instance_pool` "
+                  << "(`bot_guid`, `account_id`, `bot_name`, `role`, `faction`, `player_class`, "
+                  << "`spec_id`, `level`, `bracket`, `is_warm_pool`, `gear_score`, `slot_state`, "
+                  << "`assignment_count`, `successful_completions`, `early_exits`, `total_instance_time`) VALUES ";
+
+            bool first = true;
+            uint32 batchCount = 0;
+            constexpr uint32 BATCH_SIZE = 100;  // Insert 100 rows per batch
+
+            for (auto const& [botGuid, accountId, botName, role, faction, playerClass, specId, level, gearScore, state, assignCount, successCount, earlyExits, totalTime] : snapshot)
+            {
+                PoolBracket bracket = GetBracketForLevel(level);
+
+                std::string factionStr = (faction == Faction::Alliance) ? "ALLIANCE" : "HORDE";
+                std::string roleStr;
+                switch (role)
+                {
+                    case BotRole::Tank:   roleStr = "TANK"; break;
+                    case BotRole::Healer: roleStr = "HEALER"; break;
+                    default:              roleStr = "DPS"; break;
+                }
+                std::string stateStr;
+                switch (state)
+                {
+                    case PoolSlotState::Ready:    stateStr = "READY"; break;
+                    case PoolSlotState::Assigned: stateStr = "ASSIGNED"; break;
+                    case PoolSlotState::Cooldown: stateStr = "COOLDOWN"; break;
+                    default:                      stateStr = "READY"; break;
+                }
+
+                // Escape bot name for SQL (simple escape for single quotes)
+                std::string escapedName = botName;
+                size_t pos = 0;
+                while ((pos = escapedName.find('\'', pos)) != std::string::npos)
+                {
+                    escapedName.replace(pos, 1, "''");
+                    pos += 2;
+                }
+
+                if (!first)
+                    query << ", ";
+                first = false;
+
+                query << "(" << botGuid.GetCounter()
+                      << ", " << accountId
+                      << ", '" << escapedName << "'"
+                      << ", '" << roleStr << "'"
+                      << ", '" << factionStr << "'"
+                      << ", " << static_cast<uint32>(playerClass)
+                      << ", " << specId
+                      << ", " << static_cast<uint32>(level)
+                      << ", " << static_cast<uint32>(bracket)
+                      << ", 1"  // is_warm_pool
+                      << ", " << gearScore
+                      << ", '" << stateStr << "'"
+                      << ", " << assignCount
+                      << ", " << successCount
+                      << ", " << earlyExits
+                      << ", " << totalTime
+                      << ")";
+
+                ++batchCount;
+
+                // Execute batch when reaching BATCH_SIZE
+                if (batchCount >= BATCH_SIZE)
+                {
+                    query << " ON DUPLICATE KEY UPDATE "
+                          << "`slot_state` = VALUES(`slot_state`), "
+                          << "`assignment_count` = VALUES(`assignment_count`), "
+                          << "`successful_completions` = VALUES(`successful_completions`), "
+                          << "`early_exits` = VALUES(`early_exits`), "
+                          << "`total_instance_time` = VALUES(`total_instance_time`)";
+
+                    sPlayerbotDatabase->Execute(query.str().c_str());
+
+                    // Reset for next batch
+                    query.str("");
+                    query.clear();
+                    query << "INSERT INTO `playerbot_instance_pool` "
+                          << "(`bot_guid`, `account_id`, `bot_name`, `role`, `faction`, `player_class`, "
+                          << "`spec_id`, `level`, `bracket`, `is_warm_pool`, `gear_score`, `slot_state`, "
+                          << "`assignment_count`, `successful_completions`, `early_exits`, `total_instance_time`) VALUES ";
+                    first = true;
+                    batchCount = 0;
+                }
+            }
+
+            // Execute any remaining rows
+            if (batchCount > 0)
+            {
+                query << " ON DUPLICATE KEY UPDATE "
+                      << "`slot_state` = VALUES(`slot_state`), "
+                      << "`assignment_count` = VALUES(`assignment_count`), "
+                      << "`successful_completions` = VALUES(`successful_completions`), "
+                      << "`early_exits` = VALUES(`early_exits`), "
+                      << "`total_instance_time` = VALUES(`total_instance_time`)";
+
+                sPlayerbotDatabase->Execute(query.str().c_str());
+            }
+
+            TC_LOG_DEBUG("playerbot.pool", "SyncToDatabase: Batch sync complete for {} bots", snapshot.size());
         }
-        std::string stateStr;
-        switch (slot.state)
+        catch (std::exception const& e)
         {
-            case PoolSlotState::Ready:    stateStr = "READY"; break;
-            case PoolSlotState::Assigned: stateStr = "ASSIGNED"; break;
-            case PoolSlotState::Cooldown: stateStr = "COOLDOWN"; break;
-            default:                      stateStr = "READY"; break;
+            TC_LOG_ERROR("playerbot.pool", "SyncToDatabase: Exception during batch sync: {}", e.what());
         }
-
-        // Use REPLACE INTO to insert or update
-        // Note: Trinity::StringFormat is used to build the query string
-        std::string query = Trinity::StringFormat(
-            "REPLACE INTO `playerbot_instance_pool` "
-            "(`bot_guid`, `account_id`, `bot_name`, `role`, `faction`, `player_class`, "
-            "`spec_id`, `level`, `bracket`, `is_warm_pool`, `gear_score`, `slot_state`, "
-            "`assignment_count`, `successful_completions`, `early_exits`, `total_instance_time`) "
-            "VALUES ({}, {}, '{}', '{}', '{}', {}, {}, {}, {}, 1, {}, '{}', {}, {}, {}, {})",
-            slot.botGuid.GetCounter(),
-            slot.accountId,
-            slot.botName,
-            roleStr,
-            factionStr,
-            slot.playerClass,
-            slot.specId,
-            slot.level,
-            static_cast<uint8>(bracket),
-            slot.gearScore,
-            stateStr,
-            slot.assignmentCount,
-            slot.successfulCompletions,
-            slot.earlyExits,
-            slot.totalInstanceTime
-        );
-        sPlayerbotDatabase->Execute(query.c_str());
-
-        ++syncedCount;
-    }
-
-    TC_LOG_INFO("playerbot.pool", "SyncToDatabase complete: {} bots synced, {} errors",
-        syncedCount, errorCount);
+    }).detach();
 }
 
 void InstanceBotPool::LoadFromDatabase()
