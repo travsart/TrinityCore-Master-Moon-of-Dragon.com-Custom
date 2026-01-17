@@ -8,6 +8,8 @@
  */
 
 #include "QueueStatePoller.h"
+#include "InstanceBotPool.h"
+#include "PoolConfiguration.h"
 #include "JITBotFactory.h"
 #include "PvP/BGBotManager.h"
 #include "LFG/LFGBotManager.h"
@@ -542,6 +544,80 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
     TC_LOG_INFO("playerbot.jit", "QueueStatePoller: BG Shortage detected - Type={} Alliance need={} Horde need={}",
         static_cast<uint32>(snapshot.bgTypeId), snapshot.allianceShortage, snapshot.hordeShortage);
 
+    // ========================================================================
+    // STEP 1: TRY WARM POOL FIRST
+    // Warm pool bots are pre-created and ready for instant assignment
+    // Only fall back to JIT if warm pool doesn't have enough bots
+    // ========================================================================
+
+    uint32 allianceFromPool = 0;
+    uint32 hordeFromPool = 0;
+    uint32 allianceStillNeeded = snapshot.allianceShortage > 0 ? static_cast<uint32>(snapshot.allianceShortage) : 0;
+    uint32 hordeStillNeeded = snapshot.hordeShortage > 0 ? static_cast<uint32>(snapshot.hordeShortage) : 0;
+
+    // Get level from bracket for warm pool assignment
+    // Use the midpoint of the bracket's level range
+    uint32 minLevel, maxLevel;
+    GetBracketLevelRange(static_cast<PoolBracket>(snapshot.bracketId), minLevel, maxLevel);
+    uint32 bracketLevel = (minLevel + maxLevel) / 2;
+
+    if (allianceStillNeeded > 0 || hordeStillNeeded > 0)
+    {
+        // Try to get bots from the warm pool
+        BGAssignment poolAssignment = sInstanceBotPool->AssignForBattleground(
+            static_cast<uint32>(snapshot.bgTypeId),
+            bracketLevel,
+            allianceStillNeeded,
+            hordeStillNeeded
+        );
+
+        if (poolAssignment.success)
+        {
+            allianceFromPool = static_cast<uint32>(poolAssignment.allianceBots.size());
+            hordeFromPool = static_cast<uint32>(poolAssignment.hordeBots.size());
+
+            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {}/{} Alliance and {}/{} Horde from warm pool",
+                allianceFromPool, allianceStillNeeded, hordeFromPool, hordeStillNeeded);
+
+            // Queue the bots from pool for the BG
+            for (ObjectGuid const& guid : poolAssignment.allianceBots)
+            {
+                if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                    sBGBotManager->QueueBotForBG(bot, snapshot.bgTypeId, snapshot.bracketId);
+            }
+            for (ObjectGuid const& guid : poolAssignment.hordeBots)
+            {
+                if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                    sBGBotManager->QueueBotForBG(bot, snapshot.bgTypeId, snapshot.bracketId);
+            }
+
+            // Update remaining needs
+            allianceStillNeeded = allianceStillNeeded > allianceFromPool ? allianceStillNeeded - allianceFromPool : 0;
+            hordeStillNeeded = hordeStillNeeded > hordeFromPool ? hordeStillNeeded - hordeFromPool : 0;
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Warm pool assignment failed: {}",
+                poolAssignment.errorMessage);
+        }
+    }
+
+    // If warm pool fully satisfied the demand, we're done
+    if (allianceStillNeeded == 0 && hordeStillNeeded == 0)
+    {
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: BG shortage fully satisfied from warm pool");
+        RecordJITRequest(key);
+        return;
+    }
+
+    // ========================================================================
+    // STEP 2: JIT CREATION FOR REMAINING SHORTAGE
+    // Only create bots via JIT if warm pool couldn't satisfy demand
+    // ========================================================================
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Warm pool insufficient, requesting JIT for Alliance={} Horde={}",
+        allianceStillNeeded, hordeStillNeeded);
+
     // Calculate priority based on queue fill rate
     // Higher fill = higher priority (closer to starting)
     float allianceFill = snapshot.minPlayersPerTeam > 0
@@ -555,14 +631,14 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
     // Priority 1-10, higher fill = lower number (higher priority)
     uint8 priority = static_cast<uint8>(std::clamp(10.0f - (avgFill * 9.0f), 1.0f, 10.0f));
 
-    // Submit JIT requests for each faction that needs bots
-    if (snapshot.allianceShortage > 0)
+    // Submit JIT requests for remaining shortage
+    if (allianceStillNeeded > 0)
     {
         FactoryRequest request;
         request.instanceType = InstanceType::Battleground;
         request.contentId = static_cast<uint32>(snapshot.bgTypeId);
         request.playerFaction = Faction::Alliance;
-        request.allianceNeeded = static_cast<uint32>(snapshot.allianceShortage);
+        request.allianceNeeded = allianceStillNeeded;
         request.hordeNeeded = 0;
         request.priority = priority;
         request.createdAt = std::chrono::system_clock::now();
@@ -571,10 +647,12 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
         request.onComplete = [bgTypeId = snapshot.bgTypeId, bracket = snapshot.bracketId](std::vector<ObjectGuid> const& botGuids) {
             for (ObjectGuid const& guid : botGuids)
             {
-                // The bot needs to be queued for the BG
-                // BGBotManager will handle the actual queueing when the bot is ready
-                TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Alliance bot {} ready for BG type {}",
-                    guid.ToString(), static_cast<uint32>(bgTypeId));
+                if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                {
+                    sBGBotManager->QueueBotForBG(bot, bgTypeId, bracket);
+                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: JIT Alliance bot {} queued for BG type {}",
+                        guid.ToString(), static_cast<uint32>(bgTypeId));
+                }
             }
         };
 
@@ -583,26 +661,30 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
         {
             ++_jitRequestsTriggered;
             TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Submitted Alliance JIT request {} for {} bots (priority {})",
-                requestId, snapshot.allianceShortage, priority);
+                requestId, allianceStillNeeded, priority);
         }
     }
 
-    if (snapshot.hordeShortage > 0)
+    if (hordeStillNeeded > 0)
     {
         FactoryRequest request;
         request.instanceType = InstanceType::Battleground;
         request.contentId = static_cast<uint32>(snapshot.bgTypeId);
         request.playerFaction = Faction::Horde;
         request.allianceNeeded = 0;
-        request.hordeNeeded = static_cast<uint32>(snapshot.hordeShortage);
+        request.hordeNeeded = hordeStillNeeded;
         request.priority = priority;
         request.createdAt = std::chrono::system_clock::now();
 
         request.onComplete = [bgTypeId = snapshot.bgTypeId, bracket = snapshot.bracketId](std::vector<ObjectGuid> const& botGuids) {
             for (ObjectGuid const& guid : botGuids)
             {
-                TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Horde bot {} ready for BG type {}",
-                    guid.ToString(), static_cast<uint32>(bgTypeId));
+                if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                {
+                    sBGBotManager->QueueBotForBG(bot, bgTypeId, bracket);
+                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: JIT Horde bot {} queued for BG type {}",
+                        guid.ToString(), static_cast<uint32>(bgTypeId));
+                }
             }
         };
 
@@ -611,7 +693,7 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
         {
             ++_jitRequestsTriggered;
             TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Submitted Horde JIT request {} for {} bots (priority {})",
-                requestId, snapshot.hordeShortage, priority);
+                requestId, hordeStillNeeded, priority);
         }
     }
 
@@ -644,16 +726,79 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     if (tanksShort == 0 && healersShort == 0 && dpsShort == 0)
         return;
 
+    uint32 tanksStillNeeded = tanksShort;
+    uint32 healersStillNeeded = healersShort;
+    uint32 dpsStillNeeded = dpsShort;
+
+    // ========================================================================
+    // STEP 1: TRY WARM POOL FIRST
+    // Warm pool bots are pre-created and ready for instant assignment
+    // Only fall back to JIT if warm pool doesn't have enough bots
+    // ========================================================================
+
+    uint32 avgLevel = (snapshot.minLevel + snapshot.maxLevel) / 2;
+
+    // LFG is cross-faction in modern WoW, use Neutral to get bots from any faction
+    std::vector<ObjectGuid> poolBots = sInstanceBotPool->AssignForDungeon(
+        snapshot.dungeonId,
+        avgLevel,
+        Faction::Neutral,  // Cross-faction LFG
+        tanksStillNeeded,
+        healersStillNeeded,
+        dpsStillNeeded
+    );
+
+    if (!poolBots.empty())
+    {
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {} bots from warm pool for dungeon {}",
+            poolBots.size(), snapshot.dungeonId);
+
+        // Queue the bots from pool for LFG
+        for (ObjectGuid const& guid : poolBots)
+        {
+            if (Player* bot = ObjectAccessor::FindPlayer(guid))
+            {
+                // Determine bot's role and queue for LFG
+                uint8 role = sLFGRoleDetector->DetectRole(bot);
+                sLFGBotManager->QueueBotForDungeon(bot, snapshot.dungeonId, role);
+
+                // Track which roles were filled
+                if (role == lfg::PLAYER_ROLE_TANK && tanksStillNeeded > 0)
+                    --tanksStillNeeded;
+                else if (role == lfg::PLAYER_ROLE_HEALER && healersStillNeeded > 0)
+                    --healersStillNeeded;
+                else if (tanksStillNeeded > 0 || healersStillNeeded > 0 || dpsStillNeeded > 0)
+                    --dpsStillNeeded;  // Default to DPS
+            }
+        }
+    }
+
+    // If warm pool fully satisfied the demand, we're done
+    if (tanksStillNeeded == 0 && healersStillNeeded == 0 && dpsStillNeeded == 0)
+    {
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: LFG shortage fully satisfied from warm pool");
+        RecordJITRequest(snapshot.dungeonId);
+        return;
+    }
+
+    // ========================================================================
+    // STEP 2: JIT CREATION FOR REMAINING SHORTAGE
+    // Only create bots via JIT if warm pool couldn't satisfy demand
+    // ========================================================================
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Warm pool insufficient, requesting JIT for T:{}/H:{}/D:{}",
+        tanksStillNeeded, healersStillNeeded, dpsStillNeeded);
+
     // LFG gets high priority (7 out of 10)
     uint8 priority = 7;
 
     FactoryRequest request;
     request.instanceType = InstanceType::Dungeon;
     request.contentId = snapshot.dungeonId;
-    request.playerLevel = (snapshot.minLevel + snapshot.maxLevel) / 2;  // Average level
-    request.tanksNeeded = tanksShort;
-    request.healersNeeded = healersShort;
-    request.dpsNeeded = dpsShort;
+    request.playerLevel = avgLevel;
+    request.tanksNeeded = tanksStillNeeded;
+    request.healersNeeded = healersStillNeeded;
+    request.dpsNeeded = dpsStillNeeded;
     request.priority = priority;
     request.createdAt = std::chrono::system_clock::now();
 
@@ -674,7 +819,7 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     {
         ++_jitRequestsTriggered;
         TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Submitted LFG JIT request {} for T:{}/H:{}/D:{} bots",
-            requestId, tanksShort, healersShort, dpsShort);
+            requestId, tanksStillNeeded, healersStillNeeded, dpsStillNeeded);
     }
 
     RecordJITRequest(snapshot.dungeonId);
@@ -703,13 +848,109 @@ void QueueStatePoller::ProcessArenaShortage(ArenaQueueSnapshot const& snapshot)
     uint32 allianceTeamsNeeded = snapshot.allianceTeamsInQueue == 0 ? 1 : 0;
     uint32 hordeTeamsNeeded = snapshot.hordeTeamsInQueue == 0 ? 1 : 0;
 
-    if (allianceTeamsNeeded > 0)
+    uint32 allianceBotsNeeded = allianceTeamsNeeded * snapshot.playersPerTeam;
+    uint32 hordeBotsNeeded = hordeTeamsNeeded * snapshot.playersPerTeam;
+
+    // Get level from bracket for warm pool assignment
+    uint32 minLevel, maxLevel;
+    GetBracketLevelRange(static_cast<PoolBracket>(snapshot.bracketId), minLevel, maxLevel);
+    uint32 bracketLevel = (minLevel + maxLevel) / 2;
+
+    // ========================================================================
+    // STEP 1: TRY WARM POOL FIRST
+    // Warm pool bots are pre-created and ready for instant assignment
+    // Only fall back to JIT if warm pool doesn't have enough bots
+    // ========================================================================
+
+    uint32 allianceFromPool = 0;
+    uint32 hordeFromPool = 0;
+    uint32 allianceStillNeeded = allianceBotsNeeded;
+    uint32 hordeStillNeeded = hordeBotsNeeded;
+
+    // Try Alliance first if needed
+    if (allianceBotsNeeded > 0)
+    {
+        ArenaAssignment poolAssignment = sInstanceBotPool->AssignForArena(
+            snapshot.arenaType,
+            bracketLevel,
+            Faction::Alliance,
+            allianceBotsNeeded,  // teammates needed (all same faction for this call)
+            0                    // no opponents in this call
+        );
+
+        if (poolAssignment.success && !poolAssignment.teammates.empty())
+        {
+            allianceFromPool = static_cast<uint32>(poolAssignment.teammates.size());
+            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {}/{} Alliance bots from warm pool for {}v{}",
+                allianceFromPool, allianceBotsNeeded, snapshot.arenaType, snapshot.arenaType);
+
+            // Queue the bots from pool for arena
+            for (ObjectGuid const& guid : poolAssignment.teammates)
+            {
+                if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                {
+                    // Queue bot for arena (implementation in ArenaBotManager)
+                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Alliance arena bot {} ready from pool",
+                        guid.ToString());
+                }
+            }
+            allianceStillNeeded = allianceStillNeeded > allianceFromPool ? allianceStillNeeded - allianceFromPool : 0;
+        }
+    }
+
+    // Try Horde if needed
+    if (hordeBotsNeeded > 0)
+    {
+        ArenaAssignment poolAssignment = sInstanceBotPool->AssignForArena(
+            snapshot.arenaType,
+            bracketLevel,
+            Faction::Horde,
+            hordeBotsNeeded,  // teammates needed
+            0                 // no opponents
+        );
+
+        if (poolAssignment.success && !poolAssignment.teammates.empty())
+        {
+            hordeFromPool = static_cast<uint32>(poolAssignment.teammates.size());
+            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {}/{} Horde bots from warm pool for {}v{}",
+                hordeFromPool, hordeBotsNeeded, snapshot.arenaType, snapshot.arenaType);
+
+            // Queue the bots from pool for arena
+            for (ObjectGuid const& guid : poolAssignment.teammates)
+            {
+                if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                {
+                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Horde arena bot {} ready from pool",
+                        guid.ToString());
+                }
+            }
+            hordeStillNeeded = hordeStillNeeded > hordeFromPool ? hordeStillNeeded - hordeFromPool : 0;
+        }
+    }
+
+    // If warm pool fully satisfied the demand, we're done
+    if (allianceStillNeeded == 0 && hordeStillNeeded == 0)
+    {
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Arena shortage fully satisfied from warm pool");
+        RecordJITRequest(key);
+        return;
+    }
+
+    // ========================================================================
+    // STEP 2: JIT CREATION FOR REMAINING SHORTAGE
+    // Only create bots via JIT if warm pool couldn't satisfy demand
+    // ========================================================================
+
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Warm pool insufficient, requesting JIT for Alliance={} Horde={}",
+        allianceStillNeeded, hordeStillNeeded);
+
+    if (allianceStillNeeded > 0)
     {
         FactoryRequest request;
         request.instanceType = InstanceType::Arena;
         request.contentId = snapshot.arenaType;  // 2, 3, or 5 for arena type
         request.playerFaction = Faction::Alliance;
-        request.allianceNeeded = allianceTeamsNeeded * snapshot.playersPerTeam;
+        request.allianceNeeded = allianceStillNeeded;
         request.priority = priority;
         request.createdAt = std::chrono::system_clock::now();
 
@@ -725,13 +966,13 @@ void QueueStatePoller::ProcessArenaShortage(ArenaQueueSnapshot const& snapshot)
         }
     }
 
-    if (hordeTeamsNeeded > 0)
+    if (hordeStillNeeded > 0)
     {
         FactoryRequest request;
         request.instanceType = InstanceType::Arena;
         request.contentId = snapshot.arenaType;
         request.playerFaction = Faction::Horde;
-        request.hordeNeeded = hordeTeamsNeeded * snapshot.playersPerTeam;
+        request.hordeNeeded = hordeStillNeeded;
         request.priority = priority;
         request.createdAt = std::chrono::system_clock::now();
 

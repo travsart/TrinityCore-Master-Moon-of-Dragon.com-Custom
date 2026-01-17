@@ -551,10 +551,12 @@ void BotTemplateRepository::LoadFromDatabase()
     std::unordered_map<uint64, std::vector<uint8>> classRaceMatrix; // (class << 8 | faction) -> races
 
     QueryResult raceResult = sPlayerbotDatabase->Query(
-        "SELECT class_id, race_id, faction FROM playerbot_class_race_matrix ORDER BY weight DESC");
+        "SELECT class_id, race_id, faction FROM playerbot_class_race_matrix WHERE enabled = 1 ORDER BY weight DESC");
 
     if (raceResult)
     {
+        uint32 validEntries = 0;
+
         do
         {
             Field* fields = raceResult->Fetch();
@@ -567,10 +569,14 @@ void BotTemplateRepository::LoadFromDatabase()
 
             uint64 key = (static_cast<uint64>(classId) << 8) | faction;
             classRaceMatrix[key].push_back(raceId);
+            ++validEntries;
+
+            TC_LOG_TRACE("playerbot.template",
+                "Loaded class/race matrix: class={} race={} faction={}",
+                classId, raceId, factionStr);
         } while (raceResult->NextRow());
 
-        TC_LOG_INFO("playerbot.template", "Loaded class/race matrix with {} entries",
-            classRaceMatrix.size());
+        TC_LOG_INFO("playerbot.template", "Loaded class/race matrix: {} entries", validEntries);
     }
 
     // ==========================================================================
@@ -1767,14 +1773,8 @@ std::vector<uint8> BotTemplateRepository::GetValidRaces(uint8 playerClass, Facti
         }
     }
 
-    // Log warning if no races were found
-    if (races.empty())
-    {
-        TC_LOG_ERROR("playerbot.template",
-            "GetValidRaces returned empty for class {} faction {} - this will cause template selection failures!",
-            playerClass, static_cast<uint8>(faction));
-    }
-
+    // Return all valid races for this class/faction
+    // Player::Create() will validate against playercreateinfo if creation fails
     return races;
 }
 
