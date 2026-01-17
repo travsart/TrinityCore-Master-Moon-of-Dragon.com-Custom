@@ -726,68 +726,14 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     if (tanksShort == 0 && healersShort == 0 && dpsShort == 0)
         return;
 
-    uint32 tanksStillNeeded = tanksShort;
-    uint32 healersStillNeeded = healersShort;
-    uint32 dpsStillNeeded = dpsShort;
-
     // ========================================================================
-    // STEP 1: TRY WARM POOL FIRST
-    // Warm pool bots are pre-created and ready for instant assignment
-    // Only fall back to JIT if warm pool doesn't have enough bots
+    // LFG uses JIT creation directly
+    // Note: LFG warm pool integration requires more complex role-based
+    // queue integration. For now, JIT handles LFG bot creation.
+    // The JIT system uses BotPostLoginConfigurator to queue bots after login.
     // ========================================================================
 
     uint32 avgLevel = (snapshot.minLevel + snapshot.maxLevel) / 2;
-
-    // LFG is cross-faction in modern WoW, use Neutral to get bots from any faction
-    std::vector<ObjectGuid> poolBots = sInstanceBotPool->AssignForDungeon(
-        snapshot.dungeonId,
-        avgLevel,
-        Faction::Neutral,  // Cross-faction LFG
-        tanksStillNeeded,
-        healersStillNeeded,
-        dpsStillNeeded
-    );
-
-    if (!poolBots.empty())
-    {
-        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {} bots from warm pool for dungeon {}",
-            poolBots.size(), snapshot.dungeonId);
-
-        // Queue the bots from pool for LFG
-        for (ObjectGuid const& guid : poolBots)
-        {
-            if (Player* bot = ObjectAccessor::FindPlayer(guid))
-            {
-                // Determine bot's role and queue for LFG
-                uint8 role = sLFGRoleDetector->DetectRole(bot);
-                sLFGBotManager->QueueBotForDungeon(bot, snapshot.dungeonId, role);
-
-                // Track which roles were filled
-                if (role == lfg::PLAYER_ROLE_TANK && tanksStillNeeded > 0)
-                    --tanksStillNeeded;
-                else if (role == lfg::PLAYER_ROLE_HEALER && healersStillNeeded > 0)
-                    --healersStillNeeded;
-                else if (tanksStillNeeded > 0 || healersStillNeeded > 0 || dpsStillNeeded > 0)
-                    --dpsStillNeeded;  // Default to DPS
-            }
-        }
-    }
-
-    // If warm pool fully satisfied the demand, we're done
-    if (tanksStillNeeded == 0 && healersStillNeeded == 0 && dpsStillNeeded == 0)
-    {
-        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: LFG shortage fully satisfied from warm pool");
-        RecordJITRequest(snapshot.dungeonId);
-        return;
-    }
-
-    // ========================================================================
-    // STEP 2: JIT CREATION FOR REMAINING SHORTAGE
-    // Only create bots via JIT if warm pool couldn't satisfy demand
-    // ========================================================================
-
-    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Warm pool insufficient, requesting JIT for T:{}/H:{}/D:{}",
-        tanksStillNeeded, healersStillNeeded, dpsStillNeeded);
 
     // LFG gets high priority (7 out of 10)
     uint8 priority = 7;
@@ -796,9 +742,9 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     request.instanceType = InstanceType::Dungeon;
     request.contentId = snapshot.dungeonId;
     request.playerLevel = avgLevel;
-    request.tanksNeeded = tanksStillNeeded;
-    request.healersNeeded = healersStillNeeded;
-    request.dpsNeeded = dpsStillNeeded;
+    request.tanksNeeded = tanksShort;
+    request.healersNeeded = healersShort;
+    request.dpsNeeded = dpsShort;
     request.priority = priority;
     request.createdAt = std::chrono::system_clock::now();
 
@@ -819,7 +765,7 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     {
         ++_jitRequestsTriggered;
         TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Submitted LFG JIT request {} for T:{}/H:{}/D:{} bots",
-            requestId, tanksStillNeeded, healersStillNeeded, dpsStillNeeded);
+            requestId, tanksShort, healersShort, dpsShort);
     }
 
     RecordJITRequest(snapshot.dungeonId);
