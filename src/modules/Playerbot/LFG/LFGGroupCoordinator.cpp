@@ -21,7 +21,9 @@
 #include "DB2Stores.h"
 #include "DatabaseEnv.h"
 #include "QueryResult.h"
+#include "WorldSession.h"
 #include "../Core/PlayerBotHooks.h"
+#include <typeinfo>
 
 namespace Playerbot
 {
@@ -93,7 +95,7 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
     if (!_enabled)
         return false;
 
-    TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Group: {}, Dungeon: {}",
+    TC_LOG_INFO("lfg.playerbot", ">>> LFGGroupCoordinator::OnGroupFormed CALLED - Group: {}, Dungeon: {}",
         groupGuid.ToString(), dungeonId);
 
     Group* group = sGroupMgr->GetGroupByGUID(groupGuid);
@@ -177,12 +179,29 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
         // players are not "in world" so FindPlayer() returns null. FindConnectedPlayer()
         // returns connected players regardless of IsInWorld() state.
         Player* humanPlayer = nullptr;
+
+        // Log all group members for debugging
+        TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Searching {} members for human player:",
+            group->GetMemberSlots().size());
+
         for (auto const& slot : group->GetMemberSlots())
         {
             Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
-            if (member && !PlayerBotHooks::IsPlayerBot(member))
+            if (!member)
             {
-                TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Found human {} (InWorld: {}, TeleportFar: {}, TeleportNear: {})",
+                TC_LOG_INFO("lfg.playerbot", "  - Member {} (name: {}) NOT FOUND via FindConnectedPlayer",
+                    slot.guid.ToString(), slot.name);
+                continue;
+            }
+
+            bool isBot = PlayerBotHooks::IsPlayerBot(member);
+            TC_LOG_INFO("lfg.playerbot", "  - Member {} ({}): IsBot={}, InWorld={}, SessionType={}",
+                member->GetName(), slot.guid.ToString(), isBot, member->IsInWorld(),
+                member->GetSession() ? typeid(*member->GetSession()).name() : "null");
+
+            if (!isBot)
+            {
+                TC_LOG_INFO("lfg.playerbot", "LFGGroupCoordinator::OnGroupFormed - Found human {} (InWorld: {}, TeleportFar: {}, TeleportNear: {})",
                     member->GetName(), member->IsInWorld(),
                     member->IsBeingTeleportedFar(), member->IsBeingTeleportedNear());
                 humanPlayer = member;
@@ -323,21 +342,38 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
     uint32 notFoundCount = 0;
 
     // Teleport all group members
+    // CRITICAL FIX: Use FindConnectedPlayer instead of FindPlayer!
+    // During LFG dungeon teleport, JIT bots may not be "in world" yet (still loading),
+    // so FindPlayer() returns null. FindConnectedPlayer() returns connected players
+    // regardless of IsInWorld() state, which is what we need for teleportation.
     for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ObjectAccessor::FindPlayer(slot.guid);
+        Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
         if (!member)
         {
             ++notFoundCount;
-            TC_LOG_WARN("lfg.playerbot", "TeleportGroupToDungeon - Member {} NOT FOUND via ObjectAccessor (name from slot: {})",
+            TC_LOG_WARN("lfg.playerbot", "TeleportGroupToDungeon - Member {} NOT FOUND via FindConnectedPlayer (name: {}) - bot may still be loading",
                 slot.guid.ToString(), slot.name);
             continue;
         }
 
         totalMembers++;
 
-        TC_LOG_INFO("lfg.playerbot", "TeleportGroupToDungeon - Attempting teleport for {} (GUID: {})",
-            member->GetName(), member->GetGUID().ToString());
+        // Check if player is ready for teleport
+        bool isInWorld = member->IsInWorld();
+        bool isTeleporting = member->IsBeingTeleportedFar() || member->IsBeingTeleportedNear();
+
+        TC_LOG_INFO("lfg.playerbot", "TeleportGroupToDungeon - Member {} (GUID: {}) state: InWorld={}, Teleporting={}",
+            member->GetName(), member->GetGUID().ToString(), isInWorld, isTeleporting);
+
+        // Skip if already being teleported
+        if (isTeleporting)
+        {
+            TC_LOG_INFO("lfg.playerbot", "TeleportGroupToDungeon - {} is already being teleported, skipping",
+                member->GetName());
+            successCount++; // Count as success since teleport is in progress
+            continue;
+        }
 
         if (TeleportPlayerToDungeon(member, dungeonId))
         {
@@ -347,8 +383,8 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
         }
         else
         {
-            TC_LOG_WARN("lfg.playerbot", "TeleportGroupToDungeon - FAILED to teleport {} to dungeon {}",
-                member->GetName(), dungeonId);
+            TC_LOG_WARN("lfg.playerbot", "TeleportGroupToDungeon - FAILED to teleport {} to dungeon {} (InWorld={})",
+                member->GetName(), dungeonId, isInWorld);
         }
     }
 
@@ -363,8 +399,21 @@ bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 dung
     if (!player)
         return false;
 
-    TC_LOG_DEBUG("lfg.playerbot", "CanTeleportToDungeon - Checking {} for dungeon {} (isDead={}, IsInFlight={}, IsFalling={})",
-        player->GetName(), dungeonId, player->isDead(), player->IsInFlight(), player->IsFalling());
+    bool isInWorld = player->IsInWorld();
+
+    TC_LOG_DEBUG("lfg.playerbot", "CanTeleportToDungeon - Checking {} for dungeon {} (InWorld={}, isDead={}, IsInFlight={}, IsFalling={})",
+        player->GetName(), dungeonId, isInWorld, player->isDead(), player->IsInFlight(), player->IsFalling());
+
+    // CRITICAL FIX: For players not yet in world (JIT bots still loading),
+    // allow teleport - sLFGMgr->TeleportPlayer will handle the actual teleport
+    // when the player finishes loading. The state checks below only make sense
+    // for players that are fully in the world.
+    if (!isInWorld)
+    {
+        TC_LOG_INFO("lfg.playerbot", "CanTeleportToDungeon - Player {} not in world yet, allowing LFG teleport attempt",
+            player->GetName());
+        return true; // Let LFGMgr handle it
+    }
 
     // Check if player is dead
     if (player->isDead())

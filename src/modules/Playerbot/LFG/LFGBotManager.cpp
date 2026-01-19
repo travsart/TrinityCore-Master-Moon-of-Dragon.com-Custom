@@ -300,10 +300,29 @@ void LFGBotManager::OnPlayerJoinQueue(Player* player, uint8 playerRole, lfg::Lfg
                     botsQueued, player->GetName());
     }
 
+    // ========================================================================
     // Register dungeons with QueueStatePoller for shortage detection
+    // CRITICAL: Pass the human player's level so JIT bots are created at
+    // the correct level to match the human, not at dungeon average level.
+    // ========================================================================
+    uint8 playerLevel = player->GetLevel();
     for (uint32 dungeonId : dungeons)
     {
-        sQueueStatePoller->RegisterActiveLFGQueue(dungeonId);
+        // Get dungeon level range for validation
+        uint8 minLevel = 0, maxLevel = 0;
+        if (GetDungeonLevelRange(dungeonId, minLevel, maxLevel))
+        {
+            sQueueStatePoller->RegisterActiveLFGQueue(dungeonId, minLevel, maxLevel, playerLevel);
+            TC_LOG_INFO("module.playerbot.lfg", "Registered LFG queue for dungeon {} with human player level {}",
+                dungeonId, playerLevel);
+        }
+        else
+        {
+            // Fallback if level range not found (shouldn't happen)
+            sQueueStatePoller->RegisterActiveLFGQueue(dungeonId);
+            TC_LOG_WARN("module.playerbot.lfg", "Could not get level range for dungeon {}, using fallback registration",
+                dungeonId);
+        }
     }
 
     // Trigger immediate poll to detect any remaining shortages
@@ -440,11 +459,15 @@ void LFGBotManager::OnRoleCheckReceived(ObjectGuid groupGuid, ObjectGuid botGuid
 void LFGBotManager::OnGroupFormed(ObjectGuid groupGuid)
 {
     if (!_enabled || !_initialized)
+    {
+        TC_LOG_WARN("module.playerbot", "LFGBotManager::OnGroupFormed - SKIPPED (enabled={}, initialized={})",
+            _enabled.load(), _initialized);
         return;
+    }
 
     std::lock_guard lock(_mutex);
 
-    TC_LOG_DEBUG("module.playerbot", "LFGBotManager::OnGroupFormed - Group {} formed successfully", groupGuid.ToString());
+    TC_LOG_INFO("module.playerbot", ">>> LFGBotManager::OnGroupFormed CALLED - Group {}", groupGuid.ToString());
 
     // Get the group
     Group* group = sGroupMgr->GetGroupByGUID(groupGuid);
@@ -456,14 +479,20 @@ void LFGBotManager::OnGroupFormed(ObjectGuid groupGuid)
 
     // Get the dungeon ID for this group
     uint32 dungeonId = sLFGMgr->GetDungeon(groupGuid);
+    TC_LOG_INFO("module.playerbot", "LFGBotManager::OnGroupFormed - Group {} has dungeonId {} from LFGMgr",
+        groupGuid.ToString(), dungeonId);
+
     if (dungeonId == 0)
     {
-        TC_LOG_WARN("module.playerbot", "LFGBotManager::OnGroupFormed - No dungeon ID for group {}", groupGuid.ToString());
+        TC_LOG_WARN("module.playerbot", "LFGBotManager::OnGroupFormed - No dungeon ID for group {} - ABORTING", groupGuid.ToString());
         return;
     }
 
     // Notify the group coordinator about group formation
-    if (sLFGGroupCoordinator->IsEnabled())
+    bool coordinatorEnabled = sLFGGroupCoordinator->IsEnabled();
+    TC_LOG_INFO("module.playerbot", "LFGBotManager::OnGroupFormed - Coordinator enabled: {}", coordinatorEnabled);
+
+    if (coordinatorEnabled)
     {
         if (sLFGGroupCoordinator->OnGroupFormed(groupGuid, dungeonId))
         {
@@ -899,6 +928,68 @@ bool LFGBotManager::QueueJITBot(Player* bot, uint32 dungeonId)
         return false;
     }
 
+    // ========================================================================
+    // ENHANCED JIT BOT QUEUE LOGGING
+    // ========================================================================
+    // Log comprehensive information to help diagnose LFG queue failures.
+    // The most common issue is level mismatch between bot and dungeon requirements.
+    // ========================================================================
+
+    uint8 botLevel = bot->GetLevel();
+    uint8 minLevel = 0, maxLevel = 0;
+    bool hasLevelRange = GetDungeonLevelRange(dungeonId, minLevel, maxLevel);
+
+    TC_LOG_INFO("module.playerbot.lfg",
+        "LFGBotManager::QueueJITBot - Attempting to queue bot {} (level {}) for dungeon {} (requires level {}-{})",
+        bot->GetName(), botLevel, dungeonId,
+        hasLevelRange ? minLevel : 0,
+        hasLevelRange ? maxLevel : 0);
+
+    // Pre-queue validation: Check if bot's level is within dungeon range
+    if (hasLevelRange)
+    {
+        if (botLevel < minLevel)
+        {
+            TC_LOG_WARN("module.playerbot.lfg",
+                "⚠️ QueueJITBot: Bot {} level {} is BELOW dungeon {} minimum level {}!",
+                bot->GetName(), botLevel, dungeonId, minLevel);
+            // Continue anyway - the LFGMgr will do the final check
+        }
+        else if (botLevel > maxLevel)
+        {
+            TC_LOG_WARN("module.playerbot.lfg",
+                "⚠️ QueueJITBot: Bot {} level {} is ABOVE dungeon {} maximum level {}!",
+                bot->GetName(), botLevel, dungeonId, maxLevel);
+            // Continue anyway - the LFGMgr will do the final check
+        }
+        else
+        {
+            TC_LOG_INFO("module.playerbot.lfg",
+                "✅ QueueJITBot: Bot {} level {} is within dungeon {} range ({}-{})",
+                bot->GetName(), botLevel, dungeonId, minLevel, maxLevel);
+        }
+    }
+
+    // Pre-check: Get locked dungeons to see if this dungeon is accessible
+    lfg::LfgLockMap locks = sLFGMgr->GetLockedDungeons(bot->GetGUID());
+    auto lockIt = locks.find(dungeonId);
+    if (lockIt != locks.end())
+    {
+        // LfgLockInfoData members: lockStatus, requiredItemLevel, currentItemLevel
+        TC_LOG_WARN("module.playerbot.lfg",
+            "⚠️ QueueJITBot: Bot {} has LOCK on dungeon {} - Status: {}, RequiredILvl: {}, CurrentILvl: {:.1f}",
+            bot->GetName(), dungeonId,
+            lockIt->second.lockStatus,
+            lockIt->second.requiredItemLevel,
+            lockIt->second.currentItemLevel);
+    }
+    else
+    {
+        TC_LOG_INFO("module.playerbot.lfg",
+            "✅ QueueJITBot: Bot {} has NO lock on dungeon {} - eligible to queue",
+            bot->GetName(), dungeonId);
+    }
+
     // Determine role based on bot's spec
     uint8 role = sLFGRoleDetector->DetectBotRole(bot);
 
@@ -906,10 +997,26 @@ bool LFGBotManager::QueueJITBot(Player* bot, uint32 dungeonId)
     lfg::LfgDungeonSet dungeons;
     dungeons.insert(dungeonId);
 
-    TC_LOG_INFO("module.playerbot.lfg", "LFGBotManager::QueueJITBot - Queueing JIT bot {} (role={}) for dungeon {}",
-                bot->GetName(), role, dungeonId);
+    TC_LOG_INFO("module.playerbot.lfg",
+        "LFGBotManager::QueueJITBot - Queueing JIT bot {} (level {}, role={}) for dungeon {}",
+        bot->GetName(), botLevel, role, dungeonId);
 
-    return QueueBot(bot, role, dungeons);
+    bool success = QueueBot(bot, role, dungeons);
+
+    if (success)
+    {
+        TC_LOG_INFO("module.playerbot.lfg",
+            "✅ QueueJITBot: Successfully queued bot {} (level {}) for dungeon {}",
+            bot->GetName(), botLevel, dungeonId);
+    }
+    else
+    {
+        TC_LOG_ERROR("module.playerbot.lfg",
+            "❌ QueueJITBot: FAILED to queue bot {} (level {}) for dungeon {}",
+            bot->GetName(), botLevel, dungeonId);
+    }
+
+    return success;
 }
 
 void LFGBotManager::CalculateNeededRoles(uint8 humanRoles,
