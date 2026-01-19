@@ -205,18 +205,24 @@ void QueueStatePoller::UnregisterActiveBGQueue(BattlegroundTypeId bgTypeId, Batt
         static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
 }
 
-void QueueStatePoller::RegisterActiveLFGQueue(uint32 dungeonId, uint8 minLevel, uint8 maxLevel)
+void QueueStatePoller::RegisterActiveLFGQueue(uint32 dungeonId, uint8 minLevel, uint8 maxLevel, uint8 humanPlayerLevel)
 {
     std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     _activeLFGQueues.insert(dungeonId);
-    _lfgQueueInfo[dungeonId] = {minLevel, maxLevel};
+    _lfgQueueInfo[dungeonId] = {minLevel, maxLevel, humanPlayerLevel};
 
-    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Registered active LFG queue (dungeon={}, levels={}-{})",
-        dungeonId, minLevel, maxLevel);
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Registered active LFG queue (dungeon={}, levels={}-{}, humanLevel={})",
+        dungeonId, minLevel, maxLevel, humanPlayerLevel);
 
     // Trigger immediate poll
     DoPollLFGQueue(dungeonId, minLevel, maxLevel);
+}
+
+void QueueStatePoller::RegisterActiveLFGQueue(uint32 dungeonId, uint8 minLevel, uint8 maxLevel)
+{
+    // DEPRECATED: Calls new overload with humanPlayerLevel=0 (will use dungeon average as fallback)
+    RegisterActiveLFGQueue(dungeonId, minLevel, maxLevel, 0);
 }
 
 void QueueStatePoller::RegisterActiveLFGQueue(uint32 dungeonId)
@@ -729,7 +735,33 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     uint32 tanksStillNeeded = tanksShort;
     uint32 healersStillNeeded = healersShort;
     uint32 dpsStillNeeded = dpsShort;
-    uint32 avgLevel = (snapshot.minLevel + snapshot.maxLevel) / 2;
+
+    // ========================================================================
+    // CRITICAL FIX: Use HUMAN PLAYER'S LEVEL, not dungeon average!
+    // ========================================================================
+    // The human player queued at a specific level. Bots must match that level
+    // so they can group together. Using the dungeon's average level creates
+    // bots at the wrong level (e.g., level 37 for a level 26 player).
+    //
+    // Priority:
+    // 1. Use humanPlayerLevel from _lfgQueueInfo if set (when human queued)
+    // 2. Fall back to dungeon average if no human level tracked (shouldn't happen)
+    // ========================================================================
+    uint32 targetLevel = 0;
+    auto queueInfoIt = _lfgQueueInfo.find(snapshot.dungeonId);
+    if (queueInfoIt != _lfgQueueInfo.end() && queueInfoIt->second.humanPlayerLevel > 0)
+    {
+        targetLevel = queueInfoIt->second.humanPlayerLevel;
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Using HUMAN PLAYER level {} for dungeon {} (dungeon range: {}-{})",
+            targetLevel, snapshot.dungeonId, snapshot.minLevel, snapshot.maxLevel);
+    }
+    else
+    {
+        // Fallback: use dungeon average (this is the old, incorrect behavior)
+        targetLevel = (snapshot.minLevel + snapshot.maxLevel) / 2;
+        TC_LOG_WARN("playerbot.jit", "QueueStatePoller: ⚠️ No human player level found for dungeon {}, using dungeon average {} (SUBOPTIMAL)",
+            snapshot.dungeonId, targetLevel);
+    }
 
     // ========================================================================
     // STEP 1: TRY WARM POOL FIRST
@@ -747,7 +779,7 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     {
         std::vector<ObjectGuid> allianceBots = sInstanceBotPool->AssignForDungeon(
             snapshot.dungeonId,
-            avgLevel,
+            targetLevel,
             Faction::Alliance,
             tanksStillNeeded,
             healersStillNeeded,
@@ -812,7 +844,7 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     {
         std::vector<ObjectGuid> hordeBots = sInstanceBotPool->AssignForDungeon(
             snapshot.dungeonId,
-            avgLevel,
+            targetLevel,
             Faction::Horde,
             tanksStillNeeded,
             healersStillNeeded,
@@ -903,7 +935,7 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
     FactoryRequest request;
     request.instanceType = InstanceType::Dungeon;
     request.contentId = snapshot.dungeonId;
-    request.playerLevel = avgLevel;
+    request.playerLevel = targetLevel;
     request.tanksNeeded = tanksStillNeeded;
     request.healersNeeded = healersStillNeeded;
     request.dpsNeeded = dpsStillNeeded;

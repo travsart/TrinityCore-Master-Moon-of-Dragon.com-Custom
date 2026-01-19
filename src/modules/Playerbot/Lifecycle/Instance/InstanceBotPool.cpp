@@ -1611,17 +1611,22 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     // CRITICAL: Register pending configuration BEFORE bot logs in
     // This ensures BotPostLoginConfigurator::ApplyPendingConfiguration()
     // will apply the correct level when the bot enters the world.
+    //
+    // CRITICAL FIX (2026-01-18): Include targetGearScore so BotGearFactory
+    // generates appropriate gear. Pool bots don't have templates, so they
+    // rely entirely on BotGearFactory for equipment.
     // ========================================================================
     BotPendingConfiguration pendingConfig;
     pendingConfig.botGuid = botGuid;
     pendingConfig.targetLevel = targetLevel;
     pendingConfig.specId = specId;
+    pendingConfig.targetGearScore = targetLevel * 10;  // Approximate gear score based on level
     pendingConfig.createdAt = std::chrono::steady_clock::now();
 
     sBotPostLoginConfigurator->RegisterPendingConfig(std::move(pendingConfig));
 
-    TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Registered pending config for bot {} targetLevel={}",
-        botGuid.ToString(), targetLevel);
+    TC_LOG_INFO("playerbot.pool", "InstanceBotPool::WarmUpBot - Registered pending config for bot {} (level={}, spec={}, gearScore={})",
+        botGuid.ToString(), targetLevel, specId, pendingConfig.targetGearScore);
 
     // Use BotSpawner to spawn the bot (same flow as regular bots)
     // This uses the proven workflow: SpawnBot -> async character selection -> login

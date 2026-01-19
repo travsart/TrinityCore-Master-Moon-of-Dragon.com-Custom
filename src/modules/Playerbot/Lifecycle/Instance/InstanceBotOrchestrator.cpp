@@ -866,11 +866,15 @@ bool InstanceBotOrchestrator::FulfillDungeonRequest(DungeonRequest& request)
         }
     }
 
-    // Track bots
+    // Track bots and mark them as instance bots
     {
         std::lock_guard<std::mutex> lock(_instanceMutex);
         for (auto const& guid : allBots)
+        {
             _managedBots.insert(guid);
+            // Mark as instance bot - enables 60s idle timeout
+            sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+        }
     }
 
     if (_config.logAssignments)
@@ -933,11 +937,15 @@ bool InstanceBotOrchestrator::FulfillRaidRequest(RaidRequest& request)
     factoryReq.dpsNeeded = needed.dpsNeeded;
     factoryReq.minGearScore = needed.minGearScore;
     factoryReq.onComplete = [this, request](std::vector<ObjectGuid> const& bots) mutable {
-        // Track bots
+        // Track bots and mark them as instance bots
         {
             std::lock_guard<std::mutex> lock(_instanceMutex);
             for (auto const& guid : bots)
+            {
                 _managedBots.insert(guid);
+                // Mark as instance bot - enables 60s idle timeout
+                sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+            }
         }
 
         if (request.onBotsReady)
@@ -1006,11 +1014,15 @@ bool InstanceBotOrchestrator::FulfillBattlegroundRequest(BattlegroundRequest& re
                 hordeBots.push_back(bots[i]);
         }
 
-        // Track all bots
+        // Track all bots and mark them as instance bots
         {
             std::lock_guard<std::mutex> lock(_instanceMutex);
             for (auto const& guid : bots)
+            {
                 _managedBots.insert(guid);
+                // Mark as instance bot - enables 60s idle timeout
+                sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+            }
         }
 
         if (request.onBotsReady)
@@ -1087,13 +1099,21 @@ bool InstanceBotOrchestrator::FulfillArenaRequest(ArenaRequest& request)
         opponents.insert(opponents.end(), dps.begin(), dps.end());
     }
 
-    // Track bots
+    // Track bots and mark them as instance bots
     {
         std::lock_guard<std::mutex> lock(_instanceMutex);
         for (auto const& guid : teammates)
+        {
             _managedBots.insert(guid);
+            // Mark as instance bot - enables 60s idle timeout
+            sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+        }
         for (auto const& guid : opponents)
+        {
             _managedBots.insert(guid);
+            // Mark as instance bot - enables 60s idle timeout
+            sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+        }
     }
 
     if (request.onBotsReady)
@@ -1224,7 +1244,11 @@ void InstanceBotOrchestrator::TrackBotsInInstance(
     }
 
     for (auto const& guid : bots)
+    {
         _managedBots.insert(guid);
+        // Mark as instance bot - enables 60s idle timeout
+        sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+    }
 }
 
 void InstanceBotOrchestrator::ReleaseBotsFromInstance(uint32 instanceId)

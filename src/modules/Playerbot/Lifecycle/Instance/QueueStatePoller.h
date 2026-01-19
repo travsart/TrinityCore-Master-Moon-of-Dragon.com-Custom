@@ -233,12 +233,27 @@ public:
     void UnregisterActiveBGQueue(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket);
 
     /**
+     * @brief Register an LFG queue as active with human player level (PREFERRED)
+     *
+     * CRITICAL: Always use this overload when a human player joins the queue.
+     * Bots must be created at the HUMAN PLAYER'S LEVEL, not the dungeon's average.
+     *
+     * @param dungeonId The dungeon ID
+     * @param minLevel Dungeon minimum level
+     * @param maxLevel Dungeon maximum level
+     * @param humanPlayerLevel The human player's current level (bots will match this)
+     */
+    void RegisterActiveLFGQueue(uint32 dungeonId, uint8 minLevel, uint8 maxLevel, uint8 humanPlayerLevel);
+
+    /**
      * @brief Register an LFG queue as active
+     * @deprecated Use the overload with humanPlayerLevel instead
      */
     void RegisterActiveLFGQueue(uint32 dungeonId, uint8 minLevel, uint8 maxLevel);
 
     /**
      * @brief Register an LFG queue as active (auto-detects level range from LFGDungeonEntry)
+     * @deprecated Use the overload with humanPlayerLevel instead
      */
     void RegisterActiveLFGQueue(uint32 dungeonId);
 
@@ -481,8 +496,10 @@ private:
     // LFG level requirements per dungeon
     struct LFGQueueInfo
     {
-        uint8 minLevel;
-        uint8 maxLevel;
+        uint8 minLevel;         // Dungeon minimum level requirement
+        uint8 maxLevel;         // Dungeon maximum level requirement
+        uint8 humanPlayerLevel; // CRITICAL: Level of the human player who queued
+                                // Bots must match the human's level, NOT the dungeon's level range
     };
     std::unordered_map<uint32, LFGQueueInfo> _lfgQueueInfo;
 
