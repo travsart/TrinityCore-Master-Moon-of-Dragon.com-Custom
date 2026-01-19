@@ -575,15 +575,24 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                         if (bot)
                         {
                             // CRITICAL: Skip JIT bots - they're configured by BotPostLoginConfigurator
-                            // Check both:
+                            // Check all three conditions:
                             // 1. HasPendingConfiguration - config not yet applied
-                            // 2. IsManagedBot - config already applied, bot managed by orchestrator
+                            // 2. WasRecentlyConfigured - config was applied but not yet cleared (prevents race condition)
+                            // 3. IsManagedBot - config already applied, bot managed by orchestrator
+                            bool wasRecentlyConfigured = sBotPostLoginConfigurator->WasRecentlyConfigured(guid);
                             if (sBotPostLoginConfigurator->HasPendingConfiguration(guid) ||
+                                wasRecentlyConfigured ||
                                 sInstanceBotOrchestrator->IsManagedBot(guid))
                             {
                                 TC_LOG_INFO("module.playerbot.session",
-                                    "Bot {} is JIT-configured - SKIPPING LevelManager submission to preserve target level",
-                                    bot->GetName());
+                                    "Bot {} is JIT-configured - SKIPPING LevelManager submission to preserve target level (wasRecent={})",
+                                    bot->GetName(), wasRecentlyConfigured ? "YES" : "NO");
+
+                                // Clear the recently configured flag now that we've processed this bot
+                                if (wasRecentlyConfigured)
+                                {
+                                    sBotPostLoginConfigurator->ClearRecentlyConfigured(guid);
+                                }
                             }
                             else
                             {
@@ -783,6 +792,27 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         {
             disconnectedSessions.push_back(guid);
             continue;
+        }
+
+        // ====================================================================
+        // INSTANCE BOT IDLE LOGOUT CHECK
+        // ====================================================================
+        // Instance bots (JIT/warm pool) are for instanced content only.
+        // They auto-logout after 60 seconds of being idle (not in queue/group).
+        // This reduces server load when bots are not actively in use.
+        // ====================================================================
+        if (botSession->IsInstanceBot() && botSession->IsLoginComplete())
+        {
+            if (botSession->UpdateIdleStateAndCheckLogout(diff))
+            {
+                // Bot has been idle for 60+ seconds - schedule for logout
+                Player* bot = botSession->GetPlayer();
+                TC_LOG_INFO("module.playerbot.instance",
+                    "📴 Instance bot {} idle timeout - scheduling logout to reduce server load",
+                    bot ? bot->GetName() : guid.ToString().c_str());
+                disconnectedSessions.push_back(guid);
+                continue;
+            }
         }
 
         // OPTION 5: Capture weak_ptr for session lifetime detection
@@ -1477,6 +1507,26 @@ bool BotWorldSessionMgr::IsBotLoading(ObjectGuid botGuid) const
 {
     ::std::lock_guard lock(_sessionsMutex);
     return _botsLoading.find(botGuid) != _botsLoading.end();
+}
+
+void BotWorldSessionMgr::MarkAsInstanceBot(ObjectGuid botGuid)
+{
+    ::std::lock_guard lock(_sessionsMutex);
+
+    auto it = _botSessions.find(botGuid);
+    if (it != _botSessions.end() && it->second)
+    {
+        it->second->SetInstanceBot(true);
+        TC_LOG_DEBUG("module.playerbot.instance",
+            "Marked bot {} as INSTANCE BOT - will auto-logout after 60s if idle",
+            botGuid.ToString());
+    }
+    else
+    {
+        TC_LOG_DEBUG("module.playerbot.instance",
+            "Could not mark bot {} as instance bot - session not found",
+            botGuid.ToString());
+    }
 }
 
 } // namespace Playerbot

@@ -144,6 +144,63 @@ public:
     bool IsBot() const { return true; }
     bool IsActive() const { return _active.load(); }
 
+    // ========================================================================
+    // INSTANCE BOT LIFECYCLE MANAGEMENT
+    // ========================================================================
+    // Instance bots (JIT/Warm Pool) are special-purpose bots created exclusively
+    // for dungeons, raids, battlegrounds, and arenas. They should NOT do quests
+    // or other open-world activities. When not in a queue or group, they should
+    // automatically log out after a short idle period to reduce server load.
+    //
+    // IDLE TIMEOUT: 60 seconds (1 minute)
+    // ========================================================================
+
+    /**
+     * @brief Mark this bot as an instance bot (JIT or warm pool)
+     *
+     * Called by: JITBotFactory, InstanceBotPool during bot creation
+     * Effect: Enables automatic logout when not in queue or group
+     */
+    void SetInstanceBot(bool isInstanceBot);
+
+    /**
+     * @brief Check if this is an instance bot
+     * @return true if this bot was created for instanced content only
+     */
+    bool IsInstanceBot() const { return _isInstanceBot.load(); }
+
+    /**
+     * @brief Check if the bot is currently in an "active" instance state
+     * @return true if bot is in queue, in group, or in instance
+     *
+     * Active states that prevent idle logout:
+     * - In LFG queue
+     * - In BG queue
+     * - In Arena queue
+     * - In a group (any type)
+     * - Inside an instance (dungeon/raid/BG/arena)
+     */
+    bool IsInActiveInstanceState() const;
+
+    /**
+     * @brief Update idle state and check if bot should log out
+     * @param diff Time since last update in milliseconds
+     * @return true if bot should be logged out due to idle timeout
+     *
+     * Called from BotWorldSessionMgr::UpdateSessions() every tick.
+     * Returns true when instance bot has been idle for 60+ seconds.
+     */
+    bool UpdateIdleStateAndCheckLogout(uint32 diff);
+
+    /**
+     * @brief Get idle duration in milliseconds
+     * @return Time the bot has been idle (0 if not idle)
+     */
+    uint32 GetIdleDurationMs() const;
+
+    /// Idle timeout for instance bots (60 seconds = 1 minute)
+    static constexpr uint32 INSTANCE_BOT_IDLE_TIMEOUT_MS = 60 * 1000;
+
     // Process pending async login operations
     void ProcessPendingLogin();
 
@@ -430,6 +487,24 @@ private:
     // Tracks when bot started waiting for group members to enter dungeon first
     // After timeout (30 seconds), bot proceeds anyway to avoid being stuck forever
     std::atomic<uint32> _instanceSyncWaitStartMs{0};
+
+    // ========================================================================
+    // INSTANCE BOT LIFECYCLE TRACKING
+    // ========================================================================
+    // Instance bots (JIT/warm pool) are for instanced content only.
+    // They auto-logout after 60 seconds of being idle (not in queue/group).
+    // ========================================================================
+
+    /// Whether this bot is an instance bot (JIT or warm pool)
+    std::atomic<bool> _isInstanceBot{false};
+
+    /// Accumulated idle time in milliseconds
+    /// Reset to 0 when bot enters queue or group, incremented when idle
+    std::atomic<uint32> _idleAccumulatorMs{0};
+
+    /// Whether bot was active (in queue/group) last check
+    /// Used to detect transition from active to idle
+    std::atomic<bool> _wasActiveLastCheck{true};
 
     // Deleted copy operations
     BotSession(BotSession const&) = delete;

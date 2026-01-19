@@ -58,6 +58,8 @@
 #include "LFGMgr.h"        // For sLFGMgr->UpdateProposal (LFG auto-accept)
 #include "LFGPacketsCommon.h" // For RideTicket parsing (LFG auto-accept)
 #include "Lifecycle/Instance/BotPostLoginConfigurator.h"  // Post-login configuration for JIT bots
+#include "BattlegroundMgr.h"  // For queue state checking (instance bot idle detection)
+#include "BattlegroundQueue.h"  // For IsPlayerInvitedToRatedMatch etc.
 
 namespace Playerbot {
 
@@ -1916,13 +1918,12 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                     pCurrChar->SetPrimarySpecialization(firstSpec->ID);
                     pCurrChar->SetActiveTalentGroup(firstSpec->OrderIndex);
 
-                    // Learn all spec-specific spells (including Summon Imp for warlocks!)
+                    // Learn specialization spells using standard TrinityCore method
+                    // This is safe because IsInWorld() is false at this point (before AddPlayerToMap),
+                    // so LearnSpell() won't attempt to send packets
                     pCurrChar->LearnSpecializationSpells();
 
-                    // NOTE: Don't call SaveToDB() here - it will be saved naturally later
-                    // Calling it during login can cause thread safety issues with MapUpdater
-
-                    TC_LOG_INFO("module.playerbot.session", "Bot {} now has spec {} - specialization spells learned",
+                    TC_LOG_INFO("module.playerbot.session", "Bot {} now has spec {} - specialization spells learned via LearnSpecializationSpells()",
                         pCurrChar->GetName(), firstSpec->ID);
                 }
             }
@@ -3095,6 +3096,148 @@ bool BotSession::ProcessPendingLfgProposalAccepts()
     }
 
     return acceptedAny;
+}
+
+// ============================================================================
+// INSTANCE BOT LIFECYCLE MANAGEMENT
+// ============================================================================
+// Instance bots (JIT/Warm Pool) auto-logout after 60 seconds of being idle
+// (not in queue, not in group, not in instance).
+// ============================================================================
+
+void BotSession::SetInstanceBot(bool isInstanceBot)
+{
+    _isInstanceBot.store(isInstanceBot);
+
+    if (isInstanceBot)
+    {
+        // Reset idle state when marked as instance bot
+        _idleAccumulatorMs.store(0);
+        _wasActiveLastCheck.store(true);
+
+        Player* player = GetPlayer();
+        TC_LOG_INFO("module.playerbot.instance",
+            "Bot {} marked as INSTANCE BOT - will auto-logout after {}s if idle",
+            player ? player->GetName() : "unknown",
+            INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000);
+    }
+}
+
+bool BotSession::IsInActiveInstanceState() const
+{
+    Player* player = GetPlayer();
+    if (!player)
+        return false;
+
+    // Check 1: Is bot in a group?
+    if (player->GetGroup())
+    {
+        return true;
+    }
+
+    // Check 2: Is bot inside an instance (dungeon/raid/BG/arena)?
+    Map* map = player->GetMap();
+    if (map && (map->IsDungeon() || map->IsRaid() || map->IsBattleground() || map->IsBattleArena()))
+    {
+        return true;
+    }
+
+    // Check 3: Is bot in LFG queue?
+    // LFGMgr tracks queued players
+    lfg::LfgState lfgState = sLFGMgr->GetState(player->GetGUID());
+    if (lfgState != lfg::LFG_STATE_NONE && lfgState != lfg::LFG_STATE_RAIDBROWSER)
+    {
+        // States that indicate active queue:
+        // LFG_STATE_QUEUED, LFG_STATE_PROPOSAL, LFG_STATE_DUNGEON, LFG_STATE_BOOT
+        return true;
+    }
+
+    // Check 4: Is bot in BG queue?
+    // Iterate through all possible BG queue types to check if player is queued
+    for (uint8 i = 0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
+    {
+        BattlegroundQueueTypeId bgQueueTypeId = player->GetBattlegroundQueueTypeId(i);
+        if (bgQueueTypeId != BATTLEGROUND_QUEUE_NONE)
+        {
+            // Player has an active BG queue slot
+            return true;
+        }
+    }
+
+    // Check 5: Is bot in Arena queue? (handled by BG queue check above for rated)
+
+    // Not in any active state
+    return false;
+}
+
+bool BotSession::UpdateIdleStateAndCheckLogout(uint32 diff)
+{
+    // Only applies to instance bots
+    if (!_isInstanceBot.load())
+        return false;
+
+    Player* player = GetPlayer();
+    if (!player)
+        return false;
+
+    bool isActive = IsInActiveInstanceState();
+
+    if (isActive)
+    {
+        // Bot is active - reset idle accumulator
+        if (_idleAccumulatorMs.load() > 0)
+        {
+            TC_LOG_DEBUG("module.playerbot.instance",
+                "Bot {} became ACTIVE (in queue/group/instance) - resetting idle timer",
+                player->GetName());
+        }
+        _idleAccumulatorMs.store(0);
+        _wasActiveLastCheck.store(true);
+        return false;
+    }
+
+    // Bot is idle - accumulate idle time
+    bool wasActive = _wasActiveLastCheck.exchange(false);
+    if (wasActive)
+    {
+        // Just became idle - log the transition
+        TC_LOG_INFO("module.playerbot.instance",
+            "Bot {} became IDLE (not in queue/group/instance) - starting {}s logout timer",
+            player->GetName(), INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000);
+    }
+
+    uint32 currentIdle = _idleAccumulatorMs.load();
+    uint32 newIdle = currentIdle + diff;
+    _idleAccumulatorMs.store(newIdle);
+
+    // Check if timeout exceeded
+    if (newIdle >= INSTANCE_BOT_IDLE_TIMEOUT_MS)
+    {
+        TC_LOG_INFO("module.playerbot.instance",
+            "⏰ Bot {} IDLE TIMEOUT ({} seconds) - scheduling logout to reduce server load",
+            player->GetName(), INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000);
+        return true;
+    }
+
+    // Log progress every 15 seconds
+    uint32 oldSeconds = currentIdle / 15000;
+    uint32 newSeconds = newIdle / 15000;
+    if (newSeconds > oldSeconds)
+    {
+        TC_LOG_DEBUG("module.playerbot.instance",
+            "Bot {} idle for {}s / {}s",
+            player->GetName(), newIdle / 1000, INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000);
+    }
+
+    return false;
+}
+
+uint32 BotSession::GetIdleDurationMs() const
+{
+    if (!_isInstanceBot.load())
+        return 0;
+
+    return _idleAccumulatorMs.load();
 }
 
 } // namespace Playerbot

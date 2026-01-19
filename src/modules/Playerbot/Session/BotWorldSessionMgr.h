@@ -78,6 +78,22 @@ public:
     // Used by ProcessPendingBGQueues to avoid double-queuing race conditions
     bool IsBotLoading(ObjectGuid botGuid) const;
 
+    // ========================================================================
+    // INSTANCE BOT MANAGEMENT
+    // ========================================================================
+    // Instance bots (JIT/warm pool) are for instanced content only.
+    // They auto-logout after 60 seconds of being idle (not in queue/group).
+    // ========================================================================
+
+    /**
+     * @brief Mark a bot as an instance bot (JIT or warm pool)
+     * @param botGuid Bot to mark
+     *
+     * Called by: InstanceBotOrchestrator when bot is assigned to instance content
+     * Effect: Enables automatic logout when not in queue or group
+     */
+    void MarkAsInstanceBot(ObjectGuid botGuid);
+
 private:
     BotWorldSessionMgr() = default;
     ~BotWorldSessionMgr() = default;
