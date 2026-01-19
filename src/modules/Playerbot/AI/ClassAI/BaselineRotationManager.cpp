@@ -118,9 +118,10 @@ bool BaselineRotationManager::ShouldUseBaselineRotation(Player* bot)
 
     // Also use if bot is level 10+ but hasn't chosen a specialization
     // (This is an edge case that should trigger auto-specialization)
-    // Check if bot has an active talent group (specialization)
-    uint8 activeGroup = bot->GetActiveTalentGroup();
-    return (level >= 10 && activeGroup == 0);
+    // FIXED: GetActiveTalentGroup() returns talent GROUP index (0 or 1), not specialization!
+    // Use GetPrimarySpecialization() to correctly detect if bot has a spec assigned.
+    ChrSpecialization spec = bot->GetPrimarySpecialization();
+    return (level >= 10 && spec == ChrSpecialization::None);
 }
 
 bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* target)

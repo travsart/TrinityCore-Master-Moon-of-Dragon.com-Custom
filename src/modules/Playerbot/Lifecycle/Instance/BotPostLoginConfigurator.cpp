@@ -9,11 +9,13 @@
 
 #include "BotPostLoginConfigurator.h"
 #include "BotTemplateRepository.h"
+#include "Equipment/BotGearFactory.h"
 #include "LFG/LFGBotManager.h"
 #include "Player.h"
 #include "Item.h"
 #include "Log.h"
 #include "SpellMgr.h"
+#include "SpellInfo.h"
 #include "ObjectMgr.h"
 #include "DB2Stores.h"
 #include "World.h"
@@ -61,6 +63,7 @@ void BotPostLoginConfigurator::Shutdown()
     {
         std::lock_guard<std::mutex> lock(_configMutex);
         _pendingConfigs.clear();
+        _recentlyConfiguredBots.clear();
     }
 
     _initialized.store(false);
@@ -129,6 +132,34 @@ void BotPostLoginConfigurator::RemovePendingConfiguration(ObjectGuid botGuid)
     }
 }
 
+bool BotPostLoginConfigurator::WasRecentlyConfigured(ObjectGuid botGuid) const
+{
+    std::lock_guard<std::mutex> lock(_configMutex);
+    bool found = _recentlyConfiguredBots.find(botGuid) != _recentlyConfiguredBots.end();
+
+    if (found)
+    {
+        TC_LOG_INFO("module.playerbot.configurator",
+            "WasRecentlyConfigured: GUID={} -> YES (in recently configured set)",
+            botGuid.ToString());
+    }
+
+    return found;
+}
+
+void BotPostLoginConfigurator::ClearRecentlyConfigured(ObjectGuid botGuid)
+{
+    std::lock_guard<std::mutex> lock(_configMutex);
+    auto erased = _recentlyConfiguredBots.erase(botGuid);
+
+    if (erased > 0)
+    {
+        TC_LOG_INFO("module.playerbot.configurator",
+            "ClearRecentlyConfigured: Removed GUID={} from recently configured set (remaining: {})",
+            botGuid.ToString(), _recentlyConfiguredBots.size());
+    }
+}
+
 // ============================================================================
 // CONFIGURATION APPLICATION
 // ============================================================================
@@ -174,20 +205,26 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     bool success = true;
 
     // Get template if not cached
+    // NOTE: Template is OPTIONAL - warm pool bots may not have a template
+    // In that case, we still apply level, spec, and use BotGearFactory for equipment
     BotTemplate const* tmpl = config.templatePtr;
     if (!tmpl && config.templateId > 0)
     {
         tmpl = sBotTemplateRepository->GetTemplateById(config.templateId);
+        if (!tmpl)
+        {
+            TC_LOG_WARN("module.playerbot.configurator",
+                "Template {} not found for bot {} - will use BotGearFactory fallback",
+                config.templateId, player->GetName());
+        }
     }
 
+    // If no template is available, log info and continue with fallback behavior
     if (!tmpl)
     {
-        TC_LOG_ERROR("module.playerbot.configurator",
-            "Failed to get template {} for bot {}",
-            config.templateId, player->GetName());
-        _stats.failedConfigs.fetch_add(1);
-        RemovePendingConfiguration(playerGuid);
-        return false;
+        TC_LOG_INFO("module.playerbot.configurator",
+            "No template for bot {} (templateId={}) - using BotGearFactory for equipment",
+            player->GetName(), config.templateId);
     }
 
     // Step 1: Apply Level
@@ -207,7 +244,8 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     }
 
     // Step 2: Apply Specialization (must be before talents)
-    uint32 specId = config.specId > 0 ? config.specId : tmpl->specId;
+    // Use config.specId if set, otherwise fallback to template spec (if available)
+    uint32 specId = config.specId > 0 ? config.specId : (tmpl ? tmpl->specId : 0);
     if (specId > 0)
     {
         TC_LOG_INFO("module.playerbot.configurator",
@@ -230,8 +268,8 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
 
     ApplyClassSpells(player);
 
-    // Step 4: Apply Talents
-    if (!tmpl->talents.talentIds.empty())
+    // Step 4: Apply Talents (only if template exists with talents)
+    if (tmpl && !tmpl->talents.talentIds.empty())
     {
         TC_LOG_INFO("module.playerbot.configurator",
             "Applying {} talents to bot {}",
@@ -247,11 +285,22 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     }
 
     // Step 5: Apply Gear
-    if (config.targetGearScore > 0 || !tmpl->gearSets.empty())
+    // CRITICAL FIX: Always apply gear for instance bots
+    // BotGearFactory will handle gear generation when template is null/empty/has no gear
+    // Previous condition was broken because:
+    //   - targetGearScore=0 (templates set this to 0)
+    //   - hasTemplateGear=false (no gear sets in database)
+    //   - tmpl != nullptr (templates exist)
+    // Result: shouldApplyGear was always false, bots had no gear!
+    bool hasTemplateGear = tmpl && !tmpl->gearSets.empty();
+    // ALWAYS apply gear - if no template gear exists, BotGearFactory will generate appropriate gear
+    bool shouldApplyGear = true;  // Always equip gear for instance bots
+
+    if (shouldApplyGear)
     {
         TC_LOG_INFO("module.playerbot.configurator",
-            "Applying gear (target GS: {}) to bot {}",
-            config.targetGearScore, player->GetName());
+            "Applying gear to bot {} (targetGS={}, hasTemplate={}, hasTemplateGear={})",
+            player->GetName(), config.targetGearScore, tmpl != nullptr, hasTemplateGear);
 
         if (!ApplyGear(player, tmpl, config.targetGearScore))
         {
@@ -262,8 +311,8 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
         }
     }
 
-    // Step 6: Apply Action Bars
-    if (!tmpl->actionBars.buttons.empty())
+    // Step 6: Apply Action Bars (only if template exists with action bars)
+    if (tmpl && !tmpl->actionBars.buttons.empty())
     {
         TC_LOG_INFO("module.playerbot.configurator",
             "Applying {} action buttons to bot {}",
@@ -334,6 +383,19 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
         TC_LOG_WARN("module.playerbot.configurator",
             "Partially configured bot {} in {}ms (some steps failed)",
             player->GetName(), durationMs);
+    }
+
+    // CRITICAL: Add to recently configured set BEFORE removing pending config
+    // This prevents the race condition where:
+    // 1. We remove pending config
+    // 2. BotWorldSessionMgr checks HasPendingConfiguration() - returns FALSE
+    // 3. Bot gets submitted to BotLevelManager which re-levels it
+    {
+        std::lock_guard<std::mutex> lock(_configMutex);
+        _recentlyConfiguredBots.insert(playerGuid);
+        TC_LOG_INFO("module.playerbot.configurator",
+            "Added bot {} to recently configured set (size: {})",
+            player->GetName(), _recentlyConfiguredBots.size());
     }
 
     // Remove pending configuration
@@ -553,47 +615,105 @@ bool BotPostLoginConfigurator::LearnTalent(Player* player, uint32 talentId)
 
 bool BotPostLoginConfigurator::ApplyGear(Player* player, BotTemplate const* tmpl, uint32 targetGearScore)
 {
-    if (!player || !tmpl)
+    if (!player)
         return false;
 
-    // Select best gear set for target
-    GearSetTemplate const* gearSet = SelectGearSet(tmpl, targetGearScore);
-    if (!gearSet)
+    // First, try to use template gear set if available and has valid items
+    bool useTemplateGear = false;
+    GearSetTemplate const* gearSet = nullptr;
+
+    if (tmpl)
+    {
+        gearSet = SelectGearSet(tmpl, targetGearScore);
+        if (gearSet)
+        {
+            // Check if template has any valid item IDs (non-zero)
+            for (auto const& slotData : gearSet->slots)
+            {
+                if (slotData.itemId != 0)
+                {
+                    useTemplateGear = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    // If template has valid items, use them
+    if (useTemplateGear && gearSet)
     {
         TC_LOG_INFO("module.playerbot.configurator",
-            "No gear set found for bot {} (target GS: {})",
-            player->GetName(), targetGearScore);
+            "Using template gear set iLvl {} (actual GS: {}) for bot {}",
+            gearSet->targetItemLevel, gearSet->actualGearScore, player->GetName());
+
+        uint32 itemsEquipped = 0;
+        uint32 itemsFailed = 0;
+
+        for (uint8 slot = 0; slot < EQUIPMENT_SLOT_END; ++slot)
+        {
+            if (slot >= gearSet->slots.size())
+                break;
+
+            GearSlotTemplate const& slotData = gearSet->slots[slot];
+            if (slotData.itemId == 0)
+                continue;
+
+            if (EquipItem(player, slot, slotData.itemId))
+                ++itemsEquipped;
+            else
+                ++itemsFailed;
+        }
+
+        TC_LOG_INFO("module.playerbot.configurator",
+            "Applied template gear to bot {}: {} equipped, {} failed",
+            player->GetName(), itemsEquipped, itemsFailed);
+
+        return itemsFailed == 0;
+    }
+
+    // FALLBACK: Use BotGearFactory to generate and apply gear dynamically
+    // This handles cases where:
+    // 1. Template has no gear sets
+    // 2. Template gear sets have placeholder items (itemId = 0)
+    // 3. No template was provided
+    TC_LOG_INFO("module.playerbot.configurator",
+        "Template has no valid gear - using BotGearFactory for bot {} (level {}, class {}, spec {})",
+        player->GetName(), player->GetLevel(), player->GetClass(),
+        static_cast<uint32>(player->GetPrimarySpecialization()));
+
+    if (!sBotGearFactory->IsReady())
+    {
+        TC_LOG_WARN("module.playerbot.configurator",
+            "BotGearFactory not ready - cannot generate gear for bot {}",
+            player->GetName());
+        return false;
+    }
+
+    // Determine faction
+    TeamId faction = player->GetTeamId();
+
+    // Build gear set using BotGearFactory
+    GearSet generatedGear = sBotGearFactory->BuildGearSet(
+        player->GetClass(),
+        static_cast<uint32>(player->GetPrimarySpecialization()),
+        player->GetLevel(),
+        faction
+    );
+
+    // Apply the generated gear set
+    if (!sBotGearFactory->ApplyGearSet(player, generatedGear))
+    {
+        TC_LOG_WARN("module.playerbot.configurator",
+            "BotGearFactory failed to apply gear to bot {}",
+            player->GetName());
         return false;
     }
 
     TC_LOG_INFO("module.playerbot.configurator",
-        "Selected gear set iLvl {} (actual GS: {}) for bot {}",
-        gearSet->targetItemLevel, gearSet->actualGearScore, player->GetName());
+        "BotGearFactory successfully equipped bot {} with generated gear",
+        player->GetName());
 
-    uint32 itemsEquipped = 0;
-    uint32 itemsFailed = 0;
-
-    // Equipment slots (0-18)
-    for (uint8 slot = 0; slot < EQUIPMENT_SLOT_END; ++slot)
-    {
-        if (slot >= gearSet->slots.size())
-            break;
-
-        GearSlotTemplate const& slotData = gearSet->slots[slot];
-        if (slotData.itemId == 0)
-            continue;
-
-        if (EquipItem(player, slot, slotData.itemId))
-            ++itemsEquipped;
-        else
-            ++itemsFailed;
-    }
-
-    TC_LOG_INFO("module.playerbot.configurator",
-        "Applied gear to bot {}: {} equipped, {} failed",
-        player->GetName(), itemsEquipped, itemsFailed);
-
-    return itemsFailed == 0;
+    return true;
 }
 
 bool BotPostLoginConfigurator::EquipItem(Player* player, uint8 slot, uint32 itemId)
@@ -669,16 +789,78 @@ bool BotPostLoginConfigurator::ApplyClassSpells(Player* player)
     player->LearnDefaultSkills();
     player->UpdateSkillsForLevel();
 
-    // Learn specialization spells if spec is set
-    // NOTE: SKIPPING LearnSpecializationSpells() - it calls LearnSpell() which
-    // sends packets via SendDirectMessage() and crashes for bots without proper session.
-    // The bot AI will learn necessary spells when it initializes.
+    // ========================================================================
+    // SPECIALIZATION SPELL LEARNING
+    // ========================================================================
+    // Use standard TrinityCore method when possible:
+    // - If NOT in world: LearnSpecializationSpells() won't send packets (IsInWorld check)
+    // - If IN world: Use AddSpell directly to avoid log spam from failed packet sends
+    //   (Bot sessions have no socket, so SendDirectMessage logs errors but doesn't crash)
+    // ========================================================================
     if (player->GetPrimarySpecialization() != ChrSpecialization::None)
     {
+        if (!player->IsInWorld())
+        {
+            // Standard TrinityCore path - safe because packets won't be sent
+            player->LearnSpecializationSpells();
+
+            TC_LOG_INFO("module.playerbot.configurator",
+                "ApplyClassSpells: Bot {} learned specialization spells via standard method (not in world)",
+                player->GetName());
+        }
+        else
+        {
+            // Bot is already in world - use AddSpell directly to avoid log spam
+            uint32 specId = static_cast<uint32>(player->GetPrimarySpecialization());
+            uint32 spellsLearned = 0;
+
+            if (std::vector<SpecializationSpellsEntry const*> const* specSpells = sDB2Manager.GetSpecializationSpells(specId))
+            {
+                for (SpecializationSpellsEntry const* specSpell : *specSpells)
+                {
+                    if (!specSpell)
+                        continue;
+
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(specSpell->SpellID, DIFFICULTY_NONE);
+                    if (!spellInfo || spellInfo->SpellLevel > player->GetLevel())
+                        continue;
+
+                    if (player->AddSpell(specSpell->SpellID, true, true, false, false, false, 0, false, {}))
+                    {
+                        ++spellsLearned;
+                        if (specSpell->OverridesSpellID)
+                            player->AddOverrideSpell(specSpell->OverridesSpellID, specSpell->SpellID);
+                    }
+                }
+            }
+
+            // Learn mastery spells
+            if (player->CanUseMastery())
+            {
+                ChrSpecializationEntry const* spec = sChrSpecializationStore.LookupEntry(specId);
+                if (spec)
+                {
+                    for (uint32 i = 0; i < MAX_MASTERY_SPELLS; ++i)
+                    {
+                        if (uint32 masterySpellId = spec->MasterySpellID[i])
+                        {
+                            if (player->AddSpell(masterySpellId, true, true, false, false, false, 0, false, {}))
+                                ++spellsLearned;
+                        }
+                    }
+                }
+            }
+
+            TC_LOG_INFO("module.playerbot.configurator",
+                "ApplyClassSpells: Bot {} (spec={}) learned {} spells via AddSpell (already in world)",
+                player->GetName(), specId, spellsLearned);
+        }
+    }
+    else
+    {
         TC_LOG_INFO("module.playerbot.configurator",
-            "ApplyClassSpells: SKIPPING LearnSpecializationSpells() for bot {} (spec={}) - crashes with SendDirectMessage",
-            player->GetName(), static_cast<uint32>(player->GetPrimarySpecialization()));
-        // player->LearnSpecializationSpells();  // DISABLED - causes crash
+            "ApplyClassSpells: Bot {} has no specialization set - skipping spec spells",
+            player->GetName());
     }
 
     TC_LOG_INFO("module.playerbot.configurator",

@@ -23,9 +23,32 @@
 #include "GridNotifiers.h"
 #include "CellImpl.h"
 #include "../../Group/GroupRoleEnums.h"  // For IsPlayerHealer
+#include "../../Session/BotWorldSessionMgr.h"  // For GetPlayerBot fallback
 
 namespace Playerbot
 {
+
+// Helper function to find a player with fallback lookups
+// Uses: FindPlayer (in-world) -> FindConnectedPlayer (connected) -> GetPlayerBot (module registry)
+static Player* FindGroupMember(ObjectGuid memberGuid)
+{
+    if (memberGuid.IsEmpty())
+        return nullptr;
+
+    // Method 1: Standard ObjectAccessor::FindPlayer (fast, in same map)
+    if (Player* player = ObjectAccessor::FindPlayer(memberGuid))
+        return player;
+
+    // Method 2: FindConnectedPlayer (finds any connected player, even on different maps)
+    if (Player* player = ObjectAccessor::FindConnectedPlayer(memberGuid))
+        return player;
+
+    // Method 3: Check our bot registry (for bots not properly registered with ObjectAccessor)
+    if (Player* bot = sBotWorldSessionMgr->GetPlayerBot(memberGuid))
+        return bot;
+
+    return nullptr;
+}
 
 GroupCombatStrategy::GroupCombatStrategy()
     : Strategy("group_combat")
@@ -129,7 +152,8 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             Player* tankToFollow = nullptr;
             for (auto const& slot : group->GetMemberSlots())
             {
-                Player* member = ObjectAccessor::FindPlayer(slot.guid);
+                // Use FindGroupMember() with fallback lookups
+                Player* member = FindGroupMember(slot.guid);
                 if (!member || member == bot || !member->IsAlive())
                     continue;
 
@@ -145,7 +169,8 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             {
                 for (auto const& slot : group->GetMemberSlots())
                 {
-                    Player* member = ObjectAccessor::FindPlayer(slot.guid);
+                    // Use FindGroupMember() with fallback lookups
+                    Player* member = FindGroupMember(slot.guid);
                     if (member && member != bot && member->IsAlive() && member->IsInCombat())
                     {
                         tankToFollow = member;
@@ -300,7 +325,7 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
 
     // CRITICAL FIX: Use GetMemberSlots() instead of GetMembers()
     // GetMembers()/GetSource() only works for players in the same map
-    // GetMemberSlots() gives us GUIDs which we can use with ObjectAccessor
+    // GetMemberSlots() gives us GUIDs which we can use with FindGroupMember()
     for (auto const& slot : group->GetMemberSlots())
     {
         ObjectGuid memberGuid = slot.guid;
@@ -312,19 +337,22 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
             continue;
         }
 
-        Player* member = ObjectAccessor::FindPlayer(memberGuid);
+        // CRITICAL FIX: Use FindGroupMember() with fallback lookups
+        // ObjectAccessor::FindPlayer() alone fails for bots not properly registered
+        Player* member = FindGroupMember(memberGuid);
 
         if (shouldLog)
         {
             if (!member)
-                TC_LOG_ERROR("module.playerbot.strategy", "  - NULL member for GUID {}", memberGuid.ToString());
+                TC_LOG_ERROR("module.playerbot.strategy", "  - NULL member for GUID {} (all lookups failed)", memberGuid.ToString());
             else if (member == bot)
                 TC_LOG_ERROR("module.playerbot.strategy", "  - {} (is bot - SKIPPING)", member->GetName());
             else
-                TC_LOG_ERROR("module.playerbot.strategy", "  - {} InCombat={}, HasTarget={}",
+                TC_LOG_ERROR("module.playerbot.strategy", "  - {} InCombat={}, HasTarget={}, IsBot={}",
                             member->GetName(),
                             member->IsInCombat(),
-                            member->GetSelectedUnit() != nullptr);
+                            member->GetSelectedUnit() != nullptr,
+                            sBotWorldSessionMgr->GetPlayerBot(memberGuid) != nullptr);
         }
 
         if (!member || member == bot)
@@ -359,7 +387,8 @@ Unit* GroupCombatStrategy::FindGroupCombatTarget(BotAI* ai) const
     // 3. What group members have selected (GetSelectedUnit)
     for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ObjectAccessor::FindPlayer(slot.guid);
+        // Use FindGroupMember() with fallback lookups
+        Player* member = FindGroupMember(slot.guid);
         if (!member || member == bot || !member->IsInCombat())
             continue;
 

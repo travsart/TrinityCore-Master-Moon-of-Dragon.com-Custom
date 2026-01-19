@@ -14,6 +14,7 @@
 #include "BotTemplateRepository.h"
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <atomic>
 #include <chrono>
@@ -117,6 +118,15 @@ public:
     /// Remove pending configuration (called after successful application)
     void RemovePendingConfiguration(ObjectGuid botGuid);
 
+    /// Check if a bot was recently JIT-configured (prevents LevelManager re-leveling)
+    /// This returns true for bots that have been configured but not yet processed by
+    /// the BotWorldSessionMgr session update loop. This prevents the race condition where
+    /// pending config is removed before the skip check runs.
+    bool WasRecentlyConfigured(ObjectGuid botGuid) const;
+
+    /// Clear a bot from the recently configured list (called after bot is fully processed)
+    void ClearRecentlyConfigured(ObjectGuid botGuid);
+
     // ========================================================================
     // CONFIGURATION APPLICATION (Main thread only, called from BotSession)
     // ========================================================================
@@ -200,6 +210,15 @@ private:
     // Pending configurations (thread-safe access)
     mutable std::mutex _configMutex;
     std::unordered_map<ObjectGuid, BotPendingConfiguration> _pendingConfigs;
+
+    // Recently configured bots - prevents BotLevelManager from re-leveling JIT bots
+    // This tracks bots that have been configured but not yet processed by the
+    // BotWorldSessionMgr session update loop. The race condition is:
+    // 1. ApplyPendingConfiguration() applies level, removes pending config
+    // 2. BotWorldSessionMgr.cpp checks HasPendingConfiguration() - returns FALSE
+    // 3. Bot gets submitted to BotLevelManager which re-levels it
+    // Solution: Track in _recentlyConfiguredBots until cleared by the session manager
+    std::unordered_set<ObjectGuid> _recentlyConfiguredBots;
 
     // Statistics
     ConfiguratorStats _stats;
