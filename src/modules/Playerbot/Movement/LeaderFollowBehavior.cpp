@@ -957,6 +957,18 @@ bool LeaderFollowBehavior::GenerateFollowPath(Player* bot, const Position& desti
     bool result = path.CalculatePath(destination.GetPositionX(), destination.GetPositionY(),
                                      destination.GetPositionZ());
 
+    // Diagnostic logging for pathfinding issues
+    ::PathType pathType = path.GetPathType();
+    bool isShortcut = (static_cast<uint32>(pathType) & static_cast<uint32>(::PATHFIND_NOT_USING_PATH)) ||
+                      (pathType == ::PATHFIND_SHORTCUT);
+    if (isShortcut)
+    {
+        TC_LOG_WARN("module.playerbot.movement", "⚠️ Bot {} using SHORTCUT path (pathType={}) - may clip through walls! "
+            "Check if MMAPs are loaded for this area. Destination: ({:.1f}, {:.1f}, {:.1f})",
+            bot->GetName(), static_cast<uint32>(pathType),
+            destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
+    }
+
     if (result)
     {
         _currentPath.clear();

@@ -273,6 +273,40 @@ bool DoubleBufferedSpatialGrid::ShouldUpdate() const
     return elapsed.count() >= UPDATE_INTERVAL_MS;
 }
 
+// ============================================================================
+// CRASH FIX v6: SEH Protection for Map Pointer Access
+// ============================================================================
+// The _map pointer can become a DANGLING POINTER when:
+// 1. A Map is destroyed (instance expires, player leaves dungeon)
+// 2. A new Map with the same mapId is created (player re-enters)
+// 3. The grid still holds the old pointer which points to freed memory
+//
+// The pointer is NOT null (passes if (!_map) check) but accessing it crashes.
+// We must use SEH to safely detect and recover from this.
+// ============================================================================
+#ifdef _WIN32
+static bool SafeGetMapId(Map const* map, uint32& outMapId)
+{
+    __try
+    {
+        outMapId = map->GetId();
+        return true;
+    }
+    __except (SpatialGridExceptionFilter(GetExceptionCode(), GetExceptionInformation()))
+    {
+        return false;  // ACCESS_VIOLATION - map pointer is dangling
+    }
+}
+#else
+static bool SafeGetMapId(Map const* map, uint32& outMapId)
+{
+    // Non-Windows: Just try it and hope for the best
+    // Linux/Mac would need signal handling instead of SEH
+    outMapId = map->GetId();
+    return true;
+}
+#endif
+
 void DoubleBufferedSpatialGrid::Update() const
 {
     // CRITICAL SAFETY CHECK: Verify map pointer is valid before any operations
@@ -298,8 +332,35 @@ void DoubleBufferedSpatialGrid::Update() const
     if (!ShouldUpdate())
         return;
 
-    // Cache mapId before potentially long operations (in case _map becomes invalid)
-    uint32 mapId = _map->GetId();
+    // CRASH FIX v6: Safely access Map pointer using SEH protection
+    // The pointer may be dangling (freed memory) even though it's not null
+    uint32 mapId = 0;
+    if (!SafeGetMapId(_map, mapId))
+    {
+        // Map pointer is dangling - the Map was destroyed but grid wasn't notified
+        TC_LOG_ERROR("playerbot.spatial",
+            "Update() detected DANGLING Map pointer (cached mapId={}) - "
+            "Map was destroyed without notifying grid. Invalidating _map pointer.",
+            _mapId);
+
+        // Invalidate the pointer to prevent future crashes
+        const_cast<DoubleBufferedSpatialGrid*>(this)->_map = nullptr;
+        return;
+    }
+
+    // Validate that the mapId matches what we cached at construction
+    // This catches cases where memory was reused for a different Map
+    if (mapId != _mapId)
+    {
+        TC_LOG_ERROR("playerbot.spatial",
+            "Update() detected Map pointer reuse - expected mapId={}, got mapId={}. "
+            "Invalidating _map pointer.",
+            _mapId, mapId);
+
+        const_cast<DoubleBufferedSpatialGrid*>(this)->_map = nullptr;
+        return;
+    }
+
     auto cycleStart = ::std::chrono::steady_clock::now();
 
     try
@@ -345,9 +406,29 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         return;
     }
 
-    // CRITICAL FIX: Cache mapId IMMEDIATELY at function start for safe logging
-    // This prevents crash if _map becomes invalid during execution (rare but possible)
-    uint32 cachedMapId = _map->GetId();
+    // CRASH FIX v6: Use SEH-protected Map access for safety
+    // Even though Update() validated the Map, it could have become invalid since then
+    uint32 cachedMapId = 0;
+    if (!SafeGetMapId(_map, cachedMapId))
+    {
+        TC_LOG_ERROR("playerbot.spatial",
+            "PopulateBufferFromMap detected DANGLING Map pointer (using cached mapId={}) - "
+            "Invalidating _map pointer.",
+            _mapId);
+        _map = nullptr;
+        return;
+    }
+
+    // Validate mapId consistency
+    if (cachedMapId != _mapId)
+    {
+        TC_LOG_ERROR("playerbot.spatial",
+            "PopulateBufferFromMap detected Map pointer reuse - expected mapId={}, got mapId={}. "
+            "Invalidating _map pointer.",
+            _mapId, cachedMapId);
+        _map = nullptr;
+        return;
+    }
 
     auto start = ::std::chrono::high_resolution_clock::now();
 
