@@ -587,10 +587,20 @@ void BotAI::UpdateAI(uint32 diff)
         // Activate all solo-relevant strategies in priority order:
         ActivateStrategy("rest");
         ActivateStrategy("solo_combat");
-        ActivateStrategy("quest");
-        ActivateStrategy("grind");  // Fallback when quests unavailable (activates via ShouldGrind check)
-        ActivateStrategy("loot");
-        ActivateStrategy("solo");
+
+        // CRITICAL FIX: Disable questing, grinding, looting and solo behavior for JIT/Instance bots
+        // They should only defend themselves (solo_combat) and rest while waiting for queues
+        if (!_instanceOnlyMode)
+        {
+            ActivateStrategy("quest");
+            ActivateStrategy("grind");  // Fallback when quests unavailable (activates via ShouldGrind check)
+            ActivateStrategy("loot");
+            ActivateStrategy("solo");
+        }
+        else
+        {
+            TC_LOG_INFO("module.playerbot.ai", "Bot {} is JIT/Instance-Only - Skipping quest/grind/solo strategies", _bot->GetName());
+        }
 
         _soloStrategiesActivated = true;
 

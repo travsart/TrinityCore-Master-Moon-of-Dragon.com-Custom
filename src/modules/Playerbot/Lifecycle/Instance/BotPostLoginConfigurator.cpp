@@ -790,6 +790,15 @@ bool BotPostLoginConfigurator::ApplyClassSpells(Player* player)
     player->UpdateSkillsForLevel();
 
     // ========================================================================
+    // ESSENTIAL CLASS SPELLS - Teach core abilities directly
+    // ========================================================================
+    // Standard TrinityCore learning (LearnDefaultSkills, SkillRewardedSpells) only teaches
+    // spells with AcquireMethod::Automatic*. Many core abilities require trainer visits.
+    // For bots, we teach them directly to ensure rotation functionality.
+    // ========================================================================
+    LearnEssentialClassSpells(player);
+
+    // ========================================================================
     // SPECIALIZATION SPELL LEARNING
     // ========================================================================
     // Use standard TrinityCore method when possible:
@@ -908,6 +917,310 @@ GearSetTemplate const* BotPostLoginConfigurator::SelectGearSet(BotTemplate const
     }
 
     return bestMatch;
+}
+
+// ============================================================================
+// SPELL LEARNING VERIFICATION - Modern WoW 11.2 Approach
+// ============================================================================
+// In modern WoW (since Patch 5.0.4 / MoP 2012), ALL combat spells are learned
+// automatically on level up. Class trainers no longer exist for combat abilities.
+//
+// TrinityCore's native spell learning system handles this via:
+// 1. LearnDefaultSkills() - learns class skills and auto-granted spells
+// 2. LearnSpecializationSpells() - learns spec-specific spells from SpecializationSpells.db2
+//
+// This function exists only for DIAGNOSTIC purposes - to verify that spells
+// were learned correctly and log any missing spells for investigation.
+//
+// If bots are missing spells, the issue is likely:
+// - Spec not set before LearnSpecializationSpells() was called
+// - DB2 data missing entries (SpecializationSpells.db2 or SkillLineAbility.db2)
+// - Timing issue with when spell learning occurs in bot login flow
+// ============================================================================
+
+// Helper: Get key diagnostic spells for each class to verify spell learning
+static std::vector<std::pair<uint32, std::string>> GetDiagnosticSpells(uint8 playerClass)
+{
+    switch (playerClass)
+    {
+        case CLASS_WARRIOR:
+            return {
+                {6673, "Battle Shout"},
+                {100, "Charge"},
+                {5308, "Execute"},
+                {12294, "Mortal Strike"},      // Arms
+                {23881, "Bloodthirst"},        // Fury
+                {23922, "Shield Slam"},        // Protection
+                {1680, "Whirlwind"},
+                {6552, "Pummel"},
+            };
+        case CLASS_PALADIN:
+            return {
+                {35395, "Crusader Strike"},
+                {20271, "Judgment"},
+                {853, "Hammer of Justice"},
+                {85256, "Templar's Verdict"},  // Retribution
+                {85673, "Word of Glory"},
+                {31935, "Avenger's Shield"},   // Protection
+            };
+        case CLASS_HUNTER:
+            return {
+                {185358, "Arcane Shot"},
+                {257620, "Multi-Shot"},
+                {19434, "Aimed Shot"},         // Marksmanship
+                {34026, "Kill Command"},       // Beast Mastery
+                {781, "Disengage"},
+            };
+        case CLASS_ROGUE:
+            return {
+                {1752, "Sinister Strike"},
+                {196819, "Eviscerate"},
+                {1856, "Vanish"},
+                {408, "Kidney Shot"},
+                {703, "Garrote"},
+            };
+        case CLASS_PRIEST:
+            return {
+                {585, "Smite"},
+                {589, "Shadow Word: Pain"},
+                {17, "Power Word: Shield"},
+                {2061, "Flash Heal"},
+                {34914, "Vampiric Touch"},     // Shadow
+            };
+        case CLASS_DEATH_KNIGHT:
+            return {
+                {49998, "Death Strike"},
+                {47541, "Death Coil"},
+                {49576, "Death Grip"},
+                {49020, "Obliterate"},         // Frost
+                {55090, "Scourge Strike"},     // Unholy
+            };
+        case CLASS_SHAMAN:
+            return {
+                {188196, "Lightning Bolt"},
+                {188389, "Flame Shock"},
+                {51505, "Lava Burst"},
+                {8004, "Healing Surge"},
+                {17364, "Stormstrike"},        // Enhancement
+            };
+        case CLASS_MAGE:
+            return {
+                {116, "Frostbolt"},
+                {133, "Fireball"},
+                {30451, "Arcane Blast"},
+                {1953, "Blink"},
+                {2139, "Counterspell"},
+            };
+        case CLASS_WARLOCK:
+            return {
+                {686, "Shadow Bolt"},
+                {172, "Corruption"},
+                {348, "Immolate"},
+                {5782, "Fear"},
+                {980, "Agony"},
+            };
+        case CLASS_MONK:
+            return {
+                {100780, "Tiger Palm"},
+                {100784, "Blackout Kick"},
+                {109132, "Roll"},
+                {113656, "Fists of Fury"},     // Windwalker
+                {115175, "Soothing Mist"},     // Mistweaver
+            };
+        case CLASS_DRUID:
+            return {
+                {5176, "Wrath"},
+                {8921, "Moonfire"},
+                {774, "Rejuvenation"},
+                {5221, "Shred"},
+                {33917, "Mangle"},
+            };
+        case CLASS_DEMON_HUNTER:
+            return {
+                {162243, "Demon's Bite"},
+                {198013, "Eye Beam"},
+                {195072, "Fel Rush"},
+                {185245, "Torment"},           // Vengeance
+                {179057, "Chaos Nova"},
+            };
+        case CLASS_EVOKER:
+            return {
+                {361469, "Living Flame"},
+                {362969, "Azure Strike"},
+                {357208, "Fire Breath"},
+                {355913, "Emerald Blossom"},
+            };
+        default:
+            return {};
+    }
+}
+
+void BotPostLoginConfigurator::LearnEssentialClassSpells(Player* player)
+{
+    if (!player)
+        return;
+
+    uint8 playerClass = player->GetClass();
+    uint32 playerLevel = player->GetLevel();
+    ChrSpecializationEntry const* spec = player->GetPrimarySpecializationEntry();
+
+    TC_LOG_INFO("module.playerbot.configurator",
+        "=== SPELL DIAGNOSTIC: Bot {} (class={}, level={}, spec={}) ===",
+        player->GetName(), playerClass, playerLevel, spec ? spec->ID : 0);
+
+    // Log spec details
+    if (spec)
+    {
+        TC_LOG_INFO("module.playerbot.configurator",
+            "  Spec: ID={}, Name={}, ClassID={}, OrderIndex={}",
+            spec->ID, spec->Name[DEFAULT_LOCALE], spec->ClassID, spec->OrderIndex);
+    }
+    else
+    {
+        TC_LOG_WARN("module.playerbot.configurator",
+            "  WARNING: No valid specialization entry!");
+    }
+
+    // Count spells BEFORE we call native methods
+    uint32 spellCountBefore = 0;
+    for (auto const& spellPair : player->GetSpellMap())
+    {
+        if (spellPair.second.active && !spellPair.second.disabled)
+            ++spellCountBefore;
+    }
+
+    TC_LOG_INFO("module.playerbot.configurator",
+        "  Spells before native learning: {}", spellCountBefore);
+
+    // Call native methods as safety net
+    if (spec && spec->ID > 0)
+    {
+        player->LearnSpecializationSpells();
+    }
+    player->LearnDefaultSkills();
+    player->UpdateSkillsForLevel();
+
+    // Count spells AFTER
+    uint32 spellCountAfter = 0;
+    for (auto const& spellPair : player->GetSpellMap())
+    {
+        if (spellPair.second.active && !spellPair.second.disabled)
+            ++spellCountAfter;
+    }
+
+    TC_LOG_INFO("module.playerbot.configurator",
+        "  Spells after native learning: {} (added {})",
+        spellCountAfter, spellCountAfter - spellCountBefore);
+
+    // Check diagnostic spells for this class
+    auto diagnosticSpells = GetDiagnosticSpells(playerClass);
+    uint32 hasCount = 0;
+    uint32 missingCount = 0;
+
+    TC_LOG_INFO("module.playerbot.configurator",
+        "  --- Checking {} key spells for class {} ---", diagnosticSpells.size(), playerClass);
+
+    for (auto const& [spellId, spellName] : diagnosticSpells)
+    {
+        bool hasSpell = player->HasSpell(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+
+        if (hasSpell)
+        {
+            ++hasCount;
+            TC_LOG_DEBUG("module.playerbot.configurator",
+                "    [OK] {} ({}) - LEARNED", spellName, spellId);
+        }
+        else
+        {
+            ++missingCount;
+            if (spellInfo)
+            {
+                uint32 reqLevel = std::max(spellInfo->SpellLevel, spellInfo->BaseLevel);
+                if (reqLevel > playerLevel)
+                {
+                    TC_LOG_DEBUG("module.playerbot.configurator",
+                        "    [--] {} ({}) - Not learned (requires level {}, bot is {})",
+                        spellName, spellId, reqLevel, playerLevel);
+                }
+                else
+                {
+                    TC_LOG_WARN("module.playerbot.configurator",
+                        "    [MISSING] {} ({}) - Should be learned! (req level {} <= bot level {})",
+                        spellName, spellId, reqLevel, playerLevel);
+                }
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.configurator",
+                    "    [ERROR] {} ({}) - Spell ID not found in SpellMgr!",
+                    spellName, spellId);
+            }
+        }
+    }
+
+    TC_LOG_INFO("module.playerbot.configurator",
+        "  Summary: {}/{} diagnostic spells present, {} missing",
+        hasCount, diagnosticSpells.size(), missingCount);
+
+    // Log what spells are in SpecializationSpells.db2 for this spec
+    if (spec && spec->ID > 0)
+    {
+        if (std::vector<SpecializationSpellsEntry const*> const* specSpells =
+            sDB2Manager.GetSpecializationSpells(spec->ID))
+        {
+            TC_LOG_INFO("module.playerbot.configurator",
+                "  --- SpecializationSpells.db2 has {} entries for spec {} ---",
+                specSpells->size(), spec->ID);
+
+            uint32 specSpellsLearned = 0;
+            uint32 specSpellsMissing = 0;
+            for (SpecializationSpellsEntry const* entry : *specSpells)
+            {
+                if (!entry) continue;
+
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->SpellID, DIFFICULTY_NONE);
+                char const* spellName = (spellInfo && spellInfo->SpellName) ? (*spellInfo->SpellName)[DEFAULT_LOCALE] : "Unknown";
+                bool hasIt = player->HasSpell(entry->SpellID);
+
+                if (hasIt)
+                {
+                    ++specSpellsLearned;
+                    TC_LOG_TRACE("module.playerbot.configurator",
+                        "    [OK] SpellID {} ({}) - learned",
+                        entry->SpellID, spellName);
+                }
+                else
+                {
+                    ++specSpellsMissing;
+                    uint32 reqLevel = spellInfo ? std::max(spellInfo->SpellLevel, spellInfo->BaseLevel) : 0;
+                    if (reqLevel > playerLevel)
+                    {
+                        TC_LOG_TRACE("module.playerbot.configurator",
+                            "    [--] SpellID {} ({}) - requires level {}",
+                            entry->SpellID, spellName, reqLevel);
+                    }
+                    else
+                    {
+                        TC_LOG_WARN("module.playerbot.configurator",
+                            "    [MISSING] SpellID {} ({}) - SHOULD be learned! (req {})",
+                            entry->SpellID, spellName, reqLevel);
+                    }
+                }
+            }
+            TC_LOG_INFO("module.playerbot.configurator",
+                "  Spec spells: {}/{} learned, {} missing (may be level-gated)",
+                specSpellsLearned, specSpells->size(), specSpellsMissing);
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.configurator",
+                "  ERROR: No SpecializationSpells.db2 entries found for spec {}!", spec->ID);
+        }
+    }
+
+    TC_LOG_INFO("module.playerbot.configurator",
+        "=== END SPELL DIAGNOSTIC for {} ===", player->GetName());
 }
 
 void BotPostLoginConfigurator::ResetStats()

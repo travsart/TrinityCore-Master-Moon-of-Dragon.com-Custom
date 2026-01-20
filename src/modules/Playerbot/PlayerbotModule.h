@@ -158,6 +158,12 @@ private:
     static bool InitializeDatabase();
 
     /**
+     * @brief Initialize all sub-managers
+     * @return true if all managers initialized successfully
+     */
+    static bool InitializeManagers();
+
+    /**
      * @brief Shutdown Playerbot Database connection
      *
      * Cleanly closes the PlayerbotDatabase connection and

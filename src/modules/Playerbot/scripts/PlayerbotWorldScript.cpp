@@ -15,7 +15,6 @@
 #include "Timer.h"
 #include "Config/PlayerbotConfig.h"
 #include "Lifecycle/BotSpawner.h"
-#include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Lifecycle/BotLifecycleMgr.h"
 #include "Character/BotLevelManager.h"

@@ -384,26 +384,9 @@ private:
         uint8 race, uint8 playerClass, uint8 gender, uint32 level);
 
     /**
-     * @brief Apply gear to bot
-     */
-    void ApplyGearScaling(
-        ObjectGuid botGuid,
-        BotTemplate const* tmpl,
-        uint32 targetLevel,
-        uint32 targetGearScore);
-
-    /**
-     * @brief Apply talents from template
-     */
-    void ApplyTalents(ObjectGuid botGuid, BotTemplate const* tmpl);
-
-    /**
-     * @brief Apply action bars from template
-     */
-    void ApplyActionBars(ObjectGuid botGuid, BotTemplate const* tmpl);
-
-    /**
-     * @brief Login the bot (optional fast login)
+     * @brief Perform a "fast login" for a newly created bot
+     * @param botGuid The bot to login
+     * @return true if successful
      */
     bool FastLogin(ObjectGuid botGuid);
 

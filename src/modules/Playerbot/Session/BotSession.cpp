@@ -1941,7 +1941,12 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             pCurrChar->GetName(), pCurrChar->GetLevel());
         pCurrChar->LearnDefaultSkills();
         pCurrChar->UpdateSkillsForLevel();  // Ensures skill values match current level
-        TC_LOG_DEBUG("module.playerbot.session", "Bot {} - Default skills learned, now checking spells",
+
+        // Verify spell learning - in modern WoW (11.2), ALL combat spells are automatic
+        // TrinityCore's LearnDefaultSkills() + LearnSpecializationSpells() should teach everything
+        // This call is a safety net that re-calls the native methods in case of timing issues
+        sBotPostLoginConfigurator->ApplyClassSpells(pCurrChar);
+        TC_LOG_DEBUG("module.playerbot.session", "Bot {} - Spell learning verification complete",
             pCurrChar->GetName());
 
         // Set the player for this session

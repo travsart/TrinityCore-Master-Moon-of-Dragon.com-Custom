@@ -987,14 +987,18 @@ static void WriteSpellTargetData(ByteBuffer& buffer, WorldPackets::Spells::Spell
 {
     size_t startSize = buffer.size();
 
+    // Fixed fields (must match exact read order in SpellPackets.cpp:167-180)
     buffer << uint32(targetData.Flags);
     buffer << targetData.Unit;
     buffer << targetData.Item;
+    buffer << targetData.Unknown1127_1;  // CRITICAL: Added in patch 11.2.7 - ObjectGuid (16 bytes)
 
-    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellTargetData: After Flags/Unit/Item, Unit={}, size={}",
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellTargetData: After Flags/Unit/Item/Unknown1127_1, Unit={}, size={}",
         targetData.Unit.ToString(), buffer.size());
 
-    // Write optional presence bits
+    // Bit fields section (must match exact read order)
+    // Unknown1127_2 is a single bit that must come before OptionalInit bits
+    buffer << WorldPackets::Bits<1>(targetData.Unknown1127_2);  // CRITICAL: Added in patch 11.2.7 - 1 bit
     buffer << WorldPackets::OptionalInit(targetData.SrcLocation);
     buffer << WorldPackets::OptionalInit(targetData.DstLocation);
     buffer << WorldPackets::OptionalInit(targetData.Orientation);

@@ -203,6 +203,9 @@ private:
     /// Learn a single talent with error handling
     bool LearnTalent(Player* player, uint32 talentId);
 
+    /// Learn essential class combat spells (trainer-learned abilities)
+    void LearnEssentialClassSpells(Player* player);
+
     // ========================================================================
     // DATA MEMBERS
     // ========================================================================

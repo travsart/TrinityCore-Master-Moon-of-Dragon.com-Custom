@@ -40,8 +40,8 @@
 #include "GameTime.h"
 #include "DatabaseEnv.h"
 #include "CharacterDatabase.h"
-#include "BotSessionMgr.h"
 #include "BotWorldSessionMgr.h"
+#include "Session/BotSession.h"
 #include "BotResourcePool.h"
 #include "BotAccountMgr.h"
 #include "Config/PlayerbotConfig.h"
@@ -1225,7 +1225,7 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
     // Remove the bot session properly to prevent memory leaks
     if (accountId != 0)
     {
-        sBotSessionMgr->ReleaseSession(accountId);
+        Playerbot::sBotWorldSessionMgr->RemoveAllPlayerBots(accountId);
         TC_LOG_DEBUG("module.playerbot.spawner",
             "Released bot session for account {} (character {})", accountId, guid.ToString());
     }
@@ -1805,9 +1805,9 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         TC_LOG_TRACE("module.playerbot.spawner", "Race/class validation succeeded");
 
         // Create a TEMPORARY bot session for character creation only
-        // CRITICAL: Use BotSession::Create() NOT sBotSessionMgr->CreateSession()
-        // BotSession::Create() creates a standalone session not added to any update loop
-        // sBotSessionMgr->CreateSession() adds to _activeSessions causing infinite update loop
+        // CRITICAL: Use BotSession::Create() to create a standalone session for character creation.
+        // Standalone sessions are not added to any update loop, preventing infinite update loops
+        // during the creation process.
         ::std::shared_ptr<BotSession> tempSession = BotSession::Create(accountId);
         if (!tempSession)
         {
@@ -2060,9 +2060,9 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
         uint8 startLevel = 1;
 
         // Create a TEMPORARY bot session for character creation only
-        // CRITICAL: Use BotSession::Create() NOT sBotSessionMgr->CreateSession()
-        // BotSession::Create() creates a standalone session not added to any update loop
-        // sBotSessionMgr->CreateSession() adds to _activeSessions causing infinite update loop
+        // CRITICAL: Use BotSession::Create() to create a standalone session for character creation.
+        // Standalone sessions are not added to any update loop, preventing infinite update loops
+        // during the creation process.
         ::std::shared_ptr<BotSession> tempSession = BotSession::Create(accountId);
         if (!tempSession)
         {

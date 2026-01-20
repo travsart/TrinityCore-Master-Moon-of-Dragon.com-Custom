@@ -683,15 +683,30 @@ bool ClassAI::IsSpellUsable(uint32 spellId)
 
     // Check if bot knows the spell
     if (!GetBot()->HasSpell(spellId))
+    {
+        TC_LOG_DEBUG("playerbot.classai.spell",
+            "IsSpellUsable: Bot {} does NOT have spell {} - needs to learn it",
+            GetBot()->GetName(), spellId);
         return false;
+    }
 
-    // Check if spell is ready
+    // Check if spell is ready (cooldown/GCD)
     if (!IsSpellReady(spellId))
+    {
+        TC_LOG_TRACE("playerbot.classai.spell",
+            "IsSpellUsable: Bot {} spell {} not ready (on cooldown or GCD)",
+            GetBot()->GetName(), spellId);
         return false;
+    }
 
     // Check resource requirements
     if (!HasEnoughResource(spellId))
+    {
+        TC_LOG_TRACE("playerbot.classai.spell",
+            "IsSpellUsable: Bot {} spell {} - not enough resources",
+            GetBot()->GetName(), spellId);
         return false;
+    }
 
     return true;
 }

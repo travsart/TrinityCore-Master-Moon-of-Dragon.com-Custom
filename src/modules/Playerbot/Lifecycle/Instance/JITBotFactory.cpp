@@ -20,7 +20,10 @@
 #include "Session/BotWorldSessionMgr.h"
 #include "Database/PlayerbotDatabase.h"
 #include "Core/Diagnostics/BotOperationTracker.h"
+#include "Group/GroupRoleEnums.h"
 #include "Player.h"
+#include "ObjectAccessor.h"
+#include "DB2Stores.h"
 #include "Log.h"
 #include "DatabaseEnv.h"
 #include "CharacterDatabase.h"
@@ -30,6 +33,93 @@
 
 namespace Playerbot
 {
+
+// ============================================================================
+// ROLE DETECTION UTILITIES
+// ============================================================================
+
+/**
+ * @brief Get the GroupRole from a player's specialization using TrinityCore's DB2 data
+ * @param player The player to check
+ * @return GroupRole based on the player's active specialization
+ */
+static GroupRole GetPlayerSpecRole(Player const* player)
+{
+    if (!player)
+        return GroupRole::NONE;
+
+    // Get the player's active specialization entry from TrinityCore
+    ChrSpecializationEntry const* specEntry = player->GetPrimarySpecializationEntry();
+    if (!specEntry)
+    {
+        // No specialization set - return NONE (player might be low level)
+        return GroupRole::NONE;
+    }
+
+    // Get the authoritative role from the DBC data
+    ChrSpecializationRole chrRole = specEntry->GetRole();
+
+    switch (chrRole)
+    {
+        case ChrSpecializationRole::Tank:
+            return GroupRole::TANK;
+
+        case ChrSpecializationRole::Healer:
+            return GroupRole::HEALER;
+
+        case ChrSpecializationRole::Dps:
+        {
+            // Determine if ranged or melee DPS using the spec flags
+            EnumFlag<ChrSpecializationFlag> flags = specEntry->GetFlags();
+            if (flags.HasFlag(ChrSpecializationFlag::Ranged))
+                return GroupRole::RANGED_DPS;
+            else
+                return GroupRole::MELEE_DPS;
+        }
+
+        default:
+            return GroupRole::NONE;
+    }
+}
+
+/**
+ * @brief Convert GroupRole to BotRole for the pool system
+ * @param groupRole The GroupRole from spec detection
+ * @return Corresponding BotRole (Tank, Healer, or DPS)
+ */
+static BotRole GroupRoleToBotRole(GroupRole groupRole)
+{
+    switch (groupRole)
+    {
+        case GroupRole::TANK:
+            return BotRole::Tank;
+
+        case GroupRole::HEALER:
+            return BotRole::Healer;
+
+        case GroupRole::MELEE_DPS:
+        case GroupRole::RANGED_DPS:
+        case GroupRole::SUPPORT:
+        case GroupRole::UTILITY:
+        case GroupRole::NONE:
+        default:
+            return BotRole::DPS;
+    }
+}
+
+/**
+ * @brief Determine the BotRole for a player based on their specialization
+ * @param player The player to analyze
+ * @return BotRole (Tank, Healer, or DPS) based on active spec
+ */
+static BotRole DetermineBotRole(Player const* player)
+{
+    if (!player)
+        return BotRole::DPS;
+
+    GroupRole groupRole = GetPlayerSpecRole(player);
+    return GroupRoleToBotRole(groupRole);
+}
 
 // ============================================================================
 // SINGLETON
@@ -410,6 +500,21 @@ std::chrono::milliseconds JITBotFactory::GetEstimatedCompletion(uint32 requestId
 // BOT RECYCLING
 // ============================================================================
 
+void JITBotFactory::RecycleBot(Player* player, BotRole role)
+{
+    if (!player || !_initialized.load())
+        return;
+
+    ObjectGuid guid = player->GetGUID();
+    Faction faction = (player->GetTeamId() == TEAM_ALLIANCE) ? Faction::Alliance : Faction::Horde;
+    uint32 level = player->GetLevel();
+    uint32 gearScore = static_cast<uint32>(std::round(player->GetAverageItemLevel()));
+    uint8 playerClass = player->GetClass();
+    PoolBracket bracket = GetBracketForLevel(level);
+
+    RecycleBot(guid, role, faction, bracket, level, gearScore, playerClass);
+}
+
 void JITBotFactory::RecycleBot(
     ObjectGuid botGuid,
     BotRole role,
@@ -480,11 +585,27 @@ void JITBotFactory::RecycleBotLegacy(
 
 void JITBotFactory::RecycleBots(std::vector<ObjectGuid> const& bots)
 {
-    // Note: This simplified version doesn't have full bot info
-    // In a full implementation, we'd look up bot details from the pool
+    uint32 recycledCount = 0;
     for (auto const& guid : bots)
     {
-        RecycleBotLegacy(guid, BotRole::DPS, Faction::Alliance, 80, 400, 1);
+        Player* player = ObjectAccessor::FindPlayer(guid);
+        if (player)
+        {
+            // Determine role from player's specialization using DB2 data
+            BotRole role = DetermineBotRole(player);
+
+            TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::RecycleBots - Bot {} has role {} based on spec",
+                player->GetName(), BotRoleToString(role));
+
+            RecycleBot(player, role);
+            ++recycledCount;
+        }
+    }
+
+    if (recycledCount > 0)
+    {
+        TC_LOG_INFO("playerbot.jit", "JITBotFactory::RecycleBots - Recycled {} bots from instance",
+            recycledCount);
     }
 }
 

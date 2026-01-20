@@ -101,9 +101,10 @@ bool CombatStateManager::OnInitialize()
     }
 
     dispatcher->Subscribe(StateMachine::EventType::DAMAGE_TAKEN, this);
+    dispatcher->Subscribe(StateMachine::EventType::GROUP_MEMBER_ATTACKED, this);
 
     TC_LOG_INFO("module.playerbot.combat",
-        "CombatStateManager:  Initialized for bot '{}' - subscribed to DAMAGE_TAKEN events",
+        "CombatStateManager:  Initialized for bot '{}' - subscribed to DAMAGE_TAKEN and GROUP_MEMBER_ATTACKED events",
         botPtr->GetName());
 
     // Log configuration
@@ -164,8 +165,11 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
 {
     using namespace StateMachine;
 
-    // Filter: Only handle DAMAGE_TAKEN events
-    if (event.type != EventType::DAMAGE_TAKEN)
+    // Filter: Only handle DAMAGE_TAKEN and GROUP_MEMBER_ATTACKED events
+    bool isDamageTaken = (event.type == EventType::DAMAGE_TAKEN);
+    bool isGroupAssist = (event.type == EventType::GROUP_MEMBER_ATTACKED);
+
+    if (!isDamageTaken && !isGroupAssist)
         return;
 
     m_statistics.totalDamageEvents.fetch_add(1, ::std::memory_order_relaxed);
@@ -178,9 +182,18 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
         if (m_config.verboseLogging)
         {
             TC_LOG_DEBUG("module.playerbot.combat",
-                "CombatStateManager: Bot '{}' is dead - ignoring DAMAGE_TAKEN event",
-                botPtr->GetName());
+                "CombatStateManager: Bot '{}' is dead - ignoring {} event",
+                botPtr->GetName(), isDamageTaken ? "DAMAGE_TAKEN" : "GROUP_MEMBER_ATTACKED");
         }
+        return;
+    }
+
+    // For GROUP_MEMBER_ATTACKED, check if bot is already in combat
+    if (isGroupAssist && botPtr->IsInCombat())
+    {
+        TC_LOG_DEBUG("module.playerbot.combat",
+            "CombatStateManager: Bot '{}' already in combat - ignoring GROUP_MEMBER_ATTACKED",
+            botPtr->GetName());
         return;
     }
     // Extract damage amount from event data (format: "damage:absorbed")
@@ -202,8 +215,10 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
     }
 
     ObjectGuid attackerGuid = event.sourceGuid;
+
     // CRITICAL FILTERING: Check if combat state should be triggered
-    if (!ShouldTriggerCombatState(attackerGuid, damage))
+    // For GROUP_MEMBER_ATTACKED, skip damage threshold check - always assist group members
+    if (isDamageTaken && !ShouldTriggerCombatState(attackerGuid, damage))
         return;
 
     // Find attacker unit
@@ -215,8 +230,8 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
         if (m_config.verboseLogging)
         {
             TC_LOG_DEBUG("module.playerbot.combat",
-                "CombatStateManager: Bot '{}' attacker {} not found in world - skipping",
-                botPtr->GetName(), attackerGuid.ToString());
+                "CombatStateManager: Bot '{}' {} - attacker {} not found in world - skipping",
+                botPtr->GetName(), isGroupAssist ? "GROUP_ASSIST" : "DAMAGE_TAKEN", attackerGuid.ToString());
         }
         return;
     }
@@ -228,14 +243,14 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
         if (m_config.verboseLogging)
         {
             TC_LOG_DEBUG("module.playerbot.combat",
-                "CombatStateManager: Bot '{}' attacker '{}' is dead - skipping",
-                botPtr->GetName(), attacker->GetName());
+                "CombatStateManager: Bot '{}' {} - attacker '{}' is dead - skipping",
+                botPtr->GetName(), isGroupAssist ? "GROUP_ASSIST" : "DAMAGE_TAKEN", attacker->GetName());
         }
         return;
     }
 
-    // EDGE CASE: Filter friendly fire (healing/buff damage)
-    if (m_config.filterFriendlyFire && botPtr->IsFriendlyTo(attacker))
+    // EDGE CASE: Filter friendly fire (healing/buff damage) - but NOT for group assist
+    if (!isGroupAssist && m_config.filterFriendlyFire && botPtr->IsFriendlyTo(attacker))
     {
         m_statistics.friendlyFireFiltered.fetch_add(1, ::std::memory_order_relaxed);
 
@@ -243,6 +258,14 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
             "CombatStateManager: Bot '{}' took damage from friendly unit '{}' ({} damage) - ignoring",
             botPtr->GetName(), attacker->GetName(), damage);
         return;
+    }
+
+    // Log group assist event
+    if (isGroupAssist)
+    {
+        TC_LOG_INFO("module.playerbot.combat",
+            "⚔️ CombatStateManager: Bot '{}' ASSISTING group member under attack by '{}'",
+            botPtr->GetName(), attacker->GetName());
     }
 
     // Trigger combat state

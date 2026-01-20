@@ -29,15 +29,17 @@
  *
  * SOLUTION ARCHITECTURE:
  * - Module-only implementation (ZERO core modifications)
- * - Subscribes to DAMAGE_TAKEN events from existing PlayerbotUnitScript::OnDamage hook
+ * - Subscribes to DAMAGE_TAKEN and GROUP_MEMBER_ATTACKED events
  * - Uses Trinity's thread-safe CombatManager::SetInCombatWith() API
  * - Handles all damage sources: melee, spells, DoTs, AreaTriggers, environmental
  * - Filters environmental/self-damage and friendly fire
+ * - GROUP_MEMBER_ATTACKED enables group assist - bots help when any group member is attacked
  *
  * INTEGRATION POINTS:
  * - Trinity's ScriptMgr::OnDamage() hook (already exists, no core change needed)
- * - PlayerbotUnitScript::OnDamage() (already registered, dispatches DAMAGE_TAKEN)
- * - BotAI EventDispatcher (receives DAMAGE_TAKEN events)
+ * - PlayerbotUnitScript::OnDamage() dispatches DAMAGE_TAKEN to victim bot
+ * - PlayerbotUnitScript::OnDamage() dispatches GROUP_MEMBER_ATTACKED to other group bots
+ * - BotAI EventDispatcher (receives both event types)
  * - CombatStateManager (subscribes to events, triggers combat state) ← THIS FILE
  *
  * PERFORMANCE:

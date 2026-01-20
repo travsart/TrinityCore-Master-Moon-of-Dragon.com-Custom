@@ -42,7 +42,6 @@
 // Enterprise-Grade Diagnostics System
 #include "Core/Diagnostics/BotOperationTracker.h"
 
-#include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Session/BotPacketRelay.h"
 #include "Chat/BotChatCommandHandler.h"
@@ -153,6 +152,515 @@ bool PlayerbotModule::Initialize()
     // This ensures schema synchronization between builds
     PlayerbotMigrationMgr::instance()->CheckVersionMismatch();
 
+    // Initialize all sub-managers
+    if (!InitializeManagers())
+    {
+        return false;
+    }
+
+    // ==========================================================================
+
+
+    // Register with the shared ModuleUpdateManager for world updates
+    if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
+    {
+        _lastError = "Failed to register with ModuleUpdateManager";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: ModuleUpdateManager registration failed");
+        return false;
+    }
+    TC_LOG_INFO("server.loading", "Playerbot Module: Successfully registered with ModuleUpdateManager");
+
+    _initialized = true;
+    _enabled = true;
+
+
+    return true;
+}
+
+void PlayerbotModule::Shutdown()
+{
+    if (!_initialized)
+        return;
+
+    TC_LOG_INFO("server.loading", "Shutting down Playerbot Module...");
+
+    // Shutdown Bot Action Manager
+    sBotActionMgr->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Action Manager shutdown complete");
+
+    // Shutdown Population Lifecycle Controller (depends on all lifecycle components)
+    TC_LOG_INFO("server.loading", "Shutting down Population Lifecycle Controller...");
+    sPopulationLifecycleController->Shutdown();
+    TC_LOG_INFO("server.loading", "Population Lifecycle Controller shutdown complete");
+
+    // ==========================================================================
+    // INSTANCE BOT POOL SYSTEM SHUTDOWN
+    // ==========================================================================
+
+    // Shutdown Instance Bot Hooks (stops core integration first)
+    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Hooks...");
+    Playerbot::InstanceBotHooks::Shutdown();
+    TC_LOG_INFO("server.loading", "Instance Bot Hooks shutdown complete");
+
+    // Shutdown Instance Bot Orchestrator (coordinates all instance bot operations)
+    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Orchestrator...");
+    sInstanceBotOrchestrator->Shutdown();
+    TC_LOG_INFO("server.loading", "Instance Bot Orchestrator shutdown complete");
+
+    // Shutdown Queue Shortage Subscriber (stop EventBus subscriptions)
+    TC_LOG_INFO("server.loading", "Shutting down Queue Shortage Subscriber...");
+    sQueueShortageSubscriber->Shutdown();
+    TC_LOG_INFO("server.loading", "Queue Shortage Subscriber shutdown complete");
+
+    // Shutdown Queue State Poller (stop queue polling)
+    TC_LOG_INFO("server.loading", "Shutting down Queue State Poller...");
+    sQueueStatePoller->Shutdown();
+    TC_LOG_INFO("server.loading", "Queue State Poller shutdown complete");
+
+    // Shutdown JIT Bot Factory (stop async creation)
+    TC_LOG_INFO("server.loading", "Shutting down JIT Bot Factory...");
+    sJITBotFactory->Shutdown();
+    TC_LOG_INFO("server.loading", "JIT Bot Factory shutdown complete");
+
+    // Shutdown Instance Bot Pool (logout pool bots)
+    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Pool...");
+    sInstanceBotPool->Shutdown();
+    TC_LOG_INFO("server.loading", "Instance Bot Pool shutdown complete");
+
+    // Shutdown Bot Clone Engine (stop async cloning)
+    TC_LOG_INFO("server.loading", "Shutting down Bot Clone Engine...");
+    sBotCloneEngine->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Clone Engine shutdown complete");
+
+    // Shutdown Bot Post-Login Configurator (clear pending configs)
+    TC_LOG_INFO("server.loading", "Shutting down Bot Post-Login Configurator...");
+    sBotPostLoginConfigurator->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Post-Login Configurator shutdown complete");
+
+    // Shutdown Bot Template Repository
+    TC_LOG_INFO("server.loading", "Shutting down Bot Template Repository...");
+    sBotTemplateRepository->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Template Repository shutdown complete");
+
+    // ==========================================================================
+    // ENTERPRISE-GRADE DIAGNOSTICS SYSTEM SHUTDOWN
+    // ==========================================================================
+
+    // Shutdown Bot Operation Tracker - print final status report before shutdown
+    TC_LOG_INFO("server.loading", "Shutting down Bot Operation Tracker...");
+    sBotOperationTracker->PrintStatus();  // Print final diagnostics report
+    sBotOperationTracker->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Operation Tracker shutdown complete");
+
+    // ==========================================================================
+
+    // Shutdown Demand Calculator (depends on ActivityTracker, ProtectionRegistry, FlowPredictor)
+    TC_LOG_INFO("server.loading", "Shutting down Demand Calculator...");
+    sDemandCalculator->Shutdown();
+    TC_LOG_INFO("server.loading", "Demand Calculator shutdown complete");
+
+    // Shutdown Player Activity Tracker
+    TC_LOG_INFO("server.loading", "Shutting down Player Activity Tracker...");
+    sPlayerActivityTracker->Shutdown();
+    TC_LOG_INFO("server.loading", "Player Activity Tracker shutdown complete");
+
+    // Shutdown Bracket Flow Predictor
+    TC_LOG_INFO("server.loading", "Shutting down Bracket Flow Predictor...");
+    sBracketFlowPredictor->Shutdown();
+    TC_LOG_INFO("server.loading", "Bracket Flow Predictor shutdown complete");
+
+    // Shutdown Bot Retirement Manager (before Protection Registry)
+    TC_LOG_INFO("server.loading", "Shutting down Bot Retirement Manager...");
+    sBotRetirementManager->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Retirement Manager shutdown complete");
+
+    // Shutdown Bot Protection Registry
+    TC_LOG_INFO("server.loading", "Shutting down Bot Protection Registry...");
+    sBotProtectionRegistry->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Protection Registry shutdown complete");
+
+    // Unregister hooks
+    UnregisterHooks();
+
+    // Unregister from ModuleUpdateManager
+    sModuleUpdateManager->UnregisterModule("playerbot");
+    TC_LOG_DEBUG("server.loading", "Unregistered playerbot from ModuleUpdateManager");
+
+    if (_enabled)
+    {
+        // Shutdown Bot Lifecycle Manager
+        //         TC_LOG_INFO("server.loading", "Shutting down Bot Lifecycle Manager...");
+        //         BotLifecycleMgr::instance()->Shutdown();
+        //
+        // Shutdown Bot Chat Command Handler
+        TC_LOG_INFO("server.loading", "Shutting down Bot Chat Command Handler...");
+        Playerbot::BotChatCommandHandler::Shutdown();
+
+        // Shutdown Bot Packet Relay
+        TC_LOG_INFO("server.loading", "Shutting down Bot Packet Relay...");
+        Playerbot::BotPacketRelay::Shutdown();
+
+        // Shutdown Packet Sniffer
+        TC_LOG_INFO("server.loading", "Shutting down Packet Sniffer...");
+        Playerbot::PlayerbotPacketSniffer::Shutdown();
+
+        // Shutdown Bot World Session Manager
+        TC_LOG_INFO("server.loading", "Shutting down Bot World Session Manager...");
+        Playerbot::sBotWorldSessionMgr->Shutdown();
+
+        // Shutdown Bot Name Manager
+        TC_LOG_INFO("server.loading", "Shutting down Bot Name Manager...");
+        sBotNameMgr->Shutdown();
+
+        // Shutdown Bot Account Manager
+        TC_LOG_INFO("server.loading", "Shutting down Bot Account Manager...");
+        sBotAccountMgr->Shutdown();
+
+        // Shutdown Playerbot Database first to stop all operations
+        TC_LOG_INFO("server.loading", "Shutting down Playerbot Database...");
+        ShutdownDatabase();
+
+        // Then shutdown Character Database Interface after operations complete
+        TC_LOG_INFO("server.loading", "Shutting down Character Database Interface...");
+        sPlayerbotCharDB->Shutdown();
+    }
+
+    // Mark as shutdown
+    _initialized = false;
+    _enabled = false;
+
+    TC_LOG_INFO("server.loading", "Playerbot Module: Shutdown complete");
+}
+
+bool PlayerbotModule::IsEnabled()
+{
+    return _initialized && _enabled;
+}
+
+std::string PlayerbotModule::GetVersion()
+{
+    return Trinity::StringFormat("{}.{}.{}", MODULE_VERSION_MAJOR, MODULE_VERSION_MINOR, MODULE_VERSION_PATCH);
+}
+
+std::string PlayerbotModule::GetBuildInfo()
+{
+    return Trinity::StringFormat("Playerbot Module {} (Built: {} {})",
+        GetVersion(), __DATE__, __TIME__);
+}
+
+void PlayerbotModule::RegisterHooks()
+{
+    // Register with ModuleManager for reliable lifecycle management
+    Playerbot::PlayerbotModuleAdapter::RegisterWithModuleManager();
+}
+
+void PlayerbotModule::UnregisterHooks()
+{
+    // TODO: Unregister event hooks
+}
+
+void PlayerbotModule::OnWorldUpdate(uint32 diff)
+{
+    if (!_enabled || !_initialized)
+        return;
+
+    // CRITICAL SAFETY: Wrap entire update in try-catch to prevent crashes
+    try
+    {
+
+    // One-time trigger to complete login for existing sessions
+    static bool loginTriggered = false;
+    static uint32 totalTime = 0;
+    totalTime += diff;
+
+    if (!loginTriggered && totalTime > 5000) // Wait 5 seconds after startup
+    {
+        TC_LOG_INFO("module.playerbot", " OnWorldUpdate: Auto-triggering character logins for existing sessions");
+        TriggerBotCharacterLogins();
+        loginTriggered = true;
+    }
+
+    // PERFORMANCE PROFILING: Track time for each manager
+    auto timeStart = std::chrono::high_resolution_clock::now();
+    auto lastTime = timeStart;
+
+    // Update BotAccountMgr for thread-safe callback processing
+    sBotAccountMgr->Update(diff);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto accountTime = std::chrono::duration_cast<std::chrono::microseconds>(t1 - lastTime).count();
+    lastTime = t1;
+
+    // Update BotSpawner for automatic character creation and management
+    Playerbot::sBotSpawner->Update(diff);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto spawnerTime = std::chrono::duration_cast<std::chrono::microseconds>(t2 - lastTime).count();
+    lastTime = t2;
+
+    // Update BotWorldSessionMgr for native TrinityCore login sessions
+    Playerbot::sBotWorldSessionMgr->UpdateSessions(diff);
+    auto t4 = std::chrono::high_resolution_clock::now();
+    auto worldSessionTime = std::chrono::duration_cast<std::chrono::microseconds>(t4 - lastTime).count();
+    lastTime = t4;
+
+    // Update PlayerbotCharacterDBInterface to process sync queue
+    sPlayerbotCharDB->Update(diff);
+    auto t5 = std::chrono::high_resolution_clock::now();
+    auto charDBTime = std::chrono::duration_cast<std::chrono::microseconds>(t5 - lastTime).count();
+    lastTime = t5;
+
+    // Update GroupEventBus to process pending group events
+    Playerbot::GroupEventBus::instance()->ProcessEvents(diff);
+    auto t6 = std::chrono::high_resolution_clock::now();
+    auto groupEventTime = std::chrono::duration_cast<std::chrono::microseconds>(t6 - lastTime).count();
+    lastTime = t6;
+
+    // Update BotProtectionRegistry for periodic maintenance
+    sBotProtectionRegistry->Update(diff);
+    auto t7 = std::chrono::high_resolution_clock::now();
+    auto protectionTime = std::chrono::duration_cast<std::chrono::microseconds>(t7 - lastTime).count();
+    lastTime = t7;
+
+    // Update BotRetirementManager for retirement queue processing
+    sBotRetirementManager->Update(diff);
+    auto t8 = std::chrono::high_resolution_clock::now();
+    auto retirementTime = std::chrono::duration_cast<std::chrono::microseconds>(t8 - lastTime).count();
+    lastTime = t8;
+
+    // Update BracketFlowPredictor for flow tracking
+    sBracketFlowPredictor->Update(diff);
+    auto t9 = std::chrono::high_resolution_clock::now();
+    auto predictionTime = std::chrono::duration_cast<std::chrono::microseconds>(t9 - lastTime).count();
+    lastTime = t9;
+
+    // Update PlayerActivityTracker for player location tracking
+    sPlayerActivityTracker->Update(diff);
+    auto t10 = std::chrono::high_resolution_clock::now();
+    auto activityTime = std::chrono::duration_cast<std::chrono::microseconds>(t10 - lastTime).count();
+    lastTime = t10;
+
+    // Update DemandCalculator for spawn demand analysis
+    sDemandCalculator->Update(diff);
+    auto t11 = std::chrono::high_resolution_clock::now();
+    auto demandTime = std::chrono::duration_cast<std::chrono::microseconds>(t11 - lastTime).count();
+    lastTime = t11;
+
+    // Update PopulationLifecycleController for lifecycle orchestration
+    sPopulationLifecycleController->Update(diff);
+    auto t12 = std::chrono::high_resolution_clock::now();
+    auto lifecycleTime = std::chrono::duration_cast<std::chrono::microseconds>(t12 - lastTime).count();
+    lastTime = t12;
+
+    // Update Instance Bot Systems (Hybrid Warm Pool + Elastic Overflow)
+    // These systems handle JIT bot creation for dungeons, raids, BGs, and arenas
+    sInstanceBotPool->Update(diff);
+    auto t13 = std::chrono::high_resolution_clock::now();
+    auto instancePoolTime = std::chrono::duration_cast<std::chrono::microseconds>(t13 - lastTime).count();
+    lastTime = t13;
+
+    sInstanceBotOrchestrator->Update(diff);
+    auto t14 = std::chrono::high_resolution_clock::now();
+    auto orchestratorTime = std::chrono::duration_cast<std::chrono::microseconds>(t14 - lastTime).count();
+    lastTime = t14;
+
+    sJITBotFactory->Update(diff);
+    auto t15 = std::chrono::high_resolution_clock::now();
+    auto jitFactoryTime = std::chrono::duration_cast<std::chrono::microseconds>(t15 - lastTime).count();
+    lastTime = t15;
+
+    // Update Queue State Poller (JIT queue shortage detection)
+    sQueueStatePoller->Update(diff);
+    auto t16 = std::chrono::high_resolution_clock::now();
+    auto queuePollerTime = std::chrono::duration_cast<std::chrono::microseconds>(t16 - lastTime).count();
+
+    // Calculate total time
+    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t16 - timeStart).count();
+
+    // Log if total time exceeds 100ms
+    if (totalUpdateTime > 100000) // 100ms in microseconds
+    {
+        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms, Protection:{:.2f}ms, Retirement:{:.2f}ms, Prediction:{:.2f}ms, Activity:{:.2f}ms, Demand:{:.2f}ms, Lifecycle:{:.2f}ms, InstPool:{:.2f}ms, Orchestrator:{:.2f}ms, JITFactory:{:.2f}ms, QueuePoller:{:.2f}ms",
+            totalUpdateTime / 1000.0f,
+            accountTime / 1000.0f,
+            spawnerTime / 1000.0f,
+            worldSessionTime / 1000.0f,
+            charDBTime / 1000.0f,
+            groupEventTime / 1000.0f,
+            protectionTime / 1000.0f,
+            retirementTime / 1000.0f,
+            predictionTime / 1000.0f,
+            activityTime / 1000.0f,
+            demandTime / 1000.0f,
+            lifecycleTime / 1000.0f,
+            instancePoolTime / 1000.0f,
+            orchestratorTime / 1000.0f,
+            jitFactoryTime / 1000.0f,
+            queuePollerTime / 1000.0f);
+    }
+
+    }
+    catch (std::exception const& ex)
+    {
+        TC_LOG_ERROR("module.playerbot", "CRITICAL EXCEPTION in PlayerbotModule::OnWorldUpdate: {}", ex.what());
+        TC_LOG_ERROR("module.playerbot", "Disabling playerbot to prevent further crashes");
+        _enabled = false;
+    }
+    catch (...)
+    {
+        TC_LOG_ERROR("module.playerbot", "CRITICAL UNKNOWN EXCEPTION in PlayerbotModule::OnWorldUpdate");
+        TC_LOG_ERROR("module.playerbot", "Disabling playerbot to prevent further crashes");
+        _enabled = false;
+    }
+}
+
+bool PlayerbotModule::ValidateConfig()
+{
+    // Basic configuration validation
+    if (!sPlayerbotConfig)
+    {
+        _lastError = "Configuration system not initialized";
+        return false;
+    }
+
+    // Validate bot count limits
+    uint32 maxBots = sPlayerbotConfig->GetInt("Playerbot.MaxBotsPerAccount", 10);
+    if (maxBots < 1 || maxBots > 50)
+    {
+        _lastError = Trinity::StringFormat("Playerbot.MaxBotsPerAccount invalid ({}), must be between 1-50", maxBots);
+        TC_LOG_WARN("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
+    // Validate character limit per account - WICHTIG: MAX 10!
+    uint32 maxChars = sPlayerbotConfig->GetInt("Playerbot.MaxCharactersPerAccount", 10);
+    if (maxChars < 1 || maxChars > 10)
+    {
+        _lastError = Trinity::StringFormat("Playerbot.MaxCharactersPerAccount invalid ({}), must be between 1-10", maxChars);
+        TC_LOG_WARN("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
+    // Validate update intervals
+    uint32 updateMs = sPlayerbotConfig->GetInt("Playerbot.UpdateInterval", 1000);
+    if (updateMs < 100)
+    {
+        _lastError = "Playerbot.UpdateInterval too low (minimum 100ms)";
+        TC_LOG_WARN("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
+    return true;
+}
+
+void PlayerbotModule::InitializeLogging()
+{
+    // Check if sPlayerbotConfig is valid
+    if (!sPlayerbotConfig)
+    {
+        return;
+    }
+
+    sPlayerbotConfig->InitializeLogging();
+}
+
+bool PlayerbotModule::InitializeDatabase()
+{
+    // Get individual database settings from configuration
+    std::string host = sPlayerbotConfig->GetString("Playerbot.Database.Host", "127.0.0.1");
+    uint32 port = sPlayerbotConfig->GetInt("Playerbot.Database.Port", 3306);
+    std::string user = sPlayerbotConfig->GetString("Playerbot.Database.User", "trinity");
+    std::string password = sPlayerbotConfig->GetString("Playerbot.Database.Password", "trinity");
+    std::string database = sPlayerbotConfig->GetString("Playerbot.Database.Name", "characters");
+
+    // Construct connection string in format: hostname;port;username;password;database
+    std::string dbString = Trinity::StringFormat("{};{};{};{};{}", host, port, user, password, database);
+
+    TC_LOG_INFO("server.loading", "Playerbot Database: Connecting to {}:{}/{}", host, port, database);
+
+    // Initialize database connection using our custom manager
+    if (!sPlayerbotDatabase->Initialize(dbString))
+    {
+        // ============================================================================
+        // CRITICAL DATABASE CONNECTION FAILURE - BLOCK SERVER STARTUP
+        // ============================================================================
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "================================================================================");
+        TC_LOG_ERROR("server.loading", "  PLAYERBOT DATABASE CONNECTION FAILED - SERVER STARTUP BLOCKED");
+        TC_LOG_ERROR("server.loading", "================================================================================");
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Playerbot is ENABLED but cannot connect to its database.");
+        TC_LOG_ERROR("server.loading", "  The server cannot start safely without a working database connection.");
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Current Configuration:");
+        TC_LOG_ERROR("server.loading", "    Host:     {}", host);
+        TC_LOG_ERROR("server.loading", "    Port:     {}", port);
+        TC_LOG_ERROR("server.loading", "    User:     {}", user);
+        TC_LOG_ERROR("server.loading", "    Database: {}", database);
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Possible Causes:");
+        TC_LOG_ERROR("server.loading", "    1. MySQL server is not running");
+        TC_LOG_ERROR("server.loading", "    2. Wrong hostname or port in configuration");
+        TC_LOG_ERROR("server.loading", "    3. Invalid username or password");
+        TC_LOG_ERROR("server.loading", "    4. Database '{}' does not exist", database);
+        TC_LOG_ERROR("server.loading", "    5. User '{}' has no access to database '{}'", user, database);
+        TC_LOG_ERROR("server.loading", "    6. Firewall blocking connection to port {}", port);
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "  Solutions:");
+        TC_LOG_ERROR("server.loading", "    - Check worldserver.conf for Playerbot.Database.* settings");
+        TC_LOG_ERROR("server.loading", "    - Verify MySQL server is running: mysql -u {} -p -h {} -P {}", user, host, port);
+        TC_LOG_ERROR("server.loading", "    - Create database if missing: CREATE DATABASE {};", database);
+        TC_LOG_ERROR("server.loading", "    - Or disable Playerbot: set Playerbot.Enable = 0");
+        TC_LOG_ERROR("server.loading", "");
+        TC_LOG_ERROR("server.loading", "================================================================================");
+        TC_LOG_ERROR("server.loading", "");
+
+        _lastError = Trinity::StringFormat(
+            "CRITICAL: Playerbot database connection failed! "
+            "Cannot connect to {}:{}/{} as user '{}'. "
+            "Check your Playerbot.Database.* configuration or disable Playerbot (Playerbot.Enable = 0)",
+            host, port, database, user);
+
+        return false;
+    }
+
+    TC_LOG_INFO("server.loading", "Playerbot Database: Successfully connected to {}:{}/{}", host, port, database);
+
+    // Validate database schema
+    TC_LOG_INFO("server.loading", "Validating Playerbot Database Schema...");
+    if (!sPlayerbotDatabase->ValidateSchema())
+    {
+        TC_LOG_WARN("server.loading", "");
+        TC_LOG_WARN("server.loading", "================================================================================");
+        TC_LOG_WARN("server.loading", "  PLAYERBOT DATABASE SCHEMA WARNING");
+        TC_LOG_WARN("server.loading", "================================================================================");
+        TC_LOG_WARN("server.loading", "  Database schema validation failed - some tables may be missing or outdated.");
+        TC_LOG_WARN("server.loading", "  Playerbot will continue but some features may not work correctly.");
+        TC_LOG_WARN("server.loading", "");
+        TC_LOG_WARN("server.loading", "  Solution: Run the database migrations in sql/playerbot/ directory");
+        TC_LOG_WARN("server.loading", "================================================================================");
+        TC_LOG_WARN("server.loading", "");
+    }
+
+    return true;
+}
+
+void PlayerbotModule::TriggerBotCharacterLogins()
+{
+    if (!_enabled || !_initialized)
+    {
+        TC_LOG_WARN("module.playerbot", "TriggerBotCharacterLogins: Module not enabled or initialized");
+        return;
+    }
+
+    TC_LOG_INFO("module.playerbot", " TriggerBotCharacterLogins: Manually triggering character logins for existing sessions");
+
+    // Call the BotWorldSessionMgr method to trigger native logins
+    Playerbot::sBotWorldSessionMgr->TriggerCharacterLoginForAllSessions();
+
+    TC_LOG_INFO("module.playerbot", " TriggerBotCharacterLogins: Complete");
+}
+
+bool PlayerbotModule::InitializeManagers()
+{
     // Initialize Bot Account Manager
     TC_LOG_INFO("server.loading", "PlayerbotModule: About to call sBotAccountMgr->Initialize()...");
     if (!sBotAccountMgr->Initialize())
@@ -191,13 +699,6 @@ bool PlayerbotModule::Initialize()
         return false;
     }
 
-    // Initialize Bot Session Manager
-    if (!sBotSessionMgr->Initialize())
-    {
-        _lastError = "Failed to initialize Bot Session Manager";
-        return false;
-    }
-
     // Initialize Bot World Session Manager (native TrinityCore login)
     if (!Playerbot::sBotWorldSessionMgr->Initialize())
     {
@@ -220,15 +721,6 @@ bool PlayerbotModule::Initialize()
     // AFTER this Initialize() function completes. The ModuleManager calls OnModuleStartup()
     // at the correct time, and it will initialize both BotAccountMgr and BotSpawner.
 
-    // Initialize Bot Lifecycle Manager
-    //     TC_LOG_INFO("server.loading", "Initializing Bot Lifecycle Manager...");
-    //     if (!BotLifecycleMgr::instance()->Initialize())
-    //     {
-    //         _lastError = "Failed to initialize Bot Lifecycle Manager";
-    //         TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
-    //         return false;
-    //     }
-    //
     // Initialize Profession Database (must happen before bots are created)
     // Phase 1B: Shared profession data now in ProfessionDatabase singleton
     // Per-bot ProfessionManager instances created by GameSystemsManager
@@ -505,514 +997,7 @@ bool PlayerbotModule::Initialize()
     sBotOperationTracker->Initialize();
     TC_LOG_INFO("server.loading", "Bot Operation Tracker initialized - tracking all bot operations");
 
-    // ==========================================================================
-
-    // Register with the shared ModuleUpdateManager for world updates
-    if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
-    {
-        _lastError = "Failed to register with ModuleUpdateManager";
-        TC_LOG_ERROR("server.loading", "Playerbot Module: ModuleUpdateManager registration failed");
-        return false;
-    }
-    TC_LOG_INFO("server.loading", "Playerbot Module: Successfully registered with ModuleUpdateManager");
-
-    _initialized = true;
-    _enabled = true;
-
-
     return true;
-}
-
-void PlayerbotModule::Shutdown()
-{
-    if (!_initialized)
-        return;
-
-    TC_LOG_INFO("server.loading", "Shutting down Playerbot Module...");
-
-    // Shutdown Bot Action Manager
-    sBotActionMgr->Shutdown();
-    TC_LOG_INFO("server.loading", "Bot Action Manager shutdown complete");
-
-    // Shutdown Population Lifecycle Controller (depends on all lifecycle components)
-    TC_LOG_INFO("server.loading", "Shutting down Population Lifecycle Controller...");
-    sPopulationLifecycleController->Shutdown();
-    TC_LOG_INFO("server.loading", "Population Lifecycle Controller shutdown complete");
-
-    // ==========================================================================
-    // INSTANCE BOT POOL SYSTEM SHUTDOWN
-    // ==========================================================================
-
-    // Shutdown Instance Bot Hooks (stops core integration first)
-    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Hooks...");
-    Playerbot::InstanceBotHooks::Shutdown();
-    TC_LOG_INFO("server.loading", "Instance Bot Hooks shutdown complete");
-
-    // Shutdown Instance Bot Orchestrator (coordinates all instance bot operations)
-    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Orchestrator...");
-    sInstanceBotOrchestrator->Shutdown();
-    TC_LOG_INFO("server.loading", "Instance Bot Orchestrator shutdown complete");
-
-    // Shutdown Queue Shortage Subscriber (stop EventBus subscriptions)
-    TC_LOG_INFO("server.loading", "Shutting down Queue Shortage Subscriber...");
-    sQueueShortageSubscriber->Shutdown();
-    TC_LOG_INFO("server.loading", "Queue Shortage Subscriber shutdown complete");
-
-    // Shutdown Queue State Poller (stop queue polling)
-    TC_LOG_INFO("server.loading", "Shutting down Queue State Poller...");
-    sQueueStatePoller->Shutdown();
-    TC_LOG_INFO("server.loading", "Queue State Poller shutdown complete");
-
-    // Shutdown JIT Bot Factory (stop async creation)
-    TC_LOG_INFO("server.loading", "Shutting down JIT Bot Factory...");
-    sJITBotFactory->Shutdown();
-    TC_LOG_INFO("server.loading", "JIT Bot Factory shutdown complete");
-
-    // Shutdown Instance Bot Pool (logout pool bots)
-    TC_LOG_INFO("server.loading", "Shutting down Instance Bot Pool...");
-    sInstanceBotPool->Shutdown();
-    TC_LOG_INFO("server.loading", "Instance Bot Pool shutdown complete");
-
-    // Shutdown Bot Clone Engine (stop async cloning)
-    TC_LOG_INFO("server.loading", "Shutting down Bot Clone Engine...");
-    sBotCloneEngine->Shutdown();
-    TC_LOG_INFO("server.loading", "Bot Clone Engine shutdown complete");
-
-    // Shutdown Bot Post-Login Configurator (clear pending configs)
-    TC_LOG_INFO("server.loading", "Shutting down Bot Post-Login Configurator...");
-    sBotPostLoginConfigurator->Shutdown();
-    TC_LOG_INFO("server.loading", "Bot Post-Login Configurator shutdown complete");
-
-    // Shutdown Bot Template Repository
-    TC_LOG_INFO("server.loading", "Shutting down Bot Template Repository...");
-    sBotTemplateRepository->Shutdown();
-    TC_LOG_INFO("server.loading", "Bot Template Repository shutdown complete");
-
-    // ==========================================================================
-    // ENTERPRISE-GRADE DIAGNOSTICS SYSTEM SHUTDOWN
-    // ==========================================================================
-
-    // Shutdown Bot Operation Tracker - print final status report before shutdown
-    TC_LOG_INFO("server.loading", "Shutting down Bot Operation Tracker...");
-    sBotOperationTracker->PrintStatus();  // Print final diagnostics report
-    sBotOperationTracker->Shutdown();
-    TC_LOG_INFO("server.loading", "Bot Operation Tracker shutdown complete");
-
-    // ==========================================================================
-
-    // Shutdown Demand Calculator (depends on ActivityTracker, ProtectionRegistry, FlowPredictor)
-    TC_LOG_INFO("server.loading", "Shutting down Demand Calculator...");
-    sDemandCalculator->Shutdown();
-    TC_LOG_INFO("server.loading", "Demand Calculator shutdown complete");
-
-    // Shutdown Player Activity Tracker
-    TC_LOG_INFO("server.loading", "Shutting down Player Activity Tracker...");
-    sPlayerActivityTracker->Shutdown();
-    TC_LOG_INFO("server.loading", "Player Activity Tracker shutdown complete");
-
-    // Shutdown Bracket Flow Predictor
-    TC_LOG_INFO("server.loading", "Shutting down Bracket Flow Predictor...");
-    sBracketFlowPredictor->Shutdown();
-    TC_LOG_INFO("server.loading", "Bracket Flow Predictor shutdown complete");
-
-    // Shutdown Bot Retirement Manager (before Protection Registry)
-    TC_LOG_INFO("server.loading", "Shutting down Bot Retirement Manager...");
-    sBotRetirementManager->Shutdown();
-    TC_LOG_INFO("server.loading", "Bot Retirement Manager shutdown complete");
-
-    // Shutdown Bot Protection Registry
-    TC_LOG_INFO("server.loading", "Shutting down Bot Protection Registry...");
-    sBotProtectionRegistry->Shutdown();
-    TC_LOG_INFO("server.loading", "Bot Protection Registry shutdown complete");
-
-    // Unregister hooks
-    UnregisterHooks();
-
-    // Unregister from ModuleUpdateManager
-    sModuleUpdateManager->UnregisterModule("playerbot");
-    TC_LOG_DEBUG("server.loading", "Unregistered playerbot from ModuleUpdateManager");
-
-    if (_enabled)
-    {
-        // Shutdown Bot Lifecycle Manager
-        //         TC_LOG_INFO("server.loading", "Shutting down Bot Lifecycle Manager...");
-        //         BotLifecycleMgr::instance()->Shutdown();
-        //
-        // Shutdown Bot Chat Command Handler
-        TC_LOG_INFO("server.loading", "Shutting down Bot Chat Command Handler...");
-        Playerbot::BotChatCommandHandler::Shutdown();
-
-        // Shutdown Bot Packet Relay
-        TC_LOG_INFO("server.loading", "Shutting down Bot Packet Relay...");
-        Playerbot::BotPacketRelay::Shutdown();
-
-        // Shutdown Packet Sniffer
-        TC_LOG_INFO("server.loading", "Shutting down Packet Sniffer...");
-        Playerbot::PlayerbotPacketSniffer::Shutdown();
-
-        // Shutdown Bot World Session Manager
-        TC_LOG_INFO("server.loading", "Shutting down Bot World Session Manager...");
-        Playerbot::sBotWorldSessionMgr->Shutdown();
-
-        // Shutdown Bot Name Manager
-        TC_LOG_INFO("server.loading", "Shutting down Bot Name Manager...");
-        sBotNameMgr->Shutdown();
-
-        // Shutdown Bot Account Manager
-        TC_LOG_INFO("server.loading", "Shutting down Bot Account Manager...");
-        sBotAccountMgr->Shutdown();
-
-        // Shutdown Playerbot Database first to stop all operations
-        TC_LOG_INFO("server.loading", "Shutting down Playerbot Database...");
-        ShutdownDatabase();
-
-        // Then shutdown Character Database Interface after operations complete
-        TC_LOG_INFO("server.loading", "Shutting down Character Database Interface...");
-        sPlayerbotCharDB->Shutdown();
-    }
-
-    // Mark as shutdown
-    _initialized = false;
-    _enabled = false;
-
-    TC_LOG_INFO("server.loading", "Playerbot Module: Shutdown complete");
-}
-
-bool PlayerbotModule::IsEnabled()
-{
-    return _initialized && _enabled;
-}
-
-std::string PlayerbotModule::GetVersion()
-{
-    return Trinity::StringFormat("{}.{}.{}", MODULE_VERSION_MAJOR, MODULE_VERSION_MINOR, MODULE_VERSION_PATCH);
-}
-
-std::string PlayerbotModule::GetBuildInfo()
-{
-    return Trinity::StringFormat("Playerbot Module {} (Built: {} {})",
-        GetVersion(), __DATE__, __TIME__);
-}
-
-void PlayerbotModule::RegisterHooks()
-{
-    // Register with ModuleManager for reliable lifecycle management
-    Playerbot::PlayerbotModuleAdapter::RegisterWithModuleManager();
-}
-
-void PlayerbotModule::UnregisterHooks()
-{
-    // TODO: Unregister event hooks
-}
-
-void PlayerbotModule::OnWorldUpdate(uint32 diff)
-{
-    if (!_enabled || !_initialized)
-        return;
-
-    // CRITICAL SAFETY: Wrap entire update in try-catch to prevent crashes
-    try
-    {
-
-    // One-time trigger to complete login for existing sessions
-    static bool loginTriggered = false;
-    static uint32 totalTime = 0;
-    totalTime += diff;
-
-    if (!loginTriggered && totalTime > 5000) // Wait 5 seconds after startup
-    {
-        TC_LOG_INFO("module.playerbot", " OnWorldUpdate: Auto-triggering character logins for existing sessions");
-        TriggerBotCharacterLogins();
-        loginTriggered = true;
-    }
-
-    // PERFORMANCE PROFILING: Track time for each manager
-    auto timeStart = std::chrono::high_resolution_clock::now();
-    auto lastTime = timeStart;
-
-    // Update BotAccountMgr for thread-safe callback processing
-    sBotAccountMgr->Update(diff);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    auto accountTime = std::chrono::duration_cast<std::chrono::microseconds>(t1 - lastTime).count();
-    lastTime = t1;
-
-    // Update BotSpawner for automatic character creation and management
-    Playerbot::sBotSpawner->Update(diff);
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto spawnerTime = std::chrono::duration_cast<std::chrono::microseconds>(t2 - lastTime).count();
-    lastTime = t2;
-
-    // Update BotSessionMgr for active bot session processing (legacy)
-    sBotSessionMgr->UpdateAllSessions(diff);
-    auto t3 = std::chrono::high_resolution_clock::now();
-    auto sessionMgrTime = std::chrono::duration_cast<std::chrono::microseconds>(t3 - lastTime).count();
-    lastTime = t3;
-
-    // Update BotWorldSessionMgr for native TrinityCore login sessions
-    Playerbot::sBotWorldSessionMgr->UpdateSessions(diff);
-    auto t4 = std::chrono::high_resolution_clock::now();
-    auto worldSessionTime = std::chrono::duration_cast<std::chrono::microseconds>(t4 - lastTime).count();
-    lastTime = t4;
-
-    // Update PlayerbotCharacterDBInterface to process sync queue
-    sPlayerbotCharDB->Update(diff);
-    auto t5 = std::chrono::high_resolution_clock::now();
-    auto charDBTime = std::chrono::duration_cast<std::chrono::microseconds>(t5 - lastTime).count();
-    lastTime = t5;
-
-    // Update GroupEventBus to process pending group events
-    Playerbot::GroupEventBus::instance()->ProcessEvents(diff);
-    auto t6 = std::chrono::high_resolution_clock::now();
-    auto groupEventTime = std::chrono::duration_cast<std::chrono::microseconds>(t6 - lastTime).count();
-    lastTime = t6;
-
-    // Update BotProtectionRegistry for periodic maintenance
-    sBotProtectionRegistry->Update(diff);
-    auto t7 = std::chrono::high_resolution_clock::now();
-    auto protectionTime = std::chrono::duration_cast<std::chrono::microseconds>(t7 - lastTime).count();
-    lastTime = t7;
-
-    // Update BotRetirementManager for retirement queue processing
-    sBotRetirementManager->Update(diff);
-    auto t8 = std::chrono::high_resolution_clock::now();
-    auto retirementTime = std::chrono::duration_cast<std::chrono::microseconds>(t8 - lastTime).count();
-    lastTime = t8;
-
-    // Update BracketFlowPredictor for flow tracking
-    sBracketFlowPredictor->Update(diff);
-    auto t9 = std::chrono::high_resolution_clock::now();
-    auto predictionTime = std::chrono::duration_cast<std::chrono::microseconds>(t9 - lastTime).count();
-    lastTime = t9;
-
-    // Update PlayerActivityTracker for player location tracking
-    sPlayerActivityTracker->Update(diff);
-    auto t10 = std::chrono::high_resolution_clock::now();
-    auto activityTime = std::chrono::duration_cast<std::chrono::microseconds>(t10 - lastTime).count();
-    lastTime = t10;
-
-    // Update DemandCalculator for spawn demand analysis
-    sDemandCalculator->Update(diff);
-    auto t11 = std::chrono::high_resolution_clock::now();
-    auto demandTime = std::chrono::duration_cast<std::chrono::microseconds>(t11 - lastTime).count();
-    lastTime = t11;
-
-    // Update PopulationLifecycleController for lifecycle orchestration
-    sPopulationLifecycleController->Update(diff);
-    auto t12 = std::chrono::high_resolution_clock::now();
-    auto lifecycleTime = std::chrono::duration_cast<std::chrono::microseconds>(t12 - lastTime).count();
-    lastTime = t12;
-
-    // Update Instance Bot Systems (Hybrid Warm Pool + Elastic Overflow)
-    // These systems handle JIT bot creation for dungeons, raids, BGs, and arenas
-    sInstanceBotPool->Update(diff);
-    auto t13 = std::chrono::high_resolution_clock::now();
-    auto instancePoolTime = std::chrono::duration_cast<std::chrono::microseconds>(t13 - lastTime).count();
-    lastTime = t13;
-
-    sInstanceBotOrchestrator->Update(diff);
-    auto t14 = std::chrono::high_resolution_clock::now();
-    auto orchestratorTime = std::chrono::duration_cast<std::chrono::microseconds>(t14 - lastTime).count();
-    lastTime = t14;
-
-    sJITBotFactory->Update(diff);
-    auto t15 = std::chrono::high_resolution_clock::now();
-    auto jitFactoryTime = std::chrono::duration_cast<std::chrono::microseconds>(t15 - lastTime).count();
-    lastTime = t15;
-
-    // Update Queue State Poller (JIT queue shortage detection)
-    sQueueStatePoller->Update(diff);
-    auto t16 = std::chrono::high_resolution_clock::now();
-    auto queuePollerTime = std::chrono::duration_cast<std::chrono::microseconds>(t16 - lastTime).count();
-
-    // Calculate total time
-    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t16 - timeStart).count();
-
-    // Log if total time exceeds 100ms
-    if (totalUpdateTime > 100000) // 100ms in microseconds
-    {
-        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, SessionMgr:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms, Protection:{:.2f}ms, Retirement:{:.2f}ms, Prediction:{:.2f}ms, Activity:{:.2f}ms, Demand:{:.2f}ms, Lifecycle:{:.2f}ms, InstPool:{:.2f}ms, Orchestrator:{:.2f}ms, JITFactory:{:.2f}ms, QueuePoller:{:.2f}ms",
-            totalUpdateTime / 1000.0f,
-            accountTime / 1000.0f,
-            spawnerTime / 1000.0f,
-            sessionMgrTime / 1000.0f,
-            worldSessionTime / 1000.0f,
-            charDBTime / 1000.0f,
-            groupEventTime / 1000.0f,
-            protectionTime / 1000.0f,
-            retirementTime / 1000.0f,
-            predictionTime / 1000.0f,
-            activityTime / 1000.0f,
-            demandTime / 1000.0f,
-            lifecycleTime / 1000.0f,
-            instancePoolTime / 1000.0f,
-            orchestratorTime / 1000.0f,
-            jitFactoryTime / 1000.0f,
-            queuePollerTime / 1000.0f);
-    }
-
-    }
-    catch (std::exception const& ex)
-    {
-        TC_LOG_ERROR("module.playerbot", "CRITICAL EXCEPTION in PlayerbotModule::OnWorldUpdate: {}", ex.what());
-        TC_LOG_ERROR("module.playerbot", "Disabling playerbot to prevent further crashes");
-        _enabled = false;
-    }
-    catch (...)
-    {
-        TC_LOG_ERROR("module.playerbot", "CRITICAL UNKNOWN EXCEPTION in PlayerbotModule::OnWorldUpdate");
-        TC_LOG_ERROR("module.playerbot", "Disabling playerbot to prevent further crashes");
-        _enabled = false;
-    }
-}
-
-bool PlayerbotModule::ValidateConfig()
-{
-    // Basic configuration validation
-    if (!sPlayerbotConfig)
-    {
-        _lastError = "Configuration system not initialized";
-        return false;
-    }
-
-    // Validate bot count limits
-    uint32 maxBots = sPlayerbotConfig->GetInt("Playerbot.MaxBotsPerAccount", 10);
-    if (maxBots < 1 || maxBots > 50)
-    {
-        _lastError = Trinity::StringFormat("Playerbot.MaxBotsPerAccount invalid ({}), must be between 1-50", maxBots);
-        TC_LOG_WARN("server.loading", "Playerbot Module: {}", _lastError);
-        return false;
-    }
-
-    // Validate character limit per account - WICHTIG: MAX 10!
-    uint32 maxChars = sPlayerbotConfig->GetInt("Playerbot.MaxCharactersPerAccount", 10);
-    if (maxChars < 1 || maxChars > 10)
-    {
-        _lastError = Trinity::StringFormat("Playerbot.MaxCharactersPerAccount invalid ({}), must be between 1-10", maxChars);
-        TC_LOG_WARN("server.loading", "Playerbot Module: {}", _lastError);
-        return false;
-    }
-
-    // Validate update intervals
-    uint32 updateMs = sPlayerbotConfig->GetInt("Playerbot.UpdateInterval", 1000);
-    if (updateMs < 100)
-    {
-        _lastError = "Playerbot.UpdateInterval too low (minimum 100ms)";
-        TC_LOG_WARN("server.loading", "Playerbot Module: {}", _lastError);
-        return false;
-    }
-
-    return true;
-}
-
-void PlayerbotModule::InitializeLogging()
-{
-    // Check if sPlayerbotConfig is valid
-    if (!sPlayerbotConfig)
-    {
-        return;
-    }
-
-    sPlayerbotConfig->InitializeLogging();
-}
-
-bool PlayerbotModule::InitializeDatabase()
-{
-    // Get individual database settings from configuration
-    std::string host = sPlayerbotConfig->GetString("Playerbot.Database.Host", "127.0.0.1");
-    uint32 port = sPlayerbotConfig->GetInt("Playerbot.Database.Port", 3306);
-    std::string user = sPlayerbotConfig->GetString("Playerbot.Database.User", "trinity");
-    std::string password = sPlayerbotConfig->GetString("Playerbot.Database.Password", "trinity");
-    std::string database = sPlayerbotConfig->GetString("Playerbot.Database.Name", "characters");
-
-    // Construct connection string in format: hostname;port;username;password;database
-    std::string dbString = Trinity::StringFormat("{};{};{};{};{}", host, port, user, password, database);
-
-    TC_LOG_INFO("server.loading", "Playerbot Database: Connecting to {}:{}/{}", host, port, database);
-
-    // Initialize database connection using our custom manager
-    if (!sPlayerbotDatabase->Initialize(dbString))
-    {
-        // ============================================================================
-        // CRITICAL DATABASE CONNECTION FAILURE - BLOCK SERVER STARTUP
-        // ============================================================================
-        TC_LOG_ERROR("server.loading", "");
-        TC_LOG_ERROR("server.loading", "================================================================================");
-        TC_LOG_ERROR("server.loading", "  PLAYERBOT DATABASE CONNECTION FAILED - SERVER STARTUP BLOCKED");
-        TC_LOG_ERROR("server.loading", "================================================================================");
-        TC_LOG_ERROR("server.loading", "");
-        TC_LOG_ERROR("server.loading", "  Playerbot is ENABLED but cannot connect to its database.");
-        TC_LOG_ERROR("server.loading", "  The server cannot start safely without a working database connection.");
-        TC_LOG_ERROR("server.loading", "");
-        TC_LOG_ERROR("server.loading", "  Current Configuration:");
-        TC_LOG_ERROR("server.loading", "    Host:     {}", host);
-        TC_LOG_ERROR("server.loading", "    Port:     {}", port);
-        TC_LOG_ERROR("server.loading", "    User:     {}", user);
-        TC_LOG_ERROR("server.loading", "    Database: {}", database);
-        TC_LOG_ERROR("server.loading", "");
-        TC_LOG_ERROR("server.loading", "  Possible Causes:");
-        TC_LOG_ERROR("server.loading", "    1. MySQL server is not running");
-        TC_LOG_ERROR("server.loading", "    2. Wrong hostname or port in configuration");
-        TC_LOG_ERROR("server.loading", "    3. Invalid username or password");
-        TC_LOG_ERROR("server.loading", "    4. Database '{}' does not exist", database);
-        TC_LOG_ERROR("server.loading", "    5. User '{}' has no access to database '{}'", user, database);
-        TC_LOG_ERROR("server.loading", "    6. Firewall blocking connection to port {}", port);
-        TC_LOG_ERROR("server.loading", "");
-        TC_LOG_ERROR("server.loading", "  Solutions:");
-        TC_LOG_ERROR("server.loading", "    - Check worldserver.conf for Playerbot.Database.* settings");
-        TC_LOG_ERROR("server.loading", "    - Verify MySQL server is running: mysql -u {} -p -h {} -P {}", user, host, port);
-        TC_LOG_ERROR("server.loading", "    - Create database if missing: CREATE DATABASE {};", database);
-        TC_LOG_ERROR("server.loading", "    - Or disable Playerbot: set Playerbot.Enable = 0");
-        TC_LOG_ERROR("server.loading", "");
-        TC_LOG_ERROR("server.loading", "================================================================================");
-        TC_LOG_ERROR("server.loading", "");
-
-        _lastError = Trinity::StringFormat(
-            "CRITICAL: Playerbot database connection failed! "
-            "Cannot connect to {}:{}/{} as user '{}'. "
-            "Check your Playerbot.Database.* configuration or disable Playerbot (Playerbot.Enable = 0)",
-            host, port, database, user);
-
-        return false;
-    }
-
-    TC_LOG_INFO("server.loading", "Playerbot Database: Successfully connected to {}:{}/{}", host, port, database);
-
-    // Validate database schema
-    TC_LOG_INFO("server.loading", "Validating Playerbot Database Schema...");
-    if (!sPlayerbotDatabase->ValidateSchema())
-    {
-        TC_LOG_WARN("server.loading", "");
-        TC_LOG_WARN("server.loading", "================================================================================");
-        TC_LOG_WARN("server.loading", "  PLAYERBOT DATABASE SCHEMA WARNING");
-        TC_LOG_WARN("server.loading", "================================================================================");
-        TC_LOG_WARN("server.loading", "  Database schema validation failed - some tables may be missing or outdated.");
-        TC_LOG_WARN("server.loading", "  Playerbot will continue but some features may not work correctly.");
-        TC_LOG_WARN("server.loading", "");
-        TC_LOG_WARN("server.loading", "  Solution: Run the database migrations in sql/playerbot/ directory");
-        TC_LOG_WARN("server.loading", "================================================================================");
-        TC_LOG_WARN("server.loading", "");
-    }
-
-    return true;
-}
-
-void PlayerbotModule::TriggerBotCharacterLogins()
-{
-    if (!_enabled || !_initialized)
-    {
-        TC_LOG_WARN("module.playerbot", "TriggerBotCharacterLogins: Module not enabled or initialized");
-        return;
-    }
-
-    TC_LOG_INFO("module.playerbot", " TriggerBotCharacterLogins: Manually triggering character logins for existing sessions");
-
-    // Call the BotSessionMgr method to trigger logins (legacy approach)
-    sBotSessionMgr->TriggerCharacterLoginForAllSessions();
-
-    // Call the BotWorldSessionMgr method to trigger native logins
-    Playerbot::sBotWorldSessionMgr->TriggerCharacterLoginForAllSessions();
-
-    TC_LOG_INFO("module.playerbot", " TriggerBotCharacterLogins: Complete");
 }
 
 void PlayerbotModule::ShutdownDatabase()

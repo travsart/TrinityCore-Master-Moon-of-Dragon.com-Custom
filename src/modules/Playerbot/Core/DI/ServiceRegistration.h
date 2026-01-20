@@ -19,7 +19,6 @@
 
 #include "ServiceContainer.h"
 #include "Interfaces/ISpatialGridManager.h"
-#include "Interfaces/IBotSessionMgr.h"
 #include "Interfaces/IConfigManager.h"
 #include "Interfaces/IBotLifecycleManager.h"
 #include "Interfaces/IBotDatabasePool.h"
@@ -105,7 +104,6 @@
 #include "Interfaces/IBattlegroundAI.h"
 #include "Interfaces/IBotAIFactory.h"
 #include "Spatial/SpatialGridManager.h"
-#include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
 #include "Lifecycle/BotLifecycleManager.h"
 #include "Database/BotDatabasePool.h"
@@ -231,14 +229,6 @@ inline void RegisterPlayerbotServices()
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ISpatialGridManager");
 
-        // Register BotSessionMgr
-        container.RegisterInstance<IBotSessionMgr>(
-            std::shared_ptr<IBotSessionMgr>(
-                BotSessionMgr::instance(),
-                [](IBotSessionMgr*) {} // No-op deleter (singleton)
-            )
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IBotSessionMgr");
 
         // Register ConfigManager (Phase 2)
         container.RegisterInstance<IConfigManager>(

@@ -63,6 +63,7 @@
 #include "Chat/BotChatCommandHandler.h"  // PHASE 4: Command processing
 #include "Session/BotSession.h"          // PHASE 4: BotSession for command context
 #include "Session/BotPriorityManager.h"  // CRITICAL: Immediate priority escalation on combat
+#include "Session/BotWorldSessionMgr.h"  // For sBotWorldSessionMgr singleton
 
 using namespace Playerbot::Events;
 using namespace Playerbot::StateMachine;
@@ -805,6 +806,65 @@ public:
                                           victim->GetGUID());
                 petCriticalEvent.priority = 250;  // Very high priority
                 DispatchToBotEventDispatcher(petOwnerBot, petCriticalEvent);
+            }
+        }
+
+        // ================================================================
+        // CRITICAL FIX: GROUP ASSIST NOTIFICATION
+        // ================================================================
+        // When ANY group member (bot or human) takes damage from an enemy,
+        // notify ALL OTHER bots in the group to assist immediately.
+        // This ensures bots join combat when their group is attacked.
+        // ================================================================
+        if (attacker && victim)
+        {
+            Player* victimPlayer = victim->ToPlayer();
+            if (victimPlayer)
+            {
+                Group* group = victimPlayer->GetGroup();
+                if (group)
+                {
+                    TC_LOG_DEBUG("module.playerbot.events",
+                        "GROUP_MEMBER_ATTACKED: {} attacked by {} - notifying group bots",
+                        victimPlayer->GetName(), attacker->GetName());
+
+                    // Notify all OTHER bots in the group
+                    for (auto const& slot : group->GetMemberSlots())
+                    {
+                        if (slot.guid == victimPlayer->GetGUID())
+                            continue; // Skip the victim (already notified via DAMAGE_TAKEN)
+
+                        Player* member = ObjectAccessor::FindPlayer(slot.guid);
+                        if (!member)
+                            member = Playerbot::sBotWorldSessionMgr->GetPlayerBot(slot.guid);
+
+                        if (!member || !IsBot(member))
+                            continue; // Only notify bots
+
+                        // Escalate priority so bot responds immediately
+                        Playerbot::BotPriority currentPriority = Playerbot::sBotPriorityMgr->GetPriority(member->GetGUID());
+                        if (currentPriority > Playerbot::BotPriority::HIGH)
+                        {
+                            Playerbot::sBotPriorityMgr->SetPriority(member->GetGUID(), Playerbot::BotPriority::HIGH);
+                            TC_LOG_DEBUG("module.playerbot.priority",
+                                "Bot {} priority ESCALATED to HIGH - group member {} under attack (was: {})",
+                                member->GetName(), victimPlayer->GetName(), static_cast<uint32>(currentPriority));
+                        }
+
+                        // Dispatch GROUP_MEMBER_ATTACKED event
+                        // sourceGuid = attacker, targetGuid = victim (the attacked group member)
+                        BotEvent assistEvent(EventType::GROUP_MEMBER_ATTACKED,
+                                            attacker->GetGUID(),
+                                            victimPlayer->GetGUID());
+                        assistEvent.data = std::to_string(damage);
+                        assistEvent.priority = 190; // High priority - group assist!
+                        DispatchToBotEventDispatcher(member, assistEvent);
+
+                        TC_LOG_DEBUG("module.playerbot.events",
+                            "Dispatched GROUP_MEMBER_ATTACKED to bot {} (attacker: {}, victim: {})",
+                            member->GetName(), attacker->GetName(), victimPlayer->GetName());
+                    }
+                }
             }
         }
     }

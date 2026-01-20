@@ -22,7 +22,6 @@
 #include "Monitoring/BotMonitor.h"
 #include "Lifecycle/BotSpawner.h"
 #include "Lifecycle/BotCharacterCreator.h"
-#include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -359,7 +358,7 @@ namespace Playerbot
         }
 
         // Step 3: Release the bot session
-        sBotSessionMgr->ReleaseSession(accountId);
+        sBotWorldSessionMgr->RemoveAllPlayerBots(accountId);
 
         // Step 4: Log the deletion (character data remains in database for potential restoration)
         // Note: We don't delete character data from database to allow for recovery

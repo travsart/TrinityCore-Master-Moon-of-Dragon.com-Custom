@@ -18,7 +18,6 @@
 #include "RoleCoordinator.h"
 #include "../../Advanced/GroupCoordinator.h"
 #include "../../Session/BotSession.h"
-#include "../../Session/BotSessionMgr.h"
 #include "../../Session/BotSessionManager.h"
 #include "../../Session/BotWorldSessionMgr.h"
 #include "../../AI/BotAI.h"

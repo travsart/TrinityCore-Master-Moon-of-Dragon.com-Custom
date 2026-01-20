@@ -110,6 +110,7 @@ namespace StateMachine
         MEMBER_LEFT           = 40,  ///< Member left group
         GROUP_INVITE_DECLINED = 41,  ///< Bot declined group invitation
         RAID_CONVERTED        = 42,  ///< Group converted to raid
+        GROUP_MEMBER_ATTACKED = 43,  ///< Group member was attacked - triggers assist
 
         // Combat events (64-95) - Addresses Issues #2 and #3
         COMBAT_STARTED        = 64,  ///< Combat initiated
@@ -752,6 +753,9 @@ namespace StateMachine
 
             case EventType::RAID_CONVERTED:
             return "RAID_CONVERTED";
+
+            case EventType::GROUP_MEMBER_ATTACKED:
+            return "GROUP_MEMBER_ATTACKED";
 
             // Combat events
 

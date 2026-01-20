@@ -21,6 +21,7 @@
 #include "DatabaseEnv.h"
 #include "Database/PlayerbotDatabase.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
 #include "Player.h"
 #include "Timer.h"
 #include "World.h"
@@ -1096,6 +1097,17 @@ void InstanceBotPool::ReleaseBot(ObjectGuid botGuid, bool success)
 
         if (it->second.state != PoolSlotState::Assigned)
             return;
+
+        // CRITICAL FIX: Capture current player state before release
+        // This ensures level-ups and gear changes during the instance are preserved in pool metadata
+        Player* player = ObjectAccessor::FindPlayer(botGuid);
+        if (player)
+        {
+            it->second.level = player->GetLevel();
+            it->second.gearScore = static_cast<uint32>(std::round(player->GetAverageItemLevel()));
+            TC_LOG_DEBUG("playerbot.pool", "ReleaseBot: Updated bot {} metadata - Level={}, GS={}",
+                botGuid.ToString(), it->second.level, it->second.gearScore);
+        }
 
         // Store slot info before state change
         role = it->second.role;

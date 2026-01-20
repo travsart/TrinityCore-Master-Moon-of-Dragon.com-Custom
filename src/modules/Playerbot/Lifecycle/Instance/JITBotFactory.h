@@ -80,6 +80,8 @@
 #include <unordered_map>
 #include <vector>
 
+class Player;  // Forward declaration
+
 namespace Playerbot
 {
 
@@ -464,6 +466,13 @@ public:
     // ========================================================================
     // BOT RECYCLING
     // ========================================================================
+
+    /**
+     * @brief Recycle an active bot player
+     * @param player The player object
+     * @param role The bot's current role
+     */
+    void RecycleBot(Player* player, BotRole role);
 
     /**
      * @brief Recycle a bot for potential reuse (bracket-based)
