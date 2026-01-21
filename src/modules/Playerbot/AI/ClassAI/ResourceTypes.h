@@ -436,7 +436,7 @@ public:
 
 private:
     Player* _bot = nullptr;
-    ::std::atomic<float> _shards{3.0f};
+    float _shards{3.0f};  // Not atomic - per-bot instance, single-threaded access
     float _maxShards{5.0f};
 };
 

@@ -30,6 +30,7 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include <atomic>
 #include <shared_mutex>
 #include <unordered_map>
 #include <unordered_set>
