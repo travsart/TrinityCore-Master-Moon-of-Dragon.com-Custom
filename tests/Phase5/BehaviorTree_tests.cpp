@@ -18,7 +18,7 @@
 #include "tc_catch2.h"
 #include "AI/Decision/BehaviorTree.h"
 
-using namespace bot::ai;
+using namespace Playerbot::bot::ai;
 
 TEST_CASE("BehaviorTree - NodeStatus Values", "[Phase5][BehaviorTree]")
 {

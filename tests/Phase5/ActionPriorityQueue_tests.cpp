@@ -19,7 +19,7 @@
 #include "AI/Decision/ActionPriorityQueue.h"
 #include "AI/Decision/DecisionFusionSystem.h"
 
-using namespace bot::ai;
+using namespace Playerbot::bot::ai;
 
 // Test spell IDs (placeholder values)
 constexpr uint32 SPELL_FIREBALL = 133;

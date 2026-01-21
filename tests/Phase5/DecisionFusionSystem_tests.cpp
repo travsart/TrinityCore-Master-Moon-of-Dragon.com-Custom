@@ -18,7 +18,7 @@
 #include "tc_catch2.h"
 #include "AI/Decision/DecisionFusionSystem.h"
 
-using namespace bot::ai;
+using namespace Playerbot::bot::ai;
 
 TEST_CASE("DecisionFusion - DecisionVote Weighted Score", "[Phase5][DecisionFusion]")
 {
