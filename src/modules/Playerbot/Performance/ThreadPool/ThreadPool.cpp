@@ -11,7 +11,11 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#else
+#elif defined(__APPLE__)
+#include <pthread.h>
+#include <mach/thread_policy.h>
+#include <mach/thread_act.h>
+#else  // Linux
 #include <pthread.h>
 #include <sched.h>
 #endif
@@ -463,7 +467,14 @@ void WorkerThread::SetAffinity()
     HANDLE thread = _thread.native_handle();
     DWORD_PTR mask = 1ULL << _cpuCore;
     SetThreadAffinityMask(thread, mask);
-#else
+#elif defined(__APPLE__)
+    // macOS uses thread affinity tags (not strict CPU binding)
+    thread_affinity_policy_data_t policy = { static_cast<integer_t>(_cpuCore) };
+    thread_policy_set(pthread_mach_thread_np(_thread.native_handle()),
+                      THREAD_AFFINITY_POLICY,
+                      reinterpret_cast<thread_policy_t>(&policy),
+                      THREAD_AFFINITY_POLICY_COUNT);
+#else  // Linux
     pthread_t thread = _thread.native_handle();
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);

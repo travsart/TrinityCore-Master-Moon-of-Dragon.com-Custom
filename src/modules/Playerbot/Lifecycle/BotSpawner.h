@@ -129,7 +129,7 @@ public:
     // Configuration
     void LoadConfig() override;
     SpawnConfig const& GetConfig() const override { return _config; }
-    void SetConfig(SpawnConfig const& config) { _config = config; }
+    void SetConfig(SpawnConfig const& config) override { _config = config; }
 
     // Single bot spawning
     bool SpawnBot(SpawnRequest const& request);

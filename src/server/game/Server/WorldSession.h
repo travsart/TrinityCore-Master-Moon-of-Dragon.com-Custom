@@ -981,7 +981,7 @@ class TC_GAME_API WorldSession
             , bool is_bot = false
 #endif
             );
-        ~WorldSession();
+        virtual ~WorldSession();  // Virtual for BotSession inheritance
 
         bool PlayerLoading() const { return !m_playerLoading.IsEmpty(); }
         bool PlayerLogout() const { return m_playerLogout; }
