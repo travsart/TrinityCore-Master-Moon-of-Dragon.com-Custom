@@ -2002,9 +2002,9 @@ void HunterAI::LogCombatMetrics()
 
                  uint32(_combatMetrics.damageDealt.load()),
 
-                 _combatMetrics.timeAtRange.load(),
+                 _combatMetrics.timeAtRange,
 
-                 _combatMetrics.timeInDeadZone.load(),
+                 _combatMetrics.timeInDeadZone,
 
                  _totalUpdateTime / _updateCounter,
 

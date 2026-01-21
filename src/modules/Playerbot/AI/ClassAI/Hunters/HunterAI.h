@@ -83,8 +83,8 @@ struct HunterCombatMetrics
     ::std::atomic<uint32> petCommands{0};
     ::std::atomic<uint32> focusSpent{0};
     ::std::atomic<uint32> damageDealt{0};
-    ::std::atomic<float> timeAtRange{0.0f};
-    ::std::atomic<float> timeInDeadZone{0.0f};
+    float timeAtRange{0.0f};      // Not atomic - += not supported for atomic<float>
+    float timeInDeadZone{0.0f};   // Not atomic - += not supported for atomic<float>
 
     void Reset()
     {

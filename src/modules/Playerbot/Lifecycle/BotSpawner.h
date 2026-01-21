@@ -122,12 +122,12 @@ public:
     static BotSpawner* instance();
 
     // IBotSpawner interface implementation
-    bool Initialize();
-    void Shutdown();
-    void Update(uint32 diff);
+    bool Initialize() override;
+    void Shutdown() override;
+    void Update(uint32 diff) override;
 
     // Configuration
-    void LoadConfig();
+    void LoadConfig() override;
     SpawnConfig const& GetConfig() const override { return _config; }
     void SetConfig(SpawnConfig const& config) { _config = config; }
 
