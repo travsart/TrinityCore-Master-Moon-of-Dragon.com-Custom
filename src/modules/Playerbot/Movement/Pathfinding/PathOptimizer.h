@@ -241,7 +241,7 @@ namespace Playerbot
         // Statistics
         mutable ::std::atomic<uint32> _totalPathsOptimized;
         mutable ::std::atomic<uint32> _totalPointsRemoved;
-        mutable ::std::atomic<float> _totalLengthReduction;
+        mutable float _totalLengthReduction;  // Not atomic - fetch_add not supported for float
         mutable ::std::atomic<uint32> _failedOptimizations;
     };
 }

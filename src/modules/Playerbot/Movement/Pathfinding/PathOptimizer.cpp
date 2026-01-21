@@ -84,7 +84,7 @@ namespace Playerbot
             size_t pointsRemoved = originalSize - path.nodes.size();
             _totalPointsRemoved.fetch_add(static_cast<uint32>(pointsRemoved));
             float reduction = originalLength - path.totalLength;
-            _totalLengthReduction.fetch_add(reduction);
+            _totalLengthReduction += reduction;
 
             path.isOptimized = true;
 
@@ -370,7 +370,7 @@ namespace Playerbot
     {
         pathsOptimized = _totalPathsOptimized.load();
         pointsRemoved = _totalPointsRemoved.load();
-        float totalReduction = _totalLengthReduction.load();
+        float totalReduction = _totalLengthReduction;
         averageReduction = pathsOptimized > 0 ? totalReduction / pathsOptimized : 0.0f;
     }
 
@@ -378,7 +378,7 @@ namespace Playerbot
     {
         _totalPathsOptimized.store(0);
         _totalPointsRemoved.store(0);
-        _totalLengthReduction.store(0.0f);
+        _totalLengthReduction = 0.0f;
         _failedOptimizations.store(0);
     }
 
