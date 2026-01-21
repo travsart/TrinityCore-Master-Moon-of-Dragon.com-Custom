@@ -75,7 +75,9 @@
 #include "MapUtils.h"
 #include "Metric.h"
 #include "Modules/ModuleManager.h"
+#ifdef BUILD_PLAYERBOT
 #include "Update/ModuleUpdateManager.h"
+#endif
 #include "MiscPackets.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -2325,11 +2327,13 @@ void World::Update(uint32 diff)
         ModuleManager::CallOnUpdate(diff);
     }
 
+#ifdef BUILD_PLAYERBOT
     // CRITICAL FIX: Update registered module callbacks (PlayerBot, etc.)
     {
         TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update module callbacks"));
         sModuleUpdateManager->Update(diff);
     }
+#endif
 
 #ifdef BUILD_PLAYERBOT
     // CRITICAL FIX: Process bot actions queued by worker threads

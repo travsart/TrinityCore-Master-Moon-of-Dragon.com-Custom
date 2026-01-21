@@ -225,7 +225,7 @@ jobs:
         uses: MarkusJx/install-boost@v2
         id: install-boost
         with:
-          boost_version: 1.84.0
+          boost_version: 1.89.0
           link: static
           platform_version: 2022
           toolset: msvc
@@ -250,6 +250,7 @@ jobs:
           cmake -GNinja -S . -B build `
             -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }} `
             -DWITH_WARNINGS_AS_ERRORS=ON `
+            -DBUILD_PLAYERBOT=ON `
             -DTOOLS=ON
 
       - name: Build with timing
