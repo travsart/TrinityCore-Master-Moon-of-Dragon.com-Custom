@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include <array>
+#include <atomic>
 #include <optional>
 #include <string>
 #include <unordered_map>

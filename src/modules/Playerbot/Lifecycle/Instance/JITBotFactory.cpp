@@ -38,49 +38,8 @@ namespace Playerbot
 // ROLE DETECTION UTILITIES
 // ============================================================================
 
-/**
- * @brief Get the GroupRole from a player's specialization using TrinityCore's DB2 data
- * @param player The player to check
- * @return GroupRole based on the player's active specialization
- */
-static GroupRole GetPlayerSpecRole(Player const* player)
-{
-    if (!player)
-        return GroupRole::NONE;
-
-    // Get the player's active specialization entry from TrinityCore
-    ChrSpecializationEntry const* specEntry = player->GetPrimarySpecializationEntry();
-    if (!specEntry)
-    {
-        // No specialization set - return NONE (player might be low level)
-        return GroupRole::NONE;
-    }
-
-    // Get the authoritative role from the DBC data
-    ChrSpecializationRole chrRole = specEntry->GetRole();
-
-    switch (chrRole)
-    {
-        case ChrSpecializationRole::Tank:
-            return GroupRole::TANK;
-
-        case ChrSpecializationRole::Healer:
-            return GroupRole::HEALER;
-
-        case ChrSpecializationRole::Dps:
-        {
-            // Determine if ranged or melee DPS using the spec flags
-            EnumFlag<ChrSpecializationFlag> flags = specEntry->GetFlags();
-            if (flags.HasFlag(ChrSpecializationFlag::Ranged))
-                return GroupRole::RANGED_DPS;
-            else
-                return GroupRole::MELEE_DPS;
-        }
-
-        default:
-            return GroupRole::NONE;
-    }
-}
+// Note: GetPlayerSpecRole is declared in Group/GroupRoleEnums.h and
+// implemented in Group/GroupRoleUtils.cpp
 
 /**
  * @brief Convert GroupRole to BotRole for the pool system
