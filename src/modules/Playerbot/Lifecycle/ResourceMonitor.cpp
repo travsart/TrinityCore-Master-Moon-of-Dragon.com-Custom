@@ -19,7 +19,14 @@
 #include <windows.h>
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
-#else
+#elif defined(__APPLE__)
+#include <sys/times.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <mach/mach.h>
+#include <unistd.h>
+#include <fstream>
+#else  // Linux
 #include <sys/times.h>
 #include <sys/sysinfo.h>
 #include <unistd.h>
@@ -301,6 +308,25 @@ float ResourceMonitor::CollectMemoryUsage()
 
     // Calculate percentage of total physical memory
     float memoryUsagePercent = (float)(pmc.WorkingSetSize * 100.0 / memInfo.ullTotalPhys);
+    return ::std::min(memoryUsagePercent, 100.0f);
+
+#elif defined(__APPLE__)
+    // macOS implementation using mach API
+    struct mach_task_basic_info info;
+    mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount) != KERN_SUCCESS)
+        return 0.0f;
+
+    _currentMetrics.workingSetMB = info.resident_size / (1024 * 1024);
+    _currentMetrics.commitSizeMB = info.virtual_size / (1024 * 1024);
+
+    // Get total system memory via sysctl
+    int64_t totalMemory = 0;
+    size_t size = sizeof(totalMemory);
+    if (sysctlbyname("hw.memsize", &totalMemory, &size, nullptr, 0) != 0)
+        return 0.0f;
+
+    float memoryUsagePercent = (float)(info.resident_size * 100.0 / totalMemory);
     return ::std::min(memoryUsagePercent, 100.0f);
 
 #else

@@ -10,6 +10,7 @@
 #include "SpellAuras.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+#include <mutex>
 
 namespace Playerbot
 {
