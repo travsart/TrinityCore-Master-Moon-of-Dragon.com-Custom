@@ -367,8 +367,15 @@ namespace Playerbot
         void ValidateHubData();
 
     private:
-        /// Forward declaration for internal use
-        struct QuestGiverData;
+        /// Quest giver data structure (must be fully defined for use in vector)
+        struct QuestGiverData
+        {
+            uint32 creatureEntry;
+            Position position;
+            uint32 mapId;
+            uint32 zoneId;
+            uint32 factionTemplate;
+        };
 
         /// All quest hubs (primary storage)
         ::std::vector<QuestHub> _questHubs;

@@ -59,6 +59,7 @@
 
 #include "Define.h"
 #include "PoolSlotState.h"
+#include <atomic>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>

@@ -371,15 +371,7 @@ namespace Playerbot
     // Private Helper Methods
     // ============================================================================
 
-    // Define the QuestGiverData structure (forward-declared in header)
-    struct QuestHubDatabase::QuestGiverData
-    {
-        uint32 creatureEntry;
-        Position position;
-        uint32 mapId;
-        uint32 zoneId;
-        uint32 factionTemplate;
-    };
+    // QuestGiverData struct is now defined in the header (required for std::vector)
 
     uint32 QuestHubDatabase::LoadQuestGiversFromDB()
     {
