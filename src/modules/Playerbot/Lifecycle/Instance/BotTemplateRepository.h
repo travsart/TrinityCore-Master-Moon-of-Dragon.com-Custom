@@ -56,6 +56,7 @@
 #include "Define.h"
 #include "PoolSlotState.h"
 #include <array>
+#include <atomic>
 #include <memory>
 #include <shared_mutex>
 #include <string>
