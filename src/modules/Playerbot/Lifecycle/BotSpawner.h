@@ -132,21 +132,21 @@ public:
     void SetConfig(SpawnConfig const& config) override { _config = config; }
 
     // Single bot spawning
-    bool SpawnBot(SpawnRequest const& request);
+    bool SpawnBot(SpawnRequest const& request) override;
 
     // Batch spawning
-    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests);
+    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests) override;
 
     // Population management
-    void SpawnToPopulationTarget();
-    void UpdatePopulationTargets();
-    void DespawnBot(ObjectGuid guid, bool forced = false);
-    bool DespawnBot(ObjectGuid guid, ::std::string const& reason);
-    void DespawnAllBots();
+    void SpawnToPopulationTarget() override;
+    void UpdatePopulationTargets() override;
+    void DespawnBot(ObjectGuid guid, bool forced = false) override;
+    bool DespawnBot(ObjectGuid guid, ::std::string const& reason) override;
+    void DespawnAllBots() override;
 
     // Zone management
-    void UpdateZonePopulation(uint32 zoneId, uint32 mapId);
-    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId);
+    void UpdateZonePopulation(uint32 zoneId, uint32 mapId) override;
+    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId) override;
     ZonePopulation GetZonePopulation(uint32 zoneId) const override;
     ::std::vector<ZonePopulation> GetAllZonePopulations() const override;
 
@@ -159,11 +159,11 @@ public:
 
     // Statistics
     SpawnStats const& GetStats() const override { return _stats; }
-    void ResetStats();
+    void ResetStats() override;
 
     // Player login detection
-    void OnPlayerLogin();
-    void CheckAndSpawnForPlayers();
+    void OnPlayerLogin() override;
+    void CheckAndSpawnForPlayers() override;
 
     // Population caps
     bool CanSpawnMore() const override;
@@ -171,15 +171,15 @@ public:
     bool CanSpawnOnMap(uint32 mapId) const override;
 
     // Runtime control
-    void SetEnabled(bool enabled) { _enabled = enabled; }
+    void SetEnabled(bool enabled) override { _enabled = enabled; }
     bool IsEnabled() const override { return _enabled.load(); }
 
     // Configuration methods
-    void SetMaxBots(uint32 maxBots) { _config.maxBotsTotal = maxBots; }
-    void SetBotToPlayerRatio(float ratio) { _config.botToPlayerRatio = ratio; }
+    void SetMaxBots(uint32 maxBots) override { _config.maxBotsTotal = maxBots; }
+    void SetBotToPlayerRatio(float ratio) override { _config.botToPlayerRatio = ratio; }
 
     // Chat command support - Create new bot character and spawn it
-    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid);
+    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid) override;
 
     // Create bot character (database record) using async-safe path via sPlayerbotCharDB
     // Used by InstanceBotPool for pool warmup when BotCharacterCreator would crash
