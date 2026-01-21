@@ -9,7 +9,8 @@
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # Use system Boost 1.89 when building with playerbot to avoid vcpkg conflicts
-if(BUILD_PLAYERBOT)
+# Skip custom FindSystemBoost on CI (GITHUB_ACTIONS env var) - use standard finding
+if(BUILD_PLAYERBOT AND NOT DEFINED ENV{GITHUB_ACTIONS})
     message(STATUS "Using system Boost 1.89 for Playerbot compatibility")
     include(${CMAKE_SOURCE_DIR}/cmake/FindSystemBoost.cmake)
 
