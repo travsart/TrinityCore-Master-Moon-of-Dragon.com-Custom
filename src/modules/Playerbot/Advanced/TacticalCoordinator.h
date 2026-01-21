@@ -65,8 +65,6 @@ namespace Playerbot
 namespace Advanced
 {
 
-class BotAI;
-
 /**
  * @brief Tactical assignment for a specific bot
  */

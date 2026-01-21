@@ -9,11 +9,11 @@
 
 #include "Common.h"
 #include "ObjectGuid.h"
+#include "SharedDefines.h"  // DispelType
 #include <vector>
 
 class Player;
 class Unit;
-enum DispelType;
 
 namespace Playerbot {
 namespace bot { namespace ai {

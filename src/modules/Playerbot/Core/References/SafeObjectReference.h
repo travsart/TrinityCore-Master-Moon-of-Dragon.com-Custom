@@ -26,6 +26,8 @@
 #include "Log.h"
 #include <atomic>
 #include <memory>
+#include <sstream>
+#include <iomanip>
 
 namespace Playerbot::References {
 
