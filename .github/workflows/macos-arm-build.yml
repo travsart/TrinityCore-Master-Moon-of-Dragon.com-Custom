@@ -28,6 +28,9 @@ jobs:
         done
         brew config
 
+    - name: Initialize submodules
+      run: git submodule update --init --recursive
+
     - name: Check some deps
       run: |
         mysql --version

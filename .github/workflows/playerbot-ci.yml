@@ -188,6 +188,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
+
       - name: Get current OpenSSL version
         id: openssl-info
         run: |
