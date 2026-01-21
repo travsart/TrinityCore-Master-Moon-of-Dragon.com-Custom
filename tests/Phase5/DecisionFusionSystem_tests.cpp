@@ -16,7 +16,7 @@
  */
 
 #include "tc_catch2.h"
-#include "modules/Playerbot/AI/Decision/DecisionFusionSystem.h"
+#include "AI/Decision/DecisionFusionSystem.h"
 
 using namespace bot::ai;
 

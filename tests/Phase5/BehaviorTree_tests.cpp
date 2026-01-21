@@ -16,7 +16,7 @@
  */
 
 #include "tc_catch2.h"
-#include "modules/Playerbot/AI/Decision/BehaviorTree.h"
+#include "AI/Decision/BehaviorTree.h"
 
 using namespace bot::ai;
 
