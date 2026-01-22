@@ -8,8 +8,11 @@
  */
 
 #include "InnkeeperInteractionManager.h"
+#include "CellImpl.h"
 #include "Creature.h"
 #include "GameTime.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "Log.h"
 #include "Map.h"
 #include "ObjectAccessor.h"

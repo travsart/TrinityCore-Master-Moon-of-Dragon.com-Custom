@@ -16,6 +16,7 @@
  */
 
 #include "PortalDatabase.h"
+#include "CellImpl.h"
 #include "DatabaseEnv.h"
 #include "DB2Stores.h"
 #include "GameObjectData.h"

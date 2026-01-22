@@ -8,11 +8,14 @@
  */
 
 #include "MailInteractionManager.h"
+#include "CellImpl.h"
 #include "CharacterCache.h"
 #include "Creature.h"
 #include "DatabaseEnv.h"
 #include "GameTime.h"
 #include "GameObject.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "Item.h"
 #include "ItemTemplate.h"
 #include "Log.h"
