@@ -17,10 +17,11 @@ on:
     types:
       - published
 
-  # Security advisory notifications
-  repository_vulnerability_alert:
-    types:
-      - create
+  # Note: repository_vulnerability_alert requires GitHub Advanced Security
+  # Uncomment when Advanced Security is enabled:
+  # repository_vulnerability_alert:
+  #   types:
+  #     - create
 
   # Manual trigger for testing
   workflow_dispatch:
@@ -269,51 +270,53 @@ jobs:
   # ===========================================================================
   # Security Alert Notifications
   # ===========================================================================
-  notify-security:
-    name: Security Alert Notification
-    runs-on: ubuntu-latest
-    if: github.event_name == 'repository_vulnerability_alert'
-    timeout-minutes: 5
+  # Note: This job requires GitHub Advanced Security to be enabled
+  # Uncomment when Advanced Security is available
+  # notify-security:
+  #   name: Security Alert Notification
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'repository_vulnerability_alert'
+  #   timeout-minutes: 5
 
-    steps:
-      - name: Send security alert
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        run: |
-          MESSAGE="🔒 **Security Alert**: A new vulnerability has been detected in ${{ env.PROJECT_NAME }}. Please review the Security tab for details."
-
-          # Discord
-          if [ -n "$DISCORD_WEBHOOK" ]; then
-            curl -H "Content-Type: application/json" \
-              -d '{
-                "embeds": [{
-                  "title": "🔒 Security Vulnerability Detected",
-                  "description": "A new vulnerability has been detected in **${{ env.PROJECT_NAME }}**.\n\nPlease review the Security tab immediately.",
-                  "color": 15158332,
-                  "url": "${{ github.server_url }}/${{ github.repository }}/security",
-                  "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-                }]
-              }' \
-              "$DISCORD_WEBHOOK" || echo "Discord notification failed"
-          fi
-
-          # Slack
-          if [ -n "$SLACK_WEBHOOK" ]; then
-            curl -X POST \
-              -H "Content-Type: application/json" \
-              -d '{
-                "attachments": [{
-                  "color": "danger",
-                  "title": "🔒 Security Vulnerability Detected",
-                  "title_link": "${{ github.server_url }}/${{ github.repository }}/security",
-                  "text": "A new vulnerability has been detected. Please review immediately.",
-                  "footer": "${{ env.PROJECT_NAME }}",
-                  "ts": '$(date +%s)'
-                }]
-              }' \
-              "$SLACK_WEBHOOK" || echo "Slack notification failed"
-          fi
+  #   steps:
+  #     - name: Send security alert
+  #       env:
+  #         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  #       run: |
+  #         MESSAGE="🔒 **Security Alert**: A new vulnerability has been detected in ${{ env.PROJECT_NAME }}. Please review the Security tab for details."
+  #
+  #         # Discord
+  #         if [ -n "$DISCORD_WEBHOOK" ]; then
+  #           curl -H "Content-Type: application/json" \
+  #             -d '{
+  #               "embeds": [{
+  #                 "title": "🔒 Security Vulnerability Detected",
+  #                 "description": "A new vulnerability has been detected in **${{ env.PROJECT_NAME }}**.\n\nPlease review the Security tab immediately.",
+  #                 "color": 15158332,
+  #                 "url": "${{ github.server_url }}/${{ github.repository }}/security",
+  #                 "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+  #               }]
+  #             }' \
+  #             "$DISCORD_WEBHOOK" || echo "Discord notification failed"
+  #         fi
+  #
+  #         # Slack
+  #         if [ -n "$SLACK_WEBHOOK" ]; then
+  #           curl -X POST \
+  #             -H "Content-Type: application/json" \
+  #             -d '{
+  #               "attachments": [{
+  #                 "color": "danger",
+  #                 "title": "🔒 Security Vulnerability Detected",
+  #                 "title_link": "${{ github.server_url }}/${{ github.repository }}/security",
+  #                 "text": "A new vulnerability has been detected. Please review immediately.",
+  #                 "footer": "${{ env.PROJECT_NAME }}",
+  #                 "ts": '$(date +%s)'
+  #               }]
+  #             }' \
+  #             "$SLACK_WEBHOOK" || echo "Slack notification failed"
+  #         fi
 
   # ===========================================================================
   # Test Notifications

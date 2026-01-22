@@ -78,10 +78,20 @@ jobs:
         run: |
           Write-Host "Checking OpenSSL version..."
 
-          # Get current OpenSSL version info
-          $currentOpenSSL = & "C:/libs/openssl/bin/openssl.exe" version 2>$null
-
-          Write-Host "Current OpenSSL: $currentOpenSSL"
+          # Check if OpenSSL is available (may not be installed on all runners)
+          $openSSLPath = "C:/libs/openssl/bin/openssl.exe"
+          if (Test-Path $openSSLPath) {
+            $currentOpenSSL = & $openSSLPath version 2>$null
+            Write-Host "Current OpenSSL: $currentOpenSSL"
+          } else {
+            # Try system OpenSSL
+            try {
+              $currentOpenSSL = & openssl version 2>$null
+              Write-Host "System OpenSSL: $currentOpenSSL"
+            } catch {
+              Write-Host "OpenSSL not found - skipping version check"
+            }
+          }
 
           # TODO: Check for updates and security advisories
 
