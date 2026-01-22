@@ -81,7 +81,6 @@ jobs:
         run: >
           cmake -GNinja -S ${{ github.workspace }} -B ${{ steps.strings.outputs.build-output-dir }}
           -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
-          -DWITH_WARNINGS=1
           -DWITH_WARNINGS_AS_ERRORS=ON
           -DBUILD_PLAYERBOT=ON
           -DTOOLS=ON
