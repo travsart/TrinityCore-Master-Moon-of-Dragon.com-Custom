@@ -1078,17 +1078,61 @@ target_link_libraries(playerbot-pvp PRIVATE playerbot-lifecycle playerbot-gamepl
 # ============================================================================
 # Create the main playerbot INTERFACE library that aggregates all sub-libraries
 # ============================================================================
+# NOTE: Cross-library dependencies require special linking.
+# GameSystemsManager (playerbot-core) uses types from playerbot-combat and playerbot-gameplay.
+# On Linux/macOS with GCC/Clang, static library link order matters.
+#
+# Platform-specific solutions:
+# - Linux: Use --start-group/--end-group via LINK_GROUP:RESCAN
+# - macOS: Repeat libraries that provide cross-dependencies
+# - Windows: MSVC handles this automatically
+# ============================================================================
 add_library(playerbot INTERFACE)
-target_link_libraries(playerbot INTERFACE
-    playerbot-core
-    playerbot-database
-    playerbot-ai-base
-    playerbot-classai
-    playerbot-combat
-    playerbot-lifecycle
-    playerbot-gameplay
-    playerbot-pvp
-)
+
+if(UNIX AND NOT APPLE)
+    # Linux: Use LINK_GROUP:RESCAN for circular dependency resolution
+    # This uses -Wl,--start-group ... -Wl,--end-group
+    target_link_libraries(playerbot INTERFACE
+        $<LINK_GROUP:RESCAN,
+            playerbot-core,
+            playerbot-database,
+            playerbot-ai-base,
+            playerbot-classai,
+            playerbot-combat,
+            playerbot-lifecycle,
+            playerbot-gameplay,
+            playerbot-pvp
+        >
+    )
+elseif(APPLE)
+    # macOS: ld64 doesn't support --start-group, so we repeat libraries
+    # to ensure symbols from combat/gameplay are available to core
+    target_link_libraries(playerbot INTERFACE
+        playerbot-pvp
+        playerbot-gameplay
+        playerbot-combat
+        playerbot-lifecycle
+        playerbot-classai
+        playerbot-ai-base
+        playerbot-database
+        playerbot-core
+        # Repeat libraries that provide symbols needed by core
+        playerbot-combat
+        playerbot-gameplay
+    )
+else()
+    # Windows (MSVC): Standard order works due to different linker behavior
+    target_link_libraries(playerbot INTERFACE
+        playerbot-core
+        playerbot-database
+        playerbot-ai-base
+        playerbot-classai
+        playerbot-combat
+        playerbot-lifecycle
+        playerbot-gameplay
+        playerbot-pvp
+    )
+endif()
 
 # ============================================================================
 # Install configuration
