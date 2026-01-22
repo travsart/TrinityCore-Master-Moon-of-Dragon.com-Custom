@@ -66,7 +66,7 @@ TEST_CASE("ActionPriorityQueue - Priority Levels", "[Phase5][ActionPriorityQueue
         REQUIRE(static_cast<uint8>(SpellPriority::CRITICAL) > static_cast<uint8>(SpellPriority::HIGH));
         REQUIRE(static_cast<uint8>(SpellPriority::HIGH) > static_cast<uint8>(SpellPriority::MEDIUM));
         REQUIRE(static_cast<uint8>(SpellPriority::MEDIUM) > static_cast<uint8>(SpellPriority::LOW));
-        REQUIRE(static_cast<uint8>(SpellPriority::LOW) > static_cast<uint8>(SpellPriority::OPTIONAL));
+        REQUIRE(static_cast<uint8>(SpellPriority::LOW) > static_cast<uint8>(SpellPriority::OPTIONAL_PRIORITY));
     }
 
     SECTION("Emergency priority has highest value")
