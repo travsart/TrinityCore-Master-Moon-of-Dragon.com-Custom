@@ -290,11 +290,11 @@ jobs:
             - 📄 Download dependency report from artifacts
 
             ### Auto-Fix
-            ${{ github.event.inputs.auto_create_pr == 'true' ? '✅ An automated PR has been created with fixes' : '❌ Auto PR creation disabled' }}
+            Auto PR creation: ${{ github.event.inputs.auto_create_pr || 'true' }}
 
             ---
             **Priority**: CRITICAL
-            **Detected**: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") UTC
+            **Detected**: ${new Date().toISOString()}
             `;
 
             github.rest.issues.create({
