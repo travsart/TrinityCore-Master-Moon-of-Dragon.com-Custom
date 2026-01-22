@@ -23,10 +23,12 @@ jobs:
       run: |
         brew update
         brew uninstall openssl@1.1
-        for pkg in mysql openssl readline cmake boost coreutils ninja; do
+        for pkg in mysql openssl readline cmake boost coreutils ninja icu4c; do
           brew ls --versions $pkg || brew install $pkg
         done
         brew config
+        # Add icu4c to pkg-config path for Boost.Locale
+        echo "PKG_CONFIG_PATH=$(brew --prefix icu4c)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
     - name: Initialize submodules
       run: git submodule update --init --recursive
@@ -43,14 +45,19 @@ jobs:
     - name: Configure CMake
       env:
         CMAKE_BUILD_TYPE: Debug
+        ICU_ROOT: /opt/homebrew/opt/icu4c
       run: >
         cmake -GNinja -B ${{ steps.strings.outputs.build-output-dir }}
         -DWITH_WARNINGS=1 -DWITH_WARNINGS_AS_ERRORS=1 -DWITH_COREDEBUG=0 -DUSE_COREPCH=1 -DUSE_SCRIPTPCH=1 -DTOOLS=1 -DSCRIPTS=static -DSERVERS=1 -DBUILD_TESTING=1 -DBUILD_PLAYERBOT=ON
         -DCMAKE_C_FLAGS_DEBUG="-DNDEBUG" -DCMAKE_CXX_FLAGS_DEBUG="-DNDEBUG"
         -DCMAKE_INSTALL_PREFIX=check_install
+        -DCMAKE_PREFIX_PATH="/opt/homebrew/opt/icu4c"
         -S ${{ github.workspace }}
 
     - name: Build
+      env:
+        # Add ICU library path for Boost.Locale linking
+        LIBRARY_PATH: /opt/homebrew/opt/icu4c/lib:$LIBRARY_PATH
       run: |
         cd ${{ steps.strings.outputs.build-output-dir }}
         ninja
