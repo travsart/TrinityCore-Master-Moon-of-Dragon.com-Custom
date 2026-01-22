@@ -1144,12 +1144,9 @@ if(CONF_DIR)
     install(DIRECTORY DESTINATION ${CONF_DIR}/sql/migrations)
 
     install(FILES
-        sql/migrations/001_initial_schema.sql
-        sql/migrations/002_account_management.sql
-        sql/migrations/003_lifecycle_management.sql
-        sql/migrations/004_character_distribution.sql
-        sql/migrations/005_initial_data.sql
-        sql/migrations/006_bot_names.sql
+        sql/migrations/001_playerbot_base.sql
+        sql/migrations/002_population_lifecycle.sql
+        sql/migrations/003_bot_templates.sql
         DESTINATION ${CONF_DIR}/sql/migrations
     )
 
