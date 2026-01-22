@@ -55,11 +55,10 @@ jobs:
         -S ${{ github.workspace }}
 
     - name: Build
-      env:
-        # Add ICU library path for Boost.Locale linking
-        LIBRARY_PATH: /opt/homebrew/opt/icu4c/lib:$LIBRARY_PATH
       run: |
         cd ${{ steps.strings.outputs.build-output-dir }}
+        # Add ICU library path for Boost.Locale linking (-licudata, -licui18n, -licuuc)
+        export LIBRARY_PATH="/opt/homebrew/opt/icu4c/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
         ninja
         ninja install
       
