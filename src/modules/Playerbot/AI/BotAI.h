@@ -93,6 +93,7 @@ namespace Events
 
 class ManagerRegistry;
 class HybridAIController;
+class AdaptiveAIUpdateThrottler; // ST-1: Adaptive AI Update Throttling
 
 // Phase 5E: Decision Fusion System forward declarations
 namespace bot { namespace ai {
@@ -566,6 +567,29 @@ public:
     Events::EventDispatcher const* GetEventDispatcher() const { return _gameSystems ? _gameSystems->GetEventDispatcher() : nullptr; }
 
     // ========================================================================
+    // ST-1: ADAPTIVE AI UPDATE THROTTLING - Performance optimization
+    // ========================================================================
+
+    /**
+     * @brief Get the adaptive AI update throttler
+     * @return Throttler instance or nullptr if not initialized
+     */
+    AdaptiveAIUpdateThrottler* GetAIUpdateThrottler() { return _aiUpdateThrottler.get(); }
+    AdaptiveAIUpdateThrottler const* GetAIUpdateThrottler() const { return _aiUpdateThrottler.get(); }
+
+    /**
+     * @brief Check if AI updates are currently throttled (for diagnostics)
+     * @return true if in reduced update mode
+     */
+    bool IsAIUpdateThrottled() const;
+
+    /**
+     * @brief Get current throttle tier (0=FULL_RATE to 4=MINIMAL_RATE)
+     * @return Throttle tier value for diagnostics
+     */
+    uint32 GetAIThrottleTier() const;
+
+    // ========================================================================
     // PHASE 7.1: MANAGER REGISTRY - Manager lifecycle management
     // ========================================================================
 
@@ -982,6 +1006,9 @@ protected:
 
     // Behavior priority management
     std::unique_ptr<BehaviorPriorityManager> _priorityManager;
+
+    // ST-1: Adaptive AI Update Throttling - reduces CPU for bots far from human players
+    std::unique_ptr<AdaptiveAIUpdateThrottler> _aiUpdateThrottler;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;

@@ -2,7 +2,7 @@
 
 **Started**: 2026-01-23
 **Status**: IN PROGRESS
-**Current Phase**: Phase 1 - Quick Wins (MOSTLY COMPLETE)
+**Current Phase**: Phase 2 - Short-Term Improvements (STARTING)
 
 ---
 
@@ -154,8 +154,41 @@
 **Target**: 10-15% additional CPU reduction
 
 ### ST-1: Implement Adaptive AI Update Throttling
-- **Status**: ⏳ PENDING
+- **Status**: ✅ COMPLETED
 - **Priority**: P0 (CRITICAL)
+- **Started**: 2026-01-23
+- **Completed**: 2026-01-23
+- **Commit**: (pending)
+- **Implementation Details**:
+
+  **New Files Created:**
+  - `AI/AdaptiveAIUpdateThrottler.h` - Header with throttle tier definitions and metrics
+  - `AI/AdaptiveAIUpdateThrottler.cpp` - Implementation with proximity detection and activity classification
+
+  **Core Integration:**
+  - Integrated into BotAI constructor (creates throttler instance)
+  - Integrated into BotAI::UpdateAI() with `ShouldUpdate()` check
+  - Integrated into OnCombatStart()/OnCombatEnd() for combat state notifications
+
+  **Throttle Tiers:**
+  - `FULL_RATE (100%)`: Near humans (<100m), in combat, or group with human leader
+  - `HIGH_RATE (75%)`: Moderate distance (100-250m), active questing/grinding
+  - `MEDIUM_RATE (50%)`: Far from players (250-500m), simple following
+  - `LOW_RATE (25%)`: Very far (500-1000m), minimal activity
+  - `MINIMAL_RATE (10%)`: Idle, out of range (>1000m), no tasks
+
+  **Key Features:**
+  - Proximity-based throttling (checks every 2 seconds for nearby human players)
+  - Combat state override (combat = FULL_RATE always)
+  - Activity classification (COMBAT, QUESTING, FOLLOWING, TRAVELING, IDLE, etc.)
+  - Group leader detection (human leader = FULL_RATE for group bots)
+  - Global statistics singleton for monitoring overall throttle effectiveness
+  - ForceNextUpdate() method for critical events
+
+  **Expected Impact:**
+  - 10-15% CPU reduction for bots far from human players
+  - Zero impact on bots near players (full responsiveness maintained)
+  - Zero impact on bots in combat (always full update rate)
 
 ### ST-2: Fix Packet Queue Lock Contention
 - **Status**: ⏳ PENDING
@@ -166,8 +199,34 @@
 - **Priority**: P1 (HIGH)
 
 ### ST-4: Consolidate BotLifecycleManager ⊕ BotLifecycleMgr
-- **Status**: ⏳ PENDING
-- **Priority**: P0 (CRITICAL DUPLICATION)
+- **Status**: 🔬 ANALYZED - NOT A DUPLICATION (Naming Confusion Only)
+- **Priority**: P0 → P3 (LOW - Rename only)
+- **Started**: 2026-01-23
+- **Completed**: Analysis Complete
+- **Analysis Results**:
+
+  **BotLifecycleManager** (per-bot controller):
+  - Constructor: `BotLifecycleManager(Player* bot)` - takes individual bot
+  - Purpose: Individual bot state management (ACTIVE, IDLE, COMBAT, QUESTING)
+  - Methods: CreateBotLifecycle(), GetBotLifecycle(), GetActiveLifecycles()
+  - Implements: IBotLifecycleManager interface
+
+  **BotLifecycleMgr** (system singleton coordinator):
+  - Constructor: `static BotLifecycleMgr* instance()` - singleton
+  - Purpose: Global bot population coordination, zone balancing
+  - Methods: Initialize(), ProcessSchedulerEvents(), OnBotSpawnSuccess()
+  - Implements: IBotLifecycleMgr interface
+  - Has worker thread for background processing
+
+  **CONCLUSION: NOT a duplication issue**
+  - Different responsibility levels (micro vs macro)
+  - Different interfaces (per-bot vs system-wide)
+  - Naming is confusing but functionality is distinct
+
+  **Recommendation:**
+  - Rename `BotLifecycleMgr` → `BotPopulationCoordinator` (clarifies system-level role)
+  - Keep `BotLifecycleManager` as-is (per-bot lifecycle is clear)
+  - This is a naming improvement, not a consolidation
 
 ### ST-5: Consolidate QuestManager → UnifiedQuestManager
 - **Status**: ⏳ PENDING

@@ -187,6 +187,8 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_EventHandlers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/AdaptiveAIUpdateThrottler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/AdaptiveAIUpdateThrottler.h
 
     # AI Decision Systems
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/DecisionFusionSystem.cpp
