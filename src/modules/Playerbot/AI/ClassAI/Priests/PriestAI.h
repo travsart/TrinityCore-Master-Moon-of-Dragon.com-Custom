@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "../BaselineRotationManager.h"
 #include "Position.h"
 #include <memory>
 
@@ -56,6 +57,9 @@ protected:
     bool ExecuteNormalRotation(::Unit* target);
 
 private:
+    // QW-4 FIX: Per-instance rotation manager (was static - caused cross-bot contamination)
+    BaselineRotationManager _rotationManager;
+
     // Performance tracking
     uint32 _manaSpent;
     uint32 _healingDone;

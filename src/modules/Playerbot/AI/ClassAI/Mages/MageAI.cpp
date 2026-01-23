@@ -16,6 +16,12 @@ namespace Playerbot
 MageAI::MageAI(Player* bot) : ClassAI(bot)
 {
     // SAFETY: GetName() removed from constructor to prevent ACCESS_VIOLATION crash during worker thread bot login
+
+    // QW-4 FIX: Initialize per-instance specialization objects
+    // These were previously static, causing all bots to share the same object with stale bot pointers
+    _arcaneSpec = ::std::make_unique<ArcaneMageRefactored>(bot);
+    _fireSpec = ::std::make_unique<FireMageRefactored>(bot);
+    _frostSpec = ::std::make_unique<FrostMageRefactored>(bot);
 }
 
 MageAI::~MageAI() = default;
@@ -30,31 +36,32 @@ void MageAI::UpdateRotation(::Unit* target)
     // already chosen a specialization (level 10+ with talents).
 
     // Delegate to specialization-specific AI
+    // QW-4 FIX: Use per-instance specialization objects instead of static locals
     ChrSpecialization spec = _bot->GetPrimarySpecialization();
 
     switch (static_cast<uint32>(spec))
     {
         case 62: // Arcane
         {
-            static ArcaneMageRefactored arcane(_bot);
-            arcane.UpdateRotation(target);
+            if (_arcaneSpec)
+                _arcaneSpec->UpdateRotation(target);
             break;
         }
         case 63: // Fire
         {
-            static FireMageRefactored fire(_bot);
-            fire.UpdateRotation(target);
+            if (_fireSpec)
+                _fireSpec->UpdateRotation(target);
             break;
         }
         case 64: // Frost
         {
-            static FrostMageRefactored frost(_bot);
-            frost.UpdateRotation(target);
+            if (_frostSpec)
+                _frostSpec->UpdateRotation(target);
             break;
         }
         default:
             // No spec or unknown spec, use basic rotation
-    if (CanUseAbility(FROSTBOLT))
+            if (CanUseAbility(FROSTBOLT))
                 CastSpell(FROSTBOLT, target);
             break;
     }
@@ -66,26 +73,27 @@ void MageAI::UpdateBuffs()
         return;
 
     // Delegate to specialization-specific AI
+    // QW-4 FIX: Use per-instance specialization objects instead of static locals
     ChrSpecialization spec = _bot->GetPrimarySpecialization();
 
     switch (static_cast<uint32>(spec))
     {
         case 62: // Arcane
         {
-            static ArcaneMageRefactored arcane(_bot);
-            arcane.UpdateBuffs();
+            if (_arcaneSpec)
+                _arcaneSpec->UpdateBuffs();
             break;
         }
         case 63: // Fire
         {
-            static FireMageRefactored fire(_bot);
-            fire.UpdateBuffs();
+            if (_fireSpec)
+                _fireSpec->UpdateBuffs();
             break;
         }
         case 64: // Frost
         {
-            static FrostMageRefactored frost(_bot);
-            frost.UpdateBuffs();
+            if (_frostSpec)
+                _frostSpec->UpdateBuffs();
             break;
         }
         default:

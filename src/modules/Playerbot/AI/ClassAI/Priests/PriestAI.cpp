@@ -603,9 +603,8 @@ bool PriestAI::ExecuteNormalRotation(::Unit* target)
         return false;
 
     // Use BaselineRotationManager for rotation execution
-    // The refactored specializations are integrated via BaselineRotationManager
-    static BaselineRotationManager rotationManager;
-    return rotationManager.ExecuteBaselineRotation(GetBot(), target);
+    // QW-4 FIX: Use per-instance rotation manager instead of static
+    return _rotationManager.ExecuteBaselineRotation(GetBot(), target);
 }
 
 
@@ -1093,8 +1092,8 @@ void PriestAI::HealGroupMembers()
     if (healTarget)
     {
         // Execute healing rotation via BaselineRotationManager
-        static BaselineRotationManager rotationManager;
-        rotationManager.ExecuteBaselineRotation(GetBot(), healTarget);
+        // QW-4 FIX: Use per-instance rotation manager instead of static
+        _rotationManager.ExecuteBaselineRotation(GetBot(), healTarget);
     }
 }
 

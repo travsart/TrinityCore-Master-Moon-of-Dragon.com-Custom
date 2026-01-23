@@ -103,13 +103,13 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     // and ExecutePendingSpellCastRequest() every frame - see Player.cpp:946-947
 
     // DIAGNOSTIC: Log spell queue check
-    static uint32 lastSpellQueueLog = 0;
+    // QW-4 FIX: Removed static - now uses instance member _lastSpellQueueLog
     uint32 currentTime = GameTime::GetGameTimeMS();
-    if (currentTime - lastSpellQueueLog > 500) // Every 500ms
+    if (currentTime - _lastSpellQueueLog > 500) // Every 500ms
     {
         TC_LOG_ERROR("module.playerbot.classai", " OnCombatUpdate: Checking spell queue for bot {} - hasPending={}",
                     GetBot()->GetName(), _pendingSpellCastRequest != nullptr);
-        lastSpellQueueLog = currentTime;
+        _lastSpellQueueLog = currentTime;
     }
 
     if (CanExecutePendingSpell())
@@ -128,15 +128,15 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     }
 
     // DIAGNOSTIC: Log that OnCombatUpdate is being called
-    static uint32 lastCombatLog = 0;
-    if (currentTime - lastCombatLog > 2000) // Every 2 seconds (reuse currentTime from spell queue check)
+    // QW-4 FIX: Removed static - now uses instance member _lastCombatLog
+    if (currentTime - _lastCombatLog > 2000) // Every 2 seconds (reuse currentTime from spell queue check)
     {
         TC_LOG_ERROR("module.playerbot", " ClassAI::OnCombatUpdate: Bot {} - currentTarget={}, combatTime={}ms, behaviors={}",
                      GetBot()->GetName(),
                      _currentCombatTarget ? _currentCombatTarget->GetName() : "NONE",
                      _combatTime,
                      _combatBehaviors ? "active" : "inactive");
-        lastCombatLog = currentTime;
+        _lastCombatLog = currentTime;
     }
 
     // Update component managers

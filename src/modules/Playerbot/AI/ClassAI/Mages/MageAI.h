@@ -25,7 +25,10 @@
 namespace Playerbot
 {
 
-// Forward declarations
+// Forward declarations for specialization classes (QW-4 FIX)
+class ArcaneMageRefactored;
+class FireMageRefactored;
+class FrostMageRefactored;
 
 // Mage schools for spell priorities
 enum class MageSchool : uint8
@@ -80,6 +83,12 @@ private:
     ::std::unique_ptr<TargetSelector> _targetSelector;
     ::std::unique_ptr<PositionManager> _positionManager;
     ::std::unique_ptr<InterruptManager> _interruptManager;
+
+    // QW-4 FIX: Per-instance specialization objects (was static - caused cross-bot contamination)
+    // Each bot now has its own specialization object initialized with correct bot pointer
+    ::std::unique_ptr<ArcaneMageRefactored> _arcaneSpec;
+    ::std::unique_ptr<FireMageRefactored> _fireSpec;
+    ::std::unique_ptr<FrostMageRefactored> _frostSpec;
 
     // Shared utility tracking
     ::std::unordered_map<ObjectGuid, uint32> _polymorphTargets;

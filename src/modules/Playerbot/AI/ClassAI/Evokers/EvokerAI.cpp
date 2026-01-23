@@ -389,14 +389,14 @@ void EvokerAI::UpdateCooldowns(uint32 diff)
     }
 
     // Update various stack counters
+    // QW-4 FIX: Removed static - now uses instance member _burnoutDecayTimer
     if (_burnoutStacks > 0)
     {
-        static uint32 burnoutDecay = 0;
-        burnoutDecay += diff;
-        if (burnoutDecay >= 10000) // 10 second duration
+        _burnoutDecayTimer += diff;
+        if (_burnoutDecayTimer >= 10000) // 10 second duration
         {
             _burnoutStacks = _burnoutStacks > 0 ? _burnoutStacks - 1 : 0;
-            burnoutDecay = 0;
+            _burnoutDecayTimer = 0;
         }
     }
 }

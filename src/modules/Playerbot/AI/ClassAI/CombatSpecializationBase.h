@@ -271,6 +271,9 @@ protected:
     Player* _cachedTank;
     Player* _cachedHealer;
 
+    // QW-4 FIX: Per-instance cleanup throttle (was static - caused cross-bot contamination)
+    uint32 _lastCooldownCleanup = 0;
+
 private:
     // Internal update methods
     void UpdateGlobalCooldown(uint32 diff);

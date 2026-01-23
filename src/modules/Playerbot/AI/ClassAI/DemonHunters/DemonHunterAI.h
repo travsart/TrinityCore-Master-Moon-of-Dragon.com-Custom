@@ -150,6 +150,9 @@ private:
     uint32 _successfulInterrupts;
     ::std::unordered_map<uint32, uint32> _abilityUsage;
 
+    // QW-4 FIX: Per-instance pain decay timer (was static - caused cross-bot contamination)
+    uint32 _painDecayTimer = 0;
+
     // Metrics tracking
     struct DemonHunterMetrics
     {

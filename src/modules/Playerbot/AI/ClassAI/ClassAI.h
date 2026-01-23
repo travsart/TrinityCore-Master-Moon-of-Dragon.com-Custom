@@ -368,6 +368,10 @@ protected:
     uint32 _lastExpensiveUpdate = 0;
     static constexpr uint32 EXPENSIVE_UPDATE_INTERVAL = 500; // 500ms for expensive checks
 
+    // QW-4 FIX: Per-instance logging throttle variables (was static - caused cross-bot contamination)
+    uint32 _lastSpellQueueLog = 0;
+    uint32 _lastCombatLog = 0;
+
 private:
     // ========================================================================
     // INTERNAL METHODS - Called by OnCombatUpdate()

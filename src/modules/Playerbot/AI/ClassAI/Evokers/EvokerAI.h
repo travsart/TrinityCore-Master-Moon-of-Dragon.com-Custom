@@ -232,6 +232,9 @@ private:
     uint32 _lastDisintegrate;
     bool _eternitysSurgeReady;
 
+    // QW-4 FIX: Per-instance burnout decay timer (was static - caused cross-bot contamination)
+    uint32 _burnoutDecayTimer = 0;
+
     // Preservation tracking
     uint32 _temporalCompressionStacks;
     uint32 _callOfYseraStacks;

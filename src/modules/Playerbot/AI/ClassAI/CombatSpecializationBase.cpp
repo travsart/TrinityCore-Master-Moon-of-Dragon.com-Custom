@@ -114,14 +114,14 @@ void CombatSpecializationBase::UpdateCooldowns(uint32 diff)
     }
 
     // Periodic cleanup of ready cooldowns (every 5 seconds)
-    static uint32 lastCleanup = 0;
-    if (currentTime - lastCleanup > 5000)
+    // QW-4 FIX: Removed static - now uses instance member _lastCooldownCleanup
+    if (currentTime - _lastCooldownCleanup > 5000)
     {
         ::std::erase_if(_cooldowns, [](const auto& pair) {
 
             return pair.second == 0;
         });
-        lastCleanup = currentTime;
+        _lastCooldownCleanup = currentTime;
     }
 }
 

@@ -918,12 +918,13 @@ void DemonHunterAI::DecayPain(uint32 diff)
         return;
 
     // Decay 1 pain per second out of combat
-    static uint32 decayTimer = 0;
-    decayTimer += diff;
-    if (decayTimer >= 1000)
+    // QW-4 FIX: Removed static - now uses instance member _painDecayTimer
+    _painDecayTimer += diff;
+    if (_painDecayTimer >= 1000)
     {
         SpendPain(1);
-        decayTimer = 0;    }
+        _painDecayTimer = 0;
+    }
 }
 
 uint32 DemonHunterAI::GetFury() const
