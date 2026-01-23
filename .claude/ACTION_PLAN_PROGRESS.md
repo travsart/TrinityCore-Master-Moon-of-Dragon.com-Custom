@@ -158,7 +158,7 @@
 - **Priority**: P0 (CRITICAL)
 - **Started**: 2026-01-23
 - **Completed**: 2026-01-23
-- **Commit**: (pending)
+- **Commit**: 95c1779d81
 - **Implementation Details**:
 
   **New Files Created:**
@@ -317,4 +317,5 @@
 | 2026-01-23 | QW-4 | ec2095f443 | Fix 7 static variable memory leaks in ClassAI files |
 | 2026-01-23 | QW-2 | fda478532b | Implement threat/group focus caching (O(n²) → O(n)) |
 | 2026-01-23 | QW-3 | 83a570b165 | Add reserve() calls to 7 hot path vector allocations |
+| 2026-01-23 | ST-1 | 95c1779d81 | Implement Adaptive AI Update Throttling system |
 
