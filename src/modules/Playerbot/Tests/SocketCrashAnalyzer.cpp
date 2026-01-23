@@ -354,10 +354,10 @@ private:
             // This might trigger unguarded socket access during packet validation
             botSession->SendPacket(&testPacket);
 
-            auto queuePacket = new WorldPacket(0x5678, 4);
-            *queuePacket << uint32(84);
-            botSession->QueuePacket(queuePacket);
-            delete queuePacket;
+            // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+            WorldPacket queuePacket(0x5678, 4);
+            queuePacket << uint32(84);
+            botSession->QueuePacket(std::move(queuePacket));
 
             // Test 6.2: Force error conditions that might bypass guards
             TC_LOG_INFO("test.playerbot", "Testing error conditions...");

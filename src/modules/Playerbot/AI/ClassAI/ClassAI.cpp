@@ -1058,8 +1058,8 @@ void ClassAI::CancelPendingSpell()
         // This is why bots were only doing auto-attack with 1 damage - no abilities fired!
         if (result.packet && GetBot()->GetSession())
         {
-            // QueuePacket takes ownership of raw pointer (deletes after processing)
-            GetBot()->GetSession()->QueuePacket(result.packet.release());
+            // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+            GetBot()->GetSession()->QueuePacket(std::move(*result.packet));
             TC_LOG_ERROR("playerbot.classai.spell",
                          "🎯 ClassAI QUEUED spell {} packet for bot {} targeting {}",
                          spellId, GetBot()->GetName(), target->GetName());

@@ -73,7 +73,10 @@ public:
 
     // === WorldSession Overrides ===
     void SendPacket(WorldPacket const* packet, bool forced = false) override;
-    void QueuePacket(WorldPacket* packet);
+    // Note: QueuePacket hides WorldSession::QueuePacket (not virtual in base)
+    // Bot sessions store packets in their own queue for bot-specific processing
+    void QueuePacket(WorldPacket&& packet);  // TrinityCore 11.2 signature
+    void QueuePacketLegacy(WorldPacket* packet);      // Legacy compatibility (takes ownership)
     bool Update(uint32 diff, PacketFilter& updater);
 
 

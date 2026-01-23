@@ -426,11 +426,10 @@ TEST_F(BotSessionIntegrationTest, TrinityCoreSystems)
         botSession->SendPacket(&testPacket);
 
         // Test packet queuing
-        auto queuePacket = new WorldPacket(0x5678, 4);
-        *queuePacket << uint32(84);
-
-        botSession->QueuePacket(queuePacket);
-        delete queuePacket; // Manual cleanup since QueuePacket should copy
+        // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+        WorldPacket queuePacket(0x5678, 4);
+        queuePacket << uint32(84);
+        botSession->QueuePacket(std::move(queuePacket));
 
     }) << "Packet system integration should be safe";
 

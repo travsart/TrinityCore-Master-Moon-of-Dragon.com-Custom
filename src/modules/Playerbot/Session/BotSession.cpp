@@ -751,7 +751,19 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
     _outgoingPackets.push(::std::move(packetCopy));
 }
 
-void BotSession::QueuePacket(WorldPacket* packet)
+// TrinityCore 11.2: Override for new WorldSession::QueuePacket signature
+void BotSession::QueuePacket(WorldPacket&& packet)
+{
+    // Store the packet in incoming queue
+    ::std::lock_guard<::std::recursive_timed_mutex> lock(_packetMutex);
+
+    // Move the packet into a unique_ptr for storage
+    auto packetCopy = ::std::make_unique<WorldPacket>(::std::move(packet));
+    _incomingPackets.push(::std::move(packetCopy));
+}
+
+// Legacy compatibility method (deprecated - prefer QueuePacket(WorldPacket&&))
+void BotSession::QueuePacketLegacy(WorldPacket* packet)
 {
     if (!packet) return;
 
@@ -1568,7 +1580,8 @@ void BotSession::ProcessBotPackets()
         try {
             // Process packet through WorldSession's standard queue system
             // This is safe to call without locks
-            WorldSession::QueuePacket(packet.get());
+            // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+            WorldSession::QueuePacket(std::move(*packet));
         }
         catch (::std::exception const& e)
         {

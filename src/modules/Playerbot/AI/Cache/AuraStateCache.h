@@ -82,10 +82,10 @@ struct AuraCacheKeyHash
 {
     std::size_t operator()(AuraCacheKey const& key) const
     {
-        // Use ObjectGuid's built-in hash function
-        std::size_t h1 = key.unitGuid.GetHash();
+        // Use std::hash specialization for ObjectGuid
+        std::size_t h1 = std::hash<ObjectGuid>{}(key.unitGuid);
         std::size_t h2 = std::hash<uint32>{}(key.spellId);
-        std::size_t h3 = key.casterGuid.GetHash();
+        std::size_t h3 = std::hash<ObjectGuid>{}(key.casterGuid);
         return h1 ^ (h2 << 1) ^ (h3 << 2);
     }
 };

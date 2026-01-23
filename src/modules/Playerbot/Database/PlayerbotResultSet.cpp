@@ -7,6 +7,8 @@
  * option) any later version.
  */
 
+#include <string>
+#include <string_view>
 #include "PlayerbotResultSet.h"
 #include "MySQLWorkaround.h"
 #include "Log.h"

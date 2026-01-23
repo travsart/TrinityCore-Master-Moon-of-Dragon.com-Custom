@@ -90,8 +90,8 @@ bool BaselineRotationManager::QueueSpellCast(Player* bot, uint32 spellId, ::Unit
     {
         if (result.packet)
         {
-            // QueuePacket takes ownership of the raw pointer
-            session->QueuePacket(result.packet.release());
+            // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+            session->QueuePacket(std::move(*result.packet));
             TC_LOG_TRACE("playerbot.baseline", "QueueSpellCast: Bot {} queued spell {} on {}",
                          bot->GetName(), spellId, target->GetName());
             return true;
@@ -432,8 +432,8 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         // Without this, the spell cast never happens - the packet is built but never sent.
         if (result.packet && bot->GetSession())
         {
-            // QueuePacket takes ownership of the raw pointer
-            bot->GetSession()->QueuePacket(result.packet.release());
+            // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+            bot->GetSession()->QueuePacket(std::move(*result.packet));
             TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: QUEUED spell {} packet successfully!",
                          ability.spellId);
         }
