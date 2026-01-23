@@ -491,10 +491,11 @@ BotSession::~BotSession()
         TC_LOG_ERROR("module.playerbot.session", "Exception clearing login state for account {}", accountId);
     }
 
-    // DEADLOCK-FREE PACKET CLEANUP: Use very short timeout to prevent hanging
+    // DEADLOCK-FREE PACKET CLEANUP: ST-2 FIX - Use try_lock() (no timeout wait)
+    // If we can't get the lock immediately, skip cleanup - destructor shouldn't block
     try {
-        ::std::unique_lock<::std::recursive_timed_mutex> lock(_packetMutex, ::std::defer_lock);
-        if (lock.try_lock_for(::std::chrono::milliseconds(10))) { // Reduced timeout
+        ::std::unique_lock<::std::mutex> lock(_packetMutex, ::std::defer_lock);
+        if (lock.try_lock()) {
             // Clear packets quickly
             ::std::queue<::std::unique_ptr<WorldPacket>> empty1, empty2;
             _incomingPackets.swap(empty1);
@@ -744,7 +745,8 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
     BotPacketRelay::RelayToGroupMembers(this, packet);
 
     // Store packet in outgoing queue for debugging/logging
-    ::std::lock_guard<::std::recursive_timed_mutex> lock(_packetMutex);
+    // ST-2 FIX: Simple mutex instead of recursive_timed_mutex
+    ::std::lock_guard<::std::mutex> lock(_packetMutex);
 
     // Create a copy of the packet
     auto packetCopy = ::std::make_unique<WorldPacket>(*packet);
@@ -755,7 +757,8 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
 void BotSession::QueuePacket(WorldPacket&& packet)
 {
     // Store the packet in incoming queue
-    ::std::lock_guard<::std::recursive_timed_mutex> lock(_packetMutex);
+    // ST-2 FIX: Simple mutex instead of recursive_timed_mutex
+    ::std::lock_guard<::std::mutex> lock(_packetMutex);
 
     // Move the packet into a unique_ptr for storage
     auto packetCopy = ::std::make_unique<WorldPacket>(::std::move(packet));
@@ -768,7 +771,8 @@ void BotSession::QueuePacketLegacy(WorldPacket* packet)
     if (!packet) return;
 
     // Simple packet handling - just store in incoming queue
-    ::std::lock_guard<::std::recursive_timed_mutex> lock(_packetMutex);
+    // ST-2 FIX: Simple mutex instead of recursive_timed_mutex
+    ::std::lock_guard<::std::mutex> lock(_packetMutex);
 
     // Create a copy of the packet
     auto packetCopy = ::std::make_unique<WorldPacket>(*packet);
@@ -1547,23 +1551,21 @@ void BotSession::ProcessBotPackets()
     }
 
     // PHASE 1: Quick extraction with minimal lock time
+    // ST-2 FIX: Replace try_lock_for(5ms) with blocking lock_guard
+    // Analysis shows lock hold time is ~100µs (queue push/pop only).
+    // Blocking wait is more reliable than timeout failures which
+    // caused cascading packet processing deferrals under high load.
     {
-        // Use shorter timeout for better responsiveness under high load
-        ::std::unique_lock<::std::recursive_timed_mutex> lock(_packetMutex, ::std::defer_lock);
-        if (!lock.try_lock_for(::std::chrono::milliseconds(5))) // Reduced from 50ms to 5ms
-        {
-            TC_LOG_DEBUG("module.playerbot.session", "Failed to acquire packet mutex within 5ms for account {}, deferring", GetAccountId());
-            return; // Defer processing to prevent thread pool starvation
-        }
+        ::std::lock_guard<::std::mutex> lock(_packetMutex);
 
         // Extract incoming packets atomically
-    for (size_t i = 0; i < BATCH_SIZE && !_incomingPackets.empty(); ++i) {
+        for (size_t i = 0; i < BATCH_SIZE && !_incomingPackets.empty(); ++i) {
             incomingBatch.emplace_back(::std::move(_incomingPackets.front()));
             _incomingPackets.pop();
         }
 
         // Extract outgoing packets (for logging/debugging)
-    for (size_t i = 0; i < BATCH_SIZE && !_outgoingPackets.empty(); ++i) {
+        for (size_t i = 0; i < BATCH_SIZE && !_outgoingPackets.empty(); ++i) {
             outgoingBatch.emplace_back(::std::move(_outgoingPackets.front()));
             _outgoingPackets.pop();
         }

@@ -414,9 +414,13 @@ private:
 
 private:
     // Simple packet queues - NO TBB, NO BOOST
+    // ST-2 FIX: Changed from recursive_timed_mutex to simple mutex
+    // Analysis shows no recursive locking occurs, and try_lock_for timeouts
+    // were causing packet processing deferrals under high load.
+    // Simple mutex with blocking wait is more reliable than timeout failures.
     ::std::queue<::std::unique_ptr<WorldPacket>> _incomingPackets;
     ::std::queue<::std::unique_ptr<WorldPacket>> _outgoingPackets;
-    mutable ::std::recursive_timed_mutex _packetMutex;
+    mutable ::std::mutex _packetMutex;
     mutable ::std::timed_mutex _updateMutex;  // TIMED MUTEX: Prevents both deadlock AND race conditions
 
     // Deferred packet queue (main thread processing)
