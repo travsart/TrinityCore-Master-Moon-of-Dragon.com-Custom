@@ -94,6 +94,16 @@ public:
      */
     void MarkAsInstanceBot(ObjectGuid botGuid);
 
+    /**
+     * @brief Get count of bots marked as instance bots
+     * @return Number of currently active instance bots
+     *
+     * Used by JITBotFactory hard cap check to prevent bot explosion.
+     * Instance bots are those marked via MarkAsInstanceBot() - they have
+     * the 60-second idle timeout and restricted behavior.
+     */
+    uint32 GetInstanceBotCount() const;
+
 private:
     BotWorldSessionMgr() = default;
     ~BotWorldSessionMgr() = default;

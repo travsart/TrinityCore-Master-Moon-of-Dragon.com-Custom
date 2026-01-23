@@ -14,6 +14,7 @@
 #include "PvP/BGBotManager.h"
 #include "LFG/LFGBotManager.h"
 #include "LFG/LFGRoleDetector.h"
+#include "Session/BotWorldSessionMgr.h"  // CRITICAL FIX (2026-01-22): For MarkAsInstanceBot
 #include "BattlegroundMgr.h"
 #include "BattlegroundQueue.h"
 #include "ObjectAccessor.h"
@@ -585,16 +586,25 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
             TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {}/{} Alliance and {}/{} Horde from warm pool",
                 allianceFromPool, allianceStillNeeded, hordeFromPool, hordeStillNeeded);
 
-            // Queue the bots from pool for the BG
+            // Queue the bots from pool for the BG and MARK AS INSTANCE BOTS
+            // ====================================================================
+            // CRITICAL FIX (2026-01-22): Mark warm pool bots as INSTANCE BOTS!
+            // ====================================================================
             for (ObjectGuid const& guid : poolAssignment.allianceBots)
             {
                 if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                {
                     sBGBotManager->QueueBotForBG(bot, snapshot.bgTypeId, snapshot.bracketId);
+                    sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+                }
             }
             for (ObjectGuid const& guid : poolAssignment.hordeBots)
             {
                 if (Player* bot = ObjectAccessor::FindPlayer(guid))
+                {
                     sBGBotManager->QueueBotForBG(bot, snapshot.bgTypeId, snapshot.bracketId);
+                    sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+                }
             }
 
             // Update remaining needs
@@ -802,6 +812,16 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
                     // Queue bot via LFGBotManager public API
                     if (sLFGBotManager->QueueJITBot(bot, snapshot.dungeonId))
                     {
+                        // ====================================================================
+                        // CRITICAL FIX (2026-01-22): Mark warm pool bots as INSTANCE BOTS!
+                        // ====================================================================
+                        // Without this, warm pool bots assigned via QueueStatePoller would:
+                        // - NOT get the 60-second idle logout timeout
+                        // - Stay online forever causing bot explosion
+                        // - Do quests and other activities (no behavioral restriction)
+                        // ====================================================================
+                        sBotWorldSessionMgr->MarkAsInstanceBot(botGuid);
+
                         // Track which role was filled
                         if ((detectedRole & lfg::PLAYER_ROLE_TANK) && tanksStillNeeded > 0)
                         {
@@ -819,7 +839,7 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
                             ++dpsFromPool;
                         }
 
-                        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Alliance bot {} queued for dungeon {} as role {}",
+                        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Alliance bot {} queued for dungeon {} as role {}, marked as INSTANCE BOT",
                             bot->GetName(), snapshot.dungeonId, detectedRole);
                     }
                     else
@@ -867,6 +887,16 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
                     // Queue bot via LFGBotManager public API
                     if (sLFGBotManager->QueueJITBot(bot, snapshot.dungeonId))
                     {
+                        // ====================================================================
+                        // CRITICAL FIX (2026-01-22): Mark warm pool bots as INSTANCE BOTS!
+                        // ====================================================================
+                        // Without this, warm pool bots assigned via QueueStatePoller would:
+                        // - NOT get the 60-second idle logout timeout
+                        // - Stay online forever causing bot explosion
+                        // - Do quests and other activities (no behavioral restriction)
+                        // ====================================================================
+                        sBotWorldSessionMgr->MarkAsInstanceBot(botGuid);
+
                         // Track which role was filled
                         if ((detectedRole & lfg::PLAYER_ROLE_TANK) && tanksStillNeeded > 0)
                         {
@@ -884,7 +914,7 @@ void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
                             ++dpsFromPool;
                         }
 
-                        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Horde bot {} queued for dungeon {} as role {}",
+                        TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Horde bot {} queued for dungeon {} as role {}, marked as INSTANCE BOT",
                             bot->GetName(), snapshot.dungeonId, detectedRole);
                     }
                     else
@@ -1024,13 +1054,18 @@ void QueueStatePoller::ProcessArenaShortage(ArenaQueueSnapshot const& snapshot)
             TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {}/{} Alliance bots from warm pool for {}v{}",
                 allianceFromPool, allianceBotsNeeded, snapshot.arenaType, snapshot.arenaType);
 
-            // Queue the bots from pool for arena
+            // Queue the bots from pool for arena and MARK AS INSTANCE BOTS
+            // ====================================================================
+            // CRITICAL FIX (2026-01-22): Mark warm pool arena bots as INSTANCE BOTS!
+            // ====================================================================
             for (ObjectGuid const& guid : poolAssignment.teammates)
             {
                 if (Player* bot = ObjectAccessor::FindPlayer(guid))
                 {
+                    // Mark as instance bot for 60-second idle timeout
+                    sBotWorldSessionMgr->MarkAsInstanceBot(guid);
                     // Queue bot for arena (implementation in ArenaBotManager)
-                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Alliance arena bot {} ready from pool",
+                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Alliance arena bot {} ready from pool, marked as INSTANCE BOT",
                         guid.ToString());
                 }
             }
@@ -1055,12 +1090,17 @@ void QueueStatePoller::ProcessArenaShortage(ArenaQueueSnapshot const& snapshot)
             TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {}/{} Horde bots from warm pool for {}v{}",
                 hordeFromPool, hordeBotsNeeded, snapshot.arenaType, snapshot.arenaType);
 
-            // Queue the bots from pool for arena
+            // Queue the bots from pool for arena and MARK AS INSTANCE BOTS
+            // ====================================================================
+            // CRITICAL FIX (2026-01-22): Mark warm pool arena bots as INSTANCE BOTS!
+            // ====================================================================
             for (ObjectGuid const& guid : poolAssignment.teammates)
             {
                 if (Player* bot = ObjectAccessor::FindPlayer(guid))
                 {
-                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Horde arena bot {} ready from pool",
+                    // Mark as instance bot for 60-second idle timeout
+                    sBotWorldSessionMgr->MarkAsInstanceBot(guid);
+                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Horde arena bot {} ready from pool, marked as INSTANCE BOT",
                         guid.ToString());
                 }
             }

@@ -2736,6 +2736,23 @@ Playerbot.Instance.JIT.RecycleTimeoutMinutes = 5
 Playerbot.Instance.JIT.MaxRecycledBots = 100
 
 #
+#  Playerbot.Instance.JIT.MaxTotalInstanceBots
+#    Description: SAFETY HARD CAP - Absolute maximum instance bots that can exist at once.
+#                 This is an emergency safeguard to prevent runaway bot explosion.
+#                 If this cap is reached, no new JIT bots will be created until
+#                 existing ones log out. This cap includes all instance bots
+#                 (JIT and warm pool) that are marked as instance bots.
+#
+#                 The 2026-01-22 bot explosion bug (1500+ bots, 50s lag) was caused by
+#                 instance bots not being properly marked, bypassing the 60-second
+#                 idle timeout. This cap exists as an additional safety measure.
+#
+#                 Set to 0 to disable this safeguard (NOT RECOMMENDED).
+#    Default:     500
+#
+Playerbot.Instance.JIT.MaxTotalInstanceBots = 500
+
+#
 #  Priority settings (lower = higher priority)
 #
 

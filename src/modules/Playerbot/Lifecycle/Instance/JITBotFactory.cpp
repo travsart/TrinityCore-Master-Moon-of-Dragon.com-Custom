@@ -255,6 +255,9 @@ void JITBotFactory::LoadConfig()
     _config.recycleTimeoutMinutes = sPlayerbotConfig->GetInt("Playerbot.Instance.JIT.RecycleTimeoutMinutes", 5);
     _config.maxRecycledBots = sPlayerbotConfig->GetInt("Playerbot.Instance.JIT.MaxRecycledBots", 100);
 
+    // SAFETY HARD CAP (2026-01-22 FIX): Absolute maximum instance bots to prevent explosion
+    _config.maxTotalInstanceBots = sPlayerbotConfig->GetInt("Playerbot.Instance.JIT.MaxTotalInstanceBots", 500);
+
     _config.dungeonPriority = static_cast<uint8>(sPlayerbotConfig->GetInt("Playerbot.Instance.JIT.DungeonPriority", 1));
     _config.arenaPriority = static_cast<uint8>(sPlayerbotConfig->GetInt("Playerbot.Instance.JIT.ArenaPriority", 2));
     _config.raidPriority = static_cast<uint8>(sPlayerbotConfig->GetInt("Playerbot.Instance.JIT.RaidPriority", 3));
@@ -265,8 +268,8 @@ void JITBotFactory::LoadConfig()
     _config.battlegroundTimeoutMs = sPlayerbotConfig->GetInt("Playerbot.Instance.JIT.BattlegroundTimeoutMs", 120000);
     _config.arenaTimeoutMs = sPlayerbotConfig->GetInt("Playerbot.Instance.JIT.ArenaTimeoutMs", 15000);
 
-    TC_LOG_INFO("playerbot.jit", "JITBotFactory::LoadConfig - JIT Factory: enabled={}, maxConcurrent={}, recycleTimeout={}min",
-        _config.enabled, _config.maxConcurrentCreations, _config.recycleTimeoutMinutes);
+    TC_LOG_INFO("playerbot.jit", "JITBotFactory::LoadConfig - JIT Factory: enabled={}, maxConcurrent={}, recycleTimeout={}min, maxTotalInstanceBots={}",
+        _config.enabled, _config.maxConcurrentCreations, _config.recycleTimeoutMinutes, _config.maxTotalInstanceBots);
 }
 
 // ============================================================================
@@ -289,6 +292,45 @@ uint32 JITBotFactory::SubmitRequest(FactoryRequest request)
         if (request.onFailed)
             request.onFailed("Invalid request parameters");
         return 0;
+    }
+
+    // ========================================================================
+    // SAFETY HARD CAP CHECK (2026-01-22 FIX)
+    // ========================================================================
+    // Prevent bot explosion by enforcing absolute maximum instance bot count.
+    // This check runs BEFORE queueing the request to avoid runaway creation.
+    //
+    // Note: Instance bots include:
+    // - JIT bots created on-demand for LFG/BG/Arena/Raid
+    // - Warm pool bots assigned to instances
+    //
+    // If this cap is reached, the request is rejected with an error.
+    // The bot explosion bug (1500+ bots with 50s lag) was caused by:
+    // 1. JIT bots not being marked as instance bots (now fixed above)
+    // 2. No hard cap to catch runaway creation (fixed here)
+    // ========================================================================
+    if (_config.maxTotalInstanceBots > 0)
+    {
+        uint32 currentInstanceBots = sBotWorldSessionMgr->GetInstanceBotCount();
+        if (currentInstanceBots >= _config.maxTotalInstanceBots)
+        {
+            TC_LOG_ERROR("playerbot.jit", "JITBotFactory::SubmitRequest - HARD CAP REACHED! "
+                "Current instance bots ({}) >= max ({}). Rejecting new JIT request to prevent explosion.",
+                currentInstanceBots, _config.maxTotalInstanceBots);
+
+            if (request.onFailed)
+                request.onFailed("Instance bot hard cap reached - try again later");
+            return 0;
+        }
+
+        // Also log a warning if we're approaching the cap (>80% full)
+        uint32 warningThreshold = static_cast<uint32>(_config.maxTotalInstanceBots * 0.8f);
+        if (currentInstanceBots >= warningThreshold)
+        {
+            TC_LOG_WARN("playerbot.jit", "JITBotFactory::SubmitRequest - Approaching hard cap: {}/{} instance bots ({}%)",
+                currentInstanceBots, _config.maxTotalInstanceBots,
+                (currentInstanceBots * 100) / _config.maxTotalInstanceBots);
+        }
     }
 
     // Assign request ID
@@ -978,7 +1020,23 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
             if (sBotWorldSessionMgr->AddPlayerBot(botGuid, accountId, true))  // bypassLimit=true for JIT bots
             {
                 ++loginSuccessCount;
-                TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in bot {} (account {})",
+
+                // ====================================================================
+                // CRITICAL FIX (2026-01-22): Mark JIT bots as INSTANCE BOTS!
+                // ====================================================================
+                // Without this, JIT bots would:
+                // - NOT get the 60-second idle logout timeout
+                // - Stay online forever causing bot explosion (1500+ bots)
+                // - Do quests and other activities (pool flag not set)
+                // - Cause massive server lag (50s+ response times)
+                //
+                // By marking as instance bot, they get:
+                // - Auto-logout after 60 seconds if not in queue/group/instance
+                // - Restricted behavior (no questing, just queue and fight)
+                // ====================================================================
+                sBotWorldSessionMgr->MarkAsInstanceBot(botGuid);
+
+                TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in bot {} (account {}), marked as INSTANCE BOT",
                     botGuid.ToString(), accountId);
                 BOT_TRACK_SUCCESS(BotOperationCategory::SPAWN, "JITBotFactory::LoginBot", botGuid);
             }
@@ -994,7 +1052,7 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
             }
         }
 
-        TC_LOG_INFO("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in {}/{} bots",
+        TC_LOG_INFO("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in {}/{} bots (all marked as INSTANCE BOTS)",
             loginSuccessCount, progress.created);
 
         // Determine status - STRICT requirements to ensure full groups

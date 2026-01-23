@@ -1103,6 +1103,20 @@ struct JITFactoryConfig
     /// Maximum recycled bots to keep
     uint32 maxRecycledBots = 100;
 
+    // ========================================================================
+    // SAFETY HARD CAP (2026-01-22 FIX)
+    // ========================================================================
+    // Absolute maximum total instance bots that can exist at any time.
+    // This is a safety cap to prevent runaway bot explosion even if other
+    // checks fail (e.g., if MarkAsInstanceBot somehow fails or bots aren't
+    // properly released). If this cap is reached, no new JIT bots will be
+    // created until existing ones log out.
+    //
+    // This is separate from warm pool size and exists purely as an emergency
+    // safeguard. Set to 0 to disable this safeguard (not recommended).
+    // ========================================================================
+    uint32 maxTotalInstanceBots = 500;
+
     /// Use template cloning for fast creation
     bool useTemplateCloning = true;
 

@@ -1529,4 +1529,17 @@ void BotWorldSessionMgr::MarkAsInstanceBot(ObjectGuid botGuid)
     }
 }
 
+uint32 BotWorldSessionMgr::GetInstanceBotCount() const
+{
+    ::std::lock_guard lock(_sessionsMutex);
+
+    uint32 count = 0;
+    for (auto const& [guid, session] : _botSessions)
+    {
+        if (session && session->IsInstanceBot())
+            ++count;
+    }
+    return count;
+}
+
 } // namespace Playerbot
