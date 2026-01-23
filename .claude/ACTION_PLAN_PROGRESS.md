@@ -22,15 +22,23 @@
 - **Priority**: P0 (CRITICAL)
 - **Started**: 2026-01-23
 - **Completed**: 2026-01-23
-- **Commit**: (pending)
+- **Commit**: fda478532b
 - **Notes**: Implemented threat score caching (500ms refresh) and group focus caching to eliminate redundant GetThreat() calls and O(n*m) group member iteration. Added _threatScoreCache and _groupFocusCache with RefreshThreatScoreCache(), RefreshGroupFocusCache(), GetCachedThreatScore(), GetCachedGroupFocusCount() methods.
 
 ### QW-3: Add Container reserve() Calls to Hot Paths
-- **Status**: ⏳ PENDING
+- **Status**: ✅ COMPLETED
 - **Priority**: P1 (HIGH)
-- **Started**: -
-- **Completed**: -
-- **Commit**: -
+- **Started**: 2026-01-23
+- **Completed**: 2026-01-23
+- **Commit**: (pending)
+- **Notes**: Added reserve() calls to 7 hot path functions:
+  - TargetSelector::GetNearbyEnemies() - reserve(hostileSnapshots.size())
+  - TargetSelector::GetNearbyAllies() - reserve(group->GetMembersCount() + 5)
+  - BotThreatManager::GetAllThreatTargets() - reserve(_threatMap.Size())
+  - BotThreatManager::GetThreatTargetsByPriority() - reserve(_threatMap.Size() / 3)
+  - CrowdControlManager::GetAvailableCCSpells() - reserve(classIt->second.size())
+  - PositionManager::GenerateCandidatePositions() - reserve(24) for RANGED_DPS
+  - TargetManager::GetCombatTargets() - reserve(threatMgr.GetThreatListSize())
 
 ### QW-5: Implement Spatial Query Caching
 - **Status**: ⏳ PENDING

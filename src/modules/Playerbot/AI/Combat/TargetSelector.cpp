@@ -469,6 +469,9 @@ TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const Selec
     // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, range, true);
 
+    // QW-3 FIX: Pre-allocate vector to avoid repeated reallocations in hot path
+    enemies.reserve(hostileSnapshots.size());
+
     // Convert snapshots to Unit* for return (needed by callers)
     for (auto const& snapshot : hostileSnapshots)
     {
@@ -491,6 +494,9 @@ TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const Selec
 
     if (Group* group = _bot->GetGroup())
     {
+        // QW-3 FIX: Pre-allocate for group members + estimated pets
+        allies.reserve(group->GetMembersCount() + 5);
+
         float rangeSq = range * range;
         for (GroupReference const& ref : group->GetMembers())
         {

@@ -503,6 +503,9 @@ float BotThreatManager::GetThreatPercent(Unit* target) const
 {
     ::std::vector<Unit*> targets;
 
+    // QW-3 FIX: Pre-allocate based on threat map size to avoid reallocations
+    targets.reserve(_threatMap.Size());
+
     // No lock needed - threat data is per-bot instance data
     for (const auto& [guid, info] : _threatMap)
     {
@@ -526,6 +529,9 @@ float BotThreatManager::GetThreatPercent(Unit* target) const
 ::std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority priority)
 {
     ::std::vector<Unit*> targets;
+
+    // QW-3 FIX: Pre-allocate (estimate ~30% of threats match given priority)
+    targets.reserve(::std::max(_threatMap.Size() / 3, size_t(5)));
 
     // No lock needed - threat data is per-bot instance data
     for (const auto& [guid, info] : _threatMap)

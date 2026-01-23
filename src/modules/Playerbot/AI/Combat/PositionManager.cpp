@@ -338,6 +338,8 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
 
         case PositionType::RANGED_DPS:
             {
+                // QW-3 FIX: Pre-allocate for both rings (12+12=24 positions)
+                candidates.reserve(24);
                 ::std::vector<Position> innerRing = GenerateCircularPositions(targetPos, context.preferredRange * 0.8f, 12);
                 ::std::vector<Position> outerRing = GenerateCircularPositions(targetPos, context.preferredRange * 1.2f, 12);
                 candidates.insert(candidates.end(), innerRing.begin(), innerRing.end());

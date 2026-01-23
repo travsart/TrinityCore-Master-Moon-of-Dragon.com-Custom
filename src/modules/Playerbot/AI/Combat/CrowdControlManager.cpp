@@ -517,6 +517,9 @@ float CrowdControlManager::CalculateCCPriority(Unit* target) const
     if (classIt == classCCSpells.end())
         return spells;
 
+    // QW-3 FIX: Pre-allocate for class CC spells (typically 4-8 per class)
+    spells.reserve(classIt->second.size());
+
     // Check each CC spell for availability
     for (const CCSpellInfo& ccInfo : classIt->second)
     {

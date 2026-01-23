@@ -256,6 +256,9 @@ bool TargetManager::IsHighPriorityTarget(Unit* target)
     // Get all enemies from threat list
     ThreatManager& threatMgr = _bot->GetThreatManager();
 
+    // QW-3 FIX: Pre-allocate based on threat list size
+    targets.reserve(threatMgr.GetThreatListSize());
+
     for (ThreatReference const* ref : threatMgr.GetUnsortedThreatList())
     {
         if (!ref)
