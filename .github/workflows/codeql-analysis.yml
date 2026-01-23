@@ -79,7 +79,6 @@ jobs:
               - 'dep/**'
               - 'contrib/**'
               - 'tests/**'
-              - 'src/server/scripts/**'
             query-filters:
               - exclude:
                   problem.severity: recommendation
