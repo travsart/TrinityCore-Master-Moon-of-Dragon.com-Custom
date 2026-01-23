@@ -54,6 +54,8 @@ namespace Playerbot
  * - CHARGE     → MoveCharge()
  * - KNOCKBACK  → MoveKnockbackFrom()
  * - CUSTOM     → LaunchMoveSpline()
+ * - RANDOM     → MoveRandom() [NEW: TrinityCore 11.2 - natural idle wandering]
+ * - PATH       → MovePath() [NEW: TrinityCore 11.2 - waypoint-based navigation]
  */
 enum class MovementRequestType : uint8
 {
@@ -65,7 +67,9 @@ enum class MovementRequestType : uint8
     JUMP,           // Jump to position
     CHARGE,         // Charge to position (warrior, etc.)
     KNOCKBACK,      // Knockback from origin
-    CUSTOM          // Custom spline movement
+    CUSTOM,         // Custom spline movement
+    RANDOM,         // [NEW] Wander randomly around a point (natural idle behavior)
+    PATH            // [NEW] Follow a waypoint path (quest routes, dungeon pathing)
 };
 
 /**
@@ -127,6 +131,67 @@ struct IdleMovementParams
 {
     // No parameters needed for idle
     bool operator==(IdleMovementParams const&) const { return true; }
+};
+
+/**
+ * Random wandering movement parameters (MoveRandom)
+ *
+ * NEW: Leverages TrinityCore 11.2's MoveRandom() support for players.
+ * Creates natural idle behavior by wandering around a center point.
+ *
+ * Use Cases:
+ * - Town idle: Bots wander near mailbox/AH/bank naturally
+ * - Waiting for group: Wander near meeting point
+ * - Guard duty: Patrol randomly within defense perimeter
+ * - Fishing spots: Move around fishing area
+ */
+struct RandomMovementParams
+{
+    Position centerPos;                         // Center point to wander around
+    float wanderDistance = 5.0f;                // Radius of wander area (yards)
+    Optional<Milliseconds> duration;            // How long to wander (empty = until interrupted)
+    Optional<float> speed;                      // Movement speed override
+    bool forceWalk = true;                      // Walk instead of run (more natural)
+
+    bool operator==(RandomMovementParams const& other) const
+    {
+        return centerPos.GetExactDist(&other.centerPos) < 0.5f &&
+               std::abs(wanderDistance - other.wanderDistance) < 0.5f &&
+               forceWalk == other.forceWalk;
+    }
+};
+
+/**
+ * Waypoint path movement parameters (MovePath)
+ *
+ * NEW: Leverages TrinityCore 11.2's MovePath() support for players.
+ * Allows bots to follow predefined waypoint paths for smooth navigation.
+ *
+ * Use Cases:
+ * - Quest routes: Pre-defined paths to quest objectives
+ * - Dungeon pathing: Follow tank's path through instance
+ * - Patrol behavior: Guard bots patrolling an area
+ * - Gathering routes: Mining/herbalism farming paths
+ * - Boss mechanics: Execute precise movement patterns
+ */
+struct PathMovementParams
+{
+    uint32 pathId = 0;                          // Waypoint path ID from database/memory
+    bool repeatable = false;                    // Loop the path
+    Optional<Milliseconds> duration;            // Path duration limit
+    Optional<float> speed;                      // Movement speed override
+    bool forceWalk = false;                     // Walk instead of run
+    Optional<::std::pair<Milliseconds, Milliseconds>> waitTimeAtEnd;  // Wait at path end
+    Optional<float> wanderAtEnds;               // Wander distance at waypoints
+    bool exactSpline = false;                   // Follow exact spline vs pathfinding
+    bool generatePath = true;                   // Use pathfinding between waypoints
+
+    bool operator==(PathMovementParams const& other) const
+    {
+        return pathId == other.pathId &&
+               repeatable == other.repeatable &&
+               exactSpline == other.exactSpline;
+    }
 };
 
 /**
@@ -208,6 +273,52 @@ public:
         ::std::string reason = "",
         ::std::string sourceSystem = "");
 
+    /**
+     * Construct random wandering movement request
+     *
+     * NEW: Uses TrinityCore 11.2's MoveRandom() for natural idle behavior.
+     *
+     * @param priority Movement priority
+     * @param centerPos Center point to wander around
+     * @param wanderDistance Radius of wander area (default 5 yards)
+     * @param duration How long to wander (empty = until interrupted)
+     * @param forceWalk Walk instead of run (default true for natural movement)
+     * @param reason Debug description
+     * @param sourceSystem Source system name
+     */
+    static MovementRequest MakeRandomMovement(
+        PlayerBotMovementPriority priority,
+        Position const& centerPos,
+        float wanderDistance = 5.0f,
+        Optional<Milliseconds> duration = {},
+        bool forceWalk = true,
+        ::std::string reason = "",
+        ::std::string sourceSystem = "");
+
+    /**
+     * Construct waypoint path movement request
+     *
+     * NEW: Uses TrinityCore 11.2's MovePath() for waypoint-based navigation.
+     *
+     * @param priority Movement priority
+     * @param pathId Waypoint path ID
+     * @param repeatable Loop the path
+     * @param duration Path duration limit
+     * @param speed Movement speed override
+     * @param forceWalk Walk instead of run
+     * @param reason Debug description
+     * @param sourceSystem Source system name
+     */
+    static MovementRequest MakePathMovement(
+        PlayerBotMovementPriority priority,
+        uint32 pathId,
+        bool repeatable = false,
+        Optional<Milliseconds> duration = {},
+        Optional<float> speed = {},
+        bool forceWalk = false,
+        ::std::string reason = "",
+        ::std::string sourceSystem = "");
+
     // ========================================================================
     // ACCESSORS
     // ========================================================================
@@ -228,11 +339,15 @@ public:
     FollowMovementParams const& GetFollowParams() const;
     JumpMovementParams const& GetJumpParams() const;
     IdleMovementParams const& GetIdleParams() const;
+    RandomMovementParams const& GetRandomParams() const;
+    PathMovementParams const& GetPathParams() const;
 
     // Safe parameter getters (returns Optional)
     Optional<PointMovementParams> TryGetPointParams() const;
     Optional<ChaseMovementParams> TryGetChaseParams() const;
     Optional<FollowMovementParams> TryGetFollowParams() const;
+    Optional<RandomMovementParams> TryGetRandomParams() const;
+    Optional<PathMovementParams> TryGetPathParams() const;
 
     // ========================================================================
     // SETTERS (Fluent Interface)
@@ -320,7 +435,9 @@ private:
         ChaseMovementParams,
         FollowMovementParams,
         JumpMovementParams,
-        IdleMovementParams
+        IdleMovementParams,
+        RandomMovementParams,                     // NEW: TrinityCore 11.2 MoveRandom()
+        PathMovementParams                        // NEW: TrinityCore 11.2 MovePath()
     >;
 
     Params _params;

@@ -490,6 +490,82 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
             break;
         }
 
+        // ====================================================================
+        // NEW: TrinityCore 11.2 Movement Types
+        // ====================================================================
+
+        case MovementRequestType::RANDOM:
+        {
+            auto const& params = request.GetRandomParams();
+
+            // Determine speed selection mode based on forceWalk flag
+            MovementWalkRunSpeedSelectionMode speedMode = params.forceWalk
+                ? MovementWalkRunSpeedSelectionMode::ForceWalk
+                : MovementWalkRunSpeedSelectionMode::Default;
+
+            // TrinityCore 11.2 API: MoveRandom(wanderDistance, duration, speed, speedSelectionMode)
+            // NEW: Now works for players (previously creature-only)
+            motionMaster->MoveRandom(
+                params.wanderDistance,
+                params.duration,
+                params.speed,
+                speedMode);
+
+            if (_diagnosticLogging)
+            {
+                TC_LOG_DEBUG("playerbot.movement.arbiter",
+                    "MovementArbiter: Executing RANDOM movement (center: {:.2f}, {:.2f}, {:.2f}, "
+                    "radius: {:.2f}yd, walk: {}) for bot {} - Priority: {} ({})",
+                    params.centerPos.GetPositionX(),
+                    params.centerPos.GetPositionY(),
+                    params.centerPos.GetPositionZ(),
+                    params.wanderDistance,
+                    params.forceWalk ? "yes" : "no",
+                    _bot->GetName(),
+                    MovementPriorityMapper::GetPriorityName(request.GetPriority()),
+                    tcPriority.ToString());
+            }
+            break;
+        }
+
+        case MovementRequestType::PATH:
+        {
+            auto const& params = request.GetPathParams();
+
+            // Determine speed selection mode based on forceWalk flag
+            MovementWalkRunSpeedSelectionMode speedMode = params.forceWalk
+                ? MovementWalkRunSpeedSelectionMode::ForceWalk
+                : MovementWalkRunSpeedSelectionMode::Default;
+
+            // TrinityCore 11.2 API: MovePath(pathId, repeatable, duration, speed, speedMode, ...)
+            // NEW: Now works for players (previously creature-only)
+            motionMaster->MovePath(
+                params.pathId,
+                params.repeatable,
+                params.duration,
+                params.speed,
+                speedMode,
+                params.waitTimeAtEnd,
+                params.wanderAtEnds,
+                Optional<bool>{},    // followPathBackwards
+                params.exactSpline ? Optional<bool>(true) : Optional<bool>{},
+                params.generatePath);
+
+            if (_diagnosticLogging)
+            {
+                TC_LOG_DEBUG("playerbot.movement.arbiter",
+                    "MovementArbiter: Executing PATH movement (pathId: {}, repeatable: {}, walk: {}) "
+                    "for bot {} - Priority: {} ({})",
+                    params.pathId,
+                    params.repeatable ? "yes" : "no",
+                    params.forceWalk ? "yes" : "no",
+                    _bot->GetName(),
+                    MovementPriorityMapper::GetPriorityName(request.GetPriority()),
+                    tcPriority.ToString());
+            }
+            break;
+        }
+
         default:
             TC_LOG_ERROR("playerbot.movement.arbiter",
                 "MovementArbiter: Unknown movement type {} for bot {}",

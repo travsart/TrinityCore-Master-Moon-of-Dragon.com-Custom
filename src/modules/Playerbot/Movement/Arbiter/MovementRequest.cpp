@@ -280,6 +280,58 @@ MovementRequest MovementRequest::MakeJumpMovement(
 }
 
 // ============================================================================
+// NEW: TrinityCore 11.2 Movement Features - Factory Methods
+// ============================================================================
+
+MovementRequest MovementRequest::MakeRandomMovement(
+    PlayerBotMovementPriority priority,
+    Position const& centerPos,
+    float wanderDistance,
+    Optional<Milliseconds> duration,
+    bool forceWalk,
+    ::std::string reason,
+    ::std::string sourceSystem)
+{
+    MovementRequest req(priority, ::std::move(reason));
+    req._type = MovementRequestType::RANDOM;
+    req._sourceSystem = ::std::move(sourceSystem);
+
+    RandomMovementParams params;
+    params.centerPos = centerPos;
+    params.wanderDistance = wanderDistance;
+    params.duration = duration;
+    params.forceWalk = forceWalk;
+
+    req._params = ::std::move(params);
+    return req;
+}
+
+MovementRequest MovementRequest::MakePathMovement(
+    PlayerBotMovementPriority priority,
+    uint32 pathId,
+    bool repeatable,
+    Optional<Milliseconds> duration,
+    Optional<float> speed,
+    bool forceWalk,
+    ::std::string reason,
+    ::std::string sourceSystem)
+{
+    MovementRequest req(priority, ::std::move(reason));
+    req._type = MovementRequestType::PATH;
+    req._sourceSystem = ::std::move(sourceSystem);
+
+    PathMovementParams params;
+    params.pathId = pathId;
+    params.repeatable = repeatable;
+    params.duration = duration;
+    params.speed = speed;
+    params.forceWalk = forceWalk;
+
+    req._params = ::std::move(params);
+    return req;
+}
+
+// ============================================================================
 // Type-Specific Parameter Getters (Throwing)
 // ============================================================================
 
@@ -318,6 +370,20 @@ IdleMovementParams const& MovementRequest::GetIdleParams() const
     throw ::std::runtime_error("MovementRequest::GetIdleParams() called on non-IDLE request");
 }
 
+RandomMovementParams const& MovementRequest::GetRandomParams() const
+{
+    if (auto* params = ::std::get_if<RandomMovementParams>(&_params))
+        return *params;
+    throw ::std::runtime_error("MovementRequest::GetRandomParams() called on non-RANDOM request");
+}
+
+PathMovementParams const& MovementRequest::GetPathParams() const
+{
+    if (auto* params = ::std::get_if<PathMovementParams>(&_params))
+        return *params;
+    throw ::std::runtime_error("MovementRequest::GetPathParams() called on non-PATH request");
+}
+
 // ============================================================================
 // Safe Parameter Getters (Optional)
 // ============================================================================
@@ -339,6 +405,20 @@ Optional<ChaseMovementParams> MovementRequest::TryGetChaseParams() const
 Optional<FollowMovementParams> MovementRequest::TryGetFollowParams() const
 {
     if (auto* params = ::std::get_if<FollowMovementParams>(&_params))
+        return *params;
+    return {};
+}
+
+Optional<RandomMovementParams> MovementRequest::TryGetRandomParams() const
+{
+    if (auto* params = ::std::get_if<RandomMovementParams>(&_params))
+        return *params;
+    return {};
+}
+
+Optional<PathMovementParams> MovementRequest::TryGetPathParams() const
+{
+    if (auto* params = ::std::get_if<PathMovementParams>(&_params))
         return *params;
     return {};
 }
@@ -422,6 +502,34 @@ uint64 MovementRequest::GetSpatialTemporalHash() const
             // Idle requests have same hash (all identical)
             break;
 
+        case MovementRequestType::RANDOM:
+        {
+            auto const& params = GetRandomParams();
+
+            // Quantize center position to 5-yard grid
+            constexpr float GRID_SIZE = 5.0f;
+            int32 gridX = static_cast<int32>(params.centerPos.GetPositionX() / GRID_SIZE);
+            int32 gridY = static_cast<int32>(params.centerPos.GetPositionY() / GRID_SIZE);
+
+            // Include wander distance in hash (quantized to 1-yard increments)
+            int32 wanderKey = static_cast<int32>(params.wanderDistance);
+
+            hash |= (static_cast<uint64>(gridX & 0xFFFF) << 16);
+            hash |= (static_cast<uint64>(gridY & 0xFFFF) << 32);
+            hash |= (static_cast<uint64>(wanderKey & 0xFFFF) << 48);
+            break;
+        }
+
+        case MovementRequestType::PATH:
+        {
+            auto const& params = GetPathParams();
+
+            // Path ID is the primary distinguisher
+            hash |= (static_cast<uint64>(params.pathId) << 16);
+            hash |= (static_cast<uint64>(params.repeatable ? 1 : 0) << 48);
+            break;
+        }
+
         default:
             break;
     }
@@ -481,6 +589,37 @@ bool MovementRequest::IsDuplicateOf(MovementRequest const& other) const
             // All idle requests are duplicates of each other
             return true;
 
+        case MovementRequestType::RANDOM:
+        {
+            auto const& params1 = GetRandomParams();
+            auto const& params2 = other.GetRandomParams();
+
+            // Consider duplicate if center is within 5 yards and wander distance similar
+            constexpr float CENTER_THRESHOLD = 5.0f;
+            constexpr float WANDER_THRESHOLD = 2.0f;
+
+            float dx = params1.centerPos.GetPositionX() - params2.centerPos.GetPositionX();
+            float dy = params1.centerPos.GetPositionY() - params2.centerPos.GetPositionY();
+            float distSq = dx * dx + dy * dy;
+
+            if (distSq > (CENTER_THRESHOLD * CENTER_THRESHOLD))
+                return false;
+
+            if (::std::abs(params1.wanderDistance - params2.wanderDistance) > WANDER_THRESHOLD)
+                return false;
+
+            return true;
+        }
+
+        case MovementRequestType::PATH:
+        {
+            auto const& params1 = GetPathParams();
+            auto const& params2 = other.GetPathParams();
+
+            // Same path ID = duplicate
+            return params1.pathId == params2.pathId;
+        }
+
         default:
             return false;
     }
@@ -511,6 +650,8 @@ bool MovementRequest::IsDuplicateOf(MovementRequest const& other) const
         case MovementRequestType::CHARGE:    oss << "CHARGE"; break;
         case MovementRequestType::KNOCKBACK: oss << "KNOCKBACK"; break;
         case MovementRequestType::CUSTOM:    oss << "CUSTOM"; break;
+        case MovementRequestType::RANDOM:    oss << "RANDOM"; break;
+        case MovementRequestType::PATH:      oss << "PATH"; break;
         default:                              oss << "UNKNOWN"; break;
     }
 
@@ -554,6 +695,29 @@ bool MovementRequest::IsDuplicateOf(MovementRequest const& other) const
             auto const& params = GetFollowParams();
             oss << ", target=" << params.targetGuid.ToString();
             oss << ", distance=" << params.distance;
+            break;
+        }
+
+        case MovementRequestType::RANDOM:
+        {
+            auto const& params = GetRandomParams();
+            oss << ", center=(" << params.centerPos.GetPositionX() << ", "
+                << params.centerPos.GetPositionY() << ", "
+                << params.centerPos.GetPositionZ() << ")";
+            oss << ", wanderDist=" << params.wanderDistance;
+            if (params.duration.has_value())
+                oss << ", duration=" << params.duration->count() << "ms";
+            oss << ", walk=" << (params.forceWalk ? "yes" : "no");
+            break;
+        }
+
+        case MovementRequestType::PATH:
+        {
+            auto const& params = GetPathParams();
+            oss << ", pathId=" << params.pathId;
+            oss << ", repeatable=" << (params.repeatable ? "yes" : "no");
+            if (params.speed.has_value())
+                oss << ", speed=" << *params.speed;
             break;
         }
 

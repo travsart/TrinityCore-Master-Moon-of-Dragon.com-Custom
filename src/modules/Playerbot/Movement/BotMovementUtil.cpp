@@ -430,4 +430,244 @@ bool BotMovementUtil::IsMovingToDestination(Player* bot, Position const& destina
     return (distToDestination <= tolerance);
 }
 
+// ============================================================================
+// NEW: TrinityCore 11.2 Movement Features - Implementation
+// ============================================================================
+// These methods leverage the new MoveRandom() and MovePath() player support
+// added in TrinityCore 11.2 (commits 12743dd0e7, 1db1a0e57f)
+// ============================================================================
+
+bool BotMovementUtil::MoveRandomAround(Player* bot, float wanderDistance,
+    Optional<Milliseconds> duration, bool forceWalk)
+{
+    if (!bot)
+        return false;
+
+    // CRITICAL: Bot must be in world before any movement operations
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "MoveRandomAround: Bot {} not in world, skipping random movement", bot->GetName());
+        return false;
+    }
+
+    // Use bot's current position as center
+    Position centerPos;
+    centerPos.Relocate(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ());
+
+    return MoveRandomAroundPosition(bot, centerPos, wanderDistance, duration, forceWalk);
+}
+
+bool BotMovementUtil::MoveRandomAroundPosition(Player* bot, Position const& centerPos,
+    float wanderDistance, Optional<Milliseconds> duration, bool forceWalk)
+{
+    if (!bot)
+        return false;
+
+    // CRITICAL: Bot must be in world before any movement operations
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "MoveRandomAroundPosition: Bot {} not in world, skipping random movement", bot->GetName());
+        return false;
+    }
+
+    MotionMaster* mm = bot->GetMotionMaster();
+    if (!mm)
+    {
+        TC_LOG_ERROR("module.playerbot.movement",
+            "MoveRandomAroundPosition: Bot {} has NULL MotionMaster", bot->GetName());
+        return false;
+    }
+
+    // Validate wander distance
+    if (wanderDistance < 1.0f)
+        wanderDistance = 1.0f;
+    if (wanderDistance > 50.0f)
+        wanderDistance = 50.0f;  // Reasonable max to prevent extreme wandering
+
+    // Correct the center position Z to ground level
+    Position correctedCenter = centerPos;
+    CorrectPositionToGround(bot, correctedCenter);
+
+    // Determine speed selection mode
+    MovementWalkRunSpeedSelectionMode speedMode = forceWalk
+        ? MovementWalkRunSpeedSelectionMode::ForceWalk
+        : MovementWalkRunSpeedSelectionMode::Default;
+
+    // Check if already doing random movement near this center
+    MovementGeneratorType currentMoveType = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
+    if (currentMoveType == RANDOM_MOTION_TYPE)
+    {
+        // Already wandering - check if center is similar
+        float distFromCenter = bot->GetExactDist2d(correctedCenter.GetPositionX(), correctedCenter.GetPositionY());
+        if (distFromCenter <= wanderDistance)
+        {
+            TC_LOG_DEBUG("module.playerbot.movement",
+                "MoveRandomAroundPosition: Bot {} already wandering near center ({:.1f}yd away)",
+                bot->GetName(), distFromCenter);
+            return true;
+        }
+    }
+
+    // Don't interrupt important movement types
+    if (currentMoveType == CHASE_MOTION_TYPE ||
+        currentMoveType == FOLLOW_MOTION_TYPE ||
+        currentMoveType == POINT_MOTION_TYPE)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "MoveRandomAroundPosition: Bot {} has active movement (type={}), not starting wander",
+            bot->GetName(), static_cast<int>(currentMoveType));
+        return false;
+    }
+
+    // Use TrinityCore 11.2's MoveRandom() for players
+    // NEW: This now works for players (previously creature-only)
+    TC_LOG_DEBUG("module.playerbot.movement",
+        "MoveRandomAroundPosition: Bot {} starting random wander (center={:.1f},{:.1f},{:.1f}, radius={:.1f}yd, walk={})",
+        bot->GetName(),
+        correctedCenter.GetPositionX(), correctedCenter.GetPositionY(), correctedCenter.GetPositionZ(),
+        wanderDistance, forceWalk ? "yes" : "no");
+
+    // First teleport to center if needed (only if far from center)
+    float distToCenter = bot->GetExactDist(correctedCenter);
+    if (distToCenter > wanderDistance * 2)
+    {
+        // Too far from center - move there first
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "MoveRandomAroundPosition: Bot {} is {:.1f}yd from center, moving there first",
+            bot->GetName(), distToCenter);
+        mm->MovePoint(0, correctedCenter.GetPositionX(), correctedCenter.GetPositionY(),
+            correctedCenter.GetPositionZ());
+        return true;
+    }
+
+    // Start random movement using TrinityCore 11.2 API
+    mm->MoveRandom(wanderDistance, duration, Optional<float>{}, speedMode);
+
+    return true;
+}
+
+bool BotMovementUtil::MoveAlongPath(Player* bot, uint32 pathId, bool repeatable,
+    bool forceWalk, Optional<float> speed)
+{
+    if (!bot)
+        return false;
+
+    // CRITICAL: Bot must be in world before any movement operations
+    if (!bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "MoveAlongPath: Bot {} not in world, skipping path movement", bot->GetName());
+        return false;
+    }
+
+    // Path ID 0 is invalid
+    if (pathId == 0)
+    {
+        TC_LOG_ERROR("module.playerbot.movement",
+            "MoveAlongPath: Bot {} - invalid pathId 0", bot->GetName());
+        return false;
+    }
+
+    MotionMaster* mm = bot->GetMotionMaster();
+    if (!mm)
+    {
+        TC_LOG_ERROR("module.playerbot.movement",
+            "MoveAlongPath: Bot {} has NULL MotionMaster", bot->GetName());
+        return false;
+    }
+
+    // Don't interrupt important movement types
+    MovementGeneratorType currentMoveType = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
+    if (currentMoveType == CHASE_MOTION_TYPE || currentMoveType == FOLLOW_MOTION_TYPE)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "MoveAlongPath: Bot {} has active chase/follow (type={}), not starting path",
+            bot->GetName(), static_cast<int>(currentMoveType));
+        return false;
+    }
+
+    // Check if already on the same path
+    if (currentMoveType == WAYPOINT_MOTION_TYPE)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "MoveAlongPath: Bot {} already on a waypoint path", bot->GetName());
+        // Could check if same path ID, but for now just let it continue
+        return true;
+    }
+
+    // Determine speed selection mode
+    MovementWalkRunSpeedSelectionMode speedMode = forceWalk
+        ? MovementWalkRunSpeedSelectionMode::ForceWalk
+        : MovementWalkRunSpeedSelectionMode::Default;
+
+    TC_LOG_DEBUG("module.playerbot.movement",
+        "MoveAlongPath: Bot {} starting path {} (repeatable={}, walk={})",
+        bot->GetName(), pathId, repeatable ? "yes" : "no", forceWalk ? "yes" : "no");
+
+    // Use TrinityCore 11.2's MovePath() for players
+    // NEW: This now works for players (previously creature-only)
+    mm->MovePath(pathId, repeatable,
+        Optional<Milliseconds>{},                  // duration
+        speed,                                     // speed override
+        speedMode,                                 // walk/run mode
+        Optional<::std::pair<Milliseconds, Milliseconds>>{},  // wait time at end
+        Optional<float>{},                         // wander at ends
+        Optional<bool>{},                          // follow backwards
+        Optional<bool>{},                          // exact spline
+        true);                                     // generate path
+
+    return true;
+}
+
+bool BotMovementUtil::IsWandering(Player* bot)
+{
+    if (!bot)
+        return false;
+
+    MotionMaster* mm = bot->GetMotionMaster();
+    if (!mm)
+        return false;
+
+    return mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) == RANDOM_MOTION_TYPE;
+}
+
+bool BotMovementUtil::IsFollowingPath(Player* bot)
+{
+    if (!bot)
+        return false;
+
+    MotionMaster* mm = bot->GetMotionMaster();
+    if (!mm)
+        return false;
+
+    return mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) == WAYPOINT_MOTION_TYPE;
+}
+
+void BotMovementUtil::StopWanderingOrPath(Player* bot)
+{
+    if (!bot)
+        return;
+
+    MotionMaster* mm = bot->GetMotionMaster();
+    if (!mm)
+        return;
+
+    MovementGeneratorType currentMoveType = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
+
+    if (currentMoveType == RANDOM_MOTION_TYPE)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "StopWanderingOrPath: Bot {} stopping random movement", bot->GetName());
+        mm->Remove(RANDOM_MOTION_TYPE, MOTION_SLOT_ACTIVE);
+    }
+    else if (currentMoveType == WAYPOINT_MOTION_TYPE)
+    {
+        TC_LOG_DEBUG("module.playerbot.movement",
+            "StopWanderingOrPath: Bot {} stopping waypoint path", bot->GetName());
+        mm->Remove(WAYPOINT_MOTION_TYPE, MOTION_SLOT_ACTIVE);
+    }
+}
+
 } // namespace Playerbot

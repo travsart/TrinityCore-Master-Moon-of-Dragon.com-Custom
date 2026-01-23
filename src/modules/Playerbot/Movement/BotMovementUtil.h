@@ -170,6 +170,118 @@ public:
      * @return true if bot is already moving to this destination
      */
     static bool IsMovingToDestination(Player* bot, Position const& destination, float tolerance = 1.0f);
+
+    // ========================================================================
+    // NEW: TrinityCore 11.2 Movement Features
+    // ========================================================================
+    // These methods leverage the new MoveRandom() and MovePath() player support
+    // added in TrinityCore 11.2 (commits 12743dd0e7, 1db1a0e57f)
+    // ========================================================================
+
+    /**
+     * Start random wandering around current position
+     *
+     * NEW: Uses TrinityCore 11.2's MoveRandom() for players.
+     * Creates natural idle behavior by wandering around a center point.
+     *
+     * Use Cases:
+     * - Town idle: Bots wander near mailbox/AH/bank naturally
+     * - Waiting for group: Wander near meeting point
+     * - Guard duty: Patrol randomly within defense perimeter
+     * - Fishing spots: Move around fishing area
+     *
+     * @param bot Player bot to move
+     * @param wanderDistance Radius of wander area in yards (default 5.0)
+     * @param duration How long to wander (default 30 seconds, empty = until interrupted)
+     * @param forceWalk Walk instead of run (default true for natural movement)
+     * @return true if random movement initiated
+     *
+     * Example:
+     *   // Natural town idle behavior
+     *   BotMovementUtil::MoveRandomAround(bot, 5.0f, 30s, true);
+     *
+     *   // Guard patrol behavior (larger radius)
+     *   BotMovementUtil::MoveRandomAround(bot, 15.0f, {}, true);
+     */
+    static bool MoveRandomAround(Player* bot, float wanderDistance = 5.0f,
+        Optional<Milliseconds> duration = Milliseconds(30000), bool forceWalk = true);
+
+    /**
+     * Start random wandering around a specific position
+     *
+     * Same as MoveRandomAround() but with custom center point.
+     *
+     * @param bot Player bot to move
+     * @param centerPos Center point to wander around
+     * @param wanderDistance Radius of wander area in yards
+     * @param duration How long to wander
+     * @param forceWalk Walk instead of run
+     * @return true if random movement initiated
+     *
+     * Example:
+     *   // Wander around a quest giver while waiting
+     *   Position questGiverPos = questGiver->GetPosition();
+     *   BotMovementUtil::MoveRandomAroundPosition(bot, questGiverPos, 8.0f, 60s, true);
+     */
+    static bool MoveRandomAroundPosition(Player* bot, Position const& centerPos,
+        float wanderDistance = 5.0f, Optional<Milliseconds> duration = Milliseconds(30000),
+        bool forceWalk = true);
+
+    /**
+     * Follow a waypoint path by ID
+     *
+     * NEW: Uses TrinityCore 11.2's MovePath() for players.
+     * Allows bots to follow predefined waypoint paths for smooth navigation.
+     *
+     * Use Cases:
+     * - Quest routes: Pre-defined paths to quest objectives
+     * - Dungeon pathing: Follow tank's path through instance
+     * - Patrol behavior: Guard bots patrolling an area
+     * - Gathering routes: Mining/herbalism farming paths
+     * - Boss mechanics: Execute precise movement patterns
+     *
+     * @param bot Player bot to move
+     * @param pathId Waypoint path ID from waypoint_path table or BotWaypointPathManager
+     * @param repeatable Loop the path when reaching the end
+     * @param forceWalk Walk instead of run
+     * @param speed Optional speed override
+     * @return true if path movement initiated
+     *
+     * Example:
+     *   // Follow a quest route path
+     *   BotMovementUtil::MoveAlongPath(bot, 12345, false, false);
+     *
+     *   // Patrol path that loops
+     *   BotMovementUtil::MoveAlongPath(bot, 12346, true, true);
+     */
+    static bool MoveAlongPath(Player* bot, uint32 pathId, bool repeatable = false,
+        bool forceWalk = false, Optional<float> speed = {});
+
+    /**
+     * Check if bot is currently in random wandering mode
+     *
+     * @param bot Player bot to check
+     * @return true if bot is randomly wandering
+     */
+    static bool IsWandering(Player* bot);
+
+    /**
+     * Check if bot is currently following a waypoint path
+     *
+     * @param bot Player bot to check
+     * @return true if bot is following a path
+     */
+    static bool IsFollowingPath(Player* bot);
+
+    /**
+     * Stop random wandering or path following
+     *
+     * Specifically clears RANDOM_MOTION_TYPE or WAYPOINT_MOTION_TYPE
+     * without affecting other movement types.
+     *
+     * @param bot Player bot to stop
+     */
+    static void StopWanderingOrPath(Player* bot);
 };
 
 } // namespace Playerbot
