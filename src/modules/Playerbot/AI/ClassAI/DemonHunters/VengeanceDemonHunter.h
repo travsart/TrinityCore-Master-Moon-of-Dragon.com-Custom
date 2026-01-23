@@ -23,6 +23,7 @@
 #include "ObjectAccessor.h"
 #include "Log.h"
 #include "DemonHunterAI.h"
+#include "DemonHunterTalentEnhancements.h"
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
@@ -290,7 +291,7 @@ public:
     using Base::_resource;
     explicit VengeanceDemonHunterRefactored(Player* bot)
         : TankSpecialization<PainResource>(bot)
-        
+        , _talentState(bot)
         , _soulFragments()
         , _demonSpikes()
         , _lastShearTime(0)
@@ -394,29 +395,22 @@ protected:
         uint32 currentPain = _resource;
         uint32 now = GameTime::GetGameTimeMS();
 
-        // Priority 1: Sigil of Flame for threat and damage
+        // TrinityCore 11.2: Check talent-based priorities first
+        // This handles Painbringer, Soulmonger, Cycle of Binding, Retaliation
+        if (HandleTalentPriorities(target))
+            return;
+
+        // Priority 1: Sigil of Flame for threat and damage (with Cycle of Binding tracking)
         if (this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target))
         {
             this->CastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target);
             _lastSigilOfFlameTime = now;
-            
 
-        // Register cooldowns using CooldownManager
-        // COMMENTED OUT:         _cooldowns.RegisterBatch({
-        // COMMENTED OUT:             {DemonHunterSpells::METAMORPHOSIS_VENGEANCE, CooldownPresets::MAJOR_OFFENSIVE, 1},
-        // COMMENTED OUT:             {DemonHunterSpells::DEMON_SPIKES, 20000, 1},
-        // COMMENTED OUT:             {DemonHunterSpells::FIERY_BRAND, CooldownPresets::OFFENSIVE_60, 1},
-        // COMMENTED OUT:             {DemonHunterSpells::SIGIL_OF_FLAME, CooldownPresets::OFFENSIVE_30, 1},
-        // COMMENTED OUT:             {SIGIL_OF_SILENCE, CooldownPresets::OFFENSIVE_60, 1},
-        // COMMENTED OUT:             {SIGIL_OF_MISERY, 90000, 1},
-        // COMMENTED OUT:             {SIGIL_OF_CHAINS, 90000, 1},
-        // COMMENTED OUT:             {INFERNAL_STRIKE, 20000, 1},
-        // COMMENTED OUT:             {SOUL_BARRIER, CooldownPresets::OFFENSIVE_30, 1},
-        // COMMENTED OUT:             {FEL_DEVASTATION, CooldownPresets::OFFENSIVE_60, 1},
-        // COMMENTED OUT:             {TORMENT, CooldownPresets::DISPEL, 1},
-        // COMMENTED OUT:         });
+            // Track for Cycle of Binding if talented
+            if (_talentState.talents.HasCycleOfBinding())
+                _talentState.cycleOfBinding.OnSigilActivated(DHtalents::SIGIL_OF_FLAME);
 
-        TC_LOG_DEBUG("playerbot", "Vengeance: Sigil of Flame cast");
+            TC_LOG_DEBUG("playerbot", "Vengeance: Sigil of Flame cast");
             return;
         }
 
@@ -443,12 +437,24 @@ protected:
         }
 
         // Priority 4: Soul Cleave for healing (high priority if low health or high Pain)
+        // Note: Painbringer-optimized Soul Cleave is handled in HandleTalentPriorities
         if (ShouldUseSoulCleave(currentPain) && currentPain >= 30)
         {
             this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
             _lastSoulCleaveTime = now;
             this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
-            _soulFragments.ConsumeFragments(2); // Consumes up to 2 fragments for healing
+
+            uint32 fragmentsConsumed = ::std::min(_soulFragments.GetFragmentCount(), 2u);
+            _soulFragments.ConsumeFragments(fragmentsConsumed);
+
+            // Track for Painbringer if talented
+            if (_talentState.talents.HasPainbringer())
+                _talentState.painbringer.OnSoulCleave();
+
+            // Track for Soulmonger if talented
+            if (_talentState.talents.HasSoulmonger())
+                _talentState.soulmonger.OnFragmentsConsumed(fragmentsConsumed);
+
             TC_LOG_DEBUG("playerbot", "Vengeance: Soul Cleave cast");
             return;
         }
@@ -458,9 +464,15 @@ protected:
         {
             if (_soulFragments.HasMinFragments(4))
             {
+                uint32 fragmentsConsumed = _soulFragments.GetFragmentCount();
                 this->CastSpell(DemonHunterSpells::SPIRIT_BOMB, this->GetBot());
                 this->ConsumeResource(DemonHunterSpells::SPIRIT_BOMB);
                 _soulFragments.ConsumeAllFragments();
+
+                // Track for Soulmonger if talented
+                if (_talentState.talents.HasSoulmonger())
+                    _talentState.soulmonger.OnFragmentsConsumed(fragmentsConsumed);
+
                 TC_LOG_DEBUG("playerbot", "Vengeance: Spirit Bomb cast");
                 return;
             }
@@ -479,7 +491,8 @@ protected:
             }
         }
 
-        // Priority 7: Shear for basic Pain generation
+        // Priority 7: Shear for basic Pain generation (tracks Painbringer consumption)
+        // Note: Painbringer-optimized Shear is handled in HandleTalentPriorities
         if (currentPain < 90)
         {
             if (this->CanCastSpell(DemonHunterSpells::SHEAR, target))
@@ -487,6 +500,11 @@ protected:
                 this->CastSpell(DemonHunterSpells::SHEAR, target);
                 _lastShearTime = now;
                 GeneratePain(10);
+
+                // Track for Painbringer if talented (consumes buff)
+                if (_talentState.talents.HasPainbringer() && _talentState.painbringer.IsBuffActive())
+                    _talentState.painbringer.OnShear();
+
                 TC_LOG_DEBUG("playerbot", "Vengeance: Shear cast");
                 return;
             }
@@ -508,35 +526,62 @@ protected:
     {
         uint32 currentPain = _resource;
 
-        // Priority 1: Sigil of Flame for AoE threat
+        // TrinityCore 11.2: Check talent-based priorities first
+        // Retaliation is especially valuable in AoE for damage reflection
+        if (HandleTalentPriorities(target))
+            return;
+
+        // Priority 1: Sigil of Flame for AoE threat (with Cycle of Binding tracking)
         if (this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target))
         {
             this->CastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target);
             _lastSigilOfFlameTime = GameTime::GetGameTimeMS();
+
+            // Track for Cycle of Binding if talented
+            if (_talentState.talents.HasCycleOfBinding())
+                _talentState.cycleOfBinding.OnSigilActivated(DHtalents::SIGIL_OF_FLAME);
+
             TC_LOG_DEBUG("playerbot", "Vengeance: Sigil of Flame AoE");
             return;
         }
 
-        // Priority 2: Spirit Bomb for AoE damage/threat
+        // Priority 2: Spirit Bomb for AoE damage/threat (with Soulmonger tracking)
         if (this->GetBot()->HasSpell(SPIRIT_BOMB_TALENT) && currentPain >= 40)
         {
             if (_soulFragments.HasMinFragments(3))
             {
+                uint32 fragmentsConsumed = _soulFragments.GetFragmentCount();
                 this->CastSpell(DemonHunterSpells::SPIRIT_BOMB, this->GetBot());
                 this->ConsumeResource(DemonHunterSpells::SPIRIT_BOMB);
                 _soulFragments.ConsumeAllFragments();
+
+                // Track for Soulmonger if talented
+                if (_talentState.talents.HasSoulmonger())
+                    _talentState.soulmonger.OnFragmentsConsumed(fragmentsConsumed);
+
                 TC_LOG_DEBUG("playerbot", "Vengeance: Spirit Bomb AoE");
                 return;
             }
         }
 
-        // Priority 3: Soul Cleave for AoE healing/damage
+        // Priority 3: Soul Cleave for AoE healing/damage (with Painbringer tracking)
         if (currentPain >= 30)
         {
             this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
             _lastSoulCleaveTime = GameTime::GetGameTimeMS();
             this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
-            _soulFragments.ConsumeFragments(2);
+
+            uint32 fragmentsConsumed = ::std::min(_soulFragments.GetFragmentCount(), 2u);
+            _soulFragments.ConsumeFragments(fragmentsConsumed);
+
+            // Track for Painbringer if talented
+            if (_talentState.talents.HasPainbringer())
+                _talentState.painbringer.OnSoulCleave();
+
+            // Track for Soulmonger if talented
+            if (_talentState.talents.HasSoulmonger())
+                _talentState.soulmonger.OnFragmentsConsumed(fragmentsConsumed);
+
             TC_LOG_DEBUG("playerbot", "Vengeance: Soul Cleave AoE");
             return;
         }
@@ -580,6 +625,9 @@ private:
         // Update Demon Spikes tracking
         _demonSpikes.Update();
 
+        // Update talent state (TrinityCore 11.2 new talents)
+        _talentState.Update();
+
         // Check Fiery Brand expiry
         if (_fieryBrandActive && now >= _fieryBrandEndTime)
         {
@@ -609,13 +657,18 @@ private:
         // Calculate incoming damage rate (simplified)
         float incomingDamageRate = CalculateIncomingDamageRate();
 
-        // Use Demon Spikes for active mitigation
+        // Use Demon Spikes for active mitigation (with Retaliation tracking)
         if (_demonSpikes.ShouldUse(incomingDamageRate, healthPct))
         {
             if (this->CanCastSpell(DemonHunterSpells::DEMON_SPIKES, bot))
             {
                 this->CastSpell(DemonHunterSpells::DEMON_SPIKES, bot);
                 _demonSpikes.Use();
+
+                // Track for Retaliation if talented
+                if (_talentState.talents.HasRetaliation())
+                    _talentState.retaliation.OnDemonSpikesActivated();
+
                 TC_LOG_DEBUG("playerbot", "Vengeance: Demon Spikes activated");
             }
         }
@@ -1091,6 +1144,9 @@ private:
     }
 
 private:
+    // TrinityCore 11.2 talent state (Painbringer, Soulmonger, Cycle of Binding, Retaliation)
+    DHTalentState _talentState;
+
     VengeanceSoulFragmentManager _soulFragments;
     VengeanceDemonSpikesTracker _demonSpikes;
 
@@ -1105,6 +1161,198 @@ private:
     bool _metamorphosisActive;
     uint32 _metamorphosisEndTime;
     bool _immolationAuraActive;
+
+    // ========================================================================
+    // TRINITYCORE 11.2 TALENT INTEGRATION HELPERS
+    // ========================================================================
+
+    /**
+     * Handles Painbringer talent optimization.
+     *
+     * Painbringer: Soul Cleave grants damage increase buff to Shear
+     * Optimal rotation: Soul Cleave -> Shear (boosted) -> repeat
+     *
+     * @return true if Painbringer-optimized action was taken
+     */
+    bool HandlePainbringerPriority(::Unit* target)
+    {
+        if (!_talentState.talents.HasPainbringer())
+            return false;
+
+        // Update Painbringer tracker
+        if (_talentState.painbringer.IsBuffActive())
+        {
+            // Buff is active - prioritize Shear to consume the damage boost
+            if (this->CanCastSpell(DemonHunterSpells::SHEAR, target))
+            {
+                this->CastSpell(DemonHunterSpells::SHEAR, target);
+                _lastShearTime = GameTime::GetGameTimeMS();
+                GeneratePain(10);
+                _talentState.painbringer.OnShear();
+                TC_LOG_DEBUG("playerbot", "Vengeance: Painbringer-boosted Shear");
+                return true;
+            }
+        }
+        else
+        {
+            // No buff - check if Soul Cleave should be used to gain the buff
+            if (_talentState.painbringer.ShouldPrioritizeSoulCleave(_resource, _soulFragments.GetFragmentCount()))
+            {
+                if (this->CanCastSpell(DemonHunterSpells::SOUL_CLEAVE, target))
+                {
+                    this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
+                    _lastSoulCleaveTime = GameTime::GetGameTimeMS();
+                    this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
+                    _soulFragments.ConsumeFragments(2);
+                    _talentState.painbringer.OnSoulCleave();
+                    TC_LOG_DEBUG("playerbot", "Vengeance: Soul Cleave to trigger Painbringer");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Handles Soulmonger talent optimization.
+     *
+     * Soulmonger: Soul Fragments have chance to create additional fragments
+     * Strategy: More aggressive fragment consumption for bonus fragment generation
+     *
+     * @return true if Soulmonger-optimized action was taken
+     */
+    bool HandleSoulmongerPriority(::Unit* target)
+    {
+        if (!_talentState.talents.HasSoulmonger())
+            return false;
+
+        // With Soulmonger, we want to consume fragments more aggressively
+        // because each consumption has a chance to spawn bonus fragments
+        if (_talentState.soulmonger.ShouldAggressivelyConsumeFragments(_soulFragments.GetFragmentCount()))
+        {
+            // Use Soul Cleave or Spirit Bomb to consume fragments
+            if (_resource >= 30 && this->CanCastSpell(DemonHunterSpells::SOUL_CLEAVE, target))
+            {
+                this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
+                _lastSoulCleaveTime = GameTime::GetGameTimeMS();
+                this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
+
+                uint32 fragmentsConsumed = ::std::min(_soulFragments.GetFragmentCount(), 2u);
+                _soulFragments.ConsumeFragments(fragmentsConsumed);
+                _talentState.soulmonger.OnFragmentsConsumed(fragmentsConsumed);
+
+                TC_LOG_DEBUG("playerbot", "Vengeance: Soulmonger-optimized Soul Cleave (consumed {} fragments)",
+                    fragmentsConsumed);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Handles Cycle of Binding talent optimization.
+     *
+     * Cycle of Binding: Sigils reduce cooldown of other Sigils by 2 seconds
+     * Strategy: Alternate between different Sigils for maximum uptime
+     *
+     * @return true if Cycle of Binding-optimized action was taken
+     */
+    bool HandleCycleOfBindingPriority(::Unit* target)
+    {
+        if (!_talentState.talents.HasCycleOfBinding())
+            return false;
+
+        // Get recommended next Sigil based on cooldown reduction tracking
+        uint32 recommendedSigil = _talentState.cycleOfBinding.GetRecommendedNextSigil(this->GetBot());
+
+        // Try to cast the recommended Sigil
+        if (this->CanCastSpell(recommendedSigil, target))
+        {
+            this->CastSpell(recommendedSigil, target);
+            _talentState.cycleOfBinding.OnSigilActivated(recommendedSigil);
+
+            TC_LOG_DEBUG("playerbot", "Vengeance: Cycle of Binding Sigil {} cast (benefits other Sigils)",
+                recommendedSigil);
+            return true;
+        }
+
+        // Fallback to any available Sigil
+        for (uint32 sigil : DHtalents::ALL_SIGILS)
+        {
+            if (sigil != _talentState.cycleOfBinding.GetLastSigilActivated() &&
+                this->GetBot()->HasSpell(sigil) &&
+                this->CanCastSpell(sigil, target))
+            {
+                this->CastSpell(sigil, target);
+                _talentState.cycleOfBinding.OnSigilActivated(sigil);
+
+                TC_LOG_DEBUG("playerbot", "Vengeance: Cycle of Binding fallback Sigil {}", sigil);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Handles Retaliation talent optimization.
+     *
+     * Retaliation: Demon Spikes causes melee attackers to take fire damage
+     * Strategy: Prioritize Demon Spikes when facing multiple melee attackers
+     *
+     * @return true if Retaliation-optimized action was taken
+     */
+    bool HandleRetaliationPriority()
+    {
+        if (!_talentState.talents.HasRetaliation())
+            return false;
+
+        uint32 attackerCount = this->GetEnemiesInRange(5.0f);  // Melee range
+
+        // With Retaliation, Demon Spikes becomes more valuable against multiple attackers
+        if (_talentState.retaliation.ShouldPrioritizeDemonSpikes(attackerCount))
+        {
+            if (_demonSpikes.CanUse() && this->CanCastSpell(DemonHunterSpells::DEMON_SPIKES, this->GetBot()))
+            {
+                this->CastSpell(DemonHunterSpells::DEMON_SPIKES, this->GetBot());
+                _demonSpikes.Use();
+                _talentState.retaliation.OnDemonSpikesActivated();
+
+                TC_LOG_DEBUG("playerbot", "Vengeance: Retaliation-prioritized Demon Spikes ({} attackers)",
+                    attackerCount);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Integrates all TrinityCore 11.2 talent priorities into rotation.
+     * Called at the start of rotation to handle talent-specific optimizations.
+     *
+     * @return true if a talent-based action was taken
+     */
+    bool HandleTalentPriorities(::Unit* target)
+    {
+        // Priority 1: Retaliation - defensive value against multiple attackers
+        if (HandleRetaliationPriority())
+            return true;
+
+        // Priority 2: Painbringer - rotation optimization
+        if (HandlePainbringerPriority(target))
+            return true;
+
+        // Priority 3: Cycle of Binding - Sigil cooldown reduction
+        if (HandleCycleOfBindingPriority(target))
+            return true;
+
+        // Priority 4: Soulmonger - aggressive fragment consumption
+        if (HandleSoulmongerPriority(target))
+            return true;
+
+        return false;
+    }
 };
 
 } // namespace Playerbot

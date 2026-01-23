@@ -33,6 +33,9 @@
 #include "../Common/CooldownManager.h"
 #include "../../BotAI.h"
 
+// TrinityCore 11.2 New Priest Talents
+#include "PriestTalentEnhancements.h"
+
 namespace Playerbot
 {
 
@@ -70,6 +73,12 @@ constexpr uint32 HOLY_FADE = 586;
 constexpr uint32 HOLY_DESPERATE_PRAYER = 19236;
 constexpr uint32 HOLY_POWER_WORD_FORTITUDE = 21562;
 constexpr uint32 HOLY_PURIFY = 527;
+
+// NEW: TrinityCore 11.2 Talent Spell IDs
+constexpr uint32 HOLY_EMPYREAL_BLAZE = 372616;
+constexpr uint32 HOLY_EMPYREAL_BLAZE_AURA = 372617;
+constexpr uint32 HOLY_POWER_SURGE = 453109;
+constexpr uint32 HOLY_POWER_SURGE_PERIODIC = 453112;
 
 // Renew HoT tracker
 class RenewTracker
@@ -232,6 +241,7 @@ public:
         : HealerSpecialization<ManaResource>(bot)
         , _renewTracker()
         , _pomTracker()
+        , _talentState(bot)  // NEW: TrinityCore 11.2 talent state
         , _apotheosisActive(false)
         , _apotheosisEndTime(0)
         , _lastApotheosisTime(0)
@@ -239,6 +249,8 @@ public:
         , _lastDivineHymnTime(0)
         , _lastSalvationTime(0)
         , _lastSymbolOfHopeTime(0)
+        , _lastHaloTime(0)      // NEW: Track Halo CD for Power Surge
+        , _lastHolyFireTime(0)  // NEW: Track Holy Fire for Empyreal Blaze
         , _cooldowns()
     {
         // Register cooldowns for major abilities
@@ -401,7 +413,120 @@ private:
 
         _renewTracker.Update(bot);
         _pomTracker.Update(bot);
+        _talentState.Update();  // NEW: Update talent state
         UpdateCooldownStates();
+    }
+
+    // ========================================================================
+    // NEW: TrinityCore 11.2 TALENT-BASED ENHANCEMENTS
+    // ========================================================================
+
+    /**
+     * Handle Empyreal Blaze talent for damage rotation
+     *
+     * When we have the Empyreal Blaze buff (from casting Holy Fire),
+     * the next Holy Fire becomes instant cast and triggers AoE healing.
+     */
+    bool HandleEmpyrealBlazePriority(::Unit* target)
+    {
+        Player* bot = this->GetBot();
+        if (!bot || !target)
+            return false;
+
+        if (!_talentState.talents.HasEmpyrealBlaze())
+            return false;
+
+        // Check if we have the Empyreal Blaze buff (instant Holy Fire ready)
+        if (bot->HasAura(HOLY_EMPYREAL_BLAZE_AURA))
+        {
+            // High priority instant Holy Fire
+            if (this->CanCastSpell(HOLY_HOLY_FIRE, target))
+            {
+                this->CastSpell(HOLY_HOLY_FIRE, target);
+                _lastHolyFireTime = GameTime::GetGameTimeMS();
+                _talentState.empyrealBlaze.OnBlazeConsumed();
+                TC_LOG_DEBUG("module.playerbot.holy",
+                    "HolyPriest: {} cast instant Holy Fire (Empyreal Blaze)",
+                    bot->GetName());
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle Power Surge talent optimization
+     *
+     * After casting Halo, we get periodic healing/damage ticks.
+     * We should time Halo usage for maximum group benefit.
+     */
+    bool HandlePowerSurgePriority(const ::std::vector<Unit*>& group)
+    {
+        Player* bot = this->GetBot();
+        if (!bot)
+            return false;
+
+        if (!_talentState.talents.HasPowerSurge())
+            return false;
+
+        if (!bot->HasSpell(HOLY_HALO))
+            return false;
+
+        // Check cooldown (40 sec)
+        if ((GameTime::GetGameTimeMS() - _lastHaloTime) < 40000)
+            return false;
+
+        // Count injured group members
+        uint32 injuredCount = 0;
+        for (Unit* member : group)
+        {
+            if (member && member->GetHealthPct() < 85.0f)
+                ++injuredCount;
+        }
+
+        // Use Halo with Power Surge when 3+ injured for maximum value
+        if (injuredCount >= 3)
+        {
+            if (this->CanCastSpell(HOLY_HALO, bot))
+            {
+                this->CastSpell(HOLY_HALO, bot);
+                _lastHaloTime = GameTime::GetGameTimeMS();
+                _talentState.powerSurge.OnHaloCast(true); // Holy version
+                TC_LOG_DEBUG("module.playerbot.holy",
+                    "HolyPriest: {} cast Halo with Power Surge ({} injured)",
+                    bot->GetName(), injuredCount);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Enhanced Holy Fire usage for Empyreal Blaze procs
+     */
+    bool CastHolyFireWithBlaze(::Unit* target)
+    {
+        Player* bot = this->GetBot();
+        if (!bot || !target)
+            return false;
+
+        if (this->CanCastSpell(HOLY_HOLY_FIRE, target))
+        {
+            this->CastSpell(HOLY_HOLY_FIRE, target);
+            _lastHolyFireTime = GameTime::GetGameTimeMS();
+
+            // Track for Empyreal Blaze
+            if (_talentState.talents.HasEmpyrealBlaze())
+            {
+                _talentState.empyrealBlaze.OnHolyFireCast();
+                // The buff proc is handled by TrinityCore's spell scripts
+            }
+            return true;
+        }
+
+        return false;
     }    void UpdateCooldownStates()
     {
         Player* bot = this->GetBot();
@@ -744,6 +869,10 @@ private:
 
     bool HandleAoEHealing(const ::std::vector<Unit*>& group)
     {
+        // NEW: Power Surge Halo priority
+        if (HandlePowerSurgePriority(group))
+            return true;
+
         // Circle of Healing (instant AoE)
         uint32 injuredCount = 0;
         for (Unit* member : group)
@@ -962,14 +1091,13 @@ private:
 
     void ExecuteDamageRotation(::Unit* target)
     {
-        // Holy Fire (DoT + damage)
-        if (this->CanCastSpell(HOLY_HOLY_FIRE, target))
-        {
-
-            this->CastSpell(HOLY_HOLY_FIRE, target);
-
+        // NEW: Priority 1 - Empyreal Blaze instant Holy Fire
+        if (HandleEmpyrealBlazePriority(target))
             return;
-        }
+
+        // Holy Fire (DoT + damage + Empyreal Blaze proc)
+        if (CastHolyFireWithBlaze(target))
+            return;
 
         // Smite (filler)
         if (this->CanCastSpell(HOLY_SMITE, target))
@@ -1287,6 +1415,9 @@ private:
     RenewTracker _renewTracker;
     PrayerOfMendingTracker _pomTracker;
 
+    // NEW: TrinityCore 11.2 Talent State
+    PriestTalentState _talentState;
+
     bool _apotheosisActive;
     uint32 _apotheosisEndTime;
 
@@ -1295,6 +1426,10 @@ private:
     uint32 _lastDivineHymnTime;
     uint32 _lastSalvationTime;
     uint32 _lastSymbolOfHopeTime;
+
+    // NEW: TrinityCore 11.2 Cooldown Tracking
+    uint32 _lastHaloTime;
+    uint32 _lastHolyFireTime;
 
     CooldownManager _cooldowns;
 };

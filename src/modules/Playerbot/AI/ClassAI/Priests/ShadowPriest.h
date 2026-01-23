@@ -33,6 +33,9 @@
 #include "../Common/CooldownManager.h"
 #include "../../BotAI.h"
 
+// TrinityCore 11.2 New Priest Talents
+#include "PriestTalentEnhancements.h"
+
 namespace Playerbot
 {
 
@@ -68,6 +71,11 @@ constexpr uint32 SHADOW_FADE = 586;
 constexpr uint32 SHADOW_DESPERATE_PRAYER = 19236;
 constexpr uint32 SHADOW_POWER_WORD_FORTITUDE = 21562;
 constexpr uint32 SHADOW_SHADOWFORM = 232698;
+
+// NEW: TrinityCore 11.2 Talent Spell IDs
+constexpr uint32 SHADOW_MINDBENDER = 123040;
+constexpr uint32 SHADOW_SHADOWFIEND = 34433;
+constexpr uint32 SHADOW_HALO = 120644;  // Shadow version
 
 // Insanity tracker (Shadow Priest secondary resource - primary is still Mana)
 class InsanityTracker
@@ -276,12 +284,15 @@ public:
         , _insanityTracker()
         , _voidformTracker()
         , _dotTracker()
+        , _talentState(bot)  // NEW: TrinityCore 11.2 talent state
         , _darkAscensionActive(false)
         , _darkAscensionEndTime(0)
         , _lastDarkAscensionTime(0)
         , _lastVoidTorrentTime(0)
         , _lastMindgamesTime(0)
         , _lastVampiricEmbraceTime(0)
+        , _lastMindbenderTime(0)  // NEW: Track Mindbender/Shadowfiend CD
+        , _lastHaloTime(0)        // NEW: Track Halo CD
         // _cooldowns removed - inherited from base class, initialized there
     {
         // Register cooldowns for major abilities
@@ -395,7 +406,234 @@ private:
 
         _voidformTracker.Update(bot);
         _dotTracker.Update(bot);
+        _talentState.Update();  // NEW: Update talent state
         UpdateCooldownStates();
+    }
+
+    // ========================================================================
+    // NEW: TrinityCore 11.2 TALENT-BASED ROTATION ENHANCEMENTS
+    // ========================================================================
+
+    /**
+     * Handle Inescapable Torment talent optimization
+     *
+     * When Mindbender/Shadowfiend is active, prioritize Mind Blast and SW:Death
+     * to extend the pet duration and trigger additional damage.
+     */
+    bool HandleInescapableTormentPriority(::Unit* target)
+    {
+        Player* bot = this->GetBot();
+        if (!bot || !target)
+            return false;
+
+        // Only active if we have the talent and pet is out
+        if (!_talentState.talents.HasInescapableTorment())
+            return false;
+
+        if (!_talentState.inescapableTorment.IsPetActive())
+            return false;
+
+        // Prioritize Mind Blast to extend pet
+        if (this->CanCastSpell(SHADOW_MIND_BLAST, target))
+        {
+            this->CastSpell(SHADOW_MIND_BLAST, target);
+            _insanityTracker.GenerateInsanity(12);
+            _talentState.inescapableTorment.OnExtensionApplied(1000); // 1 sec extension
+            TC_LOG_DEBUG("module.playerbot.shadow",
+                "ShadowPriest: {} used Mind Blast for Inescapable Torment (pet remaining: {}ms)",
+                bot->GetName(), _talentState.inescapableTorment.GetRemainingPetDuration());
+            return true;
+        }
+
+        // SW:Death also triggers extension (execute phase)
+        if (target->GetHealthPct() < 20.0f && this->CanCastSpell(SHADOW_SHADOW_WORD_DEATH, target))
+        {
+            this->CastSpell(SHADOW_SHADOW_WORD_DEATH, target);
+            _insanityTracker.GenerateInsanity(15);
+            _talentState.inescapableTorment.OnExtensionApplied(1000);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle Death's Torment talent for execute phase
+     *
+     * When target has DoTs and is low health, SW:Death will hit multiple times
+     * if the target dies.
+     */
+    bool HandleDeathsTormentPriority(::Unit* target)
+    {
+        Player* bot = this->GetBot();
+        if (!bot || !target)
+            return false;
+
+        if (!_talentState.talents.HasDeathsTorment())
+            return false;
+
+        // Only prioritize if target is in execute range and has our DoTs
+        if (target->GetHealthPct() > 20.0f)
+            return false;
+
+        bool hasVT = _dotTracker.HasVampiricTouch(target->GetGUID());
+        bool hasSWP = _dotTracker.HasShadowWordPain(target->GetGUID());
+
+        if (!hasVT && !hasSWP)
+            return false;
+
+        // High priority SW:Death - will proc multiple hits on kill
+        if (this->CanCastSpell(SHADOW_SHADOW_WORD_DEATH, target))
+        {
+            this->CastSpell(SHADOW_SHADOW_WORD_DEATH, target);
+            _insanityTracker.GenerateInsanity(15);
+            TC_LOG_DEBUG("module.playerbot.shadow",
+                "ShadowPriest: {} used SW:Death for Death's Torment proc (target HP: {:.1f}%)",
+                bot->GetName(), target->GetHealthPct());
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle Insidious Ire - maximize DoT damage by not refreshing too early
+     *
+     * With this talent, each DoT tick increases damage. We want to let DoTs
+     * tick longer before refreshing to maximize the stacking bonus.
+     */
+    bool ShouldDelayDoTRefresh(ObjectGuid targetGuid, uint32 spellId) const
+    {
+        if (!_talentState.talents.HasInsidiousIre())
+            return false;
+
+        // Get current damage bonus from Insidious Ire
+        float bonus = _talentState.insidiousIre.GetCurrentBonus(targetGuid, spellId);
+
+        // If we have a significant bonus (>10%), delay refresh slightly
+        // to maximize damage from remaining ticks
+        if (bonus > 10.0f)
+        {
+            // Only delay if DoT still has substantial time remaining
+            uint32 remaining = 0;
+            if (spellId == SHADOW_VAMPIRIC_TOUCH)
+                remaining = _dotTracker.GetVampiricTouchTimeRemaining(targetGuid);
+            else if (spellId == SHADOW_SHADOW_WORD_PAIN)
+                remaining = _dotTracker.GetShadowWordPainTimeRemaining(targetGuid);
+
+            // Don't delay if less than 2 seconds remain
+            return remaining > 2000;
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle Mental Decay - Mind abilities extend DoTs
+     *
+     * With this talent, Mind Flay/Sear/Spike extend VT and SW:P.
+     * We can use fewer DoT refreshes and more Mind abilities.
+     */
+    bool ShouldUseMindAbilityForExtension(ObjectGuid targetGuid) const
+    {
+        if (!_talentState.talents.HasMentalDecay())
+            return false;
+
+        // Check if DoTs need extension but not full refresh
+        uint32 vtRemaining = _dotTracker.GetVampiricTouchTimeRemaining(targetGuid);
+        uint32 swpRemaining = _dotTracker.GetShadowWordPainTimeRemaining(targetGuid);
+
+        // If DoTs have 3-6 seconds remaining, Mind abilities can extend them
+        // instead of using a full recast
+        bool vtNeedsExtension = vtRemaining > 3000 && vtRemaining < 6000;
+        bool swpNeedsExtension = swpRemaining > 3000 && swpRemaining < 6000;
+
+        return vtNeedsExtension || swpNeedsExtension;
+    }
+
+    /**
+     * Handle Shadowy Apparitions - track and optimize for crit procs
+     */
+    void OnDoTCriticalHit(ObjectGuid targetGuid)
+    {
+        if (_talentState.talents.HasShadowyApparitions())
+        {
+            _talentState.apparitions.OnDoTCritical(targetGuid);
+            TC_LOG_DEBUG("module.playerbot.shadow",
+                "ShadowPriest: Shadowy Apparition spawned (total: {})",
+                _talentState.apparitions.GetTotalSpawned());
+        }
+    }
+
+    /**
+     * Summon Mindbender or Shadowfiend with talent tracking
+     */
+    bool SummonMindbenderOrShadowfiend(::Unit* target)
+    {
+        Player* bot = this->GetBot();
+        if (!bot || !target)
+            return false;
+
+        // Check cooldown (3 min for Shadowfiend, 1 min for Mindbender)
+        uint32 cooldownTime = _talentState.talents.HasMindbender() ? 60000 : 180000;
+        if ((GameTime::GetGameTimeMS() - _lastMindbenderTime) < cooldownTime)
+            return false;
+
+        uint32 petSpell = _talentState.talents.HasMindbender() ?
+            SHADOW_MINDBENDER : SHADOW_SHADOWFIEND;
+
+        if (this->CanCastSpell(petSpell, target))
+        {
+            this->CastSpell(petSpell, target);
+            _lastMindbenderTime = GameTime::GetGameTimeMS();
+
+            // Track for Inescapable Torment
+            uint32 baseDuration = _talentState.talents.HasMindbender() ? 15000 : 15000;
+            _talentState.inescapableTorment.OnPetSummoned(ObjectGuid::Empty, baseDuration);
+
+            TC_LOG_DEBUG("module.playerbot.shadow",
+                "ShadowPriest: {} summoned {} for combat",
+                bot->GetName(),
+                _talentState.talents.HasMindbender() ? "Mindbender" : "Shadowfiend");
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Cast Halo with Power Surge tracking
+     */
+    bool CastHaloWithPowerSurge(::Unit* target)
+    {
+        Player* bot = this->GetBot();
+        if (!bot || !target)
+            return false;
+
+        if (!bot->HasSpell(SHADOW_HALO))
+            return false;
+
+        // Check cooldown (40 sec)
+        if ((GameTime::GetGameTimeMS() - _lastHaloTime) < 40000)
+            return false;
+
+        if (this->CanCastSpell(SHADOW_HALO, target))
+        {
+            this->CastSpell(SHADOW_HALO, target);
+            _lastHaloTime = GameTime::GetGameTimeMS();
+
+            // Track for Power Surge talent
+            if (_talentState.talents.HasPowerSurge())
+            {
+                _talentState.powerSurge.OnHaloCast(false); // Shadow version
+                TC_LOG_DEBUG("module.playerbot.shadow",
+                    "ShadowPriest: {} cast Halo with Power Surge proc",
+                    bot->GetName());
+            }
+            return true;
+        }
+
+        return false;
     }
 
     void UpdateCooldownStates()
@@ -421,6 +659,29 @@ private:
 
         uint32 insanity = _insanityTracker.GetInsanity();
 
+        // ====================================================================
+        // NEW: TrinityCore 11.2 TALENT PRIORITY HANDLING
+        // ====================================================================
+
+        // Priority 1: Inescapable Torment - extend pet when active
+        if (HandleInescapableTormentPriority(target))
+            return;
+
+        // Priority 2: Death's Torment - execute phase optimization
+        if (HandleDeathsTormentPriority(target))
+            return;
+
+        // Summon pet if available (for Inescapable Torment synergy)
+        if (insanity >= 40 && !_talentState.inescapableTorment.IsPetActive())
+        {
+            if (SummonMindbenderOrShadowfiend(target))
+                return;
+        }
+
+        // ====================================================================
+        // END TALENT PRIORITY HANDLING
+        // ====================================================================
+
         // Enter Voidform (or Dark Ascension)
         if (insanity >= 60 && !_voidformTracker.IsActive())
         {
@@ -442,24 +703,49 @@ private:
                 _insanityTracker.Reset(); // Void Eruption consumes all Insanity
                 return;
             }
-        }        // Maintain DoTs        if (!_dotTracker.HasVampiricTouch(target->GetGUID()) ||            _dotTracker.NeedsVampiricTouchRefresh(target->GetGUID()))
-        {            if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
+        }        // Maintain DoTs (with Insidious Ire consideration)
+        bool vtNeedsRefresh = !_dotTracker.HasVampiricTouch(target->GetGUID()) ||
+            _dotTracker.NeedsVampiricTouchRefresh(target->GetGUID());
+        bool swpNeedsRefresh = !_dotTracker.HasShadowWordPain(target->GetGUID()) ||
+            _dotTracker.NeedsShadowWordPainRefresh(target->GetGUID());
+
+        // NEW: Mental Decay - use Mind abilities to extend DoTs instead of recasting
+        if (_talentState.talents.HasMentalDecay() &&
+            ShouldUseMindAbilityForExtension(target->GetGUID()))
         {
-                this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);
-                _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
-                _insanityTracker.GenerateInsanity(5);
+            // Use Mind Flay to extend DoTs instead of refreshing
+            if (this->CanCastSpell(SHADOW_MIND_FLAY, target))
+            {
+                this->CastSpell(SHADOW_MIND_FLAY, target);
+                _insanityTracker.GenerateInsanity(3);
+                _talentState.mentalDecay.OnMindAbilityUsed(target->GetGUID());
                 return;
             }
         }
 
-        
-        if (!_dotTracker.HasShadowWordPain(target->GetGUID()) ||            _dotTracker.NeedsShadowWordPainRefresh(target->GetGUID()))
+        // NEW: Insidious Ire - delay refresh to maximize stacking damage
+        if (vtNeedsRefresh && !ShouldDelayDoTRefresh(target->GetGUID(), SHADOW_VAMPIRIC_TOUCH))
+        {
+            if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
+            {
+                this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);
+                _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
+                _insanityTracker.GenerateInsanity(5);
+                // Track for Insidious Ire
+                _talentState.insidiousIre.OnDoTApplied(target->GetGUID(), SHADOW_VAMPIRIC_TOUCH);
+                return;
+            }
+        }
+
+        if (swpNeedsRefresh && !ShouldDelayDoTRefresh(target->GetGUID(), SHADOW_SHADOW_WORD_PAIN))
         {
             if (this->CanCastSpell(SHADOW_SHADOW_WORD_PAIN, target))
             {
                 this->CastSpell(SHADOW_SHADOW_WORD_PAIN, target);
                 _dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
                 _insanityTracker.GenerateInsanity(4);
+                // Track for Insidious Ire
+                _talentState.insidiousIre.OnDoTApplied(target->GetGUID(), SHADOW_SHADOW_WORD_PAIN);
                 return;
             }
         }
@@ -955,6 +1241,9 @@ private:
     VoidformTracker _voidformTracker;
     ShadowDoTTracker _dotTracker;
 
+    // NEW: TrinityCore 11.2 Talent State
+    PriestTalentState _talentState;
+
     bool _darkAscensionActive;
     uint32 _darkAscensionEndTime;
 
@@ -962,6 +1251,10 @@ private:
     uint32 _lastVoidTorrentTime;
     uint32 _lastMindgamesTime;
     uint32 _lastVampiricEmbraceTime;
+
+    // NEW: TrinityCore 11.2 Cooldown Tracking
+    uint32 _lastMindbenderTime;
+    uint32 _lastHaloTime;
 };
 
 } // namespace Playerbot
