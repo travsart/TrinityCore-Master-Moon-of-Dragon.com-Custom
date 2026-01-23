@@ -10,19 +10,20 @@
 **Target**: 25-40% CPU reduction, 5-10% memory reduction
 
 ### QW-4: Fix ClassAI Static Object Bug
-- **Status**: 🔄 IN PROGRESS
+- **Status**: ✅ COMPLETED
 - **Priority**: P0 (CRITICAL - Memory Leak)
 - **Started**: 2026-01-23
-- **Completed**: -
-- **Commit**: -
-- **Notes**: Verify overlap with UtilityContextBuilder thread safety fix
+- **Completed**: 2026-01-23
+- **Commit**: ec2095f443
+- **Notes**: Fixed 7 static variable bugs in ClassAI.cpp, CombatSpecializationBase.cpp, DemonHunterAI.cpp, EvokerAI.cpp, MageAI.cpp, PriestAI.cpp. All converted to per-instance member variables.
 
 ### QW-2: Optimize Target Selection Algorithm (O(n²) → O(n))
-- **Status**: ⏳ PENDING
+- **Status**: ✅ COMPLETED
 - **Priority**: P0 (CRITICAL)
-- **Started**: -
-- **Completed**: -
-- **Commit**: -
+- **Started**: 2026-01-23
+- **Completed**: 2026-01-23
+- **Commit**: (pending)
+- **Notes**: Implemented threat score caching (500ms refresh) and group focus caching to eliminate redundant GetThreat() calls and O(n*m) group member iteration. Added _threatScoreCache and _groupFocusCache with RefreshThreatScoreCache(), RefreshGroupFocusCache(), GetCachedThreatScore(), GetCachedGroupFocusCount() methods.
 
 ### QW-3: Add Container reserve() Calls to Hot Paths
 - **Status**: ⏳ PENDING

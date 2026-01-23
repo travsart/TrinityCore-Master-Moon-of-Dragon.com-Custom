@@ -33,7 +33,8 @@ namespace Playerbot
 TargetSelector::TargetSelector(Player* bot, BotThreatManager* threatManager)
     : _bot(bot), _threatManager(threatManager), _groupTarget(nullptr), _emergencyMode(false),
       _maxTargetsToEvaluate(DEFAULT_MAX_TARGETS), _selectionCacheDuration(CACHE_DURATION_MS),
-      _defaultMaxRange(DEFAULT_MAX_RANGE), _cacheTimestamp(0), _cacheDirty(true)
+      _defaultMaxRange(DEFAULT_MAX_RANGE), _cacheTimestamp(0), _cacheDirty(true),
+      _threatScoreCacheTimestamp(0), _groupFocusCacheTimestamp(0)  // QW-2 FIX: Initialize cache timestamps
 {
 
     if (!_threatManager)
@@ -63,6 +64,10 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
             return result;
         }
 
+        // QW-2 FIX: Refresh caches before evaluation (O(n) once instead of O(n²))
+        RefreshThreatScoreCache();
+        RefreshGroupFocusCache(context);
+
         ::std::vector<Unit*> candidates = GetAllTargetCandidates(context);
         if (candidates.empty())
         {
@@ -87,7 +92,8 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
             targetInfo.unit = candidate;
             targetInfo.distance = ::std::sqrt(_bot->GetExactDistSq(candidate)); // Calculate once from squared distance
             targetInfo.healthPercent = candidate->GetHealthPct();
-            targetInfo.threatLevel = _threatManager ? _threatManager->GetThreat(candidate) : 0.0f;
+            // QW-2 FIX: Use cached threat score (avoids redundant GetThreat() calls)
+            targetInfo.threatLevel = GetCachedThreatScore(candidate);
             targetInfo.isInterruptTarget = IsInterruptible(candidate);
             targetInfo.isGroupFocus = (candidate == context.groupTarget);
             targetInfo.isVulnerable = IsVulnerable(candidate);
@@ -543,7 +549,9 @@ float TargetSelector::CalculateThreatScore(Unit* target, const SelectionContext&
 {
     if (!_threatManager || !target)
         return 0.0f;
-    float threat = _threatManager->GetThreat(target);
+
+    // QW-2 FIX: Use cached threat score (avoids redundant GetThreat() calls per candidate)
+    float threat = GetCachedThreatScore(target);
     float maxThreat = 100.0f;
 
     return (threat / maxThreat) * 100.0f;
@@ -652,12 +660,9 @@ float TargetSelector::CalculateGroupFocusScore(Unit* target, const SelectionCont
     if (target == context.groupTarget)
         return 75.0f;
 
-    uint32 focusCount = 0;
-    for (Player* member : context.groupMembers)
-    {
-        if (member && member->GetVictim() == target)
-            focusCount++;
-    }
+    // QW-2 FIX: Use pre-computed group focus cache (O(1) instead of O(m) per candidate)
+    // Cache is populated once per selection cycle in RefreshGroupFocusCache()
+    uint32 focusCount = GetCachedGroupFocusCount(target);
 
     return focusCount * 15.0f;
 }
@@ -954,6 +959,109 @@ bool TargetSelectionUtils::IsGoodInterruptTarget(Unit* target, Player* interrupt
         return false;
 
     return true;
+}
+
+// =============================================================================
+// QW-2 FIX: Cache management methods - eliminates O(n²) target selection
+// =============================================================================
+
+void TargetSelector::RefreshThreatScoreCache() const
+{
+    uint32 now = GameTime::GetGameTimeMS();
+
+    // Check if cache is still valid (500ms refresh interval)
+    if ((now - _threatScoreCacheTimestamp) < THREAT_SCORE_CACHE_DURATION_MS)
+        return;
+
+    // Clear and rebuild cache
+    _threatScoreCache.clear();
+
+    if (!_threatManager)
+        return;
+
+    // Pre-compute threat scores for all targets in threat table (O(n) once)
+    auto threatTargets = _threatManager->GetAllThreatTargets();
+    _threatScoreCache.reserve(threatTargets.size());
+
+    for (Unit* target : threatTargets)
+    {
+        if (target)
+        {
+            ObjectGuid guid = target->GetGUID();
+            float threat = _threatManager->GetThreat(target);
+            _threatScoreCache[guid] = threat;
+        }
+    }
+
+    _threatScoreCacheTimestamp = now;
+}
+
+void TargetSelector::RefreshGroupFocusCache(const SelectionContext& context) const
+{
+    uint32 now = GameTime::GetGameTimeMS();
+
+    // Check if cache is still valid (500ms refresh interval)
+    if ((now - _groupFocusCacheTimestamp) < GROUP_FOCUS_CACHE_DURATION_MS)
+        return;
+
+    // Clear and rebuild cache
+    _groupFocusCache.clear();
+
+    if (context.groupMembers.empty())
+    {
+        _groupFocusCacheTimestamp = now;
+        return;
+    }
+
+    // Pre-compute focus counts for all targets being attacked by group members (O(m) once)
+    // This replaces O(n*m) iteration with O(m) pre-computation + O(n)*O(1) lookups
+    for (Player* member : context.groupMembers)
+    {
+        if (!member)
+            continue;
+
+        Unit* memberTarget = member->GetVictim();
+        if (!memberTarget)
+            continue;
+
+        ObjectGuid targetGuid = memberTarget->GetGUID();
+        _groupFocusCache[targetGuid]++;
+    }
+
+    _groupFocusCacheTimestamp = now;
+}
+
+float TargetSelector::GetCachedThreatScore(Unit* target) const
+{
+    if (!target)
+        return 0.0f;
+
+    ObjectGuid guid = target->GetGUID();
+    auto it = _threatScoreCache.find(guid);
+
+    if (it != _threatScoreCache.end())
+        return it->second;
+
+    // Fallback to direct lookup if not in cache (rare - new target or cache miss)
+    if (_threatManager)
+        return _threatManager->GetThreat(target);
+
+    return 0.0f;
+}
+
+uint32 TargetSelector::GetCachedGroupFocusCount(Unit* target) const
+{
+    if (!target)
+        return 0;
+
+    ObjectGuid guid = target->GetGUID();
+    auto it = _groupFocusCache.find(guid);
+
+    if (it != _groupFocusCache.end())
+        return it->second;
+
+    // Not in cache means no group members are attacking this target
+    return 0;
 }
 
 } // namespace Playerbot

@@ -312,7 +312,16 @@ private:
     uint32 _selectionCacheDuration;
     float _defaultMaxRange;
 
-    // Cache for performance
+    // QW-2 FIX: Enhanced cache for performance - eliminates O(n²) redundant calculations
+    // Threat score cache: Avoids double GetThreat() calls per candidate
+    mutable ::std::unordered_map<ObjectGuid, float> _threatScoreCache;
+    mutable uint32 _threatScoreCacheTimestamp;
+
+    // Group focus cache: Pre-computed target counts from group members (O(m) once instead of O(n*m))
+    mutable ::std::unordered_map<ObjectGuid, uint32> _groupFocusCache;
+    mutable uint32 _groupFocusCacheTimestamp;
+
+    // Legacy target cache (kept for compatibility)
     mutable ::std::unordered_map<ObjectGuid, TargetInfo> _targetCache;
     mutable uint32 _cacheTimestamp;
     mutable bool _cacheDirty;
@@ -328,6 +337,16 @@ private:
     static constexpr uint32 CACHE_DURATION_MS = 100;
     static constexpr float DEFAULT_MAX_RANGE = 40.0f;
     static constexpr float SELECTION_TIMEOUT_MS = 5.0f;
+
+    // QW-2 FIX: Cache refresh intervals (500ms as specified in action plan)
+    static constexpr uint32 THREAT_SCORE_CACHE_DURATION_MS = 500;
+    static constexpr uint32 GROUP_FOCUS_CACHE_DURATION_MS = 500;
+
+    // QW-2 FIX: Private helper methods for cache management
+    void RefreshThreatScoreCache() const;
+    void RefreshGroupFocusCache(const SelectionContext& context) const;
+    float GetCachedThreatScore(Unit* target) const;
+    uint32 GetCachedGroupFocusCount(Unit* target) const;
 };
 
 // Target selection utilities
