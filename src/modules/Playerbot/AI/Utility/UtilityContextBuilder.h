@@ -25,6 +25,7 @@
 #include "Unit.h"
 #include "GridNotifiers.h"
 #include "ThreatManager.h"
+#include <shared_mutex>
 
 namespace Playerbot
 {
@@ -221,6 +222,7 @@ private:
     /**
      * @brief Get time since combat started (in milliseconds)
      * Uses static tracking per player GUID to monitor combat state transitions
+     * Thread-safe: Uses shared_mutex for concurrent access from ThreadPool workers
      */
     static uint32 GetTimeSinceCombatStart(BotAI* ai)
     {
@@ -231,32 +233,48 @@ private:
         if (!bot)
             return 0;
 
-        // Static storage for combat start times
+        // Static storage for combat start times (thread-safe)
         // Map player GUID -> combat start time
         static ::std::unordered_map<ObjectGuid, uint32> combatStartTimes;
+        static ::std::shared_mutex combatStartTimesMutex;
 
         ObjectGuid botGuid = bot->GetGUID();
         uint32 currentTime = GameTime::GetGameTimeMS();
 
         if (!bot->IsInCombat())
         {
-            // Not in combat - clear tracking entry
+            // Not in combat - clear tracking entry (exclusive lock for write)
+            ::std::unique_lock lock(combatStartTimesMutex);
             combatStartTimes.erase(botGuid);
             return 0;
         }
 
-        // In combat - check if we have a start time recorded
-        auto it = combatStartTimes.find(botGuid);
-        if (it == combatStartTimes.end())
+        // In combat - check if we have a start time recorded (shared lock for read)
         {
-            // Just entered combat - record start time
-            combatStartTimes[botGuid] = currentTime;
-            return 0;  // Just started, 0 duration
+            ::std::shared_lock readLock(combatStartTimesMutex);
+            auto it = combatStartTimes.find(botGuid);
+            if (it != combatStartTimes.end())
+            {
+                // Calculate duration since combat start
+                uint32 startTime = it->second;
+                return currentTime >= startTime ? (currentTime - startTime) : 0;
+            }
         }
 
-        // Calculate duration since combat start
-        uint32 startTime = it->second;
-        return currentTime >= startTime ? (currentTime - startTime) : 0;
+        // Just entered combat - record start time (exclusive lock for write)
+        {
+            ::std::unique_lock writeLock(combatStartTimesMutex);
+            // Double-check after acquiring write lock (another thread may have inserted)
+            auto it = combatStartTimes.find(botGuid);
+            if (it == combatStartTimes.end())
+            {
+                combatStartTimes[botGuid] = currentTime;
+                return 0;  // Just started, 0 duration
+            }
+            // Another thread inserted while we were waiting for lock
+            uint32 startTime = it->second;
+            return currentTime >= startTime ? (currentTime - startTime) : 0;
+        }
     }
 };
 
