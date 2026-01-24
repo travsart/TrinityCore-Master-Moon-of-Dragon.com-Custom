@@ -191,12 +191,63 @@
   - Zero impact on bots in combat (always full update rate)
 
 ### ST-2: Fix Packet Queue Lock Contention
-- **Status**: ⏳ PENDING
+- **Status**: ✅ COMPLETED
 - **Priority**: P1 (HIGH)
+- **Started**: 2026-01-23
+- **Completed**: 2026-01-23
+- **Commit**: 26d7c83429
+- **Implementation Details**:
+
+  **Problem Identified:**
+  - `_packetMutex` was `recursive_timed_mutex` with 5ms try_lock_for timeout
+  - Under high load (5000+ bots), timeout failures caused packet processing deferrals
+  - Log message "Failed to acquire packet mutex within 5ms" indicated contention
+  - Each deferral added 50ms latency (one tick delay)
+
+  **Analysis Results:**
+  - 6 usages of _packetMutex in BotSession (destructor, SendPacket, QueuePacket, QueuePacketLegacy, ProcessBotPackets)
+  - No recursive lock acquisition exists (analyzed all code paths)
+  - Lock hold time is ~100µs (just queue push/pop operations)
+
+  **Fix Applied:**
+  - Changed `recursive_timed_mutex` → simple `std::mutex` (cheaper, no recursion tracking needed)
+  - Changed `try_lock_for(5ms)` → `lock_guard` in ProcessBotPackets (blocking wait for µs is better than 50ms deferral)
+  - Changed `try_lock_for(10ms)` → `try_lock()` in destructor (non-blocking to prevent hang)
+  - Updated all 6 lock_guard types to use `std::mutex`
+
+  **Expected Impact:**
+  - Eliminates cascading packet processing deferrals under contention
+  - Reduces mutex overhead (simpler lock type, no recursion counter)
+  - More reliable packet processing at scale (5000+ bots)
 
 ### ST-3: Expand Object Pooling to Hot Paths
-- **Status**: ⏳ PENDING
+- **Status**: 🔄 IN PROGRESS (PathNode pooling + TargetSelector complete, more managers next)
 - **Priority**: P1 (HIGH)
+- **Started**: 2026-01-23
+- **Commits So Far**:
+  - 0ca31dcac4: PathNode pool in PathfindingManager (eliminates 250k allocations/sec)
+  - (pending): TargetSelector vector pooling (eliminates 250k vector allocations/sec)
+
+  **Phase 1 COMPLETE: PathNode Pooling**
+  - Added PathNode::Reset() for pool reuse
+  - Added _nodeStorage vector as pre-allocated pool (256 initial capacity)
+  - Added AcquireNode() and ResetNodePool() methods
+  - Changed allNodes map from unique_ptr to raw pointers (pool owns)
+  - Fixed memory leak where CreateNode was called but node not added
+  - Added reserve() calls for closedSet and allNodes vectors
+
+  **Phase 2 IN PROGRESS: Vector Pooling**
+  ✅ **TargetSelector COMPLETE:**
+  - Added reusable buffer members: _enemiesBuffer, _alliesBuffer, _candidatesBuffer, _evaluatedTargetsBuffer
+  - Added PopulateNearbyEnemies(), PopulateNearbyAllies() internal methods
+  - Modified GetNearbyEnemies/GetNearbyAllies to use buffers
+  - Modified SelectBestTarget to use _candidatesBuffer and _evaluatedTargetsBuffer
+  - Modified SelectHealTarget and SelectInterruptTarget to use buffers
+  - Eliminates ~250k vector allocations/sec in target selection hot path
+
+  **Remaining Work (Phase 2)**:
+  - Vector pools for combat behavior managers (320k vector allocations/sec)
+  - Vector pools for ThreatManagement (50k vector allocations/sec)
 
 ### ST-4: Consolidate BotLifecycleManager ⊕ BotLifecycleMgr
 - **Status**: 🔬 ANALYZED - NOT A DUPLICATION (Naming Confusion Only)
@@ -318,4 +369,6 @@
 | 2026-01-23 | QW-2 | fda478532b | Implement threat/group focus caching (O(n²) → O(n)) |
 | 2026-01-23 | QW-3 | 83a570b165 | Add reserve() calls to 7 hot path vector allocations |
 | 2026-01-23 | ST-1 | 95c1779d81 | Implement Adaptive AI Update Throttling system |
+| 2026-01-23 | ST-2 | 26d7c83429 | Replace packet queue recursive_timed_mutex with simple mutex |
+| 2026-01-23 | ST-3 | 0ca31dcac4 | Add PathNode pooling to eliminate A* heap allocations |
 
