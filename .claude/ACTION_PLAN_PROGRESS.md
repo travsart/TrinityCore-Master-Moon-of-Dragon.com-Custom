@@ -221,12 +221,13 @@
   - More reliable packet processing at scale (5000+ bots)
 
 ### ST-3: Expand Object Pooling to Hot Paths
-- **Status**: 🔄 IN PROGRESS (PathNode pooling + TargetSelector complete, more managers next)
+- **Status**: ✅ SUBSTANTIALLY COMPLETE
 - **Priority**: P1 (HIGH)
 - **Started**: 2026-01-23
-- **Commits So Far**:
+- **Completed**: 2026-01-24
+- **Commits**:
   - 0ca31dcac4: PathNode pool in PathfindingManager (eliminates 250k allocations/sec)
-  - (pending): TargetSelector vector pooling (eliminates 250k vector allocations/sec)
+  - 8f406176dd: TargetSelector vector pooling (eliminates 250k vector allocations/sec)
 
   **Phase 1 COMPLETE: PathNode Pooling**
   - Added PathNode::Reset() for pool reuse
@@ -236,7 +237,7 @@
   - Fixed memory leak where CreateNode was called but node not added
   - Added reserve() calls for closedSet and allNodes vectors
 
-  **Phase 2 IN PROGRESS: Vector Pooling**
+  **Phase 2 COMPLETE: Vector Pooling**
   ✅ **TargetSelector COMPLETE:**
   - Added reusable buffer members: _enemiesBuffer, _alliesBuffer, _candidatesBuffer, _evaluatedTargetsBuffer
   - Added PopulateNearbyEnemies(), PopulateNearbyAllies() internal methods
@@ -245,9 +246,15 @@
   - Modified SelectHealTarget and SelectInterruptTarget to use buffers
   - Eliminates ~250k vector allocations/sec in target selection hot path
 
-  **Remaining Work (Phase 2)**:
-  - Vector pools for combat behavior managers (320k vector allocations/sec)
-  - Vector pools for ThreatManagement (50k vector allocations/sec)
+  **Remaining Work (Lower Priority - Diminishing Returns)**:
+  Analysis shows other combat managers already have:
+  - BotThreatManager: 250ms analysis cache, 500ms score cache, reserve() calls (QW-3)
+  - PositionManager: 250ms update interval, reserve(24) calls (QW-3)
+  - CrowdControlManager: 500ms update interval
+  - AdaptiveBehaviorManager: 200ms update interval
+
+  The main hot path (TargetSelector, called every frame in combat) is now optimized.
+  Other managers have sufficient rate-limiting that vector pooling provides diminishing returns.
 
 ### ST-4: Consolidate BotLifecycleManager ⊕ BotLifecycleMgr
 - **Status**: 🔬 ANALYZED - NOT A DUPLICATION (Naming Confusion Only)
@@ -371,4 +378,5 @@
 | 2026-01-23 | ST-1 | 95c1779d81 | Implement Adaptive AI Update Throttling system |
 | 2026-01-23 | ST-2 | 26d7c83429 | Replace packet queue recursive_timed_mutex with simple mutex |
 | 2026-01-23 | ST-3 | 0ca31dcac4 | Add PathNode pooling to eliminate A* heap allocations |
+| 2026-01-24 | ST-3 | 8f406176dd | Add TargetSelector vector pooling (buffers for hot paths) |
 
