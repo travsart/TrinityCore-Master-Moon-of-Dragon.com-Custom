@@ -258,6 +258,23 @@ private:
         ::std::vector<ObjectGuid> pendingTeleports; // Players waiting for teleport
     };
 
+    /**
+     * Safety net tracking for groups where not all members teleported
+     * This ensures all bots eventually join the human in the dungeon
+     */
+    struct PendingSafetyTeleport
+    {
+        ObjectGuid groupGuid;
+        uint32 dungeonId;
+        uint32 expectedMapId;        // The map ID the group should be on
+        ::std::vector<ObjectGuid> allMembers;      // All expected group members
+        ::std::vector<ObjectGuid> failedMembers;   // Members that failed to teleport
+        uint32 createdTime;          // When this tracking started
+        uint32 lastRetryTime;        // Last retry attempt
+        uint32 retryCount;           // Number of retries
+        bool humanInDungeon;         // Whether the human is confirmed in dungeon
+    };
+
     // ========================================================================
     // INTERNAL HELPERS
     // ========================================================================
@@ -267,6 +284,32 @@ private:
      * Cleans up stale teleport tracking entries
      */
     void ProcessTeleportTimeouts();
+
+    /**
+     * Process safety net retries
+     * Retries teleporting members that failed initial teleport
+     * Called from Update() every SAFETY_NET_CHECK_INTERVAL ms
+     */
+    void ProcessSafetyNetRetries();
+
+    /**
+     * Register a group for safety net tracking
+     * Called after TeleportGroupToDungeon if not all members were teleported
+     *
+     * @param group The group to track
+     * @param dungeonId The dungeon they should be in
+     * @param failedMembers GUIDs of members that failed to teleport
+     */
+    void RegisterSafetyNetGroup(Group* group, uint32 dungeonId, ::std::vector<ObjectGuid> const& failedMembers);
+
+    /**
+     * Check if a member has successfully teleported to the dungeon
+     *
+     * @param memberGuid The member's GUID
+     * @param expectedMapId The map ID they should be on
+     * @return true if member is in the expected dungeon
+     */
+    bool IsMemberInDungeon(ObjectGuid memberGuid, uint32 expectedMapId) const;
 
     /**
      * Get dungeon map ID from LFG dungeon ID
@@ -312,9 +355,19 @@ private:
 
     ::std::unordered_map<ObjectGuid, TeleportInfo> _pendingTeleports;        ///< Pending teleportations
     ::std::unordered_map<ObjectGuid, GroupFormationInfo> _groupFormations;   ///< Active group formations
+    ::std::unordered_map<ObjectGuid, PendingSafetyTeleport> _safetyNetGroups; ///< Groups needing safety net retries
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _teleportMutex;                      ///< Protects teleport data
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _groupMutex;                         ///< Protects group formation data
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _safetyNetMutex;                     ///< Protects safety net data
+
+    uint32 _safetyNetCheckAccumulator = 0;  ///< Timer for safety net checks
+
+    // Safety net constants
+    static constexpr uint32 SAFETY_NET_CHECK_INTERVAL = 2000;    ///< Check every 2 seconds
+    static constexpr uint32 SAFETY_NET_RETRY_INTERVAL = 3000;    ///< Retry teleport every 3 seconds
+    static constexpr uint32 SAFETY_NET_MAX_RETRIES = 20;         ///< Max 20 retries (~60 seconds)
+    static constexpr uint32 SAFETY_NET_MAX_AGE = 120000;         ///< Give up after 2 minutes
 };
 
 } // namespace Playerbot

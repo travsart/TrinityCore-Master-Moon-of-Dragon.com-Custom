@@ -58,29 +58,54 @@ void LFGGroupCoordinator::Initialize()
 
     _pendingTeleports.clear();
     _groupFormations.clear();
+    _safetyNetGroups.clear();
+    _safetyNetCheckAccumulator = 0;
     _enabled = true;
 
-    TC_LOG_INFO("server.loading", ">> LFG Group Coordinator initialized");
+    TC_LOG_INFO("server.loading", ">> LFG Group Coordinator initialized (Safety net enabled: check every {}ms, max {} retries)",
+        SAFETY_NET_CHECK_INTERVAL, SAFETY_NET_MAX_RETRIES);
 }
 
-void LFGGroupCoordinator::Update(uint32 /*diff*/)
+void LFGGroupCoordinator::Update(uint32 diff)
 {
     if (!_enabled)
         return;
 
     // Process teleport timeouts every update
     ProcessTeleportTimeouts();
+
+    // Process safety net retries periodically
+    _safetyNetCheckAccumulator += diff;
+    if (_safetyNetCheckAccumulator >= SAFETY_NET_CHECK_INTERVAL)
+    {
+        ProcessSafetyNetRetries();
+        _safetyNetCheckAccumulator = 0;
+    }
 }
 
 void LFGGroupCoordinator::Shutdown()
 {
     TC_LOG_INFO("server.loading", "Shutting down LFG Group Coordinator...");
 
-    ::std::lock_guard lockTeleport(_teleportMutex);
-    ::std::lock_guard lockGroup(_groupMutex);
+    {
+        ::std::lock_guard lockTeleport(_teleportMutex);
+        _pendingTeleports.clear();
+    }
 
-    _pendingTeleports.clear();
-    _groupFormations.clear();
+    {
+        ::std::lock_guard lockGroup(_groupMutex);
+        _groupFormations.clear();
+    }
+
+    {
+        ::std::lock_guard lockSafety(_safetyNetMutex);
+        if (!_safetyNetGroups.empty())
+        {
+            TC_LOG_INFO("server.loading", ">> Clearing {} pending safety net groups", _safetyNetGroups.size());
+        }
+        _safetyNetGroups.clear();
+    }
+
     _enabled = false;
 
     TC_LOG_INFO("server.loading", ">> LFG Group Coordinator shut down");
@@ -391,6 +416,47 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
     TC_LOG_INFO("lfg.playerbot", "TeleportGroupToDungeon - Result: {} teleported, {} found, {} not found",
         successCount, totalMembers, notFoundCount);
 
+    // ========================================================================
+    // SAFETY NET: Register group for retry if not all members were teleported
+    // ========================================================================
+    // This ensures that JIT bots that weren't loaded yet, or bots that failed
+    // to teleport for any reason, will be retried until they join the dungeon.
+    // ========================================================================
+    if (notFoundCount > 0 || successCount < (totalMembers + notFoundCount))
+    {
+        // Collect all members that might need retry
+        ::std::vector<ObjectGuid> failedMembers;
+        for (auto const& slot : group->GetMemberSlots())
+        {
+            Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
+            if (!member)
+            {
+                // Member not found - definitely needs retry
+                failedMembers.push_back(slot.guid);
+                TC_LOG_INFO("lfg.playerbot", "SAFETY NET: Adding {} ({}) to retry list (not found)",
+                    slot.name, slot.guid.ToString());
+            }
+            else
+            {
+                // Check if member is already in the dungeon
+                uint32 dungeonMapId = GetDungeonMapId(dungeonId);
+                if (dungeonMapId != 0 && member->GetMapId() != dungeonMapId)
+                {
+                    failedMembers.push_back(slot.guid);
+                    TC_LOG_INFO("lfg.playerbot", "SAFETY NET: Adding {} ({}) to retry list (on map {} instead of {})",
+                        member->GetName(), slot.guid.ToString(), member->GetMapId(), dungeonMapId);
+                }
+            }
+        }
+
+        if (!failedMembers.empty())
+        {
+            RegisterSafetyNetGroup(group, dungeonId, failedMembers);
+            TC_LOG_INFO("lfg.playerbot", "SAFETY NET: Registered group {} with {} members needing retry",
+                group->GetGUID().ToString(), failedMembers.size());
+        }
+    }
+
     return successCount == totalMembers;
 }
 
@@ -622,6 +688,200 @@ void LFGGroupCoordinator::HandleTeleportFailure(Player* player, ::std::string co
 
     // Clear teleport tracking
     ClearTeleport(player->GetGUID());
+}
+
+// ============================================================================
+// SAFETY NET IMPLEMENTATION
+// ============================================================================
+
+void LFGGroupCoordinator::RegisterSafetyNetGroup(Group* group, uint32 dungeonId, ::std::vector<ObjectGuid> const& failedMembers)
+{
+    if (!group || failedMembers.empty())
+        return;
+
+    ::std::lock_guard lock(_safetyNetMutex);
+
+    ObjectGuid groupGuid = group->GetGUID();
+    uint32 dungeonMapId = GetDungeonMapId(dungeonId);
+
+    PendingSafetyTeleport& pending = _safetyNetGroups[groupGuid];
+    pending.groupGuid = groupGuid;
+    pending.dungeonId = dungeonId;
+    pending.expectedMapId = dungeonMapId;
+    pending.failedMembers = failedMembers;
+    pending.createdTime = GameTime::GetGameTimeMS();
+    pending.lastRetryTime = pending.createdTime;
+    pending.retryCount = 0;
+    pending.humanInDungeon = false;
+
+    // Collect all group members
+    pending.allMembers.clear();
+    for (auto const& slot : group->GetMemberSlots())
+    {
+        pending.allMembers.push_back(slot.guid);
+    }
+
+    TC_LOG_INFO("lfg.playerbot", "SAFETY NET: Registered group {} for retry - {} total members, {} failed, dungeon {} (map {})",
+        groupGuid.ToString(), pending.allMembers.size(), failedMembers.size(), dungeonId, dungeonMapId);
+}
+
+void LFGGroupCoordinator::ProcessSafetyNetRetries()
+{
+    ::std::lock_guard lock(_safetyNetMutex);
+
+    if (_safetyNetGroups.empty())
+        return;
+
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    ::std::vector<ObjectGuid> completedGroups;
+
+    for (auto& [groupGuid, pending] : _safetyNetGroups)
+    {
+        // Check if too old - give up
+        if (currentTime - pending.createdTime > SAFETY_NET_MAX_AGE)
+        {
+            TC_LOG_WARN("lfg.playerbot", "SAFETY NET: Group {} timed out after {}ms - {} members never teleported",
+                groupGuid.ToString(), SAFETY_NET_MAX_AGE, pending.failedMembers.size());
+            completedGroups.push_back(groupGuid);
+            continue;
+        }
+
+        // Check if max retries exceeded
+        if (pending.retryCount >= SAFETY_NET_MAX_RETRIES)
+        {
+            TC_LOG_WARN("lfg.playerbot", "SAFETY NET: Group {} exceeded max retries ({}) - {} members never teleported",
+                groupGuid.ToString(), SAFETY_NET_MAX_RETRIES, pending.failedMembers.size());
+            completedGroups.push_back(groupGuid);
+            continue;
+        }
+
+        // Check if retry interval has passed
+        if (currentTime - pending.lastRetryTime < SAFETY_NET_RETRY_INTERVAL)
+            continue;
+
+        pending.lastRetryTime = currentTime;
+        pending.retryCount++;
+
+        TC_LOG_DEBUG("lfg.playerbot", "SAFETY NET: Processing group {} retry #{} ({} failed members)",
+            groupGuid.ToString(), pending.retryCount, pending.failedMembers.size());
+
+        // First, check if the human player is in the dungeon (if not, bots shouldn't teleport)
+        bool humanFound = false;
+        ObjectGuid humanGuid;
+        for (ObjectGuid memberGuid : pending.allMembers)
+        {
+            Player* member = ObjectAccessor::FindConnectedPlayer(memberGuid);
+            if (member && !PlayerBotHooks::IsPlayerBot(member))
+            {
+                humanFound = true;
+                humanGuid = memberGuid;
+                pending.humanInDungeon = IsMemberInDungeon(memberGuid, pending.expectedMapId);
+                break;
+            }
+        }
+
+        if (!humanFound)
+        {
+            TC_LOG_WARN("lfg.playerbot", "SAFETY NET: Group {} has no human player accessible - clearing",
+                groupGuid.ToString());
+            completedGroups.push_back(groupGuid);
+            continue;
+        }
+
+        if (!pending.humanInDungeon)
+        {
+            TC_LOG_DEBUG("lfg.playerbot", "SAFETY NET: Human {} not in dungeon yet (map {}) - waiting",
+                humanGuid.ToString(), pending.expectedMapId);
+            // Don't count this as a retry - human hasn't arrived yet
+            pending.retryCount--;
+            continue;
+        }
+
+        // Human is in dungeon - now teleport any bots that aren't there yet
+        ::std::vector<ObjectGuid> stillFailed;
+
+        for (ObjectGuid botGuid : pending.failedMembers)
+        {
+            // Skip the human
+            if (botGuid == humanGuid)
+                continue;
+
+            // Check if already in dungeon
+            if (IsMemberInDungeon(botGuid, pending.expectedMapId))
+            {
+                TC_LOG_INFO("lfg.playerbot", "SAFETY NET: Bot {} is now in dungeon - removing from retry list",
+                    botGuid.ToString());
+                continue;
+            }
+
+            // Try to find and teleport the bot
+            Player* bot = ObjectAccessor::FindConnectedPlayer(botGuid);
+            if (!bot)
+            {
+                // Bot still not accessible - keep in retry list
+                stillFailed.push_back(botGuid);
+                TC_LOG_DEBUG("lfg.playerbot", "SAFETY NET: Bot {} not accessible via FindConnectedPlayer - will retry",
+                    botGuid.ToString());
+                continue;
+            }
+
+            // Bot is accessible - attempt teleport
+            TC_LOG_INFO("lfg.playerbot", "SAFETY NET: Attempting to teleport bot {} ({}) to dungeon {} (retry #{})",
+                bot->GetName(), botGuid.ToString(), pending.dungeonId, pending.retryCount);
+
+            if (TeleportPlayerToDungeon(bot, pending.dungeonId))
+            {
+                TC_LOG_INFO("lfg.playerbot", "✅ SAFETY NET: Successfully initiated teleport for bot {} to dungeon {}",
+                    bot->GetName(), pending.dungeonId);
+                // Keep in list to verify they actually arrived
+                stillFailed.push_back(botGuid);
+            }
+            else
+            {
+                TC_LOG_WARN("lfg.playerbot", "❌ SAFETY NET: Failed to teleport bot {} to dungeon {} - will retry",
+                    bot->GetName(), pending.dungeonId);
+                stillFailed.push_back(botGuid);
+            }
+        }
+
+        // Update the failed members list
+        pending.failedMembers = stillFailed;
+
+        // Check if all members are now in the dungeon
+        if (pending.failedMembers.empty())
+        {
+            TC_LOG_INFO("lfg.playerbot", "✅ SAFETY NET: All members of group {} are now in dungeon {} - complete!",
+                groupGuid.ToString(), pending.dungeonId);
+            completedGroups.push_back(groupGuid);
+        }
+        else
+        {
+            TC_LOG_DEBUG("lfg.playerbot", "SAFETY NET: Group {} still has {} members to teleport",
+                groupGuid.ToString(), pending.failedMembers.size());
+        }
+    }
+
+    // Remove completed groups
+    for (ObjectGuid const& guid : completedGroups)
+    {
+        _safetyNetGroups.erase(guid);
+    }
+}
+
+bool LFGGroupCoordinator::IsMemberInDungeon(ObjectGuid memberGuid, uint32 expectedMapId) const
+{
+    if (expectedMapId == 0)
+        return false;
+
+    Player* player = ObjectAccessor::FindConnectedPlayer(memberGuid);
+    if (!player)
+        return false;
+
+    // Check if player is in world and on the expected map
+    if (!player->IsInWorld())
+        return false;
+
+    return player->GetMapId() == expectedMapId;
 }
 
 } // namespace Playerbot
