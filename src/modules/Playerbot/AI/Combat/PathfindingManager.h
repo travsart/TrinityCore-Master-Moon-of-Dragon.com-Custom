@@ -118,6 +118,21 @@ struct PathNode
     void CalculateFCost() { fCost = gCost + hCost; }
 
     bool operator<(const PathNode& other) const { return fCost > other.fCost; }
+
+    // ST-3: Reset node state for pool reuse
+    void Reset(const Position& pos)
+    {
+        position = pos;
+        gCost = 0.0f;
+        hCost = 0.0f;
+        fCost = 0.0f;
+        parent = nullptr;
+        walkable = true;
+        inWater = false;
+        isJump = false;
+        dangerRating = 0.0f;
+        // nodeId is set by pool
+    }
 };
 
 // Pathfinding request
@@ -397,6 +412,39 @@ private:
     // Thread safety
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
+    // ============================================================================
+    // ST-3: PathNode Pool for Reduced Allocations
+    // ============================================================================
+    // Pre-allocated storage eliminates heap allocations during A* pathfinding.
+    // Nodes are reused across pathfinding calls within the same manager instance.
+    // Expected reduction: 250k allocations/sec → near zero for typical 5000-bot scenarios.
+    // ============================================================================
+
+    /// Pre-allocated PathNode storage (grows if needed)
+    ::std::vector<PathNode> _nodeStorage;
+
+    /// Current allocation index (reset at start of each pathfinding)
+    size_t _nodePoolIndex;
+
+    /// Next unique node ID
+    uint32 _nextNodeId;
+
+    /// Acquire node from pool (reset state)
+    PathNode* AcquireNode(const Position& pos);
+
+    /// Reset pool for new pathfinding operation
+    void ResetNodePool();
+
+    /// Pool statistics
+    struct NodePoolStats
+    {
+        uint64_t totalAcquires{0};
+        uint64_t totalReuses{0};
+        size_t peakUsage{0};
+        size_t currentCapacity{0};
+    };
+    mutable NodePoolStats _nodePoolStats;
+
     // Constants
     static constexpr float DEFAULT_NODE_SPACING = 1.0f;     // 1 yard between nodes
     static constexpr uint32 DEFAULT_MAX_NODES = 500;        // Maximum nodes in path
@@ -405,6 +453,7 @@ private:
     static constexpr uint32 CACHE_CLEANUP_INTERVAL = 10000; // 10 seconds
     static constexpr uint32 DANGER_UPDATE_INTERVAL = 1000;  // 1 second
     static constexpr size_t MAX_CACHE_SIZE = 200;           // Maximum cache entries
+    static constexpr size_t INITIAL_NODE_POOL_SIZE = 256;   // Initial pool capacity
     static constexpr size_t MAX_DANGER_ZONES = 50;          // Maximum tracked danger zones
     static constexpr size_t MAX_ASYNC_RESULTS = 100;        // Maximum pending async results
 };
