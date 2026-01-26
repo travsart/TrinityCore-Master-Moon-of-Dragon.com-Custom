@@ -3166,6 +3166,10 @@ void Unit::InterruptSpell(CurrentSpellTypes spellType, bool withDelayed, bool wi
             spell->SetReferencedFromCurrent(false);
         }
 
+        // PLAYERBOT HOOK: Notify bots of spell interruption
+        if (Playerbot::PlayerBotHooks::OnSpellInterrupted)
+            Playerbot::PlayerBotHooks::OnSpellInterrupted(this, spell->GetSpellInfo(), nullptr);
+
         if (GetTypeId() == TYPEID_UNIT && IsAIEnabled())
             ToCreature()->AI()->OnSpellFailed(spell->GetSpellInfo());
     }
@@ -6529,6 +6533,13 @@ void Unit::SetCharm(Unit* charm, bool apply)
     // Hook for OnHeal Event
     sScriptMgr->OnHeal(healer, victim, (uint32&)gain);
 
+    // PLAYERBOT HOOK: Notify bots of healing done
+    if (Playerbot::PlayerBotHooks::OnHealingDone && healer)
+    {
+        uint32 overheal = (addhealth > static_cast<uint32>(gain)) ? (addhealth - static_cast<uint32>(gain)) : 0;
+        Playerbot::PlayerBotHooks::OnHealingDone(healer, victim, static_cast<uint32>(gain), overheal, healInfo.GetSpellInfo());
+    }
+
     Unit* unit = healer;
     if (healer && healer->GetTypeId() == TYPEID_UNIT && healer->IsTotem())
         unit = healer->GetOwner();
@@ -9265,6 +9276,10 @@ void Unit::AtEnterCombat()
 
     if (!IsInteractionAllowedInCombat())
         UpdateNearbyPlayersInteractions();
+
+    // PLAYERBOT HOOK: Notify bots of combat start
+    if (Playerbot::PlayerBotHooks::OnCombatStarted)
+        Playerbot::PlayerBotHooks::OnCombatStarted(this);
 }
 
 void Unit::AtExitCombat()
@@ -9281,6 +9296,10 @@ void Unit::AtExitCombat()
 
     if (!IsInteractionAllowedInCombat())
         UpdateNearbyPlayersInteractions();
+
+    // PLAYERBOT HOOK: Notify bots of combat end
+    if (Playerbot::PlayerBotHooks::OnCombatEnded)
+        Playerbot::PlayerBotHooks::OnCombatEnded(this);
 }
 
 void Unit::AtTargetAttacked(Unit* target, bool canInitialAggro)
@@ -11258,6 +11277,10 @@ void Unit::SetMeleeAnimKitId(uint16 animKitId)
 
     if (attacker && !attacker->IsInMap(victim))
         attacker = nullptr;
+
+    // PLAYERBOT HOOK: Notify bots of unit death
+    if (Playerbot::PlayerBotHooks::OnUnitDied)
+        Playerbot::PlayerBotHooks::OnUnitDied(victim, attacker);
 
     // find player: owner of controlled `this` or `this` itself maybe
     Player* player = nullptr;

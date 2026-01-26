@@ -4475,6 +4475,10 @@ void Spell::finish(SpellCastResult result)
     // Stop Attack for some spells
     if (m_spellInfo->HasAttribute(SPELL_ATTR0_CANCELS_AUTO_ATTACK_COMBAT))
         unitCaster->AttackStop();
+
+    // PLAYERBOT HOOK: Notify bots of successful spell cast completion
+    if (Playerbot::PlayerBotHooks::OnSpellCastSuccess)
+        Playerbot::PlayerBotHooks::OnSpellCastSuccess(unitCaster, m_spellInfo);
 }
 
 template<class T>
