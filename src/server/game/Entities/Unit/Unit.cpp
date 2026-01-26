@@ -91,6 +91,7 @@
 #include "World.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
+#include "../../modules/Playerbot/Core/PlayerBotHooks.h"
 #include <queue>
 #include <sstream>
 #include <cmath>
@@ -834,6 +835,10 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
 
         // Hook for OnDamage Event
         sScriptMgr->OnDamage(attacker, victim, tmpDamage);
+
+        // PLAYERBOT HOOK: Notify bots of damage event
+        if (Playerbot::PlayerBotHooks::OnDamageDealt)
+            Playerbot::PlayerBotHooks::OnDamageDealt(attacker, victim, tmpDamage, damagetype, spellProto);
 
         // if any script modified damage, we need to also apply the same modification to unscaled damage value
         if (tmpDamage != damageTaken)

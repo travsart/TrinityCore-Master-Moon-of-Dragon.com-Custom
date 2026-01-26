@@ -19,9 +19,13 @@
 class Player;
 class Group;
 class Unit;
+class SpellInfo;
+class Aura;
 enum RemoveMethod : uint8;
 enum LootMethod : uint8;
 enum Difficulty : uint8;
+enum DamageEffectType : uint8;
+enum SpellSchoolMask : uint32;
 
 namespace Playerbot
 {
@@ -313,6 +317,120 @@ public:
     static inline ::std::function<void(Player*)> OnPlayerResurrected = nullptr;
 
     // ========================================================================
+    // COMBAT EVENT HOOKS (Phase 3 Event-Driven Architecture)
+    // ========================================================================
+
+    /**
+     * Hook: Damage dealt
+     * Called from: Unit::DealDamage() after damage is applied
+     *
+     * @param attacker Unit dealing damage (may be nullptr)
+     * @param victim Unit receiving damage
+     * @param damage Amount of damage dealt
+     * @param damagetype Type of damage (DIRECT_DAMAGE, SPELL_DIRECT_DAMAGE, DOT, etc.)
+     * @param spellProto Spell that caused the damage (nullptr for melee)
+     */
+    static inline ::std::function<void(Unit*, Unit*, uint32, DamageEffectType, SpellInfo const*)> OnDamageDealt = nullptr;
+
+    /**
+     * Hook: Healing done
+     * Called from: Unit::HealBySpell() and similar healing functions
+     *
+     * @param healer Unit doing the healing
+     * @param target Unit being healed
+     * @param healAmount Amount healed
+     * @param overheal Amount of overhealing
+     * @param spellProto Spell that caused the healing
+     */
+    static inline ::std::function<void(Unit*, Unit*, uint32, uint32, SpellInfo const*)> OnHealingDone = nullptr;
+
+    /**
+     * Hook: Spell cast started
+     * Called from: Spell::prepare() when cast begins
+     *
+     * IMPORTANT: This hook should trigger IMMEDIATE event dispatch for interrupt coordination
+     *
+     * @param caster Unit casting the spell
+     * @param spellInfo The spell being cast
+     * @param target Target of the spell (may be nullptr)
+     */
+    static inline ::std::function<void(Unit*, SpellInfo const*, Unit*)> OnSpellCastStart = nullptr;
+
+    /**
+     * Hook: Spell cast succeeded
+     * Called from: Spell::finish() when cast completes successfully
+     *
+     * @param caster Unit that cast the spell
+     * @param spellInfo The spell that was cast
+     */
+    static inline ::std::function<void(Unit*, SpellInfo const*)> OnSpellCastSuccess = nullptr;
+
+    /**
+     * Hook: Spell interrupted
+     * Called from: Unit::InterruptSpell() when a spell is interrupted
+     *
+     * @param caster Unit whose spell was interrupted
+     * @param spellInfo The spell that was interrupted
+     * @param interrupter Unit that caused the interrupt
+     */
+    static inline ::std::function<void(Unit*, SpellInfo const*, Unit*)> OnSpellInterrupted = nullptr;
+
+    /**
+     * Hook: Aura applied
+     * Called from: Unit::_ApplyAura() when an aura is applied
+     *
+     * @param target Unit receiving the aura
+     * @param aura The aura being applied
+     * @param caster Unit that applied the aura
+     */
+    static inline ::std::function<void(Unit*, Aura const*, Unit*)> OnAuraApplied = nullptr;
+
+    /**
+     * Hook: Aura removed
+     * Called from: Unit::_UnapplyAura() when an aura is removed
+     *
+     * @param target Unit losing the aura
+     * @param aura The aura being removed
+     */
+    static inline ::std::function<void(Unit*, Aura const*)> OnAuraRemoved = nullptr;
+
+    /**
+     * Hook: Threat changed
+     * Called from: ThreatManager::AddThreat() when threat is modified
+     *
+     * @param threatOwner Unit whose threat table changed
+     * @param victim Unit on the threat table
+     * @param oldThreat Previous threat value
+     * @param newThreat New threat value
+     */
+    static inline ::std::function<void(Unit*, Unit*, float, float)> OnThreatChanged = nullptr;
+
+    /**
+     * Hook: Unit died
+     * Called from: Unit::Kill() when a unit dies
+     *
+     * @param victim Unit that died
+     * @param killer Unit that caused the death (may be nullptr)
+     */
+    static inline ::std::function<void(Unit*, Unit*)> OnUnitDied = nullptr;
+
+    /**
+     * Hook: Combat started
+     * Called from: Unit::SetInCombatWith() when entering combat
+     *
+     * @param unit Unit entering combat
+     */
+    static inline ::std::function<void(Unit*)> OnCombatStarted = nullptr;
+
+    /**
+     * Hook: Combat ended
+     * Called from: Unit::ClearInCombat() or similar when leaving combat
+     *
+     * @param unit Unit leaving combat
+     */
+    static inline ::std::function<void(Unit*)> OnCombatEnded = nullptr;
+
+    // ========================================================================
     // UTILITY FUNCTIONS
     // ========================================================================
 
@@ -355,6 +473,18 @@ public:
         uint64_t difficultyCalls{0};
         uint64_t playerDeathCalls{0};
         uint64_t playerResurrectedCalls{0};
+        // Phase 3 Combat Event hooks
+        uint64_t damageDealtCalls{0};
+        uint64_t healingDoneCalls{0};
+        uint64_t spellCastStartCalls{0};
+        uint64_t spellCastSuccessCalls{0};
+        uint64_t spellInterruptedCalls{0};
+        uint64_t auraAppliedCalls{0};
+        uint64_t auraRemovedCalls{0};
+        uint64_t threatChangedCalls{0};
+        uint64_t unitDiedCalls{0};
+        uint64_t combatStartedCalls{0};
+        uint64_t combatEndedCalls{0};
 
         ::std::string ToString() const;
         void Reset();

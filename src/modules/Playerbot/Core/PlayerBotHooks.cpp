@@ -16,6 +16,10 @@
 #include "BotAI.h"
 #include "ObjectAccessor.h"
 #include "Core/Services/BotNpcLocationService.h"
+#include "Core/Events/CombatEventRouter.h"
+#include "SpellInfo.h"
+#include "SpellAuras.h"
+#include "Unit.h"
 #include <sstream>
 
 namespace Playerbot
@@ -492,7 +496,159 @@ void PlayerBotHooks::RegisterHooks()
         }
     };
 
-    TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All {} hook functions registered", 21);
+    // ========================================================================
+    // COMBAT EVENT HOOKS - Phase 3 Event-Driven Architecture
+    // These hooks dispatch events to CombatEventRouter for the new event system
+    // ========================================================================
+
+    // Initialize CombatEventRouter
+    CombatEventRouter::Instance().Initialize();
+
+    OnDamageDealt = [](Unit* attacker, Unit* victim, uint32 damage, DamageEffectType /*damagetype*/, SpellInfo const* spellProto)
+    {
+        if (!victim)
+            return;
+
+        IncrementHookCall("OnDamageDealt");
+
+        // Create and dispatch damage events
+        ObjectGuid attackerGuid = attacker ? attacker->GetGUID() : ObjectGuid::Empty;
+        auto event = CombatEvent::CreateDamageTaken(victim->GetGUID(), attackerGuid, damage, 0, spellProto);
+        CombatEventRouter::Instance().QueueEvent(event);
+
+        // Also create DAMAGE_DEALT for the attacker
+        if (attacker)
+        {
+            auto dealerEvent = CombatEvent::CreateDamageDealt(attacker->GetGUID(), victim->GetGUID(), damage, spellProto);
+            CombatEventRouter::Instance().QueueEvent(dealerEvent);
+        }
+    };
+
+    OnHealingDone = [](Unit* healer, Unit* target, uint32 healAmount, uint32 overheal, SpellInfo const* spellProto)
+    {
+        if (!healer || !target)
+            return;
+
+        IncrementHookCall("OnHealingDone");
+
+        auto event = CombatEvent::CreateHealingDone(healer->GetGUID(), target->GetGUID(), healAmount, overheal, spellProto);
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    OnSpellCastStart = [](Unit* caster, SpellInfo const* spellInfo, Unit* target)
+    {
+        if (!caster || !spellInfo)
+            return;
+
+        IncrementHookCall("OnSpellCastStart");
+
+        // IMPORTANT: Use Dispatch() for immediate delivery - critical for interrupt coordination
+        ObjectGuid targetGuid = target ? target->GetGUID() : ObjectGuid::Empty;
+        auto event = CombatEvent::CreateSpellCastStart(caster->GetGUID(), spellInfo, targetGuid);
+        CombatEventRouter::Instance().Dispatch(event);  // Immediate dispatch!
+    };
+
+    OnSpellCastSuccess = [](Unit* caster, SpellInfo const* spellInfo)
+    {
+        if (!caster || !spellInfo)
+            return;
+
+        IncrementHookCall("OnSpellCastSuccess");
+
+        auto event = CombatEvent::CreateSpellCastSuccess(caster->GetGUID(), spellInfo);
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    OnSpellInterrupted = [](Unit* caster, SpellInfo const* spellInfo, Unit* interrupter)
+    {
+        if (!caster)
+            return;
+
+        IncrementHookCall("OnSpellInterrupted");
+
+        ObjectGuid interrupterGuid = interrupter ? interrupter->GetGUID() : ObjectGuid::Empty;
+        auto event = CombatEvent::CreateSpellInterrupted(caster->GetGUID(), spellInfo, interrupterGuid);
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    OnAuraApplied = [](Unit* target, Aura const* aura, Unit* caster)
+    {
+        if (!target || !aura)
+            return;
+
+        IncrementHookCall("OnAuraApplied");
+
+        ObjectGuid casterGuid = caster ? caster->GetGUID() : ObjectGuid::Empty;
+        auto event = CombatEvent::CreateAuraApplied(target->GetGUID(), aura, casterGuid);
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    OnAuraRemoved = [](Unit* target, Aura const* aura)
+    {
+        if (!target || !aura)
+            return;
+
+        IncrementHookCall("OnAuraRemoved");
+
+        auto event = CombatEvent::CreateAuraRemoved(target->GetGUID(), aura);
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    OnThreatChanged = [](Unit* threatOwner, Unit* victim, float oldThreat, float newThreat)
+    {
+        if (!threatOwner || !victim)
+            return;
+
+        // Only dispatch significant threat changes (>1% change or >100 delta)
+        float delta = newThreat - oldThreat;
+        if (oldThreat > 0.0f)
+        {
+            float percentChange = (delta / oldThreat) * 100.0f;
+            if (percentChange < 1.0f && ::std::abs(delta) < 100.0f)
+                return;  // Skip insignificant changes
+        }
+
+        IncrementHookCall("OnThreatChanged");
+
+        auto event = CombatEvent::CreateThreatChanged(threatOwner->GetGUID(), victim->GetGUID(), oldThreat, newThreat);
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    OnUnitDied = [](Unit* victim, Unit* killer)
+    {
+        if (!victim)
+            return;
+
+        IncrementHookCall("OnUnitDied");
+
+        ObjectGuid killerGuid = killer ? killer->GetGUID() : ObjectGuid::Empty;
+        auto event = CombatEvent::CreateUnitDied(victim->GetGUID(), killerGuid);
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    OnCombatStarted = [](Unit* unit)
+    {
+        if (!unit)
+            return;
+
+        IncrementHookCall("OnCombatStarted");
+
+        auto event = CombatEvent::CreateCombatStarted(unit->GetGUID());
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    OnCombatEnded = [](Unit* unit)
+    {
+        if (!unit)
+            return;
+
+        IncrementHookCall("OnCombatEnded");
+
+        auto event = CombatEvent::CreateCombatEnded(unit->GetGUID());
+        CombatEventRouter::Instance().QueueEvent(event);
+    };
+
+    TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All {} hook functions registered (including combat events)", 32);
 }
 
 void PlayerBotHooks::UnregisterHooks()
@@ -520,7 +676,23 @@ void PlayerBotHooks::UnregisterHooks()
     OnPlayerDeath = nullptr;
     OnPlayerResurrected = nullptr;
 
-    TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All hook functions unregistered");
+    // Clear combat event hooks
+    OnDamageDealt = nullptr;
+    OnHealingDone = nullptr;
+    OnSpellCastStart = nullptr;
+    OnSpellCastSuccess = nullptr;
+    OnSpellInterrupted = nullptr;
+    OnAuraApplied = nullptr;
+    OnAuraRemoved = nullptr;
+    OnThreatChanged = nullptr;
+    OnUnitDied = nullptr;
+    OnCombatStarted = nullptr;
+    OnCombatEnded = nullptr;
+
+    // Shutdown CombatEventRouter
+    CombatEventRouter::Instance().Shutdown();
+
+    TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All hook functions unregistered (including combat events)");
 }
 
 bool PlayerBotHooks::IsPlayerBot(Player const* player)
@@ -590,6 +762,29 @@ void PlayerBotHooks::IncrementHookCall(const char* hookName)
         ++GetStats().playerDeathCalls;
     else if (hook == "OnPlayerResurrected")
         ++GetStats().playerResurrectedCalls;
+    // Combat event hooks
+    else if (hook == "OnDamageDealt")
+        ++GetStats().damageDealtCalls;
+    else if (hook == "OnHealingDone")
+        ++GetStats().healingDoneCalls;
+    else if (hook == "OnSpellCastStart")
+        ++GetStats().spellCastStartCalls;
+    else if (hook == "OnSpellCastSuccess")
+        ++GetStats().spellCastSuccessCalls;
+    else if (hook == "OnSpellInterrupted")
+        ++GetStats().spellInterruptedCalls;
+    else if (hook == "OnAuraApplied")
+        ++GetStats().auraAppliedCalls;
+    else if (hook == "OnAuraRemoved")
+        ++GetStats().auraRemovedCalls;
+    else if (hook == "OnThreatChanged")
+        ++GetStats().threatChangedCalls;
+    else if (hook == "OnUnitDied")
+        ++GetStats().unitDiedCalls;
+    else if (hook == "OnCombatStarted")
+        ++GetStats().combatStartedCalls;
+    else if (hook == "OnCombatEnded")
+        ++GetStats().combatEndedCalls;
 }
 
 PlayerBotHooks::HookStatistics const& PlayerBotHooks::GetStatistics()
@@ -612,18 +807,29 @@ void PlayerBotHooks::DumpStatistics()
 ::std::string PlayerBotHooks::HookStatistics::ToString() const
 {
     ::std::ostringstream oss;
-    oss << "Total Hook Calls: " << totalHookCalls
-        << ", Member Added: " << memberAddedCalls
-        << ", Member Removed: " << memberRemovedCalls
-        << ", Leader Changed: " << leaderChangedCalls
-        << ", Group Disbanded: " << groupDisbandedCalls
-        << ", Raid Converted: " << raidConvertedCalls
-        << ", Loot Changed: " << lootMethodChangedCalls
-        << ", Ready Checks: " << readyCheckCalls
-        << ", Target Icons: " << targetIconCalls
-        << ", Difficulty: " << difficultyCalls
-        << ", Player Deaths: " << playerDeathCalls
-        << ", Player Resurrected: " << playerResurrectedCalls;
+    oss << "Total Hook Calls: " << totalHookCalls << "\n"
+        << "  Group Events: Added=" << memberAddedCalls
+        << ", Removed=" << memberRemovedCalls
+        << ", Leader=" << leaderChangedCalls
+        << ", Disbanded=" << groupDisbandedCalls
+        << ", RaidConvert=" << raidConvertedCalls
+        << ", Loot=" << lootMethodChangedCalls
+        << ", ReadyCheck=" << readyCheckCalls
+        << ", TargetIcon=" << targetIconCalls
+        << ", Difficulty=" << difficultyCalls << "\n"
+        << "  Player Events: Deaths=" << playerDeathCalls
+        << ", Resurrected=" << playerResurrectedCalls << "\n"
+        << "  Combat Events: Damage=" << damageDealtCalls
+        << ", Healing=" << healingDoneCalls
+        << ", SpellStart=" << spellCastStartCalls
+        << ", SpellSuccess=" << spellCastSuccessCalls
+        << ", Interrupted=" << spellInterruptedCalls
+        << ", AuraApplied=" << auraAppliedCalls
+        << ", AuraRemoved=" << auraRemovedCalls
+        << ", Threat=" << threatChangedCalls
+        << ", Died=" << unitDiedCalls
+        << ", CombatStart=" << combatStartedCalls
+        << ", CombatEnd=" << combatEndedCalls;
     return oss.str();
 }
 
@@ -641,6 +847,18 @@ void PlayerBotHooks::HookStatistics::Reset()
     difficultyCalls = 0;
     playerDeathCalls = 0;
     playerResurrectedCalls = 0;
+    // Reset combat event statistics
+    damageDealtCalls = 0;
+    healingDoneCalls = 0;
+    spellCastStartCalls = 0;
+    spellCastSuccessCalls = 0;
+    spellInterruptedCalls = 0;
+    auraAppliedCalls = 0;
+    auraRemovedCalls = 0;
+    threatChangedCalls = 0;
+    unitDiedCalls = 0;
+    combatStartedCalls = 0;
+    combatEndedCalls = 0;
 }
 
 } // namespace Playerbot
