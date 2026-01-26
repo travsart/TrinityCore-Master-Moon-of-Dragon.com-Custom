@@ -39,6 +39,9 @@
 namespace Playerbot
 {
 
+// Destructor must be defined in cpp file where specialization types are complete
+HunterAI::~HunterAI() = default;
+
 HunterAI::HunterAI(Player* bot) :
     ClassAI(bot),
     _lastCounterShot(0),
@@ -182,25 +185,7 @@ bool HunterAI::HandleInterrupts(::Unit* target)
 
             }
 
-            // Try Silencing Shot if available (MM spec)
-    if (_bot->HasSpell(SILENCING_SHOT) && CanUseAbility(SILENCING_SHOT))
-
-            {
-
-                if (CastSpell(SILENCING_SHOT, interruptTarget))
-                {
-
-                    _combatMetrics.interrupts++;
-
-                    TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} interrupted {} with Silencing Shot",
-
-                                 GetBot()->GetName(), interruptTarget->GetName());
-
-                    return true;
-
-                }
-
-            }
+            // Note: Silencing Shot was removed in modern WoW - Counter Shot is the primary interrupt
         }
     }
     return false;
@@ -384,17 +369,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
                 }
 
-                // Use melee abilities while in dead zone
-    if (_bot->HasSpell(WING_CLIP) && CanUseAbility(WING_CLIP))
-
-                {
-
-                    CastSpell(WING_CLIP, target);
-
-                    return true;
-
-                }
-
+                // Note: Wing Clip was removed in WoW 11.2
                 // Movement will be handled by BotAI movement strategies
 
                 Position optimalPos = _combatBehaviors->GetOptimalPosition();
@@ -755,7 +730,7 @@ bool HunterAI::HandleAoEDecisions(::Unit* target)
             if (now - _lastTrapPlacement > 30000)
 
             {
-            PlaceTrap(13813, target->GetPosition()); // Explosive Trap spell ID
+            PlaceTrap(EXPLOSIVE_TRAP, target->GetPosition());
 
                 _lastTrapPlacement = now;
 
@@ -976,7 +951,8 @@ bool HunterAI::CanUseAbility(uint32 spellId)
         return false;
 
     // Additional hunter-specific checks
-    if (IsInDeadZone(nullptr) && spellId != WING_CLIP && spellId != HUNTER_DISENGAGE)
+    // Note: Dead zone restrictions are less strict in modern WoW, but ranged attacks still require distance
+    if (IsInDeadZone(nullptr) && spellId != HUNTER_DISENGAGE)
         return false;
 
     return ClassAI::CanUseAbility(spellId);
@@ -1296,12 +1272,12 @@ bool HunterAI::ShouldPlaceExplosiveTrap() const
     // Place explosive trap when multiple enemies nearby
     return GetNearbyEnemyCount(10.0f) >= 3;
 }
-bool HunterAI::ShouldPlaceSnakeTrap() const
+bool HunterAI::ShouldPlaceTarTrap() const
 {
     if (!CanPlaceTrap())
         return false;
 
-    // Place snake trap for slowing multiple enemies
+    // Place tar trap for slowing multiple enemies (replaces Snake Trap in WoW 11.2)
     return GetNearbyEnemyCount(10.0f) >= 2;
 }
 
@@ -1320,10 +1296,9 @@ uint32 HunterAI::GetBestTrapForSituation() const
     if (ShouldPlaceFreezingTrap(nullptr))
         return FREEZING_TRAP;
     if (ShouldPlaceExplosiveTrap())
-        return 13813; // Explosive Trap
-    if (ShouldPlaceSnakeTrap())
-        return SNAKE_TRAP;
-    return FREEZING_TRAP; // Default
+        return EXPLOSIVE_TRAP;
+    // TAR_TRAP replaces Snake Trap in WoW 11.2
+    return TAR_TRAP;
 }
 // Range management implementation
 bool HunterAI::IsInOptimalRange(::Unit* target) const
@@ -1482,319 +1457,43 @@ void HunterAI::ManageAspects()
 
 void HunterAI::UpdateTracking()
 {
-    if (!_bot)
-        return;
-
-    // Check if we already have tracking active - don't spam tracking changes
-    uint32 currentTracking = 0;
-    if (_bot->HasAura(TRACK_BEASTS)) currentTracking = TRACK_BEASTS;
-    else if (_bot->HasAura(TRACK_DEMONS)) currentTracking = TRACK_DEMONS;
-    else if (_bot->HasAura(TRACK_DRAGONKIN)) currentTracking = TRACK_DRAGONKIN;
-    else if (_bot->HasAura(TRACK_ELEMENTALS)) currentTracking = TRACK_ELEMENTALS;
-    else if (_bot->HasAura(TRACK_GIANTS)) currentTracking = TRACK_GIANTS;
-    else if (_bot->HasAura(TRACK_HUMANOIDS)) currentTracking = TRACK_HUMANOIDS;
-    else if (_bot->HasAura(TRACK_UNDEAD)) currentTracking = TRACK_UNDEAD;
-    else if (_bot->HasAura(TRACK_HIDDEN)) currentTracking = TRACK_HIDDEN;
-
-    // Determine the best tracking based on current target and nearby enemies
-    uint32 optimalTracking = 0;
-
-    // Priority 1: If we have a current target, use tracking appropriate for its creature type
-    if (Unit* target = _bot->GetSelectedUnit())
-    {
-        if (target->GetTypeId() == TYPEID_UNIT)
-        {
-
-            Creature* creature = target->ToCreature();
-
-            if (creature)
-            {
-                CreatureType creatureType = static_cast<CreatureType>(creature->GetCreatureTemplate()->type);
-
-                switch (creatureType)
-
-                {
-
-                    case CREATURE_TYPE_BEAST:
-
-                        if (_bot->HasSpell(TRACK_BEASTS))
-
-                            optimalTracking = TRACK_BEASTS;
-
-                        break;
-
-                    case CREATURE_TYPE_DEMON:
-
-                        if (_bot->HasSpell(TRACK_DEMONS))
-
-                            optimalTracking = TRACK_DEMONS;
-
-                        break;
-
-                    case CREATURE_TYPE_DRAGONKIN:
-
-                        if (_bot->HasSpell(TRACK_DRAGONKIN))
-
-                            optimalTracking = TRACK_DRAGONKIN;
-
-                        break;
-
-                    case CREATURE_TYPE_ELEMENTAL:
-
-                        if (_bot->HasSpell(TRACK_ELEMENTALS))
-
-                            optimalTracking = TRACK_ELEMENTALS;
-
-                        break;
-
-                    case CREATURE_TYPE_GIANT:
-
-                        if (_bot->HasSpell(TRACK_GIANTS))
-
-                            optimalTracking = TRACK_GIANTS;
-
-                        break;
-
-                    case CREATURE_TYPE_HUMANOID:
-
-                        if (_bot->HasSpell(TRACK_HUMANOIDS))
-
-                            optimalTracking = TRACK_HUMANOIDS;
-
-                        break;
-
-                    case CREATURE_TYPE_UNDEAD:
-
-                        if (_bot->HasSpell(TRACK_UNDEAD))
-
-                            optimalTracking = TRACK_UNDEAD;
-
-                        break;
-
-                    default:
-                        // For other types, default to humanoid tracking if in PvP zone
-                        if (_bot->IsPvP() && _bot->HasSpell(TRACK_HUMANOIDS))
-                            optimalTracking = TRACK_HUMANOIDS;
-
-                        break;
-
-                }
-
-            }
-        }
-        else if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            // Tracking players with Track Humanoids
-    if (_bot->HasSpell(TRACK_HUMANOIDS))
-
-                optimalTracking = TRACK_HUMANOIDS;
-        }
-    }
-
-    // Priority 2: If no specific target, analyze nearby creatures
-    if (optimalTracking == 0)
-    {
-        ::std::unordered_map<CreatureType, uint32> creatureTypeCounts;
-
-        // Count nearby creature types within 40 yards
-        // Use spatial grid to find nearby creatures (same pattern as elsewhere in this file)
-        Map* map = _bot->GetMap();
-        if (!map)
-            return;
-
-        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-        {
-            sSpatialGridManager.CreateGrid(map);
-            spatialGrid = sSpatialGridManager.GetGrid(map);
-        }
-
-        if (spatialGrid)
-        {
-            // Query nearby creature GUIDs (lock-free!)
-            ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-                _bot->GetPosition(), 40.0f);
-
-            // Process results
-            for (ObjectGuid guid : nearbyGuids)
-            {
-                // Thread-safe spatial grid validation
-                auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
-                Creature* creature = nullptr;
-                if (snapshot_entity)
-                {
-                    // FIXED: CreatureSnapshot to Creature conversion via ObjectAccessor
-                    creature = ObjectAccessor::GetCreature(*_bot, snapshot_entity->guid);
-                }
-                if (!creature || creature->IsFriendlyTo(_bot))
-                    continue;
-
-                CreatureType type = static_cast<CreatureType>(creature->GetCreatureTemplate()->type);
-                creatureTypeCounts[type]++;
-            }
-        }
-
-        // Select tracking for the most common nearby creature type
-        uint32 maxCount = 0;
-        CreatureType mostCommonType = CREATURE_TYPE_NON_COMBAT_PET;
-
-        for (const auto& [type, count] : creatureTypeCounts)
-        {
-
-            if (count > maxCount)
-
-            {
-
-                maxCount = count;
-
-                mostCommonType = type;
-
-            }
-        }
-
-        // Apply tracking for most common type
-    if (maxCount > 0)
-        {
-
-            switch (mostCommonType)
-
-            {
-
-                case CREATURE_TYPE_BEAST:
-
-                    if (_bot->HasSpell(TRACK_BEASTS))
-
-                        optimalTracking = TRACK_BEASTS;
-
-                    break;
-
-                case CREATURE_TYPE_DEMON:
-
-                    if (_bot->HasSpell(TRACK_DEMONS))
-
-                        optimalTracking = TRACK_DEMONS;
-
-                    break;
-
-                case CREATURE_TYPE_DRAGONKIN:
-
-                    if (_bot->HasSpell(TRACK_DRAGONKIN))
-
-                        optimalTracking = TRACK_DRAGONKIN;
-
-                    break;
-
-                case CREATURE_TYPE_ELEMENTAL:
-
-                    if (_bot->HasSpell(TRACK_ELEMENTALS))
-
-                        optimalTracking = TRACK_ELEMENTALS;
-
-                    break;
-
-                case CREATURE_TYPE_GIANT:
-
-                    if (_bot->HasSpell(TRACK_GIANTS))
-
-                        optimalTracking = TRACK_GIANTS;
-
-                    break;
-
-                case CREATURE_TYPE_HUMANOID:
-
-                    if (_bot->HasSpell(TRACK_HUMANOIDS))
-
-                        optimalTracking = TRACK_HUMANOIDS;
-
-                    break;
-
-                case CREATURE_TYPE_UNDEAD:
-
-                    if (_bot->HasSpell(TRACK_UNDEAD))
-
-                        optimalTracking = TRACK_UNDEAD;
-
-                    break;
-
-                default:
-
-                    break;
-
-            }
-        }
-    }
-
-    // Priority 3: Default to appropriate tracking based on zone type
-    if (optimalTracking == 0)
-    {
-        // In dungeons/raids, prioritize Track Hidden for stealth detection
-        if (_bot->GetMap()->IsDungeon() && _bot->HasSpell(TRACK_HIDDEN))
-        {
-            optimalTracking = TRACK_HIDDEN;
-        }
-        // In PvP zones, track humanoids
-        else if (_bot->IsPvP() && _bot->HasSpell(TRACK_HUMANOIDS))
-        {
-            optimalTracking = TRACK_HUMANOIDS;
-        }
-        // Default to beast tracking in open world
-        else if (_bot->HasSpell(TRACK_BEASTS))
-        {
-
-            optimalTracking = TRACK_BEASTS;
-        }
-    }
-
-    // Apply the optimal tracking if it's different from current
-    if (optimalTracking != 0 && optimalTracking != currentTracking)
-    {
-        if (CastSpell(optimalTracking, _bot))
-        {
-
-            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched tracking to spell {}",
-
-                         _bot->GetName(), optimalTracking);
-        }
-    }
+    // Note: Tracking spells were removed in WoW 11.2
+    // This function is kept for interface compatibility but does nothing
 }
 
 bool HunterAI::HasAnyAspect()
 {
-    return HasAura(ASPECT_OF_THE_HAWK) ||
+    // WoW 11.2 only has these aspects
+    return HasAura(ASPECT_OF_THE_WILD) ||
            HasAura(ASPECT_OF_THE_CHEETAH) ||
-           HasAura(ASPECT_OF_THE_PACK) ||
-           HasAura(ASPECT_OF_THE_VIPER) ||
-           HasAura(ASPECT_OF_THE_DRAGONHAWK) ||
            HasAura(ASPECT_OF_THE_TURTLE);
 }
 
 uint32 HunterAI::GetCurrentAspect()
 {
-    if (HasAura(ASPECT_OF_THE_DRAGONHAWK)) return ASPECT_OF_THE_DRAGONHAWK;
-    if (HasAura(ASPECT_OF_THE_HAWK)) return ASPECT_OF_THE_HAWK;
+    // WoW 11.2 aspects only
+    if (HasAura(ASPECT_OF_THE_WILD)) return ASPECT_OF_THE_WILD;
     if (HasAura(ASPECT_OF_THE_CHEETAH)) return ASPECT_OF_THE_CHEETAH;
-    if (HasAura(ASPECT_OF_THE_PACK)) return ASPECT_OF_THE_PACK;
-    if (HasAura(ASPECT_OF_THE_VIPER)) return ASPECT_OF_THE_VIPER;
     if (HasAura(ASPECT_OF_THE_TURTLE)) return ASPECT_OF_THE_TURTLE;
     return 0;
 }
 
 void HunterAI::SwitchToCombatAspect()
 {
-    uint32 combatAspect = _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;
-    if (!HasAura(combatAspect) && _bot->HasSpell(combatAspect))
+    // WoW 11.2: Aspect of the Wild is the primary combat aspect
+    if (!HasAura(ASPECT_OF_THE_WILD) && _bot->HasSpell(ASPECT_OF_THE_WILD))
     {
-        CastSpell(combatAspect);
+        CastSpell(ASPECT_OF_THE_WILD);
         _lastAspectSwitch = GameTime::GetGameTimeMS();
     }
 }
 
 void HunterAI::SwitchToMovementAspect()
 {
-    uint32 moveAspect = _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;
-    if (!HasAura(moveAspect) && _bot->HasSpell(moveAspect))
+    // WoW 11.2: Aspect of the Cheetah is the movement aspect (Aspect of the Pack was removed)
+    if (!HasAura(ASPECT_OF_THE_CHEETAH) && _bot->HasSpell(ASPECT_OF_THE_CHEETAH))
     {
-        CastSpell(moveAspect);
+        CastSpell(ASPECT_OF_THE_CHEETAH);
         _lastAspectSwitch = GameTime::GetGameTimeMS();
     }
 }
@@ -1809,17 +1508,18 @@ uint32 HunterAI::GetOptimalAspect() const
 {
     if (_bot->IsInCombat())
     {
-        // Low on focus? Use Viper
-        if (GetFocusPercent() < 30.0f && _bot->HasSpell(ASPECT_OF_THE_VIPER))
-            return ASPECT_OF_THE_VIPER;
-
-        // Normal combat aspect
-        return _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;
+        // WoW 11.2: Aspect of the Wild is the combat aspect
+        // Note: Aspect of the Viper was removed - focus regenerates passively now
+        if (_bot->HasSpell(ASPECT_OF_THE_WILD))
+            return ASPECT_OF_THE_WILD;
+        return 0; // No aspect
     }
     else
     {
         // Out of combat movement
-        return _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;
+        if (_bot->HasSpell(ASPECT_OF_THE_CHEETAH))
+            return ASPECT_OF_THE_CHEETAH;
+        return 0; // No aspect
     }
 }
 

@@ -23,6 +23,7 @@
 #include "Lifecycle/BotSpawner.h"
 #include "Lifecycle/BotCharacterCreator.h"
 #include "Session/BotWorldSessionMgr.h"
+#include "Core/Diagnostics/GroupMemberDiagnostics.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -101,6 +102,16 @@ namespace Playerbot
             rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
         };
 
+        static ChatCommandTable botDiagCommandTable =
+        {
+            { "enable",  HandleBotDiagEnableCommand,  rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "disable", HandleBotDiagDisableCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "report",  HandleBotDiagReportCommand,  rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "reset",   HandleBotDiagResetCommand,   rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "verbose", HandleBotDiagVerboseCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "",        HandleBotDiagCommand,        rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
+        };
+
         static ChatCommandTable botCommandTable =
         {
 
@@ -137,7 +148,9 @@ namespace Playerbot
             { "monitor",   botMonitorCommandTable },
 
             { "alerts",
-            botAlertsCommandTable }
+            botAlertsCommandTable },
+
+            { "diag",      botDiagCommandTable }
         };
 
         static ChatCommandTable commandTable =
@@ -1372,6 +1385,91 @@ namespace Playerbot
         monitor->ClearAlertHistory();
         handler->SendSysMessage("Alert history cleared");
 
+        return true;
+    }
+
+    // =====================================================================
+    // DIAGNOSTIC COMMANDS FOR GROUP MEMBER LOOKUP
+    // =====================================================================
+
+    bool PlayerbotCommandScript::HandleBotDiagCommand(ChatHandler* handler)
+    {
+        std::ostringstream oss;
+        oss << "Bot Group Member Diagnostics\n";
+        oss << "============================\n\n";
+        oss << "Status: " << (sGroupMemberDiagnostics->IsEnabled() ? "ENABLED" : "DISABLED") << "\n";
+        oss << "Verbose: " << (sGroupMemberDiagnostics->IsVerbose() ? "ON" : "OFF") << "\n\n";
+        oss << "Quick Stats:\n";
+        oss << "  Total Lookups: " << sGroupMemberDiagnostics->GetTotalLookups() << "\n";
+        oss << "  Failed Lookups: " << sGroupMemberDiagnostics->GetFailedLookups() << "\n";
+        oss << "  Bot Failures: " << sGroupMemberDiagnostics->GetBotLookupFailures() << "\n";
+        oss << "  Success Rate: " << std::fixed << std::setprecision(1) 
+            << sGroupMemberDiagnostics->GetOverallSuccessRate() << "%\n\n";
+        oss << "Commands:\n";
+        oss << "  .bot diag enable   - Enable diagnostics\n";
+        oss << "  .bot diag disable  - Disable diagnostics\n";
+        oss << "  .bot diag report   - Show detailed report\n";
+        oss << "  .bot diag reset    - Reset statistics\n";
+        oss << "  .bot diag verbose  - Toggle verbose logging\n";
+
+        handler->SendSysMessage(oss.str().c_str());
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDiagEnableCommand(ChatHandler* handler)
+    {
+        sGroupMemberDiagnostics->SetEnabled(true);
+        handler->SendSysMessage("Group member lookup diagnostics ENABLED");
+        handler->SendSysMessage("Run dungeons/group content, then use '.bot diag report' to see results");
+        TC_LOG_INFO("module.playerbot.diag.group", "[GroupMemberDiag] Diagnostics enabled by admin");
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDiagDisableCommand(ChatHandler* handler)
+    {
+        sGroupMemberDiagnostics->SetEnabled(false);
+        handler->SendSysMessage("Group member lookup diagnostics DISABLED");
+        TC_LOG_INFO("module.playerbot.diag.group", "[GroupMemberDiag] Diagnostics disabled by admin");
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDiagReportCommand(ChatHandler* handler)
+    {
+        if (!sGroupMemberDiagnostics->IsEnabled())
+        {
+            handler->SendSysMessage("Diagnostics are disabled. Enable with '.bot diag enable' first.");
+            return true;
+        }
+
+        std::string report = sGroupMemberDiagnostics->GetReport();
+        
+        // Split by newlines and send each line
+        std::istringstream stream(report);
+        std::string line;
+        while (std::getline(stream, line))
+        {
+            if (!line.empty())
+                handler->SendSysMessage(line.c_str());
+        }
+
+        // Also log to file
+        sGroupMemberDiagnostics->LogSummary();
+
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDiagResetCommand(ChatHandler* handler)
+    {
+        sGroupMemberDiagnostics->Reset();
+        handler->SendSysMessage("Diagnostic statistics reset");
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDiagVerboseCommand(ChatHandler* handler, bool enable)
+    {
+        sGroupMemberDiagnostics->SetVerbose(enable);
+        handler->PSendSysMessage("Verbose logging %s", enable ? "ENABLED" : "DISABLED");
+        handler->SendSysMessage("Note: Verbose mode logs EVERY lookup, not just failures");
         return true;
     }
 

@@ -29,6 +29,16 @@
 namespace Playerbot
 {
 
+// Forward declarations for specialization classes (QW-4 FIX)
+class BrewmasterMonkRefactored;
+class MistweaverMonkRefactored;
+class WindwalkerMonkRefactored;
+
+// Type aliases for consistency with base naming
+using BrewmasterMonk = BrewmasterMonkRefactored;
+using MistweaverMonk = MistweaverMonkRefactored;
+using WindwalkerMonk = WindwalkerMonkRefactored;
+
 // Monk specializations
 enum class MonkSpec : uint8
 {
@@ -36,8 +46,6 @@ enum class MonkSpec : uint8
     MISTWEAVER = 1,
     WINDWALKER = 2
 };
-
-// Forward declarations
 
 // Monk martial art forms
 enum class MartialForm : uint8
@@ -54,7 +62,7 @@ class TC_GAME_API MonkAI : public ClassAI
 {
 public:
     explicit MonkAI(Player* bot);
-    ~MonkAI() = default;
+    ~MonkAI();
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -76,6 +84,18 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<BrewmasterMonk> _brewmasterSpec;
+    ::std::unique_ptr<MistweaverMonk> _mistweaverSpec;
+    ::std::unique_ptr<WindwalkerMonk> _windwalkerSpec;
+
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
+
     // Current specialization tracking
     MonkSpec _currentSpec;
 
@@ -731,6 +751,7 @@ private:
 
     // Spell IDs
     // Monk Spell IDs - Using central registry (WoW 11.2)
+    // All spell IDs now reference WoW112Spells::Monk namespace for consistency
     enum MonkSpells
     {
         // Chi generators
@@ -738,7 +759,6 @@ private:
         EXPEL_HARM = WoW112Spells::Monk::Common::EXPEL_HARM,
         CHI_WAVE = WoW112Spells::Monk::Common::CHI_WAVE,
         CHI_BURST = WoW112Spells::Monk::Common::CHI_BURST,
-        JAB = WoW112Spells::Monk::Common::TIGER_PALM, // JAB was renamed to Tiger Palm
 
         // Basic attacks
         BLACKOUT_KICK = WoW112Spells::Monk::Common::BLACKOUT_KICK,
@@ -753,20 +773,21 @@ private:
         FLYING_SERPENT_KICK = WoW112Spells::Monk::Common::FLYING_SERPENT_KICK,
         MARK_OF_THE_CRANE = WoW112Spells::Monk::Common::MARK_OF_THE_CRANE,
         RUSHING_JADE_WIND = WoW112Spells::Monk::Common::RUSHING_JADE_WIND,
+        SERENITY = WoW112Spells::Monk::Common::SERENITY,
 
         // Brewmaster abilities
         KEG_SMASH = WoW112Spells::Monk::Common::KEG_SMASH,
         BREATH_OF_FIRE = WoW112Spells::Monk::Common::BREATH_OF_FIRE,
-        IRONSKIN_BREW = 115308, // Merged into CELESTIAL_BREW in modern WoW
+        CELESTIAL_BREW = WoW112Spells::Monk::Common::CELESTIAL_BREW,       // Replaced IRONSKIN_BREW in WoW 11.2
         PURIFYING_BREW = WoW112Spells::Monk::Common::PURIFYING_BREW,
         FORTIFYING_BREW = WoW112Spells::Monk::Common::FORTIFYING_BREW,
         BLACK_OX_BREW = WoW112Spells::Monk::Common::BLACK_OX_BREW,
+        STAGGER = WoW112Spells::Monk::Common::STAGGER,
         STAGGER_HEAVY = WoW112Spells::Monk::Common::STAGGER_HEAVY,
         STAGGER_MODERATE = WoW112Spells::Monk::Common::STAGGER_MODERATE,
         STAGGER_LIGHT = WoW112Spells::Monk::Common::STAGGER_LIGHT,
         ZEN_MEDITATION = WoW112Spells::Monk::Common::ZEN_MEDITATION,
         DAMPEN_HARM = WoW112Spells::Monk::Common::DAMPEN_HARM,
-        GUARD = 115295, // Talent, keeping hardcoded
 
         // Mistweaver abilities
         RENEWING_MIST = WoW112Spells::Monk::Common::RENEWING_MIST,
@@ -778,8 +799,8 @@ private:
         REVIVAL = WoW112Spells::Monk::Common::REVIVAL,
         THUNDER_FOCUS_TEA = WoW112Spells::Monk::Common::THUNDER_FOCUS_TEA,
         MANA_TEA = WoW112Spells::Monk::Common::MANA_TEA,
-        TEACHINGS_OF_THE_MONASTERY = 202090, // Passive talent
-        SHEILUNS_GIFT = 205406, // Artifact ability (removed)
+        TEACHINGS_OF_THE_MONASTERY = WoW112Spells::Monk::Common::TEACHINGS_OF_THE_MONASTERY,
+        SHEILUNS_GIFT = WoW112Spells::Monk::Common::SHEILUNS_GIFT,         // WoW 11.2 ID: 399491
 
         // Mobility
         ROLL = WoW112Spells::Monk::Common::ROLL,
@@ -796,22 +817,15 @@ private:
         CRACKLING_JADE_LIGHTNING = WoW112Spells::Monk::Common::CRACKLING_JADE_LIGHTNING,
         DETOX = WoW112Spells::Monk::Common::DETOX,
         RESUSCITATE = WoW112Spells::Monk::Common::RESUSCITATE,
-
-        // Buffs (removed in modern WoW)
-        LEGACY_OF_THE_WHITE_TIGER = 116781,
-        LEGACY_OF_THE_EMPEROR = 115921,
+        PROVOKE = WoW112Spells::Monk::Common::PROVOKE,                     // Taunt
 
         // Defensive cooldowns
         TOUCH_OF_KARMA = WoW112Spells::Monk::Common::TOUCH_OF_KARMA,
         DIFFUSE_MAGIC = WoW112Spells::Monk::Common::DIFFUSE_MAGIC,
 
-        // Talents
-        CHI_ORBIT = 196743, // Passive talent
-        ENERGIZING_ELIXIR = WoW112Spells::Monk::Common::ENERGIZING_ELIXIR,
-        POWER_STRIKES = 121817, // Passive talent
-        EYE_OF_THE_TIGER = 196607, // Passive talent
-        CHI_EXPLOSION = 152174, // Removed
-        SERENITY = WoW112Spells::Monk::Common::SERENITY
+        // Talents - using central registry where available
+        EYE_OF_THE_TIGER = WoW112Spells::Monk::Common::EYE_OF_THE_TIGER,
+        ENERGIZING_ELIXIR = WoW112Spells::Monk::Common::ENERGIZING_ELIXIR
     };
 
     // Advanced specialization management methods

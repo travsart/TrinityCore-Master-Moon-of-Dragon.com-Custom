@@ -25,6 +25,9 @@
 namespace Playerbot
 {
 
+// Destructor must be defined in cpp file where specialization types are complete
+DruidAI::~DruidAI() = default;
+
 DruidAI::DruidAI(Player* bot) : ClassAI(bot),    _currentForm(DruidForm::HUMANOID),
     _lastFormShift(0),
     _comboPoints(0),
@@ -464,16 +467,17 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             }
 
-            // Lunar Strike - cleave
-    if (CanUseAbility(LUNAR_STRIKE))
+            // NOTE: Lunar Strike was removed in WoW 11.x (merged with Starfire)
+            // Use Starfire for cleave damage instead
+            if (CanUseAbility(STARFIRE))
 
             {
 
-                if (CastSpell(LUNAR_STRIKE, target))
+                if (CastSpell(STARFIRE, target))
 
                 {
 
-                    TC_LOG_DEBUG("module.playerbot.ai", "Druid {} using Lunar Strike for cleave",
+                    TC_LOG_DEBUG("module.playerbot.ai", "Druid {} using Starfire for cleave",
 
                                  GetBot()->GetName());
 
@@ -1095,28 +1099,9 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
             }
 
 
-            if (CanUseAbility(SOLAR_WRATH))
-
-            {
-
-                CastSpell(SOLAR_WRATH, target);
-
-                return;
-
-            }
-
-
-            if (CanUseAbility(LUNAR_STRIKE))
-
-            {
-
-                CastSpell(LUNAR_STRIKE, target);
-
-                return;
-
-            }
-
-
+            // NOTE: Solar Wrath and Lunar Strike were removed in WoW 11.x
+            // They were merged with Wrath and Starfire respectively
+            // Use Wrath as the primary filler
             if (CanUseAbility(WRATH))
 
             {
@@ -1246,9 +1231,8 @@ void DruidAI::UpdateBuffs()
                     ShiftToForm(DruidForm::MOONKIN);
             }
             // Apply Mark of the Wild if not present (universal druid buff)
-            // Spell ID 1126 = Mark of the Wild
-            if (!bot->HasAura(1126) && CanUseAbility(1126))
-                CastSpell(1126, bot);
+            if (!bot->HasAura(MARK_OF_THE_WILD) && CanUseAbility(MARK_OF_THE_WILD))
+                CastSpell(MARK_OF_THE_WILD, bot);
             break;
 
         case ChrSpecialization::DruidFeral:
@@ -1260,8 +1244,8 @@ void DruidAI::UpdateBuffs()
                     ShiftToForm(DruidForm::CAT);
             }
             // Apply Mark of the Wild if not present
-            if (!bot->HasAura(1126) && CanUseAbility(1126))
-                CastSpell(1126, bot);
+            if (!bot->HasAura(MARK_OF_THE_WILD) && CanUseAbility(MARK_OF_THE_WILD))
+                CastSpell(MARK_OF_THE_WILD, bot);
             break;
 
         case ChrSpecialization::DruidGuardian:
@@ -1273,22 +1257,22 @@ void DruidAI::UpdateBuffs()
                     ShiftToForm(DruidForm::BEAR);
             }
             // Apply Mark of the Wild if not present
-            if (!bot->HasAura(1126) && CanUseAbility(1126))
-                CastSpell(1126, bot);
+            if (!bot->HasAura(MARK_OF_THE_WILD) && CanUseAbility(MARK_OF_THE_WILD))
+                CastSpell(MARK_OF_THE_WILD, bot);
             break;
 
         case ChrSpecialization::DruidRestoration:
             // Restoration druids stay in caster form for healing
             // They might use Tree of Life form during heavy healing phases (handled in rotation)
             // Apply Mark of the Wild if not present
-            if (!bot->HasAura(1126) && CanUseAbility(1126))
-                CastSpell(1126, bot);
+            if (!bot->HasAura(MARK_OF_THE_WILD) && CanUseAbility(MARK_OF_THE_WILD))
+                CastSpell(MARK_OF_THE_WILD, bot);
             break;
 
         default:
             // No specialization or unknown - apply basic buffs
-            if (!bot->HasAura(1126) && CanUseAbility(1126))
-                CastSpell(1126, bot);
+            if (!bot->HasAura(MARK_OF_THE_WILD) && CanUseAbility(MARK_OF_THE_WILD))
+                CastSpell(MARK_OF_THE_WILD, bot);
             break;
     }
 }

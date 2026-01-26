@@ -8,6 +8,8 @@
 #include "Map.h"
 #include "Log.h"
 #include "Timer.h"
+#include "../Group/GroupMemberResolver.h"
+#include "../Core/Diagnostics/GroupMemberDiagnostics.h"
 #include <algorithm>
 #include "GameTime.h"
 
@@ -237,13 +239,12 @@ bool BotPriorityManager::IsInHighPriorityActivity(Player* bot) const
 
         // If bot is in a group but not in instance, check group combat state
         // This covers outdoor group activities (world bosses, elite quests, etc.)
-    for (GroupReference const& ref : group->GetMembers())
+        // FIXED: Use GroupMemberResolver instead of GetMembers()
+        for (auto const& slot : group->GetMemberSlots())
         {
-            if (Player* member = ref.GetSource())
-            {
-                if (member->IsInCombat())
-                    return true; // Any group member in combat = high priority
-            }
+            Player* member = GroupMemberResolver::ResolveMember(slot.guid);
+            if (member && member->IsInCombat())
+                return true; // Any group member in combat = high priority
         }
     }
 

@@ -158,11 +158,11 @@ public:
 private:
     bool IsFinisher(uint32 spellId) const
     {
+        // WoW 11.2 finishers - EXPOSE_ARMOR removed from game
         return spellId == RogueAI::SLICE_AND_DICE || spellId == RogueAI::RUPTURE ||
-
                spellId == RogueAI::EVISCERATE || spellId == RogueAI::KIDNEY_SHOT ||
-
-               spellId == RogueAI::EXPOSE_ARMOR || spellId == RogueAI::ENVENOM;
+               spellId == RogueAI::ENVENOM || spellId == RogueAI::CRIMSON_TEMPEST ||
+               spellId == RogueAI::BETWEEN_THE_EYES;
     }
 
     ::std::unordered_map<uint32, ::std::chrono::steady_clock::time_point> _abilityTimings;
@@ -661,24 +661,8 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         }
     }
 
-    // Use Expose Armor if no sunder armor debuff present
-    if (comboPoints >= 3 && !target->HasAura(EXPOSE_ARMOR))    {
-        if (CanUseAbility(EXPOSE_ARMOR))
-        {
-
-            if (CastSpell(EXPOSE_ARMOR, target))
-
-            {
-
-                RecordAbilityUsage(EXPOSE_ARMOR);
-
-                _metrics->totalFinishersExecuted++;
-
-                return;
-
-            }
-        }
-    }
+    // NOTE: EXPOSE_ARMOR removed from WoW 11.2
+    // Armor reduction is now provided by other debuffs (Colossus Smash, etc.)
 
     // Kidney Shot for control
     if (comboPoints >= 4 && target->GetTypeId() == TYPEID_PLAYER)    {
@@ -817,17 +801,13 @@ void RogueAI::UseDefensiveCooldowns()
     }
 
     // Feint for AoE damage reduction
-    if (healthPct < 50.0f && CanUseAbility(1966)) // Feint spell ID
+    if (healthPct < 50.0f && CanUseAbility(FEINT))
     {
-        if (CastSpell(1966))
+        if (CastSpell(FEINT))
         {
-
-            RecordAbilityUsage(1966);
-
+            RecordAbilityUsage(FEINT);
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} used Feint for damage reduction",
-
                          GetBot()->GetName());
-
             return;
         }
     }
@@ -1166,25 +1146,19 @@ bool RogueAI::BuildComboPoints(Unit* target)
             break;
 
         case 2: // Subtlety
-    if (CanUseAbility(HEMORRHAGE))
-
+            // NOTE: HEMORRHAGE removed from WoW 11.2
+            // Subtlety now uses Shadowstrike (from stealth/Shadow Dance) and Backstab
+            if (CanUseAbility(SHADOWSTRIKE))
             {
-
-                CastSpell(HEMORRHAGE, target);
-
-                _combatMetrics->RecordAbilityUsage(HEMORRHAGE, true, 35);
-
-                _combatMetrics->RecordComboPointGeneration(1);
-
+                CastSpell(SHADOWSTRIKE, target);
+                _combatMetrics->RecordAbilityUsage(SHADOWSTRIKE, true, 40);
+                _combatMetrics->RecordComboPointGeneration(2);
                 return true;
-
             }
-
             break;
 
         case 1: // Combat/Outlaw
-            // Combat prefers Sinister Strike
-
+            // Outlaw prefers Sinister Strike
             break;
     }
 
@@ -1296,9 +1270,8 @@ void RogueAI::ApplyPoisons()
                 break;
 
             case 2: // Subtlety
-
-                poisonSpell = MIND_NUMBING_POISON;
-
+                // NOTE: MIND_NUMBING_POISON renamed to NUMBING_POISON in WoW 11.2
+                poisonSpell = NUMBING_POISON;
                 break;
         }
 
@@ -1384,10 +1357,11 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
 
 bool RogueAI::IsFinisher(uint32 spellId) const
 {
+    // WoW 11.2 finishers - EXPOSE_ARMOR and DEADLY_THROW removed from game
     return spellId == SLICE_AND_DICE || spellId == RUPTURE ||
            spellId == EVISCERATE || spellId == KIDNEY_SHOT ||
-           spellId == EXPOSE_ARMOR || spellId == ENVENOM ||
-           spellId == DEADLY_THROW;
+           spellId == ENVENOM || spellId == CRIMSON_TEMPEST ||
+           spellId == BETWEEN_THE_EYES;
 }
 
 void RogueAI::ConsumeResource(uint32 spellId)

@@ -21,6 +21,16 @@
 namespace Playerbot
 {
 
+// Forward declarations for specialization classes (QW-4 FIX)
+class ElementalShamanRefactored;
+class EnhancementShamanRefactored;
+class RestorationShamanRefactored;
+
+// Type aliases for consistency with base naming
+using ElementalShaman = ElementalShamanRefactored;
+using EnhancementShaman = EnhancementShamanRefactored;
+using RestorationShaman = RestorationShamanRefactored;
+
 // TotemType and TotemInfo are defined in ShamanSpecialization.h
 
 // Shaman AI implementation with specialization pattern and CombatBehaviorIntegration
@@ -100,6 +110,15 @@ protected:
     };
 
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<ElementalShaman> _elementalSpec;
+    ::std::unique_ptr<EnhancementShaman> _enhancementSpec;
+    ::std::unique_ptr<RestorationShaman> _restorationSpec;
+
     // Performance tracking
     uint32 _manaSpent;
     uint32 _damageDealt;

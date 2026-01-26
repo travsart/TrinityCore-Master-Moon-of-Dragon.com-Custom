@@ -19,14 +19,22 @@
 namespace Playerbot
 {
 
-// Forward declarations (kept for potential future use in refactored specs)
+// Forward declarations for specialization classes (QW-4 FIX)
+class HolyPaladinRefactored;
+class ProtectionPaladinRefactored;
+class RetributionPaladinRefactored;
+
+// Type aliases for consistency with base naming
+using HolyPaladin = HolyPaladinRefactored;
+using ProtectionPaladin = ProtectionPaladinRefactored;
+using RetributionPaladin = RetributionPaladinRefactored;
 
 // Paladin AI with full CombatBehaviorIntegration
 class TC_GAME_API PaladinAI : public ClassAI
 {
 public:
     explicit PaladinAI(Player* bot);
-    ~PaladinAI() = default;
+    ~PaladinAI();
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -48,8 +56,20 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<HolyPaladin> _holySpec;
+    ::std::unique_ptr<ProtectionPaladin> _protectionSpec;
+    ::std::unique_ptr<RetributionPaladin> _retributionSpec;
+
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
+
     // Paladin-specific spell IDs (comprehensive list for all specs)
-    // Paladin Spell IDs - Using central registry (WoW 11.2)
+    // Paladin Spell IDs - Using central registry (WoW 11.2 only)
     enum PaladinSpells
     {
         // Interrupts
@@ -87,22 +107,17 @@ private:
 
         // AoE Abilities
         CONSECRATION = WoW112Spells::Paladin::Common::CONSECRATION,
-        HAMMER_OF_LIGHT = 427445, // Hero talent
-        DIVINE_HAMMER = 198034, // Removed in modern WoW
+        HAMMER_OF_LIGHT = WoW112Spells::Paladin::Protection::LIGHTS_GUIDANCE, // Hero talent (Templar)
 
-        // Seals and Auras (most removed in modern WoW)
-        SEAL_OF_COMMAND = 20375,
-        SEAL_OF_RIGHTEOUSNESS = 21084,
+        // Auras (WoW 11.2)
         RETRIBUTION_AURA = WoW112Spells::Paladin::Common::RETRIBUTION_AURA,
         DEVOTION_AURA = WoW112Spells::Paladin::Common::DEVOTION_AURA,
         CRUSADER_AURA = WoW112Spells::Paladin::Common::CRUSADER_AURA,
+        CONCENTRATION_AURA = WoW112Spells::Paladin::CONCENTRATION_AURA,
 
-        // Blessings and Buffs (most removed in modern WoW)
-        BLESSING_OF_KINGS = 20217,
-        BLESSING_OF_MIGHT = 19740,
-        BLESSING_OF_WISDOM = 19742,
+        // Blessings (WoW 11.2)
         BLESSING_OF_FREEDOM = WoW112Spells::Paladin::Common::BLESSING_OF_FREEDOM,
-        BLESSING_OF_SANCTUARY = 20911,
+        BLESSING_OF_SACRIFICE = WoW112Spells::Paladin::BLESSING_OF_SACRIFICE,
 
         // Healing Abilities (for Holy spec)
         FLASH_OF_LIGHT = WoW112Spells::Paladin::Common::FLASH_OF_LIGHT,
@@ -114,13 +129,13 @@ private:
         // Utility
         HAND_OF_RECKONING = WoW112Spells::Paladin::Common::HAND_OF_RECKONING,
         CLEANSE = WoW112Spells::Paladin::Common::CLEANSE,
+        CLEANSE_TOXINS = WoW112Spells::Paladin::CLEANSE_TOXINS,
         HAMMER_OF_WRATH = WoW112Spells::Paladin::Common::HAMMER_OF_WRATH,
-        EXORCISM = 879, // Removed in modern WoW
         BLINDING_LIGHT = WoW112Spells::Paladin::Common::BLINDING_LIGHT,
+        TURN_EVIL = WoW112Spells::Paladin::TURN_EVIL,
 
         // Movement
-        DIVINE_STEED = WoW112Spells::Paladin::Common::DIVINE_STEED,
-        LONG_ARM_OF_THE_LAW = 87172 // Passive talent
+        DIVINE_STEED = WoW112Spells::Paladin::Common::DIVINE_STEED
     };
 
 

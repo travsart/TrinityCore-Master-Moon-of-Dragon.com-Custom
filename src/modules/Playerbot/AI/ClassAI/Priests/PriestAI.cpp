@@ -8,6 +8,9 @@
  */
 
 #include "PriestAI.h"
+#include "DisciplinePriest.h"
+#include "HolyPriest.h"
+#include "ShadowPriest.h"
 #include "Player.h"
 #include "Unit.h"
 #include "SpellMgr.h"
@@ -31,8 +34,15 @@
 namespace Playerbot
 {
 
+// Namespace aliases for central spell registry
+namespace PriestCommon = WoW112Spells::Priest::Common;
+namespace PriestDiscipline = WoW112Spells::Priest::Discipline;
+namespace PriestHoly = WoW112Spells::Priest::HolyPriest;
+namespace PriestShadow = WoW112Spells::Priest::Shadow;
+
 // Talent IDs for specialization detection
-enum PriestTalents
+// NOTE: Renamed to avoid conflict with PriestTalents namespace in PriestTalentEnhancements.h
+enum PriestTalentIds
 {
     // Holy talents
     TALENT_SPIRIT_OF_REDEMPTION = 20711,
@@ -617,34 +627,29 @@ void PriestAI::UpdatePriestBuffs()
     if (!GetBot())
         return;
 
-    // Maintain Inner Fire
-    if (!GetBot()->HasAura(INNER_FIRE) || (GameTime::GetGameTimeMS() - _lastInnerFire > INNER_FIRE_DURATION))
-    {
-        CastInnerFire();
-    }
-
     // Maintain Power Word: Fortitude
     if (!GetBot()->HasAura(POWER_WORD_FORTITUDE))
     {
         CastPowerWordFortitude();
     }
 
-    // Maintain Divine Spirit if available
-    if (GetBot()->HasSpell(DIVINE_SPIRIT) && !GetBot()->HasAura(DIVINE_SPIRIT))
+    // Maintain Power Word: Shield if not on cooldown (Weakened Soul check)
+    if (GetBot()->GetHealthPct() < 80.0f && !GetBot()->HasAura(POWER_WORD_SHIELD))
     {
-        this->CastSpell(DIVINE_SPIRIT, GetBot());
+        if (this->IsSpellReady(POWER_WORD_SHIELD))
+        {
+            this->CastSpell(POWER_WORD_SHIELD, GetBot());
+        }
     }
+
+    // Note: Inner Fire, Divine Spirit, and Shadow Protection were removed in WoW 11.2
 }
 
 void PriestAI::CastInnerFire()
 {
-    if (!GetBot() || !this->IsSpellReady(INNER_FIRE))
-        return;
-
-    if (this->CastSpell(INNER_FIRE, GetBot()))
-    {
-        _lastInnerFire = GameTime::GetGameTimeMS();
-    }
+    // Inner Fire was removed in WoW 11.2 - this method is kept for backward compatibility
+    // but does nothing in modern WoW
+    (void)_lastInnerFire; // Suppress unused variable warning
 }
 
 void PriestAI::UpdateFortitudeBuffs()
@@ -717,10 +722,10 @@ void PriestAI::UseManaRegeneration()
     if (!GetBot())
         return;
 
-    // Use Hymn of Hope if available
-    if (this->IsSpellReady(HYMN_OF_HOPE))
+    // Use Symbol of Hope if available (Holy spec only, replaces old Hymn of Hope)
+    if (this->IsSpellReady(SYMBOL_OF_HOPE))
     {
-        this->CastSpell(HYMN_OF_HOPE, GetBot());
+        this->CastSpell(SYMBOL_OF_HOPE, GetBot());
     }
 }
 
@@ -773,26 +778,9 @@ void PriestAI::CastDispelMagic()
 
 void PriestAI::CastFearWard()
 {
-    if (!GetBot() || !this->IsSpellReady(FEAR_WARD))
-        return;
-
-    if (GameTime::GetGameTimeMS() - _lastFearWard < FEAR_WARD_COOLDOWN)
-        return;
-
-    // Find best target for Fear Ward
-    ::Unit* target = nullptr;
-    if (Group* group = GetBot()->GetGroup())
-    {
-        target = FindGroupTank();
-    }
-
-    if (!target)
-        target = GetBot();
-
-    if (this->CastSpell(FEAR_WARD, target))
-    {
-        _lastFearWard = GameTime::GetGameTimeMS();
-    }
+    // Fear Ward was removed in WoW 11.2 - this method is kept for backward compatibility
+    // but does nothing in modern WoW
+    (void)_lastFearWard; // Suppress unused variable warning
 }
 void PriestAI::CastDesperatePrayer()
 {
@@ -1034,26 +1022,43 @@ uint32 PriestAI::CountUnbuffedGroupMembers(uint32 spellId)
 
 bool PriestAI::IsHealingSpell(uint32 spellId)
 {
-    // Common healing spell IDs
-    return (spellId == 2050 || spellId == 2060 || spellId == 2061 ||
-
-            spellId == 139 || spellId == 596 || spellId == 33076 ||
-
-            spellId == 47540 || spellId == 186263); // Heal, Greater Heal, Flash Heal, Renew, PoH, PoM, Penance, Shadow Mend
+    // Common healing spell IDs - Using central registry (WoW 11.2)
+    return (spellId == PriestHoly::HOLY_WORD_SERENITY ||    // 2050 - Holy Word: Serenity
+            spellId == PriestCommon::HEAL ||                 // 2060 - Heal
+            spellId == PriestCommon::FLASH_HEAL ||           // 2061 - Flash Heal
+            spellId == PriestCommon::RENEW ||                // 139 - Renew
+            spellId == PriestHoly::PRAYER_OF_HEALING ||      // 596 - Prayer of Healing
+            spellId == PriestCommon::PRAYER_OF_MENDING ||    // 33076 - Prayer of Mending
+            spellId == PriestDiscipline::PENANCE ||          // 47540 - Penance
+            spellId == PriestDiscipline::SHADOW_MEND ||      // 186263 - Shadow Mend
+            spellId == PriestCommon::CIRCLE_OF_HEALING ||    // 204883 - Circle of Healing
+            spellId == PriestHoly::HOLY_WORD_SANCTIFY ||     // 34861 - Holy Word: Sanctify
+            spellId == PriestCommon::POWER_WORD_SHIELD);     // 17 - Power Word: Shield
 }
 
 bool PriestAI::IsDamageSpell(uint32 spellId)
 {
-    // Common damage spell IDs
-    return (spellId == 589 || spellId == 8092 || spellId == 15407 ||
-
-            spellId == 34914 || spellId == 585 || spellId == 14914); // SWP, Mind Blast, Mind Flay, VT, Smite, Holy Fire
+    // Common damage spell IDs - Using central registry (WoW 11.2)
+    return (spellId == PriestCommon::SHADOW_WORD_PAIN ||     // 589 - Shadow Word: Pain
+            spellId == PriestCommon::MIND_BLAST ||           // 8092 - Mind Blast
+            spellId == PriestCommon::MIND_FLAY ||            // 15407 - Mind Flay
+            spellId == PriestCommon::VAMPIRIC_TOUCH ||       // 34914 - Vampiric Touch
+            spellId == PriestCommon::SMITE ||                // 585 - Smite
+            spellId == PriestCommon::HOLY_FIRE ||            // 14914 - Holy Fire
+            spellId == PriestCommon::SHADOW_WORD_DEATH ||    // 32379 - Shadow Word: Death
+            spellId == PriestCommon::DEVOURING_PLAGUE ||     // 335467 - Devouring Plague
+            spellId == PriestShadow::VOID_BOLT ||            // 205448 - Void Bolt
+            spellId == PriestShadow::VOID_ERUPTION);         // 228260 - Void Eruption
 }
 
 bool PriestAI::IsEmergencyHeal(uint32 spellId)
 {
-    // Fast heals for emergencies
-    return (spellId == 2061 || spellId == 19236 || spellId == 47788); // Flash Heal, Desperate Prayer, Guardian Spirit
+    // Fast heals for emergencies - Using central registry (WoW 11.2)
+    return (spellId == PriestCommon::FLASH_HEAL ||           // 2061 - Flash Heal
+            spellId == PriestCommon::DESPERATE_PRAYER ||     // 19236 - Desperate Prayer
+            spellId == PriestHoly::GUARDIAN_SPIRIT ||        // 47788 - Guardian Spirit
+            spellId == PriestDiscipline::PAIN_SUPPRESSION || // 33206 - Pain Suppression
+            spellId == PriestCommon::POWER_WORD_SHIELD);     // 17 - Power Word: Shield
 }
 
 bool PriestAI::ShouldUseShadowProtection()

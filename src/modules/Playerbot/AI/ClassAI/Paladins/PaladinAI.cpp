@@ -8,6 +8,9 @@
  */
 
 #include "PaladinAI.h"
+#include "HolyPaladin.h"
+#include "ProtectionPaladin.h"
+#include "RetributionPaladin.h"
 #include "ObjectAccessor.h"
 #include "../BaselineRotationManager.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
@@ -26,6 +29,9 @@
 
 namespace Playerbot
 {
+
+// Destructor must be defined in cpp file where specialization types are complete
+PaladinAI::~PaladinAI() = default;
 
 PaladinAI::PaladinAI(Player* bot) : ClassAI(bot)
 {
@@ -582,46 +588,14 @@ void PaladinAI::UpdateBlessingManagement()
 
     _lastBlessingTime = currentTime;
 
-    // Apply appropriate blessing based on spec
-    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
+    // WoW 11.2: Most blessings are removed. Paladin now has situational blessings:
+    // - Blessing of Freedom (movement utility)
+    // - Blessing of Protection (physical immunity)
+    // - Blessing of Sacrifice (damage sharing)
+    // These are now used reactively in combat, not as persistent buffs.
 
-    // Retribution or Protection use Blessing of Might
-    if (spec == ChrSpecialization::PaladinProtection || spec == ChrSpecialization::PaladinRetribution)
-    {
-        // Blessing of Might for physical damage dealers
-    if (CanUseAbility(BLESSING_OF_MIGHT))
-        {
-            if (CastSpell(BLESSING_OF_MIGHT, GetBot()))
-            {
-                RecordAbilityUsage(BLESSING_OF_MIGHT);
-                _currentBlessing = BLESSING_OF_MIGHT;
-                return;
-            }
-        }
-    }
-    else if (spec == ChrSpecialization::PaladinHoly)
-    {
-        // Blessing of Wisdom for mana users
-    if (CanUseAbility(BLESSING_OF_WISDOM))
-        {
-            if (CastSpell(BLESSING_OF_WISDOM, GetBot()))
-            {
-                RecordAbilityUsage(BLESSING_OF_WISDOM);
-                _currentBlessing = BLESSING_OF_WISDOM;
-                return;
-            }
-        }
-    }
-
-    // Default to Blessing of Kings
-    if (CanUseAbility(BLESSING_OF_KINGS))
-    {
-        if (CastSpell(BLESSING_OF_KINGS, GetBot()))
-        {
-            RecordAbilityUsage(BLESSING_OF_KINGS);
-            _currentBlessing = BLESSING_OF_KINGS;
-        }
-    }
+    // Holy Paladin can use seasonal blessings (Holy::BLESSING_OF_SUMMER, etc.)
+    // These are managed in the Holy specialization rotation.
 }
 
 void PaladinAI::UpdateAuraManagement()

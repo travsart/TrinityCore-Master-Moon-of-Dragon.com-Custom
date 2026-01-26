@@ -25,14 +25,22 @@
 namespace Playerbot
 {
 
-// Forward declarations
+// Forward declarations for specialization classes (QW-4 FIX)
+class ArmsWarriorRefactored;
+class FuryWarriorRefactored;
+class ProtectionWarriorRefactored;
+
+// Type aliases for consistency with base naming
+using ArmsWarrior = ArmsWarriorRefactored;
+using FuryWarrior = FuryWarriorRefactored;
+using ProtectionWarrior = ProtectionWarriorRefactored;
 
 // Warrior AI implementation
 class TC_GAME_API WarriorAI : public ClassAI
 {
 public:
     explicit WarriorAI(Player* bot);
-    ~WarriorAI() = default;
+    ~WarriorAI();
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -63,6 +71,15 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<ArmsWarrior> _armsSpec;
+    ::std::unique_ptr<FuryWarrior> _furySpec;
+    ::std::unique_ptr<ProtectionWarrior> _protectionSpec;
+
     // Enhanced performance tracking
     ::std::atomic<uint32> _rageSpent{0};
     ::std::atomic<uint32> _damageDealt{0};

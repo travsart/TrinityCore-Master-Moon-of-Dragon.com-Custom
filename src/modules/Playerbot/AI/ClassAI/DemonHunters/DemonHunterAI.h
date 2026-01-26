@@ -18,6 +18,14 @@
 namespace Playerbot
 {
 
+// Forward declarations for specialization classes (QW-4 FIX)
+class HavocDemonHunterRefactored;
+class VengeanceDemonHunterRefactored;
+
+// Type aliases for consistency with base naming
+using HavocDemonHunter = HavocDemonHunterRefactored;
+using VengeanceDemonHunter = VengeanceDemonHunterRefactored;
+
 // DemonHunter Spell IDs - Using central registry (WoW 11.2)
 enum DemonHunterSpells
 {
@@ -72,7 +80,7 @@ class TC_GAME_API DemonHunterAI : public ClassAI
 {
 public:
     explicit DemonHunterAI(Player* bot);
-    ~DemonHunterAI() = default;
+    ~DemonHunterAI();
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -94,6 +102,17 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<HavocDemonHunter> _havocSpec;
+    ::std::unique_ptr<VengeanceDemonHunter> _vengeanceSpec;
+
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
+
     void ExitMetamorphosis();
     bool ShouldUseMetamorphosis();
     void CastMetamorphosisHavoc();

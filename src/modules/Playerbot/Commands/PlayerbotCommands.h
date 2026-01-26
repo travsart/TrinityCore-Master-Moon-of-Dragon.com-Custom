@@ -99,6 +99,14 @@ namespace Playerbot
         static bool HandleBotAlertsHistoryCommand(ChatHandler* handler);
         static bool HandleBotAlertsClearCommand(ChatHandler* handler);
 
+        // Diagnostic commands for group member lookup issues
+        static bool HandleBotDiagCommand(ChatHandler* handler);
+        static bool HandleBotDiagEnableCommand(ChatHandler* handler);
+        static bool HandleBotDiagDisableCommand(ChatHandler* handler);
+        static bool HandleBotDiagReportCommand(ChatHandler* handler);
+        static bool HandleBotDiagResetCommand(ChatHandler* handler);
+        static bool HandleBotDiagVerboseCommand(ChatHandler* handler, bool enable);
+
         // Helper methods
         static Player* FindBotByName(::std::string const& name);
         static bool ValidateRaceClass(uint8 race, uint8 classId, ChatHandler* handler);

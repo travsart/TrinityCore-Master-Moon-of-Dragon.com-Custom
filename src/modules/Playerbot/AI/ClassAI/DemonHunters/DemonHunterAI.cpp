@@ -8,6 +8,8 @@
  */
 
 #include "DemonHunterAI.h"
+#include "HavocDemonHunter.h"
+#include "VengeanceDemonHunter.h"
 #include "../BaselineRotationManager.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
@@ -36,6 +38,9 @@ static constexpr uint32 PAIN_DUMP_THRESHOLD = 60;
 static constexpr float METAMORPHOSIS_HEALTH_THRESHOLD = 40.0f;
 static constexpr uint32 INTERRUPT_COOLDOWN = 15000;
 static constexpr uint32 DEFENSIVE_COOLDOWN = 60000;
+
+// Destructor must be defined in cpp file where specialization types are complete
+DemonHunterAI::~DemonHunterAI() = default;
 
 DemonHunterAI::DemonHunterAI(Player* bot) : ClassAI(bot),    _lastInterruptTime(0),
     _lastDefensiveTime(0),

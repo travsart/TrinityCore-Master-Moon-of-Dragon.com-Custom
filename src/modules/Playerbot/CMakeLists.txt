@@ -108,6 +108,8 @@ set(PLAYERBOT_CORE_SOURCES
     # Core Diagnostics
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotOperationTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotOperationTracker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/GroupMemberDiagnostics.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/GroupMemberDiagnostics.h
 
     # Core DI Interfaces
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces/IObjectiveTracker.h
@@ -715,6 +717,8 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     # Group System
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupMemberResolver.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupMemberResolver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.cpp

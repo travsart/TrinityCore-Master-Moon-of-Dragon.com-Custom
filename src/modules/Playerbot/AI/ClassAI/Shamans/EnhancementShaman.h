@@ -19,6 +19,7 @@
 #define PLAYERBOT_ENHANCEMENTSHAMANREFACTORED_H
 
 #include "../CombatSpecializationTemplates.h"
+#include "../Common/CooldownManager.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"

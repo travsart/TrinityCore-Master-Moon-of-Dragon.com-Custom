@@ -223,36 +223,30 @@ private:
     static constexpr uint32 WATER_ELEMENTAL = WoW112Spells::Mage::Common::SUMMON_WATER_ELEMENTAL;
     static constexpr uint32 ICE_BARRIER = WoW112Spells::Mage::Common::ICE_BARRIER;
     static constexpr uint32 FROST_NOVA = WoW112Spells::Mage::Common::FROST_NOVA;
-    static constexpr uint32 FROST_ARMOR = 7301; // Removed in modern WoW
 
     // Crowd control
     static constexpr uint32 POLYMORPH = WoW112Spells::Mage::Common::POLYMORPH;
     static constexpr uint32 COUNTERSPELL = WoW112Spells::Mage::Common::COUNTERSPELL;
-    static constexpr uint32 BANISH = 710; // Not a mage spell
 
     // Defensive abilities
     static constexpr uint32 BLINK = WoW112Spells::Mage::Common::BLINK;
+    static constexpr uint32 SHIMMER = WoW112Spells::Mage::Common::SHIMMER;
     static constexpr uint32 INVISIBILITY = WoW112Spells::Mage::Common::INVISIBILITY;
+    static constexpr uint32 GREATER_INVISIBILITY = WoW112Spells::Mage::Common::GREATER_INVISIBILITY;
     static constexpr uint32 ICE_BLOCK = WoW112Spells::Mage::Common::ICE_BLOCK;
-    static constexpr uint32 COLD_SNAP = 235219; // Frost-only cooldown reset
-    static constexpr uint32 MANA_SHIELD = 1463; // Removed in modern WoW
+    static constexpr uint32 BLAZING_BARRIER = WoW112Spells::Mage::Common::BLAZING_BARRIER;
 
     // Utility
     static constexpr uint32 MIRROR_IMAGE = WoW112Spells::Mage::MIRROR_IMAGE;
     static constexpr uint32 PRESENCE_OF_MIND = WoW112Spells::Mage::Common::PRESENCE_OF_MIND;
-    static constexpr uint32 TELEPORT_STORMWIND = 3561; // Utility - keep hardcoded
-    static constexpr uint32 TELEPORT_IRONFORGE = 3562; // Utility - keep hardcoded
-    static constexpr uint32 PORTAL_STORMWIND = 10059; // Utility - keep hardcoded
-    static constexpr uint32 PORTAL_IRONFORGE = 11416; // Utility - keep hardcoded
-
-    // Armor spells (removed in modern WoW - mages now use Barrier)
-    static constexpr uint32 MAGE_ARMOR = 6117;
-    static constexpr uint32 MOLTEN_ARMOR = 30482;
+    static constexpr uint32 TIME_WARP = WoW112Spells::Mage::Common::TIME_WARP;
+    static constexpr uint32 TELEPORT_STORMWIND = WoW112Spells::Mage::Common::TELEPORT_STORMWIND;
+    static constexpr uint32 TELEPORT_IRONFORGE = WoW112Spells::Mage::Common::TELEPORT_IRONFORGE;
+    static constexpr uint32 PORTAL_STORMWIND = WoW112Spells::Mage::Common::PORTAL_STORMWIND;
+    static constexpr uint32 PORTAL_IRONFORGE = WoW112Spells::Mage::Common::PORTAL_IRONFORGE;
 
     // Conjure spells
-    static constexpr uint32 CONJURE_FOOD = WoW112Spells::Mage::CONJURE_REFRESHMENT;
-    static constexpr uint32 CONJURE_WATER = WoW112Spells::Mage::CONJURE_REFRESHMENT;
-    static constexpr uint32 CONJURE_MANA_GEM = 759; // Removed in modern WoW
+    static constexpr uint32 CONJURE_REFRESHMENT = WoW112Spells::Mage::CONJURE_REFRESHMENT;
 
     // Helper methods
     bool IsChanneling();
@@ -278,6 +272,7 @@ private:
         {COMBUSTION, MageSchool::FIRE},
         {LIVING_BOMB, MageSchool::FIRE},
         {DRAGON_BREATH, MageSchool::FIRE},
+        {BLAZING_BARRIER, MageSchool::FIRE},
 
         // Frost spells
         {FROSTBOLT, MageSchool::FROST},
@@ -289,16 +284,17 @@ private:
         {WATER_ELEMENTAL, MageSchool::FROST},
         {ICE_BARRIER, MageSchool::FROST},
         {FROST_NOVA, MageSchool::FROST},
-        {FROST_ARMOR, MageSchool::FROST},
 
         // Generic utility spells
         {POLYMORPH, MageSchool::GENERIC},
         {COUNTERSPELL, MageSchool::GENERIC},
         {BLINK, MageSchool::GENERIC},
+        {SHIMMER, MageSchool::GENERIC},
         {INVISIBILITY, MageSchool::GENERIC},
+        {GREATER_INVISIBILITY, MageSchool::GENERIC},
         {ICE_BLOCK, MageSchool::GENERIC},
-        {MAGE_ARMOR, MageSchool::GENERIC},
-        {MOLTEN_ARMOR, MageSchool::GENERIC}
+        {MIRROR_IMAGE, MageSchool::GENERIC},
+        {TIME_WARP, MageSchool::GENERIC}
     };
 };
 
@@ -366,13 +362,6 @@ public:
     static constexpr float MANA_EMERGENCY_THRESHOLD = 0.15f; // 15%
 
 public:
-    // Spell IDs (version-specific - these need to be accurate for target WoW version)
-    enum MageSpells
-    {
-        // Arcane spells
-        ARCANE_MISSILES = 5143
-    };
-
     static uint32 CalculateFrostboltDamage(Player* caster, ::Unit* target);
     static uint32 CalculateArcaneMissilesDamage(Player* caster, ::Unit* target);
 

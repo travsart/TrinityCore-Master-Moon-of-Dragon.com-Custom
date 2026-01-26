@@ -8,8 +8,12 @@
  */
 
 #include "ShamanAI.h"
+#include "ElementalShaman.h"
+#include "EnhancementShaman.h"
+#include "RestorationShaman.h"
 #include "../BaselineRotationManager.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
+#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
 #include "Player.h"
 #include "Unit.h"
 #include "Creature.h"
@@ -34,159 +38,199 @@
 namespace Playerbot
 {
 
-// Totem spell definitions for quick reference
-enum TotemSpells
+// ============================================================================
+// WoW 11.2 SPELL ID ALIASES - Using Central Registry
+// ============================================================================
+// Import from SpellValidation_WoW112_Part2.h to avoid hardcoded values
+
+namespace ShamanSpells = WoW112Spells::Shaman;
+namespace ShamanElemental = WoW112Spells::Shaman::Elemental;
+namespace ShamanEnhancement = WoW112Spells::Shaman::Enhancement;
+namespace ShamanRestoration = WoW112Spells::Shaman::Restoration;
+namespace ShamanCommon = WoW112Spells::Shaman::Common;
+
+// Totem spell definitions - WoW 11.2 (many totems removed/consolidated)
+enum TotemSpells : uint32
 {
-    // Fire Totems
-    SPELL_SEARING_TOTEM = 3599,
-    SPELL_FIRE_NOVA_TOTEM = 1535,
-    SPELL_MAGMA_TOTEM = 8190,
-    SPELL_FLAMETONGUE_TOTEM = 8227,
-    SPELL_TOTEM_OF_WRATH = 30706,
-    SPELL_FIRE_ELEMENTAL_TOTEM = 2894,
+    // Active totems in WoW 11.2
+    SPELL_EARTHBIND_TOTEM          = ShamanCommon::EARTHBIND_TOTEM,        // 2484
+    SPELL_TREMOR_TOTEM             = ShamanCommon::TREMOR_TOTEM,           // 8143
+    SPELL_HEALING_STREAM_TOTEM     = ShamanCommon::HEALING_STREAM_TOTEM,   // 5394
+    SPELL_HEALING_TIDE_TOTEM       = ShamanCommon::HEALING_TIDE_TOTEM,     // 108280
+    SPELL_CAPACITOR_TOTEM          = ShamanCommon::CAPACITOR_TOTEM,        // 192058
+    SPELL_SPIRIT_LINK_TOTEM        = ShamanCommon::SPIRIT_LINK_TOTEM,      // 98008
+    SPELL_WIND_RUSH_TOTEM          = ShamanSpells::WIND_RUSH_TOTEM,        // 192077
+    SPELL_WINDFURY_TOTEM           = ShamanCommon::WINDFURY_TOTEM,         // 8512
+    SPELL_FIRE_ELEMENTAL           = ShamanCommon::FIRE_ELEMENTAL,         // 198067
+    SPELL_EARTH_ELEMENTAL          = ShamanCommon::EARTH_ELEMENTAL,        // 198103
+    SPELL_LIQUID_MAGMA_TOTEM       = ShamanElemental::LIQUID_MAGMA_TOTEM,  // 192222
 
-    // Earth Totems
-    SPELL_EARTHBIND_TOTEM = 2484,
-    SPELL_STONESKIN_TOTEM = 8071,
-    SPELL_STONECLAW_TOTEM = 5730,
-    SPELL_STRENGTH_OF_EARTH_TOTEM = 8075,
-    SPELL_TREMOR_TOTEM = 8143,
-    SPELL_EARTH_ELEMENTAL_TOTEM = 2062,
-    SPELL_EARTHGRAB_TOTEM = 51485,
+    // Restoration-specific totems
+    SPELL_EARTHEN_WALL_TOTEM       = ShamanRestoration::EARTHEN_WALL_TOTEM,      // 198838
+    SPELL_ANCESTRAL_PROTECTION_TOTEM = ShamanRestoration::ANCESTRAL_PROTECTION_TOTEM, // 207399
+    SPELL_CLOUDBURST_TOTEM         = ShamanRestoration::CLOUDBURST_TOTEM,        // 157153
+    SPELL_MANA_TIDE_TOTEM          = ShamanRestoration::MANA_TIDE_TOTEM,         // 16191
 
-    // Water Totems
-    SPELL_HEALING_STREAM_TOTEM = 5394,
-    SPELL_MANA_SPRING_TOTEM = 5675,
-    SPELL_POISON_CLEANSING_TOTEM = 8166,
-    SPELL_DISEASE_CLEANSING_TOTEM = 8170,
-    SPELL_FIRE_RESISTANCE_TOTEM = 8184,
-    SPELL_MANA_TIDE_TOTEM = 16190,
-    SPELL_HEALING_TIDE_TOTEM = 108280,
-
-    // Air Totems
-    SPELL_GROUNDING_TOTEM = 8177,
-    SPELL_NATURE_RESISTANCE_TOTEM = 10595,
-    SPELL_WINDFURY_TOTEM = 8512,
-    SPELL_GRACE_OF_AIR_TOTEM = 8835,
-    SPELL_WRATH_OF_AIR_TOTEM = 3738,
-    SPELL_SENTRY_TOTEM = 6495,
-    SPELL_SPIRIT_LINK_TOTEM = 98008,
-    SPELL_CAPACITOR_TOTEM = 192058
+    // Legacy totems removed in WoW 11.2 (kept as 0 for compatibility checks)
+    SPELL_SEARING_TOTEM            = 0,  // Removed
+    SPELL_FIRE_NOVA_TOTEM          = 0,  // Removed
+    SPELL_MAGMA_TOTEM              = 0,  // Removed
+    SPELL_FLAMETONGUE_TOTEM        = 0,  // Removed
+    SPELL_TOTEM_OF_WRATH           = 0,  // Removed
+    SPELL_FIRE_ELEMENTAL_TOTEM     = 0,  // Replaced by Fire Elemental (198067)
+    SPELL_STONESKIN_TOTEM          = 0,  // Removed
+    SPELL_STONECLAW_TOTEM          = 0,  // Removed
+    SPELL_STRENGTH_OF_EARTH_TOTEM  = 0,  // Removed
+    SPELL_EARTH_ELEMENTAL_TOTEM    = 0,  // Replaced by Earth Elemental (198103)
+    SPELL_EARTHGRAB_TOTEM          = 0,  // Replaced by Earthbind Totem root talent
+    SPELL_MANA_SPRING_TOTEM        = 0,  // Removed
+    SPELL_POISON_CLEANSING_TOTEM   = 0,  // Removed
+    SPELL_DISEASE_CLEANSING_TOTEM  = 0,  // Removed
+    SPELL_FIRE_RESISTANCE_TOTEM    = 0,  // Removed
+    SPELL_GROUNDING_TOTEM          = 0,  // Removed (was 8177)
+    SPELL_NATURE_RESISTANCE_TOTEM  = 0,  // Removed
+    SPELL_GRACE_OF_AIR_TOTEM       = 0,  // Removed
+    SPELL_WRATH_OF_AIR_TOTEM       = 0,  // Removed
+    SPELL_SENTRY_TOTEM             = 0   // Removed
 };
 
-// Shock spell definitions
-enum ShockSpells
+// Shock spell definitions - WoW 11.2
+enum ShockSpells : uint32
 {
-    SPELL_EARTH_SHOCK = 8042,
-    SPELL_FLAME_SHOCK = 8050,
-    SPELL_FROST_SHOCK = 8056,
-    SPELL_WIND_SHEAR = 57994  // Interrupt
+    SPELL_EARTH_SHOCK  = ShamanCommon::EARTH_SHOCK,   // 8042
+    SPELL_FLAME_SHOCK  = ShamanCommon::FLAME_SHOCK,   // 188389 (updated ID)
+    SPELL_FROST_SHOCK  = ShamanCommon::FROST_SHOCK,   // 196840 (updated ID)
+    SPELL_WIND_SHEAR   = ShamanCommon::WIND_SHEAR     // 57994 - Interrupt
 };
 
-// Shield spell definitions
-enum ShieldSpells
+// Shield spell definitions - WoW 11.2
+enum ShieldSpells : uint32
 {
-    SPELL_LIGHTNING_SHIELD = 192106,
-    SPELL_WATER_SHIELD = 52127,
-    SPELL_EARTH_SHIELD = 974
+    SPELL_WATER_SHIELD  = ShamanRestoration::WATER_SHIELD,   // 52127
+    SPELL_EARTH_SHIELD  = ShamanCommon::EARTH_SHIELD,        // 974
+    // Note: Lightning Shield removed as standalone buff in 11.2
+    SPELL_LIGHTNING_SHIELD = 0  // Removed/reworked
 };
 
-// Weapon imbue spell definitions
-enum WeaponImbues
+// Weapon imbue spell definitions - WoW 11.2
+enum WeaponImbues : uint32
 {
-    SPELL_ROCKBITER_WEAPON = 8017,
-    SPELL_FLAMETONGUE_WEAPON = 8024,
-    SPELL_FROSTBRAND_WEAPON = 8033,
-    SPELL_WINDFURY_WEAPON = 8232,
-    SPELL_EARTHLIVING_WEAPON = 51730
+    SPELL_FLAMETONGUE_WEAPON = ShamanCommon::FLAMETONGUE_WEAPON, // 318038 (updated ID)
+    SPELL_WINDFURY_WEAPON    = ShamanCommon::WINDFURY_WEAPON,    // 33757
+
+    // Legacy weapon imbues removed in WoW 11.2
+    SPELL_ROCKBITER_WEAPON   = 0,  // Removed
+    SPELL_FROSTBRAND_WEAPON  = 0,  // Removed
+    SPELL_EARTHLIVING_WEAPON = 0   // Removed
 };
 
-// Utility spell definitions
-enum UtilitySpells
+// Utility spell definitions - WoW 11.2
+enum UtilitySpells : uint32
 {
-    SPELL_PURGE = 370,
-    SPELL_CLEANSE_SPIRIT = 51886,
-    SPELL_HEX = 51514,
-    SPELL_BLOODLUST = 2825,
-    SPELL_HEROISM = 32182,
-    SPELL_GHOST_WOLF = 2645,
-    SPELL_ANCESTRAL_SPIRIT = 2008,
-    SPELL_WATER_WALKING = 546,
-    SPELL_WATER_BREATHING = 131,
-    SPELL_ASTRAL_RECALL = 556,
-    SPELL_ASTRAL_SHIFT = 108271,
-    SPELL_SHAMANISTIC_RAGE = 30823,
-    SPELL_SPIRIT_WALK = 58875
+    SPELL_PURGE             = ShamanCommon::PURGE,             // 370
+    SPELL_CLEANSE_SPIRIT    = ShamanCommon::CLEANSE_SPIRIT,    // 51886
+    SPELL_HEX               = ShamanCommon::HEX,               // 51514
+    SPELL_BLOODLUST         = ShamanCommon::BLOODLUST,         // 2825
+    SPELL_HEROISM           = ShamanCommon::HEROISM,           // 32182
+    SPELL_GHOST_WOLF        = ShamanCommon::GHOST_WOLF,        // 2645
+    SPELL_ANCESTRAL_SPIRIT  = ShamanCommon::ANCESTRAL_SPIRIT,  // 2008
+    SPELL_ASTRAL_SHIFT      = ShamanCommon::ASTRAL_SHIFT,      // 108271
+    SPELL_SPIRIT_WALK       = ShamanCommon::SPIRIT_WALK,       // 58875
+    SPELL_REINCARNATION     = ShamanCommon::REINCARNATION,     // 20608
+    SPELL_PURIFY_SPIRIT     = ShamanCommon::PURIFY_SPIRIT,     // 77130
+
+    // Legacy utilities (kept for reference but may not exist in 11.2)
+    SPELL_WATER_WALKING     = ShamanSpells::WATER_WALKING,     // 546
+    SPELL_ASTRAL_RECALL     = ShamanSpells::ASTRAL_RECALL,     // 556
+    SPELL_WATER_BREATHING   = 0,  // Removed/combined with Water Walking
+    SPELL_SHAMANISTIC_RAGE  = 0   // Removed (was Enhancement defensive)
 };
 
-// Healing spell definitions
-enum HealingSpells
+// Healing spell definitions - WoW 11.2
+enum HealingSpells : uint32
 {
-    SPELL_HEALING_WAVE = 331,
-    SPELL_LESSER_HEALING_WAVE = 8004,
-    SPELL_CHAIN_HEAL = 1064,
-    SPELL_RIPTIDE = 61295,
-    SPELL_HEALING_RAIN = 73920,
-    SPELL_HEALING_SURGE = 8004,
-    SPELL_ANCESTRAL_GUIDANCE = 108281,
-    SPELL_SPIRIT_LINK = 98021
+    SPELL_HEALING_WAVE       = ShamanCommon::HEALING_WAVE,       // 77472 (updated ID)
+    SPELL_HEALING_SURGE      = ShamanCommon::HEALING_SURGE,      // 8004
+    SPELL_CHAIN_HEAL         = ShamanCommon::CHAIN_HEAL,         // 1064
+    SPELL_RIPTIDE            = ShamanCommon::RIPTIDE,            // 61295
+    SPELL_HEALING_RAIN       = ShamanCommon::HEALING_RAIN,       // 73920
+
+    // Restoration-specific healing
+    SPELL_WELLSPRING         = ShamanRestoration::WELLSPRING,         // 197995
+    SPELL_UNLEASH_LIFE       = ShamanRestoration::UNLEASH_LIFE,       // 73685
+    SPELL_DOWNPOUR           = ShamanRestoration::DOWNPOUR,           // 207778
+    SPELL_SPIRITWALKERS_GRACE = ShamanRestoration::SPIRITWALKERS_GRACE, // 79206
+
+    // Legacy healing spells
+    SPELL_LESSER_HEALING_WAVE = 0,  // Removed (replaced by Healing Surge)
+    SPELL_ANCESTRAL_GUIDANCE  = 0,  // Reworked/talent
+    SPELL_SPIRIT_LINK         = 0   // Now Spirit Link Totem only
 };
 
-// Damage spell definitions
-enum DamageSpells
+// Damage spell definitions - WoW 11.2
+enum DamageSpells : uint32
 {
-    SPELL_LIGHTNING_BOLT = 403,
-    SPELL_CHAIN_LIGHTNING = 421,
-    SPELL_LAVA_BURST = 51505,
-    SPELL_THUNDERSTORM = 51490,
-    SPELL_EARTHQUAKE = 61882,
-    SPELL_ELEMENTAL_BLAST = 117014,
-    SPELL_LAVA_BEAM = 114074
+    SPELL_LIGHTNING_BOLT   = ShamanCommon::LIGHTNING_BOLT,   // 188196 (updated ID)
+    SPELL_CHAIN_LIGHTNING  = ShamanCommon::CHAIN_LIGHTNING,  // 188443 (updated ID)
+    SPELL_LAVA_BURST       = ShamanCommon::LAVA_BURST,       // 51505
+    SPELL_EARTHQUAKE       = ShamanCommon::EARTHQUAKE,       // 61882
+    SPELL_ELEMENTAL_BLAST  = ShamanCommon::ELEMENTAL_BLAST,  // 117014
+    SPELL_LAVA_BEAM        = ShamanElemental::LAVA_BEAM,     // 114074
+    SPELL_THUNDERSTORM     = 0  // 51490 - Removed/reworked in 11.2
 };
 
-// Enhancement-specific spells
-enum EnhancementSpells
+// Enhancement-specific spells - WoW 11.2
+enum EnhancementSpells : uint32
 {
-    SPELL_STORMSTRIKE = 17364,
-    SPELL_LAVA_LASH = 60103,
-    SPELL_FERAL_SPIRIT = 51533,
-    SPELL_CRASH_LIGHTNING = 187874,
-    SPELL_WINDSTRIKE = 115356,
-    SPELL_SUNDERING = 197214,
-    SPELL_DOOM_WINDS = 335903
+    SPELL_STORMSTRIKE       = ShamanCommon::STORMSTRIKE,              // 17364
+    SPELL_LAVA_LASH         = ShamanCommon::LAVA_LASH,                // 60103
+    SPELL_FERAL_SPIRIT      = ShamanCommon::FERAL_SPIRIT,             // 51533
+    SPELL_CRASH_LIGHTNING   = ShamanCommon::CRASH_LIGHTNING,          // 187874
+    SPELL_WINDSTRIKE        = ShamanEnhancement::WINDSTRIKE,          // 115356
+    SPELL_SUNDERING         = ShamanEnhancement::SUNDERING,           // 197214
+    SPELL_DOOM_WINDS        = ShamanEnhancement::DOOM_WINDS,          // 384352 (updated ID)
+    SPELL_ICE_STRIKE        = ShamanEnhancement::ICE_STRIKE,          // 342240
+    SPELL_FIRE_NOVA         = ShamanEnhancement::FIRE_NOVA,           // 333974
+    SPELL_MAELSTROM_WEAPON  = ShamanEnhancement::MAELSTROM_WEAPON     // 187880
 };
 
-// Elemental-specific spells
-enum ElementalSpells
+// Elemental-specific spells - WoW 11.2
+enum ElementalSpells : uint32
 {
-    SPELL_ELEMENTAL_MASTERY = 16166,
-    SPELL_ASCENDANCE = 114049,
-    SPELL_STORMKEEPER = 191634,
-    SPELL_LIQUID_MAGMA_TOTEM = 192222,
-    SPELL_ICEFURY = 210714,
-    SPELL_PRIMORDIAL_WAVE = 375982
+    SPELL_ASCENDANCE         = ShamanCommon::ASCENDANCE,              // 114050
+    SPELL_STORMKEEPER        = ShamanCommon::STORMKEEPER,             // 191634
+    SPELL_ICEFURY            = ShamanElemental::ICEFURY,              // 210714
+    SPELL_PRIMORDIAL_WAVE    = ShamanElemental::PRIMORDIAL_WAVE,      // 375982
+    SPELL_ECHOING_SHOCK      = ShamanElemental::ECHOING_SHOCK,        // 320125
+    SPELL_LIGHTNING_LASSO    = ShamanElemental::LIGHTNING_LASSO,      // 305483
+    SPELL_TEMPEST            = ShamanElemental::TEMPEST,              // 454009
+
+    // Legacy elemental spells
+    SPELL_ELEMENTAL_MASTERY  = 0  // Removed/reworked in 11.2
 };
 
-// Talent IDs for specialization detection
-enum ShamanTalents
+// Talent IDs for specialization detection - WoW 11.2
+// Note: Talent detection in 11.2 uses different systems; these are kept for compatibility
+enum ShamanTalents : uint32
 {
-    TALENT_ELEMENTAL_FOCUS = 16164,
-    TALENT_ELEMENTAL_MASTERY = 16166,
-    TALENT_LIGHTNING_OVERLOAD = 30675,
-    TALENT_TOTEM_OF_WRATH_TALENT = 30706,
-    TALENT_LAVA_BURST_TALENT = 51505,
+    // Core abilities that indicate spec (used as spell checks, not talent IDs)
+    TALENT_LAVA_BURST_TALENT         = ShamanCommon::LAVA_BURST,       // 51505 (Elemental indicator)
+    TALENT_STORMSTRIKE_TALENT        = ShamanCommon::STORMSTRIKE,      // 17364 (Enhancement indicator)
+    TALENT_RIPTIDE_TALENT            = ShamanCommon::RIPTIDE,          // 61295 (Restoration indicator)
+    TALENT_EARTH_SHIELD_TALENT       = ShamanCommon::EARTH_SHIELD,     // 974 (Restoration indicator)
+    TALENT_LAVA_LASH_TALENT          = ShamanCommon::LAVA_LASH,        // 60103 (Enhancement indicator)
+    TALENT_HEALING_RAIN_TALENT       = ShamanCommon::HEALING_RAIN,     // 73920 (Restoration indicator)
 
-    TALENT_DUAL_WIELD = 30798,
-    TALENT_STORMSTRIKE_TALENT = 17364,
-    TALENT_SHAMANISTIC_RAGE_TALENT = 30823,
-    TALENT_MAELSTROM_WEAPON = 51530,
-    TALENT_LAVA_LASH_TALENT = 60103,
-
-    TALENT_NATURES_SWIFTNESS = 16188,
-    TALENT_MANA_TIDE_TOTEM_TALENT = 16190,
-    TALENT_EARTH_SHIELD_TALENT = 974,
-    TALENT_RIPTIDE_TALENT = 61295,
-    TALENT_HEALING_RAIN_TALENT = 73920
+    // Legacy talents removed in 11.2
+    TALENT_ELEMENTAL_FOCUS     = 0,  // Removed
+    TALENT_ELEMENTAL_MASTERY   = 0,  // Removed
+    TALENT_LIGHTNING_OVERLOAD  = 0,  // Removed (became Mastery)
+    TALENT_TOTEM_OF_WRATH_TALENT = 0, // Removed
+    TALENT_DUAL_WIELD          = 0,  // Now baseline for Enhancement
+    TALENT_SHAMANISTIC_RAGE_TALENT = 0, // Removed
+    TALENT_MAELSTROM_WEAPON    = ShamanEnhancement::MAELSTROM_WEAPON, // 187880
+    TALENT_NATURES_SWIFTNESS   = 0,  // Removed (now general talent?)
+    TALENT_MANA_TIDE_TOTEM_TALENT = ShamanRestoration::MANA_TIDE_TOTEM // 16191
 };
 
 // Combat constants

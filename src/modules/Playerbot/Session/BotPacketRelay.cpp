@@ -65,6 +65,8 @@
 #include "Opcodes.h"
 #include "Log.h"
 #include "Chat.h"
+#include "../Group/GroupMemberResolver.h"
+#include "../Core/Diagnostics/GroupMemberDiagnostics.h"
 #include <algorithm>
 #include "GameTime.h"
 
@@ -393,20 +395,19 @@ void BotPacketRelay::RemoveRelayOpcode(uint32 opcode)
     // Reserve space for typical group size (5-player dungeon)
     humanPlayers.reserve(5);
 
-    // Iterate through group members using TrinityCore 11.2 API
-    // GetMembers() returns GroupRefManager which supports range-based for loops
-    for (GroupReference const& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member)
             continue;
 
         // Filter out bots
-    if (IsBot(member))
+        if (IsBot(member))
             continue;
 
         // Filter out the bot itself (redundant check, but safe)
-    if (member == bot)
+        if (member == bot)
             continue;
 
         humanPlayers.push_back(member);
@@ -428,11 +429,10 @@ void BotPacketRelay::RemoveRelayOpcode(uint32 opcode)
     // Reserve space for typical group size
     allPlayers.reserve(5);
 
-    // Iterate through all group members using TrinityCore 11.2 API
-    // GetMembers() returns GroupRefManager which supports range-based for loops
-    for (GroupReference const& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (member)
             allPlayers.push_back(member);
     }

@@ -17,13 +17,23 @@
 namespace Playerbot
 {
 
-// Forward declarations
+// Forward declarations for specialization classes (QW-4 FIX)
+class BalanceDruidRefactored;
+class FeralDruidRefactored;
+class GuardianDruidRefactored;
+class RestorationDruidRefactored;
+
+// Type aliases for consistency with base naming
+using BalanceDruid = BalanceDruidRefactored;
+using FeralDruid = FeralDruidRefactored;
+using GuardianDruid = GuardianDruidRefactored;
+using RestorationDruid = RestorationDruidRefactored;
 
 class TC_GAME_API DruidAI : public ClassAI
 {
 public:
     explicit DruidAI(Player* bot);
-    ~DruidAI() = default;
+    ~DruidAI();
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -60,6 +70,16 @@ protected:
     };
 
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<BalanceDruid> _balanceSpec;
+    ::std::unique_ptr<FeralDruid> _feralSpec;
+    ::std::unique_ptr<GuardianDruid> _guardianSpec;
+    ::std::unique_ptr<RestorationDruid> _restorationSpec;
+
     // Form management
     DruidForm _currentForm;
     uint32 _lastFormShift;
@@ -166,8 +186,8 @@ private:
         STARFALL = WoW112Spells::Druid::Common::STARFALL,
         CELESTIAL_ALIGNMENT = WoW112Spells::Druid::Common::CELESTIAL_ALIGNMENT,
         INCARNATION_BALANCE = WoW112Spells::Druid::Common::INCARNATION_BALANCE,
-        LUNAR_STRIKE = 194153, // Removed in modern WoW (merged with Starfire)
-        SOLAR_WRATH = 190984, // Removed in modern WoW (merged with Wrath)
+        // NOTE: LUNAR_STRIKE and SOLAR_WRATH were removed in WoW 11.x
+        // They were merged with STARFIRE and WRATH respectively
 
         // Restoration abilities
         REJUVENATION = WoW112Spells::Druid::Common::REJUVENATION,
@@ -186,7 +206,8 @@ private:
         NATURES_CURE = WoW112Spells::Druid::Common::NATURES_CURE,
         REBIRTH = WoW112Spells::Druid::Common::REBIRTH,
         INNERVATE = WoW112Spells::Druid::Common::INNERVATE,
-        STAMPEDING_ROAR = WoW112Spells::Druid::Common::STAMPEDING_ROAR
+        STAMPEDING_ROAR = WoW112Spells::Druid::Common::STAMPEDING_ROAR,
+        MARK_OF_THE_WILD = WoW112Spells::Druid::MARK_OF_THE_WILD
     };
 };
 

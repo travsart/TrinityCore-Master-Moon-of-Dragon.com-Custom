@@ -28,6 +28,8 @@
 #include "WorldSession.h"
 #include "Opcodes.h"
 #include "SharedDefines.h"
+#include "../Group/GroupMemberResolver.h"
+#include "../Core/Diagnostics/GroupMemberDiagnostics.h"
 #include "Config/PlayerbotTradeConfig.h"
 #include <algorithm>
 #include <numeric>
@@ -810,11 +812,12 @@ namespace Playerbot
 
             ::std::vector<Player*> candidates;
 
+            // FIXED: Use GroupMemberResolver instead of ObjectAccessor::FindPlayer
             for (Group::MemberSlot const& member : group->GetMemberSlots())
 
             {
 
-                if (Player* player = ObjectAccessor::FindPlayer(member.guid))
+                if (Player* player = GroupMemberResolver::ResolveMember(member.guid))
 
                 {
 
@@ -1082,6 +1085,7 @@ namespace Playerbot
             return true;
 
         // Allow one-sided trades from other group members
+        // FIXED: Use GroupMemberResolver instead of ObjectAccessor::FindPlayer
     if (group)
         {
 
@@ -1089,7 +1093,7 @@ namespace Playerbot
 
             {
 
-                Player* memberPlayer = ObjectAccessor::FindPlayer(member.guid);
+                Player* memberPlayer = GroupMemberResolver::ResolveMember(member.guid);
 
                 if (memberPlayer && memberPlayer->GetGUID() == m_currentSession.traderGuid)
 
@@ -1320,6 +1324,7 @@ namespace Playerbot
                 shouldAutoAccept = true;
 
             // Auto-accept from group members
+            // FIXED: Use GroupMemberResolver instead of ObjectAccessor::FindPlayer
     if (m_autoAcceptGroup && !shouldAutoAccept)
 
             {
@@ -1334,7 +1339,7 @@ namespace Playerbot
 
                     {
 
-                        Player* memberPlayer = ObjectAccessor::FindPlayer(member.guid);
+                        Player* memberPlayer = GroupMemberResolver::ResolveMember(member.guid);
 
                         if (memberPlayer && memberPlayer->GetGUID() == m_currentSession.traderGuid)
 
@@ -1609,10 +1614,11 @@ namespace Playerbot
             return;
 
         // Build player priorities
+        // FIXED: Use GroupMemberResolver instead of ObjectAccessor::FindPlayer
     for (Group::MemberSlot const& member : group->GetMemberSlots())
         {
 
-            if (Player* player = ObjectAccessor::FindPlayer(member.guid))
+            if (Player* player = GroupMemberResolver::ResolveMember(member.guid))
 
             {
 

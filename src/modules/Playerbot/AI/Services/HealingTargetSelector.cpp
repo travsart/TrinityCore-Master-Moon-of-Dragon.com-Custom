@@ -19,6 +19,8 @@
 #include "Log.h"
 #include "LFG.h"
 #include "LFGMgr.h"
+#include "../../Group/GroupMemberResolver.h"
+#include "../../Core/Diagnostics/GroupMemberDiagnostics.h"
 #include <algorithm>
 
 // Talent spec constants for role detection (used internally)
@@ -903,15 +905,25 @@ std::vector<Player*> HealingTargetSelector::GetGroupMembersInRange(Player* heale
         return members;
     }
 
-    // Group: iterate members
-    for (GroupReference& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of direct iteration
+    // This ensures bots are properly found via BotWorldSessionMgr fallback
+    float rangeSq = range * range;
+    
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        // Use diagnostic lookup if enabled, otherwise regular resolver
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
         if (!member || member->isDead())
             continue;
 
-        // Check range
-    if (healer->GetDistance(member) <= range)
+        // Check range (must be on same map)
+        if (member->GetMapId() != healer->GetMapId())
+            continue;
+
+        if (healer->GetExactDistSq(member) <= rangeSq)
             members.push_back(member);
     }
 

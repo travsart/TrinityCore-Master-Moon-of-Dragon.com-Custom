@@ -26,6 +26,9 @@
 namespace Playerbot
 {
 
+// Destructor must be defined in cpp file where specialization types are complete
+WarriorAI::~WarriorAI() = default;
+
 WarriorAI::WarriorAI(Player* bot) : ClassAI(bot)
 {
     _lastStanceChange = 0;

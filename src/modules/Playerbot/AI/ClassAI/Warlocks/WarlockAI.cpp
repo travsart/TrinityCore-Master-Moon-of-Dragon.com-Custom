@@ -8,6 +8,10 @@
  */
 
 #include "WarlockAI.h"
+#include "AfflictionWarlock.h"
+#include "DemonologyWarlock.h"
+#include "DestructionWarlock.h"
+#include "../SpellValidation_WoW112_Part2.h"
 #include "GameTime.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
@@ -38,102 +42,80 @@
 namespace Playerbot
 {
 
-// Warlock spell IDs
-enum WarlockSpells
-{
-    // Generic/Utility
-    SPELL_LOCK = 19647,         // Felhunter interrupt
-    FEAR = 5782,
-    BANISH = 710,
-    HOWL_OF_TERROR = 5484,
-    DEATH_COIL = 6789,
-    SHADOWFURY = 30283,
+// Destructor must be defined in cpp file where specialization types are complete
+WarlockAI::~WarlockAI() = default;
 
-    // Defensive
-    UNENDING_RESOLVE = 104773,
-    DARK_PACT = 108416,
-    SOUL_LEECH = 108370,
-    DEMON_ARMOR = 47889,
-    FEL_ARMOR = 47893,
-    SHADOW_WARD = 47891,
-    NETHER_WARD = 91711,
-    SOULBURN = 74434,
+// ============================================================================
+// Warlock Spell IDs - Using Central SpellValidation Registry (WoW 11.2)
+// ============================================================================
+// All spell IDs sourced from SpellValidation_WoW112_Part2.h to maintain single source of truth
 
-    // Pet Management
-    SUMMON_IMP = 688,
-    SUMMON_VOIDWALKER = 697,
-    SUMMON_SUCCUBUS = 712,
-    SUMMON_FELHUNTER = 691,
-    SUMMON_FELGUARD = 30146,
-    SUMMON_INFERNAL = 1122,
-    SUMMON_DOOMGUARD = 18540,
-    HEALTH_FUNNEL = 755,
-    CONSUME_SHADOWS = 17767,    // Voidwalker heal
-    SOUL_LINK = 19028,
-    DEMONIC_EMPOWERMENT = 47193,
+// Namespace aliases for cleaner code
+namespace WarlockSpells = WoW112Spells::Warlock;
+namespace WarlockAffliction = WoW112Spells::Warlock::Affliction;
+namespace WarlockDemonology = WoW112Spells::Warlock::Demonology;
+namespace WarlockDestruction = WoW112Spells::Warlock::Destruction;
+namespace WarlockCommon = WoW112Spells::Warlock::Common;
 
-    // Offensive Cooldowns
-    DARK_SOUL_INSTABILITY = 113858,  // Destruction
-    DARK_SOUL_KNOWLEDGE = 113861,    // Affliction
-    DARK_SOUL_MISERY = 113860,       // Demonology
-    METAMORPHOSIS = 103958,
+// Legacy spell ID aliases for backward compatibility with existing code
+// These map old WARLOCK_ prefixed names to the central registry
 
-    // AoE
-    SEED_OF_CORRUPTION = 27243,
-    RAIN_OF_FIRE = 5740,
-    CATACLYSM = 152108,
-    FIRE_AND_BRIMSTONE = 108683,
-    MANNOROTH_FURY = 108508,
+// Core Abilities (All Specs)
+static constexpr uint32 WARLOCK_SHADOW_BOLT = WarlockSpells::SHADOW_BOLT;
+static constexpr uint32 WARLOCK_SHADOWBOLT = WarlockSpells::SHADOW_BOLT;  // Alias
+static constexpr uint32 WARLOCK_CORRUPTION = WarlockSpells::CORRUPTION;
+static constexpr uint32 WARLOCK_LIFE_TAP = WarlockSpells::LIFE_TAP;
+static constexpr uint32 WARLOCK_DRAIN_LIFE = WarlockSpells::DRAIN_LIFE;
+static constexpr uint32 WARLOCK_HEALTH_FUNNEL = WarlockSpells::HEALTH_FUNNEL;
+static constexpr uint32 WARLOCK_UNENDING_RESOLVE = WarlockSpells::UNENDING_RESOLVE;
+static constexpr uint32 WARLOCK_CREATE_SOULSTONE = WarlockSpells::SOULSTONE;
+static constexpr uint32 WARLOCK_CREATE_HEALTHSTONE = WarlockSpells::CREATE_HEALTHSTONE;
+static constexpr uint32 WARLOCK_RITUAL_OF_SUMMONING = WarlockSpells::RITUAL_OF_SUMMONING;
+static constexpr uint32 WARLOCK_EYE_OF_KILROGG = WarlockSpells::EYE_OF_KILROGG;
+static constexpr uint32 WARLOCK_UNENDING_BREATH = WarlockSpells::UNENDING_BREATH;
 
-    // Curses
-    CURSE_OF_AGONY = 980,
-    CURSE_OF_ELEMENTS = 1490,
-    CURSE_OF_TONGUES = 1714,
-    CURSE_OF_WEAKNESS = 702,
-    CURSE_OF_EXHAUSTION = 18223,
+// Pet Summons
+static constexpr uint32 WARLOCK_SUMMON_IMP = WarlockSpells::SUMMON_IMP;
+static constexpr uint32 WARLOCK_SUMMON_VOIDWALKER = WarlockSpells::SUMMON_VOIDWALKER;
+static constexpr uint32 WARLOCK_SUMMON_SUCCUBUS = WarlockSpells::SUMMON_SUCCUBUS;
+static constexpr uint32 WARLOCK_SUMMON_FELHUNTER = WarlockSpells::SUMMON_FELHUNTER;
+static constexpr uint32 WARLOCK_SUMMON_FELGUARD = WarlockSpells::SUMMON_FELGUARD;
+static constexpr uint32 WARLOCK_SUMMON_INFERNAL = WarlockDestruction::SUMMON_INFERNAL;
 
-    // Affliction
-    CORRUPTION = 172,
-    UNSTABLE_AFFLICTION = 30108,
-    HAUNT = 48181,
-    DRAIN_SOUL = 1120,
-    SIPHON_LIFE = 63106,
-    SOUL_SWAP = 86121,
+// CC and Interrupts
+static constexpr uint32 WARLOCK_SPELL_LOCK = WarlockSpells::SPELL_LOCK;
+static constexpr uint32 WARLOCK_FEAR = WarlockSpells::FEAR;
+static constexpr uint32 WARLOCK_HOWL_OF_TERROR = WarlockSpells::HOWL_OF_TERROR;
+static constexpr uint32 WARLOCK_DEATH_COIL = WarlockSpells::MORTAL_COIL;  // Renamed in retail
+static constexpr uint32 WARLOCK_SHADOWFURY = WarlockSpells::SHADOWFURY;
+static constexpr uint32 WARLOCK_BANISH = WarlockSpells::BANISH;
 
-    // Demonology
-    HAND_OF_GULDAN = 105174,
-    SHADOWBOLT = 686,
-    TOUCH_OF_CHAOS = 103964,
-    CHAOS_WAVE = 124916,
-    IMMOLATION_AURA = 104025,
-    CARRION_SWARM = 103967,
-    DEMONIC_LEAP = 104205,
-    WRATHSTORM = 89751,
+// Curses
+static constexpr uint32 WARLOCK_CURSE_OF_TONGUES = WarlockSpells::CURSE_OF_TONGUES;
+static constexpr uint32 WARLOCK_CURSE_OF_WEAKNESS = WarlockSpells::CURSE_OF_WEAKNESS;
+static constexpr uint32 WARLOCK_CURSE_OF_EXHAUSTION = WarlockSpells::CURSE_OF_EXHAUSTION;
 
-    // Destruction
-    IMMOLATE = 348,
-    CONFLAGRATE = 17962,
-    CHAOS_BOLT = 116858,
-    INCINERATE = 29722,
-    SHADOWBURN = 17877,
-    HAVOC = 80240,
-    BACKDRAFT = 117828,
+// Affliction Specialization aliases
+static constexpr uint32 WARLOCK_CURSE_OF_AGONY = WarlockAffliction::AGONY;  // Renamed to Agony
+static constexpr uint32 WARLOCK_UNSTABLE_AFFLICTION = WarlockAffliction::UNSTABLE_AFFLICTION;
+static constexpr uint32 WARLOCK_SEED_OF_CORRUPTION = WarlockAffliction::SEED_OF_CORRUPTION;
+static constexpr uint32 WARLOCK_HAUNT = WarlockAffliction::HAUNT;
+static constexpr uint32 WARLOCK_DARK_SOUL_MISERY = WarlockAffliction::DARK_SOUL_MISERY;
+static constexpr uint32 WARLOCK_DARK_PACT = WarlockAffliction::DARK_PACT;
 
-    // Resources
-    LIFE_TAP = 1454,
-    DARK_INTENT = 109773,
-    DRAIN_LIFE = 234153,     // WoW 11.2 retail spell ID (NOT 689 which is Classic)
-    DRAIN_MANA = 5138,
+// Demonology Specialization aliases
+static constexpr uint32 WARLOCK_HAND_OF_GULDAN = WarlockDemonology::HAND_OF_GULDAN;
 
-    // Utility
-    CREATE_SOULSTONE = 20707,
-    CREATE_HEALTHSTONE = 6201,
-    RITUAL_OF_SUMMONING = 698,
-    EYE_OF_KILROGG = 126,
-    ENSLAVE_DEMON = 1098,
-    UNENDING_BREATH = 5697,
-    DETECT_INVISIBILITY = 2970
-};
+// Destruction Specialization aliases
+static constexpr uint32 WARLOCK_IMMOLATE = WarlockDestruction::IMMOLATE;
+static constexpr uint32 WARLOCK_CONFLAGRATE = WarlockDestruction::CONFLAGRATE;
+static constexpr uint32 WARLOCK_RAIN_OF_FIRE = WarlockDestruction::RAIN_OF_FIRE;
+static constexpr uint32 WARLOCK_SHADOWBURN = WarlockDestruction::SHADOWBURN;
+static constexpr uint32 WARLOCK_CATACLYSM = WarlockDestruction::CATACLYSM;
+static constexpr uint32 WARLOCK_DARK_SOUL_INSTABILITY = WarlockDestruction::DARK_SOUL_INSTABILITY;
+static constexpr uint32 WARLOCK_FIRE_AND_BRIMSTONE = WarlockDestruction::FIRE_AND_BRIMSTONE;
+static constexpr uint32 WARLOCK_CHAOS_BOLT = WarlockDestruction::CHAOS_BOLT;
+static constexpr uint32 WARLOCK_INCINERATE = WarlockDestruction::INCINERATE;
 
 // Constructor with proper member initialization matching the header
 WarlockAI::WarlockAI(Player* bot) :
@@ -168,9 +150,6 @@ WarlockAI::WarlockAI(Player* bot) :
     TC_LOG_DEBUG("playerbot.warlock", "WarlockAI initialized for {} with specialization {}",
                  GetBot()->GetName(), static_cast<uint32>(GetBot()->GetPrimarySpecialization()));
 }
-
-// Destructor (required because of forward declarations)
-WarlockAI::~WarlockAI() = default;
 
 void WarlockAI::UpdateRotation(::Unit* target)
 {
@@ -341,13 +320,13 @@ bool WarlockAI::HandleInterrupt(Unit* target)
     if (pet->GetEntry() == 417 || pet->GetEntry() == 17252) // Felhunter or Fel Guard
         {
             // Command pet to use Spell Lock (19647)
-    if (!_petAbilityCooldowns[SPELL_LOCK] || GameTime::GetGameTimeMS() - _petAbilityCooldowns[SPELL_LOCK] > 24000)
+    if (!_petAbilityCooldowns[WARLOCK_SPELL_LOCK] || GameTime::GetGameTimeMS() - _petAbilityCooldowns[WARLOCK_SPELL_LOCK] > 24000)
 
             {
 
-                pet->CastSpell(CastSpellTargetArg(target), SPELL_LOCK);
+                pet->CastSpell(CastSpellTargetArg(target), WARLOCK_SPELL_LOCK);
 
-                _petAbilityCooldowns[SPELL_LOCK] = GameTime::GetGameTimeMS();
+                _petAbilityCooldowns[WARLOCK_SPELL_LOCK] = GameTime::GetGameTimeMS();
 
                 return true;
 
@@ -356,13 +335,13 @@ bool WarlockAI::HandleInterrupt(Unit* target)
     }
 
     // Shadowfury - stun interrupt
-    if (bot->HasSpell(SHADOWFURY) && !bot->GetSpellHistory()->HasCooldown(SHADOWFURY))
+    if (bot->HasSpell(WARLOCK_SHADOWFURY) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_SHADOWFURY))
     {
         float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     if (distance <= 30.0f)
         {
 
-            bot->CastSpell(CastSpellTargetArg(target), SHADOWFURY);
+            bot->CastSpell(CastSpellTargetArg(target), WARLOCK_SHADOWFURY);
 
             return true;
         }
@@ -381,19 +360,19 @@ bool WarlockAI::HandleDefensives()
     if (healthPct < 20.0f)
     {
         // Unending Resolve
-    if (bot->HasSpell(UNENDING_RESOLVE) && !bot->GetSpellHistory()->HasCooldown(UNENDING_RESOLVE))
+    if (bot->HasSpell(WARLOCK_UNENDING_RESOLVE) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_UNENDING_RESOLVE))
         {
 
-            bot->CastSpell(CastSpellTargetArg(bot), UNENDING_RESOLVE);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_UNENDING_RESOLVE);
 
             return true;
         }
 
         // Dark Pact
-    if (bot->HasSpell(DARK_PACT) && !bot->GetSpellHistory()->HasCooldown(DARK_PACT))
+    if (bot->HasSpell(WARLOCK_DARK_PACT) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_DARK_PACT))
         {
 
-            bot->CastSpell(CastSpellTargetArg(bot), DARK_PACT);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_DARK_PACT);
 
             return true;
         }
@@ -404,27 +383,18 @@ bool WarlockAI::HandleDefensives()
             return true;
     }
 
-// Low health - use moderate defensives
+// Low health - use moderate defensives (WoW 11.2)
     if (healthPct < 40.0f)
-    {        // Shadow Ward/Nether Ward
-    if (bot->HasSpell(NETHER_WARD) && !bot->GetSpellHistory()->HasCooldown(NETHER_WARD))
     {
-
-            bot->CastSpell(CastSpellTargetArg(bot), NETHER_WARD);
-
-            return true;
-        
-        }
-        else if (bot->HasSpell(SHADOW_WARD) && !bot->GetSpellHistory()->HasCooldown(SHADOW_WARD))      
-    {
-
-            bot->CastSpell(CastSpellTargetArg(bot), SHADOW_WARD);
-
+        // Dark Pact for shield (Affliction)
+        if (bot->HasSpell(WARLOCK_DARK_PACT) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_DARK_PACT))
+        {
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_DARK_PACT);
             return true;
         }
 
-// Death Coil for heal + fear
-    if (bot->HasSpell(DEATH_COIL) && !bot->GetSpellHistory()->HasCooldown(DEATH_COIL))
+// Mortal Coil for heal + fear (was Death Coil)
+    if (bot->HasSpell(WARLOCK_DEATH_COIL) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_DEATH_COIL))
 
         {
         Unit* nearestEnemy = GetNearestEnemy(8.0f);
@@ -432,7 +402,7 @@ bool WarlockAI::HandleDefensives()
             if (nearestEnemy)
             {
 
-                bot->CastSpell(CastSpellTargetArg(nearestEnemy), DEATH_COIL);
+                bot->CastSpell(CastSpellTargetArg(nearestEnemy), WARLOCK_DEATH_COIL);
 
                 return true;
 
@@ -441,12 +411,12 @@ bool WarlockAI::HandleDefensives()
 
         
         // Howl of Terror for AoE fear
-    if (bot->HasSpell(HOWL_OF_TERROR) && !bot->GetSpellHistory()->HasCooldown(HOWL_OF_TERROR))
+    if (bot->HasSpell(WARLOCK_HOWL_OF_TERROR) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_HOWL_OF_TERROR))
         {
 
             if (GetNearbyEnemyCount(10.0f) >= 2)
             {
-            bot->CastSpell(CastSpellTargetArg(bot), HOWL_OF_TERROR);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_HOWL_OF_TERROR);
 
                 return true;
                 }
@@ -454,10 +424,10 @@ bool WarlockAI::HandleDefensives()
 
 // Drain Life for healing
         Unit* target = bot->GetVictim();
-        if (target && bot->HasSpell(DRAIN_LIFE) && !bot->IsNonMeleeSpellCast(false))
+        if (target && bot->HasSpell(WARLOCK_DRAIN_LIFE) && !bot->IsNonMeleeSpellCast(false))
         {
 
-            bot->CastSpell(CastSpellTargetArg(target), DRAIN_LIFE);
+            bot->CastSpell(CastSpellTargetArg(target), WARLOCK_DRAIN_LIFE);
 
             return true;
         }
@@ -502,40 +472,14 @@ bool WarlockAI::HandlePetManagement()
     // Heal pet if needed
     if (_petHealthPercent.load() < 50)
     {
-        // Health Funnel
-    if (bot->HasSpell(HEALTH_FUNNEL) && !bot->GetSpellHistory()->HasCooldown(HEALTH_FUNNEL))
-    {
-
-            bot->CastSpell(CastSpellTargetArg(pet), HEALTH_FUNNEL);
-            return true;
-        }
-
-        // Consume Shadows (Voidwalker self-heal)
-    if (pet->GetEntry() == 1860) // Voidwalker
+        // Health Funnel - keep pet healthy
+        if (bot->HasSpell(WARLOCK_HEALTH_FUNNEL) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_HEALTH_FUNNEL))
         {
-
-            if (!_petAbilityCooldowns[CONSUME_SHADOWS] || GameTime::GetGameTimeMS() - _petAbilityCooldowns[CONSUME_SHADOWS] > 180000)
-
-            {
-
-                pet->CastSpell(CastSpellTargetArg(pet), CONSUME_SHADOWS);
-
-                _petAbilityCooldowns[CONSUME_SHADOWS] = GameTime::GetGameTimeMS();
-
-            }
-        }
-    }
-
-    // Demonic Empowerment for Demonology (spec ID 266)
-    if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 266)    {
-        if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
-        {
-
-            bot->CastSpell(CastSpellTargetArg(bot), DEMONIC_EMPOWERMENT);
-
+            bot->CastSpell(CastSpellTargetArg(pet), WARLOCK_HEALTH_FUNNEL);
             return true;
         }
     }
+    // Note: Consume Shadows and Demonic Empowerment removed in WoW 11.2
 
     // Command pet to attack if idle
     Unit* target = bot->GetVictim();
@@ -609,10 +553,10 @@ bool WarlockAI::SummonPet()
     {
         // Demonology ALWAYS uses Felguard if available - it's their signature pet
         // Felguard is tanky AND does great damage
-        if (bot->HasSpell(SUMMON_FELGUARD))
-            summonSpell = SUMMON_FELGUARD;
+        if (bot->HasSpell(WARLOCK_SUMMON_FELGUARD))
+            summonSpell = WARLOCK_SUMMON_FELGUARD;
         else
-            summonSpell = SUMMON_VOIDWALKER;
+            summonSpell = WARLOCK_SUMMON_VOIDWALKER;
     }
     else if (isSolo)
     {
@@ -620,10 +564,10 @@ bool WarlockAI::SummonPet()
         // - Voidwalker tanks mobs while Warlock does damage
         // - Affliction DoTs + Voidwalker tank = safe leveling
         // - Destruction burst + Voidwalker tank = safe questing
-        if (bot->HasSpell(SUMMON_VOIDWALKER))
-            summonSpell = SUMMON_VOIDWALKER;
-        else if (bot->HasSpell(SUMMON_IMP))
-            summonSpell = SUMMON_IMP; // Fallback for low level
+        if (bot->HasSpell(WARLOCK_SUMMON_VOIDWALKER))
+            summonSpell = WARLOCK_SUMMON_VOIDWALKER;
+        else if (bot->HasSpell(WARLOCK_SUMMON_IMP))
+            summonSpell = WARLOCK_SUMMON_IMP; // Fallback for low level
     }
     else // In group
     {
@@ -632,16 +576,16 @@ bool WarlockAI::SummonPet()
         {
             // Felhunter for Spell Lock (interrupt) and Devour Magic (dispel)
             // Useful in dungeons/raids for interrupt rotation
-            if (bot->HasSpell(SUMMON_FELHUNTER))
-                summonSpell = SUMMON_FELHUNTER;
+            if (bot->HasSpell(WARLOCK_SUMMON_FELHUNTER))
+                summonSpell = WARLOCK_SUMMON_FELHUNTER;
             else
-                summonSpell = SUMMON_IMP;
+                summonSpell = WARLOCK_SUMMON_IMP;
         }
         else if (static_cast<uint32>(spec) == 267) // Destruction
         {
             // Imp for extra DPS in group content
             // Tank is handling aggro, so Warlock can maximize damage
-            summonSpell = SUMMON_IMP;
+            summonSpell = WARLOCK_SUMMON_IMP;
         }
     }    
     // Fallback to basic pets if specialized ones aren't available
@@ -649,12 +593,12 @@ bool WarlockAI::SummonPet()
     
     {
 
-        if (bot->HasSpell(SUMMON_IMP))
+        if (bot->HasSpell(WARLOCK_SUMMON_IMP))
 
-            summonSpell = SUMMON_IMP;
-        else if (bot->HasSpell(SUMMON_VOIDWALKER))
+            summonSpell = WARLOCK_SUMMON_IMP;
+        else if (bot->HasSpell(WARLOCK_SUMMON_VOIDWALKER))
 
-            summonSpell = SUMMON_VOIDWALKER;
+            summonSpell = WARLOCK_SUMMON_VOIDWALKER;
             }
     if (summonSpell && !bot->GetSpellHistory()->HasCooldown(summonSpell))
     {
@@ -690,8 +634,8 @@ bool WarlockAI::SummonPet()
     {
         TC_LOG_ERROR("playerbot.warlock", "❌ Warlock {} has no pet summon spell! Level={}, HasImp={}, HasVW={}",
                      bot->GetName(), bot->GetLevel(),
-                     bot->HasSpell(SUMMON_IMP) ? "YES" : "NO",
-                     bot->HasSpell(SUMMON_VOIDWALKER) ? "YES" : "NO");
+                     bot->HasSpell(WARLOCK_SUMMON_IMP) ? "YES" : "NO",
+                     bot->HasSpell(WARLOCK_SUMMON_VOIDWALKER) ? "YES" : "NO");
     }
 
     return false;
@@ -708,13 +652,13 @@ bool WarlockAI::HandleCrowdControl(Unit* target)
     uint32 now = GameTime::GetGameTimeMS();
 
     // Fear - primary CC
-    if (bot->HasSpell(FEAR) && (now - _lastFear > 5000))
+    if (bot->HasSpell(WARLOCK_FEAR) && (now - _lastFear > 5000))
     {
         float distanceSq = bot->GetExactDistSq(target);
-        if (!target->HasAura(FEAR) && distanceSq <= (20.0f * 20.0f)) // 400.0f
+        if (!target->HasAura(WARLOCK_FEAR) && distanceSq <= (20.0f * 20.0f)) // 400.0f
 
         {
-        bot->CastSpell(CastSpellTargetArg(target), FEAR);
+        bot->CastSpell(CastSpellTargetArg(target), WARLOCK_FEAR);
 
             _lastFear = now;
             _fearsUsed++;
@@ -727,19 +671,19 @@ bool WarlockAI::HandleCrowdControl(Unit* target)
     if (target->GetCreatureType() == CREATURE_TYPE_DEMON ||
         target->GetCreatureType() == CREATURE_TYPE_ELEMENTAL)
     {
-        if (bot->HasSpell(BANISH) && !target->HasAura(BANISH))
+        if (bot->HasSpell(WARLOCK_BANISH) && !target->HasAura(WARLOCK_BANISH))
         {
 
-            bot->CastSpell(CastSpellTargetArg(target), BANISH);
+            bot->CastSpell(CastSpellTargetArg(target), WARLOCK_BANISH);
 
             return true;
         }
     }
 
     // Curse of Exhaustion - slow for kiting
-    if (bot->HasSpell(CURSE_OF_EXHAUSTION) && !target->HasAura(CURSE_OF_EXHAUSTION))
+    if (bot->HasSpell(WARLOCK_CURSE_OF_EXHAUSTION) && !target->HasAura(WARLOCK_CURSE_OF_EXHAUSTION))
     {
-        bot->CastSpell(CastSpellTargetArg(target), CURSE_OF_EXHAUSTION);
+        bot->CastSpell(CastSpellTargetArg(target), WARLOCK_CURSE_OF_EXHAUSTION);
         return true;
     }    return false;
 }
@@ -758,47 +702,42 @@ bool WarlockAI::HandleAoERotation(Unit* target)
 
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());        // Seed of Corruption for Affliction (265) or when many enemies
     if (static_cast<uint32>(spec) == 265 || nearbyEnemies >= 4)    {
-        if (bot->HasSpell(SEED_OF_CORRUPTION) && !target->HasAura(SEED_OF_CORRUPTION))
+        if (bot->HasSpell(WARLOCK_SEED_OF_CORRUPTION) && !target->HasAura(WARLOCK_SEED_OF_CORRUPTION))
         {
 
-            bot->CastSpell(CastSpellTargetArg(target), SEED_OF_CORRUPTION);
+            bot->CastSpell(CastSpellTargetArg(target), WARLOCK_SEED_OF_CORRUPTION);
 
             return true;
         }
     }
 
 // Rain of Fire
-    if (bot->HasSpell(RAIN_OF_FIRE) && !bot->GetSpellHistory()->HasCooldown(RAIN_OF_FIRE))
+    if (bot->HasSpell(WARLOCK_RAIN_OF_FIRE) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_RAIN_OF_FIRE))
     {
         // Note: Ground-targeted spell, needs special handling
-        bot->CastSpell(CastSpellTargetArg(target), RAIN_OF_FIRE);
+        bot->CastSpell(CastSpellTargetArg(target), WARLOCK_RAIN_OF_FIRE);
         return true;
     }
 
     // Cataclysm (if available)
-    if (bot->HasSpell(CATACLYSM) && !bot->GetSpellHistory()->HasCooldown(CATACLYSM))
+    if (bot->HasSpell(WARLOCK_CATACLYSM) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_CATACLYSM))
     {
-        bot->CastSpell(CastSpellTargetArg(target), CATACLYSM);
+        bot->CastSpell(CastSpellTargetArg(target), WARLOCK_CATACLYSM);
         return true;
     }
 
 // Fire and Brimstone for Destruction (267)
     if (static_cast<uint32>(spec) == 267)
-    {        if (bot->HasSpell(FIRE_AND_BRIMSTONE) && !bot->HasAura(FIRE_AND_BRIMSTONE))
+    {        if (bot->HasSpell(WARLOCK_FIRE_AND_BRIMSTONE) && !bot->HasAura(WARLOCK_FIRE_AND_BRIMSTONE))
         {
 
-            bot->CastSpell(CastSpellTargetArg(bot), FIRE_AND_BRIMSTONE);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_FIRE_AND_BRIMSTONE);
 
             return true;
         }
     }
 
-    // Mannoroth's Fury
-    if (bot->HasSpell(MANNOROTH_FURY) && !bot->GetSpellHistory()->HasCooldown(MANNOROTH_FURY))
-    {
-        bot->CastSpell(CastSpellTargetArg(bot), MANNOROTH_FURY);
-        return true;
-    }
+    // Note: Mannoroth's Fury removed in WoW 11.2
 
     return false;
 }
@@ -822,39 +761,30 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
     // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
     if (static_cast<uint32>(spec) == 265) // Affliction
     {
-        if (bot->HasSpell(DARK_SOUL_MISERY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_MISERY))
+        if (bot->HasSpell(WARLOCK_DARK_SOUL_MISERY) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_DARK_SOUL_MISERY))
         {
 
-            bot->CastSpell(CastSpellTargetArg(bot), DARK_SOUL_MISERY);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_DARK_SOUL_MISERY);
 
             usedCooldown = true;
         }
     }
     else if (static_cast<uint32>(spec) == 266) // Demonology
-  
     {
-        // Metamorphosis
-    if (bot->HasSpell(METAMORPHOSIS) && !bot->GetSpellHistory()->HasCooldown(METAMORPHOSIS))
+        // Summon Demonic Tyrant - main Demonology cooldown in 11.2
+        // Note: Metamorphosis and Dark Soul: Knowledge removed (Metamorphosis is Demon Hunter only)
+        constexpr uint32 SUMMON_DEMONIC_TYRANT = WarlockDemonology::SUMMON_DEMONIC_TYRANT;
+        if (bot->HasSpell(SUMMON_DEMONIC_TYRANT) && !bot->GetSpellHistory()->HasCooldown(SUMMON_DEMONIC_TYRANT))
         {
-
-            bot->CastSpell(CastSpellTargetArg(bot), METAMORPHOSIS);
-
-            usedCooldown = true;
-        }
-        // Dark Soul: Knowledge
-    if (bot->HasSpell(DARK_SOUL_KNOWLEDGE) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_KNOWLEDGE))
-        {
-
-            bot->CastSpell(CastSpellTargetArg(bot), DARK_SOUL_KNOWLEDGE);
-
+            bot->CastSpell(CastSpellTargetArg(bot), SUMMON_DEMONIC_TYRANT);
             usedCooldown = true;
         }
     }    else if (static_cast<uint32>(spec) == 267) // Destruction
   
-    {        if (bot->HasSpell(DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_INSTABILITY))
+    {        if (bot->HasSpell(WARLOCK_DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_DARK_SOUL_INSTABILITY))
     {
 
-            bot->CastSpell(CastSpellTargetArg(bot), DARK_SOUL_INSTABILITY);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_DARK_SOUL_INSTABILITY);
 
             usedCooldown = true;
         }
@@ -862,46 +792,13 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
 
     // Summon Infernal/Doomguard
     if (GetNearbyEnemyCount(30.0f) >= 3 || target->GetHealthPct() > 80.0f)    {
-        // Infernal for AoE
-    if (GetNearbyEnemyCount(10.0f) >= 3 && bot->HasSpell(SUMMON_INFERNAL))        {
-
-            if (!bot->GetSpellHistory()->HasCooldown(SUMMON_INFERNAL))
-
+        // Summon Infernal - main offensive cooldown for Destruction (Doomguard removed in 11.2)
+        if (bot->HasSpell(WARLOCK_SUMMON_INFERNAL))
+        {
+            if (!bot->GetSpellHistory()->HasCooldown(WARLOCK_SUMMON_INFERNAL))
             {
-
-                uint32 soulShards = bot->GetItemCount(6265);
-                if (soulShards > 0)
-
-                {
-
-                    bot->CastSpell(CastSpellTargetArg(target), SUMMON_INFERNAL);
-
-                    usedCooldown = true;
-
-                }
-
-            }
-        }
-        // Doomguard for single target
-        else if (bot->HasSpell(SUMMON_DOOMGUARD))
-      
-    {
-
-            if (!bot->GetSpellHistory()->HasCooldown(SUMMON_DOOMGUARD))
-
-            {
-
-                uint32 soulShards = bot->GetItemCount(6265);
-                if (soulShards > 0)
-
-                {
-
-                    bot->CastSpell(CastSpellTargetArg(target), SUMMON_DOOMGUARD);
-
-                    usedCooldown = true;
-
-                }
-
+                bot->CastSpell(CastSpellTargetArg(target), WARLOCK_SUMMON_INFERNAL);
+                usedCooldown = true;
             }
         }
     }
@@ -934,19 +831,19 @@ void WarlockAI::HandleSoulShardManagement()
     // Create healthstone if we don't have one
     if (!HasHealthstone() && _currentSoulShards.load() > 5)
     {
-        if (bot->HasSpell(CREATE_HEALTHSTONE) && !bot->GetSpellHistory()->HasCooldown(CREATE_HEALTHSTONE))
+        if (bot->HasSpell(WARLOCK_CREATE_HEALTHSTONE) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_CREATE_HEALTHSTONE))
         {
 
-            bot->CastSpell(CastSpellTargetArg(bot), CREATE_HEALTHSTONE);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_CREATE_HEALTHSTONE);
         }
     }
 
     // Create soulstone if needed
     if (!HasSoulstone() && _currentSoulShards.load() > 3)
-    {        if (bot->HasSpell(CREATE_SOULSTONE) && !bot->GetSpellHistory()->HasCooldown(CREATE_SOULSTONE))
+    {        if (bot->HasSpell(WARLOCK_CREATE_SOULSTONE) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_CREATE_SOULSTONE))
         {
 
-            bot->CastSpell(CastSpellTargetArg(bot), CREATE_SOULSTONE);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_CREATE_SOULSTONE);
         }
     }
 }
@@ -977,11 +874,11 @@ void WarlockAI::ExecuteBasicRotation(Unit* target)
     // PRIORITY 1: Self-heal with Drain Life if health is low (level 9+)
     // ========================================================================
     float healthPct = bot->GetHealthPct();
-    if (healthPct < 50.0f && bot->HasSpell(DRAIN_LIFE))
+    if (healthPct < 50.0f && bot->HasSpell(WARLOCK_DRAIN_LIFE))
     {
         TC_LOG_DEBUG("module.playerbot.warlock", "ExecuteBasicRotation: {} health low ({:.0f}%), using Drain Life",
                      bot->GetName(), healthPct);
-        SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), DRAIN_LIFE);
+        SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), WARLOCK_DRAIN_LIFE);
         if (result == SPELL_CAST_OK)
         {
             _warlockMetrics.spellsCast++;
@@ -992,14 +889,14 @@ void WarlockAI::ExecuteBasicRotation(Unit* target)
     // ========================================================================
     // PRIORITY 2: Apply Corruption if target doesn't have it (instant cast DoT)
     // ========================================================================
-    if (bot->HasSpell(CORRUPTION))
+    if (bot->HasSpell(WARLOCK_CORRUPTION))
     {
         bool hasCorruption = target->HasAura(CORRUPTION, bot->GetGUID());
         if (!hasCorruption)
         {
             TC_LOG_DEBUG("module.playerbot.warlock", "ExecuteBasicRotation: {} casting Corruption on {}",
                          bot->GetName(), target->GetName());
-            SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), CORRUPTION);
+            SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), WARLOCK_CORRUPTION);
             if (result == SPELL_CAST_OK)
             {
                 _warlockMetrics.spellsCast++;
@@ -1012,15 +909,15 @@ void WarlockAI::ExecuteBasicRotation(Unit* target)
     // PRIORITY 3: Shadow Bolt (main cast-time damage spell)
     // SHADOWBOLT = 686 - This is the base Warlock damage spell
     // ========================================================================
-    bool hasShadowBolt = bot->HasSpell(SHADOWBOLT);
+    bool hasShadowBolt = bot->HasSpell(WARLOCK_SHADOWBOLT);
     TC_LOG_INFO("playerbot.warlock", "ExecuteBasicRotation: {} HasSpell(SHADOWBOLT={})={}",
-                bot->GetName(), static_cast<uint32>(SHADOWBOLT), hasShadowBolt ? "YES" : "NO");
+                bot->GetName(), static_cast<uint32>(WARLOCK_SHADOWBOLT), hasShadowBolt ? "YES" : "NO");
 
     if (hasShadowBolt)
     {
         TC_LOG_INFO("playerbot.warlock", "ExecuteBasicRotation: {} ATTEMPTING Shadow Bolt (ID {}) on {}",
-                    bot->GetName(), static_cast<uint32>(SHADOWBOLT), target->GetName());
-        SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), SHADOWBOLT);
+                    bot->GetName(), static_cast<uint32>(WARLOCK_SHADOWBOLT), target->GetName());
+        SpellCastResult result = bot->CastSpell(CastSpellTargetArg(target), WARLOCK_SHADOWBOLT);
         TC_LOG_INFO("playerbot.warlock", "ExecuteBasicRotation: {} Shadow Bolt result = {} (OK={})",
                     bot->GetName(), static_cast<int>(result), static_cast<int>(SPELL_CAST_OK));
         if (result == SPELL_CAST_OK)
@@ -1037,7 +934,7 @@ void WarlockAI::ExecuteBasicRotation(Unit* target)
     else
     {
         TC_LOG_WARN("playerbot.warlock", "ExecuteBasicRotation: {} does NOT have Shadow Bolt spell ID {}!",
-                    bot->GetName(), static_cast<uint32>(SHADOWBOLT));
+                    bot->GetName(), static_cast<uint32>(WARLOCK_SHADOWBOLT));
     }
 
     // ========================================================================
@@ -1061,9 +958,9 @@ bool WarlockAI::HandleInstantCasts(Unit* target)
         return false;
 
     // Corruption - instant with talent
-    if (bot->HasSpell(CORRUPTION) && !target->HasAura(CORRUPTION))
+    if (bot->HasSpell(WARLOCK_CORRUPTION) && !target->HasAura(WARLOCK_CORRUPTION))
     {
-        bot->CastSpell(CastSpellTargetArg(target), CORRUPTION);
+        bot->CastSpell(CastSpellTargetArg(target), WARLOCK_CORRUPTION);
         return true;
     }
 
@@ -1073,14 +970,14 @@ bool WarlockAI::HandleInstantCasts(Unit* target)
 
     // Conflagrate for Destruction (267)
     if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 267)    {
-        if (bot->HasSpell(CONFLAGRATE) && target->HasAura(IMMOLATE))
+        if (bot->HasSpell(WARLOCK_CONFLAGRATE) && target->HasAura(WARLOCK_IMMOLATE))
         {
 
-            if (!bot->GetSpellHistory()->HasCooldown(CONFLAGRATE))
+            if (!bot->GetSpellHistory()->HasCooldown(WARLOCK_CONFLAGRATE))
 
             {
 
-                bot->CastSpell(CastSpellTargetArg(target), CONFLAGRATE);
+                bot->CastSpell(CastSpellTargetArg(target), WARLOCK_CONFLAGRATE);
 
                 return true;
 
@@ -1089,12 +986,12 @@ bool WarlockAI::HandleInstantCasts(Unit* target)
     }
 
     // Shadowburn for low health targets
-    if (bot->HasSpell(SHADOWBURN) && target->GetHealthPct() < 20.0f)
+    if (bot->HasSpell(WARLOCK_SHADOWBURN) && target->GetHealthPct() < 20.0f)
     {
-        if (!bot->GetSpellHistory()->HasCooldown(SHADOWBURN))
+        if (!bot->GetSpellHistory()->HasCooldown(WARLOCK_SHADOWBURN))
         {
 
-            bot->CastSpell(CastSpellTargetArg(target), SHADOWBURN);
+            bot->CastSpell(CastSpellTargetArg(target), WARLOCK_SHADOWBURN);
 
             return true;
         }
@@ -1117,9 +1014,9 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
     uint32 now = GameTime::GetGameTimeMS();
 
     // Corruption - primary DoT
-    if (bot->HasSpell(CORRUPTION) && !target->HasAura(CORRUPTION))
+    if (bot->HasSpell(WARLOCK_CORRUPTION) && !target->HasAura(WARLOCK_CORRUPTION))
     {
-        bot->CastSpell(CastSpellTargetArg(target), CORRUPTION);
+        bot->CastSpell(CastSpellTargetArg(target), WARLOCK_CORRUPTION);
         _dotTracker[targetGuid][CORRUPTION] = now;
         return true;
     }
@@ -1129,19 +1026,19 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
     if (static_cast<uint32>(spec) == 265) // Affliction
     {
         // Unstable Affliction
-    if (bot->HasSpell(UNSTABLE_AFFLICTION) && !target->HasAura(UNSTABLE_AFFLICTION))
+    if (bot->HasSpell(WARLOCK_UNSTABLE_AFFLICTION) && !target->HasAura(WARLOCK_UNSTABLE_AFFLICTION))
         {
 
-            bot->CastSpell(CastSpellTargetArg(target), UNSTABLE_AFFLICTION);
+            bot->CastSpell(CastSpellTargetArg(target), WARLOCK_UNSTABLE_AFFLICTION);
 
             _dotTracker[targetGuid][UNSTABLE_AFFLICTION] = now;
             return true;
         }
         // Haunt
-    if (bot->HasSpell(HAUNT) && !bot->GetSpellHistory()->HasCooldown(HAUNT))
+    if (bot->HasSpell(WARLOCK_HAUNT) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_HAUNT))
         {
 
-            bot->CastSpell(CastSpellTargetArg(target), HAUNT);
+            bot->CastSpell(CastSpellTargetArg(target), WARLOCK_HAUNT);
 
             _dotTracker[targetGuid][HAUNT] = now;
 
@@ -1151,10 +1048,10 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
     else if (static_cast<uint32>(spec) == 267) // Destruction  
     {
         // Immolate
-    if (bot->HasSpell(IMMOLATE) && !target->HasAura(IMMOLATE))
+    if (bot->HasSpell(WARLOCK_IMMOLATE) && !target->HasAura(WARLOCK_IMMOLATE))
 
         {
-        bot->CastSpell(CastSpellTargetArg(target), IMMOLATE);
+        bot->CastSpell(CastSpellTargetArg(target), WARLOCK_IMMOLATE);
 
             _dotTracker[targetGuid][IMMOLATE] = now;
 
@@ -1164,10 +1061,10 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
     else if (static_cast<uint32>(spec) == 266) // Demonology  
     {
         // Corruption is usually enough, Hand of Gul'dan for AoE
-    if (bot->HasSpell(HAND_OF_GULDAN) && !bot->GetSpellHistory()->HasCooldown(HAND_OF_GULDAN))
+    if (bot->HasSpell(WARLOCK_HAND_OF_GULDAN) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_HAND_OF_GULDAN))
         {
 
-            bot->CastSpell(CastSpellTargetArg(target), HAND_OF_GULDAN);
+            bot->CastSpell(CastSpellTargetArg(target), WARLOCK_HAND_OF_GULDAN);
 
             return true;
         }
@@ -1185,28 +1082,30 @@ bool WarlockAI::ApplyCurse(Unit* target)
     if (!bot)
         return false;
 
-    // Check if target already has a curse
-    if (target->HasAura(CURSE_OF_AGONY) || target->HasAura(CURSE_OF_ELEMENTS) ||
-        target->HasAura(CURSE_OF_TONGUES) || target->HasAura(CURSE_OF_WEAKNESS))
+    // Check if target already has a curse (Curse of Elements removed in 11.2)
+    if (target->HasAura(WARLOCK_CURSE_OF_AGONY) ||
+        target->HasAura(WARLOCK_CURSE_OF_TONGUES) || target->HasAura(WARLOCK_CURSE_OF_WEAKNESS) ||
+        target->HasAura(WARLOCK_CURSE_OF_EXHAUSTION))
         return false;
 
     uint32 curseSpell = 0;
 
     // Choose appropriate curse based on target and situation
+    // Note: Curse of Elements removed in WoW 11.2
     if (target->GetPowerType() == POWER_MANA)
     {
         // Curse of Tongues for casters
-        curseSpell = CURSE_OF_TONGUES;
+        curseSpell = WARLOCK_CURSE_OF_TONGUES;
     }
-    else if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 265) // Affliction  
+    else if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 265) // Affliction
     {
-        // Curse of Agony for Affliction
-        curseSpell = CURSE_OF_AGONY;
+        // Curse of Agony (Agony) for Affliction
+        curseSpell = WARLOCK_CURSE_OF_AGONY;
     }
     else
     {
-        // Curse of the Elements for damage increase
-        curseSpell = CURSE_OF_ELEMENTS;
+        // Curse of Weakness for damage/attack power reduction
+        curseSpell = WARLOCK_CURSE_OF_WEAKNESS;
     }
 
     // Apply curse if available
@@ -1434,10 +1333,10 @@ void WarlockAI::UpdateCombatMetrics()
         Unit* target = bot->GetVictim();
         int dotCount = 0;
         int totalDots = 3; // Typical number of DoTs
-    if (target->HasAura(CORRUPTION)) dotCount++;
-        if (target->HasAura(CURSE_OF_AGONY)) dotCount++;
-        if (target->HasAura(UNSTABLE_AFFLICTION)) dotCount++;
-        if (target->HasAura(IMMOLATE)) dotCount++;
+    if (target->HasAura(WARLOCK_CORRUPTION)) dotCount++;
+        if (target->HasAura(WARLOCK_CURSE_OF_AGONY)) dotCount++;
+        if (target->HasAura(WARLOCK_UNSTABLE_AFFLICTION)) dotCount++;
+        if (target->HasAura(WARLOCK_IMMOLATE)) dotCount++;
 
         _warlockMetrics.dotUptime = (static_cast<float>(dotCount) / totalDots) * 100.0f;
     }
@@ -1594,26 +1493,14 @@ void WarlockAI::OnNonCombatUpdate(uint32 diff)
         {
             // Health Funnel (only if we have good health ourselves)
             if (bot->GetHealthPct() > 80.0f &&
-                bot->HasSpell(HEALTH_FUNNEL) &&
-                !bot->GetSpellHistory()->HasCooldown(HEALTH_FUNNEL))
+                bot->HasSpell(WARLOCK_HEALTH_FUNNEL) &&
+                !bot->GetSpellHistory()->HasCooldown(WARLOCK_HEALTH_FUNNEL))
             {
-                bot->CastSpell(CastSpellTargetArg(pet), HEALTH_FUNNEL);
+                bot->CastSpell(CastSpellTargetArg(pet), WARLOCK_HEALTH_FUNNEL);
                 TC_LOG_DEBUG("playerbot.warlock", "Warlock {} healing pet with Health Funnel (out of combat)", bot->GetName());
                 return;
             }
-
-            // Consume Shadows (Voidwalker self-heal)
-            if (pet->GetEntry() == 1860) // Voidwalker
-            {
-                if (!_petAbilityCooldowns[CONSUME_SHADOWS] ||
-                    GameTime::GetGameTimeMS() - _petAbilityCooldowns[CONSUME_SHADOWS] > 180000)
-                {
-                    pet->CastSpell(CastSpellTargetArg(pet), CONSUME_SHADOWS);
-                    _petAbilityCooldowns[CONSUME_SHADOWS] = GameTime::GetGameTimeMS();
-                    TC_LOG_DEBUG("playerbot.warlock", "Warlock {} pet using Consume Shadows (out of combat)", bot->GetName());
-                    return;
-                }
-            }
+            // Note: Consume Shadows removed in WoW 11.2
         }
     }
 
@@ -1744,32 +1631,9 @@ void WarlockAI::UpdateWarlockBuffs()
     if (bot->HasUnitState(UNIT_STATE_CASTING))
         return;
 
-    // Demon Armor/Fel Armor
-    if (!bot->HasAura(DEMON_ARMOR) && !bot->HasAura(FEL_ARMOR))
-    {
-        if (bot->HasSpell(FEL_ARMOR))
-
-            bot->CastSpell(CastSpellTargetArg(bot), FEL_ARMOR);
-        else if (bot->HasSpell(DEMON_ARMOR))
-
-            bot->CastSpell(CastSpellTargetArg(bot), DEMON_ARMOR);
-    }
-
-    // Soul Link for Demonology (266)
-    if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 266)  
-    {
-        if (bot->HasSpell(SOUL_LINK) && !bot->HasAura(SOUL_LINK) && _petActive.load())
-        {
-
-            bot->CastSpell(CastSpellTargetArg(bot), SOUL_LINK);
-        }
-    }
-
-    // Dark Intent buff
-    if (bot->HasSpell(DARK_INTENT) && !bot->HasAura(DARK_INTENT))
-    {
-        bot->CastSpell(CastSpellTargetArg(bot), DARK_INTENT);
-    }
+    // Note: Demon Armor, Fel Armor, Soul Link, and Dark Intent removed in WoW 11.2
+    // Warlocks no longer have passive armor buffs - they rely on defensive cooldowns instead
+    // Soul Link is now a passive talent, not an active ability
 }
 
 void WarlockAI::UpdatePetCheck()
@@ -1847,10 +1711,10 @@ void WarlockAI::ManageLifeTapTiming()
     float manaPct = bot->GetPowerPct(POWER_MANA);    // Only Life Tap if health is good and mana is low
     if (healthPct > LIFE_TAP_THRESHOLD * 100 && manaPct < _optimalManaThreshold * 100)
     {
-        if (bot->HasSpell(LIFE_TAP) && !bot->GetSpellHistory()->HasCooldown(LIFE_TAP))
+        if (bot->HasSpell(WARLOCK_LIFE_TAP) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_LIFE_TAP))
         {
 
-            bot->CastSpell(CastSpellTargetArg(bot), LIFE_TAP);
+            bot->CastSpell(CastSpellTargetArg(bot), WARLOCK_LIFE_TAP);
 
             _lastLifeTapTime = now;
 
@@ -1881,7 +1745,7 @@ void WarlockAI::OptimizePetPositioning()
 
     // Determine optimal position based on pet type
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
-    if (static_cast<uint32>(spec) == 266 && bot->HasSpell(SUMMON_FELGUARD)) // Demonology
+    if (static_cast<uint32>(spec) == 266 && bot->HasSpell(WARLOCK_SUMMON_FELGUARD)) // Demonology
     {
         // Melee pet - position in front of target
         distance = 3.0f;
@@ -1999,28 +1863,19 @@ void WarlockAI::ManageWarlockCooldowns()
     if (!bot || !bot->IsInCombat())
         return;
 
-    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());    // Demonic Empowerment for Demonology (266)
-    if (static_cast<uint32>(spec) == 266 && _petActive.load())
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
+
+    // Summon Demonic Tyrant for Demonology (266) - main cooldown in WoW 11.2
+    // Note: Demonic Empowerment and Metamorphosis removed in 11.2
+    if (spec == 266)
     {
-        if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
+        constexpr uint32 SUMMON_DEMONIC_TYRANT = WarlockDemonology::SUMMON_DEMONIC_TYRANT;
+        if (bot->HasSpell(SUMMON_DEMONIC_TYRANT) && !bot->GetSpellHistory()->HasCooldown(SUMMON_DEMONIC_TYRANT))
         {
-
-            bot->CastSpell(CastSpellTargetArg(bot), DEMONIC_EMPOWERMENT);
-        }
-    }
-
-    // Metamorphosis for Demonology (266)
-    if (static_cast<uint32>(spec) == 266)
-    {
-        if (bot->HasSpell(METAMORPHOSIS) && !bot->GetSpellHistory()->HasCooldown(METAMORPHOSIS))
-        {
-            // Use in high-pressure situations
-    if (bot->GetVictim() && bot->GetVictim()->GetHealthPct() > 50)
-
+            // Use in high-pressure situations with many active demons
+            if (bot->GetVictim() && bot->GetVictim()->GetHealthPct() > 50)
             {
-
-                bot->CastSpell(CastSpellTargetArg(bot), METAMORPHOSIS);
-
+                bot->CastSpell(CastSpellTargetArg(bot), SUMMON_DEMONIC_TYRANT);
             }
         }
     }
@@ -2052,21 +1907,21 @@ void WarlockAI::HandleAoESituations()
     if (nearbyEnemies >= 3)
     {
         // Seed of Corruption for Affliction (265)
-    if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 265 && bot->HasSpell(SEED_OF_CORRUPTION))
+    if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 265 && bot->HasSpell(WARLOCK_SEED_OF_CORRUPTION))
         {
 
             Unit* target = bot->GetVictim();
-            if (target && !target->HasAura(SEED_OF_CORRUPTION) && !bot->GetSpellHistory()->HasCooldown(SEED_OF_CORRUPTION))
+            if (target && !target->HasAura(WARLOCK_SEED_OF_CORRUPTION) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_SEED_OF_CORRUPTION))
 
             {
 
-                bot->CastSpell(CastSpellTargetArg(target), SEED_OF_CORRUPTION);
+                bot->CastSpell(CastSpellTargetArg(target), WARLOCK_SEED_OF_CORRUPTION);
 
             }
         }
 
         // Rain of Fire for all specs
-    if (bot->HasSpell(RAIN_OF_FIRE) && !bot->GetSpellHistory()->HasCooldown(RAIN_OF_FIRE))
+    if (bot->HasSpell(WARLOCK_RAIN_OF_FIRE) && !bot->GetSpellHistory()->HasCooldown(WARLOCK_RAIN_OF_FIRE))
         {
 
             Unit* target = bot->GetVictim();
@@ -2074,7 +1929,7 @@ void WarlockAI::HandleAoESituations()
 
             {
 
-                bot->CastSpell(CastSpellTargetArg(target), RAIN_OF_FIRE);
+                bot->CastSpell(CastSpellTargetArg(target), WARLOCK_RAIN_OF_FIRE);
 
             }
         }

@@ -26,6 +26,16 @@
 namespace Playerbot
 {
 
+// Forward declarations for specialization classes (QW-4 FIX)
+class BloodDeathKnightRefactored;
+class FrostDeathKnightRefactored;
+class UnholyDeathKnightRefactored;
+
+// Type aliases for consistency with base naming
+using BloodDeathKnight = BloodDeathKnightRefactored;
+using FrostDeathKnight = FrostDeathKnightRefactored;
+using UnholyDeathKnight = UnholyDeathKnightRefactored;
+
 // Death Knight Specializations
 enum class DeathKnightSpec : uint8
 {
@@ -66,6 +76,18 @@ public:
     DeathKnightSpec GetCurrentSpecialization() const;
 
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<BloodDeathKnight> _bloodSpec;
+    ::std::unique_ptr<FrostDeathKnight> _frostSpec;
+    ::std::unique_ptr<UnholyDeathKnight> _unholySpec;
+
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
+
     // Specialization detection
     void DetectSpecialization();
     // Initialization

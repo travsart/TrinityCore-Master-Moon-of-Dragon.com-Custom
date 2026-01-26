@@ -29,6 +29,16 @@
 namespace Playerbot
 {
 
+// Forward declarations for specialization classes (QW-4 FIX)
+class AfflictionWarlockRefactored;
+class DemonologyWarlockRefactored;
+class DestructionWarlockRefactored;
+
+// Type aliases for consistency with base naming
+using AfflictionWarlock = AfflictionWarlockRefactored;
+using DemonologyWarlock = DemonologyWarlockRefactored;
+using DestructionWarlock = DestructionWarlockRefactored;
+
 // Warlock AI implementation with specialization pattern and full CombatBehaviorIntegration
 class TC_GAME_API WarlockAI : public ClassAI
 {
@@ -175,6 +185,18 @@ private:
     ::std::unique_ptr<TargetSelector> _targetSelector;
     ::std::unique_ptr<PositionManager> _positionManager;
     ::std::unique_ptr<InterruptManager> _interruptManager;
+
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<AfflictionWarlock> _afflictionSpec;
+    ::std::unique_ptr<DemonologyWarlock> _demonologySpec;
+    ::std::unique_ptr<DestructionWarlock> _destructionSpec;
+
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
 
     // ========================================================================
     // Resource Tracking

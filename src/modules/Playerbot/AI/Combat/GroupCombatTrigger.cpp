@@ -18,6 +18,8 @@
 #include "Log.h"
 #include "../Actions/TargetAssistAction.h"
 #include "../Actions/Action.h"
+#include "../../Group/GroupMemberResolver.h"
+#include "../../Core/Diagnostics/GroupMemberDiagnostics.h"
 #include <algorithm>
 #include "GameTime.h"
 
@@ -116,8 +118,8 @@ float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
     // Base urgency for group combat
     float urgency = 0.7f;
 
-    // Increase urgency if leader is in combat
-    Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID());
+    // FIXED: Use GroupMemberResolver for leader lookup
+    Player* leader = GroupMemberResolver::ResolveMember(group->GetLeaderGUID());
     if (leader && leader != bot && leader->IsInCombat())
     {
         urgency += 0.2f;
@@ -128,12 +130,17 @@ float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
     }
 
     // Check how many members are in combat
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
     uint32 membersInCombat = 0;
     uint32 totalMembers = 0;
 
-    for (GroupReference const& itr : group->GetMembers())
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = itr.GetSource())
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
+        if (member)
         {
             ++totalMembers;
             if (member->IsInCombat())
@@ -171,15 +178,17 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
     bool inCombat = false;
     uint32 membersInCombat = 0;
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = itr.GetSource())
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
+        if (member && member->IsInCombat())
         {
-            if (member->IsInCombat())
-            {
-                inCombat = true;
-                ++membersInCombat;
-            }
+            inCombat = true;
+            ++membersInCombat;
         }
     }
 
@@ -240,22 +249,23 @@ Unit* GroupCombatTrigger::GetGroupTarget(Group* group) const
     ::std::unordered_map<ObjectGuid, uint32> targetCounts;
     Unit* leaderTarget = nullptr;
 
-    // Count targets being attacked by group members
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = itr.GetSource())
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
+        if (!member || !member->IsInCombat())
+            continue;
+
+        if (Unit* victim = member->GetVictim())
         {
-            if (!member->IsInCombat())
-                continue;
+            targetCounts[victim->GetGUID()]++;
 
-            if (Unit* victim = member->GetVictim())
-            {
-                targetCounts[victim->GetGUID()]++;
-
-                // Track leader's target specifically
-    if (member->GetGUID() == group->GetLeaderGUID())
-                    leaderTarget = victim;
-            }
+            // Track leader's target specifically
+            if (member->GetGUID() == group->GetLeaderGUID())
+                leaderTarget = victim;
         }
     }
 
@@ -316,24 +326,26 @@ Unit* GroupCombatTrigger::GetAssistTarget(Player* bot, Group* group) const
     Unit* nearestTarget = nullptr;
     float nearestDistanceSq = _maxEngagementRange * _maxEngagementRange;
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = itr.GetSource())
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
+        if (!member || member == bot || !member->IsInCombat())
+            continue;
+
+        if (Unit* victim = member->GetVictim())
         {
-            if (member == bot || !member->IsInCombat())
+            if (!IsValidGroupTarget(bot, victim))
                 continue;
 
-            if (Unit* victim = member->GetVictim())
+            float distanceSq = bot->GetExactDistSq(victim);
+            if (distanceSq < nearestDistanceSq)
             {
-                if (!IsValidGroupTarget(bot, victim))
-                    continue;
-
-                float distanceSq = bot->GetExactDistSq(victim);
-                if (distanceSq < nearestDistanceSq)
-                {
-                    nearestDistanceSq = distanceSq;
-                    nearestTarget = victim;
-                }
+                nearestDistanceSq = distanceSq;
+                nearestTarget = victim;
             }
         }
     }
@@ -364,16 +376,18 @@ void GroupCombatTrigger::UpdateGroupCombatState(Group* group, bool inCombat)
     info.memberTargets.clear();
     info.membersInCombat = 0;
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = itr.GetSource())
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
+        if (member && member->IsInCombat())
         {
-            if (member->IsInCombat())
-            {
-                info.membersInCombat++;
-                if (Unit* victim = member->GetVictim())
-                    info.memberTargets[member->GetGUID()] = victim->GetGUID();
-            }
+            info.membersInCombat++;
+            if (Unit* victim = member->GetVictim())
+                info.memberTargets[member->GetGUID()] = victim->GetGUID();
         }
     }
 }
@@ -410,7 +424,8 @@ bool GroupCombatTrigger::IsInEngagementRange(Player* bot, Unit* target) const
         bot->GetClass() == CLASS_PALADIN || bot->GetClass() == CLASS_MONK)
     {
         // Allow slightly more range for melee to account for movement
-        return distance <= ::std::max(10.0f, MIN_ENGAGEMENT_RANGE * 2);
+        // Use parentheses around std::max to prevent Windows max macro interference
+        return distance <= (::std::max)(10.0f, MIN_ENGAGEMENT_RANGE * 2.0f);
     }
 
     // Ranged classes can engage from further
@@ -450,13 +465,15 @@ bool GroupCombatTrigger::IsTargetEngaged(Group* group, Unit* target) const
     if (!group || !target)
         return false;
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = itr.GetSource())
-        {
-            if (member->IsInCombat() && member->GetVictim() == target)
-                return true;
-        }
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
+        if (member && member->IsInCombat() && member->GetVictim() == target)
+            return true;
     }
 
     return false;
@@ -464,7 +481,8 @@ bool GroupCombatTrigger::IsTargetEngaged(Group* group, Unit* target) const
 
 void GroupCombatTrigger::SetUpdateInterval(uint32 intervalMs)
 {
-    _updateIntervalMs = ::std::clamp(intervalMs, MIN_UPDATE_INTERVAL, MAX_UPDATE_INTERVAL);
+    // Use parentheses to prevent macro interference
+    _updateIntervalMs = (::std::clamp)(intervalMs, MIN_UPDATE_INTERVAL, MAX_UPDATE_INTERVAL);
 }
 
 bool GroupCombatTrigger::UpdateCombatCache(Group* group) const
@@ -472,16 +490,18 @@ bool GroupCombatTrigger::UpdateCombatCache(Group* group) const
     if (!group)
         return false;
 
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
     bool inCombat = false;
-    for (GroupReference const& itr : group->GetMembers())
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = itr.GetSource())
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
+        if (member && member->IsInCombat())
         {
-            if (member->IsInCombat())
-            {
-                inCombat = true;
-                break;
-            }
+            inCombat = true;
+            break;
         }
     }
 
@@ -513,8 +533,8 @@ float GroupCombatTrigger::CalculateTargetPriority(Group* group, Unit* target) co
     uint32 attackerCount = CountMembersOnTarget(group, target);
     priority += attackerCount * 10.0f;
 
-    // Leader's target gets bonus priority
-    if (Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID()))
+    // FIXED: Use GroupMemberResolver for leader lookup
+    if (Player* leader = GroupMemberResolver::ResolveMember(group->GetLeaderGUID()))
     {
         if (leader->GetVictim() == target)
             priority += 20.0f;
@@ -537,13 +557,15 @@ uint32 GroupCombatTrigger::CountMembersOnTarget(Group* group, Unit* target) cons
 
     uint32 count = 0;
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = itr.GetSource())
-        {
-            if (member->IsInCombat() && member->GetVictim() == target)
-                ++count;
-        }
+        Player* member = sGroupMemberDiagnostics->IsEnabled()
+            ? sGroupMemberDiagnostics->DiagnosticLookup(slot.guid, __FUNCTION__, __FILE__, __LINE__)
+            : GroupMemberResolver::ResolveMember(slot.guid);
+            
+        if (member && member->IsInCombat() && member->GetVictim() == target)
+            ++count;
     }
 
     return count;

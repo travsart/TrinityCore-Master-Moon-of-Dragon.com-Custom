@@ -22,6 +22,8 @@
 #include "ObjectAccessor.h"
 #include "Session/BotSession.h"
 #include "Spatial/SpatialGridQueryHelpers.h"
+#include "../Group/GroupMemberResolver.h"
+#include "../Core/Diagnostics/GroupMemberDiagnostics.h"
 #include <algorithm>
 #include <random>
 #include "GameTime.h"
@@ -321,9 +323,10 @@ bool LootDistribution::ShouldPlayerGreedItem(const LootItem& item)
     uint32 offSpecUserCount = 0;
     bool botCanMainSpec = IsItemForMainSpec(item);
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = itr.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member || member == _bot)
             continue;
 
@@ -718,9 +721,10 @@ LootMetrics LootDistribution::GetGroupLootMetrics(uint32 groupId)
     float totalSatisfaction = 0.0f;
     float totalAccuracy = 0.0f;
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& memberSlot : group->GetMemberSlots())
     {
-        Player* member = itr.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(memberSlot.guid);
         if (!member)
             continue;
 
@@ -759,9 +763,10 @@ LootMetrics LootDistribution::GetGroupLootMetrics(uint32 groupId)
             float totalRollTime = 0.0f;
             uint32 rollCount = 0;
 
-            for (GroupReference const& itr : group->GetMembers())
+            // FIXED: Use GroupMemberResolver instead of GetMembers()
+            for (auto const& memberSlot : group->GetMemberSlots())
             {
-                Player* member = itr.GetSource();
+                Player* member = GroupMemberResolver::ResolveMember(memberSlot.guid);
                 if (!member)
                     continue;
 
@@ -900,9 +905,10 @@ bool LootDistribution::ShouldInitiateRoll(Group* group, const LootItem& item)
 
     // Check if there are at least 2 group members (potential interest)
     uint32 groupMembers = 0;
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& memberSlot : group->GetMemberSlots())
     {
-        if (itr.GetSource())
+        if (GroupMemberResolver::ResolveMember(memberSlot.guid))
             groupMembers++;
     }
 
@@ -999,9 +1005,10 @@ void LootDistribution::HandleAutoLoot(Group* group, const LootItem& item)
     else
     {
         // Fallback to first group member
-        for (GroupReference const& itr : group->GetMembers())
+        // FIXED: Use GroupMemberResolver instead of GetMembers()
+        for (auto const& memberSlot : group->GetMemberSlots())
         {
-            Player* member = itr.GetSource();
+            Player* member = GroupMemberResolver::ResolveMember(memberSlot.guid);
             if (member)
             {
                 recipient = member;
@@ -1105,9 +1112,10 @@ void LootDistribution::ConsiderGroupComposition(Group* group, const LootItem& it
     uint32 sameSpecCount = 0;
     uint32 totalEligiblePlayers = 0;
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& memberSlot : group->GetMemberSlots())
     {
-        Player* member = itr.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(memberSlot.guid);
         if (!member || member == _bot)
             continue;
 
@@ -2333,9 +2341,11 @@ void LootDistribution::SetMasterLooter(Group* group, Player* masterLooter)
     {
         // Check if they're an assistant
         bool isAssistant = false;
-        for (GroupReference const& itr : group->GetMembers())
+        // FIXED: Use GroupMemberResolver instead of GetMembers()
+        for (auto const& memberSlot : group->GetMemberSlots())
         {
-            if (itr.GetSource() == masterLooter)
+            Player* member = GroupMemberResolver::ResolveMember(memberSlot.guid);
+            if (member == masterLooter)
             {
                 isAssistant = group->IsAssistant(masterLooter->GetGUID());
                 break;
@@ -2499,9 +2509,10 @@ void LootDistribution::PredictLootNeeds(Group* group)
     // Analyze group composition and predict what loot each member might need
     TC_LOG_DEBUG("playerbot.loot", "Analyzing loot needs for group {}", group->GetGUID().GetCounter());
 
-    for (GroupReference const& itr : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& memberSlot : group->GetMemberSlots())
     {
-        Player* member = itr.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(memberSlot.guid);
         if (!member)
             continue;
 

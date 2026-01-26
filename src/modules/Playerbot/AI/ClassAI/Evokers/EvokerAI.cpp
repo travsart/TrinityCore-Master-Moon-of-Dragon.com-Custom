@@ -8,6 +8,9 @@
  */
 
 #include "EvokerAI.h"
+#include "DevastationEvoker.h"
+#include "PreservationEvoker.h"
+#include "AugmentationEvoker.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
 #include "Spell.h"
@@ -33,6 +36,9 @@
 
 namespace Playerbot
 {
+
+// Destructor must be defined in cpp file where specialization types are complete
+EvokerAI::~EvokerAI() = default;
 
 EvokerAI::EvokerAI(Player* bot) : ClassAI(bot)
 {
@@ -1216,7 +1222,7 @@ uint32 EvokerCalculator::CalculateAzureStrikeDamage(Player* caster, ::Unit* targ
     if (!caster || !target)
         return 0;
 
-    constexpr uint32 AZURE_STRIKE_SPELL_ID = 362969;
+    constexpr uint32 AZURE_STRIKE_SPELL_ID = EvokerAI::AZURE_STRIKE;
     constexpr float DEFAULT_COEFFICIENT = 0.35f;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(AZURE_STRIKE_SPELL_ID, caster->GetMap()->GetDifficultyID());
@@ -1267,7 +1273,7 @@ uint32 EvokerCalculator::CalculateLivingFlameDamage(Player* caster, ::Unit* targ
     if (!caster || !target)
         return 0;
 
-    constexpr uint32 LIVING_FLAME_SPELL_ID = 361469;
+    constexpr uint32 LIVING_FLAME_SPELL_ID = EvokerAI::LIVING_FLAME;
     constexpr float SPELL_POWER_COEFFICIENT = 0.60f;
     constexpr float ATTACK_POWER_COEFFICIENT = 0.30f;
 
@@ -1364,7 +1370,7 @@ uint32 EvokerCalculator::CalculateEmeraldBlossomHealing(Player* caster)
     if (!caster)
         return 0;
 
-    constexpr uint32 EMERALD_BLOSSOM_SPELL_ID = 355913;
+    constexpr uint32 EMERALD_BLOSSOM_SPELL_ID = EvokerAI::EMERALD_BLOSSOM;
     constexpr float DEFAULT_COEFFICIENT = 1.15f;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(EMERALD_BLOSSOM_SPELL_ID, caster->GetMap()->GetDifficultyID());
@@ -1423,7 +1429,7 @@ uint32 EvokerCalculator::CalculateVerdantEmbraceHealing(Player* caster, ::Unit* 
     if (!caster)
         return 0;
 
-    constexpr uint32 VERDANT_EMBRACE_SPELL_ID = 360995;
+    constexpr uint32 VERDANT_EMBRACE_SPELL_ID = EvokerAI::VERDANT_EMBRACE;
     constexpr float DEFAULT_COEFFICIENT = 2.85f;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(VERDANT_EMBRACE_SPELL_ID, caster->GetMap()->GetDifficultyID());
@@ -1487,7 +1493,7 @@ uint32 EvokerCalculator::CalculateEchoHealing(Player* caster, ::Unit* target)
     if (!caster)
         return 0;
 
-    constexpr uint32 ECHO_SPELL_ID = 364343;
+    constexpr uint32 ECHO_SPELL_ID = EvokerAI::ECHO;
     constexpr float ECHO_BASE_COEFFICIENT = 0.30f;  // Echo duplicates 30% of original heal
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ECHO_SPELL_ID, caster->GetMap()->GetDifficultyID());
@@ -2278,7 +2284,7 @@ bool EchoController::ShouldCreateEcho(::Unit* target) const
     if (!caster)
         return nullptr;
 
-    constexpr uint32 ECHO_SPELL_ID = 364343;
+    constexpr uint32 ECHO_SPELL_ID = EvokerAI::ECHO;
 
     ::Unit* bestTarget = nullptr;
     uint32 bestScore = 0;

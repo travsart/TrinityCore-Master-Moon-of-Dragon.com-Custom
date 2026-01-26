@@ -38,6 +38,8 @@
 #include <unordered_map>
 #include <boost/asio/io_context.hpp>
 #include "Chat/Chat.h"
+#include "../Group/GroupMemberResolver.h"
+#include "../Core/Diagnostics/GroupMemberDiagnostics.h"
 #include "Database/QueryHolder.h"
 #include "Group/GroupInvitationHandler.h"
 #include "PartyPackets.h"
@@ -925,9 +927,10 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                     bool thisIsFirstBot = true; // Used when all members are bots
                     uint32 membersFound = 0;
 
-                    for (GroupReference const& ref : group->GetMembers())
+                    // FIXED: Use GroupMemberResolver instead of GetMembers()
+                    for (auto const& slot : group->GetMemberSlots())
                     {
-                        Player* member = ref.GetSource();
+                        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
                         if (!member || member == bot)
                             continue;
 

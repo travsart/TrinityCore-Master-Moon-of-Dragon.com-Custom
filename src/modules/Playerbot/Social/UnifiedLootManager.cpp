@@ -15,6 +15,8 @@
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"  // For sObjectMgr
 #include "Random.h"
+#include "../Group/GroupMemberResolver.h"
+#include "../Core/Diagnostics/GroupMemberDiagnostics.h"
 #include <algorithm>
 #include <sstream>
 #include <cmath>
@@ -646,9 +648,10 @@ void UnifiedLootManager::CoordinationModule::PrioritizeLootDistribution(Group* g
         float totalUpgrade = 0.0f;
         uint32 memberCount = 0;
 
-        for (GroupReference const& ref : group->GetMembers())
+        // FIXED: Use GroupMemberResolver instead of GetMembers()
+        for (auto const& slot : group->GetMemberSlots())
         {
-            Player* member = ref.GetSource();
+            Player* member = GroupMemberResolver::ResolveMember(slot.guid);
             if (!member)
                 continue;
 
@@ -760,9 +763,10 @@ void UnifiedLootManager::CoordinationModule::FacilitateGroupLootDiscussion(Group
     uint32 greedCount = 0;
     uint32 passCount = 0;
 
-    for (GroupReference const& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member)
             continue;
 
@@ -829,9 +833,10 @@ void UnifiedLootManager::CoordinationModule::HandleLootConflictResolution(Group*
 
     std::vector<ConflictCandidate> candidates;
 
-    for (GroupReference const& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member)
             continue;
 
@@ -931,9 +936,10 @@ void UnifiedLootManager::CoordinationModule::BroadcastLootRecommendations(Group*
 
     std::vector<Recommendation> recommendations;
 
-    for (GroupReference const& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member)
             continue;
 
@@ -1008,9 +1014,10 @@ void UnifiedLootManager::CoordinationModule::OptimizeLootEfficiency(Group* group
     uint32 humanMembers = 0;
     uint32 membersWithAutoLoot = 0;
 
-    for (GroupReference const& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member)
             continue;
 
@@ -1169,10 +1176,11 @@ void UnifiedLootManager::CoordinationModule::MaximizeLootFairness(Group* group, 
         fairness.sessionStartTime = session.sessionStartTime;
         fairness.isActive = true;
 
-        // Initialize tracking for all group members
-        for (GroupReference const& itr : group->GetMembers())
+        // FIXED: Use GroupMemberResolver instead of GetMembers()
+        for (auto const& slot : group->GetMemberSlots())
         {
-            if (Player* member = itr.GetSource())
+            Player* member = GroupMemberResolver::ResolveMember(slot.guid);
+            if (member)
             {
                 fairness.itemsWonThisSession[member->GetGUID()] = 0;
                 fairness.totalUpgradeValueReceived[member->GetGUID()] = 0.0f;
@@ -1430,9 +1438,10 @@ void UnifiedLootManager::DistributionModule::HandleMasterLoot(Group* group, Loot
     // Evaluate all bots in the group
     std::vector<BotRollEvaluation> evaluations;
 
-    for (GroupReference const& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member || !GetBotAI(member))
             continue; // Skip non-bots and human players
 
@@ -1505,9 +1514,10 @@ void UnifiedLootManager::DistributionModule::HandleGroupLoot(Group* group, LootI
     // Collect rolls from all bots in the group
     std::vector<BotRollEvaluation> evaluations;
 
-    for (GroupReference const& ref : group->GetMembers())
+    // FIXED: Use GroupMemberResolver instead of GetMembers()
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member || !GetBotAI(member))
             continue; // Skip non-bots and human players
 

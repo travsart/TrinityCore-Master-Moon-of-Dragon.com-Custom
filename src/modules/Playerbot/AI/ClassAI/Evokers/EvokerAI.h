@@ -22,6 +22,23 @@
 namespace Playerbot
 {
 
+// Namespace aliases for Evoker spells from central registry (WoW 11.2)
+namespace EvokerSpells = WoW112Spells::Evoker;
+namespace EvokerDevastation = WoW112Spells::Evoker::Devastation;
+namespace EvokerPreservation = WoW112Spells::Evoker::Preservation;
+namespace EvokerAugmentation = WoW112Spells::Evoker::Augmentation;
+namespace EvokerCommon = WoW112Spells::Evoker::Common;
+
+// Forward declarations for specialization classes (QW-4 FIX)
+class DevastationEvokerRefactored;
+class PreservationEvokerRefactored;
+class AugmentationEvokerRefactored;
+
+// Type aliases for consistency with base naming
+using DevastationEvoker = DevastationEvokerRefactored;
+using PreservationEvoker = PreservationEvokerRefactored;
+using AugmentationEvoker = AugmentationEvokerRefactored;
+
 // Evoker specializations
 enum class EvokerSpec : uint8
 {
@@ -115,7 +132,7 @@ class TC_GAME_API EvokerAI : public ClassAI
 {
 public:
     explicit EvokerAI(Player* bot);
-    ~EvokerAI() = default;
+    ~EvokerAI();
 
     // Evoker Spell IDs - Using central registry (WoW 11.2)
     enum EvokerSpells
@@ -168,8 +185,11 @@ public:
         DEEP_BREATH_MOVEMENT = WoW112Spells::Evoker::Common::DEEP_BREATH,
         SOAR_MOVEMENT = WoW112Spells::Evoker::SOAR,
 
-        // Additional constants
-        ECHO = 364343, // Evoker-specific echo mechanic
+        // Additional constants - Using central registry where available
+        ECHO = EvokerPreservation::ECHO, // Preservation echo mechanic (364343)
+
+        // Aspect spells (not in central registry - Evoker-specific visual forms)
+        // These are cosmetic/form spells without combat impact, kept as constants
         BRONZE_ASPECT = 364344,
         AZURE_ASPECT = 364345,
         GREEN_ASPECT = 364346,
@@ -200,6 +220,18 @@ protected:
     EvokerSpec DetectSpecialization();
 
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<DevastationEvoker> _devastationSpec;
+    ::std::unique_ptr<PreservationEvoker> _preservationSpec;
+    ::std::unique_ptr<AugmentationEvoker> _augmentationSpec;
+
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
+
     // Evoker-specific data
     EvokerAspect _currentAspect;
     uint32 _damageDealt;

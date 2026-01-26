@@ -170,10 +170,10 @@ private:
 };
 
 // ============================================================================
-// ECHO SYSTEM
+// ECHO SYSTEM (Preservation-specific, named PresEcho to avoid conflict with EvokerAI::Echo)
 // ============================================================================
 
-struct Echo
+struct PresEcho
 {
     ObjectGuid targetGuid;
     uint32 remainingHeals;
@@ -181,9 +181,9 @@ struct Echo
     uint32 lastHealTime;
     uint32 healInterval;
 
-    Echo() : remainingHeals(0), healAmount(0), lastHealTime(0), healInterval(2000) {}
+    PresEcho() : remainingHeals(0), healAmount(0), lastHealTime(0), healInterval(2000) {}
 
-    Echo(ObjectGuid guid, uint32 heals, uint32 amount)
+    PresEcho(ObjectGuid guid, uint32 heals, uint32 amount)
         : targetGuid(guid), remainingHeals(heals), healAmount(amount), lastHealTime(GameTime::GetGameTimeMS()), healInterval(2000) {}
 
     bool ShouldHeal() const
@@ -227,7 +227,7 @@ public:
     {
         _echoes.erase(
             ::std::remove_if(_echoes.begin(), _echoes.end(),
-                [targetGuid](const Echo& echo) { return echo.targetGuid == targetGuid; }),
+                [targetGuid](const PresEcho& echo) { return echo.targetGuid == targetGuid; }),
             _echoes.end()
         );
     }
@@ -253,7 +253,7 @@ public:
         // Remove expired echoes
         _echoes.erase(
             ::std::remove_if(_echoes.begin(), _echoes.end(),
-                [](const Echo& echo) { return echo.IsExpired(); }),
+                [](const PresEcho& echo) { return echo.IsExpired(); }),
             _echoes.end()
         );
     }
@@ -263,11 +263,11 @@ public:
     [[nodiscard]] bool HasEcho(ObjectGuid targetGuid) const
     {
         return ::std::any_of(_echoes.begin(), _echoes.end(),
-            [targetGuid](const Echo& echo) { return echo.targetGuid == targetGuid; });
+            [targetGuid](const PresEcho& echo) { return echo.targetGuid == targetGuid; });
     }
 
 private:
-    ::std::vector<Echo> _echoes;
+    ::std::vector<PresEcho> _echoes;
     uint32 _maxEchoes;
 };
 

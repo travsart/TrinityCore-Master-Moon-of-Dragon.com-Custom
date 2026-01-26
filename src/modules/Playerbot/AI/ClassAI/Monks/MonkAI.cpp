@@ -8,6 +8,9 @@
  */
 
 #include "MonkAI.h"
+#include "BrewmasterMonk.h"
+#include "MistweaverMonk.h"
+#include "WindwalkerMonk.h"
 #include "GameTime.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -24,6 +27,9 @@
 
 namespace Playerbot
 {
+
+// Destructor must be defined in cpp file where specialization types are complete
+MonkAI::~MonkAI() = default;
 
 MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER)
 {
@@ -280,26 +286,8 @@ void MonkAI::UpdateBuffs()
     if (!bot)
         return;
 
-    // Apply Legacy of the White Tiger / Legacy of the Emperor (raid-wide stat buff)
-    uint32 legacyBuff = 0;
-    if (bot->HasSpell(LEGACY_OF_THE_WHITE_TIGER))
-        legacyBuff = LEGACY_OF_THE_WHITE_TIGER;
-    else if (bot->HasSpell(LEGACY_OF_THE_EMPEROR))
-        legacyBuff = LEGACY_OF_THE_EMPEROR;
-
-    if (legacyBuff != 0 && !bot->HasAura(legacyBuff))
-    {
-        uint32 now = GameTime::GetGameTimeMS();
-        if (now - _lastLegacyBuff > 300000) // 5 minute buff duration, recast check
-        {
-            if (CastSpell(legacyBuff, bot))
-            {
-                _lastLegacyBuff = now;
-                RecordAbilityUsage(legacyBuff);
-                TC_LOG_DEBUG("module.playerbot.monk", "Monk {} applied Legacy buff", bot->GetName());
-            }
-        }
-    }
+    // Note: Legacy of the White Tiger / Legacy of the Emperor were removed in modern WoW
+    // These raid-wide stat buffs are no longer available in WoW 11.2
 
     // Specialization-specific buff management
     ChrSpecialization spec = bot->GetPrimarySpecialization();
@@ -308,16 +296,16 @@ void MonkAI::UpdateBuffs()
     {
         case 268: // Brewmaster
         {
-            // Maintain Ironskin Brew uptime when tanking
-    if (!bot->HasAura(IRONSKIN_BREW) && bot->IsInCombat())
+            // Maintain Celestial Brew uptime when tanking (replaced Ironskin Brew in WoW 11.2)
+    if (!bot->HasAura(CELESTIAL_BREW) && bot->IsInCombat())
             {
-                if (bot->HasSpell(IRONSKIN_BREW) && HasEnoughResource(IRONSKIN_BREW))
+                if (bot->HasSpell(CELESTIAL_BREW) && HasEnoughResource(CELESTIAL_BREW))
                 {
-                    if (CastSpell(IRONSKIN_BREW, bot))
+                    if (CastSpell(CELESTIAL_BREW, bot))
                     {
-                        ConsumeResource(IRONSKIN_BREW);
-                        RecordAbilityUsage(IRONSKIN_BREW);
-                        TC_LOG_DEBUG("module.playerbot.monk", "Brewmaster {} activated Ironskin Brew", bot->GetName());
+                        ConsumeResource(CELESTIAL_BREW);
+                        RecordAbilityUsage(CELESTIAL_BREW);
+                        TC_LOG_DEBUG("module.playerbot.monk", "Brewmaster {} activated Celestial Brew", bot->GetName());
                     }
                 }
             }
@@ -578,7 +566,7 @@ bool MonkAI::HasEnoughResource(uint32 spellId)
     switch (spellId)
     {
         // Chi generators (Energy cost)
-        case TIGER_PALM:  // Note: JAB = 100780 (same as TIGER_PALM, removed duplicate)
+        case TIGER_PALM:
             return GetBot()->GetPower(POWER_ENERGY) >= 50;
         case EXPEL_HARM:
             return GetBot()->GetPower(POWER_ENERGY) >= 15;
@@ -604,7 +592,7 @@ bool MonkAI::HasEnoughResource(uint32 spellId)
             return GetBot()->GetPower(POWER_ENERGY) >= 40;
         case BREATH_OF_FIRE:
             return _chiManager.current.load() >= 1;
-        case IRONSKIN_BREW:
+        case CELESTIAL_BREW:
             return true; // Brew charges handled separately
         case PURIFYING_BREW:
             return true; // Brew charges handled separately
@@ -694,7 +682,6 @@ void MonkAI::ConsumeResource(uint32 spellId)
             }
             break;
 
-        // REMOVED: Duplicate TIGER_PALM case (JAB=100780 same as TIGER_PALM)
 
         // Chi spenders
         case BLACKOUT_KICK:
@@ -1191,14 +1178,14 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
         }
     }
 
-    // Maintain Ironskin Brew
-    if (CanUseAbility(IRONSKIN_BREW))
+    // Maintain Celestial Brew (replaced Ironskin Brew in WoW 11.2)
+    if (CanUseAbility(CELESTIAL_BREW))
     {
-        if (!GetBot()->HasAura(IRONSKIN_BREW))
+        if (!GetBot()->HasAura(CELESTIAL_BREW))
         {
-            if (CastSpell(IRONSKIN_BREW))
+            if (CastSpell(CELESTIAL_BREW))
             {
-                RecordAbilityUsage(IRONSKIN_BREW);
+                RecordAbilityUsage(CELESTIAL_BREW);
                 return;
             }
         }

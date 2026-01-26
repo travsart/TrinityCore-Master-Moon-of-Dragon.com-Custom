@@ -26,6 +26,16 @@
 namespace Playerbot
 {
 
+// Forward declarations for specialization classes (QW-4 FIX)
+class AssassinationRogueRefactored;
+class OutlawRogueRefactored;
+class SubtletyRogueRefactored;
+
+// Type aliases for consistency with base naming
+using AssassinationRogue = AssassinationRogueRefactored;
+using OutlawRogue = OutlawRogueRefactored;
+using SubtletyRogue = SubtletyRogueRefactored;
+
 // Forward declarations
 struct RogueMetrics;
 class RogueCombatMetrics;
@@ -95,6 +105,18 @@ public:
 
     // Specialization Management
 private:
+    // ========================================================================
+    // QW-4 FIX: Per-instance specialization objects
+    // Each bot has its own specialization object initialized with correct bot pointer
+    // ========================================================================
+
+    ::std::unique_ptr<AssassinationRogue> _assassinationSpec;
+    ::std::unique_ptr<OutlawRogue> _outlawSpec;
+    ::std::unique_ptr<SubtletyRogue> _subtletySpec;
+
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
+
     // Initialization
     void InitializeCombatSystems();
     // Combat execution
@@ -150,29 +172,35 @@ private:
 
 public:
     // Rogue Spell IDs - Using central registry (WoW 11.2)
+    // See WoW112Spells::Rogue namespace in SpellValidation_WoW112_Part2.h
     enum RogueSpells
     {
-        // Combo Point Builders
+        // ====================================================================
+        // Combo Point Builders - All specs use central registry
+        // ====================================================================
         SINISTER_STRIKE = WoW112Spells::Rogue::Common::SINISTER_STRIKE,
         BACKSTAB = WoW112Spells::Rogue::Common::BACKSTAB,
         MUTILATE = WoW112Spells::Rogue::Common::MUTILATE,
-        HEMORRHAGE = 16511, // Removed in modern WoW
         SHIV = WoW112Spells::Rogue::Common::SHIV,
         AMBUSH = WoW112Spells::Rogue::Common::AMBUSH,
         GARROTE = WoW112Spells::Rogue::Common::GARROTE,
         CHEAP_SHOT = WoW112Spells::Rogue::Common::CHEAP_SHOT,
+        SHADOWSTRIKE = WoW112Spells::Rogue::Common::SHADOWSTRIKE,
 
-        // Combo Point Finishers
+        // ====================================================================
+        // Combo Point Finishers - Using central registry
+        // ====================================================================
         SLICE_AND_DICE = WoW112Spells::Rogue::Common::SLICE_AND_DICE,
         RUPTURE = WoW112Spells::Rogue::Common::RUPTURE,
         EVISCERATE = WoW112Spells::Rogue::Common::EVISCERATE,
         KIDNEY_SHOT = WoW112Spells::Rogue::Common::KIDNEY_SHOT,
-        EXPOSE_ARMOR = 8647, // Removed in modern WoW
         ENVENOM = WoW112Spells::Rogue::Common::ENVENOM,
         CRIMSON_TEMPEST = WoW112Spells::Rogue::Common::CRIMSON_TEMPEST,
-        DEADLY_THROW = 26679, // Removed in modern WoW
+        BETWEEN_THE_EYES = WoW112Spells::Rogue::Common::BETWEEN_THE_EYES,
 
-        // Cooldowns
+        // ====================================================================
+        // Cooldowns - Using central registry
+        // ====================================================================
         BLADE_FLURRY = WoW112Spells::Rogue::Common::BLADE_FLURRY,
         ADRENALINE_RUSH = WoW112Spells::Rogue::Common::ADRENALINE_RUSH,
         KILLING_SPREE = WoW112Spells::Rogue::Common::KILLING_SPREE,
@@ -181,10 +209,13 @@ public:
         COLD_BLOOD = WoW112Spells::Rogue::Common::COLD_BLOOD,
         SHADOW_DANCE = WoW112Spells::Rogue::Common::SHADOW_DANCE,
         SHADOWSTEP = WoW112Spells::Rogue::Common::SHADOWSTEP,
+        SYMBOLS_OF_DEATH = WoW112Spells::Rogue::Common::SYMBOLS_OF_DEATH,
+        MARKED_FOR_DEATH = WoW112Spells::Rogue::Common::MARKED_FOR_DEATH,
 
-        // Utility
+        // ====================================================================
+        // Utility - Using central registry
+        // ====================================================================
         KICK = WoW112Spells::Rogue::Common::KICK,
-        GOUGE = 1776, // Removed in modern WoW
         BLIND = WoW112Spells::Rogue::Common::BLIND,
         SAP = WoW112Spells::Rogue::Common::SAP,
         VANISH = WoW112Spells::Rogue::Common::VANISH,
@@ -193,28 +224,43 @@ public:
         CLOAK_OF_SHADOWS = WoW112Spells::Rogue::Common::CLOAK_OF_SHADOWS,
         EVASION = WoW112Spells::Rogue::Common::EVASION,
         FEINT = WoW112Spells::Rogue::Common::FEINT,
+        TRICKS_OF_THE_TRADE = WoW112Spells::Rogue::Common::TRICKS_OF_THE_TRADE,
 
-        // Poisons
+        // ====================================================================
+        // Poisons - Using central registry
+        // ====================================================================
         DEADLY_POISON = WoW112Spells::Rogue::Common::DEADLY_POISON,
         INSTANT_POISON = WoW112Spells::Rogue::Common::INSTANT_POISON,
         WOUND_POISON = WoW112Spells::Rogue::Common::WOUND_POISON,
-        MIND_NUMBING_POISON = 5761, // Renamed to NUMBING_POISON in modern WoW
+        NUMBING_POISON = WoW112Spells::Rogue::NUMBING_POISON,
         CRIPPLING_POISON = WoW112Spells::Rogue::Common::CRIPPLING_POISON,
 
-        // AoE
+        // ====================================================================
+        // AoE - Using central registry
+        // ====================================================================
         FAN_OF_KNIVES = WoW112Spells::Rogue::Common::FAN_OF_KNIVES,
-        POISON_BOMB = 255544, // Talent proc, not in Common
 
-        // Assassination
+        // ====================================================================
+        // Assassination Spec - Using central registry
+        // ====================================================================
         DEATHMARK = WoW112Spells::Rogue::Assassination::DEATHMARK,
         POISONED_KNIFE = WoW112Spells::Rogue::Assassination::POISONED_KNIFE,
 
-        // Subtlety
-        SYMBOLS_OF_DEATH = WoW112Spells::Rogue::Common::SYMBOLS_OF_DEATH,
-
-        // Talents
-        VIGOR = 14983, // Passive talent
+        // ====================================================================
+        // Talents - Using central registry where available
+        // ====================================================================
+        VIGOR = 14983, // Passive talent for energy pool (still used in 11.2)
         DEEPER_STRATAGEM = WoW112Spells::Rogue::Subtlety::DEEPER_STRATAGEM
+
+        // ====================================================================
+        // REMOVED SPELLS (Not in WoW 11.2):
+        // - HEMORRHAGE (16511) - Removed from game
+        // - EXPOSE_ARMOR (8647) - Removed from game
+        // - DEADLY_THROW (26679) - Removed from game
+        // - GOUGE (1776) - Removed from game
+        // - MIND_NUMBING_POISON - Renamed to NUMBING_POISON
+        // - POISON_BOMB (255544) - Internal proc, not used directly
+        // ====================================================================
     };
 };
 
