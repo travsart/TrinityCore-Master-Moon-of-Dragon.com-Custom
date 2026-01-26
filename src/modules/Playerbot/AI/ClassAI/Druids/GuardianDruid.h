@@ -31,6 +31,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
+// Central Spell Registry - See WoW112Spells::Druid namespace
+#include "../SpellValidation_WoW112.h"
+
 namespace Playerbot
 {
 
@@ -47,24 +50,25 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Guardian Druid Spell IDs
-constexpr uint32 GUARDIAN_MANGLE = 33917;
-constexpr uint32 GUARDIAN_THRASH = 77758;
-constexpr uint32 GUARDIAN_SWIPE = 213771;
-constexpr uint32 GUARDIAN_MAUL = 6807;
-constexpr uint32 GUARDIAN_IRONFUR = 192081;
-constexpr uint32 GUARDIAN_FRENZIED_REGENERATION = 22842;
-constexpr uint32 GUARDIAN_BARKSKIN = 22812;
-constexpr uint32 GUARDIAN_SURVIVAL_INSTINCTS = 61336;
-constexpr uint32 GUARDIAN_PULVERIZE = 80313; // Talent
-constexpr uint32 GUARDIAN_INCARNATION_BEAR = 102558; // Incarnation: Guardian of Ursoc
-constexpr uint32 GUARDIAN_BERSERK = 50334;
-constexpr uint32 GUARDIAN_MOONFIRE = 8921;
-constexpr uint32 GUARDIAN_RAGE_OF_SLEEPER = 200851; // Talent
-constexpr uint32 GUARDIAN_BEAR_FORM = 5487;
-constexpr uint32 GUARDIAN_BRISTLING_FUR = 155835; // Talent
-constexpr uint32 GUARDIAN_RENEWAL = 108238;
-constexpr uint32 GUARDIAN_REGROWTH = 8936;
-constexpr uint32 GUARDIAN_GROWL = 6795; // Taunt
+// See central registry: WoW112Spells::Druid and WoW112Spells::Druid::Guardian
+constexpr uint32 GUARDIAN_MANGLE = 33917;              // -> WoW112Spells::Druid::Guardian::MANGLE
+constexpr uint32 GUARDIAN_THRASH = 77758;              // -> WoW112Spells::Druid::Guardian::THRASH_BEAR
+constexpr uint32 GUARDIAN_SWIPE = 213771;              // -> WoW112Spells::Druid::Guardian::SWIPE_BEAR
+constexpr uint32 GUARDIAN_MAUL = 6807;                 // -> WoW112Spells::Druid::Guardian::MAUL
+constexpr uint32 GUARDIAN_IRONFUR = 192081;            // -> WoW112Spells::Druid::Guardian::IRONFUR
+constexpr uint32 GUARDIAN_FRENZIED_REGENERATION = 22842; // -> WoW112Spells::Druid::Guardian::FRENZIED_REGENERATION
+constexpr uint32 GUARDIAN_BARKSKIN = 22812;            // -> WoW112Spells::Druid::BARKSKIN
+constexpr uint32 GUARDIAN_SURVIVAL_INSTINCTS = 61336;  // -> WoW112Spells::Druid::Guardian::SURVIVAL_INSTINCTS
+constexpr uint32 GUARDIAN_PULVERIZE = 80313;           // -> WoW112Spells::Druid::Guardian::PULVERIZE
+constexpr uint32 GUARDIAN_INCARNATION_BEAR = 102558;   // -> WoW112Spells::Druid::Guardian::INCARNATION_GUARDIAN
+constexpr uint32 GUARDIAN_BERSERK = 50334;             // -> WoW112Spells::Druid::Guardian::BERSERK_GUARDIAN
+constexpr uint32 GUARDIAN_MOONFIRE = 8921;             // -> WoW112Spells::Druid::Guardian::MOONFIRE_BEAR
+constexpr uint32 GUARDIAN_RAGE_OF_SLEEPER = 200851;    // -> WoW112Spells::Druid::Guardian::RAGE_OF_THE_SLEEPER
+constexpr uint32 GUARDIAN_BEAR_FORM = 5487;            // -> WoW112Spells::Druid::BEAR_FORM
+constexpr uint32 GUARDIAN_BRISTLING_FUR = 155835;      // -> WoW112Spells::Druid::Guardian::BRISTLING_FUR
+constexpr uint32 GUARDIAN_RENEWAL = 108238;            // (talent)
+constexpr uint32 GUARDIAN_REGROWTH = 8936;             // -> WoW112Spells::Druid::REGROWTH
+constexpr uint32 GUARDIAN_GROWL = 6795;                // -> WoW112Spells::Druid::Guardian::GROWL
 
 // Ironfur stacking tracker
 class GuardianIronfurTracker

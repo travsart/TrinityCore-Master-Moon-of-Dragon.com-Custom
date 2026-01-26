@@ -25,6 +25,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
+// Central Spell Registry - See WoW112Spells::Rogue namespace
+#include "../SpellValidation_WoW112.h"
+
 namespace Playerbot
 {
 
@@ -47,6 +50,7 @@ using bot::ai::SpellCategory;
 
 // ============================================================================
 // SUBTLETY ROGUE SPELL IDs (WoW 11.2 - The War Within)
+// See central registry: WoW112Spells::Rogue and WoW112Spells::Rogue::Subtlety
 // ============================================================================
 
 enum SubtletySpells
@@ -55,33 +59,33 @@ enum SubtletySpells
     // Only Subtlety-UNIQUE spells defined here to avoid duplicate definitions
 
     // Combo Point Builders (Unique to Subtlety)
-    SHADOWSTRIKE_SUB         = 185438,  // From stealth/Shadow Dance, 2 CP (unique ID)
-    SHURIKEN_STORM           = 197835,  // 35 Energy, AoE, 1 CP per target
+    SHADOWSTRIKE_SUB         = 185438,  // -> WoW112Spells::Rogue::Subtlety::SHADOWSTRIKE
+    SHURIKEN_STORM           = 197835,  // -> WoW112Spells::Rogue::Subtlety::SHURIKEN_STORM
 
     // Combo Point Spenders (Unique to Subtlety)
-    EVISCERATE_SUB           = 196819,  // Finisher, high damage (unique Subtlety version)
-    BLACK_POWDER             = 319175,  // AoE finisher
-    SECRET_TECHNIQUE         = 280719,  // Finisher, teleport attacks (talent)
+    EVISCERATE_SUB           = 196819,  // -> WoW112Spells::Rogue::Subtlety::EVISCERATE
+    BLACK_POWDER             = 319175,  // -> WoW112Spells::Rogue::Subtlety::BLACK_POWDER
+    SECRET_TECHNIQUE         = 280719,  // -> WoW112Spells::Rogue::Subtlety::SECRET_TECHNIQUE
 
     // Major Cooldowns
-    SHADOW_BLADES            = 121471,  // 3 min CD, all attacks generate CP (talent)
-    SHURIKEN_TORNADO         = 277925,  // 1 min CD, sustained AoE (talent)
+    SHADOW_BLADES            = 121471,  // -> WoW112Spells::Rogue::Subtlety::SHADOW_BLADES
+    SHURIKEN_TORNADO         = 277925,  // -> WoW112Spells::Rogue::Subtlety::SHURIKEN_TORNADO
 
     // Shadow Techniques
-    SHADOW_TECHNIQUES_PROC   = 196911,  // Passive extra CP generation
+    SHADOW_TECHNIQUES_PROC   = 196911,  // -> WoW112Spells::Rogue::Subtlety::SHADOW_TECHNIQUES
 
     // Finisher Buffs
-    SLICE_AND_DICE_SUB       = 315496,  // Attack speed buff (unique ID)
+    SLICE_AND_DICE_SUB       = 315496,  // -> WoW112Spells::Rogue::Outlaw::SLICE_AND_DICE (shared)
 
     // Procs and Buffs
-    DANSE_MACABRE            = 393969,  // Buff from spending CP
-    DEEPER_DAGGERS           = 383405,  // Eviscerate increases next Eviscerate
+    DANSE_MACABRE            = 393969,  // -> WoW112Spells::Rogue::Subtlety::DANSE_MACABRE
+    DEEPER_DAGGERS           = 383405,  // -> WoW112Spells::Rogue::Subtlety::DEEPER_DAGGERS
 
     // Talents
-    DARK_SHADOW              = 245687,  // Shadow Dance CDR
-    DEEPER_STRATAGEM_SUB     = 193531,  // 6 max combo points
-    MARKED_FOR_DEATH_SUB     = 137619,  // Instant 5 CP
-    SHURIKEN_TORNADO_TALENT  = 277925   // AoE sustained damage
+    DARK_SHADOW              = 245687,  // -> WoW112Spells::Rogue::Subtlety::DARK_SHADOW
+    DEEPER_STRATAGEM_SUB     = 193531,  // -> WoW112Spells::Rogue::Subtlety::DEEPER_STRATAGEM
+    MARKED_FOR_DEATH_SUB     = 137619,  // -> WoW112Spells::Rogue::MARKED_FOR_DEATH
+    SHURIKEN_TORNADO_TALENT  = 277925   // -> WoW112Spells::Rogue::Subtlety::SHURIKEN_TORNADO
 };
 
 // ============================================================================

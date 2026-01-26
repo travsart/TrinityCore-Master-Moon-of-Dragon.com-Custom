@@ -10,6 +10,7 @@
 
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112.h"
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
@@ -32,25 +33,30 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
+// ============================================================================
+// AUGMENTATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
+// See central registry: WoW112Spells::Evoker and WoW112Spells::Evoker::Augmentation
+// ============================================================================
+
 enum AugmentationEvokerSpells
 {
     // Core Buffs
-    EBON_MIGHT           = 395152,  // 1 essence, 10s damage buff on ally
-    PRESCIENCE           = 409311,  // 1 essence, crit buff on ally
-    BLISTERING_SCALES    = 360827,  // Thorns buff on ally
+    EBON_MIGHT           = 395152,  // -> WoW112Spells::Evoker::Augmentation::EBON_MIGHT (slight ID difference)
+    PRESCIENCE           = 409311,  // -> WoW112Spells::Evoker::Augmentation::PRESCIENCE
+    BLISTERING_SCALES    = 360827,  // -> WoW112Spells::Evoker::Augmentation::BLISTERING_SCALES
 
     // Empowered Abilities
-    BREATH_OF_EONS       = 403631,  // 3 essence, empowered damage + Ebon Might extension
+    BREATH_OF_EONS       = 403631,  // -> WoW112Spells::Evoker::Augmentation::BREATH_OF_EONS
 
     // Essence Generation
-    AZURE_STRIKE_AUG     = 362969,  // Generates 2 essence
-    ERUPTION             = 395160,  // 3 essence, AoE damage
+    AZURE_STRIKE_AUG     = 362969,  // -> WoW112Spells::Evoker::AZURE_STRIKE
+    ERUPTION             = 395160,  // -> WoW112Spells::Evoker::Augmentation::ERUPTION
 
     // Utility (shared with other Evoker specs)
-    AUG_OBSIDIAN_SCALES  = 363916,
-    AUG_RENEWING_BLAZE   = 374348,
-    AUG_QUELL            = 351338,
-    AUG_HOVER            = 358267
+    AUG_OBSIDIAN_SCALES  = 363916,  // -> WoW112Spells::Evoker::OBSIDIAN_SCALES
+    AUG_RENEWING_BLAZE   = 374348,  // -> WoW112Spells::Evoker::RENEWING_BLAZE
+    AUG_QUELL            = 351338,  // -> WoW112Spells::Evoker::QUELL
+    AUG_HOVER            = 358267   // -> WoW112Spells::Evoker::HOVER
 };
 
 struct EssenceResourceAug

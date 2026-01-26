@@ -30,6 +30,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
+// Central Spell Registry - See WoW112Spells::Rogue namespace
+#include "../SpellValidation_WoW112.h"
+
 namespace Playerbot
 {
 
@@ -53,15 +56,16 @@ class AssassinationRogueRefactored : public MeleeDpsSpecialization<ComboPointsAs
 {
 public:
     // Assassination Rogue Spell IDs
-    static constexpr uint32 GARROTE = 703;
-    static constexpr uint32 RUPTURE = 1943;
-    static constexpr uint32 ENVENOM = 32645;
-    static constexpr uint32 VENDETTA = 79140;
-    static constexpr uint32 MUTILATE = 1329;
-    static constexpr uint32 FAN_OF_KNIVES = 51723;
-    static constexpr uint32 CRIMSON_TEMPEST = 121411;
-    static constexpr uint32 EXSANGUINATE = 200806;
-    static constexpr uint32 KINGSBANE = 192759;
+    // See central registry: WoW112Spells::Rogue and WoW112Spells::Rogue::Assassination
+    static constexpr uint32 GARROTE = 703;             // -> WoW112Spells::Rogue::Assassination::GARROTE
+    static constexpr uint32 RUPTURE = 1943;            // -> WoW112Spells::Rogue::Assassination::RUPTURE
+    static constexpr uint32 ENVENOM = 32645;           // -> WoW112Spells::Rogue::Assassination::ENVENOM
+    static constexpr uint32 VENDETTA = 79140;          // -> WoW112Spells::Rogue::Assassination::VENDETTA
+    static constexpr uint32 MUTILATE = 1329;           // -> WoW112Spells::Rogue::Assassination::MUTILATE
+    static constexpr uint32 FAN_OF_KNIVES = 51723;     // -> WoW112Spells::Rogue::FAN_OF_KNIVES
+    static constexpr uint32 CRIMSON_TEMPEST = 121411;  // -> WoW112Spells::Rogue::Assassination::CRIMSON_TEMPEST
+    static constexpr uint32 EXSANGUINATE = 200806;     // -> WoW112Spells::Rogue::Assassination::EXSANGUINATE
+    static constexpr uint32 KINGSBANE = 192759;        // -> WoW112Spells::Rogue::Assassination::KINGSBANE (ID may differ)
 
 
 public:

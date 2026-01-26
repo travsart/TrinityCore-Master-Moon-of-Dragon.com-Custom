@@ -25,6 +25,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
+// Central Spell Registry - See WoW112Spells::Rogue namespace
+#include "../SpellValidation_WoW112.h"
+
 namespace Playerbot
 {
 
@@ -46,33 +49,34 @@ using bot::ai::SpellCategory;
 
 // ============================================================================
 // OUTLAW ROGUE SPELL IDs (WoW 11.2 - The War Within) - UNIQUE ONLY
+// See central registry: WoW112Spells::Rogue and WoW112Spells::Rogue::Outlaw
 // ============================================================================
 
 enum OutlawSpells
 {
     // WoW 11.2 Outlaw-specific spells
-    PISTOL_SHOT              = 185763,  // 40 Energy, ranged, 1 CP
-    BETWEEN_THE_EYES         = 315341,  // Finisher, stun
-    DISPATCH_OUTLAW          = 2098,    // Finisher, high damage
+    PISTOL_SHOT              = 185763,  // -> WoW112Spells::Rogue::Outlaw::PISTOL_SHOT
+    BETWEEN_THE_EYES         = 315341,  // -> WoW112Spells::Rogue::Outlaw::BETWEEN_THE_EYES
+    DISPATCH_OUTLAW          = 2098,    // -> WoW112Spells::Rogue::Outlaw::DISPATCH
 
     // Roll the Bones System (Outlaw unique)
-    ROLL_THE_BONES           = 315508,  // 25 Energy, random buff
-    BUFF_RUTHLESS_PRECISION  = 193357,  // Crit buff
-    BUFF_GRAND_MELEE         = 193358,  // Attack speed buff
-    BUFF_BROADSIDE           = 193356,  // Extra combo point
-    BUFF_TRUE_BEARING        = 193359,  // CDR buff
-    BUFF_SKULL_AND_CROSSBONES = 199603, // Attack power buff
-    BUFF_BURIED_TREASURE     = 199600,  // Energy regen buff
+    ROLL_THE_BONES           = 315508,  // -> WoW112Spells::Rogue::Outlaw::ROLL_THE_BONES
+    BUFF_RUTHLESS_PRECISION  = 193357,  // -> WoW112Spells::Rogue::Outlaw::RUTHLESS_PRECISION
+    BUFF_GRAND_MELEE         = 193358,  // -> WoW112Spells::Rogue::Outlaw::GRAND_MELEE
+    BUFF_BROADSIDE           = 193356,  // -> WoW112Spells::Rogue::Outlaw::BROADSIDE
+    BUFF_TRUE_BEARING        = 193359,  // -> WoW112Spells::Rogue::Outlaw::TRUE_BEARING
+    BUFF_SKULL_AND_CROSSBONES = 199603, // -> WoW112Spells::Rogue::Outlaw::SKULL_AND_CROSSBONES
+    BUFF_BURIED_TREASURE     = 199600,  // -> WoW112Spells::Rogue::Outlaw::BURIED_TREASURE
 
     // Talents (Outlaw specific)
-    BLADE_RUSH               = 271877,  // 45 sec CD, charge + AoE (talent)
-    OPPORTUNITY_PROC         = 195627,  // Free Pistol Shot proc
-    GHOSTLY_STRIKE           = 196937,  // Dodge buff
-    DREADBLADES              = 343142,  // Spender costs CP instead of energy
+    BLADE_RUSH               = 271877,  // -> WoW112Spells::Rogue::Outlaw::BLADE_RUSH
+    OPPORTUNITY_PROC         = 195627,  // -> WoW112Spells::Rogue::Outlaw::OPPORTUNITY_PROC
+    GHOSTLY_STRIKE           = 196937,  // -> WoW112Spells::Rogue::Outlaw::GHOSTLY_STRIKE
+    DREADBLADES              = 343142,  // -> WoW112Spells::Rogue::Outlaw::DREADBLADES
 
-    // Outlaw-specific utility (not in shared RogueSpecialization.h)
-    FEINT_OUTLAW             = 1966,    // Threat reduction
-    MARKED_FOR_DEATH         = 137619   // Instant 5 CP on target
+    // Outlaw-specific utility
+    FEINT_OUTLAW             = 1966,    // -> WoW112Spells::Rogue::FEINT
+    MARKED_FOR_DEATH         = 137619   // -> WoW112Spells::Rogue::MARKED_FOR_DEATH
 };
 
 // ============================================================================

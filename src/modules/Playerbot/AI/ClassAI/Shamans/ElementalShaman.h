@@ -31,6 +31,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
+// Central Spell Registry - See WoW112Spells::Shaman namespace
+#include "../SpellValidation_WoW112.h"
+
 namespace Playerbot
 {
 
@@ -47,25 +50,26 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Elemental Shaman Spell IDs
-constexpr uint32 ELEM_LIGHTNING_BOLT = 188196;
-constexpr uint32 ELEM_LAVA_BURST = 51505;
-constexpr uint32 ELEM_FLAME_SHOCK = 188389;
-constexpr uint32 ELEM_EARTH_SHOCK = 8042;
-constexpr uint32 ELEM_FROST_SHOCK = 196840;
-constexpr uint32 ELEM_CHAIN_LIGHTNING = 188443;
-constexpr uint32 ELEM_EARTHQUAKE = 61882;
-constexpr uint32 ELEM_FIRE_ELEMENTAL = 198067;
-constexpr uint32 ELEM_STORMKEEPER = 191634;
-constexpr uint32 ELEM_ASCENDANCE = 114050;
-constexpr uint32 ELEM_LIQUID_MAGMA_TOTEM = 192222;
-constexpr uint32 ELEM_ICEFURY = 210714;
-constexpr uint32 ELEM_ELEMENTAL_BLAST = 117014;
-constexpr uint32 ELEM_ECHOING_SHOCK = 320125;
-constexpr uint32 ELEM_PRIMORDIAL_WAVE = 375982;
-constexpr uint32 ELEM_ASTRAL_SHIFT = 108271;
-constexpr uint32 ELEM_EARTH_SHIELD = 974;
-constexpr uint32 ELEM_WIND_SHEAR = 57994;
-constexpr uint32 ELEM_CAPACITOR_TOTEM = 192058;
+// See central registry: WoW112Spells::Shaman and WoW112Spells::Shaman::Elemental
+constexpr uint32 ELEM_LIGHTNING_BOLT = 188196;      // -> WoW112Spells::Shaman::LIGHTNING_BOLT
+constexpr uint32 ELEM_LAVA_BURST = 51505;           // -> WoW112Spells::Shaman::LAVA_BURST
+constexpr uint32 ELEM_FLAME_SHOCK = 188389;         // -> WoW112Spells::Shaman::FLAME_SHOCK
+constexpr uint32 ELEM_EARTH_SHOCK = 8042;           // -> WoW112Spells::Shaman::EARTH_SHOCK
+constexpr uint32 ELEM_FROST_SHOCK = 196840;         // -> WoW112Spells::Shaman::FROST_SHOCK
+constexpr uint32 ELEM_CHAIN_LIGHTNING = 188443;     // -> WoW112Spells::Shaman::CHAIN_LIGHTNING
+constexpr uint32 ELEM_EARTHQUAKE = 61882;           // -> WoW112Spells::Shaman::Elemental::EARTHQUAKE
+constexpr uint32 ELEM_FIRE_ELEMENTAL = 198067;      // -> WoW112Spells::Shaman::Elemental::FIRE_ELEMENTAL
+constexpr uint32 ELEM_STORMKEEPER = 191634;         // -> WoW112Spells::Shaman::Elemental::STORMKEEPER
+constexpr uint32 ELEM_ASCENDANCE = 114050;          // -> WoW112Spells::Shaman::Elemental::ASCENDANCE
+constexpr uint32 ELEM_LIQUID_MAGMA_TOTEM = 192222;  // -> WoW112Spells::Shaman::Elemental::LIQUID_MAGMA_TOTEM
+constexpr uint32 ELEM_ICEFURY = 210714;             // -> WoW112Spells::Shaman::Elemental::ICEFURY
+constexpr uint32 ELEM_ELEMENTAL_BLAST = 117014;     // -> WoW112Spells::Shaman::Elemental::ELEMENTAL_BLAST
+constexpr uint32 ELEM_ECHOING_SHOCK = 320125;       // -> WoW112Spells::Shaman::Elemental::ECHOING_SHOCK
+constexpr uint32 ELEM_PRIMORDIAL_WAVE = 375982;     // -> WoW112Spells::Shaman::Elemental::PRIMORDIAL_WAVE
+constexpr uint32 ELEM_ASTRAL_SHIFT = 108271;        // -> WoW112Spells::Shaman::ASTRAL_SHIFT
+constexpr uint32 ELEM_EARTH_SHIELD = 974;           // -> WoW112Spells::Shaman::Restoration::EARTH_SHIELD
+constexpr uint32 ELEM_WIND_SHEAR = 57994;           // -> WoW112Spells::Shaman::WIND_SHEAR
+constexpr uint32 ELEM_CAPACITOR_TOTEM = 192058;     // -> WoW112Spells::Shaman::CAPACITOR_TOTEM
 
 // ManaResource is already defined in CombatSpecializationTemplates.h
 // No need to redefine it here

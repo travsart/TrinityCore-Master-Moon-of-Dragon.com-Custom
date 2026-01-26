@@ -362,12 +362,19 @@ namespace Druid
         constexpr uint32 NEW_MOON = 274281;
         constexpr uint32 HALF_MOON = 274282;
         constexpr uint32 FULL_MOON = 274283;
+        constexpr uint32 WARRIOR_OF_ELUNE = 202425;
 
         // Eclipse System
         constexpr uint32 SOLAR_ECLIPSE = 48517;
         constexpr uint32 LUNAR_ECLIPSE = 48518;
         constexpr uint32 ECLIPSE_SOLAR_BUFF = 48517;
         constexpr uint32 ECLIPSE_LUNAR_BUFF = 48518;
+
+        // Procs and Buffs
+        constexpr uint32 BALANCE_OF_ALL_THINGS = 394048;
+        constexpr uint32 SHOOTING_STARS = 202342;
+        constexpr uint32 STARWEAVERS_WARP = 393942;
+        constexpr uint32 STARWEAVERS_WEFT = 393944;
 
         // Hero Talents - Keeper of the Grove
         constexpr uint32 POWER_OF_THE_DREAM = 434657;
@@ -400,6 +407,7 @@ namespace Druid
         constexpr uint32 THRASH_CAT = 106832;
         constexpr uint32 SWIPE_CAT = 106785;
         constexpr uint32 MAIM = 22570;
+        constexpr uint32 BLOODTALONS = 155672;
 
         // Combo Points
         constexpr uint32 COMBO_POINT = 4;
@@ -435,6 +443,7 @@ namespace Druid
         constexpr uint32 RAZE = 400254;
         constexpr uint32 RAGE_OF_THE_SLEEPER = 200851;
         constexpr uint32 LUNAR_BEAM = 204066;
+        constexpr uint32 GROWL = 6795; // Taunt
 
         // Rage Resource
         constexpr uint32 RAGE_GENERATION = 195707;
@@ -467,6 +476,9 @@ namespace Druid
         constexpr uint32 SPRING_BLOSSOMS = 207386;
         constexpr uint32 PHOTOSYNTHESIS = 274902;
         constexpr uint32 VERDANT_INFUSION = 392325;
+        constexpr uint32 HEALING_TOUCH = 5185;
+        constexpr uint32 IRONBARK = 102342;
+        constexpr uint32 EFFLORESCENCE = 145205;
 
         // HoTs
         constexpr uint32 HOT_REJUVENATION = 774;
@@ -536,6 +548,16 @@ namespace Evoker
         // Essence Resource
         constexpr uint32 ESSENCE = 469;
 
+        // Procs and Buffs
+        constexpr uint32 TIP_THE_SCALES = 370553;  // Instant empower
+        constexpr uint32 IRIDESCENCE_BLUE = 386399;  // Azure Strike empowerment
+        constexpr uint32 IRIDESCENCE_RED = 386353;  // Pyre/Fire Breath empowerment
+
+        // Talents
+        constexpr uint32 CATALYZE = 386283;  // Essence Burst chance
+        constexpr uint32 FEED_THE_FLAMES = 369846;  // Fire Breath extended
+        constexpr uint32 ONYX_LEGACY = 386348;  // Deep Breath enhanced
+
         // Hero Talents - Flameshaper
         constexpr uint32 ENGULF = 443328;
         constexpr uint32 CONSUME = 443329;
@@ -563,6 +585,20 @@ namespace Evoker
         constexpr uint32 STASIS = 370537;
         constexpr uint32 TIME_OF_NEED = 368412;
         constexpr uint32 TEMPORAL_COMPRESSION = 362874;
+        constexpr uint32 LIVING_FLAME_HEAL = 361509;  // Heal version of Living Flame
+
+        // Utility
+        constexpr uint32 LIFEBIND = 373267;  // Link two allies, share healing
+        constexpr uint32 TWIN_GUARDIAN = 370888;  // Shield another player
+
+        // Procs
+        constexpr uint32 ESSENCE_BURST_PRES = 369299;  // Free essence spender
+        constexpr uint32 CALL_OF_YSERA = 373835;  // Dream Breath proc
+
+        // Talents
+        constexpr uint32 FIELD_OF_DREAMS = 370062;  // Dream Breath AoE larger
+        constexpr uint32 FLOW_STATE = 385696;  // Essence regen
+        constexpr uint32 LIFEFORCE_MENDER = 376179;  // Healing increase
 
         // Hero Talents - Chronowarden
         constexpr uint32 CHRONO_FLAMES = 431442;

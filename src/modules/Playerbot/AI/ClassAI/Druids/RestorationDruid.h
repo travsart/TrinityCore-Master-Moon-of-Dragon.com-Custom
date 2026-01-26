@@ -31,6 +31,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
+// Central Spell Registry - See WoW112Spells::Druid namespace
+#include "../SpellValidation_WoW112.h"
+
 namespace Playerbot
 {
 
@@ -47,24 +50,25 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Restoration Druid Spell IDs
-constexpr uint32 RESTO_REJUVENATION = 774;
-constexpr uint32 RESTO_REGROWTH = 8936;
-constexpr uint32 RESTO_WILD_GROWTH = 48438;
-constexpr uint32 RESTO_SWIFTMEND = 18562;
-constexpr uint32 RESTO_LIFEBLOOM = 33763;
-constexpr uint32 RESTO_EFFLORESCENCE = 145205;
-constexpr uint32 RESTO_TRANQUILITY = 740;
-constexpr uint32 RESTO_IRONBARK = 102342;
-constexpr uint32 RESTO_NATURES_SWIFTNESS = 132158;
-constexpr uint32 RESTO_CENARION_WARD = 102351; // Talent
-constexpr uint32 RESTO_FLOURISH = 197721; // Talent
-constexpr uint32 RESTO_INCARNATION_TREE = 33891; // Incarnation: Tree of Life
-constexpr uint32 RESTO_NOURISH = 50464;
-constexpr uint32 RESTO_HEALING_TOUCH = 5185;
-constexpr uint32 RESTO_INNERVATE = 29166;
-constexpr uint32 RESTO_BARKSKIN = 22812;
-constexpr uint32 RESTO_RENEWAL = 108238;
-constexpr uint32 RESTO_MOONFIRE = 8921; // For mana regen / DPS
+// See central registry: WoW112Spells::Druid and WoW112Spells::Druid::Restoration
+constexpr uint32 RESTO_REJUVENATION = 774;         // -> WoW112Spells::Druid::REJUVENATION
+constexpr uint32 RESTO_REGROWTH = 8936;            // -> WoW112Spells::Druid::REGROWTH
+constexpr uint32 RESTO_WILD_GROWTH = 48438;        // -> WoW112Spells::Druid::WILD_GROWTH
+constexpr uint32 RESTO_SWIFTMEND = 18562;          // -> WoW112Spells::Druid::SWIFTMEND
+constexpr uint32 RESTO_LIFEBLOOM = 33763;          // -> WoW112Spells::Druid::Restoration::LIFEBLOOM
+constexpr uint32 RESTO_EFFLORESCENCE = 145205;     // -> WoW112Spells::Druid::Restoration::EFFLORESCENCE
+constexpr uint32 RESTO_TRANQUILITY = 740;          // -> WoW112Spells::Druid::Restoration::TRANQUILITY
+constexpr uint32 RESTO_IRONBARK = 102342;          // -> WoW112Spells::Druid::Restoration::IRONBARK
+constexpr uint32 RESTO_NATURES_SWIFTNESS = 132158; // -> WoW112Spells::Druid::Restoration::NATURES_SWIFTNESS
+constexpr uint32 RESTO_CENARION_WARD = 102351;     // -> WoW112Spells::Druid::Restoration::CENARION_WARD
+constexpr uint32 RESTO_FLOURISH = 197721;          // -> WoW112Spells::Druid::Restoration::FLOURISH
+constexpr uint32 RESTO_INCARNATION_TREE = 33891;   // -> WoW112Spells::Druid::Restoration::INCARNATION_TREE
+constexpr uint32 RESTO_NOURISH = 50464;            // -> WoW112Spells::Druid::Restoration::NOURISH
+constexpr uint32 RESTO_HEALING_TOUCH = 5185;       // -> WoW112Spells::Druid::Restoration::HEALING_TOUCH
+constexpr uint32 RESTO_INNERVATE = 29166;          // -> WoW112Spells::Druid::INNERVATE
+constexpr uint32 RESTO_BARKSKIN = 22812;           // -> WoW112Spells::Druid::BARKSKIN
+constexpr uint32 RESTO_RENEWAL = 108238;           // (talent)
+constexpr uint32 RESTO_MOONFIRE = 8921;            // -> WoW112Spells::Druid::MOONFIRE
 
 // Mana resource is defined in CombatSpecializationTemplates.h as uint32
 // No custom ManaResource struct needed - use ManaResource (uint32 typedef)

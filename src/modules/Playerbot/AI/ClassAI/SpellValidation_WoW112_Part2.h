@@ -364,6 +364,8 @@ namespace Rogue
     constexpr uint32 SHADOWSTEP = 36554;
     constexpr uint32 SHIV = 5938;
     constexpr uint32 FEINT = 1966;
+    constexpr uint32 FAN_OF_KNIVES = 51723;
+    constexpr uint32 MARKED_FOR_DEATH = 137619;
 
     // Poisons
     constexpr uint32 INSTANT_POISON = 315584;
@@ -433,6 +435,9 @@ namespace Rogue
         // Combo Point Finishers
         constexpr uint32 COMBO_POINT_ROGUE = 193315;
 
+        // Procs
+        constexpr uint32 OPPORTUNITY_PROC = 195627;
+
         // Roll the Bones Buffs
         constexpr uint32 SKULL_AND_CROSSBONES = 199603;
         constexpr uint32 GRAND_MELEE = 193358;
@@ -476,6 +481,14 @@ namespace Rogue
         // Shadow Techniques
         constexpr uint32 SHADOW_TECHNIQUES = 196911;
         constexpr uint32 FIND_WEAKNESS = 316220;
+
+        // Talents
+        constexpr uint32 DEEPER_STRATAGEM = 193531;
+        constexpr uint32 DARK_SHADOW = 245687;
+
+        // Procs and Buffs
+        constexpr uint32 DANSE_MACABRE = 393969;
+        constexpr uint32 DEEPER_DAGGERS = 383405;
 
         // Hero Talents - Deathstalker
         constexpr uint32 SUB_DEATHSTALKERS_MARK = 457052;
@@ -539,6 +552,7 @@ namespace Shaman
         constexpr uint32 ELEMENTAL_EQUILIBRIUM = 378270;
         constexpr uint32 LIGHTNING_LASSO = 305483;
         constexpr uint32 TEMPEST = 454009;
+        constexpr uint32 ECHOING_SHOCK = 320125;
 
         // Maelstrom Resource
         constexpr uint32 MAELSTROM = 470;
@@ -617,6 +631,7 @@ namespace Shaman
         constexpr uint32 EARTH_SHIELD = 974;
         constexpr uint32 DOWNPOUR = 207778;
         constexpr uint32 VESPER_TOTEM = 324386;
+        constexpr uint32 PURIFY_SPIRIT = 77130;
 
         // Tidal Waves
         constexpr uint32 TIDAL_WAVES = 53390;

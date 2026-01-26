@@ -14,6 +14,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -39,47 +40,48 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // DEVASTATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
+// See central registry: WoW112Spells::Evoker and WoW112Spells::Evoker::Devastation
 // ============================================================================
 
 enum DevastationEvokerSpells
 {
     // Essence Generators
-    AZURE_STRIKE         = 362969,  // 25 yd, generates 2 essence
-    LIVING_FLAME         = 361469,  // 25 yd, generates 1 essence
+    AZURE_STRIKE         = 362969,  // -> WoW112Spells::Evoker::AZURE_STRIKE
+    LIVING_FLAME         = 361469,  // -> WoW112Spells::Evoker::LIVING_FLAME
 
     // Essence Spenders (Empowered)
-    FIRE_BREATH          = 357208,  // 3 essence, empowered (rank 1-4)
-    ETERNITY_SURGE       = 359073,  // 3 essence, empowered (rank 1-4)
+    FIRE_BREATH          = 357208,  // Alternate ID for empowered rank
+    ETERNITY_SURGE       = 359073,  // -> WoW112Spells::Evoker::Devastation::ETERNITY_SURGE
 
     // Direct Damage
-    DISINTEGRATE         = 356995,  // 3 essence, channel
-    PYRE                 = 357211,   // 2 essence, AoE cone
-    SHATTERING_STAR      = 370452,  // 0 essence, 20s CD, debuff
+    DISINTEGRATE         = 356995,  // -> WoW112Spells::Evoker::DISINTEGRATE
+    PYRE                 = 357211,  // -> WoW112Spells::Evoker::Devastation::PYRE
+    SHATTERING_STAR      = 370452,  // -> WoW112Spells::Evoker::Devastation::SHATTERING_STAR
 
     // Major Cooldowns
-    DRAGONRAGE           = 375087,  // 2 min CD, 18s burst window
-    DEEP_BREATH          = 357210,  // 2 min CD, flying breath attack
-    TIP_THE_SCALES       = 370553,  // 2 min CD, instant empower
+    DRAGONRAGE           = 375087,  // -> WoW112Spells::Evoker::Devastation::DRAGONRAGE
+    DEEP_BREATH          = 357210,  // Alternate ID for flying breath attack
+    TIP_THE_SCALES       = 370553,  // -> WoW112Spells::Evoker::Devastation::TIP_THE_SCALES
 
     // Procs and Buffs
-    ESSENCE_BURST        = 359618,  // Free essence spender
-    BURNOUT              = 375802,  // Living Flame damage increase
-    IRIDESCENCE_BLUE     = 386399,  // Azure Strike empowerment
-    IRIDESCENCE_RED      = 386353,  // Pyre/Fire Breath empowerment
+    ESSENCE_BURST        = 359618,  // -> WoW112Spells::Evoker::Devastation::ESSENSE_BURST
+    BURNOUT              = 375802,  // -> WoW112Spells::Evoker::Devastation::BURNOUT (slight ID difference)
+    IRIDESCENCE_BLUE     = 386399,  // -> WoW112Spells::Evoker::Devastation::IRIDESCENCE_BLUE
+    IRIDESCENCE_RED      = 386353,  // -> WoW112Spells::Evoker::Devastation::IRIDESCENCE_RED
 
     // Utility
-    HOVER                = 358267,  // 10 sec CD, hover mode
-    OBSIDIAN_SCALES      = 363916,  // 90 sec CD, damage reduction
-    RENEWING_BLAZE       = 374348,  // 90 sec CD, self-heal
-    QUELL                = 351338,  // 40 sec CD, interrupt
-    TAIL_SWIPE           = 368970,  // 90 sec CD, knockback
-    WING_BUFFET          = 357214,  // 90 sec CD, cone knockback
+    HOVER                = 358267,  // -> WoW112Spells::Evoker::HOVER
+    OBSIDIAN_SCALES      = 363916,  // -> WoW112Spells::Evoker::OBSIDIAN_SCALES
+    RENEWING_BLAZE       = 374348,  // -> WoW112Spells::Evoker::RENEWING_BLAZE
+    QUELL                = 351338,  // -> WoW112Spells::Evoker::QUELL
+    TAIL_SWIPE           = 368970,  // -> WoW112Spells::Evoker::TAIL_SWIPE
+    WING_BUFFET          = 357214,  // -> WoW112Spells::Evoker::WING_BUFFET
 
     // Talents
-    ANIMOSITY            = 375797,  // Dragonrage CDR
-    CATALYZE             = 386283,  // Essence Burst chance
-    FEED_THE_FLAMES      = 369846,  // Fire Breath extended
-    ONYX_LEGACY          = 386348   // Deep Breath enhanced
+    ANIMOSITY            = 375797,  // -> WoW112Spells::Evoker::Devastation::ANIMOSITY
+    CATALYZE             = 386283,  // -> WoW112Spells::Evoker::Devastation::CATALYZE
+    FEED_THE_FLAMES      = 369846,  // -> WoW112Spells::Evoker::Devastation::FEED_THE_FLAMES
+    ONYX_LEGACY          = 386348   // -> WoW112Spells::Evoker::Devastation::ONYX_LEGACY
 };
 
 // Essence resource type for Devastation Evoker

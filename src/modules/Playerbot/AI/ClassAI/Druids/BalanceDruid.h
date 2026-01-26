@@ -25,6 +25,9 @@
 #include "../BotAI.h"
 #include "GameTime.h"
 
+// Central Spell Registry - See WoW112Spells::Druid namespace
+#include "../SpellValidation_WoW112.h"
+
 namespace Playerbot
 {
 
@@ -42,60 +45,61 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // BALANCE DRUID SPELL IDs (WoW 11.2 - The War Within)
+// See central registry: WoW112Spells::Druid and WoW112Spells::Druid::Balance
 // ============================================================================
 
 enum BalanceDruidSpells
 {
     // Astral Power Generators
-    WRATH                    = 190984,  // 40 Astral Power, single target
-    STARFIRE                 = 194153,  // 60 Astral Power, single target
-    STELLAR_FLARE            = 202347,  // DoT, generates 8 AP per tick (talent)
-    FORCE_OF_NATURE          = 205636,  // 20 AP, summons treants (talent)
+    WRATH                    = 190984,  // -> WoW112Spells::Druid::Balance::WRATH
+    STARFIRE                 = 194153,  // -> WoW112Spells::Druid::Balance::STARFIRE
+    STELLAR_FLARE            = 202347,  // -> WoW112Spells::Druid::Balance::STELLAR_FLARE
+    FORCE_OF_NATURE          = 205636,  // -> WoW112Spells::Druid::Balance::FORCE_OF_NATURE
 
     // Astral Power Spenders
-    STARSURGE                = 78674,   // 30 AP, single target nuke
-    STARFALL                 = 191034,  // 50 AP, AoE ground effect
-    NEW_MOON                 = 274281,  // 10 AP, first stage (talent)
-    HALF_MOON                = 274282,  // 20 AP, second stage (talent)
-    FULL_MOON                = 274283,  // 40 AP, third stage (talent)
+    STARSURGE                = 78674,   // -> WoW112Spells::Druid::Balance::STARSURGE
+    STARFALL                 = 191034,  // -> WoW112Spells::Druid::Balance::STARFALL
+    NEW_MOON                 = 274281,  // -> WoW112Spells::Druid::Balance::NEW_MOON
+    HALF_MOON                = 274282,  // -> WoW112Spells::Druid::Balance::HALF_MOON
+    FULL_MOON                = 274283,  // -> WoW112Spells::Druid::Balance::FULL_MOON
 
     // DoTs
-    MOONFIRE                 = 164812,  // DoT, applies from Wrath during eclipse
-    SUNFIRE                  = 164815,  // DoT, applies from Starfire during eclipse
+    MOONFIRE                 = 164812,  // -> WoW112Spells::Druid::MOONFIRE (variant)
+    SUNFIRE                  = 164815,  // -> WoW112Spells::Druid::SUNFIRE (variant)
 
     // Major Cooldowns
-    INCARNATION_CHOSEN       = 102560,  // 3 min CD, major burst (talent)
-    CELESTIAL_ALIGNMENT      = 194223,  // 3 min CD, burst damage
-    WARRIOR_OF_ELUNE         = 202425,  // 45 sec CD, 3 free Starfires (talent)
-    FURY_OF_ELUNE            = 202770,  // 1 min CD, channeled AoE (talent)
-    CONVOKE_THE_SPIRITS      = 391528,  // 2 min CD, random spell burst (talent)
+    INCARNATION_CHOSEN       = 102560,  // -> WoW112Spells::Druid::Balance::INCARNATION_CHOSEN
+    CELESTIAL_ALIGNMENT      = 194223,  // -> WoW112Spells::Druid::Balance::CELESTIAL_ALIGNMENT
+    WARRIOR_OF_ELUNE         = 202425,  // -> WoW112Spells::Druid::Balance::WARRIOR_OF_ELUNE
+    FURY_OF_ELUNE            = 202770,  // -> WoW112Spells::Druid::Balance::FURY_OF_ELUNE
+    CONVOKE_THE_SPIRITS      = 391528,  // -> WoW112Spells::Druid::Balance::CONVOKE_THE_SPIRITS
 
     // Utility
-    MOONKIN_FORM             = 24858,   // Shapeshift
-    SOLAR_BEAM               = 78675,   // Interrupt/silence
-    TYPHOON                  = 132469,  // Knockback (talent)
-    MIGHTY_BASH              = 5211,    // Stun (talent)
-    MASS_ENTANGLEMENT        = 102359,  // Root (talent)
-    REMOVE_CORRUPTION        = 2782,    // Dispel poison/curse
-    SOOTHE                   = 2908,    // Enrage dispel
-    INNERVATE                = 29166,   // Mana regen
+    MOONKIN_FORM             = 24858,   // -> WoW112Spells::Druid::MOONKIN_FORM
+    SOLAR_BEAM               = 78675,   // -> WoW112Spells::Druid::SOLAR_BEAM
+    TYPHOON                  = 132469,  // (talent)
+    MIGHTY_BASH              = 5211,    // (talent)
+    MASS_ENTANGLEMENT        = 102359,  // (talent)
+    REMOVE_CORRUPTION        = 2782,    // -> WoW112Spells::Druid::REMOVE_CORRUPTION
+    SOOTHE                   = 2908,    // -> WoW112Spells::Druid::SOOTHE
+    INNERVATE                = 29166,   // -> WoW112Spells::Druid::INNERVATE
 
     // Defensives
-    BARKSKIN                 = 22812,   // 1 min CD, damage reduction
-    RENEWAL                  = 108238,  // 1.5 min CD, self-heal (talent)
-    REGROWTH                 = 8936,    // Self-heal
-    BEAR_FORM                = 5487,    // Emergency tank form
-    FRENZIED_REGENERATION    = 22842,   // Self-heal in bear form
+    BARKSKIN                 = 22812,   // -> WoW112Spells::Druid::BARKSKIN
+    RENEWAL                  = 108238,  // (talent)
+    REGROWTH                 = 8936,    // -> WoW112Spells::Druid::REGROWTH
+    BEAR_FORM                = 5487,    // -> WoW112Spells::Druid::BEAR_FORM
+    FRENZIED_REGENERATION    = 22842,   // -> WoW112Spells::Druid::Guardian::FRENZIED_REGENERATION
 
     // Eclipse System
-    ECLIPSE_SOLAR            = 48517,   // Solar Eclipse buff
-    ECLIPSE_LUNAR            = 48518,   // Lunar Eclipse buff
-    BALANCE_OF_ALL_THINGS    = 394048,  // Stacking crit buff (talent)
+    ECLIPSE_SOLAR            = 48517,   // -> WoW112Spells::Druid::Balance::SOLAR_ECLIPSE
+    ECLIPSE_LUNAR            = 48518,   // -> WoW112Spells::Druid::Balance::LUNAR_ECLIPSE
+    BALANCE_OF_ALL_THINGS    = 394048,  // -> WoW112Spells::Druid::Balance::BALANCE_OF_ALL_THINGS
 
     // Procs and Buffs
-    SHOOTING_STARS           = 202342,  // Proc: free Starsurge (talent)
-    STARWEAVERS_WARP         = 393942,  // Starsurge increases Starfall damage
-    STARWEAVERS_WEFT         = 393944,  // Starfall increases Starsurge damage
+    SHOOTING_STARS           = 202342,  // -> WoW112Spells::Druid::Balance::SHOOTING_STARS
+    STARWEAVERS_WARP         = 393942,  // -> WoW112Spells::Druid::Balance::STARWEAVERS_WARP
+    STARWEAVERS_WEFT         = 393944,  // -> WoW112Spells::Druid::Balance::STARWEAVERS_WEFT
 
     // Talents
     WILD_MUSHROOM            = 88747,   // Ground AoE (talent)
