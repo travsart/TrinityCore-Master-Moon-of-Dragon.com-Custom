@@ -53,6 +53,7 @@ static Player* FindGroupMember(ObjectGuid memberGuid)
 GroupCombatStrategy::GroupCombatStrategy()
     : Strategy("group_combat")
 {
+    _memberCache.reserve(40); // Max raid size
     TC_LOG_DEBUG("module.playerbot.strategy", "GroupCombatStrategy: Initialized");
 }
 
@@ -146,15 +147,22 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
         // Healers should position at healing range (30yd from group center, not enemies)
         // Find a group member to stay near (preferably the tank)
-        Group* group = bot->GetGroup();
-        if (group)
+        // Use cached members for O(N) instead of O(N²)
         {
-            Player* tankToFollow = nullptr;
-            for (auto const& slot : group->GetMemberSlots())
+            // Ensure cache is fresh
+            uint32 now = GameTime::GetGameTimeMS();
+            if (_memberCacheDirty || (now - _lastCacheUpdate) > CACHE_REFRESH_INTERVAL)
             {
-                // Use FindGroupMember() with fallback lookups
-                Player* member = FindGroupMember(slot.guid);
-                if (!member || member == bot || !member->IsAlive())
+                const_cast<GroupCombatStrategy*>(this)->RefreshMemberCache(ai);
+            }
+
+            Player* tankToFollow = nullptr;
+
+            // First pass: look for tank
+            for (ObjectGuid const& memberGuid : _memberCache)
+            {
+                Player* member = FindGroupMember(memberGuid);
+                if (!member || !member->IsAlive())
                     continue;
 
                 if (IsPlayerTank(member))
@@ -164,14 +172,13 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 }
             }
 
-            // If no tank found, follow the group leader or any member in combat
+            // If no tank found, follow any member in combat
             if (!tankToFollow)
             {
-                for (auto const& slot : group->GetMemberSlots())
+                for (ObjectGuid const& memberGuid : _memberCache)
                 {
-                    // Use FindGroupMember() with fallback lookups
-                    Player* member = FindGroupMember(slot.guid);
-                    if (member && member != bot && member->IsAlive() && member->IsInCombat())
+                    Player* member = FindGroupMember(memberGuid);
+                    if (member && member->IsAlive() && member->IsInCombat())
                     {
                         tankToFollow = member;
                         break;
@@ -298,6 +305,35 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
     return 0.0f;
 }
 
+void GroupCombatStrategy::RefreshMemberCache(BotAI* ai)
+{
+    _memberCache.clear();
+
+    if (!ai || !ai->GetBot())
+        return;
+
+    Player* bot = ai->GetBot();
+    Group* group = bot->GetGroup();
+    if (!group)
+        return;
+
+    ObjectGuid botGuid = bot->GetGUID();
+
+    // Build cache of group member GUIDs (excluding self)
+    for (auto const& slot : group->GetMemberSlots())
+    {
+        if (!slot.guid.IsEmpty() && slot.guid != botGuid)
+            _memberCache.push_back(slot.guid);
+    }
+
+    _lastCacheUpdate = GameTime::GetGameTimeMS();
+    _memberCacheDirty = false;
+
+    TC_LOG_DEBUG("module.playerbot.strategy",
+        "GroupCombatStrategy: Refreshed member cache for {} ({} members)",
+        bot->GetName(), _memberCache.size());
+}
+
 bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
 {
     if (!ai || !ai->GetBot())
@@ -308,45 +344,35 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
     if (!group)
         return false;
 
+    // Refresh cache if dirty or expired
+    uint32 now = GameTime::GetGameTimeMS();
+    if (_memberCacheDirty || (now - _lastCacheUpdate) > CACHE_REFRESH_INTERVAL)
+    {
+        const_cast<GroupCombatStrategy*>(this)->RefreshMemberCache(ai);
+    }
+
     // DIAGNOSTIC: Log which members we're checking
     static uint32 lastLog = 0;
-    uint32 now = GameTime::GetGameTimeMS();
     bool shouldLog = (now - lastLog > 2000);
 
     if (shouldLog)
     {
         TC_LOG_ERROR("module.playerbot.strategy", " Checking group members for combat (bot is {}):", bot->GetName());
-        TC_LOG_ERROR("module.playerbot.strategy", "   Group GUID: {}, MemberCount: {}, Leader: {}",
-                    group->GetGUID().ToString(),
-                    group->GetMembersCount(),
-                    group->GetLeaderGUID().ToString());
+        TC_LOG_ERROR("module.playerbot.strategy", "   Group GUID: {}, CachedMembers: {}",
+                    group->GetGUID().ToString(), _memberCache.size());
         lastLog = now;
     }
 
-    // CRITICAL FIX: Use GetMemberSlots() instead of GetMembers()
-    // GetMembers()/GetSource() only works for players in the same map
-    // GetMemberSlots() gives us GUIDs which we can use with FindGroupMember()
-    for (auto const& slot : group->GetMemberSlots())
+    // Use cached member GUIDs - O(N) instead of rebuilding list each time
+    for (ObjectGuid const& memberGuid : _memberCache)
     {
-        ObjectGuid memberGuid = slot.guid;
-
-        if (memberGuid.IsEmpty())
-        {
-            if (shouldLog)
-                TC_LOG_ERROR("module.playerbot.strategy", "  - Empty member GUID");
-            continue;
-        }
-
-        // CRITICAL FIX: Use FindGroupMember() with fallback lookups
-        // ObjectAccessor::FindPlayer() alone fails for bots not properly registered
+        // Use FindGroupMember() with fallback lookups
         Player* member = FindGroupMember(memberGuid);
 
         if (shouldLog)
         {
             if (!member)
                 TC_LOG_ERROR("module.playerbot.strategy", "  - NULL member for GUID {} (all lookups failed)", memberGuid.ToString());
-            else if (member == bot)
-                TC_LOG_ERROR("module.playerbot.strategy", "  - {} (is bot - SKIPPING)", member->GetName());
             else
                 TC_LOG_ERROR("module.playerbot.strategy", "  - {} InCombat={}, HasTarget={}, IsBot={}",
                             member->GetName(),
@@ -355,7 +381,7 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
                             sBotWorldSessionMgr->GetPlayerBot(memberGuid) != nullptr);
         }
 
-        if (!member || member == bot)
+        if (!member)
             continue;
 
         if (member->IsInCombat())
@@ -378,18 +404,26 @@ Unit* GroupCombatStrategy::FindGroupCombatTarget(BotAI* ai) const
     if (!group)
         return nullptr;
 
+    // Refresh cache if dirty or expired
+    uint32 now = GameTime::GetGameTimeMS();
+    if (_memberCacheDirty || (now - _lastCacheUpdate) > CACHE_REFRESH_INTERVAL)
+    {
+        const_cast<GroupCombatStrategy*>(this)->RefreshMemberCache(ai);
+    }
+
     Unit* bestTarget = nullptr;
     float bestPriority = 0.0f;
 
-    // CRITICAL FIX: Iterate through all group members and find:
+    // Use cached member GUIDs - O(N) instead of rebuilding list each time
+    // Priority order:
     // 1. Enemies attacking group members (highest priority)
     // 2. What group members are attacking (GetVictim)
     // 3. What group members have selected (GetSelectedUnit)
-    for (auto const& slot : group->GetMemberSlots())
+    for (ObjectGuid const& memberGuid : _memberCache)
     {
         // Use FindGroupMember() with fallback lookups
-        Player* member = FindGroupMember(slot.guid);
-        if (!member || member == bot || !member->IsInCombat())
+        Player* member = FindGroupMember(memberGuid);
+        if (!member || !member->IsInCombat())
             continue;
 
         // PRIORITY 1: Find enemies attacking this group member (highest priority)

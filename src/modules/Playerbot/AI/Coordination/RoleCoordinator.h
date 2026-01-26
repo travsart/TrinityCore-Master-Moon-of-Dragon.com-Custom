@@ -34,6 +34,28 @@ namespace Coordination
 using Advanced::GroupCoordinator;
 
 /**
+ * @brief Cached role query results to avoid O(N) iteration every frame
+ * Refresh interval ensures data stays current without expensive per-frame recalculation
+ */
+struct RoleCache
+{
+    ::std::vector<ObjectGuid> tanks;
+    ::std::vector<ObjectGuid> healers;
+    ::std::vector<ObjectGuid> meleeDPS;
+    ::std::vector<ObjectGuid> rangedDPS;
+    uint32 lastRefreshTime = 0;
+    bool dirty = true;
+
+    static constexpr uint32 REFRESH_INTERVAL = 1000; // 1 second
+
+    void MarkDirty() { dirty = true; }
+    bool NeedsRefresh(uint32 currentTime) const
+    {
+        return dirty || (currentTime - lastRefreshTime) > REFRESH_INTERVAL;
+    }
+};
+
+/**
  * @brief Base class for role-specific coordination
  * Each role (Tank, Healer, DPS) has unique coordination needs
  */
@@ -73,6 +95,7 @@ class TC_GAME_API TankCoordinator : public RoleCoordinator
 {
 public:
     void Update(GroupCoordinator* group, uint32 diff) override;
+    void UpdateWithCache(GroupCoordinator* group, uint32 diff, RoleCache const& cache);
     GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::TANK; }
 
     /**
@@ -106,7 +129,7 @@ public:
     bool NeedsTankSwap(ObjectGuid mainTankGuid) const;
 
 private:
-    void UpdateMainTank(GroupCoordinator* group);
+    void UpdateMainTank(GroupCoordinator* group, RoleCache const& cache);
     void UpdateTankAssignments(GroupCoordinator* group);
     void UpdateTauntRotation(GroupCoordinator* group);
 
@@ -131,6 +154,7 @@ class TC_GAME_API HealerCoordinator : public RoleCoordinator
 {
 public:
     void Update(GroupCoordinator* group, uint32 diff) override;
+    void UpdateWithCache(GroupCoordinator* group, uint32 diff, RoleCache const& cache);
     GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::HEALER; }
 
     /**
@@ -169,10 +193,10 @@ public:
     ::std::vector<ObjectGuid> GetResurrectionPriority() const;
 
 private:
-    void UpdateHealingAssignments(GroupCoordinator* group);
+    void UpdateHealingAssignments(GroupCoordinator* group, RoleCache const& cache);
     void UpdateDispelCoordination(GroupCoordinator* group);
-    void UpdateCooldownRotation(GroupCoordinator* group);
-    void UpdateManaManagement(GroupCoordinator* group);
+    void UpdateCooldownRotation(GroupCoordinator* group, RoleCache const& cache);
+    void UpdateManaManagement(GroupCoordinator* group, RoleCache const& cache);
 
     struct HealingAssignment
     {
@@ -182,6 +206,11 @@ private:
         uint32 priority;
     };
 
+    // O(1) lookup maps instead of O(N) vector searches
+    ::std::unordered_map<ObjectGuid, HealingAssignment> _healerToAssignment; // Healer → Assignment
+    ::std::unordered_map<ObjectGuid, ObjectGuid> _tankToHealer; // Tank → Healer (for GetHealerForTank O(1))
+
+    // Legacy vector kept for iteration needs
     ::std::vector<HealingAssignment> _healingAssignments;
     ::std::unordered_map<ObjectGuid, ::std::unordered_map<::std::string, uint32>> _healerCooldowns; // Healer → Cooldown → ExpireTime
 
@@ -219,6 +248,7 @@ class TC_GAME_API DPSCoordinator : public RoleCoordinator
 {
 public:
     void Update(GroupCoordinator* group, uint32 diff) override;
+    void UpdateWithCache(GroupCoordinator* group, uint32 diff, RoleCache const& cache);
     GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::DPS_MELEE; } // Handles both melee and ranged
 
     /**
@@ -272,8 +302,8 @@ public:
     bool InBurstWindow() const;
 
 private:
-    void UpdateFocusTarget(GroupCoordinator* group);
-    void UpdateInterruptRotation(GroupCoordinator* group);
+    void UpdateFocusTarget(GroupCoordinator* group, RoleCache const& cache);
+    void UpdateInterruptRotation(GroupCoordinator* group, RoleCache const& cache);
     void UpdateCCAssignments(GroupCoordinator* group);
     void UpdateBurstWindows(GroupCoordinator* group);
 
@@ -306,6 +336,8 @@ private:
 /**
  * @brief Role Coordinator Manager
  * Manages all role-specific coordinators for a group
+ *
+ * Performance: Uses shared RoleCache to avoid O(N) group iteration per coordinator
  */
 class TC_GAME_API RoleCoordinatorManager
 {
@@ -335,10 +367,25 @@ public:
      */
     DPSCoordinator* GetDPSCoordinator() { return _dpsCoordinator.get(); }
 
+    /**
+     * @brief Get cached role data (refreshed periodically)
+     */
+    RoleCache const& GetRoleCache() const { return _roleCache; }
+
+    /**
+     * @brief Invalidate role cache (call when group composition changes)
+     */
+    void InvalidateCache() { _roleCache.MarkDirty(); }
+
 private:
+    void RefreshRoleCache(GroupCoordinator* group);
+
     ::std::unique_ptr<TankCoordinator> _tankCoordinator;
     ::std::unique_ptr<HealerCoordinator> _healerCoordinator;
     ::std::unique_ptr<DPSCoordinator> _dpsCoordinator;
+
+    // Shared cache for all coordinators - refreshed once per Update cycle
+    RoleCache _roleCache;
 };
 
 } // namespace Coordination

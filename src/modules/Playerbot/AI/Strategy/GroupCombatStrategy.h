@@ -10,6 +10,8 @@
 #pragma once
 
 #include "Strategy.h"
+#include "ObjectGuid.h"
+#include <vector>
 
 namespace Playerbot
 {
@@ -20,6 +22,9 @@ namespace Playerbot
  *
  * This strategy simply monitors group combat state and triggers ClassAI combat behaviors.
  * It doesn't implement complex actions - just coordinates existing bot combat systems.
+ *
+ * Performance: Uses member caching to avoid O(N²) group iteration every frame.
+ * Cache is refreshed every CACHE_REFRESH_INTERVAL ms or when OnGroupChanged() is called.
  */
 class TC_GAME_API GroupCombatStrategy : public Strategy
 {
@@ -39,6 +44,9 @@ public:
     // CRITICAL FIX: UpdateBehavior is called every frame, not GetRelevance!
     void UpdateBehavior(BotAI* ai, uint32 diff) override;
 
+    // Call when group composition changes to invalidate cache
+    void OnGroupChanged() { _memberCacheDirty = true; }
+
 private:
     bool IsGroupInCombat(BotAI* ai) const;
 
@@ -54,6 +62,17 @@ private:
      * @return Unit* Valid hostile target, or nullptr if none found
      */
     Unit* FindGroupCombatTarget(BotAI* ai) const;
+
+    // Performance optimization: Member caching to avoid O(N²) iteration
+    void RefreshMemberCache(BotAI* ai);
+
+    // Member cache - stores GUIDs of group members (excluding self)
+    mutable ::std::vector<ObjectGuid> _memberCache;
+    mutable uint32 _lastCacheUpdate = 0;
+    mutable bool _memberCacheDirty = true;
+
+    // Cache refresh interval (1 second) - group composition rarely changes mid-combat
+    static constexpr uint32 CACHE_REFRESH_INTERVAL = 1000;
 };
 
 } // namespace Playerbot
