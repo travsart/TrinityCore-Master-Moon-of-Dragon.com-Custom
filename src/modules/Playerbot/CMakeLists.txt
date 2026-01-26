@@ -111,6 +111,10 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/GroupMemberDiagnostics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/GroupMemberDiagnostics.h
 
+    # Core Combat - Context Detection and Performance
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Combat/CombatContextDetector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Combat/CombatContextDetector.h
+
     # Core DI Interfaces
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces/IObjectiveTracker.h
 
@@ -934,6 +938,7 @@ set(PLAYERBOT_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Combat
     ${CMAKE_CURRENT_SOURCE_DIR}/Events
     ${CMAKE_CURRENT_SOURCE_DIR}/Session
     ${CMAKE_CURRENT_SOURCE_DIR}/Chat
