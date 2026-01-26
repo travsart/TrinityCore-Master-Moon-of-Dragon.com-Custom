@@ -21,6 +21,8 @@
 #include "SpellHistory.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
+#include "Core/Events/CombatEventRouter.h"
+#include "Core/Events/CombatEvent.h"
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 #include <algorithm>
 #include <sstream>
@@ -34,31 +36,45 @@ ThreatCoordinator::ThreatCoordinator(Group* group)
     _lastUpdate = ::std::chrono::steady_clock::now();
     _lastEmergencyCheck = ::std::chrono::steady_clock::now();
 
+    // Phase 3: Subscribe to combat events for real-time threat tracking
+    if (CombatEventRouter::Instance().IsInitialized())
+    {
+        CombatEventRouter::Instance().Subscribe(this);
+        _subscribed = true;
+        TC_LOG_DEBUG("playerbots", "ThreatCoordinator: Subscribed to CombatEventRouter (event-driven mode)");
+    }
+    else
+    {
+        TC_LOG_DEBUG("playerbots", "ThreatCoordinator: Initialized in polling mode (CombatEventRouter not ready)");
+    }
+
     TC_LOG_DEBUG("playerbots", "ThreatCoordinator: Initialized for group");
 }
 
-void ThreatCoordinator::Update(uint32 /*diff*/)
+ThreatCoordinator::~ThreatCoordinator()
+{
+    // Phase 3: Unsubscribe from combat events
+    if (_subscribed && CombatEventRouter::Instance().IsInitialized())
+    {
+        CombatEventRouter::Instance().Unsubscribe(this);
+        _subscribed = false;
+        TC_LOG_DEBUG("playerbots", "ThreatCoordinator: Unsubscribed from CombatEventRouter");
+    }
+}
+
+void ThreatCoordinator::Update(uint32 diff)
 {
     auto startTime = ::std::chrono::high_resolution_clock::now();
-
-    // Check if it's time for standard update
     auto now = ::std::chrono::steady_clock::now();
-    auto elapsedMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastUpdate).count();
 
-    if (elapsedMs >= _updateInterval)
-    {
-        _lastUpdate = now;
+    // ========================================================================
+    // Phase 3 Event-Driven Architecture:
+    // - Threat updates moved to event handlers (HandleDamageDealt, etc.)
+    // - Standard updates only run when threat data is dirty OR at maintenance interval
+    // - Emergency checks remain at 50ms for safety situations
+    // ========================================================================
 
-        // Core update cycle
-        UpdateGroupThreatStatus();
-        UpdateBotAssignments();
-        ProcessThreatResponses();
-        UpdateStabilityMetrics();
-
-        _metrics.threatUpdates++;
-    }
-
-    // Emergency checks run more frequently
+    // Emergency checks run frequently (50ms) - safety critical, always runs
     auto emergencyElapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastEmergencyCheck).count();
     if (_emergencyResponseEnabled && emergencyElapsed >= _emergencyCheckInterval)
     {
@@ -66,11 +82,33 @@ void ThreatCoordinator::Update(uint32 /*diff*/)
         CheckEmergencySituations();
     }
 
-    // Execute queued responses
+    // Execute queued responses immediately (time-critical)
     ExecuteQueuedResponses();
+
+    // Maintenance cycle - runs when dirty OR at maintenance interval
+    _maintenanceTimer.fetch_add(diff, ::std::memory_order_relaxed);
+    bool shouldUpdate = _threatDataDirty.load(::std::memory_order_relaxed) ||
+                        _maintenanceTimer.load(::std::memory_order_relaxed) >= MAINTENANCE_INTERVAL_MS;
+
+    if (!shouldUpdate)
+        return;
+
+    // Reset timers and dirty flag
+    _maintenanceTimer.store(0, ::std::memory_order_relaxed);
+    _threatDataDirty.store(false, ::std::memory_order_relaxed);
+    _lastUpdate = now;
+
+    // Core maintenance cycle (only when needed)
+    UpdateGroupThreatStatus();
+    UpdateBotAssignments();
+    ProcessThreatResponses();
+    UpdateStabilityMetrics();
 
     // Cleanup
     CleanupExpiredResponses();
+    CleanupInactiveBots();
+
+    _metrics.threatUpdates++;
 
     auto endTime = ::std::chrono::high_resolution_clock::now();
     auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
@@ -1127,6 +1165,298 @@ void ThreatCoordinator::LogThreatStatus() const
     report << "- Avg Stability: " << _metrics.averageThreatStability * 100 << "%\n";
 
     return report.str();
+}
+
+// ============================================================================
+// ICombatEventSubscriber Implementation (Phase 3 Event-Driven Architecture)
+// ============================================================================
+
+CombatEventType ThreatCoordinator::GetSubscribedEventTypes() const
+{
+    // Subscribe to all events that affect threat tracking:
+    // - DAMAGE_TAKEN: Updates threat from damage received
+    // - DAMAGE_DEALT: Updates threat from damage dealt
+    // - HEALING_DONE: Updates threat from healing generated
+    // - THREAT_CHANGED: Direct threat table updates
+    // - UNIT_DIED: Remove dead units from tracking
+    return CombatEventType::DAMAGE_TAKEN |
+           CombatEventType::DAMAGE_DEALT |
+           CombatEventType::HEALING_DONE |
+           CombatEventType::THREAT_CHANGED |
+           CombatEventType::UNIT_DIED;
+}
+
+bool ThreatCoordinator::ShouldReceiveEvent(const CombatEvent& event) const
+{
+    // Only receive events involving our group members
+    // This filters out events from unrelated players/creatures
+
+    // For threat events, check if either participant is a group member
+    if (!event.source.IsEmpty() && IsGroupMember(event.source))
+        return true;
+
+    if (!event.target.IsEmpty() && IsGroupMember(event.target))
+        return true;
+
+    return false;
+}
+
+void ThreatCoordinator::OnCombatEvent(const CombatEvent& event)
+{
+    // Route event to appropriate handler based on type
+    switch (event.type)
+    {
+        case CombatEventType::DAMAGE_TAKEN:
+            HandleDamageTaken(event);
+            break;
+
+        case CombatEventType::DAMAGE_DEALT:
+            HandleDamageDealt(event);
+            break;
+
+        case CombatEventType::HEALING_DONE:
+            HandleHealingDone(event);
+            break;
+
+        case CombatEventType::THREAT_CHANGED:
+            HandleThreatChanged(event);
+            break;
+
+        case CombatEventType::UNIT_DIED:
+            HandleUnitDied(event);
+            break;
+
+        default:
+            // Ignore unhandled event types
+            break;
+    }
+}
+
+void ThreatCoordinator::HandleDamageTaken(const CombatEvent& event)
+{
+    // When a group member takes damage, track who is attacking them
+    // This helps identify loose targets attacking non-tanks
+
+    if (!event.target || !event.source)
+        return;
+
+    // Check if the victim is one of our group members
+    if (!IsGroupMember(event.target))
+        return;
+
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_coordinatorMutex);
+
+    // Find the victim's assignment
+    auto it = _botAssignments.find(event.target);
+    if (it == _botAssignments.end())
+        return;
+
+    // If a healer or DPS is taking damage, this may indicate a threat issue
+    if (it->second.assignedRole == ThreatRole::HEALER ||
+        it->second.assignedRole == ThreatRole::DPS)
+    {
+        // Track this as a potential loose target situation
+        _groupStatus.looseTargets++;
+
+        // If significant damage, mark as critical
+        if (event.amount > 0)
+        {
+            _groupStatus.criticalTargets++;
+            _groupStatus.requiresEmergencyResponse = true;
+        }
+    }
+
+    // Mark threat data as dirty for next Update() cycle
+    _threatDataDirty = true;
+}
+
+void ThreatCoordinator::HandleDamageDealt(const CombatEvent& event)
+{
+    // When a group member deals damage, update their threat tracking
+    // Helps identify when DPS is pulling aggro
+
+    if (!event.source || !event.target)
+        return;
+
+    // Check if the attacker is one of our group members
+    if (!IsGroupMember(event.source))
+        return;
+
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_coordinatorMutex);
+
+    // Find the attacker's assignment
+    auto it = _botAssignments.find(event.source);
+    if (it == _botAssignments.end())
+        return;
+
+    // Track that this bot generated threat against this target
+    // The actual threat percent calculation happens in UpdateGroupThreatStatus()
+
+    // For DPS roles, check if they're approaching threat cap
+    if (it->second.assignedRole == ThreatRole::DPS)
+    {
+        // High damage may indicate approaching threat cap
+        // Actual threat calculation done in maintenance cycle
+        _threatDataDirty = true;
+    }
+
+    // Mark threat data as dirty
+    _threatDataDirty = true;
+}
+
+void ThreatCoordinator::HandleHealingDone(const CombatEvent& event)
+{
+    // Healing generates threat spread across all mobs in combat
+    // This is important for healer threat management
+
+    if (!event.source)
+        return;
+
+    // Check if the healer is one of our group members
+    if (!IsGroupMember(event.source))
+        return;
+
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_coordinatorMutex);
+
+    // Find the healer's assignment
+    auto it = _botAssignments.find(event.source);
+    if (it == _botAssignments.end())
+        return;
+
+    // Only track for healer role
+    if (it->second.assignedRole != ThreatRole::HEALER)
+        return;
+
+    // Healing threat is split among all mobs in combat
+    // Significant healing may approach healer threat threshold
+    if (event.amount > 5000)  // Significant heal
+    {
+        // Mark for threat recalculation
+        _threatDataDirty = true;
+    }
+}
+
+void ThreatCoordinator::HandleThreatChanged(const CombatEvent& event)
+{
+    // Direct threat table update from TrinityCore ThreatManager
+    // This is the most accurate threat information
+
+    if (!event.source || !event.target)
+        return;
+
+    // Only care if the threat holder is a group member
+    // (source is the unit on the threat table, target is the mob)
+    if (!IsGroupMember(event.source))
+        return;
+
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_coordinatorMutex);
+
+    // Find the bot's assignment
+    auto it = _botAssignments.find(event.source);
+    if (it == _botAssignments.end())
+        return;
+
+    // Update the bot's threat data directly from the event
+    float threatDelta = event.newThreat - event.oldThreat;
+
+    // Large threat changes may indicate:
+    // - Tank building aggro (good)
+    // - DPS pulling threat (bad)
+    // - Threat reduction ability used
+    if (::std::abs(threatDelta) > 1000.0f)
+    {
+        // Significant threat change, recalculate status
+        _threatDataDirty = true;
+
+        // Check for threat spike on non-tank
+        if (it->second.assignedRole != ThreatRole::TANK && threatDelta > 0)
+        {
+            // DPS/Healer gaining significant threat
+            if (event.newThreat > _dpsThreatThreshold)
+            {
+                _groupStatus.requiresTaunt = true;
+            }
+        }
+    }
+
+    // Always mark dirty for any threat change
+    _threatDataDirty = true;
+}
+
+void ThreatCoordinator::HandleUnitDied(const CombatEvent& event)
+{
+    // When a unit dies, remove it from our tracking
+
+    if (!event.source)
+        return;
+
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_coordinatorMutex);
+
+    // Check if it's a group member that died
+    if (IsGroupMember(event.source))
+    {
+        // Remove from bot assignments
+        _botAssignments.erase(event.source);
+        _botAIs.erase(event.source);
+        _botThreatManagers.erase(event.source);
+
+        // Check if it was a tank
+        if (_primaryTank == event.source)
+        {
+            _primaryTank = ObjectGuid::Empty;
+            _groupStatus.requiresEmergencyResponse = true;
+        }
+        if (_offTank == event.source)
+        {
+            _offTank = ObjectGuid::Empty;
+        }
+
+        // Remove from backup tanks
+        _backupTanks.erase(
+            ::std::remove(_backupTanks.begin(), _backupTanks.end(), event.source),
+            _backupTanks.end());
+    }
+
+    // Check if it's a target we were tracking
+    auto targetIt = _groupStatus.targetThreatLevels.find(event.source);
+    if (targetIt != _groupStatus.targetThreatLevels.end())
+    {
+        // Remove from active targets
+        _groupStatus.targetThreatLevels.erase(targetIt);
+        _groupStatus.targetTanks.erase(event.source);
+        _groupStatus.activeTargets.erase(
+            ::std::remove(_groupStatus.activeTargets.begin(), _groupStatus.activeTargets.end(), event.source),
+            _groupStatus.activeTargets.end());
+    }
+
+    // Mark for status recalculation
+    _threatDataDirty = true;
+}
+
+bool ThreatCoordinator::IsGroupMember(ObjectGuid guid) const
+{
+    // Check if the GUID belongs to one of our registered bots
+    // This is used to filter events to only those involving our group
+
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_coordinatorMutex);
+
+    // Check bot assignments (all registered bots)
+    if (_botAssignments.find(guid) != _botAssignments.end())
+        return true;
+
+    // Also check the group if available (TrinityCore 11.x API)
+    if (_group)
+    {
+        // Check if GUID is in the group using GetMemberSlots()
+        Group::MemberSlotList const& memberSlots = _group->GetMemberSlots();
+        for (auto const& slot : memberSlots)
+        {
+            if (slot.guid == guid)
+                return true;
+        }
+    }
+
+    return false;
 }
 
 } // namespace Playerbot
