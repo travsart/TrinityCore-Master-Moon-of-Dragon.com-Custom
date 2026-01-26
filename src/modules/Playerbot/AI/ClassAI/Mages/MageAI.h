@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "../SpellValidation_WoW112.h"
 #include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include "../../Combat/BotThreatManager.h"
@@ -193,65 +194,65 @@ private:
         }
     } _combatMetrics;
 
-    // Mage spell IDs
-    static constexpr uint32 ARCANE_MISSILES = 5143;
-    static constexpr uint32 ARCANE_BLAST = 30451;
-    static constexpr uint32 ARCANE_BARRAGE = 44425;
-    static constexpr uint32 ARCANE_ORB = 153626;
-    static constexpr uint32 ARCANE_POWER = 12042;
-    static constexpr uint32 ARCANE_INTELLECT = 1459;
-    static constexpr uint32 ARCANE_EXPLOSION = 1449;
+    // Mage spell IDs - Using central registry (WoW 11.2)
+    static constexpr uint32 ARCANE_MISSILES = WoW112Spells::Mage::Common::ARCANE_MISSILES;
+    static constexpr uint32 ARCANE_BLAST = WoW112Spells::Mage::Common::ARCANE_BLAST;
+    static constexpr uint32 ARCANE_BARRAGE = WoW112Spells::Mage::Common::ARCANE_BARRAGE;
+    static constexpr uint32 ARCANE_ORB = WoW112Spells::Mage::Common::ARCANE_ORB;
+    static constexpr uint32 ARCANE_POWER = WoW112Spells::Mage::Common::ARCANE_POWER;
+    static constexpr uint32 ARCANE_INTELLECT = WoW112Spells::Mage::Common::ARCANE_INTELLECT;
+    static constexpr uint32 ARCANE_EXPLOSION = WoW112Spells::Mage::Common::ARCANE_EXPLOSION;
 
     // Fire spells
-    static constexpr uint32 FIREBALL = 133;
-    static constexpr uint32 FIRE_BLAST = 2136;
-    static constexpr uint32 PYROBLAST = 11366;
-    static constexpr uint32 FLAMESTRIKE = 2120;
-    static constexpr uint32 SCORCH = 2948;
-    static constexpr uint32 COMBUSTION = 190319;
-    static constexpr uint32 LIVING_BOMB = 44457;
-    static constexpr uint32 DRAGON_BREATH = 31661;
+    static constexpr uint32 FIREBALL = WoW112Spells::Mage::Common::FIREBALL;
+    static constexpr uint32 FIRE_BLAST = WoW112Spells::Mage::Common::FIRE_BLAST;
+    static constexpr uint32 PYROBLAST = WoW112Spells::Mage::Common::PYROBLAST;
+    static constexpr uint32 FLAMESTRIKE = WoW112Spells::Mage::Common::FLAMESTRIKE;
+    static constexpr uint32 SCORCH = WoW112Spells::Mage::Common::SCORCH;
+    static constexpr uint32 COMBUSTION = WoW112Spells::Mage::Common::COMBUSTION;
+    static constexpr uint32 LIVING_BOMB = WoW112Spells::Mage::Common::LIVING_BOMB;
+    static constexpr uint32 DRAGON_BREATH = WoW112Spells::Mage::Common::DRAGONS_BREATH;
 
     // Frost spells
-    static constexpr uint32 FROSTBOLT = 116;
-    static constexpr uint32 ICE_LANCE = 30455;
-    static constexpr uint32 FROZEN_ORB = 84714;
-    static constexpr uint32 BLIZZARD = 10;
-    static constexpr uint32 CONE_OF_COLD = 120;
-    static constexpr uint32 ICY_VEINS = 12472;
-    static constexpr uint32 WATER_ELEMENTAL = 31687;
-    static constexpr uint32 ICE_BARRIER = 11426;
-    static constexpr uint32 FROST_NOVA = 122;
-    static constexpr uint32 FROST_ARMOR = 7301;
+    static constexpr uint32 FROSTBOLT = WoW112Spells::Mage::Common::FROSTBOLT;
+    static constexpr uint32 ICE_LANCE = WoW112Spells::Mage::Common::ICE_LANCE;
+    static constexpr uint32 FROZEN_ORB = WoW112Spells::Mage::Common::FROZEN_ORB;
+    static constexpr uint32 BLIZZARD = WoW112Spells::Mage::Common::BLIZZARD;
+    static constexpr uint32 CONE_OF_COLD = WoW112Spells::Mage::Common::CONE_OF_COLD;
+    static constexpr uint32 ICY_VEINS = WoW112Spells::Mage::Common::ICY_VEINS;
+    static constexpr uint32 WATER_ELEMENTAL = WoW112Spells::Mage::Common::SUMMON_WATER_ELEMENTAL;
+    static constexpr uint32 ICE_BARRIER = WoW112Spells::Mage::Common::ICE_BARRIER;
+    static constexpr uint32 FROST_NOVA = WoW112Spells::Mage::Common::FROST_NOVA;
+    static constexpr uint32 FROST_ARMOR = 7301; // Removed in modern WoW
 
     // Crowd control
-    static constexpr uint32 POLYMORPH = 118;
-    static constexpr uint32 COUNTERSPELL = 2139;
-    static constexpr uint32 BANISH = 710;
+    static constexpr uint32 POLYMORPH = WoW112Spells::Mage::Common::POLYMORPH;
+    static constexpr uint32 COUNTERSPELL = WoW112Spells::Mage::Common::COUNTERSPELL;
+    static constexpr uint32 BANISH = 710; // Not a mage spell
 
     // Defensive abilities
-    static constexpr uint32 BLINK = 1953;
-    static constexpr uint32 INVISIBILITY = 66;
-    static constexpr uint32 ICE_BLOCK = 45438;
-    static constexpr uint32 COLD_SNAP = 11958;
-    static constexpr uint32 MANA_SHIELD = 1463;
+    static constexpr uint32 BLINK = WoW112Spells::Mage::Common::BLINK;
+    static constexpr uint32 INVISIBILITY = WoW112Spells::Mage::Common::INVISIBILITY;
+    static constexpr uint32 ICE_BLOCK = WoW112Spells::Mage::Common::ICE_BLOCK;
+    static constexpr uint32 COLD_SNAP = 235219; // Frost-only cooldown reset
+    static constexpr uint32 MANA_SHIELD = 1463; // Removed in modern WoW
 
     // Utility
-    static constexpr uint32 MIRROR_IMAGE = 55342;
-    static constexpr uint32 PRESENCE_OF_MIND = 12043;
-    static constexpr uint32 TELEPORT_STORMWIND = 3561;
-    static constexpr uint32 TELEPORT_IRONFORGE = 3562;
-    static constexpr uint32 PORTAL_STORMWIND = 10059;
-    static constexpr uint32 PORTAL_IRONFORGE = 11416;
+    static constexpr uint32 MIRROR_IMAGE = WoW112Spells::Mage::MIRROR_IMAGE;
+    static constexpr uint32 PRESENCE_OF_MIND = WoW112Spells::Mage::Common::PRESENCE_OF_MIND;
+    static constexpr uint32 TELEPORT_STORMWIND = 3561; // Utility - keep hardcoded
+    static constexpr uint32 TELEPORT_IRONFORGE = 3562; // Utility - keep hardcoded
+    static constexpr uint32 PORTAL_STORMWIND = 10059; // Utility - keep hardcoded
+    static constexpr uint32 PORTAL_IRONFORGE = 11416; // Utility - keep hardcoded
 
-    // Armor spells
+    // Armor spells (removed in modern WoW - mages now use Barrier)
     static constexpr uint32 MAGE_ARMOR = 6117;
     static constexpr uint32 MOLTEN_ARMOR = 30482;
 
     // Conjure spells
-    static constexpr uint32 CONJURE_FOOD = 587;
-    static constexpr uint32 CONJURE_WATER = 5504;
-    static constexpr uint32 CONJURE_MANA_GEM = 759;
+    static constexpr uint32 CONJURE_FOOD = WoW112Spells::Mage::CONJURE_REFRESHMENT;
+    static constexpr uint32 CONJURE_WATER = WoW112Spells::Mage::CONJURE_REFRESHMENT;
+    static constexpr uint32 CONJURE_MANA_GEM = 759; // Removed in modern WoW
 
     // Helper methods
     bool IsChanneling();

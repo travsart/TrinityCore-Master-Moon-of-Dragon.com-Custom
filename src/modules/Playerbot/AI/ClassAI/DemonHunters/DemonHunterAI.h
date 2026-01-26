@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "../SpellValidation_WoW112.h"
 #include <memory>
 #include <chrono>
 #include <unordered_map>
@@ -17,55 +18,54 @@
 namespace Playerbot
 {
 
-// DemonHunter Spell IDs (WoW 11.2 The War Within)
+// DemonHunter Spell IDs - Using central registry (WoW 11.2)
 enum DemonHunterSpells
 {
     // Havoc abilities
-    CHAOS_STRIKE = 162794,
-    BLADE_DANCE = 188499,
-    DEATH_SWEEP = 210152,
-    ANNIHILATION = 201427,
-    METAMORPHOSIS_HAVOC = 191427,
-    EYE_BEAM = 198013,
-    DEMONS_BITE = 162243,
-    FEL_BARRAGE = 258925,
+    CHAOS_STRIKE = WoW112Spells::DemonHunter::Common::CHAOS_STRIKE,
+    BLADE_DANCE = WoW112Spells::DemonHunter::Common::BLADE_DANCE,
+    DEATH_SWEEP = WoW112Spells::DemonHunter::Common::DEATH_SWEEP,
+    ANNIHILATION = WoW112Spells::DemonHunter::Common::ANNIHILATION,
+    METAMORPHOSIS_HAVOC = WoW112Spells::DemonHunter::Common::METAMORPHOSIS_HAVOC,
+    EYE_BEAM = WoW112Spells::DemonHunter::Common::EYE_BEAM,
+    DEMONS_BITE = WoW112Spells::DemonHunter::Common::DEMONS_BITE,
+    FEL_BARRAGE = WoW112Spells::DemonHunter::Common::FEL_BARRAGE,
 
     // Vengeance abilities
-    SOUL_CLEAVE = 228477,
-    SPIRIT_BOMB = 247454,
-    METAMORPHOSIS_VENGEANCE = 187827,
-    SHEAR = 203782,
-    SOUL_BARRIER = 227225,
+    SOUL_CLEAVE = WoW112Spells::DemonHunter::Common::SOUL_CLEAVE,
+    SPIRIT_BOMB = WoW112Spells::DemonHunter::Common::SPIRIT_BOMB,
+    METAMORPHOSIS_VENGEANCE = WoW112Spells::DemonHunter::Common::METAMORPHOSIS_VENGEANCE,
+    SHEAR = WoW112Spells::DemonHunter::Common::SHEAR,
+    SOUL_BARRIER = WoW112Spells::DemonHunter::Common::SOUL_BARRIER,
 
     // Defensive abilities
-    BLUR = 198589,
-    DARKNESS = 196718,
-    NETHERWALK = 196555,
+    BLUR = WoW112Spells::DemonHunter::Common::BLUR,
+    DARKNESS = WoW112Spells::DemonHunter::Common::DARKNESS,
+    NETHERWALK = WoW112Spells::DemonHunter::Common::NETHERWALK,
 
     // Shared abilities
-    DEMON_SPIKES = 203720,
-    IMMOLATION_AURA = 258920,
-    FIERY_BRAND = 204021,
-    FEL_RUSH = 195072,
-    VENGEFUL_RETREAT = 198793,
-    CONSUME_MAGIC = 278326,
-    SIGIL_OF_FLAME = 204596,
-    SIGIL_OF_SILENCE = 202137,
-    SIGIL_OF_MISERY = 207684,
-    CHAOS_NOVA = 179057,
+    DEMON_SPIKES = WoW112Spells::DemonHunter::Common::DEMON_SPIKES,
+    IMMOLATION_AURA = WoW112Spells::DemonHunter::Common::IMMOLATION_AURA,
+    FIERY_BRAND = WoW112Spells::DemonHunter::Common::FIERY_BRAND,
+    FEL_RUSH = WoW112Spells::DemonHunter::Common::FEL_RUSH,
+    VENGEFUL_RETREAT = WoW112Spells::DemonHunter::Common::VENGEFUL_RETREAT,
+    CONSUME_MAGIC = WoW112Spells::DemonHunter::Common::CONSUME_MAGIC,
+    SIGIL_OF_FLAME = WoW112Spells::DemonHunter::Common::SIGIL_OF_FLAME,
+    SIGIL_OF_SILENCE = WoW112Spells::DemonHunter::Common::SIGIL_OF_SILENCE,
+    SIGIL_OF_MISERY = WoW112Spells::DemonHunter::Common::SIGIL_OF_MISERY,
+    CHAOS_NOVA = WoW112Spells::DemonHunter::Common::CHAOS_NOVA,
 
     // Utility/Interrupts
-    DISRUPT = 183752,
-    IMPRISON = 217832,
+    DISRUPT = WoW112Spells::DemonHunter::Common::DISRUPT,
+    IMPRISON = WoW112Spells::DemonHunter::Common::IMPRISON,
 
     // Offensive cooldowns
-    NEMESIS = 206491,
+    NEMESIS = WoW112Spells::DemonHunter::Common::NEMESIS,
 
     // Talent abilities
-    MOMENTUM_TALENT = 206476,
-    DEMONIC_TALENT = 213410,
-    BLIND_FURY_TALENT = 203550
-    // Note: BUFF_MOMENTUM and BUFF_PREPARED moved to HavocSpells enum in HavocDemonHunterRefactored.h
+    MOMENTUM_TALENT = WoW112Spells::DemonHunter::Common::MOMENTUM_TALENT,
+    DEMONIC_TALENT = WoW112Spells::DemonHunter::Common::DEMONIC_TALENT,
+    BLIND_FURY_TALENT = WoW112Spells::DemonHunter::Common::BLIND_FURY_TALENT
 };
 
 class TC_GAME_API DemonHunterAI : public ClassAI

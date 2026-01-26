@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "../SpellValidation_WoW112_Part2.h"
 #include "../BaselineRotationManager.h"
 #include "Position.h"
 #include <memory>
@@ -133,26 +134,26 @@ private:
     static constexpr float MANA_CONSERVATION_THRESHOLD = 0.3f; // 30%
     static constexpr float EMERGENCY_HEALTH_THRESHOLD = 0.25f; // 25%
 
-    // Spell IDs (shared across specs)
+    // Spell IDs - Using central registry (WoW 11.2)
     enum PriestSpells
     {
         // Utility spells
-        DISPEL_MAGIC = 527,
-        MASS_DISPEL = 32375,
-        PSYCHIC_SCREAM = 8122,
-        FADE = 586,
-        FEAR_WARD = 6346,
-        DESPERATE_PRAYER = 19236,
-        SILENCE = 15487,
-        PURIFY = 527,
-        DISPERSION = 47585,
+        DISPEL_MAGIC = WoW112Spells::Priest::Common::DISPEL_MAGIC,
+        MASS_DISPEL = WoW112Spells::Priest::Common::MASS_DISPEL,
+        PSYCHIC_SCREAM = WoW112Spells::Priest::Common::PSYCHIC_SCREAM,
+        FADE = WoW112Spells::Priest::Common::FADE,
+        FEAR_WARD = 6346, // Removed in modern WoW
+        DESPERATE_PRAYER = WoW112Spells::Priest::Common::DESPERATE_PRAYER,
+        SILENCE = WoW112Spells::Priest::Common::SILENCE,
+        PURIFY = WoW112Spells::Priest::Common::PURIFY,
+        DISPERSION = WoW112Spells::Priest::Common::DISPERSION,
 
         // Buffs
-        POWER_WORD_FORTITUDE = 21562,
-        INNER_FIRE = 588,
-        SHADOW_PROTECTION = 976,
-        DIVINE_SPIRIT = 14752,
-        HYMN_OF_HOPE = 64901
+        POWER_WORD_FORTITUDE = WoW112Spells::Priest::Common::POWER_WORD_FORTITUDE,
+        INNER_FIRE = 588, // Removed in modern WoW
+        SHADOW_PROTECTION = 976, // Removed in modern WoW
+        DIVINE_SPIRIT = 14752, // Removed in modern WoW
+        HYMN_OF_HOPE = 64901 // Renamed to SYMBOL_OF_HOPE in modern WoW
     };
 };
 

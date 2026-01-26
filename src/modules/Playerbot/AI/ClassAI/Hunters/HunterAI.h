@@ -11,6 +11,7 @@
 #define TRINITY_HUNTERPLAYERAI_H
 
 #include "../ClassAI.h"
+#include "../SpellValidation_WoW112.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Position.h"
 #include "ObjectGuid.h"
@@ -244,60 +245,61 @@ private:
 
 public:
     // Hunter Spell IDs
+    // Hunter Spell IDs - Using central registry (WoW 11.2)
     enum HunterSpells
     {
         // Shots and Attacks
-        STEADY_SHOT = 56641,
-        ARCANE_SHOT = 3044,
-        MULTI_SHOT = 2643,
-        AIMED_SHOT = 19434,
-        KILL_SHOT = 53351,
-        EXPLOSIVE_SHOT = 53301,
-        SERPENT_STING = 1978,
-        CONCUSSIVE_SHOT = 5116,
+        STEADY_SHOT = WoW112Spells::Hunter::Common::STEADY_SHOT,
+        ARCANE_SHOT = WoW112Spells::Hunter::Common::ARCANE_SHOT,
+        MULTI_SHOT = WoW112Spells::Hunter::Common::MULTI_SHOT,
+        AIMED_SHOT = WoW112Spells::Hunter::Common::AIMED_SHOT,
+        KILL_SHOT = WoW112Spells::Hunter::Common::KILL_SHOT,
+        EXPLOSIVE_SHOT = WoW112Spells::Hunter::Common::EXPLOSIVE_SHOT,
+        SERPENT_STING = WoW112Spells::Hunter::Common::SERPENT_STING,
+        CONCUSSIVE_SHOT = WoW112Spells::Hunter::Common::CONCUSSIVE_SHOT,
 
         // Pet Abilities
-        KILL_COMMAND = 34026,
-        MEND_PET = 136,
-        REVIVE_PET = 982,
-        CALL_PET = 883,
-        MASTER_S_CALL = 53271,
+        KILL_COMMAND = WoW112Spells::Hunter::Common::KILL_COMMAND,
+        MEND_PET = WoW112Spells::Hunter::Common::MEND_PET,
+        REVIVE_PET = WoW112Spells::Hunter::Common::REVIVE_PET,
+        CALL_PET = WoW112Spells::Hunter::Common::CALL_PET,
+        MASTER_S_CALL = WoW112Spells::Hunter::Common::MASTERS_CALL,
 
         // Traps
-        FREEZING_TRAP = 187650,
-        EXPLOSIVE_TRAP = 191433,
-        SNAKE_TRAP = 34600,
+        FREEZING_TRAP = WoW112Spells::Hunter::Common::FREEZING_TRAP,
+        EXPLOSIVE_TRAP = WoW112Spells::Hunter::Common::EXPLOSIVE_TRAP,
+        SNAKE_TRAP = 34600, // Removed in modern WoW
 
         // Defensive/Utility
-        HUNTER_DISENGAGE = 781,
-        FEIGN_DEATH = 5384,
-        DETERRENCE = 19263,
-        EXHILARATION = 109304,
-        WING_CLIP = 2974,
-        SCATTER_SHOT = 19503,
-        COUNTER_SHOT = 147362,
-        SILENCING_SHOT = 34490,
+        HUNTER_DISENGAGE = WoW112Spells::Hunter::Common::DISENGAGE,
+        FEIGN_DEATH = WoW112Spells::Hunter::Common::FEIGN_DEATH,
+        DETERRENCE = WoW112Spells::Hunter::Common::ASPECT_OF_THE_TURTLE, // Renamed
+        EXHILARATION = WoW112Spells::Hunter::Common::EXHILARATION,
+        WING_CLIP = 2974, // Removed in modern WoW
+        SCATTER_SHOT = 19503, // Removed in modern WoW
+        COUNTER_SHOT = WoW112Spells::Hunter::Common::COUNTER_SHOT,
+        SILENCING_SHOT = 34490, // Removed in modern WoW
 
         // Aspects
-        ASPECT_OF_THE_HAWK = 13165,
-        ASPECT_OF_THE_WILD = 20043,
-        ASPECT_OF_THE_CHEETAH = 5118,
-        ASPECT_OF_THE_TURTLE = 186265,
-        ASPECT_OF_THE_DRAGONHAWK = 61846,
-        ASPECT_OF_THE_PACK = 13159,
-        ASPECT_OF_THE_VIPER = 34074,
+        ASPECT_OF_THE_HAWK = 13165, // Removed in modern WoW
+        ASPECT_OF_THE_WILD = WoW112Spells::Hunter::Common::ASPECT_OF_THE_WILD,
+        ASPECT_OF_THE_CHEETAH = WoW112Spells::Hunter::Common::ASPECT_OF_THE_CHEETAH,
+        ASPECT_OF_THE_TURTLE = WoW112Spells::Hunter::Common::ASPECT_OF_THE_TURTLE,
+        ASPECT_OF_THE_DRAGONHAWK = 61846, // Removed in modern WoW
+        ASPECT_OF_THE_PACK = 13159, // Removed in modern WoW
+        ASPECT_OF_THE_VIPER = 34074, // Removed in modern WoW
 
         // Marks/Debuffs
-        HUNTER_S_MARK = 1130,
+        HUNTER_S_MARK = WoW112Spells::Hunter::Common::HUNTERS_MARK,
 
         // Cooldowns
-        RAPID_FIRE = 3045,
-        BESTIAL_WRATH = 19574,
-        TRUESHOT = 288613,
-        BARRAGE = 120360,
-        VOLLEY = 260243,
+        RAPID_FIRE = WoW112Spells::Hunter::Common::RAPID_FIRE,
+        BESTIAL_WRATH = WoW112Spells::Hunter::Common::BESTIAL_WRATH,
+        TRUESHOT = WoW112Spells::Hunter::Common::TRUESHOT,
+        BARRAGE = WoW112Spells::Hunter::Common::BARRAGE,
+        VOLLEY = WoW112Spells::Hunter::Common::VOLLEY,
 
-        // Tracking Abilities (WoW 11.2)
+        // Tracking Abilities
         TRACK_BEASTS = 1494,
         TRACK_DEMONS = 19878,
         TRACK_DRAGONKIN = 19879,

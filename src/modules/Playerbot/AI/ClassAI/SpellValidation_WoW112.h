@@ -319,7 +319,28 @@ namespace DemonHunter
     // Base AI Compatibility - Common spell aliases
     namespace Common
     {
-        // These aliases allow base AI to reference spells without spec namespace
+        // Core Abilities (All Specs)
+        constexpr uint32 METAMORPHOSIS_VENGEANCE = 187827;
+        constexpr uint32 METAMORPHOSIS_HAVOC = 191427;
+        constexpr uint32 FEL_RUSH = 195072;
+        constexpr uint32 VENGEFUL_RETREAT = 198793;
+        constexpr uint32 THROW_GLAIVE = 185123;
+        constexpr uint32 SPECTRAL_SIGHT = 188501;
+        constexpr uint32 GLIDE = 131347;
+        constexpr uint32 CONSUME_MAGIC = 278326;
+        constexpr uint32 DISRUPT = 183752;
+        constexpr uint32 IMPRISON = 217832;
+        constexpr uint32 DARKNESS = 196718;
+        constexpr uint32 CHAOS_NOVA = 179057;
+        constexpr uint32 SIGIL_OF_FLAME = 204596;
+        constexpr uint32 SIGIL_OF_MISERY = 207684;
+        constexpr uint32 SIGIL_OF_SILENCE = 202137;
+        constexpr uint32 BLUR = 198589;
+        constexpr uint32 NETHERWALK = 196555;
+        constexpr uint32 NEMESIS = 206491;
+        constexpr uint32 IMMOLATION_AURA = 258920;
+
+        // Havoc abilities
         constexpr uint32 CHAOS_STRIKE = 162794;
         constexpr uint32 BLADE_DANCE = 188499;
         constexpr uint32 DEATH_SWEEP = 210152;
@@ -327,12 +348,19 @@ namespace DemonHunter
         constexpr uint32 EYE_BEAM = 198013;
         constexpr uint32 DEMONS_BITE = 162243;
         constexpr uint32 FEL_BARRAGE = 258925;
+
+        // Vengeance abilities
         constexpr uint32 SOUL_CLEAVE = 228477;
         constexpr uint32 SPIRIT_BOMB = 247454;
         constexpr uint32 SHEAR = 203782;
+        constexpr uint32 FRACTURE = 263642;
         constexpr uint32 SOUL_BARRIER = 263648;
         constexpr uint32 DEMON_SPIKES = 203720;
         constexpr uint32 FIERY_BRAND = 204021;
+        constexpr uint32 INFERNAL_STRIKE = 189110;
+        constexpr uint32 FEL_DEVASTATION = 212084;
+
+        // Talents
         constexpr uint32 MOMENTUM_TALENT = 206476;
         constexpr uint32 DEMONIC_TALENT = 213410;
         constexpr uint32 BLIND_FURY_TALENT = 203550;
@@ -1003,6 +1031,7 @@ namespace Hunter
         // Traps
         constexpr uint32 FREEZING_TRAP = 187650;
         constexpr uint32 TAR_TRAP = 187698;
+        constexpr uint32 EXPLOSIVE_TRAP = 236776; // Hi-Explosive Trap (PvP talent)
 
         // Defensive/Utility
         constexpr uint32 DISENGAGE = 781;
@@ -1486,6 +1515,7 @@ namespace Monk
 
         // Talents
         constexpr uint32 EYE_OF_THE_TIGER = 196607;
+        constexpr uint32 ENERGIZING_ELIXIR = 115288; // Restores Chi and Energy
     }
 }
 

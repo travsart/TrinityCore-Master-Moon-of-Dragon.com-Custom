@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "../SpellValidation_WoW112_Part2.h"
 #include "Position.h"
 #include <memory>
 #include <chrono>
@@ -48,77 +49,78 @@ protected:
 
 private:
     // Paladin-specific spell IDs (comprehensive list for all specs)
+    // Paladin Spell IDs - Using central registry (WoW 11.2)
     enum PaladinSpells
     {
         // Interrupts
-        REBUKE = 96231,  // Retribution interrupt
-        HAMMER_OF_JUSTICE = 853,  // Stun (can interrupt)
+        REBUKE = WoW112Spells::Paladin::Common::REBUKE,
+        HAMMER_OF_JUSTICE = WoW112Spells::Paladin::Common::HAMMER_OF_JUSTICE,
 
         // Defensive Cooldowns
-        DIVINE_SHIELD = 642,
-        SHIELD_OF_VENGEANCE = 184662,
-        BLESSING_OF_PROTECTION = 1022,
-        ARDENT_DEFENDER = 31850,  // Protection
-        GUARDIAN_OF_ANCIENT_KINGS = 86659,  // Protection
-        LAY_ON_HANDS = 633,
-        DIVINE_PROTECTION = 498,
+        DIVINE_SHIELD = WoW112Spells::Paladin::Common::DIVINE_SHIELD,
+        SHIELD_OF_VENGEANCE = WoW112Spells::Paladin::Common::SHIELD_OF_VENGEANCE,
+        BLESSING_OF_PROTECTION = WoW112Spells::Paladin::Common::BLESSING_OF_PROTECTION,
+        ARDENT_DEFENDER = WoW112Spells::Paladin::Common::ARDENT_DEFENDER,
+        GUARDIAN_OF_ANCIENT_KINGS = WoW112Spells::Paladin::Common::GUARDIAN_OF_ANCIENT_KINGS,
+        LAY_ON_HANDS = WoW112Spells::Paladin::Common::LAY_ON_HANDS,
+        DIVINE_PROTECTION = WoW112Spells::Paladin::Common::DIVINE_PROTECTION,
 
         // Offensive Cooldowns
-        AVENGING_WRATH = 31884,
-        CRUSADE = 231895,  // Retribution talent
-        HOLY_AVENGER = 105809,  // Talent
-        EXECUTION_SENTENCE = 114157,  // Talent
+        AVENGING_WRATH = WoW112Spells::Paladin::Common::AVENGING_WRATH,
+        CRUSADE = WoW112Spells::Paladin::Common::CRUSADE,
+        HOLY_AVENGER = WoW112Spells::Paladin::Common::HOLY_AVENGER,
+        EXECUTION_SENTENCE = WoW112Spells::Paladin::Common::EXECUTION_SENTENCE,
 
         // Holy Power Generators
-        CRUSADER_STRIKE = 35395,
-        BLADE_OF_JUSTICE = 184575,
-        HAMMER_OF_THE_RIGHTEOUS = 53595,  // Protection
-        JUDGMENT = 20271,
-        WAKE_OF_ASHES = 255937,  // Retribution
+        CRUSADER_STRIKE = WoW112Spells::Paladin::Common::CRUSADER_STRIKE,
+        BLADE_OF_JUSTICE = WoW112Spells::Paladin::Common::BLADE_OF_JUSTICE,
+        HAMMER_OF_THE_RIGHTEOUS = WoW112Spells::Paladin::Common::HAMMER_OF_THE_RIGHTEOUS,
+        JUDGMENT = WoW112Spells::Paladin::Common::JUDGMENT,
+        WAKE_OF_ASHES = WoW112Spells::Paladin::Common::WAKE_OF_ASHES,
 
         // Holy Power Spenders
-        TEMPLARS_VERDICT = 85256,  // Retribution
-        FINAL_VERDICT = 157048,  // Retribution talent
-        DIVINE_STORM = 53385,  // Retribution AoE
-        SHIELD_OF_THE_RIGHTEOUS = 53600,  // Protection
-        WORD_OF_GLORY = 85673,  // Healing spender
+        TEMPLARS_VERDICT = WoW112Spells::Paladin::Common::TEMPLARS_VERDICT,
+        FINAL_VERDICT = WoW112Spells::Paladin::Common::FINAL_VERDICT,
+        DIVINE_STORM = WoW112Spells::Paladin::Common::DIVINE_STORM,
+        SHIELD_OF_THE_RIGHTEOUS = WoW112Spells::Paladin::Common::SHIELD_OF_THE_RIGHTEOUS,
+        WORD_OF_GLORY = WoW112Spells::Paladin::Common::WORD_OF_GLORY,
 
         // AoE Abilities
-        CONSECRATION = 26573,
-        HAMMER_OF_LIGHT = 427445,  // Retribution
-        DIVINE_HAMMER = 198034,  // Talent
+        CONSECRATION = WoW112Spells::Paladin::Common::CONSECRATION,
+        HAMMER_OF_LIGHT = 427445, // Hero talent
+        DIVINE_HAMMER = 198034, // Removed in modern WoW
 
-        // Seals and Auras
+        // Seals and Auras (most removed in modern WoW)
         SEAL_OF_COMMAND = 20375,
         SEAL_OF_RIGHTEOUSNESS = 21084,
-        RETRIBUTION_AURA = 183435,
-        DEVOTION_AURA = 183425,
-        CRUSADER_AURA = 32223,
+        RETRIBUTION_AURA = WoW112Spells::Paladin::Common::RETRIBUTION_AURA,
+        DEVOTION_AURA = WoW112Spells::Paladin::Common::DEVOTION_AURA,
+        CRUSADER_AURA = WoW112Spells::Paladin::Common::CRUSADER_AURA,
 
-        // Blessings and Buffs
+        // Blessings and Buffs (most removed in modern WoW)
         BLESSING_OF_KINGS = 20217,
         BLESSING_OF_MIGHT = 19740,
         BLESSING_OF_WISDOM = 19742,
-        BLESSING_OF_FREEDOM = 1044,
-        BLESSING_OF_SANCTUARY = 20911,  // Protection
+        BLESSING_OF_FREEDOM = WoW112Spells::Paladin::Common::BLESSING_OF_FREEDOM,
+        BLESSING_OF_SANCTUARY = 20911,
 
         // Healing Abilities (for Holy spec)
-        FLASH_OF_LIGHT = 19750,
-        HOLY_LIGHT = 82326,
-        HOLY_SHOCK = 20473,
-        LIGHT_OF_DAWN = 85222,
-        BEACON_OF_LIGHT = 53651,
+        FLASH_OF_LIGHT = WoW112Spells::Paladin::Common::FLASH_OF_LIGHT,
+        HOLY_LIGHT = WoW112Spells::Paladin::Common::HOLY_LIGHT,
+        HOLY_SHOCK = WoW112Spells::Paladin::Common::HOLY_SHOCK,
+        LIGHT_OF_DAWN = WoW112Spells::Paladin::Common::LIGHT_OF_DAWN,
+        BEACON_OF_LIGHT = WoW112Spells::Paladin::Common::BEACON_OF_LIGHT,
 
         // Utility
-        HAND_OF_RECKONING = 62124,  // Taunt
-        CLEANSE = 4987,
-        HAMMER_OF_WRATH = 24275,
-        EXORCISM = 879,
-        BLINDING_LIGHT = 115750,  // Talent
+        HAND_OF_RECKONING = WoW112Spells::Paladin::Common::HAND_OF_RECKONING,
+        CLEANSE = WoW112Spells::Paladin::Common::CLEANSE,
+        HAMMER_OF_WRATH = WoW112Spells::Paladin::Common::HAMMER_OF_WRATH,
+        EXORCISM = 879, // Removed in modern WoW
+        BLINDING_LIGHT = WoW112Spells::Paladin::Common::BLINDING_LIGHT,
 
         // Movement
-        DIVINE_STEED = 190784,
-        LONG_ARM_OF_THE_LAW = 87172  // Speed buff
+        DIVINE_STEED = WoW112Spells::Paladin::Common::DIVINE_STEED,
+        LONG_ARM_OF_THE_LAW = 87172 // Passive talent
     };
 
 

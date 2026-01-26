@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "../SpellValidation_WoW112.h"
 #include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include <unordered_map>
@@ -116,59 +117,59 @@ public:
     explicit EvokerAI(Player* bot);
     ~EvokerAI() = default;
 
-    // Spell IDs (version-specific)
+    // Evoker Spell IDs - Using central registry (WoW 11.2)
     enum EvokerSpells
     {
         // Basic abilities
-        AZURE_STRIKE = 362969,
-        LIVING_FLAME = 361469,
-        HOVER = 358267,
-        SOAR = 369536,
+        AZURE_STRIKE = WoW112Spells::Evoker::Common::AZURE_STRIKE,
+        LIVING_FLAME = WoW112Spells::Evoker::Common::LIVING_FLAME,
+        HOVER = WoW112Spells::Evoker::HOVER,
+        SOAR = WoW112Spells::Evoker::SOAR,
 
         // Devastation abilities
-        ETERNITYS_SURGE = 359073,
-        DISINTEGRATE = 356995,
-        PYRE = 357211,
-        DEEP_BREATH = 357210,
-        FIRE_BREATH = 357208,
-        AZURE_STRIKE_DEVASTATION = 362969,
+        ETERNITYS_SURGE = WoW112Spells::Evoker::Common::ETERNITYS_SURGE,
+        DISINTEGRATE = WoW112Spells::Evoker::Common::DISINTEGRATE,
+        PYRE = WoW112Spells::Evoker::Devastation::PYRE,
+        DEEP_BREATH = WoW112Spells::Evoker::Common::DEEP_BREATH,
+        FIRE_BREATH = WoW112Spells::Evoker::Common::FIRE_BREATH,
+        AZURE_STRIKE_DEVASTATION = WoW112Spells::Evoker::Common::AZURE_STRIKE,
 
         // Preservation abilities
-        DREAM_BREATH = 355936,
-        SPIRIT_BLOOM = 367226,
-        SPIRITBLOOM = 367226, // Alias for compatibility
-        EMERALD_BLOSSOM = 355916,
-        VERDANT_EMBRACE = 360995,
-        LIFEBIND = 373267,
-        EMERALD_COMMUNION = 370960,
-        TEMPORAL_ANOMALY = 373861,
+        DREAM_BREATH = WoW112Spells::Evoker::Common::DREAM_BREATH,
+        SPIRIT_BLOOM = WoW112Spells::Evoker::Common::SPIRITBLOOM,
+        SPIRITBLOOM = WoW112Spells::Evoker::Common::SPIRITBLOOM,
+        EMERALD_BLOSSOM = WoW112Spells::Evoker::Common::EMERALD_BLOSSOM,
+        VERDANT_EMBRACE = WoW112Spells::Evoker::Common::VERDANT_EMBRACE,
+        LIFEBIND = WoW112Spells::Evoker::Common::LIFEBIND,
+        EMERALD_COMMUNION = WoW112Spells::Evoker::Common::EMERALD_COMMUNION,
+        TEMPORAL_ANOMALY = WoW112Spells::Evoker::Common::TEMPORAL_ANOMALY,
 
         // Augmentation abilities
-        EBON_MIGHT = 395152,
-        BREATH_OF_EONS = 403631,
-        PRESCIENCE = 409311,
-        BLISTERING_SCALES = 360827,
+        EBON_MIGHT = WoW112Spells::Evoker::Common::EBON_MIGHT,
+        BREATH_OF_EONS = WoW112Spells::Evoker::Common::BREATH_OF_EONS,
+        PRESCIENCE = WoW112Spells::Evoker::Common::PRESCIENCE,
+        BLISTERING_SCALES = WoW112Spells::Evoker::Common::BLISTERING_SCALES,
 
         // Utility abilities
-        BLESSING_OF_THE_BRONZE = 364342,
-        LANDSLIDE = 358385,
-        TAIL_SWIPE = 368970,
-        WING_BUFFET = 357214,
-        SLEEP_WALK = 360806,
-        SPELL_QUELL = 351338,       // Interrupt
-        SPELL_DRAGONRAGE = 375087,   // Devastation major cooldown
+        BLESSING_OF_THE_BRONZE = WoW112Spells::Evoker::Common::BLESSING_OF_THE_BRONZE,
+        LANDSLIDE = WoW112Spells::Evoker::Common::LANDSLIDE,
+        TAIL_SWIPE = WoW112Spells::Evoker::Common::TAIL_SWIPE,
+        WING_BUFFET = WoW112Spells::Evoker::Common::WING_BUFFET,
+        SLEEP_WALK = WoW112Spells::Evoker::Common::SLEEP_WALK,
+        SPELL_QUELL = WoW112Spells::Evoker::Common::QUELL,
+        SPELL_DRAGONRAGE = WoW112Spells::Evoker::Common::DRAGONRAGE,
 
         // Defensive abilities
-        OBSIDIAN_SCALES = 363916,
-        RENEWING_BLAZE = 374348,
-        RESCUE = 370665,
+        OBSIDIAN_SCALES = WoW112Spells::Evoker::OBSIDIAN_SCALES,
+        RENEWING_BLAZE = WoW112Spells::Evoker::RENEWING_BLAZE,
+        RESCUE = WoW112Spells::Evoker::RESCUE,
 
         // Movement abilities
-        DEEP_BREATH_MOVEMENT = 357210,
-        SOAR_MOVEMENT = 369536,
+        DEEP_BREATH_MOVEMENT = WoW112Spells::Evoker::Common::DEEP_BREATH,
+        SOAR_MOVEMENT = WoW112Spells::Evoker::SOAR,
 
         // Additional constants
-        ECHO = 364343,
+        ECHO = 364343, // Evoker-specific echo mechanic
         BRONZE_ASPECT = 364344,
         AZURE_ASPECT = 364345,
         GREEN_ASPECT = 364346,

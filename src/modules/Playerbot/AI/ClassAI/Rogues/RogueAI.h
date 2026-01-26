@@ -11,6 +11,7 @@
 #define ROGUE_AI_H
 
 #include "../ClassAI.h"
+#include "../SpellValidation_WoW112_Part2.h"
 #include "Position.h"
 #include "Unit.h"
 #include "../Combat/BotThreatManager.h"
@@ -148,72 +149,72 @@ private:
     uint32 _lastPoison;
 
 public:
-    // Rogue Spell IDs
+    // Rogue Spell IDs - Using central registry (WoW 11.2)
     enum RogueSpells
     {
         // Combo Point Builders
-        SINISTER_STRIKE = 1752,
-        BACKSTAB = 53,
-        MUTILATE = 1329,
-        HEMORRHAGE = 16511,
-        SHIV = 5938,
-        AMBUSH = 8676,
-        GARROTE = 703,
-        CHEAP_SHOT = 1833,
+        SINISTER_STRIKE = WoW112Spells::Rogue::Common::SINISTER_STRIKE,
+        BACKSTAB = WoW112Spells::Rogue::Common::BACKSTAB,
+        MUTILATE = WoW112Spells::Rogue::Common::MUTILATE,
+        HEMORRHAGE = 16511, // Removed in modern WoW
+        SHIV = WoW112Spells::Rogue::Common::SHIV,
+        AMBUSH = WoW112Spells::Rogue::Common::AMBUSH,
+        GARROTE = WoW112Spells::Rogue::Common::GARROTE,
+        CHEAP_SHOT = WoW112Spells::Rogue::Common::CHEAP_SHOT,
 
         // Combo Point Finishers
-        SLICE_AND_DICE = 5171,
-        RUPTURE = 1943,
-        EVISCERATE = 2098,
-        KIDNEY_SHOT = 408,
-        EXPOSE_ARMOR = 8647,
-        ENVENOM = 32645,
-        CRIMSON_TEMPEST = 121411,
-        DEADLY_THROW = 26679,
+        SLICE_AND_DICE = WoW112Spells::Rogue::Common::SLICE_AND_DICE,
+        RUPTURE = WoW112Spells::Rogue::Common::RUPTURE,
+        EVISCERATE = WoW112Spells::Rogue::Common::EVISCERATE,
+        KIDNEY_SHOT = WoW112Spells::Rogue::Common::KIDNEY_SHOT,
+        EXPOSE_ARMOR = 8647, // Removed in modern WoW
+        ENVENOM = WoW112Spells::Rogue::Common::ENVENOM,
+        CRIMSON_TEMPEST = WoW112Spells::Rogue::Common::CRIMSON_TEMPEST,
+        DEADLY_THROW = 26679, // Removed in modern WoW
 
         // Cooldowns
-        BLADE_FLURRY = 13877,
-        ADRENALINE_RUSH = 13750,
-        KILLING_SPREE = 51690,
-        VENDETTA = 79140,
-        SHADOW_BLADES = 121471,
-        COLD_BLOOD = 14177,
-        SHADOW_DANCE = 185313,
-        SHADOWSTEP = 36554,
+        BLADE_FLURRY = WoW112Spells::Rogue::Common::BLADE_FLURRY,
+        ADRENALINE_RUSH = WoW112Spells::Rogue::Common::ADRENALINE_RUSH,
+        KILLING_SPREE = WoW112Spells::Rogue::Common::KILLING_SPREE,
+        VENDETTA = WoW112Spells::Rogue::Common::VENDETTA,
+        SHADOW_BLADES = WoW112Spells::Rogue::Common::SHADOW_BLADES,
+        COLD_BLOOD = WoW112Spells::Rogue::Common::COLD_BLOOD,
+        SHADOW_DANCE = WoW112Spells::Rogue::Common::SHADOW_DANCE,
+        SHADOWSTEP = WoW112Spells::Rogue::Common::SHADOWSTEP,
 
         // Utility
-        KICK = 1766,
-        GOUGE = 1776,
-        BLIND = 2094,
-        SAP = 6770,
-        VANISH = 1856,
-        STEALTH = 1784,
-        SPRINT = 2983,
-        CLOAK_OF_SHADOWS = 31224,
-        EVASION = 5277,
-        FEINT = 1966,
+        KICK = WoW112Spells::Rogue::Common::KICK,
+        GOUGE = 1776, // Removed in modern WoW
+        BLIND = WoW112Spells::Rogue::Common::BLIND,
+        SAP = WoW112Spells::Rogue::Common::SAP,
+        VANISH = WoW112Spells::Rogue::Common::VANISH,
+        STEALTH = WoW112Spells::Rogue::Common::STEALTH,
+        SPRINT = WoW112Spells::Rogue::Common::SPRINT,
+        CLOAK_OF_SHADOWS = WoW112Spells::Rogue::Common::CLOAK_OF_SHADOWS,
+        EVASION = WoW112Spells::Rogue::Common::EVASION,
+        FEINT = WoW112Spells::Rogue::Common::FEINT,
 
         // Poisons
-        DEADLY_POISON = 2823,
-        INSTANT_POISON = 315584,
-        WOUND_POISON = 8679,
-        MIND_NUMBING_POISON = 5761,
-        CRIPPLING_POISON = 3408,
+        DEADLY_POISON = WoW112Spells::Rogue::Common::DEADLY_POISON,
+        INSTANT_POISON = WoW112Spells::Rogue::Common::INSTANT_POISON,
+        WOUND_POISON = WoW112Spells::Rogue::Common::WOUND_POISON,
+        MIND_NUMBING_POISON = 5761, // Renamed to NUMBING_POISON in modern WoW
+        CRIPPLING_POISON = WoW112Spells::Rogue::Common::CRIPPLING_POISON,
 
         // AoE
-        FAN_OF_KNIVES = 51723,
-        POISON_BOMB = 255544,
+        FAN_OF_KNIVES = WoW112Spells::Rogue::Common::FAN_OF_KNIVES,
+        POISON_BOMB = 255544, // Talent proc, not in Common
 
         // Assassination
-        DEATHMARK = 360194,
-        POISONED_KNIFE = 185565,
+        DEATHMARK = WoW112Spells::Rogue::Assassination::DEATHMARK,
+        POISONED_KNIFE = WoW112Spells::Rogue::Assassination::POISONED_KNIFE,
 
         // Subtlety
-        SYMBOLS_OF_DEATH = 212283,
+        SYMBOLS_OF_DEATH = WoW112Spells::Rogue::Common::SYMBOLS_OF_DEATH,
 
         // Talents
-        VIGOR = 14983,
-        DEEPER_STRATAGEM = 193531
+        VIGOR = 14983, // Passive talent
+        DEEPER_STRATAGEM = WoW112Spells::Rogue::Subtlety::DEEPER_STRATAGEM
     };
 };
 

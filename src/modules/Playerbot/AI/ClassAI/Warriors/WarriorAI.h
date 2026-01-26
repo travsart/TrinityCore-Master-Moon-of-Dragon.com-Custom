@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "../SpellValidation_WoW112_Part2.h"
 #include "Position.h"
 #include "../../Combat/BotThreatManager.h"
 #include "../../Combat/TargetSelector.h"
@@ -212,65 +213,65 @@ private:
     static constexpr float MULTI_TARGET_THRESHOLD = 3.0f; // 3+ enemies
     static constexpr uint32 FORMATION_CHECK_INTERVAL = 2000; // 2 seconds
 
-    // Spell IDs (these would need to be accurate for the WoW version)
+    // Spell IDs - Using central registry (WoW 11.2)
     enum WarriorSpells
     {
         // Stances
-        BATTLE_STANCE = 2457,
-        DEFENSIVE_STANCE = 71,
-        BERSERKER_STANCE = 2458,
+        BATTLE_STANCE = WoW112Spells::Warrior::Common::BATTLE_STANCE,
+        DEFENSIVE_STANCE = WoW112Spells::Warrior::Common::DEFENSIVE_STANCE,
+        BERSERKER_STANCE = WoW112Spells::Warrior::Common::BERSERKER_STANCE,
 
         // Basic attacks
-        HEROIC_STRIKE = 78,
-        CLEAVE = 845,
-        WHIRLWIND = 1680,
+        HEROIC_STRIKE = WoW112Spells::Warrior::Common::HEROIC_STRIKE,
+        CLEAVE = WoW112Spells::Warrior::Common::CLEAVE,
+        WHIRLWIND = WoW112Spells::Warrior::Common::WHIRLWIND,
 
         // Arms abilities
-        MORTAL_STRIKE = 12294,
-        COLOSSUS_SMASH = 86346,
-        OVERPOWER = 7384,
-        REND = 772,
+        MORTAL_STRIKE = WoW112Spells::Warrior::Common::MORTAL_STRIKE,
+        COLOSSUS_SMASH = WoW112Spells::Warrior::Common::COLOSSUS_SMASH,
+        OVERPOWER = WoW112Spells::Warrior::Common::OVERPOWER,
+        REND = WoW112Spells::Warrior::Common::REND,
 
         // Fury abilities
-        BLOODTHIRST = 23881,
-        RAMPAGE = 184367,
-        RAGING_BLOW = 85288,
-        EXECUTE = 5308,
+        BLOODTHIRST = WoW112Spells::Warrior::Common::BLOODTHIRST,
+        RAMPAGE = WoW112Spells::Warrior::Common::RAMPAGE,
+        RAGING_BLOW = WoW112Spells::Warrior::Common::RAGING_BLOW,
+        EXECUTE = WoW112Spells::Warrior::Common::EXECUTE,
 
         // Protection abilities
-        SHIELD_SLAM = 23922,
-        THUNDER_CLAP = 6343,
-        REVENGE = 6572,
-        DEVASTATE = 20243,
-        SHIELD_BLOCK = 2565,
+        SHIELD_SLAM = WoW112Spells::Warrior::Common::SHIELD_SLAM,
+        THUNDER_CLAP = WoW112Spells::Warrior::Common::THUNDER_CLAP,
+        REVENGE = WoW112Spells::Warrior::Common::REVENGE,
+        DEVASTATE = WoW112Spells::Warrior::Common::DEVASTATE,
+        SHIELD_BLOCK = WoW112Spells::Warrior::Common::SHIELD_BLOCK,
 
         // Defensive cooldowns
-        SHIELD_WALL = 871,
-        LAST_STAND = 12975,
-        SPELL_REFLECTION = 23920,
+        SHIELD_WALL = WoW112Spells::Warrior::Common::SHIELD_WALL,
+        LAST_STAND = WoW112Spells::Warrior::Common::LAST_STAND,
+        SPELL_REFLECTION = WoW112Spells::Warrior::Common::SPELL_REFLECTION,
 
         // Offensive cooldowns
-        RECKLESSNESS = 1719,
-        BLADESTORM = 46924,
-        AVATAR = 107574,
+        RECKLESSNESS = WoW112Spells::Warrior::Common::RECKLESSNESS,
+        BLADESTORM = WoW112Spells::Warrior::Common::BLADESTORM,
+        AVATAR = WoW112Spells::Warrior::Common::AVATAR,
 
         // Movement abilities
-        CHARGE = 100,
-        INTERCEPT = 20252,
-        HEROIC_LEAP = 6544,
+        CHARGE = WoW112Spells::Warrior::Common::CHARGE,
+        INTERCEPT = WoW112Spells::Warrior::Common::INTERVENE, // INTERCEPT merged with INTERVENE in 11.2
+        HEROIC_LEAP = WoW112Spells::Warrior::Common::HEROIC_LEAP,
 
         // Utility
-        PUMMEL = 6552,
-        DISARM = 676,
-        TAUNT = 355,
-        SUNDER_ARMOR = 7386,
+        PUMMEL = WoW112Spells::Warrior::Common::PUMMEL,
+        DISARM = 676, // Removed in modern WoW, keeping legacy ID
+        TAUNT = WoW112Spells::Warrior::Common::TAUNT,
+        SUNDER_ARMOR = 7386, // Removed in modern WoW, keeping legacy ID
 
         // Buffs
-        BATTLE_SHOUT = 6673,
-        COMMANDING_SHOUT = 469,
+        BATTLE_SHOUT = WoW112Spells::Warrior::Common::BATTLE_SHOUT,
+        COMMANDING_SHOUT = WoW112Spells::Warrior::Common::COMMANDING_SHOUT,
 
         // Weapon buffs (if applicable)
-        WEAPON_MASTER = 16538
+        WEAPON_MASTER = 16538 // Passive talent, no spell ID needed
     };
 };
 
