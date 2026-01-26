@@ -17,6 +17,9 @@
 #include "Creature.h"
 #include "GameTime.h"
 #include "DBCEnums.h"  // For MAX_EFFECT_MASK
+#include "ObjectAccessor.h"
+#include "Core/Events/CombatEventRouter.h"
+#include "Core/Events/CombatEvent.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -173,6 +176,28 @@ CrowdControlManager::CrowdControlManager(Player* bot)
     : _bot(bot)
     , _lastUpdate(0)
 {
+    // Phase 3: Subscribe to combat events for real-time CC tracking
+    if (CombatEventRouter::Instance().IsInitialized())
+    {
+        CombatEventRouter::Instance().Subscribe(this);
+        _subscribed = true;
+        TC_LOG_DEBUG("playerbots", "CrowdControlManager: Subscribed to CombatEventRouter (event-driven mode)");
+    }
+    else
+    {
+        TC_LOG_DEBUG("playerbots", "CrowdControlManager: Initialized in polling mode (CombatEventRouter not ready)");
+    }
+}
+
+CrowdControlManager::~CrowdControlManager()
+{
+    // Phase 3: Unsubscribe from combat events
+    if (_subscribed && CombatEventRouter::Instance().IsInitialized())
+    {
+        CombatEventRouter::Instance().Unsubscribe(this);
+        _subscribed = false;
+        TC_LOG_DEBUG("playerbots", "CrowdControlManager: Unsubscribed from CombatEventRouter");
+    }
 }
 
 void CrowdControlManager::Update(uint32 diff, const CombatMetrics& metrics)
@@ -180,15 +205,27 @@ void CrowdControlManager::Update(uint32 diff, const CombatMetrics& metrics)
     if (!_bot)
         return;
 
-    _lastUpdate += diff;
+    // ========================================================================
+    // Phase 3 Event-Driven Architecture:
+    // - CC tracking updates moved to event handlers (HandleAuraApplied, etc.)
+    // - Update() only runs maintenance tasks at reduced frequency
+    // ========================================================================
 
-    if (_lastUpdate < UPDATE_INTERVAL)
+    _maintenanceTimer += diff;
+
+    // Run maintenance at reduced frequency (1Hz instead of 2Hz)
+    if (_maintenanceTimer < MAINTENANCE_INTERVAL_MS && !_ccDataDirty)
         return;
 
-    _lastUpdate = 0;
+    _maintenanceTimer = 0;
+    _ccDataDirty = false;
 
-    // Update expired CCs
+    // Update expired CCs (maintenance task)
     UpdateExpiredCCs();
+
+    // Update DR states (maintenance task)
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    UpdateDR(currentTime);
 }
 
 void CrowdControlManager::Reset()
@@ -882,6 +919,187 @@ uint32 CrowdControlManager::GetExpectedDuration(ObjectGuid target, uint32 spellI
 {
     float multiplier = GetDRMultiplier(target, spellId);
     return static_cast<uint32>(baseDuration * multiplier);
+}
+
+// ============================================================================
+// ICombatEventSubscriber Implementation (Phase 3 Event-Driven Architecture)
+// ============================================================================
+
+CombatEventType CrowdControlManager::GetSubscribedEventTypes() const
+{
+    // Subscribe to events relevant for CC tracking:
+    // - AURA_APPLIED: Track when CC auras are applied
+    // - AURA_REMOVED: Track when CC auras are removed/broken
+    // - UNIT_DIED: Clear DR for dead units
+    return CombatEventType::AURA_APPLIED |
+           CombatEventType::AURA_REMOVED |
+           CombatEventType::UNIT_DIED;
+}
+
+bool CrowdControlManager::ShouldReceiveEvent(const CombatEvent& event) const
+{
+    // For aura events, check if it's a CC aura
+    if (event.type == CombatEventType::AURA_APPLIED || event.type == CombatEventType::AURA_REMOVED)
+    {
+        if (event.spellId == 0)
+            return false;
+
+        // Check if this is a CC spell
+        return IsCCAura(event.spellId);
+    }
+
+    // For unit death, always receive to clear DR
+    if (event.type == CombatEventType::UNIT_DIED)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void CrowdControlManager::OnCombatEvent(const CombatEvent& event)
+{
+    // Route event to appropriate handler based on type
+    switch (event.type)
+    {
+        case CombatEventType::AURA_APPLIED:
+            HandleAuraApplied(event);
+            break;
+
+        case CombatEventType::AURA_REMOVED:
+            HandleAuraRemoved(event);
+            break;
+
+        case CombatEventType::UNIT_DIED:
+            HandleUnitDied(event);
+            break;
+
+        default:
+            // Ignore unhandled event types
+            break;
+    }
+}
+
+void CrowdControlManager::HandleAuraApplied(const CombatEvent& event)
+{
+    // When a CC aura is applied, track it
+    if (!_bot || event.target.IsEmpty() || event.spellId == 0)
+        return;
+
+    // Get CC type from spell
+    CrowdControlType ccType = GetCCTypeFromSpell(event.spellId);
+    if (ccType == CrowdControlType::MAX)
+        return;  // Not a CC spell
+
+    // Find the target unit (use bot as reference for same-map lookup)
+    Unit* target = ObjectAccessor::GetUnit(*_bot, event.target);
+    if (!target)
+        return;
+
+    // Find who applied it (source)
+    Player* appliedBy = nullptr;
+    if (!event.source.IsEmpty())
+    {
+        appliedBy = ObjectAccessor::FindPlayer(event.source);
+    }
+
+    // Get aura duration
+    uint32 duration = event.auraDuration;
+    if (duration == 0)
+        duration = 8000;  // Default 8 second estimate
+
+    // Apply CC tracking
+    ApplyCC(target, ccType, duration, appliedBy, event.spellId);
+
+    // Track DR
+    OnCCApplied(event.target, event.spellId);
+
+    // Mark data as dirty
+    _ccDataDirty = true;
+
+    TC_LOG_DEBUG("playerbot", "CrowdControlManager: Event - CC applied to {} (spell: {})",
+        target->GetName(), event.spellId);
+}
+
+void CrowdControlManager::HandleAuraRemoved(const CombatEvent& event)
+{
+    // When a CC aura is removed, stop tracking it
+    if (!_bot || event.target.IsEmpty() || event.spellId == 0)
+        return;
+
+    // Find the target unit (use bot as reference for same-map lookup)
+    Unit* target = ObjectAccessor::GetUnit(*_bot, event.target);
+    if (!target)
+        return;
+
+    // Check if we're tracking this CC
+    auto it = _activeCCs.find(event.target);
+    if (it != _activeCCs.end() && it->second.spellId == event.spellId)
+    {
+        TC_LOG_DEBUG("playerbot", "CrowdControlManager: Event - CC removed from {} (spell: {})",
+            target->GetName(), event.spellId);
+
+        _activeCCs.erase(it);
+        _ccDataDirty = true;
+    }
+}
+
+void CrowdControlManager::HandleUnitDied(const CombatEvent& event)
+{
+    // When a unit dies, clear all tracking for that unit
+    if (!event.source.IsEmpty())
+    {
+        // Clear DR tracking
+        ClearDR(event.source);
+
+        // Clear active CC tracking
+        _activeCCs.erase(event.source);
+
+        _ccDataDirty = true;
+
+        TC_LOG_DEBUG("playerbots", "CrowdControlManager: Event - Unit died, cleared tracking for {}",
+            event.source.ToString());
+    }
+}
+
+bool CrowdControlManager::IsCCAura(uint32 spellId) const
+{
+    // Check if spell is a known CC spell
+    // Use the DR category as a proxy - if it has a DR category, it's a CC
+    DRCategory category = GetDRCategory(spellId);
+    return category != DRCategory::NONE;
+}
+
+CrowdControlType CrowdControlManager::GetCCTypeFromSpell(uint32 spellId) const
+{
+    // Map spell to CC type based on DR category
+    DRCategory category = GetDRCategory(spellId);
+
+    switch (category)
+    {
+        case DRCategory::STUN:
+            return CrowdControlType::STUN;
+
+        case DRCategory::INCAPACITATE:
+            return CrowdControlType::INCAPACITATE;
+
+        case DRCategory::DISORIENT:
+        case DRCategory::FEAR:
+        case DRCategory::HORROR:
+            return CrowdControlType::DISORIENT;
+
+        case DRCategory::ROOT:
+            return CrowdControlType::ROOT;
+
+        case DRCategory::SILENCE:
+            return CrowdControlType::SILENCE;
+
+        case DRCategory::DISARM:
+            return CrowdControlType::DISARM;
+
+        default:
+            return CrowdControlType::MAX;  // Not a CC
+    }
 }
 
 } // namespace Playerbot
