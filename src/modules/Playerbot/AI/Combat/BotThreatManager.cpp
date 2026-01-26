@@ -19,6 +19,8 @@
 #include "Log.h"
 #include "Combat/ThreatManager.h" // TrinityCore's ThreatManager
 #include "Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
+#include "Core/Events/CombatEventRouter.h"
+#include "Core/Events/CombatEvent.h"
 #include <algorithm>
 #include <chrono>
 
@@ -58,6 +60,25 @@ BotThreatManager::BotThreatManager(Player* bot)
     // Bot may not be fully in world yet during ClassAI/BotAI construction,
     // and Player::m_name/m_guid are not initialized, causing ACCESS_VIOLATION.
     // Logging deferred to first UpdateThreat() when bot IsInWorld().
+
+    // Phase 3: Subscribe to combat events for real-time threat tracking
+    if (CombatEventRouter::Instance().IsInitialized())
+    {
+        CombatEventRouter::Instance().Subscribe(this);
+        _subscribed = true;
+        TC_LOG_DEBUG("playerbots", "BotThreatManager: Subscribed to CombatEventRouter (event-driven mode)");
+    }
+}
+
+BotThreatManager::~BotThreatManager()
+{
+    // Phase 3: Unsubscribe from combat events
+    if (_subscribed && CombatEventRouter::Instance().IsInitialized())
+    {
+        CombatEventRouter::Instance().Unsubscribe(this);
+        _subscribed = false;
+        TC_LOG_DEBUG("playerbots", "BotThreatManager: Unsubscribed from CombatEventRouter");
+    }
 }
 
 void BotThreatManager::UpdateThreat(uint32 diff)
@@ -65,24 +86,35 @@ void BotThreatManager::UpdateThreat(uint32 diff)
     if (!_bot)
         return;
 
-    auto startTime = ::std::chrono::high_resolution_clock::now();
+    // ========================================================================
+    // Phase 3 Event-Driven Architecture:
+    // - Threat updates moved to event handlers (HandleDamageDealt, etc.)
+    // - Update() only runs maintenance tasks at reduced frequency
+    // - Maintenance includes: cleanup, distance updates, role-based adjustments
+    // ========================================================================
 
-    _lastUpdate += diff;
-    if (_lastUpdate < _updateInterval)
+    _maintenanceTimer += diff;
+
+    // Run maintenance at reduced frequency (1Hz instead of 2Hz)
+    // Also run if threat data is dirty from events
+    if (_maintenanceTimer < MAINTENANCE_INTERVAL_MS && !_threatDataDirty)
         return;
 
-    _lastUpdate = 0;
+    auto startTime = ::std::chrono::high_resolution_clock::now();
+
+    _maintenanceTimer = 0;
+    _threatDataDirty = false;
 
     {
         // No lock needed - threat data is per-bot instance data
 
-        // Update threat table
+        // Update threat table from TrinityCore (maintenance sync)
         UpdateThreatTable(diff);
 
         // Clean up stale entries
         CleanupStaleEntries();
 
-        // Update distances and combat state
+        // Update distances and combat state (maintenance)
         UpdateDistances();
         UpdateCombatState();
 
@@ -990,6 +1022,188 @@ bool ThreatCalculator::IsValidThreatTarget(Unit* target)
             return false;
 
     return true;
+}
+
+// ============================================================================
+// ICombatEventSubscriber Implementation (Phase 3 Event-Driven Architecture)
+// ============================================================================
+
+CombatEventType BotThreatManager::GetSubscribedEventTypes() const
+{
+    // Subscribe to all events that affect threat tracking:
+    // - DAMAGE_DEALT: Bot deals damage, generates threat
+    // - DAMAGE_TAKEN: Bot takes damage, enemy has threat on bot
+    // - HEALING_DONE: Healing generates threat
+    // - THREAT_CHANGED: Direct threat table updates
+    // - UNIT_DIED: Remove dead units from tracking
+    return CombatEventType::DAMAGE_DEALT |
+           CombatEventType::DAMAGE_TAKEN |
+           CombatEventType::HEALING_DONE |
+           CombatEventType::THREAT_CHANGED |
+           CombatEventType::UNIT_DIED;
+}
+
+bool BotThreatManager::ShouldReceiveEvent(const CombatEvent& event) const
+{
+    if (!_bot)
+        return false;
+
+    ObjectGuid botGuid = _bot->GetGUID();
+
+    // Only receive events involving this specific bot
+    if (!event.source.IsEmpty() && event.source == botGuid)
+        return true;
+
+    if (!event.target.IsEmpty() && event.target == botGuid)
+        return true;
+
+    return false;
+}
+
+void BotThreatManager::OnCombatEvent(const CombatEvent& event)
+{
+    // Route event to appropriate handler based on type
+    switch (event.type)
+    {
+        case CombatEventType::DAMAGE_DEALT:
+            HandleDamageDealt(event);
+            break;
+
+        case CombatEventType::DAMAGE_TAKEN:
+            HandleDamageTaken(event);
+            break;
+
+        case CombatEventType::HEALING_DONE:
+            HandleHealingDone(event);
+            break;
+
+        case CombatEventType::THREAT_CHANGED:
+            HandleThreatChanged(event);
+            break;
+
+        case CombatEventType::UNIT_DIED:
+            HandleUnitDied(event);
+            break;
+
+        default:
+            // Ignore unhandled event types
+            break;
+    }
+}
+
+void BotThreatManager::HandleDamageDealt(const CombatEvent& event)
+{
+    // When bot deals damage, update threat on the target
+    if (!_bot || event.source != _bot->GetGUID())
+        return;
+
+    if (event.target.IsEmpty() || event.amount == 0)
+        return;
+
+    // Find target unit
+    Unit* target = ObjectAccessor::GetUnit(*_bot, event.target);
+    if (!target)
+        return;
+
+    // Use existing OnDamageDealt method
+    OnDamageDealt(target, event.amount);
+
+    // Mark data as dirty
+    _threatDataDirty = true;
+}
+
+void BotThreatManager::HandleDamageTaken(const CombatEvent& event)
+{
+    // When bot takes damage, the attacker has threat on the bot
+    if (!_bot || event.target != _bot->GetGUID())
+        return;
+
+    if (event.source.IsEmpty())
+        return;
+
+    // The attacker is generating threat by attacking us
+    // This is mainly for tracking who is attacking the bot
+
+    // Mark data as dirty - we may need to recalculate priorities
+    _threatDataDirty = true;
+    _analysisDirty = true;
+}
+
+void BotThreatManager::HandleHealingDone(const CombatEvent& event)
+{
+    // When bot heals, it generates threat on all enemies in combat
+    if (!_bot || event.source != _bot->GetGUID())
+        return;
+
+    if (event.amount == 0)
+        return;
+
+    // Healing generates threat - find target if specified
+    Unit* target = nullptr;
+    if (!event.target.IsEmpty())
+    {
+        target = ObjectAccessor::GetUnit(*_bot, event.target);
+    }
+
+    if (target)
+    {
+        // Use existing OnHealingDone method
+        OnHealingDone(target, event.amount);
+    }
+
+    // Mark data as dirty
+    _threatDataDirty = true;
+}
+
+void BotThreatManager::HandleThreatChanged(const CombatEvent& event)
+{
+    // Direct threat table update from TrinityCore ThreatManager
+    if (!_bot)
+        return;
+
+    ObjectGuid botGuid = _bot->GetGUID();
+
+    // Only care if the bot is on someone's threat list
+    if (event.source != botGuid)
+        return;
+
+    // event.target is the enemy whose threat table changed
+    if (event.target.IsEmpty())
+        return;
+
+    // Update our tracking to match the new threat value
+    Unit* target = ObjectAccessor::GetUnit(*_bot, event.target);
+    if (!target)
+        return;
+
+    // Update threat value directly
+    float threatDelta = event.newThreat - event.oldThreat;
+    if (::std::abs(threatDelta) > 0.1f)
+    {
+        // Significant threat change
+        UpdateThreatValue(target, event.newThreat, ThreatType::DAMAGE);
+        _threatDataDirty = true;
+        _analysisDirty = true;
+    }
+}
+
+void BotThreatManager::HandleUnitDied(const CombatEvent& event)
+{
+    // When a unit dies, remove it from threat tracking
+    if (event.source.IsEmpty())
+        return;
+
+    // Check if this unit was in our threat map
+    if (_threatMap.Contains(event.source))
+    {
+        _threatMap.Remove(event.source);
+        _threatHistory.Remove(event.source);
+        _threatDataDirty = true;
+        _analysisDirty = true;
+
+        TC_LOG_DEBUG("playerbots", "BotThreatManager: Removed dead unit {} from threat tracking",
+            event.source.ToString());
+    }
 }
 
 } // namespace Playerbot
