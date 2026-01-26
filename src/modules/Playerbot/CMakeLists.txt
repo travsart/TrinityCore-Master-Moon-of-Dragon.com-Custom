@@ -100,6 +100,12 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/QueueEventData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/CombatEventType.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/CombatEvent.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/CombatEvent.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/ICombatEventSubscriber.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/CombatEventRouter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/CombatEventRouter.cpp
 
     # Core Services
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Services/BotNpcLocationService.cpp
