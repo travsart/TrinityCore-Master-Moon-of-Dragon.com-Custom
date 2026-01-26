@@ -16,6 +16,7 @@
  */
 
 #include "RaidOrchestrator.h"
+#include "../../Advanced/GroupCoordinator.h"  // Concrete implementation - included in .cpp, not .h
 #include "Group.h"
 #include "Player.h"
 #include "Unit.h"
@@ -101,7 +102,7 @@ void RaidOrchestrator::Update(uint32 diff)
     UpdateRaidStats();
 }
 
-GroupCoordinator* RaidOrchestrator::GetGroupCoordinator(uint32 groupIndex)
+IGroupCoordinator* RaidOrchestrator::GetGroupCoordinator(uint32 groupIndex)
 {
     // GroupCoordinator is now per-bot, not per-group
     // Return the GroupCoordinator of the first bot found in the specified subgroup
@@ -316,7 +317,7 @@ void RaidOrchestrator::UpdateGroupCoordinators(uint32 diff)
         if (!gameSystems)
             continue;
 
-        GroupCoordinator* coordinator = gameSystems->GetGroupCoordinator();
+        IGroupCoordinator* coordinator = gameSystems->GetGroupCoordinator();
         if (!coordinator)
             continue;
 

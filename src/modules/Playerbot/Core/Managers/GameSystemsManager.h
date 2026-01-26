@@ -199,7 +199,7 @@ public:
     // Note: BotWorldSessionMgr is a global singleton, use sBotWorldSessionMgr macro instead
     // BotWorldSessionMgr* GetBotWorldSessionMgr() const { return _botWorldSessionMgr.get(); }
     BotLifecycleManager* GetBotLifecycleManager() const { return _botLifecycleManager.get(); }
-    Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
+    IGroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
     CombatStateManager* GetCombatStateManager() const override { return _combatStateManager.get(); }

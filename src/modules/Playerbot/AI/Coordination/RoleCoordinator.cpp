@@ -86,7 +86,9 @@ static ::std::vector<ObjectGuid> GetGroupMembersByRole(GroupCoordinator* group, 
                 IGameSystemsManager* gameSystems = botAI->GetGameSystems();
                 if (gameSystems)
                 {
-                    GroupCoordinator* botGroupCoord = gameSystems->GetGroupCoordinator();
+                    // Use static_cast since we know concrete type is GroupCoordinator
+                    // This is needed to access GroupRole enum and GetRole() method
+                    GroupCoordinator* botGroupCoord = static_cast<GroupCoordinator*>(gameSystems->GetGroupCoordinator());
                     if (botGroupCoord)
                     {
                         // Get the bot's assigned role from its own GroupCoordinator

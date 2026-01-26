@@ -18,7 +18,7 @@
 #ifndef TRINITYCORE_RAID_ORCHESTRATOR_H
 #define TRINITYCORE_RAID_ORCHESTRATOR_H
 
-#include "../../Advanced/GroupCoordinator.h"
+#include "../../Core/DI/Interfaces/IGroupCoordinator.h"
 #include "RoleCoordinator.h"
 #include "Define.h"
 #include "ObjectGuid.h"
@@ -26,6 +26,9 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
+
+// Forward declaration - concrete implementation is in Advanced layer
+namespace Playerbot { namespace Advanced { class GroupCoordinator; } }
 
 class Group;
 
@@ -105,8 +108,9 @@ public:
     /**
      * @brief Get group coordinator by index
      * @param groupIndex Group index (0-7)
+     * @return Interface pointer to group coordinator, nullptr if invalid index
      */
-    GroupCoordinator* GetGroupCoordinator(uint32 groupIndex);
+    IGroupCoordinator* GetGroupCoordinator(uint32 groupIndex);
 
     /**
      * @brief Get role coordinator manager
@@ -224,7 +228,7 @@ private:
     void AssignDPSToAdds();
 
     Group* _raid;
-    ::std::vector<::std::unique_ptr<GroupCoordinator>> _groupCoordinators;
+    ::std::vector<::std::unique_ptr<IGroupCoordinator>> _groupCoordinators;
     RoleCoordinatorManager _roleCoordinatorManager;
 
     // Raid state

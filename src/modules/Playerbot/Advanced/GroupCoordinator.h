@@ -12,6 +12,7 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "../Core/DI/Interfaces/IGroupCoordinator.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -56,26 +57,26 @@ namespace Advanced
      * - Social coordination: Invites, quests, loot (per-bot)
      * - Raid mechanics: Boss strategies, positioning (per-bot)
      */
-    class GroupCoordinator
+    class GroupCoordinator : public ::Playerbot::IGroupCoordinator
     {
     public:
         explicit GroupCoordinator(Player* bot, BotAI* ai);
-        ~GroupCoordinator();
+        ~GroupCoordinator() override;
 
-        // Core lifecycle
-        void Initialize();
-        void Update(uint32 diff);
-        void Reset();
-        void Shutdown();
+        // Core lifecycle (IGroupCoordinator interface)
+        void Initialize() override;
+        void Update(uint32 diff) override;
+        void Reset() override;
+        void Shutdown() override;
 
-        // Group management
-        bool JoinGroup(Group* group);
-        bool LeaveGroup();
+        // Group management (IGroupCoordinator interface)
+        bool JoinGroup(Group* group) override;
+        bool LeaveGroup() override;
         bool InviteToGroup(Player* player);
         bool AcceptGroupInvite(Player* inviter);
         bool DeclineGroupInvite(Player* inviter);
-        Group* GetGroup() const;
-        bool IsInGroup() const;
+        Group* GetGroup() const override;
+        bool IsInGroup() const override;
 
         // Role management
         enum class GroupRole : uint8
@@ -93,9 +94,22 @@ namespace Advanced
         GroupRole GetRole() const { return m_assignedRole; }
         bool CanFillRole(GroupRole role) const;
 
-        // Raid coordination
-        bool IsInRaid() const;
-        uint32 GetRaidSize() const;
+        // Raid coordination (IGroupCoordinator interface)
+        bool IsInRaid() const override;
+        uint32 GetRaidSize() const override;
+        uint32 GetGroupSize() const override;
+        Player* GetLeader() const override;
+
+        // Role queries (IGroupCoordinator interface)
+        bool IsTank() const override { return GetRole() == GroupRole::TANK; }
+        bool IsHealer() const override { return GetRole() == GroupRole::HEALER; }
+        bool IsDPS() const override
+        {
+            return GetRole() == GroupRole::DPS_MELEE || GetRole() == GroupRole::DPS_RANGED;
+        }
+
+        // Combat queries (IGroupCoordinator interface)
+        bool IsInCombat() const override;
         bool IsRaidLeader() const;
         bool AssignRaidRole(Player* target, GroupRole role);
         void CoordinateRaidPositions();
@@ -153,7 +167,7 @@ namespace Advanced
         // Combat coordination
         void AssignTarget(Unit* target);
         void FocusTarget(Unit* target);
-        Unit* GetGroupTarget() const;
+        Unit* GetGroupTarget() const override;
         void CoordinateCrowdControl(Unit* target);
         void CallForHelp(Unit* attacker);
 

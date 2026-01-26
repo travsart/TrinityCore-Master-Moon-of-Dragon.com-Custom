@@ -366,6 +366,44 @@ namespace Advanced
         return group ? group->GetMembersCount() : 0;
     }
 
+    uint32 GroupCoordinator::GetGroupSize() const
+    {
+        Group* group = GetGroup();
+        return group ? group->GetMembersCount() : 0;
+    }
+
+    Player* GroupCoordinator::GetLeader() const
+    {
+        Group* group = GetGroup();
+        if (!group)
+            return nullptr;
+
+        ObjectGuid leaderGuid = group->GetLeaderGUID();
+        return ObjectAccessor::FindPlayer(leaderGuid);
+    }
+
+    bool GroupCoordinator::IsInCombat() const
+    {
+        if (m_bot && m_bot->IsInCombat())
+            return true;
+
+        // Check if any group member is in combat
+        Group* group = GetGroup();
+        if (!group)
+            return false;
+
+        for (GroupReference const& ref : group->GetMembers())
+        {
+            if (Player* member = ref.GetSource())
+            {
+                if (member->IsInCombat())
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     bool GroupCoordinator::IsRaidLeader() const
     {
         if (!m_bot)

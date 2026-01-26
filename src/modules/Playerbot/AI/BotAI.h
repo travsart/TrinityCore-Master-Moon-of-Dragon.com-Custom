@@ -417,8 +417,19 @@ public:
     AuctionManager* GetAuctionManager() { return _gameSystems ? _gameSystems->GetAuctionManager() : nullptr; }
     AuctionManager const* GetAuctionManager() const { return _gameSystems ? _gameSystems->GetAuctionManager() : nullptr; }
 
-    Advanced::GroupCoordinator* GetGroupCoordinator() { return _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr; }
-    Advanced::GroupCoordinator const* GetGroupCoordinator() const { return _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr; }
+    // Returns interface pointer for loose coupling
+    IGroupCoordinator* GetGroupCoordinator() { return _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr; }
+    IGroupCoordinator const* GetGroupCoordinator() const { return _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr; }
+
+    // Returns concrete type when Advanced features are needed
+    Advanced::GroupCoordinator* GetGroupCoordinatorAdvanced()
+    {
+        return static_cast<Advanced::GroupCoordinator*>(GetGroupCoordinator());
+    }
+    Advanced::GroupCoordinator const* GetGroupCoordinatorAdvanced() const
+    {
+        return static_cast<Advanced::GroupCoordinator const*>(GetGroupCoordinator());
+    }
 
     /**
      * @brief Get Tactical Group Coordinator (Phase 3)
@@ -427,12 +438,12 @@ public:
      */
     Advanced::TacticalCoordinator* GetTacticalCoordinator()
     {
-        auto gc = _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr;
+        auto gc = GetGroupCoordinatorAdvanced();
         return gc ? gc->GetTacticalCoordinator() : nullptr;
     }
     Advanced::TacticalCoordinator const* GetTacticalCoordinator() const
     {
-        auto gc = _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr;
+        auto gc = GetGroupCoordinatorAdvanced();
         return gc ? gc->GetTacticalCoordinator() : nullptr;
     }
 

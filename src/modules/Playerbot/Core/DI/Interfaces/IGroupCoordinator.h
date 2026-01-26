@@ -5,10 +5,12 @@
 #pragma once
 
 #include "Define.h"
+#include "ObjectGuid.h"
 #include <cstdint>
 
 class Player;
 class Group;
+class Unit;
 
 namespace Playerbot
 {
@@ -88,6 +90,63 @@ public:
      * @return Number of players in raid, or 0 if not in raid
      */
     virtual uint32 GetRaidSize() const = 0;
+
+    /**
+     * @brief Get group size
+     *
+     * @return Number of players in group, or 0 if not in group
+     */
+    virtual uint32 GetGroupSize() const = 0;
+
+    /**
+     * @brief Get group leader
+     *
+     * @return Pointer to leader player, or nullptr if not in group
+     */
+    virtual Player* GetLeader() const = 0;
+
+    // ========================================================================
+    // Role queries - Used by coordinators to determine bot's role in group
+    // ========================================================================
+
+    /**
+     * @brief Check if bot is assigned as tank
+     *
+     * @return True if tank role, false otherwise
+     */
+    virtual bool IsTank() const = 0;
+
+    /**
+     * @brief Check if bot is assigned as healer
+     *
+     * @return True if healer role, false otherwise
+     */
+    virtual bool IsHealer() const = 0;
+
+    /**
+     * @brief Check if bot is assigned as DPS
+     *
+     * @return True if DPS role, false otherwise
+     */
+    virtual bool IsDPS() const = 0;
+
+    // ========================================================================
+    // Combat queries - Used by strategies to coordinate group combat
+    // ========================================================================
+
+    /**
+     * @brief Check if group is in combat
+     *
+     * @return True if any group member is in combat, false otherwise
+     */
+    virtual bool IsInCombat() const = 0;
+
+    /**
+     * @brief Get current group target (focus target for coordinated attacks)
+     *
+     * @return Pointer to target unit, or nullptr if no group target
+     */
+    virtual Unit* GetGroupTarget() const = 0;
 };
 
 } // namespace Playerbot

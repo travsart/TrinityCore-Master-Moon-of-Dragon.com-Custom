@@ -74,6 +74,9 @@ class ManagerRegistry;
 class HybridAIController;
 class BehaviorPriorityManager;
 
+// IGroupCoordinator interface - no Advanced namespace dependency
+class IGroupCoordinator;
+
 namespace Advanced
 {
     class GroupCoordinator;
@@ -218,9 +221,13 @@ public:
 
     /**
      * @brief Get group coordination system
-     * @return Non-owning pointer to GroupCoordinator (owned by facade)
+     * @return Non-owning pointer to IGroupCoordinator interface (owned by facade)
+     *
+     * NOTE: Returns interface pointer to fix layer violation (Core should not
+     * depend on Advanced). Callers needing Advanced::GroupCoordinator-specific
+     * methods should dynamic_cast or use the concrete implementation directly.
      */
-    virtual Advanced::GroupCoordinator* GetGroupCoordinator() const = 0;
+    virtual IGroupCoordinator* GetGroupCoordinator() const = 0;
 
     /**
      * @brief Get death recovery management system
