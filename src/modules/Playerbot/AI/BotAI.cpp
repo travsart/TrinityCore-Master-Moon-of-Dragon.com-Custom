@@ -914,7 +914,10 @@ void BotAI::UpdateStrategies(uint32 diff)
         }
         else
         {
-            selectedStrategy->UpdateBehavior(this, diff);
+            // Use throttled update - MaybeUpdateBehavior respects update intervals
+            // based on CombatContext (SOLO=150ms, ARENA=25ms, etc.)
+            // Strategies that need every-frame updates override NeedsEveryFrameUpdate()
+            selectedStrategy->MaybeUpdateBehavior(this, diff);
         }
 
         _performanceMetrics.strategiesEvaluated = 1;

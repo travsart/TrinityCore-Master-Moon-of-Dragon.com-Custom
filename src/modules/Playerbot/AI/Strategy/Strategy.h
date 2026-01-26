@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "../../Core/DI/Interfaces/IStrategyFactory.h"
+#include "../../Core/Combat/CombatContextDetector.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <vector>
@@ -88,15 +89,61 @@ public:
     virtual void OnDeactivate(BotAI* /*ai*/) {}
     void SetActive(bool active) { _active = active; }
 
-    // Update method for every-frame behavior updates
-    // Called from BotAI::UpdateStrategies() every frame when strategy is active
-    // No throttling - runs at full frame rate for smooth behavior
+    // Update method for behavior updates (throttled by MaybeUpdateBehavior)
+    // Override this to implement strategy-specific behavior updates
     virtual void UpdateBehavior(BotAI* /*ai*/, uint32 /*diff*/) {}
+
+    // Throttled update method - call this from BotAI::UpdateStrategies()
+    // Returns true if UpdateBehavior was actually called
+    bool MaybeUpdateBehavior(BotAI* ai, uint32 diff)
+    {
+        // Check if this strategy needs every-frame updates (bypasses throttling)
+        if (NeedsEveryFrameUpdate())
+        {
+            UpdateBehavior(ai, diff);
+            return true;
+        }
+
+        // Accumulate time since last update
+        _timeSinceLastBehaviorUpdate += diff;
+
+        // Check if enough time has passed
+        if (_timeSinceLastBehaviorUpdate >= _behaviorUpdateInterval)
+        {
+            // Pass actual accumulated time to UpdateBehavior
+            UpdateBehavior(ai, _timeSinceLastBehaviorUpdate);
+            _timeSinceLastBehaviorUpdate = 0;
+            return true;
+        }
+
+        return false;
+    }
+
+    // Override to return true for strategies that require every-frame updates
+    // Examples: movement interpolation, animation sync, UI updates
+    // Most strategies should return false and use throttled updates
+    virtual bool NeedsEveryFrameUpdate() const { return false; }
+
+    // Set the update interval based on combat context
+    void SetUpdateIntervalForContext(CombatContext context)
+    {
+        _behaviorUpdateInterval = CombatContextDetector::GetRecommendedUpdateInterval(context);
+    }
+
+    // Get/set the update interval directly
+    uint32 GetBehaviorUpdateInterval() const { return _behaviorUpdateInterval; }
+    void SetBehaviorUpdateInterval(uint32 intervalMs) { _behaviorUpdateInterval = intervalMs; }
 
 protected:
     ::std::string _name;
     uint32 _priority = 100;
     ::std::atomic<bool> _active{false};
+
+    // Behavior update throttling
+    // Default 100ms interval (10 TPS) - suitable for GROUP/RAID contexts
+    // Use SetUpdateIntervalForContext() to adjust based on CombatContext
+    uint32 _behaviorUpdateInterval = 100;
+    uint32 _timeSinceLastBehaviorUpdate = 0;
 
     // Strategy components
     ::std::unordered_map<::std::string, ::std::shared_ptr<Action>> _actions;
