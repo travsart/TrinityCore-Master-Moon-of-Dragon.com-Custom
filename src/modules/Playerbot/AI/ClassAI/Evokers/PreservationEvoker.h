@@ -48,13 +48,13 @@ using bot::ai::SpellCategory;
 enum PreservationEvokerSpells
 {
     // Direct Heals
-    EMERALD_BLOSSOM      = WoW112Spells::Evoker::Preservation::EMERALD_BLOSSOM_PRES,
+    EMERALD_BLOSSOM      = WoW112Spells::Evoker::EMERALD_BLOSSOM,
     VERDANT_EMBRACE      = WoW112Spells::Evoker::VERDANT_EMBRACE,
     LIVING_FLAME_HEAL    = WoW112Spells::Evoker::Preservation::LIVING_FLAME_HEAL,
 
     // Empowered Heals
-    DREAM_BREATH         = WoW112Spells::Evoker::Preservation::DREAM_BREATH_EMPOWERED,
-    SPIRIT_BLOOM         = WoW112Spells::Evoker::Preservation::SPIRITBLOOM_ALT,
+    DREAM_BREATH         = WoW112Spells::Evoker::Preservation::DREAM_BREATH,
+    SPIRIT_BLOOM         = WoW112Spells::Evoker::Preservation::SPIRITBLOOM,
 
     // Echo System
     ECHO                 = WoW112Spells::Evoker::Preservation::ECHO,
@@ -67,7 +67,7 @@ enum PreservationEvokerSpells
 
     // Utility
     LIFEBIND             = WoW112Spells::Evoker::Preservation::LIFEBIND,
-    BLESSING_BRONZE      = WoW112Spells::Evoker::Preservation::BLESSING_OF_THE_BRONZE_ALT,
+    BLESSING_BRONZE      = WoW112Spells::Evoker::BLESSING_OF_THE_BRONZE,
     TIME_DILATION        = WoW112Spells::Evoker::Preservation::TIME_DILATION,
     STASIS               = WoW112Spells::Evoker::Preservation::STASIS,
     RESCUE               = WoW112Spells::Evoker::RESCUE,
@@ -89,7 +89,7 @@ enum PreservationEvokerSpells
     FIELD_OF_DREAMS      = WoW112Spells::Evoker::Preservation::FIELD_OF_DREAMS,
     FLOW_STATE           = WoW112Spells::Evoker::Preservation::FLOW_STATE,
     LIFEFORCE_MENDER     = WoW112Spells::Evoker::Preservation::LIFEFORCE_MENDER,
-    TEMPORAL_COMPRESSION = WoW112Spells::Evoker::Preservation::TEMPORAL_COMPRESSION_ALT
+    TEMPORAL_COMPRESSION = WoW112Spells::Evoker::Preservation::TEMPORAL_COMPRESSION
 };
 
 // Essence resource (same as Devastation)

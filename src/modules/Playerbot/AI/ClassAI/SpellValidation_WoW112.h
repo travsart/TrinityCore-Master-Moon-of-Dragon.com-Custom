@@ -421,7 +421,6 @@ namespace Druid
         constexpr uint32 ADAPTIVE_SWARM = 391888;
         constexpr uint32 THRASH_CAT = 106832;
         constexpr uint32 SWIPE_CAT = 106785;
-        constexpr uint32 SWIPE_CAT_ALT = 106830; // Alternate spell ID
         constexpr uint32 MAIM = 22570;
         constexpr uint32 BLOODTALONS = 155672;
 
@@ -557,11 +556,7 @@ namespace Evoker
         constexpr uint32 SHATTERING_STAR = 370452;
         constexpr uint32 DRAGONRAGE = 375087;
         constexpr uint32 FIRESTORM = 368847;
-        constexpr uint32 DEEP_BREATH_DEV = 382266;
-        constexpr uint32 DEEP_BREATH_DEVASTATION = 357210; // Flying breath attack variant
-        constexpr uint32 FIRE_BREATH_EMPOWERED = 357208;   // Empowered rank variant
         constexpr uint32 BURNOUT = 375801;
-        constexpr uint32 BURNOUT_ALT = 375802;             // Alternate spell ID
         constexpr uint32 ENGULFING_BLAZE = 370837;
         constexpr uint32 VOLATILITY = 369089;
         constexpr uint32 ANIMOSITY = 375797;
@@ -600,23 +595,18 @@ namespace Evoker
         constexpr uint32 TEMPORAL_ANOMALY = 373861;
         constexpr uint32 TIME_DILATION = 357170;
         constexpr uint32 DREAM_BREATH = 382614;
-        constexpr uint32 DREAM_BREATH_EMPOWERED = 355936; // Empowered rank variant
         constexpr uint32 SPIRITBLOOM = 382731;
-        constexpr uint32 SPIRITBLOOM_ALT = 367226;        // Alternate spell ID
         constexpr uint32 REWIND = 363534;
         constexpr uint32 EMERALD_COMMUNION = 370960;
         constexpr uint32 DREAM_FLIGHT = 359816;
         constexpr uint32 STASIS = 370537;
         constexpr uint32 TIME_OF_NEED = 368412;
         constexpr uint32 TEMPORAL_COMPRESSION = 362874;
-        constexpr uint32 TEMPORAL_COMPRESSION_ALT = 362877; // Alternate spell ID
         constexpr uint32 LIVING_FLAME_HEAL = 361509;  // Heal version of Living Flame
-        constexpr uint32 EMERALD_BLOSSOM_PRES = 355916;   // Preservation variant
 
         // Utility
         constexpr uint32 LIFEBIND = 373267;  // Link two allies, share healing
         constexpr uint32 TWIN_GUARDIAN = 370888;  // Shield another player
-        constexpr uint32 BLESSING_OF_THE_BRONZE_ALT = 364342; // Alternate spell ID
 
         // Procs
         constexpr uint32 ESSENCE_BURST_PRES = 369299;  // Free essence spender
@@ -643,7 +633,6 @@ namespace Evoker
     {
         // Core Rotation
         constexpr uint32 EBON_MIGHT = 395296;
-        constexpr uint32 EBON_MIGHT_ALT = 395152;         // Alternate spell ID
         constexpr uint32 PRESCIENCE = 409311;
         constexpr uint32 BREATH_OF_EONS = 403631;
         constexpr uint32 TIME_SKIP = 404977;

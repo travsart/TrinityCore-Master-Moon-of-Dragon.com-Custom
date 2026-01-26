@@ -322,7 +322,6 @@ namespace Priest
 
         // The War Within Abilities
         constexpr uint32 MINDGAMES_SHADOW = 375901; // Shadow version (different from Discipline)
-        constexpr uint32 SHADOW_CRASH_ALT = 205385; // Alternative ID used in some contexts
         constexpr uint32 HALO_SHADOW = 120644; // Shadow-specific Halo ID
         constexpr uint32 MINDBENDER = 123040; // Primary Mindbender ID
 

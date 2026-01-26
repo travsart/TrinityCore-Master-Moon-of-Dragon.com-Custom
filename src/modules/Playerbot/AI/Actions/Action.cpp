@@ -487,14 +487,14 @@ void ActionFactory::RegisterAction(::std::string const& name,
                 actions.push_back(::std::make_shared<SpellAction>("bloodthirst", Warrior::Fury::BLOODTHIRST));
                 actions.push_back(::std::make_shared<SpellAction>("raging_blow", Warrior::Fury::RAGING_BLOW));
                 actions.push_back(::std::make_shared<SpellAction>("rampage", Warrior::Fury::RAMPAGE));
-                actions.push_back(::std::make_shared<SpellAction>("execute", Warrior::Fury::EXECUTE_FURY));
-                actions.push_back(::std::make_shared<SpellAction>("whirlwind", Warrior::Fury::WHIRLWIND_FURY));
-                actions.push_back(::std::make_shared<SpellAction>("bladestorm", Warrior::Fury::BLADESTORM_FURY));
+                actions.push_back(::std::make_shared<SpellAction>("execute", Warrior::Fury::EXECUTE));
+                actions.push_back(::std::make_shared<SpellAction>("whirlwind", Warrior::Fury::WHIRLWIND));
+                actions.push_back(::std::make_shared<SpellAction>("bladestorm", Warrior::Fury::BLADESTORM));
                 actions.push_back(::std::make_shared<SpellAction>("recklessness", Warrior::Fury::RECKLESSNESS));
                 actions.push_back(::std::make_shared<SpellAction>("enraged_regeneration", Warrior::Fury::ENRAGED_REGENERATION));
                 actions.push_back(::std::make_shared<SpellAction>("onslaught", Warrior::Fury::ONSLAUGHT));
                 actions.push_back(::std::make_shared<SpellAction>("odyn_fury", Warrior::Fury::ODYN_FURY));
-                actions.push_back(::std::make_shared<SpellAction>("thunderous_roar", Warrior::Fury::THUNDEROUS_ROAR_FURY));
+                actions.push_back(::std::make_shared<SpellAction>("thunderous_roar", Warrior::Fury::THUNDEROUS_ROAR));
             }
             else if (specEnum == ChrSpecialization::WarriorProtection)
             {
@@ -506,9 +506,9 @@ void ActionFactory::RegisterAction(::std::string const& name,
                 actions.push_back(::std::make_shared<SpellAction>("demoralizing_shout", Warrior::Protection::DEMORALIZING_SHOUT));
                 actions.push_back(::std::make_shared<SpellAction>("last_stand", Warrior::Protection::LAST_STAND));
                 actions.push_back(::std::make_shared<SpellAction>("shield_wall", Warrior::Protection::SHIELD_WALL));
-                actions.push_back(::std::make_shared<SpellAction>("avatar", Warrior::Protection::AVATAR_PROT));
+                actions.push_back(::std::make_shared<SpellAction>("avatar", Warrior::Protection::AVATAR));
                 actions.push_back(::std::make_shared<SpellAction>("shield_charge", Warrior::Protection::SHIELD_CHARGE));
-                actions.push_back(::std::make_shared<SpellAction>("thunderous_roar", Warrior::Protection::THUNDEROUS_ROAR_PROT));
+                actions.push_back(::std::make_shared<SpellAction>("thunderous_roar", Warrior::Protection::THUNDEROUS_ROAR));
             }
             break;
         }
@@ -1077,7 +1077,7 @@ void ActionFactory::RegisterAction(::std::string const& name,
                 actions.push_back(::std::make_shared<SpellAction>("shattering_star", Evoker::Devastation::SHATTERING_STAR));
                 actions.push_back(::std::make_shared<SpellAction>("dragonrage", Evoker::Devastation::DRAGONRAGE));
                 actions.push_back(::std::make_shared<SpellAction>("firestorm", Evoker::Devastation::FIRESTORM));
-                actions.push_back(::std::make_shared<SpellAction>("deep_breath", Evoker::Devastation::DEEP_BREATH_DEV));
+                actions.push_back(::std::make_shared<SpellAction>("deep_breath", Evoker::DEEP_BREATH));
             }
             else if (specEnum == ChrSpecialization::EvokerPreservation)
             {

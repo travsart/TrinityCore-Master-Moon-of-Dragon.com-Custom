@@ -41,7 +41,7 @@ using bot::ai::SpellCategory;
 enum AugmentationEvokerSpells
 {
     // Core Buffs
-    EBON_MIGHT           = WoW112Spells::Evoker::Augmentation::EBON_MIGHT_ALT,
+    EBON_MIGHT           = WoW112Spells::Evoker::Augmentation::EBON_MIGHT,
     PRESCIENCE           = WoW112Spells::Evoker::Augmentation::PRESCIENCE,
     BLISTERING_SCALES    = WoW112Spells::Evoker::Augmentation::BLISTERING_SCALES,
 
