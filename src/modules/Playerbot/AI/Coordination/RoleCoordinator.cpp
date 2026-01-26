@@ -16,6 +16,7 @@
  */
 
 #include "RoleCoordinator.h"
+#include "../Combat/InterruptCoordinator.h"
 #include "../../Advanced/GroupCoordinator.h"
 #include "../../Session/BotSession.h"
 #include "../../Session/BotSessionManager.h"
@@ -970,6 +971,20 @@ void DPSCoordinator::SetFocusTarget(ObjectGuid targetGuid)
 
 ObjectGuid DPSCoordinator::GetNextInterrupter() const
 {
+    // Phase 2 Architecture: Delegate to InterruptCoordinator (single authority)
+    if (_interruptCoordinator)
+    {
+        // InterruptCoordinator manages all interrupt assignments centrally
+        // GetPendingAssignments returns vector of InterruptAssignment structs
+        auto pending = _interruptCoordinator->GetPendingAssignments();
+        if (!pending.empty())
+        {
+            return pending.front().assignedBot; // Return first assigned bot
+        }
+        return ObjectGuid::Empty;
+    }
+
+    // Fallback: Legacy implementation (only used if no InterruptCoordinator set)
     uint32 now = GameTime::GetGameTimeMS();
 
     for (auto const& interrupt : _interruptRotation)
@@ -985,6 +1000,21 @@ ObjectGuid DPSCoordinator::GetNextInterrupter() const
 
 void DPSCoordinator::AssignInterrupt(ObjectGuid dpsGuid, ObjectGuid targetGuid)
 {
+    // Phase 2 Architecture: Delegate to InterruptCoordinator (single authority)
+    if (_interruptCoordinator)
+    {
+        // InterruptCoordinator handles interrupt assignment via OnEnemyCastStart events
+        // Direct assignment is deprecated - interrupts are triggered by cast detection
+        // Simply register the bot as available for interrupts (updates cooldown to ready)
+        _interruptCoordinator->UpdateBotCooldown(dpsGuid, 0); // 0 = ready to interrupt
+
+        TC_LOG_DEBUG("playerbot.coordination",
+            "DPSCoordinator delegated interrupt for {} to InterruptCoordinator (target: {})",
+            dpsGuid.ToString(), targetGuid.ToString());
+        return;
+    }
+
+    // Fallback: Legacy implementation (only used if no InterruptCoordinator set)
     uint32 now = GameTime::GetGameTimeMS();
 
     InterruptAssignment assignment;
@@ -1127,6 +1157,15 @@ void DPSCoordinator::UpdateFocusTarget(GroupCoordinator* group, RoleCache const&
 
 void DPSCoordinator::UpdateInterruptRotation(GroupCoordinator* group, RoleCache const& cache)
 {
+    // Phase 2 Architecture: Skip when InterruptCoordinator is handling interrupts
+    if (_interruptCoordinator)
+    {
+        // InterruptCoordinator maintains its own interrupt rotation via RegisterBot/UpdateBotCooldown
+        // DPS registration should happen at bot creation/group join, not in periodic updates
+        return;
+    }
+
+    // Fallback: Legacy implementation (only used if no InterruptCoordinator set)
     uint32 now = GameTime::GetGameTimeMS();
 
     // Clean up expired interrupt cooldowns

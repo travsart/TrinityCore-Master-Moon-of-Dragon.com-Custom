@@ -27,6 +27,12 @@
 
 namespace Playerbot
 {
+
+// Forward declaration for single authority delegation
+// Note: InterruptCoordinator is a type alias for InterruptCoordinatorFixed
+class InterruptCoordinatorFixed;
+using InterruptCoordinator = InterruptCoordinatorFixed;
+
 namespace Coordination
 {
 
@@ -251,6 +257,16 @@ public:
     void UpdateWithCache(GroupCoordinator* group, uint32 diff, RoleCache const& cache);
     GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::DPS_MELEE; } // Handles both melee and ranged
 
+    // ========================================================================
+    // DEPENDENCY INJECTION - Single Authority Delegation
+    // ========================================================================
+
+    /**
+     * @brief Set interrupt coordinator (single authority for interrupts)
+     * Phase 2 Architecture: All interrupt coordination delegates to InterruptCoordinator
+     */
+    void SetInterruptCoordinator(InterruptCoordinator* ic) { _interruptCoordinator = ic; }
+
     /**
      * @brief Get focus target for DPS
      */
@@ -264,6 +280,7 @@ public:
     /**
      * @brief Get next interrupter
      * @return DPS GUID with interrupt ready
+     * Phase 2: Delegates to InterruptCoordinator
      */
     ObjectGuid GetNextInterrupter() const;
 
@@ -271,6 +288,7 @@ public:
      * @brief Assign interrupt to DPS
      * @param dpsGuid DPS GUID
      * @param targetGuid Target GUID
+     * Phase 2: Delegates to InterruptCoordinator
      */
     void AssignInterrupt(ObjectGuid dpsGuid, ObjectGuid targetGuid);
 
@@ -324,6 +342,11 @@ private:
     };
 
     ObjectGuid _focusTarget;
+
+    // Phase 2 Architecture: Delegate to single authority
+    InterruptCoordinator* _interruptCoordinator = nullptr;
+
+    // Legacy: Only used when _interruptCoordinator is null
     ::std::vector<InterruptAssignment> _interruptRotation;
     ::std::vector<CCAssignment> _ccAssignments;
 

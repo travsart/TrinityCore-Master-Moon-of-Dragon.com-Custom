@@ -62,6 +62,12 @@ class Group;
 
 namespace Playerbot
 {
+
+// Forward declaration for interrupt authority
+// Note: InterruptCoordinator is a type alias for InterruptCoordinatorFixed
+class InterruptCoordinatorFixed;
+using InterruptCoordinator = InterruptCoordinatorFixed;
+
 namespace Advanced
 {
 
@@ -503,6 +509,23 @@ public:
     uint32 GetUpdateInterval() const { return m_updateInterval; }
 
     // ========================================================================
+    // DEPENDENCY INJECTION - Single Authority Delegation
+    // ========================================================================
+
+    /**
+     * @brief Set interrupt coordinator (single authority for interrupts)
+     * @param ic InterruptCoordinator instance to delegate to
+     *
+     * Phase 2 Architecture: All interrupt coordination delegates to InterruptCoordinator
+     */
+    void SetInterruptCoordinator(InterruptCoordinator* ic) { _interruptCoordinator = ic; }
+
+    /**
+     * @brief Get interrupt coordinator
+     */
+    InterruptCoordinator* GetInterruptCoordinator() const { return _interruptCoordinator; }
+
+    // ========================================================================
     // STATISTICS & MONITORING
     // ========================================================================
 
@@ -618,6 +641,9 @@ private:
 
     Group* m_group;                                             ///< Group being coordinated
     GroupTacticalState m_tacticalState;                         ///< Shared tactical state
+
+    // Phase 2 Architecture: Delegate to single authorities
+    InterruptCoordinator* _interruptCoordinator = nullptr;      ///< Single authority for interrupts
 
     // Assignments
     std::unordered_map<ObjectGuid, TacticalAssignment> m_assignments; ///< Bot GUID → Assignment

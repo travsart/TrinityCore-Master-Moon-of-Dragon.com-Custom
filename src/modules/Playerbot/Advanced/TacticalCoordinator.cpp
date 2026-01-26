@@ -16,6 +16,7 @@
  */
 
 #include "TacticalCoordinator.h"
+#include "../AI/Combat/InterruptCoordinator.h"
 #include "Group.h"
 #include "Player.h"
 #include "Unit.h"
@@ -23,6 +24,7 @@
 #include "Timer.h"
 #include "Creature.h"
 #include "ThreatManager.h"
+#include "ObjectAccessor.h"
 #include <algorithm>
 #include <chrono>
 
@@ -217,6 +219,34 @@ ObjectGuid TacticalCoordinator::AssignInterrupt(ObjectGuid targetGuid)
     if (targetGuid.IsEmpty())
         return ObjectGuid::Empty;
 
+    // Phase 2 Architecture: Delegate to InterruptCoordinator (single authority)
+    if (_interruptCoordinator)
+    {
+        // InterruptCoordinator handles all interrupt assignment logic
+        // Get the caster unit to pass spell info
+        Unit* caster = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(targetGuid), targetGuid);
+        if (caster)
+        {
+            // The InterruptCoordinator will handle assignment internally
+            // via OnEnemyCastStart when it detects the cast
+            TC_LOG_DEBUG("playerbot", "TacticalCoordinator::AssignInterrupt() - Delegated to InterruptCoordinator for {}",
+                         targetGuid.ToString());
+        }
+
+        m_statistics.interruptsAssigned.fetch_add(1, std::memory_order_relaxed);
+
+        // Query who was assigned (InterruptCoordinator manages rotation)
+        auto assignments = _interruptCoordinator->GetPendingAssignments();
+        for (auto const& assignment : assignments)
+        {
+            if (assignment.targetCaster == targetGuid)
+                return assignment.assignedBot;
+        }
+
+        return ObjectGuid::Empty;
+    }
+
+    // Fallback: Legacy implementation (only used if no InterruptCoordinator set)
     std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
     uint32 currentTime = getMSTime();
@@ -228,21 +258,19 @@ ObjectGuid TacticalCoordinator::AssignInterrupt(ObjectGuid targetGuid)
         TacticalAssignment assignment;
         assignment.targetGuid = targetGuid;
         assignment.taskType = "interrupt";
-        assignment.priority = 90; // High priority
+        assignment.priority = 90;
         assignment.assignedTime = currentTime;
-        assignment.expirationTime = currentTime + 5000; // 5 second window
+        assignment.expirationTime = currentTime + 5000;
         assignment.assignedBot = bestInterrupter;
 
         m_assignments[bestInterrupter] = assignment;
-
-        // Mark interrupt as used (assume 24 second CD for most interrupts)
         m_tacticalState.interruptQueue[bestInterrupter] = currentTime + 24000;
         m_tacticalState.lastInterruptTime = currentTime;
         m_tacticalState.lastInterrupter = bestInterrupter;
 
         m_statistics.interruptsAssigned.fetch_add(1, std::memory_order_relaxed);
 
-        TC_LOG_DEBUG("playerbot", "TacticalCoordinator::AssignInterrupt() - Assigned {} to interrupt {}",
+        TC_LOG_DEBUG("playerbot", "TacticalCoordinator::AssignInterrupt() - Fallback: Assigned {} to interrupt {}",
                      bestInterrupter.ToString(), targetGuid.ToString());
 
         return bestInterrupter;
@@ -259,12 +287,22 @@ void TacticalCoordinator::RegisterInterrupter(ObjectGuid botGuid, uint32 cooldow
     if (botGuid.IsEmpty())
         return;
 
-    std::lock_guard<decltype(m_mutex)> lock(m_mutex);
+    // Phase 2 Architecture: InterruptCoordinator handles registration via RegisterBot()
+    // This method is kept for backward compatibility but InterruptCoordinator should be
+    // the primary registration point via BotAI initialization
+    if (_interruptCoordinator)
+    {
+        TC_LOG_DEBUG("playerbot", "TacticalCoordinator::RegisterInterrupter() - InterruptCoordinator handles registration for {}",
+                     botGuid.ToString());
+        // InterruptCoordinator's RegisterBot() is called elsewhere during bot init
+        return;
+    }
 
-    // Initialize interrupt queue entry (ready immediately)
+    // Fallback: Legacy implementation
+    std::lock_guard<decltype(m_mutex)> lock(m_mutex);
     m_tacticalState.interruptQueue[botGuid] = 0;
 
-    TC_LOG_DEBUG("playerbot", "TacticalCoordinator::RegisterInterrupter() - Registered {} with {}ms cooldown",
+    TC_LOG_DEBUG("playerbot", "TacticalCoordinator::RegisterInterrupter() - Fallback: Registered {} with {}ms cooldown",
                  botGuid.ToString(), cooldownMs);
 }
 
@@ -273,6 +311,16 @@ void TacticalCoordinator::ReportInterruptUsed(ObjectGuid botGuid, uint32 cooldow
     if (botGuid.IsEmpty())
         return;
 
+    // Phase 2 Architecture: Delegate to InterruptCoordinator (single authority)
+    if (_interruptCoordinator)
+    {
+        _interruptCoordinator->UpdateBotCooldown(botGuid, cooldownMs);
+        TC_LOG_DEBUG("playerbot", "TacticalCoordinator::ReportInterruptUsed() - Delegated to InterruptCoordinator for {}",
+                     botGuid.ToString());
+        return;
+    }
+
+    // Fallback: Legacy implementation
     std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
     uint32 currentTime = getMSTime();
@@ -280,7 +328,7 @@ void TacticalCoordinator::ReportInterruptUsed(ObjectGuid botGuid, uint32 cooldow
     m_tacticalState.lastInterruptTime = currentTime;
     m_tacticalState.lastInterrupter = botGuid;
 
-    TC_LOG_DEBUG("playerbot", "TacticalCoordinator::ReportInterruptUsed() - {} used interrupt, ready at {}",
+    TC_LOG_DEBUG("playerbot", "TacticalCoordinator::ReportInterruptUsed() - Fallback: {} used interrupt, ready at {}",
                  botGuid.ToString(), currentTime + cooldownMs);
 }
 
@@ -289,6 +337,15 @@ bool TacticalCoordinator::IsNextInterrupter(ObjectGuid botGuid) const
     if (botGuid.IsEmpty())
         return false;
 
+    // Phase 2 Architecture: Delegate to InterruptCoordinator (single authority)
+    if (_interruptCoordinator)
+    {
+        ObjectGuid targetGuid;
+        uint32 spellId;
+        return _interruptCoordinator->ShouldBotInterrupt(botGuid, targetGuid, spellId);
+    }
+
+    // Fallback: Legacy implementation
     std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
     ObjectGuid next = GetNextInterrupter();
@@ -587,6 +644,15 @@ void TacticalCoordinator::UpdateInterruptRotation()
 {
     // Called with lock already held
 
+    // Phase 2 Architecture: InterruptCoordinator handles all rotation
+    // This is only used as fallback when no InterruptCoordinator is set
+    if (_interruptCoordinator)
+    {
+        // InterruptCoordinator handles its own update cycle
+        return;
+    }
+
+    // Fallback: Legacy implementation
     uint32 currentTime = getMSTime();
 
     // Clean up expired interrupt cooldowns
