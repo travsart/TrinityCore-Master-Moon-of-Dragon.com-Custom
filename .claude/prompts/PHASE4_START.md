@@ -1,4 +1,4 @@
-# Phase 4: New Coordinators - Claude Code Start Prompt
+# Phase 4: New Coordinators - Claude Code Start Prompt (Updated)
 
 Copy this entire prompt into Claude Code to begin Phase 4 implementation:
 
@@ -10,202 +10,247 @@ Phases 1, 2, and 3 are complete. Now implement Phase 4: New Coordinators.
 
 ### Context
 - **Repository**: `C:\TrinityBots\TrinityCore`
-- **Detailed Plan**: Read `.claude/prompts/PHASE4_NEW_COORDINATORS.md` for full specifications
-- **Master Plan**: Read `.claude/plans/COMBAT_REFACTORING_MASTER_PLAN.md`
+- **Detailed Plans**: 
+  - `.claude/prompts/PHASE4_NEW_COORDINATORS.md` (Dungeon, Arena, BG)
+  - `.claude/prompts/PHASE4_4_RAID_COORDINATOR.md` (Raid)
+- **Master Plan**: `.claude/plans/COMBAT_REFACTORING_MASTER_PLAN.md`
 
 ### Phase 4 Goal
-Implement the three missing coordinators identified in the analysis:
-- **DungeonCoordinator** - 5-man dungeon coordination (trash, bosses, M+, wipe recovery)
-- **ArenaCoordinator** - PvP coordination (kill targets, burst windows, CC chains)
-- **BattlegroundCoordinator** - Large-scale PvP (objectives, roles, strategic decisions)
+Implement the FOUR missing coordinators identified in the analysis:
+- **DungeonCoordinator** - 5-man dungeon coordination
+- **ArenaCoordinator** - 2v2/3v3/5v5 PvP coordination
+- **BattlegroundCoordinator** - Large-scale PvP objectives
+- **RaidCoordinator** - 10-40 man raid coordination (MOST COMPLEX)
 
 ---
 
-### Phase 4 Tasks (Execute in Order)
+## Phase 4 Overview (8-9 weeks total)
+
+| Task | Coordinator | Effort | Key Features |
+|------|-------------|--------|--------------|
+| 4.1 | DungeonCoordinator | 80h | Trash, bosses, M+, wipe recovery |
+| 4.2 | ArenaCoordinator | 80h | Kill targets, burst, CC chains |
+| 4.3 | BattlegroundCoordinator | 80h | Objectives, roles, strategy |
+| 4.4 | **RaidCoordinator** | **100h** | **Tanks, healers, kiting, adds, CDs** |
+| **Total** | | **340h** | |
 
 ---
 
-## Task 4.1: DungeonCoordinator (80h / 2 weeks)
+## Task 4.1: DungeonCoordinator (80h)
 
 **Files to CREATE** in `src/modules/Playerbot/AI/Coordination/Dungeon/`:
 
-### 4.1.1: DungeonState.h
-```cpp
-enum class DungeonState : uint8 {
-    IDLE, ENTERING, READY_CHECK, CLEARING_TRASH, 
-    PRE_BOSS, BOSS_COMBAT, POST_BOSS, WIPED, COMPLETED
-};
-
-enum class DungeonDifficulty : uint8 { NORMAL, HEROIC, MYTHIC, MYTHIC_PLUS };
-enum class TrashPackPriority : uint8 { SKIP, OPTIONAL, REQUIRED, PATROL, DANGEROUS };
-enum class RaidMarker : uint8 { NONE, SKULL, CROSS, MOON, SQUARE, TRIANGLE, DIAMOND, CIRCLE, STAR };
-
-struct TrashPack { uint32 packId; std::vector<ObjectGuid> members; TrashPackPriority priority; bool requiresCC; };
-struct BossInfo { uint32 bossId; uint8 currentPhase; bool hasEnrageTimer; uint32 enrageTimeMs; };
-struct DungeonProgress { uint32 dungeonId; uint8 bossesKilled; float completionPercent; /* M+ fields */ };
-```
-
-### 4.1.2: DungeonCoordinator.h/.cpp
-- State machine (IDLE → ENTERING → CLEARING_TRASH → PRE_BOSS → BOSS_COMBAT → ...)
-- Inherits `ICombatEventSubscriber`
-- Manages: TrashPullManager, BossEncounterManager, WipeRecoveryManager, MythicPlusManager
-- Key methods: `GetCurrentPullTarget()`, `AssignCCTargets()`, `OnBossEngaged()`, `OnGroupWipe()`
-
-### 4.1.3: TrashPullManager.h/.cpp
-- Pull planning with CC assignments
-- Raid marker management (Skull = kill first, Moon = poly, etc.)
-- Kill order calculation
-- Safe pull detection
-
-### 4.1.4: BossEncounterManager.h/.cpp
-- Boss strategies with phase tracking
-- Mechanic detection and handling (tank swap, spread, stack, interrupt)
-- Enrage timer tracking
-- Bloodlust timing
-
-### 4.1.5: WipeRecoveryManager.h/.cpp
-- Rez priority queue (Healer > Tank > DPS)
-- Rebuff coordination
-- Mana regeneration waiting
-- Ready check before continuing
-
-### 4.1.6: MythicPlusManager.h/.cpp
-- Timer tracking (remaining time, 2/3 chest thresholds)
-- Affix handling (Bolstering, Raging, Sanguine, Explosive, etc.)
-- Enemy forces tracking (% completion)
-- Route optimization
+1. **DungeonState.h** - States, enums, structs
+2. **DungeonCoordinator.h/.cpp** - Main coordinator
+3. **TrashPullManager.h/.cpp** - Pull planning, CC, markers
+4. **BossEncounterManager.h/.cpp** - Boss mechanics, phases
+5. **WipeRecoveryManager.h/.cpp** - Rez priority, rebuff
+6. **MythicPlusManager.h/.cpp** - Timer, affixes, forces
 
 ---
 
-## Task 4.2: ArenaCoordinator (80h / 2 weeks)
+## Task 4.2: ArenaCoordinator (80h)
 
 **Files to CREATE** in `src/modules/Playerbot/AI/Coordination/Arena/`:
 
-### 4.2.1: ArenaState.h
-```cpp
-enum class ArenaState : uint8 { IDLE, QUEUED, PREPARATION, GATES_OPENING, COMBAT, VICTORY, DEFEAT };
-enum class ArenaType : uint8 { ARENA_2V2 = 2, ARENA_3V3 = 3, ARENA_5V5 = 5 };
-enum class ArenaRole : uint8 { UNKNOWN, HEALER, MELEE_DPS, RANGED_DPS, HYBRID };
-enum class TargetPriority : uint8 { LOW, NORMAL, HIGH, KILL_TARGET };
-
-struct ArenaEnemy { ObjectGuid guid; ArenaRole role; bool trinketAvailable; float healthPercent; bool isInCC; };
-struct ArenaTeammate { ObjectGuid guid; ArenaRole role; bool needsPeel; bool hasDefensivesAvailable; };
-struct BurstWindow { ObjectGuid target; uint32 startTime; uint32 duration; bool isActive; };
-```
-
-### 4.2.2: ArenaCoordinator.h/.cpp
-- State machine (PREPARATION → GATES_OPENING → COMBAT → VICTORY/DEFEAT)
-- Manages: KillTargetManager, BurstCoordinator, CCChainManager, DefensiveCoordinator
-- Enemy cooldown tracking (trinkets, defensives, major CDs)
-- Key methods: `GetKillTarget()`, `CallBurst()`, `CallCCChain()`, `RequestPeel()`
-
-### 4.2.3: KillTargetManager.h/.cpp
-- Target scoring based on: health, trinket status, defensive status, role, position
-- Switch target logic
-- Priority bonus system
-
-### 4.2.4: CCChainManager.h/.cpp
-- **Uses DR tracking from Phase 2** (CrowdControlManager)
-- CC chain planning considering DR stacks
-- Chain execution coordination (poly → fear → stun with proper timing)
-- Overlap prevention
-
-### 4.2.5: BurstCoordinator.h/.cpp
-- Burst window management
-- Cooldown stacking coordination
-- "Go" signal timing
-
-### 4.2.6: DefensiveCoordinator.h/.cpp
-- Peel request management
-- Defensive cooldown rotation
-- External CD coordination (Pain Suppression, Blessing of Sacrifice, etc.)
+1. **ArenaState.h** - States, enemy/teammate tracking
+2. **ArenaCoordinator.h/.cpp** - Main coordinator
+3. **KillTargetManager.h/.cpp** - Target scoring, switches
+4. **CCChainManager.h/.cpp** - DR-aware CC chains
+5. **BurstCoordinator.h/.cpp** - Burst windows
+6. **DefensiveCoordinator.h/.cpp** - Peel, externals
 
 ---
 
-## Task 4.3: BattlegroundCoordinator (80h / 2 weeks)
+## Task 4.3: BattlegroundCoordinator (80h)
 
 **Files to CREATE** in `src/modules/Playerbot/AI/Coordination/Battleground/`:
 
-### 4.3.1: BGState.h
-```cpp
-enum class BGState : uint8 { IDLE, QUEUED, PREPARATION, ACTIVE, OVERTIME, VICTORY, DEFEAT };
-enum class BGType : uint32 { WARSONG_GULCH = 489, ARATHI_BASIN = 529, ALTERAC_VALLEY = 30, ... };
-enum class BGRole : uint8 { UNASSIGNED, FLAG_CARRIER, FLAG_ESCORT, FLAG_HUNTER, NODE_ATTACKER, NODE_DEFENDER, ROAMER, ... };
-enum class ObjectiveType : uint8 { FLAG, NODE, TOWER, GRAVEYARD, GATE, CART, ORB, BOSS };
-enum class ObjectiveState : uint8 { NEUTRAL, ALLIANCE_CONTROLLED, HORDE_CONTROLLED, CONTESTED, ... };
-
-struct BGObjective { uint32 id; ObjectiveType type; ObjectiveState state; float captureProgress; };
-struct BGScoreInfo { uint32 allianceScore; uint32 hordeScore; uint32 timeRemaining; };
-struct FlagInfo { ObjectGuid carrierGuid; bool isPickedUp; uint8 stackCount; };
-```
-
-### 4.3.2: BattlegroundCoordinator.h/.cpp
-- Supports 11 BG types (WSG, AB, AV, EOTS, SOTA, IOC, TP, BFG, SSM, TK, DG)
-- Manages: ObjectiveManager, BGRoleManager, FlagCarrierManager, NodeController, BGStrategyEngine
-- Key methods: `GetBotRole()`, `CommandAttack()`, `CommandDefend()`, `GetFriendlyFC()`
-
-### 4.3.3: BGRoleManager.h/.cpp
-- Role assignment based on class/spec suitability
-- Dynamic reassignment based on situation
-- Role requirements per BG type
-
-### 4.3.4: FlagCarrierManager.h/.cpp (CTF maps)
-- FC selection (best survivability)
-- Escort coordination
-- Enemy FC hunting
-- Kiting paths
-
-### 4.3.5: NodeController.h/.cpp (Node maps)
-- Capture coordination
-- Defender allocation
-- Contest decisions
-
-### 4.3.6: BGStrategyEngine.h/.cpp
-- Strategic decisions: BALANCED, AGGRESSIVE, DEFENSIVE, TURTLE, ALL_IN, STALL
-- Score-based strategy adjustment
-- Time-remaining considerations
-- Map-specific strategies
+1. **BGState.h** - States, objectives, roles
+2. **BattlegroundCoordinator.h/.cpp** - Main coordinator
+3. **BGRoleManager.h/.cpp** - Role assignment
+4. **FlagCarrierManager.h/.cpp** - CTF coordination
+5. **NodeController.h/.cpp** - Node capture
+6. **BGStrategyEngine.h/.cpp** - Strategic decisions
 
 ---
 
-### Instructions
-1. Read the detailed plan first: `.claude/prompts/PHASE4_NEW_COORDINATORS.md`
-2. Execute tasks in order (4.1 → 4.2 → 4.3)
-3. Each coordinator should be functional before moving to next
-4. Use event system from Phase 3 (ICombatEventSubscriber)
-5. Use DR tracking from Phase 2 (CrowdControlManager) for Arena CC chains
-6. Verify compilation after each major component
-7. Commit after each working sub-task
+## Task 4.4: RaidCoordinator (100h) ⭐ MOST COMPLEX
 
-### Implementation Order (6 weeks)
-| Week | Task |
-|------|------|
-| 1 | DungeonCoordinator core + TrashPullManager |
-| 2 | BossEncounterManager + WipeRecoveryManager + MythicPlusManager |
-| 3 | ArenaCoordinator core + KillTargetManager |
-| 4 | CCChainManager + BurstCoordinator + DefensiveCoordinator |
-| 5 | BattlegroundCoordinator core + BGRoleManager |
-| 6 | FlagCarrierManager + NodeController + BGStrategyEngine + Integration |
+**Files to CREATE** in `src/modules/Playerbot/AI/Coordination/Raid/`:
 
-### Success Criteria
-- [ ] DungeonCoordinator handles trash pulls with CC assignments
-- [ ] DungeonCoordinator handles boss encounters with phase tracking
-- [ ] DungeonCoordinator handles wipe recovery (rez order, rebuff)
-- [ ] MythicPlusManager tracks timer and enemy forces
-- [ ] ArenaCoordinator manages kill targets and burst windows
-- [ ] CCChainManager plans DR-aware CC chains
-- [ ] BattlegroundCoordinator assigns roles per BG type
-- [ ] BGStrategyEngine makes strategic decisions based on score/time
+### 4.4.1: RaidState.h
+All raid-specific enums and structs:
+```cpp
+enum class RaidState : uint8 { IDLE, FORMING, BUFFING, PULLING, COMBAT, PHASE_TRANSITION, WIPED, RECOVERING };
+enum class TankRole : uint8 { ACTIVE, SWAP_READY, ADD_DUTY, KITING, RECOVERING };
+enum class HealerAssignment : uint8 { RAID_HEALING, TANK_1, TANK_2, GROUP_1-8, DISPEL_DUTY };
+
+struct RaidTankInfo { ObjectGuid guid; TankRole role; uint8 debuffStacks; ObjectGuid currentTarget; };
+struct RaidHealerInfo { ObjectGuid guid; HealerAssignment assignment; float manaPercent; };
+struct RaidSubGroup { uint8 groupNumber; std::vector<ObjectGuid> members; };
+struct KitePath { std::vector<waypoints>; ObjectGuid assignedKiter; };
+struct RaidAdd { ObjectGuid guid; uint8 priority; bool requiresTank; ObjectGuid assignedTank; };
+```
+
+### 4.4.2: RaidCoordinator.h/.cpp
+Main orchestrator with sub-managers:
+- State machine (IDLE → FORMING → COMBAT → WIPED → RECOVERING)
+- Inherits `ICombatEventSubscriber`
+- Manages 9 sub-components
+
+### 4.4.3: RaidTankCoordinator.h/.cpp
+**CRITICAL - Tank swap automation:**
+```cpp
+void ConfigureSwapTrigger(uint32 spellId, uint8 stackThreshold);
+bool NeedsTankSwap() const;
+void CallTankSwap();
+void OnSwapDebuffApplied(ObjectGuid tank, uint32 spellId, uint8 stacks);
+void AssignTankToBoss(ObjectGuid tank);
+void AssignTankToAdds(ObjectGuid tank, std::vector<ObjectGuid> adds);
+```
+
+### 4.4.4: RaidHealCoordinator.h/.cpp
+**Healer assignments + external CDs:**
+```cpp
+void AssignHealerToTank(ObjectGuid healer, ObjectGuid tank);
+void AssignHealerToGroup(ObjectGuid healer, uint8 groupNum);
+void RequestExternalCooldown(ObjectGuid target, uint8 urgency);
+ObjectGuid GetNextExternalProvider() const;
+void AutoAssignHealers();  // Smart auto-assignment
+```
+
+### 4.4.5: RaidCooldownRotation.h/.cpp
+**Raid-wide CD management:**
+```cpp
+void CallBloodlust();
+void CallRaidDefensive();  // Spirit Link, Rallying Cry, etc.
+void CallBattleRez(ObjectGuid target);
+bool ShouldUseBloodlust() const;  // Based on phase/health
+void LoadCooldownPlan(const CooldownPlan& plan);  // Pre-planned rotation
+```
+
+### 4.4.6: RaidGroupManager.h/.cpp
+**8 sub-groups + split mechanics:**
+```cpp
+RaidSubGroup* GetSubGroup(uint8 groupNum);
+void AssignToSubGroup(ObjectGuid player, uint8 groupNum);
+void SplitRaid(uint8 numGroups);  // For split mechanics
+void MergeRaid();
+void OptimizeSubGroups();  // Balance tank/healer distribution
+```
+
+### 4.4.7: KitingManager.h/.cpp
+**Dedicated kiting support:**
+```cpp
+void RegisterPath(const KitePath& path);
+void AssignKiter(ObjectGuid kiter, ObjectGuid target, uint32 pathId);
+void SwapKiter(ObjectGuid oldKiter, ObjectGuid newKiter);
+float GetRecommendedDistance(ObjectGuid kiter) const;
+void OnKiterDied(ObjectGuid kiter);  // Emergency swap
+std::tuple<float, float, float> GetNextWaypoint(ObjectGuid kiter) const;
+```
+
+### 4.4.8: AddManagementSystem.h/.cpp
+**Multi-add handling:**
+```cpp
+void OnAddSpawned(ObjectGuid guid, uint32 creatureId);
+void SetAddPriority(ObjectGuid guid, uint8 priority);
+void AssignTankToAdd(ObjectGuid add, ObjectGuid tank);
+void AssignDPSToAdd(ObjectGuid add, ObjectGuid dps);
+void CallSwitchToAdd(ObjectGuid add);
+void DistributeDPSToAdds();  // Auto-balance DPS across adds
+ObjectGuid GetHighestPriorityAdd() const;
+```
+
+### 4.4.9: RaidPositioningManager.h/.cpp
+**Position assignments:**
+```cpp
+void AssignPosition(ObjectGuid player, float x, float y, float z);
+void CallSpread(float distance);
+void CallStack(float x, float y, float z);
+void CallMoveToPosition(const std::string& positionName);
+```
+
+### 4.4.10: RaidEncounterManager.h/.cpp
+**Boss mechanics + phases:**
+```cpp
+void OnPhaseChange(uint8 newPhase);
+void OnMechanicTriggered(uint32 spellId);
+uint32 GetTimeToEnrage() const;
+bool ShouldUseBloodlustNow() const;
+```
+
+---
+
+## Implementation Order (8-9 weeks)
+
+| Week | Task | Focus |
+|------|------|-------|
+| 1 | 4.1 | DungeonCoordinator core + TrashPullManager |
+| 2 | 4.1 | BossEncounterManager + WipeRecoveryManager + M+ |
+| 3 | 4.2 | ArenaCoordinator + KillTargetManager |
+| 4 | 4.2 | CCChainManager + BurstCoordinator |
+| 5 | 4.3 | BattlegroundCoordinator + BGRoleManager |
+| 6 | 4.3 | FlagCarrierManager + NodeController + Strategy |
+| 7 | 4.4 | **RaidCoordinator core + RaidTankCoordinator** |
+| 8 | 4.4 | **RaidHealCoordinator + RaidCooldownRotation** |
+| 9 | 4.4 | **KitingManager + AddManagementSystem + Positioning** |
+
+---
+
+## Success Criteria
+
+### Dungeon (4.1)
+- [ ] TrashPullManager assigns CC targets
+- [ ] BossEncounterManager tracks phases
+- [ ] WipeRecoveryManager orders rezzes correctly
+- [ ] MythicPlusManager tracks timer + forces
+
+### Arena (4.2)
+- [ ] KillTargetManager scores targets
+- [ ] CCChainManager uses Phase 2 DR tracking
+- [ ] BurstCoordinator coordinates cooldowns
+
+### Battleground (4.3)
+- [ ] BGRoleManager assigns FC, defenders, etc.
+- [ ] NodeController handles capture coordination
+- [ ] BGStrategyEngine makes strategic decisions
+
+### Raid (4.4) ⭐
+- [ ] **RaidTankCoordinator automates tank swaps**
+- [ ] **RaidHealCoordinator assigns healers to tanks/groups**
+- [ ] **RaidCooldownRotation manages Bloodlust timing**
+- [ ] **KitingManager supports dedicated kiters with paths**
+- [ ] **AddManagementSystem handles add priorities + DPS distribution**
+- [ ] **RaidGroupManager handles 8 sub-groups + splits**
+
+### General
 - [ ] All coordinators use event system (ICombatEventSubscriber)
 - [ ] Project compiles without errors
 
-### Critical Notes
-1. **Use existing systems**: Phase 2 DR tracking, Phase 3 event system
-2. **State machines**: All coordinators should have proper state management
-3. **Factory pattern**: Use factory for BG-specific initialization
-4. **Test incrementally**: Each manager should work standalone before integration
+---
 
-Start with Task 4.1.1 (DungeonState.h).
+## Critical Notes
+
+1. **Raid is MOST COMPLEX** - 21 files, 100 hours
+   - Multiple tanks with automatic swap detection
+   - Healer assignments per tank/group
+   - Kiting with waypoint paths
+   - Add management with priority system
+   - Raid CD rotation (Bloodlust, Spirit Link, etc.)
+
+2. **Use existing systems**:
+   - Phase 2: DR tracking for Arena CC chains
+   - Phase 3: Event system for all coordinators
+
+3. **Tank swap is critical**: Many raid encounters require automated tank swaps at X debuff stacks
+
+4. **Kiting is complex**: Kiters need paths, distance management, emergency swaps
+
+5. **Healer assignments matter**: Tank healers vs raid healers vs group healers
+
+Start with Task 4.1 (DungeonCoordinator), then proceed in order.
 
 ---
 
