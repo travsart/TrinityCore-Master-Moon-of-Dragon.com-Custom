@@ -55,11 +55,11 @@ constexpr uint32 FERAL_SHRED = WoW112Spells::Druid::Feral::SHRED;
 constexpr uint32 FERAL_RAKE = WoW112Spells::Druid::Feral::RAKE;
 constexpr uint32 FERAL_RIP = WoW112Spells::Druid::Feral::RIP;
 constexpr uint32 FERAL_FEROCIOUS_BITE = WoW112Spells::Druid::Feral::FEROCIOUS_BITE;
-constexpr uint32 FERAL_SWIPE_CAT = 106830;         // Local: ID variant (differs from core 106785)
+constexpr uint32 FERAL_SWIPE_CAT = WoW112Spells::Druid::Feral::SWIPE_CAT_ALT;
 constexpr uint32 FERAL_THRASH_CAT = WoW112Spells::Druid::Feral::THRASH_CAT;
 constexpr uint32 FERAL_BRUTAL_SLASH = WoW112Spells::Druid::Feral::BRUTAL_SLASH;
 constexpr uint32 FERAL_PRIMAL_WRATH = WoW112Spells::Druid::Feral::PRIMAL_WRATH;
-constexpr uint32 FERAL_MOONFIRE_CAT = 155625;      // Local: Lunar Inspiration talent
+constexpr uint32 FERAL_MOONFIRE_CAT = WoW112Spells::Druid::Feral::MOONFIRE_FERAL;
 constexpr uint32 FERAL_TIGERS_FURY = WoW112Spells::Druid::Feral::TIGERS_FURY;
 constexpr uint32 FERAL_BERSERK = WoW112Spells::Druid::Feral::BERSERK;
 constexpr uint32 FERAL_INCARNATION_KING = WoW112Spells::Druid::Feral::INCARNATION_FERAL;
@@ -70,7 +70,7 @@ constexpr uint32 FERAL_DASH = WoW112Spells::Druid::DASH;
 constexpr uint32 FERAL_STAMPEDING_ROAR = WoW112Spells::Druid::STAMPEDING_ROAR;
 constexpr uint32 FERAL_SURVIVAL_INSTINCTS = WoW112Spells::Druid::SURVIVAL_INSTINCTS;
 constexpr uint32 FERAL_BARKSKIN = WoW112Spells::Druid::BARKSKIN;
-constexpr uint32 FERAL_RENEWAL = 108238;           // Local talent
+constexpr uint32 FERAL_RENEWAL = WoW112Spells::Druid::RENEWAL;
 constexpr uint32 FERAL_REGROWTH = WoW112Spells::Druid::REGROWTH;
 
 // Feral Druid resource type (Energy + Combo Points)

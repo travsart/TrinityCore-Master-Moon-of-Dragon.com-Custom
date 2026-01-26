@@ -50,7 +50,7 @@ enum DevastationEvokerSpells
     LIVING_FLAME         = WoW112Spells::Evoker::LIVING_FLAME,
 
     // Essence Spenders (Empowered)
-    FIRE_BREATH          = 357208,  // Local: Empowered rank (differs from core 382266)
+    FIRE_BREATH          = WoW112Spells::Evoker::Devastation::FIRE_BREATH_EMPOWERED,
     ETERNITY_SURGE       = WoW112Spells::Evoker::Devastation::ETERNITY_SURGE,
 
     // Direct Damage
@@ -60,12 +60,12 @@ enum DevastationEvokerSpells
 
     // Major Cooldowns
     DRAGONRAGE           = WoW112Spells::Evoker::Devastation::DRAGONRAGE,
-    DEEP_BREATH          = 357210,  // Local: Flying breath attack (differs from core 382266)
+    DEEP_BREATH          = WoW112Spells::Evoker::Devastation::DEEP_BREATH_DEVASTATION,
     TIP_THE_SCALES       = WoW112Spells::Evoker::Devastation::TIP_THE_SCALES,
 
     // Procs and Buffs
     ESSENCE_BURST        = WoW112Spells::Evoker::Devastation::ESSENSE_BURST,
-    BURNOUT              = 375802,  // Local: Slightly different ID from registry (375801)
+    BURNOUT              = WoW112Spells::Evoker::Devastation::BURNOUT_ALT,
     IRIDESCENCE_BLUE     = WoW112Spells::Evoker::Devastation::IRIDESCENCE_BLUE,
     IRIDESCENCE_RED      = WoW112Spells::Evoker::Devastation::IRIDESCENCE_RED,
 

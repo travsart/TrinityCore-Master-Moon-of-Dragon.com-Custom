@@ -48,13 +48,13 @@ using bot::ai::SpellCategory;
 enum PreservationEvokerSpells
 {
     // Direct Heals
-    EMERALD_BLOSSOM      = 355916,  // Local: Slightly different ID from registry (355913)
+    EMERALD_BLOSSOM      = WoW112Spells::Evoker::Preservation::EMERALD_BLOSSOM_PRES,
     VERDANT_EMBRACE      = WoW112Spells::Evoker::VERDANT_EMBRACE,
     LIVING_FLAME_HEAL    = WoW112Spells::Evoker::Preservation::LIVING_FLAME_HEAL,
 
     // Empowered Heals
-    DREAM_BREATH         = 355936,  // Local: Empowered rank (differs from core 382614)
-    SPIRIT_BLOOM         = 367226,  // Local: Alternate ID (differs from core 382731)
+    DREAM_BREATH         = WoW112Spells::Evoker::Preservation::DREAM_BREATH_EMPOWERED,
+    SPIRIT_BLOOM         = WoW112Spells::Evoker::Preservation::SPIRITBLOOM_ALT,
 
     // Echo System
     ECHO                 = WoW112Spells::Evoker::Preservation::ECHO,
@@ -67,7 +67,7 @@ enum PreservationEvokerSpells
 
     // Utility
     LIFEBIND             = WoW112Spells::Evoker::Preservation::LIFEBIND,
-    BLESSING_BRONZE      = 364342,  // Local: Alternate ID (differs from core 381748)
+    BLESSING_BRONZE      = WoW112Spells::Evoker::Preservation::BLESSING_OF_THE_BRONZE_ALT,
     TIME_DILATION        = WoW112Spells::Evoker::Preservation::TIME_DILATION,
     STASIS               = WoW112Spells::Evoker::Preservation::STASIS,
     RESCUE               = WoW112Spells::Evoker::RESCUE,
@@ -89,7 +89,7 @@ enum PreservationEvokerSpells
     FIELD_OF_DREAMS      = WoW112Spells::Evoker::Preservation::FIELD_OF_DREAMS,
     FLOW_STATE           = WoW112Spells::Evoker::Preservation::FLOW_STATE,
     LIFEFORCE_MENDER     = WoW112Spells::Evoker::Preservation::LIFEFORCE_MENDER,
-    TEMPORAL_COMPRESSION = 362877   // Local: Slightly different ID from registry (362874)
+    TEMPORAL_COMPRESSION = WoW112Spells::Evoker::Preservation::TEMPORAL_COMPRESSION_ALT
 };
 
 // Essence resource (same as Devastation)

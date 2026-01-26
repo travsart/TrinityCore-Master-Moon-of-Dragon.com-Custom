@@ -64,8 +64,8 @@ enum BalanceDruidSpells
     FULL_MOON                = WoW112Spells::Druid::Balance::FULL_MOON,
 
     // DoTs
-    MOONFIRE                 = 164812,  // Local: Balance debuff variant (differs from core 8921)
-    SUNFIRE                  = 164815,  // Local: Balance debuff variant (differs from core 93402)
+    MOONFIRE                 = WoW112Spells::Druid::Balance::MOONFIRE_BALANCE,
+    SUNFIRE                  = WoW112Spells::Druid::Balance::SUNFIRE_BALANCE,
 
     // Major Cooldowns
     INCARNATION_CHOSEN       = WoW112Spells::Druid::Balance::INCARNATION_CHOSEN,
@@ -77,16 +77,16 @@ enum BalanceDruidSpells
     // Utility
     MOONKIN_FORM             = WoW112Spells::Druid::MOONKIN_FORM,
     SOLAR_BEAM               = WoW112Spells::Druid::SOLAR_BEAM,
-    TYPHOON                  = 132469,  // Local talent
-    MIGHTY_BASH              = 5211,    // Local talent
-    MASS_ENTANGLEMENT        = 102359,  // Local talent
+    TYPHOON                  = WoW112Spells::Druid::TYPHOON,
+    MIGHTY_BASH              = WoW112Spells::Druid::MIGHTY_BASH,
+    MASS_ENTANGLEMENT        = WoW112Spells::Druid::MASS_ENTANGLEMENT,
     REMOVE_CORRUPTION        = WoW112Spells::Druid::REMOVE_CORRUPTION,
     SOOTHE                   = WoW112Spells::Druid::SOOTHE,
     INNERVATE                = WoW112Spells::Druid::INNERVATE,
 
     // Defensives
     BARKSKIN                 = WoW112Spells::Druid::BARKSKIN,
-    RENEWAL                  = 108238,  // Local talent
+    RENEWAL                  = WoW112Spells::Druid::RENEWAL,
     REGROWTH                 = WoW112Spells::Druid::REGROWTH,
     BEAR_FORM                = WoW112Spells::Druid::BEAR_FORM,
     FRENZIED_REGENERATION    = WoW112Spells::Druid::Guardian::FRENZIED_REGENERATION,
@@ -102,9 +102,9 @@ enum BalanceDruidSpells
     STARWEAVERS_WEFT         = WoW112Spells::Druid::Balance::STARWEAVERS_WEFT,
 
     // Talents
-    WILD_MUSHROOM            = 88747,   // Local: Ground AoE talent (differs from core 145205)
-    TWIN_MOONS               = 279620,  // Local talent
-    SOUL_OF_THE_FOREST       = 114107   // Local talent
+    WILD_MUSHROOM            = WoW112Spells::Druid::Balance::WILD_MUSHROOM_GROUND,
+    TWIN_MOONS               = WoW112Spells::Druid::Balance::TWIN_MOONS,
+    SOUL_OF_THE_FOREST       = WoW112Spells::Druid::Balance::SOUL_OF_THE_FOREST
 };
 
 // Dual resource type for Balance Druid (Mana + Astral Power)

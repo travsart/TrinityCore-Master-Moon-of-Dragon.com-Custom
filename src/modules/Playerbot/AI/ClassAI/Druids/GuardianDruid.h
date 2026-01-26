@@ -66,7 +66,7 @@ constexpr uint32 GUARDIAN_MOONFIRE = WoW112Spells::Druid::Guardian::MOONFIRE_BEA
 constexpr uint32 GUARDIAN_RAGE_OF_SLEEPER = WoW112Spells::Druid::Guardian::RAGE_OF_THE_SLEEPER;
 constexpr uint32 GUARDIAN_BEAR_FORM = WoW112Spells::Druid::BEAR_FORM;
 constexpr uint32 GUARDIAN_BRISTLING_FUR = WoW112Spells::Druid::Guardian::BRISTLING_FUR;
-constexpr uint32 GUARDIAN_RENEWAL = 108238;            // Local talent
+constexpr uint32 GUARDIAN_RENEWAL = WoW112Spells::Druid::RENEWAL;
 constexpr uint32 GUARDIAN_REGROWTH = WoW112Spells::Druid::REGROWTH;
 constexpr uint32 GUARDIAN_GROWL = WoW112Spells::Druid::Guardian::GROWL;
 

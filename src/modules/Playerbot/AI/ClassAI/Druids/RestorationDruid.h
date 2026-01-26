@@ -67,7 +67,7 @@ constexpr uint32 RESTO_NOURISH = WoW112Spells::Druid::Restoration::NOURISH;
 constexpr uint32 RESTO_HEALING_TOUCH = WoW112Spells::Druid::Restoration::HEALING_TOUCH;
 constexpr uint32 RESTO_INNERVATE = WoW112Spells::Druid::INNERVATE;
 constexpr uint32 RESTO_BARKSKIN = WoW112Spells::Druid::BARKSKIN;
-constexpr uint32 RESTO_RENEWAL = 108238;           // Local talent
+constexpr uint32 RESTO_RENEWAL = WoW112Spells::Druid::RENEWAL;
 constexpr uint32 RESTO_MOONFIRE = WoW112Spells::Druid::MOONFIRE;
 
 // Mana resource is defined in CombatSpecializationTemplates.h as uint32

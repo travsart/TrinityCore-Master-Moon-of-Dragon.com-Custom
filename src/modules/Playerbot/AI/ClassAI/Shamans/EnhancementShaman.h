@@ -51,7 +51,7 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Enhancement Shaman Spell IDs
 // Using central registry: WoW112Spells::Shaman and WoW112Spells::Shaman::Enhancement
-constexpr uint32 ENH_ROCKBITER = 193786;            // Local: Legacy spell (removed in Shadowlands)
+constexpr uint32 ENH_ROCKBITER = WoW112Spells::Shaman::Enhancement::ROCKBITER;
 constexpr uint32 ENH_STORMSTRIKE = WoW112Spells::Shaman::Enhancement::STORMSTRIKE;
 constexpr uint32 ENH_LAVA_LASH = WoW112Spells::Shaman::Enhancement::LAVA_LASH;
 constexpr uint32 ENH_LIGHTNING_BOLT = WoW112Spells::Shaman::LIGHTNING_BOLT;
