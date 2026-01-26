@@ -48,48 +48,48 @@ using bot::ai::SpellCategory;
 enum PreservationEvokerSpells
 {
     // Direct Heals
-    EMERALD_BLOSSOM      = 355916,  // -> WoW112Spells::Evoker::EMERALD_BLOSSOM (slight ID difference)
-    VERDANT_EMBRACE      = 360995,  // -> WoW112Spells::Evoker::VERDANT_EMBRACE
-    LIVING_FLAME_HEAL    = 361509,  // -> WoW112Spells::Evoker::Preservation::LIVING_FLAME_HEAL
+    EMERALD_BLOSSOM      = 355916,  // Local: Slightly different ID from registry (355913)
+    VERDANT_EMBRACE      = WoW112Spells::Evoker::VERDANT_EMBRACE,
+    LIVING_FLAME_HEAL    = WoW112Spells::Evoker::Preservation::LIVING_FLAME_HEAL,
 
     // Empowered Heals
-    DREAM_BREATH         = 355936,  // Alternate ID for empowered rank
-    SPIRIT_BLOOM         = 367226,  // -> WoW112Spells::Evoker::Preservation::SPIRITBLOOM (alternate ID)
+    DREAM_BREATH         = 355936,  // Local: Empowered rank (differs from core 382614)
+    SPIRIT_BLOOM         = 367226,  // Local: Alternate ID (differs from core 382731)
 
     // Echo System
-    ECHO                 = 364343,  // -> WoW112Spells::Evoker::Preservation::ECHO
-    REVERSION            = 366155,  // -> WoW112Spells::Evoker::Preservation::REVERSION
+    ECHO                 = WoW112Spells::Evoker::Preservation::ECHO,
+    REVERSION            = WoW112Spells::Evoker::Preservation::REVERSION,
 
     // Major Cooldowns
-    EMERALD_COMMUNION    = 370960,  // -> WoW112Spells::Evoker::Preservation::EMERALD_COMMUNION
-    TEMPORAL_ANOMALY     = 373861,  // -> WoW112Spells::Evoker::Preservation::TEMPORAL_ANOMALY
-    REWIND               = 363534,  // -> WoW112Spells::Evoker::Preservation::REWIND
+    EMERALD_COMMUNION    = WoW112Spells::Evoker::Preservation::EMERALD_COMMUNION,
+    TEMPORAL_ANOMALY     = WoW112Spells::Evoker::Preservation::TEMPORAL_ANOMALY,
+    REWIND               = WoW112Spells::Evoker::Preservation::REWIND,
 
     // Utility
-    LIFEBIND             = 373267,  // -> WoW112Spells::Evoker::Preservation::LIFEBIND
-    BLESSING_BRONZE      = 364342,  // Alternate ID for bronze blessing
-    TIME_DILATION        = 357170,  // -> WoW112Spells::Evoker::Preservation::TIME_DILATION
-    STASIS               = 370537,  // -> WoW112Spells::Evoker::Preservation::STASIS
-    RESCUE               = 370665,  // -> WoW112Spells::Evoker::RESCUE
+    LIFEBIND             = WoW112Spells::Evoker::Preservation::LIFEBIND,
+    BLESSING_BRONZE      = 364342,  // Local: Alternate ID (differs from core 381748)
+    TIME_DILATION        = WoW112Spells::Evoker::Preservation::TIME_DILATION,
+    STASIS               = WoW112Spells::Evoker::Preservation::STASIS,
+    RESCUE               = WoW112Spells::Evoker::RESCUE,
 
     // Defensive (shared with other Evoker specs)
-    PRES_OBSIDIAN_SCALES = 363916,  // -> WoW112Spells::Evoker::OBSIDIAN_SCALES
-    PRES_RENEWING_BLAZE  = 374348,  // -> WoW112Spells::Evoker::RENEWING_BLAZE
-    TWIN_GUARDIAN        = 370888,  // -> WoW112Spells::Evoker::Preservation::TWIN_GUARDIAN
+    PRES_OBSIDIAN_SCALES = WoW112Spells::Evoker::OBSIDIAN_SCALES,
+    PRES_RENEWING_BLAZE  = WoW112Spells::Evoker::RENEWING_BLAZE,
+    TWIN_GUARDIAN        = WoW112Spells::Evoker::Preservation::TWIN_GUARDIAN,
 
     // Essence Generation
-    AZURE_STRIKE_PRES    = 362969,  // -> WoW112Spells::Evoker::AZURE_STRIKE
-    DISINTEGRATE_PRES    = 356995,  // -> WoW112Spells::Evoker::DISINTEGRATE
+    AZURE_STRIKE_PRES    = WoW112Spells::Evoker::AZURE_STRIKE,
+    DISINTEGRATE_PRES    = WoW112Spells::Evoker::DISINTEGRATE,
 
     // Procs
-    ESSENCE_BURST_PRES   = 369299,  // -> WoW112Spells::Evoker::Preservation::ESSENCE_BURST_PRES
-    CALL_OF_YSERA        = 373835,  // -> WoW112Spells::Evoker::Preservation::CALL_OF_YSERA
+    ESSENCE_BURST_PRES   = WoW112Spells::Evoker::Preservation::ESSENCE_BURST_PRES,
+    CALL_OF_YSERA        = WoW112Spells::Evoker::Preservation::CALL_OF_YSERA,
 
     // Talents
-    FIELD_OF_DREAMS      = 370062,  // -> WoW112Spells::Evoker::Preservation::FIELD_OF_DREAMS
-    FLOW_STATE           = 385696,  // -> WoW112Spells::Evoker::Preservation::FLOW_STATE
-    LIFEFORCE_MENDER     = 376179,  // -> WoW112Spells::Evoker::Preservation::LIFEFORCE_MENDER
-    TEMPORAL_COMPRESSION = 362877   // -> WoW112Spells::Evoker::Preservation::TEMPORAL_COMPRESSION (slight ID difference)
+    FIELD_OF_DREAMS      = WoW112Spells::Evoker::Preservation::FIELD_OF_DREAMS,
+    FLOW_STATE           = WoW112Spells::Evoker::Preservation::FLOW_STATE,
+    LIFEFORCE_MENDER     = WoW112Spells::Evoker::Preservation::LIFEFORCE_MENDER,
+    TEMPORAL_COMPRESSION = 362877   // Local: Slightly different ID from registry (362874)
 };
 
 // Essence resource (same as Devastation)

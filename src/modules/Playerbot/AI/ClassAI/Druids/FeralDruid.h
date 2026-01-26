@@ -50,28 +50,28 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Feral Druid Spell IDs
-// See central registry: WoW112Spells::Druid and WoW112Spells::Druid::Feral
-constexpr uint32 FERAL_SHRED = 5221;               // -> WoW112Spells::Druid::Feral::SHRED
-constexpr uint32 FERAL_RAKE = 1822;                // -> WoW112Spells::Druid::Feral::RAKE
-constexpr uint32 FERAL_RIP = 1079;                 // -> WoW112Spells::Druid::Feral::RIP
-constexpr uint32 FERAL_FEROCIOUS_BITE = 22568;     // -> WoW112Spells::Druid::Feral::FEROCIOUS_BITE
-constexpr uint32 FERAL_SWIPE_CAT = 106830;         // -> WoW112Spells::Druid::Feral::SWIPE_CAT (ID variant)
-constexpr uint32 FERAL_THRASH_CAT = 106832;        // -> WoW112Spells::Druid::Feral::THRASH_CAT
-constexpr uint32 FERAL_BRUTAL_SLASH = 202028;      // -> WoW112Spells::Druid::Feral::BRUTAL_SLASH
-constexpr uint32 FERAL_PRIMAL_WRATH = 285381;      // -> WoW112Spells::Druid::Feral::PRIMAL_WRATH
-constexpr uint32 FERAL_MOONFIRE_CAT = 155625;      // Lunar Inspiration talent
-constexpr uint32 FERAL_TIGERS_FURY = 5217;         // -> WoW112Spells::Druid::Feral::TIGERS_FURY
-constexpr uint32 FERAL_BERSERK = 106951;           // -> WoW112Spells::Druid::Feral::BERSERK
-constexpr uint32 FERAL_INCARNATION_KING = 102543;  // -> WoW112Spells::Druid::Feral::INCARNATION_FERAL
-constexpr uint32 FERAL_CONVOKE = 391528;           // -> WoW112Spells::Druid::Feral::CONVOKE_FERAL
-constexpr uint32 FERAL_BLOODTALONS = 155672;       // -> WoW112Spells::Druid::Feral::BLOODTALONS
-constexpr uint32 FERAL_CAT_FORM = 768;             // -> WoW112Spells::Druid::CAT_FORM
-constexpr uint32 FERAL_DASH = 1850;                // -> WoW112Spells::Druid::DASH
-constexpr uint32 FERAL_STAMPEDING_ROAR = 106898;   // -> WoW112Spells::Druid::STAMPEDING_ROAR
-constexpr uint32 FERAL_SURVIVAL_INSTINCTS = 61336; // -> WoW112Spells::Druid::SURVIVAL_INSTINCTS
-constexpr uint32 FERAL_BARKSKIN = 22812;           // -> WoW112Spells::Druid::BARKSKIN
-constexpr uint32 FERAL_RENEWAL = 108238;           // (talent)
-constexpr uint32 FERAL_REGROWTH = 8936;            // -> WoW112Spells::Druid::REGROWTH
+// Using central registry: WoW112Spells::Druid and WoW112Spells::Druid::Feral
+constexpr uint32 FERAL_SHRED = WoW112Spells::Druid::Feral::SHRED;
+constexpr uint32 FERAL_RAKE = WoW112Spells::Druid::Feral::RAKE;
+constexpr uint32 FERAL_RIP = WoW112Spells::Druid::Feral::RIP;
+constexpr uint32 FERAL_FEROCIOUS_BITE = WoW112Spells::Druid::Feral::FEROCIOUS_BITE;
+constexpr uint32 FERAL_SWIPE_CAT = 106830;         // Local: ID variant (differs from core 106785)
+constexpr uint32 FERAL_THRASH_CAT = WoW112Spells::Druid::Feral::THRASH_CAT;
+constexpr uint32 FERAL_BRUTAL_SLASH = WoW112Spells::Druid::Feral::BRUTAL_SLASH;
+constexpr uint32 FERAL_PRIMAL_WRATH = WoW112Spells::Druid::Feral::PRIMAL_WRATH;
+constexpr uint32 FERAL_MOONFIRE_CAT = 155625;      // Local: Lunar Inspiration talent
+constexpr uint32 FERAL_TIGERS_FURY = WoW112Spells::Druid::Feral::TIGERS_FURY;
+constexpr uint32 FERAL_BERSERK = WoW112Spells::Druid::Feral::BERSERK;
+constexpr uint32 FERAL_INCARNATION_KING = WoW112Spells::Druid::Feral::INCARNATION_FERAL;
+constexpr uint32 FERAL_CONVOKE = WoW112Spells::Druid::Feral::CONVOKE_FERAL;
+constexpr uint32 FERAL_BLOODTALONS = WoW112Spells::Druid::Feral::BLOODTALONS;
+constexpr uint32 FERAL_CAT_FORM = WoW112Spells::Druid::CAT_FORM;
+constexpr uint32 FERAL_DASH = WoW112Spells::Druid::DASH;
+constexpr uint32 FERAL_STAMPEDING_ROAR = WoW112Spells::Druid::STAMPEDING_ROAR;
+constexpr uint32 FERAL_SURVIVAL_INSTINCTS = WoW112Spells::Druid::SURVIVAL_INSTINCTS;
+constexpr uint32 FERAL_BARKSKIN = WoW112Spells::Druid::BARKSKIN;
+constexpr uint32 FERAL_RENEWAL = 108238;           // Local talent
+constexpr uint32 FERAL_REGROWTH = WoW112Spells::Druid::REGROWTH;
 
 // Feral Druid resource type (Energy + Combo Points)
 // Uses distinct type to avoid template instantiation conflicts with Rogue specs

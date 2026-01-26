@@ -41,22 +41,22 @@ using bot::ai::SpellCategory;
 enum AugmentationEvokerSpells
 {
     // Core Buffs
-    EBON_MIGHT           = 395152,  // -> WoW112Spells::Evoker::Augmentation::EBON_MIGHT (slight ID difference)
-    PRESCIENCE           = 409311,  // -> WoW112Spells::Evoker::Augmentation::PRESCIENCE
-    BLISTERING_SCALES    = 360827,  // -> WoW112Spells::Evoker::Augmentation::BLISTERING_SCALES
+    EBON_MIGHT           = 395152,  // Local: Slightly different ID from registry (395296)
+    PRESCIENCE           = WoW112Spells::Evoker::Augmentation::PRESCIENCE,
+    BLISTERING_SCALES    = WoW112Spells::Evoker::Augmentation::BLISTERING_SCALES,
 
     // Empowered Abilities
-    BREATH_OF_EONS       = 403631,  // -> WoW112Spells::Evoker::Augmentation::BREATH_OF_EONS
+    BREATH_OF_EONS       = WoW112Spells::Evoker::Augmentation::BREATH_OF_EONS,
 
     // Essence Generation
-    AZURE_STRIKE_AUG     = 362969,  // -> WoW112Spells::Evoker::AZURE_STRIKE
-    ERUPTION             = 395160,  // -> WoW112Spells::Evoker::Augmentation::ERUPTION
+    AZURE_STRIKE_AUG     = WoW112Spells::Evoker::AZURE_STRIKE,
+    ERUPTION             = WoW112Spells::Evoker::Augmentation::ERUPTION,
 
     // Utility (shared with other Evoker specs)
-    AUG_OBSIDIAN_SCALES  = 363916,  // -> WoW112Spells::Evoker::OBSIDIAN_SCALES
-    AUG_RENEWING_BLAZE   = 374348,  // -> WoW112Spells::Evoker::RENEWING_BLAZE
-    AUG_QUELL            = 351338,  // -> WoW112Spells::Evoker::QUELL
-    AUG_HOVER            = 358267   // -> WoW112Spells::Evoker::HOVER
+    AUG_OBSIDIAN_SCALES  = WoW112Spells::Evoker::OBSIDIAN_SCALES,
+    AUG_RENEWING_BLAZE   = WoW112Spells::Evoker::RENEWING_BLAZE,
+    AUG_QUELL            = WoW112Spells::Evoker::QUELL,
+    AUG_HOVER            = WoW112Spells::Evoker::HOVER
 };
 
 struct EssenceResourceAug

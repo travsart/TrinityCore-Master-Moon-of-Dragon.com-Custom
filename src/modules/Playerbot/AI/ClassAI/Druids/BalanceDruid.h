@@ -51,60 +51,60 @@ using bot::ai::SpellCategory;
 enum BalanceDruidSpells
 {
     // Astral Power Generators
-    WRATH                    = 190984,  // -> WoW112Spells::Druid::Balance::WRATH
-    STARFIRE                 = 194153,  // -> WoW112Spells::Druid::Balance::STARFIRE
-    STELLAR_FLARE            = 202347,  // -> WoW112Spells::Druid::Balance::STELLAR_FLARE
-    FORCE_OF_NATURE          = 205636,  // -> WoW112Spells::Druid::Balance::FORCE_OF_NATURE
+    WRATH                    = WoW112Spells::Druid::Balance::WRATH,
+    STARFIRE                 = WoW112Spells::Druid::Balance::STARFIRE,
+    STELLAR_FLARE            = WoW112Spells::Druid::Balance::STELLAR_FLARE,
+    FORCE_OF_NATURE          = WoW112Spells::Druid::Balance::FORCE_OF_NATURE,
 
     // Astral Power Spenders
-    STARSURGE                = 78674,   // -> WoW112Spells::Druid::Balance::STARSURGE
-    STARFALL                 = 191034,  // -> WoW112Spells::Druid::Balance::STARFALL
-    NEW_MOON                 = 274281,  // -> WoW112Spells::Druid::Balance::NEW_MOON
-    HALF_MOON                = 274282,  // -> WoW112Spells::Druid::Balance::HALF_MOON
-    FULL_MOON                = 274283,  // -> WoW112Spells::Druid::Balance::FULL_MOON
+    STARSURGE                = WoW112Spells::Druid::Balance::STARSURGE,
+    STARFALL                 = WoW112Spells::Druid::Balance::STARFALL,
+    NEW_MOON                 = WoW112Spells::Druid::Balance::NEW_MOON,
+    HALF_MOON                = WoW112Spells::Druid::Balance::HALF_MOON,
+    FULL_MOON                = WoW112Spells::Druid::Balance::FULL_MOON,
 
     // DoTs
-    MOONFIRE                 = 164812,  // -> WoW112Spells::Druid::MOONFIRE (variant)
-    SUNFIRE                  = 164815,  // -> WoW112Spells::Druid::SUNFIRE (variant)
+    MOONFIRE                 = 164812,  // Local: Balance debuff variant (differs from core 8921)
+    SUNFIRE                  = 164815,  // Local: Balance debuff variant (differs from core 93402)
 
     // Major Cooldowns
-    INCARNATION_CHOSEN       = 102560,  // -> WoW112Spells::Druid::Balance::INCARNATION_CHOSEN
-    CELESTIAL_ALIGNMENT      = 194223,  // -> WoW112Spells::Druid::Balance::CELESTIAL_ALIGNMENT
-    WARRIOR_OF_ELUNE         = 202425,  // -> WoW112Spells::Druid::Balance::WARRIOR_OF_ELUNE
-    FURY_OF_ELUNE            = 202770,  // -> WoW112Spells::Druid::Balance::FURY_OF_ELUNE
-    CONVOKE_THE_SPIRITS      = 391528,  // -> WoW112Spells::Druid::Balance::CONVOKE_THE_SPIRITS
+    INCARNATION_CHOSEN       = WoW112Spells::Druid::Balance::INCARNATION_CHOSEN,
+    CELESTIAL_ALIGNMENT      = WoW112Spells::Druid::Balance::CELESTIAL_ALIGNMENT,
+    WARRIOR_OF_ELUNE         = WoW112Spells::Druid::Balance::WARRIOR_OF_ELUNE,
+    FURY_OF_ELUNE            = WoW112Spells::Druid::Balance::FURY_OF_ELUNE,
+    CONVOKE_THE_SPIRITS      = WoW112Spells::Druid::Balance::CONVOKE_THE_SPIRITS,
 
     // Utility
-    MOONKIN_FORM             = 24858,   // -> WoW112Spells::Druid::MOONKIN_FORM
-    SOLAR_BEAM               = 78675,   // -> WoW112Spells::Druid::SOLAR_BEAM
-    TYPHOON                  = 132469,  // (talent)
-    MIGHTY_BASH              = 5211,    // (talent)
-    MASS_ENTANGLEMENT        = 102359,  // (talent)
-    REMOVE_CORRUPTION        = 2782,    // -> WoW112Spells::Druid::REMOVE_CORRUPTION
-    SOOTHE                   = 2908,    // -> WoW112Spells::Druid::SOOTHE
-    INNERVATE                = 29166,   // -> WoW112Spells::Druid::INNERVATE
+    MOONKIN_FORM             = WoW112Spells::Druid::MOONKIN_FORM,
+    SOLAR_BEAM               = WoW112Spells::Druid::SOLAR_BEAM,
+    TYPHOON                  = 132469,  // Local talent
+    MIGHTY_BASH              = 5211,    // Local talent
+    MASS_ENTANGLEMENT        = 102359,  // Local talent
+    REMOVE_CORRUPTION        = WoW112Spells::Druid::REMOVE_CORRUPTION,
+    SOOTHE                   = WoW112Spells::Druid::SOOTHE,
+    INNERVATE                = WoW112Spells::Druid::INNERVATE,
 
     // Defensives
-    BARKSKIN                 = 22812,   // -> WoW112Spells::Druid::BARKSKIN
-    RENEWAL                  = 108238,  // (talent)
-    REGROWTH                 = 8936,    // -> WoW112Spells::Druid::REGROWTH
-    BEAR_FORM                = 5487,    // -> WoW112Spells::Druid::BEAR_FORM
-    FRENZIED_REGENERATION    = 22842,   // -> WoW112Spells::Druid::Guardian::FRENZIED_REGENERATION
+    BARKSKIN                 = WoW112Spells::Druid::BARKSKIN,
+    RENEWAL                  = 108238,  // Local talent
+    REGROWTH                 = WoW112Spells::Druid::REGROWTH,
+    BEAR_FORM                = WoW112Spells::Druid::BEAR_FORM,
+    FRENZIED_REGENERATION    = WoW112Spells::Druid::Guardian::FRENZIED_REGENERATION,
 
     // Eclipse System
-    ECLIPSE_SOLAR            = 48517,   // -> WoW112Spells::Druid::Balance::SOLAR_ECLIPSE
-    ECLIPSE_LUNAR            = 48518,   // -> WoW112Spells::Druid::Balance::LUNAR_ECLIPSE
-    BALANCE_OF_ALL_THINGS    = 394048,  // -> WoW112Spells::Druid::Balance::BALANCE_OF_ALL_THINGS
+    ECLIPSE_SOLAR            = WoW112Spells::Druid::Balance::SOLAR_ECLIPSE,
+    ECLIPSE_LUNAR            = WoW112Spells::Druid::Balance::LUNAR_ECLIPSE,
+    BALANCE_OF_ALL_THINGS    = WoW112Spells::Druid::Balance::BALANCE_OF_ALL_THINGS,
 
     // Procs and Buffs
-    SHOOTING_STARS           = 202342,  // -> WoW112Spells::Druid::Balance::SHOOTING_STARS
-    STARWEAVERS_WARP         = 393942,  // -> WoW112Spells::Druid::Balance::STARWEAVERS_WARP
-    STARWEAVERS_WEFT         = 393944,  // -> WoW112Spells::Druid::Balance::STARWEAVERS_WEFT
+    SHOOTING_STARS           = WoW112Spells::Druid::Balance::SHOOTING_STARS,
+    STARWEAVERS_WARP         = WoW112Spells::Druid::Balance::STARWEAVERS_WARP,
+    STARWEAVERS_WEFT         = WoW112Spells::Druid::Balance::STARWEAVERS_WEFT,
 
     // Talents
-    WILD_MUSHROOM            = 88747,   // Ground AoE (talent)
-    TWIN_MOONS               = 279620,  // Moonfire hits extra target
-    SOUL_OF_THE_FOREST       = 114107   // Reduced Starsurge cost after Starfall
+    WILD_MUSHROOM            = 88747,   // Local: Ground AoE talent (differs from core 145205)
+    TWIN_MOONS               = 279620,  // Local talent
+    SOUL_OF_THE_FOREST       = 114107   // Local talent
 };
 
 // Dual resource type for Balance Druid (Mana + Astral Power)

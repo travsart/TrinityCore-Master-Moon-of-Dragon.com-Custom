@@ -32,6 +32,7 @@
 
 // Central Spell Registry - See WoW112Spells::Shaman namespace
 #include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW112_Part2.h"
 
 namespace Playerbot
 {
@@ -49,27 +50,27 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Enhancement Shaman Spell IDs
-// See central registry: WoW112Spells::Shaman and WoW112Spells::Shaman::Enhancement
-constexpr uint32 ENH_ROCKBITER = 193786;            // Legacy spell (removed in Shadowlands)
-constexpr uint32 ENH_STORMSTRIKE = 17364;           // -> WoW112Spells::Shaman::Enhancement::STORMSTRIKE
-constexpr uint32 ENH_LAVA_LASH = 60103;             // -> WoW112Spells::Shaman::Enhancement::LAVA_LASH
-constexpr uint32 ENH_LIGHTNING_BOLT = 188196;       // -> WoW112Spells::Shaman::LIGHTNING_BOLT
-constexpr uint32 ENH_FLAME_SHOCK = 188389;          // -> WoW112Spells::Shaman::FLAME_SHOCK
-constexpr uint32 ENH_FROST_SHOCK = 196840;          // -> WoW112Spells::Shaman::FROST_SHOCK
-constexpr uint32 ENH_CRASH_LIGHTNING = 187874;      // -> WoW112Spells::Shaman::Enhancement::CRASH_LIGHTNING
-constexpr uint32 ENH_SUNDERING = 197214;            // -> WoW112Spells::Shaman::Enhancement::SUNDERING
-constexpr uint32 ENH_FERAL_SPIRIT = 51533;          // -> WoW112Spells::Shaman::Enhancement::FERAL_SPIRIT
-constexpr uint32 ENH_ASCENDANCE = 114051;           // -> WoW112Spells::Shaman::Enhancement::ASCENDANCE_ENH
-constexpr uint32 ENH_WINDFURY_TOTEM = 8512;         // -> WoW112Spells::Shaman::Enhancement::WINDFURY_TOTEM
-constexpr uint32 ENH_WINDSTRIKE = 115356;           // -> WoW112Spells::Shaman::Enhancement::WINDSTRIKE
-constexpr uint32 ENH_ICE_STRIKE = 342240;           // -> WoW112Spells::Shaman::Enhancement::ICE_STRIKE
-constexpr uint32 ENH_FIRE_NOVA = 333974;            // -> WoW112Spells::Shaman::Enhancement::FIRE_NOVA
-constexpr uint32 ENH_ELEMENTAL_BLAST = 117014;      // -> WoW112Spells::Shaman::Enhancement::ELEMENTAL_BLAST_ENH
-constexpr uint32 ENH_LAVA_BURST = 51505;            // -> WoW112Spells::Shaman::LAVA_BURST
-constexpr uint32 ENH_ASTRAL_SHIFT = 108271;         // -> WoW112Spells::Shaman::ASTRAL_SHIFT
-constexpr uint32 ENH_EARTH_SHIELD = 974;            // -> WoW112Spells::Shaman::Restoration::EARTH_SHIELD
-constexpr uint32 ENH_WIND_SHEAR = 57994;            // -> WoW112Spells::Shaman::WIND_SHEAR
-constexpr uint32 ENH_CAPACITOR_TOTEM = 192058;      // -> WoW112Spells::Shaman::CAPACITOR_TOTEM
+// Using central registry: WoW112Spells::Shaman and WoW112Spells::Shaman::Enhancement
+constexpr uint32 ENH_ROCKBITER = 193786;            // Local: Legacy spell (removed in Shadowlands)
+constexpr uint32 ENH_STORMSTRIKE = WoW112Spells::Shaman::Enhancement::STORMSTRIKE;
+constexpr uint32 ENH_LAVA_LASH = WoW112Spells::Shaman::Enhancement::LAVA_LASH;
+constexpr uint32 ENH_LIGHTNING_BOLT = WoW112Spells::Shaman::LIGHTNING_BOLT;
+constexpr uint32 ENH_FLAME_SHOCK = WoW112Spells::Shaman::FLAME_SHOCK;
+constexpr uint32 ENH_FROST_SHOCK = WoW112Spells::Shaman::FROST_SHOCK;
+constexpr uint32 ENH_CRASH_LIGHTNING = WoW112Spells::Shaman::Enhancement::CRASH_LIGHTNING;
+constexpr uint32 ENH_SUNDERING = WoW112Spells::Shaman::Enhancement::SUNDERING;
+constexpr uint32 ENH_FERAL_SPIRIT = WoW112Spells::Shaman::Enhancement::FERAL_SPIRIT;
+constexpr uint32 ENH_ASCENDANCE = WoW112Spells::Shaman::Enhancement::ASCENDANCE_ENH;
+constexpr uint32 ENH_WINDFURY_TOTEM = WoW112Spells::Shaman::Enhancement::WINDFURY_TOTEM;
+constexpr uint32 ENH_WINDSTRIKE = WoW112Spells::Shaman::Enhancement::WINDSTRIKE;
+constexpr uint32 ENH_ICE_STRIKE = WoW112Spells::Shaman::Enhancement::ICE_STRIKE;
+constexpr uint32 ENH_FIRE_NOVA = WoW112Spells::Shaman::Enhancement::FIRE_NOVA;
+constexpr uint32 ENH_ELEMENTAL_BLAST = WoW112Spells::Shaman::Enhancement::ELEMENTAL_BLAST_ENH;
+constexpr uint32 ENH_LAVA_BURST = WoW112Spells::Shaman::LAVA_BURST;
+constexpr uint32 ENH_ASTRAL_SHIFT = WoW112Spells::Shaman::ASTRAL_SHIFT;
+constexpr uint32 ENH_EARTH_SHIELD = WoW112Spells::Shaman::Restoration::EARTH_SHIELD;
+constexpr uint32 ENH_WIND_SHEAR = WoW112Spells::Shaman::WIND_SHEAR;
+constexpr uint32 ENH_CAPACITOR_TOTEM = WoW112Spells::Shaman::CAPACITOR_TOTEM;
 
 // ManaResource is already defined in CombatSpecializationTemplates.h
 // No need to redefine it here

@@ -27,6 +27,7 @@
 
 // Central Spell Registry - See WoW112Spells::Rogue namespace
 #include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW112_Part2.h"
 
 namespace Playerbot
 {
@@ -55,28 +56,29 @@ using bot::ai::SpellCategory;
 enum OutlawSpells
 {
     // WoW 11.2 Outlaw-specific spells
-    PISTOL_SHOT              = 185763,  // -> WoW112Spells::Rogue::Outlaw::PISTOL_SHOT
-    BETWEEN_THE_EYES         = 315341,  // -> WoW112Spells::Rogue::Outlaw::BETWEEN_THE_EYES
-    DISPATCH_OUTLAW          = 2098,    // -> WoW112Spells::Rogue::Outlaw::DISPATCH
+    // Using central registry: WoW112Spells::Rogue and WoW112Spells::Rogue::Outlaw
+    PISTOL_SHOT              = WoW112Spells::Rogue::Outlaw::PISTOL_SHOT,
+    BETWEEN_THE_EYES         = WoW112Spells::Rogue::Outlaw::BETWEEN_THE_EYES,
+    DISPATCH_OUTLAW          = WoW112Spells::Rogue::Outlaw::DISPATCH,
 
     // Roll the Bones System (Outlaw unique)
-    ROLL_THE_BONES           = 315508,  // -> WoW112Spells::Rogue::Outlaw::ROLL_THE_BONES
-    BUFF_RUTHLESS_PRECISION  = 193357,  // -> WoW112Spells::Rogue::Outlaw::RUTHLESS_PRECISION
-    BUFF_GRAND_MELEE         = 193358,  // -> WoW112Spells::Rogue::Outlaw::GRAND_MELEE
-    BUFF_BROADSIDE           = 193356,  // -> WoW112Spells::Rogue::Outlaw::BROADSIDE
-    BUFF_TRUE_BEARING        = 193359,  // -> WoW112Spells::Rogue::Outlaw::TRUE_BEARING
-    BUFF_SKULL_AND_CROSSBONES = 199603, // -> WoW112Spells::Rogue::Outlaw::SKULL_AND_CROSSBONES
-    BUFF_BURIED_TREASURE     = 199600,  // -> WoW112Spells::Rogue::Outlaw::BURIED_TREASURE
+    ROLL_THE_BONES           = WoW112Spells::Rogue::Outlaw::ROLL_THE_BONES,
+    BUFF_RUTHLESS_PRECISION  = WoW112Spells::Rogue::Outlaw::RUTHLESS_PRECISION,
+    BUFF_GRAND_MELEE         = WoW112Spells::Rogue::Outlaw::GRAND_MELEE,
+    BUFF_BROADSIDE           = WoW112Spells::Rogue::Outlaw::BROADSIDE,
+    BUFF_TRUE_BEARING        = WoW112Spells::Rogue::Outlaw::TRUE_BEARING,
+    BUFF_SKULL_AND_CROSSBONES = WoW112Spells::Rogue::Outlaw::SKULL_AND_CROSSBONES,
+    BUFF_BURIED_TREASURE     = WoW112Spells::Rogue::Outlaw::BURIED_TREASURE,
 
     // Talents (Outlaw specific)
-    BLADE_RUSH               = 271877,  // -> WoW112Spells::Rogue::Outlaw::BLADE_RUSH
-    OPPORTUNITY_PROC         = 195627,  // -> WoW112Spells::Rogue::Outlaw::OPPORTUNITY_PROC
-    GHOSTLY_STRIKE           = 196937,  // -> WoW112Spells::Rogue::Outlaw::GHOSTLY_STRIKE
-    DREADBLADES              = 343142,  // -> WoW112Spells::Rogue::Outlaw::DREADBLADES
+    BLADE_RUSH               = WoW112Spells::Rogue::Outlaw::BLADE_RUSH,
+    OPPORTUNITY_PROC         = WoW112Spells::Rogue::Outlaw::OPPORTUNITY_PROC,
+    GHOSTLY_STRIKE           = WoW112Spells::Rogue::Outlaw::GHOSTLY_STRIKE,
+    DREADBLADES              = WoW112Spells::Rogue::Outlaw::DREADBLADES,
 
     // Outlaw-specific utility
-    FEINT_OUTLAW             = 1966,    // -> WoW112Spells::Rogue::FEINT
-    MARKED_FOR_DEATH         = 137619   // -> WoW112Spells::Rogue::MARKED_FOR_DEATH
+    FEINT_OUTLAW             = WoW112Spells::Rogue::FEINT,
+    MARKED_FOR_DEATH         = WoW112Spells::Rogue::MARKED_FOR_DEATH
 };
 
 // ============================================================================

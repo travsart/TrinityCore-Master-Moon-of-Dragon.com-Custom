@@ -27,6 +27,7 @@
 
 // Central Spell Registry - See WoW112Spells::Rogue namespace
 #include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW112_Part2.h"
 
 namespace Playerbot
 {
@@ -57,35 +58,36 @@ enum SubtletySpells
 {
     // NOTE: Shared spells (BACKSTAB, RUPTURE, STEALTH, VANISH, KICK, etc.) are in RogueSpecialization.h
     // Only Subtlety-UNIQUE spells defined here to avoid duplicate definitions
+    // Using central registry: WoW112Spells::Rogue and WoW112Spells::Rogue::Subtlety
 
     // Combo Point Builders (Unique to Subtlety)
-    SHADOWSTRIKE_SUB         = 185438,  // -> WoW112Spells::Rogue::Subtlety::SHADOWSTRIKE
-    SHURIKEN_STORM           = 197835,  // -> WoW112Spells::Rogue::Subtlety::SHURIKEN_STORM
+    SHADOWSTRIKE_SUB         = WoW112Spells::Rogue::Subtlety::SHADOWSTRIKE,
+    SHURIKEN_STORM           = WoW112Spells::Rogue::Subtlety::SHURIKEN_STORM,
 
     // Combo Point Spenders (Unique to Subtlety)
-    EVISCERATE_SUB           = 196819,  // -> WoW112Spells::Rogue::Subtlety::EVISCERATE
-    BLACK_POWDER             = 319175,  // -> WoW112Spells::Rogue::Subtlety::BLACK_POWDER
-    SECRET_TECHNIQUE         = 280719,  // -> WoW112Spells::Rogue::Subtlety::SECRET_TECHNIQUE
+    EVISCERATE_SUB           = WoW112Spells::Rogue::Subtlety::EVISCERATE,
+    BLACK_POWDER             = WoW112Spells::Rogue::Subtlety::BLACK_POWDER,
+    SECRET_TECHNIQUE         = WoW112Spells::Rogue::Subtlety::SECRET_TECHNIQUE,
 
     // Major Cooldowns
-    SHADOW_BLADES            = 121471,  // -> WoW112Spells::Rogue::Subtlety::SHADOW_BLADES
-    SHURIKEN_TORNADO         = 277925,  // -> WoW112Spells::Rogue::Subtlety::SHURIKEN_TORNADO
+    SHADOW_BLADES            = WoW112Spells::Rogue::Subtlety::SHADOW_BLADES,
+    SHURIKEN_TORNADO         = WoW112Spells::Rogue::Subtlety::SHURIKEN_TORNADO,
 
     // Shadow Techniques
-    SHADOW_TECHNIQUES_PROC   = 196911,  // -> WoW112Spells::Rogue::Subtlety::SHADOW_TECHNIQUES
+    SHADOW_TECHNIQUES_PROC   = WoW112Spells::Rogue::Subtlety::SHADOW_TECHNIQUES,
 
     // Finisher Buffs
-    SLICE_AND_DICE_SUB       = 315496,  // -> WoW112Spells::Rogue::Outlaw::SLICE_AND_DICE (shared)
+    SLICE_AND_DICE_SUB       = WoW112Spells::Rogue::Outlaw::SLICE_AND_DICE,
 
     // Procs and Buffs
-    DANSE_MACABRE            = 393969,  // -> WoW112Spells::Rogue::Subtlety::DANSE_MACABRE
-    DEEPER_DAGGERS           = 383405,  // -> WoW112Spells::Rogue::Subtlety::DEEPER_DAGGERS
+    DANSE_MACABRE            = WoW112Spells::Rogue::Subtlety::DANSE_MACABRE,
+    DEEPER_DAGGERS           = WoW112Spells::Rogue::Subtlety::DEEPER_DAGGERS,
 
     // Talents
-    DARK_SHADOW              = 245687,  // -> WoW112Spells::Rogue::Subtlety::DARK_SHADOW
-    DEEPER_STRATAGEM_SUB     = 193531,  // -> WoW112Spells::Rogue::Subtlety::DEEPER_STRATAGEM
-    MARKED_FOR_DEATH_SUB     = 137619,  // -> WoW112Spells::Rogue::MARKED_FOR_DEATH
-    SHURIKEN_TORNADO_TALENT  = 277925   // -> WoW112Spells::Rogue::Subtlety::SHURIKEN_TORNADO
+    DARK_SHADOW              = WoW112Spells::Rogue::Subtlety::DARK_SHADOW,
+    DEEPER_STRATAGEM_SUB     = WoW112Spells::Rogue::Subtlety::DEEPER_STRATAGEM,
+    MARKED_FOR_DEATH_SUB     = WoW112Spells::Rogue::MARKED_FOR_DEATH,
+    SHURIKEN_TORNADO_TALENT  = WoW112Spells::Rogue::Subtlety::SHURIKEN_TORNADO
 };
 
 // ============================================================================

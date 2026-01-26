@@ -46,42 +46,42 @@ using bot::ai::SpellCategory;
 enum DevastationEvokerSpells
 {
     // Essence Generators
-    AZURE_STRIKE         = 362969,  // -> WoW112Spells::Evoker::AZURE_STRIKE
-    LIVING_FLAME         = 361469,  // -> WoW112Spells::Evoker::LIVING_FLAME
+    AZURE_STRIKE         = WoW112Spells::Evoker::AZURE_STRIKE,
+    LIVING_FLAME         = WoW112Spells::Evoker::LIVING_FLAME,
 
     // Essence Spenders (Empowered)
-    FIRE_BREATH          = 357208,  // Alternate ID for empowered rank
-    ETERNITY_SURGE       = 359073,  // -> WoW112Spells::Evoker::Devastation::ETERNITY_SURGE
+    FIRE_BREATH          = 357208,  // Local: Empowered rank (differs from core 382266)
+    ETERNITY_SURGE       = WoW112Spells::Evoker::Devastation::ETERNITY_SURGE,
 
     // Direct Damage
-    DISINTEGRATE         = 356995,  // -> WoW112Spells::Evoker::DISINTEGRATE
-    PYRE                 = 357211,  // -> WoW112Spells::Evoker::Devastation::PYRE
-    SHATTERING_STAR      = 370452,  // -> WoW112Spells::Evoker::Devastation::SHATTERING_STAR
+    DISINTEGRATE         = WoW112Spells::Evoker::DISINTEGRATE,
+    PYRE                 = WoW112Spells::Evoker::Devastation::PYRE,
+    SHATTERING_STAR      = WoW112Spells::Evoker::Devastation::SHATTERING_STAR,
 
     // Major Cooldowns
-    DRAGONRAGE           = 375087,  // -> WoW112Spells::Evoker::Devastation::DRAGONRAGE
-    DEEP_BREATH          = 357210,  // Alternate ID for flying breath attack
-    TIP_THE_SCALES       = 370553,  // -> WoW112Spells::Evoker::Devastation::TIP_THE_SCALES
+    DRAGONRAGE           = WoW112Spells::Evoker::Devastation::DRAGONRAGE,
+    DEEP_BREATH          = 357210,  // Local: Flying breath attack (differs from core 382266)
+    TIP_THE_SCALES       = WoW112Spells::Evoker::Devastation::TIP_THE_SCALES,
 
     // Procs and Buffs
-    ESSENCE_BURST        = 359618,  // -> WoW112Spells::Evoker::Devastation::ESSENSE_BURST
-    BURNOUT              = 375802,  // -> WoW112Spells::Evoker::Devastation::BURNOUT (slight ID difference)
-    IRIDESCENCE_BLUE     = 386399,  // -> WoW112Spells::Evoker::Devastation::IRIDESCENCE_BLUE
-    IRIDESCENCE_RED      = 386353,  // -> WoW112Spells::Evoker::Devastation::IRIDESCENCE_RED
+    ESSENCE_BURST        = WoW112Spells::Evoker::Devastation::ESSENSE_BURST,
+    BURNOUT              = 375802,  // Local: Slightly different ID from registry (375801)
+    IRIDESCENCE_BLUE     = WoW112Spells::Evoker::Devastation::IRIDESCENCE_BLUE,
+    IRIDESCENCE_RED      = WoW112Spells::Evoker::Devastation::IRIDESCENCE_RED,
 
     // Utility
-    HOVER                = 358267,  // -> WoW112Spells::Evoker::HOVER
-    OBSIDIAN_SCALES      = 363916,  // -> WoW112Spells::Evoker::OBSIDIAN_SCALES
-    RENEWING_BLAZE       = 374348,  // -> WoW112Spells::Evoker::RENEWING_BLAZE
-    QUELL                = 351338,  // -> WoW112Spells::Evoker::QUELL
-    TAIL_SWIPE           = 368970,  // -> WoW112Spells::Evoker::TAIL_SWIPE
-    WING_BUFFET          = 357214,  // -> WoW112Spells::Evoker::WING_BUFFET
+    HOVER                = WoW112Spells::Evoker::HOVER,
+    OBSIDIAN_SCALES      = WoW112Spells::Evoker::OBSIDIAN_SCALES,
+    RENEWING_BLAZE       = WoW112Spells::Evoker::RENEWING_BLAZE,
+    QUELL                = WoW112Spells::Evoker::QUELL,
+    TAIL_SWIPE           = WoW112Spells::Evoker::TAIL_SWIPE,
+    WING_BUFFET          = WoW112Spells::Evoker::WING_BUFFET,
 
     // Talents
-    ANIMOSITY            = 375797,  // -> WoW112Spells::Evoker::Devastation::ANIMOSITY
-    CATALYZE             = 386283,  // -> WoW112Spells::Evoker::Devastation::CATALYZE
-    FEED_THE_FLAMES      = 369846,  // -> WoW112Spells::Evoker::Devastation::FEED_THE_FLAMES
-    ONYX_LEGACY          = 386348   // -> WoW112Spells::Evoker::Devastation::ONYX_LEGACY
+    ANIMOSITY            = WoW112Spells::Evoker::Devastation::ANIMOSITY,
+    CATALYZE             = WoW112Spells::Evoker::Devastation::CATALYZE,
+    FEED_THE_FLAMES      = WoW112Spells::Evoker::Devastation::FEED_THE_FLAMES,
+    ONYX_LEGACY          = WoW112Spells::Evoker::Devastation::ONYX_LEGACY
 };
 
 // Essence resource type for Devastation Evoker
