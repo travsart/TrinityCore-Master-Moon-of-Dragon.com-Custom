@@ -596,9 +596,6 @@ namespace Shaman
         // Maelstrom Weapon
         constexpr uint32 MAELSTROM_WEAPON = 187880;
 
-        // Legacy spells (removed but may be needed for some implementations)
-        constexpr uint32 ROCKBITER = 193786;            // Legacy spell (removed in Shadowlands)
-
         // Hero Talents - Totemic
         constexpr uint32 SURGING_TOTEM = 444995;
         constexpr uint32 OVERSURGE = 444996;

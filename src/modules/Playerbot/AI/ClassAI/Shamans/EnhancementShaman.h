@@ -51,7 +51,6 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Enhancement Shaman Spell IDs
 // Using central registry: WoW112Spells::Shaman and WoW112Spells::Shaman::Enhancement
-constexpr uint32 ENH_ROCKBITER = WoW112Spells::Shaman::Enhancement::ROCKBITER;
 constexpr uint32 ENH_STORMSTRIKE = WoW112Spells::Shaman::Enhancement::STORMSTRIKE;
 constexpr uint32 ENH_LAVA_LASH = WoW112Spells::Shaman::Enhancement::LAVA_LASH;
 constexpr uint32 ENH_LIGHTNING_BOLT = WoW112Spells::Shaman::LIGHTNING_BOLT;
@@ -523,14 +522,7 @@ private:
 
             return;
         }
-
-        // Rockbiter (builder - low priority)
-        if (this->CanCastSpell(ENH_ROCKBITER, target))
-        {
-
-            this->CastSpell(ENH_ROCKBITER, target);
-            return;
-        }    }
+    }
 
     void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
     {
@@ -715,15 +707,6 @@ private:
             this->CastSpell(ENH_LAVA_LASH, target);
 
             _maelstromWeaponTracker.AddStack(1);
-
-            return;
-        }
-
-        // Rockbiter (builder)
-        if (this->CanCastSpell(ENH_ROCKBITER, target))
-        {
-
-            this->CastSpell(ENH_ROCKBITER, target);
 
             return;
         }
