@@ -664,4 +664,224 @@ void CrowdControlManager::UpdateExpiredCCs()
     }
 }
 
+// ============================================================================
+// DIMINISHING RETURNS (DR) TRACKING - Phase 2 Architecture
+// ============================================================================
+
+// Spell ID to DR Category mapping
+// This is a comprehensive list for WoW 11.x - expand as needed
+DRCategory CrowdControlManager::GetDRCategory(uint32 spellId)
+{
+    // Map commonly used CC spells to their DR categories
+    switch (spellId)
+    {
+        // STUN category
+        case 408:       // Kidney Shot
+        case 853:       // Hammer of Justice
+        case 115750:    // Blinding Light
+        case 108194:    // Asphyxiate
+        case 5211:      // Mighty Bash
+        case 119381:    // Leg Sweep
+        case 91807:     // Shambling Rush
+        case 30283:     // Shadowfury
+        case 109248:    // Binding Shot
+        case 118905:    // Static Charge
+        case 197214:    // Sundering
+        case 200196:    // Holy Word: Chastise
+        case 179057:    // Chaos Nova
+        case 1776:      // Gouge
+            return DRCategory::STUN;
+
+        // INCAPACITATE category
+        case 118:       // Polymorph
+        case 6770:      // Sap
+        case 51514:     // Hex
+        case 20066:     // Repentance
+        case 2637:      // Hibernate
+        case 710:       // Banish
+        case 9484:      // Shackle Undead
+        case 605:       // Mind Control
+        case 115078:    // Paralysis
+        case 187650:    // Freezing Trap
+        case 19386:     // Wyvern Sting
+        case 82691:     // Ring of Frost
+        case 213691:    // Scatter Shot
+        case 217832:    // Imprison
+            return DRCategory::INCAPACITATE;
+
+        // DISORIENT category
+        case 8122:      // Psychic Scream
+        case 2094:      // Blind
+        case 6789:      // Mortal Coil
+        case 99:        // Incapacitating Roar
+        case 31661:     // Dragon's Breath
+        case 207167:    // Blinding Sleet
+            return DRCategory::DISORIENT;
+
+        // FEAR category (Warlock fear specifically)
+        case 5782:      // Fear
+        case 118699:    // Fear (Havoc warlock version)
+        case 130616:    // Fear (Pet)
+            return DRCategory::FEAR;
+
+        // HORROR category
+        case 5484:      // Howl of Terror
+        case 6358:      // Seduction
+            return DRCategory::HORROR;
+
+        // ROOT category
+        case 122:       // Frost Nova
+        case 339:       // Entangling Roots
+        case 102359:    // Mass Entanglement
+        case 116706:    // Disable
+        case 45334:     // Feral Charge Root
+        case 233395:    // Frozen Center
+            return DRCategory::ROOT;
+
+        // SILENCE category
+        case 15487:     // Silence
+        case 78675:     // Solar Beam
+        case 47476:     // Strangulate
+        case 199683:    // Last Word
+            return DRCategory::SILENCE;
+
+        // DISARM category
+        case 236077:    // Disarm
+            return DRCategory::DISARM;
+
+        // KNOCKBACK category
+        case 132469:    // Typhoon
+        case 51490:     // Thunderstorm
+        case 202138:    // Sigil of Chains
+            return DRCategory::KNOCKBACK;
+
+        default:
+            return DRCategory::NONE;
+    }
+}
+
+float CrowdControlManager::GetDRMultiplier(ObjectGuid target, DRCategory category) const
+{
+    if (category == DRCategory::NONE)
+        return 1.0f;
+
+    auto targetIt = _drTracking.find(target);
+    if (targetIt == _drTracking.end())
+        return 1.0f;  // No DR history = full duration
+
+    auto categoryIt = targetIt->second.find(category);
+    if (categoryIt == targetIt->second.end())
+        return 1.0f;  // No DR for this category = full duration
+
+    return categoryIt->second.GetDurationMultiplier();
+}
+
+float CrowdControlManager::GetDRMultiplier(ObjectGuid target, uint32 spellId) const
+{
+    DRCategory category = GetDRCategory(spellId);
+    return GetDRMultiplier(target, category);
+}
+
+bool CrowdControlManager::IsDRImmune(ObjectGuid target, DRCategory category) const
+{
+    if (category == DRCategory::NONE)
+        return false;
+
+    auto targetIt = _drTracking.find(target);
+    if (targetIt == _drTracking.end())
+        return false;  // No DR history = not immune
+
+    auto categoryIt = targetIt->second.find(category);
+    if (categoryIt == targetIt->second.end())
+        return false;  // No DR for this category = not immune
+
+    return categoryIt->second.IsImmune();
+}
+
+bool CrowdControlManager::IsDRImmune(ObjectGuid target, uint32 spellId) const
+{
+    DRCategory category = GetDRCategory(spellId);
+    return IsDRImmune(target, category);
+}
+
+uint8 CrowdControlManager::GetDRStacks(ObjectGuid target, DRCategory category) const
+{
+    if (category == DRCategory::NONE)
+        return 0;
+
+    auto targetIt = _drTracking.find(target);
+    if (targetIt == _drTracking.end())
+        return 0;
+
+    auto categoryIt = targetIt->second.find(category);
+    if (categoryIt == targetIt->second.end())
+        return 0;
+
+    return categoryIt->second.stacks;
+}
+
+void CrowdControlManager::OnCCApplied(ObjectGuid target, uint32 spellId)
+{
+    DRCategory category = GetDRCategory(spellId);
+    OnCCApplied(target, category);
+}
+
+void CrowdControlManager::OnCCApplied(ObjectGuid target, DRCategory category)
+{
+    if (category == DRCategory::NONE)
+        return;
+
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    _drTracking[target][category].Apply(currentTime);
+
+    uint8 stacks = _drTracking[target][category].stacks;
+    TC_LOG_DEBUG("playerbot", "CrowdControlManager: DR applied to {} (category: {}, stacks: {})",
+        target.ToString(), static_cast<uint8>(category), stacks);
+}
+
+void CrowdControlManager::UpdateDR(uint32 currentTime)
+{
+    // Update all DR states and remove expired ones
+    for (auto& targetPair : _drTracking)
+    {
+        for (auto categoryIt = targetPair.second.begin(); categoryIt != targetPair.second.end();)
+        {
+            categoryIt->second.Update(currentTime);
+
+            // Remove if reset to 0 stacks
+            if (categoryIt->second.stacks == 0 && categoryIt->second.lastApplicationTime > 0)
+            {
+                TC_LOG_DEBUG("playerbot", "CrowdControlManager: DR reset for {} (category: {})",
+                    targetPair.first.ToString(), static_cast<uint8>(categoryIt->first));
+                categoryIt = targetPair.second.erase(categoryIt);
+            }
+            else
+            {
+                ++categoryIt;
+            }
+        }
+    }
+
+    // Clean up targets with no DR tracking
+    for (auto targetIt = _drTracking.begin(); targetIt != _drTracking.end();)
+    {
+        if (targetIt->second.empty())
+            targetIt = _drTracking.erase(targetIt);
+        else
+            ++targetIt;
+    }
+}
+
+void CrowdControlManager::ClearDR(ObjectGuid target)
+{
+    _drTracking.erase(target);
+    TC_LOG_DEBUG("playerbot", "CrowdControlManager: Cleared all DR for {}", target.ToString());
+}
+
+uint32 CrowdControlManager::GetExpectedDuration(ObjectGuid target, uint32 spellId, uint32 baseDuration) const
+{
+    float multiplier = GetDRMultiplier(target, spellId);
+    return static_cast<uint32>(baseDuration * multiplier);
+}
+
 } // namespace Playerbot

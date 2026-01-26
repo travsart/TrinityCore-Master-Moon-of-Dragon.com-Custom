@@ -36,6 +36,95 @@ namespace Playerbot
     };
 
     /**
+     * @enum DRCategory
+     * @brief Diminishing Returns categories (WoW standard)
+     *
+     * Phase 2 Architecture: Essential for PvP CC coordination
+     * Different spells share DR categories - tracking prevents wasted CCs
+     */
+    enum class DRCategory : uint8
+    {
+        NONE = 0,           // No DR (instant effects, etc.)
+        STUN = 1,           // Charge Stun, Hammer of Justice, Kidney Shot
+        INCAPACITATE = 2,   // Polymorph, Hex, Gouge, Repentance
+        DISORIENT = 3,      // Fear (non-warlock), Psychic Scream
+        SILENCE = 4,        // Silence, Strangulate, Solar Beam
+        FEAR = 5,           // Warlock Fear specifically
+        ROOT = 6,           // Frost Nova, Entangling Roots
+        HORROR = 7,         // Death Coil, Intimidating Shout
+        DISARM = 8,         // Disarm effects
+        KNOCKBACK = 9,      // Typhoon, Thunderstorm
+        MAX
+    };
+
+    /**
+     * @struct DRState
+     * @brief Tracks Diminishing Returns state for a single category on a target
+     *
+     * WoW DR rules:
+     * - 0 stacks: 100% duration
+     * - 1 stack:  50% duration
+     * - 2 stacks: 25% duration
+     * - 3+ stacks: Immune
+     * - DR resets after 18 seconds of no applications
+     */
+    struct DRState
+    {
+        uint8 stacks = 0;
+        uint32 lastApplicationTime = 0;
+
+        static constexpr uint32 DR_RESET_TIME_MS = 18000;  // 18 seconds
+
+        /**
+         * @brief Get duration multiplier based on current DR stacks
+         */
+        [[nodiscard]] float GetDurationMultiplier() const
+        {
+            switch (stacks)
+            {
+                case 0: return 1.0f;    // Full duration
+                case 1: return 0.5f;    // 50% duration
+                case 2: return 0.25f;   // 25% duration
+                default: return 0.0f;   // Immune
+            }
+        }
+
+        /**
+         * @brief Check if target is immune due to DR
+         */
+        [[nodiscard]] bool IsImmune() const { return stacks >= 3; }
+
+        /**
+         * @brief Apply a new CC (increments stacks)
+         */
+        void Apply(uint32 currentTime)
+        {
+            stacks = ::std::min<uint8>(stacks + 1, 3);
+            lastApplicationTime = currentTime;
+        }
+
+        /**
+         * @brief Update DR state (resets if expired)
+         */
+        void Update(uint32 currentTime)
+        {
+            if (lastApplicationTime > 0 && (currentTime - lastApplicationTime) > DR_RESET_TIME_MS)
+            {
+                stacks = 0;
+            }
+        }
+
+        /**
+         * @brief Reset DR state
+         */
+        void Reset()
+        {
+            stacks = 0;
+            lastApplicationTime = 0;
+        }
+    };
+
+    /**
      * @struct CCTarget
      * @brief Active crowd control on a target
      */
@@ -243,10 +332,114 @@ namespace Playerbot
          */
         bool ShouldBreakCC(Unit* target) const;
 
+        // ====================================================================
+        // DIMINISHING RETURNS (DR) TRACKING - Phase 2 Architecture
+        // ====================================================================
+
+        /**
+         * @brief Get DR duration multiplier for target and CC category
+         *
+         * @param target Target to check
+         * @param category DR category
+         * @return Duration multiplier (1.0 = full, 0.5 = half, 0.25 = quarter, 0.0 = immune)
+         */
+        float GetDRMultiplier(ObjectGuid target, DRCategory category) const;
+
+        /**
+         * @brief Get DR duration multiplier for target and spell
+         *
+         * @param target Target to check
+         * @param spellId Spell to use
+         * @return Duration multiplier based on spell's DR category
+         */
+        float GetDRMultiplier(ObjectGuid target, uint32 spellId) const;
+
+        /**
+         * @brief Check if target is immune to DR category
+         *
+         * @param target Target to check
+         * @param category DR category
+         * @return True if target has 3+ stacks (immune)
+         */
+        bool IsDRImmune(ObjectGuid target, DRCategory category) const;
+
+        /**
+         * @brief Check if target is immune to spell's DR
+         *
+         * @param target Target to check
+         * @param spellId Spell to use
+         * @return True if target is immune to this spell's DR category
+         */
+        bool IsDRImmune(ObjectGuid target, uint32 spellId) const;
+
+        /**
+         * @brief Get current DR stacks for target and category
+         *
+         * @param target Target to check
+         * @param category DR category
+         * @return Number of DR stacks (0-3)
+         */
+        uint8 GetDRStacks(ObjectGuid target, DRCategory category) const;
+
+        /**
+         * @brief Record CC application for DR tracking
+         *
+         * @param target Target that was CC'd
+         * @param spellId Spell used
+         *
+         * Call when CC is successfully applied
+         */
+        void OnCCApplied(ObjectGuid target, uint32 spellId);
+
+        /**
+         * @brief Record CC application for DR tracking (by category)
+         *
+         * @param target Target that was CC'd
+         * @param category DR category
+         */
+        void OnCCApplied(ObjectGuid target, DRCategory category);
+
+        /**
+         * @brief Update DR states (reset expired DR)
+         *
+         * @param currentTime Current game time
+         *
+         * Call periodically (every update cycle)
+         */
+        void UpdateDR(uint32 currentTime);
+
+        /**
+         * @brief Clear all DR for a target (when target dies)
+         *
+         * @param target Target whose DR to clear
+         */
+        void ClearDR(ObjectGuid target);
+
+        /**
+         * @brief Get expected CC duration considering DR
+         *
+         * @param target Target to CC
+         * @param spellId Spell to use
+         * @param baseDuration Base duration of the CC
+         * @return Effective duration after DR reduction
+         */
+        uint32 GetExpectedDuration(ObjectGuid target, uint32 spellId, uint32 baseDuration) const;
+
+        /**
+         * @brief Get DR category for a spell
+         *
+         * @param spellId Spell ID to check
+         * @return DR category for this spell
+         */
+        static DRCategory GetDRCategory(uint32 spellId);
+
     private:
         Player* _bot;
         ::std::unordered_map<ObjectGuid, CCTarget> _activeCCs;
         uint32 _lastUpdate;
+
+        // Phase 2 Architecture: DR tracking per target per category
+        ::std::unordered_map<ObjectGuid, ::std::unordered_map<DRCategory, DRState>> _drTracking;
 
         static constexpr uint32 UPDATE_INTERVAL = 500;  // 500ms
         static constexpr uint32 CHAIN_CC_WINDOW = 2000; // 2 seconds before expiry
