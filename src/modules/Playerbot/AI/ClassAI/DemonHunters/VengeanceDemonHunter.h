@@ -52,39 +52,39 @@ using bot::ai::SpellCategory;
 
 enum VengeanceSpells
 {
-    // Pain Generators (values from central registry)
-    FRACTURE                 = 263642,  // WoW112Spells::DemonHunter::Vengeance::FRACTURE
-    FEL_DEVASTATION          = 212084,  // WoW112Spells::DemonHunter::Vengeance::FEL_DEVASTATION
+    // Pain Generators - Using central registry: WoW112Spells::DemonHunter::Vengeance
+    FRACTURE                 = WoW112Spells::DemonHunter::Vengeance::FRACTURE,
+    FEL_DEVASTATION          = WoW112Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
 
     // Pain Spenders - use DemonHunterSpells from DemonHunterAI.h for SOUL_CLEAVE, SPIRIT_BOMB
-    FEL_DEVASTATION_SPENDER  = 212084,  // Same as FEL_DEVASTATION
+    FEL_DEVASTATION_SPENDER  = WoW112Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
 
-    // Sigils
-    SIGIL_OF_CHAINS          = 202138,  // WoW112Spells::DemonHunter::Vengeance::SIGIL_OF_CHAINS
+    // Sigils - Using central registry: WoW112Spells::DemonHunter::Vengeance
+    SIGIL_OF_CHAINS          = WoW112Spells::DemonHunter::Vengeance::SIGIL_OF_CHAINS,
 
-    // Threat and Utility
-    INFERNAL_STRIKE          = 189110,  // WoW112Spells::DemonHunter::Vengeance::INFERNAL_STRIKE
-    THROW_GLAIVE_TANK        = 204157,  // WoW112Spells::DemonHunter::Vengeance::THROW_GLAIVE_TANK
-    TORMENT                  = 185245,  // WoW112Spells::DemonHunter::Vengeance::TORMENT
-    CONSUME_MAGIC_TANK       = 278326,  // WoW112Spells::DemonHunter::CONSUME_MAGIC
+    // Threat and Utility - Using central registry: WoW112Spells::DemonHunter::Vengeance
+    INFERNAL_STRIKE          = WoW112Spells::DemonHunter::Vengeance::INFERNAL_STRIKE,
+    THROW_GLAIVE_TANK        = WoW112Spells::DemonHunter::Vengeance::THROW_GLAIVE_TANK,
+    TORMENT                  = WoW112Spells::DemonHunter::Vengeance::TORMENT,
+    CONSUME_MAGIC_TANK       = WoW112Spells::DemonHunter::CONSUME_MAGIC,
 
-    // Defensive Cooldowns
-    LAST_RESORT              = 209258,  // WoW112Spells::DemonHunter::Vengeance::LAST_RESORT
-    FEL_DEVASTATION_DEF      = 212084,  // Leech healing (same spell)
+    // Defensive Cooldowns - Using central registry: WoW112Spells::DemonHunter::Vengeance
+    LAST_RESORT              = WoW112Spells::DemonHunter::Vengeance::LAST_RESORT,
+    FEL_DEVASTATION_DEF      = WoW112Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
 
-    // Passives/Procs
-    IMMOLATION_AURA_TANK     = 258920,  // WoW112Spells::DemonHunter::Vengeance::IMMOLATION_AURA_TANK
-    SOUL_FRAGMENTS_BUFF      = 203981,  // WoW112Spells::DemonHunter::Vengeance::SOUL_FRAGMENT
-    PAINBRINGER_BUFF         = 207407,  // WoW112Spells::DemonHunter::Vengeance::PAINBRINGER_BUFF
-    FRAILTY_DEBUFF           = 247456,  // WoW112Spells::DemonHunter::Vengeance::FRAILTY_DEBUFF
+    // Passives/Procs - Using central registry: WoW112Spells::DemonHunter::Vengeance
+    IMMOLATION_AURA_TANK     = WoW112Spells::DemonHunter::Vengeance::IMMOLATION_AURA_TANK,
+    SOUL_FRAGMENTS_BUFF      = WoW112Spells::DemonHunter::Vengeance::SOUL_FRAGMENT,
+    PAINBRINGER_BUFF         = WoW112Spells::DemonHunter::Vengeance::PAINBRINGER_BUFF,
+    FRAILTY_DEBUFF           = WoW112Spells::DemonHunter::Vengeance::FRAILTY_DEBUFF,
 
-    // Talents
-    AGONIZING_FLAMES         = 207548,  // WoW112Spells::DemonHunter::Vengeance::AGONIZING_FLAMES
-    BURNING_ALIVE            = 207739,  // WoW112Spells::DemonHunter::Vengeance::BURNING_ALIVE
-    FEED_THE_DEMON           = 218612,  // WoW112Spells::DemonHunter::Vengeance::FEED_THE_DEMON
-    SPIRIT_BOMB_TALENT       = 247454,  // WoW112Spells::DemonHunter::Vengeance::SPIRIT_BOMB
-    FRACTURE_TALENT          = 263642,  // WoW112Spells::DemonHunter::Vengeance::FRACTURE
-    SOUL_BARRIER_TALENT      = 263648   // WoW112Spells::DemonHunter::Vengeance::SOUL_BARRIER
+    // Talents - Using central registry: WoW112Spells::DemonHunter::Vengeance
+    AGONIZING_FLAMES         = WoW112Spells::DemonHunter::Vengeance::AGONIZING_FLAMES,
+    BURNING_ALIVE            = WoW112Spells::DemonHunter::Vengeance::BURNING_ALIVE,
+    FEED_THE_DEMON           = WoW112Spells::DemonHunter::Vengeance::FEED_THE_DEMON,
+    SPIRIT_BOMB_TALENT       = WoW112Spells::DemonHunter::Vengeance::SPIRIT_BOMB,
+    FRACTURE_TALENT          = WoW112Spells::DemonHunter::Vengeance::FRACTURE,
+    SOUL_BARRIER_TALENT      = WoW112Spells::DemonHunter::Vengeance::SOUL_BARRIER
 };
 
 // Pain resource type (simple uint32)

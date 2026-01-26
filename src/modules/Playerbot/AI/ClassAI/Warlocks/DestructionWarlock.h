@@ -25,7 +25,7 @@
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW112_Part2.h"
 
 namespace Playerbot
 {
@@ -49,60 +49,60 @@ using bot::ai::SpellCategory;
 
 enum DestructionWarlockSpells
 {
-    // Core Spells - WoW112Spells::Warlock::Destruction::
-    CHAOS_BOLT               = 116858,  // WoW112Spells::Warlock::Destruction::CHAOS_BOLT
-    INCINERATE               = 29722,   // WoW112Spells::Warlock::Destruction::INCINERATE
-    CONFLAGRATE              = 17962,   // WoW112Spells::Warlock::Destruction::CONFLAGRATE
-    IMMOLATE                 = 348,     // WoW112Spells::Warlock::Destruction::IMMOLATE
+    // Core Spells - Using central registry: WoW112Spells::Warlock::Destruction
+    CHAOS_BOLT               = WoW112Spells::Warlock::Destruction::CHAOS_BOLT,
+    INCINERATE               = WoW112Spells::Warlock::Destruction::INCINERATE,
+    CONFLAGRATE              = WoW112Spells::Warlock::Destruction::CONFLAGRATE,
+    IMMOLATE                 = WoW112Spells::Warlock::Destruction::IMMOLATE,
 
-    // AoE Spells - WoW112Spells::Warlock::Destruction::
-    RAIN_OF_FIRE             = 5740,    // WoW112Spells::Warlock::Destruction::RAIN_OF_FIRE
-    CHANNEL_DEMONFIRE        = 196447,  // WoW112Spells::Warlock::Destruction::CHANNEL_DEMONFIRE
-    CATACLYSM                = 152108,  // WoW112Spells::Warlock::Destruction::CATACLYSM
-    HAVOC                    = 80240,   // WoW112Spells::Warlock::Destruction::HAVOC
+    // AoE Spells - Using central registry: WoW112Spells::Warlock::Destruction
+    RAIN_OF_FIRE             = WoW112Spells::Warlock::Destruction::RAIN_OF_FIRE,
+    CHANNEL_DEMONFIRE        = WoW112Spells::Warlock::Destruction::CHANNEL_DEMONFIRE,
+    CATACLYSM                = WoW112Spells::Warlock::Destruction::CATACLYSM,
+    HAVOC                    = WoW112Spells::Warlock::Destruction::HAVOC,
 
-    // Major Cooldowns - WoW112Spells::Warlock::Destruction::
-    SUMMON_INFERNAL          = 1122,    // WoW112Spells::Warlock::Destruction::SUMMON_INFERNAL
-    DARK_SOUL_INSTABILITY    = 113858,  // WoW112Spells::Warlock::Destruction::DARK_SOUL_INSTABILITY
-    SOUL_FIRE                = 6353,    // WoW112Spells::Warlock::Destruction::SOUL_FIRE
+    // Major Cooldowns - Using central registry: WoW112Spells::Warlock::Destruction
+    SUMMON_INFERNAL          = WoW112Spells::Warlock::Destruction::SUMMON_INFERNAL,
+    DARK_SOUL_INSTABILITY    = WoW112Spells::Warlock::Destruction::DARK_SOUL_INSTABILITY,
+    SOUL_FIRE                = WoW112Spells::Warlock::Destruction::SOUL_FIRE,
 
-    // Pet Management - WoW112Spells::Warlock:: (class-level)
-    SUMMON_IMP_DESTRO        = 688,     // WoW112Spells::Warlock::SUMMON_IMP
-    SUMMON_VOIDWALKER_DESTRO = 697,     // WoW112Spells::Warlock::SUMMON_VOIDWALKER
-    SUMMON_SUCCUBUS_DESTRO   = 712,     // WoW112Spells::Warlock::SUMMON_SUCCUBUS
-    SUMMON_FELHUNTER_DESTRO  = 691,     // WoW112Spells::Warlock::SUMMON_FELHUNTER
-    COMMAND_DEMON_DESTRO     = 119898,  // WoW112Spells::Warlock::COMMAND_DEMON
+    // Pet Management - Using central registry: WoW112Spells::Warlock
+    SUMMON_IMP_DESTRO        = WoW112Spells::Warlock::SUMMON_IMP,
+    SUMMON_VOIDWALKER_DESTRO = WoW112Spells::Warlock::SUMMON_VOIDWALKER,
+    SUMMON_SUCCUBUS_DESTRO   = WoW112Spells::Warlock::SUMMON_SUCCUBUS,
+    SUMMON_FELHUNTER_DESTRO  = WoW112Spells::Warlock::SUMMON_FELHUNTER,
+    COMMAND_DEMON_DESTRO     = WoW112Spells::Warlock::COMMAND_DEMON,
 
-    // Utility - WoW112Spells::Warlock:: (class-level) and ::Destruction::
-    CURSE_OF_TONGUES_DESTRO  = 1714,    // WoW112Spells::Warlock::CURSE_OF_TONGUES
-    CURSE_OF_WEAKNESS_DESTRO = 702,     // WoW112Spells::Warlock::CURSE_OF_WEAKNESS
-    CURSE_OF_EXHAUSTION_DESTRO = 334275,// WoW112Spells::Warlock::CURSE_OF_EXHAUSTION
-    SHADOWBURN               = 17877,   // WoW112Spells::Warlock::Destruction::SHADOWBURN
-    BACKDRAFT                = 196406,  // WoW112Spells::Warlock::Destruction::BACKDRAFT
+    // Utility - Using central registry: WoW112Spells::Warlock
+    CURSE_OF_TONGUES_DESTRO  = WoW112Spells::Warlock::CURSE_OF_TONGUES,
+    CURSE_OF_WEAKNESS_DESTRO = WoW112Spells::Warlock::CURSE_OF_WEAKNESS,
+    CURSE_OF_EXHAUSTION_DESTRO = WoW112Spells::Warlock::CURSE_OF_EXHAUSTION,
+    SHADOWBURN               = WoW112Spells::Warlock::Destruction::SHADOWBURN,
+    BACKDRAFT                = WoW112Spells::Warlock::Destruction::BACKDRAFT,
 
-    // Defensives - WoW112Spells::Warlock:: (class-level)
-    UNENDING_RESOLVE_DESTRO  = 104773,  // WoW112Spells::Warlock::UNENDING_RESOLVE
-    DARK_PACT_DESTRO         = 108416,  // WoW112Spells::Warlock::Affliction::DARK_PACT
-    MORTAL_COIL_DESTRO       = 6789,    // WoW112Spells::Warlock::MORTAL_COIL
-    HOWL_OF_TERROR_DESTRO    = 5484,    // WoW112Spells::Warlock::HOWL_OF_TERROR
-    FEAR_DESTRO              = 5782,    // WoW112Spells::Warlock::FEAR
-    BANISH_DESTRO            = 710,     // WoW112Spells::Warlock::BANISH
-    DEMONIC_CIRCLE_TELEPORT_DESTRO = 48020, // WoW112Spells::Warlock::DEMONIC_CIRCLE_TELEPORT
-    DEMONIC_GATEWAY_DESTRO   = 111771,  // WoW112Spells::Warlock::DEMONIC_GATEWAY
-    BURNING_RUSH_DESTRO      = 111400,  // WoW112Spells::Warlock::BURNING_RUSH
+    // Defensives - Using central registry: WoW112Spells::Warlock
+    UNENDING_RESOLVE_DESTRO  = WoW112Spells::Warlock::UNENDING_RESOLVE,
+    DARK_PACT_DESTRO         = WoW112Spells::Warlock::Affliction::DARK_PACT,
+    MORTAL_COIL_DESTRO       = WoW112Spells::Warlock::MORTAL_COIL,
+    HOWL_OF_TERROR_DESTRO    = WoW112Spells::Warlock::HOWL_OF_TERROR,
+    FEAR_DESTRO              = WoW112Spells::Warlock::FEAR,
+    BANISH_DESTRO            = WoW112Spells::Warlock::BANISH,
+    DEMONIC_CIRCLE_TELEPORT_DESTRO = WoW112Spells::Warlock::DEMONIC_CIRCLE_TELEPORT,
+    DEMONIC_GATEWAY_DESTRO   = WoW112Spells::Warlock::DEMONIC_GATEWAY,
+    BURNING_RUSH_DESTRO      = WoW112Spells::Warlock::BURNING_RUSH,
 
-    // Procs and Buffs - WoW112Spells::Warlock::Destruction::
-    BACKDRAFT_BUFF           = 117828,  // WoW112Spells::Warlock::Destruction::BACKDRAFT_BUFF
-    REVERSE_ENTROPY          = 205148,  // WoW112Spells::Warlock::Destruction::REVERSE_ENTROPY
-    ERADICATION              = 196412,  // WoW112Spells::Warlock::Destruction::ERADICATION
-    FLASHOVER                = 267115,  // WoW112Spells::Warlock::Destruction::FLASHOVER
+    // Procs and Buffs - Using central registry: WoW112Spells::Warlock::Destruction
+    BACKDRAFT_BUFF           = WoW112Spells::Warlock::Destruction::BACKDRAFT_BUFF,
+    REVERSE_ENTROPY          = WoW112Spells::Warlock::Destruction::REVERSE_ENTROPY,
+    ERADICATION              = WoW112Spells::Warlock::Destruction::ERADICATION,
+    FLASHOVER                = WoW112Spells::Warlock::Destruction::FLASHOVER,
 
-    // Talents - WoW112Spells::Warlock::Destruction::
-    ROARING_BLAZE            = 205184,  // WoW112Spells::Warlock::Destruction::ROARING_BLAZE
-    INTERNAL_COMBUSTION      = 266134,  // WoW112Spells::Warlock::Destruction::INTERNAL_COMBUSTION
-    FIRE_AND_BRIMSTONE       = 196408,  // WoW112Spells::Warlock::Destruction::FIRE_AND_BRIMSTONE
-    INFERNO                  = 270545,  // WoW112Spells::Warlock::Destruction::INFERNO
-    GRIMOIRE_OF_SUPREMACY    = 266086   // WoW112Spells::Warlock::Destruction::GRIMOIRE_OF_SUPREMACY
+    // Talents - Using central registry: WoW112Spells::Warlock::Destruction
+    ROARING_BLAZE            = WoW112Spells::Warlock::Destruction::ROARING_BLAZE,
+    INTERNAL_COMBUSTION      = WoW112Spells::Warlock::Destruction::INTERNAL_COMBUSTION,
+    FIRE_AND_BRIMSTONE       = WoW112Spells::Warlock::Destruction::FIRE_AND_BRIMSTONE,
+    INFERNO                  = WoW112Spells::Warlock::Destruction::INFERNO,
+    GRIMOIRE_OF_SUPREMACY    = WoW112Spells::Warlock::Destruction::GRIMOIRE_OF_SUPREMACY
 };
 
 // Dual resource type for Destruction Warlock

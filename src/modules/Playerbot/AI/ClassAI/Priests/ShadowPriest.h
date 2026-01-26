@@ -37,7 +37,7 @@
 #include "PriestTalentEnhancements.h"
 
 // Central Spell Registry - See WoW112Spells::Priest namespace
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW112_Part2.h"
 
 namespace Playerbot
 {
@@ -55,32 +55,32 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Shadow Priest Spell IDs
-// See central registry: WoW112Spells::Priest and WoW112Spells::Priest::Shadow
-constexpr uint32 SHADOW_MIND_BLAST = 8092;             // -> WoW112Spells::Priest::Shadow::MIND_BLAST_SHADOW
-constexpr uint32 SHADOW_MIND_FLAY = 15407;             // -> WoW112Spells::Priest::Shadow::MIND_FLAY
-constexpr uint32 SHADOW_VAMPIRIC_TOUCH = 34914;        // -> WoW112Spells::Priest::Shadow::VAMPIRIC_TOUCH
-constexpr uint32 SHADOW_SHADOW_WORD_PAIN = 589;        // -> WoW112Spells::Priest::SHADOW_WORD_PAIN
-constexpr uint32 SHADOW_DEVOURING_PLAGUE = 335467;     // -> WoW112Spells::Priest::Shadow::DEVOURING_PLAGUE
-constexpr uint32 SHADOW_VOID_ERUPTION = 228260;        // -> WoW112Spells::Priest::Shadow::VOID_ERUPTION
-constexpr uint32 SHADOW_VOID_BOLT = 205448;            // -> WoW112Spells::Priest::Shadow::VOID_BOLT
-constexpr uint32 SHADOW_MIND_SEAR = 48045;             // -> WoW112Spells::Priest::Shadow::MIND_SEAR
+// Using central registry: WoW112Spells::Priest and WoW112Spells::Priest::Shadow
+constexpr uint32 SHADOW_MIND_BLAST = WoW112Spells::Priest::Shadow::MIND_BLAST_SHADOW;
+constexpr uint32 SHADOW_MIND_FLAY = WoW112Spells::Priest::Shadow::MIND_FLAY;
+constexpr uint32 SHADOW_VAMPIRIC_TOUCH = WoW112Spells::Priest::Shadow::VAMPIRIC_TOUCH;
+constexpr uint32 SHADOW_SHADOW_WORD_PAIN = WoW112Spells::Priest::SHADOW_WORD_PAIN;
+constexpr uint32 SHADOW_DEVOURING_PLAGUE = WoW112Spells::Priest::Shadow::DEVOURING_PLAGUE;
+constexpr uint32 SHADOW_VOID_ERUPTION = WoW112Spells::Priest::Shadow::VOID_ERUPTION;
+constexpr uint32 SHADOW_VOID_BOLT = WoW112Spells::Priest::Shadow::VOID_BOLT;
+constexpr uint32 SHADOW_MIND_SEAR = WoW112Spells::Priest::Shadow::MIND_SEAR;
 constexpr uint32 SHADOW_SHADOW_CRASH = WoW112Spells::Priest::Shadow::SHADOW_CRASH;
-constexpr uint32 SHADOW_VOID_TORRENT = 263165;         // -> WoW112Spells::Priest::Shadow::VOID_TORRENT
-constexpr uint32 SHADOW_DARK_ASCENSION = 391109;       // -> WoW112Spells::Priest::Shadow::DARK_ASCENSION
-constexpr uint32 SHADOW_MINDGAMES = 375901;            // -> WoW112Spells::Priest::Shadow::MINDGAMES_SHADOW
-constexpr uint32 SHADOW_SHADOW_WORD_DEATH = 32379;     // -> WoW112Spells::Priest::SHADOW_WORD_DEATH
-constexpr uint32 SHADOW_VAMPIRIC_EMBRACE = 15286;      // -> WoW112Spells::Priest::Shadow::VAMPIRIC_EMBRACE
-constexpr uint32 SHADOW_DISPERSION = 47585;            // -> WoW112Spells::Priest::Shadow::DISPERSION
-constexpr uint32 SHADOW_FADE = 586;                    // -> WoW112Spells::Priest::FADE
-constexpr uint32 SHADOW_DESPERATE_PRAYER = 19236;      // -> WoW112Spells::Priest::DESPERATE_PRAYER
-constexpr uint32 SHADOW_POWER_WORD_FORTITUDE = 21562;  // -> WoW112Spells::Priest::POWER_WORD_FORTITUDE
-constexpr uint32 SHADOW_SHADOWFORM = 232698;           // -> WoW112Spells::Priest::Shadow::SHADOWFORM
+constexpr uint32 SHADOW_VOID_TORRENT = WoW112Spells::Priest::Shadow::VOID_TORRENT;
+constexpr uint32 SHADOW_DARK_ASCENSION = WoW112Spells::Priest::Shadow::DARK_ASCENSION;
+constexpr uint32 SHADOW_MINDGAMES = WoW112Spells::Priest::Shadow::MINDGAMES_SHADOW;
+constexpr uint32 SHADOW_SHADOW_WORD_DEATH = WoW112Spells::Priest::SHADOW_WORD_DEATH;
+constexpr uint32 SHADOW_VAMPIRIC_EMBRACE = WoW112Spells::Priest::Shadow::VAMPIRIC_EMBRACE;
+constexpr uint32 SHADOW_DISPERSION = WoW112Spells::Priest::Shadow::DISPERSION;
+constexpr uint32 SHADOW_FADE = WoW112Spells::Priest::FADE;
+constexpr uint32 SHADOW_DESPERATE_PRAYER = WoW112Spells::Priest::DESPERATE_PRAYER;
+constexpr uint32 SHADOW_POWER_WORD_FORTITUDE = WoW112Spells::Priest::POWER_WORD_FORTITUDE;
+constexpr uint32 SHADOW_SHADOWFORM = WoW112Spells::Priest::Shadow::SHADOWFORM;
 
-// NEW: TrinityCore 11.2 Talent Spell IDs
-// See central registry: WoW112Spells::Priest::Shadow
-constexpr uint32 SHADOW_MINDBENDER = 123040;           // -> WoW112Spells::Priest::Shadow::MINDBENDER
-constexpr uint32 SHADOW_SHADOWFIEND = 34433;           // -> WoW112Spells::Priest::Shadow::SHADOWFIEND_SHADOW
-constexpr uint32 SHADOW_HALO = 120644;                 // -> WoW112Spells::Priest::Shadow::HALO_SHADOW
+// TrinityCore 11.2 Talent Spell IDs
+// Using central registry: WoW112Spells::Priest::Shadow
+constexpr uint32 SHADOW_MINDBENDER = WoW112Spells::Priest::Shadow::MINDBENDER;
+constexpr uint32 SHADOW_SHADOWFIEND = WoW112Spells::Priest::Shadow::SHADOWFIEND_SHADOW;
+constexpr uint32 SHADOW_HALO = WoW112Spells::Priest::Shadow::HALO_SHADOW;
 
 // Insanity tracker (Shadow Priest secondary resource - primary is still Mana)
 class InsanityTracker

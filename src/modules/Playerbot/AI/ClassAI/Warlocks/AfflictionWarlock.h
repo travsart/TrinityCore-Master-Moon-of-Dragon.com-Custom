@@ -25,7 +25,7 @@
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW112_Part2.h"
 // NOTE: BaselineRotationManager.h no longer needed - baseline rotation check
 // is now handled centrally at the dispatch level in ClassAI::OnCombatUpdate()
 
@@ -51,64 +51,64 @@ using bot::ai::SpellCategory;
 
 enum AfflictionWarlockSpells
 {
-    // DoT Spells - WoW112Spells::Warlock::Affliction::
-    AGONY                    = 980,     // WoW112Spells::Warlock::Affliction::AGONY
-    CORRUPTION               = 172,     // WoW112Spells::Warlock::CORRUPTION (class-level)
-    UNSTABLE_AFFLICTION      = 316099,  // WoW112Spells::Warlock::Affliction::UNSTABLE_AFFLICTION
-    SIPHON_LIFE              = 63106,   // WoW112Spells::Warlock::Affliction::SIPHON_LIFE
-    HAUNT                    = 48181,   // WoW112Spells::Warlock::Affliction::HAUNT
+    // DoT Spells - Using central registry: WoW112Spells::Warlock::Affliction
+    AGONY                    = WoW112Spells::Warlock::Affliction::AGONY,
+    CORRUPTION               = WoW112Spells::Warlock::CORRUPTION,
+    UNSTABLE_AFFLICTION      = WoW112Spells::Warlock::Affliction::UNSTABLE_AFFLICTION,
+    SIPHON_LIFE              = WoW112Spells::Warlock::Affliction::SIPHON_LIFE,
+    HAUNT                    = WoW112Spells::Warlock::Affliction::HAUNT,
 
-    // Direct Damage - WoW112Spells::Warlock::
-    SHADOW_BOLT_AFF          = 686,     // WoW112Spells::Warlock::SHADOW_BOLT (class-level)
-    DRAIN_SOUL               = 198590,  // WoW112Spells::Warlock::Affliction::DRAIN_SOUL
-    MALEFIC_RAPTURE          = 324536,  // WoW112Spells::Warlock::Affliction::MALEFIC_RAPTURE
+    // Direct Damage - Using central registry: WoW112Spells::Warlock
+    SHADOW_BOLT_AFF          = WoW112Spells::Warlock::SHADOW_BOLT,
+    DRAIN_SOUL               = WoW112Spells::Warlock::Affliction::DRAIN_SOUL,
+    MALEFIC_RAPTURE          = WoW112Spells::Warlock::Affliction::MALEFIC_RAPTURE,
 
-    // Major Cooldowns - WoW112Spells::Warlock::Affliction::
-    PHANTOM_SINGULARITY      = 205179,  // WoW112Spells::Warlock::Affliction::PHANTOM_SINGULARITY
-    VILE_TAINT               = 278350,  // WoW112Spells::Warlock::Affliction::VILE_TAINT
-    SOUL_ROT                 = 386997,  // WoW112Spells::Warlock::Affliction::SOUL_ROT
-    SUMMON_DARKGLARE         = 205180,  // WoW112Spells::Warlock::Affliction::SUMMON_DARKGLARE
-    DARK_SOUL_MISERY         = 113860,  // WoW112Spells::Warlock::Affliction::DARK_SOUL_MISERY
+    // Major Cooldowns - Using central registry: WoW112Spells::Warlock::Affliction
+    PHANTOM_SINGULARITY      = WoW112Spells::Warlock::Affliction::PHANTOM_SINGULARITY,
+    VILE_TAINT               = WoW112Spells::Warlock::Affliction::VILE_TAINT,
+    SOUL_ROT                 = WoW112Spells::Warlock::Affliction::SOUL_ROT,
+    SUMMON_DARKGLARE         = WoW112Spells::Warlock::Affliction::SUMMON_DARKGLARE,
+    DARK_SOUL_MISERY         = WoW112Spells::Warlock::Affliction::DARK_SOUL_MISERY,
 
-    // AoE - WoW112Spells::Warlock::Affliction::
-    SEED_OF_CORRUPTION       = 27243,   // WoW112Spells::Warlock::Affliction::SEED_OF_CORRUPTION
-    SOULBURN                 = 385899,  // WoW112Spells::Warlock::Affliction::SOULBURN
+    // AoE - Using central registry: WoW112Spells::Warlock::Affliction
+    SEED_OF_CORRUPTION       = WoW112Spells::Warlock::Affliction::SEED_OF_CORRUPTION,
+    SOULBURN                 = WoW112Spells::Warlock::Affliction::SOULBURN,
 
-    // Pet Management - WoW112Spells::Warlock:: (class-level)
-    SUMMON_IMP_AFF           = 688,     // WoW112Spells::Warlock::SUMMON_IMP
-    SUMMON_VOIDWALKER_AFF    = 697,     // WoW112Spells::Warlock::SUMMON_VOIDWALKER
-    SUMMON_FELHUNTER_AFF     = 691,     // WoW112Spells::Warlock::SUMMON_FELHUNTER
-    SUMMON_SUCCUBUS_AFF      = 712,     // WoW112Spells::Warlock::SUMMON_SUCCUBUS
-    COMMAND_DEMON_AFF        = 119898,  // WoW112Spells::Warlock::COMMAND_DEMON
+    // Pet Management - Using central registry: WoW112Spells::Warlock
+    SUMMON_IMP_AFF           = WoW112Spells::Warlock::SUMMON_IMP,
+    SUMMON_VOIDWALKER_AFF    = WoW112Spells::Warlock::SUMMON_VOIDWALKER,
+    SUMMON_FELHUNTER_AFF     = WoW112Spells::Warlock::SUMMON_FELHUNTER,
+    SUMMON_SUCCUBUS_AFF      = WoW112Spells::Warlock::SUMMON_SUCCUBUS,
+    COMMAND_DEMON_AFF        = WoW112Spells::Warlock::COMMAND_DEMON,
 
-    // Utility - WoW112Spells::Warlock:: (class-level)
-    CURSE_OF_WEAKNESS        = 702,     // WoW112Spells::Warlock::CURSE_OF_WEAKNESS
-    CURSE_OF_TONGUES         = 1714,    // WoW112Spells::Warlock::CURSE_OF_TONGUES
-    CURSE_OF_EXHAUSTION      = 334275,  // WoW112Spells::Warlock::CURSE_OF_EXHAUSTION
-    UNENDING_RESOLVE         = 104773,  // WoW112Spells::Warlock::UNENDING_RESOLVE
-    DARK_PACT                = 108416,  // WoW112Spells::Warlock::Affliction::DARK_PACT
-    MORTAL_COIL              = 6789,    // WoW112Spells::Warlock::MORTAL_COIL
-    HOWL_OF_TERROR           = 5484,    // WoW112Spells::Warlock::HOWL_OF_TERROR
-    FEAR                     = 5782,    // WoW112Spells::Warlock::FEAR
-    BANISH                   = 710,     // WoW112Spells::Warlock::BANISH
-    SOULSTONE                = 20707,   // WoW112Spells::Warlock::SOULSTONE
+    // Utility - Using central registry: WoW112Spells::Warlock
+    CURSE_OF_WEAKNESS        = WoW112Spells::Warlock::CURSE_OF_WEAKNESS,
+    CURSE_OF_TONGUES         = WoW112Spells::Warlock::CURSE_OF_TONGUES,
+    CURSE_OF_EXHAUSTION      = WoW112Spells::Warlock::CURSE_OF_EXHAUSTION,
+    UNENDING_RESOLVE         = WoW112Spells::Warlock::UNENDING_RESOLVE,
+    DARK_PACT                = WoW112Spells::Warlock::Affliction::DARK_PACT,
+    MORTAL_COIL              = WoW112Spells::Warlock::MORTAL_COIL,
+    HOWL_OF_TERROR           = WoW112Spells::Warlock::HOWL_OF_TERROR,
+    FEAR                     = WoW112Spells::Warlock::FEAR,
+    BANISH                   = WoW112Spells::Warlock::BANISH,
+    SOULSTONE                = WoW112Spells::Warlock::SOULSTONE,
 
-    // Defensives - WoW112Spells::Warlock:: (class-level)
-    HEALTH_FUNNEL            = 755,     // WoW112Spells::Warlock::HEALTH_FUNNEL
-    DEMONIC_CIRCLE_TELEPORT  = 48020,   // WoW112Spells::Warlock::DEMONIC_CIRCLE_TELEPORT
-    DEMONIC_GATEWAY          = 111771,  // WoW112Spells::Warlock::DEMONIC_GATEWAY
-    BURNING_RUSH             = 111400,  // WoW112Spells::Warlock::BURNING_RUSH
+    // Defensives - Using central registry: WoW112Spells::Warlock
+    HEALTH_FUNNEL            = WoW112Spells::Warlock::HEALTH_FUNNEL,
+    DEMONIC_CIRCLE_TELEPORT  = WoW112Spells::Warlock::DEMONIC_CIRCLE_TELEPORT,
+    DEMONIC_GATEWAY          = WoW112Spells::Warlock::DEMONIC_GATEWAY,
+    BURNING_RUSH             = WoW112Spells::Warlock::BURNING_RUSH,
 
-    // Procs and Buffs - WoW112Spells::Warlock::Affliction::
-    NIGHTFALL                = 108558,  // WoW112Spells::Warlock::Affliction::NIGHTFALL
-    INEVITABLE_DEMISE        = 334319,  // WoW112Spells::Warlock::Affliction::INEVITABLE_DEMISE
-    TORMENTED_CRESCENDO      = 387079,  // WoW112Spells::Warlock::Affliction::TORMENTED_CRESCENDO
+    // Procs and Buffs - Using central registry: WoW112Spells::Warlock::Affliction
+    NIGHTFALL                = WoW112Spells::Warlock::Affliction::NIGHTFALL,
+    INEVITABLE_DEMISE        = WoW112Spells::Warlock::Affliction::INEVITABLE_DEMISE,
+    TORMENTED_CRESCENDO      = WoW112Spells::Warlock::Affliction::TORMENTED_CRESCENDO,
 
-    // Talents - WoW112Spells::Warlock::Affliction::
-    GRIMOIRE_OF_SACRIFICE    = 108503,  // WoW112Spells::Warlock::Affliction::GRIMOIRE_OF_SACRIFICE
-    SOUL_CONDUIT             = 215941,  // WoW112Spells::Warlock::Affliction::SOUL_CONDUIT
-    CREEPING_DEATH           = 264000,  // WoW112Spells::Warlock::Affliction::CREEPING_DEATH
-    WRITHE_IN_AGONY          = 196102   // WoW112Spells::Warlock::Affliction::WRITHE_IN_AGONY
+    // Talents - Using central registry: WoW112Spells::Warlock::Affliction
+    GRIMOIRE_OF_SACRIFICE    = WoW112Spells::Warlock::Affliction::GRIMOIRE_OF_SACRIFICE,
+    SOUL_CONDUIT             = WoW112Spells::Warlock::Affliction::SOUL_CONDUIT,
+    CREEPING_DEATH           = WoW112Spells::Warlock::Affliction::CREEPING_DEATH,
+    WRITHE_IN_AGONY          = WoW112Spells::Warlock::Affliction::WRITHE_IN_AGONY
 };
 
 // Dual resource type for Warlock (Mana + Soul Shards)

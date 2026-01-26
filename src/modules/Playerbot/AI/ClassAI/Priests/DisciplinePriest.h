@@ -34,7 +34,7 @@
 #include "../../BotAI.h"
 
 // Central Spell Registry - See WoW112Spells::Priest namespace
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW112_Part2.h"
 
 namespace Playerbot
 {
@@ -52,26 +52,26 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Discipline Priest Spell IDs
-// See central registry: WoW112Spells::Priest and WoW112Spells::Priest::Discipline
-constexpr uint32 DISC_SMITE = 585;                     // -> WoW112Spells::Priest::SMITE
-constexpr uint32 DISC_PENANCE = 47540;                 // -> WoW112Spells::Priest::Discipline::PENANCE
-constexpr uint32 DISC_POWER_WORD_SHIELD = 17;          // -> WoW112Spells::Priest::POWER_WORD_SHIELD
-constexpr uint32 DISC_SHADOW_MEND = 186263;            // -> WoW112Spells::Priest::Discipline::SHADOW_MEND
-constexpr uint32 DISC_PURGE_WICKED = 204197;           // -> WoW112Spells::Priest::Discipline::PURGE_THE_WICKED
-constexpr uint32 DISC_POWER_WORD_RADIANCE = 194509;    // -> WoW112Spells::Priest::Discipline::POWER_WORD_RADIANCE
-constexpr uint32 DISC_RAPTURE = 47536;                 // -> WoW112Spells::Priest::Discipline::RAPTURE
-constexpr uint32 DISC_PAIN_SUPPRESSION = 33206;        // -> WoW112Spells::Priest::Discipline::PAIN_SUPPRESSION
-constexpr uint32 DISC_BARRIER = 62618;                 // -> WoW112Spells::Priest::Discipline::POWER_WORD_BARRIER
-constexpr uint32 DISC_EVANGELISM = 246287;             // -> WoW112Spells::Priest::Discipline::EVANGELISM
-constexpr uint32 DISC_SCHISM = 214621;                 // -> WoW112Spells::Priest::Discipline::SCHISM
-constexpr uint32 DISC_MINDGAMES = 323673;              // -> WoW112Spells::Priest::Discipline::MINDGAMES
-constexpr uint32 DISC_SHADOW_COVENANT = 314867;        // -> WoW112Spells::Priest::Discipline::SHADOW_COVENANT
-constexpr uint32 DISC_POWER_WORD_LIFE = 373481;        // -> WoW112Spells::Priest::Discipline::POWER_WORD_LIFE
-constexpr uint32 DISC_PURIFY = 527;                    // -> WoW112Spells::Priest::PURIFY
-constexpr uint32 DISC_SHADOW_WORD_PAIN = 589;          // -> WoW112Spells::Priest::SHADOW_WORD_PAIN
-constexpr uint32 DISC_FADE = 586;                      // -> WoW112Spells::Priest::FADE
-constexpr uint32 DISC_DESPERATE_PRAYER = 19236;        // -> WoW112Spells::Priest::DESPERATE_PRAYER
-constexpr uint32 DISC_POWER_WORD_FORTITUDE = 21562;    // -> WoW112Spells::Priest::POWER_WORD_FORTITUDE
+// Using central registry: WoW112Spells::Priest and WoW112Spells::Priest::Discipline
+constexpr uint32 DISC_SMITE = WoW112Spells::Priest::SMITE;
+constexpr uint32 DISC_PENANCE = WoW112Spells::Priest::Discipline::PENANCE;
+constexpr uint32 DISC_POWER_WORD_SHIELD = WoW112Spells::Priest::POWER_WORD_SHIELD;
+constexpr uint32 DISC_SHADOW_MEND = WoW112Spells::Priest::Discipline::SHADOW_MEND;
+constexpr uint32 DISC_PURGE_WICKED = WoW112Spells::Priest::Discipline::PURGE_THE_WICKED;
+constexpr uint32 DISC_POWER_WORD_RADIANCE = WoW112Spells::Priest::Discipline::POWER_WORD_RADIANCE;
+constexpr uint32 DISC_RAPTURE = WoW112Spells::Priest::Discipline::RAPTURE;
+constexpr uint32 DISC_PAIN_SUPPRESSION = WoW112Spells::Priest::Discipline::PAIN_SUPPRESSION;
+constexpr uint32 DISC_BARRIER = WoW112Spells::Priest::Discipline::POWER_WORD_BARRIER;
+constexpr uint32 DISC_EVANGELISM = WoW112Spells::Priest::Discipline::EVANGELISM;
+constexpr uint32 DISC_SCHISM = WoW112Spells::Priest::Discipline::SCHISM;
+constexpr uint32 DISC_MINDGAMES = WoW112Spells::Priest::Discipline::MINDGAMES;
+constexpr uint32 DISC_SHADOW_COVENANT = WoW112Spells::Priest::Discipline::SHADOW_COVENANT;
+constexpr uint32 DISC_POWER_WORD_LIFE = WoW112Spells::Priest::Discipline::POWER_WORD_LIFE;
+constexpr uint32 DISC_PURIFY = WoW112Spells::Priest::PURIFY;
+constexpr uint32 DISC_SHADOW_WORD_PAIN = WoW112Spells::Priest::SHADOW_WORD_PAIN;
+constexpr uint32 DISC_FADE = WoW112Spells::Priest::FADE;
+constexpr uint32 DISC_DESPERATE_PRAYER = WoW112Spells::Priest::DESPERATE_PRAYER;
+constexpr uint32 DISC_POWER_WORD_FORTITUDE = WoW112Spells::Priest::POWER_WORD_FORTITUDE;
 
 // Atonement tracker - tracks which allies have Atonement buff for damage-to-healing conversion
 class AtonementTracker

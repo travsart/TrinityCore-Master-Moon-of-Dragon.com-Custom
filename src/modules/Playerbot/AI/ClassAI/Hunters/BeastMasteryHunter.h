@@ -59,39 +59,39 @@ using bot::ai::SpellCategory;
 
 enum BeastMasterySpells
 {
-    // Core Abilities (values from central registry)
-    SPELL_KILL_COMMAND          = 34026,   // WoW112Spells::Hunter::BeastMastery::KILL_COMMAND
-    SPELL_BARBED_SHOT           = 217200,  // WoW112Spells::Hunter::BeastMastery::BARBED_SHOT
-    SPELL_COBRA_SHOT            = 193455,  // WoW112Spells::Hunter::BeastMastery::COBRA_SHOT
-    SPELL_BESTIAL_WRATH         = 19574,   // WoW112Spells::Hunter::BeastMastery::BESTIAL_WRATH
-    SPELL_ASPECT_OF_THE_WILD    = 193530,  // WoW112Spells::Hunter::BeastMastery::ASPECT_OF_THE_WILD
-    SPELL_MULTISHOT             = 2643,    // WoW112Spells::Hunter::BeastMastery::MULTI_SHOT_BM
+    // Core Abilities - Using central registry: WoW112Spells::Hunter::BeastMastery
+    SPELL_KILL_COMMAND          = WoW112Spells::Hunter::BeastMastery::KILL_COMMAND,
+    SPELL_BARBED_SHOT           = WoW112Spells::Hunter::BeastMastery::BARBED_SHOT,
+    SPELL_COBRA_SHOT            = WoW112Spells::Hunter::BeastMastery::COBRA_SHOT,
+    SPELL_BESTIAL_WRATH         = WoW112Spells::Hunter::BeastMastery::BESTIAL_WRATH,
+    SPELL_ASPECT_OF_THE_WILD    = WoW112Spells::Hunter::BeastMastery::ASPECT_OF_THE_WILD,
+    SPELL_MULTISHOT             = WoW112Spells::Hunter::BeastMastery::MULTI_SHOT_BM,
 
-    // Pet Management
-    SPELL_CALL_PET_1            = 883,     // WoW112Spells::Hunter::CALL_PET_1
-    SPELL_MEND_PET              = 136,     // WoW112Spells::Hunter::MEND_PET
-    SPELL_REVIVE_PET            = 982,     // WoW112Spells::Hunter::REVIVE_PET
-    SPELL_PET_ATTACK            = 52398,   // WoW112Spells::Hunter::PET_ATTACK
-    SPELL_PET_FOLLOW            = 52399,   // WoW112Spells::Hunter::PET_FOLLOW
-    SPELL_PET_STAY              = 52400,   // WoW112Spells::Hunter::PET_STAY
+    // Pet Management - Using central registry: WoW112Spells::Hunter
+    SPELL_CALL_PET_1            = WoW112Spells::Hunter::CALL_PET_1,
+    SPELL_MEND_PET              = WoW112Spells::Hunter::MEND_PET,
+    SPELL_REVIVE_PET            = WoW112Spells::Hunter::REVIVE_PET,
+    SPELL_PET_ATTACK            = WoW112Spells::Hunter::PET_ATTACK,
+    SPELL_PET_FOLLOW            = WoW112Spells::Hunter::PET_FOLLOW,
+    SPELL_PET_STAY              = WoW112Spells::Hunter::PET_STAY,
 
-    // Talents/Special
-    SPELL_DIRE_BEAST            = 120679,  // WoW112Spells::Hunter::BeastMastery::DIRE_BEAST
-    SPELL_BLOODSHED             = 321530,  // WoW112Spells::Hunter::BeastMastery::BLOODSHED
-    SPELL_WILD_CALL             = 185789,  // WoW112Spells::Hunter::BeastMastery::WILD_CALL
-    SPELL_ANIMAL_COMPANION      = 267116,  // WoW112Spells::Hunter::BeastMastery::ANIMAL_COMPANION
+    // Talents/Special - Using central registry: WoW112Spells::Hunter::BeastMastery
+    SPELL_DIRE_BEAST            = WoW112Spells::Hunter::BeastMastery::DIRE_BEAST,
+    SPELL_BLOODSHED             = WoW112Spells::Hunter::BeastMastery::BLOODSHED,
+    SPELL_WILD_CALL             = WoW112Spells::Hunter::BeastMastery::WILD_CALL,
+    SPELL_ANIMAL_COMPANION      = WoW112Spells::Hunter::BeastMastery::ANIMAL_COMPANION,
 
-    // Buffs/Debuffs
-    SPELL_HUNTERS_MARK          = 257284,  // WoW112Spells::Hunter::HUNTERS_MARK
-    SPELL_ASPECT_OF_CHEETAH     = 186257,  // WoW112Spells::Hunter::ASPECT_OF_THE_CHEETAH
-    SPELL_EXHILARATION          = 109304,  // WoW112Spells::Hunter::EXHILARATION
-    SPELL_PET_FRENZY            = 272790,  // WoW112Spells::Hunter::BeastMastery::PET_FRENZY
+    // Buffs/Debuffs - Using central registry: WoW112Spells::Hunter
+    SPELL_HUNTERS_MARK          = WoW112Spells::Hunter::HUNTERS_MARK,
+    SPELL_ASPECT_OF_CHEETAH     = WoW112Spells::Hunter::ASPECT_OF_THE_CHEETAH,
+    SPELL_EXHILARATION          = WoW112Spells::Hunter::EXHILARATION,
+    SPELL_PET_FRENZY            = WoW112Spells::Hunter::BeastMastery::PET_FRENZY,
 
-    // Utility
-    SPELL_COUNTER_SHOT          = 147362,  // WoW112Spells::Hunter::COUNTER_SHOT
-    SPELL_TRANQUILIZING_SHOT    = 19801,   // WoW112Spells::Hunter::TRANQUILIZING_SHOT
-    SPELL_TAR_TRAP              = 187698,  // WoW112Spells::Hunter::TAR_TRAP
-    SPELL_FREEZING_TRAP         = 187650   // WoW112Spells::Hunter::FREEZING_TRAP
+    // Utility - Using central registry: WoW112Spells::Hunter
+    SPELL_COUNTER_SHOT          = WoW112Spells::Hunter::COUNTER_SHOT,
+    SPELL_TRANQUILIZING_SHOT    = WoW112Spells::Hunter::TRANQUILIZING_SHOT,
+    SPELL_TAR_TRAP              = WoW112Spells::Hunter::TAR_TRAP,
+    SPELL_FREEZING_TRAP         = WoW112Spells::Hunter::FREEZING_TRAP
 };
 
 /**

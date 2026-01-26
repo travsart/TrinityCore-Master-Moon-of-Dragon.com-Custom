@@ -56,41 +56,41 @@ using bot::ai::SpellCategory;
 
 enum MarksmanshipSpells
 {
-    // Core Abilities (values from central registry)
-    SPELL_AIMED_SHOT           = 19434,   // WoW112Spells::Hunter::Marksmanship::AIMED_SHOT_MM
-    SPELL_RAPID_FIRE           = 257044,  // WoW112Spells::Hunter::Marksmanship::RAPID_FIRE_MM
-    SPELL_STEADY_SHOT          = 56641,   // WoW112Spells::Hunter::Marksmanship::STEADY_SHOT_MM
-    SPELL_ARCANE_SHOT          = 185358,  // WoW112Spells::Hunter::Marksmanship::ARCANE_SHOT_MM
-    SPELL_TRUESHOT             = 288613,  // WoW112Spells::Hunter::Marksmanship::TRUESHOT
-    SPELL_DOUBLE_TAP           = 260402,  // WoW112Spells::Hunter::Marksmanship::DOUBLE_TAP
+    // Core Abilities - Using central registry: WoW112Spells::Hunter::Marksmanship
+    SPELL_AIMED_SHOT           = WoW112Spells::Hunter::Marksmanship::AIMED_SHOT_MM,
+    SPELL_RAPID_FIRE           = WoW112Spells::Hunter::Marksmanship::RAPID_FIRE_MM,
+    SPELL_STEADY_SHOT          = WoW112Spells::Hunter::Marksmanship::STEADY_SHOT_MM,
+    SPELL_ARCANE_SHOT          = WoW112Spells::Hunter::Marksmanship::ARCANE_SHOT_MM,
+    SPELL_TRUESHOT             = WoW112Spells::Hunter::Marksmanship::TRUESHOT,
+    SPELL_DOUBLE_TAP           = WoW112Spells::Hunter::Marksmanship::DOUBLE_TAP,
 
-    // AoE Abilities
-    SPELL_MULTISHOT_MM         = 257620,  // WoW112Spells::Hunter::MULTI_SHOT
-    SPELL_EXPLOSIVE_SHOT       = 212431,  // WoW112Spells::Hunter::Marksmanship::EXPLOSIVE_SHOT
-    SPELL_VOLLEY               = 260243,  // WoW112Spells::Hunter::Marksmanship::VOLLEY
+    // AoE Abilities - Using central registry: WoW112Spells::Hunter
+    SPELL_MULTISHOT_MM         = WoW112Spells::Hunter::MULTI_SHOT,
+    SPELL_EXPLOSIVE_SHOT       = WoW112Spells::Hunter::Marksmanship::EXPLOSIVE_SHOT,
+    SPELL_VOLLEY               = WoW112Spells::Hunter::Marksmanship::VOLLEY,
 
-    // Procs and Buffs
-    SPELL_PRECISE_SHOTS        = 260242,  // WoW112Spells::Hunter::Marksmanship::PRECISE_SHOTS
-    SPELL_TRICK_SHOTS          = 257621,  // WoW112Spells::Hunter::Marksmanship::TRICK_SHOTS
-    SPELL_LETHAL_SHOTS         = 260393,  // WoW112Spells::Hunter::Marksmanship::LETHAL_SHOTS
-    SPELL_CAREFUL_AIM          = 260228,  // WoW112Spells::Hunter::Marksmanship::CAREFUL_AIM
+    // Procs and Buffs - Using central registry: WoW112Spells::Hunter::Marksmanship
+    SPELL_PRECISE_SHOTS        = WoW112Spells::Hunter::Marksmanship::PRECISE_SHOTS,
+    SPELL_TRICK_SHOTS          = WoW112Spells::Hunter::Marksmanship::TRICK_SHOTS,
+    SPELL_LETHAL_SHOTS         = WoW112Spells::Hunter::Marksmanship::LETHAL_SHOTS,
+    SPELL_CAREFUL_AIM          = WoW112Spells::Hunter::Marksmanship::CAREFUL_AIM,
 
-    // Utility
-    SPELL_HUNTERS_MARK_MM      = 257284,  // WoW112Spells::Hunter::HUNTERS_MARK
-    SPELL_BINDING_SHOT         = 109248,  // WoW112Spells::Hunter::Marksmanship::BINDING_SHOT
-    SPELL_SCATTER_SHOT         = 213691,  // WoW112Spells::Hunter::Marksmanship::SCATTER_SHOT
-    SPELL_BURSTING_SHOT        = 186387,  // WoW112Spells::Hunter::Marksmanship::BURSTING_SHOT
-    SPELL_COUNTER_SHOT_MM      = 147362,  // WoW112Spells::Hunter::COUNTER_SHOT
+    // Utility - Using central registry: WoW112Spells::Hunter
+    SPELL_HUNTERS_MARK_MM      = WoW112Spells::Hunter::HUNTERS_MARK,
+    SPELL_BINDING_SHOT         = WoW112Spells::Hunter::Marksmanship::BINDING_SHOT,
+    SPELL_SCATTER_SHOT         = WoW112Spells::Hunter::Marksmanship::SCATTER_SHOT,
+    SPELL_BURSTING_SHOT        = WoW112Spells::Hunter::Marksmanship::BURSTING_SHOT,
+    SPELL_COUNTER_SHOT_MM      = WoW112Spells::Hunter::COUNTER_SHOT,
 
-    // Defensives
-    SPELL_ASPECT_TURTLE        = 186265,  // WoW112Spells::Hunter::ASPECT_OF_THE_TURTLE
-    SPELL_EXHILARATION_MM      = 109304,  // WoW112Spells::Hunter::EXHILARATION
-    SPELL_SURVIVAL_TACTICS     = 202746,  // WoW112Spells::Hunter::Marksmanship::SURVIVAL_TACTICS
+    // Defensives - Using central registry: WoW112Spells::Hunter
+    SPELL_ASPECT_TURTLE        = WoW112Spells::Hunter::ASPECT_OF_THE_TURTLE,
+    SPELL_EXHILARATION_MM      = WoW112Spells::Hunter::EXHILARATION,
+    SPELL_SURVIVAL_TACTICS     = WoW112Spells::Hunter::Marksmanship::SURVIVAL_TACTICS,
 
-    // Pet (minimal for MM)
-    SPELL_CALL_PET_MM          = 883,     // WoW112Spells::Hunter::CALL_PET_1
-    SPELL_DISMISS_PET          = 2641,    // WoW112Spells::Hunter::DISMISS_PET
-    SPELL_LONE_WOLF            = 155228   // WoW112Spells::Hunter::Marksmanship::LONE_WOLF
+    // Pet (minimal for MM) - Using central registry: WoW112Spells::Hunter
+    SPELL_CALL_PET_MM          = WoW112Spells::Hunter::CALL_PET_1,
+    SPELL_DISMISS_PET          = WoW112Spells::Hunter::DISMISS_PET,
+    SPELL_LONE_WOLF            = WoW112Spells::Hunter::Marksmanship::LONE_WOLF
 };
 
 /**
