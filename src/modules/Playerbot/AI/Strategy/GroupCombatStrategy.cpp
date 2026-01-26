@@ -10,6 +10,7 @@
 #include "GroupCombatStrategy.h"
 #include "../BotAI.h"
 #include "../ClassAI/ClassAI.h"  // For ClassAI positioning delegation
+#include "../../Advanced/TacticalCoordinator.h"  // For target coordination
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
@@ -404,6 +405,48 @@ Unit* GroupCombatStrategy::FindGroupCombatTarget(BotAI* ai) const
     if (!group)
         return nullptr;
 
+    // Phase 2 Architecture: Query TacticalCoordinator first (single authority for group targets)
+    if (Advanced::TacticalCoordinator* tc = const_cast<BotAI*>(ai)->GetTacticalCoordinator())
+    {
+        // 1. Check focus target (highest priority - explicitly set by group)
+        ObjectGuid focusGuid = tc->GetFocusTarget();
+        if (!focusGuid.IsEmpty())
+        {
+            // Need to get Unit* from GUID
+            if (Unit* focusTarget = ObjectAccessor::GetUnit(*bot, focusGuid))
+            {
+                if (focusTarget->IsAlive() && bot->IsValidAttackTarget(focusTarget))
+                {
+                    TC_LOG_DEBUG("module.playerbot.strategy",
+                        "🎯 GroupCombatStrategy: Bot {} using TacticalCoordinator focus target: {}",
+                        bot->GetName(), focusTarget->GetName());
+                    return focusTarget;
+                }
+            }
+        }
+
+        // 2. Check priority targets
+        auto priorityTargets = tc->GetPriorityTargets();
+        for (ObjectGuid const& targetGuid : priorityTargets)
+        {
+            if (Unit* priorityTarget = ObjectAccessor::GetUnit(*bot, targetGuid))
+            {
+                if (priorityTarget->IsAlive() && bot->IsValidAttackTarget(priorityTarget))
+                {
+                    TC_LOG_DEBUG("module.playerbot.strategy",
+                        "🎯 GroupCombatStrategy: Bot {} using TacticalCoordinator priority target: {}",
+                        bot->GetName(), priorityTarget->GetName());
+                    return priorityTarget;
+                }
+            }
+        }
+
+        // TacticalCoordinator has no valid target - fall through to legacy logic
+        TC_LOG_DEBUG("module.playerbot.strategy",
+            "🎯 GroupCombatStrategy: TacticalCoordinator has no valid target, using fallback logic");
+    }
+
+    // Fallback: Legacy target finding logic (used when no TacticalCoordinator or no valid target)
     // Refresh cache if dirty or expired
     uint32 now = GameTime::GetGameTimeMS();
     if (_memberCacheDirty || (now - _lastCacheUpdate) > CACHE_REFRESH_INTERVAL)
