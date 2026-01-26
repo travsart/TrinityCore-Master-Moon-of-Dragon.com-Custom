@@ -68,6 +68,9 @@ namespace Playerbot
 class InterruptCoordinatorFixed;
 using InterruptCoordinator = InterruptCoordinatorFixed;
 
+// Forward declaration for CC authority (single source of truth)
+class CrowdControlManager;
+
 namespace Advanced
 {
 
@@ -525,6 +528,17 @@ public:
      */
     InterruptCoordinator* GetInterruptCoordinator() const { return _interruptCoordinator; }
 
+    /**
+     * @brief Set CC manager (single authority for crowd control)
+     * Phase 2 Architecture: All CC coordination delegates to CrowdControlManager
+     */
+    void SetCCManager(CrowdControlManager* ccm) { _ccManager = ccm; }
+
+    /**
+     * @brief Get CC manager
+     */
+    CrowdControlManager* GetCCManager() const { return _ccManager; }
+
     // ========================================================================
     // STATISTICS & MONITORING
     // ========================================================================
@@ -644,6 +658,7 @@ private:
 
     // Phase 2 Architecture: Delegate to single authorities
     InterruptCoordinator* _interruptCoordinator = nullptr;      ///< Single authority for interrupts
+    CrowdControlManager* _ccManager = nullptr;                   ///< Single authority for crowd control
 
     // Assignments
     std::unordered_map<ObjectGuid, TacticalAssignment> m_assignments; ///< Bot GUID → Assignment

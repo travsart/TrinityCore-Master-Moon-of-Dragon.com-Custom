@@ -17,6 +17,7 @@
 
 #include "TacticalCoordinator.h"
 #include "../AI/Combat/InterruptCoordinator.h"
+#include "../AI/Combat/CrowdControlManager.h"
 #include "Group.h"
 #include "Player.h"
 #include "Unit.h"
@@ -439,6 +440,17 @@ void TacticalCoordinator::AssignCrowdControl(ObjectGuid targetGuid, ObjectGuid a
     if (targetGuid.IsEmpty() || assignedBot.IsEmpty())
         return;
 
+    // Phase 2 Architecture: Delegate to CrowdControlManager (single authority)
+    if (_ccManager)
+    {
+        // CrowdControlManager handles all CC logic - just log that we're delegating
+        // The actual CC application is done by the bot's CrowdControlManager instance
+        TC_LOG_DEBUG("playerbot", "TacticalCoordinator::AssignCrowdControl() - Delegated to CrowdControlManager (target: {}, bot: {})",
+                     targetGuid.ToString(), assignedBot.ToString());
+        return;
+    }
+
+    // Fallback: Legacy implementation (only used if no CrowdControlManager set)
     std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
     // Add to CC targets if not already there
@@ -469,6 +481,22 @@ void TacticalCoordinator::AssignCrowdControl(ObjectGuid targetGuid, ObjectGuid a
 
 std::vector<ObjectGuid> TacticalCoordinator::GetCrowdControlTargets() const
 {
+    // Phase 2 Architecture: Delegate to CrowdControlManager (single authority)
+    if (_ccManager)
+    {
+        // CrowdControlManager returns vector<Unit*>, convert to vector<ObjectGuid>
+        std::vector<ObjectGuid> targets;
+        auto ccdUnits = _ccManager->GetCCdTargets();
+        targets.reserve(ccdUnits.size());
+        for (Unit* unit : ccdUnits)
+        {
+            if (unit)
+                targets.push_back(unit->GetGUID());
+        }
+        return targets;
+    }
+
+    // Fallback: Legacy implementation (only used if no CrowdControlManager set)
     std::lock_guard<decltype(m_mutex)> lock(m_mutex);
     return m_tacticalState.crowdControlTargets;
 }
@@ -478,6 +506,22 @@ bool TacticalCoordinator::IsTargetCrowdControlled(ObjectGuid targetGuid) const
     if (targetGuid.IsEmpty())
         return false;
 
+    // Phase 2 Architecture: Delegate to CrowdControlManager (single authority)
+    if (_ccManager)
+    {
+        // Need to find Unit* from GUID to call CrowdControlManager
+        // CrowdControlManager::IsTargetCCd() takes Unit* parameter
+        // For now, iterate CC'd targets to find match by GUID
+        auto ccdUnits = _ccManager->GetCCdTargets();
+        for (Unit* unit : ccdUnits)
+        {
+            if (unit && unit->GetGUID() == targetGuid)
+                return true;
+        }
+        return false;
+    }
+
+    // Fallback: Legacy implementation (only used if no CrowdControlManager set)
     std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
     auto it = std::find(m_tacticalState.crowdControlTargets.begin(),
