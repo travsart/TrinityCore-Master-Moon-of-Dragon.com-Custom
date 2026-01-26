@@ -12,9 +12,8 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
-#include "BotThreatManager.h"
-#include "ThreatAbilities.h"
-#include "InterruptCoordinator.h"
+#include "BotThreatManager.h"  // Needed for ThreatRole enum
+#include "ThreatAbilities.h"   // Needed for ThreatAbilityType, ThreatAbilityData
 #include <memory>
 #include <vector>
 #include <unordered_map>
@@ -24,6 +23,15 @@
 class Player;
 class Unit;
 class Group;
+
+namespace Playerbot
+{
+// Forward declaration to reduce header coupling
+// Full include is in ThreatCoordinator.cpp
+// Note: InterruptCoordinator is a type alias for InterruptCoordinatorFixed
+class InterruptCoordinatorFixed;
+using InterruptCoordinator = InterruptCoordinatorFixed;
+} // namespace Playerbot
 
 namespace Playerbot
 {
