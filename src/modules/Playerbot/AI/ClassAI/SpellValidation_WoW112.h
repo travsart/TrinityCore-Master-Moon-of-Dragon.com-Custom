@@ -208,6 +208,9 @@ namespace DemonHunter
     constexpr uint32 SIGIL_OF_MISERY = 207684;
     constexpr uint32 SIGIL_OF_SILENCE = 202137;
     constexpr uint32 BLUR = 198589; // Defensive dodge ability
+    constexpr uint32 NETHERWALK = 196555; // Immunity + speed
+    constexpr uint32 NEMESIS = 206491; // Single target damage buff
+    constexpr uint32 IMMOLATION_AURA = 258920; // Shared damage aura
 
     // Havoc Specialization
     namespace Havoc
@@ -308,6 +311,31 @@ namespace DemonHunter
         constexpr uint32 VENG_FEL_SCARRED = 472683;
         constexpr uint32 VENG_DEMONIC_INTENSITY = 472684;
         constexpr uint32 VENG_MONSTER = 472686;
+
+        // Alternative/Legacy Spell IDs (for base AI compatibility)
+        constexpr uint32 SOUL_BARRIER_LEGACY = 227225; // Alternative Soul Barrier ID
+    }
+
+    // Base AI Compatibility - Common spell aliases
+    namespace Common
+    {
+        // These aliases allow base AI to reference spells without spec namespace
+        constexpr uint32 CHAOS_STRIKE = 162794;
+        constexpr uint32 BLADE_DANCE = 188499;
+        constexpr uint32 DEATH_SWEEP = 210152;
+        constexpr uint32 ANNIHILATION = 201427;
+        constexpr uint32 EYE_BEAM = 198013;
+        constexpr uint32 DEMONS_BITE = 162243;
+        constexpr uint32 FEL_BARRAGE = 258925;
+        constexpr uint32 SOUL_CLEAVE = 228477;
+        constexpr uint32 SPIRIT_BOMB = 247454;
+        constexpr uint32 SHEAR = 203782;
+        constexpr uint32 SOUL_BARRIER = 263648;
+        constexpr uint32 DEMON_SPIKES = 203720;
+        constexpr uint32 FIERY_BRAND = 204021;
+        constexpr uint32 MOMENTUM_TALENT = 206476;
+        constexpr uint32 DEMONIC_TALENT = 213410;
+        constexpr uint32 BLIND_FURY_TALENT = 203550;
     }
 }
 
@@ -513,6 +541,87 @@ namespace Druid
         constexpr uint32 EMPOWERED_SHAPESHIFTING = 481583;
         constexpr uint32 STRATEGIC_INFUSION = 481584;
     }
+
+    // Base AI Compatibility - Common Druid spell aliases (11.2 only)
+    namespace Common
+    {
+        // Forms
+        constexpr uint32 BEAR_FORM = 5487;
+        constexpr uint32 CAT_FORM = 768;
+        constexpr uint32 MOONKIN_FORM = 24858;
+        constexpr uint32 TREE_OF_LIFE = 33891;
+        constexpr uint32 TRAVEL_FORM = 783;
+
+        // Interrupts
+        constexpr uint32 SKULL_BASH = 106839;
+        constexpr uint32 SKULL_BASH_BEAR = 106839;
+        constexpr uint32 SKULL_BASH_CAT = 106839;
+        constexpr uint32 SOLAR_BEAM = 78675;
+        constexpr uint32 MIGHTY_BASH = 5211;
+
+        // Defensive
+        constexpr uint32 BARKSKIN = 22812;
+        constexpr uint32 SURVIVAL_INSTINCTS = 61336;
+        constexpr uint32 FRENZIED_REGENERATION = 22842;
+        constexpr uint32 IRONBARK = 102342;
+        constexpr uint32 CENARION_WARD = 102351;
+
+        // Offensive - Feral
+        constexpr uint32 TIGERS_FURY = 5217;
+        constexpr uint32 BERSERK_CAT = 106951;
+        constexpr uint32 BERSERK_BEAR = 50334;
+        constexpr uint32 INCARNATION_KING = 102543;
+
+        // Feral abilities
+        constexpr uint32 SHRED = 5221;
+        constexpr uint32 RAKE = 1822;
+        constexpr uint32 RIP = 1079;
+        constexpr uint32 FEROCIOUS_BITE = 22568;
+        constexpr uint32 SAVAGE_ROAR = 52610;
+        constexpr uint32 SWIPE_CAT = 106830;
+        constexpr uint32 THRASH_CAT = 106832;
+        constexpr uint32 PRIMAL_WRATH = 285381;
+
+        // Guardian abilities
+        constexpr uint32 MANGLE = 33917;
+        constexpr uint32 MANGLE_BEAR = 33917;
+        constexpr uint32 MAUL = 6807;
+        constexpr uint32 IRONFUR = 192081;
+        constexpr uint32 THRASH_BEAR = 77758;
+        constexpr uint32 SWIPE_BEAR = 213771;
+        constexpr uint32 PULVERIZE = 80313;
+        constexpr uint32 INCARNATION_GUARDIAN = 102558;
+
+        // Balance abilities
+        constexpr uint32 WRATH = 190984;
+        constexpr uint32 STARFIRE = 194153;
+        constexpr uint32 MOONFIRE = 8921;
+        constexpr uint32 SUNFIRE = 93402;
+        constexpr uint32 STARSURGE = 78674;
+        constexpr uint32 STARFALL = 191034;
+        constexpr uint32 CELESTIAL_ALIGNMENT = 194223;
+        constexpr uint32 INCARNATION_BALANCE = 102560;
+
+        // Restoration abilities
+        constexpr uint32 REJUVENATION = 774;
+        constexpr uint32 REGROWTH = 8936;
+        constexpr uint32 LIFEBLOOM = 33763;
+        constexpr uint32 HEALING_TOUCH = 5185;
+        constexpr uint32 WILD_GROWTH = 48438;
+        constexpr uint32 SWIFTMEND = 18562;
+        constexpr uint32 TRANQUILITY = 740;
+        constexpr uint32 INCARNATION_TREE = 33891;
+        constexpr uint32 NATURES_SWIFTNESS = 132158;
+        constexpr uint32 EFFLORESCENCE = 145205;
+
+        // Utility
+        constexpr uint32 REMOVE_CORRUPTION = 2782;
+        constexpr uint32 NATURES_CURE = 88423;
+        constexpr uint32 REBIRTH = 20484;
+        constexpr uint32 INNERVATE = 29166;
+        constexpr uint32 STAMPEDING_ROAR = 106898;
+        constexpr uint32 TYPHOON = 132469;
+    }
 }
 
 // ============================================================================
@@ -650,6 +759,54 @@ namespace Evoker
         constexpr uint32 MIGHT_OF_THE_BLACK_DRAGONFLIGHT = 436301;
         constexpr uint32 UNRELENTING_SIEGE = 436302;
         constexpr uint32 EXTENDED_BATTLE = 436303;
+    }
+
+    // Base AI Compatibility - Common Evoker spell aliases (11.2 only)
+    namespace Common
+    {
+        // Basic abilities
+        constexpr uint32 AZURE_STRIKE = 362969;
+        constexpr uint32 LIVING_FLAME = 361469;
+        constexpr uint32 HOVER = 358267;
+        constexpr uint32 SOAR = 369536;
+
+        // Devastation abilities
+        constexpr uint32 ETERNITY_SURGE = 359073;
+        constexpr uint32 ETERNITYS_SURGE = 359073; // Alias
+        constexpr uint32 DISINTEGRATE = 356995;
+        constexpr uint32 PYRE = 357211;
+        constexpr uint32 DEEP_BREATH = 382266;
+        constexpr uint32 FIRE_BREATH = 382266;
+        constexpr uint32 DRAGONRAGE = 375087;
+
+        // Preservation abilities
+        constexpr uint32 DREAM_BREATH = 382614;
+        constexpr uint32 SPIRITBLOOM = 382731;
+        constexpr uint32 EMERALD_BLOSSOM = 355913;
+        constexpr uint32 VERDANT_EMBRACE = 360995;
+        constexpr uint32 LIFEBIND = 373267;
+        constexpr uint32 EMERALD_COMMUNION = 370960;
+        constexpr uint32 TEMPORAL_ANOMALY = 373861;
+        constexpr uint32 ECHO = 364343;
+
+        // Augmentation abilities
+        constexpr uint32 EBON_MIGHT = 395296;
+        constexpr uint32 BREATH_OF_EONS = 403631;
+        constexpr uint32 PRESCIENCE = 409311;
+        constexpr uint32 BLISTERING_SCALES = 360827;
+
+        // Utility abilities
+        constexpr uint32 BLESSING_OF_THE_BRONZE = 381748;
+        constexpr uint32 LANDSLIDE = 358385;
+        constexpr uint32 TAIL_SWIPE = 368970;
+        constexpr uint32 WING_BUFFET = 357214;
+        constexpr uint32 SLEEP_WALK = 360806;
+        constexpr uint32 QUELL = 351338;
+
+        // Defensive abilities
+        constexpr uint32 OBSIDIAN_SCALES = 363916;
+        constexpr uint32 RENEWING_BLAZE = 374348;
+        constexpr uint32 RESCUE = 370665;
     }
 }
 
@@ -822,6 +979,53 @@ namespace Hunter
         constexpr uint32 SV_SENTINEL = 460405;
         constexpr uint32 SV_LUNAR_STORM = 460406;
     }
+
+    // Base AI Compatibility - Common Hunter spell aliases (11.2 only)
+    namespace Common
+    {
+        // Shots and Attacks
+        constexpr uint32 STEADY_SHOT = 56641;
+        constexpr uint32 ARCANE_SHOT = 185358;
+        constexpr uint32 MULTI_SHOT = 257620;
+        constexpr uint32 AIMED_SHOT = 19434;
+        constexpr uint32 KILL_SHOT = 53351;
+        constexpr uint32 EXPLOSIVE_SHOT = 212431;
+        constexpr uint32 SERPENT_STING = 259491;
+        constexpr uint32 CONCUSSIVE_SHOT = 5116;
+
+        // Pet Abilities
+        constexpr uint32 KILL_COMMAND = 34026;
+        constexpr uint32 MEND_PET = 136;
+        constexpr uint32 REVIVE_PET = 982;
+        constexpr uint32 CALL_PET = 883;
+        constexpr uint32 MASTERS_CALL = 53271;
+
+        // Traps
+        constexpr uint32 FREEZING_TRAP = 187650;
+        constexpr uint32 TAR_TRAP = 187698;
+
+        // Defensive/Utility
+        constexpr uint32 DISENGAGE = 781;
+        constexpr uint32 FEIGN_DEATH = 5384;
+        constexpr uint32 EXHILARATION = 109304;
+        constexpr uint32 SCATTER_SHOT = 213691;
+        constexpr uint32 COUNTER_SHOT = 147362;
+
+        // Aspects
+        constexpr uint32 ASPECT_OF_THE_WILD = 193530;
+        constexpr uint32 ASPECT_OF_THE_CHEETAH = 186257;
+        constexpr uint32 ASPECT_OF_THE_TURTLE = 186265;
+
+        // Marks/Debuffs
+        constexpr uint32 HUNTERS_MARK = 257284;
+
+        // Cooldowns
+        constexpr uint32 RAPID_FIRE = 257044;
+        constexpr uint32 BESTIAL_WRATH = 19574;
+        constexpr uint32 TRUESHOT = 288613;
+        constexpr uint32 BARRAGE = 120360;
+        constexpr uint32 VOLLEY = 260243;
+    }
 }
 
 // ============================================================================
@@ -961,6 +1165,75 @@ namespace Mage
         // Hero Talents - Spellslinger
         constexpr uint32 FROST_SPLINTERSTORM = 443742;
         constexpr uint32 FROST_AUGURY_ABOUNDS = 443743;
+    }
+
+    // Base AI Compatibility - Common Mage spell aliases (11.2 only)
+    namespace Common
+    {
+        // Arcane spells
+        constexpr uint32 ARCANE_MISSILES = 5143;
+        constexpr uint32 ARCANE_BLAST = 30451;
+        constexpr uint32 ARCANE_BARRAGE = 44425;
+        constexpr uint32 ARCANE_ORB = 153626;
+        constexpr uint32 ARCANE_POWER = 12042;
+        constexpr uint32 ARCANE_INTELLECT = 1459;
+        constexpr uint32 ARCANE_EXPLOSION = 1449;
+
+        // Fire spells
+        constexpr uint32 FIREBALL = 133;
+        constexpr uint32 FIRE_BLAST = 108853;
+        constexpr uint32 PYROBLAST = 11366;
+        constexpr uint32 FLAMESTRIKE = 2120;
+        constexpr uint32 SCORCH = 2948;
+        constexpr uint32 COMBUSTION = 190319;
+        constexpr uint32 LIVING_BOMB = 44457;
+        constexpr uint32 DRAGONS_BREATH = 31661;
+
+        // Frost spells
+        constexpr uint32 FROSTBOLT = 116;
+        constexpr uint32 ICE_LANCE = 30455;
+        constexpr uint32 FROZEN_ORB = 84714;
+        constexpr uint32 BLIZZARD = 190356;
+        constexpr uint32 CONE_OF_COLD = 120;
+        constexpr uint32 ICY_VEINS = 12472;
+        constexpr uint32 SUMMON_WATER_ELEMENTAL = 31687;
+        constexpr uint32 ICE_BARRIER = 11426;
+        constexpr uint32 FROST_NOVA = 122;
+
+        // Crowd control
+        constexpr uint32 POLYMORPH = 118;
+        constexpr uint32 COUNTERSPELL = 2139;
+
+        // Defensive abilities
+        constexpr uint32 BLINK = 1953;
+        constexpr uint32 SHIMMER = 212653;
+        constexpr uint32 INVISIBILITY = 66;
+        constexpr uint32 GREATER_INVISIBILITY = 110959;
+        constexpr uint32 ICE_BLOCK = 45438;
+
+        // Utility
+        constexpr uint32 MIRROR_IMAGE = 55342;
+        constexpr uint32 PRESENCE_OF_MIND = 205025;
+        constexpr uint32 TIME_WARP = 80353;
+
+        // Armor/Barrier spells
+        constexpr uint32 BLAZING_BARRIER = 235313;
+
+        // Conjure spells
+        constexpr uint32 CONJURE_REFRESHMENT = 190336;
+
+        // Teleport spells
+        constexpr uint32 TELEPORT_STORMWIND = 3561;
+        constexpr uint32 TELEPORT_IRONFORGE = 3562;
+
+        // Portal spells
+        constexpr uint32 PORTAL_STORMWIND = 10059;
+        constexpr uint32 PORTAL_IRONFORGE = 11416;
+
+        // Misc
+        constexpr uint32 SLOW_FALL = 130;
+        constexpr uint32 REMOVE_CURSE = 475;
+        constexpr uint32 SPELLSTEAL = 30449;
     }
 }
 
@@ -1136,6 +1409,83 @@ namespace Monk
         // Hero Talents - Conduit of the Celestials
         constexpr uint32 WW_CELESTIAL_CONDUIT = 443028;
         constexpr uint32 WW_AUGUST_DYNASTY = 443029;
+    }
+
+    // Base AI Compatibility - Common Monk spell aliases (11.2 only)
+    namespace Common
+    {
+        // Chi generators
+        constexpr uint32 TIGER_PALM = 100780;
+        constexpr uint32 EXPEL_HARM = 322101;
+        constexpr uint32 CHI_WAVE = 115098;
+        constexpr uint32 CHI_BURST = 123986;
+
+        // Basic attacks
+        constexpr uint32 BLACKOUT_KICK = 100784;
+        constexpr uint32 RISING_SUN_KICK = 107428;
+        constexpr uint32 SPINNING_CRANE_KICK = 101546;
+
+        // Windwalker abilities
+        constexpr uint32 FISTS_OF_FURY = 113656;
+        constexpr uint32 WHIRLING_DRAGON_PUNCH = 152175;
+        constexpr uint32 STORM_EARTH_AND_FIRE = 137639;
+        constexpr uint32 TOUCH_OF_DEATH = 322109;
+        constexpr uint32 FLYING_SERPENT_KICK = 101545;
+        constexpr uint32 MARK_OF_THE_CRANE = 228287;
+        constexpr uint32 RUSHING_JADE_WIND = 116847;
+        constexpr uint32 RUSHING_JADE_WIND_WW = 261715;
+        constexpr uint32 SERENITY = 152173;
+
+        // Brewmaster abilities
+        constexpr uint32 KEG_SMASH = 121253;
+        constexpr uint32 BREATH_OF_FIRE = 115181;
+        constexpr uint32 CELESTIAL_BREW = 322507;
+        constexpr uint32 PURIFYING_BREW = 119582;
+        constexpr uint32 FORTIFYING_BREW = 115203;
+        constexpr uint32 BLACK_OX_BREW = 115399;
+        constexpr uint32 STAGGER = 124255;
+        constexpr uint32 STAGGER_HEAVY = 124273;
+        constexpr uint32 STAGGER_MODERATE = 124274;
+        constexpr uint32 STAGGER_LIGHT = 124275;
+        constexpr uint32 ZEN_MEDITATION = 115176;
+        constexpr uint32 DAMPEN_HARM = 122278;
+
+        // Mistweaver abilities
+        constexpr uint32 RENEWING_MIST = 115151;
+        constexpr uint32 ENVELOPING_MIST = 124682;
+        constexpr uint32 VIVIFY = 116670;
+        constexpr uint32 ESSENCE_FONT = 191837;
+        constexpr uint32 SOOTHING_MIST = 115175;
+        constexpr uint32 LIFE_COCOON = 116849;
+        constexpr uint32 REVIVAL = 115310;
+        constexpr uint32 THUNDER_FOCUS_TEA = 116680;
+        constexpr uint32 MANA_TEA = 197908;
+        constexpr uint32 TEACHINGS_OF_THE_MONASTERY = 202090;
+        constexpr uint32 SHEILUNS_GIFT = 399491;
+
+        // Mobility
+        constexpr uint32 ROLL = 109132;
+        constexpr uint32 CHI_TORPEDO = 115008;
+        constexpr uint32 TRANSCENDENCE = 101643;
+        constexpr uint32 TRANSCENDENCE_TRANSFER = 119996;
+        constexpr uint32 TIGERS_LUST = 116841;
+
+        // Utility and crowd control
+        constexpr uint32 PARALYSIS = 115078;
+        constexpr uint32 LEG_SWEEP = 119381;
+        constexpr uint32 SPEAR_HAND_STRIKE = 116705;
+        constexpr uint32 RING_OF_PEACE = 116844;
+        constexpr uint32 CRACKLING_JADE_LIGHTNING = 117952;
+        constexpr uint32 DETOX = 115450;
+        constexpr uint32 RESUSCITATE = 115178;
+        constexpr uint32 PROVOKE = 115546;
+
+        // Defensive cooldowns
+        constexpr uint32 TOUCH_OF_KARMA = 122470;
+        constexpr uint32 DIFFUSE_MAGIC = 122783;
+
+        // Talents
+        constexpr uint32 EYE_OF_THE_TIGER = 196607;
     }
 }
 

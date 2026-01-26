@@ -170,6 +170,70 @@ namespace Paladin
         constexpr uint32 RET_SUNS_AVATAR = 431381;
         constexpr uint32 MORNING_STAR = 431384;
     }
+
+    // Base AI Compatibility - Common Paladin spell aliases (11.2 only)
+    namespace Common
+    {
+        // Interrupts
+        constexpr uint32 REBUKE = 96231;
+        constexpr uint32 HAMMER_OF_JUSTICE = 853;
+
+        // Defensive Cooldowns
+        constexpr uint32 DIVINE_SHIELD = 642;
+        constexpr uint32 SHIELD_OF_VENGEANCE = 184662;
+        constexpr uint32 BLESSING_OF_PROTECTION = 1022;
+        constexpr uint32 ARDENT_DEFENDER = 31850;
+        constexpr uint32 GUARDIAN_OF_ANCIENT_KINGS = 86659;
+        constexpr uint32 LAY_ON_HANDS = 633;
+        constexpr uint32 DIVINE_PROTECTION = 498;
+
+        // Offensive Cooldowns
+        constexpr uint32 AVENGING_WRATH = 31884;
+        constexpr uint32 CRUSADE = 231895;
+        constexpr uint32 HOLY_AVENGER = 105809;
+        constexpr uint32 EXECUTION_SENTENCE = 343527;
+
+        // Holy Power Generators
+        constexpr uint32 CRUSADER_STRIKE = 35395;
+        constexpr uint32 BLADE_OF_JUSTICE = 184575;
+        constexpr uint32 HAMMER_OF_THE_RIGHTEOUS = 53595;
+        constexpr uint32 JUDGMENT = 20271;
+        constexpr uint32 WAKE_OF_ASHES = 255937;
+
+        // Holy Power Spenders
+        constexpr uint32 TEMPLARS_VERDICT = 85256;
+        constexpr uint32 FINAL_VERDICT = 383328;
+        constexpr uint32 DIVINE_STORM = 53385;
+        constexpr uint32 SHIELD_OF_THE_RIGHTEOUS = 53600;
+        constexpr uint32 WORD_OF_GLORY = 85673;
+
+        // AoE Abilities
+        constexpr uint32 CONSECRATION = 26573;
+
+        // Auras
+        constexpr uint32 DEVOTION_AURA = 465;
+        constexpr uint32 CRUSADER_AURA = 32223;
+        constexpr uint32 RETRIBUTION_AURA = 183435;
+
+        // Blessings
+        constexpr uint32 BLESSING_OF_FREEDOM = 1044;
+
+        // Healing Abilities
+        constexpr uint32 FLASH_OF_LIGHT = 19750;
+        constexpr uint32 HOLY_LIGHT = 82326;
+        constexpr uint32 HOLY_SHOCK = 20473;
+        constexpr uint32 LIGHT_OF_DAWN = 85222;
+        constexpr uint32 BEACON_OF_LIGHT = 53563;
+
+        // Utility
+        constexpr uint32 HAND_OF_RECKONING = 62124;
+        constexpr uint32 CLEANSE = 4987;
+        constexpr uint32 HAMMER_OF_WRATH = 24275;
+        constexpr uint32 BLINDING_LIGHT = 115750;
+
+        // Movement
+        constexpr uint32 DIVINE_STEED = 190784;
+    }
 }
 
 // ============================================================================
@@ -335,6 +399,57 @@ namespace Priest
         constexpr uint32 SHADOW_DIVINE_HALO = 431696;
         constexpr uint32 SHADOW_RESONANT_ENERGY = 431697;
     }
+
+    // Base AI Compatibility - Common Priest spell aliases (11.2 only)
+    namespace Common
+    {
+        // Interrupts
+        constexpr uint32 SILENCE = 15487;
+        constexpr uint32 PSYCHIC_SCREAM = 8122;
+
+        // Defensive Cooldowns
+        constexpr uint32 DESPERATE_PRAYER = 19236;
+        constexpr uint32 FADE = 586;
+        constexpr uint32 DISPERSION = 47585;
+        constexpr uint32 POWER_WORD_SHIELD = 17;
+
+        // Dispels
+        constexpr uint32 DISPEL_MAGIC = 527;
+        constexpr uint32 PURIFY = 527;
+        constexpr uint32 MASS_DISPEL = 32375;
+
+        // Buffs
+        constexpr uint32 POWER_WORD_FORTITUDE = 21562;
+        constexpr uint32 POWER_INFUSION = 10060;
+        constexpr uint32 LEVITATE = 1706;
+
+        // Healing Abilities
+        constexpr uint32 FLASH_HEAL = 2061;
+        constexpr uint32 HEAL = 2060;
+        constexpr uint32 PRAYER_OF_MENDING = 33076;
+        constexpr uint32 RENEW = 139;
+        constexpr uint32 HOLY_WORD_SERENITY = 2050;
+        constexpr uint32 HOLY_WORD_SANCTIFY = 34861;
+        constexpr uint32 CIRCLE_OF_HEALING = 204883;
+
+        // Damage Abilities
+        constexpr uint32 SMITE = 585;
+        constexpr uint32 SHADOW_WORD_PAIN = 589;
+        constexpr uint32 SHADOW_WORD_DEATH = 32379;
+        constexpr uint32 MIND_BLAST = 8092;
+        constexpr uint32 HOLY_FIRE = 14914;
+        constexpr uint32 VAMPIRIC_TOUCH = 34914;
+        constexpr uint32 DEVOURING_PLAGUE = 335467;
+        constexpr uint32 MIND_FLAY = 15407;
+
+        // Utility
+        constexpr uint32 LEAP_OF_FAITH = 73325;
+        constexpr uint32 MIND_CONTROL = 605;
+        constexpr uint32 SHACKLE_UNDEAD = 9484;
+
+        // Forms
+        constexpr uint32 SHADOWFORM = 232698;
+    }
 }
 
 // ============================================================================
@@ -497,6 +612,68 @@ namespace Rogue
         constexpr uint32 SUB_UNSEEN_BLADE = 441146;
         constexpr uint32 SUB_SMOKE_SCREEN = 441147;
     }
+
+    // Base AI Compatibility - Common Rogue spell aliases (11.2 only)
+    namespace Common
+    {
+        // Combo Point Builders
+        constexpr uint32 SINISTER_STRIKE = 1752;
+        constexpr uint32 BACKSTAB = 53;
+        constexpr uint32 MUTILATE = 1329;
+        constexpr uint32 AMBUSH = 8676;
+        constexpr uint32 GARROTE = 703;
+        constexpr uint32 CHEAP_SHOT = 1833;
+        constexpr uint32 SHIV = 5938;
+        constexpr uint32 SHADOWSTRIKE = 185438;
+
+        // Combo Point Finishers
+        constexpr uint32 SLICE_AND_DICE = 5171;
+        constexpr uint32 RUPTURE = 1943;
+        constexpr uint32 EVISCERATE = 2098;
+        constexpr uint32 KIDNEY_SHOT = 408;
+        constexpr uint32 ENVENOM = 32645;
+        constexpr uint32 CRIMSON_TEMPEST = 121411;
+        constexpr uint32 BETWEEN_THE_EYES = 315341;
+
+        // Interrupts
+        constexpr uint32 KICK = 1766;
+        constexpr uint32 GOUGE = 1776;
+        constexpr uint32 BLIND = 2094;
+
+        // Defensive Cooldowns
+        constexpr uint32 VANISH = 1856;
+        constexpr uint32 CLOAK_OF_SHADOWS = 31224;
+        constexpr uint32 EVASION = 5277;
+        constexpr uint32 FEINT = 1966;
+        constexpr uint32 CRIMSON_VIAL = 185311;
+
+        // Offensive Cooldowns
+        constexpr uint32 ADRENALINE_RUSH = 13750;
+        constexpr uint32 BLADE_FLURRY = 13877;
+        constexpr uint32 KILLING_SPREE = 51690;
+        constexpr uint32 VENDETTA = 79140;
+        constexpr uint32 SHADOW_BLADES = 121471;
+        constexpr uint32 SHADOW_DANCE = 185313;
+        constexpr uint32 SYMBOLS_OF_DEATH = 212283;
+        constexpr uint32 COLD_BLOOD = 382245;
+
+        // Utility
+        constexpr uint32 STEALTH = 1784;
+        constexpr uint32 SHADOWSTEP = 36554;
+        constexpr uint32 SAP = 6770;
+        constexpr uint32 SPRINT = 2983;
+        constexpr uint32 TRICKS_OF_THE_TRADE = 57934;
+        constexpr uint32 MARKED_FOR_DEATH = 137619;
+
+        // Poisons
+        constexpr uint32 DEADLY_POISON = 2823;
+        constexpr uint32 INSTANT_POISON = 315584;
+        constexpr uint32 WOUND_POISON = 8679;
+        constexpr uint32 CRIPPLING_POISON = 3408;
+
+        // AoE
+        constexpr uint32 FAN_OF_KNIVES = 51723;
+    }
 }
 
 // ============================================================================
@@ -642,6 +819,75 @@ namespace Shaman
         // Hero Talents - Totemic
         constexpr uint32 RESTO_SURGING_TOTEM = 444995;
         constexpr uint32 RESTO_OVERSURGE = 444996;
+    }
+
+    // Base AI Compatibility - Common Shaman spell aliases (11.2 only)
+    namespace Common
+    {
+        // Interrupts
+        constexpr uint32 WIND_SHEAR = 57994;
+        constexpr uint32 CAPACITOR_TOTEM = 192058;
+
+        // Shock Spells
+        constexpr uint32 FLAME_SHOCK = 188389;
+        constexpr uint32 FROST_SHOCK = 196840;
+        constexpr uint32 EARTH_SHOCK = 8042;
+
+        // Core Damage
+        constexpr uint32 LIGHTNING_BOLT = 188196;
+        constexpr uint32 CHAIN_LIGHTNING = 188443;
+        constexpr uint32 LAVA_BURST = 51505;
+        constexpr uint32 STORMSTRIKE = 17364;
+        constexpr uint32 LAVA_LASH = 60103;
+        constexpr uint32 CRASH_LIGHTNING = 187874;
+        constexpr uint32 ELEMENTAL_BLAST = 117014;
+        constexpr uint32 EARTHQUAKE = 61882;
+
+        // Core Healing
+        constexpr uint32 HEALING_WAVE = 77472;
+        constexpr uint32 HEALING_SURGE = 8004;
+        constexpr uint32 CHAIN_HEAL = 1064;
+        constexpr uint32 RIPTIDE = 61295;
+        constexpr uint32 HEALING_RAIN = 73920;
+
+        // Offensive Cooldowns
+        constexpr uint32 ASCENDANCE = 114050;
+        constexpr uint32 STORMKEEPER = 191634;
+        constexpr uint32 FIRE_ELEMENTAL = 198067;
+        constexpr uint32 FERAL_SPIRIT = 51533;
+        constexpr uint32 BLOODLUST = 2825;
+        constexpr uint32 HEROISM = 32182;
+
+        // Defensive Cooldowns
+        constexpr uint32 ASTRAL_SHIFT = 108271;
+        constexpr uint32 SPIRIT_LINK_TOTEM = 98008;
+        constexpr uint32 HEALING_TIDE_TOTEM = 108280;
+        constexpr uint32 EARTH_ELEMENTAL = 198103;
+
+        // Utility Totems
+        constexpr uint32 HEALING_STREAM_TOTEM = 5394;
+        constexpr uint32 EARTHBIND_TOTEM = 2484;
+        constexpr uint32 TREMOR_TOTEM = 8143;
+        constexpr uint32 WIND_RUSH_TOTEM = 192077;
+        constexpr uint32 WINDFURY_TOTEM = 8512;
+
+        // Dispels and Utility
+        constexpr uint32 PURGE = 370;
+        constexpr uint32 CLEANSE_SPIRIT = 51886;
+        constexpr uint32 PURIFY_SPIRIT = 77130;
+        constexpr uint32 HEX = 51514;
+        constexpr uint32 GHOST_WOLF = 2645;
+        constexpr uint32 SPIRIT_WALK = 58875;
+        constexpr uint32 REINCARNATION = 20608;
+        constexpr uint32 ANCESTRAL_SPIRIT = 2008;
+
+        // Weapon Imbues
+        constexpr uint32 FLAMETONGUE_WEAPON = 318038;
+        constexpr uint32 WINDFURY_WEAPON = 33757;
+
+        // Shields
+        constexpr uint32 EARTH_SHIELD = 974;
+        constexpr uint32 WATER_SHIELD = 52127;
     }
 }
 
@@ -815,6 +1061,72 @@ namespace Warlock
         constexpr uint32 GRIMOIRE_OF_SUPREMACY = 266086; // Better pets
         constexpr uint32 INFERNO = 270545;             // Rain of Fire stun
     }
+
+    // Base AI Compatibility - Common Warlock spell aliases (11.2 only)
+    namespace Common
+    {
+        // Core Damage
+        constexpr uint32 SHADOW_BOLT = 686;
+        constexpr uint32 CORRUPTION = 172;
+        constexpr uint32 DRAIN_LIFE = 234153;
+        constexpr uint32 AGONY = 980;
+        constexpr uint32 UNSTABLE_AFFLICTION = 316099;
+        constexpr uint32 DEMONBOLT = 264178;
+        constexpr uint32 INCINERATE = 29722;
+        constexpr uint32 IMMOLATE = 348;
+        constexpr uint32 CONFLAGRATE = 17962;
+        constexpr uint32 CHAOS_BOLT = 116858;
+
+        // Interrupts / CC
+        constexpr uint32 SPELL_LOCK = 19647;
+        constexpr uint32 FEAR = 5782;
+        constexpr uint32 HOWL_OF_TERROR = 5484;
+        constexpr uint32 MORTAL_COIL = 6789;
+        constexpr uint32 SHADOWFURY = 30283;
+        constexpr uint32 BANISH = 710;
+
+        // Defensive Cooldowns
+        constexpr uint32 UNENDING_RESOLVE = 104773;
+        constexpr uint32 DARK_PACT = 108416;
+
+        // Summons and Pets
+        constexpr uint32 SUMMON_IMP = 688;
+        constexpr uint32 SUMMON_VOIDWALKER = 697;
+        constexpr uint32 SUMMON_SUCCUBUS = 712;
+        constexpr uint32 SUMMON_FELHUNTER = 691;
+        constexpr uint32 SUMMON_FELGUARD = 30146;
+        constexpr uint32 SUMMON_INFERNAL = 1122;
+        constexpr uint32 SUMMON_DARKGLARE = 205180;
+        constexpr uint32 SUMMON_DEMONIC_TYRANT = 265187;
+        constexpr uint32 CALL_DREADSTALKERS = 104316;
+        constexpr uint32 HAND_OF_GULDAN = 105174;
+        constexpr uint32 HEALTH_FUNNEL = 755;
+
+        // Offensive Cooldowns
+        constexpr uint32 DARK_SOUL_MISERY = 113860;
+        constexpr uint32 DARK_SOUL_INSTABILITY = 113858;
+        constexpr uint32 SOUL_ROT = 386997;
+
+        // Utility
+        constexpr uint32 CREATE_HEALTHSTONE = 6201;
+        constexpr uint32 CREATE_SOULWELL = 29893;
+        constexpr uint32 RITUAL_OF_SUMMONING = 698;
+        constexpr uint32 DEMONIC_CIRCLE_SUMMON = 48018;
+        constexpr uint32 DEMONIC_CIRCLE_TELEPORT = 48020;
+        constexpr uint32 DEMONIC_GATEWAY = 111771;
+        constexpr uint32 BURNING_RUSH = 111400;
+        constexpr uint32 SOULSTONE = 20707;
+
+        // Curses
+        constexpr uint32 CURSE_OF_WEAKNESS = 702;
+        constexpr uint32 CURSE_OF_TONGUES = 1714;
+        constexpr uint32 CURSE_OF_EXHAUSTION = 334275;
+
+        // AoE
+        constexpr uint32 SEED_OF_CORRUPTION = 27243;
+        constexpr uint32 RAIN_OF_FIRE = 5740;
+        constexpr uint32 IMPLOSION = 196277;
+    }
 }
 
 // ============================================================================
@@ -959,6 +1271,85 @@ namespace Warrior
         // Hero Talents - Mountain Thane
         constexpr uint32 THUNDER_BLAST = 435222;
         constexpr uint32 STORM_SHIELD = 435223;
+    }
+
+    // Base AI Compatibility - Common Warrior spell aliases (11.2 only)
+    namespace Common
+    {
+        // Stances (deprecated in 11.x but kept for compatibility)
+        constexpr uint32 BATTLE_STANCE = 2457;
+        constexpr uint32 DEFENSIVE_STANCE = 197690;
+        constexpr uint32 BERSERKER_STANCE = 386196;
+
+        // Basic Attacks
+        constexpr uint32 HEROIC_STRIKE = 78;
+        constexpr uint32 CLEAVE = 845;
+        constexpr uint32 WHIRLWIND = 1680;
+        constexpr uint32 SLAM = 1464;
+
+        // Arms Abilities
+        constexpr uint32 MORTAL_STRIKE = 12294;
+        constexpr uint32 COLOSSUS_SMASH = 167105;
+        constexpr uint32 WARBREAKER = 262161;
+        constexpr uint32 OVERPOWER = 7384;
+        constexpr uint32 REND = 388539;
+        constexpr uint32 SWEEPING_STRIKES = 260708;
+        constexpr uint32 BLADESTORM = 227847;
+
+        // Fury Abilities
+        constexpr uint32 BLOODTHIRST = 23881;
+        constexpr uint32 RAMPAGE = 184367;
+        constexpr uint32 RAGING_BLOW = 85288;
+        constexpr uint32 EXECUTE = 5308;
+        constexpr uint32 ONSLAUGHT = 315720;
+        constexpr uint32 ODYN_FURY = 385059;
+        constexpr uint32 ENRAGED_REGENERATION = 184364;
+
+        // Protection Abilities
+        constexpr uint32 SHIELD_SLAM = 23922;
+        constexpr uint32 THUNDER_CLAP = 6343;
+        constexpr uint32 REVENGE = 6572;
+        constexpr uint32 DEVASTATE = 20243;
+        constexpr uint32 SHIELD_BLOCK = 2565;
+        constexpr uint32 IGNORE_PAIN = 190456;
+
+        // Defensive Cooldowns
+        constexpr uint32 SHIELD_WALL = 871;
+        constexpr uint32 LAST_STAND = 12975;
+        constexpr uint32 SPELL_REFLECTION = 23920;
+        constexpr uint32 DIE_BY_THE_SWORD = 118038;
+        constexpr uint32 RALLYING_CRY = 97462;
+
+        // Offensive Cooldowns
+        constexpr uint32 RECKLESSNESS = 1719;
+        constexpr uint32 AVATAR = 107574;
+        constexpr uint32 THUNDEROUS_ROAR = 384318;
+        constexpr uint32 CHAMPIONS_SPEAR = 376079;
+        constexpr uint32 RAVAGER = 152277;
+
+        // Movement Abilities
+        constexpr uint32 CHARGE = 100;
+        constexpr uint32 HEROIC_LEAP = 6544;
+        constexpr uint32 INTERVENE = 3411;
+
+        // Interrupts and CC
+        constexpr uint32 PUMMEL = 6552;
+        constexpr uint32 STORM_BOLT = 107570;
+        constexpr uint32 SHOCKWAVE = 46968;
+        constexpr uint32 INTIMIDATING_SHOUT = 5246;
+        constexpr uint32 HAMSTRING = 1715;
+        constexpr uint32 PIERCING_HOWL = 12323;
+
+        // Buffs
+        constexpr uint32 BATTLE_SHOUT = 6673;
+        constexpr uint32 COMMANDING_SHOUT = 469;
+        constexpr uint32 BERSERKER_RAGE = 18499;
+
+        // Utility
+        constexpr uint32 TAUNT = 355;
+        constexpr uint32 HEROIC_THROW = 57755;
+        constexpr uint32 SHATTERING_THROW = 64382;
+        constexpr uint32 VICTORY_RUSH = 34428;
     }
 }
 
