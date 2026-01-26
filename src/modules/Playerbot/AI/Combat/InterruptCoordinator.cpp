@@ -15,6 +15,8 @@
 #include "Map.h"
 #include "ObjectAccessor.h"
 #include "Unit.h"
+#include "Core/Events/CombatEventRouter.h"
+#include "Core/Events/CombatEvent.h"
 #include <algorithm>
 #include <execution>
 #include <limits>
@@ -26,6 +28,20 @@ namespace Playerbot
 InterruptCoordinatorFixed::InterruptCoordinatorFixed(Group* group)
     : _group(group), _lastUpdate(::std::chrono::steady_clock::now())
 {
+    // Phase 3: Subscribe to combat events for real-time interrupt detection
+    if (CombatEventRouter::Instance().IsInitialized())
+    {
+        CombatEventRouter::Instance().Subscribe(this);
+        _subscribed = true;
+        TC_LOG_DEBUG("module.playerbot.interrupt",
+            "InterruptCoordinatorFixed subscribed to CombatEventRouter (event-driven mode)");
+    }
+    else
+    {
+        TC_LOG_DEBUG("module.playerbot.interrupt",
+            "InterruptCoordinatorFixed initialized in polling mode (CombatEventRouter not ready)");
+    }
+
     TC_LOG_DEBUG("module.playerbot.interrupt",
         "InterruptCoordinatorFixed initialized for group with single-mutex design");
 }
@@ -33,6 +49,15 @@ InterruptCoordinatorFixed::InterruptCoordinatorFixed(Group* group)
 InterruptCoordinatorFixed::~InterruptCoordinatorFixed()
 {
     _active = false;
+
+    // Phase 3: Unsubscribe from combat events
+    if (_subscribed && CombatEventRouter::Instance().IsInitialized())
+    {
+        CombatEventRouter::Instance().Unsubscribe(this);
+        _subscribed = false;
+        TC_LOG_DEBUG("module.playerbot.interrupt",
+            "InterruptCoordinatorFixed unsubscribed from CombatEventRouter");
+    }
 }
 
 void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
@@ -169,7 +194,7 @@ void InterruptCoordinatorFixed::OnEnemyCastComplete(ObjectGuid casterGuid, uint3
     _state.activeCasts.erase(casterGuid);
 }
 
-void InterruptCoordinatorFixed::Update(uint32 /*diff*/)
+void InterruptCoordinatorFixed::Update(uint32 diff)
 {
     if (!_active || !_group)
         return;
@@ -177,19 +202,30 @@ void InterruptCoordinatorFixed::Update(uint32 /*diff*/)
     _updateCount.fetch_add(1, ::std::memory_order_relaxed);
     uint32 currentTime = GameTime::GetGameTimeMS();
 
-    // Execute ready assignments
+    // ========================================================================
+    // Phase 3 Event-Driven Architecture:
+    // - Spell detection moved to HandleSpellCastStart() via events
+    // - Assignment moved to HandleSpellCastStart() via events
+    // - Update() is now MAINTENANCE ONLY (runs once per second)
+    // ========================================================================
+
+    // Always execute ready assignments (time-critical)
     ExecuteAssignments(currentTime);
 
-    // Assign new interrupts
-    AssignInterrupters();
+    // Maintenance tasks run only once per second to reduce overhead
+    _maintenanceTimer.fetch_add(diff, ::std::memory_order_relaxed);
+    if (_maintenanceTimer.load(::std::memory_order_relaxed) < MAINTENANCE_INTERVAL_MS)
+        return;
 
-    // Rotate interrupters if enabled
-    if (_useRotation && (_updateCount % 100) == 0)
+    _maintenanceTimer.store(0, ::std::memory_order_relaxed);
+
+    // Rotate interrupters if enabled (once per second)
+    if (_useRotation)
     {
         RotateInterrupters();
     }
 
-    // Clean up completed casts
+    // Clean up completed/expired casts
     {
         ::std::lock_guard lock(_stateMutex);
 
@@ -202,6 +238,30 @@ void InterruptCoordinatorFixed::Update(uint32 /*diff*/)
             else
             {
                 ++it;
+            }
+        }
+
+        // Clean up expired assignments
+        _state.pendingAssignments.erase(
+            ::std::remove_if(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
+                [currentTime](InterruptAssignment const& assignment) {
+                    return assignment.executed || currentTime > assignment.executionDeadline;
+                }),
+            _state.pendingAssignments.end()
+        );
+    }
+
+    // Update cooldown timers for all bots
+    {
+        ::std::lock_guard lock(_stateMutex);
+        for (auto& [guid, info] : _state.botInfo)
+        {
+            if (info.cooldownRemaining > 0)
+            {
+                info.cooldownRemaining = (info.cooldownRemaining > MAINTENANCE_INTERVAL_MS)
+                    ? info.cooldownRemaining - MAINTENANCE_INTERVAL_MS
+                    : 0;
+                info.available = (info.cooldownRemaining == 0);
             }
         }
     }
@@ -660,6 +720,232 @@ void InterruptCoordinatorFixed::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid
             break;
         }
     }
+}
+
+// ============================================================================
+// ICombatEventSubscriber Implementation (Phase 3 Event-Driven Architecture)
+// ============================================================================
+
+CombatEventType InterruptCoordinatorFixed::GetSubscribedEventTypes() const
+{
+    return CombatEventType::SPELL_CAST_START |
+           CombatEventType::SPELL_INTERRUPTED |
+           CombatEventType::SPELL_CAST_SUCCESS;
+}
+
+bool InterruptCoordinatorFixed::ShouldReceiveEvent(const CombatEvent& event) const
+{
+    // Filter to only receive events relevant to interrupt coordination
+    // We want enemy casts (to interrupt) and our own successful interrupts (for tracking)
+    if (event.type == CombatEventType::SPELL_CAST_START)
+    {
+        // Only interested in enemy casts - IsEnemyCaster will validate
+        return !event.source.IsEmpty();
+    }
+    return true;  // Receive all other subscribed event types
+}
+
+void InterruptCoordinatorFixed::OnCombatEvent(const CombatEvent& event)
+{
+    if (!_active)
+        return;
+
+    switch (event.type)
+    {
+        case CombatEventType::SPELL_CAST_START:
+            HandleSpellCastStart(event);
+            break;
+        case CombatEventType::SPELL_INTERRUPTED:
+            HandleSpellInterrupted(event);
+            break;
+        case CombatEventType::SPELL_CAST_SUCCESS:
+            HandleSpellCastSuccess(event);
+            break;
+        default:
+            break;
+    }
+}
+
+void InterruptCoordinatorFixed::HandleSpellCastStart(const CombatEvent& event)
+{
+    // Validate event data
+    if (event.source.IsEmpty() || !event.spellInfo)
+        return;
+
+    // Check if caster is an enemy to our group
+    if (!IsEnemyCaster(event.source))
+        return;
+
+    // Check if spell is interruptible
+    if (!IsInterruptibleSpell(event.spellInfo))
+        return;
+
+    TC_LOG_DEBUG("module.playerbot.interrupt",
+        "[EVENT] Enemy spell cast detected: caster={}, spellId={}, castTime={}ms",
+        event.source.ToString(), event.spellId, event.spellInfo->CalcCastTime());
+
+    // Register the cast for tracking
+    CastingSpellInfo castInfo;
+    castInfo.casterGuid = event.source;
+    castInfo.spellId = event.spellId;
+    castInfo.castStartTime = GameTime::GetGameTimeMS();
+    castInfo.castEndTime = castInfo.castStartTime + static_cast<uint32>(event.spellInfo->CalcCastTime());
+    castInfo.isChanneled = event.spellInfo->IsChanneled();
+
+    // Get spell priority
+    uint64 version;
+    auto priorities = _spellPriorities.Read(version);
+    auto prioIt = priorities.find(event.spellId);
+    castInfo.priority = (prioIt != priorities.end()) ? prioIt->second : InterruptPriority::NORMAL;
+
+    // Thread-safe insertion
+    {
+        ::std::lock_guard lock(_stateMutex);
+        _state.activeCasts[event.source] = castInfo;
+    }
+
+    // Update metrics
+    _metrics.spellsDetected.fetch_add(1, ::std::memory_order_relaxed);
+
+    // Immediately assign an interrupter (event-driven assignment)
+    AssignInterrupters();
+}
+
+void InterruptCoordinatorFixed::HandleSpellInterrupted(const CombatEvent& event)
+{
+    // Track that the spell was interrupted
+    ObjectGuid casterGuid = event.target;  // Target is the caster whose spell was interrupted
+
+    {
+        ::std::lock_guard lock(_stateMutex);
+
+        auto it = _state.activeCasts.find(casterGuid);
+        if (it != _state.activeCasts.end())
+        {
+            it->second.wasInterrupted = true;
+            TC_LOG_DEBUG("module.playerbot.interrupt",
+                "[EVENT] Spell interrupted: caster={}, spellId={}",
+                casterGuid.ToString(), event.spellId);
+        }
+
+        // Check if one of our bots did this interrupt
+        if (WasAssignedToInterrupt(casterGuid, event.spellId))
+        {
+            _metrics.interruptsSuccessful.fetch_add(1, ::std::memory_order_relaxed);
+            TC_LOG_DEBUG("module.playerbot.interrupt",
+                "[EVENT] Our bot successfully interrupted spell {} on {}",
+                event.spellId, casterGuid.ToString());
+        }
+    }
+}
+
+void InterruptCoordinatorFixed::HandleSpellCastSuccess(const CombatEvent& event)
+{
+    // Cast completed successfully - if we were supposed to interrupt it, we failed
+    ObjectGuid casterGuid = event.source;
+
+    {
+        ::std::lock_guard lock(_stateMutex);
+
+        auto it = _state.activeCasts.find(casterGuid);
+        if (it != _state.activeCasts.end() && !it->second.wasInterrupted)
+        {
+            // Check if we had an assignment to interrupt this
+            if (WasAssignedToInterrupt(casterGuid, event.spellId))
+            {
+                _metrics.interruptsFailed.fetch_add(1, ::std::memory_order_relaxed);
+                TC_LOG_DEBUG("module.playerbot.interrupt",
+                    "[EVENT] Missed interrupt: spell {} completed on {}",
+                    event.spellId, casterGuid.ToString());
+            }
+
+            // Remove completed cast from tracking
+            _state.activeCasts.erase(it);
+        }
+    }
+}
+
+bool InterruptCoordinatorFixed::IsEnemyCaster(ObjectGuid casterGuid) const
+{
+    if (!_group || casterGuid.IsEmpty())
+        return false;
+
+    // Get a reference object to resolve the GUID
+    WorldObject* refObject = nullptr;
+    {
+        ::std::lock_guard lock(_stateMutex);
+        if (!_state.botAI.empty())
+        {
+            auto it = _state.botAI.begin();
+            if (it->second)
+                refObject = it->second->GetBot();
+        }
+    }
+
+    if (!refObject && _group)
+    {
+        refObject = ObjectAccessor::FindPlayer(_group->GetLeaderGUID());
+    }
+
+    if (!refObject)
+        return false;
+
+    Unit* caster = ObjectAccessor::GetUnit(*refObject, casterGuid);
+    if (!caster)
+        return false;
+
+    // Check if caster is hostile to any of our group members
+    for (auto const& slot : _group->GetMemberSlots())
+    {
+        if (Player* member = ObjectAccessor::FindPlayer(slot.guid))
+        {
+            if (caster->IsHostileTo(member))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+bool InterruptCoordinatorFixed::IsInterruptibleSpell(SpellInfo const* spellInfo) const
+{
+    if (!spellInfo)
+        return false;
+
+    // Check if it's a cast-time spell (instant casts don't need interrupting)
+    if (spellInfo->CalcCastTime() == 0 && !spellInfo->IsChanneled())
+        return false;
+
+    // Check for spell attributes that indicate it can't be interrupted
+    // SPELL_ATTR0_PASSIVE - passive auras shouldn't be interrupted
+    if (spellInfo->HasAttribute(SPELL_ATTR0_PASSIVE))
+        return false;
+
+    // SPELL_ATTR1_CHANNEL_TRACK_TARGET - some channeled spells that track target
+    // are typically interruptible (e.g., Mind Flay, Arcane Missiles)
+
+    // SPELL_ATTR3_NO_PUSHBACK - spells immune to pushback are often important
+    // to interrupt (heal spells, etc.)
+
+    // Positive spells (buffs, heals) that heal enemies should be interrupted
+    // But friendly positive spells shouldn't trigger interrupt for us
+
+    // Simple heuristic: if it has cast time and isn't a passive, it's interruptible
+    // The priority system will determine if it's WORTH interrupting
+    return true;
+}
+
+bool InterruptCoordinatorFixed::WasAssignedToInterrupt(ObjectGuid casterGuid, uint32 spellId) const
+{
+    // Note: Caller should hold _stateMutex
+    for (auto const& assignment : _state.pendingAssignments)
+    {
+        if (assignment.targetCaster == casterGuid && assignment.targetSpell == spellId)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace Playerbot
