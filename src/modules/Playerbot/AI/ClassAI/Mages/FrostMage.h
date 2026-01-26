@@ -21,6 +21,7 @@
 #include "../Common/StatusEffectTracker.h"
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
+#include "../SpellValidation_WoW112.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -48,23 +49,34 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
+
 // WoW 11.2 (The War Within) - Frost Mage Spell IDs
-constexpr uint32 FROST_FROSTBOLT = 116;
-constexpr uint32 FROST_ICE_LANCE = 30455;
-constexpr uint32 FROST_FLURRY = 44614;
-constexpr uint32 FROST_FROZEN_ORB = 84714;
-constexpr uint32 FROST_BLIZZARD = 190356;
-constexpr uint32 FROST_COMET_STORM = 153595;
-constexpr uint32 FROST_RAY_OF_FROST = 205021;
-constexpr uint32 FROST_GLACIAL_SPIKE = 199786;
-constexpr uint32 FROST_ICY_VEINS = 12472;
-constexpr uint32 FROST_CONE_OF_COLD = 120;
-constexpr uint32 FROST_FREEZE = 33395; // Water Elemental ability
-constexpr uint32 FROST_SUMMON_WATER_ELEMENTAL = 31687;
-constexpr uint32 FROST_ICE_BARRIER = 11426;
-constexpr uint32 FROST_ICE_BLOCK = 45438;
-constexpr uint32 FROST_MIRROR_IMAGE = 55342;
-constexpr uint32 FROST_SHIFTING_POWER = 382440;
+// Use central spell registry (SpellValidation_WoW112.h)
+namespace FrostMageSpells
+{
+    // Frost Spec Spells
+    constexpr uint32 FROST_FROSTBOLT              = WoW112Spells::Mage::FROSTBOLT;
+    constexpr uint32 FROST_ICE_LANCE              = WoW112Spells::Mage::Frost::ICE_LANCE;
+    constexpr uint32 FROST_FLURRY                 = WoW112Spells::Mage::Frost::FLURRY;
+    constexpr uint32 FROST_FROZEN_ORB             = WoW112Spells::Mage::Frost::FROZEN_ORB;
+    constexpr uint32 FROST_BLIZZARD               = WoW112Spells::Mage::Frost::BLIZZARD;
+    constexpr uint32 FROST_COMET_STORM            = WoW112Spells::Mage::Frost::COMET_STORM;
+    constexpr uint32 FROST_RAY_OF_FROST           = WoW112Spells::Mage::Frost::RAY_OF_FROST;
+    constexpr uint32 FROST_GLACIAL_SPIKE          = WoW112Spells::Mage::Frost::GLACIAL_SPIKE;
+    constexpr uint32 FROST_ICY_VEINS              = WoW112Spells::Mage::Frost::ICY_VEINS;
+    constexpr uint32 FROST_CONE_OF_COLD           = WoW112Spells::Mage::Frost::CONE_OF_COLD;
+    constexpr uint32 FROST_FREEZE                 = WoW112Spells::Mage::Frost::FREEZE;
+    constexpr uint32 FROST_SUMMON_WATER_ELEMENTAL = WoW112Spells::Mage::Frost::SUMMON_WATER_ELEMENTAL;
+    constexpr uint32 FROST_ICE_BARRIER            = WoW112Spells::Mage::Frost::ICE_BARRIER;
+
+    // Common Mage Spells
+    constexpr uint32 FROST_ICE_BLOCK              = WoW112Spells::Mage::ICE_BLOCK;
+    constexpr uint32 FROST_MIRROR_IMAGE           = WoW112Spells::Mage::MIRROR_IMAGE;
+    constexpr uint32 FROST_SHIFTING_POWER         = WoW112Spells::Mage::SHIFTING_POWER_COMMON;
+}
+
+// Make spells available in the namespace
+using namespace FrostMageSpells;
 
 // Fingers of Frost proc tracker (2 free Ice Lance charges)
 class FingersOfFrostTracker

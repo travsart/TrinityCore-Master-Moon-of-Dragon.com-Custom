@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -40,59 +41,72 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // WINDWALKER MONK SPELL IDs (WoW 11.2 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW112.h
 // ============================================================================
 
-enum WindwalkerMonkSpells
+namespace WindwalkerMonkSpells
 {
+    // Import from central registry - Monk common spells
+    using namespace WoW112Spells::Monk;
+
     // Chi Generators
-    TIGER_PALM_WIND          = 100780,  // 25 Energy, generates 2 Chi
-    EXPEL_HARM_WIND          = 322101,  // 15 Energy, generates 1 Chi
-    CHI_WAVE_WIND            = 115098,  // 15 sec CD, generates 1 Chi (talent)
-    CHI_BURST_WIND           = 123986,  // 30 sec CD, generates 1 Chi (talent)
-    CRACKLING_JADE_LIGHTNING = 117952,  // Channel, generates Chi
+    constexpr uint32 TIGER_PALM_WIND          = Windwalker::TIGER_PALM_WW;
+    constexpr uint32 EXPEL_HARM_WIND          = EXPEL_HARM;
+    constexpr uint32 CHI_WAVE_WIND            = Windwalker::CHI_WAVE_WW;
+    constexpr uint32 CHI_BURST_WIND           = Windwalker::CHI_BURST_WW;
+    constexpr uint32 CRACKLING_JADE_LIGHTNING_WW = WoW112Spells::Monk::CRACKLING_JADE_LIGHTNING;
 
     // Chi Spenders
-    RISING_SUN_KICK          = 107428,  // 2 Chi, 10 sec CD, applies debuff
-    BLACKOUT_KICK            = 100784,  // 1 Chi, combo builder
-    FISTS_OF_FURY            = 113656,  // 3 Chi, 24 sec CD, channel burst
-    SPINNING_CRANE_KICK      = 101546,  // 2 Chi, AoE
-    WHIRLING_DRAGON_PUNCH    = 152175,  // 2 Chi, 24 sec CD, burst (talent)
+    constexpr uint32 RISING_SUN_KICK          = Windwalker::RISING_SUN_KICK_WW;
+    constexpr uint32 BLACKOUT_KICK            = Windwalker::BLACKOUT_KICK_WW;
+    constexpr uint32 FISTS_OF_FURY            = Windwalker::FISTS_OF_FURY;
+    constexpr uint32 SPINNING_CRANE_KICK      = Windwalker::SPINNING_CRANE_KICK_WW;
+    constexpr uint32 WHIRLING_DRAGON_PUNCH    = Windwalker::WHIRLING_DRAGON_PUNCH;
 
     // Strike of the Windlord
-    STRIKE_OF_THE_WINDLORD   = 392983,  // 2 Chi, 40 sec CD, burst damage
+    constexpr uint32 STRIKE_OF_THE_WINDLORD   = Windwalker::STRIKE_OF_THE_WINDLORD;
 
     // Major Cooldowns
-    STORM_EARTH_AND_FIRE     = 137639,  // 2 min CD, clone ability
-    INVOKE_XUEN              = 123904,  // 2 min CD, summon celestial
-    SERENITY                 = 152173,  // 1.5 min CD, burst window (talent)
-    WEAPONS_OF_ORDER_WIND    = 387184,  // 2 min CD, damage buff (talent)
+    constexpr uint32 STORM_EARTH_AND_FIRE     = Windwalker::STORM_EARTH_AND_FIRE;
+    constexpr uint32 INVOKE_XUEN              = Windwalker::INVOKE_XUEN;
+    constexpr uint32 SERENITY                 = Windwalker::SERENITY;
+    constexpr uint32 WEAPONS_OF_ORDER_WIND    = Windwalker::WEAPONS_OF_ORDER_WW;
+    constexpr uint32 BONEDUST_BREW_WIND       = Windwalker::BONEDUST_BREW_WW;
 
     // Utility
-    TOUCH_OF_DEATH           = 322109,  // 3 min CD, execute
-    TOUCH_OF_KARMA           = 122470,  // 1.5 min CD, damage absorption + reflect
-    FORTIFYING_BREW_WIND     = 243435,  // 6 min CD, damage reduction
-    DIFFUSE_MAGIC_WIND       = 122783,  // 1.5 min CD, magic immunity
-    PARALYSIS_WIND           = 115078,  // CC
-    LEG_SWEEP                = 119381,  // 1 min CD, AoE stun
-    RING_OF_PEACE            = 116844,  // 45 sec CD, AoE silence (talent)
+    constexpr uint32 TOUCH_OF_DEATH_WW        = TOUCH_OF_DEATH;
+    constexpr uint32 TOUCH_OF_KARMA           = Windwalker::TOUCH_OF_KARMA;
+    constexpr uint32 FORTIFYING_BREW_WIND     = FORTIFYING_BREW;
+    constexpr uint32 DIFFUSE_MAGIC_WIND       = DIFFUSE_MAGIC;
+    constexpr uint32 PARALYSIS_WIND           = PARALYSIS;
+    constexpr uint32 LEG_SWEEP_WW             = LEG_SWEEP;
+    constexpr uint32 RING_OF_PEACE_WW         = RING_OF_PEACE;
 
     // Movement
-    ROLL_WIND                = 109132,  // Mobility
-    FLYING_SERPENT_KICK      = 101545,  // 25 sec CD, mobility + damage
-    TIGER_LUST_WIND          = 116841,  // Sprint + snare removal
+    constexpr uint32 ROLL_WIND                = ROLL;
+    constexpr uint32 FLYING_SERPENT_KICK      = Windwalker::FLYING_SERPENT_KICK;
+    constexpr uint32 TIGER_LUST_WIND          = TIGERS_LUST;
 
     // Procs and Buffs
-    TEACHINGS_OF_THE_MONASTERY_WIND = 202090, // Buff from Blackout Kick
-    DANCE_OF_CHI_JI          = 325202,  // Spinning Crane Kick damage buff
-    COMBO_BREAKER            = 137384,  // Proc: free Blackout Kick
-    BLACKOUT_COMBO           = 196736,  // Talent: empowers next ability
+    constexpr uint32 TEACHINGS_OF_THE_MONASTERY_WIND = Windwalker::TEACHINGS_OF_THE_MONASTERY_WW;
+    constexpr uint32 DANCE_OF_CHI_JI          = Windwalker::DANCE_OF_CHI_JI;
+    constexpr uint32 COMBO_BREAKER            = Windwalker::COMBO_BREAKER;
+    constexpr uint32 HIT_COMBO                = Windwalker::HIT_COMBO;
+    constexpr uint32 MARK_OF_THE_CRANE        = Windwalker::MARK_OF_THE_CRANE;
 
     // Talents
-    FAELINE_STOMP            = 388193,  // 30 sec CD, ground effect
-    BONEDUST_BREW_WIND       = 386276,  // 1 min CD, damage amp
-    FALLEN_ORDER             = 326860,  // 3 min CD, summon clones
-    JADE_IGNITION            = 392979   // Passive: damage amp
-};
+    constexpr uint32 FAELINE_STOMP            = Windwalker::FAELINE_STOMP_WW;
+    constexpr uint32 JADEFIRE_STOMP           = Windwalker::JADEFIRE_STOMP;
+    constexpr uint32 JADE_IGNITION            = Windwalker::JADE_IGNITION;
+    constexpr uint32 TRANSFER_THE_POWER       = Windwalker::TRANSFER_THE_POWER;
+    constexpr uint32 GLORY_OF_THE_DAWN        = Windwalker::GLORY_OF_THE_DAWN;
+    constexpr uint32 INVOKERS_DELIGHT         = Windwalker::INVOKERS_DELIGHT;
+
+    // Hero Talents
+    constexpr uint32 WW_FLURRY_STRIKES        = Windwalker::WW_FLURRY_STRIKES;
+    constexpr uint32 WW_CELESTIAL_CONDUIT     = Windwalker::WW_CELESTIAL_CONDUIT;
+}
+using namespace WindwalkerMonkSpells;
 
 // Dual resource type for Windwalker Monk
 struct EnergyChiResourceWindwalker

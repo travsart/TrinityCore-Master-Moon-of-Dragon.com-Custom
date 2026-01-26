@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -42,84 +43,69 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // MISTWEAVER MONK SPELL IDs (WoW 11.2 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW112.h
 // ============================================================================
 
-enum MistweaverMonkSpells
+namespace MistweaverMonkSpells
 {
+    // Import from central registry - Monk common spells
+    using namespace WoW112Spells::Monk;
+
     // Direct Heals
-
-    VIVIFY
-    = 116670,  // 5% mana, smart heal (cleave)
-
-    SOOTHING_MIST
-    = 115175,  // Channel, enables instant Vivify
-    ENVELOPING_MIST          = 124682,  // 6% mana, HoT
-    EXPEL_HARM_MIST          = 322101,  // Self-heal
-
-    LIFE_COCOON
-    = 116849,  // 2 min CD, absorb shield
+    constexpr uint32 VIVIFY                  = Mistweaver::VIVIFY;
+    constexpr uint32 SOOTHING_MIST           = Mistweaver::SOOTHING_MIST;
+    constexpr uint32 ENVELOPING_MIST         = Mistweaver::ENVELOPING_MIST;
+    constexpr uint32 EXPEL_HARM_MIST         = EXPEL_HARM;
+    constexpr uint32 LIFE_COCOON             = Mistweaver::LIFE_COCOON;
 
     // HoT Management
-
-    RENEWING_MIST
-    = 115151,  // 8.5 sec CD, 2 charges, bouncing HoT
-
-    ESSENCE_FONT
-    = 191837,  // 5% mana, 12 sec CD, AoE HoT + heal
-
-    REVIVAL
-    = 115310,  // 3 min CD, raid-wide instant heal
+    constexpr uint32 RENEWING_MIST           = Mistweaver::RENEWING_MIST;
+    constexpr uint32 ESSENCE_FONT            = Mistweaver::ESSENCE_FONT;
+    constexpr uint32 REVIVAL                 = Mistweaver::REVIVAL;
 
     // AoE Healing
-    REFRESHING_JADE_WIND     = 196725,  // 25% mana, AoE HoT (talent)
-    CHI_BURST_MIST           = 123986,  // 30 sec CD, AoE heal (talent)
+    constexpr uint32 REFRESHING_JADE_WIND    = Mistweaver::REFRESHING_JADE_WIND;
+    constexpr uint32 CHI_BURST_MIST          = Mistweaver::CHI_BURST;
+    constexpr uint32 CHI_WAVE_MIST           = Mistweaver::CHI_WAVE;
 
     // Cooldowns
-
-    INVOKE_YULON
-    = 322118,  // 3 min CD, summon celestial (talent)
-
-    INVOKE_CHI_JI
-    = 325197,  // 3 min CD, summon celestial (talent)
-    INVOKE_SHEILUN           = 399491,  // 3 min CD, summon weapon (talent)
+    constexpr uint32 INVOKE_YULON            = Mistweaver::INVOKE_YULON;
+    constexpr uint32 INVOKE_CHI_JI           = Mistweaver::INVOKE_CHI_JI;
+    constexpr uint32 INVOKE_SHEILUN          = Mistweaver::INVOKE_SHEILUN;
+    constexpr uint32 SHEILUNS_GIFT           = Mistweaver::SHEILUNS_GIFT;
 
     // Utility
-    THUNDER_FOCUS_TEA        = 116680,  // 30 sec CD, empowers next spell
-
-    MANA_TEA
-    = 197908,  // Mana regen channel (talent)
-    FORTIFYING_BREW_MIST     = 243435,  // 6 min CD, damage reduction
-    DIFFUSE_MAGIC_MIST       = 122783,  // 1.5 min CD, magic immunity
-
-    DETOX_MIST
-    = 115450,  // Dispel poison/disease
-
-    PARALYSIS
-    = 115078,  // CC
+    constexpr uint32 THUNDER_FOCUS_TEA       = Mistweaver::THUNDER_FOCUS_TEA;
+    constexpr uint32 MANA_TEA                = Mistweaver::MANA_TEA;
+    constexpr uint32 FORTIFYING_BREW_MIST    = FORTIFYING_BREW;
+    constexpr uint32 DIFFUSE_MAGIC_MIST      = DIFFUSE_MAGIC;
+    constexpr uint32 DETOX_MIST              = DETOX;
+    constexpr uint32 PARALYSIS_MIST          = PARALYSIS;
 
     // DPS Abilities (Fistweaving)
-    RISING_SUN_KICK_MIST     = 107428,  // 2 Chi, damage
-    BLACKOUT_KICK_MIST       = 100784,  // 1 Chi, damage
-    TIGER_PALM_MIST          = 100780,  // Energy, generates Chi
-    SPINNING_CRANE_KICK_MIST = 101546,  // Chi, AoE damage + healing
+    constexpr uint32 RISING_SUN_KICK_MIST    = Mistweaver::RISING_SUN_KICK;
+    constexpr uint32 BLACKOUT_KICK_MIST      = Mistweaver::BLACKOUT_KICK_MW;
+    constexpr uint32 TIGER_PALM_MIST         = Mistweaver::TIGER_PALM_MW;
+    constexpr uint32 SPINNING_CRANE_KICK_MIST = Mistweaver::SPINNING_CRANE_KICK_MW;
 
     // Procs and Buffs
-    TEACHINGS_OF_THE_MONASTERY = 202090, // Buff from Blackout Kick
-
-    UPWELLING
-    = 274963,  // Essence Font stacks
-    ANCIENT_TEACHINGS        = 388023,  // Fistweaving healing conversion
+    constexpr uint32 TEACHINGS_OF_THE_MONASTERY_MW = WoW112Spells::Monk::TEACHINGS_OF_THE_MONASTERY;
+    constexpr uint32 ANCIENT_TEACHINGS       = Mistweaver::ANCIENT_TEACHINGS;
+    constexpr uint32 FAELINE_STOMP           = Mistweaver::FAELINE_STOMP;
 
     // Talents
-    INVOKE_YULON_THE_JADE_SERPENT = 322118,
+    constexpr uint32 UPWELLING               = Mistweaver::UPWELLING;
+    constexpr uint32 LIFECYCLES              = Mistweaver::LIFECYCLES;
+    constexpr uint32 SPIRIT_OF_THE_CRANE     = Mistweaver::SPIRIT_OF_THE_CRANE;
+    constexpr uint32 CLOUDED_FOCUS           = Mistweaver::CLOUDED_FOCUS;
+    constexpr uint32 RISING_MIST             = Mistweaver::RISING_MIST;
+    constexpr uint32 SECRET_INFUSION         = Mistweaver::SECRET_INFUSION;
 
-    LIFECYCLES
-    = 197915,  // Mana reduction rotation
-    SPIRIT_OF_THE_CRANE      = 210802,  // Mana regen from fistweaving
-
-    CLOUDED_FOCUS
-    = 388047   // Soothing Mist cost reduction
-};
+    // Hero Talents
+    constexpr uint32 CELESTIAL_CONDUIT       = Mistweaver::CELESTIAL_CONDUIT;
+    constexpr uint32 MW_ASPECT_OF_HARMONY    = Mistweaver::MW_ASPECT_OF_HARMONY;
+}
+using namespace MistweaverMonkSpells;
 
 // ============================================================================
 // MISTWEAVER RENEWING MIST TRACKER

@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112.h"
 #include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -45,49 +46,45 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // VENGEANCE DEMON HUNTER SPELL IDs (WoW 11.2 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW112.h
+// Note: Uses enum to maintain compatibility with DemonHunterAI.h and existing code
 // ============================================================================
 
 enum VengeanceSpells
 {
-    // Pain Generators (SHEAR already defined in DemonHunterAI.h)
-    FRACTURE                 = 263642,  // 25 Pain, generates Soul Fragments
-    FEL_DEVASTATION          = 212084,  // Channel, generates Pain
+    // Pain Generators (values from central registry)
+    FRACTURE                 = 263642,  // WoW112Spells::DemonHunter::Vengeance::FRACTURE
+    FEL_DEVASTATION          = 212084,  // WoW112Spells::DemonHunter::Vengeance::FEL_DEVASTATION
 
-    // Pain Spenders (SOUL_CLEAVE, SPIRIT_BOMB already defined in DemonHunterAI.h)
-    FEL_DEVASTATION_SPENDER  = 212084,  // 50 Pain channel (talent)
+    // Pain Spenders - use DemonHunterSpells from DemonHunterAI.h for SOUL_CLEAVE, SPIRIT_BOMB
+    FEL_DEVASTATION_SPENDER  = 212084,  // Same as FEL_DEVASTATION
 
-    // Active Mitigation (DEMON_SPIKES, FIERY_BRAND already defined in DemonHunterAI.h)
-    // SOUL_BARRIER already defined in DemonHunterAI.h
-    // METAMORPHOSIS_VENGEANCE already defined in DemonHunterAI.h
-
-    // Sigils (SIGIL_OF_FLAME already defined in DemonHunterAI.h)
-    // SIGIL_OF_SILENCE already defined in DemonHunterAI.h
-    // SIGIL_OF_MISERY already defined in DemonHunterAI.h
-    SIGIL_OF_CHAINS          = 202138,  // AoE slow, 1.5 min CD
+    // Sigils
+    SIGIL_OF_CHAINS          = 202138,  // WoW112Spells::DemonHunter::Vengeance::SIGIL_OF_CHAINS
 
     // Threat and Utility
-    INFERNAL_STRIKE          = 189110,  // 2 charges, leap
-    THROW_GLAIVE_TANK        = 204157,  // Ranged threat
-    TORMENT                  = 185245,  // Taunt
-    CONSUME_MAGIC_TANK       = 278326,  // Purge
+    INFERNAL_STRIKE          = 189110,  // WoW112Spells::DemonHunter::Vengeance::INFERNAL_STRIKE
+    THROW_GLAIVE_TANK        = 204157,  // WoW112Spells::DemonHunter::Vengeance::THROW_GLAIVE_TANK
+    TORMENT                  = 185245,  // WoW112Spells::DemonHunter::Vengeance::TORMENT
+    CONSUME_MAGIC_TANK       = 278326,  // WoW112Spells::DemonHunter::CONSUME_MAGIC
 
     // Defensive Cooldowns
-    LAST_RESORT              = 209258,  // Cheat death (talent)
-    FEL_DEVASTATION_DEF      = 212084,  // Leech healing
+    LAST_RESORT              = 209258,  // WoW112Spells::DemonHunter::Vengeance::LAST_RESORT
+    FEL_DEVASTATION_DEF      = 212084,  // Leech healing (same spell)
 
     // Passives/Procs
-    IMMOLATION_AURA_TANK     = 258920,  // Passive AoE damage
-    SOUL_FRAGMENTS_BUFF      = 203981,  // Soul Fragment tracking
-    PAINBRINGER_BUFF         = 207407,  // Shear damage increase
-    FRAILTY_DEBUFF           = 247456,  // Spirit Bomb debuff
+    IMMOLATION_AURA_TANK     = 258920,  // WoW112Spells::DemonHunter::Vengeance::IMMOLATION_AURA_TANK
+    SOUL_FRAGMENTS_BUFF      = 203981,  // WoW112Spells::DemonHunter::Vengeance::SOUL_FRAGMENT
+    PAINBRINGER_BUFF         = 207407,  // WoW112Spells::DemonHunter::Vengeance::PAINBRINGER_BUFF
+    FRAILTY_DEBUFF           = 247456,  // WoW112Spells::DemonHunter::Vengeance::FRAILTY_DEBUFF
 
     // Talents
-    AGONIZING_FLAMES         = 207548,  // Fiery Brand spread
-    BURNING_ALIVE            = 207739,  // Fiery Brand duration
-    FEED_THE_DEMON           = 218612,  // Demon Spikes CDR
-    SPIRIT_BOMB_TALENT       = 247454,  // Enables Spirit Bomb
-    FRACTURE_TALENT          = 263642,  // Alternative Pain generator
-    SOUL_BARRIER_TALENT      = 263648   // Shield from Soul Fragments
+    AGONIZING_FLAMES         = 207548,  // WoW112Spells::DemonHunter::Vengeance::AGONIZING_FLAMES
+    BURNING_ALIVE            = 207739,  // WoW112Spells::DemonHunter::Vengeance::BURNING_ALIVE
+    FEED_THE_DEMON           = 218612,  // WoW112Spells::DemonHunter::Vengeance::FEED_THE_DEMON
+    SPIRIT_BOMB_TALENT       = 247454,  // WoW112Spells::DemonHunter::Vengeance::SPIRIT_BOMB
+    FRACTURE_TALENT          = 263642,  // WoW112Spells::DemonHunter::Vengeance::FRACTURE
+    SOUL_BARRIER_TALENT      = 263648   // WoW112Spells::DemonHunter::Vengeance::SOUL_BARRIER
 };
 
 // Pain resource type (simple uint32)

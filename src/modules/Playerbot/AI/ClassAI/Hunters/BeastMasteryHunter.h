@@ -18,7 +18,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../CombatSpecializationTemplates.h"
+#include "../SpellValidation_WoW112.h"
 #include "Pet.h"
 #include "PetDefines.h"
 #include "MotionMaster.h"
@@ -52,56 +52,46 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 Beast Mastery Hunter Spell IDs
+// ============================================================================
+// BEAST MASTERY HUNTER SPELL IDs (WoW 11.2 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW112.h
+// ============================================================================
+
 enum BeastMasterySpells
 {
-    // Core Abilities
-    SPELL_KILL_COMMAND          = 34026,   // Primary pet damage ability
-    SPELL_BARBED_SHOT          = 217200,  // Generates focus, maintains pet frenzy
-    SPELL_COBRA_SHOT           = 193455,  // Focus builder
-    SPELL_BESTIAL_WRATH        = 19574,   // Major cooldown
-    SPELL_ASPECT_OF_THE_WILD  = 193530,  // DPS cooldown
-
-    SPELL_MULTISHOT
-    = 2643,
-    // AoE ability
+    // Core Abilities (values from central registry)
+    SPELL_KILL_COMMAND          = 34026,   // WoW112Spells::Hunter::BeastMastery::KILL_COMMAND
+    SPELL_BARBED_SHOT           = 217200,  // WoW112Spells::Hunter::BeastMastery::BARBED_SHOT
+    SPELL_COBRA_SHOT            = 193455,  // WoW112Spells::Hunter::BeastMastery::COBRA_SHOT
+    SPELL_BESTIAL_WRATH         = 19574,   // WoW112Spells::Hunter::BeastMastery::BESTIAL_WRATH
+    SPELL_ASPECT_OF_THE_WILD    = 193530,  // WoW112Spells::Hunter::BeastMastery::ASPECT_OF_THE_WILD
+    SPELL_MULTISHOT             = 2643,    // WoW112Spells::Hunter::BeastMastery::MULTI_SHOT_BM
 
     // Pet Management
-    SPELL_CALL_PET_1           = 883,     // Summon primary pet
-
-    SPELL_MEND_PET
-    = 136,
-    // Pet heal
-    SPELL_REVIVE_PET           = 982,     // Resurrect pet
-    SPELL_PET_ATTACK           = 52398,   // Command pet to attack
-    SPELL_PET_FOLLOW           = 52399,   // Command pet to follow
-
-    SPELL_PET_STAY
-    = 52400,   // Command pet to stay
+    SPELL_CALL_PET_1            = 883,     // WoW112Spells::Hunter::CALL_PET_1
+    SPELL_MEND_PET              = 136,     // WoW112Spells::Hunter::MEND_PET
+    SPELL_REVIVE_PET            = 982,     // WoW112Spells::Hunter::REVIVE_PET
+    SPELL_PET_ATTACK            = 52398,   // WoW112Spells::Hunter::PET_ATTACK
+    SPELL_PET_FOLLOW            = 52399,   // WoW112Spells::Hunter::PET_FOLLOW
+    SPELL_PET_STAY              = 52400,   // WoW112Spells::Hunter::PET_STAY
 
     // Talents/Special
-    SPELL_DIRE_BEAST           = 120679,  // Summon additional beast
-
-    SPELL_BLOODSHED
-    = 321530,  // Pet bleed ability
-
-    SPELL_WILD_CALL
-    = 185789,  // Barbed Shot reset proc
-    SPELL_ANIMAL_COMPANION     = 267116,  // Second permanent pet
+    SPELL_DIRE_BEAST            = 120679,  // WoW112Spells::Hunter::BeastMastery::DIRE_BEAST
+    SPELL_BLOODSHED             = 321530,  // WoW112Spells::Hunter::BeastMastery::BLOODSHED
+    SPELL_WILD_CALL             = 185789,  // WoW112Spells::Hunter::BeastMastery::WILD_CALL
+    SPELL_ANIMAL_COMPANION      = 267116,  // WoW112Spells::Hunter::BeastMastery::ANIMAL_COMPANION
 
     // Buffs/Debuffs
-    SPELL_HUNTERS_MARK         = 257284,  // Target marking
-    SPELL_ASPECT_OF_CHEETAH    = 186257,  // Movement speed
-    SPELL_EXHILARATION         = 109304,  // Heal self and pet
-    SPELL_PET_FRENZY           = 272790,  // Pet attack speed buff (from Barbed Shot)
+    SPELL_HUNTERS_MARK          = 257284,  // WoW112Spells::Hunter::HUNTERS_MARK
+    SPELL_ASPECT_OF_CHEETAH     = 186257,  // WoW112Spells::Hunter::ASPECT_OF_THE_CHEETAH
+    SPELL_EXHILARATION          = 109304,  // WoW112Spells::Hunter::EXHILARATION
+    SPELL_PET_FRENZY            = 272790,  // WoW112Spells::Hunter::BeastMastery::PET_FRENZY
 
     // Utility
-    SPELL_COUNTER_SHOT         = 147362,  // Interrupt
-    SPELL_TRANQUILIZING_SHOT   = 19801,   // Dispel
-
-    SPELL_TAR_TRAP
-    = 187698,  // Slow trap
-    SPELL_FREEZING_TRAP        = 187650,  // CC trap
+    SPELL_COUNTER_SHOT          = 147362,  // WoW112Spells::Hunter::COUNTER_SHOT
+    SPELL_TRANQUILIZING_SHOT    = 19801,   // WoW112Spells::Hunter::TRANQUILIZING_SHOT
+    SPELL_TAR_TRAP              = 187698,  // WoW112Spells::Hunter::TAR_TRAP
+    SPELL_FREEZING_TRAP         = 187650   // WoW112Spells::Hunter::FREEZING_TRAP
 };
 
 /**

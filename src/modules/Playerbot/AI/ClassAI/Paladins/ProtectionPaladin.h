@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -29,6 +30,63 @@
 namespace Playerbot
 {
 
+// ============================================================================
+// PROTECTION PALADIN SPELL ALIASES (WoW 11.2 - The War Within)
+// Consolidated spell IDs from central registry - NO duplicates
+// ============================================================================
+
+namespace ProtectionPaladinSpells
+{
+    // Holy Power Generators
+    constexpr uint32 JUDGMENT_PROT           = WoW112Spells::Paladin::Protection::JUDGMENT_PROT;
+    constexpr uint32 HAMMER_OF_WRATH_PROT    = WoW112Spells::Paladin::HAMMER_OF_WRATH;
+    constexpr uint32 BLESSED_HAMMER          = WoW112Spells::Paladin::Protection::BLESSED_HAMMER;
+    constexpr uint32 AVENGERS_SHIELD         = WoW112Spells::Paladin::Protection::AVENGERS_SHIELD;
+
+    // Holy Power Spenders
+    constexpr uint32 SHIELD_OF_THE_RIGHTEOUS = WoW112Spells::Paladin::Protection::SHIELD_OF_THE_RIGHTEOUS;
+    constexpr uint32 WORD_OF_GLORY_PROT      = WoW112Spells::Paladin::WORD_OF_GLORY;
+    constexpr uint32 LIGHT_OF_THE_PROTECTOR  = WoW112Spells::Paladin::Protection::LIGHT_OF_THE_PROTECTOR;
+
+    // Threat Generation
+    constexpr uint32 CONSECRATION            = WoW112Spells::Paladin::CONSECRATION;
+    constexpr uint32 HAMMER_OF_THE_RIGHTEOUS = WoW112Spells::Paladin::Protection::HAMMER_OF_THE_RIGHTEOUS;
+
+    // Active Mitigation
+    constexpr uint32 GUARDIAN_OF_ANCIENT_KINGS = WoW112Spells::Paladin::Protection::GUARDIAN_OF_ANCIENT_KINGS;
+    constexpr uint32 ARDENT_DEFENDER         = WoW112Spells::Paladin::Protection::ARDENT_DEFENDER;
+    constexpr uint32 DIVINE_PROTECTION_PROT  = WoW112Spells::Paladin::DIVINE_PROTECTION;
+    constexpr uint32 BLESSING_OF_SPELLWARDING = WoW112Spells::Paladin::Protection::BLESSING_OF_SPELLWARDING;
+
+    // Major Cooldowns
+    constexpr uint32 AVENGING_WRATH_PROT     = WoW112Spells::Paladin::AVENGING_WRATH;
+    constexpr uint32 SENTINEL                = WoW112Spells::Paladin::Protection::SENTINEL;
+    constexpr uint32 FINAL_STAND             = WoW112Spells::Paladin::Protection::FINAL_STAND;
+
+    // Utility
+    constexpr uint32 HAND_OF_RECKONING       = WoW112Spells::Paladin::HAND_OF_RECKONING;
+    constexpr uint32 BLESSING_OF_FREEDOM_PROT = WoW112Spells::Paladin::BLESSING_OF_FREEDOM;
+    constexpr uint32 BLESSING_OF_PROTECTION_PROT = WoW112Spells::Paladin::BLESSING_OF_PROTECTION;
+    constexpr uint32 LAY_ON_HANDS_PROT       = WoW112Spells::Paladin::LAY_ON_HANDS;
+    constexpr uint32 DIVINE_SHIELD_PROT      = WoW112Spells::Paladin::DIVINE_SHIELD;
+    constexpr uint32 CLEANSE_TOXINS          = WoW112Spells::Paladin::CLEANSE_TOXINS;
+
+    // Auras
+    constexpr uint32 DEVOTION_AURA_PROT      = WoW112Spells::Paladin::DEVOTION_AURA;
+    constexpr uint32 CONCENTRATION_AURA_PROT = WoW112Spells::Paladin::CONCENTRATION_AURA;
+    constexpr uint32 RETRIBUTION_AURA_PROT   = WoW112Spells::Paladin::RETRIBUTION_AURA;
+
+    // Procs and Buffs
+    constexpr uint32 GRAND_CRUSADER          = WoW112Spells::Paladin::Protection::GRAND_CRUSADER;
+    constexpr uint32 SHINING_LIGHT           = WoW112Spells::Paladin::Protection::SHINING_LIGHT;
+
+    // Talents
+    constexpr uint32 SERAPHIM                = WoW112Spells::Paladin::Protection::SERAPHIM;
+    constexpr uint32 BULWARK_OF_RIGHTEOUS_FURY = WoW112Spells::Paladin::Protection::BULWARK_OF_RIGHTEOUS_FURY;
+    constexpr uint32 MOMENT_OF_GLORY         = WoW112Spells::Paladin::Protection::MOMENT_OF_GLORY;
+    constexpr uint32 FIRST_AVENGER           = WoW112Spells::Paladin::Protection::FIRST_AVENGER;
+}
+using namespace ProtectionPaladinSpells;
 
 // Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
 using bot::ai::Sequence;
@@ -41,75 +99,6 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// ============================================================================
-// PROTECTION PALADIN SPELL IDs (WoW 11.2 - The War Within)
-// ============================================================================
-
-enum ProtectionPaladinSpells
-{
-    // Holy Power Generators
-
-    JUDGMENT_PROT
-    = 275779,  // 3% mana, 6 sec CD, 1 HP
-    HAMMER_OF_WRATH_PROT     = 24275,   // 10% mana, 7.5 sec CD, 1 HP (execute)
-    BLESSED_HAMMER           = 204019,  // 10% mana, 3 charges, 1 HP per charge (talent)
-    AVENGERS_SHIELD          = 31935,   // 10% mana, 15 sec CD, ranged silence
-
-    // Holy Power Spenders
-    SHIELD_OF_THE_RIGHTEOUS  = 53600,   // 3 HP, physical damage reduction
-    WORD_OF_GLORY_PROT       = 85673,   // 3 HP, self-heal
-    LIGHT_OF_THE_PROTECTOR   = 184092,  // 3 HP, strong self-heal (talent)
-
-    // Threat Generation
-
-    CONSECRATION
-    = 26573,   // 18% mana, ground AoE
-    HAMMER_OF_THE_RIGHTEOUS  = 53595,   // 9% mana, melee AoE
-
-    // Active Mitigation
-    GUARDIAN_OF_ANCIENT_KINGS = 86659,  // 5 min CD, 50% damage reduction
-    ARDENT_DEFENDER          = 31850,   // 2 min CD, cheat death
-    DIVINE_PROTECTION_PROT   = 498,     // 1 min CD, magic damage reduction
-    BLESSING_OF_SPELLWARDING = 204018,  // Magic immunity (replaces Divine Protection)
-
-    // Major Cooldowns
-    AVENGING_WRATH_PROT      = 31884,   // 2 min CD, damage/healing buff
-
-    SENTINEL
-    = 389539,  // 5 min CD, massive armor (talent)
-
-    FINAL_STAND
-    = 204077,  // Increases Ardent Defender effectiveness
-
-    // Utility
-    HAND_OF_RECKONING        = 62124,   // Taunt
-    BLESSING_OF_FREEDOM_PROT = 1044,    // Remove movement impairment
-    BLESSING_OF_PROTECTION_PROT = 1022, // Physical immunity
-    LAY_ON_HANDS_PROT        = 633,     // 10 min CD, full heal
-    DIVINE_SHIELD_PROT       = 642,     // 5 min CD, immunity
-    CLEANSE_TOXINS           = 213644,  // Dispel poison/disease
-
-    // Auras
-    DEVOTION_AURA_PROT       = 465,     // Armor buff
-    CONCENTRATION_AURA_PROT  = 317920,  // Interrupt resistance
-    RETRIBUTION_AURA_PROT    = 183435,  // Damage reflect
-
-    // Procs and Buffs
-    GRAND_CRUSADER           = 85043,   // Proc: free Avenger's Shield
-
-    SHINING_LIGHT
-    = 327510,  // Proc: free Word of Glory
-
-    // Talents
-
-    SERAPHIM
-    = 152262,  // 3 HP, all stats buff
-    BULWARK_OF_RIGHTEOUS_FURY = 386653, // Shield of the Righteous extended duration
-    MOMENT_OF_GLORY          = 327193,  // Avenger's Shield CDR
-
-    FIRST_AVENGER
-    = 203776   // Avenger's Shield extra charge
-};
 
 // Forward declaration - ManaHolyPowerResource should be defined in ResourceTypes.h
 // If not, we define it here as a local type

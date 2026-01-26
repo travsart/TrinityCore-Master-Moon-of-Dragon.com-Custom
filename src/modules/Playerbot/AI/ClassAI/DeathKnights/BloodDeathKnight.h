@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112.h"  // Central spell registry
 #include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -27,6 +28,67 @@
 namespace Playerbot
 {
 
+// ============================================================================
+// BLOOD DEATH KNIGHT SPELL ALIASES (WoW 11.2 - The War Within)
+// Consolidated spell IDs from central registry - NO duplicates
+// ============================================================================
+
+namespace BloodDeathKnightSpells
+{
+    // Rune Spenders
+    constexpr uint32 HEART_STRIKE             = WoW112Spells::DeathKnight::Blood::HEART_STRIKE;
+    constexpr uint32 BLOOD_BOIL               = WoW112Spells::DeathKnight::Blood::BLOOD_BOIL;
+    constexpr uint32 DEATHS_CARESS            = WoW112Spells::DeathKnight::Blood::DEATHS_CARESS;
+    constexpr uint32 MARROWREND               = WoW112Spells::DeathKnight::Blood::MARROWREND;
+    constexpr uint32 CONSUMPTION              = WoW112Spells::DeathKnight::Blood::CONSUMPTION;
+
+    // Runic Power Spenders
+    constexpr uint32 DEATH_STRIKE             = WoW112Spells::DeathKnight::DEATH_STRIKE;
+    constexpr uint32 DEATHS_AND_DECAY_BLOOD   = WoW112Spells::DeathKnight::DEATH_AND_DECAY;
+    constexpr uint32 BONESTORM                = WoW112Spells::DeathKnight::Blood::BONESTORM;
+
+    // Active Mitigation
+    constexpr uint32 VAMPIRIC_BLOOD           = WoW112Spells::DeathKnight::Blood::VAMPIRIC_BLOOD;
+    constexpr uint32 DANCING_RUNE_WEAPON      = WoW112Spells::DeathKnight::Blood::DANCING_RUNE_WEAPON;
+    constexpr uint32 ICEBOUND_FORTITUDE       = WoW112Spells::DeathKnight::ICEBOUND_FORTITUDE;
+    constexpr uint32 ANTI_MAGIC_SHELL         = WoW112Spells::DeathKnight::ANTI_MAGIC_SHELL;
+    constexpr uint32 RUNE_TAP                 = WoW112Spells::DeathKnight::Blood::RUNE_TAP;
+    constexpr uint32 VAMPIRIC_STRIKE          = WoW112Spells::DeathKnight::Blood::VAMPIRIC_STRIKE;
+
+    // Threat Generation
+    constexpr uint32 DARK_COMMAND             = WoW112Spells::DeathKnight::DARK_COMMAND;
+    constexpr uint32 BLOOD_PLAGUE             = WoW112Spells::DeathKnight::Blood::BLOOD_PLAGUE;
+    constexpr uint32 FROST_FEVER              = WoW112Spells::DeathKnight::Frost::FROST_FEVER;
+
+    // Major Cooldowns
+    constexpr uint32 RAISE_DEAD_BLOOD         = WoW112Spells::DeathKnight::RAISE_DEAD;
+    constexpr uint32 ARMY_OF_THE_DEAD         = WoW112Spells::DeathKnight::Unholy::ARMY_OF_THE_DEAD;
+    constexpr uint32 GOREFIENDS_GRASP         = WoW112Spells::DeathKnight::Blood::GOREFIENDS_GRASP;
+    constexpr uint32 BLOODDRINKER             = WoW112Spells::DeathKnight::Blood::BLOODDRINKER;
+    constexpr uint32 TOMBSTONE                = WoW112Spells::DeathKnight::Blood::TOMBSTONE;
+
+    // Utility
+    constexpr uint32 DEATH_GRIP               = WoW112Spells::DeathKnight::DEATH_GRIP;
+    constexpr uint32 DEATHS_ADVANCE           = WoW112Spells::DeathKnight::DEATHS_ADVANCE;
+    constexpr uint32 MIND_FREEZE              = WoW112Spells::DeathKnight::MIND_FREEZE;
+    constexpr uint32 ASPHYXIATE               = WoW112Spells::DeathKnight::ASPHYXIATE;
+    constexpr uint32 CONTROL_UNDEAD           = WoW112Spells::DeathKnight::CONTROL_UNDEAD;
+    constexpr uint32 RAISE_ALLY               = WoW112Spells::DeathKnight::RAISE_ALLY;
+
+    // Procs and Buffs
+    constexpr uint32 BONE_SHIELD              = WoW112Spells::DeathKnight::Blood::BONE_SHIELD;
+    constexpr uint32 CRIMSON_SCOURGE          = WoW112Spells::DeathKnight::Blood::CRIMSON_SCOURGE;
+    constexpr uint32 HEMOSTASIS               = WoW112Spells::DeathKnight::Blood::HEMOSTASIS;
+    constexpr uint32 OSSUARY                  = WoW112Spells::DeathKnight::Blood::OSSUARY;
+
+    // Talents
+    constexpr uint32 BLOOD_TAP                = WoW112Spells::DeathKnight::Blood::BLOOD_TAP;
+    constexpr uint32 RAPID_DECOMPOSITION      = WoW112Spells::DeathKnight::Blood::RAPID_DECOMPOSITION;
+    constexpr uint32 HEARTBREAKER             = WoW112Spells::DeathKnight::Blood::HEARTBREAKER;
+    constexpr uint32 FOUL_BULWARK             = WoW112Spells::DeathKnight::Blood::FOUL_BULWARK;
+    constexpr uint32 RELISH_IN_BLOOD          = WoW112Spells::DeathKnight::Blood::RELISH_IN_BLOOD;
+}
+using namespace BloodDeathKnightSpells;
 
 // Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
 using bot::ai::Sequence;
@@ -39,65 +101,6 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// ============================================================================
-// BLOOD DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
-// ============================================================================
-
-enum BloodDeathKnightSpells
-{
-    // Rune Spenders
-    HEART_STRIKE             = 206930,  // 1 Rune, main threat generator
-    BLOOD_BOIL               = 50842,   // 2 Runes, AoE threat
-    DEATHS_CARESS            = 195292,  // 1 Rune, ranged pull
-    MARROWREND               = 195182,  // 2 Runes, generates Bone Shield stacks
-    CONSUMPTION              = 274156,  // 3-5 Runes, AoE leech (talent)
-
-    // Runic Power Spenders
-    DEATH_STRIKE             = 49998,   // 35-45 RP, self-heal + shield
-    DEATHS_AND_DECAY_BLOOD   = 43265,   // 30 RP, ground AoE
-    BONESTORM                = 194844,  // 10 RP per sec, AoE channel (talent)
-
-    // Active Mitigation
-    VAMPIRIC_BLOOD           = 55233,   // 1.5 min CD, massive self-heal + max HP
-    DANCING_RUNE_WEAPON      = 49028,   // 2 min CD, threat + parry
-    ICEBOUND_FORTITUDE       = 48792,   // 3 min CD, damage reduction
-    ANTI_MAGIC_SHELL         = 48707,   // 1 min CD, magic absorption
-    RUNE_TAP                 = 194679,  // 25 sec CD, damage reduction (talent)
-    VAMPIRIC_STRIKE          = 433895,  // Empowered Death Strike (talent)
-
-    // Threat Generation
-    DARK_COMMAND             = 56222,   // Taunt
-    BLOOD_PLAGUE             = 55078,   // Disease DoT
-    FROST_FEVER              = 55095,   // Disease DoT (from Icy Touch)
-
-    // Major Cooldowns
-    RAISE_DEAD_BLOOD         = 46585,   // Permanent pet
-    ARMY_OF_THE_DEAD         = 42650,   // 8 min CD, summon ghouls
-    GOREFIENDS_GRASP         = 108199,  // 2 min CD, AoE grip (talent)
-    BLOODDRINKER             = 206931,  // 30 sec CD, channel heal (talent)
-    TOMBSTONE                = 219809,  // 1 min CD, consume Bone Shield for shield (talent)
-
-    // Utility
-    DEATH_GRIP               = 49576,   // 25 sec CD, pull
-    DEATHS_ADVANCE           = 48265,   // 1.5 min CD, speed + damage reduction
-    MIND_FREEZE              = 47528,   // Interrupt
-    ASPHYXIATE               = 221562,  // 45 sec CD, stun
-    CONTROL_UNDEAD           = 111673,  // Mind control undead
-    RAISE_ALLY               = 61999,   // Battle res
-
-    // Procs and Buffs
-    BONE_SHIELD              = 195181,  // Passive: stacks from Marrowrend
-    CRIMSON_SCOURGE          = 81136,   // Proc: free Blood Boil
-    HEMOSTASIS               = 273947,  // Buff: increased Blood Boil damage (talent)
-    OSSUARY                  = 219786,  // Passive: reduces Death Strike cost (talent)
-
-    // Talents
-    BLOOD_TAP                = 221699,  // Rune regen talent
-    RAPID_DECOMPOSITION      = 194662,  // Disease tick speed
-    HEARTBREAKER             = 221536,  // Heart Strike generates RP
-    FOUL_BULWARK             = 206974,  // Armor from Bone Shield
-    RELISH_IN_BLOOD          = 317610   // Extra Bone Shield stacks
-};
 
 // Dual resource type for Blood Death Knight (Runes + Runic Power)
 struct RuneRunicPowerResource

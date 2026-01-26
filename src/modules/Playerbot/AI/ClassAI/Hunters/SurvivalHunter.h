@@ -16,7 +16,7 @@
 #include "../Common/StatusEffectTracker.h"
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
-// Old HunterSpecialization.h removed
+#include "../SpellValidation_WoW112.h"
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
@@ -55,56 +55,52 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 Survival Hunter Spell IDs
+// ============================================================================
+// SURVIVAL HUNTER SPELL IDs (WoW 11.2 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW112.h
+// ============================================================================
+
 enum SurvivalSpells
 {
-    // Core Melee Abilities
-    SPELL_RAPTOR_STRIKE        = 186270,  // Main focus spender
-    SPELL_MONGOOSE_BITE        = 259387,  // Stacking damage ability
-
-    SPELL_CARVE
-    = 187708,  // AoE cleave
-
-    SPELL_BUTCHERY
-    = 212436,  // AoE burst
-    SPELL_COORDINATED_ASSAULT  = 360952,  // Major DPS cooldown
-    SPELL_FLANKING_STRIKE      = 269751,  // Pet coordination
+    // Core Melee Abilities (values from central registry)
+    SPELL_RAPTOR_STRIKE        = 186270,  // WoW112Spells::Hunter::Survival::RAPTOR_STRIKE
+    SPELL_MONGOOSE_BITE        = 259387,  // WoW112Spells::Hunter::Survival::MONGOOSE_BITE
+    SPELL_CARVE                = 187708,  // WoW112Spells::Hunter::Survival::CARVE
+    SPELL_BUTCHERY             = 212436,  // WoW112Spells::Hunter::Survival::BUTCHERY
+    SPELL_COORDINATED_ASSAULT  = 360952,  // WoW112Spells::Hunter::Survival::COORDINATED_ASSAULT
+    SPELL_FLANKING_STRIKE      = 269751,  // WoW112Spells::Hunter::Survival::FLANKING_STRIKE
 
     // Wildfire Bombs
-    SPELL_WILDFIRE_BOMB        = 259495,  // Base bomb
-    SPELL_SHRAPNEL_BOMB        = 270335,  // Bleed variant
-    SPELL_PHEROMONE_BOMB       = 270323,  // Debuff variant
-    SPELL_VOLATILE_BOMB        = 271045,  // Damage variant
-    SPELL_WILDFIRE_INFUSION    = 271014,  // Random bomb selection
+    SPELL_WILDFIRE_BOMB        = 259495,  // WoW112Spells::Hunter::Survival::WILDFIRE_BOMB
+    SPELL_SHRAPNEL_BOMB        = 270335,  // WoW112Spells::Hunter::Survival::SHRAPNEL_BOMB
+    SPELL_PHEROMONE_BOMB       = 270323,  // WoW112Spells::Hunter::Survival::PHEROMONE_BOMB
+    SPELL_VOLATILE_BOMB        = 271045,  // WoW112Spells::Hunter::Survival::VOLATILE_BOMB
+    SPELL_WILDFIRE_INFUSION    = 271014,  // WoW112Spells::Hunter::Survival::WILDFIRE_INFUSION
 
     // DoTs and Debuffs
-    SPELL_SERPENT_STING        = 259491,  // Primary DoT
-    SPELL_INTERNAL_BLEEDING    = 270343,  // Bleed from Shrapnel
-    SPELL_BLOODSEEKER          = 260248,  // Attack speed from bleeds
+    SPELL_SERPENT_STING        = 259491,  // WoW112Spells::Hunter::Survival::SERPENT_STING
+    SPELL_INTERNAL_BLEEDING    = 270343,  // WoW112Spells::Hunter::Survival::INTERNAL_BLEEDING
+    SPELL_BLOODSEEKER          = 260248,  // WoW112Spells::Hunter::Survival::BLOODSEEKER
 
     // Focus Management
-    SPELL_KILL_COMMAND_SURV    = 259489,  // Focus generator
-    SPELL_TERMS_OF_ENGAGEMENT  = 265895,  // Harpoon with focus
-
-    SPELL_HARPOON
-    = 190925,  // Gap closer
+    SPELL_KILL_COMMAND_SURV    = 259489,  // WoW112Spells::Hunter::Survival::KILL_COMMAND_SURVIVAL
+    SPELL_TERMS_OF_ENGAGEMENT  = 265895,  // WoW112Spells::Hunter::Survival::TERMS_OF_ENGAGEMENT
+    SPELL_HARPOON              = 190925,  // WoW112Spells::Hunter::Survival::HARPOON
 
     // Utility
-    SPELL_ASPECT_OF_EAGLE      = 186289,  // Increased range
-
-    SPELL_MUZZLE
-    = 187707,  // Interrupt
-    SPELL_STEEL_TRAP           = 162488,  // Root trap
-    SPELL_GUERRILLA_TACTICS    = 264332,  // First bomb enhancement
+    SPELL_ASPECT_OF_EAGLE      = 186289,  // WoW112Spells::Hunter::Survival::ASPECT_OF_THE_EAGLE
+    SPELL_MUZZLE               = 187707,  // WoW112Spells::Hunter::Survival::MUZZLE
+    SPELL_STEEL_TRAP           = 162488,  // WoW112Spells::Hunter::Survival::STEEL_TRAP
+    SPELL_GUERRILLA_TACTICS    = 264332,  // WoW112Spells::Hunter::Survival::GUERRILLA_TACTICS
 
     // Pet
-    SPELL_CALL_PET_SURV        = 883,     // Summon pet
-    SPELL_MEND_PET_SURV        = 136,     // Pet heal
+    SPELL_CALL_PET_SURV        = 883,     // WoW112Spells::Hunter::CALL_PET_1
+    SPELL_MEND_PET_SURV        = 136,     // WoW112Spells::Hunter::MEND_PET
 
     // Defensives
-    SPELL_ASPECT_TURTLE_SURV   = 186265,  // Damage reduction
-    SPELL_EXHILARATION_SURV    = 109304,  // Self heal
-    SPELL_SURVIVAL_OF_FITTEST  = 264735,  // Damage reduction
+    SPELL_ASPECT_TURTLE_SURV   = 186265,  // WoW112Spells::Hunter::ASPECT_OF_THE_TURTLE
+    SPELL_EXHILARATION_SURV    = 109304,  // WoW112Spells::Hunter::EXHILARATION
+    SPELL_SURVIVAL_OF_FITTEST  = 264735   // WoW112Spells::Hunter::SURVIVAL_OF_THE_FITTEST
 };
 
 /**

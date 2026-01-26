@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112.h"  // Central spell registry
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -26,6 +27,68 @@
 namespace Playerbot
 {
 
+// ============================================================================
+// FROST DEATH KNIGHT SPELL ALIASES (WoW 11.2 - The War Within)
+// Consolidated spell IDs from central registry - NO duplicates
+// ============================================================================
+
+namespace FrostDeathKnightSpells
+{
+    // Rune Spenders
+    constexpr uint32 OBLITERATE               = WoW112Spells::DeathKnight::Frost::OBLITERATE;
+    constexpr uint32 HOWLING_BLAST            = WoW112Spells::DeathKnight::Frost::HOWLING_BLAST;
+    constexpr uint32 REMORSELESS_WINTER       = WoW112Spells::DeathKnight::Frost::REMORSELESS_WINTER;
+    constexpr uint32 GLACIAL_ADVANCE          = WoW112Spells::DeathKnight::Frost::GLACIAL_ADVANCE;
+    constexpr uint32 FROSTSCYTHE              = WoW112Spells::DeathKnight::Frost::FROSTSCYTHE;
+
+    // Runic Power Spenders
+    constexpr uint32 FROST_STRIKE             = WoW112Spells::DeathKnight::Frost::FROST_STRIKE;
+    constexpr uint32 HORN_OF_WINTER           = WoW112Spells::DeathKnight::Frost::HORN_OF_WINTER;
+
+    // Cooldowns
+    constexpr uint32 PILLAR_OF_FROST          = WoW112Spells::DeathKnight::Frost::PILLAR_OF_FROST;
+    constexpr uint32 EMPOWER_RUNE_WEAPON      = WoW112Spells::DeathKnight::Frost::EMPOWER_RUNE_WEAPON;
+    constexpr uint32 BREATH_OF_SINDRAGOSA     = WoW112Spells::DeathKnight::Frost::BREATH_OF_SINDRAGOSA;
+    constexpr uint32 FROSTWYRMS_FURY          = WoW112Spells::DeathKnight::Frost::FROSTWYRMS_FURY;
+
+    // Utility
+    constexpr uint32 DEATH_GRIP_FROST         = WoW112Spells::DeathKnight::DEATH_GRIP;
+    constexpr uint32 MIND_FREEZE_FROST        = WoW112Spells::DeathKnight::MIND_FREEZE;
+    constexpr uint32 CHAINS_OF_ICE            = WoW112Spells::DeathKnight::CHAINS_OF_ICE;
+    constexpr uint32 DARK_COMMAND_FROST       = WoW112Spells::DeathKnight::DARK_COMMAND;
+    constexpr uint32 ANTI_MAGIC_SHELL_FROST   = WoW112Spells::DeathKnight::ANTI_MAGIC_SHELL;
+    constexpr uint32 ICEBOUND_FORTITUDE_FROST = WoW112Spells::DeathKnight::ICEBOUND_FORTITUDE;
+    constexpr uint32 DEATHS_ADVANCE_FROST     = WoW112Spells::DeathKnight::DEATHS_ADVANCE;
+
+    // Procs and Buffs
+    constexpr uint32 KILLING_MACHINE          = WoW112Spells::DeathKnight::Frost::KILLING_MACHINE;
+    constexpr uint32 RIME                     = WoW112Spells::DeathKnight::Frost::RIME;
+    constexpr uint32 RAZORICE                 = WoW112Spells::DeathKnight::Frost::RAZORICE_PROC;
+    constexpr uint32 FROZEN_PULSE             = WoW112Spells::DeathKnight::Frost::FROZEN_PULSE;
+
+    // Diseases
+    constexpr uint32 FROST_FEVER_DK           = WoW112Spells::DeathKnight::Frost::FROST_FEVER;
+
+    // Talents
+    constexpr uint32 OBLITERATION             = WoW112Spells::DeathKnight::Frost::OBLITERATION;
+    constexpr uint32 BREATH_OF_SINDRAGOSA_TALENT = BREATH_OF_SINDRAGOSA;
+    constexpr uint32 GATHERING_STORM          = WoW112Spells::DeathKnight::Frost::GATHERING_STORM;
+    constexpr uint32 ICECAP                   = WoW112Spells::DeathKnight::Frost::ICECAP;
+    constexpr uint32 INEXORABLE_ASSAULT       = WoW112Spells::DeathKnight::Frost::INEXORABLE_ASSAULT;
+    constexpr uint32 COLD_HEART               = WoW112Spells::DeathKnight::Frost::COLD_HEART;
+
+    // Aliases with FROST_ prefix for RegisterSpell compatibility
+    constexpr uint32 FROST_ICEBOUND_FORTITUDE = ICEBOUND_FORTITUDE_FROST;
+    constexpr uint32 FROST_PILLAR_OF_FROST = PILLAR_OF_FROST;
+    constexpr uint32 FROST_EMPOWER_RUNE_WEAPON = EMPOWER_RUNE_WEAPON;
+    constexpr uint32 FROST_OBLITERATE = OBLITERATE;
+    constexpr uint32 FROST_HOWLING_BLAST = HOWLING_BLAST;
+    constexpr uint32 FROST_FROST_STRIKE = FROST_STRIKE;
+    constexpr uint32 FROST_BREATH_OF_SINDRAGOSA = BREATH_OF_SINDRAGOSA;
+    constexpr uint32 FROST_REMORSELESS_WINTER = REMORSELESS_WINTER;
+    constexpr uint32 FROST_HORN_OF_WINTER = HORN_OF_WINTER;
+}
+using namespace FrostDeathKnightSpells;
 
 // Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
 using bot::ai::Sequence;
@@ -38,66 +101,6 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// ============================================================================
-// FROST DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
-// ============================================================================
-
-enum FrostDeathKnightSpells
-{
-    // Rune Spenders
-    OBLITERATE               = 49020,   // 2 Runes, main damage dealer
-    HOWLING_BLAST            = 49184,   // 1 Rune, AoE + applies Frost Fever
-    REMORSELESS_WINTER       = 196770,  // 1 Rune, 20 sec CD, AoE slow
-    GLACIAL_ADVANCE          = 194913,  // 2 Runes, ranged AoE (talent)
-    FROSTSCYTHE              = 207230,  // 2 Runes, AoE cleave (talent)
-
-    // Runic Power Spenders
-    FROST_STRIKE             = 49143,   // 25 RP, main RP spender
-    HORN_OF_WINTER           = 57330,   // 2 Runes + 25 RP gen (talent)
-
-    // Cooldowns
-    PILLAR_OF_FROST          = 51271,   // 1 min CD, major damage buff
-    EMPOWER_RUNE_WEAPON      = 47568,   // 2 min CD, rune refresh
-    BREATH_OF_SINDRAGOSA     = 152279,  // 2 min CD, channel (talent)
-    FROSTWYRMS_FURY          = 279302,  // 3 min CD, AoE burst (talent)
-
-    // Utility
-    DEATH_GRIP_FROST         = 49576,   // 25 sec CD, pull
-    MIND_FREEZE_FROST        = 47528,   // Interrupt
-    CHAINS_OF_ICE            = 45524,   // Root/slow
-    DARK_COMMAND_FROST       = 56222,   // Taunt
-    ANTI_MAGIC_SHELL_FROST   = 48707,   // 1 min CD, magic absorption
-    ICEBOUND_FORTITUDE_FROST = 48792,   // 3 min CD, damage reduction
-    DEATHS_ADVANCE_FROST     = 48265,   // 1.5 min CD, speed + mitigation
-
-    // Procs and Buffs
-    KILLING_MACHINE          = 51128,   // Proc: crit on Obliterate
-    RIME                     = 59052,   // Proc: free Howling Blast
-    RAZORICE                 = 50401,   // Debuff: stacking damage amp
-    FROZEN_PULSE             = 194909,  // Passive AoE (talent)
-
-    // Diseases
-    FROST_FEVER_DK           = 55095,   // Disease from Howling Blast
-
-    // Talents
-    OBLITERATION             = 281238,  // Pillar of Frost extension
-    BREATH_OF_SINDRAGOSA_TALENT = 152279, // Channel burst
-    GATHERING_STORM          = 194912,  // Remorseless Winter buff
-    ICECAP                   = 207126,  // Pillar of Frost CDR
-    INEXORABLE_ASSAULT       = 253593,  // Cold Heart stacking buff
-    COLD_HEART               = 281208   // Chains of Ice nuke (talent)
-};
-
-// Aliases with FROST_ prefix for RegisterSpell compatibility
-constexpr uint32 FROST_ICEBOUND_FORTITUDE = ICEBOUND_FORTITUDE_FROST;
-constexpr uint32 FROST_PILLAR_OF_FROST = PILLAR_OF_FROST;
-constexpr uint32 FROST_EMPOWER_RUNE_WEAPON = EMPOWER_RUNE_WEAPON;
-constexpr uint32 FROST_OBLITERATE = OBLITERATE;
-constexpr uint32 FROST_HOWLING_BLAST = HOWLING_BLAST;
-constexpr uint32 FROST_FROST_STRIKE = FROST_STRIKE;
-constexpr uint32 FROST_BREATH_OF_SINDRAGOSA = BREATH_OF_SINDRAGOSA;
-constexpr uint32 FROST_REMORSELESS_WINTER = REMORSELESS_WINTER;
-constexpr uint32 FROST_HORN_OF_WINTER = HORN_OF_WINTER;
 
 // Dual resource type for Frost Death Knight (simplified runes)
 struct FrostRuneRunicPowerResource

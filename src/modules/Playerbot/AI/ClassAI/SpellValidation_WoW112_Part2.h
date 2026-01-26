@@ -72,6 +72,15 @@ namespace Paladin
         constexpr uint32 BLESSING_OF_WINTER = 388011;
         constexpr uint32 BLESSING_OF_SPRING = 388013;
 
+        // Holy-Specific Abilities
+        constexpr uint32 LIGHT_OF_THE_MARTYR = 183998;    // Self-damage heal
+        constexpr uint32 HOLY_AVENGER = 105809;           // 2 min CD, HP generation boost
+        constexpr uint32 GLIMMER_OF_LIGHT = 325966;       // HoT from Holy Shock
+        constexpr uint32 AWAKENING = 248033;              // Avenging Wrath CDR talent
+        constexpr uint32 UNBREAKABLE_SPIRIT = 114154;     // Reduced defensive CDs
+        constexpr uint32 AVENGING_WRATH_HOLY = 31842;     // Holy-specific version (differs from common)
+        constexpr uint32 JUDGMENT_HOLY = 275773;          // Holy-specific Judgment
+
         // Infusion of Light
         constexpr uint32 INFUSION_OF_LIGHT = 53576;
 
@@ -95,7 +104,7 @@ namespace Paladin
         constexpr uint32 SHIELD_OF_THE_RIGHTEOUS = 53600;
         constexpr uint32 HAMMER_OF_THE_RIGHTEOUS = 53595;
         constexpr uint32 BLESSED_HAMMER = 204019;
-        constexpr uint32 GRAND_CRUSADER = 85416;
+        constexpr uint32 GRAND_CRUSADER = 85043;           // Proc for free Avenger's Shield
         constexpr uint32 ARDENT_DEFENDER = 31850;
         constexpr uint32 GUARDIAN_OF_ANCIENT_KINGS = 86659;
         constexpr uint32 LIGHT_OF_THE_PROTECTOR = 184092;
@@ -106,6 +115,15 @@ namespace Paladin
         constexpr uint32 DIVINE_TOLL = 375576;
         constexpr uint32 SENTINEL = 389539;
         constexpr uint32 EYE_OF_TYR = 387174;
+
+        // Protection-Specific Abilities
+        constexpr uint32 JUDGMENT_PROT = 275779;           // Protection-specific Judgment
+        constexpr uint32 BLESSING_OF_SPELLWARDING = 204018; // Magic immunity (replaces Divine Protection)
+        constexpr uint32 FINAL_STAND = 204077;             // Increases Ardent Defender effectiveness
+        constexpr uint32 SHINING_LIGHT = 327510;           // Proc: free Word of Glory
+        constexpr uint32 SERAPHIM = 152262;                // 3 HP, all stats buff
+        constexpr uint32 BULWARK_OF_RIGHTEOUS_FURY = 386653; // SotR extended duration
+        constexpr uint32 FIRST_AVENGER = 203776;           // Avenger's Shield extra charge
 
         // Holy Power
         constexpr uint32 HOLY_POWER = 85804;
@@ -179,6 +197,7 @@ namespace Priest
     constexpr uint32 MIND_SOOTHE = 453;
     constexpr uint32 POWER_INFUSION = 10060;
     constexpr uint32 FLASH_HEAL = 2061;
+    constexpr uint32 SMITE = 585; // Shared damage filler
 
     // Discipline Specialization
     namespace Discipline
@@ -209,6 +228,10 @@ namespace Priest
         // Atonement
         constexpr uint32 ATONEMENT = 81749;
         constexpr uint32 ATONEMENT_BUFF = 194384;
+
+        // The War Within Abilities
+        constexpr uint32 MINDGAMES = 323673; // Discipline version
+        constexpr uint32 POWER_WORD_LIFE = 373481;
 
         // Hero Talents - Oracle
         constexpr uint32 PREEMPTIVE_CARE = 441315;
@@ -248,6 +271,12 @@ namespace Priest
         // Chakras
         constexpr uint32 CHAKRA_CHASTISE = 81209;
         constexpr uint32 CHAKRA_SANCTUARY = 81206;
+
+        // The War Within Abilities
+        constexpr uint32 EMPYREAL_BLAZE = 372616;
+        constexpr uint32 EMPYREAL_BLAZE_AURA = 372617;
+        constexpr uint32 POWER_SURGE = 453109;
+        constexpr uint32 POWER_SURGE_PERIODIC = 453112;
 
         // Hero Talents - Oracle
         constexpr uint32 HOLY_PREEMPTIVE_CARE = 441315;
@@ -290,6 +319,12 @@ namespace Priest
 
         // Insanity Resource
         constexpr uint32 INSANITY = 194022;
+
+        // The War Within Abilities
+        constexpr uint32 MINDGAMES_SHADOW = 375901; // Shadow version (different from Discipline)
+        constexpr uint32 SHADOW_CRASH_ALT = 205385; // Alternative ID used in some contexts
+        constexpr uint32 HALO_SHADOW = 120644; // Shadow-specific Halo ID
+        constexpr uint32 MINDBENDER = 123040; // Primary Mindbender ID
 
         // Hero Talents - Voidweaver
         constexpr uint32 SHADOW_VOID_BLAST = 450405;
@@ -670,6 +705,14 @@ namespace Warlock
         constexpr uint32 DEMONIC_SOUL = 449614;
         constexpr uint32 NECROLYTE_TEACHINGS = 449615;
         constexpr uint32 FEAST_OF_SOULS = 449616;
+
+        // Additional Talents and Procs
+        constexpr uint32 SOULBURN = 385899;            // Instant Seed of Corruption
+        constexpr uint32 DARK_PACT = 108416;           // 1 min CD, shield
+        constexpr uint32 NIGHTFALL = 108558;           // Proc: free Shadow Bolt
+        constexpr uint32 TORMENTED_CRESCENDO = 387079; // Stacking Malefic Rapture buff
+        constexpr uint32 GRIMOIRE_OF_SACRIFICE = 108503; // Sacrifice pet for damage buff
+        constexpr uint32 SOUL_CONDUIT = 215941;        // Chance to refund soul shards
     }
 
     // Demonology Specialization
@@ -705,6 +748,15 @@ namespace Warlock
         // Hero Talents - Soul Harvester
         constexpr uint32 DEMO_DEMONIC_SOUL = 449614;
         constexpr uint32 DEMO_NECROLYTE_TEACHINGS = 449615;
+
+        // Additional Talents and Procs
+        constexpr uint32 DEMONFIRE = 270569;           // DoT from Felguard
+        constexpr uint32 DEMONIC_CORE = 267102;        // Proc: free Demonbolt
+        constexpr uint32 DEMONIC_CALLING = 205145;     // Proc: reduced Dreadstalkers cost
+        constexpr uint32 FEL_DOMINATION = 333889;      // Instant summon
+        constexpr uint32 FROM_THE_SHADOWS = 267170;    // Dreadstalkers buff
+        constexpr uint32 SOUL_CONDUIT = 215941;        // Chance to refund soul shards
+        constexpr uint32 CARNIVOROUS_STALKERS = 386194; // Dreadstalkers extend duration
     }
 
     // Destruction Specialization
@@ -741,11 +793,18 @@ namespace Warlock
         // Hero Talents - Diabolist
         constexpr uint32 DESTRO_DIABOLIC_RITUAL = 428514;
         constexpr uint32 DESTRO_CLOVEN_SOULS = 428515;
+
+        // Additional Talents and Procs
+        constexpr uint32 BACKDRAFT_BUFF = 117828;      // Buff from Conflagrate
+        constexpr uint32 REVERSE_ENTROPY = 205148;     // Buff from Rain of Fire
+        constexpr uint32 FLASHOVER = 267115;           // Backdraft on Conflagrate CD end
+        constexpr uint32 GRIMOIRE_OF_SUPREMACY = 266086; // Better pets
+        constexpr uint32 INFERNO = 270545;             // Rain of Fire stun
     }
 }
 
 // ============================================================================
-// WARRIOR SPELLS - Updated for 11.2
+// WARRIOR SPELLS - Updated for 11.2.7 (The War Within)
 // ============================================================================
 
 namespace Warrior
@@ -771,6 +830,11 @@ namespace Warrior
     constexpr uint32 HAMSTRING = 1715;
     constexpr uint32 PIERCING_HOWL = 12323;
     constexpr uint32 VICTORY_RUSH = 34428; // After killing enemy that yields XP/honor
+
+    // Procs and Buffs (All Specs)
+    constexpr uint32 OVERPOWER_PROC = 60503;      // Triggers Overpower availability
+    constexpr uint32 SUDDEN_DEATH_PROC = 52437;   // Free Execute proc (Arms)
+    constexpr uint32 REVENGE_PROC = 5302;         // Triggers Revenge availability (Prot)
 
     // Arms Specialization
     namespace Arms
@@ -819,25 +883,27 @@ namespace Warrior
         constexpr uint32 BLOODTHIRST = 23881;
         constexpr uint32 RAGING_BLOW = 85288;
         constexpr uint32 RAMPAGE = 184367;
-        constexpr uint32 EXECUTE_FURY = 5308;
-        constexpr uint32 WHIRLWIND_FURY = 190411;
-        constexpr uint32 BLADESTORM_FURY = 46924;
+        constexpr uint32 EXECUTE = 5308;              // Fury Execute
+        constexpr uint32 WHIRLWIND = 190411;          // Fury Whirlwind
+        constexpr uint32 BLADESTORM = 46924;          // Fury Bladestorm
         constexpr uint32 RECKLESSNESS = 1719;
         constexpr uint32 ENRAGED_REGENERATION = 184364;
         constexpr uint32 ONSLAUGHT = 315720;
         constexpr uint32 ODYN_FURY = 385059;
-        constexpr uint32 RAVAGER_FURY = 228920;
-        constexpr uint32 THUNDEROUS_ROAR_FURY = 384318;
-        constexpr uint32 CHAMPIONS_SPEAR_FURY = 376079;
+        constexpr uint32 RAVAGER = 228920;
+        constexpr uint32 THUNDEROUS_ROAR = 384318;
+        constexpr uint32 CHAMPIONS_SPEAR = 376079;
         constexpr uint32 ANNIHILATOR = 383916;
         constexpr uint32 TENDERIZE = 388933;
+        constexpr uint32 CRUSHING_BLOW = 335097;      // Raging Blow enhancement
 
-        // Enrage
+        // Enrage and Buffs
         constexpr uint32 ENRAGE = 184361;
+        constexpr uint32 WHIRLWIND_BUFF = 85739;      // Whirlwind cleave buff (Meat Cleaver)
 
         // Hero Talents - Slayer
-        constexpr uint32 FURY_SLAYERS_STRIKE = 444930;
-        constexpr uint32 FURY_OVERWHELMING_BLADES = 444931;
+        constexpr uint32 SLAYERS_STRIKE = 444930;
+        constexpr uint32 OVERWHELMING_BLADES = 444931;
 
         // Hero Talents - Mountain Thane
         constexpr uint32 THUNDER_BLAST = 435222;
@@ -852,32 +918,33 @@ namespace Warrior
         constexpr uint32 SHIELD_SLAM = 23922;
         constexpr uint32 THUNDER_CLAP = 6343;
         constexpr uint32 REVENGE = 6572;
+        constexpr uint32 DEVASTATE = 20243;           // Filler attack, applies Deep Wounds
         constexpr uint32 SHIELD_BLOCK = 2565;
         constexpr uint32 IGNORE_PAIN = 190456;
         constexpr uint32 DEMORALIZING_SHOUT = 1160;
         constexpr uint32 LAST_STAND = 12975;
         constexpr uint32 SHIELD_WALL = 871;
-        constexpr uint32 AVATAR_PROT = 401150;
-        constexpr uint32 RAVAGER_PROT = 228920;
+        constexpr uint32 AVATAR = 401150;             // Protection Avatar
+        constexpr uint32 RAVAGER = 228920;            // Protection Ravager
         constexpr uint32 CHALLENGING_SHOUT = 1161;
         constexpr uint32 SPELL_BLOCK = 392966;
         constexpr uint32 CHAMPION_BULWARK = 386328;
         constexpr uint32 SHIELD_CHARGE = 385952;
         constexpr uint32 BOOMING_VOICE = 202743;
         constexpr uint32 DISRUPTING_SHOUT = 386071;
-        constexpr uint32 THUNDEROUS_ROAR_PROT = 384318;
-        constexpr uint32 CHAMPIONS_SPEAR_PROT = 376079;
+        constexpr uint32 THUNDEROUS_ROAR = 384318;
+        constexpr uint32 CHAMPIONS_SPEAR = 376079;
 
         // Shield Block
         constexpr uint32 SHIELD_BLOCK_BUFF = 132404;
 
         // Hero Talents - Colossus
-        constexpr uint32 PROT_DEMOLISH = 436358;
-        constexpr uint32 PROT_COLOSSAL_MIGHT = 436359;
+        constexpr uint32 DEMOLISH = 436358;
+        constexpr uint32 COLOSSAL_MIGHT = 436359;
 
         // Hero Talents - Mountain Thane
-        constexpr uint32 PROT_THUNDER_BLAST = 435222;
-        constexpr uint32 PROT_STORM_SHIELD = 435223;
+        constexpr uint32 THUNDER_BLAST = 435222;
+        constexpr uint32 STORM_SHIELD = 435223;
     }
 }
 

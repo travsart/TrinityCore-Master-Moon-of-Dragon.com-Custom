@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../../Services/ThreatAssistant.h"
+#include "../SpellValidation_WoW112.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -41,62 +42,73 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // BREWMASTER MONK SPELL IDs (WoW 11.2 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW112.h
 // ============================================================================
 
-enum BrewmasterMonkSpells
+namespace BrewmasterMonkSpells
 {
+    // Import from central registry - Monk common spells
+    using namespace WoW112Spells::Monk;
+
     // Chi Generators
-    KEG_SMASH                = 121253,  // 40 Energy, 8 sec CD, generates 2 Chi
-    TIGER_PALM_BREW          = 100780,  // 25 Energy, generates 2 Chi
-    EXPEL_HARM_BREW          = 322101,  // 15 Energy, generates 1 Chi, self-heal
-    CHI_WAVE                 = 115098,  // 15 sec CD, generates 1 Chi (talent)
-    CHI_BURST                = 123986,  // 30 sec CD, generates 1 Chi (talent)
+    constexpr uint32 KEG_SMASH                = Brewmaster::KEG_SMASH;
+    constexpr uint32 TIGER_PALM_BREW          = TIGER_PALM;
+    constexpr uint32 EXPEL_HARM_BREW          = EXPEL_HARM;
+    constexpr uint32 CHI_WAVE_BREW            = CHI_WAVE;
+    constexpr uint32 CHI_BURST                = Mistweaver::CHI_BURST; // Shared spell ID
 
     // Chi Spenders
-    BLACKOUT_KICK_BREW       = 205523,  // 1-3 Chi, reduces brew cooldown
-    BREATH_OF_FIRE           = 115181,  // 2 Chi, cone AoE + DoT
-    SPINNING_CRANE_KICK_BREW = 322729,  // 2 Chi, AoE channel
+    constexpr uint32 BLACKOUT_KICK_BREW       = Brewmaster::BLACKOUT_KICK;
+    constexpr uint32 BREATH_OF_FIRE           = Brewmaster::BREATH_OF_FIRE;
+    constexpr uint32 SPINNING_CRANE_KICK_BREW = Brewmaster::SPINNING_CRANE_KICK;
+    constexpr uint32 RISING_SUN_KICK_BREW     = Mistweaver::RISING_SUN_KICK; // Shared with MW
 
     // Active Mitigation (Brews)
-    PURIFYING_BREW           = 119582,  // Removes Stagger damage
-    CELESTIAL_BREW           = 322507,  // 1 min CD, absorb shield
-    FORTIFYING_BREW_BREW     = 115203,  // 6 min CD, damage reduction + max HP
+    constexpr uint32 PURIFYING_BREW           = Brewmaster::PURIFYING_BREW;
+    constexpr uint32 CELESTIAL_BREW           = Brewmaster::CELESTIAL_BREW;
+    constexpr uint32 FORTIFYING_BREW_BREW     = FORTIFYING_BREW;
 
-    // Stagger Management
-    IRONSKIN_BREW            = 115308,  // Increases Stagger effectiveness
-    SHUFFLE                  = 215479,  // Buff from Blackout Kick
+    // Stagger
+    constexpr uint32 STAGGER                  = Brewmaster::STAGGER;
+    constexpr uint32 LIGHT_STAGGER            = Brewmaster::LIGHT_STAGGER;
+    constexpr uint32 MODERATE_STAGGER         = Brewmaster::MODERATE_STAGGER;
+    constexpr uint32 HEAVY_STAGGER            = Brewmaster::HEAVY_STAGGER;
+    constexpr uint32 SHUFFLE                  = Brewmaster::SHUFFLE;
+    constexpr uint32 IRONSKIN_BREW            = 115308; // Legacy - replaced by Shuffle in TWW
 
     // Threat Generation
-    PROVOKE                  = 115546,  // Taunt
-    RISING_SUN_KICK_BREW     = 107428,  // 2 Chi, threat modifier
+    constexpr uint32 PROVOKE_TAUNT            = PROVOKE;
 
     // Major Cooldowns
-    INVOKE_NIUZAO            = 132578,  // 3 min CD, summon statue (talent)
-    WEAPONS_OF_ORDER         = 387184,  // 2 min CD, damage/defense buff (talent)
-    BONEDUST_BREW            = 386276,  // 1 min CD, damage amp (talent)
+    constexpr uint32 INVOKE_NIUZAO            = Brewmaster::INVOKE_NIUZAO;
+    constexpr uint32 WEAPONS_OF_ORDER         = Brewmaster::WEAPONS_OF_ORDER;
+    constexpr uint32 BONEDUST_BREW            = Brewmaster::BONEDUST_BREW;
+    constexpr uint32 EXPLODING_KEG            = Brewmaster::EXPLODING_KEG;
 
     // Utility
-    TRANSCENDENCE            = 101643,  // Teleport anchor
-    TRANSCENDENCE_TRANSFER   = 119996,  // Teleport to anchor
-    ROLL                     = 109132,  // Mobility
-    TIGER_LUST               = 116841,  // Sprint + snare removal
-    DETOX                    = 218164,  // Dispel poison/disease
+    constexpr uint32 TRANSCENDENCE_BREW       = TRANSCENDENCE;
+    constexpr uint32 TRANSCENDENCE_TRANSFER_BREW = TRANSCENDENCE_TRANSFER;
+    constexpr uint32 ROLL_BREW                = ROLL;
+    constexpr uint32 TIGER_LUST               = TIGERS_LUST;
+    constexpr uint32 DETOX_BREW               = DETOX;
 
     // Defensive Cooldowns
-    DAMPEN_HARM              = 122278,  // 2 min CD, damage reduction
-    ZEN_MEDITATION           = 115176,  // 5 min CD, channel massive DR
-    DIFFUSE_MAGIC            = 122783,  // 1.5 min CD, magic immunity (talent)
+    constexpr uint32 DAMPEN_HARM_BREW         = DAMPEN_HARM;
+    constexpr uint32 ZEN_MEDITATION_BREW      = ZEN_MEDITATION;
+    constexpr uint32 DIFFUSE_MAGIC_BREW       = DIFFUSE_MAGIC;
 
-    // Procs and Buffs
-    ELUSIVE_BRAWLER          = 195630,  // Passive dodge stacks
-    GIFT_OF_THE_OX           = 124502,  // Healing orbs
-    COUNTERSTRIKE            = 383800,  // Parry proc
+    // Passive/Procs
+    constexpr uint32 ELUSIVE_BRAWLER          = Brewmaster::ELUSIVE_BRAWLER;
+    constexpr uint32 GIFT_OF_THE_OX           = Brewmaster::GIFT_OF_THE_OX;
+    constexpr uint32 COUNTERSTRIKE            = Brewmaster::COUNTERSTRIKE;
+    constexpr uint32 BLACK_OX_BREW            = Brewmaster::BLACK_OX_BREW;
+    constexpr uint32 CHARRED_PASSIONS         = Brewmaster::CHARRED_PASSIONS;
 
-    // Talents
-    BLACK_OX_BREW            = 115399,  // Resets brew cooldowns
-    CHARRED_PASSIONS         = 386965,  // Breath of Fire enhancement
-    EXPLODING_KEG            = 325153   // Keg Smash knockdown
-};
+    // Hero Talents
+    constexpr uint32 ASPECT_OF_HARMONY        = Brewmaster::ASPECT_OF_HARMONY;
+    constexpr uint32 FLURRY_STRIKES           = Brewmaster::FLURRY_STRIKES;
+}
+using namespace BrewmasterMonkSpells;
 
 // Dual resource type for Monk
 struct EnergyChiResource

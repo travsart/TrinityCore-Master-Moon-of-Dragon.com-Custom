@@ -25,6 +25,7 @@
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
+#include "../SpellValidation_WoW112.h"
 // NOTE: BaselineRotationManager.h no longer needed - baseline rotation check
 // is now handled centrally at the dispatch level in ClassAI::OnCombatUpdate()
 
@@ -45,68 +46,69 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // AFFLICTION WARLOCK SPELL IDs (WoW 11.2 - The War Within)
+// Central Registry: WoW112Spells::Warlock::Affliction in SpellValidation_WoW112_Part2.h
 // ============================================================================
 
 enum AfflictionWarlockSpells
 {
-    // DoT Spells
-    AGONY                    = 980,     // Core DoT, stacks up to 10
-    CORRUPTION               = 172,     // Core DoT
-    UNSTABLE_AFFLICTION      = 316099,  // Strong DoT, generates shards on refresh
-    SIPHON_LIFE              = 63106,   // DoT + heal (talent)
-    HAUNT                    = 48181,   // Burst DoT, haunts target (talent)
+    // DoT Spells - WoW112Spells::Warlock::Affliction::
+    AGONY                    = 980,     // WoW112Spells::Warlock::Affliction::AGONY
+    CORRUPTION               = 172,     // WoW112Spells::Warlock::CORRUPTION (class-level)
+    UNSTABLE_AFFLICTION      = 316099,  // WoW112Spells::Warlock::Affliction::UNSTABLE_AFFLICTION
+    SIPHON_LIFE              = 63106,   // WoW112Spells::Warlock::Affliction::SIPHON_LIFE
+    HAUNT                    = 48181,   // WoW112Spells::Warlock::Affliction::HAUNT
 
-    // Direct Damage
-    SHADOW_BOLT_AFF          = 686,     // Filler, generates shards
-    DRAIN_SOUL               = 198590,  // Execute damage (< 20% HP)
-    MALEFIC_RAPTURE          = 324536,  // Shard spender, AoE burst
+    // Direct Damage - WoW112Spells::Warlock::
+    SHADOW_BOLT_AFF          = 686,     // WoW112Spells::Warlock::SHADOW_BOLT (class-level)
+    DRAIN_SOUL               = 198590,  // WoW112Spells::Warlock::Affliction::DRAIN_SOUL
+    MALEFIC_RAPTURE          = 324536,  // WoW112Spells::Warlock::Affliction::MALEFIC_RAPTURE
 
-    // Major Cooldowns
-    PHANTOM_SINGULARITY      = 205179,  // 45 sec CD, AoE DoT (talent)
-    VILE_TAINT               = 278350,  // 20 sec CD, AoE DoT (talent)
-    SOUL_ROT                 = 386997,  // 1 min CD, AoE DoT (talent)
-    SUMMON_DARKGLARE         = 205180,  // 2 min CD, extends DoTs
-    DARK_SOUL_MISERY         = 113860,  // 2 min CD, damage increase (talent)
+    // Major Cooldowns - WoW112Spells::Warlock::Affliction::
+    PHANTOM_SINGULARITY      = 205179,  // WoW112Spells::Warlock::Affliction::PHANTOM_SINGULARITY
+    VILE_TAINT               = 278350,  // WoW112Spells::Warlock::Affliction::VILE_TAINT
+    SOUL_ROT                 = 386997,  // WoW112Spells::Warlock::Affliction::SOUL_ROT
+    SUMMON_DARKGLARE         = 205180,  // WoW112Spells::Warlock::Affliction::SUMMON_DARKGLARE
+    DARK_SOUL_MISERY         = 113860,  // WoW112Spells::Warlock::Affliction::DARK_SOUL_MISERY
 
-    // AoE
-    SEED_OF_CORRUPTION       = 27243,   // AoE DoT spread
-    SOULBURN                 = 385899,  // Instant Seed of Corruption (talent)
+    // AoE - WoW112Spells::Warlock::Affliction::
+    SEED_OF_CORRUPTION       = 27243,   // WoW112Spells::Warlock::Affliction::SEED_OF_CORRUPTION
+    SOULBURN                 = 385899,  // WoW112Spells::Warlock::Affliction::SOULBURN
 
-    // Pet Management
-    SUMMON_IMP_AFF           = 688,
-    SUMMON_VOIDWALKER_AFF    = 697,
-    SUMMON_FELHUNTER_AFF     = 691,
-    SUMMON_SUCCUBUS_AFF      = 712,
-    COMMAND_DEMON_AFF        = 119898,
+    // Pet Management - WoW112Spells::Warlock:: (class-level)
+    SUMMON_IMP_AFF           = 688,     // WoW112Spells::Warlock::SUMMON_IMP
+    SUMMON_VOIDWALKER_AFF    = 697,     // WoW112Spells::Warlock::SUMMON_VOIDWALKER
+    SUMMON_FELHUNTER_AFF     = 691,     // WoW112Spells::Warlock::SUMMON_FELHUNTER
+    SUMMON_SUCCUBUS_AFF      = 712,     // WoW112Spells::Warlock::SUMMON_SUCCUBUS
+    COMMAND_DEMON_AFF        = 119898,  // WoW112Spells::Warlock::COMMAND_DEMON
 
-    // Utility
-    CURSE_OF_WEAKNESS        = 702,     // Reduces physical damage
-    CURSE_OF_TONGUES         = 1714,    // Casting slow (talent)
-    CURSE_OF_EXHAUSTION      = 334275,  // Movement slow
-    UNENDING_RESOLVE         = 104773,  // 3 min CD, damage reduction
-    DARK_PACT                = 108416,  // 1 min CD, shield (talent)
-    MORTAL_COIL              = 6789,    // Heal + fear (talent)
-    HOWL_OF_TERROR           = 5484,    // AoE fear (talent)
-    FEAR                     = 5782,    // CC
-    BANISH                   = 710,     // CC (demons/elementals)
-    SOULSTONE                = 20707,   // Battle res
+    // Utility - WoW112Spells::Warlock:: (class-level)
+    CURSE_OF_WEAKNESS        = 702,     // WoW112Spells::Warlock::CURSE_OF_WEAKNESS
+    CURSE_OF_TONGUES         = 1714,    // WoW112Spells::Warlock::CURSE_OF_TONGUES
+    CURSE_OF_EXHAUSTION      = 334275,  // WoW112Spells::Warlock::CURSE_OF_EXHAUSTION
+    UNENDING_RESOLVE         = 104773,  // WoW112Spells::Warlock::UNENDING_RESOLVE
+    DARK_PACT                = 108416,  // WoW112Spells::Warlock::Affliction::DARK_PACT
+    MORTAL_COIL              = 6789,    // WoW112Spells::Warlock::MORTAL_COIL
+    HOWL_OF_TERROR           = 5484,    // WoW112Spells::Warlock::HOWL_OF_TERROR
+    FEAR                     = 5782,    // WoW112Spells::Warlock::FEAR
+    BANISH                   = 710,     // WoW112Spells::Warlock::BANISH
+    SOULSTONE                = 20707,   // WoW112Spells::Warlock::SOULSTONE
 
-    // Defensives
-    HEALTH_FUNNEL            = 755,     // Channel, heals pet
-    DEMONIC_CIRCLE_TELEPORT  = 48020,   // Teleport
-    DEMONIC_GATEWAY          = 111771,  // Portal
-    BURNING_RUSH             = 111400,  // Speed buff, drains health
+    // Defensives - WoW112Spells::Warlock:: (class-level)
+    HEALTH_FUNNEL            = 755,     // WoW112Spells::Warlock::HEALTH_FUNNEL
+    DEMONIC_CIRCLE_TELEPORT  = 48020,   // WoW112Spells::Warlock::DEMONIC_CIRCLE_TELEPORT
+    DEMONIC_GATEWAY          = 111771,  // WoW112Spells::Warlock::DEMONIC_GATEWAY
+    BURNING_RUSH             = 111400,  // WoW112Spells::Warlock::BURNING_RUSH
 
-    // Procs and Buffs
-    NIGHTFALL                = 108558,  // Proc: free Shadow Bolt
-    INEVITABLE_DEMISE        = 334319,  // Stacking drain life buff
-    TORMENTED_CRESCENDO      = 387079,  // Stacking Malefic Rapture buff
+    // Procs and Buffs - WoW112Spells::Warlock::Affliction::
+    NIGHTFALL                = 108558,  // WoW112Spells::Warlock::Affliction::NIGHTFALL
+    INEVITABLE_DEMISE        = 334319,  // WoW112Spells::Warlock::Affliction::INEVITABLE_DEMISE
+    TORMENTED_CRESCENDO      = 387079,  // WoW112Spells::Warlock::Affliction::TORMENTED_CRESCENDO
 
-    // Talents
-    GRIMOIRE_OF_SACRIFICE    = 108503,  // Sacrifice pet for damage buff
-    SOUL_CONDUIT             = 215941,  // Chance to refund soul shards
-    CREEPING_DEATH           = 264000,  // DoT speed increase
-    WRITHE_IN_AGONY          = 196102   // Agony damage increase
+    // Talents - WoW112Spells::Warlock::Affliction::
+    GRIMOIRE_OF_SACRIFICE    = 108503,  // WoW112Spells::Warlock::Affliction::GRIMOIRE_OF_SACRIFICE
+    SOUL_CONDUIT             = 215941,  // WoW112Spells::Warlock::Affliction::SOUL_CONDUIT
+    CREEPING_DEATH           = 264000,  // WoW112Spells::Warlock::Affliction::CREEPING_DEATH
+    WRITHE_IN_AGONY          = 196102   // WoW112Spells::Warlock::Affliction::WRITHE_IN_AGONY
 };
 
 // Dual resource type for Warlock (Mana + Soul Shards)

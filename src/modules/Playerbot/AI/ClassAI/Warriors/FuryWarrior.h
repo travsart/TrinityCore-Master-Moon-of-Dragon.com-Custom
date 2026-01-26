@@ -19,6 +19,7 @@
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
 // Phase 5 Integration
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
@@ -43,6 +44,43 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 
+// ============================================================================
+// FURY WARRIOR SPELL ALIASES - Using Central Registry (WoW 11.2.7)
+// ============================================================================
+namespace FuryWarriorSpells
+{
+    // Core Warrior spells (from WoW112Spells::Warrior)
+    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW112Spells::Warrior::BATTLE_SHOUT;
+    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW112Spells::Warrior::COMMANDING_SHOUT;
+    constexpr uint32 SPELL_CHARGE            = WoW112Spells::Warrior::CHARGE;
+    constexpr uint32 SPELL_BERSERKER_RAGE    = WoW112Spells::Warrior::BERSERKER_RAGE;
+
+    // Fury Core Rotation
+    constexpr uint32 SPELL_BLOODTHIRST       = WoW112Spells::Warrior::Fury::BLOODTHIRST;
+    constexpr uint32 SPELL_RAMPAGE           = WoW112Spells::Warrior::Fury::RAMPAGE;
+    constexpr uint32 SPELL_RAGING_BLOW       = WoW112Spells::Warrior::Fury::RAGING_BLOW;
+    constexpr uint32 SPELL_EXECUTE           = WoW112Spells::Warrior::Fury::EXECUTE;
+    constexpr uint32 SPELL_WHIRLWIND         = WoW112Spells::Warrior::Fury::WHIRLWIND;
+    constexpr uint32 SPELL_ONSLAUGHT         = WoW112Spells::Warrior::Fury::ONSLAUGHT;
+
+    // Fury Cooldowns
+    constexpr uint32 SPELL_RECKLESSNESS      = WoW112Spells::Warrior::Fury::RECKLESSNESS;
+    constexpr uint32 SPELL_ENRAGED_REGENERATION = WoW112Spells::Warrior::Fury::ENRAGED_REGENERATION;
+    constexpr uint32 SPELL_BLADESTORM        = WoW112Spells::Warrior::Fury::BLADESTORM;
+    constexpr uint32 SPELL_RAVAGER           = WoW112Spells::Warrior::Fury::RAVAGER;
+    constexpr uint32 SPELL_ODYN_FURY         = WoW112Spells::Warrior::Fury::ODYN_FURY;
+    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW112Spells::Warrior::Fury::THUNDEROUS_ROAR;
+    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW112Spells::Warrior::Fury::CHAMPIONS_SPEAR;
+
+    // Enrage and Buffs
+    constexpr uint32 SPELL_ENRAGE            = WoW112Spells::Warrior::Fury::ENRAGE;
+    constexpr uint32 SPELL_WHIRLWIND_BUFF    = WoW112Spells::Warrior::Fury::WHIRLWIND_BUFF;
+
+    // Hero Talents
+    constexpr uint32 SPELL_SLAYERS_STRIKE    = WoW112Spells::Warrior::Fury::SLAYERS_STRIKE;
+    constexpr uint32 SPELL_THUNDER_BLAST     = WoW112Spells::Warrior::Fury::THUNDER_BLAST;
+}
+
 /**
  * Refactored Fury Warrior using template architecture
  *
@@ -64,14 +102,12 @@ public:
     using Base::_resource;
     explicit FuryWarriorRefactored(Player* bot)
         : MeleeDpsSpecialization<RageResource>(bot)
-        
         , _isEnraged(false)
         , _enrageEndTime(0)
         , _hasWhirlwindBuff(false)
         , _rampageStacks(0)
         , _lastBloodthirst(0)
         , _lastRampage(0)
-        , _furiousSlashStacks(0)
         , _executePhaseActive(false)
         , _hasDualWield(false)
     {
@@ -107,21 +143,13 @@ public:
 
     void UpdateBuffs() override
     {
+        using namespace FuryWarriorSpells;
         Player* bot = this->GetBot();
 
         // Maintain Battle Shout
         if (!bot->HasAura(SPELL_BATTLE_SHOUT) && !bot->HasAura(SPELL_COMMANDING_SHOUT))
         {
             this->CastSpell(SPELL_BATTLE_SHOUT, bot);
-        }
-
-        // Fury warriors should be in Berserker Stance
-        if (!bot->HasAura(SPELL_BERSERKER_STANCE))
-        {
-            if (this->CanUseAbility(SPELL_BERSERKER_STANCE))
-            {
-                this->CastSpell(SPELL_BERSERKER_STANCE, bot);
-            }
         }
 
         // Use Berserker Rage when needed for rage generation or fear break
@@ -142,6 +170,8 @@ protected:
 
     void ExecuteFuryRotation(::Unit* target)
     {
+        using namespace FuryWarriorSpells;
+
         // Priority 1: Maintain Enrage with Rampage
         if (ShouldUseRampage() && this->CanUseAbility(SPELL_RAMPAGE))
         {
@@ -187,24 +217,25 @@ protected:
             return;
         }
 
-        // Priority 6: Furious Slash as filler and to build stacks
-        if (this->CanUseAbility(SPELL_FURIOUS_SLASH))
+        // Priority 6: Onslaught as filler (11.2.7 - replaces Furious Slash)
+        if (this->CanUseAbility(SPELL_ONSLAUGHT))
         {
-            this->CastSpell(SPELL_FURIOUS_SLASH, target);
-            _furiousSlashStacks = ::std::min(_furiousSlashStacks + 1, 4u);
+            this->CastSpell(SPELL_ONSLAUGHT, target);
             return;
         }
 
-        // Priority 7: Heroic Strike as rage dump
-        if (this->_resource >= 80 && this->CanUseAbility(SPELL_HEROIC_STRIKE))
+        // Priority 7: Onslaught as rage dump if high rage
+        if (this->_resource >= 80 && this->CanUseAbility(SPELL_ONSLAUGHT))
         {
-            this->CastSpell(SPELL_HEROIC_STRIKE, target);
+            this->CastSpell(SPELL_ONSLAUGHT, target);
             return;
         }
     }
 
     void ExecutePhaseRotation(::Unit* target)
     {
+        using namespace FuryWarriorSpells;
+
         // Priority 1: Maintain Enrage
         if (!_isEnraged && this->CanUseAbility(SPELL_RAMPAGE))
         {
@@ -250,6 +281,7 @@ protected:
 
     void UpdateFuryState(::Unit* target)
     {
+        using namespace FuryWarriorSpells;
         Player* bot = this->GetBot();
         uint32 currentTime = GameTime::GetGameTimeMS();
 
@@ -268,12 +300,11 @@ protected:
             _enrageEndTime = 0;
         }
 
-        // Update Whirlwind buff tracking (affects next 2 abilities)
-        _hasWhirlwindBuff = bot->HasAura(SPELL_WHIRLWIND_BUFF);        // Check execute phase
-        _executePhaseActive = (target->GetHealthPct() <= 20.0f);
+        // Update Whirlwind buff tracking (Meat Cleaver - affects next 2 abilities)
+        _hasWhirlwindBuff = bot->HasAura(SPELL_WHIRLWIND_BUFF);
 
-        // Update Furious Slash decay (stacks fall off after 4 seconds)
-        // This would need actual buff tracking in production
+        // Check execute phase
+        _executePhaseActive = (target->GetHealthPct() <= 20.0f);
     }
 
     void TriggerEnrage()
@@ -359,24 +390,15 @@ protected:
 
     void OnCombatStartSpecific(::Unit* target) override
     {
+        using namespace FuryWarriorSpells;
         // Reset Fury state
         _isEnraged = false;
         _enrageEndTime = 0;
         _hasWhirlwindBuff = false;
         _rampageStacks = 0;
-        _furiousSlashStacks = 0;
         _executePhaseActive = false;
         _lastBloodthirst = 0;
         _lastRampage = 0;
-
-        // Ensure we're in Berserker Stance
-        if (!this->GetBot()->HasAura(SPELL_BERSERKER_STANCE))
-        {
-            if (this->CanUseAbility(SPELL_BERSERKER_STANCE))
-            {
-                this->CastSpell(SPELL_BERSERKER_STANCE, this->GetBot());
-            }
-        }
 
         // Use charge if not in range
         if (!this->IsInMeleeRange(target) && this->CanUseAbility(SPELL_CHARGE))
@@ -395,7 +417,6 @@ protected:
         _enrageEndTime = 0;
         _hasWhirlwindBuff = false;
         _rampageStacks = 0;
-        _furiousSlashStacks = 0;
         _executePhaseActive = false;
     }
 
@@ -407,8 +428,7 @@ private:
 
     void InitializeFuryMechanics()
     {
-        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        using namespace FuryWarriorSpells;
 
         // Setup Fury-specific mechanics
         CheckDualWieldStatus();
@@ -453,7 +473,7 @@ private:
             queue->AddCondition(SPELL_RAMPAGE,
                 [](Player* bot, Unit*) {
                     // Rampage to trigger/maintain Enrage
-                    return !bot->HasAura(SPELL_ENRAGE) || (bot->GetAura(SPELL_ENRAGE) ? bot->GetAura(SPELL_ENRAGE)->GetDuration() : 0) < 2000;
+                    return !bot->HasAura(FuryWarriorSpells::SPELL_ENRAGE) || (bot->GetAura(FuryWarriorSpells::SPELL_ENRAGE) ? bot->GetAura(FuryWarriorSpells::SPELL_ENRAGE)->GetDuration() : 0) < 2000;
                 },
                 "Trigger or refresh Enrage");
 
@@ -462,7 +482,7 @@ private:
             queue->RegisterSpell(SPELL_RAGING_BLOW, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_RAGING_BLOW,
                 [](Player* bot, Unit*) {
-                    return bot->HasAura(SPELL_ENRAGE);
+                    return bot->HasAura(FuryWarriorSpells::SPELL_ENRAGE);
                 },
                 "While Enraged");
 
@@ -474,11 +494,11 @@ private:
                 },
                 "2+ targets (AoE)");
 
-            queue->RegisterSpell(SPELL_FURIOUS_SLASH, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->RegisterSpell(SPELL_ONSLAUGHT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
 
             // Low priority fillers
-            queue->RegisterSpell(SPELL_HEROIC_STRIKE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(SPELL_HEROIC_STRIKE,
+            queue->RegisterSpell(SPELL_ONSLAUGHT, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_ONSLAUGHT,
                 [this](Player* bot, Unit*) {
                     return this->_resource >= 80; // Rage dump
                 },
@@ -487,7 +507,7 @@ private:
             queue->RegisterSpell(SPELL_BERSERKER_RAGE, SpellPriority::LOW, SpellCategory::UTILITY);
             queue->AddCondition(SPELL_BERSERKER_RAGE,
                 [](Player* bot, Unit*) {
-                    return !bot->HasAura(SPELL_ENRAGE);
+                    return !bot->HasAura(FuryWarriorSpells::SPELL_ENRAGE);
                 },
                 "Enrage not active");
 
@@ -678,23 +698,23 @@ private:
 
                     // Filler spells
                     Selector("Filler", {
-                        Sequence("Heroic Strike (Rage Dump)", {
+                        Sequence("Onslaught (Rage Dump)", {
                             Condition("High Rage", [this](Player* bot, Unit*) {
                                 return this->_resource >= 80;
                             }),
-                            bot::ai::Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
+                            bot::ai::Action("Cast Onslaught", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(FuryWarriorSpells::SPELL_ONSLAUGHT, target))
                                 {
-                                    this->CastSpell(SPELL_HEROIC_STRIKE, target);
+                                    this->CastSpell(FuryWarriorSpells::SPELL_ONSLAUGHT, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
                             })
                         }),
-                        bot::ai::Action("Cast Furious Slash", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(SPELL_FURIOUS_SLASH, target))
+                        bot::ai::Action("Cast Onslaught", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(FuryWarriorSpells::SPELL_ONSLAUGHT, target))
                             {
-                                this->CastSpell(SPELL_FURIOUS_SLASH, target);
+                                this->CastSpell(FuryWarriorSpells::SPELL_ONSLAUGHT, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -709,40 +729,6 @@ private:
     }
 
     // ========================================================================
-    // SPELL IDS
-    // ========================================================================
-
-    enum FurySpells
-    {
-        // Stances
-        SPELL_BERSERKER_STANCE      = 2458,
-
-        // Shouts
-        SPELL_BATTLE_SHOUT          = 6673,
-        SPELL_COMMANDING_SHOUT      = 469,
-
-        // Core Abilities
-        SPELL_BLOODTHIRST           = 23881,
-        SPELL_RAMPAGE               = 184367,
-        SPELL_RAGING_BLOW           = 85288,
-        SPELL_FURIOUS_SLASH         = 100130,
-        SPELL_EXECUTE               = 5308,
-        SPELL_WHIRLWIND             = 190411,
-        SPELL_HEROIC_STRIKE         = 78,
-        SPELL_CHARGE                = 100,
-
-        // Fury Specific
-        SPELL_BERSERKER_RAGE        = 18499,
-        SPELL_RECKLESSNESS          = 1719,
-        SPELL_ENRAGED_REGENERATION  = 184364,
-
-        // Buffs/Procs
-        SPELL_ENRAGE                = 184361,
-        SPELL_WHIRLWIND_BUFF        = 85739,
-        SPELL_FURIOUS_SLASH_BUFF    = 202539,
-    };
-
-    // ========================================================================
     // MEMBER VARIABLES
     // ========================================================================
 
@@ -753,7 +739,6 @@ private:
     // Buff tracking
     bool _hasWhirlwindBuff;
     uint32 _rampageStacks;
-    uint32 _furiousSlashStacks;
 
     // Timing tracking
     uint32 _lastBloodthirst;
@@ -762,10 +747,6 @@ private:
     // Combat state
     bool _executePhaseActive;
     bool _hasDualWield;
-
-    // Stance management
-    WarriorAI::WarriorStance _currentStance;
-    WarriorAI::WarriorStance _preferredStance;
 };
 
 } // namespace Playerbot

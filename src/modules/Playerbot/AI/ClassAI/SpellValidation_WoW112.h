@@ -36,6 +36,8 @@ namespace DeathKnight
     constexpr uint32 DARK_COMMAND = 56222; // Taunt
     constexpr uint32 RAISE_ALLY = 61999; // Battle resurrection
     constexpr uint32 CONTROL_UNDEAD = 111673; // Control undead minion
+    constexpr uint32 DEATHS_ADVANCE = 48265; // 1.5 min CD, speed + mitigation
+    constexpr uint32 ASPHYXIATE = 221562; // 45 sec CD, stun
 
     // Blood Specialization
     namespace Blood
@@ -71,6 +73,16 @@ namespace DeathKnight
         constexpr uint32 VAMPIRIC_BLOOD_ENHANCE = 433896;
         constexpr uint32 BLOODTHIRST = 433897;
         constexpr uint32 GIFT_OF_THE_SANLAYN = 433898;
+
+        // Procs and Talents
+        constexpr uint32 BLOOD_PLAGUE = 55078;         // Disease DoT
+        constexpr uint32 CRIMSON_SCOURGE = 81136;      // Proc: free Blood Boil
+        constexpr uint32 HEMOSTASIS = 273947;          // Buff: increased Blood Boil damage
+        constexpr uint32 OSSUARY = 219786;             // Passive: reduces Death Strike cost
+        constexpr uint32 RAPID_DECOMPOSITION = 194662; // Disease tick speed
+        constexpr uint32 HEARTBREAKER = 221536;        // Heart Strike generates RP
+        constexpr uint32 FOUL_BULWARK = 206974;        // Armor from Bone Shield
+        constexpr uint32 RELISH_IN_BLOOD = 317610;     // Extra Bone Shield stacks
     }
 
     // Frost Specialization
@@ -107,6 +119,16 @@ namespace DeathKnight
         constexpr uint32 FROST_REAPER_MARK = 444765;
         constexpr uint32 FROST_WAVE_OF_SOULS = 444766;
         constexpr uint32 FROST_EXTERMINATE = 444767;
+
+        // Procs and Talents
+        constexpr uint32 KILLING_MACHINE = 51128;      // Proc: crit on Obliterate
+        constexpr uint32 RIME = 59052;                 // Proc: free Howling Blast
+        constexpr uint32 RAZORICE_PROC = 50401;        // Debuff: stacking damage amp
+        constexpr uint32 FROZEN_PULSE = 194909;        // Passive AoE
+        constexpr uint32 OBLITERATION = 281238;        // Pillar of Frost extension
+        constexpr uint32 GATHERING_STORM = 194912;     // Remorseless Winter buff
+        constexpr uint32 ICECAP = 207126;              // Pillar of Frost CDR
+        constexpr uint32 INEXORABLE_ASSAULT = 253593;  // Cold Heart stacking buff
     }
 
     // Unholy Specialization
@@ -148,6 +170,18 @@ namespace DeathKnight
         constexpr uint32 UNHOLY_APOCALYPSE = 454756;
         constexpr uint32 UNHOLY_RIDERS = 454757;
         constexpr uint32 MORBIDITY = 454758;
+
+        // Procs and Talents
+        constexpr uint32 VIRULENT_PLAGUE = 191587;     // Main disease DoT
+        constexpr uint32 RAISE_ABOMINATION = 455395;   // 1.5 min CD, summon abomination
+        constexpr uint32 SUDDEN_DOOM = 49530;          // Proc: free Death Coil
+        constexpr uint32 RUNIC_CORRUPTION = 51460;     // Proc: increased rune regen
+        constexpr uint32 UNHOLY_STRENGTH = 53365;      // Passive: pet damage buff
+        constexpr uint32 BURSTING_SORES = 207264;      // Festering Wound burst AoE
+        constexpr uint32 INFECTED_CLAWS = 207272;      // Pet applies Festering Wounds
+        constexpr uint32 ALL_WILL_SERVE = 194916;      // Summon skeleton on Death Coil
+        constexpr uint32 UNHOLY_PACT = 319230;         // Dark Transformation damage buff
+        constexpr uint32 SUPERSTRAIN = 390283;         // Disease damage buff
     }
 }
 
@@ -195,6 +229,22 @@ namespace DemonHunter
         // Fury Resource
         constexpr uint32 FURY_GENERATION = 203555;
 
+        // Talents
+        constexpr uint32 DEMONIC = 213410; // Eye Beam triggers Meta
+        constexpr uint32 MOMENTUM = 206476; // Movement abilities buff damage
+        constexpr uint32 BLIND_FURY = 203550; // Eye Beam generates more fury
+        constexpr uint32 FIRST_BLOOD = 206416; // Blade Dance cost reduction
+        constexpr uint32 TRAIL_OF_RUIN = 258881; // Blade Dance DoT
+        constexpr uint32 CHAOS_CLEAVE = 206475; // Chaos Strike cleaves
+        constexpr uint32 CYCLE_OF_HATRED = 258887; // Meta CD reduction
+        constexpr uint32 TORMENT = 281854; // Havoc taunt
+
+        // Buffs
+        constexpr uint32 BUFF_MOMENTUM = 208628; // Momentum damage increase
+        constexpr uint32 BUFF_FURIOUS_GAZE = 343312; // Eye Beam haste buff
+        constexpr uint32 BUFF_METAMORPHOSIS = 162264; // Meta transformation buff
+        constexpr uint32 BUFF_PREPARED = 203650; // Vengeful Retreat buff
+
         // Hero Talents - Aldrachi Reaver
         constexpr uint32 ALDRACHI_TACTICS = 442683;
         constexpr uint32 ARMY_UNTO_ONESELF = 442684;
@@ -217,6 +267,7 @@ namespace DemonHunter
         constexpr uint32 SOUL_CLEAVE = 228477;
         constexpr uint32 SOUL_CARVER = 207407;
         constexpr uint32 IMMOLATION_AURA_VENG = 178740;
+        constexpr uint32 IMMOLATION_AURA_TANK = 258920; // Alternative ID
         constexpr uint32 DEMON_SPIKES = 203720;
         constexpr uint32 FIERY_BRAND = 204021;
         constexpr uint32 INFERNAL_STRIKE = 189110;
@@ -229,6 +280,24 @@ namespace DemonHunter
         // Soul Fragments
         constexpr uint32 SOUL_FRAGMENT = 203981;
         constexpr uint32 SHATTERED_SOUL = 204254;
+
+        // Sigils
+        constexpr uint32 SIGIL_OF_CHAINS = 202138; // AoE slow
+
+        // Utility
+        constexpr uint32 THROW_GLAIVE_TANK = 204157; // Ranged threat
+        constexpr uint32 TORMENT = 185245; // Taunt
+
+        // Talents
+        constexpr uint32 LAST_RESORT = 209258; // Cheat death
+        constexpr uint32 AGONIZING_FLAMES = 207548; // Fiery Brand spread
+        constexpr uint32 BURNING_ALIVE = 207739; // Fiery Brand duration
+        constexpr uint32 FEED_THE_DEMON = 218612; // Demon Spikes CDR
+        constexpr uint32 SOUL_BARRIER = 263648; // Shield from fragments
+
+        // Debuffs
+        constexpr uint32 FRAILTY_DEBUFF = 247456; // Spirit Bomb debuff
+        constexpr uint32 PAINBRINGER_BUFF = 207407; // Shear damage increase
 
         // Hero Talents - Aldrachi Reaver
         constexpr uint32 VENG_ALDRACHI_TACTICS = 462683;
@@ -564,6 +633,9 @@ namespace Hunter
     constexpr uint32 DISMISS_PET = 2641;
     constexpr uint32 REVIVE_PET = 982;
     constexpr uint32 MEND_PET = 136;
+    constexpr uint32 PET_ATTACK = 52398;
+    constexpr uint32 PET_FOLLOW = 52399;
+    constexpr uint32 PET_STAY = 52400;
 
     // Beast Mastery Specialization
     namespace BeastMastery
@@ -596,6 +668,11 @@ namespace Hunter
         constexpr uint32 PACK_COORDINATION = 445405;
         constexpr uint32 HOWL_OF_THE_PACK = 445406;
 
+        // Procs and Buffs
+        constexpr uint32 WILD_CALL = 185789; // Barbed Shot reset proc
+        constexpr uint32 PET_FRENZY = 272790; // Pet attack speed buff
+        constexpr uint32 MULTI_SHOT_BM = 2643; // BM Multi-Shot
+
         // Hero Talents - Dark Ranger
         constexpr uint32 BLACK_ARROW = 430703;
         constexpr uint32 SHADOW_SURGE = 430704;
@@ -622,6 +699,15 @@ namespace Hunter
         // Precise Shots
         constexpr uint32 PRECISE_SHOTS = 260242;
         constexpr uint32 TRICK_SHOTS = 257621;
+        constexpr uint32 LETHAL_SHOTS = 260393; // Crit buff
+        constexpr uint32 CAREFUL_AIM = 260228; // High HP crit bonus
+
+        // Utility
+        constexpr uint32 BINDING_SHOT = 109248; // Tether CC
+        constexpr uint32 SCATTER_SHOT = 213691; // Disorient
+        constexpr uint32 BURSTING_SHOT = 186387; // Knockback
+        constexpr uint32 SURVIVAL_TACTICS = 202746; // Defensive buff
+        constexpr uint32 LONE_WOLF = 155228; // No pet damage bonus
 
         // Hero Talents - Sentinel
         constexpr uint32 SENTINEL_OWL = 450405;
@@ -650,6 +736,17 @@ namespace Hunter
         constexpr uint32 BUTCHERY = 212436;
         constexpr uint32 DEATH_CHAKRAM_SV = 375891;
         constexpr uint32 EXPLOSIVE_SHOT_SV = 212431;
+        constexpr uint32 CARVE = 187708; // AoE cleave
+
+        // Wildfire Bombs (variants)
+        constexpr uint32 SHRAPNEL_BOMB = 270335; // Bleed variant
+        constexpr uint32 PHEROMONE_BOMB = 270323; // Debuff variant
+        constexpr uint32 VOLATILE_BOMB = 271045; // Damage variant
+        constexpr uint32 WILDFIRE_INFUSION = 271014; // Random bomb selection
+
+        // DoTs and Debuffs
+        constexpr uint32 INTERNAL_BLEEDING = 270343; // Bleed from Shrapnel
+        constexpr uint32 BLOODSEEKER = 260248; // Attack speed from bleeds
 
         // Traps
         constexpr uint32 STEEL_TRAP = 162488;
@@ -658,6 +755,11 @@ namespace Hunter
         // Focus Builders
         constexpr uint32 HARPOON = 190925;
         constexpr uint32 TERMS_OF_ENGAGEMENT = 265895;
+
+        // Utility
+        constexpr uint32 ASPECT_OF_THE_EAGLE = 186289; // Increased range
+        constexpr uint32 MUZZLE = 187707; // Interrupt
+        constexpr uint32 GUERRILLA_TACTICS = 264332; // First bomb enhancement
 
         // Hero Talents - Pack Leader
         constexpr uint32 SV_VICIOUS_HUNT = 445404;
@@ -698,6 +800,7 @@ namespace Mage
     constexpr uint32 TIME_WARP = 80353; // Heroism/Bloodlust
     constexpr uint32 TELEPORT = 3561;
     constexpr uint32 PORTAL = 10059;
+    constexpr uint32 SHIFTING_POWER_COMMON = 382440; // Shared Night Fae ability
 
     // Arcane Specialization
     namespace Arcane
@@ -717,6 +820,7 @@ namespace Mage
         constexpr uint32 SHIFTING_POWER = 382440;
         constexpr uint32 ARCANE_SURGE = 365350;
         constexpr uint32 TOUCH_OF_THE_MAGI = 321507;
+        constexpr uint32 ARCANE_FAMILIAR = 205022;
 
         // Arcane Charges
         constexpr uint32 ARCANE_CHARGE = 36032;
@@ -750,6 +854,7 @@ namespace Mage
         constexpr uint32 ALEXSTRASZAS_FURY = 235870;
         constexpr uint32 FROM_THE_ASHES = 342344;
         constexpr uint32 HYPERTHERMIA = 383391;
+        constexpr uint32 BLAZING_BARRIER = 235313;
 
         // Heating Up / Hot Streak
         constexpr uint32 HEATING_UP = 48107;
@@ -791,6 +896,10 @@ namespace Mage
         constexpr uint32 WINTERS_CHILL = 228358;
         constexpr uint32 ICE_BARRIER = 11426;
 
+        // Water Elemental
+        constexpr uint32 SUMMON_WATER_ELEMENTAL = 31687;
+        constexpr uint32 FREEZE = 33395; // Water Elemental's Freeze ability
+
         // Hero Talents - Frostfire
         constexpr uint32 FROST_FROSTFIRE_BOLT = 431044;
         constexpr uint32 FROST_ISOTHERMIC_CORE = 431045;
@@ -827,6 +936,11 @@ namespace Monk
     constexpr uint32 ZEN_PILGRIMAGE = 126892;
     constexpr uint32 PROVOKE = 115546; // Taunt
     constexpr uint32 RESUSCITATE = 115178; // Resurrect
+    constexpr uint32 EXPEL_HARM = 322101; // Self-heal (all specs)
+    constexpr uint32 ZEN_MEDITATION = 115176; // Damage reduction channel
+    constexpr uint32 CHI_WAVE = 115098; // Bouncing heal/damage
+    constexpr uint32 TIGER_PALM = 100780; // Core builder (all specs)
+    constexpr uint32 TEACHINGS_OF_THE_MONASTERY = 202090; // Tiger Palm buff
 
     // Brewmaster Specialization
     namespace Brewmaster
@@ -850,6 +964,17 @@ namespace Monk
         constexpr uint32 LIGHT_STAGGER = 124275;
         constexpr uint32 MODERATE_STAGGER = 124274;
         constexpr uint32 HEAVY_STAGGER = 124273;
+
+        // Passive/Talents
+        constexpr uint32 SHUFFLE = 215479; // Stagger buff from Blackout Kick
+        constexpr uint32 ELUSIVE_BRAWLER = 195630; // Mastery - dodge stacks
+        constexpr uint32 GIFT_OF_THE_OX = 124502; // Healing orb passive
+        constexpr uint32 BLACK_OX_BREW = 115399; // Reset brews
+        constexpr uint32 CHARRED_PASSIONS = 386965; // Breath of Fire enhancement
+        constexpr uint32 HIGH_TOLERANCE = 196737; // Haste from Stagger
+        constexpr uint32 BOB_AND_WEAVE = 280515; // Stagger duration talent
+        constexpr uint32 SCALDING_BREW = 383698; // Keg Smash DoT bonus
+        constexpr uint32 COUNTERSTRIKE = 383800; // Counter damage talent
 
         // Hero Talents - Master of Harmony
         constexpr uint32 ASPECT_OF_HARMONY = 450508;
@@ -888,6 +1013,16 @@ namespace Monk
         constexpr uint32 SHEILUNS_GIFT = 399491;
         constexpr uint32 FAELINE_STOMP = 388193;
 
+        // Passive/Talents
+        constexpr uint32 UPWELLING = 274963; // Essence Font buff
+        constexpr uint32 LIFECYCLES = 197915; // Vivify/Enveloping cost reduction
+        constexpr uint32 SPIRIT_OF_THE_CRANE = 210802; // Mana return on kick
+        constexpr uint32 CLOUDED_FOCUS = 388047; // Soothing Mist channel buff
+        constexpr uint32 RISING_MIST = 274909; // Extend HoTs on RSK
+        constexpr uint32 FOCUSED_THUNDER = 197895; // Double Thunder Focus Tea
+        constexpr uint32 SECRET_INFUSION = 388491; // TFT stat buffs
+        constexpr uint32 INVOKE_SHEILUN = 399491; // Alternative name for Sheilun's Gift
+
         // Hero Talents - Master of Harmony
         constexpr uint32 MW_ASPECT_OF_HARMONY = 450508;
         constexpr uint32 MW_HARMONIC_GAMBIT = 450509;
@@ -925,6 +1060,20 @@ namespace Monk
         // Chi and Energy
         constexpr uint32 CHI = 163;
         constexpr uint32 ENERGY = 103;
+
+        // Passive/Talents
+        constexpr uint32 DANCE_OF_CHI_JI = 325202; // Free SCK procs
+        constexpr uint32 COMBO_BREAKER = 137384; // Free Blackout Kick
+        constexpr uint32 HIT_COMBO = 196740; // Damage buff for unique abilities
+        constexpr uint32 MARK_OF_THE_CRANE = 228287; // SCK damage increase
+        constexpr uint32 TEACHINGS_OF_THE_MONASTERY_WW = 202090; // Tiger Palm stacks
+        constexpr uint32 TRANSFER_THE_POWER = 195300; // RSK damage buff
+        constexpr uint32 JADE_IGNITION = 392979; // Stomp empowerment
+        constexpr uint32 LAST_EMPERORS_CAPACITOR = 392989; // CJL damage buff
+        constexpr uint32 GLORY_OF_THE_DAWN = 392958; // Extra RSK
+        constexpr uint32 SHADOWBOXING_TREADS = 392982; // Extra Blackout Kick
+        constexpr uint32 INVOKERS_DELIGHT = 388661; // Haste on Xuen
+        constexpr uint32 XUENS_BATTLEGEAR = 392993; // Fists of Fury extension
 
         // Hero Talents - Shado-Pan
         constexpr uint32 WW_FLURRY_STRIKES = 450711;

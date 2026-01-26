@@ -18,14 +18,13 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../CombatSpecializationTemplates.h"
+#include "../SpellValidation_WoW112.h"
 #include "Pet.h"
 #include "MotionMaster.h"
 #include "CharmInfo.h"
 #include "HunterAI.h"
 #include <unordered_map>
 #include <deque>
-// Old HunterSpecialization.h removed
 
 // Phase 5 Integration: Decision Systems
 #include "../../Decision/ActionPriorityQueue.h"
@@ -50,50 +49,48 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 Marksmanship Hunter Spell IDs
+// ============================================================================
+// MARKSMANSHIP HUNTER SPELL IDs (WoW 11.2 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW112.h
+// ============================================================================
+
 enum MarksmanshipSpells
 {
-    // Core Abilities
-    SPELL_AIMED_SHOT           = 19434,   // Main nuke with cast time
-    SPELL_RAPID_FIRE           = 257044,  // Channel burst
-    SPELL_STEADY_SHOT          = 56641,   // Focus generator
-    SPELL_ARCANE_SHOT          = 185358,  // Instant damage
-
-    SPELL_TRUESHOT
-    = 288613,  // Major DPS cooldown
-    SPELL_DOUBLE_TAP           = 260402,  // Burst window enhancement
+    // Core Abilities (values from central registry)
+    SPELL_AIMED_SHOT           = 19434,   // WoW112Spells::Hunter::Marksmanship::AIMED_SHOT_MM
+    SPELL_RAPID_FIRE           = 257044,  // WoW112Spells::Hunter::Marksmanship::RAPID_FIRE_MM
+    SPELL_STEADY_SHOT          = 56641,   // WoW112Spells::Hunter::Marksmanship::STEADY_SHOT_MM
+    SPELL_ARCANE_SHOT          = 185358,  // WoW112Spells::Hunter::Marksmanship::ARCANE_SHOT_MM
+    SPELL_TRUESHOT             = 288613,  // WoW112Spells::Hunter::Marksmanship::TRUESHOT
+    SPELL_DOUBLE_TAP           = 260402,  // WoW112Spells::Hunter::Marksmanship::DOUBLE_TAP
 
     // AoE Abilities
-    SPELL_MULTISHOT_MM         = 257620,  // AoE ability
-    SPELL_EXPLOSIVE_SHOT       = 212431,  // AoE burst
-
-    SPELL_VOLLEY
-    = 260243,  // Sustained AoE
+    SPELL_MULTISHOT_MM         = 257620,  // WoW112Spells::Hunter::MULTI_SHOT
+    SPELL_EXPLOSIVE_SHOT       = 212431,  // WoW112Spells::Hunter::Marksmanship::EXPLOSIVE_SHOT
+    SPELL_VOLLEY               = 260243,  // WoW112Spells::Hunter::Marksmanship::VOLLEY
 
     // Procs and Buffs
-    SPELL_PRECISE_SHOTS        = 260242,  // Proc from Aimed Shot
-    SPELL_TRICK_SHOTS          = 257621,  // AoE enhancement
-    SPELL_LETHAL_SHOTS         = 260393,  // Crit buff
-    SPELL_CAREFUL_AIM          = 260228,  // Increased crit above 70% or below 20%
+    SPELL_PRECISE_SHOTS        = 260242,  // WoW112Spells::Hunter::Marksmanship::PRECISE_SHOTS
+    SPELL_TRICK_SHOTS          = 257621,  // WoW112Spells::Hunter::Marksmanship::TRICK_SHOTS
+    SPELL_LETHAL_SHOTS         = 260393,  // WoW112Spells::Hunter::Marksmanship::LETHAL_SHOTS
+    SPELL_CAREFUL_AIM          = 260228,  // WoW112Spells::Hunter::Marksmanship::CAREFUL_AIM
 
     // Utility
-    SPELL_HUNTERS_MARK_MM      = 257284,  // Target marking
-    SPELL_BINDING_SHOT         = 109248,  // Tether CC
-    SPELL_SCATTER_SHOT         = 213691,  // Disorient
-    SPELL_BURSTING_SHOT        = 186387,  // Knockback
-    SPELL_COUNTER_SHOT_MM      = 147362,  // Interrupt
+    SPELL_HUNTERS_MARK_MM      = 257284,  // WoW112Spells::Hunter::HUNTERS_MARK
+    SPELL_BINDING_SHOT         = 109248,  // WoW112Spells::Hunter::Marksmanship::BINDING_SHOT
+    SPELL_SCATTER_SHOT         = 213691,  // WoW112Spells::Hunter::Marksmanship::SCATTER_SHOT
+    SPELL_BURSTING_SHOT        = 186387,  // WoW112Spells::Hunter::Marksmanship::BURSTING_SHOT
+    SPELL_COUNTER_SHOT_MM      = 147362,  // WoW112Spells::Hunter::COUNTER_SHOT
 
     // Defensives
-    SPELL_ASPECT_TURTLE        = 186265,  // Damage reduction
-    SPELL_EXHILARATION_MM      = 109304,  // Self heal
-    SPELL_SURVIVAL_TACTICS     = 202746,  // Defensive buff
+    SPELL_ASPECT_TURTLE        = 186265,  // WoW112Spells::Hunter::ASPECT_OF_THE_TURTLE
+    SPELL_EXHILARATION_MM      = 109304,  // WoW112Spells::Hunter::EXHILARATION
+    SPELL_SURVIVAL_TACTICS     = 202746,  // WoW112Spells::Hunter::Marksmanship::SURVIVAL_TACTICS
 
     // Pet (minimal for MM)
-    SPELL_CALL_PET_MM          = 883,     // Summon pet
-    SPELL_DISMISS_PET          = 2641,    // Dismiss pet for Lone Wolf
-
-    SPELL_LONE_WOLF
-    = 155228,  // Bonus damage without pet
+    SPELL_CALL_PET_MM          = 883,     // WoW112Spells::Hunter::CALL_PET_1
+    SPELL_DISMISS_PET          = 2641,    // WoW112Spells::Hunter::DISMISS_PET
+    SPELL_LONE_WOLF            = 155228   // WoW112Spells::Hunter::Marksmanship::LONE_WOLF
 };
 
 /**

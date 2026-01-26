@@ -19,6 +19,7 @@
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
 // Phase 5 Integration
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
@@ -41,6 +42,62 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 
+// ============================================================================
+// ARMS WARRIOR SPELL ALIASES - Using Central Registry (WoW 11.2.7)
+// ============================================================================
+// All spell IDs from WoW112Spells::Warrior and WoW112Spells::Warrior::Arms
+namespace ArmsWarriorSpells
+{
+    // Core Warrior spells (from WoW112Spells::Warrior)
+    using namespace WoW112Spells::Warrior;
+
+    // Arms-specific spells (from WoW112Spells::Warrior::Arms)
+    // Aliased with SPELL_ prefix for consistency
+    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW112Spells::Warrior::BATTLE_SHOUT;
+    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW112Spells::Warrior::COMMANDING_SHOUT;
+    constexpr uint32 SPELL_CHARGE            = WoW112Spells::Warrior::CHARGE;
+
+    // Arms Rotation
+    constexpr uint32 SPELL_MORTAL_STRIKE     = WoW112Spells::Warrior::Arms::MORTAL_STRIKE;
+    constexpr uint32 SPELL_COLOSSUS_SMASH    = WoW112Spells::Warrior::Arms::COLOSSUS_SMASH;
+    constexpr uint32 SPELL_OVERPOWER         = WoW112Spells::Warrior::Arms::OVERPOWER;
+    constexpr uint32 SPELL_EXECUTE           = WoW112Spells::Warrior::Arms::EXECUTE;
+    constexpr uint32 SPELL_WHIRLWIND         = WoW112Spells::Warrior::Arms::WHIRLWIND;
+    constexpr uint32 SPELL_REND              = WoW112Spells::Warrior::Arms::REND;
+    constexpr uint32 SPELL_CLEAVE            = WoW112Spells::Warrior::Arms::CLEAVE;
+    constexpr uint32 SPELL_SLAM              = WoW112Spells::Warrior::Arms::SLAM;
+
+    // Arms Cooldowns
+    constexpr uint32 SPELL_WARBREAKER        = WoW112Spells::Warrior::Arms::WARBREAKER;
+    constexpr uint32 SPELL_SWEEPING_STRIKES  = WoW112Spells::Warrior::Arms::SWEEPING_STRIKES;
+    constexpr uint32 SPELL_BLADESTORM        = WoW112Spells::Warrior::Arms::BLADESTORM;
+    constexpr uint32 SPELL_AVATAR            = WoW112Spells::Warrior::Arms::AVATAR;
+    constexpr uint32 SPELL_DIE_BY_THE_SWORD  = WoW112Spells::Warrior::Arms::DIE_BY_THE_SWORD;
+    constexpr uint32 SPELL_DEFENSIVE_STANCE  = WoW112Spells::Warrior::Arms::DEFENSIVE_STANCE;
+    constexpr uint32 SPELL_SKULLSPLITTER     = WoW112Spells::Warrior::Arms::SKULLSPLITTER;
+    constexpr uint32 SPELL_RAVAGER           = WoW112Spells::Warrior::Arms::RAVAGER;
+    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW112Spells::Warrior::Arms::THUNDEROUS_ROAR;
+    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW112Spells::Warrior::Arms::CHAMPIONS_SPEAR;
+
+    // Deep Wounds (DoT)
+    constexpr uint32 SPELL_DEEP_WOUNDS       = WoW112Spells::Warrior::Arms::DEEP_WOUNDS;
+    constexpr uint32 SPELL_DEEP_WOUNDS_DEBUFF = WoW112Spells::Warrior::Arms::DEEP_WOUNDS_DEBUFF;
+
+    // Procs (from central registry)
+    constexpr uint32 SPELL_OVERPOWER_PROC    = WoW112Spells::Warrior::OVERPOWER_PROC;
+    constexpr uint32 SPELL_SUDDEN_DEATH_PROC = WoW112Spells::Warrior::SUDDEN_DEATH_PROC;
+
+    // Hero Talents - Slayer
+    constexpr uint32 SPELL_SLAYERS_STRIKE      = WoW112Spells::Warrior::Arms::SLAYERS_STRIKE;
+    constexpr uint32 SPELL_OVERWHELMING_BLADES = WoW112Spells::Warrior::Arms::OVERWHELMING_BLADES;
+    constexpr uint32 SPELL_SLAYERS_DOMINANCE   = WoW112Spells::Warrior::Arms::SLAYERS_DOMINANCE;
+
+    // Hero Talents - Colossus
+    constexpr uint32 SPELL_DEMOLISH          = WoW112Spells::Warrior::Arms::DEMOLISH;
+    constexpr uint32 SPELL_COLOSSAL_MIGHT    = WoW112Spells::Warrior::Arms::COLOSSAL_MIGHT;
+    constexpr uint32 SPELL_MARTIAL_PROWESS   = WoW112Spells::Warrior::Arms::MARTIAL_PROWESS;
+}
+
 /**
  * Refactored Arms Warrior using template architecture
  *
@@ -48,50 +105,11 @@ using bot::ai::SpellCategory;
  * - Inherits from MeleeDpsSpecialization<RageResource> for role defaults
  * - Automatically gets UpdateCooldowns, CanUseAbility, OnCombatStart/End
  * - Uses specialized rage management as primary resource
- * - Eliminates ~370 lines of duplicate code
+ * - Uses central spell registry (SpellValidation_WoW112_Part2.h)
+ * - WoW 11.2.7 (The War Within) spell IDs
  */
 class ArmsWarriorRefactored : public MeleeDpsSpecialization<RageResource>
 {
-private:
-    // ========================================================================
-    // SPELL IDS
-    // ========================================================================
-
-    enum ArmsSpells
-    {
-        // Stances
-        SPELL_BATTLE_STANCE         = 2457,
-        SPELL_DEFENSIVE_STANCE      = 71,
-        SPELL_BERSERKER_STANCE      = 2458,
-
-        // Shouts
-        SPELL_BATTLE_SHOUT          = 6673,
-        SPELL_COMMANDING_SHOUT      = 469,
-
-        // Core Abilities
-        SPELL_MORTAL_STRIKE         = 12294,
-        SPELL_COLOSSUS_SMASH        = 86346,
-        SPELL_OVERPOWER             = 7384,
-        SPELL_EXECUTE               = 5308,
-        SPELL_WHIRLWIND             = 1680,
-        SPELL_REND                  = 772,
-        SPELL_HEROIC_STRIKE         = 78,
-        SPELL_CLEAVE                = 845,
-        SPELL_CHARGE                = 100,
-
-        // Arms Specific
-        SPELL_WAR_BREAKER           = 262161,
-        SPELL_SWEEPING_STRIKES      = 260708,
-        SPELL_BLADESTORM            = 227847,
-        SPELL_AVATAR                = 107574,
-        SPELL_DEEP_WOUNDS           = 115767,
-        SPELL_TACTICAL_MASTERY      = 12295,
-
-        // Procs
-        SPELL_OVERPOWER_PROC        = 60503,
-        SPELL_SUDDEN_DEATH_PROC     = 52437,
-    };
-
 public:
     // Use base class members with type alias for cleaner syntax
     using Base = MeleeDpsSpecialization<RageResource>;
@@ -120,9 +138,6 @@ public:
         , _executePhaseActive(false)
         , _lastMortalStrike(0)
         , _lastColossusSmash(0)
-        , _tacticalMasteryRage(0)
-        , _currentStance(WarriorAI::WarriorStance::BATTLE)
-        , _preferredStance(WarriorAI::WarriorStance::BATTLE)
     {
         // Initialize debuff tracking
         InitializeDebuffTracking();
@@ -156,6 +171,7 @@ public:
 
     void UpdateBuffs() override
     {
+        using namespace ArmsWarriorSpells;
         Player* bot = this->GetBot();
 
         // Maintain Battle Shout
@@ -173,8 +189,11 @@ public:
             }
         }
 
-        // Stance management
-        UpdateStanceOptimization();
+        // Use Defensive Stance cooldown if low health (11.2.7 - ability, not stance)
+        if (bot->GetHealthPct() < 40.0f && this->CanUseAbility(SPELL_DEFENSIVE_STANCE))
+        {
+            this->CastSpell(SPELL_DEFENSIVE_STANCE, bot);
+        }
     }
 
 protected:
@@ -184,6 +203,7 @@ protected:
 
     uint32 GetSpellResourceCost(uint32 spellId) const override
     {
+        using namespace ArmsWarriorSpells;
         switch (spellId)
         {
             case SPELL_MORTAL_STRIKE:    return 30;
@@ -192,7 +212,7 @@ protected:
             case SPELL_EXECUTE:          return 15; // Base cost, scales with available rage
             case SPELL_WHIRLWIND:        return 25;
             case SPELL_REND:             return 10;
-            case SPELL_HEROIC_STRIKE:    return 15;
+            case SPELL_SLAM:             return 20;
             case SPELL_CLEAVE:           return 20;
             default:                     return 10;
         }
@@ -204,6 +224,8 @@ protected:
 
     void ExecuteArmsRotation(::Unit* target)
     {
+        using namespace ArmsWarriorSpells;
+
         // Priority 1: Colossus Smash for vulnerability window
         if (ShouldUseColossusSmash(target) && this->CanUseAbility(SPELL_COLOSSUS_SMASH))
         {
@@ -245,10 +267,10 @@ protected:
             return;
         }
 
-        // Priority 6: War Breaker for AoE debuff
-        if (this->GetEnemiesInRange(8.0f) >= 2 && this->CanUseAbility(SPELL_WAR_BREAKER))
+        // Priority 6: Warbreaker for AoE debuff
+        if (this->GetEnemiesInRange(8.0f) >= 2 && this->CanUseAbility(SPELL_WARBREAKER))
         {
-            this->CastSpell(SPELL_WAR_BREAKER, target);
+            this->CastSpell(SPELL_WARBREAKER, target);
             return;
         }
 
@@ -257,7 +279,9 @@ protected:
         {
             this->CastSpell(SPELL_WHIRLWIND, this->GetBot());
             return;
-        }        // Priority 8: Rend for DoT (if not already applied)
+        }
+
+        // Priority 8: Rend for DoT (if not already applied)
         if (!HasRendDebuff(target) && this->_resource >= 10 && this->CanUseAbility(SPELL_REND))
         {
             this->CastSpell(SPELL_REND, target);
@@ -265,21 +289,17 @@ protected:
             return;
         }
 
-        // Priority 9: Heroic Strike as rage dump
-        if (this->_resource >= 80 && this->CanUseAbility(SPELL_HEROIC_STRIKE))
+        // Priority 9: Slam as rage dump
+        if (this->_resource >= 80 && this->CanUseAbility(SPELL_SLAM))
         {
-            this->CastSpell(SPELL_HEROIC_STRIKE, target);
+            this->CastSpell(SPELL_SLAM, target);
             return;
         }
     }
 
     void ExecutePhaseRotation(::Unit* target)
     {
-        // Switch to Berserker Stance for execute if needed
-        if (_currentStance != WarriorAI::WarriorStance::BERSERKER && this->HasTacticalMastery())
-        {
-            this->SwitchToStance(WarriorAI::WarriorStance::BERSERKER);
-        }
+        using namespace ArmsWarriorSpells;
 
         // Priority 1: Execute with Sudden Death proc
         if (_suddenDeathProc && this->CanUseAbility(SPELL_EXECUTE))
@@ -332,6 +352,7 @@ protected:
 
     void UpdateArmsState(::Unit* target)
     {
+        using namespace ArmsWarriorSpells;
         Player* bot = this->GetBot();
         uint32 currentTime = GameTime::GetGameTimeMS();
 
@@ -352,59 +373,6 @@ protected:
 
         // Update execute phase state
         _executePhaseActive = (target->GetHealthPct() <= 20.0f);
-    }
-
-    void UpdateStanceOptimization()
-    {
-        Player* bot = this->GetBot();
-
-        // Determine optimal stance based on situation
-        WarriorAI::WarriorStance optimalStance = this->DetermineOptimalStance();
-
-        if (_currentStance != optimalStance)
-        {
-            // Tactical Mastery allows retaining rage when switching
-            if (this->HasTacticalMastery())
-            {
-                _tacticalMasteryRage = ::std::min(this->_resource, 25u);
-            }
-
-            this->SwitchToStance(optimalStance);
-        }
-    }
-
-    WarriorAI::WarriorStance DetermineOptimalStance()
-    {
-        Player* bot = this->GetBot();
-
-        // Defensive stance if low health
-        if (bot->GetHealthPct() < 30.0f)
-            return WarriorAI::WarriorStance::DEFENSIVE;
-
-        // Berserker for execute phase
-        if (_executePhaseActive)
-            return WarriorAI::WarriorStance::BERSERKER;
-
-        // Battle stance as default for Arms
-        return WarriorAI::WarriorStance::BATTLE;
-    }
-
-    void SwitchToStance(WarriorAI::WarriorStance stance)
-    {
-        uint32 stanceSpell = 0;
-        switch (stance)
-        {
-            case WarriorAI::WarriorStance::BATTLE:     stanceSpell = SPELL_BATTLE_STANCE; break;
-            case WarriorAI::WarriorStance::DEFENSIVE:  stanceSpell = SPELL_DEFENSIVE_STANCE; break;
-            case WarriorAI::WarriorStance::BERSERKER:  stanceSpell = SPELL_BERSERKER_STANCE; break;
-            default: return;
-        }
-
-        if (stanceSpell && this->CanUseAbility(stanceSpell))
-        {
-            this->CastSpell(stanceSpell, this->GetBot());
-            _currentStance = stance;
-        }
     }    // ========================================================================
     // DEEP WOUNDS MANAGEMENT
     // ========================================================================
@@ -466,17 +434,13 @@ protected:
         return it != _rendTracking.end() && it->second > GameTime::GetGameTimeMS();
     }
 
-    bool HasTacticalMastery() const
-    {
-        return this->GetBot()->HasSpell(SPELL_TACTICAL_MASTERY);
-    }
-
     // ========================================================================
     // COMBAT LIFECYCLE HOOKS
     // ========================================================================
 
     void OnCombatStartSpecific(::Unit* target) override
     {
+        using namespace ArmsWarriorSpells;
         // Reset all Arms-specific state
         _colossusSmashActive = false;
         _overpowerReady = false;
@@ -486,12 +450,6 @@ protected:
         _lastColossusSmash = 0;
         _deepWoundsTracking.clear();
         _rendTracking.clear();
-
-        // Start in Battle Stance
-        if (_currentStance != WarriorAI::WarriorStance::BATTLE)
-        {
-            this->SwitchToStance(WarriorAI::WarriorStance::BATTLE);
-        }
 
         // Use charge if not in range
         if (!this->IsInMeleeRange(target) && this->CanUseAbility(SPELL_CHARGE))
@@ -529,6 +487,7 @@ private:
 
     void inline SetupActionPriorityQueue()
     {
+        using namespace ArmsWarriorSpells;
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue
         // ========================================================================
@@ -558,7 +517,7 @@ private:
             queue->RegisterSpell(SPELL_OVERPOWER, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_OVERPOWER,
                 [](Player* bot, Unit*) {
-                    return bot->HasAura(SPELL_OVERPOWER_PROC);
+                    return bot->HasAura(ArmsWarriorSpells::SPELL_OVERPOWER_PROC);
                 },
                 "Overpower proc active");
 
@@ -576,12 +535,12 @@ private:
             queue->AddCondition(SPELL_REND,
                 ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target)
                 {
-                    return target && !target->HasAura(SPELL_REND);
+                    return target && !target->HasAura(ArmsWarriorSpells::SPELL_REND);
                 }},
                 "Rend not active on target");
 
             // Low priority fillers
-            queue->RegisterSpell(SPELL_HEROIC_STRIKE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->RegisterSpell(SPELL_SLAM, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
             queue->RegisterSpell(SPELL_CLEAVE, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
 
             TC_LOG_INFO("module.playerbot", "  ARMS WARRIOR: Registered {} spells in ActionPriorityQueue",
@@ -702,17 +661,17 @@ private:
                     Selector("Filler", {
                         bot::ai::Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target)
                         {
-                            if (bot->getAttackers().size() >= 3 && this->CanCastSpell(SPELL_WHIRLWIND, target))
+                            if (bot->getAttackers().size() >= 3 && this->CanCastSpell(ArmsWarriorSpells::SPELL_WHIRLWIND, target))
                             {
-                                this->CastSpell(SPELL_WHIRLWIND, target);
+                                this->CastSpell(ArmsWarriorSpells::SPELL_WHIRLWIND, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        bot::ai::Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
+                        bot::ai::Action("Cast Slam", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(ArmsWarriorSpells::SPELL_SLAM, target))
                             {
-                                this->CastSpell(SPELL_HEROIC_STRIKE, target);
+                                this->CastSpell(ArmsWarriorSpells::SPELL_SLAM, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -725,8 +684,6 @@ private:
             TC_LOG_INFO("module.playerbot", " ARMS WARRIOR: BehaviorTree initialized with hierarchical combat flow");
         }
     }
-
-    // Note: WarriorStance enum is inherited from WarriorSpecialization parent class
 
     // ========================================================================
     // MEMBER VARIABLES
@@ -745,11 +702,6 @@ private:
     // Timing tracking
     uint32 _lastMortalStrike;
     uint32 _lastColossusSmash;
-
-    // Stance management
-    uint32 _tacticalMasteryRage;
-    WarriorAI::WarriorStance _currentStance;
-    WarriorAI::WarriorStance _preferredStance;
 
 };
 

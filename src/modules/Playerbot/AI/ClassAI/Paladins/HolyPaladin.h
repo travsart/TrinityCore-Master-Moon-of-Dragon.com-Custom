@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -30,6 +31,64 @@
 namespace Playerbot
 {
 
+// ============================================================================
+// HOLY PALADIN SPELL ALIASES (WoW 11.2 - The War Within)
+// Consolidated spell IDs from central registry - NO duplicates
+// ============================================================================
+
+namespace HolyPaladinSpells
+{
+    // Holy Power Generators
+    constexpr uint32 HOLY_SHOCK               = WoW112Spells::Paladin::Holy::HOLY_SHOCK;
+    constexpr uint32 CRUSADER_STRIKE_HOLY     = WoW112Spells::Paladin::CRUSADER_STRIKE;
+    constexpr uint32 JUDGMENT_HOLY            = WoW112Spells::Paladin::Holy::JUDGMENT_HOLY;
+
+    // Holy Power Spenders
+    constexpr uint32 WORD_OF_GLORY            = WoW112Spells::Paladin::WORD_OF_GLORY;
+    constexpr uint32 LIGHT_OF_DAWN            = WoW112Spells::Paladin::Holy::LIGHT_OF_DAWN;
+    constexpr uint32 SHIELD_OF_THE_RIGHTEOUS_HOLY = WoW112Spells::Paladin::Protection::SHIELD_OF_THE_RIGHTEOUS;
+
+    // Direct Heals
+    constexpr uint32 FLASH_OF_LIGHT           = WoW112Spells::Paladin::FLASH_OF_LIGHT;
+    constexpr uint32 HOLY_LIGHT               = WoW112Spells::Paladin::HOLY_LIGHT;
+    constexpr uint32 DIVINE_TOLL              = WoW112Spells::Paladin::Protection::DIVINE_TOLL;
+
+    // AoE Heals
+    constexpr uint32 LIGHT_OF_THE_MARTYR      = WoW112Spells::Paladin::Holy::LIGHT_OF_THE_MARTYR;
+    constexpr uint32 BEACON_OF_LIGHT          = WoW112Spells::Paladin::Holy::BEACON_OF_LIGHT;
+    constexpr uint32 BEACON_OF_FAITH          = WoW112Spells::Paladin::Holy::BEACON_OF_FAITH;
+    constexpr uint32 BEACON_OF_VIRTUE         = WoW112Spells::Paladin::Holy::BEACON_OF_VIRTUE;
+
+    // Cooldowns
+    constexpr uint32 AVENGING_WRATH_HOLY      = WoW112Spells::Paladin::Holy::AVENGING_WRATH_HOLY;
+    constexpr uint32 AVENGING_CRUSADER        = WoW112Spells::Paladin::Holy::AVENGING_CRUSADER;
+    constexpr uint32 HOLY_AVENGER             = WoW112Spells::Paladin::Holy::HOLY_AVENGER;
+    constexpr uint32 DIVINE_PROTECTION        = WoW112Spells::Paladin::DIVINE_PROTECTION;
+    constexpr uint32 BLESSING_OF_SACRIFICE    = WoW112Spells::Paladin::BLESSING_OF_SACRIFICE;
+
+    // Utility
+    constexpr uint32 CLEANSE                  = WoW112Spells::Paladin::CLEANSE;
+    constexpr uint32 BLESSING_OF_FREEDOM      = WoW112Spells::Paladin::BLESSING_OF_FREEDOM;
+    constexpr uint32 BLESSING_OF_PROTECTION   = WoW112Spells::Paladin::BLESSING_OF_PROTECTION;
+    constexpr uint32 LAY_ON_HANDS             = WoW112Spells::Paladin::LAY_ON_HANDS;
+    constexpr uint32 DIVINE_SHIELD            = WoW112Spells::Paladin::DIVINE_SHIELD;
+
+    // Buffs/Auras
+    constexpr uint32 INFUSION_OF_LIGHT        = WoW112Spells::Paladin::Holy::INFUSION_OF_LIGHT;
+    constexpr uint32 GLIMMER_OF_LIGHT         = WoW112Spells::Paladin::Holy::GLIMMER_OF_LIGHT;
+    constexpr uint32 AURA_MASTERY             = WoW112Spells::Paladin::Holy::AURA_MASTERY;
+
+    // Auras
+    constexpr uint32 DEVOTION_AURA            = WoW112Spells::Paladin::DEVOTION_AURA;
+    constexpr uint32 CONCENTRATION_AURA       = WoW112Spells::Paladin::CONCENTRATION_AURA;
+    constexpr uint32 RETRIBUTION_AURA         = WoW112Spells::Paladin::RETRIBUTION_AURA;
+
+    // Talents
+    constexpr uint32 DIVINE_FAVOR             = WoW112Spells::Paladin::Holy::DIVINE_FAVOR;
+    constexpr uint32 AWAKENING                = WoW112Spells::Paladin::Holy::AWAKENING;
+    constexpr uint32 UNBREAKABLE_SPIRIT       = WoW112Spells::Paladin::Holy::UNBREAKABLE_SPIRIT;
+}
+using namespace HolyPaladinSpells;
 
 // Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
 using bot::ai::Sequence;
@@ -42,62 +101,6 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// ============================================================================
-// HOLY PALADIN SPELL IDs (WoW 11.2 - The War Within)
-// ============================================================================
-
-enum HolyPaladinSpells
-{
-    // Holy Power Generators
-    HOLY_SHOCK               = 20473,   // 16% mana, 1 HP, 7.5 sec CD
-    CRUSADER_STRIKE_HOLY     = 35395,   // 9% mana, 1 HP, generates HP for healing
-    JUDGMENT_HOLY            = 275773,  // 3% mana, 12 sec CD
-
-    // Holy Power Spenders
-    WORD_OF_GLORY            = 85673,   // 3 HP, instant heal
-    LIGHT_OF_DAWN            = 85222,   // 3 HP, AoE cone heal
-    SHIELD_OF_THE_RIGHTEOUS_HOLY = 53600, // 3 HP, defensive
-
-    // Direct Heals
-    FLASH_OF_LIGHT           = 19750,   // 22% mana, fast heal
-    HOLY_LIGHT               = 82326,   // 15% mana, efficient heal
-    DIVINE_TOLL              = 375576,  // 1 min CD, instant HP generation
-
-    // AoE Heals
-    LIGHT_OF_THE_MARTYR      = 183998,  // 7% mana, self-damage heal
-    BEACON_OF_LIGHT          = 53563,   // Transfer healing to beacon target
-    BEACON_OF_FAITH          = 156910,  // Second beacon (talent)
-    BEACON_OF_VIRTUE         = 200025,  // Short duration AoE beacon (talent)
-
-    // Cooldowns
-    AVENGING_WRATH_HOLY      = 31842,   // 2 min CD, healing/damage buff
-    AVENGING_CRUSADER        = 216331,  // 2 min CD, healing/damage hybrid (talent)
-    HOLY_AVENGER             = 105809,  // 2 min CD, HP generation boost (talent)
-    DIVINE_PROTECTION        = 498,     // 5 min CD, 20% damage reduction
-    BLESSING_OF_SACRIFICE    = 6940,    // 2 min CD, redirect damage to self
-
-    // Utility
-    CLEANSE                  = 4987,    // Dispel diseases/poisons
-    BLESSING_OF_FREEDOM      = 1044,    // Remove movement impairment
-    BLESSING_OF_PROTECTION   = 1022,    // Immunity to physical damage
-    LAY_ON_HANDS             = 633,     // 10 min CD, full heal
-    DIVINE_SHIELD            = 642,     // 5 min CD, immunity
-
-    // Buffs/Auras
-    INFUSION_OF_LIGHT        = 54149,   // Proc: reduced Flash of Light cast time
-    GLIMMER_OF_LIGHT         = 325966,  // HoT from Holy Shock
-    AURA_MASTERY             = 31821,   // 3 min CD, strengthen auras
-
-    // Auras
-    DEVOTION_AURA            = 465,     // Armor buff
-    CONCENTRATION_AURA       = 317920,  // Interrupt resistance
-    RETRIBUTION_AURA         = 183435,  // Damage reflect
-
-    // Talents
-    DIVINE_FAVOR             = 210294,  // Free, instant Holy Light proc
-    AWAKENING                = 248033,  // Avenging Wrath CDR
-    UNBREAKABLE_SPIRIT       = 114154   // Reduced defensive CDs
-};
 
 // Dual resource type for Paladin - defined once with include guard
 #ifndef PLAYERBOT_RESOURCE_TYPES_MANA_HOLY_POWER

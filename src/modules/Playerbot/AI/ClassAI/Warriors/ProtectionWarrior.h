@@ -19,6 +19,7 @@
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
 #include "Item.h"
 #include "ItemDefines.h"
 #include "../../Services/ThreatAssistant.h"  // Phase 5C: Unified threat service
@@ -45,6 +46,46 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
+
+// ============================================================================
+// PROTECTION WARRIOR SPELL ALIASES - Using Central Registry (WoW 11.2.7)
+// ============================================================================
+namespace ProtectionWarriorSpells
+{
+    // Core Warrior spells (from WoW112Spells::Warrior)
+    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW112Spells::Warrior::BATTLE_SHOUT;
+    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW112Spells::Warrior::COMMANDING_SHOUT;
+    constexpr uint32 SPELL_CHARGE            = WoW112Spells::Warrior::CHARGE;
+    constexpr uint32 SPELL_TAUNT             = WoW112Spells::Warrior::TAUNT;
+    constexpr uint32 SPELL_RALLYING_CRY      = WoW112Spells::Warrior::RALLYING_CRY;
+    constexpr uint32 SPELL_SPELL_REFLECTION  = WoW112Spells::Warrior::SPELL_REFLECTION;
+
+    // Protection Core Rotation
+    constexpr uint32 SPELL_SHIELD_SLAM       = WoW112Spells::Warrior::Protection::SHIELD_SLAM;
+    constexpr uint32 SPELL_THUNDER_CLAP      = WoW112Spells::Warrior::Protection::THUNDER_CLAP;
+    constexpr uint32 SPELL_REVENGE           = WoW112Spells::Warrior::Protection::REVENGE;
+    constexpr uint32 SPELL_DEVASTATE         = WoW112Spells::Warrior::Protection::DEVASTATE;
+    constexpr uint32 SPELL_SHIELD_BLOCK      = WoW112Spells::Warrior::Protection::SHIELD_BLOCK;
+    constexpr uint32 SPELL_IGNORE_PAIN       = WoW112Spells::Warrior::Protection::IGNORE_PAIN;
+    constexpr uint32 SPELL_DEMORALIZING_SHOUT = WoW112Spells::Warrior::Protection::DEMORALIZING_SHOUT;
+    constexpr uint32 SPELL_CHALLENGING_SHOUT = WoW112Spells::Warrior::Protection::CHALLENGING_SHOUT;
+
+    // Protection Cooldowns
+    constexpr uint32 SPELL_LAST_STAND        = WoW112Spells::Warrior::Protection::LAST_STAND;
+    constexpr uint32 SPELL_SHIELD_WALL       = WoW112Spells::Warrior::Protection::SHIELD_WALL;
+    constexpr uint32 SPELL_AVATAR            = WoW112Spells::Warrior::Protection::AVATAR;
+    constexpr uint32 SPELL_RAVAGER           = WoW112Spells::Warrior::Protection::RAVAGER;
+    constexpr uint32 SPELL_SHIELD_CHARGE     = WoW112Spells::Warrior::Protection::SHIELD_CHARGE;
+    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW112Spells::Warrior::Protection::THUNDEROUS_ROAR;
+    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW112Spells::Warrior::Protection::CHAMPIONS_SPEAR;
+
+    // Procs
+    constexpr uint32 SPELL_REVENGE_PROC      = WoW112Spells::Warrior::REVENGE_PROC;
+}
+
+// Make Protection Warrior spell constants available in the class below
+using namespace ProtectionWarriorSpells;
+
 /**
  * Refactored Protection Warrior using template architecture
  *
@@ -118,36 +159,19 @@ public:
     {
         Player* bot = this->GetBot();
 
+        using namespace ProtectionWarriorSpells;
         // Maintain Commanding Shout (tank preference)
         if (!bot->HasAura(SPELL_COMMANDING_SHOUT) && !bot->HasAura(SPELL_BATTLE_SHOUT))
         {
-
             this->CastSpell(SPELL_COMMANDING_SHOUT, bot);
-        }
-
-        // Protection warriors must be in Defensive Stance
-        if (!bot->HasAura(SPELL_DEFENSIVE_STANCE))
-        {
-
-            if (this->CanUseAbility(SPELL_DEFENSIVE_STANCE))
-
-            {
-
-                this->CastSpell(SPELL_DEFENSIVE_STANCE, bot);
-
-            }
         }
 
         // Maintain Shield Block charges
         if (_hasShieldEquipped && _shieldBlockCharges < 2)
         {
-
             if (this->CanUseAbility(SPELL_SHIELD_BLOCK))
-
             {
-
                 UseShieldBlock();
-
             }
         }
     }
@@ -206,38 +230,27 @@ protected:
 
     uint32 GetResourceCost(uint32 spellId)
     {
+        using namespace ProtectionWarriorSpells;
         switch (spellId)
         {
-
             case SPELL_SHIELD_SLAM:
-            return 15;
-
+                return 15;
             case SPELL_REVENGE:
-            return 5;
-
+                return 5;
             case SPELL_DEVASTATE:
-            return 15;
-
+                return 15;
             case SPELL_THUNDER_CLAP:
-            return 20;
-
-            case SPELL_SUNDER_ARMOR:
-            return 15;
-
+                return 20;
             case SPELL_IGNORE_PAIN:
-            return 40;
-
-            case SPELL_HEROIC_STRIKE:
-            return 15;
-
+                return 40;
             case SPELL_SHIELD_BLOCK:
-            return 0; // No rage cost
-
+                return 0; // No rage cost
             case SPELL_TAUNT:
-            return 0; // No rage cost
-
+                return 0; // No rage cost
+            case SPELL_SHIELD_CHARGE:
+                return 20;
             default:
-            return 10;
+                return 10;
         }
     }
 
@@ -315,18 +328,7 @@ protected:
             return;
         }
 
-        // Priority 5: Sunder Armor if Devastate unavailable
-        if (!HasMaxSunder(target) && this->CanUseAbility(SPELL_SUNDER_ARMOR))
-        {
-
-            this->CastSpell(SPELL_SUNDER_ARMOR, target);
-
-            ApplySunderArmor(target);
-
-            return;
-        }
-
-        // Priority 6: Avatar for damage reduction and threat
+        // Priority 5: Avatar for damage reduction and threat
         if (ShouldUseAvatar() && this->CanUseAbility(SPELL_AVATAR))
         {
 
@@ -335,7 +337,7 @@ protected:
             return;
         }
 
-        // Priority 7: Demoralizing Shout for damage reduction
+        // Priority 6: Demoralizing Shout for damage reduction
         if (this->GetEnemiesInRange(10.0f) >= 1 && this->CanUseAbility(SPELL_DEMORALIZING_SHOUT))
         {
 
@@ -344,11 +346,11 @@ protected:
             return;
         }
 
-        // Priority 8: Heroic Strike as rage dump
-        if (this->_resource >= 80 && this->CanUseAbility(SPELL_HEROIC_STRIKE))
+        // Priority 7: Shield Charge as rage dump (replaces Heroic Strike in 11.2.7)
+        if (this->_resource >= 80 && this->CanUseAbility(SPELL_SHIELD_CHARGE))
         {
 
-            this->CastSpell(SPELL_HEROIC_STRIKE, target);
+            this->CastSpell(SPELL_SHIELD_CHARGE, target);
 
             return;
         }
@@ -530,18 +532,8 @@ protected:
 
             _threatPriority.pop();
 
-        // Ensure Defensive Stance
-        if (!this->GetBot()->HasAura(SPELL_DEFENSIVE_STANCE))
-        {
-
-            if (this->CanUseAbility(SPELL_DEFENSIVE_STANCE))
-
-            {
-
-                this->CastSpell(SPELL_DEFENSIVE_STANCE, this->GetBot());
-
-            }
-        }
+        // Note: Stances removed in WoW 11.2.7 (Legion 7.0+)
+        // Protection Warriors automatically have passive tank benefits
 
         // Initial Shield Block
         if (_hasShieldEquipped)
@@ -835,16 +827,16 @@ private:
             // LOW TIER - Rage dumps and fillers
             // ====================================================================
 
-            queue->RegisterSpell(SPELL_HEROIC_STRIKE,
+            queue->RegisterSpell(SPELL_SHIELD_CHARGE,
 
                 SpellPriority::LOW,
 
                 SpellCategory::DAMAGE_SINGLE);
 
-            queue->AddCondition(SPELL_HEROIC_STRIKE,
+            queue->AddCondition(SPELL_SHIELD_CHARGE,
 
                 [](Player* bot, Unit*) {
-                    // Rage dump when > 80 rage
+                    // Rage dump when > 80 rage (Shield Charge replaces Heroic Strike in 11.2.7)
 
                     return bot->GetPower(POWER_RAGE) >= 80;
 
@@ -852,13 +844,7 @@ private:
 
                 "Rage > 80 (rage dump)");
 
-
-            queue->RegisterSpell(SPELL_SUNDER_ARMOR,
-
-                SpellPriority::LOW,
-
-                SpellCategory::DAMAGE_SINGLE);
-
+            // Note: Sunder Armor is merged into Devastate in 11.2.7
 
             TC_LOG_INFO("module.playerbot", "  PROTECTION WARRIOR: Registered {} spells in ActionPriorityQueue",
 
@@ -1238,9 +1224,9 @@ private:
 
                         }),
 
-                        // Heroic Strike as rage dump
+                        // Shield Charge as rage dump (replaces Heroic Strike in 11.2.7)
 
-                        Sequence("Heroic Strike Dump", {
+                        Sequence("Shield Charge Dump", {
 
                             Condition("Rage > 80", [](Player* bot, Unit*) {
 
@@ -1248,13 +1234,13 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Shield Charge", [this](Player* bot, Unit* target) {
 
-                                if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
+                                if (this->CanCastSpell(SPELL_SHIELD_CHARGE, target))
 
                                 {
 
-                                    this->CastSpell(SPELL_HEROIC_STRIKE, target);
+                                    this->CastSpell(SPELL_SHIELD_CHARGE, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1279,56 +1265,6 @@ private:
         }
     }
 
-    // ========================================================================
-    // SPELL IDS
-    // ========================================================================
-
-    enum ProtectionSpells
-    {
-        // Stances
-        SPELL_DEFENSIVE_STANCE      = 71,
-
-        // Shouts
-        SPELL_BATTLE_SHOUT          = 6673,
-        SPELL_COMMANDING_SHOUT      = 469,
-        SPELL_DEMORALIZING_SHOUT    = 1160,
-        SPELL_CHALLENGING_SHOUT    = 1161,
-
-        // Core Abilities
-        SPELL_SHIELD_SLAM           = 23922,
-
-        SPELL_REVENGE
-        = 6572,
-
-        SPELL_DEVASTATE
-        = 20243,
-        SPELL_THUNDER_CLAP          = 6343,
-        SPELL_SUNDER_ARMOR          = 7386,
-        SPELL_HEROIC_STRIKE         = 78,
-
-        SPELL_CHARGE
-        = 100,
-
-        SPELL_TAUNT
-        = 355,
-
-        // Defensive Abilities
-        SPELL_SHIELD_BLOCK          = 2565,
-        SPELL_SHIELD_WALL           = 871,
-
-        SPELL_LAST_STAND
-        = 12975,
-        SPELL_SPELL_REFLECTION      = 23920,
-        SPELL_IGNORE_PAIN           = 190456,
-        SPELL_RALLYING_CRY          = 97462,
-
-        SPELL_AVATAR
-        = 107574,
-
-        // Procs
-        SPELL_REVENGE_PROC          = 5302,
-    };
-
     // Threat priority structure
     struct ThreatTarget
     {
@@ -1337,7 +1273,6 @@ private:
 
         bool operator<(const ThreatTarget& other) const
         {
-
             return priority < other.priority;
         }
     };
@@ -1362,10 +1297,6 @@ private:
     uint32 _lastTaunt;
     ::std::priority_queue<ThreatTarget> _threatPriority;
     ::std::unordered_map<ObjectGuid, uint32> _sunderStacks;
-
-    // Stance management
-    WarriorAI::WarriorStance _currentStance;
-    WarriorAI::WarriorStance _preferredStance;
 };
 
 } // namespace Playerbot

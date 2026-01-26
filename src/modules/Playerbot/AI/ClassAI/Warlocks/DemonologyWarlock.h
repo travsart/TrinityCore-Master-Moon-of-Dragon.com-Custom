@@ -24,6 +24,7 @@
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
+#include "../SpellValidation_WoW112.h"
 
 namespace Playerbot
 {
@@ -42,65 +43,66 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // DEMONOLOGY WARLOCK SPELL IDs (WoW 11.2 - The War Within)
+// Central Registry: WoW112Spells::Warlock::Demonology in SpellValidation_WoW112_Part2.h
 // ============================================================================
 
 enum DemonologyWarlockSpells
 {
-    // Core Builders
-    HAND_OF_GULDAN           = 105174,  // 1 shard, summons Wild Imps
-    DEMONBOLT                = 264178,  // 2 shards, strong direct damage
-    SHADOW_BOLT_DEMO         = 686,     // Filler, generates shards
+    // Core Builders - WoW112Spells::Warlock::Demonology::
+    HAND_OF_GULDAN           = 105174,  // WoW112Spells::Warlock::Demonology::HAND_OF_GULDAN
+    DEMONBOLT                = 264178,  // WoW112Spells::Warlock::Demonology::DEMONBOLT
+    SHADOW_BOLT_DEMO         = 686,     // WoW112Spells::Warlock::SHADOW_BOLT (class-level)
 
-    // Demon Summoning
-    CALL_DREADSTALKERS       = 104316,  // 2 shards, 12 sec summon
-    SUMMON_VILEFIEND         = 264119,  // 1 shard, 15 sec summon (talent)
-    GRIMOIRE_FELGUARD        = 111898,  // 2 min CD, 17 sec summon (talent)
-    NETHER_PORTAL            = 267217,  // 3 min CD, demon portal (talent)
-    SUMMON_DEMONIC_TYRANT    = 265187,  // 1.5 min CD, extends demons + buffs
+    // Demon Summoning - WoW112Spells::Warlock::Demonology::
+    CALL_DREADSTALKERS       = 104316,  // WoW112Spells::Warlock::Demonology::CALL_DREADSTALKERS
+    SUMMON_VILEFIEND         = 264119,  // WoW112Spells::Warlock::Demonology::SUMMON_VILEFIEND
+    GRIMOIRE_FELGUARD        = 111898,  // WoW112Spells::Warlock::Demonology::GRIMOIRE_FELGUARD
+    NETHER_PORTAL            = 267217,  // WoW112Spells::Warlock::Demonology::NETHER_PORTAL
+    SUMMON_DEMONIC_TYRANT    = 265187,  // WoW112Spells::Warlock::Demonology::SUMMON_DEMONIC_TYRANT
 
-    // Permanent Pets
-    SUMMON_FELGUARD          = 30146,   // Main pet for Demonology
-    SUMMON_VOIDWALKER_DEMO   = 697,
-    SUMMON_IMP_DEMO          = 688,
-    COMMAND_DEMON_DEMO       = 119898,
+    // Permanent Pets - WoW112Spells::Warlock:: (class-level)
+    SUMMON_FELGUARD          = 30146,   // WoW112Spells::Warlock::SUMMON_FELGUARD
+    SUMMON_VOIDWALKER_DEMO   = 697,     // WoW112Spells::Warlock::SUMMON_VOIDWALKER
+    SUMMON_IMP_DEMO          = 688,     // WoW112Spells::Warlock::SUMMON_IMP
+    COMMAND_DEMON_DEMO       = 119898,  // WoW112Spells::Warlock::COMMAND_DEMON
 
-    // Direct Damage
-    IMPLOSION                = 196277,  // Explodes Wild Imps for AoE
-    DEMONFIRE                = 270569,  // DoT from Felguard (talent)
-    DOOM                     = 603,     // DoT, summons Doom Guard (talent)
+    // Direct Damage - WoW112Spells::Warlock::Demonology::
+    IMPLOSION                = 196277,  // WoW112Spells::Warlock::Demonology::IMPLOSION
+    DEMONFIRE                = 270569,  // WoW112Spells::Warlock::Demonology::DEMONFIRE
+    DOOM                     = 603,     // WoW112Spells::Warlock::Demonology::DOOM
 
-    // Buffs and Procs
-    DEMONIC_CORE             = 267102,  // Proc: free Demonbolt
-    DEMONIC_CALLING          = 205145,  // Proc: reduced Dreadstalkers cost
-    DEMONIC_STRENGTH         = 267171,  // Buff: empowers Felguard (talent)
-    POWER_SIPHON             = 264130,  // Sacrifice imps for Demonic Core (talent)
+    // Buffs and Procs - WoW112Spells::Warlock::Demonology::
+    DEMONIC_CORE             = 267102,  // WoW112Spells::Warlock::Demonology::DEMONIC_CORE
+    DEMONIC_CALLING          = 205145,  // WoW112Spells::Warlock::Demonology::DEMONIC_CALLING
+    DEMONIC_STRENGTH         = 267171,  // WoW112Spells::Warlock::Demonology::DEMONIC_STRENGTH
+    POWER_SIPHON             = 264130,  // WoW112Spells::Warlock::Demonology::POWER_SIPHON
 
-    // Major Cooldowns
-    SUMMON_DEMONIC_TYRANT_CD = 265187,  // 1.5 min CD, extends all demons
-    NETHER_PORTAL_CD         = 267217,  // 3 min CD, summons random demons
-    GUILLOTINE               = 386833,  // 45 sec CD, Felguard burst (talent)
+    // Major Cooldowns - WoW112Spells::Warlock::Demonology::
+    SUMMON_DEMONIC_TYRANT_CD = 265187,  // WoW112Spells::Warlock::Demonology::SUMMON_DEMONIC_TYRANT
+    NETHER_PORTAL_CD         = 267217,  // WoW112Spells::Warlock::Demonology::NETHER_PORTAL
+    GUILLOTINE               = 386833,  // WoW112Spells::Warlock::Demonology::GUILLOTINE
 
-    // Utility
-    SOUL_STRIKE              = 264057,  // Felguard charge (talent)
-    FEL_DOMINATION           = 333889,  // Instant summon
-    HEALTH_FUNNEL_DEMO       = 755,     // Heal pet
-    BANISH_DEMO              = 710,     // CC demons/elementals
-    FEAR_DEMO                = 5782,    // CC
-    MORTAL_COIL_DEMO         = 6789,    // Heal + fear (talent)
-    SHADOWFURY               = 30283,   // AoE stun (talent)
+    // Utility - WoW112Spells::Warlock::Demonology::
+    SOUL_STRIKE              = 264057,  // WoW112Spells::Warlock::Demonology::SOUL_STRIKE
+    FEL_DOMINATION           = 333889,  // WoW112Spells::Warlock::Demonology::FEL_DOMINATION
+    HEALTH_FUNNEL_DEMO       = 755,     // WoW112Spells::Warlock::HEALTH_FUNNEL (class-level)
+    BANISH_DEMO              = 710,     // WoW112Spells::Warlock::BANISH (class-level)
+    FEAR_DEMO                = 5782,    // WoW112Spells::Warlock::FEAR (class-level)
+    MORTAL_COIL_DEMO         = 6789,    // WoW112Spells::Warlock::MORTAL_COIL (class-level)
+    SHADOWFURY               = 30283,   // WoW112Spells::Warlock::SHADOWFURY (class-level)
 
-    // Defensives
-    UNENDING_RESOLVE_DEMO    = 104773,  // 3 min CD, damage reduction
-    DARK_PACT_DEMO           = 108416,  // 1 min CD, shield (talent)
-    DEMONIC_CIRCLE_TELEPORT_DEMO = 48020, // Teleport
-    DEMONIC_GATEWAY_DEMO     = 111771,  // Portal
-    BURNING_RUSH_DEMO        = 111400,  // Speed, drains health
+    // Defensives - WoW112Spells::Warlock:: (class-level)
+    UNENDING_RESOLVE_DEMO    = 104773,  // WoW112Spells::Warlock::UNENDING_RESOLVE
+    DARK_PACT_DEMO           = 108416,  // WoW112Spells::Warlock::Affliction::DARK_PACT
+    DEMONIC_CIRCLE_TELEPORT_DEMO = 48020, // WoW112Spells::Warlock::DEMONIC_CIRCLE_TELEPORT
+    DEMONIC_GATEWAY_DEMO     = 111771,  // WoW112Spells::Warlock::DEMONIC_GATEWAY
+    BURNING_RUSH_DEMO        = 111400,  // WoW112Spells::Warlock::BURNING_RUSH
 
-    // Talents
-    FROM_THE_SHADOWS         = 267170,  // Dreadstalkers buff
-    SOUL_CONDUIT_DEMO        = 215941,  // Chance to refund soul shards
-    INNER_DEMONS             = 267216,  // Random demon spawns
-    CARNIVOROUS_STALKERS     = 386194   // Dreadstalkers extend duration
+    // Talents - WoW112Spells::Warlock::Demonology::
+    FROM_THE_SHADOWS         = 267170,  // WoW112Spells::Warlock::Demonology::FROM_THE_SHADOWS
+    SOUL_CONDUIT_DEMO        = 215941,  // WoW112Spells::Warlock::Demonology::SOUL_CONDUIT
+    INNER_DEMONS             = 267216,  // WoW112Spells::Warlock::Demonology::INNER_DEMONS
+    CARNIVOROUS_STALKERS     = 386194   // WoW112Spells::Warlock::Demonology::CARNIVOROUS_STALKERS
 };
 
 // Dual resource type for Demonology Warlock

@@ -18,7 +18,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../CombatSpecializationTemplates.h"
+#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
 
 // Phase 5 Integration: Decision Systems
 #include "../../Decision/ActionPriorityQueue.h"
@@ -28,6 +28,50 @@
 namespace Playerbot
 {
 
+// ============================================================================
+// RETRIBUTION PALADIN SPELL ALIASES (WoW 11.2 - The War Within)
+// Consolidated spell IDs from central registry - NO duplicates
+// NOTE: Seals, Exorcism, Holy Wrath removed (don't exist in WoW 11.2)
+// ============================================================================
+
+namespace RetributionPaladinSpells
+{
+    // Holy Power Generators
+    constexpr uint32 SPELL_BLADE_OF_JUSTICE    = WoW112Spells::Paladin::Retribution::BLADE_OF_JUSTICE;
+    constexpr uint32 SPELL_CRUSADER_STRIKE     = WoW112Spells::Paladin::CRUSADER_STRIKE;
+    constexpr uint32 SPELL_JUDGMENT            = WoW112Spells::Paladin::JUDGMENT;
+    constexpr uint32 SPELL_WAKE_OF_ASHES       = WoW112Spells::Paladin::Retribution::WAKE_OF_ASHES;
+    constexpr uint32 SPELL_HAMMER_OF_WRATH     = WoW112Spells::Paladin::HAMMER_OF_WRATH;
+
+    // Holy Power Spenders
+    constexpr uint32 SPELL_TEMPLARS_VERDICT    = WoW112Spells::Paladin::Retribution::TEMPLARS_VERDICT;
+    constexpr uint32 SPELL_FINAL_VERDICT       = WoW112Spells::Paladin::Retribution::FINAL_VERDICT;
+    constexpr uint32 SPELL_DIVINE_STORM        = WoW112Spells::Paladin::Retribution::DIVINE_STORM;
+    constexpr uint32 SPELL_JUSTICARS_VENGEANCE = WoW112Spells::Paladin::Retribution::JUSTICARS_VENGEANCE;
+
+    // Cooldowns
+    constexpr uint32 SPELL_AVENGING_WRATH      = WoW112Spells::Paladin::AVENGING_WRATH;
+    constexpr uint32 SPELL_CRUSADE             = WoW112Spells::Paladin::Retribution::CRUSADE;
+    constexpr uint32 SPELL_EXECUTION_SENTENCE  = WoW112Spells::Paladin::Retribution::EXECUTION_SENTENCE;
+    constexpr uint32 SPELL_FINAL_RECKONING     = WoW112Spells::Paladin::Retribution::FINAL_RECKONING;
+    constexpr uint32 SPELL_SHIELD_OF_VENGEANCE = WoW112Spells::Paladin::Retribution::SHIELD_OF_VENGEANCE;
+
+    // Utility
+    constexpr uint32 SPELL_CONSECRATION        = WoW112Spells::Paladin::CONSECRATION;
+    constexpr uint32 SPELL_HAMMER_OF_JUSTICE   = WoW112Spells::Paladin::HAMMER_OF_JUSTICE;
+    constexpr uint32 SPELL_REBUKE              = WoW112Spells::Paladin::REBUKE;
+    constexpr uint32 SPELL_BLESSING_OF_FREEDOM = WoW112Spells::Paladin::BLESSING_OF_FREEDOM;
+    constexpr uint32 SPELL_DIVINE_SHIELD       = WoW112Spells::Paladin::DIVINE_SHIELD;
+
+    // Auras
+    constexpr uint32 SPELL_RETRIBUTION_AURA    = WoW112Spells::Paladin::RETRIBUTION_AURA;
+
+    // Procs
+    constexpr uint32 SPELL_ART_OF_WAR          = WoW112Spells::Paladin::Retribution::ART_OF_WAR;
+    constexpr uint32 SPELL_DIVINE_PURPOSE      = WoW112Spells::Paladin::Retribution::DIVINE_PURPOSE_RET;
+    constexpr uint32 SPELL_BLADE_OF_WRATH      = WoW112Spells::Paladin::Retribution::BLADE_OF_WRATH;
+}
+using namespace RetributionPaladinSpells;
 
 // Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
 using bot::ai::Sequence;
@@ -64,7 +108,6 @@ public:
         , _holyPower()
         , _hasArtOfWar(false)
         , _hasDivinePurpose(false)
-        , _sealTwistWindow(0)
         , _cooldowns()
     {
         // Register cooldowns for major abilities
@@ -102,18 +145,13 @@ public:
     {
         Player* bot = this->GetBot();
 
-        // Maintain Retribution Aura
+        // Maintain Retribution Aura (WoW 11.2)
         if (!bot->HasAura(SPELL_RETRIBUTION_AURA))
         {
             this->CastSpell(SPELL_RETRIBUTION_AURA, bot);
         }
 
-        // Maintain Seal of Truth for single target
-        if (!bot->HasAura(SPELL_SEAL_OF_TRUTH))
-        {
-            this->CastSpell(SPELL_SEAL_OF_TRUTH, bot);
-        }
-
+        // Note: Seals removed in WoW 7.0 (Legion) - no longer exist
         // Blessings handled by group coordination
     }
 
@@ -123,14 +161,15 @@ protected:
     // ========================================================================
 
     /**
-     * Execute abilities based on priority system
+     * Execute abilities based on priority system (WoW 11.2)
      */
     void ExecutePriorityRotation(::Unit* target)
     {
-        // Hammer of Wrath (Execute phase)
+        // Hammer of Wrath (Execute phase or during Avenging Wrath)
         if (target->GetHealthPct() < 20.0f && this->CanUseAbility(SPELL_HAMMER_OF_WRATH))
         {
             this->CastSpell(SPELL_HAMMER_OF_WRATH, target);
+            _holyPower.Generate(1);
             return;
         }
 
@@ -153,26 +192,36 @@ protected:
             }
         }
 
-        // Crusader Strike - Primary Holy Power generator
-        if (this->CanUseAbility(SPELL_CRUSADER_STRIKE))
+        // Blade of Justice - Primary Holy Power generator (WoW 11.2)
+        if (this->CanUseAbility(SPELL_BLADE_OF_JUSTICE))
         {
-            this->CastSpell(SPELL_CRUSADER_STRIKE, target);
-            _holyPower.Generate(1);
+            this->CastSpell(SPELL_BLADE_OF_JUSTICE, target);
+            _holyPower.Generate(2);  // Blade of Justice generates 2 HP
             return;
         }
 
-        // Exorcism with Art of War proc
-        if (_hasArtOfWar && this->CanUseAbility(SPELL_EXORCISM))
+        // Wake of Ashes - AoE HP generator (WoW 11.2)
+        if (_hasArtOfWar && this->CanUseAbility(SPELL_WAKE_OF_ASHES))
         {
-            this->CastSpell(SPELL_EXORCISM, target);
+            this->CastSpell(SPELL_WAKE_OF_ASHES, this->GetBot());
+            _holyPower.Generate(3);  // Wake of Ashes generates 3 HP
             _hasArtOfWar = false;
             return;
         }
 
-        // Judgment
+        // Judgment - Secondary HP generator
         if (this->CanUseAbility(SPELL_JUDGMENT))
         {
             this->CastSpell(SPELL_JUDGMENT, target);
+            _holyPower.Generate(1);
+            return;
+        }
+
+        // Crusader Strike - Filler HP generator
+        if (this->CanUseAbility(SPELL_CRUSADER_STRIKE))
+        {
+            this->CastSpell(SPELL_CRUSADER_STRIKE, target);
+            _holyPower.Generate(1);
             return;
         }
 
@@ -182,54 +231,29 @@ protected:
             this->CastSpell(SPELL_CONSECRATION, this->GetBot());
             return;
         }
-
-        // Holy Wrath for burst
-        if (ShouldUseCooldowns(target) && this->CanUseAbility(SPELL_HOLY_WRATH))
-        {
-            this->CastSpell(SPELL_HOLY_WRATH, target);
-            return;
-        }
     }
 
     /**
-     * Check for Retribution-specific procs
+     * Check for Retribution-specific procs (WoW 11.2)
      */
     void CheckForProcs()
     {
         Player* bot = this->GetBot();
 
-        // Art of War proc (instant Exorcism)
-        _hasArtOfWar = bot->HasAura(SPELL_ART_OF_WAR_PROC);
+        // Art of War proc (resets Blade of Justice cooldown)
+        _hasArtOfWar = bot->HasAura(SPELL_ART_OF_WAR);
 
         // Divine Purpose proc (free 3 Holy Power ability)
-        _hasDivinePurpose = bot->HasAura(SPELL_DIVINE_PURPOSE_PROC);
+        _hasDivinePurpose = bot->HasAura(SPELL_DIVINE_PURPOSE);
     }
 
     /**
-     * Advanced seal twisting for extra DPS
+     * NOTE: Seal twisting removed - Seals don't exist in WoW 11.2 (removed in Legion 7.0)
+     * This function is kept as a stub for API compatibility.
      */
     void UpdateSealTwisting()
     {
-        uint32 currentTime = GameTime::GetGameTimeMS();
-
-        // Twist between Seal of Truth and Seal of Righteousness
-        if (currentTime > _sealTwistWindow)
-        {
-            Player* bot = this->GetBot();
-
-            if (bot->HasAura(SPELL_SEAL_OF_TRUTH))
-            {
-                // Quick swap to Righteousness for instant damage
-                this->CastSpell(SPELL_SEAL_OF_RIGHTEOUSNESS, bot);
-                _sealTwistWindow = currentTime + 100; // Very brief window
-            }
-            else
-            {
-                // Back to Truth for DoT
-                this->CastSpell(SPELL_SEAL_OF_TRUTH, bot);
-                _sealTwistWindow = currentTime + 10000; // 10 seconds
-            }
-        }
+        // No-op: Seals were removed from WoW in Legion 7.0
     }
 
     /**     * Determine if we should use offensive cooldowns
@@ -246,18 +270,25 @@ protected:
 
     void OnCombatStartSpecific(::Unit* target) override
     {
-        // Pop offensive cooldowns at start for burst
+        // Pop offensive cooldowns at start for burst (WoW 11.2)
         if (ShouldUseCooldowns(target))
         {
             Player* bot = this->GetBot();
-            if (this->CanUseAbility(SPELL_AVENGING_WRATH))
+
+            // Avenging Wrath or Crusade (talent replacement)
+            if (this->CanUseAbility(SPELL_CRUSADE))
+            {
+                this->CastSpell(SPELL_CRUSADE, bot);
+            }
+            else if (this->CanUseAbility(SPELL_AVENGING_WRATH))
             {
                 this->CastSpell(SPELL_AVENGING_WRATH, bot);
             }
 
-            if (this->CanUseAbility(SPELL_GUARDIAN_OF_ANCIENT_KINGS))
+            // Shield of Vengeance (Retribution defensive, replaces Guardian)
+            if (this->CanUseAbility(SPELL_SHIELD_OF_VENGEANCE))
             {
-                this->CastSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS, bot);
+                this->CastSpell(SPELL_SHIELD_OF_VENGEANCE, bot);
             }
         }
 
@@ -312,6 +343,16 @@ protected:
             // ====================================================================
             // HIGH TIER - Holy Power generators and execute
             // ====================================================================
+            queue->RegisterSpell(SPELL_BLADE_OF_JUSTICE,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_BLADE_OF_JUSTICE,
+                [this](Player* bot, Unit*) {
+                    // Primary HP generator (generates 2 HP)
+                    return this->_holyPower.GetAvailable() < 4;
+                },
+                "HP < 4 (primary HP generation)");
+
             queue->RegisterSpell(SPELL_CRUSADER_STRIKE,
                 SpellPriority::HIGH,
                 SpellCategory::DAMAGE_SINGLE);
@@ -332,15 +373,15 @@ protected:
                 },
                 "Target < 20% (execute phase)");
 
-            queue->RegisterSpell(SPELL_EXORCISM,
+            queue->RegisterSpell(SPELL_WAKE_OF_ASHES,
                 SpellPriority::HIGH,
-                SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(SPELL_EXORCISM,
+                SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_WAKE_OF_ASHES,
                 [this](Player* bot, Unit*) {
-                    // Use with Art of War proc
-                    return this->_hasArtOfWar;
+                    // AoE HP generator (generates 3 HP)
+                    return this->_holyPower.GetAvailable() < 3;
                 },
-                "Art of War proc active");
+                "HP < 3 (burst HP generation)");
 
             // ====================================================================
             // MEDIUM TIER - Standard rotation
@@ -370,23 +411,39 @@ protected:
                 },
                 "Boss or 3+ enemies (burst)");
 
-            queue->RegisterSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS,
+            queue->RegisterSpell(SPELL_CRUSADE,
                 SpellPriority::MEDIUM,
                 SpellCategory::OFFENSIVE);
-            queue->AddCondition(SPELL_GUARDIAN_OF_ANCIENT_KINGS,
+            queue->AddCondition(SPELL_CRUSADE,
                 [](Player* bot, Unit* target) {
-                    // Offensive cooldown for burst
+                    // Talent replacement for Avenging Wrath
                     return (target && target->GetMaxHealth() > 500000) ||
                            bot->getAttackers().size() >= 3;
                 },
-                "Boss or 3+ enemies");
+                "Boss or 3+ enemies (talent burst)");
+
+            queue->RegisterSpell(SPELL_SHIELD_OF_VENGEANCE,
+                SpellPriority::MEDIUM,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_SHIELD_OF_VENGEANCE,
+                [](Player* bot, Unit*) {
+                    // Absorb shield + damage
+                    return bot->GetHealthPct() < 80.0f;
+                },
+                "HP < 80% (absorb + damage)");
 
             // ====================================================================
-            // LOW TIER - Fillers
+            // LOW TIER - Fillers and Utility
             // ====================================================================
-            queue->RegisterSpell(SPELL_HOLY_WRATH,
+            queue->RegisterSpell(SPELL_FINAL_RECKONING,
                 SpellPriority::LOW,
                 SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_FINAL_RECKONING,
+                [](Player* bot, Unit*) {
+                    // AoE burst cooldown
+                    return bot->getAttackers().size() >= 2;
+                },
+                "2+ enemies (AoE burst)");
 
             TC_LOG_INFO("module.playerbot", "  RETRIBUTION PALADIN: Registered {} spells in ActionPriorityQueue",
                 queue->GetSpellCount());
@@ -469,13 +526,38 @@ protected:
                                 })
                             })
                         }),
-                        // Generate HP
+                        // Generate HP (WoW 11.2)
                         Sequence("Generate Holy Power", {
                             Condition("HP < 5", [this](Player* bot, Unit*) {
                                 return this->_holyPower.GetAvailable() < 5;
                             }),
                             Selector("HP Generator Priority", {
-                                // Crusader Strike
+                                // Blade of Justice (primary generator, 2 HP)
+                                bot::ai::Action("Cast Blade of Justice", [this](Player* bot, Unit* target) {
+                                    if (this->CanCastSpell(SPELL_BLADE_OF_JUSTICE, target))
+                                    {
+                                        this->CastSpell(SPELL_BLADE_OF_JUSTICE, target);
+                                        this->_holyPower.Generate(2);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                }),
+                                // Wake of Ashes (AoE generator, 3 HP)
+                                Sequence("Wake of Ashes", {
+                                    Condition("HP < 3", [this](Player* bot, Unit*) {
+                                        return this->_holyPower.GetAvailable() < 3;
+                                    }),
+                                    bot::ai::Action("Cast Wake of Ashes", [this](Player* bot, Unit*) {
+                                        if (this->CanCastSpell(SPELL_WAKE_OF_ASHES, bot))
+                                        {
+                                            this->CastSpell(SPELL_WAKE_OF_ASHES, bot);
+                                            this->_holyPower.Generate(3);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                        return NodeStatus::FAILURE;
+                                    })
+                                }),
+                                // Crusader Strike (filler generator)
                                 bot::ai::Action("Cast Crusader Strike", [this](Player* bot, Unit* target) {
                                     if (this->CanCastSpell(SPELL_CRUSADER_STRIKE, target))
                                     {
@@ -484,21 +566,6 @@ protected:
                                         return NodeStatus::SUCCESS;
                                     }
                                     return NodeStatus::FAILURE;
-                                }),
-                                // Exorcism with Art of War proc
-                                Sequence("Exorcism on Proc", {
-                                    Condition("Has Art of War proc", [this](Player* bot, Unit*) {
-                                        return this->_hasArtOfWar;
-                                    }),
-                                    bot::ai::Action("Cast Exorcism", [this](Player* bot, Unit* target) {
-                                        if (this->CanCastSpell(SPELL_EXORCISM, target))
-                                        {
-                                            this->CastSpell(SPELL_EXORCISM, target);
-                                            this->_hasArtOfWar = false;
-                                            return NodeStatus::SUCCESS;
-                                        }
-                                        return NodeStatus::FAILURE;
-                                    })
                                 })
                             })
                         })
@@ -506,14 +573,23 @@ protected:
                 }),
 
                 // ================================================================
-                // TIER 3: COOLDOWN USAGE
+                // TIER 3: COOLDOWN USAGE (WoW 11.2)
                 // ================================================================
                 Sequence("Use Cooldowns", {
                     Condition("Boss or pack", [this](Player* bot, Unit* target) {
                         return this->ShouldUseCooldowns(target);
                     }),
                     Selector("Cooldown Priority", {
-                        // Avenging Wrath
+                        // Crusade (talent, replaces Avenging Wrath)
+                        bot::ai::Action("Cast Crusade", [this](Player* bot, Unit*) {
+                            if (this->CanCastSpell(SPELL_CRUSADE, bot))
+                            {
+                                this->CastSpell(SPELL_CRUSADE, bot);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Avenging Wrath (baseline)
                         bot::ai::Action("Cast Avenging Wrath", [this](Player* bot, Unit*) {
                             if (this->CanCastSpell(SPELL_AVENGING_WRATH, bot))
                             {
@@ -522,11 +598,11 @@ protected:
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        // Guardian of Ancient Kings
-                        bot::ai::Action("Cast Guardian", [this](Player* bot, Unit*) {
-                            if (this->CanCastSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS, bot))
+                        // Shield of Vengeance (Retribution defensive)
+                        bot::ai::Action("Cast Shield of Vengeance", [this](Player* bot, Unit*) {
+                            if (this->CanCastSpell(SPELL_SHIELD_OF_VENGEANCE, bot))
                             {
-                                this->CastSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS, bot);
+                                this->CastSpell(SPELL_SHIELD_OF_VENGEANCE, bot);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -535,15 +611,16 @@ protected:
                 }),
 
                 // ================================================================
-                // TIER 4: STANDARD DPS ROTATION
+                // TIER 4: STANDARD DPS ROTATION (WoW 11.2)
                 // ================================================================
                 Sequence("Standard Rotation", {
                     Selector("Rotation Priority", {
-                        // Judgment
+                        // Judgment (HP generator)
                         bot::ai::Action("Cast Judgment", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_JUDGMENT, target))
                             {
                                 this->CastSpell(SPELL_JUDGMENT, target);
+                                this->_holyPower.Generate(1);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -564,14 +641,19 @@ protected:
                             })
                         }),
 
-                        // Holy Wrath filler
-                        bot::ai::Action("Cast Holy Wrath", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(SPELL_HOLY_WRATH, target))
-                            {
-                                this->CastSpell(SPELL_HOLY_WRATH, target);
-                                return NodeStatus::SUCCESS;
-                            }
-                            return NodeStatus::FAILURE;
+                        // Final Reckoning (AoE burst talent)
+                        Sequence("Final Reckoning", {
+                            Condition("2+ enemies", [](Player* bot, Unit*) {
+                                return bot->getAttackers().size() >= 2;
+                            }),
+                            bot::ai::Action("Cast Final Reckoning", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(SPELL_FINAL_RECKONING, target))
+                                {
+                                    this->CastSpell(SPELL_FINAL_RECKONING, target);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
                         })
                     })
                 })
@@ -585,36 +667,9 @@ protected:
 private:
     CooldownManager _cooldowns;
     // ========================================================================
-    // SPELL IDS
+    // SPELL IDs now defined in RetributionPaladinSpells namespace above
+    // Legacy spells removed: Seals, Exorcism, Holy Wrath (don't exist in WoW 11.2)
     // ========================================================================
-
-    enum RetributionSpells
-    {
-        // Seals
-        SPELL_SEAL_OF_TRUTH         = 31801,
-        SPELL_SEAL_OF_RIGHTEOUSNESS = 21084,
-
-        // Auras
-        SPELL_RETRIBUTION_AURA      = 7294,
-
-        // Core Abilities
-        SPELL_CRUSADER_STRIKE       = 35395,
-        SPELL_TEMPLARS_VERDICT      = 85256,
-        SPELL_DIVINE_STORM          = 53385,
-        SPELL_HAMMER_OF_WRATH       = 24275,
-        SPELL_EXORCISM              = 879,
-        SPELL_JUDGMENT              = 20271,
-        SPELL_CONSECRATION          = 26573,
-        SPELL_HOLY_WRATH            = 2812,
-
-        // Cooldowns
-        SPELL_AVENGING_WRATH        = 31884,
-        SPELL_GUARDIAN_OF_ANCIENT_KINGS = 86150,
-
-        // Procs
-        SPELL_ART_OF_WAR_PROC       = 59578,
-        SPELL_DIVINE_PURPOSE_PROC   = 90174,
-    };
 
     // ========================================================================
     // MEMBER VARIABLES
@@ -626,9 +681,6 @@ private:
     // Proc tracking
     bool _hasArtOfWar;
     bool _hasDivinePurpose;
-
-    // Seal twisting
-    uint32 _sealTwistWindow;
 };
 
 } // namespace Playerbot
