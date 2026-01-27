@@ -130,7 +130,7 @@ private:
 
     // Core coordination data
     ::std::unordered_map<uint32, InstanceProgress> _instanceProgress; // groupId -> progress
-    ::std::unordered_map<uint32, CoordinationMetrics> _groupMetrics;
+    ::std::unordered_map<uint32, AtomicCoordinationMetrics> _groupMetrics;
     ::std::unordered_map<uint32, ::std::vector<Position>> _groupRoutes; // groupId -> waypoints
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _coordinationMutex;
 
@@ -163,6 +163,9 @@ private:
         bool requiresConsensus;
         uint32 coordinationLevel;
 
+        CoordinationState() : groupId(0), lastCoordinationTime(0)
+            , requiresConsensus(false), coordinationLevel(2) {}
+
         CoordinationState(uint32 gId) : groupId(gId), lastCoordinationTime(GameTime::GetGameTimeMS())
             , requiresConsensus(false), coordinationLevel(2) {}
     };
@@ -186,7 +189,7 @@ private:
     ::std::unordered_map<uint32, ResourceCoordination> _resourceCoordination; // groupId -> resources
 
     // Performance tracking
-    CoordinationMetrics _globalMetrics;
+    AtomicCoordinationMetrics _globalMetrics;
 
     // Helper functions
     void UpdateGroupFormation(Group* group);

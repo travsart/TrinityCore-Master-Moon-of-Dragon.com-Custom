@@ -20,8 +20,8 @@
 
 namespace Playerbot
 {
-    // Forward declarations
-    enum class FormationType : uint8;  // Defined in AI/Combat/FormationManager.h
+    // Forward declarations - MovementFormationType defined in Core/DI/Interfaces/IUnifiedMovementCoordinator.h
+    // FormationType from GroupFormation.h is a different enum with different values
 
     // Type aliases for path representations
     using PositionVector = ::std::vector<Position>;

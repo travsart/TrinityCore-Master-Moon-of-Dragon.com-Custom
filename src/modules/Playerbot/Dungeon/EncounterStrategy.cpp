@@ -22,14 +22,17 @@
 #include "SpellMgr.h"
 #include "MotionMaster.h"
 #include "Spell.h"
+#include "SpellAuras.h"  // For Aura and AuraApplication
 #include "DynamicObject.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "Cell.h"
 #include "CellImpl.h"
+#include "DBCEnums.h"  // For ChrSpecialization
 #include <algorithm>
 #include <cmath>
-#include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Spatial/SpatialGridManager.h"
+#include "../Spatial/DoubleBufferedSpatialGrid.h"
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../AI/BotAI.h"
@@ -37,6 +40,57 @@
 
 namespace Playerbot
 {
+
+// ============================================================================
+// SPECIALIZATION HELPERS
+// ============================================================================
+
+/**
+ * Checks if a player has a tank specialization.
+ */
+static bool IsTankSpec(Player* player)
+{
+    if (!player)
+        return false;
+
+    ChrSpecialization spec = player->GetPrimarySpecialization();
+    switch (spec)
+    {
+        case ChrSpecialization::WarriorProtection:
+        case ChrSpecialization::PaladinProtection:
+        case ChrSpecialization::DeathKnightBlood:
+        case ChrSpecialization::DruidGuardian:
+        case ChrSpecialization::MonkBrewmaster:
+        case ChrSpecialization::DemonHunterVengeance:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+ * Checks if a player has a healer specialization.
+ */
+static bool IsHealerSpec(Player* player)
+{
+    if (!player)
+        return false;
+
+    ChrSpecialization spec = player->GetPrimarySpecialization();
+    switch (spec)
+    {
+        case ChrSpecialization::PriestDiscipline:
+        case ChrSpecialization::PriestHoly:
+        case ChrSpecialization::PaladinHoly:
+        case ChrSpecialization::DruidRestoration:
+        case ChrSpecialization::ShamanRestoration:
+        case ChrSpecialization::MonkMistweaver:
+        case ChrSpecialization::EvokerPreservation:
+            return true;
+        default:
+            return false;
+    }
+}
 
 // Singleton instance
 EncounterStrategy* EncounterStrategy::instance()
@@ -67,12 +121,10 @@ void EncounterStrategy::ExecuteEncounterStrategy(Group* group, uint32 encounterI
     TC_LOG_INFO("module.playerbot", "Executing encounter strategy for encounter {} (group {})",
         encounterId, group->GetGUID().GetCounter());
 
-    // Update metrics
-    if (_encounterMetrics.find(encounterId) == _encounterMetrics.end())
-    {
-        _encounterMetrics[encounterId] = StrategyMetrics();
-    }
-    _encounterMetrics[encounterId].strategiesExecuted++;
+    // Update metrics - use emplace to default-construct if not present
+    auto [iter, inserted] = _encounterMetrics.emplace(std::piecewise_construct,
+        std::forward_as_tuple(encounterId), std::forward_as_tuple());
+    iter->second.strategiesExecuted++;
     _globalMetrics.strategiesExecuted++;
 
     // Get dungeon encounter data
@@ -357,7 +409,7 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
         if (distance < radius)
         {
             // Calculate safe position away from danger
-            float angle = dangerZone.GetAngle(player) + static_cast<float>(M_PI); // Opposite direction
+            float angle = dangerZone.GetAbsoluteAngle(player) + static_cast<float>(M_PI); // Opposite direction
             Position safePos = dangerZone;
             safePos.RelocateOffset({::std::cos(angle) * (radius + 5.0f), ::std::sin(angle) * (radius + 5.0f), 0.0f});
 
@@ -432,7 +484,7 @@ void EncounterStrategy::HandleEnrageMechanic(Group* group, Unit* boss, uint32 ti
 // ROLE-SPECIFIC STRATEGIES
 // ============================================================================
 
-EncounterStrategy::TankStrategy EncounterStrategy::GetTankStrategy(uint32 encounterId, Player* tank)
+TankStrategy EncounterStrategy::GetTankStrategy(uint32 encounterId, Player* tank)
 {
     ::std::lock_guard lock(_strategyMutex);
 
@@ -448,7 +500,8 @@ EncounterStrategy::TankStrategy EncounterStrategy::GetTankStrategy(uint32 encoun
 
     return defaultStrategy;
 }
-EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 encounterId, Player* healer)
+
+HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 encounterId, Player* healer)
 {
     ::std::lock_guard lock(_strategyMutex);
     auto itr = _healerStrategies.find(encounterId);
@@ -464,7 +517,7 @@ EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 en
     return defaultStrategy;
 }
 
-EncounterStrategy::DpsStrategy EncounterStrategy::GetDpsStrategy(uint32 encounterId, Player* dps)
+DpsStrategy EncounterStrategy::GetDpsStrategy(uint32 encounterId, Player* dps)
 {
     ::std::lock_guard lock(_strategyMutex);
 
@@ -585,7 +638,7 @@ void EncounterStrategy::AvoidMechanicAreas(Group* group, const ::std::vector<Pos
             if (distance < 10.0f)
             {
                 // Move away from danger
-                float angle = dangerZone.GetAngle(player) + static_cast<float>(M_PI);
+                float angle = dangerZone.GetAbsoluteAngle(player) + static_cast<float>(M_PI);
                 Position safePos = dangerZone;
                 safePos.RelocateOffset({::std::cos(angle) * 15.0f, ::std::sin(angle) * 15.0f, 0.0f});
 
@@ -806,20 +859,42 @@ void EncounterStrategy::ExecuteRazorfenKraulStrategies(Group* group, uint32 enco
 // PERFORMANCE METRICS
 // ============================================================================
 
-EncounterStrategy::StrategyMetrics EncounterStrategy::GetStrategyMetrics(uint32 encounterId)
+StrategyMetrics EncounterStrategy::GetStrategyMetrics(uint32 encounterId)
 {
     ::std::lock_guard lock(_strategyMutex);
 
     auto itr = _encounterMetrics.find(encounterId);
     if (itr != _encounterMetrics.end())
-        return itr->second;
+        return itr->second.ToSnapshot();
 
-    return StrategyMetrics();
+    return StrategyMetrics();  // Return default snapshot
 }
 
-EncounterStrategy::StrategyMetrics EncounterStrategy::GetGlobalStrategyMetrics()
+StrategyMetrics EncounterStrategy::GetGlobalStrategyMetrics()
 {
-    return _globalMetrics;
+    return _globalMetrics.ToSnapshot();
+}
+
+void EncounterStrategy::SetStrategyComplexity(uint32 encounterId, float complexity)
+{
+    ::std::lock_guard lock(_strategyMutex);
+
+    // Clamp complexity to valid range
+    float clampedComplexity = ::std::max(0.0f, ::std::min(1.0f, complexity));
+
+    TC_LOG_DEBUG("module.playerbot", "Setting strategy complexity for encounter {} to {}",
+        encounterId, clampedComplexity);
+
+    // Store per-encounter complexity if needed, otherwise just update global
+    _strategyComplexity = clampedComplexity;
+}
+
+void EncounterStrategy::CoordinateCooldowns(Group* group, uint32 encounterId)
+{
+    if (!group)
+        return;
+
+    CoordinateGroupCooldowns(group, encounterId);
 }
 
 // ============================================================================
@@ -1140,27 +1215,47 @@ DungeonRole EncounterStrategy::DeterminePlayerRole(Player* player)
     if (!player)
         return DungeonRole::MELEE_DPS;
 
+    // Check for tank or healer specializations first
+    if (IsTankSpec(player))
+        return DungeonRole::TANK;
+
+    if (IsHealerSpec(player))
+        return DungeonRole::HEALER;
+
+    // For DPS, determine ranged vs melee based on class and specialization
     switch (player->GetClass())
     {
-        case CLASS_WARRIOR:
-        case CLASS_PALADIN:
-        case CLASS_DEATH_KNIGHT:
-        case CLASS_DRUID:
-        case CLASS_MONK:
-            return player->GetPrimarySpecialization() == 0 ? DungeonRole::TANK : DungeonRole::MELEE_DPS;
-
-        case CLASS_PRIEST:
-        case CLASS_SHAMAN:
-            return player->GetPrimarySpecialization() == 2 ? DungeonRole::HEALER : DungeonRole::RANGED_DPS;
-
+        // Ranged DPS classes
         case CLASS_HUNTER:
         case CLASS_MAGE:
         case CLASS_WARLOCK:
+        case CLASS_EVOKER:
             return DungeonRole::RANGED_DPS;
 
-        case CLASS_ROGUE:
+        // Hybrid classes - check specialization for ranged vs melee
+        case CLASS_PRIEST:
+        case CLASS_SHAMAN:
+        case CLASS_DRUID:
+        {
+            ChrSpecialization spec = player->GetPrimarySpecialization();
+            // Ranged DPS specs
+            if (spec == ChrSpecialization::PriestShadow ||
+                spec == ChrSpecialization::ShamanElemental ||
+                spec == ChrSpecialization::DruidBalance)
+            {
+                return DungeonRole::RANGED_DPS;
+            }
+            // Feral druid and Enhancement shaman are melee
             return DungeonRole::MELEE_DPS;
+        }
 
+        // Melee DPS classes
+        case CLASS_WARRIOR:
+        case CLASS_PALADIN:
+        case CLASS_DEATH_KNIGHT:
+        case CLASS_ROGUE:
+        case CLASS_MONK:
+        case CLASS_DEMON_HUNTER:
         default:
             return DungeonRole::MELEE_DPS;
     }
@@ -1191,8 +1286,7 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
 
     // Highest priority: Healing spells
     if (spellInfo->HasEffect(SPELL_EFFECT_HEAL) ||
-        spellInfo->HasEffect(SPELL_EFFECT_HEAL_PCT) ||
-        spellInfo->HasAttribute(SPELL_ATTR0_CU_IS_HEALING_SPELL))
+        spellInfo->HasEffect(SPELL_EFFECT_HEAL_PCT))
     {
         interruptPriority = 100;
     }
@@ -1254,41 +1348,29 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
     if (!player || !boss)
         return;
 
-    // Find dangerous ground effects near player
-    ::std::list<::DynamicObject*> dynamicObjects;
-    Trinity::AllWorldObjectsInRange check(player, 15.0f);
-    Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
-    // DEADLOCK FIX: Spatial grid replaces Cell::Visit
+    // Find dangerous ground effects near player using spatial grid
+    Map* map = player->GetMap();
+    if (!map)
+        return;
+
+    // Use lock-free spatial grid to avoid deadlocks
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
-        Map* cellVisitMap = player->GetMap();
-        if (!cellVisitMap)
-            return;
-
-        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
-        if (!spatialGrid)
-        {
-            sSpatialGridManager.CreateGrid(cellVisitMap);
-            spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
-        }
-
-        if (spatialGrid)
-        {
-// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
-                player->GetPosition(), 15.0f);
-
-            for (ObjectGuid guid : nearbyGuids)
-            {
-                DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, guid);
-                if (dynObj)
-                {
-                    // Original logic from searcher
-                }
-            }
-        }
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
     }
 
-    for (::DynamicObject* dynObj : dynamicObjects)
+    if (!spatialGrid)
+        return;
+
+    // Query nearby dynamic objects using snapshot query
+    auto dynamicObjSnapshots = spatialGrid->QueryNearbyDynamicObjects(
+        player->GetPosition(), 15.0f);
+
+    for (auto const& snapshot : dynamicObjSnapshots)
     {
+        DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, snapshot.guid);
         if (!dynObj || dynObj->GetCaster() != boss)
             continue;
 
@@ -1307,7 +1389,7 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
             if (distance < 5.0f)
             {
                 // Move away from ground effect
-                float angle = dynObj->GetAngle(player); // Direction away from effect
+                float angle = dynObj->GetAbsoluteAngle(player); // Direction away from effect
                 float x = player->GetPositionX() + 10.0f * ::std::cos(angle);
                 float y = player->GetPositionY() + 10.0f * ::std::sin(angle);
                 float z = player->GetPositionZ();
@@ -1349,42 +1431,62 @@ void EncounterStrategy::HandleGenericAddPriority(::Player* player, ::Creature* b
     if (!player || !boss)
         return;
 
-    // Find all creatures in combat within 50 yards
-    ::std::list<::Creature*> creatures;
-    Trinity::AllWorldObjectsInRange check(player, 50.0f);
-    Trinity::CreatureListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, creatures, check);
-    
+    // ENTERPRISE: Use lock-free spatial grid for thread-safe creature queries
+    Map* map = player->GetMap();
+    if (!map)
+        return;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return;
+    }
+
+    // Query nearby creatures using immutable snapshots (lock-free!)
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(player->GetPosition(), 50.0f);
 
     ::Creature* highestPriorityAdd = nullptr;
     uint32 highestPriority = 0;
 
-    for (::Creature* creature : creatures)
+    for (auto const& snapshot : creatureSnapshots)
     {
-        if (creature == boss || !creature->IsInCombat() || !creature->IsHostileTo(player) || creature->IsDead())
+        // Filter using snapshot data - no ObjectAccessor calls needed for filtering!
+        if (snapshot.guid == boss->GetGUID())
             continue;
+
+        if (!snapshot.isInCombat || !snapshot.IsAlive() || !snapshot.isHostile)
+            continue;
+
         uint32 priority = 50; // Base priority
 
-        // Healers get highest priority
-    if (creature->GetCreatureTemplate()->trainer_type == TRAINER_TYPE_CLASS)
-            priority += 100;
-
-        // Casters get medium-high priority
-    if (creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
-            priority += 50;
+        // Casters (healers and mages) get highest priority
+        // For NPCs: PALADIN (2) = support/healer type, MAGE (8) = caster type
+        uint8 unitClass = snapshot.classId;
+        if (unitClass == UNIT_CLASS_PALADIN)
+            priority += 100;  // Potential healers/support
+        else if (unitClass == UNIT_CLASS_MAGE)
+            priority += 75;   // Ranged casters
 
         // Low health gets bonus priority
-    if (creature->GetHealthPct() < 30)
+        if (snapshot.GetHealthPercent() < 30)
             priority += 30;
 
         // Closest gets slight bonus
-        float distance = player->GetExactDist(creature);
+        float distance = player->GetExactDist(snapshot.position);
         if (distance < 10.0f)
             priority += 10;
 
         if (priority > highestPriority)
         {
-            highestPriority = priority;
-            highestPriorityAdd = creature;
+            // Only get actual Creature* for the best priority candidate
+            if (Creature* creature = ObjectAccessor::GetCreature(*player, snapshot.guid))
+            {
+                highestPriority = priority;
+                highestPriorityAdd = creature;
+            }
         }
     }
 
@@ -1429,7 +1531,7 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
 
         case DungeonRole::RANGED_DPS:
             // Ranged: 20-30 yards away
-            angle = player->GetAngle(boss);
+            angle = player->GetAbsoluteAngle(boss);
             distance = 25.0f;
             targetPos = boss->GetPosition();
             targetPos.RelocateOffset({::std::cos(angle) * distance, ::std::sin(angle) * distance, 0.0f});
@@ -1437,7 +1539,7 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
 
         case DungeonRole::HEALER:
             // Healer: 15-20 yards away (safe distance)
-            angle = player->GetAngle(boss);
+            angle = player->GetAbsoluteAngle(boss);
             distance = 18.0f;
             targetPos = boss->GetPosition();
             targetPos.RelocateOffset({::std::cos(angle) * distance, ::std::sin(angle) * distance, 0.0f});
@@ -1518,7 +1620,7 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
     for (auto const& member : group->GetMemberSlots())
     {
         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-        if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+        if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
             continue;
 
         // Check for dispellable auras
@@ -1601,14 +1703,14 @@ void EncounterStrategy::HandleGenericSpread(::Player* player, ::Creature* boss, 
     for (auto const& member : group->GetMemberSlots())
     {
         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-        if (!groupMember || groupMember == player || !groupMember->IsInWorld() || groupMember->IsDead())
+        if (!groupMember || groupMember == player || !groupMember->IsInWorld() || !groupMember->IsAlive())
             continue;
 
         float distanceToMember = player->GetExactDist(groupMember);
         if (distanceToMember < distance)
         {
             // Too close, move away
-            float angle = groupMember->GetAngle(player); // Direction away from member
+            float angle = groupMember->GetAbsoluteAngle(player); // Direction away from member
             float x = player->GetPositionX() + (distance - distanceToMember) * ::std::cos(angle);
             float y = player->GetPositionY() + (distance - distanceToMember) * ::std::sin(angle);
             float z = player->GetPositionZ();
@@ -1658,7 +1760,7 @@ void EncounterStrategy::HandleGenericStack(::Player* player, ::Creature* boss)
     for (auto const& member : group->GetMemberSlots())
     {
         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-        if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+        if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
             continue;
 
         if (DeterminePlayerRole(groupMember) == DungeonRole::TANK)

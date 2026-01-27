@@ -28,17 +28,45 @@ namespace Playerbot
 struct DungeonData;
 struct DungeonEncounter;
 enum class DungeonRole : uint8;
-enum class EncounterStrategy : uint8;
+enum class EncounterStrategyType : uint8;
 enum class ThreatManagement : uint8;
 
-// DungeonMetrics definition (needs full definition for return by value)
+// DungeonMetrics snapshot for return by value (no atomic members)
 struct DungeonMetrics
+{
+    uint32 dungeonsCompleted = 0;
+    uint32 dungeonsAttempted = 0;
+    uint32 encountersCompleted = 0;
+    uint32 encounterWipes = 0;
+    float averageCompletionTime = 2700000.0f; // 45 minutes
+    float successRate = 0.85f;
+    float encounterSuccessRate = 0.9f;
+    uint32 totalDamageDealt = 0;
+    uint32 totalHealingDone = 0;
+    ::std::chrono::steady_clock::time_point lastUpdate;
+
+    void Reset()
+    {
+        dungeonsCompleted = 0; dungeonsAttempted = 0; encountersCompleted = 0;
+        encounterWipes = 0; averageCompletionTime = 2700000.0f; successRate = 0.85f;
+        encounterSuccessRate = 0.9f; totalDamageDealt = 0; totalHealingDone = 0;
+        lastUpdate = ::std::chrono::steady_clock::now();
+    }
+
+    float GetCompletionRate() const
+    {
+        return dungeonsAttempted > 0 ? static_cast<float>(dungeonsCompleted) / dungeonsAttempted : 0.0f;
+    }
+};
+
+// Internal thread-safe atomic storage for DungeonMetrics
+struct AtomicDungeonMetrics
 {
     ::std::atomic<uint32> dungeonsCompleted{0};
     ::std::atomic<uint32> dungeonsAttempted{0};
     ::std::atomic<uint32> encountersCompleted{0};
     ::std::atomic<uint32> encounterWipes{0};
-    ::std::atomic<float> averageCompletionTime{2700000.0f}; // 45 minutes
+    ::std::atomic<float> averageCompletionTime{2700000.0f};
     ::std::atomic<float> successRate{0.85f};
     ::std::atomic<float> encounterSuccessRate{0.9f};
     ::std::atomic<uint32> totalDamageDealt{0};
@@ -53,11 +81,20 @@ struct DungeonMetrics
         lastUpdate = ::std::chrono::steady_clock::now();
     }
 
-    float GetCompletionRate() const
+    DungeonMetrics GetSnapshot() const
     {
-        uint32 attempted = dungeonsAttempted.load();
-        uint32 completed = dungeonsCompleted.load();
-        return attempted > 0 ? (float)completed / attempted : 0.0f;
+        DungeonMetrics snapshot;
+        snapshot.dungeonsCompleted = dungeonsCompleted.load();
+        snapshot.dungeonsAttempted = dungeonsAttempted.load();
+        snapshot.encountersCompleted = encountersCompleted.load();
+        snapshot.encounterWipes = encounterWipes.load();
+        snapshot.averageCompletionTime = averageCompletionTime.load();
+        snapshot.successRate = successRate.load();
+        snapshot.encounterSuccessRate = encounterSuccessRate.load();
+        snapshot.totalDamageDealt = totalDamageDealt.load();
+        snapshot.totalHealingDone = totalHealingDone.load();
+        snapshot.lastUpdate = lastUpdate;
+        return snapshot;
     }
 };
 
@@ -140,7 +177,7 @@ public:
     virtual void LoadDungeonData() = 0;
     virtual DungeonData GetDungeonData(uint32 dungeonId) = 0;
     virtual DungeonEncounter GetEncounterData(uint32 encounterId) = 0;
-    virtual void UpdateDungeonStrategy(Group* group, EncounterStrategy strategy) = 0;
+    virtual void UpdateDungeonStrategy(Group* group, EncounterStrategyType strategy) = 0;
 
     // Error handling and recovery
     virtual void HandleDungeonError(Group* group, const ::std::string& error) = 0;
@@ -149,8 +186,8 @@ public:
     virtual void HandleGroupDisbandInDungeon(Group* group) = 0;
 
     // Configuration and settings
-    virtual void SetEncounterStrategy(uint32 groupId, EncounterStrategy strategy) = 0;
-    virtual EncounterStrategy GetEncounterStrategy(uint32 groupId) = 0;
+    virtual void SetEncounterStrategy(uint32 groupId, EncounterStrategyType strategy) = 0;
+    virtual EncounterStrategyType GetEncounterStrategy(uint32 groupId) = 0;
     virtual void SetThreatManagement(uint32 groupId, ThreatManagement management) = 0;
     virtual void EnableAdaptiveBehavior(uint32 groupId, bool enable) = 0;
 

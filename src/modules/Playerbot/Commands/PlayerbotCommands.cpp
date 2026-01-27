@@ -547,28 +547,28 @@ namespace Playerbot
             return false;
         }
 
-        // Map formation type string to FormationType enum (from FormationManager)
-        FormationType type;
+        // Map formation type string to MovementFormationType enum (from IUnifiedMovementCoordinator)
+        MovementFormationType type;
         if (formationType == "wedge")
-            type = FormationType::WEDGE;
+            type = MovementFormationType::WEDGE;
         else if (formationType == "diamond")
-            type = FormationType::DIAMOND;
+            type = MovementFormationType::DIAMOND;
         else if (formationType == "square" || formationType == "defensive")
-            type = FormationType::BOX;  // BOX is the defensive square formation
+            type = MovementFormationType::BOX;  // BOX is the defensive square formation
         else if (formationType == "arrow")
-            type = FormationType::WEDGE;  // Arrow formation maps to wedge (similar tactical purpose)
+            type = MovementFormationType::WEDGE;  // Arrow formation maps to wedge (similar tactical purpose)
         else if (formationType == "line")
-            type = FormationType::LINE;
+            type = MovementFormationType::LINE;
         else if (formationType == "column")
-            type = FormationType::COLUMN;
+            type = MovementFormationType::COLUMN;
         else if (formationType == "scatter")
-            type = FormationType::SPREAD;  // Spread is the scattered formation
+            type = MovementFormationType::SPREAD;  // Spread is the scattered formation
         else if (formationType == "circle")
-            type = FormationType::CIRCLE;
+            type = MovementFormationType::CIRCLE;
         else if (formationType == "dungeon")
-            type = FormationType::DUNGEON;
+            type = MovementFormationType::DUNGEON;
         else if (formationType == "raid")
-            type = FormationType::RAID;
+            type = MovementFormationType::RAID;
         else
         {
             handler->PSendSysMessage("Unknown formation type '%s'. Use .bot formation list to see available formations.",

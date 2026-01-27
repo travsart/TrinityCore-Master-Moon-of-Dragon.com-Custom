@@ -59,6 +59,7 @@
 #include "Log.h"
 #include "Player.h"
 #include "Creature.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Group.h"
@@ -366,7 +367,7 @@ public:
                         Position doanPos = boss->GetPosition();
                         Position playerPos = player->GetPosition();
 
-                        float angle = doanPos.GetAngle(&playerPos);
+                        float angle = doanPos.GetAbsoluteAngle(&playerPos);
                         float newX = player->GetPositionX() + cos(angle) * 15.0f;
                         float newY = player->GetPositionY() + sin(angle) * 15.0f;
                         float newZ = player->GetPositionZ();
@@ -407,7 +408,7 @@ public:
 
                     for (::Creature* add : adds)
                     {
-                        if (!add || add->IsDead())
+                        if (!add || !add->IsAlive())
                             continue;
 
                         float healthPct = add->GetHealthPct();
@@ -477,7 +478,7 @@ public:
                         Position herodPos = boss->GetPosition();
                         Position playerPos = player->GetPosition();
 
-                        float angle = herodPos.GetAngle(&playerPos);
+                        float angle = herodPos.GetAbsoluteAngle(&playerPos);
                         float newX = player->GetPositionX() + cos(angle) * 12.0f;
                         float newY = player->GetPositionY() + sin(angle) * 12.0f;
                         float newZ = player->GetPositionZ();
@@ -542,7 +543,7 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for Shadow Word: Pain (589)
@@ -566,7 +567,7 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for sleep
@@ -657,16 +658,12 @@ public:
     }
 };
 
-} // namespace Playerbot
-
 // ============================================================================
 // REGISTRATION
 // ============================================================================
 
 void AddSC_scarlet_monastery_playerbot()
 {
-    using namespace Playerbot;
-
     // Register script
     DungeonScriptMgr::instance()->RegisterScript(new ScarletMonasteryScript());
 
@@ -690,6 +687,8 @@ void AddSC_scarlet_monastery_playerbot()
 
     TC_LOG_INFO("server.loading", ">> Registered Scarlet Monastery playerbot script with 10 boss mappings (all 4 wings)");
 }
+
+} // namespace Playerbot
 
 /**
  * USAGE NOTES FOR SCARLET MONASTERY:

@@ -44,6 +44,7 @@
 #include "Log.h"
 #include "Player.h"
 #include "Creature.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Group.h"
@@ -252,7 +253,7 @@ public:
     for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for Sleep debuff (8040)
@@ -278,7 +279,7 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for poison debuff
@@ -359,7 +360,7 @@ public:
                     Position meleePos = CalculateMeleePosition(player, boss);
 
                     // Add some spread
-                    float angle = player->GetAngle(boss) + (frand(-0.5f, 0.5f));
+                    float angle = player->GetAbsoluteAngle(boss) + (frand(-0.5f, 0.5f));
                     meleePos.RelocateOffset({::std::cos(angle) * 2.0f, ::std::sin(angle) * 2.0f, 0.0f});
 
                     if (player->GetExactDist(&meleePos) > 3.0f)
@@ -451,16 +452,12 @@ public:
     }
 };
 
-} // namespace Playerbot
-
 // ============================================================================
 // REGISTRATION
 // ============================================================================
 
 void AddSC_wailing_caverns_playerbot()
 {
-    using namespace Playerbot;
-
     // Register script
     DungeonScriptMgr::instance()->RegisterScript(new WailingCavernsScript());
 
@@ -475,6 +472,8 @@ void AddSC_wailing_caverns_playerbot()
 
     TC_LOG_INFO("server.loading", ">> Registered Wailing Caverns playerbot script with 7 boss mappings");
 }
+
+} // namespace Playerbot
 
 /**
  * USAGE NOTES FOR WAILING CAVERNS:

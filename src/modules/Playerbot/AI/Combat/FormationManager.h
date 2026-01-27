@@ -30,7 +30,7 @@ namespace Playerbot
 {
 
 // DUPLICATE ENUMS REMOVED - Using definitions from IUnifiedMovementCoordinator.h
-// enum class FormationType : uint8 { ... } - REMOVED
+// enum class MovementFormationType : uint8 { ... } - REMOVED
 // enum class FormationRole : uint8 { ... } - REMOVED
 // Include at line 22 provides these definitions
 
@@ -91,7 +91,7 @@ struct FormationMember
 // Formation movement command
 struct FormationCommand
 {
-    FormationType newFormation;
+    MovementFormationType newFormation;
     Position targetPosition;
     float targetOrientation;
     FormationMovementState movementState;
@@ -102,7 +102,7 @@ struct FormationCommand
     bool allowBreaking;
     ::std::string reason;
 
-    FormationCommand() : newFormation(FormationType::NONE), targetOrientation(0.0f),
+    FormationCommand() : newFormation(MovementFormationType::NONE), targetOrientation(0.0f),
                         movementState(FormationMovementState::MOVING), movementSpeed(0.0f),
                         priority(0), timeoutMs(10000), maintainCohesion(true),
                         allowBreaking(false) {}
@@ -111,7 +111,7 @@ struct FormationCommand
 // Formation configuration
 struct FormationConfig
 {
-    FormationType type;
+    MovementFormationType type;
     float baseSpacing;              // Base distance between members
     float cohesionRadius;           // Maximum allowed spread
     float reformationThreshold;     // Distance that triggers reformation
@@ -121,7 +121,7 @@ struct FormationConfig
     ::std::vector<FormationRole> roleOrder;  // Preferred role positioning
     ::std::unordered_map<FormationRole, Position> roleOffsets;  // Role-specific offsets
 
-    FormationConfig() : type(FormationType::NONE), baseSpacing(5.0f),
+    FormationConfig() : type(MovementFormationType::NONE), baseSpacing(5.0f),
                        cohesionRadius(15.0f), reformationThreshold(10.0f),
                        maintainOrientation(true), allowDynamicAdjustment(true),
                        combatFormation(false) {}
@@ -161,9 +161,9 @@ public:
     ~FormationManager() = default;
 
     // Formation management interface
-    bool JoinFormation(const ::std::vector<Player*>& groupMembers, FormationType formation = FormationType::DUNGEON);
+    bool JoinFormation(const ::std::vector<Player*>& groupMembers, MovementFormationType formation = MovementFormationType::DUNGEON);
     bool LeaveFormation();
-    bool ChangeFormation(FormationType newFormation);
+    bool ChangeFormation(MovementFormationType newFormation);
     bool SetFormationLeader(Player* leader);
     Player* GetFormationLeader() const { return _leader; }
 
@@ -205,9 +205,9 @@ public:
     void HandleFormationBreakage();
 
     // Role-specific formations
-    FormationType DetermineOptimalFormation(const ::std::vector<Player*>& members);
-    FormationConfig GetFormationConfig(FormationType formation);
-    void SetFormationConfig(FormationType formation, const FormationConfig& config);
+    MovementFormationType DetermineOptimalFormation(const ::std::vector<Player*>& members);
+    FormationConfig GetFormationConfig(MovementFormationType formation);
+    void SetFormationConfig(MovementFormationType formation, const FormationConfig& config);
 
     // Dynamic adjustments
     void AdjustForTerrain();
@@ -216,7 +216,7 @@ public:
     void HandleMemberDisconnection(Player* disconnectedMember);
 
     // Query methods
-    FormationType GetCurrentFormation() const { return _currentFormation; }
+    MovementFormationType GetCurrentFormation() const { return _currentFormation; }
     FormationMovementState GetMovementState() const { return _movementState; }
     bool IsFormationLeader() const { return _isLeader; }
     bool IsInFormation() const { return _inFormation; }
@@ -294,11 +294,11 @@ private:
     bool _inFormation;
 
     // Formation state
-    FormationType _currentFormation;
+    MovementFormationType _currentFormation;
     FormationMovementState _movementState;
     FormationIntegrity _currentIntegrity;
     ::std::vector<FormationMember> _members;
-    ::std::unordered_map<FormationType, FormationConfig> _formationConfigs;
+    ::std::unordered_map<MovementFormationType, FormationConfig> _formationConfigs;
 
     // Position tracking
     Position _formationCenter;
@@ -340,25 +340,25 @@ class TC_GAME_API FormationUtils
 {
 public:
     // Formation type analysis
-    static FormationType GetOptimalFormationForGroup(const ::std::vector<Player*>& members);
-    static FormationType GetOptimalFormationForCombat(const ::std::vector<Player*>& members, const ::std::vector<Unit*>& enemies);
-    static FormationType GetOptimalFormationForTerrain(const Position& location);
-    static bool IsFormationSuitableForCombat(FormationType formation);
+    static MovementFormationType GetOptimalFormationForGroup(const ::std::vector<Player*>& members);
+    static MovementFormationType GetOptimalFormationForCombat(const ::std::vector<Player*>& members, const ::std::vector<Unit*>& enemies);
+    static MovementFormationType GetOptimalFormationForTerrain(const Position& location);
+    static bool IsFormationSuitableForCombat(MovementFormationType formation);
 
     // Position calculations
     static Position CalculateFormationCenterFromMembers(const ::std::vector<Player*>& members);
-    static float CalculateOptimalSpacing(const ::std::vector<Player*>& members, FormationType formation);
+    static float CalculateOptimalSpacing(const ::std::vector<Player*>& members, MovementFormationType formation);
     static ::std::vector<Position> GenerateFormationGrid(const Position& center, uint32 rows, uint32 columns, float spacing);
 
     // Role assignment utilities
     static FormationRole DetermineOptimalRole(Player* player);
-    static ::std::vector<FormationRole> GetRoleOrderForFormation(FormationType formation);
-    static bool IsRoleCompatibleWithFormation(FormationRole role, FormationType formation);
+    static ::std::vector<FormationRole> GetRoleOrderForFormation(MovementFormationType formation);
+    static bool IsRoleCompatibleWithFormation(FormationRole role, MovementFormationType formation);
 
     // Formation validation
-    static bool IsFormationValid(const ::std::vector<Position>& positions, FormationType formation);
-    static float CalculateFormationEfficiency(const ::std::vector<Player*>& members, FormationType formation);
-    static bool CanFormationFitInArea(FormationType formation, uint32 memberCount, float availableRadius);
+    static bool IsFormationValid(const ::std::vector<Position>& positions, MovementFormationType formation);
+    static float CalculateFormationEfficiency(const ::std::vector<Player*>& members, MovementFormationType formation);
+    static bool CanFormationFitInArea(MovementFormationType formation, uint32 memberCount, float availableRadius);
 
     // Movement coordination utilities
     static ::std::vector<Position> CalculateStaggeredMovement(const ::std::vector<Player*>& members, const Position& destination);
@@ -366,14 +366,14 @@ public:
     static bool WillMovementBreakFormation(const ::std::vector<Player*>& members, const Position& destination, float threshold);
 
     // Combat formation utilities
-    static FormationType GetCounterFormation(FormationType enemyFormation);
+    static MovementFormationType GetCounterFormation(MovementFormationType enemyFormation);
     static ::std::vector<Position> CalculateFlankingPositions(const Position& enemyCenter, uint32 flankerCount);
-    static bool IsFormationVulnerableToAoE(FormationType formation, float aoERadius);
+    static bool IsFormationVulnerableToAoE(MovementFormationType formation, float aoERadius);
 
     // Terrain adaptation utilities
-    static FormationType AdaptFormationToTerrain(FormationType currentFormation, const Position& location);
+    static MovementFormationType AdaptFormationToTerrain(MovementFormationType currentFormation, const Position& location);
     static ::std::vector<Position> AdjustFormationForObstacles(const ::std::vector<Position>& originalPositions, const ::std::vector<Position>& obstacles);
-    static bool IsTerrainSuitableForFormation(FormationType formation, const Position& location, float radius);
+    static bool IsTerrainSuitableForFormation(MovementFormationType formation, const Position& location, float radius);
 };
 
 } // namespace Playerbot

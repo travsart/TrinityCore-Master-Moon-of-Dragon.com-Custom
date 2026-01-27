@@ -31,10 +31,7 @@ DungeonScriptMgr::DungeonScriptMgr() : _initialized(false)
 
 DungeonScriptMgr::~DungeonScriptMgr()
 {
-    // Clean up registered scripts
-    for (auto& pair : _mapScripts)
-        delete pair.second;
-
+    // unique_ptr handles cleanup automatically
     _mapScripts.clear();
     _bossScripts.clear();
     _namedScripts.clear();

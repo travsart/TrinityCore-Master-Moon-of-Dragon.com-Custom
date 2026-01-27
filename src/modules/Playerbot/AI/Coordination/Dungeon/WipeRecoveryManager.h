@@ -14,6 +14,7 @@
 #include "ObjectGuid.h"
 #include <vector>
 #include <queue>
+#include <map>
 #include <functional>
 
 namespace Playerbot {

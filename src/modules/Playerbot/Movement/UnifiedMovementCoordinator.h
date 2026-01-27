@@ -112,9 +112,9 @@ public:
     // FORMATION MODULE INTERFACE
     // ========================================================================
 
-    bool JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation = FormationType::DUNGEON) override;
+    bool JoinFormation(::std::vector<Player*> const& groupMembers, MovementFormationType formation = MovementFormationType::DUNGEON) override;
     bool LeaveFormation() override;
-    bool ChangeFormation(FormationType newFormation) override;
+    bool ChangeFormation(MovementFormationType newFormation) override;
     bool SetFormationLeader(Player* leader) override;
     Player* GetFormationLeader() const override;
     void UpdateFormation(uint32 diff) override;
@@ -142,14 +142,14 @@ public:
     void TransitionToTravelFormation() override;
     void AdjustForThreatSpread(::std::vector<Unit*> const& threats) override;
     void HandleFormationBreakage() override;
-    FormationType DetermineOptimalFormation(::std::vector<Player*> const& members) override;
-    FormationConfig GetFormationConfig(FormationType formation) override;
-    void SetFormationConfig(FormationType formation, FormationConfig const& config) override;
+    MovementFormationType DetermineOptimalFormation(::std::vector<Player*> const& members) override;
+    FormationConfig GetFormationConfig(MovementFormationType formation) override;
+    void SetFormationConfig(MovementFormationType formation, FormationConfig const& config) override;
     void AdjustFormationForTerrain() override;
     void AdjustFormationForObstacles(::std::vector<Position> const& obstacles) override;
     void AdjustFormationForGroupSize() override;
     void HandleMemberDisconnection(Player* disconnectedMember) override;
-    FormationType GetCurrentFormation() const override;
+    MovementFormationType GetCurrentFormation() const override;
     FormationMovementState GetFormationMovementState() const override;
     bool IsFormationLeader() const override;
     bool IsInFormation() const override;
@@ -313,9 +313,9 @@ private:
         explicit FormationModule(Player* bot);
 
         // Delegates to FormationManager instance
-        bool JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation);
+        bool JoinFormation(::std::vector<Player*> const& groupMembers, MovementFormationType formation);
         bool LeaveFormation();
-        bool ChangeFormation(FormationType newFormation);
+        bool ChangeFormation(MovementFormationType newFormation);
         bool SetFormationLeader(Player* leader);
         Player* GetFormationLeader() const;
         void UpdateFormation(uint32 diff);
@@ -343,14 +343,14 @@ private:
         void TransitionToTravelFormation();
         void AdjustForThreatSpread(::std::vector<Unit*> const& threats);
         void HandleBreakage();
-        FormationType DetermineOptimalFormation(::std::vector<Player*> const& members);
-        FormationConfig GetConfig(FormationType formation);
-        void SetConfig(FormationType formation, FormationConfig const& config);
+        MovementFormationType DetermineOptimalFormation(::std::vector<Player*> const& members);
+        FormationConfig GetConfig(MovementFormationType formation);
+        void SetConfig(MovementFormationType formation, FormationConfig const& config);
         void AdjustForTerrain();
         void AdjustForObstacles(::std::vector<Position> const& obstacles);
         void AdjustForGroupSize();
         void HandleMemberDisconnection(Player* disconnectedMember);
-        FormationType GetCurrentFormation() const;
+        MovementFormationType GetCurrentFormation() const;
         FormationMovementState GetMovementState() const;
         bool IsLeader() const;
         bool IsInFormation() const;

@@ -45,7 +45,7 @@ enum class FormationBehavior : uint8
     DEFENSIVE_MODE  = 5   // Defense optimized
 };
 
-struct FormationMember
+struct GroupFormationMember
 {
     uint32 memberGuid;
     Position assignedPosition;
@@ -56,7 +56,7 @@ struct FormationMember
     bool isLeader;
     uint32 lastPositionUpdate;
 
-    FormationMember(uint32 guid, const Position& assigned, float maxDev = 3.0f, float prio = 1.0f)
+    GroupFormationMember(uint32 guid, const Position& assigned, float maxDev = 3.0f, float prio = 1.0f)
         : memberGuid(guid), assignedPosition(assigned), maxDeviationDistance(maxDev)
         , priority(prio), isFlexible(true), isLeader(false), lastPositionUpdate(GameTime::GetGameTimeMS()) {}
 };
@@ -127,26 +127,30 @@ public:
     void AssignLeader(uint32 leaderGuid);
     uint32 GetFormationLeader() const { return _leaderGuid; }
 
-    // Performance monitoring
-    struct FormationMetrics
+    // Performance monitoring (snapshot for external use)
+    struct FormationMetricsSnapshot
     {
-        ::std::atomic<float> averageDeviation{0.0f};
-        ::std::atomic<float> formationStability{1.0f};
-        ::std::atomic<float> movementEfficiency{1.0f};
-        ::std::atomic<uint32> positionAdjustments{0};
-        ::std::atomic<uint32> formationBreaks{0};
-        ::std::atomic<uint32> terrainCollisions{0};
+        float averageDeviation = 0.0f;
+        float formationStability = 1.0f;
+        float movementEfficiency = 1.0f;
+        uint32 positionAdjustments = 0;
+        uint32 formationBreaks = 0;
+        uint32 terrainCollisions = 0;
         ::std::chrono::steady_clock::time_point lastUpdate;
-
-        void Reset()
-        {
-            averageDeviation = 0.0f; formationStability = 1.0f; movementEfficiency = 1.0f;
-            positionAdjustments = 0; formationBreaks = 0; terrainCollisions = 0;
-            lastUpdate = ::std::chrono::steady_clock::now();
-        }
     };
 
-    FormationMetrics GetMetrics() const { return _metrics; }
+    FormationMetricsSnapshot GetMetrics() const
+    {
+        FormationMetricsSnapshot snapshot;
+        snapshot.averageDeviation = _metrics.averageDeviation.load();
+        snapshot.formationStability = _metrics.formationStability.load();
+        snapshot.movementEfficiency = _metrics.movementEfficiency.load();
+        snapshot.positionAdjustments = _metrics.positionAdjustments.load();
+        snapshot.formationBreaks = _metrics.formationBreaks.load();
+        snapshot.terrainCollisions = _metrics.terrainCollisions.load();
+        snapshot.lastUpdate = _metrics.lastUpdate;
+        return snapshot;
+    }
     void UpdateMetrics();
 
     // State management
@@ -166,7 +170,7 @@ private:
     ::std::atomic<bool> _isActive{true};
 
     // Formation data
-    ::std::vector<FormationMember> _members;
+    ::std::vector<GroupFormationMember> _members;
     Position _formationCenter;
     float _formationDirection;
     float _formationSpacing;
@@ -184,8 +188,27 @@ private:
     ::std::unordered_map<uint32, Position> _terrainAdjustments;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _terrainMutex;
 
+    // Internal atomic metrics for thread-safe storage
+    struct AtomicFormationMetrics
+    {
+        ::std::atomic<float> averageDeviation{0.0f};
+        ::std::atomic<float> formationStability{1.0f};
+        ::std::atomic<float> movementEfficiency{1.0f};
+        ::std::atomic<uint32> positionAdjustments{0};
+        ::std::atomic<uint32> formationBreaks{0};
+        ::std::atomic<uint32> terrainCollisions{0};
+        ::std::chrono::steady_clock::time_point lastUpdate;
+
+        void Reset()
+        {
+            averageDeviation = 0.0f; formationStability = 1.0f; movementEfficiency = 1.0f;
+            positionAdjustments = 0; formationBreaks = 0; terrainCollisions = 0;
+            lastUpdate = ::std::chrono::steady_clock::now();
+        }
+    };
+
     // Performance tracking
-    FormationMetrics _metrics;
+    AtomicFormationMetrics _metrics;
 
     // Formation templates
     static ::std::unordered_map<FormationType, FormationTemplate> _formationTemplates;
@@ -193,7 +216,7 @@ private:
 
     // Helper functions
     void RecalculateFormationPositions();
-    Position CalculateMemberPosition(const FormationMember& member) const;
+    Position CalculateMemberPosition(const GroupFormationMember& member) const;
     float CalculateOptimalSpacing() const;
     void HandleFormationCollisions();
     void UpdateMemberPositions();
@@ -219,7 +242,7 @@ private:
 
     // Pathfinding integration
     bool IsPathClearBetweenPositions(const Position& start, const Position& end) const;
-    Position FindNearestValidPosition(const Position& desired) const;
+    Position FindNearestValidPosition(const Position& desired, float maxSearchRadius = 5.0f) const;
     ::std::vector<Position> GenerateFormationPath(const Position& destination) const;
 
     // Constants
@@ -233,6 +256,8 @@ private:
     static constexpr uint32 FORMATION_SMOOTHING_INTERVAL = 500; // 0.5 seconds
     static constexpr float MAX_FORMATION_DEVIATION = 10.0f;
     static constexpr float FORMATION_BREAK_THRESHOLD = 15.0f;
+    static constexpr float MIN_COORDINATION_EFFICIENCY = 0.5f;
+    static constexpr float FORMATION_TOLERANCE = 2.0f;
 };
 
 } // namespace Playerbot

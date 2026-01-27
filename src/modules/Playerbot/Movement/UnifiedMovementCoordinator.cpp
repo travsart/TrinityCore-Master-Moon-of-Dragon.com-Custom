@@ -249,7 +249,7 @@ bool UnifiedMovementCoordinator::CalculatePath(Player* bot, Position const& dest
 // FORMATION MODULE DELEGATION (abbreviated - pattern continues)
 // ============================================================================
 
-bool UnifiedMovementCoordinator::FormationModule::JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation)
+bool UnifiedMovementCoordinator::FormationModule::JoinFormation(::std::vector<Player*> const& groupMembers, MovementFormationType formation)
 {
     _formationsExecuted++;
     return _manager->JoinFormation(groupMembers, formation);
@@ -258,7 +258,7 @@ bool UnifiedMovementCoordinator::FormationModule::JoinFormation(::std::vector<Pl
 // ... [Formation module delegation continues]
 
 // Coordinator delegation
-bool UnifiedMovementCoordinator::JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation)
+bool UnifiedMovementCoordinator::JoinFormation(::std::vector<Player*> const& groupMembers, MovementFormationType formation)
 {
     return _formation->JoinFormation(groupMembers, formation);
 }
@@ -600,7 +600,7 @@ bool UnifiedMovementCoordinator::FormationModule::LeaveFormation()
     return _manager->LeaveFormation();
 }
 
-bool UnifiedMovementCoordinator::FormationModule::ChangeFormation(FormationType newFormation)
+bool UnifiedMovementCoordinator::FormationModule::ChangeFormation(MovementFormationType newFormation)
 {
     return _manager->ChangeFormation(newFormation);
 }
@@ -783,17 +783,17 @@ void UnifiedMovementCoordinator::FormationModule::HandleBreakage()
     _manager->HandleFormationBreakage();
 }
 
-FormationType UnifiedMovementCoordinator::FormationModule::DetermineOptimalFormation(::std::vector<Player*> const& members)
+MovementFormationType UnifiedMovementCoordinator::FormationModule::DetermineOptimalFormation(::std::vector<Player*> const& members)
 {
     return _manager->DetermineOptimalFormation(members);
 }
 
-FormationConfig UnifiedMovementCoordinator::FormationModule::GetConfig(FormationType formation)
+FormationConfig UnifiedMovementCoordinator::FormationModule::GetConfig(MovementFormationType formation)
 {
     return _manager->GetFormationConfig(formation);
 }
 
-void UnifiedMovementCoordinator::FormationModule::SetConfig(FormationType formation, FormationConfig const& config)
+void UnifiedMovementCoordinator::FormationModule::SetConfig(MovementFormationType formation, FormationConfig const& config)
 {
     _manager->SetFormationConfig(formation, config);
 }
@@ -837,7 +837,7 @@ void UnifiedMovementCoordinator::FormationModule::HandleMemberDisconnection(Play
     _manager->HandleMemberDisconnection(disconnectedMember);
 }
 
-FormationType UnifiedMovementCoordinator::FormationModule::GetCurrentFormation() const
+MovementFormationType UnifiedMovementCoordinator::FormationModule::GetCurrentFormation() const
 {
     return _manager->GetCurrentFormation();
 }
@@ -966,7 +966,7 @@ bool UnifiedMovementCoordinator::LeaveFormation()
     return _formation->LeaveFormation();
 }
 
-bool UnifiedMovementCoordinator::ChangeFormation(FormationType newFormation)
+bool UnifiedMovementCoordinator::ChangeFormation(MovementFormationType newFormation)
 {
     return _formation->ChangeFormation(newFormation);
 }
@@ -1106,17 +1106,17 @@ void UnifiedMovementCoordinator::HandleFormationBreakage()
     _formation->HandleBreakage();
 }
 
-FormationType UnifiedMovementCoordinator::DetermineOptimalFormation(::std::vector<Player*> const& members)
+MovementFormationType UnifiedMovementCoordinator::DetermineOptimalFormation(::std::vector<Player*> const& members)
 {
     return _formation->DetermineOptimalFormation(members);
 }
 
-FormationConfig UnifiedMovementCoordinator::GetFormationConfig(FormationType formation)
+FormationConfig UnifiedMovementCoordinator::GetFormationConfig(MovementFormationType formation)
 {
     return _formation->GetConfig(formation);
 }
 
-void UnifiedMovementCoordinator::SetFormationConfig(FormationType formation, FormationConfig const& config)
+void UnifiedMovementCoordinator::SetFormationConfig(MovementFormationType formation, FormationConfig const& config)
 {
     _formation->SetConfig(formation, config);
 }
@@ -1141,7 +1141,7 @@ void UnifiedMovementCoordinator::HandleMemberDisconnection(Player* disconnectedM
     _formation->HandleMemberDisconnection(disconnectedMember);
 }
 
-FormationType UnifiedMovementCoordinator::GetCurrentFormation() const
+MovementFormationType UnifiedMovementCoordinator::GetCurrentFormation() const
 {
     return _formation->GetCurrentFormation();
 }

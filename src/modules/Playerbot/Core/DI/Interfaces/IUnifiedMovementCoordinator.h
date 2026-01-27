@@ -40,7 +40,7 @@ struct AoEZone;
 struct PositionMetrics;
 
 // Full enum definitions needed for default parameters
-enum class FormationType : uint8
+enum class MovementFormationType : uint8
 {
     NONE = 0,               // No formation
     LINE = 1,               // Single line formation
@@ -204,9 +204,9 @@ public:
     /**
      * @brief Formation management
      */
-    virtual bool JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation = FormationType::DUNGEON) = 0;
+    virtual bool JoinFormation(::std::vector<Player*> const& groupMembers, MovementFormationType formation = MovementFormationType::DUNGEON) = 0;
     virtual bool LeaveFormation() = 0;
-    virtual bool ChangeFormation(FormationType newFormation) = 0;
+    virtual bool ChangeFormation(MovementFormationType newFormation) = 0;
     virtual bool SetFormationLeader(Player* leader) = 0;
     virtual Player* GetFormationLeader() const = 0;
 
@@ -262,9 +262,9 @@ public:
     /**
      * @brief Role-specific formations
      */
-    virtual FormationType DetermineOptimalFormation(::std::vector<Player*> const& members) = 0;
-    virtual FormationConfig GetFormationConfig(FormationType formation) = 0;
-    virtual void SetFormationConfig(FormationType formation, FormationConfig const& config) = 0;
+    virtual MovementFormationType DetermineOptimalFormation(::std::vector<Player*> const& members) = 0;
+    virtual FormationConfig GetFormationConfig(MovementFormationType formation) = 0;
+    virtual void SetFormationConfig(MovementFormationType formation, FormationConfig const& config) = 0;
 
     /**
      * @brief Dynamic adjustments
@@ -277,7 +277,7 @@ public:
     /**
      * @brief Query methods
      */
-    virtual FormationType GetCurrentFormation() const = 0;
+    virtual MovementFormationType GetCurrentFormation() const = 0;
     virtual FormationMovementState GetFormationMovementState() const = 0;
     virtual bool IsFormationLeader() const = 0;
     virtual bool IsInFormation() const = 0;

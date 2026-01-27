@@ -126,49 +126,7 @@ public:
     void HandleChanneledSpellMechanic(Group* group, Unit* caster, uint32 spellId) override;
     void HandleEnrageMechanic(Group* group, Unit* boss, uint32 timeRemaining) override;
 
-    // Role-specific strategy execution
-    struct TankStrategy
-    {
-        ::std::function<void(Player*, Group*, const DungeonEncounter&)> positioningStrategy;
-        ::std::function<void(Player*, Group*, Unit*)> threatManagementStrategy;
-        ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
-        ::std::function<void(Player*, Group*)> cooldownUsageStrategy;
-
-        ::std::vector<uint32> priorityCooldowns;
-        ::std::vector<::std::string> keyMechanics;
-        Position optimalPosition;
-        float threatThreshold;
-        bool requiresMovement;
-    };
-
-    struct HealerStrategy
-    {
-        ::std::function<void(Player*, Group*, const DungeonEncounter&)> healingPriorityStrategy;
-        ::std::function<void(Player*, Group*)> manaManagementStrategy;
-        ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
-        ::std::function<void(Player*, Group*)> dispelStrategy;
-
-        ::std::vector<uint32> emergencyCooldowns;
-        ::std::vector<uint32> dispelPriorities;
-        Position safePosition;
-        float healingThreshold;
-        bool requiresMovement;
-    };
-
-    struct DpsStrategy
-    {
-        ::std::function<void(Player*, Group*, const ::std::vector<Unit*>&)> targetPriorityStrategy;
-        ::std::function<void(Player*, Group*, const DungeonEncounter&)> damageOptimizationStrategy;
-        ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
-        ::std::function<void(Player*, Group*)> cooldownRotationStrategy;
-
-        ::std::vector<uint32> burstCooldowns;
-        ::std::vector<uint32> targetPriorities;
-        Position optimalPosition;
-        float threatLimit;
-        bool canMoveDuringCast;
-    };
-
+    // Role-specific strategy execution (types defined in IEncounterStrategy.h)
     TankStrategy GetTankStrategy(uint32 encounterId, Player* tank) override;
     HealerStrategy GetHealerStrategy(uint32 encounterId, Player* healer) override;
     DpsStrategy GetDpsStrategy(uint32 encounterId, Player* dps) override;
@@ -185,6 +143,9 @@ public:
     void HandleEmergencyCooldowns(Group* group) override;
     void OptimizeResourceUsage(Group* group, uint32 encounterId) override;
 
+    // Public cooldown coordination method (called by DungeonBehavior)
+    void CoordinateCooldowns(Group* group, uint32 encounterId);
+
     // Adaptive strategy system
     void AnalyzeEncounterPerformance(Group* group, uint32 encounterId) override;
     void AdaptStrategyBasedOnFailures(Group* group, uint32 encounterId) override;
@@ -198,27 +159,7 @@ public:
     void ExecuteStockadeStrategies(Group* group, uint32 encounterId) override;
     void ExecuteRazorfenKraulStrategies(Group* group, uint32 encounterId) override;
 
-    // Performance monitoring
-    struct StrategyMetrics
-    {
-        ::std::atomic<uint32> strategiesExecuted{0};
-        ::std::atomic<uint32> strategiesSuccessful{0};
-        ::std::atomic<uint32> mechanicsHandled{0};
-        ::std::atomic<uint32> mechanicsSuccessful{0};
-        ::std::atomic<float> averageExecutionTime{300000.0f}; // 5 minutes
-        ::std::atomic<float> strategySuccessRate{0.85f};
-        ::std::atomic<float> mechanicSuccessRate{0.9f};
-        ::std::atomic<uint32> adaptationsPerformed{0};
-
-        void Reset()
-        {
-            strategiesExecuted = 0; strategiesSuccessful = 0; mechanicsHandled = 0;
-            mechanicsSuccessful = 0; averageExecutionTime = 300000.0f;
-            strategySuccessRate = 0.85f; mechanicSuccessRate = 0.9f;
-            adaptationsPerformed = 0;
-        }
-    };
-
+    // Performance monitoring (returns StrategyMetrics snapshot from IEncounterStrategy.h)
     StrategyMetrics GetStrategyMetrics(uint32 encounterId) override;
     StrategyMetrics GetGlobalStrategyMetrics() override;
 
@@ -231,11 +172,47 @@ private:
     EncounterStrategy();
     ~EncounterStrategy() = default;
 
+    // Internal atomic metrics for thread-safe storage
+    struct AtomicStrategyMetrics
+    {
+        ::std::atomic<uint32> strategiesExecuted{0};
+        ::std::atomic<uint32> strategiesSuccessful{0};
+        ::std::atomic<uint32> mechanicsHandled{0};
+        ::std::atomic<uint32> mechanicsSuccessful{0};
+        ::std::atomic<float> averageExecutionTime{300000.0f};
+        ::std::atomic<float> strategySuccessRate{0.85f};
+        ::std::atomic<float> mechanicSuccessRate{0.9f};
+        ::std::atomic<uint32> adaptationsPerformed{0};
+
+        void Reset()
+        {
+            strategiesExecuted = 0; strategiesSuccessful = 0; mechanicsHandled = 0;
+            mechanicsSuccessful = 0; averageExecutionTime = 300000.0f;
+            strategySuccessRate = 0.85f; mechanicSuccessRate = 0.9f;
+            adaptationsPerformed = 0;
+        }
+
+        // Convert to snapshot for external use
+        StrategyMetrics ToSnapshot() const
+        {
+            StrategyMetrics snapshot;
+            snapshot.strategiesExecuted = strategiesExecuted.load();
+            snapshot.strategiesSuccessful = strategiesSuccessful.load();
+            snapshot.mechanicsHandled = mechanicsHandled.load();
+            snapshot.mechanicsSuccessful = mechanicsSuccessful.load();
+            snapshot.averageExecutionTime = averageExecutionTime.load();
+            snapshot.strategySuccessRate = strategySuccessRate.load();
+            snapshot.mechanicSuccessRate = mechanicSuccessRate.load();
+            snapshot.adaptationsPerformed = adaptationsPerformed.load();
+            return snapshot;
+        }
+    };
+
     // Strategy database
     ::std::unordered_map<uint32, TankStrategy> _tankStrategies; // encounterId -> strategy
     ::std::unordered_map<uint32, HealerStrategy> _healerStrategies;
     ::std::unordered_map<uint32, DpsStrategy> _dpsStrategies;
-    ::std::unordered_map<uint32, StrategyMetrics> _encounterMetrics;
+    ::std::unordered_map<uint32, AtomicStrategyMetrics> _encounterMetrics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _strategyMutex;
 
     // Encounter mechanics database
@@ -277,8 +254,8 @@ private:
     ::std::atomic<uint32> _mechanicResponseTime{2000}; // 2 seconds
     ::std::atomic<float> _strategyComplexity{0.7f}; // 70% complexity
 
-    // Global metrics
-    StrategyMetrics _globalMetrics;
+    // Global metrics (atomic for thread safety)
+    AtomicStrategyMetrics _globalMetrics;
 
     // Strategy initialization
     void InitializeStrategyDatabase();
@@ -292,6 +269,15 @@ private:
     void HandleSpecificMechanic(Group* group, const EncounterMechanic& mechanic);
     void CoordinateGroupResponse(Group* group, const ::std::string& mechanic);
     void ValidateStrategyExecution(Group* group, uint32 encounterId);
+
+    // Generic mechanic handlers (internal)
+    void HandleTankSwapGeneric(Group* group);
+    void HandleAoEDamageGeneric(Group* group);
+    void HandleAddSpawnsGeneric(Group* group);
+    void HandleStackingDebuffGeneric(Group* group);
+
+    // Role determination helper
+    static DungeonRole DeterminePlayerRole(Player* player);
 
     // Positioning algorithms
     Position CalculateTankPosition(uint32 encounterId, Group* group);

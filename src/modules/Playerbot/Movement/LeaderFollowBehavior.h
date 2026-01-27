@@ -349,7 +349,7 @@ public:
     static ::std::unique_ptr<LeaderFollowBehavior> CreateFollowBehavior(FollowMode mode);
     static ::std::unique_ptr<LeaderFollowBehavior> CreateRoleBasedFollowBehavior(FormationRole role);
     static ::std::unique_ptr<LeaderFollowBehavior> CreateCombatFollowBehavior();
-    static ::std::unique_ptr<LeaderFollowBehavior> CreateFormationFollowBehavior(FormationType formation);
+    static ::std::unique_ptr<LeaderFollowBehavior> CreateFormationFollowBehavior(MovementFormationType formation);
 };
 
 // Utility functions for follow behavior

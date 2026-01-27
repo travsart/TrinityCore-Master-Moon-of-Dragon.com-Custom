@@ -40,11 +40,12 @@
 #include "Log.h"
 #include "Player.h"
 #include "Creature.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "ObjectAccessor.h"
-#include "../../../Spatial/SpatialGridManager.h"  // Spatial grid for deadlock fix
-#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5E: Thread-safe queries
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../Spatial/DoubleBufferedSpatialGrid.h"
 
 namespace Playerbot
 {
@@ -154,58 +155,48 @@ public:
                 // Taragaman has Upper Cut (knock back) and Fire Nova (area fire)
                 // Need to avoid standing in fire patches
 
-                // Check for fire ground effects
-                ::std::list<::DynamicObject*> dynamicObjects;
-                Trinity::AllWorldObjectsInRange check(player, 10.0f);
-                Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
-                // DEADLOCK FIX: Spatial grid replaces Cell::Visit
-    {
-        Map* cellVisitMap = player->GetMap();
-        if (!cellVisitMap)
-            return false;
+                // ENTERPRISE: Use lock-free spatial grid for thread-safe DynamicObject queries
+                Map* map = player->GetMap();
+                if (!map)
+                    break;
 
-        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
-        if (!spatialGrid)
-        {
-            sSpatialGridManager.CreateGrid(cellVisitMap);
-            spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
-        }
-
-        if (spatialGrid)
-        {
-// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
-                player->GetPosition(), 10.0f);
-
-            for (ObjectGuid guid : nearbyGuids)
-            {
-                // PHASE 5E: Thread-safe spatial grid validation
-                auto snapshot = SpatialGridQueryHelpers::FindDynamicObjectByGuid(player, guid);
-                DynamicObject* dynObj = nullptr;
-
-                if (snapshot)
+                DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+                if (!spatialGrid)
                 {
-                    // Get DynamicObject* for effect check (validated via snapshot first)
-                    dynObj = ObjectAccessor::GetDynamicObject(*player, guid);
+                    sSpatialGridManager.CreateGrid(map);
+                    spatialGrid = sSpatialGridManager.GetGrid(map);
+                    if (!spatialGrid)
+                        break;
                 }
 
-                if (dynObj)
-                {
-                    // Original logic from searcher
-                }
-            }
-        }
-    }
+                // Query nearby dynamic objects using immutable snapshots (lock-free!)
+                auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(player->GetPosition(), 10.0f);
 
-                for (::DynamicObject* dynObj : dynamicObjects)
+                for (auto const& snapshot : dynamicObjectSnapshots)
                 {
-                    if (!dynObj || dynObj->GetCaster() != boss)
+                    // Filter using snapshot data - no ObjectAccessor calls needed for filtering!
+                    if (!snapshot.IsActive())
                         continue;
 
+                    // Check if casted by the boss
+                    if (snapshot.casterGuid != boss->GetGUID())
+                        continue;
+
+                    // Calculate distance using snapshot position
+                    float distance = player->GetExactDist(snapshot.position);
+
                     // Fire Nova (11970) leaves fire on ground
-    if (IsDangerousGroundEffect(dynObj))
+                    if (distance < 8.0f)
                     {
-                        MoveAwayFromGroundEffect(player, dynObj);
-                        return;
+                        if (DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, snapshot.guid))
+                        {
+                            if (IsDangerousGroundEffect(dynObj))
+                            {
+                                TC_LOG_DEBUG("module.playerbot", "RagefireChasmScript: Avoiding Taragaman's fire at distance {:.1f}", distance);
+                                MoveAwayFromGroundEffect(player, dynObj);
+                                return;
+                            }
+                        }
                     }
                 }
                 break;
@@ -314,7 +305,7 @@ public:
     for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for Immolate debuff
@@ -351,8 +342,6 @@ public:
     }
 };
 
-} // namespace Playerbot
-
 // ============================================================================
 // REGISTRATION
 // ============================================================================
@@ -362,8 +351,6 @@ public:
  */
 void AddSC_ragefire_chasm_playerbot()
 {
-    using namespace Playerbot;
-
     // Register script with DungeonScriptMgr
     DungeonScriptMgr::instance()->RegisterScript(new RagefireChasmScript());
 
@@ -375,6 +362,8 @@ void AddSC_ragefire_chasm_playerbot()
 
     TC_LOG_INFO("server.loading", ">> Registered Ragefire Chasm playerbot script with 4 boss mappings");
 }
+
+} // namespace Playerbot
 
 /**
  * USAGE NOTES FOR RAGEFIRE CHASM:

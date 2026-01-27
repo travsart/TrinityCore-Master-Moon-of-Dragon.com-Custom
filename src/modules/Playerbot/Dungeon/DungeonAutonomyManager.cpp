@@ -22,6 +22,7 @@
 #include "Log.h"
 #include "MotionMaster.h"
 #include "MovementGenerator.h"
+#include "DBCEnums.h"  // For ChrSpecialization enum
 
 namespace Playerbot
 {
@@ -493,9 +494,9 @@ bool DungeonAutonomyManager::AreAllMembersInRange(Group* group, const Position& 
     if (!group)
         return false;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (auto const& memberSlot : group->GetMemberSlots())
     {
-        Player* member = itr->GetSource();
+        Player* member = ObjectAccessor::FindPlayer(memberSlot.guid);
         if (!member || !member->IsInWorld() || !member->IsAlive())
             continue;
 
@@ -519,9 +520,9 @@ float DungeonAutonomyManager::GetGroupHealthPercent(Group* group) const
     float totalHealth = 0.0f;
     uint32 memberCount = 0;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (auto const& memberSlot : group->GetMemberSlots())
     {
-        Player* member = itr->GetSource();
+        Player* member = ObjectAccessor::FindPlayer(memberSlot.guid);
         if (!member || !member->IsInWorld() || !member->IsAlive())
             continue;
 
@@ -540,9 +541,9 @@ float DungeonAutonomyManager::GetHealerManaPercent(Group* group) const
     float totalMana = 0.0f;
     uint32 healerCount = 0;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (auto const& memberSlot : group->GetMemberSlots())
     {
-        Player* member = itr->GetSource();
+        Player* member = ObjectAccessor::FindPlayer(memberSlot.guid);
         if (!member || !member->IsInWorld())
             continue;
 
@@ -756,7 +757,7 @@ bool DungeonAutonomyManager::UpdateHealerAI(Player* healer, BotAI* ai, Group* gr
     {
         // Move closer to tank
         Position followPos;
-        float angle = healer->GetAngle(tank);
+        float angle = healer->GetAbsoluteAngle(tank);
         followPos.m_positionX = tank->GetPositionX() + 15.0f * cos(angle);
         followPos.m_positionY = tank->GetPositionY() + 15.0f * sin(angle);
         followPos.m_positionZ = tank->GetPositionZ();
@@ -781,7 +782,7 @@ bool DungeonAutonomyManager::UpdateDpsAI(Player* dps, BotAI* ai, Group* group, D
     {
         // Move closer to tank
         Position followPos;
-        float angle = dps->GetAngle(tank);
+        float angle = dps->GetAbsoluteAngle(tank);
         followPos.m_positionX = tank->GetPositionX() + 20.0f * cos(angle);
         followPos.m_positionY = tank->GetPositionY() + 20.0f * sin(angle);
         followPos.m_positionZ = tank->GetPositionZ();
@@ -793,24 +794,47 @@ bool DungeonAutonomyManager::UpdateDpsAI(Player* dps, BotAI* ai, Group* group, D
     return false; // Let normal AI handle combat
 }
 
-bool DungeonAutonomyManager::IsTankRole(Player* player, Group* group) const
+bool DungeonAutonomyManager::IsTankRole(Player* player, Group* /*group*/) const
 {
-    if (!player || !group)
+    if (!player)
         return false;
 
-    // Check LFG role
-    uint8 roles = player->GetPlayerSchemeLfgRoles(false);
-    return (roles & PLAYER_ROLE_TANK) != 0;
+    // Use ChrSpecialization to determine tank role
+    ChrSpecialization spec = player->GetPrimarySpecialization();
+    switch (spec)
+    {
+        case ChrSpecialization::WarriorProtection:
+        case ChrSpecialization::PaladinProtection:
+        case ChrSpecialization::DeathKnightBlood:
+        case ChrSpecialization::DruidGuardian:
+        case ChrSpecialization::MonkBrewmaster:
+        case ChrSpecialization::DemonHunterVengeance:
+            return true;
+        default:
+            return false;
+    }
 }
 
-bool DungeonAutonomyManager::IsHealerRole(Player* player, Group* group) const
+bool DungeonAutonomyManager::IsHealerRole(Player* player, Group* /*group*/) const
 {
-    if (!player || !group)
+    if (!player)
         return false;
 
-    // Check LFG role
-    uint8 roles = player->GetPlayerSchemeLfgRoles(false);
-    return (roles & PLAYER_ROLE_HEALER) != 0;
+    // Use ChrSpecialization to determine healer role
+    ChrSpecialization spec = player->GetPrimarySpecialization();
+    switch (spec)
+    {
+        case ChrSpecialization::PriestDiscipline:
+        case ChrSpecialization::PriestHoly:
+        case ChrSpecialization::PaladinHoly:
+        case ChrSpecialization::ShamanRestoration:
+        case ChrSpecialization::DruidRestoration:
+        case ChrSpecialization::MonkMistweaver:
+        case ChrSpecialization::EvokerPreservation:
+            return true;
+        default:
+            return false;
+    }
 }
 
 Player* DungeonAutonomyManager::GetGroupTank(Group* group) const
@@ -818,10 +842,10 @@ Player* DungeonAutonomyManager::GetGroupTank(Group* group) const
     if (!group)
         return nullptr;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (auto const& memberSlot : group->GetMemberSlots())
     {
-        Player* member = itr->GetSource();
-        if (member && member->IsInWorld() && IsTankRole(const_cast<Player*>(member), const_cast<Group*>(group)))
+        Player* member = ObjectAccessor::FindPlayer(memberSlot.guid);
+        if (member && member->IsInWorld() && IsTankRole(member, group))
         {
             return member;
         }

@@ -11,11 +11,13 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
+#include "DungeonTypes.h"  // Canonical enum definitions
 #include "Player.h"
 #include "Group.h"
 #include "Map.h"
 #include "InstanceScript.h"
 #include "Position.h"
+#include "GameTime.h"  // For GameTime::GetGameTimeMS()
 #include "../Core/DI/Interfaces/IDungeonBehavior.h"
 #include <unordered_map>
 #include <unordered_set>
@@ -36,45 +38,8 @@ class Unit;
 namespace Playerbot
 {
 
-enum class DungeonRole : uint8
-{
-    TANK            = 0,
-    HEALER          = 1,
-    MELEE_DPS       = 2,
-    RANGED_DPS      = 3,
-    CROWD_CONTROL   = 4,
-    SUPPORT         = 5
-};
-
-enum class DungeonPhase : uint8
-{
-    ENTERING        = 0,
-    CLEARING_TRASH  = 1,
-    BOSS_ENCOUNTER  = 2,
-    LOOTING         = 3,
-    RESTING         = 4,
-    COMPLETED       = 5,
-    WIPED           = 6
-};
-
-enum class EncounterStrategy : uint8
-{
-    CONSERVATIVE    = 0,  // Safe, methodical approach
-    AGGRESSIVE      = 1,  // Fast, high-risk approach
-    BALANCED        = 2,  // Moderate risk/reward
-    ADAPTIVE        = 3,  // Adapt based on group performance
-    SPEED_RUN       = 4,  // Maximum speed completion
-    LEARNING        = 5   // Educational approach for new content
-};
-
-enum class ThreatManagement : uint8
-{
-    STRICT_AGGRO    = 0,  // Maintain strict threat control
-    LOOSE_AGGRO     = 1,  // Allow some threat variation
-    BURN_STRATEGY   = 2,  // Ignore threat, focus DPS
-    TANK_SWAP       = 3,  // Coordinate tank swapping
-    OFF_TANK        = 4   // Off-tank specific mechanics
-};
+// DungeonRole, DungeonPhase, EncounterStrategyType, ThreatManagement
+// are now defined in DungeonTypes.h
 
 struct DungeonEncounter
 {
@@ -84,7 +49,7 @@ struct DungeonEncounter
     Position encounterLocation;
     ::std::vector<uint32> trashMobIds;
     ::std::vector<Position> trashLocations;
-    EncounterStrategy recommendedStrategy;
+    EncounterStrategyType recommendedStrategy;
     ThreatManagement threatStrategy;
     uint32 estimatedDuration;
     float difficultyRating;
@@ -96,7 +61,7 @@ struct DungeonEncounter
 
     DungeonEncounter(uint32 id, const ::std::string& name, uint32 creatureId)
         : encounterId(id), encounterName(name), creatureId(creatureId)
-        , recommendedStrategy(EncounterStrategy::BALANCED)
+        , recommendedStrategy(EncounterStrategyType::BALANCED)
         , threatStrategy(ThreatManagement::STRICT_AGGRO)
         , estimatedDuration(300000), difficultyRating(5.0f)
         , requiresSpecialPositioning(false), hasEnrageTimer(false)
@@ -121,6 +86,11 @@ struct DungeonData
     bool requiresQuests;
     bool hasKeyRequirement;
 
+    DungeonData() : dungeonId(0), mapId(0), recommendedLevel(20)
+        , minLevel(15), maxLevel(25), recommendedGroupSize(5)
+        , averageCompletionTime(2700000), difficultyRating(5.0f)
+        , requiresQuests(false), hasKeyRequirement(false) {}
+
     DungeonData(uint32 id, const ::std::string& name, uint32 map)
         : dungeonId(id), dungeonName(name), mapId(map), recommendedLevel(20)
         , minLevel(15), maxLevel(25), recommendedGroupSize(5)
@@ -144,13 +114,19 @@ struct GroupDungeonState
     Position lastGroupPosition;
     bool isStuck;
     uint32 stuckTime;
-    EncounterStrategy activeStrategy;
+    EncounterStrategyType activeStrategy;
+
+    GroupDungeonState() : groupId(0), dungeonId(0)
+        , currentPhase(DungeonPhase::ENTERING), currentEncounterId(0)
+        , encountersCompleted(0), totalEncounters(0), wipeCount(0)
+        , startTime(0), lastProgressTime(0)
+        , isStuck(false), stuckTime(0), activeStrategy(EncounterStrategyType::BALANCED) {}
 
     GroupDungeonState(uint32 gId, uint32 dId) : groupId(gId), dungeonId(dId)
         , currentPhase(DungeonPhase::ENTERING), currentEncounterId(0)
         , encountersCompleted(0), totalEncounters(0), wipeCount(0)
         , startTime(GameTime::GetGameTimeMS()), lastProgressTime(GameTime::GetGameTimeMS())
-        , isStuck(false), stuckTime(0), activeStrategy(EncounterStrategy::BALANCED) {}
+        , isStuck(false), stuckTime(0), activeStrategy(EncounterStrategyType::BALANCED) {}
 };
 
 class TC_GAME_API DungeonBehavior final : public IDungeonBehavior
@@ -226,7 +202,7 @@ public:
     void LoadDungeonData() override;
     DungeonData GetDungeonData(uint32 dungeonId) override;
     DungeonEncounter GetEncounterData(uint32 encounterId) override;
-    void UpdateDungeonStrategy(Group* group, EncounterStrategy strategy) override;
+    void UpdateDungeonStrategy(Group* group, EncounterStrategyType strategy) override;
 
     // Error handling and recovery
     void HandleDungeonError(Group* group, const ::std::string& error) override;
@@ -234,9 +210,15 @@ public:
     void HandlePlayerDisconnection(Group* group, Player* disconnectedPlayer) override;
     void HandleGroupDisbandInDungeon(Group* group) override;
 
+    // Role determination
+    DungeonRole DeterminePlayerRole(Player* player);
+
+    // State access
+    GroupDungeonState GetGroupDungeonState(uint32 groupId) const;
+
     // Configuration and settings
-    void SetEncounterStrategy(uint32 groupId, EncounterStrategy strategy) override;
-    EncounterStrategy GetEncounterStrategy(uint32 groupId) override;
+    void SetEncounterStrategy(uint32 groupId, EncounterStrategyType strategy) override;
+    EncounterStrategyType GetEncounterStrategy(uint32 groupId) override;
     void SetThreatManagement(uint32 groupId, ThreatManagement management) override;
     void EnableAdaptiveBehavior(uint32 groupId, bool enable) override;
 
@@ -252,7 +234,7 @@ private:
     // Core data structures
     ::std::unordered_map<uint32, DungeonData> _dungeonDatabase; // dungeonId -> data
     ::std::unordered_map<uint32, GroupDungeonState> _groupDungeonStates; // groupId -> state
-    ::std::unordered_map<uint32, DungeonMetrics> _groupMetrics;
+    ::std::unordered_map<uint32, AtomicDungeonMetrics> _groupMetrics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _dungeonMutex;
 
     // Encounter tracking
@@ -261,12 +243,12 @@ private:
     ::std::unordered_map<uint32, uint32> _encounterStartTime; // groupId -> startTime
 
     // Strategy and adaptation
-    ::std::unordered_map<uint32, EncounterStrategy> _groupStrategies; // groupId -> strategy
+    ::std::unordered_map<uint32, EncounterStrategyType> _groupStrategies; // groupId -> strategy
     ::std::unordered_map<uint32, ThreatManagement> _groupThreatManagement; // groupId -> threat management
     ::std::unordered_map<uint32, bool> _adaptiveBehaviorEnabled; // groupId -> enabled
 
     // Performance tracking
-    DungeonMetrics _globalMetrics;
+    AtomicDungeonMetrics _globalMetrics;
 
     // Helper functions
     void InitializeDungeonDatabase();

@@ -40,20 +40,50 @@ struct InstanceProgress
     bool isOnTrack;
     ::std::vector<::std::string> progressNotes;
 
+    InstanceProgress() : groupId(0), instanceId(0), mapId(0)
+        , startTime(0), currentCheckpoint(0)
+        , progressPercentage(0.0f), estimatedCompletionTime(2700000)
+        , isOnTrack(true) {}
+
     InstanceProgress(uint32 gId, uint32 iId, uint32 mId) : groupId(gId), instanceId(iId)
         , mapId(mId), startTime(GameTime::GetGameTimeMS()), currentCheckpoint(0)
         , progressPercentage(0.0f), estimatedCompletionTime(2700000) // 45 minutes
         , isOnTrack(true) {}
 };
 
-// CoordinationMetrics definition (needs full definition for return by value)
+// CoordinationMetrics snapshot for return by value (no atomic members)
 struct CoordinationMetrics
+{
+    uint32 coordinationEvents = 0;
+    uint32 successfulCoordinations = 0;
+    uint32 coordinationFailures = 0;
+    float averageResponseTime = 2000.0f; // 2 seconds
+    float groupSynchronization = 0.9f; // 90% sync rate
+    float movementEfficiency = 0.85f;
+    uint32 formationBreaks = 0;
+    uint32 communicationEvents = 0;
+
+    void Reset()
+    {
+        coordinationEvents = 0; successfulCoordinations = 0; coordinationFailures = 0;
+        averageResponseTime = 2000.0f; groupSynchronization = 0.9f;
+        movementEfficiency = 0.85f; formationBreaks = 0; communicationEvents = 0;
+    }
+
+    float GetCoordinationSuccessRate() const
+    {
+        return coordinationEvents > 0 ? static_cast<float>(successfulCoordinations) / coordinationEvents : 0.0f;
+    }
+};
+
+// Internal thread-safe atomic storage for CoordinationMetrics
+struct AtomicCoordinationMetrics
 {
     ::std::atomic<uint32> coordinationEvents{0};
     ::std::atomic<uint32> successfulCoordinations{0};
     ::std::atomic<uint32> coordinationFailures{0};
-    ::std::atomic<float> averageResponseTime{2000.0f}; // 2 seconds
-    ::std::atomic<float> groupSynchronization{0.9f}; // 90% sync rate
+    ::std::atomic<float> averageResponseTime{2000.0f};
+    ::std::atomic<float> groupSynchronization{0.9f};
     ::std::atomic<float> movementEfficiency{0.85f};
     ::std::atomic<uint32> formationBreaks{0};
     ::std::atomic<uint32> communicationEvents{0};
@@ -65,11 +95,25 @@ struct CoordinationMetrics
         movementEfficiency = 0.85f; formationBreaks = 0; communicationEvents = 0;
     }
 
+    CoordinationMetrics GetSnapshot() const
+    {
+        CoordinationMetrics snapshot;
+        snapshot.coordinationEvents = coordinationEvents.load();
+        snapshot.successfulCoordinations = successfulCoordinations.load();
+        snapshot.coordinationFailures = coordinationFailures.load();
+        snapshot.averageResponseTime = averageResponseTime.load();
+        snapshot.groupSynchronization = groupSynchronization.load();
+        snapshot.movementEfficiency = movementEfficiency.load();
+        snapshot.formationBreaks = formationBreaks.load();
+        snapshot.communicationEvents = communicationEvents.load();
+        return snapshot;
+    }
+
     float GetCoordinationSuccessRate() const
     {
         uint32 total = coordinationEvents.load();
         uint32 successful = successfulCoordinations.load();
-        return total > 0 ? (float)successful / total : 0.0f;
+        return total > 0 ? static_cast<float>(successful) / total : 0.0f;
     }
 };
 

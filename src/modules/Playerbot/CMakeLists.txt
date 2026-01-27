@@ -281,6 +281,19 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ZoneOrchestrator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ZoneOrchestrator.h
 
+    # AI Coordination - Dungeon
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/DungeonState.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/DungeonCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/DungeonCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/TrashPullManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/TrashPullManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/BossEncounterManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/BossEncounterManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/WipeRecoveryManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/WipeRecoveryManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/MythicPlusManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/MythicPlusManager.cpp
+
     # AI Blackboard
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.h
@@ -946,7 +959,7 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
 
 # ============================================================================
 # LIBRARY 8: playerbot-pvp
-# PvP, LFG, Battleground, Arena, Dragonriding, Scripts, Performance
+# PvP, LFG, Battleground, Arena, Dragonriding, Dungeon, Scripts, Performance
 # ============================================================================
 set(PLAYERBOT_PVP_SOURCES
     # PvP Systems
@@ -970,6 +983,34 @@ set(PLAYERBOT_PVP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGGroupCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGGroupCoordinator.h
+
+    # Dungeon System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonAutonomyManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonAutonomyManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonBehavior.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonBehavior.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScriptLoader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScriptLoader.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScriptMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScriptMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/EncounterStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/EncounterStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/InstanceCoordination.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/InstanceCoordination.h
+
+    # Dungeon Scripts - Vanilla
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/BlackfathomDeepsScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/DeadminesScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/GnomereganScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/RagefireChasmScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/RazorfenDownsScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/RazorfenKraulScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/ScarletMonasteryScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/ShadowfangKeepScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/StockadeScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/WailingCavernsScript.cpp
 
     # Dragonriding System
     ${CMAKE_CURRENT_SOURCE_DIR}/Dragonriding/DragonridingDefines.h
@@ -1056,6 +1097,8 @@ set(PLAYERBOT_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/ResourceRace
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Epic
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon
     ${CMAKE_SOURCE_DIR}/src/modules/Common
     ${MYSQL_INCLUDE_DIR}
 )

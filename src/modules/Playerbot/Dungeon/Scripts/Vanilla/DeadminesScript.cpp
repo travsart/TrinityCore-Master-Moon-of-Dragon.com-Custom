@@ -47,6 +47,7 @@
 #include "Creature.h"
 #include "InstanceScript.h"
 #include "SpellInfo.h"
+#include "Spell.h"  // For Spell class
 #include "Log.h"
 
 namespace Playerbot

@@ -187,12 +187,12 @@ private:
     // Script name lookup (name -> script) - NON-OWNING raw pointers (lookup only)
     ::std::unordered_map<::std::string, DungeonScript*> _namedScripts;
 
-    // Statistics
-    ::std::atomic<uint32> _scriptCount{0};
-    ::std::atomic<uint32> _bossMappingCount{0};
-    ::std::atomic<uint32> _scriptHits{0};
-    ::std::atomic<uint32> _scriptMisses{0};
-    ::std::atomic<uint32> _mechanicExecutions{0};
+    // Statistics (mutable for const method access)
+    mutable ::std::atomic<uint32> _scriptCount{0};
+    mutable ::std::atomic<uint32> _bossMappingCount{0};
+    mutable ::std::atomic<uint32> _scriptHits{0};
+    mutable ::std::atomic<uint32> _scriptMisses{0};
+    mutable ::std::atomic<uint32> _mechanicExecutions{0};
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
     bool _initialized;

@@ -22,6 +22,7 @@
 #include "ObjectAccessor.h"
 #include "GameTime.h"
 #include "Log.h"
+#include "LFG.h"
 
 namespace Playerbot {
 
@@ -487,17 +488,17 @@ void DungeonCoordinator::DetectRoles()
         if (!member)
             continue;
 
-        // Check player role using LFG role
-        uint8 roles = member->GetPlayerSchemeLfgRoles();
+        // Check player role using LFG role from group
+        uint8 roles = _group ? _group->GetLfgRoles(member->GetGUID()) : 0;
 
-        if (roles & PLAYER_ROLE_TANK)
+        if (roles & lfg::PLAYER_ROLE_TANK)
         {
             if (_mainTank.IsEmpty())
                 _mainTank = member->GetGUID();
             else if (_offTank.IsEmpty())
                 _offTank = member->GetGUID();
         }
-        else if (roles & PLAYER_ROLE_HEALER)
+        else if (roles & lfg::PLAYER_ROLE_HEALER)
         {
             _healers.push_back(member->GetGUID());
         }

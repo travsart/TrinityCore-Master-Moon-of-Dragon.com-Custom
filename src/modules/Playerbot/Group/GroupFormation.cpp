@@ -123,7 +123,7 @@ void GroupFormation::AddMember(uint32 memberGuid, const Position& preferredPosit
     if (assignedPos.GetExactDist(0, 0, 0) < 0.1f) // No preferred position
     {
         // Calculate default position based on formation type
-        assignedPos = CalculateMemberPosition(FormationMember(memberGuid, Position()));
+        assignedPos = CalculateMemberPosition(GroupFormationMember(memberGuid, Position()));
     }
 
     _members.emplace_back(memberGuid, assignedPos);
@@ -144,7 +144,7 @@ void GroupFormation::RemoveMember(uint32 memberGuid)
 
     _members.erase(
         ::std::remove_if(_members.begin(), _members.end(),
-                      [memberGuid](const FormationMember& member) {
+                      [memberGuid](const GroupFormationMember& member) {
                           return member.memberGuid == memberGuid;
                       }),
         _members.end()
@@ -446,7 +446,7 @@ void GroupFormation::RecalculateFormationPositions()
     }
 }
 
-Position GroupFormation::CalculateMemberPosition(const FormationMember& member) const
+Position GroupFormation::CalculateMemberPosition(const GroupFormationMember& member) const
 {
     // Transform relative position to world position
     Position relativePos = member.assignedPosition;
@@ -865,7 +865,7 @@ void GroupFormation::ApplyFlexibilityAdjustments()
         // Adjustment 1: Adapt to formation behavior
         float adjustmentFactor = 1.0f;
 
-        switch (_formationBehavior)
+        switch (_behavior)
         {
             case FormationBehavior::RIGID:
                 adjustmentFactor = 0.1f; // Very tight formation, minimal flexibility

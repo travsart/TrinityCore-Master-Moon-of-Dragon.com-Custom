@@ -34,7 +34,7 @@ constexpr float DANGER_DECAY_RATE = 0.1f;
 
 PositionStrategyBase::PositionStrategyBase(Map* map)
     : _map(map)
-    , _formationType(FormationType::SPREAD)
+    , _formationType(MovementFormationType::SPREAD)
     , _spatialGrid(::std::make_unique<SpatialGrid>())
     , _useAdvancedPathfinding(true)
     , _enableCollisionAvoidance(true)
@@ -138,7 +138,7 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
 // Batch position calculation for multiple bots (optimized for massive scale)
 ::std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
     ::std::span<PositionRequest> requests,
-    FormationType formation)
+    MovementFormationType formation)
 {
     if (requests.empty())
         return {};
@@ -1040,22 +1040,22 @@ void PositionStrategyBase::UpdateFormationPositions(::std::vector<Player*> bots,
 
     switch (_formationType)
     {
-        case FormationType::LINE:
+        case MovementFormationType::LINE:
 
             positions = CalculateLineFormation(bots, centerTarget);
 
             break;
-        case FormationType::WEDGE:
+        case MovementFormationType::WEDGE:
 
             positions = CalculateWedgeFormation(bots, centerTarget);
 
             break;
-        case FormationType::CIRCLE:
+        case MovementFormationType::CIRCLE:
 
             positions = CalculateCircleFormation(bots, centerTarget);
 
             break;
-        case FormationType::SPREAD:
+        case MovementFormationType::SPREAD:
 
             positions = CalculateSpreadFormation(bots, centerTarget);
 

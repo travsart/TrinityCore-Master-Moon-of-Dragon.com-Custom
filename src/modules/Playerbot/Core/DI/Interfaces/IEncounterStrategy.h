@@ -27,6 +27,87 @@ struct DungeonEncounter;
 enum class DungeonRole : uint8;
 
 /**
+ * @brief Role-specific strategy for tanks
+ */
+struct TankStrategy
+{
+    ::std::function<void(Player*, Group*, const DungeonEncounter&)> positioningStrategy;
+    ::std::function<void(Player*, Group*, Unit*)> threatManagementStrategy;
+    ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
+    ::std::function<void(Player*, Group*)> cooldownUsageStrategy;
+
+    ::std::vector<uint32> priorityCooldowns;
+    ::std::vector<::std::string> keyMechanics;
+    Position optimalPosition;
+    float threatThreshold = 1.1f;
+    bool requiresMovement = false;
+};
+
+/**
+ * @brief Role-specific strategy for healers
+ */
+struct HealerStrategy
+{
+    ::std::function<void(Player*, Group*, const DungeonEncounter&)> healingPriorityStrategy;
+    ::std::function<void(Player*, Group*)> manaManagementStrategy;
+    ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
+    ::std::function<void(Player*, Group*)> dispelStrategy;
+
+    ::std::vector<uint32> emergencyCooldowns;
+    ::std::vector<uint32> dispelPriorities;
+    Position safePosition;
+    float healingThreshold = 0.7f;
+    bool requiresMovement = false;
+};
+
+/**
+ * @brief Role-specific strategy for DPS
+ */
+struct DpsStrategy
+{
+    ::std::function<void(Player*, Group*, const ::std::vector<Unit*>&)> targetPriorityStrategy;
+    ::std::function<void(Player*, Group*, const DungeonEncounter&)> damageOptimizationStrategy;
+    ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
+    ::std::function<void(Player*, Group*)> cooldownRotationStrategy;
+
+    ::std::vector<uint32> burstCooldowns;
+    ::std::vector<uint32> targetPriorities;
+    Position optimalPosition;
+    float threatLimit = 0.9f;
+    bool canMoveDuringCast = false;
+};
+
+/**
+ * @brief Strategy execution metrics (snapshot - non-atomic for copyability)
+ *
+ * This is a copyable snapshot of metrics. The internal implementation may use
+ * atomic storage but returns this copyable snapshot for external consumers.
+ */
+struct StrategyMetrics
+{
+    uint32 strategiesExecuted = 0;
+    uint32 strategiesSuccessful = 0;
+    uint32 mechanicsHandled = 0;
+    uint32 mechanicsSuccessful = 0;
+    float averageExecutionTime = 300000.0f;  // 5 minutes
+    float strategySuccessRate = 0.85f;
+    float mechanicSuccessRate = 0.9f;
+    uint32 adaptationsPerformed = 0;
+
+    void Reset()
+    {
+        strategiesExecuted = 0;
+        strategiesSuccessful = 0;
+        mechanicsHandled = 0;
+        mechanicsSuccessful = 0;
+        averageExecutionTime = 300000.0f;
+        strategySuccessRate = 0.85f;
+        mechanicSuccessRate = 0.9f;
+        adaptationsPerformed = 0;
+    }
+};
+
+/**
  * @brief Interface for encounter strategy management in dungeons
  *
  * Provides comprehensive encounter strategy execution, phase management,
@@ -56,11 +137,7 @@ public:
     virtual void HandleChanneledSpellMechanic(Group* group, Unit* caster, uint32 spellId) = 0;
     virtual void HandleEnrageMechanic(Group* group, Unit* boss, uint32 timeRemaining) = 0;
 
-    // Role-specific strategy structures
-    struct TankStrategy;
-    struct HealerStrategy;
-    struct DpsStrategy;
-
+    // Role-specific strategy getters
     virtual TankStrategy GetTankStrategy(uint32 encounterId, Player* tank) = 0;
     virtual HealerStrategy GetHealerStrategy(uint32 encounterId, Player* healer) = 0;
     virtual DpsStrategy GetDpsStrategy(uint32 encounterId, Player* dps) = 0;
@@ -91,7 +168,6 @@ public:
     virtual void ExecuteRazorfenKraulStrategies(Group* group, uint32 encounterId) = 0;
 
     // Performance monitoring
-    struct StrategyMetrics;
     virtual StrategyMetrics GetStrategyMetrics(uint32 encounterId) = 0;
     virtual StrategyMetrics GetGlobalStrategyMetrics() = 0;
 

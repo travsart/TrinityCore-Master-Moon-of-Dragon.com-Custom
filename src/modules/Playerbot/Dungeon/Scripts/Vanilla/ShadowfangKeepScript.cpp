@@ -42,12 +42,13 @@
 #include "Log.h"
 #include "Player.h"
 #include "Creature.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
-#include "../../../Spatial/SpatialGridManager.h"  // Spatial grid for deadlock fix
-#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5E: Thread-safe queries
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../Spatial/DoubleBufferedSpatialGrid.h"
 
 namespace Playerbot
 {
@@ -219,58 +220,49 @@ public:
                 // Walden throws potions creating ground effects
                 // Ice, fire, and poison puddles to avoid
 
-                ::std::list<::DynamicObject*> dynamicObjects;
-                Trinity::AllWorldObjectsInRange check(player, 15.0f);
-                Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
-                // DEADLOCK FIX: Spatial grid replaces Cell::Visit
-    {
-        Map* cellVisitMap = player->GetMap();
-        if (!cellVisitMap)
-            return false;
+                // ENTERPRISE: Use lock-free spatial grid for thread-safe DynamicObject queries
+                Map* map = player->GetMap();
+                if (!map)
+                    break;
 
-        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
-        if (!spatialGrid)
-        {
-            sSpatialGridManager.CreateGrid(cellVisitMap);
-            spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
-        }
-
-        if (spatialGrid)
-        {
-// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
-                player->GetPosition(), 15.0f);
-
-            for (ObjectGuid guid : nearbyGuids)
-            {
-                // PHASE 5E: Thread-safe spatial grid validation
-                auto snapshot = SpatialGridQueryHelpers::FindDynamicObjectByGuid(player, guid);
-                DynamicObject* dynObj = nullptr;
-
-                if (snapshot)
+                DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+                if (!spatialGrid)
                 {
-                    // Get DynamicObject* for effect check (validated via snapshot first)
-                    dynObj = ObjectAccessor::GetDynamicObject(*player, guid);
+                    sSpatialGridManager.CreateGrid(map);
+                    spatialGrid = sSpatialGridManager.GetGrid(map);
+                    if (!spatialGrid)
+                        break;
                 }
 
-                if (dynObj)
-                {
-                    // Original logic from searcher
-                }
-            }
-        }
-    }
+                // Query nearby dynamic objects using immutable snapshots (lock-free!)
+                auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(player->GetPosition(), 15.0f);
 
-                for (::DynamicObject* dynObj : dynamicObjects)
+                for (auto const& snapshot : dynamicObjectSnapshots)
                 {
-                    if (!dynObj || dynObj->GetCaster() != boss)
+                    // Filter using snapshot data - no ObjectAccessor calls needed for filtering!
+                    if (!snapshot.IsActive())
                         continue;
 
-                    // Check for potion ground effects
-    if (IsDangerousGroundEffect(dynObj))
+                    // Check if casted by the boss
+                    if (snapshot.casterGuid != boss->GetGUID())
+                        continue;
+
+                    // Calculate distance using snapshot position
+                    float distance = player->GetExactDist(snapshot.position);
+
+                    // Only get actual DynamicObject* for effect check if in range
+                    if (distance < 8.0f)
                     {
-                        TC_LOG_DEBUG("module.playerbot", "ShadowfangKeepScript: Avoiding Walden's potion effect");
-                        MoveAwayFromGroundEffect(player, dynObj);
-                        return;
+                        if (DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, snapshot.guid))
+                        {
+                            // Check for potion ground effects using the base class method
+                            if (IsDangerousGroundEffect(dynObj))
+                            {
+                                TC_LOG_DEBUG("module.playerbot", "ShadowfangKeepScript: Avoiding Walden's potion effect at distance {:.1f}", distance);
+                                MoveAwayFromGroundEffect(player, dynObj);
+                                return;
+                            }
+                        }
                     }
                 }
                 break;
@@ -303,7 +295,7 @@ public:
                 {
                     for (::Creature* add : adds)
                     {
-                        if (!add || add->IsDead())
+                        if (!add || !add->IsAlive())
                             continue;
 
                         // Check if add is targeting healer
@@ -394,7 +386,7 @@ public:
                 {
                     // All non-tanks should be behind or to the side
                     float angle = boss->GetOrientation();
-                    float playerAngle = boss->GetAngle(player);
+                    float playerAngle = boss->GetAbsoluteAngle(player);
                     float angleDiff = ::std::abs(angle - playerAngle);
 
                     // If player is in frontal arc (< 90 degrees), move
@@ -453,7 +445,7 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for Veil of Shadow (7068)
@@ -477,7 +469,7 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for fear
@@ -573,16 +565,12 @@ public:
     }
 };
 
-} // namespace Playerbot
-
 // ============================================================================
 // REGISTRATION
 // ============================================================================
 
 void AddSC_shadowfang_keep_playerbot()
 {
-    using namespace Playerbot;
-
     // Register script
     DungeonScriptMgr::instance()->RegisterScript(new ShadowfangKeepScript());
 
@@ -600,6 +588,8 @@ void AddSC_shadowfang_keep_playerbot()
 
     TC_LOG_INFO("server.loading", ">> Registered Shadowfang Keep playerbot script with 8 boss mappings");
 }
+
+} // namespace Playerbot
 
 /**
  * USAGE NOTES FOR SHADOWFANG KEEP:

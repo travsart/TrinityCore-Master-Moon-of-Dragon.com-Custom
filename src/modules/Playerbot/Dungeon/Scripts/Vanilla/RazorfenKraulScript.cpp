@@ -45,6 +45,7 @@
 #include "Log.h"
 #include "Player.h"
 #include "Creature.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Group.h"
@@ -244,7 +245,7 @@ public:
                 // Prioritize healing totems first
     for (::Creature* add : adds)
                 {
-                    if (!add || add->IsDead())
+                    if (!add || !add->IsAlive())
                         continue;
 
                     // Check if it's a totem (typical totem entries)
@@ -264,7 +265,7 @@ public:
                 // Then damage totems
     for (::Creature* add : adds)
                 {
-                    if (!add || add->IsDead())
+                    if (!add || !add->IsAlive())
                         continue;
 
                     uint32 addEntry = add->GetEntry();
@@ -293,7 +294,7 @@ public:
                 // Healing totems absolute priority
     for (::Creature* add : adds)
                 {
-                    if (!add || add->IsDead())
+                    if (!add || !add->IsAlive())
                         continue;
 
                     uint32 addEntry = add->GetEntry();
@@ -310,7 +311,7 @@ public:
                 // Then other totems
     for (::Creature* add : adds)
                 {
-                    if (!add || add->IsDead())
+                    if (!add || !add->IsAlive())
                         continue;
 
                     // Any totem
@@ -338,7 +339,7 @@ public:
 
                     for (::Creature* add : adds)
                     {
-                        if (!add || add->IsDead())
+                        if (!add || !add->IsAlive())
                             continue;
 
                         float healthPct = add->GetHealthPct();
@@ -379,9 +380,9 @@ public:
 
                 if (role == DungeonRole::MELEE_DPS)
                 {
-                    // Stay behind boss
-                    Position behindPos = CalculateBehindPosition(player, boss);
-                    float angle = player->GetAngle(boss);
+                    // Stay behind boss (melee position is behind)
+                    Position behindPos = CalculateMeleePosition(player, boss);
+                    float angle = player->GetAbsoluteAngle(boss);
                     float bossAngle = boss->GetOrientation();
                     float angleDiff = ::std::abs(angle - bossAngle);
 
@@ -434,7 +435,7 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for curse debuffs
@@ -517,16 +518,12 @@ private:
     }
 };
 
-} // namespace Playerbot
-
 // ============================================================================
 // REGISTRATION
 // ============================================================================
 
 void AddSC_razorfen_kraul_playerbot()
 {
-    using namespace Playerbot;
-
     // Register script
     DungeonScriptMgr::instance()->RegisterScript(new RazorfenKraulScript());
 
@@ -540,6 +537,8 @@ void AddSC_razorfen_kraul_playerbot()
 
     TC_LOG_INFO("server.loading", ">> Registered Razorfen Kraul playerbot script with 6 boss mappings");
 }
+
+} // namespace Playerbot
 
 /**
  * USAGE NOTES FOR RAZORFEN KRAUL:

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "DungeonTypes.h"  // Canonical enum definitions (DungeonRole, MechanicType, etc.)
 #include "Player.h"
 #include "Creature.h"
 #include "InstanceScript.h"
@@ -20,32 +21,7 @@
 namespace Playerbot
 {
 
-/**
- * @brief Mechanic types for dungeon encounters
- */
-enum class MechanicType : uint8
-{
-    INTERRUPT = 0,          // Spell interrupts
-    GROUND_AVOID = 1,       // Ground effect avoidance
-    ADD_PRIORITY = 2,       // Add kill priority
-    POSITIONING = 3,        // Player positioning
-    DISPEL = 4,             // Dispel mechanics
-    MOVEMENT = 5,           // Movement mechanics
-    TANK_SWAP = 6,          // Tank swap mechanics
-    SPREAD = 7,             // Spread out mechanic
-    STACK = 8               // Stack together mechanic
-};
-
-/**
- * @brief Player role in dungeon
- */
-enum class DungeonRole : uint8
-{
-    TANK = 0,
-    MELEE_DPS = 1,
-    RANGED_DPS = 2,
-    HEALER = 3
-};
+// DungeonRole and MechanicType are now defined in DungeonTypes.h
 
 /**
  * @brief Base class for all dungeon scripts

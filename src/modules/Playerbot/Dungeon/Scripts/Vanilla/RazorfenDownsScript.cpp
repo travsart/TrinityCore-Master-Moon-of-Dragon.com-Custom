@@ -45,12 +45,14 @@
 #include "Log.h"
 #include "Player.h"
 #include "Creature.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "SpellAuras.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
-#include "../../../Spatial/SpatialGridManager.h"  // Spatial grid for deadlock fix
-#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5E: Thread-safe queries
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../Spatial/DoubleBufferedSpatialGrid.h"
 
 namespace Playerbot
 {
@@ -217,61 +219,51 @@ public:
                 // Glutton spawns disease clouds on ground
                 // Must move out of disease
 
-                ::std::list<::DynamicObject*> dynamicObjects;
-                Trinity::AllWorldObjectsInRange check(player, 15.0f);
-                Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
-                // DEADLOCK FIX: Spatial grid replaces Cell::Visit
-    {
-        Map* cellVisitMap = player->GetMap();
-        if (!cellVisitMap)
-            return false;
+                // ENTERPRISE: Use lock-free spatial grid for thread-safe DynamicObject queries
+                Map* map = player->GetMap();
+                if (!map)
+                    break;
 
-        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
-        if (!spatialGrid)
-        {
-            sSpatialGridManager.CreateGrid(cellVisitMap);
-            spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
-        }
-
-        if (spatialGrid)
-        {
-// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
-                player->GetPosition(), 15.0f);
-
-            for (ObjectGuid guid : nearbyGuids)
-            {
-                // PHASE 5E: Thread-safe spatial grid validation
-                auto snapshot = SpatialGridQueryHelpers::FindDynamicObjectByGuid(player, guid);
-                DynamicObject* dynObj = nullptr;
-
-                if (snapshot)
+                DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+                if (!spatialGrid)
                 {
-                    // Get DynamicObject* for effect check (validated via snapshot first)
-                    dynObj = ObjectAccessor::GetDynamicObject(*player, guid);
+                    sSpatialGridManager.CreateGrid(map);
+                    spatialGrid = sSpatialGridManager.GetGrid(map);
+                    if (!spatialGrid)
+                        break;
                 }
 
-                if (dynObj)
-                {
-                    // Original logic from searcher
-                }
-            }
-        }
-    }
+                // Query nearby dynamic objects using immutable snapshots (lock-free!)
+                auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(player->GetPosition(), 15.0f);
 
-                for (::DynamicObject* dynObj : dynamicObjects)
+                for (auto const& snapshot : dynamicObjectSnapshots)
                 {
-                    if (!dynObj || dynObj->GetCaster() != boss)
+                    // Filter using snapshot data - no ObjectAccessor calls needed for filtering!
+                    if (!snapshot.IsActive())
                         continue;
 
-                    // Disease cloud effects
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId(), DIFFICULTY_NONE);
-                    if (spellInfo && (spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE) ||
-                                      spellInfo->Dispel == DISPEL_DISEASE))
+                    // Check if casted by the boss
+                    if (snapshot.casterGuid != boss->GetGUID())
+                        continue;
+
+                    // Check for disease cloud effects using spell info
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(snapshot.spellId, DIFFICULTY_NONE);
+                    if (!spellInfo)
+                        continue;
+
+                    // Disease cloud: periodic damage or disease dispel type
+                    if (!spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE) && spellInfo->Dispel != DISPEL_DISEASE)
+                        continue;
+
+                    // Calculate distance using snapshot position
+                    float distance = player->GetExactDist(snapshot.position);
+                    if (distance < 8.0f)
                     {
-                        float distance = player->GetExactDist(dynObj);
-                        if (distance < 8.0f)
+                        TC_LOG_DEBUG("module.playerbot", "RazorfenDownsScript: Avoiding Glutton's disease cloud at distance {:.1f}", distance);
+
+                        // Only get actual DynamicObject* for movement calculation (needs object reference)
+                        if (DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, snapshot.guid))
                         {
-                            TC_LOG_DEBUG("module.playerbot", "RazorfenDownsScript: Avoiding Glutton's disease cloud");
                             MoveAwayFromGroundEffect(player, dynObj);
                             return;
                         }
@@ -314,7 +306,7 @@ public:
 
                     for (::Creature* add : adds)
                     {
-                        if (!add || add->IsDead())
+                        if (!add || !add->IsAlive())
                             continue;
 
                         float dist = player->GetExactDist(add);
@@ -339,7 +331,7 @@ public:
 
                     for (::Creature* add : adds)
                     {
-                        if (!add || add->IsDead())
+                        if (!add || !add->IsAlive())
                             continue;
 
                         float healthPct = add->GetHealthPct();
@@ -369,7 +361,7 @@ public:
 
                 for (::Creature* add : adds)
                 {
-                    if (!add || add->IsDead())
+                    if (!add || !add->IsAlive())
                         continue;
 
                     // Bone constructs (entries vary)
@@ -403,9 +395,9 @@ public:
 
                 if (role == DungeonRole::MELEE_DPS)
                 {
-                    // Position behind boss
-                    Position behindPos = CalculateBehindPosition(player, boss);
-                    float angle = player->GetAngle(boss);
+                    // Position behind boss (melee position is behind)
+                    Position behindPos = CalculateMeleePosition(player, boss);
+                    float angle = player->GetAbsoluteAngle(boss);
                     float bossAngle = boss->GetOrientation();
                     float angleDiff = ::std::abs(angle - bossAngle);
 
@@ -483,7 +475,7 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for disease debuffs
@@ -520,7 +512,7 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     // Check for ice block/frost tomb
@@ -537,7 +529,7 @@ public:
     for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                    if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                         continue;
 
                     if (groupMember->HasAuraType(SPELL_AURA_MOD_ROOT))
@@ -609,7 +601,7 @@ public:
     for (auto const& member : group->GetMemberSlots())
                     {
                         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                        if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
+                        if (!groupMember || !groupMember->IsInWorld() || !groupMember->IsAlive())
                             continue;
 
                         // If ally is in Frost Tomb, move to them to help break ice
@@ -637,16 +629,12 @@ public:
     }
 };
 
-} // namespace Playerbot
-
 // ============================================================================
 // REGISTRATION
 // ============================================================================
 
 void AddSC_razorfen_downs_playerbot()
 {
-    using namespace Playerbot;
-
     // Register script
     DungeonScriptMgr::instance()->RegisterScript(new RazorfenDownsScript());
 
@@ -659,6 +647,8 @@ void AddSC_razorfen_downs_playerbot()
 
     TC_LOG_INFO("server.loading", ">> Registered Razorfen Downs playerbot script with 5 boss mappings");
 }
+
+} // namespace Playerbot
 
 /**
  * USAGE NOTES FOR RAZORFEN DOWNS:

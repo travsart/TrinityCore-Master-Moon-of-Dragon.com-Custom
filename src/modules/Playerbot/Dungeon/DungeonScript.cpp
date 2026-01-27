@@ -14,7 +14,10 @@
 #include "ObjectAccessor.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "DynamicObject.h"
+#include "DBCEnums.h"  // For ChrSpecialization enum
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Spatial/DoubleBufferedSpatialGrid.h"  // For CreatureSnapshot
 
 namespace Playerbot
 {
@@ -147,37 +150,48 @@ DungeonRole DungeonScript::GetPlayerRole(::Player* player) const
         return DungeonRole::MELEE_DPS;
 
     // Determine role based on spec/class
-    uint8 playerClass = player->GetClass();
-    uint32 spec = player->GetPrimarySpecialization());
+    ChrSpecialization spec = player->GetPrimarySpecialization();
 
-    // Tank specs
-    if ((playerClass == CLASS_WARRIOR && spec == TALENT_TREE_WARRIOR_PROTECTION) ||
-        (playerClass == CLASS_PALADIN && spec == TALENT_TREE_PALADIN_PROTECTION) ||
-        (playerClass == CLASS_DEATH_KNIGHT && spec == TALENT_TREE_DEATH_KNIGHT_BLOOD) ||
-        (playerClass == CLASS_DRUID && spec == TALENT_TREE_DRUID_FERAL_COMBAT) ||
-        (playerClass == CLASS_MONK && spec == TALENT_TREE_MONK_BREWMASTER) ||
-        (playerClass == CLASS_DEMON_HUNTER && spec == TALENT_TREE_DEMON_HUNTER_VENGEANCE))
-        return DungeonRole::TANK;
+    // Tank specs - use modern ChrSpecialization enum
+    switch (spec)
+    {
+        case ChrSpecialization::WarriorProtection:
+        case ChrSpecialization::PaladinProtection:
+        case ChrSpecialization::DeathKnightBlood:
+        case ChrSpecialization::DruidGuardian:
+        case ChrSpecialization::MonkBrewmaster:
+        case ChrSpecialization::DemonHunterVengeance:
+            return DungeonRole::TANK;
 
-    // Healer specs
-    if ((playerClass == CLASS_PRIEST && (spec == TALENT_TREE_PRIEST_DISCIPLINE ||
-                                          spec == TALENT_TREE_PRIEST_HOLY)) ||
-        (playerClass == CLASS_PALADIN && spec == TALENT_TREE_PALADIN_HOLY) ||
-        (playerClass == CLASS_SHAMAN && spec == TALENT_TREE_SHAMAN_RESTORATION) ||
-        (playerClass == CLASS_DRUID && spec == TALENT_TREE_DRUID_RESTORATION) ||
-        (playerClass == CLASS_MONK && spec == TALENT_TREE_MONK_MISTWEAVER) ||
-        (playerClass == CLASS_EVOKER && spec == TALENT_TREE_EVOKER_PRESERVATION))
-        return DungeonRole::HEALER;
+        case ChrSpecialization::PriestDiscipline:
+        case ChrSpecialization::PriestHoly:
+        case ChrSpecialization::PaladinHoly:
+        case ChrSpecialization::ShamanRestoration:
+        case ChrSpecialization::DruidRestoration:
+        case ChrSpecialization::MonkMistweaver:
+        case ChrSpecialization::EvokerPreservation:
+            return DungeonRole::HEALER;
 
-    // Ranged DPS
-    if (playerClass == CLASS_HUNTER || playerClass == CLASS_MAGE ||
-        playerClass == CLASS_WARLOCK || playerClass == CLASS_PRIEST ||
-        (playerClass == CLASS_SHAMAN && spec == TALENT_TREE_SHAMAN_ELEMENTAL) ||
-        (playerClass == CLASS_DRUID && spec == TALENT_TREE_DRUID_BALANCE) ||
-        playerClass == CLASS_EVOKER)
-        return DungeonRole::RANGED_DPS;
+        case ChrSpecialization::ShamanElemental:
+        case ChrSpecialization::DruidBalance:
+        case ChrSpecialization::MageArcane:
+        case ChrSpecialization::MageFire:
+        case ChrSpecialization::MageFrost:
+        case ChrSpecialization::WarlockAffliction:
+        case ChrSpecialization::WarlockDemonology:
+        case ChrSpecialization::WarlockDestruction:
+        case ChrSpecialization::PriestShadow:
+        case ChrSpecialization::HunterBeastMastery:
+        case ChrSpecialization::HunterMarksmanship:
+        case ChrSpecialization::EvokerDevastation:
+        case ChrSpecialization::EvokerAugmentation:
+            return DungeonRole::RANGED_DPS;
 
-    // Melee DPS (default)
+        default:
+            break;
+    }
+
+    // Melee DPS (default for remaining specs)
     return DungeonRole::MELEE_DPS;
 }
 
@@ -188,14 +202,10 @@ DungeonRole DungeonScript::GetPlayerRole(::Player* player) const
     if (!player || !boss)
         return adds;
 
-    // Find all creatures in combat within 50 yards
-    ::std::list<::Creature*> creatures;
-    Trinity::AllWorldObjectsInRange check(player, 50.0f);
-    Trinity::CreatureListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, creatures, check);
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    // ENTERPRISE: Use lock-free spatial grid for thread-safe creature queries
     Map* map = player->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return adds;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -203,27 +213,30 @@ DungeonRole DungeonScript::GetPlayerRole(::Player* player) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return adds;
     }
 
-    // Query nearby GUIDs (lock-free!)
-    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        player->GetPosition(), 50.0f);
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
+    // Query nearby creatures using immutable snapshots (lock-free!)
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(player->GetPosition(), 50.0f);
+
+    // Process results - use snapshot data for initial filtering, then get actual Creature*
+    for (const auto& snapshot : creatureSnapshots)
     {
-        auto* entity = ObjectAccessor::GetCreature(*player, guid);
-        if (!entity)
+        // Filter using snapshot data (no ObjectAccessor calls needed!)
+        if (snapshot.guid == boss->GetGUID())
+            continue; // Skip the boss
+
+        if (!snapshot.isInCombat)
             continue;
-        // Original filtering logic goes here
-    }
-    // End of spatial grid fix
-    for (::Creature* creature : creatures)
-    {
-        if (creature != boss &&
-            creature->IsInCombat() &&
-            creature->IsHostileTo(player) &&
-            !creature->IsDead())
+
+        if (!snapshot.IsAlive())
+            continue;
+
+        if (!snapshot.isHostile)
+            continue;
+
+        // Only if we pass all filters, get the actual Creature* for the return vector
+        if (Creature* creature = ObjectAccessor::GetCreature(*player, snapshot.guid))
         {
             adds.push_back(creature);
         }
@@ -328,7 +341,7 @@ void DungeonScript::MoveAwayFromGroundEffect(::Player* player, ::DynamicObject* 
         return;
 
     // Calculate safe position (15 yards away from ground effect)
-    float angle = player->GetAngle(obj) + static_cast<float>(M_PI); // Opposite direction
+    float angle = player->GetAbsoluteAngle(obj->GetPosition()) + static_cast<float>(M_PI); // Opposite direction
     float x = player->GetPositionX() + 15.0f * cos(angle);
     float y = player->GetPositionY() + 15.0f * sin(angle);
     float z = player->GetPositionZ();
@@ -343,13 +356,12 @@ uint32 DungeonScript::CalculateAddPriority(::Creature* add) const
 
     uint32 priority = 50; // Base priority
 
-    // Healers get highest priority
-    if (add->GetCreatureTemplate()->trainer_type == TRAINER_TYPE_CLASS)
-        priority += 100;
-
-    // Casters get medium-high priority
-    if (add->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
-        priority += 50;
+    // Casters get high priority (PALADIN often used for healer-type NPCs, MAGE for casters)
+    uint8 unitClass = add->GetCreatureTemplate()->unit_class;
+    if (unitClass == UNIT_CLASS_PALADIN)
+        priority += 100;  // Healer/support types
+    else if (unitClass == UNIT_CLASS_MAGE)
+        priority += 75;   // Ranged casters
 
     // Low health gets bonus priority
     if (add->GetHealthPct() < 30)
@@ -392,7 +404,7 @@ Position DungeonScript::CalculateRangedPosition(::Player* player, ::Creature* bo
         return player->GetPosition();
 
     // Ranged position: 20-30 yards from boss
-    float angle = player->GetAngle(boss);
+    float angle = player->GetAbsoluteAngle(boss);
     float distance = 25.0f;
     float x = boss->GetPositionX() + distance * cos(angle);
     float y = boss->GetPositionY() + distance * sin(angle);

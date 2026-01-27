@@ -31,7 +31,7 @@ namespace Playerbot
 
 FormationManager::FormationManager(Player* bot)
     : _bot(bot), _leader(nullptr), _isLeader(false), _inFormation(false),
-      _currentFormation(FormationType::NONE), _movementState(FormationMovementState::STATIONARY),
+      _currentFormation(MovementFormationType::NONE), _movementState(FormationMovementState::STATIONARY),
       _currentIntegrity(FormationIntegrity::PERFECT), _formationOrientation(0.0f),
       _isMovingToDestination(false), _updateInterval(DEFAULT_UPDATE_INTERVAL),
       _cohesionRadius(DEFAULT_COHESION_RADIUS), _formationSpacing(DEFAULT_FORMATION_SPACING),
@@ -44,7 +44,7 @@ FormationManager::FormationManager(Player* bot)
     // Player's m_name can be corrupted during concurrent access, causing ACCESS_VIOLATION
 }
 
-bool FormationManager::JoinFormation(const ::std::vector<Player*>& groupMembers, FormationType formation)
+bool FormationManager::JoinFormation(const ::std::vector<Player*>& groupMembers, MovementFormationType formation)
 {
     // No lock needed - _members is per-bot instance data
     try
@@ -124,7 +124,7 @@ bool FormationManager::LeaveFormation()
         return false;
 
     _inFormation = false;
-    _currentFormation = FormationType::NONE;
+    _currentFormation = MovementFormationType::NONE;
     _movementState = FormationMovementState::STATIONARY;
     _members.clear();
     _leader = nullptr;
@@ -133,7 +133,7 @@ bool FormationManager::LeaveFormation()
     return true;
 }
 
-bool FormationManager::ChangeFormation(FormationType newFormation)
+bool FormationManager::ChangeFormation(MovementFormationType newFormation)
 {
     // No lock needed - _currentFormation is per-bot instance data
     if (!_inFormation || newFormation == _currentFormation)
@@ -216,7 +216,7 @@ bool FormationManager::ExecuteFormationCommand(const FormationCommand& command)
     {
         auto startTime = ::std::chrono::steady_clock::now();
 
-        if (command.newFormation != FormationType::NONE && command.newFormation != _currentFormation)
+        if (command.newFormation != MovementFormationType::NONE && command.newFormation != _currentFormation)
         {
             _currentFormation = command.newFormation;
             AssignFormationPositions();
@@ -266,28 +266,28 @@ Position FormationManager::CalculateFormationPosition(FormationRole role, uint32
 
     switch (_currentFormation)
     {
-        case FormationType::LINE:
+        case MovementFormationType::LINE:
             return CalculateLineFormation(leaderPos, _formationOrientation)[memberIndex % CalculateLineFormation(leaderPos, _formationOrientation).size()];
 
-        case FormationType::COLUMN:
+        case MovementFormationType::COLUMN:
             return CalculateColumnFormation(leaderPos, _formationOrientation)[memberIndex % CalculateColumnFormation(leaderPos, _formationOrientation).size()];
 
-        case FormationType::WEDGE:
+        case MovementFormationType::WEDGE:
             return CalculateWedgeFormation(leaderPos, _formationOrientation)[memberIndex % CalculateWedgeFormation(leaderPos, _formationOrientation).size()];
 
-        case FormationType::DIAMOND:
+        case MovementFormationType::DIAMOND:
             return CalculateDiamondFormation(leaderPos, _formationOrientation)[memberIndex % CalculateDiamondFormation(leaderPos, _formationOrientation).size()];
 
-        case FormationType::CIRCLE:
+        case MovementFormationType::CIRCLE:
             return CalculateCircleFormation(leaderPos)[memberIndex % CalculateCircleFormation(leaderPos).size()];
 
-        case FormationType::BOX:
+        case MovementFormationType::BOX:
             return CalculateBoxFormation(leaderPos, _formationOrientation)[memberIndex % CalculateBoxFormation(leaderPos, _formationOrientation).size()];
 
-        case FormationType::DUNGEON:
+        case MovementFormationType::DUNGEON:
             return CalculateDungeonFormation(leaderPos, _formationOrientation)[memberIndex % CalculateDungeonFormation(leaderPos, _formationOrientation).size()];
 
-        case FormationType::RAID:
+        case MovementFormationType::RAID:
             return CalculateRaidFormation(leaderPos, _formationOrientation)[memberIndex % CalculateRaidFormation(leaderPos, _formationOrientation).size()];
 
         default:
@@ -452,7 +452,7 @@ void FormationManager::TransitionToCombatFormation(const ::std::vector<Unit*>& e
     if (!_inFormation || !_isLeader)
         return;
 
-    FormationType combatFormation = FormationUtils::GetOptimalFormationForCombat(
+    MovementFormationType combatFormation = FormationUtils::GetOptimalFormationForCombat(
         [this]() {
             ::std::vector<Player*> players;
             for (const auto& member : _members)
@@ -801,26 +801,26 @@ FormationRole FormationManager::DeterminePlayerRole(Player* player)
 void FormationManager::InitializeFormationConfigs()
 {
     FormationConfig dungeonConfig;
-    dungeonConfig.type = FormationType::DUNGEON;
+    dungeonConfig.type = MovementFormationType::DUNGEON;
     dungeonConfig.baseSpacing = 4.0f;
     dungeonConfig.cohesionRadius = 12.0f;
     dungeonConfig.combatFormation = true;
     dungeonConfig.roleOrder = { FormationRole::TANK, FormationRole::MELEE_DPS, FormationRole::RANGED_DPS, FormationRole::HEALER };
-    _formationConfigs[FormationType::DUNGEON] = dungeonConfig;
+    _formationConfigs[MovementFormationType::DUNGEON] = dungeonConfig;
 
     FormationConfig lineConfig;
-    lineConfig.type = FormationType::LINE;
+    lineConfig.type = MovementFormationType::LINE;
     lineConfig.baseSpacing = 3.0f;
     lineConfig.cohesionRadius = 10.0f;
     lineConfig.maintainOrientation = true;
-    _formationConfigs[FormationType::LINE] = lineConfig;
+    _formationConfigs[MovementFormationType::LINE] = lineConfig;
 
     FormationConfig circleConfig;
-    circleConfig.type = FormationType::CIRCLE;
+    circleConfig.type = MovementFormationType::CIRCLE;
     circleConfig.baseSpacing = 5.0f;
     circleConfig.cohesionRadius = 8.0f;
     circleConfig.combatFormation = true;
-    _formationConfigs[FormationType::CIRCLE] = circleConfig;
+    _formationConfigs[MovementFormationType::CIRCLE] = circleConfig;
 }
 
 void FormationManager::TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation)
@@ -841,26 +841,26 @@ void FormationManager::TrackPerformance(::std::chrono::microseconds duration, co
 }
 
 // FormationUtils implementation
-FormationType FormationUtils::GetOptimalFormationForGroup(const ::std::vector<Player*>& members)
+MovementFormationType FormationUtils::GetOptimalFormationForGroup(const ::std::vector<Player*>& members)
 {
     if (members.size() <= 2)
-        return FormationType::COLUMN;
+        return MovementFormationType::COLUMN;
     else if (members.size() <= 5)
-        return FormationType::DUNGEON;
+        return MovementFormationType::DUNGEON;
     else if (members.size() <= 10)
-        return FormationType::WEDGE;
+        return MovementFormationType::WEDGE;
     else
-        return FormationType::RAID;
+        return MovementFormationType::RAID;
 }
 
-FormationType FormationUtils::GetOptimalFormationForCombat(const ::std::vector<Player*>& members, const ::std::vector<Unit*>& enemies)
+MovementFormationType FormationUtils::GetOptimalFormationForCombat(const ::std::vector<Player*>& members, const ::std::vector<Unit*>& enemies)
 {
     if (enemies.size() == 1)
-        return FormationType::CIRCLE;
+        return MovementFormationType::CIRCLE;
     else if (enemies.size() <= 3)
-        return FormationType::LINE;
+        return MovementFormationType::LINE;
     else
-        return FormationType::BOX;
+        return MovementFormationType::BOX;
 }
 
 FormationRole FormationUtils::DetermineOptimalRole(Player* player)
@@ -897,7 +897,7 @@ FormationRole FormationUtils::DetermineOptimalRole(Player* player)
     }
 }
 
-bool FormationUtils::IsFormationValid(const ::std::vector<Position>& positions, FormationType formation)
+bool FormationUtils::IsFormationValid(const ::std::vector<Position>& positions, MovementFormationType formation)
 {
     if (positions.empty())
         return false;
@@ -1160,29 +1160,29 @@ void FormationManager::CalculateMovementTargets()
     std::vector<Position> targetPositions;
     switch (_currentFormation)
     {
-        case FormationType::LINE:
+        case MovementFormationType::LINE:
             targetPositions = CalculateLineFormation(leaderPos, orientation);
             break;
-        case FormationType::WEDGE:
+        case MovementFormationType::WEDGE:
             targetPositions = CalculateWedgeFormation(leaderPos, orientation);
             break;
-        case FormationType::COLUMN:
+        case MovementFormationType::COLUMN:
             targetPositions = CalculateColumnFormation(leaderPos, orientation);
             break;
-        case FormationType::DIAMOND:
+        case MovementFormationType::DIAMOND:
             targetPositions = CalculateDiamondFormation(leaderPos, orientation);
             break;
-        case FormationType::CIRCLE:
+        case MovementFormationType::CIRCLE:
             targetPositions = CalculateCircleFormation(leaderPos);
             break;
-        case FormationType::SPREAD:
-        case FormationType::BOX:
+        case MovementFormationType::SPREAD:
+        case MovementFormationType::BOX:
             targetPositions = CalculateBoxFormation(leaderPos, orientation);
             break;
-        case FormationType::DUNGEON:
+        case MovementFormationType::DUNGEON:
             targetPositions = CalculateDungeonFormation(leaderPos, orientation);
             break;
-        case FormationType::RAID:
+        case MovementFormationType::RAID:
             targetPositions = CalculateRaidFormation(leaderPos, orientation);
             break;
         default:
@@ -1373,7 +1373,7 @@ void FormationManager::ActivateEmergencyScatter()
                  _leader->GetName());
 
     // Set scatter mode
-    _currentFormation = FormationType::SPREAD;
+    _currentFormation = MovementFormationType::SPREAD;
     _emergencyScatter = true;
     _lastReformation = GameTime::GetGameTimeMS(); // Track when scatter started
 
@@ -1442,8 +1442,8 @@ void FormationManager::HandleEmergencyRegroup(const Position& /* rallyPoint */)
     _formationSpacing = DEFAULT_FORMATION_SPACING * 0.5f; // Tighter formation for regroup
 
     // Use column formation for easy regrouping
-    FormationType originalType = _currentFormation;
-    _currentFormation = FormationType::COLUMN;
+    MovementFormationType originalType = _currentFormation;
+    _currentFormation = MovementFormationType::COLUMN;
 
     // Calculate tight positions around leader
     CalculateMovementTargets();
@@ -1495,7 +1495,7 @@ void FormationManager::HandleMemberDisconnection(Player* disconnectedMember)
         else
         {
             // No members left, clear formation
-            _currentFormation = FormationType::NONE;
+            _currentFormation = MovementFormationType::NONE;
             _currentIntegrity = FormationIntegrity::BROKEN;
         }
     }
@@ -1569,7 +1569,7 @@ void FormationManager::TransitionToTravelFormation()
 
     TC_LOG_DEBUG("playerbot.formation", "FormationManager::TransitionToTravelFormation: Transitioning to travel formation");
 
-    _currentFormation = FormationType::COLUMN;
+    _currentFormation = MovementFormationType::COLUMN;
     _movementState = FormationMovementState::MOVING;
     _formationSpacing = DEFAULT_FORMATION_SPACING * 1.2f;
 
@@ -1652,10 +1652,10 @@ void FormationManager::HandleFormationBreakage()
     _lastReformation = GameTime::GetGameTimeMS();
 }
 
-FormationType FormationManager::DetermineOptimalFormation(const ::std::vector<Player*>& members)
+MovementFormationType FormationManager::DetermineOptimalFormation(const ::std::vector<Player*>& members)
 {
     if (members.empty())
-        return FormationType::NONE;
+        return MovementFormationType::NONE;
 
     std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_mutex);
 
@@ -1685,22 +1685,22 @@ FormationType FormationManager::DetermineOptimalFormation(const ::std::vector<Pl
     if (memberCount <= 5)
     {
         if (tanks >= 1 && healers >= 1)
-            return FormationType::DUNGEON;
-        return FormationType::WEDGE;
+            return MovementFormationType::DUNGEON;
+        return MovementFormationType::WEDGE;
     }
     else if (memberCount <= 10)
     {
         if (ranged > melee)
-            return FormationType::LINE;
-        return FormationType::BOX;
+            return MovementFormationType::LINE;
+        return MovementFormationType::BOX;
     }
     else
     {
-        return FormationType::RAID;
+        return MovementFormationType::RAID;
     }
 }
 
-FormationConfig FormationManager::GetFormationConfig(FormationType formation)
+FormationConfig FormationManager::GetFormationConfig(MovementFormationType formation)
 {
     std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_mutex);
 
@@ -1718,7 +1718,7 @@ FormationConfig FormationManager::GetFormationConfig(FormationType formation)
     return defaultConfig;
 }
 
-void FormationManager::SetFormationConfig(FormationType formation, const FormationConfig& config)
+void FormationManager::SetFormationConfig(MovementFormationType formation, const FormationConfig& config)
 {
     std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_mutex);
 

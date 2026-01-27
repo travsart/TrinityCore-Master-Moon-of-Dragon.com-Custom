@@ -27,7 +27,7 @@ class Map;
 
 namespace Playerbot
 {
-    // FormationType defined in IUnifiedMovementCoordinator.h
+    // MovementFormationType defined in IUnifiedMovementCoordinator.h
     // MovementPriority defined in Movement/Core/MovementTypes.h
 
 // Spatial grid cell for efficient position tracking
@@ -76,11 +76,11 @@ public:
     // Batch position calculation for multiple bots (optimized for 5000+ bots)
     virtual ::std::vector<Position> CalculateBatchPositions(
         ::std::span<PositionRequest> requests,
-        FormationType formation = FormationType::SPREAD);
+        MovementFormationType formation = MovementFormationType::SPREAD);
 
     // Formation management
-    virtual void SetFormation(FormationType type) { _formationType = type; }
-    virtual FormationType GetFormation() const { return _formationType; }
+    virtual void SetFormation(MovementFormationType type) { _formationType = type; }
+    virtual MovementFormationType GetFormation() const { return _formationType; }
     virtual void UpdateFormationPositions(::std::vector<Player*> bots, Unit* centerTarget);
 
     // Collision avoidance and spatial management
@@ -193,7 +193,7 @@ protected:
 
 protected:
     Map* _map;
-    FormationType _formationType;
+    MovementFormationType _formationType;
 
     // Spatial grid for collision detection
     ::std::unique_ptr<SpatialGrid> _spatialGrid;

@@ -26,6 +26,7 @@
 #include "GridNotifiers.h"
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
+#include "SpellHistory.h"
 #include <algorithm>
 #include <cmath>
 
@@ -87,9 +88,7 @@ void InstanceCoordination::InitializeInstanceCoordination(Group* group, Map* ins
     _resourceCoordination[groupId] = resources;
 
     // Initialize group metrics
-    CoordinationMetrics metrics;
-    metrics.Reset();
-    _groupMetrics[groupId] = metrics;
+    _groupMetrics[groupId].Reset();
 
     // Plan initial route through instance
     ::std::vector<uint32> encounterIds;
@@ -371,11 +370,12 @@ void InstanceCoordination::AdaptFormationToTerrain(Group* group, const Position&
     float searchRadius = 30.0f;
 
     // Use GridNotifier to count nearby hostile units
+    Unit* target = nullptr;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(leader, leader, searchRadius);
-    Trinity::UnitSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(leader, checker);
+    Trinity::UnitSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(leader, target, checker);
 
     Cell::VisitAllObjects(leader, searcher, searchRadius);
-    if (searcher.GetTarget())
+    if (target)
     {
         // Found at least one hostile - increase complexity
         terrainComplexity += 0.2f;
@@ -503,7 +503,7 @@ void InstanceCoordination::MonitorEncounterProgress(Group* group, uint32 encount
     auto metricsItr = _groupMetrics.find(groupId);
     if (metricsItr != _groupMetrics.end())
     {
-        CoordinationMetrics& metrics = metricsItr->second;
+        AtomicCoordinationMetrics& metrics = metricsItr->second;
         float syncRate = metrics.groupSynchronization.load();
 
         if (syncRate < 0.7f)
@@ -785,7 +785,7 @@ void InstanceCoordination::SynchronizeGroupStates(Group* group)
     // Update synchronization metric
     if (_groupMetrics.find(groupId) != _groupMetrics.end())
     {
-        CoordinationMetrics& metrics = _groupMetrics[groupId];
+        AtomicCoordinationMetrics& metrics = _groupMetrics[groupId];
         float newSyncRate = allReady ? 1.0f : 0.5f;
         metrics.groupSynchronization = newSyncRate;
     }
@@ -880,7 +880,7 @@ void InstanceCoordination::ResolveeLootConflicts(Group* group, uint32 itemId)
 // Progress Tracking and Optimization
 // ============================================================================
 
-InstanceCoordination::InstanceProgress InstanceCoordination::GetInstanceProgress(uint32 groupId)
+InstanceProgress InstanceCoordination::GetInstanceProgress(uint32 groupId)
 {
     ::std::lock_guard lock(_coordinationMutex);
 
@@ -957,7 +957,7 @@ void InstanceCoordination::AnalyzeProgressEfficiency(Group* group)
     // Update movement efficiency metric
     if (_groupMetrics.find(groupId) != _groupMetrics.end())
     {
-        CoordinationMetrics& metrics = _groupMetrics[groupId];
+        AtomicCoordinationMetrics& metrics = _groupMetrics[groupId];
         float newEfficiency = ::std::min(1.0f, progressRate / 10.0f); // Normalize to 0-1
         metrics.movementEfficiency = newEfficiency;
     }
@@ -1201,13 +1201,13 @@ void InstanceCoordination::HandlePlayerIncapacitation(Group* group, Player* inca
 // Performance Optimization
 // ============================================================================
 
-InstanceCoordination::CoordinationMetrics InstanceCoordination::GetGroupCoordinationMetrics(uint32 groupId)
+CoordinationMetrics InstanceCoordination::GetGroupCoordinationMetrics(uint32 groupId)
 {
     ::std::lock_guard lock(_coordinationMutex);
 
     auto metricsItr = _groupMetrics.find(groupId);
     if (metricsItr != _groupMetrics.end())
-        return metricsItr->second;
+        return metricsItr->second.GetSnapshot();
 
     // Return default metrics if not found
     CoordinationMetrics metrics;
@@ -1215,9 +1215,9 @@ InstanceCoordination::CoordinationMetrics InstanceCoordination::GetGroupCoordina
     return metrics;
 }
 
-InstanceCoordination::CoordinationMetrics InstanceCoordination::GetGlobalCoordinationMetrics()
+CoordinationMetrics InstanceCoordination::GetGlobalCoordinationMetrics()
 {
-    return _globalMetrics;
+    return _globalMetrics.GetSnapshot();
 }
 
 void InstanceCoordination::EnablePredictiveCoordination(Group* group, bool enable)
@@ -1244,7 +1244,7 @@ void InstanceCoordination::AdaptCoordinationToGroupSkill(Group* group)
     if (metricsItr == _groupMetrics.end())
         return;
 
-    CoordinationMetrics& metrics = metricsItr->second;
+    AtomicCoordinationMetrics& metrics = metricsItr->second;
 
     // Analyze group performance
     float successRate = metrics.GetCoordinationSuccessRate();
@@ -1470,7 +1470,7 @@ void InstanceCoordination::DiagnoseCoordinationIssues(Group* group)
     auto metricsItr = _groupMetrics.find(groupId);
     if (metricsItr != _groupMetrics.end())
     {
-        CoordinationMetrics const& metrics = metricsItr->second;
+        AtomicCoordinationMetrics const& metrics = metricsItr->second;
 
         float successRate = metrics.GetCoordinationSuccessRate();
         float syncRate = metrics.groupSynchronization.load();
@@ -2410,7 +2410,7 @@ void InstanceCoordination::OptimizeCoordinationPerformance(Group* group)
     auto metricsItr = _groupMetrics.find(groupId);
     if (metricsItr != _groupMetrics.end())
     {
-        CoordinationMetrics& metrics = metricsItr->second;
+        AtomicCoordinationMetrics& metrics = metricsItr->second;
 
         // Calculate average response time
         float avgResponseTime = metrics.averageResponseTime.load();
@@ -2437,7 +2437,7 @@ void InstanceCoordination::AnalyzeCoordinationEfficiency(Group* group)
     if (metricsItr == _groupMetrics.end())
         return;
 
-    CoordinationMetrics const& metrics = metricsItr->second;
+    AtomicCoordinationMetrics const& metrics = metricsItr->second;
 
     float successRate = metrics.GetCoordinationSuccessRate();
     float syncRate = metrics.groupSynchronization.load();
@@ -2476,7 +2476,7 @@ void InstanceCoordination::UpdateCoordinationMetrics(uint32 groupId, bool wasSuc
     if (metricsItr == _groupMetrics.end())
         return;
 
-    CoordinationMetrics& metrics = metricsItr->second;
+    AtomicCoordinationMetrics& metrics = metricsItr->second;
 
     // Update metrics
     metrics.coordinationEvents++;
