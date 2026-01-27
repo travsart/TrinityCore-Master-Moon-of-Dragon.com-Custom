@@ -103,6 +103,7 @@ grep "BotMovement" worldserver.conf.dist
 ---
 
 ### [ ] Step: Phase 1.3 - BotMovementManager Singleton
+<!-- chat-id: 57b43634-fcce-4a88-8d39-3990942e8671 -->
 
 **Goal:** Implement global movement system manager
 
