@@ -19,6 +19,7 @@
 #include "Lifecycle/BotLifecycleMgr.h"
 #include "Character/BotLevelManager.h"
 #include "Core/PlayerBotHooks.h"
+#include "Dungeon/DungeonScriptLoader.h"
 // INTEGRATION REQUIRED: Re-enable when API compatibility is fixed
 // Blocked by TrinityCore 11.2 API changes - see TODO at line 144 for details
 // #include "Companion/MountManager.h"
@@ -451,5 +452,8 @@ void AddSC_playerbot_world()
 
     // Spell Script Fixes: Override buggy TrinityCore scripts with null-safe versions
     AddSC_playerbot_spell_fixes();
+
+    // Dungeon Scripts: Load all dungeon-specific bot AI scripts
+    Playerbot::DungeonScriptLoader::LoadDungeonScripts();
     #endif
 }

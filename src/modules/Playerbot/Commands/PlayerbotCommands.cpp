@@ -18,6 +18,7 @@
 #include "PlayerbotCommands.h"
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "AI/BotAI.h"
+#include "Dungeon/DungeonAutonomyManager.h"
 #include "Config/ConfigManager.h"
 #include "Monitoring/BotMonitor.h"
 #include "Lifecycle/BotSpawner.h"
@@ -112,6 +113,17 @@ namespace Playerbot
             { "",        HandleBotDiagCommand,        rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
         };
 
+        static ChatCommandTable botDungeonCommandTable =
+        {
+            { "pause",   HandleBotDungeonPauseCommand,   rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "resume",  HandleBotDungeonResumeCommand,  rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "status",  HandleBotDungeonStatusCommand,  rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "enable",  HandleBotDungeonEnableCommand,  rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "disable", HandleBotDungeonDisableCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "aggro",   HandleBotDungeonAggroCommand,   rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "",        HandleBotDungeonCommand,        rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
+        };
+
         static ChatCommandTable botCommandTable =
         {
 
@@ -150,7 +162,9 @@ namespace Playerbot
             { "alerts",
             botAlertsCommandTable },
 
-            { "diag",      botDiagCommandTable }
+            { "diag",      botDiagCommandTable },
+
+            { "dungeon",   botDungeonCommandTable }
         };
 
         static ChatCommandTable commandTable =
@@ -1470,6 +1484,231 @@ namespace Playerbot
         sGroupMemberDiagnostics->SetVerbose(enable);
         handler->PSendSysMessage("Verbose logging %s", enable ? "ENABLED" : "DISABLED");
         handler->SendSysMessage("Note: Verbose mode logs EVERY lookup, not just failures");
+        return true;
+    }
+
+    // =====================================================================
+    // DUNGEON AUTONOMY COMMANDS (Critical Safeguard)
+    // =====================================================================
+
+    bool PlayerbotCommandScript::HandleBotDungeonCommand(ChatHandler* handler)
+    {
+        std::ostringstream oss;
+        oss << "Bot Dungeon Autonomy System\n";
+        oss << "============================\n\n";
+        oss << "This system allows bots to navigate dungeons autonomously.\n";
+        oss << "The tank bot will pull trash and bosses based on group readiness.\n\n";
+        oss << "CRITICAL: Use '.bot dungeon pause' to stop bots immediately!\n\n";
+        oss << "Commands:\n";
+        oss << "  .bot dungeon pause    - PAUSE all bot movement (SAFETY)\n";
+        oss << "  .bot dungeon resume   - Resume autonomous navigation\n";
+        oss << "  .bot dungeon status   - Show current status and readiness\n";
+        oss << "  .bot dungeon enable   - Enable autonomy for your group\n";
+        oss << "  .bot dungeon disable  - Disable autonomy (manual control)\n";
+        oss << "  .bot dungeon aggro <level> - Set aggression level\n";
+        oss << "    Levels: conservative, normal, aggressive, speedrun\n";
+
+        handler->SendSysMessage(oss.str().c_str());
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDungeonPauseCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        Group* group = player->GetGroup();
+        if (!group)
+        {
+            handler->SendSysMessage("You must be in a group to use dungeon commands.");
+            return false;
+        }
+
+        sDungeonAutonomyMgr->PauseDungeonAutonomy(group, player, "Manual pause via command");
+
+        handler->SendSysMessage("|cffff0000[PAUSED]|r Dungeon autonomy paused for your group.");
+        handler->SendSysMessage("Bots will hold position. Use '.bot dungeon resume' to continue.");
+
+        TC_LOG_INFO("module.playerbot.dungeon", "Dungeon autonomy PAUSED for group {} by {}",
+            group->GetGUID().ToString(), player->GetName());
+
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDungeonResumeCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        Group* group = player->GetGroup();
+        if (!group)
+        {
+            handler->SendSysMessage("You must be in a group to use dungeon commands.");
+            return false;
+        }
+
+        sDungeonAutonomyMgr->ResumeDungeonAutonomy(group, player);
+
+        handler->SendSysMessage("|cff00ff00[RESUMED]|r Dungeon autonomy resumed for your group.");
+        handler->SendSysMessage("Bots will continue autonomous navigation.");
+
+        TC_LOG_INFO("module.playerbot.dungeon", "Dungeon autonomy RESUMED for group {} by {}",
+            group->GetGUID().ToString(), player->GetName());
+
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDungeonStatusCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        Group* group = player->GetGroup();
+        if (!group)
+        {
+            handler->SendSysMessage("You must be in a group to view dungeon status.");
+            return false;
+        }
+
+        DungeonAutonomyState state = sDungeonAutonomyMgr->GetAutonomyState(group);
+        DungeonAutonomyConfig config = sDungeonAutonomyMgr->GetConfig(group);
+
+        std::ostringstream oss;
+        oss << "Dungeon Autonomy Status\n";
+        oss << "=======================\n\n";
+
+        // State
+        const char* stateStr = "UNKNOWN";
+        switch (state)
+        {
+            case DungeonAutonomyState::DISABLED: stateStr = "|cff888888DISABLED|r"; break;
+            case DungeonAutonomyState::PAUSED:   stateStr = "|cffff0000PAUSED|r"; break;
+            case DungeonAutonomyState::ACTIVE:   stateStr = "|cff00ff00ACTIVE|r"; break;
+            case DungeonAutonomyState::WAITING:  stateStr = "|cffffff00WAITING|r"; break;
+            case DungeonAutonomyState::PULLING:  stateStr = "|cffff8800PULLING|r"; break;
+            case DungeonAutonomyState::COMBAT:   stateStr = "|cffff0000COMBAT|r"; break;
+            case DungeonAutonomyState::RECOVERING: stateStr = "|cff8888ffRECOVERING|r"; break;
+        }
+        oss << "State: " << stateStr << "\n";
+
+        // Aggression level
+        const char* aggroStr = "UNKNOWN";
+        switch (config.aggressionLevel)
+        {
+            case DungeonAggressionLevel::CONSERVATIVE: aggroStr = "Conservative (safe)"; break;
+            case DungeonAggressionLevel::NORMAL:       aggroStr = "Normal"; break;
+            case DungeonAggressionLevel::AGGRESSIVE:   aggroStr = "Aggressive"; break;
+            case DungeonAggressionLevel::SPEED_RUN:    aggroStr = "Speed Run (risky)"; break;
+        }
+        oss << "Aggression: " << aggroStr << "\n\n";
+
+        // Group readiness
+        float healthPct = sDungeonAutonomyMgr->GetGroupHealthPercent(group);
+        float manaPct = sDungeonAutonomyMgr->GetHealerManaPercent(group);
+        bool ready = sDungeonAutonomyMgr->IsGroupReadyToPull(group);
+
+        oss << "Group Readiness:\n";
+        oss << "  Health: " << std::fixed << std::setprecision(1) << healthPct << "%\n";
+        oss << "  Healer Mana: " << manaPct << "%\n";
+        oss << "  Ready to Pull: " << (ready ? "|cff00ff00YES|r" : "|cffff0000NO|r") << "\n";
+
+        handler->SendSysMessage(oss.str().c_str());
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDungeonEnableCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        Group* group = player->GetGroup();
+        if (!group)
+        {
+            handler->SendSysMessage("You must be in a group to enable dungeon autonomy.");
+            return false;
+        }
+
+        sDungeonAutonomyMgr->EnableAutonomy(group);
+
+        handler->SendSysMessage("|cff00ff00[ENABLED]|r Dungeon autonomy enabled for your group.");
+        handler->SendSysMessage("Bots will navigate autonomously. Use '.bot dungeon pause' to stop.");
+
+        TC_LOG_INFO("module.playerbot.dungeon", "Dungeon autonomy ENABLED for group {} by {}",
+            group->GetGUID().ToString(), player->GetName());
+
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDungeonDisableCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        Group* group = player->GetGroup();
+        if (!group)
+        {
+            handler->SendSysMessage("You must be in a group to disable dungeon autonomy.");
+            return false;
+        }
+
+        sDungeonAutonomyMgr->DisableAutonomy(group);
+
+        handler->SendSysMessage("|cff888888[DISABLED]|r Dungeon autonomy disabled for your group.");
+        handler->SendSysMessage("Bots will follow player commands only.");
+
+        TC_LOG_INFO("module.playerbot.dungeon", "Dungeon autonomy DISABLED for group {} by {}",
+            group->GetGUID().ToString(), player->GetName());
+
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotDungeonAggroCommand(ChatHandler* handler, std::string level)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        Group* group = player->GetGroup();
+        if (!group)
+        {
+            handler->SendSysMessage("You must be in a group to set aggression level.");
+            return false;
+        }
+
+        DungeonAggressionLevel aggroLevel;
+        std::string levelLower = level;
+        std::transform(levelLower.begin(), levelLower.end(), levelLower.begin(), ::tolower);
+
+        if (levelLower == "conservative" || levelLower == "safe")
+            aggroLevel = DungeonAggressionLevel::CONSERVATIVE;
+        else if (levelLower == "normal" || levelLower == "default")
+            aggroLevel = DungeonAggressionLevel::NORMAL;
+        else if (levelLower == "aggressive" || levelLower == "fast")
+            aggroLevel = DungeonAggressionLevel::AGGRESSIVE;
+        else if (levelLower == "speedrun" || levelLower == "speed")
+            aggroLevel = DungeonAggressionLevel::SPEED_RUN;
+        else
+        {
+            handler->SendSysMessage("Invalid aggression level. Valid options:");
+            handler->SendSysMessage("  conservative - Wait for full health/mana, careful pulls");
+            handler->SendSysMessage("  normal       - Standard dungeon pace");
+            handler->SendSysMessage("  aggressive   - Pull when reasonably ready");
+            handler->SendSysMessage("  speedrun     - Chain pull, minimal waiting (risky)");
+            return false;
+        }
+
+        sDungeonAutonomyMgr->SetAggressionLevel(group, aggroLevel);
+
+        handler->PSendSysMessage("Aggression level set to: %s", level.c_str());
+
+        TC_LOG_INFO("module.playerbot.dungeon", "Dungeon aggression set to {} for group {} by {}",
+            level, group->GetGUID().ToString(), player->GetName());
+
         return true;
     }
 

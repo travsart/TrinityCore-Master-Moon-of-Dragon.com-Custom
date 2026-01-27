@@ -107,6 +107,15 @@ namespace Playerbot
         static bool HandleBotDiagResetCommand(ChatHandler* handler);
         static bool HandleBotDiagVerboseCommand(ChatHandler* handler, bool enable);
 
+        // Dungeon autonomy commands (critical safeguard for autonomous navigation)
+        static bool HandleBotDungeonCommand(ChatHandler* handler);
+        static bool HandleBotDungeonPauseCommand(ChatHandler* handler);
+        static bool HandleBotDungeonResumeCommand(ChatHandler* handler);
+        static bool HandleBotDungeonStatusCommand(ChatHandler* handler);
+        static bool HandleBotDungeonEnableCommand(ChatHandler* handler);
+        static bool HandleBotDungeonDisableCommand(ChatHandler* handler);
+        static bool HandleBotDungeonAggroCommand(ChatHandler* handler, ::std::string level);
+
         // Helper methods
         static Player* FindBotByName(::std::string const& name);
         static bool ValidateRaceClass(uint8 race, uint8 classId, ChatHandler* handler);
