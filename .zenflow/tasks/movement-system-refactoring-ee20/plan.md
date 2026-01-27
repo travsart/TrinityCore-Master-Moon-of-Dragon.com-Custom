@@ -102,18 +102,18 @@ grep "BotMovement" worldserver.conf.dist
 
 ---
 
-### [ ] Step: Phase 1.3 - BotMovementManager Singleton
+### [x] Step: Phase 1.3 - BotMovementManager Singleton
 <!-- chat-id: 57b43634-fcce-4a88-8d39-3990942e8671 -->
 
 **Goal:** Implement global movement system manager
 
 **Tasks:**
-- [ ] Create `BotMovementManager.h/cpp` with singleton pattern
-- [ ] Implement controller registry (map of ObjectGuid -> BotMovementController*)
-- [ ] Implement `GetControllerForUnit()`, `RegisterController()`, `UnregisterController()`
-- [ ] Add global PathCache instance
-- [ ] Add global MovementMetrics tracking
-- [ ] Implement `ReloadConfig()` method
+- [x] Create `BotMovementManager.h/cpp` with singleton pattern
+- [x] Implement controller registry (map of ObjectGuid -> BotMovementController*)
+- [x] Implement `GetControllerForUnit()`, `RegisterController()`, `UnregisterController()`
+- [x] Add global PathCache instance
+- [x] Add global MovementMetrics tracking
+- [x] Implement `ReloadConfig()` method
 - [ ] Write unit tests for manager lifecycle
 
 **Verification:**
@@ -126,16 +126,17 @@ grep "BotMovement" worldserver.conf.dist
 
 ---
 
-### [ ] Step: Phase 1.4 - PositionValidator Implementation
+### [x] Step: Phase 1.4 - PositionValidator Implementation
+<!-- chat-id: 57b43634-fcce-4a88-8d39-3990942e8671 -->
 
 **Goal:** Implement position bounds and validity checking
 
 **Tasks:**
-- [ ] Create `PositionValidator.h/cpp`
-- [ ] Implement `ValidateBounds()` - check coordinates within map bounds
-- [ ] Implement `ValidateMapId()` - verify map ID is valid
-- [ ] Implement `ValidatePosition()` - master validation method
-- [ ] Add error messages for each failure type
+- [x] Create `PositionValidator.h/cpp`
+- [x] Implement `ValidateBounds()` - check coordinates within map bounds
+- [x] Implement `ValidateMapId()` - verify map ID is valid
+- [x] Implement `ValidatePosition()` - master validation method
+- [x] Add error messages for each failure type
 - [ ] Write comprehensive unit tests (valid positions, out-of-bounds, invalid map IDs)
 
 **Verification:**
@@ -148,17 +149,18 @@ grep "BotMovement" worldserver.conf.dist
 
 ---
 
-### [ ] Step: Phase 1.5 - GroundValidator Implementation
+### [x] Step: Phase 1.5 - GroundValidator Implementation
+<!-- chat-id: 57b43634-fcce-4a88-8d39-3990942e8671 -->
 
 **Goal:** Implement ground height validation to prevent void falls
 
 **Tasks:**
-- [ ] Create `GroundValidator.h/cpp`
-- [ ] Implement `GetGroundHeight()` using Map::GetHeight()
-- [ ] Implement `ValidateGroundHeight()` - check if Z-coordinate is valid
-- [ ] Handle cases: no ground (void), water, bridges/multi-level
-- [ ] Implement ground height caching for performance
-- [ ] Add detection for "unsafe terrain" (lava, fatigue zones)
+- [x] Create `GroundValidator.h/cpp`
+- [x] Implement `GetGroundHeight()` using Map::GetHeight()
+- [x] Implement `ValidateGroundHeight()` - check if Z-coordinate is valid
+- [x] Handle cases: no ground (void), water, bridges/multi-level
+- [x] Implement ground height caching for performance
+- [x] Add detection for "unsafe terrain" (lava, fatigue zones)
 - [ ] Write unit tests with various terrain scenarios
 
 **Verification:**
