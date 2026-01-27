@@ -19,8 +19,11 @@
 #define TRINITY_BOTMOVEMENTCONTROLLER_H
 
 #include "Define.h"
+#include "BotMovementDefines.h"
+#include <deque>
 
 class Unit;
+struct Position;
 
 class TC_GAME_API BotMovementController
 {
@@ -31,8 +34,17 @@ public:
     Unit* GetOwner() const { return _owner; }
     void Update(uint32 diff);
 
+    Position const* GetLastPosition() const;
+    void RecordPosition();
+    
+    std::deque<PositionSnapshot> const& GetPositionHistory() const { return _positionHistory; }
+
 private:
     Unit* _owner;
+    std::deque<PositionSnapshot> _positionHistory;
+    uint32 _totalTimePassed;
+    
+    static constexpr size_t MAX_POSITION_HISTORY = 100;
 };
 
 #endif

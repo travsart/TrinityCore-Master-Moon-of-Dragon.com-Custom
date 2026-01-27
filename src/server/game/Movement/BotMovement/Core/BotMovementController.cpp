@@ -17,16 +17,41 @@
 
 #include "BotMovementController.h"
 #include "Unit.h"
+#include "Position.h"
 
 BotMovementController::BotMovementController(Unit* owner)
     : _owner(owner)
+    , _totalTimePassed(0)
 {
+    if (_owner)
+        RecordPosition();
 }
 
 BotMovementController::~BotMovementController()
 {
 }
 
-void BotMovementController::Update(uint32 /*diff*/)
+void BotMovementController::Update(uint32 diff)
 {
+    _totalTimePassed += diff;
+}
+
+Position const* BotMovementController::GetLastPosition() const
+{
+    if (_positionHistory.empty())
+        return nullptr;
+    
+    return &_positionHistory.back().pos;
+}
+
+void BotMovementController::RecordPosition()
+{
+    if (!_owner)
+        return;
+    
+    Position currentPos = _owner->GetPosition();
+    _positionHistory.emplace_back(currentPos, _totalTimePassed);
+    
+    if (_positionHistory.size() > MAX_POSITION_HISTORY)
+        _positionHistory.pop_front();
 }

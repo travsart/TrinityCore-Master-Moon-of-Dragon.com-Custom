@@ -173,17 +173,18 @@ grep "BotMovement" worldserver.conf.dist
 
 ---
 
-### [ ] Step: Phase 1.6 - BotMovementController Base Implementation
+### [x] Step: Phase 1.6 - BotMovementController Base Implementation
+<!-- chat-id: 538877ff-c7fc-40b1-b43b-67df9b4c959a -->
 
 **Goal:** Create per-bot movement controller (basic version without full state machine)
 
 **Tasks:**
-- [ ] Create `BotMovementController.h/cpp`
-- [ ] Implement constructor/destructor with Unit* owner
-- [ ] Add basic position history tracking (std::deque<PositionSnapshot>)
-- [ ] Implement `Update(uint32 diff)` stub (to be filled in later phases)
-- [ ] Add helper methods: `GetOwner()`, `GetLastPosition()`, `RecordPosition()`
-- [ ] Implement controller registration with BotMovementManager on creation
+- [x] Create `BotMovementController.h/cpp`
+- [x] Implement constructor/destructor with Unit* owner
+- [x] Add basic position history tracking (std::deque<PositionSnapshot>)
+- [x] Implement `Update(uint32 diff)` stub (to be filled in later phases)
+- [x] Add helper methods: `GetOwner()`, `GetLastPosition()`, `RecordPosition()`
+- [x] Implement controller registration with BotMovementManager on creation
 - [ ] Write tests for controller lifecycle and position tracking
 
 **Verification:**

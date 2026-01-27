@@ -19,6 +19,16 @@
 #define TRINITY_BOTMOVEMENTDEFINES_H
 
 #include "Common.h"
+#include "Position.h"
+
+struct PositionSnapshot
+{
+    Position pos;
+    uint32 timestamp;
+    
+    PositionSnapshot() : pos(), timestamp(0) { }
+    PositionSnapshot(Position const& p, uint32 time) : pos(p), timestamp(time) { }
+};
 
 enum class MovementStateType : uint8
 {
