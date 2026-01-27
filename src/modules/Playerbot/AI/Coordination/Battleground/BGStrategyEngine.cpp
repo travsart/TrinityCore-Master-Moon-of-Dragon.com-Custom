@@ -219,7 +219,7 @@ uint8 BGStrategyEngine::GetObjectivePriority(uint32 objectiveId) const
     if (!objective)
         return 5; // Default middle priority
 
-    return objective->priority;
+    return static_cast<uint8>(objective->currentPriority);
 }
 
 void BGStrategyEngine::OverrideObjectivePriority(uint32 objectiveId, uint8 priority)
@@ -309,7 +309,7 @@ bool BGStrategyEngine::ShouldRecall() const
         // Check if any friendly objectives are under attack
         for (const auto& objective : _coordinator->GetObjectives())
         {
-            if (objective.state == ObjectiveState::CONTROLLED_FRIENDLY && objective.isContested)
+            if (objective.state == BGObjectiveState::CONTROLLED_FRIENDLY && objective.isContested)
                 return true;
         }
     }
@@ -375,12 +375,10 @@ bool BGStrategyEngine::IsCloseGame() const
 
 bool BGStrategyEngine::IsTimeRunningOut() const
 {
-    const BGMatchStats* stats = _coordinator->GetMatchStats();
-    if (!stats)
-        return false;
+    const BGMatchStats& stats = _coordinator->GetMatchStats();
 
     // Consider time running out if < 3 minutes remain
-    return stats->remainingTime < 180000;
+    return stats.remainingTime < 180000;
 }
 
 float BGStrategyEngine::GetMomentum() const
@@ -397,16 +395,9 @@ StrategicDecision BGStrategyEngine::EvaluateWSGStrategy() const
     StrategicDecision decision;
 
     // WSG is capture the flag - different logic
-    const BGScoreInfo* score = _coordinator->GetScoreInfo();
-    if (!score)
-    {
-        decision.strategy = BGStrategy::BALANCED;
-        decision.offenseAllocation = 50;
-        decision.defenseAllocation = 50;
-        return decision;
-    }
+    const BGScoreInfo& score = _coordinator->GetScoreInfo();
 
-    int32 scoreDiff = score->friendlyScore - score->enemyScore;
+    int32 scoreDiff = static_cast<int32>(score.friendlyScore) - static_cast<int32>(score.enemyScore);
 
     if (scoreDiff >= 2)
     {
@@ -465,9 +456,9 @@ StrategicDecision BGStrategyEngine::EvaluateABStrategy() const
     {
         if (objective.type == ObjectiveType::CONTROL_POINT)
         {
-            if (objective.state == ObjectiveState::CONTROLLED_FRIENDLY)
+            if (objective.state == BGObjectiveState::CONTROLLED_FRIENDLY)
                 friendlyNodes++;
-            else if (objective.state == ObjectiveState::CONTROLLED_ENEMY)
+            else if (objective.state == BGObjectiveState::CONTROLLED_ENEMY)
                 enemyNodes++;
         }
     }
@@ -519,16 +510,9 @@ StrategicDecision BGStrategyEngine::EvaluateAVStrategy() const
     StrategicDecision decision;
 
     // AV has multiple objectives - towers, graveyards, bosses
-    const BGScoreInfo* score = _coordinator->GetScoreInfo();
-    if (!score)
-    {
-        decision.strategy = BGStrategy::BALANCED;
-        decision.offenseAllocation = 50;
-        decision.defenseAllocation = 50;
-        return decision;
-    }
+    const BGScoreInfo& score = _coordinator->GetScoreInfo();
 
-    int32 resourceDiff = score->friendlyScore - score->enemyScore;
+    int32 resourceDiff = static_cast<int32>(score.friendlyScore) - static_cast<int32>(score.enemyScore);
 
     // AV is primarily a race to kill the boss
     if (resourceDiff > 100)
@@ -570,7 +554,7 @@ StrategicDecision BGStrategyEngine::EvaluateEOTSStrategy() const
     for (const auto& objective : _coordinator->GetObjectives())
     {
         if (objective.type == ObjectiveType::CONTROL_POINT &&
-            objective.state == ObjectiveState::CONTROLLED_FRIENDLY)
+            objective.state == BGObjectiveState::CONTROLLED_FRIENDLY)
         {
             friendlyNodes++;
         }
@@ -735,28 +719,24 @@ float BGStrategyEngine::EvaluateComeback() const
 
 float BGStrategyEngine::GetScoreFactor() const
 {
-    const BGScoreInfo* score = _coordinator->GetScoreInfo();
-    if (!score)
+    const BGScoreInfo& score = _coordinator->GetScoreInfo();
+
+    if (score.maxScore == 0)
         return 0.0f;
 
-    if (score->maxScore == 0)
-        return 0.0f;
-
-    float friendlyRatio = static_cast<float>(score->friendlyScore) / score->maxScore;
-    float enemyRatio = static_cast<float>(score->enemyScore) / score->maxScore;
+    float friendlyRatio = static_cast<float>(score.friendlyScore) / score.maxScore;
+    float enemyRatio = static_cast<float>(score.enemyScore) / score.maxScore;
 
     return friendlyRatio - enemyRatio;
 }
 
 float BGStrategyEngine::GetTimeFactor() const
 {
-    const BGMatchStats* stats = _coordinator->GetMatchStats();
-    if (!stats)
-        return 0.0f;
+    const BGMatchStats& stats = _coordinator->GetMatchStats();
 
     // If winning, more time = better
     // If losing, less time = worse
-    float timeRemaining = static_cast<float>(stats->remainingTime) / 1800000.0f; // 30 min max
+    float timeRemaining = static_cast<float>(stats.remainingTime) / 1800000.0f; // 30 min max
 
     if (IsWinning())
         return timeRemaining * 0.5f;
@@ -792,7 +772,7 @@ float BGStrategyEngine::GetObjectiveControlFactor() const
             objective.type == ObjectiveType::CAPTURABLE)
         {
             totalObjectives++;
-            if (objective.state == ObjectiveState::CONTROLLED_FRIENDLY)
+            if (objective.state == BGObjectiveState::CONTROLLED_FRIENDLY)
                 friendlyObjectives++;
         }
     }
@@ -926,9 +906,9 @@ std::vector<uint32> BGStrategyEngine::DetermineAttackTargets(BGStrategy strategy
             objective.type != ObjectiveType::CAPTURABLE)
             continue;
 
-        if (objective.state == ObjectiveState::CONTROLLED_ENEMY ||
-            objective.state == ObjectiveState::NEUTRAL ||
-            objective.state == ObjectiveState::CONTESTED)
+        if (objective.state == BGObjectiveState::CONTROLLED_ENEMY ||
+            objective.state == BGObjectiveState::NEUTRAL ||
+            objective.state == BGObjectiveState::CONTESTED)
         {
             targets.push_back(objective.objectiveId);
         }
@@ -979,7 +959,7 @@ std::vector<uint32> BGStrategyEngine::DetermineDefenseTargets(BGStrategy strateg
             objective.type != ObjectiveType::CAPTURABLE)
             continue;
 
-        if (objective.state == ObjectiveState::CONTROLLED_FRIENDLY)
+        if (objective.state == BGObjectiveState::CONTROLLED_FRIENDLY)
         {
             targets.push_back(objective.objectiveId);
         }

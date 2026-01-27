@@ -36,9 +36,9 @@ void TwinPeaksScript::OnLoad(BattlegroundCoordinator* coordinator)
     RegisterScoreWorldState(TwinPeaks::WorldStates::HORDE_FLAG_CAPTURES, false);
 
     RegisterWorldStateMapping(TwinPeaks::WorldStates::ALLIANCE_FLAG_STATE,
-        TwinPeaks::ObjectiveIds::ALLIANCE_FLAG, ObjectiveState::ALLIANCE_CONTROLLED);
+        TwinPeaks::ObjectiveIds::ALLIANCE_FLAG, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(TwinPeaks::WorldStates::HORDE_FLAG_STATE,
-        TwinPeaks::ObjectiveIds::HORDE_FLAG, ObjectiveState::HORDE_CONTROLLED);
+        TwinPeaks::ObjectiveIds::HORDE_FLAG, BGObjectiveState::HORDE_CONTROLLED);
 
     TC_LOG_DEBUG("playerbots.bg.script",
         "TwinPeaksScript: Loaded with {} objectives",
@@ -271,7 +271,7 @@ std::vector<BGWorldState> TwinPeaksScript::GetInitialWorldStates() const
 // ============================================================================
 
 bool TwinPeaksScript::InterpretWorldState(int32 stateId, int32 value,
-    uint32& outObjectiveId, ObjectiveState& outState) const
+    uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     if (TryInterpretFromCache(stateId, value, outObjectiveId, outState))
         return true;
@@ -283,13 +283,13 @@ bool TwinPeaksScript::InterpretWorldState(int32 stateId, int32 value,
         switch (value)
         {
             case TwinPeaks::WorldStates::FLAG_STATE_AT_BASE:
-                outState = ObjectiveState::ALLIANCE_CONTROLLED;
+                outState = BGObjectiveState::ALLIANCE_CONTROLLED;
                 return true;
             case TwinPeaks::WorldStates::FLAG_STATE_PICKED_UP:
-                outState = ObjectiveState::HORDE_CAPTURING;
+                outState = BGObjectiveState::HORDE_CAPTURING;
                 return true;
             case TwinPeaks::WorldStates::FLAG_STATE_DROPPED:
-                outState = ObjectiveState::NEUTRAL;
+                outState = BGObjectiveState::NEUTRAL;
                 return true;
         }
     }
@@ -301,13 +301,13 @@ bool TwinPeaksScript::InterpretWorldState(int32 stateId, int32 value,
         switch (value)
         {
             case TwinPeaks::WorldStates::FLAG_STATE_AT_BASE:
-                outState = ObjectiveState::HORDE_CONTROLLED;
+                outState = BGObjectiveState::HORDE_CONTROLLED;
                 return true;
             case TwinPeaks::WorldStates::FLAG_STATE_PICKED_UP:
-                outState = ObjectiveState::ALLIANCE_CAPTURING;
+                outState = BGObjectiveState::ALLIANCE_CAPTURING;
                 return true;
             case TwinPeaks::WorldStates::FLAG_STATE_DROPPED:
-                outState = ObjectiveState::NEUTRAL;
+                outState = BGObjectiveState::NEUTRAL;
                 return true;
         }
     }

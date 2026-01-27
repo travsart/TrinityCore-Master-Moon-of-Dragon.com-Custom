@@ -22,7 +22,7 @@ void IsleOfConquestScript::OnLoad(BattlegroundCoordinator* coordinator)
 
     // Initialize node states as neutral
     for (uint32 i = 0; i < IsleOfConquest::Nodes::NODE_COUNT; ++i)
-        m_nodeStates[i] = ObjectiveState::NEUTRAL;
+        m_nodeStates[i] = BGObjectiveState::NEUTRAL;
 
     m_destroyedGates.clear();
 
@@ -254,19 +254,19 @@ std::vector<BGWorldState> IsleOfConquestScript::GetInitialWorldStates() const
     return states;
 }
 
-bool IsleOfConquestScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, ObjectiveState& outState) const
+bool IsleOfConquestScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     // Node states
     if (stateId == IsleOfConquest::WorldStates::REFINERY_ALLY && value)
     {
         outObjectiveId = IsleOfConquest::Nodes::REFINERY;
-        outState = ObjectiveState::ALLIANCE_CONTROLLED;
+        outState = BGObjectiveState::ALLIANCE_CONTROLLED;
         return true;
     }
     if (stateId == IsleOfConquest::WorldStates::REFINERY_HORDE && value)
     {
         outObjectiveId = IsleOfConquest::Nodes::REFINERY;
-        outState = ObjectiveState::HORDE_CONTROLLED;
+        outState = BGObjectiveState::HORDE_CONTROLLED;
         return true;
     }
     // ... (similar for other nodes)
@@ -412,8 +412,8 @@ bool IsleOfConquestScript::IsNodeControlled(uint32 nodeId, uint32 faction) const
     if (it == m_nodeStates.end())
         return false;
 
-    return (faction == ALLIANCE && it->second == ObjectiveState::ALLIANCE_CONTROLLED) ||
-           (faction == HORDE && it->second == ObjectiveState::HORDE_CONTROLLED);
+    return (faction == ALLIANCE && it->second == BGObjectiveState::ALLIANCE_CONTROLLED) ||
+           (faction == HORDE && it->second == BGObjectiveState::HORDE_CONTROLLED);
 }
 
 std::vector<uint32> IsleOfConquestScript::GetAvailableVehicles(uint32 faction) const

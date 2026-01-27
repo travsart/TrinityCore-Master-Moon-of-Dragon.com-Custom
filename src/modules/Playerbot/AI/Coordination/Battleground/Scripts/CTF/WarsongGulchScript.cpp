@@ -38,9 +38,9 @@ void WarsongGulchScript::OnLoad(BattlegroundCoordinator* coordinator)
 
     // Register flag state mappings
     RegisterWorldStateMapping(WarsongGulch::WorldStates::ALLIANCE_FLAG_STATE,
-        WarsongGulch::ObjectiveIds::ALLIANCE_FLAG, ObjectiveState::ALLIANCE_CONTROLLED);
+        WarsongGulch::ObjectiveIds::ALLIANCE_FLAG, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(WarsongGulch::WorldStates::HORDE_FLAG_STATE,
-        WarsongGulch::ObjectiveIds::HORDE_FLAG, ObjectiveState::HORDE_CONTROLLED);
+        WarsongGulch::ObjectiveIds::HORDE_FLAG, BGObjectiveState::HORDE_CONTROLLED);
 
     TC_LOG_DEBUG("playerbots.bg.script",
         "WarsongGulchScript: Loaded with {} objectives",
@@ -275,7 +275,7 @@ std::vector<BGWorldState> WarsongGulchScript::GetInitialWorldStates() const
 // ============================================================================
 
 bool WarsongGulchScript::InterpretWorldState(int32 stateId, int32 value,
-    uint32& outObjectiveId, ObjectiveState& outState) const
+    uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     // Try cached mappings first
     if (TryInterpretFromCache(stateId, value, outObjectiveId, outState))
@@ -288,13 +288,13 @@ bool WarsongGulchScript::InterpretWorldState(int32 stateId, int32 value,
         switch (value)
         {
             case WarsongGulch::WorldStates::FLAG_STATE_AT_BASE:
-                outState = ObjectiveState::ALLIANCE_CONTROLLED;
+                outState = BGObjectiveState::ALLIANCE_CONTROLLED;
                 return true;
             case WarsongGulch::WorldStates::FLAG_STATE_PICKED_UP:
-                outState = ObjectiveState::HORDE_CAPTURING;  // Horde picked up Alliance flag
+                outState = BGObjectiveState::HORDE_CAPTURING;  // Horde picked up Alliance flag
                 return true;
             case WarsongGulch::WorldStates::FLAG_STATE_DROPPED:
-                outState = ObjectiveState::NEUTRAL;  // Dropped = contestable
+                outState = BGObjectiveState::NEUTRAL;  // Dropped = contestable
                 return true;
         }
     }
@@ -306,13 +306,13 @@ bool WarsongGulchScript::InterpretWorldState(int32 stateId, int32 value,
         switch (value)
         {
             case WarsongGulch::WorldStates::FLAG_STATE_AT_BASE:
-                outState = ObjectiveState::HORDE_CONTROLLED;
+                outState = BGObjectiveState::HORDE_CONTROLLED;
                 return true;
             case WarsongGulch::WorldStates::FLAG_STATE_PICKED_UP:
-                outState = ObjectiveState::ALLIANCE_CAPTURING;  // Alliance picked up Horde flag
+                outState = BGObjectiveState::ALLIANCE_CAPTURING;  // Alliance picked up Horde flag
                 return true;
             case WarsongGulch::WorldStates::FLAG_STATE_DROPPED:
-                outState = ObjectiveState::NEUTRAL;
+                outState = BGObjectiveState::NEUTRAL;
                 return true;
         }
     }

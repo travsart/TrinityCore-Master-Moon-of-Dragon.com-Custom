@@ -30,7 +30,7 @@ public:
     std::vector<BGPositionData> GetStrategicPositions() const override;
     std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
     std::vector<BGWorldState> GetInitialWorldStates() const override;
-    bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, ObjectiveState& outState) const override;
+    bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const override;
     void GetScoreFromWorldStates(const std::map<int32, int32>& states, uint32& allianceScore, uint32& hordeScore) const override;
 
     RoleDistribution GetRecommendedRoles(const StrategicDecision& decision, float scoreAdvantage, uint32 timeRemaining) const override;

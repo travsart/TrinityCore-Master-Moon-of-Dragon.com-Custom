@@ -1612,11 +1612,30 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
         specId = it->second.specId;
     }
 
+    // Fallback: Try to get account ID from CharacterCache if not in slot
     if (accountId == 0)
     {
-        TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - No account ID for bot {}",
-            botGuid.ToString());
-        return false;
+        CharacterCacheEntry const* charInfo = sCharacterCache->GetCharacterCacheByGuid(botGuid);
+        if (charInfo && charInfo->AccountId > 0)
+        {
+            accountId = charInfo->AccountId;
+            TC_LOG_INFO("playerbot.pool", "InstanceBotPool::WarmUpBot - Got account ID {} from CharacterCache for bot {}",
+                accountId, botGuid.ToString());
+
+            // Update the slot with the correct account ID
+            {
+                std::unique_lock lock(_slotsMutex);
+                auto it = _slots.find(botGuid);
+                if (it != _slots.end())
+                    it->second.accountId = accountId;
+            }
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - No account ID for bot {} (not in slot or CharacterCache)",
+                botGuid.ToString());
+            return false;
+        }
     }
 
     // ========================================================================

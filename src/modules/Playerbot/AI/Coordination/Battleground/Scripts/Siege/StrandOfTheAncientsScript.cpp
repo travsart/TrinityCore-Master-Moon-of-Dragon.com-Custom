@@ -223,7 +223,7 @@ std::vector<BGWorldState> StrandOfTheAncientsScript::GetInitialWorldStates() con
     };
 }
 
-bool StrandOfTheAncientsScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, ObjectiveState& outState) const
+bool StrandOfTheAncientsScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     if (stateId == StrandOfTheAncients::WorldStates::ATTACKER_TEAM)
     {

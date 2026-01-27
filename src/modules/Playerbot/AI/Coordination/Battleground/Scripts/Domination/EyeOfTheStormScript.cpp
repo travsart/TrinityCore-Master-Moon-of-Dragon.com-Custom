@@ -37,21 +37,21 @@ void EyeOfTheStormScript::OnLoad(BattlegroundCoordinator* coordinator)
 
     // Register node world states
     RegisterWorldStateMapping(EyeOfTheStorm::WorldStates::FEL_REAVER_ALLIANCE,
-        EyeOfTheStorm::Nodes::FEL_REAVER, ObjectiveState::ALLIANCE_CONTROLLED);
+        EyeOfTheStorm::Nodes::FEL_REAVER, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(EyeOfTheStorm::WorldStates::FEL_REAVER_HORDE,
-        EyeOfTheStorm::Nodes::FEL_REAVER, ObjectiveState::HORDE_CONTROLLED);
+        EyeOfTheStorm::Nodes::FEL_REAVER, BGObjectiveState::HORDE_CONTROLLED);
     RegisterWorldStateMapping(EyeOfTheStorm::WorldStates::BLOOD_ELF_ALLIANCE,
-        EyeOfTheStorm::Nodes::BLOOD_ELF, ObjectiveState::ALLIANCE_CONTROLLED);
+        EyeOfTheStorm::Nodes::BLOOD_ELF, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(EyeOfTheStorm::WorldStates::BLOOD_ELF_HORDE,
-        EyeOfTheStorm::Nodes::BLOOD_ELF, ObjectiveState::HORDE_CONTROLLED);
+        EyeOfTheStorm::Nodes::BLOOD_ELF, BGObjectiveState::HORDE_CONTROLLED);
     RegisterWorldStateMapping(EyeOfTheStorm::WorldStates::DRAENEI_RUINS_ALLIANCE,
-        EyeOfTheStorm::Nodes::DRAENEI_RUINS, ObjectiveState::ALLIANCE_CONTROLLED);
+        EyeOfTheStorm::Nodes::DRAENEI_RUINS, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(EyeOfTheStorm::WorldStates::DRAENEI_RUINS_HORDE,
-        EyeOfTheStorm::Nodes::DRAENEI_RUINS, ObjectiveState::HORDE_CONTROLLED);
+        EyeOfTheStorm::Nodes::DRAENEI_RUINS, BGObjectiveState::HORDE_CONTROLLED);
     RegisterWorldStateMapping(EyeOfTheStorm::WorldStates::MAGE_TOWER_ALLIANCE,
-        EyeOfTheStorm::Nodes::MAGE_TOWER, ObjectiveState::ALLIANCE_CONTROLLED);
+        EyeOfTheStorm::Nodes::MAGE_TOWER, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(EyeOfTheStorm::WorldStates::MAGE_TOWER_HORDE,
-        EyeOfTheStorm::Nodes::MAGE_TOWER, ObjectiveState::HORDE_CONTROLLED);
+        EyeOfTheStorm::Nodes::MAGE_TOWER, BGObjectiveState::HORDE_CONTROLLED);
 
     // Reset flag state
     m_flagAtCenter = true;
@@ -230,7 +230,7 @@ std::vector<uint32> EyeOfTheStormScript::GetTickPointsTable() const
 // ============================================================================
 
 bool EyeOfTheStormScript::InterpretWorldState(int32 stateId, int32 value,
-    uint32& outObjectiveId, ObjectiveState& outState) const
+    uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     return TryInterpretFromCache(stateId, value, outObjectiveId, outState);
 }

@@ -55,8 +55,8 @@ void ResourceRaceScriptBase::OnEvent(const BGScriptEventData& event)
             if (event.objectiveId < m_cartStates.size())
             {
                 m_cartStates[event.objectiveId].controller =
-                    (event.newState == ObjectiveState::ALLIANCE_CONTROLLED) ? ALLIANCE :
-                    (event.newState == ObjectiveState::HORDE_CONTROLLED) ? HORDE : 0;
+                    (event.newState == BGObjectiveState::ALLIANCE_CONTROLLED) ? ALLIANCE :
+                    (event.newState == BGObjectiveState::HORDE_CONTROLLED) ? HORDE : 0;
                 m_cartStates[event.objectiveId].contested = false;
             }
             break;
@@ -183,7 +183,7 @@ void ResourceRaceScriptBase::AdjustStrategy(StrategicDecision& decision, float s
 }
 
 uint8 ResourceRaceScriptBase::GetObjectiveAttackPriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     if (objectiveId >= m_cartStates.size())
         return 0;
@@ -208,7 +208,7 @@ uint8 ResourceRaceScriptBase::GetObjectiveAttackPriority(uint32 objectiveId,
 }
 
 uint8 ResourceRaceScriptBase::GetObjectiveDefensePriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     if (objectiveId >= m_cartStates.size())
         return 0;

@@ -81,7 +81,7 @@ std::vector<uint32> NodeController::GetFriendlyNodeIds() const
     {
         if ((objective.type == ObjectiveType::CONTROL_POINT ||
              objective.type == ObjectiveType::CAPTURABLE) &&
-            objective.state == ObjectiveState::CONTROLLED_FRIENDLY)
+            objective.state == BGObjectiveState::CONTROLLED_FRIENDLY)
         {
             nodeIds.push_back(objective.objectiveId);
         }
@@ -98,7 +98,7 @@ std::vector<uint32> NodeController::GetEnemyNodeIds() const
     {
         if ((objective.type == ObjectiveType::CONTROL_POINT ||
              objective.type == ObjectiveType::CAPTURABLE) &&
-            objective.state == ObjectiveState::CONTROLLED_ENEMY)
+            objective.state == BGObjectiveState::CONTROLLED_ENEMY)
         {
             nodeIds.push_back(objective.objectiveId);
         }
@@ -115,7 +115,7 @@ std::vector<uint32> NodeController::GetNeutralNodeIds() const
     {
         if ((objective.type == ObjectiveType::CONTROL_POINT ||
              objective.type == ObjectiveType::CAPTURABLE) &&
-            objective.state == ObjectiveState::NEUTRAL)
+            objective.state == BGObjectiveState::NEUTRAL)
         {
             nodeIds.push_back(objective.objectiveId);
         }
@@ -132,7 +132,7 @@ std::vector<uint32> NodeController::GetContestedNodeIds() const
     {
         if ((objective.type == ObjectiveType::CONTROL_POINT ||
              objective.type == ObjectiveType::CAPTURABLE) &&
-            objective.state == ObjectiveState::CONTESTED)
+            objective.state == BGObjectiveState::CONTESTED)
         {
             nodeIds.push_back(objective.objectiveId);
         }
@@ -458,7 +458,7 @@ NodeThreatInfo NodeController::AssessNodeThreat(uint32 nodeId) const
 
     // Check if being lost
     const BGObjective* objective = _coordinator->GetObjective(nodeId);
-    if (objective && objective->state == ObjectiveState::CONTROLLED_FRIENDLY)
+    if (objective && objective->state == BGObjectiveState::CONTROLLED_FRIENDLY)
     {
         if (threat.isUnderAttack && threat.enemyStrength > threat.allyStrength)
         {
@@ -943,7 +943,7 @@ float NodeController::ScoreStrategicImportance(uint32 nodeId) const
         return 50.0f;
 
     // Use objective priority as basis
-    return objective->priority * 10.0f;
+    return static_cast<float>(static_cast<uint8>(objective->currentPriority)) * 10.0f;
 }
 
 float NodeController::ScoreDefensibility(uint32 nodeId) const

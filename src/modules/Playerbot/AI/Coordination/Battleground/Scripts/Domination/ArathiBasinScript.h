@@ -71,7 +71,7 @@ public:
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, ObjectiveState& outState) const override;
+        uint32& outObjectiveId, BGObjectiveState& outState) const override;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
         uint32& allianceScore, uint32& hordeScore) const override;
@@ -85,10 +85,10 @@ public:
         uint32 totalObjectives, uint32 timeRemaining) const override;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint32 GetOptimalNodeCount() const override { return 3; }  // 3-cap is the classic AB strategy
 

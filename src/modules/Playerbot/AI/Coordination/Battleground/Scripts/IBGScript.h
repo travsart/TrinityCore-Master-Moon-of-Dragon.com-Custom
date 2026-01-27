@@ -127,8 +127,8 @@ struct BGScriptEventData
     // State data
     int32 stateId;                // World state ID if applicable
     int32 stateValue;             // World state value
-    ObjectiveState oldState;
-    ObjectiveState newState;
+    BGObjectiveState oldState;
+    BGObjectiveState newState;
 
     // Score data
     uint32 allianceScore;
@@ -146,8 +146,8 @@ struct BGScriptEventData
         faction(0),
         stateId(0),
         stateValue(0),
-        oldState(ObjectiveState::NEUTRAL),
-        newState(ObjectiveState::NEUTRAL),
+        oldState(BGObjectiveState::NEUTRAL),
+        newState(BGObjectiveState::NEUTRAL),
         allianceScore(0),
         hordeScore(0)
     {}
@@ -522,7 +522,7 @@ public:
      * @return true if this state was meaningful
      */
     virtual bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, ObjectiveState& outState) const = 0;
+        uint32& outObjectiveId, BGObjectiveState& outState) const = 0;
 
     /**
      * @brief Extract scores from world state map
@@ -577,7 +577,7 @@ public:
      * @return Priority 0-10 (0 = don't attack)
      */
     virtual uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const = 0;
+        BGObjectiveState state, uint32 faction) const = 0;
 
     /**
      * @brief Get defense priority for an objective
@@ -587,7 +587,7 @@ public:
      * @return Priority 0-10 (0 = don't defend)
      */
     virtual uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const = 0;
+        BGObjectiveState state, uint32 faction) const = 0;
 
     /**
      * @brief Calculate win probability based on current state

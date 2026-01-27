@@ -38,37 +38,37 @@ void ArathiBasinScript::OnLoad(BattlegroundCoordinator* coordinator)
     // Register node world states
     // Stables
     RegisterWorldStateMapping(ArathiBasin::WorldStates::STABLES_ALLIANCE_CONTROLLED,
-        ArathiBasin::Nodes::STABLES, ObjectiveState::ALLIANCE_CONTROLLED);
+        ArathiBasin::Nodes::STABLES, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(ArathiBasin::WorldStates::STABLES_HORDE_CONTROLLED,
-        ArathiBasin::Nodes::STABLES, ObjectiveState::HORDE_CONTROLLED);
+        ArathiBasin::Nodes::STABLES, BGObjectiveState::HORDE_CONTROLLED);
     RegisterWorldStateMapping(ArathiBasin::WorldStates::STABLES_ALLIANCE,
-        ArathiBasin::Nodes::STABLES, ObjectiveState::ALLIANCE_CONTESTED);
+        ArathiBasin::Nodes::STABLES, BGObjectiveState::ALLIANCE_CONTESTED);
     RegisterWorldStateMapping(ArathiBasin::WorldStates::STABLES_HORDE,
-        ArathiBasin::Nodes::STABLES, ObjectiveState::HORDE_CONTESTED);
+        ArathiBasin::Nodes::STABLES, BGObjectiveState::HORDE_CONTESTED);
 
     // Blacksmith
     RegisterWorldStateMapping(ArathiBasin::WorldStates::BLACKSMITH_ALLIANCE_CONTROLLED,
-        ArathiBasin::Nodes::BLACKSMITH, ObjectiveState::ALLIANCE_CONTROLLED);
+        ArathiBasin::Nodes::BLACKSMITH, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(ArathiBasin::WorldStates::BLACKSMITH_HORDE_CONTROLLED,
-        ArathiBasin::Nodes::BLACKSMITH, ObjectiveState::HORDE_CONTROLLED);
+        ArathiBasin::Nodes::BLACKSMITH, BGObjectiveState::HORDE_CONTROLLED);
 
     // Farm
     RegisterWorldStateMapping(ArathiBasin::WorldStates::FARM_ALLIANCE_CONTROLLED,
-        ArathiBasin::Nodes::FARM, ObjectiveState::ALLIANCE_CONTROLLED);
+        ArathiBasin::Nodes::FARM, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(ArathiBasin::WorldStates::FARM_HORDE_CONTROLLED,
-        ArathiBasin::Nodes::FARM, ObjectiveState::HORDE_CONTROLLED);
+        ArathiBasin::Nodes::FARM, BGObjectiveState::HORDE_CONTROLLED);
 
     // Gold Mine
     RegisterWorldStateMapping(ArathiBasin::WorldStates::GOLD_MINE_ALLIANCE_CONTROLLED,
-        ArathiBasin::Nodes::GOLD_MINE, ObjectiveState::ALLIANCE_CONTROLLED);
+        ArathiBasin::Nodes::GOLD_MINE, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(ArathiBasin::WorldStates::GOLD_MINE_HORDE_CONTROLLED,
-        ArathiBasin::Nodes::GOLD_MINE, ObjectiveState::HORDE_CONTROLLED);
+        ArathiBasin::Nodes::GOLD_MINE, BGObjectiveState::HORDE_CONTROLLED);
 
     // Lumber Mill
     RegisterWorldStateMapping(ArathiBasin::WorldStates::LUMBER_MILL_ALLIANCE_CONTROLLED,
-        ArathiBasin::Nodes::LUMBER_MILL, ObjectiveState::ALLIANCE_CONTROLLED);
+        ArathiBasin::Nodes::LUMBER_MILL, BGObjectiveState::ALLIANCE_CONTROLLED);
     RegisterWorldStateMapping(ArathiBasin::WorldStates::LUMBER_MILL_HORDE_CONTROLLED,
-        ArathiBasin::Nodes::LUMBER_MILL, ObjectiveState::HORDE_CONTROLLED);
+        ArathiBasin::Nodes::LUMBER_MILL, BGObjectiveState::HORDE_CONTROLLED);
 
     TC_LOG_DEBUG("playerbots.bg.script",
         "ArathiBasinScript: Loaded with {} nodes",
@@ -282,7 +282,7 @@ std::vector<uint32> ArathiBasinScript::GetTickPointsTable() const
 // ============================================================================
 
 bool ArathiBasinScript::InterpretWorldState(int32 stateId, int32 value,
-    uint32& outObjectiveId, ObjectiveState& outState) const
+    uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     // Try cached mappings
     if (TryInterpretFromCache(stateId, value, outObjectiveId, outState))
@@ -293,13 +293,13 @@ bool ArathiBasinScript::InterpretWorldState(int32 stateId, int32 value,
     if (stateId == ArathiBasin::WorldStates::STABLES_ALLIANCE_CONTROLLED && value)
     {
         outObjectiveId = ArathiBasin::Nodes::STABLES;
-        outState = ObjectiveState::ALLIANCE_CONTROLLED;
+        outState = BGObjectiveState::ALLIANCE_CONTROLLED;
         return true;
     }
     if (stateId == ArathiBasin::WorldStates::STABLES_HORDE_CONTROLLED && value)
     {
         outObjectiveId = ArathiBasin::Nodes::STABLES;
-        outState = ObjectiveState::HORDE_CONTROLLED;
+        outState = BGObjectiveState::HORDE_CONTROLLED;
         return true;
     }
 
@@ -307,13 +307,13 @@ bool ArathiBasinScript::InterpretWorldState(int32 stateId, int32 value,
     if (stateId == ArathiBasin::WorldStates::BLACKSMITH_ALLIANCE_CONTROLLED && value)
     {
         outObjectiveId = ArathiBasin::Nodes::BLACKSMITH;
-        outState = ObjectiveState::ALLIANCE_CONTROLLED;
+        outState = BGObjectiveState::ALLIANCE_CONTROLLED;
         return true;
     }
     if (stateId == ArathiBasin::WorldStates::BLACKSMITH_HORDE_CONTROLLED && value)
     {
         outObjectiveId = ArathiBasin::Nodes::BLACKSMITH;
-        outState = ObjectiveState::HORDE_CONTROLLED;
+        outState = BGObjectiveState::HORDE_CONTROLLED;
         return true;
     }
 
@@ -375,8 +375,8 @@ void ArathiBasinScript::AdjustStrategy(StrategicDecision& decision,
         {
             uint32 faction = m_coordinator ? m_coordinator->GetFaction() : ALLIANCE;
             bool weControlBS =
-                (faction == ALLIANCE && bsIt->second == ObjectiveState::ALLIANCE_CONTROLLED) ||
-                (faction == HORDE && bsIt->second == ObjectiveState::HORDE_CONTROLLED);
+                (faction == ALLIANCE && bsIt->second == BGObjectiveState::ALLIANCE_CONTROLLED) ||
+                (faction == HORDE && bsIt->second == BGObjectiveState::HORDE_CONTROLLED);
 
             if (!weControlBS)
             {
@@ -412,7 +412,7 @@ void ArathiBasinScript::AdjustStrategy(StrategicDecision& decision,
 }
 
 uint8 ArathiBasinScript::GetObjectiveAttackPriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     uint8 basePriority = DominationScriptBase::GetObjectiveAttackPriority(
         objectiveId, state, faction);
@@ -439,15 +439,15 @@ uint8 ArathiBasinScript::GetObjectiveAttackPriority(uint32 objectiveId,
 }
 
 uint8 ArathiBasinScript::GetObjectiveDefensePriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     uint8 basePriority = DominationScriptBase::GetObjectiveDefensePriority(
         objectiveId, state, faction);
 
     // Blacksmith defense is critical if controlled
     if (objectiveId == ArathiBasin::Nodes::BLACKSMITH &&
-        ((faction == ALLIANCE && state == ObjectiveState::ALLIANCE_CONTROLLED) ||
-         (faction == HORDE && state == ObjectiveState::HORDE_CONTROLLED)))
+        ((faction == ALLIANCE && state == BGObjectiveState::ALLIANCE_CONTROLLED) ||
+         (faction == HORDE && state == BGObjectiveState::HORDE_CONTROLLED)))
     {
         return std::min(static_cast<uint8>(10), static_cast<uint8>(basePriority + 2));
     }

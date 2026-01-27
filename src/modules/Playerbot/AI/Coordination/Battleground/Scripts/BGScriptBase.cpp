@@ -228,30 +228,30 @@ void BGScriptBase::AdjustStrategy(StrategicDecision& decision,
 }
 
 uint8 BGScriptBase::GetObjectiveAttackPriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     // Default: prioritize neutral and enemy objectives
     switch (state)
     {
-        case ObjectiveState::NEUTRAL:
+        case BGObjectiveState::NEUTRAL:
             return 8;  // High priority - unclaimed
 
-        case ObjectiveState::ALLIANCE_CONTROLLED:
+        case BGObjectiveState::ALLIANCE_CONTROLLED:
             return (faction == HORDE) ? 6 : 0;
-        case ObjectiveState::HORDE_CONTROLLED:
+        case BGObjectiveState::HORDE_CONTROLLED:
             return (faction == ALLIANCE) ? 6 : 0;
 
-        case ObjectiveState::ALLIANCE_CONTESTED:
+        case BGObjectiveState::ALLIANCE_CONTESTED:
             return (faction == HORDE) ? 9 : 0;
-        case ObjectiveState::HORDE_CONTESTED:
+        case BGObjectiveState::HORDE_CONTESTED:
             return (faction == ALLIANCE) ? 9 : 0;
 
-        case ObjectiveState::ALLIANCE_CAPTURING:
+        case BGObjectiveState::ALLIANCE_CAPTURING:
             return (faction == HORDE) ? 7 : 0;
-        case ObjectiveState::HORDE_CAPTURING:
+        case BGObjectiveState::HORDE_CAPTURING:
             return (faction == ALLIANCE) ? 7 : 0;
 
-        case ObjectiveState::DESTROYED:
+        case BGObjectiveState::DESTROYED:
             return 0;
 
         default:
@@ -260,24 +260,24 @@ uint8 BGScriptBase::GetObjectiveAttackPriority(uint32 objectiveId,
 }
 
 uint8 BGScriptBase::GetObjectiveDefensePriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     // Default: prioritize our contested objectives
     switch (state)
     {
-        case ObjectiveState::ALLIANCE_CONTROLLED:
+        case BGObjectiveState::ALLIANCE_CONTROLLED:
             return (faction == ALLIANCE) ? 5 : 0;
-        case ObjectiveState::HORDE_CONTROLLED:
+        case BGObjectiveState::HORDE_CONTROLLED:
             return (faction == HORDE) ? 5 : 0;
 
-        case ObjectiveState::ALLIANCE_CONTESTED:
+        case BGObjectiveState::ALLIANCE_CONTESTED:
             return (faction == ALLIANCE) ? 9 : 0;  // Critical - under attack!
-        case ObjectiveState::HORDE_CONTESTED:
+        case BGObjectiveState::HORDE_CONTESTED:
             return (faction == HORDE) ? 9 : 0;
 
-        case ObjectiveState::ALLIANCE_CAPTURING:
+        case BGObjectiveState::ALLIANCE_CAPTURING:
             return (faction == ALLIANCE) ? 7 : 0;
-        case ObjectiveState::HORDE_CAPTURING:
+        case BGObjectiveState::HORDE_CAPTURING:
             return (faction == HORDE) ? 7 : 0;
 
         default:
@@ -668,7 +668,7 @@ void BGScriptBase::LogEvent(const BGScriptEventData& event) const
 // ============================================================================
 
 void BGScriptBase::RegisterWorldStateMapping(int32 stateId, uint32 objectiveId,
-                                              ObjectiveState targetState)
+                                              BGObjectiveState targetState)
 {
     WorldStateMapping mapping;
     mapping.objectiveId = objectiveId;
@@ -685,7 +685,7 @@ void BGScriptBase::RegisterScoreWorldState(int32 stateId, bool isAlliance)
 }
 
 bool BGScriptBase::TryInterpretFromCache(int32 stateId, int32 value,
-                                          uint32& outObjectiveId, ObjectiveState& outState) const
+                                          uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     auto it = m_worldStateMappings.find(stateId);
     if (it == m_worldStateMappings.end())

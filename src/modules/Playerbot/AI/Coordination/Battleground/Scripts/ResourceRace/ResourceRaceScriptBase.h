@@ -35,8 +35,8 @@ public:
         float scoreAdvantage, uint32 timeRemaining) const override;
     void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage,
         uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const override;
-    uint8 GetObjectiveAttackPriority(uint32 objectiveId, ObjectiveState state, uint32 faction) const override;
-    uint8 GetObjectiveDefensePriority(uint32 objectiveId, ObjectiveState state, uint32 faction) const override;
+    uint8 GetObjectiveAttackPriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const override;
+    uint8 GetObjectiveDefensePriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const override;
 
     // ========== RESOURCE RACE SPECIFIC ==========
     virtual uint32 GetCartCount() const = 0;

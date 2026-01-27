@@ -18,8 +18,18 @@
 #include "Group.h"
 #include "GameObject.h"
 #include "World.h"
+#include "SpellAuras.h"
+#include "SpellAuraEffects.h"
+#include "../AI/Coordination/Battleground/BattlegroundCoordinatorManager.h"
+#include "../AI/Coordination/Battleground/BattlegroundCoordinator.h"
+#include "../AI/Coordination/Battleground/Scripts/IBGScript.h"
+#include "../Movement/BotMovementUtil.h"
 #include <algorithm>
 #include <cmath>
+
+// WSG/TP Flag aura IDs
+constexpr uint32 ALLIANCE_FLAG_AURA = 23333;  // Carrying Horde flag
+constexpr uint32 HORDE_FLAG_AURA = 23335;     // Carrying Alliance flag
 
 namespace Playerbot
 {
@@ -200,13 +210,50 @@ void BattlegroundAI::Update(::Player* player, uint32 diff)
 
     _lastUpdateTimes[playerGuid] = currentTime;
 
-    ::std::lock_guard lock(_mutex);
+    // =========================================================================
+    // BATTLEGROUND COORDINATOR INTEGRATION
+    // =========================================================================
+    // Try to get coordinator for strategic decisions. If available, use its
+    // role assignment. Otherwise, fallback to local role assignment.
 
-    // Auto-assign role if not assigned
-    if (!_playerRoles.count(playerGuid))
-        AssignRole(player, GetBattlegroundType(player));
+    BattlegroundCoordinator* coordinator = sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
+    Playerbot::BGRole assignedRole = BGRole::UNASSIGNED;
+    BGObjective* assignment = nullptr;
 
-    // Execute BG-specific strategy
+    if (coordinator)
+    {
+        // Get the bot's assigned role from coordinator
+        assignedRole = coordinator->GetBotRole(player->GetGUID());
+        assignment = coordinator->GetAssignment(player->GetGUID());
+
+        TC_LOG_DEBUG("playerbots.bg",
+            "BattlegroundAI: Bot {} using coordinator (role: {}, has assignment: {})",
+            player->GetName(),
+            static_cast<uint32>(assignedRole),
+            assignment != nullptr);
+
+        // Store the role for strategy execution
+        _playerRoles[playerGuid] = assignedRole;
+    }
+    else
+    {
+        // No coordinator - try to create one through UpdateBot
+        // This handles late-joining bots or when coordinator wasn't created yet
+        sBGCoordinatorMgr->UpdateBot(player, 0);
+
+        // Fall back to local role assignment
+        ::std::lock_guard lock(_mutex);
+        if (!_playerRoles.count(playerGuid))
+            AssignRole(player, GetBattlegroundType(player));
+        assignedRole = _playerRoles[playerGuid];
+    }
+
+    // =========================================================================
+    // EXECUTE BG-SPECIFIC STRATEGY BASED ON ROLE
+    // =========================================================================
+    // Use the assigned role to drive behavior. The strategy functions
+    // will use the role to determine specific actions.
+
     BGType bgType = GetBattlegroundType(player);
     switch (bgType)
     {
@@ -451,22 +498,23 @@ bool BattlegroundAI::CompleteObjective(::Player* player, BGObjective const& obje
     // Update metrics based on objective type
     switch (objective.type)
     {
-        case BGObjectiveType::CAPTURE_FLAG:
+        case ObjectiveType::FLAG:
+            // For flags, count as captures (defense tracked separately)
             _playerMetrics[playerGuid].flagCaptures++;
             _globalMetrics.flagCaptures++;
             break;
 
-        case BGObjectiveType::DEFEND_FLAG:
-            _playerMetrics[playerGuid].flagReturns++;
-            _globalMetrics.flagReturns++;
-            break;
-
-        case BGObjectiveType::CAPTURE_BASE:
+        case ObjectiveType::NODE:
+        case ObjectiveType::CONTROL_POINT:
+        case ObjectiveType::CAPTURABLE:
+            // For bases/nodes, count as assaults
             _playerMetrics[playerGuid].basesAssaulted++;
             _globalMetrics.basesAssaulted++;
             break;
 
-        case BGObjectiveType::DEFEND_BASE:
+        case ObjectiveType::TOWER:
+        case ObjectiveType::GRAVEYARD:
+            // Towers and graveyards count as defended
             _playerMetrics[playerGuid].basesDefended++;
             _globalMetrics.basesDefended++;
             break;
@@ -488,7 +536,7 @@ bool BattlegroundAI::CompleteObjective(::Player* player, BGObjective const& obje
 bool BattlegroundAI::IsObjectiveContested(BGObjective const& objective) const
 {
     // Check if enemy players are near objective
-    uint32 enemyCount = CountPlayersAtObjective(objective.location, OBJECTIVE_RANGE);
+    uint32 enemyCount = CountPlayersAtObjective(Position(objective.x, objective.y, objective.z), OBJECTIVE_RANGE);
     return enemyCount > 0;
 }
 
@@ -498,153 +546,474 @@ bool BattlegroundAI::IsObjectiveContested(BGObjective const& objective) const
 
 void BattlegroundAI::ExecuteWSGStrategy(::Player* player)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return;
 
-    BGRole role = GetPlayerRole(player);
-    BGType bgType = GetBattlegroundType(player);
-    FlagBGStrategy strategy = _flagStrategies[bgType];
+    // Get coordinator and script for proper data-driven execution
+    BattlegroundCoordinator* coordinator = sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
+    Coordination::Battleground::IBGScript* script = coordinator ? coordinator->GetScript() : nullptr;
 
+    BGRole role = GetPlayerRole(player);
+    uint32 teamId = player->GetBGTeam();
+
+    // Check if we're carrying a flag
+    bool carryingFlag = player->HasAura(ALLIANCE_FLAG_AURA) || player->HasAura(HORDE_FLAG_AURA);
+
+    // Find flag carriers
+    ::Player* friendlyFC = FindFriendlyFlagCarrier(player);
+    ::Player* enemyFC = FindEnemyFlagCarrier(player);
+
+    // Log current state
+    TC_LOG_DEBUG("playerbots.bg", "WSG: {} role={} carryingFlag={} friendlyFC={} enemyFC={}",
+        player->GetName(), static_cast<uint32>(role), carryingFlag,
+        friendlyFC ? friendlyFC->GetName() : "none",
+        enemyFC ? enemyFC->GetName() : "none");
+
+    // =========================================================================
+    // PRIORITY 1: If we're carrying flag, run it home!
+    // =========================================================================
+    if (carryingFlag)
+    {
+        ExecuteFlagCarrierBehavior(player, coordinator, script);
+        return;
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Execute role-based behavior
+    // =========================================================================
     switch (role)
     {
         case BGRole::FLAG_CARRIER:
-            // Try to pick up enemy flag
-    if (!player->HasAura(23333)) // Not carrying flag
-                PickupFlag(player);
-            break;
-
-        case BGRole::FLAG_DEFENDER:
-            // Defend flag room or return flag if dropped
-            DefendFlagRoom(player);
-            ReturnFlag(player);
-            break;
-
-        case BGRole::HEALER_SUPPORT:
-        case BGRole::ATTACKER:
-            // Escort friendly FC or kill enemy FC
+        case BGRole::FLAG_HUNTER:
+            // Go pick up enemy flag
+            if (!enemyFC) // Enemy flag not taken, go get it
             {
-                ::Player* friendlyFC = FindFriendlyFlagCarrier(player);
-                ::Player* enemyFC = FindEnemyFlagCarrier(player);
-                if (friendlyFC && strategy.escortFlagCarrier)
-                    EscortFlagCarrier(player, friendlyFC);
-                else if (enemyFC && strategy.killEnemyFC)
-                {
-                    // Attack enemy FC
-                    player->SetSelection(enemyFC->GetGUID());
-                }
+                ExecuteFlagPickupBehavior(player, coordinator, script);
+            }
+            else // Enemy has our flag - hunt them!
+            {
+                ExecuteFlagHunterBehavior(player, enemyFC);
             }
             break;
 
+        case BGRole::FLAG_ESCORT:
+            if (friendlyFC)
+            {
+                ExecuteEscortBehavior(player, friendlyFC, coordinator, script);
+            }
+            else if (!enemyFC)
+            {
+                // No one has flags - help pick up enemy flag
+                ExecuteFlagPickupBehavior(player, coordinator, script);
+            }
+            else
+            {
+                // Our FC not present, enemy has flag - hunt enemy FC
+                ExecuteFlagHunterBehavior(player, enemyFC);
+            }
+            break;
+
+        case BGRole::FLAG_DEFENDER:
+        case BGRole::NODE_DEFENDER:
+            ExecuteDefenderBehavior(player, coordinator, script);
+            break;
+
+        case BGRole::HEALER_SUPPORT:
+            // Prioritize healing FC, then escort, then defend
+            if (friendlyFC)
+                ExecuteEscortBehavior(player, friendlyFC, coordinator, script);
+            else
+                ExecuteDefenderBehavior(player, coordinator, script);
+            break;
+
+        case BGRole::ATTACKER:
+        case BGRole::NODE_ATTACKER:
+            if (enemyFC)
+                ExecuteFlagHunterBehavior(player, enemyFC);
+            else if (!friendlyFC) // No one has enemy flag, go get it
+                ExecuteFlagPickupBehavior(player, coordinator, script);
+            else // Our FC has flag - escort
+                ExecuteEscortBehavior(player, friendlyFC, coordinator, script);
+            break;
+
         default:
+            // UNASSIGNED or unknown role - be useful: hunt enemy FC or help capture
+            if (enemyFC)
+                ExecuteFlagHunterBehavior(player, enemyFC);
+            else
+                ExecuteFlagPickupBehavior(player, coordinator, script);
             break;
     }
 }
 
 bool BattlegroundAI::PickupFlag(::Player* player)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return false;
 
     BGType bgType = GetBattlegroundType(player);
-    FlagBGStrategy strategy = _flagStrategies[bgType];
+    if (!_flagStrategies.count(bgType))
+        return false;
 
-    // Move to enemy flag location
-    float distance = ::std::sqrt(player->GetExactDistSq(strategy.enemyFlagSpawn)); // Calculate once from squared distance
+    FlagBGStrategy& strategy = _flagStrategies[bgType];
+
+    // Determine which flag we need to pick up based on faction
+    Position targetFlag = (player->GetBGTeam() == ALLIANCE)
+        ? strategy.enemyFlagSpawn   // Alliance picks up Horde flag
+        : strategy.friendlyFlagSpawn; // Horde picks up Alliance flag (positions are from Alliance perspective)
+
+    // Correct for faction - in WSG data, friendlyFlagSpawn is Alliance base, enemyFlagSpawn is Horde base
+    // Alliance wants to go to Horde base (enemyFlagSpawn) to pick up their flag
+    // Horde wants to go to Alliance base (friendlyFlagSpawn) to pick up their flag
+    if (player->GetBGTeam() == HORDE)
+        targetFlag = strategy.friendlyFlagSpawn;
+    else
+        targetFlag = strategy.enemyFlagSpawn;
+
+    float distance = player->GetExactDist(&targetFlag);
+
     if (distance > OBJECTIVE_RANGE)
     {
-        // Full implementation: Use PathGenerator to move to flag
-        TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} moving to enemy flag",
-            player->GetGUID().GetCounter());
+        // Move to enemy flag location
+        if (BotMovementUtil::MoveToPosition(player, targetFlag))
+        {
+            TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} moving to enemy flag (dist: {:.1f})",
+                player->GetName(), distance);
+        }
         return false;
     }
 
-    // Interact with flag
-    TC_LOG_INFO("playerbot", "BattlegroundAI: Player {} picking up flag",
-        player->GetGUID().GetCounter());
+    // We're at the flag - try to interact with it
+    TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} at enemy flag, attempting pickup",
+        player->GetName());
 
-    // Full implementation: Interact with flag GameObject
-    return true;
+    // Find the flag GameObject and interact with it
+    ::Battleground* bg = GetPlayerBattleground(player);
+    if (!bg)
+        return false;
+
+    // Search for nearby flag GameObjects
+    std::list<GameObject*> flagList;
+    player->GetGameObjectListWithEntryInGrid(flagList, 0, 10.0f); // Get all GOs nearby
+
+    for (GameObject* go : flagList)
+    {
+        if (!go || !go->IsWithinDistInMap(player, OBJECTIVE_RANGE))
+            continue;
+
+        // Check if this is a capturable flag (has GAMEOBJECT_TYPE_FLAGSTAND or similar)
+        GameObjectTemplate const* goInfo = go->GetGOInfo();
+        if (goInfo && (goInfo->type == GAMEOBJECT_TYPE_FLAGSTAND ||
+                       goInfo->type == GAMEOBJECT_TYPE_GOOBER))
+        {
+            // Try to use the flag
+            go->Use(player);
+            TC_LOG_INFO("playerbots.bg", "BattlegroundAI: {} picked up flag!",
+                player->GetName());
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool BattlegroundAI::ReturnFlag(::Player* player)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return false;
 
-    // Full implementation: Find dropped friendly flag and interact with it
-    TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} returning flag",
-        player->GetGUID().GetCounter());
+    ::Battleground* bg = GetPlayerBattleground(player);
+    if (!bg)
+        return false;
 
-    return true;
+    // Search for dropped flag GameObject near our flag room
+    BGType bgType = GetBattlegroundType(player);
+    if (!_flagStrategies.count(bgType))
+        return false;
+
+    FlagBGStrategy& strategy = _flagStrategies[bgType];
+
+    // Our flag room (where dropped friendly flags appear)
+    Position flagRoom = (player->GetBGTeam() == ALLIANCE)
+        ? strategy.friendlyFlagSpawn
+        : strategy.enemyFlagSpawn;
+
+    // Search for flag GameObjects in a large radius (flags can be dropped anywhere)
+    std::list<GameObject*> goList;
+    player->GetGameObjectListWithEntryInGrid(goList, 0, 50.0f);
+
+    GameObject* droppedFlag = nullptr;
+    float closestDist = 100.0f;
+
+    for (GameObject* go : goList)
+    {
+        if (!go)
+            continue;
+
+        GameObjectTemplate const* goInfo = go->GetGOInfo();
+        if (!goInfo)
+            continue;
+
+        // Look for dropped flag types
+        if (goInfo->type == GAMEOBJECT_TYPE_FLAGDROP)
+        {
+            float dist = player->GetExactDist(go);
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                droppedFlag = go;
+            }
+        }
+    }
+
+    if (droppedFlag)
+    {
+        float dist = player->GetExactDist(droppedFlag);
+        if (dist > OBJECTIVE_RANGE)
+        {
+            // Move to the dropped flag
+            Position flagPos;
+            flagPos.Relocate(droppedFlag->GetPositionX(), droppedFlag->GetPositionY(), droppedFlag->GetPositionZ());
+            if (BotMovementUtil::MoveToPosition(player, flagPos))
+            {
+                TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} moving to return dropped flag (dist: {:.1f})",
+                    player->GetName(), dist);
+            }
+            return true;
+        }
+
+        // We're at the flag - interact to return it
+        droppedFlag->Use(player);
+        TC_LOG_INFO("playerbots.bg", "BattlegroundAI: {} returned dropped flag!",
+            player->GetName());
+        return true;
+    }
+
+    return false;
 }
 
 ::Player* BattlegroundAI::FindFriendlyFlagCarrier(::Player* player) const
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return nullptr;
 
     ::Battleground* bg = GetPlayerBattleground(player);
     if (!bg)
         return nullptr;
 
-    // Full implementation: Query BG for flag carrier on player's team
-    // Check for flag aura (23333 for Alliance, 23335 for Horde)
+    uint32 teamId = player->GetBGTeam();
+    // Friendly FC has the enemy's flag:
+    // - Alliance FC carries Horde flag (ALLIANCE_FLAG_AURA = 23333)
+    // - Horde FC carries Alliance flag (HORDE_FLAG_AURA = 23335)
+    uint32 flagAura = (teamId == ALLIANCE) ? ALLIANCE_FLAG_AURA : HORDE_FLAG_AURA;
+
+    // Iterate through all players in the BG on our team
+    for (auto const& itr : bg->GetPlayers())
+    {
+        ::Player* bgPlayer = ObjectAccessor::FindPlayer(itr.first);
+        if (!bgPlayer || !bgPlayer->IsInWorld() || !bgPlayer->IsAlive())
+            continue;
+
+        // Check if on same team and has flag
+        if (bgPlayer->GetBGTeam() == teamId && bgPlayer->HasAura(flagAura))
+        {
+            return bgPlayer;
+        }
+    }
 
     return nullptr;
 }
 
 ::Player* BattlegroundAI::FindEnemyFlagCarrier(::Player* player) const
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return nullptr;
 
     ::Battleground* bg = GetPlayerBattleground(player);
     if (!bg)
         return nullptr;
 
-    // Full implementation: Query BG for flag carrier on enemy team
+    uint32 teamId = player->GetBGTeam();
+    uint32 enemyTeam = (teamId == ALLIANCE) ? HORDE : ALLIANCE;
+    // Enemy FC has our flag:
+    // - Enemy Alliance FC carries Horde flag (ALLIANCE_FLAG_AURA = 23333)
+    // - Enemy Horde FC carries Alliance flag (HORDE_FLAG_AURA = 23335)
+    uint32 flagAura = (enemyTeam == ALLIANCE) ? ALLIANCE_FLAG_AURA : HORDE_FLAG_AURA;
+
+    // Iterate through all players in the BG on enemy team
+    for (auto const& itr : bg->GetPlayers())
+    {
+        ::Player* bgPlayer = ObjectAccessor::FindPlayer(itr.first);
+        if (!bgPlayer || !bgPlayer->IsInWorld() || !bgPlayer->IsAlive())
+            continue;
+
+        // Check if on enemy team and has flag
+        if (bgPlayer->GetBGTeam() == enemyTeam && bgPlayer->HasAura(flagAura))
+        {
+            return bgPlayer;
+        }
+    }
+
     return nullptr;
 }
 
 bool BattlegroundAI::EscortFlagCarrier(::Player* player, ::Player* fc)
 {
-    if (!player || !fc)
+    if (!player || !fc || !player->IsInWorld() || !fc->IsInWorld())
         return false;
 
-    // Follow flag carrier
-    float distance = ::std::sqrt(player->GetExactDistSq(fc)); // Calculate once from squared distance
-    if (distance > 15.0f)
+    float distance = player->GetExactDist(fc);
+    constexpr float ESCORT_DISTANCE = 8.0f;  // Stay close to FC
+    constexpr float MAX_ESCORT_DISTANCE = 30.0f;  // Don't chase too far
+
+    if (distance > MAX_ESCORT_DISTANCE)
     {
-        // Full implementation: Move closer to FC
-        TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} escorting FC {}",
-            player->GetGUID().GetCounter(), fc->GetGUID().GetCounter());
+        // FC is too far, move to them
+        if (BotMovementUtil::MoveToPosition(player, fc->GetPosition()))
+        {
+            TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} chasing FC {} (dist: {:.1f})",
+                player->GetName(), fc->GetName(), distance);
+        }
+        return true;
+    }
+    else if (distance > ESCORT_DISTANCE)
+    {
+        // Move closer to FC
+        Position escortPos;
+        // Position ourselves between FC and where they're going (or just near them)
+        float angle = fc->GetOrientation() + M_PI; // Behind the FC
+        escortPos.Relocate(
+            fc->GetPositionX() + ESCORT_DISTANCE * 0.5f * cos(angle),
+            fc->GetPositionY() + ESCORT_DISTANCE * 0.5f * sin(angle),
+            fc->GetPositionZ()
+        );
+        BotMovementUtil::CorrectPositionToGround(player, escortPos);
+
+        if (BotMovementUtil::MoveToPosition(player, escortPos))
+        {
+            TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} moving to escort FC {} (dist: {:.1f})",
+                player->GetName(), fc->GetName(), distance);
+        }
     }
 
-    // Defend FC from attackers
-    // Full implementation: Find enemies attacking FC and engage
+    // Check if FC is under attack and help them
+    if (fc->IsInCombat())
+    {
+        // Find enemies attacking the FC
+        Unit* attacker = nullptr;
+        for (auto const& threatRef : fc->GetThreatManager().GetSortedThreatList())
+        {
+            Unit* target = threatRef->GetVictim();
+            if (target && target->IsAlive() && target->IsHostileTo(player))
+            {
+                attacker = target;
+                break;
+            }
+        }
+
+        // If FC has no threat list entries, check who is targeting them
+        if (!attacker)
+        {
+            // Search for nearby hostile players
+            std::list<Player*> nearbyPlayers;
+            player->GetPlayerListInGrid(nearbyPlayers, 30.0f);
+            for (::Player* nearby : nearbyPlayers)
+            {
+                if (nearby && nearby->IsAlive() && nearby->IsHostileTo(player) &&
+                    nearby->GetTarget() == fc->GetGUID())
+                {
+                    attacker = nearby;
+                    break;
+                }
+            }
+        }
+
+        if (attacker && attacker->IsAlive())
+        {
+            // Set target to attack the FC's attacker
+            player->SetSelection(attacker->GetGUID());
+            TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} targeting {} who is attacking FC",
+                player->GetName(), attacker->GetName());
+        }
+    }
 
     return true;
 }
 
 bool BattlegroundAI::DefendFlagRoom(::Player* player)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return false;
 
     BGType bgType = GetBattlegroundType(player);
-    FlagBGStrategy strategy = _flagStrategies[bgType];
+    if (!_flagStrategies.count(bgType))
+        return false;
 
-    // Move to friendly flag room
-    float distance = ::std::sqrt(player->GetExactDistSq(strategy.friendlyFlagSpawn)); // Calculate once from squared distance
-    if (distance > strategy.friendlyFlagSpawn.GetExactDist(player))
+    FlagBGStrategy& strategy = _flagStrategies[bgType];
+
+    // Our flag room depends on faction (positions are from Alliance perspective)
+    Position flagRoom = (player->GetBGTeam() == ALLIANCE)
+        ? strategy.friendlyFlagSpawn  // Alliance defends Alliance base
+        : strategy.enemyFlagSpawn;    // Horde defends Horde base
+
+    float distance = player->GetExactDist(&flagRoom);
+    constexpr float DEFENSE_RADIUS = 25.0f;
+
+    // Move to flag room if too far
+    if (distance > DEFENSE_RADIUS)
     {
-        // Full implementation: Move to flag room
-        TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} moving to flag room",
-            player->GetGUID().GetCounter());
+        if (BotMovementUtil::MoveToPosition(player, flagRoom))
+        {
+            TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} moving to defend flag room (dist: {:.1f})",
+                player->GetName(), distance);
+        }
+        return true;
     }
 
-    // Engage enemies in flag room
-    // Full implementation: Find and attack enemies near flag
+    // We're in the flag room - look for enemies
+    std::list<Player*> nearbyPlayers;
+    player->GetPlayerListInGrid(nearbyPlayers, DEFENSE_RADIUS);
+
+    ::Player* closestEnemy = nullptr;
+    float closestDist = DEFENSE_RADIUS + 1.0f;
+
+    for (::Player* nearby : nearbyPlayers)
+    {
+        if (!nearby || !nearby->IsAlive() || !nearby->IsHostileTo(player))
+            continue;
+
+        float dist = player->GetExactDist(nearby);
+        if (dist < closestDist)
+        {
+            closestDist = dist;
+            closestEnemy = nearby;
+        }
+    }
+
+    if (closestEnemy)
+    {
+        // Target the closest enemy in our flag room
+        player->SetSelection(closestEnemy->GetGUID());
+        TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} targeting enemy {} in flag room",
+            player->GetName(), closestEnemy->GetName());
+        return true;
+    }
+
+    // No enemies - patrol near the flag
+    if (!BotMovementUtil::IsMoving(player))
+    {
+        // Small random movement around flag room
+        Position patrolPos;
+        float angle = frand(0, 2 * M_PI);
+        float dist = frand(3.0f, 10.0f);
+        patrolPos.Relocate(
+            flagRoom.GetPositionX() + dist * cos(angle),
+            flagRoom.GetPositionY() + dist * sin(angle),
+            flagRoom.GetPositionZ()
+        );
+        BotMovementUtil::CorrectPositionToGround(player, patrolPos);
+        BotMovementUtil::MoveToPosition(player, patrolPos);
+    }
 
     return true;
 }
@@ -699,43 +1068,115 @@ void BattlegroundAI::ExecuteABStrategy(::Player* player)
 
 bool BattlegroundAI::CaptureBase(::Player* player, Position const& baseLocation)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return false;
 
-    // Move to base
-    float distance = ::std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
+    float distance = player->GetExactDist(&baseLocation);
+
+    // Move to base if too far
     if (distance > OBJECTIVE_RANGE)
     {
-        // Full implementation: Move to base
-        TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} moving to capture base",
-            player->GetGUID().GetCounter());
+        if (BotMovementUtil::MoveToPosition(player, baseLocation))
+        {
+            TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} moving to capture base (dist: {:.1f})",
+                player->GetName(), distance);
+        }
         return false;
     }
 
-    // Interact with base flag
-    TC_LOG_INFO("playerbot", "BattlegroundAI: Player {} capturing base",
-        player->GetGUID().GetCounter());
+    // We're at the base - try to interact with the flag/banner
+    TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} at base, attempting capture",
+        player->GetName());
 
-    // Full implementation: Interact with base GameObject
-    return true;
+    // Find the base flag GameObject
+    std::list<GameObject*> goList;
+    player->GetGameObjectListWithEntryInGrid(goList, 0, OBJECTIVE_RANGE);
+
+    for (GameObject* go : goList)
+    {
+        if (!go || !go->IsWithinDistInMap(player, OBJECTIVE_RANGE))
+            continue;
+
+        GameObjectTemplate const* goInfo = go->GetGOInfo();
+        if (goInfo && (goInfo->type == GAMEOBJECT_TYPE_GOOBER ||
+                       goInfo->type == GAMEOBJECT_TYPE_FLAGSTAND ||
+                       goInfo->type == GAMEOBJECT_TYPE_CAPTURE_POINT))
+        {
+            // Check if we can interact with it
+            go->Use(player);
+            TC_LOG_INFO("playerbots.bg", "BattlegroundAI: {} interacting with base capture point",
+                player->GetName());
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool BattlegroundAI::DefendBase(::Player* player, Position const& baseLocation)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return false;
 
-    // Move to base
-    float distance = ::std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
-    if (distance > 30.0f)
+    constexpr float DEFENSE_RADIUS = 30.0f;
+    float distance = player->GetExactDist(&baseLocation);
+
+    // Move to base if too far
+    if (distance > DEFENSE_RADIUS)
     {
-        // Full implementation: Move to base
-        TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} moving to defend base",
-            player->GetGUID().GetCounter());
+        if (BotMovementUtil::MoveToPosition(player, baseLocation))
+        {
+            TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} moving to defend base (dist: {:.1f})",
+                player->GetName(), distance);
+        }
+        return true;
     }
 
-    // Engage enemies near base
-    // Full implementation: Find and attack enemies
+    // We're at the base - look for enemies
+    std::list<Player*> nearbyPlayers;
+    player->GetPlayerListInGrid(nearbyPlayers, DEFENSE_RADIUS);
+
+    ::Player* closestEnemy = nullptr;
+    float closestDist = DEFENSE_RADIUS + 1.0f;
+
+    for (::Player* nearby : nearbyPlayers)
+    {
+        if (!nearby || !nearby->IsAlive() || !nearby->IsHostileTo(player))
+            continue;
+
+        float dist = player->GetExactDist(nearby);
+        if (dist < closestDist)
+        {
+            closestDist = dist;
+            closestEnemy = nearby;
+        }
+    }
+
+    if (closestEnemy)
+    {
+        // Target the closest enemy near base
+        player->SetSelection(closestEnemy->GetGUID());
+        TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} targeting enemy {} near base",
+            player->GetName(), closestEnemy->GetName());
+        return true;
+    }
+
+    // No enemies - patrol near the base
+    if (!BotMovementUtil::IsMoving(player))
+    {
+        Position patrolPos;
+        float angle = frand(0, 2 * M_PI);
+        float dist = frand(5.0f, 15.0f);
+        patrolPos.Relocate(
+            baseLocation.GetPositionX() + dist * cos(angle),
+            baseLocation.GetPositionY() + dist * sin(angle),
+            baseLocation.GetPositionZ()
+        );
+        BotMovementUtil::CorrectPositionToGround(player, patrolPos);
+        BotMovementUtil::MoveToPosition(player, patrolPos);
+    }
+
+    return true;
 
     return true;
 }
@@ -1141,7 +1582,7 @@ bool BattlegroundAI::GroupUpForObjective(::Player* player, BGObjective const& ob
         return false;
 
     // Check if enough players at objective
-    uint32 playersAtObjective = CountPlayersAtObjective(objective.location, 20.0f);
+    uint32 playersAtObjective = CountPlayersAtObjective(Position(objective.x, objective.y, objective.z), 20.0f);
     if (playersAtObjective < profile.minPlayersForAttack)
     {
         TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} waiting for group at objective",
@@ -1205,7 +1646,7 @@ bool BattlegroundAI::MoveToObjective(::Player* player, BGObjective const& object
     if (!player)
         return false;
 
-    float distance = ::std::sqrt(player->GetExactDistSq(objective.location)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(Position(objective.x, objective.y, objective.z))); // Calculate once from squared distance
     if (distance <= OBJECTIVE_RANGE)
         return true;
 
@@ -1230,7 +1671,7 @@ bool BattlegroundAI::IsAtObjective(::Player* player, BGObjective const& objectiv
     if (!player)
         return false;
 
-    return IsObjectiveInRange(player, objective.location, OBJECTIVE_RANGE);
+    return IsObjectiveInRange(player, Position(objective.x, objective.y, objective.z), OBJECTIVE_RANGE);
 }
 
 // ============================================================================
@@ -1407,6 +1848,353 @@ uint32 BattlegroundAI::CountPlayersAtObjective(Position const& objLocation, floa
 {
     // Full implementation: Find all players in range
     return {};
+}
+
+// ============================================================================
+// CTF BEHAVIOR EXECUTION (uses script data)
+// ============================================================================
+
+void BattlegroundAI::ExecuteFlagCarrierBehavior(::Player* player,
+    BattlegroundCoordinator* coordinator,
+    Coordination::Battleground::IBGScript* script)
+{
+    if (!player || !player->IsInWorld())
+        return;
+
+    uint32 teamId = player->GetBGTeam();
+
+    // Get our flag room position from script (where we capture)
+    Position capturePoint;
+    if (script)
+    {
+        auto flagRoomPositions = script->GetFlagRoomPositions(teamId);
+        if (!flagRoomPositions.empty())
+        {
+            capturePoint.Relocate(
+                flagRoomPositions[0].GetPositionX(),
+                flagRoomPositions[0].GetPositionY(),
+                flagRoomPositions[0].GetPositionZ()
+            );
+        }
+    }
+
+    // Fallback to hardcoded positions if script unavailable
+    if (capturePoint.GetPositionX() == 0.0f)
+    {
+        BGType bgType = GetBattlegroundType(player);
+        if (_flagStrategies.count(bgType))
+        {
+            capturePoint = (teamId == ALLIANCE)
+                ? _flagStrategies[bgType].friendlyFlagSpawn  // Alliance captures at Alliance base
+                : _flagStrategies[bgType].enemyFlagSpawn;    // Horde captures at Horde base
+        }
+    }
+
+    float distance = player->GetExactDist(&capturePoint);
+
+    TC_LOG_DEBUG("playerbots.bg", "WSG FC: {} running flag home (dist: {:.1f})",
+        player->GetName(), distance);
+
+    if (distance > OBJECTIVE_RANGE)
+    {
+        // Run home!
+        BotMovementUtil::MoveToPosition(player, capturePoint);
+    }
+    else
+    {
+        // At capture point - check if our flag is here to capture
+        // If our flag is at base, we auto-capture when touching the flag stand
+        TC_LOG_DEBUG("playerbots.bg", "WSG FC: {} at capture point, waiting for our flag",
+            player->GetName());
+
+        // Try to find flag stand and interact
+        std::list<GameObject*> goList;
+        player->GetGameObjectListWithEntryInGrid(goList, 0, OBJECTIVE_RANGE);
+        for (GameObject* go : goList)
+        {
+            if (!go)
+                continue;
+            GameObjectTemplate const* goInfo = go->GetGOInfo();
+            if (goInfo && goInfo->type == GAMEOBJECT_TYPE_FLAGSTAND)
+            {
+                go->Use(player);
+                TC_LOG_INFO("playerbots.bg", "WSG: {} captured flag!", player->GetName());
+                break;
+            }
+        }
+    }
+}
+
+void BattlegroundAI::ExecuteFlagPickupBehavior(::Player* player,
+    BattlegroundCoordinator* coordinator,
+    Coordination::Battleground::IBGScript* script)
+{
+    if (!player || !player->IsInWorld())
+        return;
+
+    uint32 teamId = player->GetBGTeam();
+
+    // Get enemy flag position from script
+    Position enemyFlagPos;
+    if (script)
+    {
+        auto objectives = script->GetObjectiveData();
+        for (const auto& obj : objectives)
+        {
+            if (obj.type == ObjectiveType::FLAG)
+            {
+                // Enemy flag: Alliance wants Horde flag (usually id 2), Horde wants Alliance flag (id 1)
+                bool isEnemyFlag = (teamId == ALLIANCE && obj.name.find("Horde") != std::string::npos) ||
+                                   (teamId == HORDE && obj.name.find("Alliance") != std::string::npos);
+                if (isEnemyFlag)
+                {
+                    enemyFlagPos.Relocate(obj.x, obj.y, obj.z);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Fallback to hardcoded
+    if (enemyFlagPos.GetPositionX() == 0.0f)
+    {
+        BGType bgType = GetBattlegroundType(player);
+        if (_flagStrategies.count(bgType))
+        {
+            // Alliance goes to Horde base (enemy spawn), Horde goes to Alliance base
+            enemyFlagPos = (teamId == ALLIANCE)
+                ? _flagStrategies[bgType].enemyFlagSpawn
+                : _flagStrategies[bgType].friendlyFlagSpawn;
+        }
+    }
+
+    float distance = player->GetExactDist(&enemyFlagPos);
+
+    TC_LOG_DEBUG("playerbots.bg", "WSG: {} going to pick up enemy flag (dist: {:.1f})",
+        player->GetName(), distance);
+
+    if (distance > OBJECTIVE_RANGE)
+    {
+        BotMovementUtil::MoveToPosition(player, enemyFlagPos);
+    }
+    else
+    {
+        // Try to interact with flag
+        std::list<GameObject*> goList;
+        player->GetGameObjectListWithEntryInGrid(goList, 0, OBJECTIVE_RANGE);
+        for (GameObject* go : goList)
+        {
+            if (!go)
+                continue;
+            GameObjectTemplate const* goInfo = go->GetGOInfo();
+            if (goInfo && (goInfo->type == GAMEOBJECT_TYPE_FLAGSTAND ||
+                           goInfo->type == GAMEOBJECT_TYPE_GOOBER))
+            {
+                go->Use(player);
+                TC_LOG_INFO("playerbots.bg", "WSG: {} picked up flag!", player->GetName());
+                break;
+            }
+        }
+    }
+}
+
+void BattlegroundAI::ExecuteFlagHunterBehavior(::Player* player, ::Player* enemyFC)
+{
+    if (!player || !player->IsInWorld() || !enemyFC || !enemyFC->IsInWorld())
+        return;
+
+    float distance = player->GetExactDist(enemyFC);
+
+    TC_LOG_DEBUG("playerbots.bg", "WSG: {} hunting enemy FC {} (dist: {:.1f})",
+        player->GetName(), enemyFC->GetName(), distance);
+
+    // Chase and attack the enemy FC
+    if (distance > 30.0f)
+    {
+        // Too far - move closer
+        BotMovementUtil::MoveToPosition(player, enemyFC->GetPosition());
+    }
+    else
+    {
+        // In range - target them for combat
+        player->SetSelection(enemyFC->GetGUID());
+
+        // If close enough, start chase
+        if (distance > 5.0f)
+        {
+            BotMovementUtil::ChaseTarget(player, enemyFC, 5.0f);
+        }
+    }
+}
+
+void BattlegroundAI::ExecuteEscortBehavior(::Player* player, ::Player* friendlyFC,
+    BattlegroundCoordinator* coordinator,
+    Coordination::Battleground::IBGScript* script)
+{
+    if (!player || !player->IsInWorld() || !friendlyFC || !friendlyFC->IsInWorld())
+        return;
+
+    float distance = player->GetExactDist(friendlyFC);
+    constexpr float ESCORT_DISTANCE = 8.0f;
+    constexpr float MAX_ESCORT_DISTANCE = 40.0f;
+
+    TC_LOG_DEBUG("playerbots.bg", "WSG: {} escorting FC {} (dist: {:.1f})",
+        player->GetName(), friendlyFC->GetName(), distance);
+
+    Position escortPos;
+
+    // Try to get formation position from script
+    if (script && distance < MAX_ESCORT_DISTANCE)
+    {
+        auto formation = script->GetEscortFormation(friendlyFC->GetPosition(), 4);
+        if (!formation.empty())
+        {
+            // Pick a position based on our guid (simple distribution)
+            uint32 idx = player->GetGUID().GetCounter() % formation.size();
+            escortPos = formation[idx];
+            BotMovementUtil::CorrectPositionToGround(player, escortPos);
+        }
+    }
+
+    // Fallback to simple following
+    if (escortPos.GetPositionX() == 0.0f || distance > MAX_ESCORT_DISTANCE)
+    {
+        escortPos = friendlyFC->GetPosition();
+        // Offset slightly behind FC
+        float angle = friendlyFC->GetOrientation() + M_PI;
+        escortPos.Relocate(
+            friendlyFC->GetPositionX() + ESCORT_DISTANCE * 0.7f * cos(angle),
+            friendlyFC->GetPositionY() + ESCORT_DISTANCE * 0.7f * sin(angle),
+            friendlyFC->GetPositionZ()
+        );
+        BotMovementUtil::CorrectPositionToGround(player, escortPos);
+    }
+
+    // Move to escort position
+    if (distance > ESCORT_DISTANCE * 1.5f || !BotMovementUtil::IsMoving(player))
+    {
+        BotMovementUtil::MoveToPosition(player, escortPos);
+    }
+
+    // Help kill anyone attacking the FC
+    if (friendlyFC->IsInCombat())
+    {
+        // Find enemies near FC
+        std::list<Player*> nearbyPlayers;
+        friendlyFC->GetPlayerListInGrid(nearbyPlayers, 20.0f);
+        for (::Player* nearby : nearbyPlayers)
+        {
+            if (nearby && nearby->IsAlive() && nearby->IsHostileTo(player))
+            {
+                player->SetSelection(nearby->GetGUID());
+                TC_LOG_DEBUG("playerbots.bg", "WSG: {} targeting {} attacking FC",
+                    player->GetName(), nearby->GetName());
+                break;
+            }
+        }
+    }
+}
+
+void BattlegroundAI::ExecuteDefenderBehavior(::Player* player,
+    BattlegroundCoordinator* coordinator,
+    Coordination::Battleground::IBGScript* script)
+{
+    if (!player || !player->IsInWorld())
+        return;
+
+    uint32 teamId = player->GetBGTeam();
+
+    // Get our flag room position from script
+    Position flagRoomPos;
+    if (script)
+    {
+        auto positions = script->GetFlagRoomPositions(teamId);
+        if (!positions.empty())
+        {
+            // Pick a defensive position
+            uint32 idx = player->GetGUID().GetCounter() % positions.size();
+            flagRoomPos.Relocate(
+                positions[idx].GetPositionX(),
+                positions[idx].GetPositionY(),
+                positions[idx].GetPositionZ()
+            );
+        }
+    }
+
+    // Fallback
+    if (flagRoomPos.GetPositionX() == 0.0f)
+    {
+        BGType bgType = GetBattlegroundType(player);
+        if (_flagStrategies.count(bgType))
+        {
+            flagRoomPos = (teamId == ALLIANCE)
+                ? _flagStrategies[bgType].friendlyFlagSpawn
+                : _flagStrategies[bgType].enemyFlagSpawn;
+        }
+    }
+
+    float distance = player->GetExactDist(&flagRoomPos);
+    constexpr float DEFENSE_RADIUS = 25.0f;
+
+    TC_LOG_DEBUG("playerbots.bg", "WSG: {} defending flag room (dist: {:.1f})",
+        player->GetName(), distance);
+
+    // Move to flag room if too far
+    if (distance > DEFENSE_RADIUS)
+    {
+        BotMovementUtil::MoveToPosition(player, flagRoomPos);
+        return;
+    }
+
+    // Look for enemies in flag room
+    std::list<Player*> nearbyPlayers;
+    player->GetPlayerListInGrid(nearbyPlayers, DEFENSE_RADIUS);
+
+    ::Player* closestEnemy = nullptr;
+    float closestDist = DEFENSE_RADIUS + 1.0f;
+
+    for (::Player* nearby : nearbyPlayers)
+    {
+        if (!nearby || !nearby->IsAlive() || !nearby->IsHostileTo(player))
+            continue;
+
+        float dist = player->GetExactDist(nearby);
+        if (dist < closestDist)
+        {
+            closestDist = dist;
+            closestEnemy = nearby;
+        }
+    }
+
+    if (closestEnemy)
+    {
+        player->SetSelection(closestEnemy->GetGUID());
+        TC_LOG_DEBUG("playerbots.bg", "WSG: {} targeting enemy {} in flag room",
+            player->GetName(), closestEnemy->GetName());
+
+        // Chase if too far
+        if (closestDist > 5.0f)
+        {
+            BotMovementUtil::ChaseTarget(player, closestEnemy, 5.0f);
+        }
+    }
+    else if (!BotMovementUtil::IsMoving(player))
+    {
+        // No enemies - patrol around flag room
+        Position patrolPos;
+        float angle = frand(0, 2 * M_PI);
+        float dist = frand(5.0f, 12.0f);
+        patrolPos.Relocate(
+            flagRoomPos.GetPositionX() + dist * cos(angle),
+            flagRoomPos.GetPositionY() + dist * sin(angle),
+            flagRoomPos.GetPositionZ()
+        );
+        BotMovementUtil::CorrectPositionToGround(player, patrolPos);
+        BotMovementUtil::MoveToPosition(player, patrolPos);
+    }
+
+    // Also try to return dropped flags
+    ReturnFlag(player);
 }
 
 } // namespace Playerbot

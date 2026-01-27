@@ -79,10 +79,10 @@ public:
         uint32 totalObjectives, uint32 timeRemaining) const override;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const override;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
         uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;

@@ -15,6 +15,7 @@
 #include "ObjectGuid.h"
 #include "Position.h"
 #include "Battleground.h"
+#include "../AI/Coordination/Battleground/BGState.h"
 #include "Core/DI/Interfaces/IBattlegroundAI.h"
 #include <unordered_map>
 #include <unordered_set>
@@ -26,85 +27,14 @@
 namespace Playerbot
 {
 
-/**
- * @brief Battleground types
- */
-enum class BGType : uint8
-{
-    WARSONG_GULCH = 0,
-    ARATHI_BASIN = 1,
-    ALTERAC_VALLEY = 2,
-    EYE_OF_THE_STORM = 3,
-    STRAND_OF_THE_ANCIENTS = 4,
-    ISLE_OF_CONQUEST = 5,
-    TWIN_PEAKS = 6,
-    BATTLE_FOR_GILNEAS = 7,
-    TEMPLE_OF_KOTMOGU = 8,
-    SILVERSHARD_MINES = 9,
-    DEEPWIND_GORGE = 10
-};
+// Forward declarations
+class BattlegroundCoordinator;
 
-/**
- * @brief Battleground role assignment
- */
-enum class BGRole : uint8
-{
-    FLAG_CARRIER = 0,      // WSG/TP - Carry flag
-    FLAG_DEFENDER = 1,     // WSG/TP - Defend flag room
-    ATTACKER = 2,          // Generic offensive role
-    DEFENDER = 3,          // Generic defensive role
-    BASE_CAPTURER = 4,     // AB/EOTS - Capture bases
-    BASE_DEFENDER = 5,     // AB/EOTS - Defend bases
-    SIEGE_OPERATOR = 6,    // AV/IoC/SotA - Operate siege weapons
-    HEALER_SUPPORT = 7,    // Support role for healers
-    SCOUT = 8              // Scouting and intelligence
-};
+namespace Coordination::Battleground {
+    class IBGScript;
+}
 
-/**
- * @brief Battleground objective priority (renamed to avoid conflict with quest ObjectivePriority)
- */
-enum class BGObjectivePriority : uint8
-{
-    CRITICAL = 0,          // Must complete immediately
-    HIGH = 1,              // Important but not urgent
-    MEDIUM = 2,            // Standard priority
-    LOW = 3,               // Optional objective
-    NONE = 4               // No priority
-};
-
-/**
- * @brief BG objective types
- */
-enum class BGObjectiveType : uint8
-{
-    CAPTURE_FLAG = 0,
-    DEFEND_FLAG = 1,
-    CAPTURE_BASE = 2,
-    DEFEND_BASE = 3,
-    KILL_BOSS = 4,
-    ESCORT_NPC = 5,
-    OPERATE_SIEGE = 6,
-    COLLECT_ORB = 7,
-    CAPTURE_CART = 8
-};
-
-/**
- * @brief Battleground objective
- */
-struct BGObjective
-{
-    BGObjectiveType type;
-    Position location;
-    ObjectGuid objectGuid;  // Flag, base, NPC, etc.
-    BGObjectivePriority priority;
-    uint32 playersRequired;
-    uint32 playersAssigned;
-    bool isCompleted;
-    uint32 timeRemaining;   // Seconds until objective expires
-
-    BGObjective() : type(BGObjectiveType::CAPTURE_FLAG), priority(BGObjectivePriority::NONE),
-        playersRequired(1), playersAssigned(0), isCompleted(false), timeRemaining(0) {}
-};
+// All BG types (BGType, BGRole, BGObjective, etc.) are defined in BGState.h
 
 /**
  * @brief BG strategy profile
@@ -324,6 +254,21 @@ public:
     ::Player* FindEnemyFlagCarrier(::Player* player) const;
     bool EscortFlagCarrier(::Player* player, ::Player* fc);
     bool DefendFlagRoom(::Player* player);
+
+    // CTF Behavior Execution (script-integrated)
+    void ExecuteFlagCarrierBehavior(::Player* player,
+        BattlegroundCoordinator* coordinator,
+        Coordination::Battleground::IBGScript* script);
+    void ExecuteFlagPickupBehavior(::Player* player,
+        BattlegroundCoordinator* coordinator,
+        Coordination::Battleground::IBGScript* script);
+    void ExecuteFlagHunterBehavior(::Player* player, ::Player* enemyFC);
+    void ExecuteEscortBehavior(::Player* player, ::Player* friendlyFC,
+        BattlegroundCoordinator* coordinator,
+        Coordination::Battleground::IBGScript* script);
+    void ExecuteDefenderBehavior(::Player* player,
+        BattlegroundCoordinator* coordinator,
+        Coordination::Battleground::IBGScript* script);
 
     // Arathi Basin / Battle for Gilneas
     void ExecuteABStrategy(::Player* player) override;

@@ -48,7 +48,7 @@ void BGRoleManager::Reset()
 
 void BGRoleManager::AssignRole(ObjectGuid player, BGRole role)
 {
-    RoleAssignment assignment;
+    BGRoleAssignment assignment;
     assignment.player = player;
     assignment.role = role;
     assignment.assignTime = GameTime::GetGameTimeMS();

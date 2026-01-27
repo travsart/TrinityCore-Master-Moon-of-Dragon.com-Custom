@@ -29,11 +29,11 @@ void AshranScript::OnLoad(BattlegroundCoordinator* coordinator)
     for (uint32 i = 0; i < Ashran::ControlPoints::CONTROL_POINT_COUNT; ++i)
     {
         if (i == Ashran::ControlPoints::STORMSHIELD_STRONGHOLD)
-            m_controlStates[i] = ObjectiveState::ALLIANCE_CONTROLLED;
+            m_controlStates[i] = BGObjectiveState::ALLIANCE_CONTROLLED;
         else if (i == Ashran::ControlPoints::WARSPEAR_STRONGHOLD)
-            m_controlStates[i] = ObjectiveState::HORDE_CONTROLLED;
+            m_controlStates[i] = BGObjectiveState::HORDE_CONTROLLED;
         else
-            m_controlStates[i] = ObjectiveState::CONTESTED;
+            m_controlStates[i] = BGObjectiveState::CONTESTED;
     }
 
     TC_LOG_DEBUG("playerbots.bg.script",
@@ -179,7 +179,7 @@ std::vector<BGWorldState> AshranScript::GetInitialWorldStates() const
     };
 }
 
-bool AshranScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, ObjectiveState& outState) const
+bool AshranScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     if (stateId == Ashran::WorldStates::ACTIVE_EVENT)
     {
@@ -336,8 +336,8 @@ bool AshranScript::IsEnemyBaseVulnerable(uint32 attackingFaction) const
         return false;
 
     bool controlCrossroads =
-        (attackingFaction == ALLIANCE && crossroadsState->second == ObjectiveState::ALLIANCE_CONTROLLED) ||
-        (attackingFaction == HORDE && crossroadsState->second == ObjectiveState::HORDE_CONTROLLED);
+        (attackingFaction == ALLIANCE && crossroadsState->second == BGObjectiveState::ALLIANCE_CONTROLLED) ||
+        (attackingFaction == HORDE && crossroadsState->second == BGObjectiveState::HORDE_CONTROLLED);
 
     float progress = GetRoadProgress(attackingFaction);
 

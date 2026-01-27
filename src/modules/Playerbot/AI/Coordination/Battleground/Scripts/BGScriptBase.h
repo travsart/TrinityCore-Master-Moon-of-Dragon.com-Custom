@@ -52,10 +52,10 @@ public:
         uint32 totalObjectives, uint32 timeRemaining) const override;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const override;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
         uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
@@ -163,7 +163,7 @@ protected:
      * @brief Cache a world state mapping
      */
     void RegisterWorldStateMapping(int32 stateId, uint32 objectiveId,
-                                   ObjectiveState targetState);
+                                   BGObjectiveState targetState);
 
     /**
      * @brief Cache a score world state
@@ -174,7 +174,7 @@ protected:
      * @brief Try to interpret a state from cached mappings
      */
     bool TryInterpretFromCache(int32 stateId, int32 value,
-                               uint32& outObjectiveId, ObjectiveState& outState) const;
+                               uint32& outObjectiveId, BGObjectiveState& outState) const;
 
     // ========================================================================
     // PROTECTED STATE
@@ -201,7 +201,7 @@ private:
     struct WorldStateMapping
     {
         uint32 objectiveId;
-        ObjectiveState state;
+        BGObjectiveState state;
     };
 
     std::unordered_map<int32, WorldStateMapping> m_worldStateMappings;

@@ -258,18 +258,18 @@ void CTFScriptBase::AdjustStrategy(StrategicDecision& decision,
 }
 
 uint8 CTFScriptBase::GetObjectiveAttackPriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     // In CTF, "objectives" are the flags
     // High priority on enemy flag when not taken
-    if (state == ObjectiveState::NEUTRAL)
+    if (state == BGObjectiveState::NEUTRAL)
     {
         // Our flag room - priority depends on if we need to return
         return 5;
     }
 
-    if ((faction == ALLIANCE && state == ObjectiveState::HORDE_CONTROLLED) ||
-        (faction == HORDE && state == ObjectiveState::ALLIANCE_CONTROLLED))
+    if ((faction == ALLIANCE && state == BGObjectiveState::HORDE_CONTROLLED) ||
+        (faction == HORDE && state == BGObjectiveState::ALLIANCE_CONTROLLED))
     {
         // Enemy controls their flag = it's at their base = go get it
         return 10;
@@ -279,11 +279,11 @@ uint8 CTFScriptBase::GetObjectiveAttackPriority(uint32 objectiveId,
 }
 
 uint8 CTFScriptBase::GetObjectiveDefensePriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     // Defend our flag room
-    if ((faction == ALLIANCE && state == ObjectiveState::ALLIANCE_CONTROLLED) ||
-        (faction == HORDE && state == ObjectiveState::HORDE_CONTROLLED))
+    if ((faction == ALLIANCE && state == BGObjectiveState::ALLIANCE_CONTROLLED) ||
+        (faction == HORDE && state == BGObjectiveState::HORDE_CONTROLLED))
     {
         // Our flag at base - need defense
         bool theyHaveFlag = !m_hordeFC.IsEmpty() && faction == ALLIANCE ||

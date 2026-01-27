@@ -12,6 +12,7 @@
 #include "../Core/PlayerBotHelpers.h"
 #include "../Core/Diagnostics/BotOperationTracker.h"
 #include "../Session/BotWorldSessionMgr.h"
+#include "../AI/Coordination/Battleground/BattlegroundCoordinatorManager.h"
 #include "Player.h"
 #include "Group.h"
 #include "GroupMgr.h"
@@ -269,12 +270,114 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
     std::lock_guard lock(_mutex);
 
     uint32 bgInstanceGuid = bg->GetInstanceID();
+    BattlegroundTypeId bgTypeId = bg->GetTypeID();
 
-    TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::OnBattlegroundStart - BG instance {} started",
-                 bgInstanceGuid);
+    TC_LOG_INFO("module.playerbot.bg", "BGBotManager::OnBattlegroundStart - BG instance {} ({}) started",
+                 bgInstanceGuid, bg->GetName());
 
-    // All bots in this BG should already be added via OnInvitationReceived
-    // The BG system handles teleportation
+    // =========================================================================
+    // 1. Initialize the BattlegroundCoordinator for this BG
+    // =========================================================================
+    sBGCoordinatorMgr->OnBattlegroundStart(bg);
+
+    // =========================================================================
+    // 2. Check team population and fill empty slots
+    // =========================================================================
+    uint32 targetTeamSize = GetBGTeamSize(bgTypeId);
+
+    // Count players per team
+    uint32 allianceCount = 0;
+    uint32 hordeCount = 0;
+
+    for (auto const& itr : bg->GetPlayers())
+    {
+        if (Player* player = ObjectAccessor::FindPlayer(itr.first))
+        {
+            if (player->GetBGTeam() == ALLIANCE)
+                ++allianceCount;
+            else
+                ++hordeCount;
+        }
+    }
+
+    TC_LOG_INFO("module.playerbot.bg",
+        "BGBotManager::OnBattlegroundStart - Current population: Alliance {}/{}, Horde {}/{}",
+        allianceCount, targetTeamSize, hordeCount, targetTeamSize);
+
+    // Calculate missing slots
+    uint32 allianceNeeded = (allianceCount < targetTeamSize) ? (targetTeamSize - allianceCount) : 0;
+    uint32 hordeNeeded = (hordeCount < targetTeamSize) ? (targetTeamSize - hordeCount) : 0;
+
+    if (allianceNeeded == 0 && hordeNeeded == 0)
+    {
+        TC_LOG_DEBUG("module.playerbot.bg",
+            "BGBotManager::OnBattlegroundStart - Teams are full, no bots needed");
+        return;
+    }
+
+    TC_LOG_INFO("module.playerbot.bg",
+        "BGBotManager::OnBattlegroundStart - Need to fill {} Alliance, {} Horde slots",
+        allianceNeeded, hordeNeeded);
+
+    // Get level range for this BG
+    BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);
+    uint8 minLevel = 10, maxLevel = 80;
+
+    if (bgTemplate && !bgTemplate->MapIDs.empty())
+    {
+        // Use the BG's actual level range
+        PVPDifficultyEntry const* bracketEntry = DB2Manager::GetBattlegroundBracketByLevel(
+            bgTemplate->MapIDs.front(), 80); // Use max level to get the bracket
+        if (bracketEntry)
+        {
+            minLevel = bracketEntry->MinLevel;
+            maxLevel = bracketEntry->MaxLevel;
+        }
+    }
+
+    uint32 botsAdded = 0;
+
+    // Queue additional Alliance bots
+    if (allianceNeeded > 0)
+    {
+        std::vector<Player*> allianceBots = FindAvailableBots(ALLIANCE, minLevel, maxLevel, allianceNeeded);
+        for (Player* bot : allianceBots)
+        {
+            if (AddBotDirectlyToBG(bot, bg, ALLIANCE))
+            {
+                ++botsAdded;
+                TC_LOG_DEBUG("module.playerbot.bg",
+                    "BGBotManager::OnBattlegroundStart - Added Alliance bot {} to BG",
+                    bot->GetName());
+            }
+        }
+    }
+
+    // Queue additional Horde bots
+    if (hordeNeeded > 0)
+    {
+        std::vector<Player*> hordeBots = FindAvailableBots(HORDE, minLevel, maxLevel, hordeNeeded);
+        for (Player* bot : hordeBots)
+        {
+            if (AddBotDirectlyToBG(bot, bg, HORDE))
+            {
+                ++botsAdded;
+                TC_LOG_DEBUG("module.playerbot.bg",
+                    "BGBotManager::OnBattlegroundStart - Added Horde bot {} to BG",
+                    bot->GetName());
+            }
+        }
+    }
+
+    if (botsAdded > 0)
+    {
+        TC_LOG_INFO("module.playerbot.bg",
+            "BGBotManager::OnBattlegroundStart - Added {} bots to fill empty slots",
+            botsAdded);
+
+        // Notify coordinator that new bots were added
+        sBGCoordinatorMgr->OnBattlegroundStart(bg);
+    }
 }
 
 void BGBotManager::OnBattlegroundEnd(Battleground* bg, Team winnerTeam)
@@ -286,8 +389,11 @@ void BGBotManager::OnBattlegroundEnd(Battleground* bg, Team winnerTeam)
 
     uint32 bgInstanceGuid = bg->GetInstanceID();
 
-    TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::OnBattlegroundEnd - BG instance {} ended, winner: {}",
+    TC_LOG_INFO("module.playerbot.bg", "BGBotManager::OnBattlegroundEnd - BG instance {} ended, winner: {}",
                  bgInstanceGuid, winnerTeam == ALLIANCE ? "Alliance" : "Horde");
+
+    // Notify coordinator that BG is ending
+    sBGCoordinatorMgr->OnBattlegroundEnd(bg);
 
     // Cleanup bots from this BG instance
     auto itr = _bgInstanceBots.find(bgInstanceGuid);
@@ -1114,6 +1220,79 @@ void BGBotManager::ProcessPendingInvitations()
             break;  // Only process one queue slot per bot per update
         }
     }
+}
+
+bool BGBotManager::AddBotDirectlyToBG(Player* bot, Battleground* bg, Team team)
+{
+    if (!bot || !bg || !bot->IsInWorld())
+        return false;
+
+    // Check if bot is already in a BG
+    if (bot->InBattleground())
+        return false;
+
+    // Check for deserter
+    if (bot->HasAura(26013))
+        return false;
+
+    TC_LOG_DEBUG("module.playerbot.bg",
+        "BGBotManager::AddBotDirectlyToBG - Adding bot {} to BG {} as {}",
+        bot->GetName(), bg->GetName(),
+        team == ALLIANCE ? "Alliance" : "Horde");
+
+    // Set battleground entry point (for return after BG ends)
+    bot->SetBattlegroundEntryPoint();
+
+    // Resurrect if dead
+    if (!bot->IsAlive())
+    {
+        bot->ResurrectPlayer(1.0f);
+        bot->SpawnCorpseBones();
+    }
+
+    // Stop taxi flight
+    bot->FinishTaxiFlight();
+
+    // Remove from any existing BG queues
+    for (int8 i = PLAYER_MAX_BATTLEGROUND_QUEUES - 1; i >= 0; --i)
+    {
+        BattlegroundQueueTypeId bgQueueTypeId = bot->GetBattlegroundQueueTypeId(i);
+        if (bgQueueTypeId != BATTLEGROUND_QUEUE_NONE)
+        {
+            sBattlegroundMgr->GetBattlegroundQueue(bgQueueTypeId).RemovePlayer(bot->GetGUID(), false);
+            bot->RemoveBattlegroundQueueId(bgQueueTypeId);
+        }
+    }
+
+    // Create queue type for this BG
+    BattlegroundQueueTypeId queueTypeId = BattlegroundMgr::BGQueueTypeId(
+        static_cast<uint16>(bg->GetTypeID()),
+        BattlegroundQueueIdType::Battleground,
+        false,  // Not rated
+        0       // TeamSize
+    );
+
+    // Set destination BG data (required for teleport and AddPlayer)
+    // Note: SetBattlegroundId() sets m_bgData.bgInstanceID, bgTypeID, AND queueId
+    bot->SetBattlegroundId(bg->GetInstanceID(), bg->GetTypeID(), queueTypeId);
+    bot->SetBGTeam(team);
+
+    // Track the bot
+    _bgInstanceBots[bg->GetInstanceID()].insert(bot->GetGUID());
+
+    // Teleport bot to the battleground
+    // IMPORTANT: Do NOT call bg->AddPlayer() here! It will be called automatically
+    // in HandleMoveWorldPortAck when the teleport completes. Calling it before
+    // teleport causes a crash in Map::SendObjectUpdates because the player is
+    // removed from the current map while still in the update queue.
+    BattlegroundMgr::SendToBattleground(bot, bg);
+
+    TC_LOG_INFO("module.playerbot.bg",
+        "BGBotManager::AddBotDirectlyToBG - Bot {} teleporting to BG {} (Team: {})",
+        bot->GetName(), bg->GetName(),
+        team == ALLIANCE ? "Alliance" : "Horde");
+
+    return true;
 }
 
 } // namespace Playerbot

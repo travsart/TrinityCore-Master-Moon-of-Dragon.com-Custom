@@ -36,7 +36,7 @@ void DominationScriptBase::OnLoad(BattlegroundCoordinator* coordinator)
     for (uint32 i = 0; i < nodeCount; ++i)
     {
         BGObjectiveData nodeData = GetNodeData(i);
-        m_nodeStates[nodeData.id] = ObjectiveState::NEUTRAL;
+        m_nodeStates[nodeData.id] = BGObjectiveState::NEUTRAL;
         m_nodeCaptureProgress[nodeData.id] = 0.0f;
         m_nodeLastContestTime[nodeData.id] = 0;
     }
@@ -239,7 +239,7 @@ void DominationScriptBase::AdjustStrategy(StrategicDecision& decision,
 }
 
 uint8 DominationScriptBase::GetObjectiveAttackPriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     // Base priority calculation
     uint8 basePriority = BGScriptBase::GetObjectiveAttackPriority(objectiveId, state, faction);
@@ -248,37 +248,37 @@ uint8 DominationScriptBase::GetObjectiveAttackPriority(uint32 objectiveId,
     uint8 strategicValue = CalculateNodeStrategicValue(objectiveId);
 
     // Neutral nodes are high priority
-    if (state == ObjectiveState::NEUTRAL)
+    if (state == BGObjectiveState::NEUTRAL)
         return std::min(static_cast<uint8>(10), static_cast<uint8>(basePriority + strategicValue / 2));
 
     // Contested enemy nodes are very high priority (finish the capture)
-    if ((faction == ALLIANCE && state == ObjectiveState::ALLIANCE_CONTESTED) ||
-        (faction == HORDE && state == ObjectiveState::HORDE_CONTESTED))
+    if ((faction == ALLIANCE && state == BGObjectiveState::ALLIANCE_CONTESTED) ||
+        (faction == HORDE && state == BGObjectiveState::HORDE_CONTESTED))
         return DominationConstants::CRITICAL_PRIORITY;
 
     // Enemy controlled with high strategic value
-    if (state == ObjectiveState::ALLIANCE_CONTROLLED && faction == HORDE)
+    if (state == BGObjectiveState::ALLIANCE_CONTROLLED && faction == HORDE)
         return std::min(static_cast<uint8>(8), static_cast<uint8>(basePriority + strategicValue / 3));
-    if (state == ObjectiveState::HORDE_CONTROLLED && faction == ALLIANCE)
+    if (state == BGObjectiveState::HORDE_CONTROLLED && faction == ALLIANCE)
         return std::min(static_cast<uint8>(8), static_cast<uint8>(basePriority + strategicValue / 3));
 
     return basePriority;
 }
 
 uint8 DominationScriptBase::GetObjectiveDefensePriority(uint32 objectiveId,
-    ObjectiveState state, uint32 faction) const
+    BGObjectiveState state, uint32 faction) const
 {
     uint8 basePriority = BGScriptBase::GetObjectiveDefensePriority(objectiveId, state, faction);
     uint8 strategicValue = CalculateNodeStrategicValue(objectiveId);
 
     // Our contested nodes are critical
-    if ((faction == ALLIANCE && state == ObjectiveState::ALLIANCE_CONTESTED) ||
-        (faction == HORDE && state == ObjectiveState::HORDE_CONTESTED))
+    if ((faction == ALLIANCE && state == BGObjectiveState::ALLIANCE_CONTESTED) ||
+        (faction == HORDE && state == BGObjectiveState::HORDE_CONTESTED))
         return DominationConstants::CRITICAL_PRIORITY;
 
     // Our controlled high-value nodes
-    if ((faction == ALLIANCE && state == ObjectiveState::ALLIANCE_CONTROLLED) ||
-        (faction == HORDE && state == ObjectiveState::HORDE_CONTROLLED))
+    if ((faction == ALLIANCE && state == BGObjectiveState::ALLIANCE_CONTROLLED) ||
+        (faction == HORDE && state == BGObjectiveState::HORDE_CONTROLLED))
     {
         return std::min(static_cast<uint8>(8), static_cast<uint8>(basePriority + strategicValue / 3));
     }
@@ -361,8 +361,8 @@ void DominationScriptBase::OnEvent(const BGScriptEventData& event)
             {
                 m_nodeStates[event.objectiveId] = event.newState;
                 m_nodeCaptureProgress[event.objectiveId] =
-                    (event.newState == ObjectiveState::ALLIANCE_CONTROLLED ||
-                     event.newState == ObjectiveState::HORDE_CONTROLLED) ? 1.0f : 0.0f;
+                    (event.newState == BGObjectiveState::ALLIANCE_CONTROLLED ||
+                     event.newState == BGObjectiveState::HORDE_CONTROLLED) ? 1.0f : 0.0f;
                 UpdateNodeCounts();
 
                 TC_LOG_DEBUG("playerbots.bg.script",
@@ -409,7 +409,7 @@ void DominationScriptBase::OnMatchStart()
     // Reset all nodes to neutral
     for (auto& [nodeId, state] : m_nodeStates)
     {
-        state = ObjectiveState::NEUTRAL;
+        state = BGObjectiveState::NEUTRAL;
         m_nodeCaptureProgress[nodeId] = 0.0f;
         m_nodeLastContestTime[nodeId] = 0;
     }
@@ -512,8 +512,8 @@ uint32 DominationScriptBase::FindWeakestEnemyNode() const
 
     for (const auto& [nodeId, state] : m_nodeStates)
     {
-        if ((faction == ALLIANCE && state == ObjectiveState::HORDE_CONTROLLED) ||
-            (faction == HORDE && state == ObjectiveState::ALLIANCE_CONTROLLED))
+        if ((faction == ALLIANCE && state == BGObjectiveState::HORDE_CONTROLLED) ||
+            (faction == HORDE && state == BGObjectiveState::ALLIANCE_CONTROLLED))
         {
             uint8 priority = GetObjectiveDefensePriority(nodeId, state, faction);
             if (priority < lowestPriority)
@@ -537,10 +537,10 @@ uint32 DominationScriptBase::FindMostThreatenedFriendlyNode() const
     for (const auto& [nodeId, state] : m_nodeStates)
     {
         bool isFriendly =
-            (faction == ALLIANCE && (state == ObjectiveState::ALLIANCE_CONTROLLED ||
-                                     state == ObjectiveState::ALLIANCE_CONTESTED)) ||
-            (faction == HORDE && (state == ObjectiveState::HORDE_CONTROLLED ||
-                                  state == ObjectiveState::HORDE_CONTESTED));
+            (faction == ALLIANCE && (state == BGObjectiveState::ALLIANCE_CONTROLLED ||
+                                     state == BGObjectiveState::ALLIANCE_CONTESTED)) ||
+            (faction == HORDE && (state == BGObjectiveState::HORDE_CONTROLLED ||
+                                  state == BGObjectiveState::HORDE_CONTESTED));
 
         if (isFriendly)
         {
@@ -626,17 +626,17 @@ void DominationScriptBase::UpdateNodeCounts()
     {
         switch (state)
         {
-            case ObjectiveState::ALLIANCE_CONTROLLED:
+            case BGObjectiveState::ALLIANCE_CONTROLLED:
                 ++m_allianceNodes;
                 break;
-            case ObjectiveState::HORDE_CONTROLLED:
+            case BGObjectiveState::HORDE_CONTROLLED:
                 ++m_hordeNodes;
                 break;
-            case ObjectiveState::ALLIANCE_CONTESTED:
-            case ObjectiveState::HORDE_CONTESTED:
+            case BGObjectiveState::ALLIANCE_CONTESTED:
+            case BGObjectiveState::HORDE_CONTESTED:
                 ++m_contestedNodes;
                 break;
-            case ObjectiveState::NEUTRAL:
+            case BGObjectiveState::NEUTRAL:
             default:
                 ++m_neutralNodes;
                 break;

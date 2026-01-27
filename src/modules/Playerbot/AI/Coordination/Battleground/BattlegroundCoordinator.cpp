@@ -59,6 +59,9 @@ void BattlegroundCoordinator::Initialize()
 {
     Reset();
 
+    // Transition to active state - coordinator is created when BG starts
+    TransitionTo(BGState::ACTIVE);
+
     // Create sub-managers
     _objectiveManager = ::std::make_unique<ObjectiveManager>(this);
     _roleManager = ::std::make_unique<BGRoleManager>(this);
@@ -93,9 +96,9 @@ void BattlegroundCoordinator::Initialize()
                 obj.x = objData.x;
                 obj.y = objData.y;
                 obj.z = objData.z;
-                obj.state = ObjectiveState::NEUTRAL;
+                obj.state = BGObjectiveState::NEUTRAL;
                 obj.controllingFaction = 0;
-                obj.priority = objData.strategicValue;
+                obj.currentPriority = static_cast<BGPriority>(std::min(objData.strategicValue, static_cast<uint8>(4)));
                 _objectives.push_back(obj);
             }
 
@@ -161,10 +164,7 @@ void BattlegroundCoordinator::Initialize()
     }
 
     // Subscribe to combat events
-    if (CombatEventRouter* router = CombatEventRouter::Instance())
-    {
-        router->Subscribe(this);
-    }
+    CombatEventRouter::Instance().Subscribe(this);
 
     TC_LOG_DEBUG("playerbot", "BattlegroundCoordinator::Initialize - Initialized for %s with %zu bots",
                  BGTypeToString(_bgType), _bots.size());
@@ -173,10 +173,7 @@ void BattlegroundCoordinator::Initialize()
 void BattlegroundCoordinator::Shutdown()
 {
     // Unsubscribe from events
-    if (CombatEventRouter* router = CombatEventRouter::Instance())
-    {
-        router->Unsubscribe(this);
-    }
+    CombatEventRouter::Instance().Unsubscribe(this);
 
     // Unload script
     if (_activeScript)
@@ -322,10 +319,10 @@ const BGObjective* BattlegroundCoordinator::GetObjective(uint32 objectiveId) con
     return nullptr;
 }
 
-ObjectiveState BattlegroundCoordinator::GetObjectiveState(uint32 objectiveId) const
+BGObjectiveState BattlegroundCoordinator::GetObjectiveState(uint32 objectiveId) const
 {
     const BGObjective* obj = GetObjective(objectiveId);
-    return obj ? obj->state : ObjectiveState::NEUTRAL;
+    return obj ? obj->state : BGObjectiveState::NEUTRAL;
 }
 
 BGObjective* BattlegroundCoordinator::GetNearestObjective(ObjectGuid player, ObjectiveType type) const
@@ -588,6 +585,56 @@ BGPlayer* BattlegroundCoordinator::GetBotMutable(ObjectGuid guid)
             alive.push_back(bot);
     }
     return alive;
+}
+
+// ============================================================================
+// PLAYER ACCESS (for sub-managers)
+// ============================================================================
+
+Player* BattlegroundCoordinator::GetPlayer(ObjectGuid guid) const
+{
+    if (guid.IsEmpty())
+        return nullptr;
+
+    return ObjectAccessor::FindPlayer(guid);
+}
+
+::std::vector<ObjectGuid> BattlegroundCoordinator::GetFriendlyPlayers() const
+{
+    ::std::vector<ObjectGuid> friendlyPlayers;
+    friendlyPlayers.reserve(_bots.size());
+
+    for (const auto& bot : _bots)
+    {
+        friendlyPlayers.push_back(bot.guid);
+    }
+
+    return friendlyPlayers;
+}
+
+::std::vector<ObjectGuid> BattlegroundCoordinator::GetEnemyPlayers() const
+{
+    ::std::vector<ObjectGuid> enemyPlayers;
+
+    if (!_battleground)
+        return enemyPlayers;
+
+    // Get enemy team
+    Team enemyTeam = (_faction == ALLIANCE) ? HORDE : ALLIANCE;
+
+    // Query battleground for enemy players
+    for (auto const& itr : _battleground->GetPlayers())
+    {
+        if (Player* player = ObjectAccessor::FindPlayer(itr.first))
+        {
+            if (player->GetTeam() == enemyTeam)
+            {
+                enemyPlayers.push_back(player->GetGUID());
+            }
+        }
+    }
+
+    return enemyPlayers;
 }
 
 // ============================================================================
@@ -1049,18 +1096,18 @@ bool BattlegroundCoordinator::IsFriendlyObjective(const BGObjective& objective) 
 {
     if (_faction == ALLIANCE)
     {
-        return objective.state == ObjectiveState::ALLIANCE_CONTROLLED ||
-               objective.state == ObjectiveState::ALLIANCE_CONTESTED ||
-               objective.state == ObjectiveState::ALLIANCE_CAPTURING;
+        return objective.state == BGObjectiveState::ALLIANCE_CONTROLLED ||
+               objective.state == BGObjectiveState::ALLIANCE_CONTESTED ||
+               objective.state == BGObjectiveState::ALLIANCE_CAPTURING;
     }
-    return objective.state == ObjectiveState::HORDE_CONTROLLED ||
-           objective.state == ObjectiveState::HORDE_CONTESTED ||
-           objective.state == ObjectiveState::HORDE_CAPTURING;
+    return objective.state == BGObjectiveState::HORDE_CONTROLLED ||
+           objective.state == BGObjectiveState::HORDE_CONTESTED ||
+           objective.state == BGObjectiveState::HORDE_CAPTURING;
 }
 
 bool BattlegroundCoordinator::IsEnemyObjective(const BGObjective& objective) const
 {
-    return !IsFriendlyObjective(objective) && objective.state != ObjectiveState::NEUTRAL;
+    return !IsFriendlyObjective(objective) && objective.state != BGObjectiveState::NEUTRAL;
 }
 
 } // namespace Playerbot

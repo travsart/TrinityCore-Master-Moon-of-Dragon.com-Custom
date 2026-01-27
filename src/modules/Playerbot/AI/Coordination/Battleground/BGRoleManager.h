@@ -137,7 +137,7 @@ private:
     // ASSIGNMENTS
     // ========================================================================
 
-    ::std::map<ObjectGuid, RoleAssignment> _assignments;
+    ::std::map<ObjectGuid, BGRoleAssignment> _assignments;
 
     // ========================================================================
     // REQUIREMENTS
@@ -175,6 +175,15 @@ private:
     bool IsTank(ObjectGuid player) const;
     bool IsMeleeDPS(ObjectGuid player) const;
     bool IsRangedDPS(ObjectGuid player) const;
+
+    // ========================================================================
+    // FC SCORING HELPERS
+    // ========================================================================
+
+    float ScoreFCHealth(ObjectGuid player) const;
+    float ScoreFCClass(ObjectGuid player) const;
+    float ScoreFCMobility(ObjectGuid player) const;
+    float ScoreFCSurvivability(ObjectGuid player) const;
 
     // ========================================================================
     // UTILITY

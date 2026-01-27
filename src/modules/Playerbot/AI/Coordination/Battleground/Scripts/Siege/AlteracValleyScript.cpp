@@ -36,8 +36,8 @@ void AlteracValleyScript::OnLoad(BattlegroundCoordinator* coordinator)
     // Initialize tower states
     for (uint32 i = 0; i <= AlteracValley::Towers::WEST_FROSTWOLF; ++i)
     {
-        ObjectiveState state = AlteracValley::IsAllianceTower(i) ?
-            ObjectiveState::ALLIANCE_CONTROLLED : ObjectiveState::HORDE_CONTROLLED;
+        BGObjectiveState state = AlteracValley::IsAllianceTower(i) ?
+            BGObjectiveState::ALLIANCE_CONTROLLED : BGObjectiveState::HORDE_CONTROLLED;
         m_towerStates[i] = state;
     }
 
@@ -255,7 +255,7 @@ std::vector<BGWorldState> AlteracValleyScript::GetInitialWorldStates() const
 // ============================================================================
 
 bool AlteracValleyScript::InterpretWorldState(int32 stateId, int32 value,
-    uint32& outObjectiveId, ObjectiveState& outState) const
+    uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     // Reinforcement states
     if (stateId == AlteracValley::WorldStates::REINF_ALLY ||
@@ -268,7 +268,7 @@ bool AlteracValleyScript::InterpretWorldState(int32 stateId, int32 value,
     if (stateId == AlteracValley::WorldStates::DB_NORTH_ALLY && value)
     {
         outObjectiveId = AlteracValley::Towers::DUN_BALDAR_NORTH;
-        outState = ObjectiveState::ALLIANCE_CONTROLLED;
+        outState = BGObjectiveState::ALLIANCE_CONTROLLED;
         return true;
     }
 

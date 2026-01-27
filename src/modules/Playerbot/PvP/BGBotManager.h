@@ -178,6 +178,15 @@ private:
      */
     bool IsBotAvailable(Player* bot) const;
 
+    /**
+     * @brief Add a bot directly to an active battleground
+     * @param bot The bot to add
+     * @param bg The battleground instance
+     * @param team The team to join
+     * @return true if successfully added
+     */
+    bool AddBotDirectlyToBG(Player* bot, Battleground* bg, Team team);
+
     // ============================================================================
     // DATA STRUCTURES
     // ============================================================================

@@ -68,8 +68,8 @@ void SilvershardMinesScript::OnEvent(const BGScriptEventData& event)
             if (event.objectiveId < SilvershardMines::CART_COUNT)
             {
                 m_cartControllers[event.objectiveId] =
-                    (event.newState == ObjectiveState::ALLIANCE_CONTROLLED) ? ALLIANCE :
-                    (event.newState == ObjectiveState::HORDE_CONTROLLED) ? HORDE : 0;
+                    (event.newState == BGObjectiveState::ALLIANCE_CONTROLLED) ? ALLIANCE :
+                    (event.newState == BGObjectiveState::HORDE_CONTROLLED) ? HORDE : 0;
                 m_cartContested[event.objectiveId] = false;
             }
             break;
@@ -177,7 +177,7 @@ std::vector<BGWorldState> SilvershardMinesScript::GetInitialWorldStates() const
     };
 }
 
-bool SilvershardMinesScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, ObjectiveState& outState) const
+bool SilvershardMinesScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     // Cart states
     if (stateId == SilvershardMines::WorldStates::CART1_STATE ||
@@ -186,9 +186,9 @@ bool SilvershardMinesScript::InterpretWorldState(int32 stateId, int32 value, uin
     {
         outObjectiveId = stateId - SilvershardMines::WorldStates::CART1_STATE;
         // Value interpretation: 0 = neutral, 1 = alliance, 2 = horde
-        outState = (value == 1) ? ObjectiveState::ALLIANCE_CONTROLLED :
-                   (value == 2) ? ObjectiveState::HORDE_CONTROLLED :
-                   ObjectiveState::NEUTRAL;
+        outState = (value == 1) ? BGObjectiveState::ALLIANCE_CONTROLLED :
+                   (value == 2) ? BGObjectiveState::HORDE_CONTROLLED :
+                   BGObjectiveState::NEUTRAL;
         return true;
     }
 

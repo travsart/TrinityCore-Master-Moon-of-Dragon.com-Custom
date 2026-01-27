@@ -166,7 +166,7 @@ std::vector<BGWorldState> SeethingShoreScript::GetInitialWorldStates() const
     };
 }
 
-bool SeethingShoreScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, ObjectiveState& outState) const
+bool SeethingShoreScript::InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const
 {
     return TryInterpretFromCache(stateId, value, outObjectiveId, outState);
 }

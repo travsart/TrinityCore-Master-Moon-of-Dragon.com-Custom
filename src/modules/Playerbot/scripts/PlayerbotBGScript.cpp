@@ -25,6 +25,7 @@
 #include "../Session/BotWorldSessionMgr.h"
 #include "../Core/PlayerBotHooks.h"
 #include "../PvP/BGBotManager.h"
+#include "../AI/Coordination/Battleground/BattlegroundCoordinatorManager.h"
 #include "../Lifecycle/Instance/InstanceBotHooks.h"
 #include "../Lifecycle/Instance/QueueStatePoller.h"
 #include "Log.h"
@@ -57,8 +58,18 @@ public:
         if (!sBGBotManager || !sBGBotManager->IsEnabled())
             return;
 
-        // Update BGBotManager
+        // Update BGBotManager (handles bot queue management)
         sBGBotManager->Update(diff);
+
+        // Update BattlegroundCoordinatorManager (handles active BG coordination)
+        if (sBGCoordinatorMgr)
+        {
+            sBGCoordinatorMgr->Update(diff);
+        }
+
+        // CRITICAL: Monitor active BGs for status transitions
+        // This ensures bots are added when BG transitions to IN_PROGRESS
+        MonitorActiveBattlegrounds();
 
         // Poll for new queued players
         PollQueuedPlayers();
@@ -71,6 +82,7 @@ public:
     {
         TC_LOG_INFO("module.playerbot.bg", "PlayerbotBGScript: Initializing BG bot integration...");
 
+        // Initialize BGBotManager (handles queue population)
         if (sBGBotManager)
         {
             sBGBotManager->Initialize();
@@ -80,12 +92,30 @@ public:
         {
             TC_LOG_ERROR("module.playerbot.bg", "PlayerbotBGScript: BGBotManager not available!");
         }
+
+        // Initialize BattlegroundCoordinatorManager (handles strategic coordination)
+        if (sBGCoordinatorMgr)
+        {
+            sBGCoordinatorMgr->Initialize();
+            TC_LOG_INFO("module.playerbot.bg", "PlayerbotBGScript: BattlegroundCoordinatorManager initialized");
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.bg", "PlayerbotBGScript: BattlegroundCoordinatorManager not available!");
+        }
     }
 
     void OnShutdownInitiate(ShutdownExitCode /*code*/, ShutdownMask /*mask*/) override
     {
         TC_LOG_INFO("module.playerbot.bg", "PlayerbotBGScript: Shutting down BG bot integration...");
 
+        // Shutdown coordinator manager first
+        if (sBGCoordinatorMgr)
+        {
+            sBGCoordinatorMgr->Shutdown();
+        }
+
+        // Then shutdown bot manager
         if (sBGBotManager)
         {
             sBGBotManager->Shutdown();
@@ -285,6 +315,108 @@ private:
     }
 
     /**
+     * @brief Monitor active battlegrounds for status transitions
+     *
+     * This detects when a BG transitions to STATUS_IN_PROGRESS and triggers
+     * bot addition to prevent premature finish due to "not enough players"
+     */
+    void MonitorActiveBattlegrounds()
+    {
+        // Find active BGs through players who are in battlegrounds
+        SessionMap const& sessions = sWorld->GetAllSessions();
+        std::unordered_set<uint32> processedBGs;
+
+        for (auto const& pair : sessions)
+        {
+            WorldSession* session = pair.second;
+            if (!session)
+                continue;
+
+            Player* player = session->GetPlayer();
+            if (!player || !player->IsInWorld())
+                continue;
+
+            // Get player's BG if any
+            Battleground* bg = player->GetBattleground();
+            if (!bg)
+                continue;
+
+            uint32 instanceId = bg->GetInstanceID();
+
+            // Skip if already processed this tick
+            if (processedBGs.count(instanceId))
+                continue;
+            processedBGs.insert(instanceId);
+
+            BattlegroundStatus status = bg->GetStatus();
+            BattlegroundTypeId bgTypeId = bg->GetTypeID();
+
+            // Skip arenas
+            if (bg->isArena())
+                continue;
+
+            // Check for status change
+            auto lastIt = _bgStatusTracker.find(instanceId);
+            BattlegroundStatus lastStatus = (lastIt != _bgStatusTracker.end())
+                ? lastIt->second
+                : STATUS_NONE;
+
+            // Update tracking
+            _bgStatusTracker[instanceId] = status;
+
+            // Detect transition to IN_PROGRESS
+            if (status == STATUS_IN_PROGRESS && lastStatus != STATUS_IN_PROGRESS)
+            {
+                TC_LOG_INFO("module.playerbot.bg",
+                    "PlayerbotBGScript: Detected BG {} (instance {}) transition to IN_PROGRESS - triggering bot population",
+                    bg->GetName(), instanceId);
+
+                // Trigger bot addition to fill empty slots
+                sBGBotManager->OnBattlegroundStart(bg);
+            }
+
+            // Also handle WAIT_JOIN -> detecting when BG is ready for players
+            // This gives us an early opportunity to ensure bots are queued
+            if (status == STATUS_WAIT_JOIN && lastStatus == STATUS_NONE)
+            {
+                TC_LOG_DEBUG("module.playerbot.bg",
+                    "PlayerbotBGScript: Detected new BG {} (instance {}) in WAIT_JOIN status",
+                    bg->GetName(), instanceId);
+            }
+
+            // Cleanup finished BGs from tracker
+            if (status == STATUS_WAIT_LEAVE)
+            {
+                // BG is ending
+                _bgStatusTracker.erase(instanceId);
+            }
+        }
+
+        // Periodic cleanup of stale entries (every 5 minutes)
+        static uint32 lastBgCleanup = 0;
+        uint32 now = GameTime::GetGameTimeMS();
+        if (now - lastBgCleanup > 5 * MINUTE * IN_MILLISECONDS)
+        {
+            lastBgCleanup = now;
+            // Remove entries for BGs that no longer exist
+            std::vector<uint32> keysToRemove;
+            for (auto const& [instanceId, status] : _bgStatusTracker)
+            {
+                // Try to find BG - if not found, it's gone
+                Battleground* bg = sBattlegroundMgr->GetBattleground(instanceId, BATTLEGROUND_TYPE_NONE);
+                if (!bg)
+                {
+                    keysToRemove.push_back(instanceId);
+                }
+            }
+            for (uint32 key : keysToRemove)
+            {
+                _bgStatusTracker.erase(key);
+            }
+        }
+    }
+
+    /**
      * @brief Cleanup stale tracking data
      */
     void CleanupStaleData()
@@ -334,6 +466,9 @@ private:
 
     // Last known queue state
     std::unordered_map<ObjectGuid, bool> _lastQueueState;
+
+    // BG status tracker: instanceId -> last known status
+    std::unordered_map<uint32, BattlegroundStatus> _bgStatusTracker;
 };
 
 void AddSC_PlayerbotBGScript()

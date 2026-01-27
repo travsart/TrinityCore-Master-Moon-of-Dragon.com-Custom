@@ -199,7 +199,7 @@ protected:
     std::set<uint32> m_destroyedGates;
 
     // Tower states
-    std::map<uint32, ObjectiveState> m_towerStates;
+    std::map<uint32, BGObjectiveState> m_towerStates;
     std::set<uint32> m_destroyedTowers;
 
     // Graveyard control

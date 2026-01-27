@@ -67,7 +67,7 @@ public:
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, ObjectiveState& outState) const override;
+        uint32& outObjectiveId, BGObjectiveState& outState) const override;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
         uint32& allianceScore, uint32& hordeScore) const override;

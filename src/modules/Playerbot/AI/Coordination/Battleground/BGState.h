@@ -54,20 +54,29 @@ enum class BGRole : uint8
     UNASSIGNED = 0,
     FLAG_CARRIER = 1,
     FLAG_ESCORT = 2,
-    FLAG_HUNTER = 3,      // Hunt enemy FC
+    FLAG_HUNTER = 3,         // Hunt enemy FC
     NODE_ATTACKER = 4,
     NODE_DEFENDER = 5,
     ROAMER = 6,
     HEALER_OFFENSE = 7,
     HEALER_DEFENSE = 8,
-    CART_PUSHER = 9,      // Silvershard Mines
-    ORB_CARRIER = 10,     // Temple of Kotmogu
+    CART_PUSHER = 9,         // Silvershard Mines
+    ORB_CARRIER = 10,        // Temple of Kotmogu
     GRAVEYARD_ASSAULT = 11,
     RESOURCE_GATHERER = 12,  // Deepwind Gorge
     VEHICLE_DRIVER = 13,     // Isle of Conquest, Strand of the Ancients
     VEHICLE_GUNNER = 14,     // Vehicle passenger/gunner
     BOSS_ASSAULT = 15,       // Isle of Conquest boss push
-    TURRET_OPERATOR = 16     // Strand of the Ancients turrets
+    TURRET_OPERATOR = 16,    // Strand of the Ancients turrets
+
+    // Generic roles used by BattlegroundAI
+    FLAG_DEFENDER = 17,      // Defend flag room in CTF
+    HEALER_SUPPORT = 18,     // Generic healer support role
+    ATTACKER = 19,           // Generic attacker role
+    DEFENDER = 20,           // Generic defender role
+    BASE_CAPTURER = 21,      // Capture bases/nodes
+    BASE_DEFENDER = 22,      // Defend bases/nodes
+    SIEGE_OPERATOR = 23      // Operate siege vehicles
 };
 
 enum class ObjectiveType : uint8
@@ -83,10 +92,27 @@ enum class ObjectiveType : uint8
     MINE = 9,
     WORKSHOP = 10,
     RELIC = 11,
-    STRATEGIC = 12   // Generic strategic position
+    STRATEGIC = 12,      // Generic strategic position
+    CONTROL_POINT = 13,  // Capturable control point (AB, BFG)
+    CAPTURABLE = 14      // Generic capturable objective
 };
 
-enum class ObjectiveState : uint8
+// Objective action types (what action is being performed)
+enum class BGObjectiveType : uint8
+{
+    CAPTURE_FLAG = 1,    // Capturing enemy flag
+    DEFEND_FLAG = 2,     // Defending/returning friendly flag
+    CAPTURE_BASE = 3,    // Capturing a base/node
+    DEFEND_BASE = 4,     // Defending a base/node
+    CAPTURE_TOWER = 5,   // Capturing a tower
+    DESTROY_GATE = 6,    // Destroying a gate
+    PUSH_CART = 7,       // Pushing a mine cart
+    CARRY_ORB = 8,       // Carrying an orb
+    KILL_BOSS = 9,       // Killing a boss
+    GENERAL = 10         // Generic objective action
+};
+
+enum class BGObjectiveState : uint8
 {
     NEUTRAL = 0,
     ALLIANCE_CONTROLLED = 1,
@@ -96,7 +122,9 @@ enum class ObjectiveState : uint8
     ALLIANCE_CAPTURING = 5,
     HORDE_CAPTURING = 6,
     DESTROYED = 7,
-    CONTESTED = 8      // Generic contested (not faction-specific)
+    CONTESTED = 8,             // Generic contested (not faction-specific)
+    CONTROLLED_FRIENDLY = 9,   // Controlled by our team (context-dependent)
+    CONTROLLED_ENEMY = 10      // Controlled by enemy team (context-dependent)
 };
 
 enum class BGPriority : uint8
@@ -112,13 +140,25 @@ enum class BGPriority : uint8
 // BATTLEGROUND STRUCTURES
 // ============================================================================
 
+/// @brief Position structure for coordinates
+struct BGPosition
+{
+    float x, y, z;
+    BGPosition() : x(0), y(0), z(0) {}
+    BGPosition(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+};
+
 struct BGObjective
 {
     uint32 id;
+    uint32& objectiveId = id;    // Alias reference to id
     ObjectiveType type;
-    ObjectiveState state;
+    BGObjectiveState state;
     ::std::string name;
     float x, y, z;
+
+    // Position as a struct for compatibility
+    BGPosition position;
 
     // Capture progress
     float captureProgress;  // 0.0 - 1.0
@@ -133,17 +173,70 @@ struct BGObjective
     uint8 strategicValue;   // 1-10
     bool isContested;
     BGPriority currentPriority;
+    BGPriority& priority = currentPriority;    // Alias reference to currentPriority
+
+    // Additional properties
+    uint32 controllingFaction;   // ALLIANCE or HORDE or 0 for neutral
+    uint32 resourceValue;        // Resource points this objective provides
 
     // Location info
     float nearbyEnemyCount;
     float nearbyAllyCount;
 
     BGObjective()
-        : id(0), type(ObjectiveType::NODE), state(ObjectiveState::NEUTRAL),
-          x(0), y(0), z(0),
+        : id(0), type(ObjectiveType::NODE), state(BGObjectiveState::NEUTRAL),
+          x(0), y(0), z(0), position(0, 0, 0),
           captureProgress(0), captureTime(0), contestedSince(0),
-          strategicValue(5), isContested(false), currentPriority(BGPriority::NORMAL),
+          strategicValue(5), isContested(false),
+          currentPriority(BGPriority::NORMAL),
+          controllingFaction(0), resourceValue(0),
           nearbyEnemyCount(0), nearbyAllyCount(0) {}
+
+    // Copy constructor (needed due to reference members)
+    BGObjective(const BGObjective& other)
+        : id(other.id), type(other.type), state(other.state), name(other.name),
+          x(other.x), y(other.y), z(other.z), position(other.position),
+          captureProgress(other.captureProgress), captureTime(other.captureTime),
+          contestedSince(other.contestedSince),
+          assignedDefenders(other.assignedDefenders), assignedAttackers(other.assignedAttackers),
+          strategicValue(other.strategicValue), isContested(other.isContested),
+          currentPriority(other.currentPriority),
+          controllingFaction(other.controllingFaction), resourceValue(other.resourceValue),
+          nearbyEnemyCount(other.nearbyEnemyCount), nearbyAllyCount(other.nearbyAllyCount) {}
+
+    // Copy assignment operator (needed due to reference members)
+    BGObjective& operator=(const BGObjective& other)
+    {
+        if (this != &other)
+        {
+            id = other.id;
+            type = other.type;
+            state = other.state;
+            name = other.name;
+            x = other.x; y = other.y; z = other.z;
+            position = other.position;
+            captureProgress = other.captureProgress;
+            captureTime = other.captureTime;
+            contestedSince = other.contestedSince;
+            assignedDefenders = other.assignedDefenders;
+            assignedAttackers = other.assignedAttackers;
+            strategicValue = other.strategicValue;
+            isContested = other.isContested;
+            currentPriority = other.currentPriority;
+            controllingFaction = other.controllingFaction;
+            resourceValue = other.resourceValue;
+            nearbyEnemyCount = other.nearbyEnemyCount;
+            nearbyAllyCount = other.nearbyAllyCount;
+        }
+        return *this;
+    }
+
+    // Sync position with x,y,z
+    void SetPosition(float _x, float _y, float _z)
+    {
+        x = _x; y = _y; z = _z;
+        position = BGPosition(_x, _y, _z);
+    }
 };
 
 struct BGScoreInfo
@@ -154,6 +247,10 @@ struct BGScoreInfo
     uint32 allianceResources;
     uint32 hordeResources;
     uint32 timeRemaining;
+
+    // Context-dependent score (set by coordinator based on faction)
+    uint32 friendlyScore;
+    uint32 enemyScore;
 
     // Flag-specific
     uint32 allianceFlagCaptures;
@@ -166,6 +263,7 @@ struct BGScoreInfo
     BGScoreInfo()
         : allianceScore(0), hordeScore(0), maxScore(0),
           allianceResources(0), hordeResources(0), timeRemaining(0),
+          friendlyScore(0), enemyScore(0),
           allianceFlagCaptures(0), hordeFlagCaptures(0),
           allianceResourceRate(0), hordeResourceRate(0) {}
 };
@@ -177,13 +275,14 @@ struct FlagInfo
     bool isAtBase;
     bool isDropped;
     float x, y, z;
-    uint8 stackCount;       // For debuffs (focused assault, etc.)
+    BGPosition droppedPosition;   // Position where flag was dropped
+    uint8 stackCount;             // For debuffs (focused assault, etc.)
     uint32 pickupTime;
     uint32 dropTime;
 
     FlagInfo()
         : carrierGuid(), isPickedUp(false), isAtBase(true), isDropped(false),
-          x(0), y(0), z(0), stackCount(0), pickupTime(0), dropTime(0) {}
+          x(0), y(0), z(0), droppedPosition(), stackCount(0), pickupTime(0), dropTime(0) {}
 };
 
 struct BGPlayer
@@ -219,7 +318,7 @@ struct BGPlayer
           kills(0), deaths(0), honorableKills(0), objectivesAssisted(0) {}
 };
 
-struct RoleAssignment
+struct BGRoleAssignment
 {
     ObjectGuid player;
     BGRole role;
@@ -227,7 +326,7 @@ struct RoleAssignment
     uint32 assignTime;
     float efficiency;       // 0-1, how well performing role
 
-    RoleAssignment()
+    BGRoleAssignment()
         : player(), role(BGRole::UNASSIGNED), objectiveId(0),
           assignTime(0), efficiency(0.5f) {}
 };
@@ -236,6 +335,7 @@ struct BGMatchStats
 {
     uint32 matchStartTime;
     uint32 matchDuration;
+    uint32 remainingTime;     // Time remaining in match
     BGType bgType;
 
     // Score tracking
@@ -254,7 +354,7 @@ struct BGMatchStats
     uint32 flagReturns;
 
     BGMatchStats()
-        : matchStartTime(0), matchDuration(0), bgType(BGType::WARSONG_GULCH),
+        : matchStartTime(0), matchDuration(0), remainingTime(0), bgType(BGType::WARSONG_GULCH),
           peakScoreAdvantage(0), peakScoreDisadvantage(0),
           objectivesCaptured(0), objectivesLost(0), objectivesDefended(0),
           totalKills(0), totalDeaths(0), flagCaptures(0), flagReturns(0) {}
@@ -341,23 +441,27 @@ inline const char* ObjectiveTypeToString(ObjectiveType type)
         case ObjectiveType::WORKSHOP: return "WORKSHOP";
         case ObjectiveType::RELIC: return "RELIC";
         case ObjectiveType::STRATEGIC: return "STRATEGIC";
+        case ObjectiveType::CONTROL_POINT: return "CONTROL_POINT";
+        case ObjectiveType::CAPTURABLE: return "CAPTURABLE";
         default: return "UNKNOWN";
     }
 }
 
-inline const char* ObjectiveStateToString(ObjectiveState state)
+inline const char* BGObjectiveStateToString(BGObjectiveState state)
 {
     switch (state)
     {
-        case ObjectiveState::NEUTRAL: return "NEUTRAL";
-        case ObjectiveState::ALLIANCE_CONTROLLED: return "ALLIANCE_CONTROLLED";
-        case ObjectiveState::HORDE_CONTROLLED: return "HORDE_CONTROLLED";
-        case ObjectiveState::ALLIANCE_CONTESTED: return "ALLIANCE_CONTESTED";
-        case ObjectiveState::HORDE_CONTESTED: return "HORDE_CONTESTED";
-        case ObjectiveState::ALLIANCE_CAPTURING: return "ALLIANCE_CAPTURING";
-        case ObjectiveState::HORDE_CAPTURING: return "HORDE_CAPTURING";
-        case ObjectiveState::DESTROYED: return "DESTROYED";
-        case ObjectiveState::CONTESTED: return "CONTESTED";
+        case BGObjectiveState::NEUTRAL: return "NEUTRAL";
+        case BGObjectiveState::ALLIANCE_CONTROLLED: return "ALLIANCE_CONTROLLED";
+        case BGObjectiveState::HORDE_CONTROLLED: return "HORDE_CONTROLLED";
+        case BGObjectiveState::ALLIANCE_CONTESTED: return "ALLIANCE_CONTESTED";
+        case BGObjectiveState::HORDE_CONTESTED: return "HORDE_CONTESTED";
+        case BGObjectiveState::ALLIANCE_CAPTURING: return "ALLIANCE_CAPTURING";
+        case BGObjectiveState::HORDE_CAPTURING: return "HORDE_CAPTURING";
+        case BGObjectiveState::DESTROYED: return "DESTROYED";
+        case BGObjectiveState::CONTESTED: return "CONTESTED";
+        case BGObjectiveState::CONTROLLED_FRIENDLY: return "CONTROLLED_FRIENDLY";
+        case BGObjectiveState::CONTROLLED_ENEMY: return "CONTROLLED_ENEMY";
         default: return "UNKNOWN";
     }
 }

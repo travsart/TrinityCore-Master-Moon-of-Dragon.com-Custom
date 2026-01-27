@@ -293,6 +293,23 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpecializedAIFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpecializedAIFactory.h
 
+    # AI Coordination - Battleground Core
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BGState.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BattlegroundCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BattlegroundCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BattlegroundCoordinatorManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BattlegroundCoordinatorManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/ObjectiveManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/ObjectiveManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BGRoleManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BGRoleManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/FlagCarrierManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/FlagCarrierManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/NodeController.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/NodeController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BGStrategyEngine.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BGStrategyEngine.cpp
+
     # AI Coordination - Battleground Scripts
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/IBGScript.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/BGScriptRegistry.h

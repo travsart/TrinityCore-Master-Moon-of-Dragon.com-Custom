@@ -27,7 +27,8 @@ struct Position;
 namespace Playerbot
 {
 
-enum class BGType : uint8;
+// Forward declarations - full types in BGState.h and BattlegroundAI.h
+enum class BGType : uint32;  // Map IDs (uint32)
 enum class BGRole : uint8;
 struct BGObjective;
 struct BGStrategyProfile;

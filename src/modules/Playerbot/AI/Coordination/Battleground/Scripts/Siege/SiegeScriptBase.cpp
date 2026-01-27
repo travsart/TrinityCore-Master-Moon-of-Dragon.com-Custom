@@ -358,8 +358,8 @@ uint32 SiegeScriptBase::GetStandingTowerCount(uint32 faction) const
     {
         if (m_destroyedTowers.find(towerId) == m_destroyedTowers.end())
         {
-            if ((faction == ALLIANCE && state == ObjectiveState::ALLIANCE_CONTROLLED) ||
-                (faction == HORDE && state == ObjectiveState::HORDE_CONTROLLED))
+            if ((faction == ALLIANCE && state == BGObjectiveState::ALLIANCE_CONTROLLED) ||
+                (faction == HORDE && state == BGObjectiveState::HORDE_CONTROLLED))
             {
                 ++count;
             }

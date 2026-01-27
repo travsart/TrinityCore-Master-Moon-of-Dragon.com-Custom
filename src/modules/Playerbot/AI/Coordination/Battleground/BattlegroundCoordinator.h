@@ -72,6 +72,7 @@ public:
     // ========================================================================
 
     const BGScoreInfo& GetScore() const { return _score; }
+    const BGScoreInfo& GetScoreInfo() const { return _score; }  // Alias for GetScore
     bool IsWinning() const;
     float GetScoreAdvantage() const;
     uint32 GetTimeRemaining() const;
@@ -84,7 +85,7 @@ public:
     ::std::vector<BGObjective> GetObjectives() const;
     BGObjective* GetObjective(uint32 objectiveId);
     const BGObjective* GetObjective(uint32 objectiveId) const;
-    ObjectiveState GetObjectiveState(uint32 objectiveId) const;
+    BGObjectiveState GetObjectiveState(uint32 objectiveId) const;
     BGObjective* GetNearestObjective(ObjectGuid player, ObjectiveType type = ObjectiveType::NODE) const;
     ::std::vector<BGObjective*> GetContestedObjectives() const;
     uint32 GetControlledObjectiveCount() const;
@@ -141,6 +142,35 @@ public:
     BGPlayer* GetBotMutable(ObjectGuid guid);
     ::std::vector<BGPlayer> GetAllBots() const;
     ::std::vector<BGPlayer> GetAliveBots() const;
+
+    // ========================================================================
+    // PLAYER ACCESS (for sub-managers)
+    // ========================================================================
+
+    /**
+     * @brief Get a Player pointer from ObjectGuid
+     * @param guid The player's GUID
+     * @return Player pointer, or nullptr if not found/valid
+     */
+    Player* GetPlayer(ObjectGuid guid) const;
+
+    /**
+     * @brief Get all friendly player GUIDs (bots on our team)
+     * @return Vector of ObjectGuids for friendly players
+     */
+    ::std::vector<ObjectGuid> GetFriendlyPlayers() const;
+
+    /**
+     * @brief Get all enemy player GUIDs
+     * @return Vector of ObjectGuids for enemy players
+     */
+    ::std::vector<ObjectGuid> GetEnemyPlayers() const;
+
+    /**
+     * @brief Get the battleground instance
+     * @return Pointer to the Battleground
+     */
+    Battleground* GetBattleground() const { return _battleground; }
 
     // ========================================================================
     // MATCH STATISTICS

@@ -111,7 +111,7 @@ const BGObjective* ObjectiveManager::GetObjective(uint32 objectiveId) const
     return result;
 }
 
-::std::vector<BGObjective*> ObjectiveManager::GetObjectivesByState(ObjectiveState state)
+::std::vector<BGObjective*> ObjectiveManager::GetObjectivesByState(BGObjectiveState state)
 {
     ::std::vector<BGObjective*> result;
     for (auto& [id, obj] : _objectives)
@@ -157,7 +157,7 @@ const BGObjective* ObjectiveManager::GetObjective(uint32 objectiveId) const
 
 ::std::vector<BGObjective*> ObjectiveManager::GetNeutralObjectives()
 {
-    return GetObjectivesByState(ObjectiveState::NEUTRAL);
+    return GetObjectivesByState(BGObjectiveState::NEUTRAL);
 }
 
 // ============================================================================
@@ -334,7 +334,7 @@ BGObjective* ObjectiveManager::GetHighestPriorityAttackTarget() const
     for (const auto& score : scores)
     {
         const BGObjective* obj = GetObjective(score.objectiveId);
-        if (obj && obj->state == ObjectiveState::NEUTRAL)
+        if (obj && obj->state == BGObjectiveState::NEUTRAL)
         {
             return const_cast<BGObjective*>(obj);
         }
@@ -363,7 +363,7 @@ BGObjective* ObjectiveManager::GetHighestPriorityDefenseTarget() const
 // STATE TRACKING
 // ============================================================================
 
-void ObjectiveManager::OnObjectiveStateChanged(uint32 objectiveId, ObjectiveState newState)
+void ObjectiveManager::OnObjectiveStateChanged(uint32 objectiveId, BGObjectiveState newState)
 {
     BGObjective* obj = GetObjective(objectiveId);
     if (obj)
@@ -371,7 +371,7 @@ void ObjectiveManager::OnObjectiveStateChanged(uint32 objectiveId, ObjectiveStat
         obj->state = newState;
 
         TC_LOG_DEBUG("playerbot", "ObjectiveManager: Objective %u state changed to %s",
-                     objectiveId, ObjectiveStateToString(newState));
+                     objectiveId, BGObjectiveStateToString(newState));
     }
 }
 
@@ -393,9 +393,9 @@ void ObjectiveManager::OnObjectiveCaptured(uint32 objectiveId, uint32 faction)
         obj->isContested = false;
 
         if (faction == ALLIANCE)
-            obj->state = ObjectiveState::ALLIANCE_CONTROLLED;
+            obj->state = BGObjectiveState::ALLIANCE_CONTROLLED;
         else
-            obj->state = ObjectiveState::HORDE_CONTROLLED;
+            obj->state = BGObjectiveState::HORDE_CONTROLLED;
 
         TC_LOG_DEBUG("playerbot", "ObjectiveManager: Objective %u captured by faction %u",
                      objectiveId, faction);
@@ -535,7 +535,7 @@ uint32 ObjectiveManager::GetNeutralCount() const
     uint32 count = 0;
     for (const auto& [id, obj] : _objectives)
     {
-        if (obj.state == ObjectiveState::NEUTRAL)
+        if (obj.state == BGObjectiveState::NEUTRAL)
             count++;
     }
     return count;
@@ -605,36 +605,36 @@ float ObjectiveManager::GetDistance(float x1, float y1, float z1, float x2, floa
     return std::sqrt(dx*dx + dy*dy + dz*dz);
 }
 
-bool ObjectiveManager::IsFriendlyState(ObjectiveState state) const
+bool ObjectiveManager::IsFriendlyState(BGObjectiveState state) const
 {
     uint32 faction = _coordinator->GetFaction();
 
     if (faction == ALLIANCE)
     {
-        return state == ObjectiveState::ALLIANCE_CONTROLLED ||
-               state == ObjectiveState::ALLIANCE_CONTESTED ||
-               state == ObjectiveState::ALLIANCE_CAPTURING;
+        return state == BGObjectiveState::ALLIANCE_CONTROLLED ||
+               state == BGObjectiveState::ALLIANCE_CONTESTED ||
+               state == BGObjectiveState::ALLIANCE_CAPTURING;
     }
 
-    return state == ObjectiveState::HORDE_CONTROLLED ||
-           state == ObjectiveState::HORDE_CONTESTED ||
-           state == ObjectiveState::HORDE_CAPTURING;
+    return state == BGObjectiveState::HORDE_CONTROLLED ||
+           state == BGObjectiveState::HORDE_CONTESTED ||
+           state == BGObjectiveState::HORDE_CAPTURING;
 }
 
-bool ObjectiveManager::IsEnemyState(ObjectiveState state) const
+bool ObjectiveManager::IsEnemyState(BGObjectiveState state) const
 {
     uint32 faction = _coordinator->GetFaction();
 
     if (faction == ALLIANCE)
     {
-        return state == ObjectiveState::HORDE_CONTROLLED ||
-               state == ObjectiveState::HORDE_CONTESTED ||
-               state == ObjectiveState::HORDE_CAPTURING;
+        return state == BGObjectiveState::HORDE_CONTROLLED ||
+               state == BGObjectiveState::HORDE_CONTESTED ||
+               state == BGObjectiveState::HORDE_CAPTURING;
     }
 
-    return state == ObjectiveState::ALLIANCE_CONTROLLED ||
-           state == ObjectiveState::ALLIANCE_CONTESTED ||
-           state == ObjectiveState::ALLIANCE_CAPTURING;
+    return state == BGObjectiveState::ALLIANCE_CONTROLLED ||
+           state == BGObjectiveState::ALLIANCE_CONTESTED ||
+           state == BGObjectiveState::ALLIANCE_CAPTURING;
 }
 
 } // namespace Playerbot

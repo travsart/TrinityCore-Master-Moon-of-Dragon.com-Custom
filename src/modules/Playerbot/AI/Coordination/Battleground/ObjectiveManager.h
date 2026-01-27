@@ -76,7 +76,7 @@ public:
     // ========================================================================
 
     ::std::vector<BGObjective*> GetObjectivesByType(ObjectiveType type);
-    ::std::vector<BGObjective*> GetObjectivesByState(ObjectiveState state);
+    ::std::vector<BGObjective*> GetObjectivesByState(BGObjectiveState state);
     ::std::vector<BGObjective*> GetContestedObjectives();
     ::std::vector<BGObjective*> GetFriendlyObjectives();
     ::std::vector<BGObjective*> GetEnemyObjectives();
@@ -105,7 +105,7 @@ public:
     // STATE TRACKING
     // ========================================================================
 
-    void OnObjectiveStateChanged(uint32 objectiveId, ObjectiveState newState);
+    void OnObjectiveStateChanged(uint32 objectiveId, BGObjectiveState newState);
     void OnObjectiveContested(uint32 objectiveId);
     void OnObjectiveCaptured(uint32 objectiveId, uint32 faction);
     void OnObjectiveLost(uint32 objectiveId);
@@ -172,8 +172,8 @@ private:
 
     void UpdateNearbyPlayerCounts();
     float GetDistance(float x1, float y1, float z1, float x2, float y2, float z2) const;
-    bool IsFriendlyState(ObjectiveState state) const;
-    bool IsEnemyState(ObjectiveState state) const;
+    bool IsFriendlyState(BGObjectiveState state) const;
+    bool IsEnemyState(BGObjectiveState state) const;
 };
 
 } // namespace Playerbot

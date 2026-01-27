@@ -198,6 +198,14 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
         return true;
     }
 
+    // CRITICAL SAFETY CHECK: Re-verify bot is still valid before accessing MotionMaster
+    // Threading issue: Bot could have been removed from world between initial check and here
+    if (!bot->IsInWorld() || !bot->GetSession())
+    {
+        TC_LOG_DEBUG("module.playerbot.movement", "⚠️ BotMovement: Bot became invalid during MoveToPosition, aborting");
+        return false;
+    }
+
     // Check if bot is already moving
     MovementGeneratorType currentMoveType = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
 
@@ -361,6 +369,10 @@ bool BotMovementUtil::ChaseTarget(Player* bot, Unit* target, float distance)
     if (!bot || !target)
         return false;
 
+    // CRITICAL: Verify bot is still in world (threading safety)
+    if (!bot->IsInWorld() || !bot->GetSession())
+        return false;
+
     MotionMaster* mm = bot->GetMotionMaster();
     if (!mm)
         return false;
@@ -401,6 +413,10 @@ void BotMovementUtil::StopMovement(Player* bot)
 bool BotMovementUtil::IsMoving(Player* bot)
 {
     if (!bot)
+        return false;
+
+    // CRITICAL: Verify bot is still in world (threading safety)
+    if (!bot->IsInWorld())
         return false;
 
     // Check spline state first (most accurate)
@@ -623,7 +639,7 @@ bool BotMovementUtil::MoveAlongPath(Player* bot, uint32 pathId, bool repeatable,
 
 bool BotMovementUtil::IsWandering(Player* bot)
 {
-    if (!bot)
+    if (!bot || !bot->IsInWorld())
         return false;
 
     MotionMaster* mm = bot->GetMotionMaster();
@@ -635,7 +651,7 @@ bool BotMovementUtil::IsWandering(Player* bot)
 
 bool BotMovementUtil::IsFollowingPath(Player* bot)
 {
-    if (!bot)
+    if (!bot || !bot->IsInWorld())
         return false;
 
     MotionMaster* mm = bot->GetMotionMaster();
@@ -647,7 +663,7 @@ bool BotMovementUtil::IsFollowingPath(Player* bot)
 
 void BotMovementUtil::StopWanderingOrPath(Player* bot)
 {
-    if (!bot)
+    if (!bot || !bot->IsInWorld())
         return;
 
     MotionMaster* mm = bot->GetMotionMaster();

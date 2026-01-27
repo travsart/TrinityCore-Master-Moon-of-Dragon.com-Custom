@@ -67,10 +67,10 @@ public:
         uint32 totalObjectives, uint32 timeRemaining) const override;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        ObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const override;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
         uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
@@ -201,7 +201,7 @@ protected:
     // ========================================================================
 
     // Node control tracking
-    std::map<uint32, ObjectiveState> m_nodeStates;
+    std::map<uint32, BGObjectiveState> m_nodeStates;
     std::map<uint32, float> m_nodeCaptureProgress;  // 0.0 to 1.0
     std::map<uint32, uint32> m_nodeLastContestTime;
 
