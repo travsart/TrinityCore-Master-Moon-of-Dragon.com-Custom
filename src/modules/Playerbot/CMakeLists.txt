@@ -292,6 +292,70 @@ set(PLAYERBOT_AI_BASE_SOURCES
     # Specialized AI Factory
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpecializedAIFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpecializedAIFactory.h
+
+    # AI Coordination - Battleground Scripts
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/IBGScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/BGScriptRegistry.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/BGScriptRegistry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/BGScriptBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/BGScriptBase.cpp
+
+    # CTF Battleground Scripts
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF/CTFScriptBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF/CTFScriptBase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF/WarsongGulchData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF/WarsongGulchScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF/WarsongGulchScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF/TwinPeaksData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF/TwinPeaksScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF/TwinPeaksScript.cpp
+
+    # Domination Battleground Scripts
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/DominationScriptBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/DominationScriptBase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/ArathiBasinData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/ArathiBasinScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/ArathiBasinScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/EyeOfTheStormData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/EyeOfTheStormScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/EyeOfTheStormScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/BattleForGilneasData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/BattleForGilneasScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/BattleForGilneasScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/TempleOfKotmoguData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/TempleOfKotmoguScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/TempleOfKotmoguScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/DeepwindGorgeData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/DeepwindGorgeScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/DeepwindGorgeScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/SeethingShoreData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/SeethingShoreScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination/SeethingShoreScript.cpp
+
+    # Siege Battleground Scripts
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/SiegeScriptBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/SiegeScriptBase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/AlteracValleyData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/AlteracValleyScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/AlteracValleyScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/IsleOfConquestData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/IsleOfConquestScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/IsleOfConquestScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/StrandOfTheAncientsData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/StrandOfTheAncientsScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege/StrandOfTheAncientsScript.cpp
+
+    # Resource Race Battleground Scripts
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/ResourceRace/ResourceRaceScriptBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/ResourceRace/ResourceRaceScriptBase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/ResourceRace/SilvershardMinesData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/ResourceRace/SilvershardMinesScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/ResourceRace/SilvershardMinesScript.cpp
+
+    # Epic Battleground Scripts
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Epic/AshranData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Epic/AshranScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Epic/AshranScript.cpp
 )
 
 # ============================================================================
@@ -968,6 +1032,13 @@ set(PLAYERBOT_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement
     ${CMAKE_CURRENT_SOURCE_DIR}/Threading
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/CTF
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Domination
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Siege
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/ResourceRace
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Epic
     ${CMAKE_SOURCE_DIR}/src/modules/Common
     ${MYSQL_INCLUDE_DIR}
 )

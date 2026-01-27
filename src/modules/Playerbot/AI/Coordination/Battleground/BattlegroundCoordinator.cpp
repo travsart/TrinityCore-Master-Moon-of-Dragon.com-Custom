@@ -14,6 +14,8 @@
 #include "FlagCarrierManager.h"
 #include "NodeController.h"
 #include "BGStrategyEngine.h"
+#include "Scripts/BGScriptRegistry.h"
+#include "Scripts/IBGScript.h"
 #include "Core/Events/CombatEventRouter.h"
 #include "Player.h"
 #include "Battleground.h"
@@ -21,6 +23,8 @@
 #include "GameTime.h"
 #include "Log.h"
 #include <algorithm>
+
+using namespace Playerbot::Coordination::Battleground;
 
 namespace Playerbot {
 
@@ -69,40 +73,73 @@ void BattlegroundCoordinator::Initialize()
     _nodeController->Initialize();
     _strategyEngine->Initialize();
 
-    // Initialize BG-specific data
-    switch (_bgType)
+    // Load BG-specific script via registry
+    uint32 mapId = _battleground ? _battleground->GetMapId() : 0;
+    if (BGScriptRegistry::Instance().HasScript(mapId))
     {
-        case BGType::WARSONG_GULCH:
-        case BGType::TWIN_PEAKS:
-            InitializeWSG();
-            break;
-        case BGType::ARATHI_BASIN:
-        case BGType::BATTLE_FOR_GILNEAS:
-            InitializeAB();
-            break;
-        case BGType::ALTERAC_VALLEY:
-            InitializeAV();
-            break;
-        case BGType::EYE_OF_THE_STORM:
-            InitializeEOTS();
-            break;
-        case BGType::STRAND_OF_THE_ANCIENTS:
-            InitializeSOTA();
-            break;
-        case BGType::ISLE_OF_CONQUEST:
-            InitializeIOC();
-            break;
-        case BGType::SILVERSHARD_MINES:
-            InitializeSilvershardMines();
-            break;
-        case BGType::TEMPLE_OF_KOTMOGU:
-            InitializeTempleOfKotmogu();
-            break;
-        case BGType::DEEPWIND_GORGE:
-            InitializeDeepwindGorge();
-            break;
-        default:
-            break;
+        _activeScript = BGScriptRegistry::Instance().CreateScript(mapId);
+        if (_activeScript)
+        {
+            _activeScript->OnLoad(this);
+
+            // Load objectives from script
+            auto scriptObjectives = _activeScript->GetObjectiveData();
+            for (const auto& objData : scriptObjectives)
+            {
+                BGObjective obj;
+                obj.id = objData.id;
+                obj.type = objData.type;
+                obj.name = objData.name;
+                obj.x = objData.x;
+                obj.y = objData.y;
+                obj.z = objData.z;
+                obj.state = ObjectiveState::NEUTRAL;
+                obj.controllingFaction = 0;
+                obj.priority = objData.strategicValue;
+                _objectives.push_back(obj);
+            }
+
+            TC_LOG_DEBUG("playerbot.bg", "BattlegroundCoordinator: Loaded script for map %u (%s) with %zu objectives",
+                mapId, _activeScript->GetName().c_str(), _objectives.size());
+        }
+    }
+    else
+    {
+        // Fallback to legacy initialization
+        switch (_bgType)
+        {
+            case BGType::WARSONG_GULCH:
+            case BGType::TWIN_PEAKS:
+                InitializeWSG();
+                break;
+            case BGType::ARATHI_BASIN:
+            case BGType::BATTLE_FOR_GILNEAS:
+                InitializeAB();
+                break;
+            case BGType::ALTERAC_VALLEY:
+                InitializeAV();
+                break;
+            case BGType::EYE_OF_THE_STORM:
+                InitializeEOTS();
+                break;
+            case BGType::STRAND_OF_THE_ANCIENTS:
+                InitializeSOTA();
+                break;
+            case BGType::ISLE_OF_CONQUEST:
+                InitializeIOC();
+                break;
+            case BGType::SILVERSHARD_MINES:
+                InitializeSilvershardMines();
+                break;
+            case BGType::TEMPLE_OF_KOTMOGU:
+                InitializeTempleOfKotmogu();
+                break;
+            case BGType::DEEPWIND_GORGE:
+                InitializeDeepwindGorge();
+                break;
+            default:
+                break;
+        }
     }
 
     // Initialize bot tracking
@@ -139,6 +176,13 @@ void BattlegroundCoordinator::Shutdown()
     if (CombatEventRouter* router = CombatEventRouter::Instance())
     {
         router->Unsubscribe(this);
+    }
+
+    // Unload script
+    if (_activeScript)
+    {
+        _activeScript->OnUnload();
+        _activeScript.reset();
     }
 
     _objectiveManager.reset();
@@ -182,8 +226,20 @@ void BattlegroundCoordinator::Update(uint32 diff)
         if (_strategyEngine)
             _strategyEngine->Update(diff);
 
+        // Update active script
+        if (_activeScript)
+            _activeScript->OnUpdate(diff);
+
         // Evaluate strategy periodically
         EvaluateStrategy(diff);
+    }
+}
+
+void BattlegroundCoordinator::NotifyScriptEvent(const BGScriptEventData& event)
+{
+    if (_activeScript)
+    {
+        _activeScript->OnEvent(event);
     }
 }
 

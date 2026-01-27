@@ -27,6 +27,11 @@ class FlagCarrierManager;
 class NodeController;
 class BGStrategyEngine;
 
+namespace Coordination::Battleground {
+    class IBGScript;
+    struct BGScriptEventData;
+}
+
 /**
  * @class BattlegroundCoordinator
  * @brief Coordinates AI bot behavior in battlegrounds
@@ -149,7 +154,7 @@ public:
 
     void OnCombatEvent(const CombatEvent& event) override;
     CombatEventType GetSubscribedEventTypes() const override;
-    uint8 GetPriority() const override { return 35; }
+    int32 GetEventPriority() const override { return 35; }
 
     // ========================================================================
     // SUB-MANAGER ACCESS
@@ -160,6 +165,13 @@ public:
     FlagCarrierManager* GetFlagManager() const { return _flagManager.get(); }
     NodeController* GetNodeController() const { return _nodeController.get(); }
     BGStrategyEngine* GetStrategyEngine() const { return _strategyEngine.get(); }
+
+    // ========================================================================
+    // BG-SPECIFIC SCRIPT
+    // ========================================================================
+
+    Coordination::Battleground::IBGScript* GetScript() const { return _activeScript.get(); }
+    void NotifyScriptEvent(const Coordination::Battleground::BGScriptEventData& event);
 
 private:
     // ========================================================================
@@ -204,6 +216,7 @@ private:
     ::std::unique_ptr<FlagCarrierManager> _flagManager;
     ::std::unique_ptr<NodeController> _nodeController;
     ::std::unique_ptr<BGStrategyEngine> _strategyEngine;
+    ::std::unique_ptr<Coordination::Battleground::IBGScript> _activeScript;
 
     // ========================================================================
     // STATE MACHINE

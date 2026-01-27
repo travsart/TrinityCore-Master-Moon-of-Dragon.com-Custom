@@ -63,7 +63,11 @@ enum class BGRole : uint8
     CART_PUSHER = 9,      // Silvershard Mines
     ORB_CARRIER = 10,     // Temple of Kotmogu
     GRAVEYARD_ASSAULT = 11,
-    RESOURCE_GATHERER = 12  // Deepwind Gorge
+    RESOURCE_GATHERER = 12,  // Deepwind Gorge
+    VEHICLE_DRIVER = 13,     // Isle of Conquest, Strand of the Ancients
+    VEHICLE_GUNNER = 14,     // Vehicle passenger/gunner
+    BOSS_ASSAULT = 15,       // Isle of Conquest boss push
+    TURRET_OPERATOR = 16     // Strand of the Ancients turrets
 };
 
 enum class ObjectiveType : uint8
@@ -78,7 +82,8 @@ enum class ObjectiveType : uint8
     BOSS = 8,
     MINE = 9,
     WORKSHOP = 10,
-    RELIC = 11
+    RELIC = 11,
+    STRATEGIC = 12   // Generic strategic position
 };
 
 enum class ObjectiveState : uint8
@@ -90,7 +95,8 @@ enum class ObjectiveState : uint8
     HORDE_CONTESTED = 4,
     ALLIANCE_CAPTURING = 5,
     HORDE_CAPTURING = 6,
-    DESTROYED = 7
+    DESTROYED = 7,
+    CONTESTED = 8      // Generic contested (not faction-specific)
 };
 
 enum class BGPriority : uint8
@@ -290,6 +296,10 @@ inline const char* BGRoleToString(BGRole role)
         case BGRole::ORB_CARRIER: return "ORB_CARRIER";
         case BGRole::GRAVEYARD_ASSAULT: return "GRAVEYARD_ASSAULT";
         case BGRole::RESOURCE_GATHERER: return "RESOURCE_GATHERER";
+        case BGRole::VEHICLE_DRIVER: return "VEHICLE_DRIVER";
+        case BGRole::VEHICLE_GUNNER: return "VEHICLE_GUNNER";
+        case BGRole::BOSS_ASSAULT: return "BOSS_ASSAULT";
+        case BGRole::TURRET_OPERATOR: return "TURRET_OPERATOR";
         default: return "UNKNOWN";
     }
 }
@@ -330,6 +340,7 @@ inline const char* ObjectiveTypeToString(ObjectiveType type)
         case ObjectiveType::MINE: return "MINE";
         case ObjectiveType::WORKSHOP: return "WORKSHOP";
         case ObjectiveType::RELIC: return "RELIC";
+        case ObjectiveType::STRATEGIC: return "STRATEGIC";
         default: return "UNKNOWN";
     }
 }
@@ -346,6 +357,7 @@ inline const char* ObjectiveStateToString(ObjectiveState state)
         case ObjectiveState::ALLIANCE_CAPTURING: return "ALLIANCE_CAPTURING";
         case ObjectiveState::HORDE_CAPTURING: return "HORDE_CAPTURING";
         case ObjectiveState::DESTROYED: return "DESTROYED";
+        case ObjectiveState::CONTESTED: return "CONTESTED";
         default: return "UNKNOWN";
     }
 }
