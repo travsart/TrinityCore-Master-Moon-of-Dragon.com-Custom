@@ -107,6 +107,74 @@ protected:
 
     uint32 GetDefaultCaptureTime() const override { return ArathiBasin::CAPTURE_TIME; }
 
+    // ========================================================================
+    // EVENTS
+    // ========================================================================
+
+    void OnEvent(const BGScriptEventData& event) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+
+    // ========================================================================
+    // ENTERPRISE-GRADE ROUTING AND POSITIONING
+    // ========================================================================
+
+    /**
+     * @brief Get rotation path between two nodes
+     * @param fromNode Source node ID
+     * @param toNode Destination node ID
+     * @return Vector of waypoints for the route
+     */
+    std::vector<Position> GetRotationPath(uint32 fromNode, uint32 toNode) const;
+
+    /**
+     * @brief Get ambush positions for intercepting enemy rotations
+     * @param faction ALLIANCE or HORDE (positions vary by faction)
+     * @return Vector of ambush positions
+     */
+    std::vector<Position> GetAmbushPositions(uint32 faction) const;
+
+    /**
+     * @brief Get pre-calculated distance between two nodes
+     * @return Distance in yards
+     */
+    float GetNodeToNodeDistance(uint32 fromNode, uint32 toNode) const;
+
+    /**
+     * @brief Find nearest node to a position
+     */
+    uint32 GetNearestNode(Position const& pos) const;
+
+    /**
+     * @brief Determine best target for assault based on current state
+     */
+    uint32 GetBestAssaultTarget(uint32 faction) const;
+
+    /**
+     * @brief Get defense priority for a node
+     */
+    uint32 GetDefensePriority(uint32 nodeId) const;
+
+    /**
+     * @brief Check if it's time to rotate defenders
+     */
+    bool ShouldRotate() const;
+
+    /**
+     * @brief Get all chokepoint positions
+     */
+    std::vector<Position> GetChokepoints() const;
+
+    /**
+     * @brief Get all sniper/elevated positions
+     */
+    std::vector<Position> GetSniperPositions() const;
+
+    /**
+     * @brief Get all buff spawn positions
+     */
+    std::vector<Position> GetBuffPositions() const;
+
 private:
     // ========================================================================
     // AB-SPECIFIC HELPERS

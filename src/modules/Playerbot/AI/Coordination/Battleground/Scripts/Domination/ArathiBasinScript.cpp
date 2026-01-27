@@ -196,26 +196,38 @@ std::vector<BGPositionData> ArathiBasinScript::GetStrategicPositions() const
         }
     }
 
-    // Add chokepoints between nodes
-    // Stables <-> Blacksmith
-    positions.push_back(BGPositionData("Stables-BS Road", 1070.0f, 1125.0f, -55.0f, 0.0f,
-        BGPositionData::PositionType::CHOKEPOINT, 0, 6));
+    // Add all chokepoints from enterprise data
+    auto chokepoints = ArathiBasin::GetChokepoints();
+    for (size_t i = 0; i < chokepoints.size(); ++i)
+    {
+        const auto& pos = chokepoints[i];
+        std::string name = "Chokepoint " + std::to_string(i + 1);
+        positions.push_back(BGPositionData(name, pos.GetPositionX(), pos.GetPositionY(),
+            pos.GetPositionZ(), pos.GetOrientation(),
+            BGPositionData::PositionType::CHOKEPOINT, 0, 7));
+    }
 
-    // Blacksmith <-> Farm
-    positions.push_back(BGPositionData("BS-Farm Road", 890.0f, 960.0f, -50.0f, 0.0f,
-        BGPositionData::PositionType::CHOKEPOINT, 0, 6));
+    // Add all sniper/overlook positions
+    auto sniperPositions = ArathiBasin::GetSniperPositions();
+    for (size_t i = 0; i < sniperPositions.size(); ++i)
+    {
+        const auto& pos = sniperPositions[i];
+        std::string name = "Sniper Position " + std::to_string(i + 1);
+        positions.push_back(BGPositionData(name, pos.GetPositionX(), pos.GetPositionY(),
+            pos.GetPositionZ(), pos.GetOrientation(),
+            BGPositionData::PositionType::SNIPER_POSITION, 0, 8));
+    }
 
-    // Blacksmith <-> Gold Mine
-    positions.push_back(BGPositionData("BS-GM Road", 1060.0f, 945.0f, -80.0f, 0.0f,
-        BGPositionData::PositionType::CHOKEPOINT, 0, 5));
-
-    // Blacksmith <-> Lumber Mill
-    positions.push_back(BGPositionData("BS-LM Road", 915.0f, 1095.0f, -20.0f, 0.0f,
-        BGPositionData::PositionType::CHOKEPOINT, 0, 6));
-
-    // Lumber Mill high ground (sniper position)
-    positions.push_back(BGPositionData("LM Overlook", 850.0f, 1140.0f, 15.0f, 0.0f,
-        BGPositionData::PositionType::SNIPER_POSITION, 0, 8));
+    // Add buff positions
+    auto buffPositions = ArathiBasin::GetBuffPositions();
+    for (size_t i = 0; i < buffPositions.size(); ++i)
+    {
+        const auto& pos = buffPositions[i];
+        std::string name = "Restoration Buff " + std::to_string(i + 1);
+        positions.push_back(BGPositionData(name, pos.GetPositionX(), pos.GetPositionY(),
+            pos.GetPositionZ(), pos.GetOrientation(),
+            BGPositionData::PositionType::BUFF_LOCATION, 0, 5));
+    }
 
     return positions;
 }
@@ -513,6 +525,184 @@ float ArathiBasinScript::GetDistanceFromSpawn(uint32 nodeId, uint32 faction) con
 
     return CalculateDistance(spawnPos.GetPositionX(), spawnPos.GetPositionY(), spawnPos.GetPositionZ(),
         nodePos.GetPositionX(), nodePos.GetPositionY(), nodePos.GetPositionZ());
+}
+
+// ============================================================================
+// ENTERPRISE-GRADE ROUTING AND POSITIONING
+// ============================================================================
+
+std::vector<Position> ArathiBasinScript::GetRotationPath(uint32 fromNode, uint32 toNode) const
+{
+    return ArathiBasin::GetRotationPath(fromNode, toNode);
+}
+
+std::vector<Position> ArathiBasinScript::GetAmbushPositions(uint32 faction) const
+{
+    return ArathiBasin::GetAmbushPositions(faction);
+}
+
+float ArathiBasinScript::GetNodeToNodeDistance(uint32 fromNode, uint32 toNode) const
+{
+    return ArathiBasin::GetNodeDistance(fromNode, toNode);
+}
+
+uint32 ArathiBasinScript::GetNearestNode(Position const& pos) const
+{
+    uint32 nearest = 0;
+    float minDist = std::numeric_limits<float>::max();
+
+    for (uint32 i = 0; i < ArathiBasin::NODE_COUNT; ++i)
+    {
+        Position nodePos = ArathiBasin::GetNodePosition(i);
+        float dist = CalculateDistance(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(),
+            nodePos.GetPositionX(), nodePos.GetPositionY(), nodePos.GetPositionZ());
+        if (dist < minDist)
+        {
+            minDist = dist;
+            nearest = i;
+        }
+    }
+    return nearest;
+}
+
+uint32 ArathiBasinScript::GetBestAssaultTarget(uint32 faction) const
+{
+    // Use Strategy constants for decision making
+    uint32 enemyNodes = 0;
+    std::vector<uint32> contestableNodes;
+
+    for (uint32 i = 0; i < ArathiBasin::NODE_COUNT; ++i)
+    {
+        auto it = m_nodeStates.find(i);
+        if (it != m_nodeStates.end())
+        {
+            bool enemyControlled = (faction == ALLIANCE)
+                ? (it->second == BGObjectiveState::HORDE_CONTROLLED)
+                : (it->second == BGObjectiveState::ALLIANCE_CONTROLLED);
+
+            if (enemyControlled)
+            {
+                enemyNodes++;
+                contestableNodes.push_back(i);
+            }
+        }
+    }
+
+    // Prioritize Blacksmith if enemy has it
+    for (uint32 node : contestableNodes)
+    {
+        if (node == ArathiBasin::Nodes::BLACKSMITH)
+            return node;
+    }
+
+    // Otherwise find closest enemy node
+    uint32 bestTarget = contestableNodes.empty() ? ArathiBasin::Nodes::BLACKSMITH : contestableNodes[0];
+    float bestValue = 0.0f;
+
+    for (uint32 node : contestableNodes)
+    {
+        float value = ArathiBasin::GetNodeStrategicValue(node);
+        // Prefer closer nodes to our controlled nodes
+        if (value > bestValue)
+        {
+            bestValue = value;
+            bestTarget = node;
+        }
+    }
+
+    return bestTarget;
+}
+
+uint32 ArathiBasinScript::GetDefensePriority(uint32 nodeId) const
+{
+    uint8 basePriority = ArathiBasin::GetNodeStrategicValue(nodeId);
+
+    // Blacksmith always top priority
+    if (nodeId == ArathiBasin::Nodes::BLACKSMITH)
+        return basePriority + ArathiBasin::Strategy::BS_EXTRA_DEFENDERS;
+
+    return basePriority;
+}
+
+bool ArathiBasinScript::ShouldRotate() const
+{
+    // Check if rotation interval has passed
+    uint32 elapsed = GetElapsedTime();
+    return (elapsed % ArathiBasin::Strategy::ROTATION_INTERVAL) < 1000;  // Within 1 sec of rotation time
+}
+
+std::vector<Position> ArathiBasinScript::GetChokepoints() const
+{
+    return ArathiBasin::GetChokepoints();
+}
+
+std::vector<Position> ArathiBasinScript::GetSniperPositions() const
+{
+    return ArathiBasin::GetSniperPositions();
+}
+
+std::vector<Position> ArathiBasinScript::GetBuffPositions() const
+{
+    return ArathiBasin::GetBuffPositions();
+}
+
+// ============================================================================
+// ENHANCED EVENT HANDLING
+// ============================================================================
+
+void ArathiBasinScript::OnEvent(const BGScriptEventData& event)
+{
+    DominationScriptBase::OnEvent(event);
+
+    switch (event.eventType)
+    {
+        case BGScriptEvent::OBJECTIVE_CAPTURED:
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "AB: Node {} captured by {}! Current control: Alliance={}, Horde={}",
+                event.objectiveId,
+                event.faction == ALLIANCE ? "Alliance" : "Horde",
+                m_allianceNodes, m_hordeNodes);
+
+            // Check if we need to adjust defenders
+            if (event.objectiveId == ArathiBasin::Nodes::BLACKSMITH)
+            {
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "AB: Blacksmith captured - critical node! Adjusting defense priority.");
+            }
+            break;
+
+        case BGScriptEvent::OBJECTIVE_CONTESTED:
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "AB: Node {} under attack at ({:.1f}, {:.1f})! Defenders needed!",
+                event.objectiveId, event.x, event.y);
+            break;
+
+        case BGScriptEvent::OBJECTIVE_LOST:
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "AB: Node {} lost! Counter-attack may be needed.",
+                event.objectiveId);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void ArathiBasinScript::OnMatchStart()
+{
+    DominationScriptBase::OnMatchStart();
+
+    TC_LOG_INFO("playerbots.bg.script",
+        "AB: Match started! Strategy: secure home bases then contest Blacksmith");
+}
+
+void ArathiBasinScript::OnMatchEnd(bool victory)
+{
+    DominationScriptBase::OnMatchEnd(victory);
+
+    TC_LOG_INFO("playerbots.bg.script",
+        "AB: Match ended - {}! Final score tracked.",
+        victory ? "Victory" : "Defeat");
 }
 
 } // namespace Playerbot::Coordination::Battleground

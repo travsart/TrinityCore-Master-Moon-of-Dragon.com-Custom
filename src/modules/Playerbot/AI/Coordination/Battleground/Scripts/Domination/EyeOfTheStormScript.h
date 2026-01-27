@@ -95,6 +95,79 @@ public:
     // ========================================================================
 
     void OnEvent(const BGScriptEventData& event) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+
+    // ========================================================================
+    // ENTERPRISE-GRADE FLAG RUNNING AND POSITIONING
+    // ========================================================================
+
+    /**
+     * @brief Get optimal flag running route from center to a node
+     * @param nodeId Target node for flag capture
+     * @return Vector of waypoints for the route
+     */
+    std::vector<Position> GetFlagRouteToNode(uint32 nodeId) const;
+
+    /**
+     * @brief Get escort formation positions around flag carrier
+     * @param fcPosition Flag carrier's current position
+     * @param escortCount Number of escorts
+     * @return Vector of escort positions
+     */
+    std::vector<Position> GetEscortFormation(Position const& fcPosition, uint8 escortCount) const;
+
+    /**
+     * @brief Get best node for flag capture based on faction and control
+     * @param faction ALLIANCE or HORDE
+     * @return Best node ID for flag capture
+     */
+    uint32 GetBestFlagCaptureNode(uint32 faction) const;
+
+    /**
+     * @brief Get distance from a node to center flag
+     */
+    float GetDistanceToCenter(uint32 nodeId) const;
+
+    /**
+     * @brief Get all bridge positions (critical chokepoints)
+     */
+    std::vector<Position> GetBridgePositions() const;
+
+    /**
+     * @brief Get all sniper/elevated positions
+     */
+    std::vector<Position> GetSniperPositions() const;
+
+    /**
+     * @brief Get center flag area defense positions
+     */
+    std::vector<Position> GetCenterFlagDefensePositions() const;
+
+    /**
+     * @brief Check if flag is worth pursuing with current node control
+     */
+    bool IsFlagWorthPursuing() const;
+
+    /**
+     * @brief Get recommended escort count based on node control
+     */
+    uint8 GetRecommendedEscortCount() const;
+
+    /**
+     * @brief Check if a node is strategically important (closer to center)
+     */
+    bool IsStrategicNode(uint32 nodeId) const;
+
+    /**
+     * @brief Get the node nearest to the center flag
+     */
+    uint32 GetNearestNodeToFlag() const;
+
+    /**
+     * @brief Get defenders needed for a specific node
+     */
+    uint32 GetDefendersNeeded(uint32 nodeId) const;
 
 protected:
     // ========================================================================

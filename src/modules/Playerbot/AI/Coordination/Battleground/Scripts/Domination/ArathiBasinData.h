@@ -138,6 +138,18 @@ constexpr std::array<uint32, 6> TICK_POINTS = {
 // Resources per second (approximate for planning)
 constexpr float RESOURCE_RATE_PER_NODE = 5.0f;  // 10 points / 2 seconds
 
+// Time to win calculations (seconds)
+inline uint32 GetTimeToWin(uint32 currentScore, uint32 nodeCount)
+{
+    if (nodeCount == 0)
+        return UINT32_MAX;
+    uint32 remaining = MAX_SCORE - currentScore;
+    uint32 pointsPerTick = TICK_POINTS[std::min(nodeCount, 5u)];
+    if (pointsPerTick == 0)
+        return UINT32_MAX;
+    return (remaining * TICK_INTERVAL) / (pointsPerTick * 1000);
+}
+
 // ============================================================================
 // SPAWN POSITIONS
 // ============================================================================
@@ -198,7 +210,7 @@ inline Position GetNodeGraveyard(uint32 nodeId)
 }
 
 // ============================================================================
-// NODE DEFENSE POSITIONS
+// NODE DEFENSE POSITIONS (ENTERPRISE-GRADE)
 // ============================================================================
 
 inline std::vector<Position> GetNodeDefensePositions(uint32 nodeId)
@@ -207,50 +219,177 @@ inline std::vector<Position> GetNodeDefensePositions(uint32 nodeId)
     {
         case Nodes::STABLES:
             return {
-                { 1166.78f, 1200.13f, -56.70f, 0.0f },  // Flag
-                { 1156.78f, 1200.13f, -56.70f, 3.14f }, // North
-                { 1176.78f, 1200.13f, -56.70f, 0.0f },  // South
-                { 1166.78f, 1190.13f, -56.70f, 1.57f }, // East
-                { 1166.78f, 1210.13f, -56.70f, 4.71f }  // West
+                // Core flag defense
+                { 1166.78f, 1200.13f, -56.70f, 0.0f },   // Flag position
+                { 1156.78f, 1200.13f, -56.70f, 3.14f },  // North
+                { 1176.78f, 1200.13f, -56.70f, 0.0f },   // South
+                { 1166.78f, 1190.13f, -56.70f, 1.57f },  // East (road to BS)
+                { 1166.78f, 1210.13f, -56.70f, 4.71f },  // West (road to LM)
+                // Entrance control
+                { 1175.78f, 1185.13f, -56.70f, 0.79f },  // SE entrance
+                { 1155.78f, 1215.13f, -56.70f, 3.93f },  // NW entrance
+                // Elevated positions
+                { 1170.78f, 1205.13f, -54.00f, 2.36f }   // Elevated overlook
             };
         case Nodes::BLACKSMITH:
             return {
-                { 977.02f, 1046.53f, -44.80f, 0.0f },   // Flag (center)
-                { 967.02f, 1046.53f, -44.80f, 3.14f },
-                { 987.02f, 1046.53f, -44.80f, 0.0f },
-                { 977.02f, 1036.53f, -44.80f, 1.57f },
-                { 977.02f, 1056.53f, -44.80f, 4.71f },
-                { 972.02f, 1041.53f, -44.80f, 2.36f },  // Extra - critical node
-                { 982.02f, 1051.53f, -44.80f, 5.50f }
+                // Core flag defense (most important node)
+                { 977.02f, 1046.53f, -44.80f, 0.0f },    // Flag (center)
+                { 967.02f, 1046.53f, -44.80f, 3.14f },   // North
+                { 987.02f, 1046.53f, -44.80f, 0.0f },    // South
+                { 977.02f, 1036.53f, -44.80f, 1.57f },   // East
+                { 977.02f, 1056.53f, -44.80f, 4.71f },   // West
+                // Extra defense positions (critical node)
+                { 972.02f, 1041.53f, -44.80f, 2.36f },   // NE corner
+                { 982.02f, 1051.53f, -44.80f, 5.50f },   // SW corner
+                { 972.02f, 1051.53f, -44.80f, 3.93f },   // NW corner
+                { 982.02f, 1041.53f, -44.80f, 0.79f },   // SE corner
+                // Bridge/ramp control
+                { 960.02f, 1046.53f, -44.80f, 3.14f },   // North road
+                { 994.02f, 1046.53f, -44.80f, 0.0f },    // South road
+                { 977.02f, 1020.53f, -44.80f, 1.57f },   // East road to GM
+                { 977.02f, 1072.53f, -44.80f, 4.71f }    // West road to LM
             };
         case Nodes::FARM:
             return {
-                { 806.22f, 874.22f, -55.99f, 0.0f },
-                { 796.22f, 874.22f, -55.99f, 3.14f },
-                { 816.22f, 874.22f, -55.99f, 0.0f },
-                { 806.22f, 864.22f, -55.99f, 1.57f },
-                { 806.22f, 884.22f, -55.99f, 4.71f }
+                // Core flag defense
+                { 806.22f, 874.22f, -55.99f, 0.0f },     // Flag position
+                { 796.22f, 874.22f, -55.99f, 3.14f },    // North
+                { 816.22f, 874.22f, -55.99f, 0.0f },     // South
+                { 806.22f, 864.22f, -55.99f, 1.57f },    // East
+                { 806.22f, 884.22f, -55.99f, 4.71f },    // West
+                // Farm building positions
+                { 820.22f, 890.22f, -55.99f, 5.50f },    // Barn corner
+                { 790.22f, 860.22f, -55.99f, 2.36f },    // Windmill side
+                // Entrance chokes
+                { 815.22f, 860.22f, -55.99f, 0.79f }     // Road to BS
             };
         case Nodes::GOLD_MINE:
             return {
-                { 1146.92f, 848.28f, -110.52f, 0.0f },
-                { 1136.92f, 848.28f, -110.52f, 3.14f },
-                { 1156.92f, 848.28f, -110.52f, 0.0f },
-                { 1146.92f, 838.28f, -110.52f, 1.57f },
-                { 1146.92f, 858.28f, -110.52f, 4.71f }
+                // Core flag defense (inside mine)
+                { 1146.92f, 848.28f, -110.52f, 0.0f },   // Flag position
+                { 1136.92f, 848.28f, -110.52f, 3.14f },  // North
+                { 1156.92f, 848.28f, -110.52f, 0.0f },   // South
+                { 1146.92f, 838.28f, -110.52f, 1.57f },  // East
+                { 1146.92f, 858.28f, -110.52f, 4.71f },  // West
+                // Mine entrance control
+                { 1130.92f, 830.28f, -110.52f, 2.36f },  // Mine entrance
+                { 1160.92f, 865.28f, -105.52f, 5.50f },  // Ramp top
+                // Outside positions
+                { 1110.92f, 835.28f, -90.52f, 2.36f }    // Outside overlook
             };
         case Nodes::LUMBER_MILL:
             return {
-                { 856.14f, 1148.90f, 11.18f, 0.0f },    // Flag
-                { 846.14f, 1148.90f, 11.18f, 3.14f },
-                { 866.14f, 1148.90f, 11.18f, 0.0f },
-                { 856.14f, 1138.90f, 11.18f, 1.57f },
-                { 856.14f, 1158.90f, 11.18f, 4.71f },
-                { 861.14f, 1143.90f, 11.18f, 0.79f }    // Cliff edge - good LoS
+                // Core flag defense (elevated)
+                { 856.14f, 1148.90f, 11.18f, 0.0f },     // Flag position
+                { 846.14f, 1148.90f, 11.18f, 3.14f },    // North
+                { 866.14f, 1148.90f, 11.18f, 0.0f },     // South
+                { 856.14f, 1138.90f, 11.18f, 1.57f },    // East
+                { 856.14f, 1158.90f, 11.18f, 4.71f },    // West
+                // Cliff edge positions (high ground advantage!)
+                { 861.14f, 1143.90f, 11.18f, 0.79f },    // SE cliff - overlooks BS
+                { 851.14f, 1153.90f, 11.18f, 3.93f },    // NW cliff - overlooks Stables
+                { 866.14f, 1158.90f, 15.18f, 5.50f },    // High platform
+                // Ramp defense
+                { 840.14f, 1135.90f, 5.18f, 2.36f },     // Ramp bottom
+                { 850.14f, 1140.90f, 9.18f, 2.36f }      // Ramp mid
             };
         default:
             return {};
     }
+}
+
+// ============================================================================
+// CHOKEPOINT POSITIONS
+// ============================================================================
+
+// Critical map chokepoints for ambushes and interception
+inline std::vector<Position> GetChokepoints()
+{
+    return {
+        // Stables to Blacksmith road
+        { 1070.0f, 1125.0f, -55.0f, 3.93f },  // Mid-road ST->BS
+        { 1120.0f, 1175.0f, -56.0f, 3.93f },  // Near Stables
+
+        // Blacksmith to Farm road
+        { 890.0f, 960.0f, -50.0f, 2.36f },    // Mid-road BS->Farm
+        { 850.0f, 920.0f, -53.0f, 2.36f },    // Near Farm
+
+        // Blacksmith to Gold Mine road
+        { 1060.0f, 945.0f, -80.0f, 0.79f },   // Mid-road BS->GM
+        { 1100.0f, 895.0f, -100.0f, 0.79f },  // Near GM entrance
+
+        // Blacksmith to Lumber Mill road
+        { 915.0f, 1095.0f, -20.0f, 3.14f },   // Mid-road BS->LM
+        { 885.0f, 1120.0f, 0.0f, 3.93f },     // Near LM ramp base
+
+        // Stables to Lumber Mill road
+        { 1010.0f, 1175.0f, -30.0f, 4.71f },  // Mid-road ST->LM
+
+        // Farm to Gold Mine road
+        { 975.0f, 860.0f, -70.0f, 0.0f },     // Mid-road Farm->GM
+
+        // Center crossroads (critical!)
+        { 980.0f, 1000.0f, -48.0f, 0.0f },    // True center
+
+        // Alliance base exit
+        { 1220.0f, 1250.0f, -35.0f, 3.93f },  // Alliance base road
+
+        // Horde base exit
+        { 750.0f, 740.0f, -30.0f, 0.79f }     // Horde base road
+    };
+}
+
+// ============================================================================
+// SNIPER/OVERLOOK POSITIONS
+// ============================================================================
+
+// High ground and line-of-sight advantage positions
+inline std::vector<Position> GetSniperPositions()
+{
+    return {
+        // Lumber Mill overlooks (best sniper spots in AB)
+        { 850.0f, 1140.0f, 15.0f, 0.79f },    // LM cliff - sees BS, Stables approach
+        { 865.0f, 1155.0f, 18.0f, 5.50f },    // LM high platform - sees Farm road
+
+        // Blacksmith elevated positions
+        { 985.0f, 1060.0f, -40.0f, 5.50f },   // BS elevated south
+        { 965.0f, 1035.0f, -40.0f, 0.79f },   // BS elevated north
+
+        // Gold Mine entrance overlook
+        { 1110.0f, 830.0f, -90.0f, 2.36f },   // Outside GM cave
+
+        // Stables hill
+        { 1180.0f, 1215.0f, -52.0f, 3.93f },  // Stables hill north
+
+        // Farm windmill area
+        { 795.0f, 860.0f, -50.0f, 2.36f }     // Farm elevated
+    };
+}
+
+// ============================================================================
+// BUFF POSITIONS (Restoration Buffs)
+// ============================================================================
+
+// Health/Mana restoration buff locations
+inline std::vector<Position> GetBuffPositions()
+{
+    return {
+        // Near Blacksmith (contested area)
+        { 990.0f, 1008.0f, -45.0f, 0.0f },    // BS east buff
+
+        // Near Gold Mine entrance
+        { 1080.0f, 870.0f, -95.0f, 0.0f },    // GM approach buff
+
+        // Near Lumber Mill base
+        { 870.0f, 1100.0f, -15.0f, 0.0f },    // LM base buff
+
+        // Stables approach
+        { 1130.0f, 1165.0f, -55.0f, 0.0f },   // Stables south buff
+
+        // Farm approach
+        { 840.0f, 910.0f, -55.0f, 0.0f }      // Farm north buff
+    };
 }
 
 // ============================================================================
@@ -268,6 +407,19 @@ inline std::vector<uint32> GetHordeOpeningRoute()
     return { Nodes::FARM, Nodes::BLACKSMITH, Nodes::GOLD_MINE };
 }
 
+// Fast 5-cap rush routes (aggressive strategy)
+inline std::vector<uint32> GetAlliance5CapRoute()
+{
+    // Rush Stables -> BS -> LM -> Farm -> GM
+    return { Nodes::STABLES, Nodes::BLACKSMITH, Nodes::LUMBER_MILL, Nodes::FARM, Nodes::GOLD_MINE };
+}
+
+inline std::vector<uint32> GetHorde5CapRoute()
+{
+    // Rush Farm -> BS -> GM -> LM -> Stables
+    return { Nodes::FARM, Nodes::BLACKSMITH, Nodes::GOLD_MINE, Nodes::LUMBER_MILL, Nodes::STABLES };
+}
+
 // Node adjacency (which nodes are close to each other)
 inline std::vector<uint32> GetAdjacentNodes(uint32 nodeId)
 {
@@ -279,6 +431,131 @@ inline std::vector<uint32> GetAdjacentNodes(uint32 nodeId)
         case Nodes::GOLD_MINE:   return { Nodes::FARM, Nodes::BLACKSMITH };
         case Nodes::LUMBER_MILL: return { Nodes::STABLES, Nodes::BLACKSMITH };
         default: return {};
+    }
+}
+
+// Distance matrix between nodes (pre-calculated for pathfinding)
+inline float GetNodeDistance(uint32 fromNode, uint32 toNode)
+{
+    // Approximate travel distances (in yards)
+    static const float distances[5][5] = {
+        //           ST      BS      Farm    GM      LM
+        /* ST */   { 0.0f,   200.0f, 400.0f, 360.0f, 180.0f },
+        /* BS */   { 200.0f, 0.0f,   180.0f, 200.0f, 150.0f },
+        /* Farm */ { 400.0f, 180.0f, 0.0f,   170.0f, 350.0f },
+        /* GM */   { 360.0f, 200.0f, 170.0f, 0.0f,   380.0f },
+        /* LM */   { 180.0f, 150.0f, 350.0f, 380.0f, 0.0f }
+    };
+
+    if (fromNode < 5 && toNode < 5)
+        return distances[fromNode][toNode];
+    return 1000.0f;  // Invalid
+}
+
+// ============================================================================
+// ROTATION PATHS (Node-to-Node travel routes)
+// ============================================================================
+
+// Get path from one node to another
+inline std::vector<Position> GetRotationPath(uint32 fromNode, uint32 toNode)
+{
+    Position start = GetNodePosition(fromNode);
+    Position end = GetNodePosition(toNode);
+
+    // Add intermediate waypoints for common routes
+    if (fromNode == Nodes::STABLES && toNode == Nodes::BLACKSMITH)
+    {
+        return {
+            start,
+            { 1120.0f, 1175.0f, -56.0f, 3.93f },
+            { 1070.0f, 1125.0f, -55.0f, 3.93f },
+            { 1020.0f, 1085.0f, -50.0f, 3.93f },
+            end
+        };
+    }
+    else if (fromNode == Nodes::BLACKSMITH && toNode == Nodes::STABLES)
+    {
+        return {
+            start,
+            { 1020.0f, 1085.0f, -50.0f, 0.79f },
+            { 1070.0f, 1125.0f, -55.0f, 0.79f },
+            { 1120.0f, 1175.0f, -56.0f, 0.79f },
+            end
+        };
+    }
+    else if (fromNode == Nodes::BLACKSMITH && toNode == Nodes::LUMBER_MILL)
+    {
+        return {
+            start,
+            { 940.0f, 1075.0f, -35.0f, 3.93f },
+            { 900.0f, 1110.0f, -10.0f, 3.93f },
+            { 870.0f, 1130.0f, 5.0f, 3.93f },
+            end
+        };
+    }
+    else if (fromNode == Nodes::BLACKSMITH && toNode == Nodes::FARM)
+    {
+        return {
+            start,
+            { 940.0f, 1010.0f, -48.0f, 2.36f },
+            { 890.0f, 960.0f, -50.0f, 2.36f },
+            { 850.0f, 920.0f, -53.0f, 2.36f },
+            end
+        };
+    }
+    else if (fromNode == Nodes::BLACKSMITH && toNode == Nodes::GOLD_MINE)
+    {
+        return {
+            start,
+            { 1010.0f, 1010.0f, -55.0f, 0.79f },
+            { 1060.0f, 945.0f, -80.0f, 0.79f },
+            { 1100.0f, 895.0f, -100.0f, 0.79f },
+            end
+        };
+    }
+    else if (fromNode == Nodes::FARM && toNode == Nodes::GOLD_MINE)
+    {
+        return {
+            start,
+            { 850.0f, 860.0f, -60.0f, 0.79f },
+            { 920.0f, 855.0f, -75.0f, 0.0f },
+            { 1020.0f, 850.0f, -90.0f, 0.0f },
+            { 1100.0f, 848.0f, -105.0f, 0.0f },
+            end
+        };
+    }
+    // Default: direct route
+    return { start, end };
+}
+
+// ============================================================================
+// AMBUSH POSITIONS
+// ============================================================================
+
+// Positions for intercepting enemy rotations
+inline std::vector<Position> GetAmbushPositions(uint32 faction)
+{
+    if (faction == ALLIANCE)
+    {
+        return {
+            // Intercept Horde going to Stables
+            { 1100.0f, 1150.0f, -56.0f, 2.36f },
+            // Intercept at BS from south
+            { 950.0f, 1020.0f, -46.0f, 1.57f },
+            // Intercept at LM ramp
+            { 865.0f, 1125.0f, 0.0f, 2.36f }
+        };
+    }
+    else
+    {
+        return {
+            // Intercept Alliance going to Farm
+            { 850.0f, 920.0f, -53.0f, 5.50f },
+            // Intercept at BS from north
+            { 1000.0f, 1070.0f, -46.0f, 4.71f },
+            // Intercept at GM entrance
+            { 1120.0f, 860.0f, -100.0f, 3.93f }
+        };
     }
 }
 
@@ -325,6 +602,10 @@ namespace WorldStates
 
     // Max resources
     constexpr int32 MAX_RESOURCES = 1780;
+
+    // Occupied bases count
+    constexpr int32 OCCUPIED_BASES_ALLY = 1778;
+    constexpr int32 OCCUPIED_BASES_HORDE = 1779;
 }
 
 // ============================================================================
@@ -344,6 +625,10 @@ namespace GameObjects
     constexpr uint32 ALLIANCE_BANNER = 180058;
     constexpr uint32 HORDE_BANNER = 180059;
     constexpr uint32 NEUTRAL_BANNER = 180060;
+
+    // Doors
+    constexpr uint32 ALLIANCE_DOOR = 180255;
+    constexpr uint32 HORDE_DOOR = 180256;
 }
 
 // ============================================================================
@@ -354,6 +639,37 @@ namespace Spells
 {
     constexpr uint32 HONORABLE_DEFENDER_25 = 21235;  // +25% honor when defending
     constexpr uint32 HONORABLE_DEFENDER_50 = 21236;  // +50% honor (2+ defenders)
+
+    // Node assault/capture related
+    constexpr uint32 ASSAULT_BANNER = 23932;   // Channeled spell for assaulting
+}
+
+// ============================================================================
+// STRATEGY CONSTANTS
+// ============================================================================
+
+namespace Strategy
+{
+    // Minimum defenders per node for 3-cap strategy
+    constexpr uint8 MIN_DEFENDERS_PER_NODE = 2;
+
+    // Blacksmith always needs extra defenders
+    constexpr uint8 BS_EXTRA_DEFENDERS = 2;
+
+    // Time to rotate between nodes (milliseconds)
+    constexpr uint32 ROTATION_INTERVAL = 15000;
+
+    // Time to respond to node under attack
+    constexpr uint32 DEFENSE_RESPONSE_TIME = 5000;
+
+    // Minimum players to send for an assault
+    constexpr uint8 MIN_ASSAULT_FORCE = 3;
+
+    // Score threshold for switching to defensive
+    constexpr uint32 DEFENSIVE_THRESHOLD = 1200;  // 80% of max score
+
+    // Score threshold for desperation all-in
+    constexpr uint32 DESPERATION_THRESHOLD = 300;  // Far behind
 }
 
 } // namespace Playerbot::Coordination::Battleground::ArathiBasin
