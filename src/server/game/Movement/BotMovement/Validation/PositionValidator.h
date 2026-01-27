@@ -20,7 +20,7 @@
 
 #include "ValidationResult.h"
 
-class Position;
+struct Position;
 class Unit;
 
 class TC_GAME_API PositionValidator

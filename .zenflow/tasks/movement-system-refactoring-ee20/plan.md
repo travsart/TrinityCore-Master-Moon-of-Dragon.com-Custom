@@ -198,6 +198,7 @@ grep "BotMovement" worldserver.conf.dist
 ---
 
 ### [ ] Step: Phase 1.7 - Phase 1 Integration Testing
+<!-- chat-id: 2befcd37-ef67-4c0b-b94a-30155532914b -->
 
 **Goal:** Validate Phase 1 deliverables work together
 

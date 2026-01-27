@@ -180,7 +180,7 @@ bool GroundValidator::IsUnsafeTerrain(Unit const* unit)
 
     if (liquidStatus != LIQUID_MAP_NO_WATER)
     {
-        if (liquidData.type_flags & (map_liquidHeaderTypeFlags::Magma | map_liquidHeaderTypeFlags::Slime))
+        if (liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Magma) || liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Slime))
             return true;
     }
 

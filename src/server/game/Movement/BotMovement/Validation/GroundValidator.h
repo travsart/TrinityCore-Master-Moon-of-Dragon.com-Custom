@@ -22,7 +22,7 @@
 #include "Define.h"
 #include <unordered_map>
 
-class Position;
+struct Position;
 class Unit;
 class Map;
 
