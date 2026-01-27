@@ -44,13 +44,11 @@ bool GroupCombatTrigger::Check(BotAI* ai) const
     uint32 currentTime = GameTime::GetGameTimeMS();
     bool shouldLog = (currentTime - lastLog > 5000); // Log every 5 seconds
 
-    // First check if bot is already in combat
-    if (bot->IsInCombat())
-    {
-        if (shouldLog)
-            TC_LOG_DEBUG("module.playerbot.combat", "GroupCombatTrigger::Check - {} already in combat, skipping", bot->GetName());
-        return false; // Already handled by normal combat
-    }
+    // NOTE: We intentionally do NOT early-return when bot->IsInCombat()
+    // This trigger must continue firing throughout combat to enable:
+    // - Healers to continuously call HealingTargetSelector
+    // - Tanks to continuously monitor and manage threat
+    // The old early-return was the ROOT CAUSE of broken healing/tank systems
 
     // Check if bot is in a group
     Group* group = bot->GetGroup();
@@ -59,6 +57,20 @@ bool GroupCombatTrigger::Check(BotAI* ai) const
         if (shouldLog)
             TC_LOG_DEBUG("module.playerbot.combat", "GroupCombatTrigger::Check - {} not in group, skipping", bot->GetName());
         return false;
+    }
+
+    // If bot is already in combat, the trigger should still fire
+    // to allow continuous healing target selection and threat management
+    if (bot->IsInCombat())
+    {
+        bool groupInCombat = IsGroupInCombat(group);
+        if (shouldLog)
+        {
+            TC_LOG_DEBUG("module.playerbot.combat", "GroupCombatTrigger::Check - {} in combat, group combat: {}, continuing trigger",
+                         bot->GetName(), groupInCombat ? "YES" : "no");
+            lastLog = currentTime;
+        }
+        return groupInCombat; // Continue firing while group is in combat
     }
 
     // Check if group is in combat and bot should engage

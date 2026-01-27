@@ -7,14 +7,17 @@
 #include "ThreatAssistant.h"
 #include "GameTime.h"
 #include "Creature.h"
+#include "CreatureData.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"
 #include "ThreatManager.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "SpellAuraEffects.h"
 #include "Log.h"
 #include "../../Group/RoleDefinitions.h"  // For tank detection in GetPlayerRole
+#include "../../Group/GroupMemberResolver.h"  // For safe group member iteration
 #include <algorithm>
 
 namespace Playerbot {
@@ -193,7 +196,7 @@ float ThreatAssistant::GetThreatPercentage(Player* tank, Unit* target)
     // Get highest threat (current victim)
     Unit* victim = target->GetVictim();
     if (!victim)
-        return 100.0f;  // No victim = equal threat
+        return 0.0f;  // No victim = tank doesn't have aggro
 
     float highestThreat = threatMgr.GetThreat(victim);
     if (highestThreat <= 0.0f)
@@ -225,15 +228,54 @@ bool ThreatAssistant::IsTauntImmune(Unit* target)
     if (!target)
         return true;
 
-    // Full taunt immunity detection using creature type and mechanic immunity
-    // Returns false as default until comprehensive immunity detection is implemented
-    // Full implementation should:
-    // - Check Unit::HasMechanicImmunity(MECHANIC_TAUNT) for taunt mechanic immunity
-    // - Verify CreatureTemplate flags for CREATURE_FLAG_EXTRA_TAUNT_IMMUNE
-    // - Check for SPELL_AURA_MECHANIC_IMMUNITY auras affecting taunt mechanic
-    // - Handle boss immunity flags (CREATURE_TYPE_FLAG_BOSS_MOB)
-    // - Validate CreatureType for mechanical/undead special cases
-    // Reference: SpellMechanics, CreatureTemplate, Unit::IsImmunedToSpellEffect
+    // Check if target is a creature with taunt immunity flags
+    if (Creature* creature = target->ToCreature())
+    {
+        CreatureTemplate const* tmpl = creature->GetCreatureTemplate();
+        if (tmpl)
+        {
+            // 1. Check explicit taunt immune flag (CREATURE_FLAG_EXTRA_NO_TAUNT)
+            if (tmpl->flags_extra & CREATURE_FLAG_EXTRA_NO_TAUNT)
+            {
+                TC_LOG_DEBUG("playerbot", "ThreatAssistant::IsTauntImmune - {} is taunt immune via CREATURE_FLAG_EXTRA_NO_TAUNT",
+                             target->GetName());
+                return true;
+            }
+        }
+
+        // 2. Check boss flags - dungeon bosses and world bosses are typically taunt immune
+        // Note: Not all bosses are taunt immune, but most raid bosses are
+        if (creature->IsDungeonBoss() || creature->isWorldBoss())
+        {
+            // Check type_flags for CREATURE_TYPE_FLAG_BOSS_MOB which indicates "??" level
+            auto const* difficulty = creature->GetCreatureDifficulty();
+            if (difficulty && (difficulty->TypeFlags & CREATURE_TYPE_FLAG_BOSS_MOB))
+            {
+                TC_LOG_DEBUG("playerbot", "ThreatAssistant::IsTauntImmune - {} is boss mob (typically taunt immune)",
+                             target->GetName());
+                return true;
+            }
+        }
+    }
+
+    // 3. Check for active mechanic immunity auras (e.g., from player abilities or boss mechanics)
+    if (target->HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY))
+    {
+        Unit::AuraEffectList const& immunities =
+            target->GetAuraEffectsByType(SPELL_AURA_MECHANIC_IMMUNITY);
+
+        for (AuraEffect const* aurEff : immunities)
+        {
+            // MECHANIC_TAUNTED = 36 in TrinityCore 11.x
+            if (aurEff->GetMiscValue() == MECHANIC_TAUNTED)
+            {
+                TC_LOG_DEBUG("playerbot", "ThreatAssistant::IsTauntImmune - {} has taunt immunity aura",
+                             target->GetName());
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -266,11 +308,12 @@ std::vector<Unit*> ThreatAssistant::GetCombatEnemies(Player* tank, float range)
     }
 
     // Group: aggregate all group members' threat lists
+    // FIXED: Use GroupMemberResolver pattern for safe member iteration
     std::set<Unit*> uniqueEnemies;
 
-    for (GroupReference& ref : group->GetMembers())
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = ref.GetSource();
+        Player* member = GroupMemberResolver::ResolveMember(slot.guid);
         if (!member || member->isDead())
             continue;
 
