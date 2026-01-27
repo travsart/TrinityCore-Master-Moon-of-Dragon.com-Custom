@@ -50,6 +50,8 @@
 #include "../PvP/BattlegroundAI.h"
 #include "../Lifecycle/Instance/BotPostLoginConfigurator.h"
 #include "../Lifecycle/Instance/InstanceBotOrchestrator.h"
+#include "../Dungeon/DungeonAutonomyManager.h"
+#include "Map.h"
 #include <chrono>
 #include <set>
 #include <unordered_map>
@@ -709,6 +711,26 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
     // Update movement based on strategy decisions
     // CRITICAL: Must run every frame for smooth movement
     UpdateMovement(diff);
+
+    // ========================================================================
+    // DUNGEON AUTONOMY SYSTEM - Autonomous dungeon navigation
+    // ========================================================================
+    // Check if bot is in a dungeon and autonomy is enabled
+    // This allows tank bots to pull and navigate autonomously
+    // Player can pause at any time with .bot dungeon pause
+    if (Map* map = _bot->GetMap())
+    {
+        if (map->IsDungeon() && _bot->GetGroup())
+        {
+            // Let DungeonAutonomyManager handle dungeon-specific behavior
+            // Returns true if autonomy handled this update (bot should use dungeon behavior)
+            if (sDungeonAutonomyMgr->UpdateBotInDungeon(_bot, this, diff))
+            {
+                // Dungeon autonomy is handling movement/pulling
+                // Still continue with normal AI for combat/healing
+            }
+        }
+    }
 
     // ========================================================================
     // PHASE 2: STATE MANAGEMENT - Check for state transitions
