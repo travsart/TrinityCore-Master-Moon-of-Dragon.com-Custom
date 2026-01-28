@@ -3,6 +3,9 @@
  * Copyright (C) 2021+ WarheadCore <https://github.com/AzerothCore/WarheadCore>
  * Copyright (C) 2025+ TrinityCore Playerbot Integration
  *
+ * Enterprise-Grade Twin Peaks Script Header
+ * ~250 lines - Complete interface for CTF coordination
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -14,9 +17,33 @@
 
 #include "CTFScriptBase.h"
 #include "TwinPeaksData.h"
+#include <unordered_set>
 
 namespace Playerbot::Coordination::Battleground
 {
+
+// ============================================================================
+// GAME PHASE ENUMERATION
+// ============================================================================
+
+enum class TwinPeaksPhase
+{
+    OPENING,     // First 90 seconds - flag grab race, establish positions
+    MID_GAME,    // Standard play - coordinated offense/defense
+    LATE_GAME,   // Score pressure - adjust strategy based on score
+    DESPERATE    // Behind by 2+ caps - all-in offense
+};
+
+// ============================================================================
+// FC ROUTE TYPES
+// ============================================================================
+
+enum class FCRouteType
+{
+    DIRECT,      // Bridge route - fastest, most contested
+    NORTH,       // North flank - avoids bridge
+    SOUTH        // Waterfall route - scenic, slower
+};
 
 /**
  * @brief Twin Peaks battleground script
@@ -26,6 +53,7 @@ namespace Playerbot::Coordination::Battleground
  * - First to 3 captures wins
  * - 25 minute time limit
  * - Different terrain from WSG (river crossing, elevation changes)
+ * - Phase-aware strategy with escort formations
  *
  * Map ID: 726
  */
@@ -51,6 +79,10 @@ public:
     // ========================================================================
 
     void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+    void OnUpdate(uint32 diff) override;
+    void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
     // DATA PROVIDERS
@@ -73,11 +105,80 @@ public:
         uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
-    // UTILITY
+    // STRATEGY AND ROLES
+    // ========================================================================
+
+    RoleDistribution GetRecommendedRoles(const StrategicDecision& decision,
+        float scoreAdvantage, uint32 timeRemaining) const override;
+
+    void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage,
+        uint32 controlledCount, uint32 totalObjectives,
+        uint32 timeRemaining) const override;
+
+    // ========================================================================
+    // POSITIONAL DATA PROVIDERS
     // ========================================================================
 
     std::vector<Position> GetObjectivePath(
         uint32 fromObjective, uint32 toObjective) const override;
+
+    // Sniper/overlook positions
+    std::vector<BGPositionData> GetSniperPositions() const;
+
+    // Ambush positions (faction-specific)
+    std::vector<BGPositionData> GetAmbushPositions(uint32 faction) const;
+
+    // Chokepoints
+    std::vector<BGPositionData> GetChokepoints() const;
+
+    // All buff positions
+    std::vector<BGPositionData> GetBuffPositions() const;
+
+    // ========================================================================
+    // FC ESCORT AND ROUTING
+    // ========================================================================
+
+    // Get escort formation positions relative to FC
+    std::vector<Position> GetFCEscortFormation() const;
+
+    // Get absolute escort positions around a specific FC location
+    std::vector<Position> GetAbsoluteEscortPositions(const Position& fcPosition) const;
+
+    // Get FC kite path for specific route
+    std::vector<Position> GetFCKitePath(uint32 faction, FCRouteType route) const;
+
+    // Recommend best route based on enemy positions
+    FCRouteType RecommendFCRoute(uint32 faction, const std::vector<Position>& enemyPositions) const;
+
+    // ========================================================================
+    // PHASE AND STATE QUERIES
+    // ========================================================================
+
+    TwinPeaksPhase GetCurrentPhase() const { return m_currentPhase; }
+    uint32 GetMatchElapsedTime() const { return m_matchElapsedTime; }
+    uint32 GetMatchRemainingTime() const;
+
+    // Score queries
+    uint32 GetAllianceScore() const { return m_allianceScore; }
+    uint32 GetHordeScore() const { return m_hordeScore; }
+    int32 GetScoreAdvantage(uint32 faction) const;
+
+    // Flag state queries
+    bool IsFlagAtBase(uint32 faction) const;
+    bool IsFlagCarried(uint32 faction) const;
+    bool IsFlagDropped(uint32 faction) const;
+
+    // ========================================================================
+    // TERRAIN QUERIES
+    // ========================================================================
+
+    bool IsInWater(float x, float y, float z) const;
+    bool IsOnBridge(float x, float y) const;
+    bool IsInAllianceBase(float x, float y) const;
+    bool IsInHordeBase(float x, float y) const;
+
+    // Get distance between two key locations
+    float GetLocationDistance(uint8 fromLoc, uint8 toLoc) const;
 
 protected:
     // ========================================================================
@@ -125,15 +226,53 @@ protected:
     }
 
 private:
-    /**
-     * @brief Get river crossing points for FC routing
-     */
-    std::vector<Position> GetRiverCrossings() const;
+    // ========================================================================
+    // INTERNAL UPDATE METHODS
+    // ========================================================================
 
-    /**
-     * @brief Check if position is in water (affects movement speed)
-     */
-    bool IsInWater(float x, float y, float z) const;
+    void UpdatePhase(uint32 timeElapsed, uint32 timeRemaining);
+    void UpdateFlagStates(const std::map<int32, int32>& worldStates);
+    void ProcessFlagEvent(const BGScriptEventData& event);
+
+    // ========================================================================
+    // INTERNAL STRATEGY HELPERS
+    // ========================================================================
+
+    void ApplyOpeningPhaseStrategy(StrategicDecision& decision, uint32 faction) const;
+    void ApplyMidGameStrategy(StrategicDecision& decision, float scoreAdvantage) const;
+    void ApplyLateGameStrategy(StrategicDecision& decision, float scoreAdvantage,
+        uint32 timeRemaining) const;
+    void ApplyDesperateStrategy(StrategicDecision& decision) const;
+
+    // Route evaluation
+    float EvaluateRouteRisk(FCRouteType route, uint32 faction,
+        const std::vector<Position>& enemyPositions) const;
+
+    // ========================================================================
+    // STATE TRACKING
+    // ========================================================================
+
+    // Match state
+    TwinPeaksPhase m_currentPhase = TwinPeaksPhase::OPENING;
+    uint32 m_matchElapsedTime = 0;
+    uint32 m_matchStartTime = 0;
+    bool m_matchActive = false;
+
+    // Score tracking
+    uint32 m_allianceScore = 0;
+    uint32 m_hordeScore = 0;
+
+    // Flag state tracking
+    int32 m_allianceFlagState = TwinPeaks::WorldStates::FLAG_STATE_AT_BASE;
+    int32 m_hordeFlagState = TwinPeaks::WorldStates::FLAG_STATE_AT_BASE;
+
+    // Flag positions when dropped
+    Position m_droppedAllianceFlagPos;
+    Position m_droppedHordeFlagPos;
+
+    // Update timers
+    uint32 m_phaseUpdateTimer = 0;
+    static constexpr uint32 PHASE_UPDATE_INTERVAL = 1000;  // 1 second
 };
 
 } // namespace Playerbot::Coordination::Battleground

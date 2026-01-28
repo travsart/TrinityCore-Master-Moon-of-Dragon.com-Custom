@@ -3,6 +3,9 @@
  * Copyright (C) 2021+ WarheadCore <https://github.com/AzerothCore/WarheadCore>
  * Copyright (C) 2025+ TrinityCore Playerbot Integration
  *
+ * Enterprise-Grade Twin Peaks Script Implementation
+ * ~750 lines - Complete CTF coordination with phase-aware strategy
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -13,6 +16,7 @@
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
 #include "Log.h"
+#include <cmath>
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -21,7 +25,7 @@ namespace Playerbot::Coordination::Battleground
 REGISTER_BG_SCRIPT(TwinPeaksScript, 726);  // TwinPeaks::MAP_ID
 
 // ============================================================================
-// LIFECYCLE
+// LIFECYCLE METHODS
 // ============================================================================
 
 void TwinPeaksScript::OnLoad(BattlegroundCoordinator* coordinator)
@@ -41,8 +45,106 @@ void TwinPeaksScript::OnLoad(BattlegroundCoordinator* coordinator)
         TwinPeaks::ObjectiveIds::HORDE_FLAG, BGObjectiveState::HORDE_CONTROLLED);
 
     TC_LOG_DEBUG("playerbots.bg.script",
-        "TwinPeaksScript: Loaded with {} objectives",
-        m_cachedObjectives.size());
+        "TwinPeaksScript: Loaded with {} objectives, {} sniper positions, {} chokepoints",
+        m_cachedObjectives.size(),
+        TwinPeaks::GetSniperPositions().size(),
+        TwinPeaks::GetMiddleChokepoints().size());
+}
+
+void TwinPeaksScript::OnMatchStart()
+{
+    CTFScriptBase::OnMatchStart();
+
+    m_matchActive = true;
+    m_matchStartTime = 0;
+    m_matchElapsedTime = 0;
+    m_currentPhase = TwinPeaksPhase::OPENING;
+    m_allianceScore = 0;
+    m_hordeScore = 0;
+    m_allianceFlagState = TwinPeaks::WorldStates::FLAG_STATE_AT_BASE;
+    m_hordeFlagState = TwinPeaks::WorldStates::FLAG_STATE_AT_BASE;
+    m_phaseUpdateTimer = 0;
+
+    TC_LOG_DEBUG("playerbots.bg.script",
+        "TwinPeaksScript: Match started - OPENING phase begins");
+}
+
+void TwinPeaksScript::OnMatchEnd(bool victory)
+{
+    CTFScriptBase::OnMatchEnd(victory);
+
+    m_matchActive = false;
+
+    TC_LOG_DEBUG("playerbots.bg.script",
+        "TwinPeaksScript: Match ended - Result: {}, Final Score: Alliance {} - Horde {}",
+        victory ? "Victory" : "Defeat",
+        m_allianceScore, m_hordeScore);
+}
+
+void TwinPeaksScript::OnUpdate(uint32 diff)
+{
+    CTFScriptBase::OnUpdate(diff);
+
+    if (!m_matchActive)
+        return;
+
+    m_matchElapsedTime += diff;
+    m_phaseUpdateTimer += diff;
+
+    // Update phase periodically
+    if (m_phaseUpdateTimer >= PHASE_UPDATE_INTERVAL)
+    {
+        m_phaseUpdateTimer = 0;
+        uint32 timeRemaining = TwinPeaks::MAX_DURATION > m_matchElapsedTime ?
+            TwinPeaks::MAX_DURATION - m_matchElapsedTime : 0;
+        UpdatePhase(m_matchElapsedTime, timeRemaining);
+    }
+}
+
+void TwinPeaksScript::OnEvent(const BGScriptEventData& event)
+{
+    CTFScriptBase::OnEvent(event);
+
+    ProcessFlagEvent(event);
+
+    // Enhanced event logging
+    switch (event.eventType)
+    {
+        case BGScriptEvent::FLAG_PICKED_UP:
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "TwinPeaks: {} flag picked up by {} at ({:.1f}, {:.1f}, {:.1f}) - Phase: {}",
+                event.faction == ALLIANCE ? "Alliance" : "Horde",
+                event.primaryGuid.ToString(),
+                event.x, event.y, event.z,
+                static_cast<int>(m_currentPhase));
+            break;
+
+        case BGScriptEvent::FLAG_CAPTURED:
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "TwinPeaks: Flag captured! New score - Alliance: {}, Horde: {} - Phase: {}",
+                m_allianceScore, m_hordeScore,
+                static_cast<int>(m_currentPhase));
+            break;
+
+        case BGScriptEvent::FLAG_DROPPED:
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "TwinPeaks: Flag dropped at ({:.1f}, {:.1f}, {:.1f}) - {} - Phase: {}",
+                event.x, event.y, event.z,
+                IsOnBridge(event.x, event.y) ? "ON BRIDGE (critical)" :
+                    (IsInWater(event.x, event.y, event.z) ? "IN WATER" : "normal"),
+                static_cast<int>(m_currentPhase));
+            break;
+
+        case BGScriptEvent::FLAG_RETURNED:
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "TwinPeaks: Flag returned to {} base - Phase: {}",
+                event.faction == ALLIANCE ? "Alliance" : "Horde",
+                static_cast<int>(m_currentPhase));
+            break;
+
+        default:
+            break;
+    }
 }
 
 // ============================================================================
@@ -67,7 +169,7 @@ std::vector<BGObjectiveData> TwinPeaksScript::GetObjectiveData() const
     allianceFlag.gameObjectEntry = TwinPeaks::GameObjects::ALLIANCE_FLAG;
     allianceFlag.allianceWorldState = TwinPeaks::WorldStates::ALLIANCE_FLAG_STATE;
     allianceFlag.distanceFromAllianceSpawn = 0.0f;
-    allianceFlag.distanceFromHordeSpawn = 550.0f;
+    allianceFlag.distanceFromHordeSpawn = TwinPeaks::Distances::FLAG_TO_FLAG;
     objectives.push_back(allianceFlag);
 
     // Horde Flag
@@ -83,7 +185,7 @@ std::vector<BGObjectiveData> TwinPeaksScript::GetObjectiveData() const
     hordeFlag.captureTime = 0;
     hordeFlag.gameObjectEntry = TwinPeaks::GameObjects::HORDE_FLAG;
     hordeFlag.hordeWorldState = TwinPeaks::WorldStates::HORDE_FLAG_STATE;
-    hordeFlag.distanceFromAllianceSpawn = 550.0f;
+    hordeFlag.distanceFromAllianceSpawn = TwinPeaks::Distances::FLAG_TO_FLAG;
     hordeFlag.distanceFromHordeSpawn = 0.0f;
     objectives.push_back(hordeFlag);
 
@@ -138,7 +240,7 @@ std::vector<BGPositionData> TwinPeaksScript::GetStrategicPositions() const
 {
     std::vector<BGPositionData> positions;
 
-    // Flag rooms
+    // Flag room defenses
     auto allianceDefense = TwinPeaks::GetAllianceFlagRoomDefense();
     for (const auto& pos : allianceDefense)
     {
@@ -157,58 +259,38 @@ std::vector<BGPositionData> TwinPeaksScript::GetStrategicPositions() const
         positions.push_back(p);
     }
 
-    // Chokepoints (including bridge)
-    auto chokepoints = TwinPeaks::GetMiddleChokepoints();
-    for (const auto& pos : chokepoints)
-    {
-        BGPositionData p("Middle Chokepoint", pos.GetPositionX(), pos.GetPositionY(),
-            pos.GetPositionZ(), pos.GetOrientation(),
-            BGPositionData::PositionType::CHOKEPOINT, 0, 7);
+    // Chokepoints
+    auto chokepoints = GetChokepoints();
+    for (const auto& p : chokepoints)
         positions.push_back(p);
-    }
 
-    // River crossings (important for TP)
+    // Sniper positions
+    auto sniperPositions = GetSniperPositions();
+    for (const auto& p : sniperPositions)
+        positions.push_back(p);
+
+    // Buffs
+    auto buffs = GetBuffPositions();
+    for (const auto& p : buffs)
+        positions.push_back(p);
+
+    // Ambush positions (both factions)
+    auto allianceAmbush = GetAmbushPositions(ALLIANCE);
+    for (const auto& p : allianceAmbush)
+        positions.push_back(p);
+
+    auto hordeAmbush = GetAmbushPositions(HORDE);
+    for (const auto& p : hordeAmbush)
+        positions.push_back(p);
+
+    // River crossings
     auto riverCrossings = TwinPeaks::GetRiverCrossingPoints();
     for (const auto& pos : riverCrossings)
     {
         BGPositionData p("River Crossing", pos.GetPositionX(), pos.GetPositionY(),
             pos.GetPositionZ(), pos.GetOrientation(),
             BGPositionData::PositionType::STRATEGIC_POINT, 0, 6);
-        p.description = "Water slows movement - choose crossing carefully";
-        positions.push_back(p);
-    }
-
-    // Buffs
-    auto speedBuffs = TwinPeaks::GetSpeedBuffPositions();
-    for (size_t i = 0; i < speedBuffs.size(); ++i)
-    {
-        uint32 faction = (i == 0) ? ALLIANCE : HORDE;
-        BGPositionData p("Speed Buff", speedBuffs[i].GetPositionX(),
-            speedBuffs[i].GetPositionY(), speedBuffs[i].GetPositionZ(),
-            speedBuffs[i].GetOrientation(),
-            BGPositionData::PositionType::BUFF_LOCATION, faction, 7);
-        positions.push_back(p);
-    }
-
-    auto restoreBuffs = TwinPeaks::GetRestoreBuffPositions();
-    for (size_t i = 0; i < restoreBuffs.size(); ++i)
-    {
-        uint32 faction = (i == 0) ? ALLIANCE : HORDE;
-        BGPositionData p("Restore Buff", restoreBuffs[i].GetPositionX(),
-            restoreBuffs[i].GetPositionY(), restoreBuffs[i].GetPositionZ(),
-            restoreBuffs[i].GetOrientation(),
-            BGPositionData::PositionType::BUFF_LOCATION, faction, 5);
-        positions.push_back(p);
-    }
-
-    auto berserkBuffs = TwinPeaks::GetBerserkBuffPositions();
-    for (size_t i = 0; i < berserkBuffs.size(); ++i)
-    {
-        uint32 faction = (i == 0) ? ALLIANCE : HORDE;
-        BGPositionData p("Berserk Buff", berserkBuffs[i].GetPositionX(),
-            berserkBuffs[i].GetPositionY(), berserkBuffs[i].GetPositionZ(),
-            berserkBuffs[i].GetOrientation(),
-            BGPositionData::PositionType::BUFF_LOCATION, faction, 5);
+        p.description = "Water crossing - affects movement speed";
         positions.push_back(p);
     }
 
@@ -328,10 +410,111 @@ void TwinPeaksScript::GetScoreFromWorldStates(const std::map<int32, int32>& stat
     auto hordeIt = states.find(TwinPeaks::WorldStates::HORDE_FLAG_CAPTURES);
     if (hordeIt != states.end())
         hordeScore = static_cast<uint32>(hordeIt->second);
+
+    // Update cached scores
+    const_cast<TwinPeaksScript*>(this)->m_allianceScore = allianceScore;
+    const_cast<TwinPeaksScript*>(this)->m_hordeScore = hordeScore;
 }
 
 // ============================================================================
-// UTILITY
+// STRATEGY AND ROLES
+// ============================================================================
+
+RoleDistribution TwinPeaksScript::GetRecommendedRoles(const StrategicDecision& decision,
+    float scoreAdvantage, uint32 timeRemaining) const
+{
+    (void)decision;
+    (void)timeRemaining;
+
+    RoleDistribution roles;
+
+    // Base distribution for CTF using BGRole enum
+    switch (m_currentPhase)
+    {
+        case TwinPeaksPhase::OPENING:
+            // Opening: heavy offense to grab flag first
+            roles.SetRole(BGRole::NODE_DEFENDER, TwinPeaks::Strategy::MIN_FLAG_DEFENDERS, TwinPeaks::Strategy::MIN_FLAG_DEFENDERS + 1);
+            roles.SetRole(BGRole::FLAG_ESCORT, 0, 1);
+            roles.SetRole(BGRole::FLAG_HUNTER, TwinPeaks::Strategy::OPTIMAL_OFFENSE, TwinPeaks::Strategy::OPTIMAL_OFFENSE + 2);
+            roles.SetRole(BGRole::ROAMER, 2, 3);
+            roles.reasoning = "Opening: grab flag fast";
+            break;
+
+        case TwinPeaksPhase::MID_GAME:
+            // Standard balanced distribution
+            roles.SetRole(BGRole::NODE_DEFENDER, TwinPeaks::Strategy::OPTIMAL_FLAG_DEFENDERS, TwinPeaks::Strategy::OPTIMAL_FLAG_DEFENDERS + 1);
+            roles.SetRole(BGRole::FLAG_ESCORT, TwinPeaks::Strategy::OPTIMAL_FC_ESCORT, TwinPeaks::Strategy::OPTIMAL_FC_ESCORT + 1);
+            roles.SetRole(BGRole::FLAG_HUNTER, TwinPeaks::Strategy::MIN_OFFENSE, TwinPeaks::Strategy::MIN_OFFENSE + 2);
+            roles.SetRole(BGRole::ROAMER, 1, 2);
+            roles.reasoning = "Mid-game balanced";
+            break;
+
+        case TwinPeaksPhase::LATE_GAME:
+            if (scoreAdvantage > 0)
+            {
+                // Winning: defensive stance
+                roles.SetRole(BGRole::NODE_DEFENDER, TwinPeaks::Strategy::MAX_FLAG_DEFENDERS, TwinPeaks::Strategy::MAX_FLAG_DEFENDERS + 1);
+                roles.SetRole(BGRole::FLAG_ESCORT, TwinPeaks::Strategy::MAX_FC_ESCORT, TwinPeaks::Strategy::MAX_FC_ESCORT + 1);
+                roles.SetRole(BGRole::FLAG_HUNTER, 2, 3);
+                roles.SetRole(BGRole::ROAMER, 0, 1);
+                roles.reasoning = "Late-game defensive: protect lead";
+            }
+            else
+            {
+                // Losing: aggressive push
+                roles.SetRole(BGRole::NODE_DEFENDER, TwinPeaks::Strategy::MIN_FLAG_DEFENDERS, TwinPeaks::Strategy::MIN_FLAG_DEFENDERS + 1);
+                roles.SetRole(BGRole::FLAG_ESCORT, TwinPeaks::Strategy::MIN_FC_ESCORT, TwinPeaks::Strategy::MIN_FC_ESCORT + 1);
+                roles.SetRole(BGRole::FLAG_HUNTER, TwinPeaks::Strategy::OPTIMAL_OFFENSE + 1, TwinPeaks::Strategy::OPTIMAL_OFFENSE + 3);
+                roles.SetRole(BGRole::ROAMER, 1, 2);
+                roles.reasoning = "Late-game aggressive: catch up";
+            }
+            break;
+
+        case TwinPeaksPhase::DESPERATE:
+            // All-in offense
+            roles.SetRole(BGRole::NODE_DEFENDER, 1, 2);
+            roles.SetRole(BGRole::FLAG_ESCORT, TwinPeaks::Strategy::MIN_FC_ESCORT, TwinPeaks::Strategy::MIN_FC_ESCORT + 1);
+            roles.SetRole(BGRole::FLAG_HUNTER, 6, 8);
+            roles.SetRole(BGRole::ROAMER, 0, 1);
+            roles.reasoning = "Desperate: all-in offense";
+            break;
+    }
+
+    return roles;
+}
+
+void TwinPeaksScript::AdjustStrategy(StrategicDecision& decision, float scoreAdvantage,
+    uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const
+{
+    (void)controlledCount;   // Unused in CTF
+    (void)totalObjectives;   // Unused in CTF
+
+    // Determine faction based on defense allocation bias
+    uint32 faction = (decision.defenseAllocation > decision.offenseAllocation) ? ALLIANCE : HORDE;
+
+    // Apply phase-specific strategy
+    switch (m_currentPhase)
+    {
+        case TwinPeaksPhase::OPENING:
+            ApplyOpeningPhaseStrategy(decision, faction);
+            break;
+
+        case TwinPeaksPhase::MID_GAME:
+            ApplyMidGameStrategy(decision, scoreAdvantage);
+            break;
+
+        case TwinPeaksPhase::LATE_GAME:
+            ApplyLateGameStrategy(decision, scoreAdvantage, timeRemaining);
+            break;
+
+        case TwinPeaksPhase::DESPERATE:
+            ApplyDesperateStrategy(decision);
+            break;
+    }
+}
+
+// ============================================================================
+// POSITIONAL DATA PROVIDERS
 // ============================================================================
 
 std::vector<Position> TwinPeaksScript::GetObjectivePath(
@@ -351,19 +534,489 @@ std::vector<Position> TwinPeaksScript::GetObjectivePath(
     return {};
 }
 
-std::vector<Position> TwinPeaksScript::GetRiverCrossings() const
+std::vector<BGPositionData> TwinPeaksScript::GetSniperPositions() const
 {
-    return TwinPeaks::GetRiverCrossingPoints();
+    std::vector<BGPositionData> positions;
+    auto sniperPos = TwinPeaks::GetSniperPositions();
+
+    for (size_t i = 0; i < sniperPos.size(); ++i)
+    {
+        const auto& pos = sniperPos[i];
+        // Determine faction based on position
+        uint32 faction = (i < 4) ? ALLIANCE : (i < 6) ? HORDE : 0;
+
+        BGPositionData p("Sniper Position", pos.GetPositionX(), pos.GetPositionY(),
+            pos.GetPositionZ(), pos.GetOrientation(),
+            BGPositionData::PositionType::SNIPER_POSITION, faction, 7);
+        p.description = "Elevated advantage for ranged attackers";
+        positions.push_back(p);
+    }
+
+    return positions;
 }
 
-bool TwinPeaksScript::IsInWater(float x, float /*y*/, float z) const
+std::vector<BGPositionData> TwinPeaksScript::GetAmbushPositions(uint32 faction) const
 {
-    // Simplified water detection based on known river area
-    // River runs roughly from x=1750 to x=1950 in the middle
-    if (x > 1750.0f && x < 1950.0f && z < 5.0f)
-        return true;
+    std::vector<BGPositionData> positions;
 
-    return false;
+    auto ambushPos = (faction == ALLIANCE) ?
+        TwinPeaks::GetAllianceAmbushPositions() :
+        TwinPeaks::GetHordeAmbushPositions();
+
+    for (const auto& pos : ambushPos)
+    {
+        BGPositionData p("Ambush Position", pos.GetPositionX(), pos.GetPositionY(),
+            pos.GetPositionZ(), pos.GetOrientation(),
+            BGPositionData::PositionType::STRATEGIC_POINT, faction, 8);
+        p.description = "FC interception point";
+        positions.push_back(p);
+    }
+
+    return positions;
+}
+
+std::vector<BGPositionData> TwinPeaksScript::GetChokepoints() const
+{
+    std::vector<BGPositionData> positions;
+    auto chokepoints = TwinPeaks::GetMiddleChokepoints();
+
+    for (size_t i = 0; i < chokepoints.size(); ++i)
+    {
+        const auto& pos = chokepoints[i];
+        uint8 importance = (i < 5) ? 9 : 7;  // Bridge positions are more important
+
+        BGPositionData p("Chokepoint", pos.GetPositionX(), pos.GetPositionY(),
+            pos.GetPositionZ(), pos.GetOrientation(),
+            BGPositionData::PositionType::CHOKEPOINT, 0, importance);
+
+        if (i == 0)
+            p.description = "Main bridge - critical chokepoint";
+        else if (i < 5)
+            p.description = "Bridge area";
+        else
+            p.description = "Flanking route";
+
+        positions.push_back(p);
+    }
+
+    return positions;
+}
+
+std::vector<BGPositionData> TwinPeaksScript::GetBuffPositions() const
+{
+    std::vector<BGPositionData> positions;
+
+    // Speed buffs (highest priority for FC)
+    auto speedBuffs = TwinPeaks::GetSpeedBuffPositions();
+    for (size_t i = 0; i < speedBuffs.size(); ++i)
+    {
+        uint32 faction = (i == 0) ? ALLIANCE : HORDE;
+        BGPositionData p("Speed Buff", speedBuffs[i].GetPositionX(),
+            speedBuffs[i].GetPositionY(), speedBuffs[i].GetPositionZ(),
+            speedBuffs[i].GetOrientation(),
+            BGPositionData::PositionType::BUFF_LOCATION, faction,
+            TwinPeaks::Strategy::SPEED_BUFF_PRIORITY);
+        p.description = "Critical for flag carriers";
+        positions.push_back(p);
+    }
+
+    // Restore buffs
+    auto restoreBuffs = TwinPeaks::GetRestoreBuffPositions();
+    for (size_t i = 0; i < restoreBuffs.size(); ++i)
+    {
+        uint32 faction = (i == 0) ? ALLIANCE : HORDE;
+        BGPositionData p("Restore Buff", restoreBuffs[i].GetPositionX(),
+            restoreBuffs[i].GetPositionY(), restoreBuffs[i].GetPositionZ(),
+            restoreBuffs[i].GetOrientation(),
+            BGPositionData::PositionType::BUFF_LOCATION, faction,
+            TwinPeaks::Strategy::RESTORE_BUFF_PRIORITY);
+        positions.push_back(p);
+    }
+
+    // Berserk buffs
+    auto berserkBuffs = TwinPeaks::GetBerserkBuffPositions();
+    for (size_t i = 0; i < berserkBuffs.size(); ++i)
+    {
+        uint32 faction = (i == 0) ? ALLIANCE : HORDE;
+        BGPositionData p("Berserk Buff", berserkBuffs[i].GetPositionX(),
+            berserkBuffs[i].GetPositionY(), berserkBuffs[i].GetPositionZ(),
+            berserkBuffs[i].GetOrientation(),
+            BGPositionData::PositionType::BUFF_LOCATION, faction,
+            TwinPeaks::Strategy::BERSERK_BUFF_PRIORITY);
+        positions.push_back(p);
+    }
+
+    return positions;
+}
+
+// ============================================================================
+// FC ESCORT AND ROUTING
+// ============================================================================
+
+std::vector<Position> TwinPeaksScript::GetFCEscortFormation() const
+{
+    return TwinPeaks::GetFCEscortFormation();
+}
+
+std::vector<Position> TwinPeaksScript::GetAbsoluteEscortPositions(const Position& fcPosition) const
+{
+    std::vector<Position> absolutePositions;
+    auto formation = TwinPeaks::GetFCEscortFormation();
+
+    float fcO = fcPosition.GetOrientation();
+    float cosO = std::cos(fcO);
+    float sinO = std::sin(fcO);
+
+    for (const auto& offset : formation)
+    {
+        // Rotate offset by FC orientation
+        float rotatedX = offset.GetPositionX() * cosO - offset.GetPositionY() * sinO;
+        float rotatedY = offset.GetPositionX() * sinO + offset.GetPositionY() * cosO;
+
+        Position absolutePos(
+            fcPosition.GetPositionX() + rotatedX,
+            fcPosition.GetPositionY() + rotatedY,
+            fcPosition.GetPositionZ() + offset.GetPositionZ(),
+            fcO + offset.GetOrientation()
+        );
+        absolutePositions.push_back(absolutePos);
+    }
+
+    return absolutePositions;
+}
+
+std::vector<Position> TwinPeaksScript::GetFCKitePath(uint32 faction, FCRouteType route) const
+{
+    if (faction == ALLIANCE)
+    {
+        switch (route)
+        {
+            case FCRouteType::DIRECT: return TwinPeaks::GetAllianceFCKitePathDirect();
+            case FCRouteType::NORTH:  return TwinPeaks::GetAllianceFCKitePathNorth();
+            case FCRouteType::SOUTH:  return TwinPeaks::GetAllianceFCKitePathSouth();
+        }
+    }
+    else
+    {
+        switch (route)
+        {
+            case FCRouteType::DIRECT: return TwinPeaks::GetHordeFCKitePathDirect();
+            case FCRouteType::NORTH:  return TwinPeaks::GetHordeFCKitePathNorth();
+            case FCRouteType::SOUTH:  return TwinPeaks::GetHordeFCKitePathSouth();
+        }
+    }
+
+    return {};
+}
+
+FCRouteType TwinPeaksScript::RecommendFCRoute(uint32 faction,
+    const std::vector<Position>& enemyPositions) const
+{
+    float directRisk = EvaluateRouteRisk(FCRouteType::DIRECT, faction, enemyPositions);
+    float northRisk = EvaluateRouteRisk(FCRouteType::NORTH, faction, enemyPositions);
+    float southRisk = EvaluateRouteRisk(FCRouteType::SOUTH, faction, enemyPositions);
+
+    // Choose lowest risk route
+    if (directRisk <= northRisk && directRisk <= southRisk)
+        return FCRouteType::DIRECT;
+    else if (northRisk <= southRisk)
+        return FCRouteType::NORTH;
+    else
+        return FCRouteType::SOUTH;
+}
+
+float TwinPeaksScript::EvaluateRouteRisk(FCRouteType route, uint32 faction,
+    const std::vector<Position>& enemyPositions) const
+{
+    auto path = GetFCKitePath(faction, route);
+    float totalRisk = 0.0f;
+
+    // Base risk for route type
+    switch (route)
+    {
+        case FCRouteType::DIRECT:
+            totalRisk = 5.0f;  // Most contested
+            break;
+        case FCRouteType::NORTH:
+            totalRisk = 3.0f;  // Moderate
+            break;
+        case FCRouteType::SOUTH:
+            totalRisk = 4.0f;  // Slower but avoids main traffic
+            break;
+    }
+
+    // Add risk based on enemy proximity to path
+    for (const auto& pathPoint : path)
+    {
+        for (const auto& enemy : enemyPositions)
+        {
+            float dx = pathPoint.GetPositionX() - enemy.GetPositionX();
+            float dy = pathPoint.GetPositionY() - enemy.GetPositionY();
+            float distance = std::sqrt(dx * dx + dy * dy);
+
+            if (distance < TwinPeaks::Strategy::AMBUSH_TRIGGER_DISTANCE)
+            {
+                // Enemy is near this path point - increase risk
+                totalRisk += (TwinPeaks::Strategy::AMBUSH_TRIGGER_DISTANCE - distance) / 10.0f;
+            }
+        }
+    }
+
+    return totalRisk;
+}
+
+// ============================================================================
+// PHASE AND STATE QUERIES
+// ============================================================================
+
+uint32 TwinPeaksScript::GetMatchRemainingTime() const
+{
+    if (m_matchElapsedTime >= TwinPeaks::MAX_DURATION)
+        return 0;
+    return TwinPeaks::MAX_DURATION - m_matchElapsedTime;
+}
+
+int32 TwinPeaksScript::GetScoreAdvantage(uint32 faction) const
+{
+    if (faction == ALLIANCE)
+        return static_cast<int32>(m_allianceScore) - static_cast<int32>(m_hordeScore);
+    else
+        return static_cast<int32>(m_hordeScore) - static_cast<int32>(m_allianceScore);
+}
+
+bool TwinPeaksScript::IsFlagAtBase(uint32 faction) const
+{
+    int32 state = (faction == ALLIANCE) ? m_allianceFlagState : m_hordeFlagState;
+    return state == TwinPeaks::WorldStates::FLAG_STATE_AT_BASE;
+}
+
+bool TwinPeaksScript::IsFlagCarried(uint32 faction) const
+{
+    int32 state = (faction == ALLIANCE) ? m_allianceFlagState : m_hordeFlagState;
+    return state == TwinPeaks::WorldStates::FLAG_STATE_PICKED_UP;
+}
+
+bool TwinPeaksScript::IsFlagDropped(uint32 faction) const
+{
+    int32 state = (faction == ALLIANCE) ? m_allianceFlagState : m_hordeFlagState;
+    return state == TwinPeaks::WorldStates::FLAG_STATE_DROPPED;
+}
+
+// ============================================================================
+// TERRAIN QUERIES
+// ============================================================================
+
+bool TwinPeaksScript::IsInWater(float x, float y, float z) const
+{
+    return TwinPeaks::IsInWaterZone(x, y, z);
+}
+
+bool TwinPeaksScript::IsOnBridge(float x, float y) const
+{
+    return TwinPeaks::IsOnBridge(x, y);
+}
+
+bool TwinPeaksScript::IsInAllianceBase(float x, float y) const
+{
+    return TwinPeaks::IsInAllianceBase(x, y);
+}
+
+bool TwinPeaksScript::IsInHordeBase(float x, float y) const
+{
+    return TwinPeaks::IsInHordeBase(x, y);
+}
+
+float TwinPeaksScript::GetLocationDistance(uint8 fromLoc, uint8 toLoc) const
+{
+    if (fromLoc >= TwinPeaks::Distances::LOC_COUNT ||
+        toLoc >= TwinPeaks::Distances::LOC_COUNT)
+        return 0.0f;
+
+    return TwinPeaks::Distances::MATRIX[fromLoc][toLoc];
+}
+
+// ============================================================================
+// INTERNAL UPDATE METHODS
+// ============================================================================
+
+void TwinPeaksScript::UpdatePhase(uint32 timeElapsed, uint32 timeRemaining)
+{
+    TwinPeaksPhase newPhase = m_currentPhase;
+
+    // Calculate score difference
+    int32 scoreDiff = std::abs(static_cast<int32>(m_allianceScore) -
+                               static_cast<int32>(m_hordeScore));
+
+    // Check for desperate mode (behind by 2+)
+    if (scoreDiff >= static_cast<int32>(TwinPeaks::Strategy::DESPERATE_SCORE_DIFF))
+    {
+        newPhase = TwinPeaksPhase::DESPERATE;
+    }
+    // Time-based phase progression
+    else if (timeElapsed < TwinPeaks::Strategy::OPENING_PHASE)
+    {
+        newPhase = TwinPeaksPhase::OPENING;
+    }
+    else if (timeRemaining <= TwinPeaks::Strategy::LATE_GAME_THRESHOLD)
+    {
+        newPhase = TwinPeaksPhase::LATE_GAME;
+    }
+    else
+    {
+        newPhase = TwinPeaksPhase::MID_GAME;
+    }
+
+    if (newPhase != m_currentPhase)
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "TwinPeaks: Phase transition {} -> {} at {}ms elapsed, score: A{}-H{}",
+            static_cast<int>(m_currentPhase), static_cast<int>(newPhase),
+            timeElapsed, m_allianceScore, m_hordeScore);
+        m_currentPhase = newPhase;
+    }
+}
+
+void TwinPeaksScript::UpdateFlagStates(const std::map<int32, int32>& worldStates)
+{
+    auto allyIt = worldStates.find(TwinPeaks::WorldStates::ALLIANCE_FLAG_STATE);
+    if (allyIt != worldStates.end())
+        m_allianceFlagState = allyIt->second;
+
+    auto hordeIt = worldStates.find(TwinPeaks::WorldStates::HORDE_FLAG_STATE);
+    if (hordeIt != worldStates.end())
+        m_hordeFlagState = hordeIt->second;
+}
+
+void TwinPeaksScript::ProcessFlagEvent(const BGScriptEventData& event)
+{
+    switch (event.eventType)
+    {
+        case BGScriptEvent::FLAG_PICKED_UP:
+            if (event.faction == ALLIANCE)
+                m_allianceFlagState = TwinPeaks::WorldStates::FLAG_STATE_PICKED_UP;
+            else
+                m_hordeFlagState = TwinPeaks::WorldStates::FLAG_STATE_PICKED_UP;
+            break;
+
+        case BGScriptEvent::FLAG_DROPPED:
+            if (event.faction == ALLIANCE)
+            {
+                m_allianceFlagState = TwinPeaks::WorldStates::FLAG_STATE_DROPPED;
+                m_droppedAllianceFlagPos = Position(event.x, event.y, event.z, 0);
+            }
+            else
+            {
+                m_hordeFlagState = TwinPeaks::WorldStates::FLAG_STATE_DROPPED;
+                m_droppedHordeFlagPos = Position(event.x, event.y, event.z, 0);
+            }
+            break;
+
+        case BGScriptEvent::FLAG_RETURNED:
+            if (event.faction == ALLIANCE)
+                m_allianceFlagState = TwinPeaks::WorldStates::FLAG_STATE_AT_BASE;
+            else
+                m_hordeFlagState = TwinPeaks::WorldStates::FLAG_STATE_AT_BASE;
+            break;
+
+        case BGScriptEvent::FLAG_CAPTURED:
+            // Update scores
+            if (event.faction == ALLIANCE)
+                m_allianceScore++;
+            else
+                m_hordeScore++;
+            break;
+
+        default:
+            break;
+    }
+}
+
+// ============================================================================
+// INTERNAL STRATEGY HELPERS
+// ============================================================================
+
+void TwinPeaksScript::ApplyOpeningPhaseStrategy(StrategicDecision& decision, uint32 faction) const
+{
+    // Opening: aggressive flag grab
+    decision.strategy = BGStrategy::AGGRESSIVE;
+    decision.attackObjectives.clear();
+    decision.attackObjectives.push_back((faction == ALLIANCE) ?
+        TwinPeaks::ObjectiveIds::HORDE_FLAG : TwinPeaks::ObjectiveIds::ALLIANCE_FLAG);
+    decision.offenseAllocation = 70;
+    decision.defenseAllocation = 30;
+    decision.reasoning = "Opening: grab flag fast";
+    decision.confidence = 0.9f;
+}
+
+void TwinPeaksScript::ApplyMidGameStrategy(StrategicDecision& decision, float scoreAdvantage) const
+{
+    if (scoreAdvantage > 0)
+    {
+        // Winning: balanced with slight defense
+        decision.strategy = BGStrategy::BALANCED;
+        decision.offenseAllocation = 40;
+        decision.defenseAllocation = 60;
+        decision.reasoning = "Mid-game: protect lead";
+    }
+    else if (scoreAdvantage < 0)
+    {
+        // Losing: more aggressive
+        decision.strategy = BGStrategy::AGGRESSIVE;
+        decision.offenseAllocation = 65;
+        decision.defenseAllocation = 35;
+        decision.reasoning = "Mid-game: catch up";
+    }
+    else
+    {
+        // Tied: fully balanced
+        decision.strategy = BGStrategy::BALANCED;
+        decision.offenseAllocation = 50;
+        decision.defenseAllocation = 50;
+        decision.reasoning = "Mid-game: balanced";
+    }
+    decision.confidence = 0.75f;
+}
+
+void TwinPeaksScript::ApplyLateGameStrategy(StrategicDecision& decision, float scoreAdvantage,
+    uint32 timeRemaining) const
+{
+    (void)timeRemaining;
+
+    if (scoreAdvantage > 0)
+    {
+        // Winning late game: turtle hard
+        decision.strategy = BGStrategy::DEFENSIVE;
+        decision.offenseAllocation = 25;
+        decision.defenseAllocation = 75;
+        decision.reasoning = "Late-game: turtle for win";
+    }
+    else if (scoreAdvantage < 0)
+    {
+        // Losing late game: all-in offense
+        decision.strategy = BGStrategy::AGGRESSIVE;
+        decision.offenseAllocation = 80;
+        decision.defenseAllocation = 20;
+        decision.reasoning = "Late-game: all-in offense";
+    }
+    else
+    {
+        // Tied late game: aggressive to break deadlock
+        decision.strategy = BGStrategy::AGGRESSIVE;
+        decision.offenseAllocation = 60;
+        decision.defenseAllocation = 40;
+        decision.reasoning = "Late-game: break deadlock";
+    }
+    decision.confidence = 0.7f;
+}
+
+void TwinPeaksScript::ApplyDesperateStrategy(StrategicDecision& decision) const
+{
+    // Desperate: maximum aggression
+    decision.strategy = BGStrategy::ALL_IN;
+    decision.offenseAllocation = 90;
+    decision.defenseAllocation = 10;
+    decision.reasoning = "Desperate: all-in attack";
+    decision.confidence = 0.5f;
 }
 
 } // namespace Playerbot::Coordination::Battleground
