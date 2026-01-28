@@ -36,6 +36,10 @@ class BotAI;
 namespace Humanization
 {
 
+// Forward declarations for sub-managers
+class AFKSimulator;
+class FishingSessionManager;
+
 /**
  * @brief Humanization state
  */
@@ -144,6 +148,16 @@ public:
      * @brief Get the session manager
      */
     ActivitySessionManager* GetSessionManager() const { return _sessionManager.get(); }
+
+    /**
+     * @brief Get the AFK simulator (Phase 3 Task 12)
+     */
+    AFKSimulator* GetAFKSimulator() const { return _afkSimulator.get(); }
+
+    /**
+     * @brief Get the fishing session manager (Phase 3 Task 11)
+     */
+    FishingSessionManager* GetFishingSessionManager() const { return _fishingSessionManager.get(); }
 
     /**
      * @brief Get current activity type
@@ -404,6 +418,10 @@ private:
 
     // Session manager
     std::unique_ptr<ActivitySessionManager> _sessionManager;
+
+    // Humanization sub-managers (Phase 3 Tasks 11-12)
+    std::unique_ptr<AFKSimulator> _afkSimulator;
+    std::unique_ptr<FishingSessionManager> _fishingSessionManager;
 
     // State
     HumanizationState _state{HumanizationState::DISABLED};

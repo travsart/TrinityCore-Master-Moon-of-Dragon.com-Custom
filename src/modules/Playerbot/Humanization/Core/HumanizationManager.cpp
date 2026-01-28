@@ -24,6 +24,10 @@
 #include "Quest/QuestHubDatabase.h"
 #include "Session/BotSessionManager.h"
 #include "Creature.h"
+#include "Core/PlayerBotHelpers.h"
+// Phase 3 Humanization sub-managers
+#include "../Activities/AFKSimulator.h"
+#include "../Sessions/FishingSessionManager.h"
 #include <random>
 #include <chrono>
 
@@ -44,6 +48,9 @@ HumanizationManager::HumanizationManager(Player* bot)
     , _botGuid(bot ? bot->GetGUID() : ObjectGuid::Empty)
 {
     _sessionManager = std::make_unique<ActivitySessionManager>(bot);
+
+    // Phase 3 Tasks 11-12: Create humanization sub-managers
+    // Note: BotAI is obtained from bot during Initialize() when it's available
 }
 
 HumanizationManager::~HumanizationManager()
@@ -80,15 +87,37 @@ void HumanizationManager::Initialize()
     // Initialize session manager
     _sessionManager->Initialize();
 
+    // Phase 3 Tasks 11-12: Initialize humanization sub-managers
+    // Get BotAI from the bot using the helper function
+    BotAI* botAI = GetBotAI(_bot);
+
+    // Create AFKSimulator (Task 12)
+    _afkSimulator = std::make_unique<AFKSimulator>(_bot, botAI);
+    if (_afkSimulator)
+    {
+        _afkSimulator->SetPersonality(&_sessionManager->GetPersonality());
+        _afkSimulator->OnInitialize();
+    }
+
+    // Create FishingSessionManager (Task 11)
+    _fishingSessionManager = std::make_unique<FishingSessionManager>(_bot, botAI);
+    if (_fishingSessionManager)
+    {
+        _fishingSessionManager->SetPersonality(&_sessionManager->GetPersonality());
+        _fishingSessionManager->OnInitialize();
+    }
+
     // Start in idle state
     _state = HumanizationState::IDLE;
     _enabled = true;
     _initialized = true;
 
     TC_LOG_DEBUG("module.playerbot.humanization",
-        "HumanizationManager::Initialize - Bot {} initialized with {} personality",
+        "HumanizationManager::Initialize - Bot {} initialized with {} personality (AFK: {}, Fishing: {})",
         _bot->GetName(),
-        PersonalityProfile::GetTypeName(_sessionManager->GetPersonality().GetType()));
+        PersonalityProfile::GetTypeName(_sessionManager->GetPersonality().GetType()),
+        _afkSimulator ? "enabled" : "disabled",
+        _fishingSessionManager ? "enabled" : "disabled");
 }
 
 void HumanizationManager::Update(uint32 diff)
@@ -127,6 +156,12 @@ void HumanizationManager::Update(uint32 diff)
     // Update session manager
     _sessionManager->Update(elapsed);
 
+    // Update humanization sub-managers (Phase 3 Tasks 11-12)
+    if (_afkSimulator)
+        _afkSimulator->OnUpdate(elapsed);
+    if (_fishingSessionManager)
+        _fishingSessionManager->OnUpdate(elapsed);
+
     // Update state machine
     UpdateStateMachine(elapsed);
 
@@ -157,6 +192,18 @@ void HumanizationManager::Shutdown()
     // End any active AFK/break
     if (_isAFK)
         EndAFK();
+
+    // Shutdown humanization sub-managers (Phase 3 Tasks 11-12)
+    if (_afkSimulator)
+    {
+        _afkSimulator->OnShutdown();
+        _afkSimulator.reset();
+    }
+    if (_fishingSessionManager)
+    {
+        _fishingSessionManager->OnShutdown();
+        _fishingSessionManager.reset();
+    }
 
     if (_sessionManager)
         _sessionManager->Shutdown();
