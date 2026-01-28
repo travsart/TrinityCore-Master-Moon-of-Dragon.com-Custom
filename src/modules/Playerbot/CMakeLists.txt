@@ -647,9 +647,26 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/HumanizationManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/ActivityExecutor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/ActivityExecutor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/ActivitySession.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/ActivitySession.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/ActivitySessionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/ActivitySessionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/SessionTransitions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/SessionTransitions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/CityLifeBehaviorManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/CityLifeBehaviorManager.h
+
+    # Achievement System (Phase 3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Achievements/AchievementManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Achievements/AchievementManager.h
+
+    # Reputation System (Phase 3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Reputation/ReputationGrindManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Reputation/ReputationGrindManager.h
+
+    # Economy System (Phase 3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/GoldFarmingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/GoldFarmingManager.h
 
     # Lifecycle Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleManager.cpp
@@ -1020,6 +1037,8 @@ set(PLAYERBOT_PVP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/EncounterStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/InstanceCoordination.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/InstanceCoordination.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/InstanceFarmingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/InstanceFarmingManager.h
 
     # Dungeon Scripts - Vanilla
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/Scripts/Vanilla/BlackfathomDeepsScript.cpp
