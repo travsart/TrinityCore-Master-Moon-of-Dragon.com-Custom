@@ -123,6 +123,7 @@ set(PLAYERBOT_CORE_SOURCES
 
     # Core DI Interfaces
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces/IObjectiveTracker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces/IRidingManager.h
 
     # Events
     ${CMAKE_CURRENT_SOURCE_DIR}/Events/BotEventData.h
@@ -308,6 +309,8 @@ set(PLAYERBOT_AI_BASE_SOURCES
 
     # AI Coordination - Battleground Core
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BGState.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BGSpatialQueryCache.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BGSpatialQueryCache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BattlegroundCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BattlegroundCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/BattlegroundCoordinatorManager.h
@@ -629,8 +632,24 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     # Companion Systems
     ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Companion/RidingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Companion/RidingManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.h
+
+    # Humanization System (Phase 3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/ActivityType.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/PersonalityProfile.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/PersonalityProfile.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/HumanizationConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/HumanizationConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/HumanizationManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/HumanizationManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/ActivityExecutor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core/ActivityExecutor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/ActivitySession.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/ActivitySessionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/ActivitySessionManager.h
 
     # Lifecycle Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleManager.cpp
@@ -817,6 +836,8 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/VendorInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/InnkeeperInteractionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/InnkeeperInteractionManager.h
 
     # Group System
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp

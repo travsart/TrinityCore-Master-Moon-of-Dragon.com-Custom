@@ -9,6 +9,7 @@
  */
 
 #include "BattlegroundCoordinator.h"
+#include "BGSpatialQueryCache.h"
 #include "ObjectiveManager.h"
 #include "BGRoleManager.h"
 #include "FlagCarrierManager.h"
@@ -68,6 +69,11 @@ void BattlegroundCoordinator::Initialize()
     _flagManager = ::std::make_unique<FlagCarrierManager>(this);
     _nodeController = ::std::make_unique<NodeController>(this);
     _strategyEngine = ::std::make_unique<BGStrategyEngine>(this);
+
+    // Create spatial query cache for O(1) player lookups
+    _spatialCache = ::std::make_unique<BGSpatialQueryCache>(_battleground, _faction);
+    _spatialCache->Initialize();
+    TC_LOG_DEBUG("playerbot.bg", "BattlegroundCoordinator: Initialized spatial query cache for O(1) lookups");
 
     // Initialize sub-managers
     _objectiveManager->Initialize();
@@ -175,6 +181,13 @@ void BattlegroundCoordinator::Shutdown()
     // Unsubscribe from events
     CombatEventRouter::Instance().Unsubscribe(this);
 
+    // Log spatial cache metrics before shutdown
+    if (_spatialCache)
+    {
+        _spatialCache->LogPerformanceSummary();
+        _spatialCache.reset();
+    }
+
     // Unload script
     if (_activeScript)
     {
@@ -202,6 +215,10 @@ void BattlegroundCoordinator::Update(uint32 diff)
     // Only update sub-managers during active play
     if (_state == BGState::ACTIVE || _state == BGState::OVERTIME)
     {
+        // Update spatial cache FIRST (other systems depend on it)
+        if (_spatialCache)
+            _spatialCache->Update(diff);
+
         // Update tracking
         UpdateBotTracking(diff);
         UpdateScoreTracking();
@@ -1108,6 +1125,97 @@ bool BattlegroundCoordinator::IsFriendlyObjective(const BGObjective& objective) 
 bool BattlegroundCoordinator::IsEnemyObjective(const BGObjective& objective) const
 {
     return !IsFriendlyObjective(objective) && objective.state != BGObjectiveState::NEUTRAL;
+}
+
+// ============================================================================
+// SPATIAL QUERY CACHE (O(1) OPTIMIZED LOOKUPS)
+// ============================================================================
+
+ObjectGuid BattlegroundCoordinator::GetCachedFriendlyFC() const
+{
+    if (_spatialCache)
+        return _spatialCache->GetFriendlyFlagCarrier();
+    return ObjectGuid::Empty;
+}
+
+ObjectGuid BattlegroundCoordinator::GetCachedEnemyFC() const
+{
+    if (_spatialCache)
+        return _spatialCache->GetEnemyFlagCarrier();
+    return ObjectGuid::Empty;
+}
+
+bool BattlegroundCoordinator::GetCachedFriendlyFCPosition(Position& outPosition) const
+{
+    if (_spatialCache)
+        return _spatialCache->GetFriendlyFCPosition(outPosition);
+    return false;
+}
+
+bool BattlegroundCoordinator::GetCachedEnemyFCPosition(Position& outPosition) const
+{
+    if (_spatialCache)
+        return _spatialCache->GetEnemyFCPosition(outPosition);
+    return false;
+}
+
+BGPlayerSnapshot const* BattlegroundCoordinator::GetPlayerSnapshot(ObjectGuid guid) const
+{
+    if (_spatialCache)
+        return _spatialCache->GetPlayerSnapshot(guid);
+    return nullptr;
+}
+
+::std::vector<BGPlayerSnapshot const*> BattlegroundCoordinator::QueryNearbyEnemies(
+    Position const& position, float radius) const
+{
+    if (_spatialCache)
+        return _spatialCache->QueryNearbyEnemies(position, radius);
+    return {};
+}
+
+::std::vector<BGPlayerSnapshot const*> BattlegroundCoordinator::QueryNearbyAllies(
+    Position const& position, float radius) const
+{
+    if (_spatialCache)
+        return _spatialCache->QueryNearbyAllies(position, radius);
+    return {};
+}
+
+BGPlayerSnapshot const* BattlegroundCoordinator::GetNearestEnemy(
+    Position const& position, float maxRadius, float* outDistance) const
+{
+    if (_spatialCache)
+        return _spatialCache->GetNearestEnemy(position, maxRadius, outDistance);
+    return nullptr;
+}
+
+BGPlayerSnapshot const* BattlegroundCoordinator::GetNearestAlly(
+    Position const& position, float maxRadius, ObjectGuid excludeGuid, float* outDistance) const
+{
+    if (_spatialCache)
+        return _spatialCache->GetNearestAlly(position, maxRadius, excludeGuid, outDistance);
+    return nullptr;
+}
+
+uint32 BattlegroundCoordinator::CountEnemiesInRadius(Position const& position, float radius) const
+{
+    if (_spatialCache)
+        return _spatialCache->CountEnemiesInRadius(position, radius);
+    return 0;
+}
+
+uint32 BattlegroundCoordinator::CountAlliesInRadius(Position const& position, float radius) const
+{
+    if (_spatialCache)
+        return _spatialCache->CountAlliesInRadius(position, radius);
+    return 0;
+}
+
+void BattlegroundCoordinator::LogSpatialCacheMetrics() const
+{
+    if (_spatialCache)
+        _spatialCache->LogPerformanceSummary();
 }
 
 } // namespace Playerbot

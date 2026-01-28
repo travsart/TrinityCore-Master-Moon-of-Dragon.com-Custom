@@ -406,7 +406,9 @@ private:
     uint32 GetEnemyTeamScore(::Player* player) const;
     bool IsObjectiveInRange(::Player* player, Position const& objLocation, float range) const;
     uint32 CountPlayersAtObjective(Position const& objLocation, float range) const;
+    uint32 CountPlayersAtObjective(Position const& objLocation, float range, ::Player* contextPlayer) const;
     ::std::vector<::Player*> GetPlayersAtObjective(Position const& objLocation, float range) const;
+    ::std::vector<::Player*> GetPlayersAtObjective(Position const& objLocation, float range, ::Player* contextPlayer) const;
 
     // ============================================================================
     // INITIALIZATION HELPERS

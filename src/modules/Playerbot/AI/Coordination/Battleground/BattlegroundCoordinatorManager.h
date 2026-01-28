@@ -94,6 +94,18 @@ public:
      */
     bool HasCoordinator(uint32 bgInstanceId) const;
 
+    /**
+     * @brief Get read-only access to all coordinators for iteration
+     * @return Const reference to the coordinators map
+     *
+     * NOTE: Caller should not hold references across calls as coordinators may be destroyed.
+     * Used for spatial cache queries when no specific player context is available.
+     */
+    std::unordered_map<uint32, std::unique_ptr<BattlegroundCoordinator>> const& GetAllCoordinators() const
+    {
+        return _coordinators;
+    }
+
     // ========================================================================
     // STATISTICS
     // ========================================================================
