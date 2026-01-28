@@ -160,15 +160,11 @@ bool PlayerbotModule::Initialize()
 
     // ==========================================================================
 
-
-    // Register with the shared ModuleUpdateManager for world updates
-    if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
-    {
-        _lastError = "Failed to register with ModuleUpdateManager";
-        TC_LOG_ERROR("server.loading", "Playerbot Module: ModuleUpdateManager registration failed");
-        return false;
-    }
-    TC_LOG_INFO("server.loading", "Playerbot Module: Successfully registered with ModuleUpdateManager");
+    // NOTE: Do NOT register with ModuleUpdateManager here!
+    // PlayerbotModuleAdapter already registers with ModuleManager, which calls OnModuleUpdate
+    // → OnWorldUpdate. Registering here would cause DOUBLE updates per tick, leading to
+    // FreezeDetector crashes (60s timeout exceeded due to 35s × 2 = 70s max wait).
+    // See: World.cpp lines 2327 (ModuleManager::CallOnUpdate) and 2334 (sModuleUpdateManager->Update)
 
     _initialized = true;
     _enabled = true;
