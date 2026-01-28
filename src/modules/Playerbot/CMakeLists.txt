@@ -653,8 +653,12 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/ActivitySessionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/SessionTransitions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/SessionTransitions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/FishingSessionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions/FishingSessionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/CityLifeBehaviorManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/CityLifeBehaviorManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/AFKSimulator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/AFKSimulator.h
 
     # Achievement System (Phase 3)
     ${CMAKE_CURRENT_SOURCE_DIR}/Achievements/AchievementManager.cpp
