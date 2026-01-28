@@ -4,10 +4,10 @@
 
 This document catalogs ALL existing systems in the Playerbot module to **prevent duplicate implementations, redundant work, and compatibility issues**. Before implementing ANY new feature, verify it doesn't already exist here.
 
-**Last Updated:** 2025-11-01 (Phase 4C/4D completion)
-**Total Systems:** 54+ major subsystems across 53 directories
-**Total Files:** 1000+ C++ files
-**Compilation Status:** ✅ 0 errors, 1 harmless warning
+**Last Updated:** 2026-01-28 (GOD_TIER Phase 3 completion)
+**Total Systems:** 60+ major subsystems across 58 directories
+**Total Files:** 1010+ C++ files
+**Compilation Status:** ✅ 0 errors, 0 warnings
 **Test Status:** ✅ 2/2 tests passing (100%)
 
 ---
@@ -56,6 +56,7 @@ src/modules/Playerbot/
 ├── Events/                # Event data structures
 ├── Game/                  # Game interactions (NPCs, vendors, flight masters, quests)
 ├── Group/                 # Group formation, invitations, roles
+├── Humanization/          # Human-like behavior simulation (AFK, mounts, pets, achievements)
 ├── Instance/              # Instance event bus
 ├── Interaction/           # NPC interaction systems
 ├── Interfaces/            # Abstract interfaces (IBotSpawner, IBotSession, etc.)
@@ -101,6 +102,12 @@ src/modules/Playerbot/
 | Database queries | PlayerbotDatabaseStatements | Database/ | ✅ COMPLETE |
 | Event handling | [Type]EventBus | Combat/, Quest/, etc. | ✅ COMPLETE |
 | Spatial queries | SpatialGrid systems | Spatial/ | ✅ COMPLETE |
+| Mount collection | MountCollectionManager | Humanization/Mounts/ | ✅ COMPLETE |
+| Pet collection | PetCollectionManager | Humanization/Collections/ | ✅ COMPLETE |
+| Achievement grinding | AchievementGrinder | Humanization/Achievements/ | ✅ COMPLETE |
+| AFK behavior | AFKSimulator | Humanization/AFKSimulator/ | ✅ COMPLETE |
+| Fishing sessions | FishingSessionManager | Humanization/Fishing/ | ✅ COMPLETE |
+| Humanization orchestration | HumanizationManager | Humanization/Core/ | ✅ COMPLETE |
 
 ---
 
@@ -300,10 +307,59 @@ bool IsGuildMaster(Creature* npc) const;
 
 ---
 
+### Humanization Systems (`Humanization/`)
+
+**Phase 3: GOD_TIER Humanization Core**
+
+**AFKSimulator/** - AFK Behavior Simulation
+- AFKSimulator - Simulates human-like AFK patterns ✅ COMPLETE
+- Controls idle durations, bio breaks, food breaks
+- Integrates with HumanizationManager
+
+**Fishing/** - Fishing Behavior
+- FishingSessionManager - Manages fishing sessions ✅ COMPLETE
+- Natural session timing, zone preferences
+- Equipment handling and auto-bait
+
+**Mounts/** - Mount Collection System
+- MountCollectionManager - Mount farming and collection ✅ COMPLETE (GOD_TIER Task 7)
+- Tracks collectible mounts by source (Vendor, Rep, Raid Drop, Dungeon Drop, etc.)
+- Priority-based farm selection
+- Session tracking with statistics
+- File: `Humanization/Mounts/MountCollectionManager.h/.cpp`
+
+**Collections/** - Pet Collection System
+- PetCollectionManager - Battle pet farming and collection ✅ COMPLETE (GOD_TIER Task 8)
+- Wild capture, vendor purchase, drop farming
+- Quality-based capture filtering
+- Coordinates with BattlePetManager for captures
+- File: `Humanization/Collections/PetCollectionManager.h/.cpp`
+
+**Achievements/** - Achievement Grinding
+- AchievementGrinder - Achievement grind execution ✅ COMPLETE (GOD_TIER Task 10)
+- Exploration, Kill, Quest, Dungeon, Raid achievements
+- Navigates to objectives and tracks progress
+- Coordinates with AchievementManager for goal selection
+- File: `Humanization/Achievements/AchievementGrinder.h/.cpp`
+
+**Core/** - Humanization Core
+- HumanizationManager - Master coordinator for humanization behaviors ✅ COMPLETE
+- Orchestrates all humanization subsystems
+- Natural behavior patterns, activity variance
+
+**Pattern:** All managers extend BehaviorManager base class with:
+- Static shared databases across bots
+- Per-bot session tracking
+- Atomic statistics
+- Callback notifications
+- Update interval control
+
+---
+
 ## File Count Summary
 
 ```
-Total Files: ~1000+
+Total Files: ~1010+
 
 By Category:
 - AI Systems:           ~280 files
@@ -324,6 +380,7 @@ By Category:
 - Economy:              ~6 files
 - Social:               ~8 files
 - Configuration:        ~8 files
+- Humanization:         ~12 files (NEW - GOD_TIER Phase 3)
 - Tests:                ~5 files (active)
 - Other:                ~100+ files
 ```

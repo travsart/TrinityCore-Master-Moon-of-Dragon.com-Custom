@@ -664,6 +664,18 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Achievements/AchievementManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Achievements/AchievementManager.h
 
+    # GOD_TIER Task 7: Mount Collection System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Mounts/MountCollectionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Mounts/MountCollectionManager.h
+
+    # GOD_TIER Task 8: Pet Collection System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Collections/PetCollectionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Collections/PetCollectionManager.h
+
+    # GOD_TIER Task 10: Achievement Grinder
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Achievements/AchievementGrinder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Achievements/AchievementGrinder.h
+
     # Reputation System (Phase 3)
     ${CMAKE_CURRENT_SOURCE_DIR}/Reputation/ReputationGrindManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Reputation/ReputationGrindManager.h
