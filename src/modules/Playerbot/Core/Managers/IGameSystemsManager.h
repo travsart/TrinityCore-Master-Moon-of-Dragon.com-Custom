@@ -63,6 +63,7 @@ class TradeManager;
 class GatheringManager;
 class ProfessionManager;
 class AuctionManager;
+class BankingManager;
 class EquipmentManager;
 class LootDistribution;
 class DeathRecoveryManager;
@@ -212,6 +213,12 @@ public:
      * @return Non-owning pointer to AuctionManager (owned by facade)
      */
     virtual AuctionManager* GetAuctionManager() const = 0;
+
+    /**
+     * @brief Get banking management system
+     * @return Non-owning pointer to BankingManager (owned by facade)
+     */
+    virtual BankingManager* GetBankingManager() const = 0;
 
     /**
      * @brief Get equipment management system

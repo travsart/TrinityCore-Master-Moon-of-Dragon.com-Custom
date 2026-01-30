@@ -378,11 +378,10 @@ BotActionResult BotActionProcessor::ExecuteUseItem(Player* bot, BotAction const&
         return BotActionResult::Failure("Item has no usable effects");
 
     // Use the item (casts the item's spell)
-    // CastItemUseSpell signature: (Item* item, SpellCastTargets const& targets, ObjectGuid castCount, int32* misc)
-    // CRITICAL: Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
-    // Passing nullptr causes ACCESS_VIOLATION crash at Player.cpp:8853
+    // CastItemUseSpell signature: (Item* item, SpellCastTargets const& targets, ObjectGuid castCount, const std::array<int32, 3>& misc)
+    // WoW 12.0: Misc array expanded from 2 to 3 elements
     SpellCastTargets targets;
-    int32 misc[2] = { 0, 0 };
+    std::array<int32, 3> misc = { 0, 0, 0 };
     bot->CastItemUseSpell(item, targets, ObjectGuid::Empty, misc);
 
     TC_LOG_TRACE("playerbot.action",

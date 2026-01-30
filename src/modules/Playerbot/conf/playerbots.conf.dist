@@ -3011,20 +3011,331 @@ Playerbot.Instance.Template.DefaultGearLevel = 450
 #
 Playerbot.Instance.Template.ScaleGearToContent = 1
 
+###############################################################################
+# B32. HUMANIZATION SYSTEM
+#
+#     Phase 3: Makes bots behave like real humans with activity sessions,
+#     personality profiles, breaks, AFK simulation, and natural transitions.
+###############################################################################
+
+#
+#  Humanization.Enabled
+#    Description: Master switch for the humanization system
+#    Default:     1 (enabled)
+#
+Humanization.Enabled = 1
+
+#
+#  Humanization.DebugLevel
+#    Description: Debug logging level for humanization
+#    Default:     0 (off)
+#    Values:      0 = off, 1 = basic, 2 = verbose
+#
+Humanization.DebugLevel = 0
+
+#
+#  Humanization.ApplyToExisting
+#    Description: Apply humanization to existing bots when loaded
+#    Default:     1 (enabled)
+#
+Humanization.ApplyToExisting = 1
+
+#
+#  Session Configuration
+#  Controls how long bots stay engaged in activities
+#
+
+#
+#  Humanization.Session.MinDuration
+#    Description: Minimum session duration in milliseconds
+#    Default:     1800000 (30 minutes)
+#
+Humanization.Session.MinDuration = 1800000
+
+#
+#  Humanization.Session.MaxDuration
+#    Description: Maximum session duration in milliseconds
+#    Default:     5400000 (90 minutes)
+#
+Humanization.Session.MaxDuration = 5400000
+
+#
+#  Humanization.Session.ExtendChance
+#    Description: Chance to extend a session when it ends (percent)
+#    Default:     20
+#
+Humanization.Session.ExtendChance = 20
+
+#
+#  Humanization.Session.MaxExtensions
+#    Description: Maximum number of times a session can be extended
+#    Default:     2
+#
+Humanization.Session.MaxExtensions = 2
+
+#
+#  Break Configuration
+#  Controls when and how long bots take breaks
+#
+
+#
+#  Humanization.Break.Short.Min
+#    Description: Short break minimum duration in milliseconds
+#    Default:     60000 (1 minute)
+#
+Humanization.Break.Short.Min = 60000
+
+#
+#  Humanization.Break.Short.Max
+#    Description: Short break maximum duration in milliseconds
+#    Default:     300000 (5 minutes)
+#
+Humanization.Break.Short.Max = 300000
+
+#
+#  Humanization.Break.Long.Min
+#    Description: Long break minimum duration in milliseconds
+#    Default:     300000 (5 minutes)
+#
+Humanization.Break.Long.Min = 300000
+
+#
+#  Humanization.Break.Long.Max
+#    Description: Long break maximum duration in milliseconds
+#    Default:     900000 (15 minutes)
+#
+Humanization.Break.Long.Max = 900000
+
+#
+#  Humanization.Break.Bio.Min
+#    Description: Bio break minimum duration in milliseconds
+#    Default:     120000 (2 minutes)
+#
+Humanization.Break.Bio.Min = 120000
+
+#
+#  Humanization.Break.Bio.Max
+#    Description: Bio break maximum duration in milliseconds
+#    Default:     600000 (10 minutes)
+#
+Humanization.Break.Bio.Max = 600000
+
+#
+#  Humanization.Break.LongChance
+#    Description: Chance for a long break instead of short (percent)
+#    Default:     10
+#
+Humanization.Break.LongChance = 10
+
+#
+#  AFK Simulation Configuration
+#  Makes bots occasionally go AFK like real players
+#
+
+#
+#  Humanization.AFK.Enabled
+#    Description: Enable AFK simulation
+#    Default:     1 (enabled)
+#
+Humanization.AFK.Enabled = 1
+
+#
+#  Humanization.AFK.ChancePerHour
+#    Description: Chance per hour for a bot to go AFK (percent)
+#    Default:     5
+#
+Humanization.AFK.ChancePerHour = 5
+
+#
+#  Humanization.AFK.Short.Min
+#    Description: Short AFK minimum duration in milliseconds
+#    Default:     60000 (1 minute)
+#
+Humanization.AFK.Short.Min = 60000
+
+#
+#  Humanization.AFK.Short.Max
+#    Description: Short AFK maximum duration in milliseconds
+#    Default:     300000 (5 minutes)
+#
+Humanization.AFK.Short.Max = 300000
+
+#
+#  Humanization.AFK.Medium.Min
+#    Description: Medium AFK minimum duration in milliseconds
+#    Default:     300000 (5 minutes)
+#
+Humanization.AFK.Medium.Min = 300000
+
+#
+#  Humanization.AFK.Medium.Max
+#    Description: Medium AFK maximum duration in milliseconds
+#    Default:     900000 (15 minutes)
+#
+Humanization.AFK.Medium.Max = 900000
+
+#
+#  Humanization.AFK.Long.Min
+#    Description: Long AFK minimum duration in milliseconds
+#    Default:     900000 (15 minutes)
+#
+Humanization.AFK.Long.Min = 900000
+
+#
+#  Humanization.AFK.Long.Max
+#    Description: Long AFK maximum duration in milliseconds
+#    Default:     1800000 (30 minutes)
+#
+Humanization.AFK.Long.Max = 1800000
+
+#
+#  Activity Duration Configuration
+#  Controls duration ranges for specific activities
+#
+
+#
+#  Humanization.Gathering.MinDuration
+#    Description: Minimum gathering session duration in milliseconds
+#    Default:     1800000 (30 minutes)
+#
+Humanization.Gathering.MinDuration = 1800000
+
+#
+#  Humanization.Gathering.MaxDuration
+#    Description: Maximum gathering session duration in milliseconds
+#    Default:     3600000 (60 minutes)
+#
+Humanization.Gathering.MaxDuration = 3600000
+
+#
+#  Humanization.Gathering.UntilBagsFull
+#    Description: Continue gathering until bags are full
+#    Default:     1 (enabled)
+#
+Humanization.Gathering.UntilBagsFull = 1
+
+#
+#  Humanization.CityLife.MinDuration
+#    Description: Minimum city activity duration in milliseconds
+#    Default:     600000 (10 minutes)
+#
+Humanization.CityLife.MinDuration = 600000
+
+#
+#  Humanization.CityLife.MaxDuration
+#    Description: Maximum city activity duration in milliseconds
+#    Default:     1800000 (30 minutes)
+#
+Humanization.CityLife.MaxDuration = 1800000
+
+#
+#  Humanization.CityLife.AuctionBrowsing
+#    Description: Enable bots visiting auction house
+#    Default:     1 (enabled)
+#
+Humanization.CityLife.AuctionBrowsing = 1
+
+#
+#  Humanization.CityLife.InnResting
+#    Description: Enable bots resting at inns
+#    Default:     1 (enabled)
+#
+Humanization.CityLife.InnResting = 1
+
+#
+#  Humanization.Fishing.MinDuration
+#    Description: Minimum fishing session duration in milliseconds
+#    Default:     1800000 (30 minutes)
+#
+Humanization.Fishing.MinDuration = 1800000
+
+#
+#  Humanization.Fishing.MaxDuration
+#    Description: Maximum fishing session duration in milliseconds
+#    Default:     3600000 (60 minutes)
+#
+Humanization.Fishing.MaxDuration = 3600000
+
+#
+#  Personality Configuration
+#  Controls bot personality assignment and variation
+#
+
+#
+#  Humanization.Personality.Random
+#    Description: Assign random personalities to new bots
+#    Default:     1 (enabled)
+#    Note:        Personalities include Casual, Hardcore, Social, Explorer,
+#                 Farmer, PvP, Completionist, Speedrunner, Roleplayer, Newcomer
+#
+Humanization.Personality.Random = 1
+
+#
+#  Humanization.Personality.Variance
+#    Description: Amount of variation in personality traits (0.0-1.0)
+#    Default:     0.15
+#
+Humanization.Personality.Variance = 0.15
+
+#
+#  Emote Configuration
+#  Controls idle emote behavior
+#
+
+#
+#  Humanization.Emotes.Enabled
+#    Description: Enable idle emotes
+#    Default:     1 (enabled)
+#
+Humanization.Emotes.Enabled = 1
+
+#
+#  Humanization.Emotes.Frequency
+#    Description: Base emote frequency (0.0-1.0)
+#    Default:     0.1
+#
+Humanization.Emotes.Frequency = 0.1
+
+#
+#  Time of Day Configuration
+#  Controls activity variation based on time of day
+#
+
+#
+#  Humanization.TimeOfDay.Enabled
+#    Description: Enable time-of-day activity variation
+#    Default:     1 (enabled)
+#    Note:        Bots are less active during night hours, more active during
+#                 prime time. Hourly multipliers can be customized below.
+#
+Humanization.TimeOfDay.Enabled = 1
+
+#
+#  Hourly Activity Multipliers (optional)
+#  Override default hourly activity levels. Values 0.0-1.0.
+#  Defaults: Night (0-5): 0.1-0.2, Morning (6-11): 0.4-0.9,
+#            Afternoon (12-17): 1.0, Evening (18-23): 0.4-1.0
+#
+#  Humanization.TimeOfDay.Hour0 = 0.2
+#  Humanization.TimeOfDay.Hour1 = 0.1
+#  ... (customize as needed)
+#
+
 ################################################################################
 #
 #                    ===== END OF CONFIGURATION FILE =====
 #
 #  Summary:
 #    Section A (Active):  Core settings, spawning, database, and AI
-#    Section B (Wired):   Subsystem-specific configuration (B1-B31)
+#    Section B (Wired):   Subsystem-specific configuration (B1-B32)
 #      B27: Instance Bot Pool - Warm pool for instant instance filling
 #      B28: JIT Bot Factory - Elastic overflow for large content (40v40)
 #      B29: Instance Bot Orchestrator - Master controller for instance bots
 #      B30: Bot Clone Engine - Fast bot creation via template cloning
 #      B31: Bot Template Repository - Pre-defined templates for fast cloning
+#      B32: Humanization System - Makes bots behave like real humans
 #
-#  Config Status: 31 subsystems wired, 50% complete
+#  Config Status: 32 subsystems wired, 52% complete
 #
 #  For implementation plans and feature roadmap, see:
 #    docs/PLAYERBOT_IMPLEMENTATION_ROADMAP.md

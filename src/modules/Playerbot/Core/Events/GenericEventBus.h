@@ -659,7 +659,20 @@ private:
      */
     void DispatchEvent(TEvent const& event)
     {
-        // Dispatch to BotAI subscribers
+        // CRITICAL FIX (GenericEventBus.h:701 crash): Copy subscribers before iterating!
+        // Problem: _subscriptionMutex is a RECURSIVE mutex. If a handler calls Unsubscribe()
+        //          during HandleEvent(), it acquires the same mutex (succeeds due to recursion)
+        //          and erases from _subscriptions - INVALIDATING the iterator in the outer loop.
+        //          This causes ACCESS_VIOLATION when the loop continues with invalid iterator.
+        //
+        // Solution: Copy the list of handlers to dispatch BEFORE releasing the lock.
+        //           Then dispatch to the local copy without holding the lock.
+        //           If Unsubscribe() is called during dispatch, it only modifies the original
+        //           map, not our local copy, so iteration remains safe.
+
+        // Collect handlers to dispatch while holding the lock
+        std::vector<std::pair<ObjectGuid, IEventHandler<TEvent>*>> handlersToDispatch;
+
         {
             std::lock_guard lock(_subscriptionMutex);
 
@@ -686,7 +699,7 @@ private:
                     continue;
                 }
 
-                // Cast to event handler interface and dispatch
+                // Cast to event handler interface
                 IEventHandler<TEvent>* handler = dynamic_cast<IEventHandler<TEvent>*>(botAI);
                 if (!handler)
                 {
@@ -695,22 +708,45 @@ private:
                     continue;
                 }
 
-                // Dispatch event to handler
-                try
+                // Add to dispatch list
+                handlersToDispatch.emplace_back(subscriberGuid, handler);
+            }
+        }
+        // Lock released here - safe to call handlers now
+
+        // Dispatch events without holding the lock
+        // This prevents iterator invalidation if handlers call Unsubscribe()
+        for (auto const& [subscriberGuid, handler] : handlersToDispatch)
+        {
+            // Re-check if subscriber is still valid (may have been unsubscribed during earlier dispatch)
+            {
+                std::lock_guard lock(_subscriptionMutex);
+                if (_subscriberPointers.find(subscriberGuid) == _subscriberPointers.end())
                 {
-                    handler->HandleEvent(event);
-                    TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to bot {}: {}",
-                        subscriberGuid.ToString(), event.ToString());
+                    TC_LOG_DEBUG("playerbot.events", "EventBus: Skipping bot {} - unsubscribed during dispatch",
+                        subscriberGuid.ToString());
+                    continue;  // Bot was unsubscribed, skip
                 }
-                catch (std::exception const& e)
-                {
-                    TC_LOG_ERROR("playerbot.events", "EventBus: Exception in event handler for bot {}: {}",
-                        subscriberGuid.ToString(), e.what());
-                }
+            }
+
+            // Dispatch event to handler
+            try
+            {
+                handler->HandleEvent(event);
+                TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to bot {}: {}",
+                    subscriberGuid.ToString(), event.ToString());
+            }
+            catch (std::exception const& e)
+            {
+                TC_LOG_ERROR("playerbot.events", "EventBus: Exception in event handler for bot {}: {}",
+                    subscriberGuid.ToString(), e.what());
             }
         }
 
         // Dispatch to callback subscribers
+        // Same pattern: copy before iterating to prevent iterator invalidation
+        std::vector<std::pair<uint32, EventHandler>> callbacksToDispatch;
+
         {
             std::lock_guard lock(_callbackMutex);
 
@@ -720,18 +756,37 @@ private:
                 if (std::find(subscription.types.begin(), subscription.types.end(), event.type) == subscription.types.end())
                     continue;
 
-                // Invoke callback
-                try
+                // Add to dispatch list
+                callbacksToDispatch.emplace_back(subscriptionId, subscription.handler);
+            }
+        }
+        // Lock released here
+
+        // Dispatch callbacks without holding the lock
+        for (auto const& [subscriptionId, handler] : callbacksToDispatch)
+        {
+            // Re-check if callback is still subscribed
+            {
+                std::lock_guard lock(_callbackMutex);
+                if (_callbackSubscriptions.find(subscriptionId) == _callbackSubscriptions.end())
                 {
-                    subscription.handler(event);
-                    TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to callback {}: {}",
-                        subscriptionId, event.ToString());
+                    TC_LOG_DEBUG("playerbot.events", "EventBus: Skipping callback {} - unsubscribed during dispatch",
+                        subscriptionId);
+                    continue;
                 }
-                catch (std::exception const& e)
-                {
-                    TC_LOG_ERROR("playerbot.events", "EventBus: Exception in callback {} handler: {}",
-                        subscriptionId, e.what());
-                }
+            }
+
+            // Invoke callback
+            try
+            {
+                handler(event);
+                TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to callback {}: {}",
+                    subscriptionId, event.ToString());
+            }
+            catch (std::exception const& e)
+            {
+                TC_LOG_ERROR("playerbot.events", "EventBus: Exception in callback {} handler: {}",
+                    subscriptionId, e.what());
             }
         }
     }

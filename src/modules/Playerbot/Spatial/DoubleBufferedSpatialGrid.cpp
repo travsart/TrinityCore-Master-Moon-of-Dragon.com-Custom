@@ -701,6 +701,7 @@ done_creatures:
         snapshot.agility = player->GetStat(STAT_AGILITY);
         snapshot.stamina = player->GetStat(STAT_STAMINA);
         snapshot.intellect = player->GetStat(STAT_INTELLECT);
+        snapshot.spirit = player->GetStat(STAT_SPIRIT);  // WoW 12.0: Spirit stat re-added
 
         // ===== RESISTANCES & ARMOR (HIGH) =====
         snapshot.armor = player->GetArmor();

@@ -236,6 +236,7 @@ private:
     struct alignas(64) Metrics
     {
         ::std::atomic<uint64> tasksCompleted{0};
+        ::std::atomic<uint64> tasksFailed{0};      // Tasks that threw exceptions
         ::std::atomic<uint64> totalWorkTime{0};    // microseconds
         ::std::atomic<uint64> totalIdleTime{0};    // microseconds
         ::std::atomic<uint64> stealAttempts{0};
@@ -256,6 +257,7 @@ private:
     struct MetricsSnapshot
     {
         uint64 tasksCompleted;
+        uint64 tasksFailed;        // Tasks that threw exceptions
         uint64 totalWorkTime;
         uint64 totalIdleTime;
         uint64 stealAttempts;
@@ -331,6 +333,7 @@ public:
     {
         MetricsSnapshot snapshot;
         snapshot.tasksCompleted = _metrics.tasksCompleted.load(::std::memory_order_relaxed);
+        snapshot.tasksFailed = _metrics.tasksFailed.load(::std::memory_order_relaxed);
         snapshot.totalWorkTime = _metrics.totalWorkTime.load(::std::memory_order_relaxed);
         snapshot.totalIdleTime = _metrics.totalIdleTime.load(::std::memory_order_relaxed);
         snapshot.stealAttempts = _metrics.stealAttempts.load(::std::memory_order_relaxed);
@@ -541,6 +544,13 @@ public:
             {
                 // All workers busy
                 _metrics.totalFailed.fetch_add(1, ::std::memory_order_relaxed);
+
+                // CRITICAL FIX (FreezeDetector crash): Balance the totalSubmitted counter!
+                // We already incremented totalSubmitted above, but task will not be executed.
+                // We MUST increment totalCompleted to prevent GetInFlightTasks() from returning
+                // a permanently inflated value, which would cause WaitForCompletion() to block forever.
+                _metrics.totalCompleted.fetch_add(1, ::std::memory_order_relaxed);
+
                 delete task;
                 throw ::std::runtime_error("All worker queues are full");
             }
@@ -627,6 +637,23 @@ public:
      * @brief Get queued tasks for specific priority
      */
     size_t GetQueuedTasks(TaskPriority priority) const;
+
+    /**
+     * @brief Get in-flight tasks (dequeued but still executing)
+     *
+     * CRITICAL: Tasks can be dequeued from the queue but still be executing on a worker.
+     * This returns the count of such tasks (submitted - completed).
+     * Use HasPendingWork() to check if ANY work is pending (queued OR executing).
+     */
+    size_t GetInFlightTasks() const;
+
+    /**
+     * @brief Check if any work is pending (queued OR in-flight)
+     *
+     * This is the safe way to check if workers might still be accessing submitted work.
+     * Returns true if GetQueuedTasks() > 0 OR GetInFlightTasks() > 0.
+     */
+    bool HasPendingWork() const;
 
     /**
      * @brief Get average task latency (submission to completion)

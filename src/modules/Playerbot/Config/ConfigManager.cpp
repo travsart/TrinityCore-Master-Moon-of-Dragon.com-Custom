@@ -218,6 +218,169 @@ namespace Playerbot
             },
             "FormationSpacing must be between 1.0 and 10.0 meters"
         };
+
+        // ========================================================================
+        // HUMANIZATION SETTINGS (Phase 3)
+        // ========================================================================
+
+        // General
+        _entries["Humanization.Enabled"] = ConfigEntry{
+            true,
+            "Enable humanization system for realistic bot behavior",
+            true,
+            true,
+            false
+        };
+
+        _entries["Humanization.DebugLevel"] = ConfigEntry{
+            static_cast<uint32>(0),
+            "Debug logging level (0=off, 1=basic, 2=verbose)",
+            static_cast<uint32>(0),
+            true,
+            false
+        };
+
+        _entries["Humanization.ApplyToExisting"] = ConfigEntry{
+            true,
+            "Apply humanization to existing bots on load",
+            true,
+            true,
+            false
+        };
+
+        // Session
+        _entries["Humanization.Session.MinDuration"] = ConfigEntry{
+            static_cast<uint32>(1800000),
+            "Minimum session duration in milliseconds (30 min default)",
+            static_cast<uint32>(1800000),
+            true,
+            false
+        };
+
+        _entries["Humanization.Session.MaxDuration"] = ConfigEntry{
+            static_cast<uint32>(5400000),
+            "Maximum session duration in milliseconds (90 min default)",
+            static_cast<uint32>(5400000),
+            true,
+            false
+        };
+
+        _entries["Humanization.Session.ExtendChance"] = ConfigEntry{
+            static_cast<uint32>(20),
+            "Chance to extend session (percent)",
+            static_cast<uint32>(20),
+            true,
+            false
+        };
+
+        _entries["Humanization.Session.MaxExtensions"] = ConfigEntry{
+            static_cast<uint32>(2),
+            "Maximum number of session extensions",
+            static_cast<uint32>(2),
+            true,
+            false
+        };
+
+        // Breaks
+        _entries["Humanization.Break.Short.Min"] = ConfigEntry{
+            static_cast<uint32>(60000),
+            "Short break minimum duration in ms (1 min)",
+            static_cast<uint32>(60000),
+            true,
+            false
+        };
+
+        _entries["Humanization.Break.Short.Max"] = ConfigEntry{
+            static_cast<uint32>(300000),
+            "Short break maximum duration in ms (5 min)",
+            static_cast<uint32>(300000),
+            true,
+            false
+        };
+
+        _entries["Humanization.Break.Long.Min"] = ConfigEntry{
+            static_cast<uint32>(300000),
+            "Long break minimum duration in ms (5 min)",
+            static_cast<uint32>(300000),
+            true,
+            false
+        };
+
+        _entries["Humanization.Break.Long.Max"] = ConfigEntry{
+            static_cast<uint32>(900000),
+            "Long break maximum duration in ms (15 min)",
+            static_cast<uint32>(900000),
+            true,
+            false
+        };
+
+        _entries["Humanization.Break.LongChance"] = ConfigEntry{
+            static_cast<uint32>(10),
+            "Chance for long break instead of short (percent)",
+            static_cast<uint32>(10),
+            true,
+            false
+        };
+
+        // AFK
+        _entries["Humanization.AFK.Enabled"] = ConfigEntry{
+            true,
+            "Enable AFK simulation",
+            true,
+            true,
+            false
+        };
+
+        _entries["Humanization.AFK.ChancePerHour"] = ConfigEntry{
+            static_cast<uint32>(5),
+            "Chance per hour of going AFK (percent)",
+            static_cast<uint32>(5),
+            true,
+            false
+        };
+
+        // Personality
+        _entries["Humanization.Personality.Random"] = ConfigEntry{
+            true,
+            "Assign random personalities to new bots",
+            true,
+            true,
+            false
+        };
+
+        _entries["Humanization.Personality.Variance"] = ConfigEntry{
+            0.15f,
+            "Personality variance (0.0-1.0)",
+            0.15f,
+            true,
+            false
+        };
+
+        // Emotes
+        _entries["Humanization.Emotes.Enabled"] = ConfigEntry{
+            true,
+            "Enable idle emotes",
+            true,
+            true,
+            false
+        };
+
+        _entries["Humanization.Emotes.Frequency"] = ConfigEntry{
+            0.1f,
+            "Base emote frequency (0.0-1.0)",
+            0.1f,
+            true,
+            false
+        };
+
+        // Time of Day
+        _entries["Humanization.TimeOfDay.Enabled"] = ConfigEntry{
+            true,
+            "Enable time-of-day activity variation",
+            true,
+            true,
+            false
+        };
     }
 
     bool ConfigManager::SetValue(::std::string const& key, ConfigValue const& value)

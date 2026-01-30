@@ -32,7 +32,9 @@
 #include "Banking/BankingManager.h"
 #include "Equipment/EquipmentManager.h"
 #include "Companion/MountManager.h"
+#include "Companion/RidingManager.h"
 #include "Companion/BattlePetManager.h"
+#include "Humanization/Core/HumanizationManager.h"
 #include "PvP/ArenaAI.h"
 #include "PvP/PvPCombatAI.h"
 #include "Social/AuctionHouse.h"
@@ -167,10 +169,12 @@ public:
     ProfessionAuctionBridge* GetProfessionAuctionBridge() const { return _professionAuctionBridge.get(); }
     FarmingCoordinator* GetFarmingCoordinator() const { return _farmingCoordinator.get(); }
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
-    BankingManager* GetBankingManager() const { return _bankingManager.get(); }
+    BankingManager* GetBankingManager() const override { return _bankingManager.get(); }
     EquipmentManager* GetEquipmentManager() const override { return _equipmentManager.get(); }
     MountManager* GetMountManager() const { return _mountManager.get(); }
+    RidingManager* GetRidingManager() const { return _ridingManager.get(); }
     BattlePetManager* GetBattlePetManager() const { return _battlePetManager.get(); }
+    Humanization::HumanizationManager* GetHumanizationManager() const { return _humanizationManager.get(); }
     ArenaAI* GetArenaAI() const { return _arenaAI.get(); }
     PvPCombatAI* GetPvPCombatAI() const { return _pvpCombatAI.get(); }
     AuctionHouse* GetAuctionHouse() const { return _auctionHouse.get(); }
@@ -236,7 +240,9 @@ private:
     std::unique_ptr<BankingManager> _bankingManager;
     std::unique_ptr<EquipmentManager> _equipmentManager;
     std::unique_ptr<MountManager> _mountManager;
+    std::unique_ptr<RidingManager> _ridingManager;
     std::unique_ptr<BattlePetManager> _battlePetManager;
+    std::unique_ptr<Humanization::HumanizationManager> _humanizationManager;
     std::unique_ptr<ArenaAI> _arenaAI;
     std::unique_ptr<PvPCombatAI> _pvpCombatAI;
     std::unique_ptr<AuctionHouse> _auctionHouse;

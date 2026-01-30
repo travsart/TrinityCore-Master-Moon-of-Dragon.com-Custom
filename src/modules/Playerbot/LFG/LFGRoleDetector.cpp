@@ -262,7 +262,7 @@ uint32 LFGRoleDetector::CalculateHealerScore(Player* player)
 
     // Base score from stats
     score += player->GetStat(STAT_INTELLECT) / 2;         // Intellect for spell power
-    // Note: STAT_SPIRIT removed in modern WoW, using Intellect as primary healer stat
+    score += player->GetStat(STAT_SPIRIT) / 3;            // WoW 12.0: Spirit re-added for mana regen
     score += player->GetRatingBonusValue(CR_HASTE_SPELL) * 2; // Spell haste
     score += player->GetRatingBonusValue(CR_CRIT_SPELL);      // Spell crit
     score += player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ALL) / 2; // Spell power

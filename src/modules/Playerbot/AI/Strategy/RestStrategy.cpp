@@ -567,9 +567,8 @@ bool RestStrategy::EatFood(BotAI* ai, Item* food)
     SpellCastTargets targets;
     targets.SetUnitTarget(bot);
 
-    // CRITICAL FIX: Pass valid misc array instead of nullptr to prevent crash
-    // Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
-    int32 misc[2] = { 0, 0 };
+    // WoW 12.0: CastItemUseSpell signature changed to std::array<int32, 3>
+    std::array<int32, 3> misc = { 0, 0, 0 };
     bot->CastItemUseSpell(food, targets, ObjectGuid::Empty, misc);
 
     _foodConsumed++;
@@ -602,9 +601,8 @@ bool RestStrategy::DrinkWater(BotAI* ai, Item* drink)
     SpellCastTargets targets;
     targets.SetUnitTarget(bot);
 
-    // CRITICAL FIX: Pass valid misc array instead of nullptr to prevent crash
-    // Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
-    int32 misc[2] = { 0, 0 };
+    // WoW 12.0: CastItemUseSpell signature changed to std::array<int32, 3>
+    std::array<int32, 3> misc = { 0, 0, 0 };
     bot->CastItemUseSpell(drink, targets, ObjectGuid::Empty, misc);
 
     _drinkConsumed++;
@@ -622,9 +620,8 @@ bool RestStrategy::UseBandage(BotAI* ai, Item* bandage)
     SpellCastTargets targets;
     targets.SetUnitTarget(bot);
 
-    // CRITICAL FIX: Pass valid misc array instead of nullptr to prevent crash
-    // Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
-    int32 misc[2] = { 0, 0 };
+    // WoW 12.0: CastItemUseSpell signature changed to std::array<int32, 3>
+    std::array<int32, 3> misc = { 0, 0, 0 };
     bot->CastItemUseSpell(bandage, targets, ObjectGuid::Empty, misc);
 
     _bandagesUsed++;

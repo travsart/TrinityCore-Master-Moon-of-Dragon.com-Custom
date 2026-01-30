@@ -294,6 +294,7 @@ public:
         float agility{0.0f};
         float stamina{0.0f};
         float intellect{0.0f};
+        float spirit{0.0f};  // WoW 12.0: Spirit stat re-added
 
         // ===== RESISTANCES & ARMOR (HIGH) =====
         int32 armor{0};

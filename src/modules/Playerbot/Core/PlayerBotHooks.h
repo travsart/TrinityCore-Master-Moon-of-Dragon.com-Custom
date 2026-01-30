@@ -23,7 +23,7 @@ class SpellInfo;
 class Aura;
 enum RemoveMethod : uint8;
 enum LootMethod : uint8;
-enum Difficulty : uint8;
+enum Difficulty : int16;
 enum DamageEffectType : uint8;
 enum SpellSchoolMask : uint32;
 

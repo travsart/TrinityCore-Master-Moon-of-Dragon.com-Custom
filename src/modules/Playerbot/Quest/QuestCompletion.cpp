@@ -35,6 +35,8 @@
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "Loot/LootItemType.h"  // For LootItemType::Item in RewardQuest
 #include "Item.h"  // For Item* type in EvaluateItemUpgrade
+#include "DataStores/DB2Stores.h" // For sFactionStore, sAreaTriggerStore
+#include "ReputationMgr.h"        // For ReputationRank, GetReputationMgr
 #include <algorithm>
 #include <cmath>
 
@@ -353,35 +355,134 @@ void QuestCompletion::ExecuteObjective(Player* bot, QuestObjectiveData& objectiv
     objective.status = ObjectiveStatus::IN_PROGRESS;
 
     // Execute based on objective type
+    // Our enum now matches TrinityCore's IDs for types 0-22
+    // Note: Aliases (KILL_CREATURE, COLLECT_ITEM, etc.) have the same numeric value
+    // as their primary types, so we only need one case per value
     switch (objective.type)
     {
-        case QuestObjectiveType::KILL_CREATURE:
+        // ====================================================================
+        // TRINITYCORE STANDARD TYPES (IDs 0-22)
+        // ====================================================================
+        case QuestObjectiveType::MONSTER:           // 0 - Kill creature (alias: KILL_CREATURE)
             HandleKillObjective(bot, objective);
             break;
-        case QuestObjectiveType::COLLECT_ITEM:
+
+        case QuestObjectiveType::ITEM:              // 1 - Collect item (alias: COLLECT_ITEM)
             HandleCollectObjective(bot, objective);
             break;
-        case QuestObjectiveType::TALK_TO_NPC:
-            HandleTalkToNpcObjective(bot, objective);
-            break;
-        case QuestObjectiveType::REACH_LOCATION:
-            HandleLocationObjective(bot, objective);
-            break;
-        case QuestObjectiveType::USE_GAMEOBJECT:
+
+        case QuestObjectiveType::GAMEOBJECT:        // 2 - Use gameobject (alias: USE_GAMEOBJECT)
             HandleGameObjectObjective(bot, objective);
             break;
-        case QuestObjectiveType::CAST_SPELL:
+
+        case QuestObjectiveType::TALKTO:            // 3 - Talk to NPC (alias: TALK_TO_NPC)
+            HandleTalkToNpcObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::CURRENCY:          // 4 - Spend currency
+            HandleCurrencyObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::LEARNSPELL:        // 5 - Learn spell (alias: LEARN_SPELL)
+            HandleLearnSpellObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::MIN_REPUTATION:    // 6 - Minimum reputation
+            HandleMinReputationObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::MAX_REPUTATION:    // 7 - Maximum reputation
+            HandleMaxReputationObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::MONEY:             // 8 - Acquire gold
+            HandleMoneyObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::PLAYERKILLS:       // 9 - Kill players
+            HandlePlayerKillsObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::AREATRIGGER:       // 10 - Area trigger (alias: REACH_LOCATION)
+            HandleAreaTriggerObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::WINPETBATTLEAGAINSTNPC:  // 11 - Win pet battle vs NPC
+            HandlePetBattleNPCObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::DEFEATBATTLEPET:   // 12 - Defeat battle pet
+            HandleDefeatBattlePetObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::WINPVPPETBATTLES:  // 13 - Win PvP pet battles
+            HandlePvPPetBattlesObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::CRITERIA_TREE:     // 14 - Criteria tree
+            HandleCriteriaTreeObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::PROGRESS_BAR:      // 15 - Progress bar
+            HandleProgressBarObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::HAVE_CURRENCY:     // 16 - Have currency on turn-in
+            HandleHaveCurrencyObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::OBTAIN_CURRENCY:   // 17 - Obtain currency
+            HandleObtainCurrencyObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::INCREASE_REPUTATION: // 18 - Gain reputation
+            HandleIncreaseReputationObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::AREA_TRIGGER_ENTER: // 19 - Enter area trigger
+            HandleAreaTriggerEnterObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::AREA_TRIGGER_EXIT:  // 20 - Exit area trigger
+            HandleAreaTriggerExitObjective(bot, objective);
+            break;
+
+        case QuestObjectiveType::KILL_WITH_LABEL:   // 21 - Kill with label
+            HandleKillWithLabelObjective(bot, objective);
+            break;
+
+        // ====================================================================
+        // EXTENDED PLAYERBOT TYPES (IDs 100+)
+        // ====================================================================
+        case QuestObjectiveType::CAST_SPELL:        // 100 - Cast spell
             HandleSpellCastObjective(bot, objective);
             break;
-        case QuestObjectiveType::EMOTE_AT_TARGET:
+
+        case QuestObjectiveType::EMOTE_AT_TARGET:   // 101 - Emote
             HandleEmoteObjective(bot, objective);
             break;
-        case QuestObjectiveType::ESCORT_NPC:
+
+        case QuestObjectiveType::ESCORT_NPC:        // 102 - Escort NPC
             HandleEscortObjective(bot, objective);
             break;
+
+        case QuestObjectiveType::DEFEND_AREA:       // 103 - Defend area
+        case QuestObjectiveType::SURVIVE_TIME:      // 104 - Survive time
+        case QuestObjectiveType::WIN_BATTLEGROUND:  // 105 - Win BG
+        case QuestObjectiveType::COMPLETE_DUNGEON:  // 106 - Complete dungeon
+        case QuestObjectiveType::GAIN_EXPERIENCE:   // 107 - Gain XP
+            // These complex objectives need special handling - mark as needing attention
+            TC_LOG_DEBUG("playerbot.quest", "ExecuteObjective: Complex objective type {} for quest {} needs special handling",
+                static_cast<uint32>(objective.type), objective.questId);
+            objective.status = ObjectiveStatus::BLOCKED;
+            break;
+
+        case QuestObjectiveType::UNK_1127:          // 22 - Unknown
+        case QuestObjectiveType::CUSTOM_OBJECTIVE:  // 255 - Fallback
         default:
-            TC_LOG_DEBUG("playerbot", "QuestCompletion::ExecuteObjective - Unknown objective type %u",
-                static_cast<uint32>(objective.type));
+            TC_LOG_WARN("playerbot.quest", "ExecuteObjective: Unhandled objective type {} for quest {}",
+                static_cast<uint32>(objective.type), objective.questId);
+            objective.status = ObjectiveStatus::BLOCKED;
             break;
     }
 
@@ -1162,42 +1263,114 @@ void QuestCompletion::ParseQuestObjectives(QuestProgressData& progress, const Qu
     {
         QuestObjective const& obj = questObjectives[i];
 
-        // Map TrinityCore objective types to our internal types
+        // Map TrinityCore objective types DIRECTLY to our enum (1:1 mapping)
+        // Our enum now matches TrinityCore's IDs exactly for types 0-22
         QuestObjectiveType internalType;
         switch (obj.Type)
         {
-            case QUEST_OBJECTIVE_MONSTER:
-                internalType = QuestObjectiveType::KILL_CREATURE;
+            // ====================================================================
+            // DIRECT 1:1 MAPPINGS (TrinityCore ID == Playerbot ID)
+            // ====================================================================
+            case QUEST_OBJECTIVE_MONSTER:           // 0 - Kill creature
+                internalType = QuestObjectiveType::MONSTER;
                 break;
-            case QUEST_OBJECTIVE_ITEM:
-                internalType = QuestObjectiveType::COLLECT_ITEM;
+            case QUEST_OBJECTIVE_ITEM:              // 1 - Collect item
+                internalType = QuestObjectiveType::ITEM;
                 break;
-            case QUEST_OBJECTIVE_GAMEOBJECT:
-                internalType = QuestObjectiveType::USE_GAMEOBJECT;
+            case QUEST_OBJECTIVE_GAMEOBJECT:        // 2 - Use gameobject
+                internalType = QuestObjectiveType::GAMEOBJECT;
                 break;
-            case QUEST_OBJECTIVE_TALKTO:
-                internalType = QuestObjectiveType::TALK_TO_NPC;
+            case QUEST_OBJECTIVE_TALKTO:            // 3 - Talk to NPC
+                internalType = QuestObjectiveType::TALKTO;
                 break;
-            case QUEST_OBJECTIVE_AREATRIGGER:
-            case QUEST_OBJECTIVE_AREA_TRIGGER_ENTER:
-            case QUEST_OBJECTIVE_AREA_TRIGGER_EXIT:
-                internalType = QuestObjectiveType::REACH_LOCATION;
+            case QUEST_OBJECTIVE_CURRENCY:          // 4 - Spend currency
+                internalType = QuestObjectiveType::CURRENCY;
                 break;
-            case QUEST_OBJECTIVE_LEARNSPELL:
-                internalType = QuestObjectiveType::LEARN_SPELL;
+            case QUEST_OBJECTIVE_LEARNSPELL:        // 5 - Learn spell
+                internalType = QuestObjectiveType::LEARNSPELL;
                 break;
+            case QUEST_OBJECTIVE_MIN_REPUTATION:    // 6 - Minimum reputation
+                internalType = QuestObjectiveType::MIN_REPUTATION;
+                break;
+            case QUEST_OBJECTIVE_MAX_REPUTATION:    // 7 - Maximum reputation
+                internalType = QuestObjectiveType::MAX_REPUTATION;
+                break;
+            case QUEST_OBJECTIVE_MONEY:             // 8 - Acquire gold
+                internalType = QuestObjectiveType::MONEY;
+                break;
+            case QUEST_OBJECTIVE_PLAYERKILLS:       // 9 - Kill players
+                internalType = QuestObjectiveType::PLAYERKILLS;
+                break;
+            case QUEST_OBJECTIVE_AREATRIGGER:       // 10 - Area trigger
+                internalType = QuestObjectiveType::AREATRIGGER;
+                break;
+            case QUEST_OBJECTIVE_WINPETBATTLEAGAINSTNPC:  // 11 - Win pet battle vs NPC
+                internalType = QuestObjectiveType::WINPETBATTLEAGAINSTNPC;
+                break;
+            case QUEST_OBJECTIVE_DEFEATBATTLEPET:   // 12 - Defeat battle pet
+                internalType = QuestObjectiveType::DEFEATBATTLEPET;
+                break;
+            case QUEST_OBJECTIVE_WINPVPPETBATTLES:  // 13 - Win PvP pet battles
+                internalType = QuestObjectiveType::WINPVPPETBATTLES;
+                break;
+            case QUEST_OBJECTIVE_CRITERIA_TREE:     // 14 - Criteria tree
+                internalType = QuestObjectiveType::CRITERIA_TREE;
+                break;
+            case QUEST_OBJECTIVE_PROGRESS_BAR:      // 15 - Progress bar
+                internalType = QuestObjectiveType::PROGRESS_BAR;
+                break;
+            case QUEST_OBJECTIVE_HAVE_CURRENCY:     // 16 - Have currency on turn-in
+                internalType = QuestObjectiveType::HAVE_CURRENCY;
+                break;
+            case QUEST_OBJECTIVE_OBTAIN_CURRENCY:   // 17 - Obtain currency
+                internalType = QuestObjectiveType::OBTAIN_CURRENCY;
+                break;
+            case QUEST_OBJECTIVE_INCREASE_REPUTATION: // 18 - Gain reputation
+                internalType = QuestObjectiveType::INCREASE_REPUTATION;
+                break;
+            case QUEST_OBJECTIVE_AREA_TRIGGER_ENTER: // 19 - Enter area trigger
+                internalType = QuestObjectiveType::AREA_TRIGGER_ENTER;
+                break;
+            case QUEST_OBJECTIVE_AREA_TRIGGER_EXIT:  // 20 - Exit area trigger
+                internalType = QuestObjectiveType::AREA_TRIGGER_EXIT;
+                break;
+            case QUEST_OBJECTIVE_KILL_WITH_LABEL:   // 21 - Kill with label
+                internalType = QuestObjectiveType::KILL_WITH_LABEL;
+                break;
+            case QUEST_OBJECTIVE_UNK_1127:          // 22 - Unknown 11.2.7
+                internalType = QuestObjectiveType::UNK_1127;
+                TC_LOG_DEBUG("playerbot.quest", "ParseQuestObjectives: Quest {} has unknown objective type 22 (UNK_1127)",
+                    quest->GetQuestId());
+                break;
+
             default:
                 internalType = QuestObjectiveType::CUSTOM_OBJECTIVE;
+                TC_LOG_WARN("playerbot.quest", "ParseQuestObjectives: Quest {} has unhandled objective type {}",
+                    quest->GetQuestId(), static_cast<uint32>(obj.Type));
                 break;
         }
 
-        if (obj.Amount > 0)
+        // Create objective data (handle objectives with Amount=0 for flag-based types)
+        uint32 amount = obj.Amount > 0 ? obj.Amount : 1;
+
+        // Flag-based objectives (like AREATRIGGER) may have Amount=0
+        bool isFlagBased = (obj.Type == QUEST_OBJECTIVE_AREATRIGGER ||
+                           obj.Type == QUEST_OBJECTIVE_AREA_TRIGGER_ENTER ||
+                           obj.Type == QUEST_OBJECTIVE_AREA_TRIGGER_EXIT ||
+                           obj.Type == QUEST_OBJECTIVE_WINPETBATTLEAGAINSTNPC ||
+                           obj.Type == QUEST_OBJECTIVE_DEFEATBATTLEPET ||
+                           obj.Type == QUEST_OBJECTIVE_CRITERIA_TREE);
+
+        if (obj.Amount > 0 || isFlagBased)
         {
             QuestObjectiveData objective(quest->GetQuestId(), static_cast<uint32>(i),
-                                        internalType, obj.ObjectID, obj.Amount);
+                                        internalType, obj.ObjectID, amount);
             objective.description = obj.Description;
             objective.isOptional = (obj.Flags & QUEST_OBJECTIVE_FLAG_OPTIONAL) != 0;
             progress.objectives.push_back(objective);
+
+            TC_LOG_DEBUG("playerbot.quest", "ParseQuestObjectives: Quest {} objective {}: type={}, target={}, amount={}",
+                quest->GetQuestId(), i, static_cast<uint32>(internalType), obj.ObjectID, amount);
         }
     }
 }
@@ -1224,19 +1397,120 @@ void QuestCompletion::UpdateQuestObjectiveFromProgress(QuestObjectiveData& objec
     QuestObjective const& questObj = questObjectives[objective.objectiveIndex];
 
     // Update based on objective type
+    // Our enum now matches TrinityCore's IDs for types 0-22
+    // Note: Aliases have same numeric values as their primaries, use only primaries in switch
     switch (objective.type)
     {
-        case QuestObjectiveType::KILL_CREATURE:
-        case QuestObjectiveType::USE_GAMEOBJECT:
-        case QuestObjectiveType::TALK_TO_NPC:
-            // Use GetQuestObjectiveData to retrieve progress
+        // ====================================================================
+        // COUNT-BASED OBJECTIVES (Use GetQuestObjectiveData)
+        // ====================================================================
+        case QuestObjectiveType::MONSTER:           // 0 - Kill creature (alias: KILL_CREATURE)
+        case QuestObjectiveType::GAMEOBJECT:        // 2 - Use gameobject (alias: USE_GAMEOBJECT)
+        case QuestObjectiveType::TALKTO:            // 3 - Talk to NPC (alias: TALK_TO_NPC)
+        case QuestObjectiveType::PLAYERKILLS:       // 9 - Player kills
+        case QuestObjectiveType::KILL_WITH_LABEL:   // 21 - Kill with label
             objective.currentCount = bot->GetQuestObjectiveData(questObj);
             break;
 
-        case QuestObjectiveType::COLLECT_ITEM:
+        // ====================================================================
+        // ITEM-BASED OBJECTIVES (Use GetItemCount)
+        // ====================================================================
+        case QuestObjectiveType::ITEM:              // 1 - Collect item (alias: COLLECT_ITEM)
             objective.currentCount = bot->GetItemCount(objective.targetId);
             break;
 
+        // ====================================================================
+        // CURRENCY-BASED OBJECTIVES (Use GetCurrency)
+        // ====================================================================
+        case QuestObjectiveType::CURRENCY:          // 4 - Spend currency
+        case QuestObjectiveType::HAVE_CURRENCY:     // 16 - Have currency
+            objective.currentCount = bot->GetCurrencyQuantity(objective.targetId);
+            break;
+
+        case QuestObjectiveType::OBTAIN_CURRENCY:   // 17 - Obtain currency (tracked by quest)
+            objective.currentCount = bot->GetQuestObjectiveData(questObj);
+            break;
+
+        // ====================================================================
+        // SPELL-BASED OBJECTIVES (Use HasSpell)
+        // ====================================================================
+        case QuestObjectiveType::LEARNSPELL:        // 5 - Learn spell (alias: LEARN_SPELL)
+            objective.currentCount = bot->HasSpell(objective.targetId) ? objective.requiredCount : 0;
+            break;
+
+        // ====================================================================
+        // REPUTATION-BASED OBJECTIVES (Use GetReputation)
+        // ====================================================================
+        case QuestObjectiveType::MIN_REPUTATION:    // 6 - Minimum reputation
+        case QuestObjectiveType::MAX_REPUTATION:    // 7 - Maximum reputation
+        {
+            FactionEntry const* factionEntry = sFactionStore.LookupEntry(objective.targetId);
+            if (factionEntry)
+            {
+                int32 rep = bot->GetReputationMgr().GetReputation(factionEntry);
+                // For MIN_REP: current >= required means complete
+                // For MAX_REP: current <= required means complete
+                if (objective.type == QuestObjectiveType::MAX_REPUTATION)
+                    objective.currentCount = rep <= static_cast<int32>(objective.requiredCount) ? objective.requiredCount : 0;
+                else
+                    objective.currentCount = rep >= static_cast<int32>(objective.requiredCount) ? objective.requiredCount : static_cast<uint32>(std::max(0, rep));
+            }
+            break;
+        }
+
+        case QuestObjectiveType::INCREASE_REPUTATION: // 18 - Gain reputation (tracked by quest)
+            objective.currentCount = bot->GetQuestObjectiveData(questObj);
+            break;
+
+        // ====================================================================
+        // MONEY-BASED OBJECTIVES (Use GetMoney)
+        // ====================================================================
+        case QuestObjectiveType::MONEY:             // 8 - Acquire gold
+            objective.currentCount = bot->GetMoney() >= objective.requiredCount ? objective.requiredCount : static_cast<uint32>(bot->GetMoney());
+            break;
+
+        // ====================================================================
+        // FLAG-BASED OBJECTIVES (Use IsQuestObjectiveComplete or GetQuestObjectiveData)
+        // ====================================================================
+        case QuestObjectiveType::AREATRIGGER:       // 10 - Area trigger (alias: REACH_LOCATION)
+        case QuestObjectiveType::AREA_TRIGGER_ENTER: // 19 - Enter area trigger
+        case QuestObjectiveType::AREA_TRIGGER_EXIT:  // 20 - Exit area trigger
+        case QuestObjectiveType::WINPETBATTLEAGAINSTNPC:  // 11 - Win pet battle vs NPC
+        case QuestObjectiveType::DEFEATBATTLEPET:   // 12 - Defeat battle pet
+        case QuestObjectiveType::WINPVPPETBATTLES:  // 13 - Win PvP pet battles
+        case QuestObjectiveType::CRITERIA_TREE:     // 14 - Criteria tree
+            if (bot->IsQuestObjectiveComplete(objective.questId, objective.objectiveIndex))
+                objective.currentCount = objective.requiredCount;
+            else
+                objective.currentCount = bot->GetQuestObjectiveData(questObj);
+            break;
+
+        // ====================================================================
+        // PROGRESS BAR OBJECTIVES (Use GetQuestObjectiveData)
+        // ====================================================================
+        case QuestObjectiveType::PROGRESS_BAR:      // 15 - Progress bar
+            objective.currentCount = bot->GetQuestObjectiveData(questObj);
+            break;
+
+        // ====================================================================
+        // EXTENDED PLAYERBOT TYPES (IDs 100+)
+        // ====================================================================
+        case QuestObjectiveType::CAST_SPELL:        // 100 - Cast spell
+        case QuestObjectiveType::EMOTE_AT_TARGET:   // 101 - Emote
+        case QuestObjectiveType::ESCORT_NPC:        // 102 - Escort NPC
+        case QuestObjectiveType::DEFEND_AREA:       // 103 - Defend area
+        case QuestObjectiveType::SURVIVE_TIME:      // 104 - Survive time
+        case QuestObjectiveType::WIN_BATTLEGROUND:  // 105 - Win BG
+        case QuestObjectiveType::COMPLETE_DUNGEON:  // 106 - Complete dungeon
+        case QuestObjectiveType::GAIN_EXPERIENCE:   // 107 - Gain XP
+            objective.currentCount = bot->GetQuestObjectiveData(questObj);
+            break;
+
+        // ====================================================================
+        // UNKNOWN/FALLBACK
+        // ====================================================================
+        case QuestObjectiveType::UNK_1127:          // 22 - Unknown
+        case QuestObjectiveType::CUSTOM_OBJECTIVE:  // 255 - Fallback
         default:
             // Check if objective is complete through quest system
             if (bot->IsQuestObjectiveComplete(objective.questId, objective.objectiveIndex))
@@ -1277,7 +1551,8 @@ bool QuestCompletion::CanExecuteObjective(Player* bot, const QuestObjectiveData&
         return false;
 
     // Check if bot is in combat for non-combat objectives
-    if (bot->IsInCombat() && objective.type != QuestObjectiveType::KILL_CREATURE)
+    // MONSTER (0) is the primary type for kill objectives (KILL_CREATURE is an alias with same value)
+    if (bot->IsInCombat() && objective.type != QuestObjectiveType::MONSTER)
         return false;
 
     // Check if objective has failed too many times
@@ -5804,4 +6079,849 @@ void QuestCompletion::InitializeQuestProgress(Player* bot, uint32 questId)
     trackingEvent.questId = questId;
     QuestEventBus::instance()->PublishEvent(trackingEvent);
 }
+
+// ============================================================================
+// NEW TRINITYCORE OBJECTIVE HANDLERS (Phase 1 Quest System Completion)
+// ============================================================================
+
+/**
+ * @brief Handle currency spending objectives (QUEST_OBJECTIVE_CURRENCY)
+ *
+ * The bot needs to spend a specific amount of currency. This typically means
+ * interacting with an NPC vendor or using a currency-consuming item/ability.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing currency ID and amount
+ */
+void QuestCompletion::HandleCurrencyObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 currencyId = objective.targetId;
+    uint32 requiredAmount = objective.requiredCount;
+
+    // Check current currency amount
+    uint32 currentAmount = bot->GetCurrencyQuantity(currencyId);
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleCurrencyObjective: Bot {} needs to spend {} of currency {}, has {}",
+        bot->GetName(), requiredAmount, currencyId, currentAmount);
+
+    // If bot has enough currency, the objective should auto-complete when they spend it
+    // This is typically handled by the quest system itself when interacting with vendors
+    if (currentAmount >= requiredAmount)
+    {
+        // Bot has the currency - quest system will track spending
+        objective.currentCount = std::min(currentAmount, requiredAmount);
+        TC_LOG_DEBUG("playerbot.quest", "HandleCurrencyObjective: Bot {} has enough currency, waiting for spending action",
+            bot->GetName());
+    }
+    else
+    {
+        // Bot needs to earn more currency first
+        TC_LOG_DEBUG("playerbot.quest", "HandleCurrencyObjective: Bot {} needs to earn {} more currency {}",
+            bot->GetName(), requiredAmount - currentAmount, currencyId);
+        objective.status = ObjectiveStatus::BLOCKED;
+    }
+}
+
+/**
+ * @brief Handle spell learning objectives (QUEST_OBJECTIVE_LEARNSPELL)
+ *
+ * The bot needs to learn a specific spell, usually from a class/profession trainer.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing spell ID
+ */
+void QuestCompletion::HandleLearnSpellObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 spellId = objective.targetId;
+
+    // Check if bot already knows the spell
+    if (bot->HasSpell(spellId))
+    {
+        objective.currentCount = objective.requiredCount;
+        objective.status = ObjectiveStatus::COMPLETED;
+        TC_LOG_DEBUG("playerbot.quest", "HandleLearnSpellObjective: Bot {} already knows spell {}",
+            bot->GetName(), spellId);
+        return;
+    }
+
+    // Find a trainer that can teach this spell
+    Creature* trainer = FindTrainerForSpell(bot, spellId);
+    if (trainer)
+    {
+        // Navigate to trainer
+        float dist = bot->GetDistance(trainer);
+        if (dist > QUEST_GIVER_INTERACTION_RANGE)
+        {
+            TC_LOG_DEBUG("playerbot.quest", "HandleLearnSpellObjective: Bot {} navigating to trainer {} for spell {}",
+                bot->GetName(), trainer->GetName(), spellId);
+            BotMovementUtil::MoveToPosition(bot, trainer->GetPosition(), 2.0f);
+            return;
+        }
+
+        // At trainer - attempt to learn spell
+        TC_LOG_DEBUG("playerbot.quest", "HandleLearnSpellObjective: Bot {} attempting to learn spell {} from {}",
+            bot->GetName(), spellId, trainer->GetName());
+
+        // Simulate trainer interaction - in a full implementation, this would use
+        // the proper gossip/trainer interaction system
+        if (bot->HasEnoughMoney(static_cast<uint64>(0))) // Trainer spells might cost gold
+        {
+            bot->LearnSpell(spellId, false);
+            if (bot->HasSpell(spellId))
+            {
+                objective.currentCount = objective.requiredCount;
+                objective.status = ObjectiveStatus::COMPLETED;
+                TC_LOG_DEBUG("playerbot.quest", "HandleLearnSpellObjective: Bot {} learned spell {}",
+                    bot->GetName(), spellId);
+            }
+        }
+    }
+    else
+    {
+        TC_LOG_WARN("playerbot.quest", "HandleLearnSpellObjective: Could not find trainer for spell {} for bot {}",
+            spellId, bot->GetName());
+        objective.status = ObjectiveStatus::BLOCKED;
+    }
+}
+
+/**
+ * @brief Handle minimum reputation objectives (QUEST_OBJECTIVE_MIN_REPUTATION)
+ *
+ * The bot needs to reach a minimum reputation level with a specific faction.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing faction ID and required standing
+ */
+void QuestCompletion::HandleMinReputationObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 factionId = objective.targetId;
+    int32 requiredStanding = static_cast<int32>(objective.requiredCount);
+
+    // Get current reputation with faction
+    FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionId);
+    if (!factionEntry)
+    {
+        TC_LOG_ERROR("playerbot.quest", "HandleMinReputationObjective: Invalid faction ID {} for quest {}",
+            factionId, objective.questId);
+        objective.status = ObjectiveStatus::FAILED;
+        return;
+    }
+
+    ReputationRank currentRank = bot->GetReputationMgr().GetRank(factionEntry);
+    int32 currentStanding = bot->GetReputationMgr().GetReputation(factionEntry);
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleMinReputationObjective: Bot {} has {} rep with faction {}, needs {}",
+        bot->GetName(), currentStanding, factionId, requiredStanding);
+
+    if (currentStanding >= requiredStanding)
+    {
+        objective.currentCount = objective.requiredCount;
+        objective.status = ObjectiveStatus::COMPLETED;
+        TC_LOG_DEBUG("playerbot.quest", "HandleMinReputationObjective: Bot {} has met reputation requirement",
+            bot->GetName());
+    }
+    else
+    {
+        // Bot needs to gain reputation - find quests or mobs that give rep
+        uint32 repSource = FindReputationSource(bot, factionId);
+        if (repSource != 0)
+        {
+            TC_LOG_DEBUG("playerbot.quest", "HandleMinReputationObjective: Bot {} should grind rep via source {}",
+                bot->GetName(), repSource);
+        }
+        objective.status = ObjectiveStatus::IN_PROGRESS;
+    }
+}
+
+/**
+ * @brief Handle maximum reputation objectives (QUEST_OBJECTIVE_MAX_REPUTATION)
+ *
+ * The bot must NOT exceed a maximum reputation level with a faction.
+ * This is rare and usually for faction-specific quests.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing faction ID and max standing
+ */
+void QuestCompletion::HandleMaxReputationObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 factionId = objective.targetId;
+    int32 maxStanding = static_cast<int32>(objective.requiredCount);
+
+    FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionId);
+    if (!factionEntry)
+    {
+        TC_LOG_ERROR("playerbot.quest", "HandleMaxReputationObjective: Invalid faction ID {} for quest {}",
+            factionId, objective.questId);
+        objective.status = ObjectiveStatus::FAILED;
+        return;
+    }
+
+    int32 currentStanding = bot->GetReputationMgr().GetReputation(factionEntry);
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleMaxReputationObjective: Bot {} has {} rep with faction {}, max allowed {}",
+        bot->GetName(), currentStanding, factionId, maxStanding);
+
+    if (currentStanding <= maxStanding)
+    {
+        objective.currentCount = objective.requiredCount;
+        objective.status = ObjectiveStatus::COMPLETED;
+    }
+    else
+    {
+        // Bot has too much reputation - this objective cannot be completed
+        TC_LOG_WARN("playerbot.quest", "HandleMaxReputationObjective: Bot {} has too much rep ({} > {}), quest may be uncompletable",
+            bot->GetName(), currentStanding, maxStanding);
+        objective.status = ObjectiveStatus::FAILED;
+    }
+}
+
+/**
+ * @brief Handle money/gold objectives (QUEST_OBJECTIVE_MONEY)
+ *
+ * The bot needs to have a specific amount of gold.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing required copper amount
+ */
+void QuestCompletion::HandleMoneyObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 requiredMoney = objective.requiredCount;  // In copper
+    uint32 currentMoney = bot->GetMoney();
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleMoneyObjective: Bot {} has {} copper, needs {}",
+        bot->GetName(), currentMoney, requiredMoney);
+
+    if (currentMoney >= requiredMoney)
+    {
+        objective.currentCount = objective.requiredCount;
+        objective.status = ObjectiveStatus::COMPLETED;
+        TC_LOG_DEBUG("playerbot.quest", "HandleMoneyObjective: Bot {} has enough gold",
+            bot->GetName());
+    }
+    else
+    {
+        // Bot needs to earn more gold
+        uint32 needed = requiredMoney - currentMoney;
+        TC_LOG_DEBUG("playerbot.quest", "HandleMoneyObjective: Bot {} needs {} more copper",
+            bot->GetName(), needed);
+        objective.status = ObjectiveStatus::IN_PROGRESS;
+        // Bot should prioritize gold-earning activities (vendoring, questing, etc.)
+    }
+}
+
+/**
+ * @brief Handle player kill objectives (QUEST_OBJECTIVE_PLAYERKILLS)
+ *
+ * The bot needs to kill other players in PvP combat.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing required kill count
+ */
+void QuestCompletion::HandlePlayerKillsObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandlePlayerKillsObjective: Bot {} needs {} player kills for quest {}",
+        bot->GetName(), objective.requiredCount, objective.questId);
+
+    // Check if bot is already in a PvP environment
+    if (bot->InBattleground() || bot->InArena())
+    {
+        TC_LOG_DEBUG("playerbot.quest", "HandlePlayerKillsObjective: Bot {} is in PvP instance, kills will count",
+            bot->GetName());
+        objective.status = ObjectiveStatus::IN_PROGRESS;
+        return;
+    }
+
+    // Queue for battleground to complete this objective
+    StartPvPActivity(bot);
+    objective.status = ObjectiveStatus::IN_PROGRESS;
+}
+
+/**
+ * @brief Handle area trigger objectives (QUEST_OBJECTIVE_AREATRIGGER)
+ *
+ * The bot needs to enter or pass through a specific area trigger.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing area trigger ID
+ */
+void QuestCompletion::HandleAreaTriggerObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 areaTriggerIdOrObjectId = objective.targetId;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleAreaTriggerObjective: Bot {} needs to reach area trigger/location {}",
+        bot->GetName(), areaTriggerIdOrObjectId);
+
+    // Find the position of the area trigger
+    Position targetPos = FindAreaTriggerPosition(areaTriggerIdOrObjectId);
+
+    if (targetPos.GetPositionX() == 0.0f && targetPos.GetPositionY() == 0.0f)
+    {
+        TC_LOG_WARN("playerbot.quest", "HandleAreaTriggerObjective: Could not find position for area trigger {}",
+            areaTriggerIdOrObjectId);
+        objective.status = ObjectiveStatus::BLOCKED;
+        return;
+    }
+
+    // Navigate to the area trigger
+    float dist = bot->GetDistance(targetPos);
+    if (dist > 10.0f)
+    {
+        TC_LOG_DEBUG("playerbot.quest", "HandleAreaTriggerObjective: Bot {} navigating to area trigger at ({}, {}, {})",
+            bot->GetName(), targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+        BotMovementUtil::MoveToPosition(bot, targetPos, 5.0f);
+        objective.status = ObjectiveStatus::IN_PROGRESS;
+    }
+    else
+    {
+        // Should be triggered automatically by the game when entering the area
+        TC_LOG_DEBUG("playerbot.quest", "HandleAreaTriggerObjective: Bot {} is at area trigger location",
+            bot->GetName());
+    }
+}
+
+/**
+ * @brief Handle pet battle vs NPC objectives (QUEST_OBJECTIVE_WINPETBATTLEAGAINSTNPC)
+ *
+ * The bot needs to win a pet battle against a specific NPC trainer.
+ * Note: Pet battles are a complex system that may not be fully implemented for bots.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing NPC entry ID
+ */
+void QuestCompletion::HandlePetBattleNPCObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 npcEntry = objective.targetId;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandlePetBattleNPCObjective: Bot {} needs to defeat pet battle trainer entry {}",
+        bot->GetName(), npcEntry);
+
+    // Find the NPC
+    Creature* petTrainer = bot->FindNearestCreature(npcEntry, 100.0f);
+    if (!petTrainer)
+    {
+        // Search in creature spawn data
+        TC_LOG_DEBUG("playerbot.quest", "HandlePetBattleNPCObjective: Pet trainer {} not nearby, searching world",
+            npcEntry);
+        objective.status = ObjectiveStatus::BLOCKED;
+        return;
+    }
+
+    // Navigate to the pet battle trainer
+    float dist = bot->GetDistance(petTrainer);
+    if (dist > QUEST_GIVER_INTERACTION_RANGE)
+    {
+        BotMovementUtil::MoveToPosition(bot, petTrainer->GetPosition(), 2.0f);
+        objective.status = ObjectiveStatus::IN_PROGRESS;
+        return;
+    }
+
+    // Pet battle system interaction would go here
+    // This requires the full pet battle system to be implemented for bots
+    TC_LOG_WARN("playerbot.quest", "HandlePetBattleNPCObjective: Pet battle system not fully implemented for bots");
+    objective.status = ObjectiveStatus::BLOCKED;
+}
+
+/**
+ * @brief Handle defeat battle pet objectives (QUEST_OBJECTIVE_DEFEATBATTLEPET)
+ *
+ * The bot needs to defeat a specific wild battle pet.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing battle pet species ID
+ */
+void QuestCompletion::HandleDefeatBattlePetObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 speciesId = objective.targetId;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleDefeatBattlePetObjective: Bot {} needs to defeat battle pet species {}",
+        bot->GetName(), speciesId);
+
+    // Wild battle pets are complex - requires pet battle system
+    TC_LOG_WARN("playerbot.quest", "HandleDefeatBattlePetObjective: Pet battle system not fully implemented for bots");
+    objective.status = ObjectiveStatus::BLOCKED;
+}
+
+/**
+ * @brief Handle PvP pet battle objectives (QUEST_OBJECTIVE_WINPVPPETBATTLES)
+ *
+ * The bot needs to win PvP pet battles against other players.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing required win count
+ */
+void QuestCompletion::HandlePvPPetBattlesObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandlePvPPetBattlesObjective: Bot {} needs {} PvP pet battle wins",
+        bot->GetName(), objective.requiredCount);
+
+    // PvP pet battles require matching system and bot-vs-player pet battles
+    TC_LOG_WARN("playerbot.quest", "HandlePvPPetBattlesObjective: PvP pet battle system not implemented for bots");
+    objective.status = ObjectiveStatus::BLOCKED;
+}
+
+/**
+ * @brief Handle criteria tree objectives (QUEST_OBJECTIVE_CRITERIA_TREE)
+ *
+ * The bot needs to complete achievement-like criteria, typically tracked by
+ * the game's achievement/criteria system.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing criteria tree ID
+ */
+void QuestCompletion::HandleCriteriaTreeObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 criteriaTreeId = objective.targetId;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleCriteriaTreeObjective: Bot {} needs to complete criteria tree {}",
+        bot->GetName(), criteriaTreeId);
+
+    // Check if criteria is already completed
+    // The criteria system tracks this automatically
+    if (bot->IsQuestObjectiveComplete(objective.questId, objective.objectiveIndex))
+    {
+        objective.currentCount = objective.requiredCount;
+        objective.status = ObjectiveStatus::COMPLETED;
+        TC_LOG_DEBUG("playerbot.quest", "HandleCriteriaTreeObjective: Criteria tree {} already completed",
+            criteriaTreeId);
+    }
+    else
+    {
+        // Criteria progress is typically tracked automatically by various game actions
+        TC_LOG_DEBUG("playerbot.quest", "HandleCriteriaTreeObjective: Waiting for criteria tree {} progress",
+            criteriaTreeId);
+        objective.status = ObjectiveStatus::IN_PROGRESS;
+    }
+}
+
+/**
+ * @brief Handle progress bar objectives (QUEST_OBJECTIVE_PROGRESS_BAR)
+ *
+ * The bot needs to fill a progress bar through various actions.
+ * The specific actions depend on the quest design.
+ *
+ * @param bot The bot player
+ * @param objective The objective data
+ */
+void QuestCompletion::HandleProgressBarObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleProgressBarObjective: Bot {} working on progress bar objective for quest {}",
+        bot->GetName(), objective.questId);
+
+    // Progress bar objectives are typically filled by:
+    // - Killing mobs in an area
+    // - Interacting with objects
+    // - Being in a specific area
+    // - Time-based progression
+
+    // Check current progress via the quest system
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (quest)
+    {
+        QuestObjectives const& questObjectives = quest->GetObjectives();
+        if (objective.objectiveIndex < questObjectives.size())
+        {
+            QuestObjective const& questObj = questObjectives[objective.objectiveIndex];
+            objective.currentCount = bot->GetQuestObjectiveData(questObj);
+
+            if (objective.currentCount >= objective.requiredCount)
+            {
+                objective.status = ObjectiveStatus::COMPLETED;
+            }
+            else
+            {
+                objective.status = ObjectiveStatus::IN_PROGRESS;
+            }
+        }
+    }
+}
+
+/**
+ * @brief Handle have currency objectives (QUEST_OBJECTIVE_HAVE_CURRENCY)
+ *
+ * The bot must have X currency when turning in the quest (not consumed).
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing currency ID and amount
+ */
+void QuestCompletion::HandleHaveCurrencyObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 currencyId = objective.targetId;
+    uint32 requiredAmount = objective.requiredCount;
+
+    uint32 currentAmount = bot->GetCurrencyQuantity(currencyId);
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleHaveCurrencyObjective: Bot {} has {} of currency {}, needs {}",
+        bot->GetName(), currentAmount, currencyId, requiredAmount);
+
+    if (currentAmount >= requiredAmount)
+    {
+        objective.currentCount = objective.requiredCount;
+        objective.status = ObjectiveStatus::COMPLETED;
+    }
+    else
+    {
+        // Bot needs to earn more currency
+        objective.currentCount = currentAmount;
+        objective.status = ObjectiveStatus::IN_PROGRESS;
+        TC_LOG_DEBUG("playerbot.quest", "HandleHaveCurrencyObjective: Bot {} needs {} more currency",
+            bot->GetName(), requiredAmount - currentAmount);
+    }
+}
+
+/**
+ * @brief Handle obtain currency objectives (QUEST_OBJECTIVE_OBTAIN_CURRENCY)
+ *
+ * The bot needs to obtain X currency after starting the quest (tracked separately).
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing currency ID and amount
+ */
+void QuestCompletion::HandleObtainCurrencyObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 currencyId = objective.targetId;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleObtainCurrencyObjective: Bot {} needs to obtain {} of currency {}",
+        bot->GetName(), objective.requiredCount, currencyId);
+
+    // This objective tracks currency GAINED after quest acceptance
+    // The quest system tracks this automatically
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (quest)
+    {
+        QuestObjectives const& questObjectives = quest->GetObjectives();
+        if (objective.objectiveIndex < questObjectives.size())
+        {
+            QuestObjective const& questObj = questObjectives[objective.objectiveIndex];
+            objective.currentCount = bot->GetQuestObjectiveData(questObj);
+
+            if (objective.currentCount >= objective.requiredCount)
+            {
+                objective.status = ObjectiveStatus::COMPLETED;
+            }
+            else
+            {
+                objective.status = ObjectiveStatus::IN_PROGRESS;
+            }
+        }
+    }
+}
+
+/**
+ * @brief Handle increase reputation objectives (QUEST_OBJECTIVE_INCREASE_REPUTATION)
+ *
+ * The bot needs to gain X reputation with a faction (tracked from quest acceptance).
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing faction ID and amount to gain
+ */
+void QuestCompletion::HandleIncreaseReputationObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 factionId = objective.targetId;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleIncreaseReputationObjective: Bot {} needs to gain {} rep with faction {}",
+        bot->GetName(), objective.requiredCount, factionId);
+
+    // Reputation gain is tracked automatically by the quest system from acceptance
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (quest)
+    {
+        QuestObjectives const& questObjectives = quest->GetObjectives();
+        if (objective.objectiveIndex < questObjectives.size())
+        {
+            QuestObjective const& questObj = questObjectives[objective.objectiveIndex];
+            objective.currentCount = bot->GetQuestObjectiveData(questObj);
+
+            if (objective.currentCount >= objective.requiredCount)
+            {
+                objective.status = ObjectiveStatus::COMPLETED;
+            }
+            else
+            {
+                // Bot should do activities that grant rep with this faction
+                uint32 repSource = FindReputationSource(bot, factionId);
+                objective.status = ObjectiveStatus::IN_PROGRESS;
+            }
+        }
+    }
+}
+
+/**
+ * @brief Handle area trigger enter objectives (QUEST_OBJECTIVE_AREA_TRIGGER_ENTER)
+ *
+ * The bot needs to enter a specific area trigger zone.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing area trigger ID
+ */
+void QuestCompletion::HandleAreaTriggerEnterObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    // Use the generic area trigger handler
+    HandleAreaTriggerObjective(bot, objective);
+}
+
+/**
+ * @brief Handle area trigger exit objectives (QUEST_OBJECTIVE_AREA_TRIGGER_EXIT)
+ *
+ * The bot needs to exit a specific area trigger zone.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing area trigger ID
+ */
+void QuestCompletion::HandleAreaTriggerExitObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    uint32 areaTriggerIdOrObjectId = objective.targetId;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleAreaTriggerExitObjective: Bot {} needs to exit area trigger {}",
+        bot->GetName(), areaTriggerIdOrObjectId);
+
+    // For exit objectives, bot needs to first enter then leave the area
+    // The game tracks this automatically once the bot leaves
+    Position targetPos = FindAreaTriggerPosition(areaTriggerIdOrObjectId);
+
+    if (targetPos.GetPositionX() != 0.0f || targetPos.GetPositionY() != 0.0f)
+    {
+        // Check if we're inside the area trigger
+        float dist = bot->GetDistance(targetPos);
+        if (dist < 20.0f)
+        {
+            // Bot is near/in the area - move away to trigger exit
+            Position awayPos = bot->GetPosition();
+            awayPos.m_positionX += 30.0f;  // Move 30 yards away
+            BotMovementUtil::MoveToPosition(bot, awayPos, 5.0f);
+        }
+    }
+
+    objective.status = ObjectiveStatus::IN_PROGRESS;
+}
+
+/**
+ * @brief Handle kill with label objectives (QUEST_OBJECTIVE_KILL_WITH_LABEL)
+ *
+ * The bot needs to kill creatures with a specific label/tag.
+ * This is similar to MONSTER but targets creatures by a label criteria.
+ *
+ * @param bot The bot player
+ * @param objective The objective data containing label information
+ */
+void QuestCompletion::HandleKillWithLabelObjective(Player* bot, QuestObjectiveData& objective)
+{
+    if (!bot)
+        return;
+
+    TC_LOG_DEBUG("playerbot.quest", "HandleKillWithLabelObjective: Bot {} needs to kill {} creatures with label for quest {}",
+        bot->GetName(), objective.requiredCount, objective.questId);
+
+    // Kill with label works like normal kill objectives but may target multiple creature types
+    // that share a label. The quest system tracks kills automatically.
+    HandleKillObjective(bot, objective);
+}
+
+// ============================================================================
+// HELPER METHODS FOR OBJECTIVE HANDLERS
+// ============================================================================
+
+/**
+ * @brief Find a trainer that can teach a specific spell
+ *
+ * @param bot The bot player
+ * @param spellId The spell ID to learn
+ * @return Trainer creature or nullptr if not found
+ */
+Creature* QuestCompletion::FindTrainerForSpell(Player* bot, uint32 spellId)
+{
+    if (!bot)
+        return nullptr;
+
+    // First check nearby trainers
+    std::list<Creature*> creatureList;
+    Trinity::AnyUnitInObjectRangeCheck check(bot, 100.0f);
+    Trinity::CreatureListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, creatureList, check);
+    Cell::VisitAllObjects(bot, searcher, 100.0f);
+
+    for (Creature* creature : creatureList)
+    {
+        if (!creature->IsTrainer())
+            continue;
+
+        // Check if this creature is a trainer that can train the bot
+        // Use GetTrainerId() to verify it's a trainer
+        if (creature->GetTrainerId() > 0)
+        {
+            TC_LOG_DEBUG("playerbot.quest", "FindTrainerForSpell: Found potential trainer {} (ID: {}) for spell {}",
+                creature->GetName(), creature->GetTrainerId(), spellId);
+            return creature;
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot.quest", "FindTrainerForSpell: No nearby trainer found for spell {}", spellId);
+    return nullptr;
+}
+
+/**
+ * @brief Start PvP activity for player kills objective
+ *
+ * @param bot The bot player
+ */
+void QuestCompletion::StartPvPActivity(Player* bot)
+{
+    if (!bot)
+        return;
+
+    TC_LOG_DEBUG("playerbot.quest", "StartPvPActivity: Bot {} starting PvP activity", bot->GetName());
+
+    // Enable PvP flag if not already
+    if (!bot->IsPvP())
+    {
+        bot->SetPvP(true);
+    }
+
+    // Queue for a random battleground
+    // In a full implementation, this would use the battleground queue system
+    QueueForBattleground(bot, 0);  // 0 = random BG
+}
+
+/**
+ * @brief Start dungeon activity for dungeon objectives
+ *
+ * @param bot The bot player
+ */
+void QuestCompletion::StartDungeonActivity(Player* bot)
+{
+    if (!bot)
+        return;
+
+    TC_LOG_DEBUG("playerbot.quest", "StartDungeonActivity: Bot {} should queue for dungeon", bot->GetName());
+    // Dungeon finder queue would be implemented here
+}
+
+/**
+ * @brief Queue bot for a specific battleground
+ *
+ * @param bot The bot player
+ * @param bgTypeId Battleground type ID (0 = random)
+ */
+void QuestCompletion::QueueForBattleground(Player* bot, uint32 bgTypeId)
+{
+    if (!bot)
+        return;
+
+    TC_LOG_DEBUG("playerbot.quest", "QueueForBattleground: Bot {} queuing for BG type {}", bot->GetName(), bgTypeId);
+    // Battleground queue implementation would go here
+    // This requires integration with the BG queue system
+}
+
+/**
+ * @brief Find area trigger position by ID
+ *
+ * @param areaTriggerIdOrObjectId Area trigger ID or related object ID
+ * @return Position of the area trigger
+ */
+Position QuestCompletion::FindAreaTriggerPosition(uint32 areaTriggerIdOrObjectId)
+{
+    // Look up area trigger in the database
+    AreaTriggerEntry const* areaTrigger = sAreaTriggerStore.LookupEntry(areaTriggerIdOrObjectId);
+    if (areaTrigger)
+    {
+        Position pos;
+        pos.m_positionX = areaTrigger->Pos.X;
+        pos.m_positionY = areaTrigger->Pos.Y;
+        pos.m_positionZ = areaTrigger->Pos.Z;
+        pos.SetOrientation(0.0f);
+        return pos;
+    }
+
+    // Return empty position if not found
+    return Position();
+}
+
+/**
+ * @brief Check if bot has enough currency
+ *
+ * @param bot The bot player
+ * @param currencyId Currency type ID
+ * @param amount Required amount
+ * @return True if bot has enough
+ */
+bool QuestCompletion::HasEnoughCurrency(Player* bot, uint32 currencyId, uint32 amount)
+{
+    if (!bot)
+        return false;
+
+    return bot->GetCurrencyQuantity(currencyId) >= amount;
+}
+
+/**
+ * @brief Find best reputation source for a faction
+ *
+ * @param bot The bot player
+ * @param factionId Faction ID
+ * @return Quest ID or creature ID that provides reputation, 0 if none found
+ */
+uint32 QuestCompletion::FindReputationSource(Player* bot, uint32 factionId)
+{
+    if (!bot)
+        return 0;
+
+    // This would search for:
+    // 1. Quests that reward reputation with this faction
+    // 2. Creatures that give rep when killed
+    // 3. Items that can be turned in for rep
+
+    TC_LOG_DEBUG("playerbot.quest", "FindReputationSource: Searching for rep sources for faction {}", factionId);
+
+    // For now, return 0 - a full implementation would query the quest/creature databases
+    return 0;
+}
+
 } // namespace Playerbot

@@ -23,7 +23,7 @@ class Player;
 class Group;
 class Unit;
 class Creature;
-enum Difficulty : uint8;
+enum Difficulty : int16;
 
 namespace Playerbot
 {

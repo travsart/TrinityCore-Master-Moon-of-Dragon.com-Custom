@@ -49,6 +49,9 @@
 #include "SpellInfo.h"
 #include "Spell.h"  // For Spell class
 #include "Log.h"
+#include "ObjectAccessor.h"
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../Spatial/DoubleBufferedSpatialGrid.h"
 
 namespace Playerbot
 {
@@ -302,11 +305,55 @@ public:
      * - Custom ground pattern handling
      *
      * DEFAULT BEHAVIOR: Generic ground avoidance (detect and move)
-     * OVERRIDE REASON: Deadmines has no special ground mechanics at level 15-20
-     *
-     * NOTE: We DON'T override this - using base class (generic is fine)
+     * OVERRIDE REASON: Using spatial grid for enterprise-grade consistency
      */
-    // void HandleGroundAvoidance(::Player* player, ::Creature* boss) override { }
+    void HandleGroundAvoidance(::Player* player, ::Creature* boss) override
+    {
+        // ENTERPRISE: Use lock-free spatial grid for thread-safe DynamicObject queries
+        // Deadmines has minimal ground effects but using spatial grid for consistency
+        Map* map = player->GetMap();
+        if (map)
+        {
+            DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!spatialGrid)
+            {
+                sSpatialGridManager.CreateGrid(map);
+                spatialGrid = sSpatialGridManager.GetGrid(map);
+            }
+
+            if (spatialGrid)
+            {
+                // Query nearby dynamic objects using immutable snapshots (lock-free!)
+                auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(player->GetPosition(), 15.0f);
+
+                for (auto const& snapshot : dynamicObjectSnapshots)
+                {
+                    if (!snapshot.IsActive())
+                        continue;
+
+                    if (snapshot.casterGuid != boss->GetGUID())
+                        continue;
+
+                    float distance = player->GetExactDist(snapshot.position);
+                    if (distance < 10.0f)
+                    {
+                        if (DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, snapshot.guid))
+                        {
+                            if (IsDangerousGroundEffect(dynObj))
+                            {
+                                TC_LOG_DEBUG("playerbot", "DeadminesScript: Avoiding ground effect at distance {:.1f}", distance);
+                                MoveAwayFromGroundEffect(player, dynObj);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fall back to generic
+        DungeonScript::HandleGroundAvoidance(player, boss);
+    }
 
     /**
      * Handle add kill priority

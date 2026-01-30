@@ -1003,15 +1003,25 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // CRITICAL: We MUST wait indefinitely - a 50ms timeout is NOT sufficient!
     // If we return while workers are still running, MapUpdater WILL crash on m_procDeep assertion.
     // The timeout approach only deferred logout processing but did NOT prevent the crash.
+    //
+    // CRITICAL FIX (Map.cpp:1973 crash): Must check HasPendingWork() not just GetQueuedTasks()!
+    // Problem: GetQueuedTasks() only checks if tasks are QUEUED. A task can be dequeued
+    //          (queue empty) but STILL EXECUTING on a worker thread. If we only check queues,
+    //          we can proceed while workers still access bot objects → use-after-free crash.
+    // Solution: Use HasPendingWork() which checks both queued AND in-flight (executing) tasks.
     if (useThreadPool)
     {
-        uint32 queuedTasks = Performance::GetThreadPool().GetQueuedTasks();
-        if (queuedTasks > 0)
+        // Check for ANY pending work (queued OR currently executing)
+        if (Performance::GetThreadPool().HasPendingWork())
         {
+            size_t queuedTasks = Performance::GetThreadPool().GetQueuedTasks();
+            size_t inFlightTasks = Performance::GetThreadPool().GetInFlightTasks();
+
             auto startWait = ::std::chrono::steady_clock::now();
 
             // Wait indefinitely for completion - we CANNOT proceed while workers cast spells
             // Using max timeout to effectively block until all tasks complete
+            // WaitForCompletion now correctly waits for BOTH queued AND executing tasks
             bool completed = Performance::GetThreadPool().WaitForCompletion(::std::chrono::milliseconds(5000));
 
             auto waitDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
@@ -1021,14 +1031,34 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             {
                 // This should rarely happen - log as error if tasks take > 5 seconds
                 TC_LOG_ERROR("module.playerbot.session",
-                    "ThreadPool tasks still running after 5000ms ({} queued) - BLOCKING until complete to prevent m_procDeep crash",
-                    queuedTasks);
+                    "ThreadPool tasks still running after 5000ms ({} queued, {} in-flight) - trying extended wait",
+                    queuedTasks, inFlightTasks);
 
-                // Force wait without timeout - we CANNOT proceed with running workers
-                Performance::GetThreadPool().WaitForCompletion(::std::chrono::milliseconds::max());
+                // CRITICAL FIX (FreezeDetector crash): NEVER use milliseconds::max()!
+                // That would block the world thread forever if there's a counter leak bug.
+                // Instead, use a reasonable maximum timeout (30 seconds) and then proceed anyway.
+                // The ThreadPool counter leak bug has been fixed, but this safeguard remains.
+                constexpr auto MAX_EXTENDED_WAIT = ::std::chrono::milliseconds(30000);
+                bool extendedCompleted = Performance::GetThreadPool().WaitForCompletion(MAX_EXTENDED_WAIT);
+
+                if (!extendedCompleted)
+                {
+                    // CRITICAL: Still not completed after 30s - likely a bug or deadlock
+                    // Log detailed diagnostic info and proceed anyway to prevent FreezeDetector crash
+                    size_t finalQueued = Performance::GetThreadPool().GetQueuedTasks();
+                    size_t finalInFlight = Performance::GetThreadPool().GetInFlightTasks();
+                    size_t activeThreads = Performance::GetThreadPool().GetActiveThreads();
+
+                    TC_LOG_FATAL("module.playerbot.session",
+                        "ThreadPool DEADLOCK DETECTED! After 35s total wait: {} queued, {} in-flight, {} active workers. "
+                        "PROCEEDING ANYWAY to prevent FreezeDetector crash - may cause instability!",
+                        finalQueued, finalInFlight, activeThreads);
+                }
+                else
+                {
+                    TC_LOG_WARN("module.playerbot.session", "ThreadPool finally completed after extended wait");
+                }
                 canProcessLogouts = false;
-
-                TC_LOG_WARN("module.playerbot.session", "ThreadPool finally completed after extended wait");
             }
             else if (waitDuration.count() > 100)
             {

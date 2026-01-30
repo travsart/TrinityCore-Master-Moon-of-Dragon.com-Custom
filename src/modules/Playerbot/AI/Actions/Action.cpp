@@ -194,9 +194,8 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     else
         targets.SetUnitTarget(bot);
 
-    // CRITICAL: Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
-    // Passing nullptr causes ACCESS_VIOLATION crash at Player.cpp:8853
-    int32 misc[2] = { 0, 0 };
+    // WoW 12.0: CastItemUseSpell signature changed to std::array<int32, 3>
+    std::array<int32, 3> misc = { 0, 0, 0 };
     bot->CastItemUseSpell(item, targets, ObjectGuid::Empty, misc);
     return true;
 }

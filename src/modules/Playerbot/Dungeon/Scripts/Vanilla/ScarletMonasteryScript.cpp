@@ -64,6 +64,8 @@
 #include "SpellMgr.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../Spatial/DoubleBufferedSpatialGrid.h"
 
 namespace Playerbot
 {
@@ -346,6 +348,48 @@ public:
     {
         uint32 entry = boss->GetEntry();
 
+        // ENTERPRISE: Use lock-free spatial grid for thread-safe DynamicObject queries
+        Map* map = player->GetMap();
+        if (map)
+        {
+            DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!spatialGrid)
+            {
+                sSpatialGridManager.CreateGrid(map);
+                spatialGrid = sSpatialGridManager.GetGrid(map);
+            }
+
+            if (spatialGrid)
+            {
+                // Query nearby dynamic objects using immutable snapshots (lock-free!)
+                auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(player->GetPosition(), 15.0f);
+
+                for (auto const& snapshot : dynamicObjectSnapshots)
+                {
+                    if (!snapshot.IsActive())
+                        continue;
+
+                    // Check if casted by the boss
+                    if (snapshot.casterGuid != boss->GetGUID())
+                        continue;
+
+                    float distance = player->GetExactDist(snapshot.position);
+                    if (distance < 10.0f)
+                    {
+                        if (DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, snapshot.guid))
+                        {
+                            if (IsDangerousGroundEffect(dynObj))
+                            {
+                                TC_LOG_DEBUG("module.playerbot", "ScarletMonasteryScript: Avoiding ground effect at distance {:.1f}", distance);
+                                MoveAwayFromGroundEffect(player, dynObj);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         switch (entry)
         {
             case 6487: // Arcanist Doan
@@ -355,11 +399,11 @@ public:
                 // Visual: He glows bright blue
 
                 // Check if Doan is casting Detonation (9435 or similar)
-    if (boss->HasAura(13323) || boss->HasAura(9435))
+                if (boss->HasAura(13323) || boss->HasAura(9435))
                 {
                     float distance = player->GetExactDist(boss);
                     // If within 20 yards of Doan during detonation, RUN AWAY
-    if (distance < 20.0f)
+                    if (distance < 20.0f)
                     {
                         TC_LOG_DEBUG("module.playerbot", "ScarletMonasteryScript: EMERGENCY - Running from Doan's Detonation");
 

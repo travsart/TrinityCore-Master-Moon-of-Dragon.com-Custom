@@ -8,16 +8,15 @@
  */
 
 #include "InnkeeperInteractionManager.h"
-#include "CellImpl.h"
 #include "Creature.h"
+#include "DB2Stores.h"
 #include "GameTime.h"
-#include "GridNotifiers.h"
-#include "GridNotifiersImpl.h"
 #include "Log.h"
 #include "Map.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Player.h"
+#include "RestMgr.h"
 #include "Spell.h"
 #include "SpellAuras.h"
 #include "SpellHistory.h"
@@ -25,10 +24,23 @@
 #include "SpellMgr.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "Spatial/DoubleBufferedSpatialGrid.h"
+#include "Spatial/SpatialGridQueryHelpers.h"
+#include "Spatial/SpatialGridManager.h"
 #include <chrono>
 
 namespace Playerbot
 {
+
+// ============================================================================
+// PRIVATE HELPER METHOD DECLARATIONS (defined at end of file)
+// ============================================================================
+
+// These are implemented at the bottom of the file
+
+// ============================================================================
+// CONSTRUCTOR
+// ============================================================================
 
 InnkeeperInteractionManager::InnkeeperInteractionManager(Player* bot)
     : m_bot(bot)
@@ -61,16 +73,17 @@ bool InnkeeperInteractionManager::BindHearthstone(Creature* innkeeper)
     // Verify this is an innkeeper
     if (!IsInnkeeper(innkeeper))
     {
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: %s is not an innkeeper",
-            m_bot->GetName().c_str(), innkeeper->GetName().c_str());
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: {} is not an innkeeper",
+            m_bot->GetName(), innkeeper->GetName());
         return false;
     }
 
     // Check distance
-    if (!IsInInnRange(innkeeper))
+    static constexpr float INNKEEPER_INTERACTION_DISTANCE = 10.0f;
+    if (m_bot->GetDistance(innkeeper) > INNKEEPER_INTERACTION_DISTANCE)
     {
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Too far from innkeeper %s",
-            m_bot->GetName().c_str(), innkeeper->GetName().c_str());
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Too far from innkeeper {}",
+            m_bot->GetName(), innkeeper->GetName());
         return false;
     }
 
@@ -91,8 +104,8 @@ bool InnkeeperInteractionManager::BindHearthstone(Creature* innkeeper)
 
         RecordBind(isNewLocation);
 
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Bound hearthstone at %s (new location: %s)",
-            m_bot->GetName().c_str(), innkeeper->GetName().c_str(), isNewLocation ? "yes" : "no");
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Bound hearthstone at {} (new location: {})",
+            m_bot->GetName(), innkeeper->GetName(), isNewLocation ? "yes" : "no");
     }
 
     // Track performance
@@ -137,15 +150,15 @@ bool InnkeeperInteractionManager::SmartBind(Creature* innkeeper)
 
     if (eval.isCurrentBind)
     {
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Already bound at this innkeeper",
-            m_bot->GetName().c_str());
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Already bound at this innkeeper",
+            m_bot->GetName());
         return true; // Already bound here, consider success
     }
 
     if (!eval.isRecommended)
     {
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Not binding at %s - %s",
-            m_bot->GetName().c_str(), innkeeper->GetName().c_str(), eval.reason.c_str());
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Not binding at {} - {}",
+            m_bot->GetName(), innkeeper->GetName(), eval.reason);
         return false;
     }
 
@@ -160,8 +173,8 @@ bool InnkeeperInteractionManager::UseHearthstone()
     // Check if hearthstone is ready
     if (!IsHearthstoneReady())
     {
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Hearthstone on cooldown (%u seconds remaining)",
-            m_bot->GetName().c_str(), GetHearthstoneCooldown());
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Hearthstone on cooldown ({} seconds remaining)",
+            m_bot->GetName(), GetHearthstoneCooldown());
         return false;
     }
 
@@ -169,8 +182,8 @@ bool InnkeeperInteractionManager::UseHearthstone()
     HomebindInfo homebind = GetCurrentHomebind();
     if (!homebind.isValid)
     {
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: No valid homebind location",
-            m_bot->GetName().c_str());
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: No valid homebind location",
+            m_bot->GetName());
         return false;
     }
 
@@ -178,8 +191,8 @@ bool InnkeeperInteractionManager::UseHearthstone()
     float distance = GetDistanceToHomebind();
     if (distance < 10.0f)
     {
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Already at homebind location",
-            m_bot->GetName().c_str());
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Already at homebind location",
+            m_bot->GetName());
         return false;
     }
 
@@ -187,8 +200,8 @@ bool InnkeeperInteractionManager::UseHearthstone()
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(HEARTHSTONE_SPELL_ID, DIFFICULTY_NONE);
     if (!spellInfo)
     {
-        TC_LOG_ERROR("playerbot", "InnkeeperInteractionManager[%s]: Hearthstone spell %u not found",
-            m_bot->GetName().c_str(), HEARTHSTONE_SPELL_ID);
+        TC_LOG_ERROR("playerbot", "InnkeeperInteractionManager[{}]: Hearthstone spell {} not found",
+            m_bot->GetName(), HEARTHSTONE_SPELL_ID);
         return false;
     }
 
@@ -203,14 +216,14 @@ bool InnkeeperInteractionManager::UseHearthstone()
     if (success)
     {
         RecordHearthstoneUse(true);
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Using hearthstone to return to %s",
-            m_bot->GetName().c_str(), homebind.zoneName.c_str());
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Using hearthstone to return to {}",
+            m_bot->GetName(), homebind.zoneName);
     }
     else
     {
         RecordHearthstoneUse(false);
-        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Failed to cast hearthstone (result: %u)",
-            m_bot->GetName().c_str(), static_cast<uint32>(result));
+        TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Failed to cast hearthstone (result: {})",
+            m_bot->GetName(), static_cast<uint32>(result));
     }
 
     return success;
@@ -254,18 +267,18 @@ bool InnkeeperInteractionManager::StartResting(Creature* innkeeper)
         return false;
 
     // Check if in range
-    if (!IsInInnRange(innkeeper))
+    static constexpr float INNKEEPER_INTERACTION_DISTANCE = 10.0f;
+    if (m_bot->GetDistance(innkeeper) > INNKEEPER_INTERACTION_DISTANCE)
         return false;
 
     // Set rested state - TrinityCore handles this automatically when near an innkeeper
-    // but we can also trigger it manually
-    m_bot->SetRestState(REST_TYPE_IN_TAVERN);
-    m_bot->SetRestFlag(REST_FLAG_IN_TAVERN);
+    // but we can also trigger it manually via RestMgr
+    m_bot->GetRestMgr().SetRestFlag(REST_FLAG_IN_TAVERN);
 
     m_stats.restingSessions++;
 
-    TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[%s]: Started resting at %s",
-        m_bot->GetName().c_str(), innkeeper->GetName().c_str());
+    TC_LOG_DEBUG("playerbot", "InnkeeperInteractionManager[{}]: Started resting at {}",
+        m_bot->GetName(), innkeeper->GetName());
 
     return true;
 }
@@ -275,7 +288,7 @@ bool InnkeeperInteractionManager::IsResting() const
     if (!m_bot)
         return false;
 
-    return m_bot->HasRestFlag(REST_FLAG_IN_TAVERN);
+    return m_bot->GetRestMgr().HasRestFlag(REST_FLAG_IN_TAVERN);
 }
 
 uint32 InnkeeperInteractionManager::GetRestedBonus() const
@@ -283,9 +296,8 @@ uint32 InnkeeperInteractionManager::GetRestedBonus() const
     if (!m_bot)
         return 0;
 
-    // Get rested XP bonus percentage (0-150 for double XP)
-    uint32 restedXP = m_bot->GetRestState();
-    return restedXP;
+    // Get rested XP bonus
+    return static_cast<uint32>(m_bot->GetRestMgr().GetRestBonus(REST_TYPE_XP));
 }
 
 // ============================================================================
@@ -308,16 +320,16 @@ InnkeeperInteractionManager::HomebindInfo InnkeeperInteractionManager::GetCurren
 
     HomebindInfo info;
 
-    // Get homebind location from player
-    WorldLocation homebindLoc = m_bot->GetHomebind();
+    // Get homebind location from player's m_homebind member
+    WorldLocation const& homebindLoc = m_bot->m_homebind;
 
     info.x = homebindLoc.GetPositionX();
     info.y = homebindLoc.GetPositionY();
     info.z = homebindLoc.GetPositionZ();
     info.mapId = homebindLoc.GetMapId();
 
-    // Get zone ID from position
-    info.zoneId = m_bot->GetZoneId();
+    // Get zone ID from area ID
+    info.zoneId = m_bot->m_homebindAreaId;
 
     // Get zone name
     if (AreaTableEntry const* area = sAreaTableStore.LookupEntry(info.zoneId))
@@ -384,7 +396,7 @@ bool InnkeeperInteractionManager::IsAtInn() const
     if (!m_bot)
         return false;
 
-    return m_bot->HasRestFlag(REST_FLAG_IN_TAVERN);
+    return m_bot->GetRestMgr().HasRestFlag(REST_FLAG_IN_TAVERN);
 }
 
 bool InnkeeperInteractionManager::IsInnkeeper(Creature* creature) const
@@ -418,23 +430,44 @@ float InnkeeperInteractionManager::GetDistanceToHomebind() const
 
 Creature* InnkeeperInteractionManager::FindNearestInnkeeper(float maxRange) const
 {
-    if (!m_bot)
+    if (!m_bot || !m_bot->IsInWorld())
         return nullptr;
+
+    Map* map = m_bot->GetMap();
+    if (!map)
+        return nullptr;
+
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return nullptr;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+        m_bot->GetPosition(), maxRange);
 
     Creature* nearest = nullptr;
     float nearestDist = maxRange;
 
-    // Search for innkeepers in range
-    std::list<Creature*> creatures;
-    Trinity::AllCreaturesOfEntryInRange check(m_bot, 0, maxRange); // 0 = any entry
-    Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(m_bot, creatures, check);
-    Cell::VisitGridObjects(m_bot, searcher, maxRange);
-
-    for (Creature* creature : creatures)
+    // Check each creature for innkeeper flag
+    for (ObjectGuid guid : nearbyGuids)
     {
-        if (!creature || !creature->IsAlive())
+        // Thread-safe spatial grid validation
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, guid);
+        if (!snapshot)
             continue;
 
+        // Get Creature* for NPC type detection
+        Creature* creature = ObjectAccessor::GetCreature(*m_bot, guid);
+        if (!creature || !creature->IsAlive() || creature->IsHostileTo(m_bot))
+            continue;
+
+        // Check for innkeeper flag
         if (!IsInnkeeper(creature))
             continue;
 
@@ -568,7 +601,6 @@ float InnkeeperInteractionManager::CalculateBindValue(Position const& position, 
     std::vector<uint32> questZones = GetActiveQuestZones();
     for (uint32 zoneId : questZones)
     {
-        // Get zone center and calculate distance
         // Simplified: just check if same map
         if (mapId == m_bot->GetMapId())
             value += 10.0f;
@@ -577,7 +609,7 @@ float InnkeeperInteractionManager::CalculateBindValue(Position const& position, 
     // Bonus for being in a major city
     if (AreaTableEntry const* area = sAreaTableStore.LookupEntry(m_bot->GetZoneId()))
     {
-        if (area->GetFlags().HasFlag(AreaFlags::Capital))
+        if (area->GetFlags().HasFlag(AreaFlags::AllowTradeChannel))
             value += 20.0f;
     }
 
@@ -609,10 +641,10 @@ std::vector<uint32> InnkeeperInteractionManager::GetActiveQuestZones() const
             continue;
 
         // Get zone from quest area group
-        uint32 zoneOrSort = quest->GetZoneOrSort();
+        int32 zoneOrSort = quest->GetZoneOrSort();
         if (zoneOrSort > 0)
         {
-            zones.push_back(zoneOrSort);
+            zones.push_back(static_cast<uint32>(zoneOrSort));
         }
     }
 
@@ -630,15 +662,6 @@ void InnkeeperInteractionManager::RecordHearthstoneUse(bool success)
 {
     if (success)
         m_stats.hearthstoneUses++;
-}
-
-bool InnkeeperInteractionManager::IsInInnRange(Creature* innkeeper) const
-{
-    if (!m_bot || !innkeeper)
-        return false;
-
-    static constexpr float INNKEEPER_INTERACTION_DISTANCE = 10.0f;
-    return m_bot->GetDistance(innkeeper) <= INNKEEPER_INTERACTION_DISTANCE;
 }
 
 float InnkeeperInteractionManager::CalculateDistanceToQuestZones(Position const& position, uint32 mapId) const

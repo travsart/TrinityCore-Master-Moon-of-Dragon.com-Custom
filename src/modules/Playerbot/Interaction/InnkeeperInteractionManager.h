@@ -302,6 +302,21 @@ private:
      */
     void RecordHearthstoneUse(bool success);
 
+    /**
+     * @brief Calculate distance to quest zones
+     * @param position Position to evaluate
+     * @param mapId Map ID
+     * @return Distance to nearest quest zone
+     */
+    float CalculateDistanceToQuestZones(::Position const& position, uint32 mapId) const;
+
+    /**
+     * @brief Determine if binding is recommended
+     * @param eval Evaluation to update
+     * @param currentBind Current homebind info
+     */
+    void DetermineRecommendation(InnEvaluation& eval, HomebindInfo const& currentBind) const;
+
     // Member Variables
     Player* m_bot;
     Statistics m_stats;

@@ -987,18 +987,19 @@ static void WriteSpellTargetData(ByteBuffer& buffer, WorldPackets::Spells::Spell
 {
     size_t startSize = buffer.size();
 
-    // Fixed fields (must match exact read order in SpellPackets.cpp:167-180)
+    // Fixed fields (must match exact read order in SpellPackets.cpp:169-172)
+    // WoW 12.0: Unknown1127_1 renamed to HousingGUID
     buffer << uint32(targetData.Flags);
     buffer << targetData.Unit;
     buffer << targetData.Item;
-    buffer << targetData.Unknown1127_1;  // CRITICAL: Added in patch 11.2.7 - ObjectGuid (16 bytes)
+    buffer << targetData.HousingGUID;  // WoW 12.0: Renamed from Unknown1127_1
 
-    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellTargetData: After Flags/Unit/Item/Unknown1127_1, Unit={}, size={}",
+    TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellTargetData: After Flags/Unit/Item/HousingGUID, Unit={}, size={}",
         targetData.Unit.ToString(), buffer.size());
 
     // Bit fields section (must match exact read order)
-    // Unknown1127_2 is a single bit that must come before OptionalInit bits
-    buffer << WorldPackets::Bits<1>(targetData.Unknown1127_2);  // CRITICAL: Added in patch 11.2.7 - 1 bit
+    // WoW 12.0: Unknown1127_2 renamed to HousingIsResident
+    buffer << WorldPackets::Bits<1>(targetData.HousingIsResident);  // WoW 12.0: Renamed from Unknown1127_2
     buffer << WorldPackets::OptionalInit(targetData.SrcLocation);
     buffer << WorldPackets::OptionalInit(targetData.DstLocation);
     buffer << WorldPackets::OptionalInit(targetData.Orientation);
@@ -1032,19 +1033,21 @@ static void WriteSpellTargetData(ByteBuffer& buffer, WorldPackets::Spells::Spell
 }
 
 // ============================================================================
-// Helper: Write SpellCastRequest to packet (mirrors operator>> in SpellPackets.cpp:224-270)
+// Helper: Write SpellCastRequest to packet (mirrors operator>> in SpellPackets.cpp:226-272)
+// WoW 12.0: Updated packet structure with renamed fields
 // ============================================================================
 static void WriteSpellCastRequest(ByteBuffer& buffer, WorldPackets::Spells::SpellCastRequest const& request)
 {
     size_t startSize = buffer.size();
 
-    // Fixed fields (must match read order exactly - see SpellPackets.cpp:224-237)
+    // Fixed fields (must match read order exactly - see SpellPackets.cpp:228-240)
     buffer << request.CastID;
     TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: After CastID, size={}", buffer.size());
 
     buffer << uint8(request.SendCastFlags);
     buffer << int32(request.Misc[0]);
     buffer << int32(request.Misc[1]);
+    buffer << int32(request.Misc[2]);  // WoW 12.0: Third element added
     buffer << int32(request.SpellID);
     TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: After SpellID={}, size={}", request.SpellID, buffer.size());
 
@@ -1056,15 +1059,15 @@ static void WriteSpellCastRequest(ByteBuffer& buffer, WorldPackets::Spells::Spel
 
     buffer << request.CraftingNPC;
 
-    // Array sizes
-    buffer << WorldPackets::Size<uint32>(request.OptionalCurrencies);
-    buffer << WorldPackets::Size<uint32>(request.OptionalReagents);
-    buffer << WorldPackets::Size<uint32>(request.RemovedModifications);
+    // Array sizes - WoW 12.0: Field names changed
+    buffer << WorldPackets::Size<uint32>(request.ExtraCurrencyCosts);  // Was OptionalCurrencies
+    buffer << WorldPackets::Size<uint32>(request.CraftingReagents);    // Was OptionalReagents
+    buffer << WorldPackets::Size<uint32>(request.RemovedReagents);     // Was RemovedModifications
 
-    buffer << uint8(request.CraftingFlags);
+    buffer << uint8(request.CraftingCastFlags);  // Was CraftingFlags
 
-    // Write OptionalCurrencies
-    for (auto const& currency : request.OptionalCurrencies)
+    // Write ExtraCurrencyCosts (was OptionalCurrencies)
+    for (auto const& currency : request.ExtraCurrencyCosts)
     {
         buffer << int32(currency.CurrencyID);
         buffer << int32(currency.Count);
@@ -1084,12 +1087,12 @@ static void WriteSpellCastRequest(ByteBuffer& buffer, WorldPackets::Spells::Spel
     TC_LOG_DEBUG("playerbot.spells.packets", "WriteSpellCastRequest: After bits, MoveUpdate={}, WeightSize={}, size={}",
         request.MoveUpdate.has_value(), request.Weight.size(), buffer.size());
 
-    // Write OptionalReagents
-    for (auto const& reagent : request.OptionalReagents)
+    // Write CraftingReagents (was OptionalReagents) - WoW 12.0: Field structure changed
+    for (auto const& reagent : request.CraftingReagents)
     {
-        buffer << int32(reagent.ItemID);
-        buffer << int32(reagent.DataSlotIndex);
+        buffer << int32(reagent.Slot);
         buffer << int32(reagent.Quantity);
+        buffer << reagent.Reagent;  // CraftingReagentBase
         buffer << WorldPackets::OptionalInit(reagent.Source);
         if (reagent.Source)
             buffer << uint8(*reagent.Source);
@@ -1099,15 +1102,15 @@ static void WriteSpellCastRequest(ByteBuffer& buffer, WorldPackets::Spells::Spel
     if (request.CraftingOrderID)
         buffer << uint64(*request.CraftingOrderID);
 
-    // Write RemovedModifications
-    for (auto const& mod : request.RemovedModifications)
+    // Write RemovedReagents (was RemovedModifications) - WoW 12.0: Same structure as CraftingReagents
+    for (auto const& reagent : request.RemovedReagents)
     {
-        buffer << int32(mod.ItemID);
-        buffer << int32(mod.DataSlotIndex);
-        buffer << int32(mod.Quantity);
-        buffer << WorldPackets::OptionalInit(mod.Source);
-        if (mod.Source)
-            buffer << uint8(*mod.Source);
+        buffer << int32(reagent.Slot);
+        buffer << int32(reagent.Quantity);
+        buffer << reagent.Reagent;  // CraftingReagentBase
+        buffer << WorldPackets::OptionalInit(reagent.Source);
+        if (reagent.Source)
+            buffer << uint8(*reagent.Source);
     }
 
     // MoveUpdate - Used when casting while moving (e.g., kiting classes like Frost Mage, Hunter)
@@ -1182,7 +1185,7 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternal(
 
     // Crafting-related fields (not used for combat spells)
     castRequest.CraftingNPC = ObjectGuid::Empty;
-    castRequest.CraftingFlags = 0;
+    castRequest.CraftingCastFlags = 0;
     // OptionalCurrencies, OptionalReagents, RemovedModifications - leave empty
     // CraftingOrderID - leave unset
 
@@ -1298,7 +1301,7 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternalGam
 
     // Crafting fields
     castRequest.CraftingNPC = ObjectGuid::Empty;
-    castRequest.CraftingFlags = 0;
+    castRequest.CraftingCastFlags = 0;
 
     // Set GameObject target
     if (goTarget)

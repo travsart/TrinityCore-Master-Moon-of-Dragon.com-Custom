@@ -49,6 +49,8 @@
 #include "SpellMgr.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../Spatial/DoubleBufferedSpatialGrid.h"
 
 namespace Playerbot
 {
@@ -232,6 +234,54 @@ public:
 
         // Fall back to generic
         DungeonScript::HandleInterruptPriority(player, boss);
+    }
+
+    void HandleGroundAvoidance(::Player* player, ::Creature* boss) override
+    {
+        // ENTERPRISE: Use lock-free spatial grid for thread-safe DynamicObject queries
+        // Wailing Caverns has poison clouds and nature effects
+        Map* map = player->GetMap();
+        if (map)
+        {
+            DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!spatialGrid)
+            {
+                sSpatialGridManager.CreateGrid(map);
+                spatialGrid = sSpatialGridManager.GetGrid(map);
+            }
+
+            if (spatialGrid)
+            {
+                // Query nearby dynamic objects using immutable snapshots (lock-free!)
+                auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(player->GetPosition(), 15.0f);
+
+                for (auto const& snapshot : dynamicObjectSnapshots)
+                {
+                    if (!snapshot.IsActive())
+                        continue;
+
+                    if (snapshot.casterGuid != boss->GetGUID())
+                        continue;
+
+                    float distance = player->GetExactDist(snapshot.position);
+                    if (distance < 10.0f)
+                    {
+                        if (DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, snapshot.guid))
+                        {
+                            if (IsDangerousGroundEffect(dynObj))
+                            {
+                                TC_LOG_DEBUG("module.playerbot", "WailingCavernsScript: Avoiding ground effect at distance {:.1f}", distance);
+                                MoveAwayFromGroundEffect(player, dynObj);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fall back to generic
+        DungeonScript::HandleGroundAvoidance(player, boss);
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override

@@ -81,7 +81,9 @@ GameSystemsManager::~GameSystemsManager()
     _bankingManager.reset();
     _equipmentManager.reset();
     _mountManager.reset();
+    _ridingManager.reset();
     _battlePetManager.reset();
+    _humanizationManager.reset();
     _arenaAI.reset();
     _pvpCombatAI.reset();
     _auctionHouse.reset();
@@ -164,7 +166,11 @@ void GameSystemsManager::Initialize(Player* bot)
 
         // Companion managers - only for full-featured bots
         _mountManager = std::make_unique<MountManager>(_bot);
+        _ridingManager = std::make_unique<RidingManager>(_bot);
         _battlePetManager = std::make_unique<BattlePetManager>(_bot);
+
+        // Humanization system (Phase 3)
+        _humanizationManager = std::make_unique<Humanization::HumanizationManager>(_bot);
     }
     // else: instance-only mode - skipping 24 non-essential managers for reduced overhead
 
@@ -298,6 +304,18 @@ void GameSystemsManager::Initialize(Player* bot)
             {
                 _mountManager->Initialize();
                 TC_LOG_DEBUG("module.playerbot.managers", "✅ MountManager initialized - mount automation and collection tracking active");
+            }
+
+            if (_ridingManager)
+            {
+                _ridingManager->Initialize();
+                TC_LOG_DEBUG("module.playerbot.managers", "✅ RidingManager initialized - humanized riding skill acquisition active");
+            }
+
+            if (_humanizationManager)
+            {
+                _humanizationManager->Initialize();
+                TC_LOG_DEBUG("module.playerbot.managers", "✅ HumanizationManager initialized - human-like behavior active");
             }
 
             if (_battlePetManager)
@@ -530,6 +548,18 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // ========================================================================
     if (_mountManager)
         _mountManager->Update(diff);
+
+    // ========================================================================
+    // RIDING ACQUISITION - Update for humanized riding skill learning
+    // ========================================================================
+    if (_ridingManager)
+        _ridingManager->Update(diff);
+
+    // ========================================================================
+    // HUMANIZATION SYSTEM - Update for human-like behavior
+    // ========================================================================
+    if (_humanizationManager)
+        _humanizationManager->Update(diff);
 
     // ========================================================================
     // BATTLE PET AUTOMATION - Update every frame for battle pet AI

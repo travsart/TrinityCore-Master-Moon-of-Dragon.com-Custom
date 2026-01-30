@@ -665,8 +665,9 @@ float RoleAssignment::CalculateGearScore(GroupRole role)
             break;
 
         case GroupRole::HEALER:
-            // Healers benefit from intellect
-            roleModifier = 1.0f + (static_cast<float>(_bot->GetStat(STAT_INTELLECT)) / 30000.0f);
+            // Healers benefit from intellect and spirit (WoW 12.0: Spirit re-added)
+            roleModifier = 1.0f + (static_cast<float>(_bot->GetStat(STAT_INTELLECT)) / 30000.0f)
+                               + (static_cast<float>(_bot->GetStat(STAT_SPIRIT)) / 50000.0f);
             break;
 
         case GroupRole::MELEE_DPS:
