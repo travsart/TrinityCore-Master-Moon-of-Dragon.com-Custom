@@ -353,10 +353,33 @@ When 100 bots enter a map simultaneously, ALL 100 queue on exclusive lock.
 | GameSystemsManager Throttling | HIGH | ✅ FIXED | ~30x fewer manager updates |
 | SpatialGridManager Thundering Herd | MEDIUM | ✅ FIXED | Instant returns for existing grids |
 | Main Thread ThreadPool Blocking | HIGH | ⚠️ MITIGATED | Fixed by making workers faster |
-| CombatEventRouter | MEDIUM | ⏳ ACCEPTABLE | Already uses good patterns |
+| CombatEventRouter | MEDIUM | ✅ FIXED | Lock-free stats with atomics |
+| VMAP Repeated Load Attempts | HIGH | ✅ FIXED | Cache failed loads, no retries |
+| MMAP Repeated Load Attempts | HIGH | ✅ FIXED | Cache failed loads, no retries |
 | Unordered Mutexes | LOW | ⏳ DEFERRED | For future cleanup |
 
 **Total Build Status:** ✅ worldserver.exe compiled successfully
+
+---
+
+## VMAP/MMAP LOAD CACHING FIX
+
+### Problem
+When maps reference VMAP/MMAP tiles that don't exist in client data (e.g., "8.0 Boost Experience",
+TWW dungeons), the server repeatedly attempts to load them on every grid access, causing:
+- Repeated file I/O operations
+- Log spam with warnings
+- Significant server slowdown
+
+### Solution
+Added `_vmapLoadFailed` and `_mmapLoadFailed` bitset caches to `TerrainInfo` class:
+- On first load failure, mark the grid as failed
+- Skip subsequent load attempts for the same grid
+- Changed log level from WARN to DEBUG for expected failures
+
+**File:** `src/server/game/Maps/TerrainMgr.h` and `TerrainMgr.cpp`
+
+**Expected Impact:** Near-instant returns for grids with missing map data
 
 ---
 

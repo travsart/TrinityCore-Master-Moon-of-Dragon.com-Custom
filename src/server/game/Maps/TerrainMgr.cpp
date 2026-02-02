@@ -252,6 +252,10 @@ void TerrainInfo::LoadMMapImpl(uint32 instanceId, int32 gx, int32 gy)
     if (!DisableMgr::IsPathfindingEnabled(GetId()))
         return;
 
+    // PLAYERBOT FIX: Skip loading if we already know this tile failed (prevents repeated file access attempts)
+    if (_mmapLoadFailed[GetBitsetIndex(gx, gy)])
+        return;
+
     switch (MMAP::LoadResult mmapLoadResult = MMAP::MMapManager::instance()->loadMap(sWorld->GetDataPath(), GetId(), instanceId, gx, gy))
     {
         case MMAP::LoadResult::Success:
@@ -260,9 +264,19 @@ void TerrainInfo::LoadMMapImpl(uint32 instanceId, int32 gx, int32 gy)
         case MMAP::LoadResult::AlreadyLoaded:
             break;
         case MMAP::LoadResult::FileNotFound:
+            // PLAYERBOT FIX: Cache the failure to prevent repeated load attempts
+            _mmapLoadFailed[GetBitsetIndex(gx, gy)] = true;
             if (_parentTerrain)
                 break; // don't log tile not found errors for child maps
-            [[fallthrough]];
+            TC_LOG_DEBUG("mmaps.tiles", "MMAP not available name:{}, id:{}, x:{}, y:{} (mmap rep.: x:{}, y:{}) - will not retry", GetMapName(), GetId(), gx, gy, gx, gy);
+            break;
+        case MMAP::LoadResult::VersionMismatch:
+        case MMAP::LoadResult::ReadFromFileFailed:
+        case MMAP::LoadResult::LibraryError:
+            // PLAYERBOT FIX: Cache these failures too - they won't succeed on retry
+            _mmapLoadFailed[GetBitsetIndex(gx, gy)] = true;
+            TC_LOG_WARN("mmaps.tiles", "MMAP failed name:{}, id:{}, x:{}, y:{} (mmap rep.: x:{}, y:{}) result: {} - will not retry", GetMapName(), GetId(), gx, gy, gx, gy, AsUnderlyingType(mmapLoadResult));
+            break;
         default:
             TC_LOG_WARN("mmaps.tiles", "Could not load MMAP name:{}, id:{}, x:{}, y:{} (mmap rep.: x:{}, y:{}) result: {}", GetMapName(), GetId(), gx, gy, gx, gy, AsUnderlyingType(mmapLoadResult));
             break;
