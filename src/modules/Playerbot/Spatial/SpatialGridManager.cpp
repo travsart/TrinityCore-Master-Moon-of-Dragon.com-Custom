@@ -86,8 +86,17 @@ DoubleBufferedSpatialGrid* SpatialGridManager::GetGrid(uint32 mapId)
     if (it == _grids.end())
         return nullptr;
 
-    // Update access time (const_cast needed for shared lock access)
-    const_cast<GridInfo&>(it->second).lastAccessTime = ::std::chrono::steady_clock::now();
+    // CRITICAL FIX: Removed lastAccessTime update from GetGrid()
+    // PROBLEM: This was a DATA RACE - writing under shared_lock is unsafe!
+    // Also caused severe performance issues with 100+ bots calling GetGrid
+    // thousands of times per second (each call: acquire lock + chrono::now())
+    //
+    // SOLUTION: lastAccessTime is now only updated when:
+    // - CreateGrid() is called (exclusive lock, grid creation)
+    // - UpdateGrid() is called (from spatial grid update cycle)
+    // - TouchGrid() is explicitly called (rare, for manual keep-alive)
+    //
+    // This eliminates ~1000+ chrono::now() calls per second and fixes the data race.
 
     return it->second.grid.get();
 }
@@ -124,16 +133,30 @@ void SpatialGridManager::DestroyAllGrids()
 
 void SpatialGridManager::UpdateGrid(uint32 mapId)
 {
-    ::std::shared_lock lock(_mutex);  // Shared read lock
+    DoubleBufferedSpatialGrid* grid = nullptr;
 
-    auto it = _grids.find(mapId);
-    if (it == _grids.end())
-        return;  // No grid for this map
+    // Phase 1: Get the grid pointer under shared lock (fast path)
+    {
+        ::std::shared_lock lock(_mutex);
+        auto it = _grids.find(mapId);
+        if (it == _grids.end())
+            return;  // No grid for this map
+        grid = it->second.grid.get();
+    }
 
-    it->second.grid->Update();
+    // Phase 2: Update the grid WITHOUT holding the manager lock
+    // Grid has its own internal locking (try_to_lock pattern)
+    if (grid)
+        grid->Update();
 
-    // Update access time
-    const_cast<GridInfo&>(it->second).lastAccessTime = ::std::chrono::steady_clock::now();
+    // Phase 3: Update access time under exclusive lock (write operation)
+    // This is called infrequently (once per update cycle, not per bot)
+    {
+        ::std::unique_lock lock(_mutex);
+        auto it = _grids.find(mapId);
+        if (it != _grids.end())
+            it->second.lastAccessTime = ::std::chrono::steady_clock::now();
+    }
 }
 
 void SpatialGridManager::UpdateGrid(Map* map)
@@ -298,13 +321,14 @@ void SpatialGridManager::LogMemoryStats() const
 
 void SpatialGridManager::TouchGrid(uint32 mapId)
 {
-    ::std::shared_lock lock(_mutex);  // Shared read lock
+    // CRITICAL FIX: Use exclusive lock for write operation
+    // Previously used shared_lock with const_cast which was a data race
+    ::std::unique_lock lock(_mutex);
 
     auto it = _grids.find(mapId);
     if (it != _grids.end())
     {
-        // Update access time (const_cast needed for shared lock access)
-        const_cast<GridInfo&>(it->second).lastAccessTime = ::std::chrono::steady_clock::now();
+        it->second.lastAccessTime = ::std::chrono::steady_clock::now();
     }
 }
 
