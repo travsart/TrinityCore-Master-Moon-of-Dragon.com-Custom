@@ -33,6 +33,51 @@
 namespace Playerbot {
 
 // ============================================================================
+// STUCK TASK DETECTION: Track currently executing bot tasks for diagnostics
+// ============================================================================
+namespace {
+    struct ExecutingTask {
+        ObjectGuid guid;
+        ::std::chrono::steady_clock::time_point startTime;
+        ::std::string botName;
+    };
+
+    // Thread-safe registry of currently executing bot tasks
+    ::std::mutex _executingTasksMutex;
+    ::std::unordered_map<ObjectGuid, ExecutingTask> _executingTasks;
+
+    void RegisterTaskStart(ObjectGuid guid, ::std::string const& botName)
+    {
+        ::std::lock_guard lock(_executingTasksMutex);
+        _executingTasks[guid] = { guid, ::std::chrono::steady_clock::now(), botName };
+    }
+
+    void RegisterTaskEnd(ObjectGuid guid)
+    {
+        ::std::lock_guard lock(_executingTasksMutex);
+        _executingTasks.erase(guid);
+    }
+
+    // Called when timeout occurs to identify stuck tasks
+    void LogStuckTasks(uint32 thresholdMs)
+    {
+        ::std::lock_guard lock(_executingTasksMutex);
+        auto now = ::std::chrono::steady_clock::now();
+
+        for (auto const& [guid, task] : _executingTasks)
+        {
+            auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - task.startTime).count();
+            if (elapsed > thresholdMs)
+            {
+                TC_LOG_ERROR("module.playerbot.session",
+                    "STUCK TASK DETECTED: Bot {} (GUID: {}) has been executing for {}ms!",
+                    task.botName, guid.ToString(), elapsed);
+            }
+        }
+    }
+} // anonymous namespace
+
+// ============================================================================
 // PHASE A: ThreadPool Integration - Priority Mapping
 // ============================================================================
 
@@ -818,10 +863,23 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // OPTION 5: Capture weak_ptr for session lifetime detection
         ::std::weak_ptr<BotSession> weakSession = botSession;
 
+        // Capture bot name for stuck task diagnostics (before lambda capture)
+        ::std::string botNameForDiag = botSession->GetPlayer() ? botSession->GetPlayer()->GetName() : guid.ToString();
+
         // Define the update logic (will be used in both parallel and sequential paths)
-        auto updateLogic = [guid, weakSession, diff, currentTime, enterpriseMode, tickCounter, this]()
+        auto updateLogic = [guid, weakSession, diff, currentTime, enterpriseMode, tickCounter, botNameForDiag, this]()
             {
                 TC_LOG_TRACE("playerbot.session.task", "?? TASK START for bot {}", guid.ToString());
+
+                // STUCK TASK DETECTION: Register this task as executing
+                RegisterTaskStart(guid, botNameForDiag);
+
+                // RAII guard to ensure task is always unregistered
+                struct TaskEndGuard {
+                    ObjectGuid _guid;
+                    ~TaskEndGuard() { RegisterTaskEnd(_guid); }
+                } taskGuard{guid};
+
                 // OPTION 5: Check if session still exists (thread-safe with weak_ptr)
                 auto session = weakSession.lock();
                 if (!session)
@@ -1040,6 +1098,9 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     "ThreadPool tasks still running after {}ms ({} queued, {} in-flight) - trying extended wait",
                     waitDuration.count(), queuedTasks, inFlightTasks);
 
+                // STUCK TASK DETECTION: Early warning - log slow tasks
+                LogStuckTasks(1500);  // Log tasks executing for more than 1.5 seconds
+
                 // Calculate remaining time for extended wait
                 auto remaining = MAX_TOTAL_WAIT - waitDuration;
                 auto extendedTimeout = ::std::min(EXTENDED_WAIT, remaining);
@@ -1061,6 +1122,9 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     "ThreadPool wait timeout after {}ms! {} queued, {} in-flight, {} active workers. "
                     "PROCEEDING to prevent FreezeDetector crash - some bot updates may be incomplete!",
                     waitDuration.count(), finalQueued, finalInFlight, activeThreads);
+
+                // STUCK TASK DETECTION: Log which bots have been executing for too long
+                LogStuckTasks(2000);  // Log tasks executing for more than 2 seconds
 
                 canProcessLogouts = false;
             }
