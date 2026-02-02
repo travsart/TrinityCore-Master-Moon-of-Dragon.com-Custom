@@ -10,6 +10,7 @@
  */
 
 #include "BotMovementUtil.h"
+#include "Battleground.h"
 #include "Log.h"
 #include "Map.h"
 #include "PhaseShift.h"
@@ -227,11 +228,38 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     }
 
     // Similarly, don't interrupt FOLLOW_MOTION_TYPE (following group leader)
+    // CRITICAL FIX: EXCEPT in battlegrounds where BG tactics take priority over following!
+    // Without this exception, bots in groups just follow the master and ignore BG objectives.
     if (currentMoveType == FOLLOW_MOTION_TYPE)
     {
-        TC_LOG_DEBUG("module.playerbot.movement", "⚠️ BotMovement: Bot {} in FOLLOW mode - NOT INTERRUPTING follow to move to position",
-                     bot->GetName());
-        return false;  // Indicate that we did NOT start movement - follow continues
+        // Check if bot is in a battleground - BG tactics should override follow behavior
+        if (bot->InBattleground())
+        {
+            ::Battleground* bg = bot->GetBattleground();
+            if (bg && bg->GetStatus() == STATUS_IN_PROGRESS)
+            {
+                TC_LOG_DEBUG("module.playerbot.movement",
+                    "🎮 BotMovement: Bot {} in FOLLOW mode BUT in active BG - INTERRUPTING follow for BG tactics",
+                    bot->GetName());
+                // Clear follow motion so BG movement can take over
+                mm->Clear(MOTION_SLOT_ACTIVE);
+                // Continue to execute the BG movement below
+            }
+            else
+            {
+                TC_LOG_DEBUG("module.playerbot.movement",
+                    "⚠️ BotMovement: Bot {} in FOLLOW mode, BG not in progress - NOT INTERRUPTING",
+                    bot->GetName());
+                return false;
+            }
+        }
+        else
+        {
+            TC_LOG_DEBUG("module.playerbot.movement",
+                "⚠️ BotMovement: Bot {} in FOLLOW mode - NOT INTERRUPTING follow to move to position",
+                bot->GetName());
+            return false;  // Indicate that we did NOT start movement - follow continues
+        }
     }
 
     // If already moving via spline, check if we should interrupt
