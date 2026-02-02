@@ -115,6 +115,7 @@ private:
     std::atomic<uint16> _referenceCountFromMap[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
     std::array<uint64, MAX_NUMBER_OF_GRIDS> _loadedGrids;
     std::bitset<MAX_NUMBER_OF_GRIDS * MAX_NUMBER_OF_GRIDS> _gridFileExists; // cache what grids are available for this map (not including parent/child maps)
+    std::bitset<MAX_NUMBER_OF_GRIDS * MAX_NUMBER_OF_GRIDS> _vmapLoadFailed;  // PLAYERBOT FIX: cache failed VMAP loads to prevent repeated attempts
 
     static constexpr Milliseconds CleanupInterval = 1min;
 

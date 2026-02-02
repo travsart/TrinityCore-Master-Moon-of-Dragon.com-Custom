@@ -222,6 +222,12 @@ void TerrainInfo::LoadVMap(int32 gx, int32 gy)
     if (!VMAP::VMapFactory::createOrGetVMapManager()->isMapLoadingEnabled())
         return;
 
+    // PLAYERBOT FIX: Skip loading if we already know this tile failed
+    // Prevents repeated file access attempts and log spam for maps without VMAP data
+    // (e.g., Boost Experience maps, phased zones, newer dungeons)
+    if (_vmapLoadFailed[GetBitsetIndex(gx, gy)])
+        return;
+
     switch (VMAP::VMapFactory::createOrGetVMapManager()->loadMap(sWorld->GetDataPath() + "vmaps", GetId(), gx, gy))
     {
         case VMAP::LoadResult::Success:
@@ -229,7 +235,9 @@ void TerrainInfo::LoadVMap(int32 gx, int32 gy)
             break;
         case VMAP::LoadResult::VersionMismatch:
         case VMAP::LoadResult::ReadFromFileFailed:
-            TC_LOG_ERROR("maps", "Could not load VMAP name:{}, id:{}, x:{}, y:{} (vmap rep.: x:{}, y:{})", GetMapName(), GetId(), gx, gy, gx, gy);
+            // PLAYERBOT FIX: Cache the failure to prevent repeated load attempts
+            _vmapLoadFailed[GetBitsetIndex(gx, gy)] = true;
+            TC_LOG_DEBUG("maps", "VMAP not available name:{}, id:{}, x:{}, y:{} (vmap rep.: x:{}, y:{}) - will not retry", GetMapName(), GetId(), gx, gy, gx, gy);
             break;
         case VMAP::LoadResult::DisabledInConfig:
             TC_LOG_DEBUG("maps", "Ignored VMAP name:{}, id:{}, x:{}, y:{} (vmap rep.: x:{}, y:{})", GetMapName(), GetId(), gx, gy, gx, gy);
