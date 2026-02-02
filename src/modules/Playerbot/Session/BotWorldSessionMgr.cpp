@@ -50,6 +50,15 @@ namespace {
     {
         ::std::lock_guard lock(_executingTasksMutex);
         _executingTasks[guid] = { guid, ::std::chrono::steady_clock::now(), botName };
+
+        // DEBUG: Log registration to verify code is being called
+        static uint32 regCount = 0;
+        if (++regCount % 100 == 1)  // Log every 100th registration to avoid spam
+        {
+            TC_LOG_INFO("module.playerbot.session",
+                "RegisterTaskStart: Bot {} (GUID: {}), total tracked: {}",
+                botName, guid.ToString(), _executingTasks.size());
+        }
     }
 
     void RegisterTaskEnd(ObjectGuid guid)
