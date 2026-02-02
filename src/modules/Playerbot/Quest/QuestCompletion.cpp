@@ -2018,8 +2018,9 @@ void QuestCompletion::HandleQuestEvent(QuestEvent const& event)
         return;
 
     // Check if bot is paused (due to death)
+    // CRITICAL FIX: Use shared_lock for read-only check (allows concurrent readers)
     {
-        std::lock_guard<std::mutex> lock(_pausedBotsMutex);
+        std::shared_lock<std::shared_mutex> lock(_pausedBotsMutex);
         if (_pausedBots.find(_bot->GetGUID().GetCounter()) != _pausedBots.end())
         {
             TC_LOG_TRACE("playerbot.quest", "QuestCompletion: Bot {} paused, skipping event {}",
@@ -2428,7 +2429,8 @@ std::optional<CachedQuestPOI> QuestCompletion::GetCachedQuestPOI(ObjectGuid botG
  */
 void QuestCompletion::PauseQuestCompletion(uint32 botGuid)
 {
-    std::lock_guard<std::mutex> lock(_pausedBotsMutex);
+    // WRITE operation - requires exclusive lock
+    std::unique_lock<std::shared_mutex> lock(_pausedBotsMutex);
     _pausedBots.insert(botGuid);
 
     TC_LOG_DEBUG("playerbot.quest", "PauseQuestCompletion: Bot {} paused", botGuid);
@@ -2441,7 +2443,8 @@ void QuestCompletion::PauseQuestCompletion(uint32 botGuid)
  */
 void QuestCompletion::ResumeQuestCompletion(uint32 botGuid)
 {
-    std::lock_guard<std::mutex> lock(_pausedBotsMutex);
+    // WRITE operation - requires exclusive lock
+    std::unique_lock<std::shared_mutex> lock(_pausedBotsMutex);
     _pausedBots.erase(botGuid);
 
     TC_LOG_DEBUG("playerbot.quest", "ResumeQuestCompletion: Bot {} resumed", botGuid);
@@ -2824,7 +2827,7 @@ void QuestCompletion::OptimizeQuestCompletionOrder(Player* player)
     }
 
     {
-        std::lock_guard<std::mutex> lock(_questOrderMutex);
+        std::unique_lock<std::shared_mutex> lock(_questOrderMutex);
         _botQuestOrder[player->GetGUID().GetCounter()] = std::move(optimizedOrder);
     }
 
@@ -2929,7 +2932,7 @@ void QuestCompletion::OptimizeObjectiveSequence(Player* player, uint32 questId)
 
     // Store optimized sequence
     {
-        std::lock_guard<std::mutex> lock(_objectiveOrderMutex);
+        std::unique_lock<std::shared_mutex> lock(_objectiveOrderMutex);
         _botObjectiveOrder[player->GetGUID().GetCounter()][questId] = std::move(optimizedOrder);
     }
 
@@ -4771,7 +4774,7 @@ void QuestCompletion::HandleDungeonQuests(Player* player, uint32 dungeonId)
 
     // Update quest order to prioritize dungeon quests
     {
-        std::lock_guard<std::mutex> lock(_questOrderMutex);
+        std::unique_lock<std::shared_mutex> lock(_questOrderMutex);
         std::vector<uint32>& questOrder = _botQuestOrder[botGuid];
 
         // Remove dungeon quests from current order
@@ -4857,7 +4860,7 @@ void QuestCompletion::HandlePvPQuests(Player* player, uint32 questId)
 
     // Prioritize this quest
     {
-        std::lock_guard<std::mutex> lock(_questOrderMutex);
+        std::unique_lock<std::shared_mutex> lock(_questOrderMutex);
         std::vector<uint32>& questOrder = _botQuestOrder[botGuid];
 
         // Remove from current position
@@ -4953,7 +4956,7 @@ void QuestCompletion::HandleSeasonalQuests(Player* player)
 
     // Prioritize seasonal quests at the top of the quest order
     {
-        std::lock_guard<std::mutex> lock(_questOrderMutex);
+        std::unique_lock<std::shared_mutex> lock(_questOrderMutex);
         std::vector<uint32>& questOrder = _botQuestOrder[botGuid];
 
         // Remove seasonal quests from current positions
@@ -5040,7 +5043,7 @@ void QuestCompletion::HandleDailyQuests(Player* player)
 
     // Prioritize daily quests
     {
-        std::lock_guard<std::mutex> lock(_questOrderMutex);
+        std::unique_lock<std::shared_mutex> lock(_questOrderMutex);
         std::vector<uint32>& questOrder = _botQuestOrder[botGuid];
 
         // Remove daily quests from current positions
@@ -5339,7 +5342,7 @@ void QuestCompletion::AbandonUncompletableQuest(Player* player, uint32 questId)
 
     // Remove from quest order
     {
-        std::lock_guard<std::mutex> lock(_questOrderMutex);
+        std::unique_lock<std::shared_mutex> lock(_questOrderMutex);
         auto& order = _botQuestOrder[botGuid];
         order.erase(std::remove(order.begin(), order.end(), questId), order.end());
     }
@@ -5545,8 +5548,9 @@ void QuestCompletion::UpdateBotQuestCompletion(Player* player, uint32 diff)
     uint32 botGuid = player->GetGUID().GetCounter();
 
     // Check if bot is paused (e.g., dead)
+    // CRITICAL FIX: Use shared_lock for read-only check (allows concurrent readers)
     {
-        std::lock_guard<std::mutex> lock(_pausedBotsMutex);
+        std::shared_lock<std::shared_mutex> lock(_pausedBotsMutex);
         if (_pausedBots.find(botGuid) != _pausedBots.end())
             return;
     }
@@ -5614,7 +5618,7 @@ void QuestCompletion::UpdateBotQuestCompletion(Player* player, uint32 diff)
         // Sort by priority (use quest order if set)
         std::vector<uint32>* questOrder = nullptr;
         {
-            std::lock_guard<std::mutex> lock(_questOrderMutex);
+            std::unique_lock<std::shared_mutex> lock(_questOrderMutex);
             auto orderIt = _botQuestOrder.find(botGuid);
             if (orderIt != _botQuestOrder.end())
                 questOrder = &orderIt->second;
@@ -5772,13 +5776,13 @@ void QuestCompletion::ValidateQuestStates()
 
                 // Also clean up related data structures
                 {
-                    std::lock_guard<std::mutex> lock(_questOrderMutex);
+                    std::unique_lock<std::shared_mutex> lock(_questOrderMutex);
                     auto& order = _botQuestOrder[botGuid];
                     order.erase(std::remove(order.begin(), order.end(), questId), order.end());
                 }
 
                 {
-                    std::lock_guard<std::mutex> lock(_objectiveOrderMutex);
+                    std::unique_lock<std::shared_mutex> lock(_objectiveOrderMutex);
                     _botObjectiveOrder[botGuid].erase(questId);
                 }
             }

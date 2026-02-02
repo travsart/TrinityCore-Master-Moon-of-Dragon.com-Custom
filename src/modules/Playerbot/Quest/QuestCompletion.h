@@ -690,7 +690,10 @@ private:
     std::unordered_map<uint32, std::unordered_map<uint32, CachedQuestPOI>> _questPOICache;
 
     // Paused bots (due to death)
-    mutable std::mutex _pausedBotsMutex;
+    // CRITICAL FIX: Changed to shared_mutex for read-heavy access pattern
+    // _pausedBots is checked on EVERY quest event (read), but rarely modified (write)
+    // With 100+ bots, std::mutex caused severe contention
+    mutable std::shared_mutex _pausedBotsMutex;
     std::unordered_set<uint32> _pausedBots;
 
     // EventBus callback subscription ID (for unsubscription in destructor)
@@ -728,11 +731,14 @@ private:
     std::unordered_map<uint32, std::unordered_map<uint32, GroupQuestCoordinationData>> _groupQuestCoordination;
 
     // Quest order optimization
-    mutable std::mutex _questOrderMutex;
+    // CRITICAL FIX: Changed to shared_mutex - quest order is read frequently (every update cycle)
+    // but only written during optimization (rare). std::mutex caused ThreadPool delays.
+    mutable std::shared_mutex _questOrderMutex;
     std::unordered_map<uint32, std::vector<uint32>> _botQuestOrder; // botGuidCounter -> ordered questIds
 
     // Objective order optimization
-    mutable std::mutex _objectiveOrderMutex;
+    // CRITICAL FIX: Changed to shared_mutex - same read-heavy pattern as quest order
+    mutable std::shared_mutex _objectiveOrderMutex;
     std::unordered_map<uint32, std::unordered_map<uint32, std::vector<uint32>>> _botObjectiveOrder; // bot -> quest -> ordered objectives
 
     // Path optimization
