@@ -526,7 +526,8 @@ public:
         );
 
         // Update metrics
-        _metrics.totalSubmitted.fetch_add(1, ::std::memory_order_relaxed);
+        // CRITICAL: Use release ordering to synchronize with acquire loads in WaitForCompletion
+        _metrics.totalSubmitted.fetch_add(1, ::std::memory_order_release);
         size_t priorityIndex = static_cast<size_t>(priority);
         _metrics.tasksByPriority[priorityIndex].fetch_add(1, ::std::memory_order_relaxed);
 
@@ -549,7 +550,8 @@ public:
                 // We already incremented totalSubmitted above, but task will not be executed.
                 // We MUST increment totalCompleted to prevent GetInFlightTasks() from returning
                 // a permanently inflated value, which would cause WaitForCompletion() to block forever.
-                _metrics.totalCompleted.fetch_add(1, ::std::memory_order_relaxed);
+                // CRITICAL: Use release ordering to synchronize with acquire loads in WaitForCompletion
+                _metrics.totalCompleted.fetch_add(1, ::std::memory_order_release);
 
                 delete task;
                 throw ::std::runtime_error("All worker queues are full");

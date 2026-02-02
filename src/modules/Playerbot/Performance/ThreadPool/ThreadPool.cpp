@@ -275,7 +275,8 @@ void WorkerThread::Run()
             // If a task was popped but an exception occurred before RecordTaskCompletion,
             // the pool's totalCompleted would never be updated, causing GetInFlightTasks()
             // to return a permanently inflated value (leading to "1 in-flight, 0 active workers")
-            _pool->_metrics.totalCompleted.fetch_add(1, ::std::memory_order_relaxed);
+            // CRITICAL: Use release ordering to synchronize with acquire loads in WaitForCompletion
+            _pool->_metrics.totalCompleted.fetch_add(1, ::std::memory_order_release);
 
             if (_diagnostics)
             {
@@ -812,7 +813,8 @@ bool ThreadPool::WaitForCompletion(::std::chrono::milliseconds timeout)
                 inFlight);
 
             // Correct the mismatch by advancing totalCompleted
-            _metrics.totalCompleted.fetch_add(inFlight, ::std::memory_order_relaxed);
+            // CRITICAL: Use release ordering to synchronize with acquire loads in WaitForCompletion
+            _metrics.totalCompleted.fetch_add(inFlight, ::std::memory_order_release);
             return true;  // All work is actually done
         }
 
@@ -1005,7 +1007,8 @@ void ThreadPool::RecordTaskCompletion(Task* task)
     auto latency = ::std::chrono::duration_cast<::std::chrono::microseconds>(
         completionTime - task->submittedAt).count();
 
-    _metrics.totalCompleted.fetch_add(1, ::std::memory_order_relaxed);
+    // CRITICAL: Use release ordering to synchronize with acquire loads in WaitForCompletion
+    _metrics.totalCompleted.fetch_add(1, ::std::memory_order_release);
     _metrics.totalLatency.fetch_add(latency, ::std::memory_order_relaxed);
 
     // Clean up task
