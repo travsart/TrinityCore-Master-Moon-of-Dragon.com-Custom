@@ -308,6 +308,19 @@ private:
     uint32 _bankingCheckTimer{0};
     uint32 _debugLogAccumulator{0};
 
+    // PERFORMANCE FIX: Additional throttle timers to reduce per-tick workload
+    // Many managers were updating EVERY FRAME causing 1000+ operations/second
+    uint32 _mountUpdateTimer{0};           // 200ms - responsive but not every frame
+    uint32 _ridingUpdateTimer{0};          // 5000ms - skill learning is rare
+    uint32 _battlePetUpdateTimer{0};       // 500ms - pet AI doesn't need 60fps
+    uint32 _arenaAIUpdateTimer{0};         // 100ms - fast for PvP responsiveness
+    uint32 _pvpCombatUpdateTimer{0};       // 100ms - fast for PvP responsiveness
+    uint32 _auctionUpdateTimer{0};         // 5000ms - AH operations are slow anyway
+    uint32 _gatheringBridgeTimer{0};       // 2000ms - gathering coordination
+    uint32 _auctionBridgeTimer{0};         // 2000ms - material sourcing
+    uint32 _professionBridgeTimer{0};      // 5000ms - selling/buying materials
+    uint32 _farmingUpdateTimer{0};         // 2000ms - farming coordination
+
     // ========================================================================
     // HELPER METHODS
     // ========================================================================

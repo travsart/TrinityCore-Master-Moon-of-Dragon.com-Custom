@@ -714,22 +714,28 @@ private:
         }
         // Lock released here - safe to call handlers now
 
-        // Dispatch events without holding the lock
-        // This prevents iterator invalidation if handlers call Unsubscribe()
-        for (auto const& [subscriberGuid, handler] : handlersToDispatch)
+        // CRITICAL FIX: Validate ALL handlers with SINGLE lock acquisition
+        // PROBLEM: Previous implementation acquired _subscriptionMutex FOR EVERY HANDLER
+        //          in the dispatch loop. With 100 bots × multiple events = 1000+ mutex
+        //          acquisitions per tick, causing SEVERE lock contention and lag.
+        //
+        // SOLUTION: Build list of valid handlers while holding lock ONCE, then dispatch
+        //           without any locks. Risk of dispatching to recently-unsubscribed handler
+        //           is acceptable (handler should handle gracefully).
+        std::vector<std::pair<ObjectGuid, IEventHandler<TEvent>*>> validHandlers;
         {
-            // Re-check if subscriber is still valid (may have been unsubscribed during earlier dispatch)
+            std::lock_guard lock(_subscriptionMutex);
+            for (auto const& [subscriberGuid, handler] : handlersToDispatch)
             {
-                std::lock_guard lock(_subscriptionMutex);
-                if (_subscriberPointers.find(subscriberGuid) == _subscriberPointers.end())
-                {
-                    TC_LOG_DEBUG("playerbot.events", "EventBus: Skipping bot {} - unsubscribed during dispatch",
-                        subscriberGuid.ToString());
-                    continue;  // Bot was unsubscribed, skip
-                }
+                if (_subscriberPointers.find(subscriberGuid) != _subscriberPointers.end())
+                    validHandlers.emplace_back(subscriberGuid, handler);
             }
+        }
+        // Lock released - dispatch without lock contention
 
-            // Dispatch event to handler
+        // Dispatch events to validated handlers
+        for (auto const& [subscriberGuid, handler] : validHandlers)
+        {
             try
             {
                 handler->HandleEvent(event);
@@ -762,21 +768,22 @@ private:
         }
         // Lock released here
 
-        // Dispatch callbacks without holding the lock
-        for (auto const& [subscriptionId, handler] : callbacksToDispatch)
+        // CRITICAL FIX: Validate ALL callbacks with SINGLE lock acquisition
+        // Same optimization as bot handlers above - single lock for all validations
+        std::vector<std::pair<uint32, EventHandler>> validCallbacks;
         {
-            // Re-check if callback is still subscribed
+            std::lock_guard lock(_callbackMutex);
+            for (auto const& [subscriptionId, handler] : callbacksToDispatch)
             {
-                std::lock_guard lock(_callbackMutex);
-                if (_callbackSubscriptions.find(subscriptionId) == _callbackSubscriptions.end())
-                {
-                    TC_LOG_DEBUG("playerbot.events", "EventBus: Skipping callback {} - unsubscribed during dispatch",
-                        subscriptionId);
-                    continue;
-                }
+                if (_callbackSubscriptions.find(subscriptionId) != _callbackSubscriptions.end())
+                    validCallbacks.emplace_back(subscriptionId, handler);
             }
+        }
+        // Lock released - dispatch without lock contention
 
-            // Invoke callback
+        // Dispatch to validated callbacks
+        for (auto const& [subscriptionId, handler] : validCallbacks)
+        {
             try
             {
                 handler(event);

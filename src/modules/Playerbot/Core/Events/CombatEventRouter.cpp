@@ -7,6 +7,7 @@
 #include "GameTime.h"
 #include "Log.h"
 #include <algorithm>
+#include <array>
 
 namespace Playerbot {
 
@@ -150,10 +151,11 @@ void CombatEventRouter::Dispatch(const CombatEvent& event) {
     DispatchToSubscribers(event);
     ++_totalEventsDispatched;
 
-    // Update per-type statistics
-    {
-        ::std::lock_guard lock(_statsMutex);
-        _eventsByType[event.type]++;
+    // PERFORMANCE FIX: Lock-free per-type statistics update
+    // Uses relaxed memory order - stats don't need strict ordering
+    uint32 bitIndex = GetEventTypeBitIndex(event.type);
+    if (bitIndex < MAX_EVENT_TYPE_BITS) {
+        _eventsByTypeLockFree[bitIndex].fetch_add(1, ::std::memory_order_relaxed);
     }
 
     if (_loggingEnabled) {
@@ -261,10 +263,10 @@ size_t CombatEventRouter::GetQueueSize() const {
 }
 
 uint64 CombatEventRouter::GetEventsDispatchedByType(CombatEventType type) const {
-    ::std::lock_guard lock(_statsMutex);
-    auto it = _eventsByType.find(type);
-    if (it != _eventsByType.end()) {
-        return it->second.load();
+    // PERFORMANCE FIX: Lock-free stats read - no mutex needed
+    uint32 bitIndex = GetEventTypeBitIndex(type);
+    if (bitIndex < MAX_EVENT_TYPE_BITS) {
+        return _eventsByTypeLockFree[bitIndex].load(::std::memory_order_relaxed);
     }
     return 0;
 }

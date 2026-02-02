@@ -58,6 +58,22 @@ public:
     size_t GetGridCount() const override;
 
     // ========================================================================
+    // PERFORMANCE OPTIMIZATION: Combined Get + Create
+    // ========================================================================
+    /**
+     * @brief Get grid for map, creating it if it doesn't exist (OPTIMAL)
+     *
+     * PERFORMANCE: This is the PREFERRED method for accessing grids!
+     * - Uses optimized double-checked locking internally
+     * - Eliminates the redundant pattern: if (!GetGrid()) { CreateGrid(); GetGrid(); }
+     * - Single method call instead of 3
+     *
+     * @param map The map to get/create grid for
+     * @return Pointer to the spatial grid (never null if map is valid)
+     */
+    DoubleBufferedSpatialGrid* GetOrCreateGrid(Map* map);
+
+    // ========================================================================
     // MEMORY LIFECYCLE MANAGEMENT (NEW)
     // ========================================================================
 

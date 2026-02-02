@@ -1968,8 +1968,23 @@ void Map::SendObjectUpdates()
     while (!_updateObjects.empty())
     {
         BaseEntity* obj = *_updateObjects.begin();
-        ASSERT(obj->IsInWorld());
         _updateObjects.erase(_updateObjects.begin());
+
+        // PLAYERBOT FIX: Graceful skip instead of ASSERT for race condition prevention
+        // Race condition in BaseEntity::RemoveFromWorld():
+        //   1. m_inWorld = false (FIRST)
+        //   2. ClearUpdateMask(true) -> RemoveFromObjectUpdate() (SECOND)
+        // There's a window between these two operations where:
+        //   - Object is still in _updateObjects (not yet removed)
+        //   - But IsInWorld() returns false (already set to false)
+        // If Map::SendObjectUpdates runs during this window, the ASSERT would crash.
+        // Solution: Skip objects that are not in world - they don't need updates anyway.
+        if (!obj->IsInWorld())
+        {
+            TC_LOG_DEBUG("maps", "Map::SendObjectUpdates: Skipping object not in world (race condition prevention)");
+            continue;
+        }
+
         obj->BuildUpdate(update_players);
     }
 

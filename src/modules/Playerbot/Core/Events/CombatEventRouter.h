@@ -278,14 +278,30 @@ private:
     mutable ::std::mutex _queueMutex;
 
     // ====================================================================
-    // STATISTICS
+    // STATISTICS (Lock-Free)
     // ====================================================================
+    // PERFORMANCE FIX: Changed from mutex-protected map to lock-free array
+    // The event types are bitmasks, so we use bit position as array index.
+    // Max bit position is 30 (BOSS_PHASE_CHANGED = 0x40000000), so 32 slots suffice.
 
     ::std::atomic<uint64> _totalEventsDispatched{0};
     ::std::atomic<uint64> _totalEventsQueued{0};
     ::std::atomic<uint64> _totalEventsDropped{0};
-    ::std::unordered_map<CombatEventType, ::std::atomic<uint64>> _eventsByType;
-    mutable ::std::mutex _statsMutex;
+
+    // Lock-free per-type counters - index is bit position of event type
+    // Uses relaxed memory order for performance (stats don't need strict ordering)
+    static constexpr size_t MAX_EVENT_TYPE_BITS = 32;
+    ::std::array<::std::atomic<uint64>, MAX_EVENT_TYPE_BITS> _eventsByTypeLockFree{};
+
+    // Helper to get bit position (index) from event type bitmask
+    static inline uint32 GetEventTypeBitIndex(CombatEventType type) {
+        uint32 val = static_cast<uint32>(type);
+        if (val == 0) return 0;
+        // Count trailing zeros to get bit position
+        uint32 index = 0;
+        while ((val & 1) == 0) { val >>= 1; ++index; }
+        return index;
+    }
 
     // ====================================================================
     // CONFIGURATION

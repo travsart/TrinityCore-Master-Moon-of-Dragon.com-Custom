@@ -121,6 +121,32 @@ public:
     virtual DoubleBufferedSpatialGrid* GetGrid(Map* map) = 0;
 
     /**
+     * @brief Get or create spatial grid for a map (OPTIMAL - PREFERRED METHOD)
+     *
+     * Combines GetGrid() + CreateGrid() into a single optimized operation.
+     * Uses double-checked locking for optimal performance.
+     *
+     * PERFORMANCE: This is the PREFERRED method for accessing grids!
+     * - Eliminates the redundant pattern: if (!GetGrid()) { CreateGrid(); GetGrid(); }
+     * - Single method call instead of 3
+     * - Single lock acquisition in the common case (grid exists)
+     *
+     * @param map Map instance to get/create grid for
+     * @return Pointer to spatial grid (never null if map is valid)
+     *
+     * Example:
+     * @code
+     * // OLD pattern (3 lookups, multiple lock acquisitions):
+     * auto grid = spatialMgr->GetGrid(map);
+     * if (!grid) { spatialMgr->CreateGrid(map); grid = spatialMgr->GetGrid(map); }
+     *
+     * // NEW pattern (optimal, single lookup):
+     * auto grid = spatialMgr->GetOrCreateGrid(map);
+     * @endcode
+     */
+    virtual DoubleBufferedSpatialGrid* GetOrCreateGrid(Map* map) = 0;
+
+    /**
      * @brief Destroy all spatial grids
      *
      * Removes and destroys all spatial grids across all maps.

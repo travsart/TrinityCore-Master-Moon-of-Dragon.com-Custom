@@ -504,33 +504,67 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     if (_gatheringManager)
         _gatheringManager->Update(diff);
 
-    // Gathering materials bridge coordinates gathering with crafting needs
-    if (_gatheringMaterialsBridge)
-        _gatheringMaterialsBridge->Update(diff);
+    // ========================================================================
+    // THROTTLED BRIDGE UPDATES - Don't need every-frame updates
+    // ========================================================================
 
-    // Auction materials bridge optimizes material sourcing (gather vs buy)
-    if (_auctionMaterialsBridge)
-        _auctionMaterialsBridge->Update(diff);
+    // Gathering materials bridge coordinates gathering with crafting needs (2 sec throttle)
+    _gatheringBridgeTimer += diff;
+    if (_gatheringBridgeTimer >= 2000)
+    {
+        _gatheringBridgeTimer = 0;
+        if (_gatheringMaterialsBridge)
+            _gatheringMaterialsBridge->Update(diff);
+    }
 
-    // Profession auction bridge handles selling materials/crafts and buying materials for leveling
-    if (_professionAuctionBridge)
-        _professionAuctionBridge->Update(_bot, diff);
+    // Auction materials bridge optimizes material sourcing (2 sec throttle)
+    _auctionBridgeTimer += diff;
+    if (_auctionBridgeTimer >= 2000)
+    {
+        _auctionBridgeTimer = 0;
+        if (_auctionMaterialsBridge)
+            _auctionMaterialsBridge->Update(diff);
+    }
 
-    // Auction manager handles auction house buying, selling, and market scanning
-    if (_auctionManager)
-        _auctionManager->Update(diff);
+    // Profession auction bridge handles selling materials/crafts (5 sec throttle)
+    _professionBridgeTimer += diff;
+    if (_professionBridgeTimer >= 5000)
+    {
+        _professionBridgeTimer = 0;
+        if (_professionAuctionBridge)
+            _professionAuctionBridge->Update(_bot, diff);
+    }
+
+    // Auction manager handles auction house buying, selling, and market scanning (5 sec throttle)
+    _auctionUpdateTimer += diff;
+    if (_auctionUpdateTimer >= 5000)
+    {
+        _auctionUpdateTimer = 0;
+        if (_auctionManager)
+            _auctionManager->Update(diff);
+    }
 
     // Group coordinator handles group/raid mechanics, role assignment, and coordination
     if (_groupCoordinator)
         _groupCoordinator->Update(diff);
 
-    // Banking manager handles personal banking automation (gold/items)
-    if (_bankingManager)
-        _bankingManager->Update(diff);
+    // Banking manager handles personal banking automation (5 sec throttle - banking is slow)
+    _bankingCheckTimer += diff;
+    if (_bankingCheckTimer >= 5000)
+    {
+        _bankingCheckTimer = 0;
+        if (_bankingManager)
+            _bankingManager->Update(diff);
+    }
 
-    // Farming coordinator handles profession skill leveling automation
-    if (_farmingCoordinator)
-        _farmingCoordinator->Update(_bot, diff);
+    // Farming coordinator handles profession skill leveling automation (2 sec throttle)
+    _farmingUpdateTimer += diff;
+    if (_farmingUpdateTimer >= 2000)
+    {
+        _farmingUpdateTimer = 0;
+        if (_farmingCoordinator)
+            _farmingCoordinator->Update(_bot, diff);
+    }
 
     // ========================================================================
     // EQUIPMENT AUTO-EQUIP - Check every 10 seconds
@@ -544,16 +578,28 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     }
 
     // ========================================================================
-    // MOUNT AUTOMATION - Update every frame for responsive mounting
+    // MOUNT AUTOMATION - 200ms throttle (responsive but not every frame)
+    // PERFORMANCE FIX: Mounting doesn't need 60fps updates
     // ========================================================================
-    if (_mountManager)
-        _mountManager->Update(diff);
+    _mountUpdateTimer += diff;
+    if (_mountUpdateTimer >= 200)
+    {
+        _mountUpdateTimer = 0;
+        if (_mountManager)
+            _mountManager->Update(diff);
+    }
 
     // ========================================================================
-    // RIDING ACQUISITION - Update for humanized riding skill learning
+    // RIDING ACQUISITION - 5 sec throttle (skill learning is rare)
+    // PERFORMANCE FIX: Riding trainers don't require constant checking
     // ========================================================================
-    if (_ridingManager)
-        _ridingManager->Update(diff);
+    _ridingUpdateTimer += diff;
+    if (_ridingUpdateTimer >= 5000)
+    {
+        _ridingUpdateTimer = 0;
+        if (_ridingManager)
+            _ridingManager->Update(diff);
+    }
 
     // ========================================================================
     // HUMANIZATION SYSTEM - Update for human-like behavior
@@ -562,22 +608,40 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
         _humanizationManager->Update(diff);
 
     // ========================================================================
-    // BATTLE PET AUTOMATION - Update every frame for battle pet AI
+    // BATTLE PET AUTOMATION - 500ms throttle (pet AI doesn't need 60fps)
+    // PERFORMANCE FIX: Battle pet decisions are strategic, not reactive
     // ========================================================================
-    if (_battlePetManager)
-        _battlePetManager->Update(diff);
+    _battlePetUpdateTimer += diff;
+    if (_battlePetUpdateTimer >= 500)
+    {
+        _battlePetUpdateTimer = 0;
+        if (_battlePetManager)
+            _battlePetManager->Update(diff);
+    }
 
     // ========================================================================
-    // ARENA PVP AI - Update every frame for arena automation
+    // ARENA PVP AI - 100ms throttle (fast for PvP responsiveness)
+    // PERFORMANCE FIX: 100ms is still responsive enough for arena
     // ========================================================================
-    if (_arenaAI)
-        _arenaAI->Update(diff);
+    _arenaAIUpdateTimer += diff;
+    if (_arenaAIUpdateTimer >= 100)
+    {
+        _arenaAIUpdateTimer = 0;
+        if (_arenaAI)
+            _arenaAI->Update(diff);
+    }
 
     // ========================================================================
-    // PVP COMBAT AI - Update for PvP combat automation (100ms throttle)
+    // PVP COMBAT AI - 100ms throttle (fast for PvP responsiveness)
+    // PERFORMANCE FIX: Comment said throttled but wasn't - now actually throttled
     // ========================================================================
-    if (_pvpCombatAI)
-        _pvpCombatAI->Update(diff);
+    _pvpCombatUpdateTimer += diff;
+    if (_pvpCombatUpdateTimer >= 100)
+    {
+        _pvpCombatUpdateTimer = 0;
+        if (_pvpCombatAI)
+            _pvpCombatAI->Update(diff);
+    }
 
     // ========================================================================
     // PROFESSION AUTOMATION - Check every 15 seconds
