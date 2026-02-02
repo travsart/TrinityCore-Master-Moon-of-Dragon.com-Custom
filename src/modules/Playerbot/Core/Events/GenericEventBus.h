@@ -671,7 +671,16 @@ private:
         //           map, not our local copy, so iteration remains safe.
 
         // Collect handlers to dispatch while holding the lock
-        std::vector<std::pair<ObjectGuid, IEventHandler<TEvent>*>> handlersToDispatch;
+        // CRITICAL FIX (GenericEventBus.h:741 crash): Store BOTH BotAI* and handler*
+        // so we can validate the EXACT pointer match during the second pass.
+        // Checking only GUID existence is insufficient - the BotAI object could be
+        // deleted and replaced with a new one at the same GUID between passes!
+        struct HandlerInfo {
+            ObjectGuid guid;
+            BotAI* botAI;
+            IEventHandler<TEvent>* handler;
+        };
+        std::vector<HandlerInfo> handlersToDispatch;
 
         {
             std::lock_guard lock(_subscriptionMutex);
@@ -708,11 +717,11 @@ private:
                     continue;
                 }
 
-                // Add to dispatch list
-                handlersToDispatch.emplace_back(subscriberGuid, handler);
+                // Add to dispatch list with BOTH pointers for validation
+                handlersToDispatch.push_back({subscriberGuid, botAI, handler});
             }
         }
-        // Lock released here - safe to call handlers now
+        // Lock released here
 
         // CRITICAL FIX: Validate ALL handlers with SINGLE lock acquisition
         // PROBLEM: Previous implementation acquired _subscriptionMutex FOR EVERY HANDLER
@@ -720,32 +729,48 @@ private:
         //          acquisitions per tick, causing SEVERE lock contention and lag.
         //
         // SOLUTION: Build list of valid handlers while holding lock ONCE, then dispatch
-        //           without any locks. Risk of dispatching to recently-unsubscribed handler
-        //           is acceptable (handler should handle gracefully).
-        std::vector<std::pair<ObjectGuid, IEventHandler<TEvent>*>> validHandlers;
+        //           without any locks.
+        //
+        // CRITICAL FIX (GenericEventBus.h:741 crash): Validate POINTER MATCH, not just GUID!
+        // The previous code only checked if GUID existed in _subscriberPointers. This fails if:
+        // 1. Bot is unsubscribed (GUID removed) - would skip dispatch (correct)
+        // 2. Bot is deleted and replaced with new bot at same GUID - would dispatch to wrong object!
+        // 3. Bot is deleted but GUID not yet removed - would dispatch to freed memory! (CRASH)
+        //
+        // By also checking that the BotAI* pointer matches, we catch case 2 and 3.
+        std::vector<HandlerInfo> validHandlers;
         {
             std::lock_guard lock(_subscriptionMutex);
-            for (auto const& [subscriberGuid, handler] : handlersToDispatch)
+            for (auto const& info : handlersToDispatch)
             {
-                if (_subscriberPointers.find(subscriberGuid) != _subscriberPointers.end())
-                    validHandlers.emplace_back(subscriberGuid, handler);
+                auto it = _subscriberPointers.find(info.guid);
+                // CRITICAL: Check BOTH guid existence AND pointer match!
+                if (it != _subscriberPointers.end() && it->second == info.botAI)
+                    validHandlers.push_back(info);
             }
         }
         // Lock released - dispatch without lock contention
 
         // Dispatch events to validated handlers
-        for (auto const& [subscriberGuid, handler] : validHandlers)
+        for (auto const& info : validHandlers)
         {
             try
             {
-                handler->HandleEvent(event);
+                info.handler->HandleEvent(event);
                 TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to bot {}: {}",
-                    subscriberGuid.ToString(), event.ToString());
+                    info.guid.ToString(), event.ToString());
             }
             catch (std::exception const& e)
             {
                 TC_LOG_ERROR("playerbot.events", "EventBus: Exception in event handler for bot {}: {}",
-                    subscriberGuid.ToString(), e.what());
+                    info.guid.ToString(), e.what());
+            }
+            catch (...)
+            {
+                // CRITICAL: Catch ALL exceptions including access violations during dispatch
+                // This can happen if BotAI is deleted between validation and dispatch
+                TC_LOG_ERROR("playerbot.events", "EventBus: Unknown exception in event handler for bot {}",
+                    info.guid.ToString());
             }
         }
 
