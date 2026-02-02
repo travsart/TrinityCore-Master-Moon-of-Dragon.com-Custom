@@ -799,6 +799,23 @@ bool ThreadPool::WaitForCompletion(::std::chrono::milliseconds timeout)
         if (allEmpty && allTasksFinished)
             return true;
 
+        // COUNTER MISMATCH DETECTION: If all queues are empty and no workers are active,
+        // but counters show in-flight tasks, we have a "ghost counter" issue.
+        // This can happen if an exception occurs during task submission or execution
+        // that doesn't properly update the completed counter.
+        if (allEmpty && GetActiveThreads() == 0 && submitted > completed)
+        {
+            uint64 inFlight = submitted - completed;
+            TC_LOG_WARN("module.playerbot.threadpool",
+                "COUNTER MISMATCH DETECTED: {} in-flight tasks but all queues empty and 0 active workers. "
+                "Correcting counters to prevent permanent timeout.",
+                inFlight);
+
+            // Correct the mismatch by advancing totalCompleted
+            _metrics.totalCompleted.fetch_add(inFlight, ::std::memory_order_relaxed);
+            return true;  // All work is actually done
+        }
+
         // Check timeout - use effective timeout with hard cap
         auto now = ::std::chrono::steady_clock::now();
         if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - start) >= effectiveTimeout)
