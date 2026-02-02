@@ -755,6 +755,11 @@ bool ThreadPool::WaitForCompletion(::std::chrono::milliseconds timeout)
 {
     auto start = ::std::chrono::steady_clock::now();
 
+    // CRITICAL SAFETY: Hard cap at 15 seconds to prevent FreezeDetector crash (60s)
+    // Even if caller passes a larger timeout, we refuse to wait longer
+    constexpr auto HARD_MAX_TIMEOUT = ::std::chrono::milliseconds(15000);
+    auto effectiveTimeout = ::std::min(timeout, HARD_MAX_TIMEOUT);
+
     while (true)
     {
         // Check if all queues are empty
@@ -787,9 +792,9 @@ bool ThreadPool::WaitForCompletion(::std::chrono::milliseconds timeout)
         if (allEmpty && allTasksFinished)
             return true;
 
-        // Check timeout
+        // Check timeout - use effective timeout with hard cap
         auto now = ::std::chrono::steady_clock::now();
-        if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - start) >= timeout)
+        if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - start) >= effectiveTimeout)
             return false;
 
         ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));

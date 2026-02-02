@@ -615,7 +615,8 @@ public:
      * @param timeout Maximum time to wait
      * @return true if all tasks completed, false if timeout
      */
-    bool WaitForCompletion(::std::chrono::milliseconds timeout = ::std::chrono::milliseconds::max());
+    // CRITICAL: Default timeout is 10 seconds, hard cap at 15 seconds to prevent FreezeDetector crash
+    bool WaitForCompletion(::std::chrono::milliseconds timeout = ::std::chrono::milliseconds(10000));
 
     /**
      * @brief Initiate graceful shutdown

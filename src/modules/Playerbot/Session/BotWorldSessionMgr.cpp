@@ -1019,50 +1019,54 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
             auto startWait = ::std::chrono::steady_clock::now();
 
-            // Wait indefinitely for completion - we CANNOT proceed while workers cast spells
-            // Using max timeout to effectively block until all tasks complete
-            // WaitForCompletion now correctly waits for BOTH queued AND executing tasks
-            bool completed = Performance::GetThreadPool().WaitForCompletion(::std::chrono::milliseconds(5000));
+            // CRITICAL FIX (FreezeDetector 60s crash): Use much shorter timeouts!
+            // FreezeDetector triggers at 60s. We must leave plenty of buffer for:
+            // - Other World::Update operations after UpdateSessions
+            // - Any unexpected delays
+            // Total wait should be MAX 10 seconds (leaving 50s buffer)
+            constexpr auto INITIAL_WAIT = ::std::chrono::milliseconds(2000);
+            constexpr auto EXTENDED_WAIT = ::std::chrono::milliseconds(8000);
+            constexpr auto MAX_TOTAL_WAIT = ::std::chrono::milliseconds(10000);
+
+            bool completed = Performance::GetThreadPool().WaitForCompletion(INITIAL_WAIT);
 
             auto waitDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
                 ::std::chrono::steady_clock::now() - startWait);
 
+            if (!completed && waitDuration < MAX_TOTAL_WAIT)
+            {
+                // Tasks still running - log and try extended wait
+                TC_LOG_WARN("module.playerbot.session",
+                    "ThreadPool tasks still running after {}ms ({} queued, {} in-flight) - trying extended wait",
+                    waitDuration.count(), queuedTasks, inFlightTasks);
+
+                // Calculate remaining time for extended wait
+                auto remaining = MAX_TOTAL_WAIT - waitDuration;
+                auto extendedTimeout = ::std::min(EXTENDED_WAIT, remaining);
+
+                completed = Performance::GetThreadPool().WaitForCompletion(extendedTimeout);
+
+                waitDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                    ::std::chrono::steady_clock::now() - startWait);
+            }
+
             if (!completed)
             {
-                // This should rarely happen - log as error if tasks take > 5 seconds
+                // CRITICAL: Still not completed - proceed anyway to prevent FreezeDetector crash
+                size_t finalQueued = Performance::GetThreadPool().GetQueuedTasks();
+                size_t finalInFlight = Performance::GetThreadPool().GetInFlightTasks();
+                size_t activeThreads = Performance::GetThreadPool().GetActiveThreads();
+
                 TC_LOG_ERROR("module.playerbot.session",
-                    "ThreadPool tasks still running after 5000ms ({} queued, {} in-flight) - trying extended wait",
-                    queuedTasks, inFlightTasks);
+                    "ThreadPool wait timeout after {}ms! {} queued, {} in-flight, {} active workers. "
+                    "PROCEEDING to prevent FreezeDetector crash - some bot updates may be incomplete!",
+                    waitDuration.count(), finalQueued, finalInFlight, activeThreads);
 
-                // CRITICAL FIX (FreezeDetector crash): NEVER use milliseconds::max()!
-                // That would block the world thread forever if there's a counter leak bug.
-                // Instead, use a reasonable maximum timeout (30 seconds) and then proceed anyway.
-                // The ThreadPool counter leak bug has been fixed, but this safeguard remains.
-                constexpr auto MAX_EXTENDED_WAIT = ::std::chrono::milliseconds(30000);
-                bool extendedCompleted = Performance::GetThreadPool().WaitForCompletion(MAX_EXTENDED_WAIT);
-
-                if (!extendedCompleted)
-                {
-                    // CRITICAL: Still not completed after 30s - likely a bug or deadlock
-                    // Log detailed diagnostic info and proceed anyway to prevent FreezeDetector crash
-                    size_t finalQueued = Performance::GetThreadPool().GetQueuedTasks();
-                    size_t finalInFlight = Performance::GetThreadPool().GetInFlightTasks();
-                    size_t activeThreads = Performance::GetThreadPool().GetActiveThreads();
-
-                    TC_LOG_FATAL("module.playerbot.session",
-                        "ThreadPool DEADLOCK DETECTED! After 35s total wait: {} queued, {} in-flight, {} active workers. "
-                        "PROCEEDING ANYWAY to prevent FreezeDetector crash - may cause instability!",
-                        finalQueued, finalInFlight, activeThreads);
-                }
-                else
-                {
-                    TC_LOG_WARN("module.playerbot.session", "ThreadPool finally completed after extended wait");
-                }
                 canProcessLogouts = false;
             }
-            else if (waitDuration.count() > 100)
+            else if (waitDuration.count() > 500)
             {
-                // Log if wait was notably long (>100ms)
+                // Log if wait was notably long (>500ms)
                 TC_LOG_DEBUG("module.playerbot.session",
                     "ThreadPool wait took {}ms for {} tasks", waitDuration.count(), queuedTasks);
             }
