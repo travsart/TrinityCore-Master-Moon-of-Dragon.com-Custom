@@ -2327,7 +2327,12 @@ void InstanceBotPool::SyncToDatabase()
             // Execute any remaining rows
             if (batchCount > 0)
             {
+                // CRITICAL FIX: Include account_id in ON DUPLICATE KEY UPDATE
+                // Previously, if a bot was saved with account_id = 0, it would never
+                // be updated even after WarmUpBot corrected it from CharacterCache.
+                // This caused "No account ID for bot" errors after server restart.
                 query << " ON DUPLICATE KEY UPDATE "
+                      << "`account_id` = VALUES(`account_id`), "
                       << "`slot_state` = VALUES(`slot_state`), "
                       << "`assignment_count` = VALUES(`assignment_count`), "
                       << "`successful_completions` = VALUES(`successful_completions`), "
@@ -2410,6 +2415,26 @@ void InstanceBotPool::LoadFromDatabase()
         slot.botGuid = guid;
         slot.accountId = fields[1].GetUInt32();
         slot.botName = fields[2].GetString();
+
+        // CRITICAL FIX: Repair account_id = 0 from CharacterCache
+        // This fixes bots that were previously saved with account_id = 0
+        // The character exists (we checked above), so CharacterCache should have it
+        if (slot.accountId == 0)
+        {
+            CharacterCacheEntry const* charInfo = sCharacterCache->GetCharacterCacheByGuid(guid);
+            if (charInfo && charInfo->AccountId > 0)
+            {
+                slot.accountId = charInfo->AccountId;
+                TC_LOG_INFO("playerbot.pool", "LoadFromDatabase: Repaired account_id for {} from CharacterCache (accountId={})",
+                    guid.ToString(), slot.accountId);
+            }
+            else
+            {
+                // Character cache doesn't have account - this bot won't be able to login
+                TC_LOG_WARN("playerbot.pool", "LoadFromDatabase: Bot {} has account_id=0 and CharacterCache has no account, bot may fail to login",
+                    guid.ToString());
+            }
+        }
 
         // Parse role enum
         std::string roleStr = fields[3].GetString();
