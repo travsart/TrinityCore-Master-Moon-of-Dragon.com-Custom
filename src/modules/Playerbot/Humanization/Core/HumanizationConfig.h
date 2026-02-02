@@ -18,9 +18,10 @@
 
 #include "Define.h"
 #include "ActivityType.h"
-#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
+#include <array>
 
 namespace Playerbot
 {
@@ -320,15 +321,20 @@ private:
 
     // Time of day
     bool _enableTimeOfDay = true;
-    float _hourlyMultipliers[24] = {
+    // CRITICAL FIX: Use std::array for thread-safe direct access (no lock needed for reads)
+    // These values are set once during Load() and never modified during runtime
+    std::array<float, 24> _hourlyMultipliers = {{
         0.2f, 0.1f, 0.1f, 0.1f, 0.1f, 0.2f,  // 0-5 (night)
         0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f,  // 6-11 (morning)
         1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // 12-17 (afternoon)
         1.0f, 1.0f, 0.9f, 0.8f, 0.6f, 0.4f   // 18-23 (evening)
-    };
+    }};
 
-    // Thread safety
-    mutable std::mutex _mutex;
+    // Thread safety - use shared_mutex for read-heavy access patterns
+    // CRITICAL FIX: std::mutex caused severe contention with 100+ concurrent bots
+    // std::shared_mutex allows multiple concurrent readers (bot updates) with only
+    // exclusive locking during config reload (rare operation)
+    mutable std::shared_mutex _mutex;
     bool _loaded = false;
 };
 

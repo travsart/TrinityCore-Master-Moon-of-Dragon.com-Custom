@@ -24,7 +24,9 @@ HumanizationConfig& HumanizationConfig::Instance()
 
 void HumanizationConfig::Load()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    // CRITICAL FIX: Use exclusive lock only during config load/reload
+    // This is a rare operation (server startup or admin reload command)
+    std::unique_lock<std::shared_mutex> lock(_mutex);
 
     TC_LOG_INFO("module.playerbot.humanization", "Loading Humanization configuration...");
 
@@ -157,7 +159,9 @@ void HumanizationConfig::Reload()
 
 ActivityConfig HumanizationConfig::GetActivityConfig(ActivityCategory category) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    // CRITICAL FIX: Use shared_lock for read operations
+    // Allows multiple concurrent readers (100+ bot updates) without blocking
+    std::shared_lock<std::shared_mutex> lock(_mutex);
 
     auto it = _activityConfigs.find(category);
     if (it != _activityConfigs.end())
@@ -188,7 +192,15 @@ float HumanizationConfig::GetHourlyActivityMultiplier(uint32 hour) const
     if (hour >= 24)
         hour = hour % 24;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    // CRITICAL FIX: Lock-free read for hourly multipliers
+    // _hourlyMultipliers is a std::array<float, 24> that is:
+    // 1. Set once during Load() under exclusive lock
+    // 2. Never modified during runtime
+    // 3. std::array elements are POD types (float) with atomic-like read semantics on x86/x64
+    //
+    // This eliminates a major contention point - every bot's HumanizationManager::Update()
+    // calls GetTimeOfDayMultiplier() which was acquiring mutex lock every time.
+    // With 100+ concurrent bots, this was causing severe lock contention.
     return _hourlyMultipliers[hour];
 }
 
