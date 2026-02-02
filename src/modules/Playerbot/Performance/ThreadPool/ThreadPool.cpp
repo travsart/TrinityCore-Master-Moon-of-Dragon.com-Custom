@@ -270,7 +270,14 @@ void WorkerThread::Run()
             // NOTE: Cannot use TC_LOG here as it might not be initialized
             // Error will be recorded in metrics instead
             _metrics.tasksCompleted.fetch_add(1, ::std::memory_order_relaxed); // Count as completed but failed
-    if (_diagnostics)
+
+            // CRITICAL FIX: Also update POOL counter to maintain in-flight balance!
+            // If a task was popped but an exception occurred before RecordTaskCompletion,
+            // the pool's totalCompleted would never be updated, causing GetInFlightTasks()
+            // to return a permanently inflated value (leading to "1 in-flight, 0 active workers")
+            _pool->_metrics.totalCompleted.fetch_add(1, ::std::memory_order_relaxed);
+
+            if (_diagnostics)
             {
                 _diagnostics->tasksFailed.fetch_add(1, ::std::memory_order_relaxed);
             }

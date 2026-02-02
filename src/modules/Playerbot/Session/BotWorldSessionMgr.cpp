@@ -64,16 +64,25 @@ namespace {
         ::std::lock_guard lock(_executingTasksMutex);
         auto now = ::std::chrono::steady_clock::now();
 
+        size_t totalTracked = _executingTasks.size();
+        size_t stuckCount = 0;
+
         for (auto const& [guid, task] : _executingTasks)
         {
             auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - task.startTime).count();
             if (elapsed > thresholdMs)
             {
+                ++stuckCount;
                 TC_LOG_ERROR("module.playerbot.session",
                     "STUCK TASK DETECTED: Bot {} (GUID: {}) has been executing for {}ms!",
                     task.botName, guid.ToString(), elapsed);
             }
         }
+
+        // Always log summary for diagnostics
+        TC_LOG_ERROR("module.playerbot.session",
+            "LogStuckTasks: {} tasks tracked, {} stuck (>{} ms)",
+            totalTracked, stuckCount, thresholdMs);
     }
 } // anonymous namespace
 
