@@ -660,17 +660,16 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
         request.priority = priority;
         request.createdAt = std::chrono::system_clock::now();
 
-        // Callback to queue the bot for BG after creation
-        request.onComplete = [bgTypeId = snapshot.bgTypeId, bracket = snapshot.bracketId](std::vector<ObjectGuid> const& botGuids) {
-            for (ObjectGuid const& guid : botGuids)
-            {
-                if (Player* bot = ObjectAccessor::FindPlayer(guid))
-                {
-                    sBGBotManager->QueueBotForBG(bot, bgTypeId, bracket);
-                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: JIT Alliance bot {} queued for BG type {}",
-                        guid.ToString(), static_cast<uint32>(bgTypeId));
-                }
-            }
+        // Set BG ID for post-login queueing
+        // The BotPostLoginConfigurator will queue bots AFTER they're fully logged in
+        // This avoids the timing issue where ObjectAccessor::FindPlayer returns nullptr
+        // because the bots haven't entered the world yet when onComplete fires.
+        request.battlegroundIdToQueue = static_cast<uint32>(snapshot.bgTypeId);
+
+        // Callback for debugging (bots queue via BotPostLoginConfigurator, not here)
+        request.onComplete = [bgTypeId = snapshot.bgTypeId](std::vector<ObjectGuid> const& botGuids) {
+            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: {} JIT Alliance bots created for BG {} - they will auto-queue after login",
+                botGuids.size(), static_cast<uint32>(bgTypeId));
         };
 
         uint32 requestId = sJITBotFactory->SubmitRequest(std::move(request));
@@ -693,16 +692,13 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
         request.priority = priority;
         request.createdAt = std::chrono::system_clock::now();
 
-        request.onComplete = [bgTypeId = snapshot.bgTypeId, bracket = snapshot.bracketId](std::vector<ObjectGuid> const& botGuids) {
-            for (ObjectGuid const& guid : botGuids)
-            {
-                if (Player* bot = ObjectAccessor::FindPlayer(guid))
-                {
-                    sBGBotManager->QueueBotForBG(bot, bgTypeId, bracket);
-                    TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: JIT Horde bot {} queued for BG type {}",
-                        guid.ToString(), static_cast<uint32>(bgTypeId));
-                }
-            }
+        // Set BG ID for post-login queueing (same as Alliance - bracket determined by level)
+        request.battlegroundIdToQueue = static_cast<uint32>(snapshot.bgTypeId);
+
+        // Callback for debugging (bots queue via BotPostLoginConfigurator, not here)
+        request.onComplete = [bgTypeId = snapshot.bgTypeId](std::vector<ObjectGuid> const& botGuids) {
+            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: {} JIT Horde bots created for BG {} - they will auto-queue after login",
+                botGuids.size(), static_cast<uint32>(bgTypeId));
         };
 
         uint32 requestId = sJITBotFactory->SubmitRequest(std::move(request));

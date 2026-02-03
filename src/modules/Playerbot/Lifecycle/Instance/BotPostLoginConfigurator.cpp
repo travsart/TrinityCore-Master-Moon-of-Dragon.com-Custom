@@ -11,6 +11,8 @@
 #include "BotTemplateRepository.h"
 #include "Equipment/BotGearFactory.h"
 #include "LFG/LFGBotManager.h"
+#include "PvP/BGBotManager.h"
+#include "BattlegroundMgr.h"
 #include "Player.h"
 #include "Item.h"
 #include "Log.h"
@@ -360,8 +362,55 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
         }
     }
 
-    // TODO: Add battleground and arena queueing when needed
-    // if (config.battlegroundIdToQueue > 0) { ... }
+    // Step 8: Queue for battleground if this was a JIT-created bot
+    if (config.battlegroundIdToQueue > 0)
+    {
+        BattlegroundTypeId bgTypeId = static_cast<BattlegroundTypeId>(config.battlegroundIdToQueue);
+        TC_LOG_INFO("module.playerbot.configurator",
+            "Queueing JIT bot {} for battleground {} after configuration",
+            player->GetName(), config.battlegroundIdToQueue);
+
+        // Get the BG template to find the map ID
+        BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);
+        if (bgTemplate && !bgTemplate->MapIDs.empty())
+        {
+            // Determine bracket from bot's level
+            PVPDifficultyEntry const* bracketEntry = DB2Manager::GetBattlegroundBracketByLevel(
+                bgTemplate->MapIDs.front(), player->GetLevel());
+
+            if (bracketEntry)
+            {
+                BattlegroundBracketId bracketId = bracketEntry->GetBracketId();
+
+                if (sBGBotManager->QueueBotForBG(player, bgTypeId, bracketId))
+                {
+                    TC_LOG_INFO("module.playerbot.configurator",
+                        "Successfully queued bot {} for BG {} bracket {}",
+                        player->GetName(), config.battlegroundIdToQueue, static_cast<uint8>(bracketId));
+                }
+                else
+                {
+                    TC_LOG_WARN("module.playerbot.configurator",
+                        "Failed to queue bot {} for BG {}",
+                        player->GetName(), config.battlegroundIdToQueue);
+                }
+            }
+            else
+            {
+                TC_LOG_WARN("module.playerbot.configurator",
+                    "Could not determine BG bracket for bot {} (level {}) on map {}",
+                    player->GetName(), player->GetLevel(), bgTemplate->MapIDs.front());
+            }
+        }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.configurator",
+                "Could not find BG template for type {}",
+                config.battlegroundIdToQueue);
+        }
+    }
+
+    // TODO: Add arena queueing when needed
     // if (config.arenaTypeToQueue > 0) { ... }
 
     // Calculate timing
