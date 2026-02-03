@@ -36,8 +36,8 @@
 // TrinityCore 11.2 New Priest Talents
 #include "PriestTalentEnhancements.h"
 
-// Central Spell Registry - See WoW112Spells::Priest namespace
-#include "../SpellValidation_WoW112_Part2.h"
+// Central Spell Registry - See WoW120Spells::Priest namespace
+#include "../SpellValidation_WoW120_Part2.h"
 
 namespace Playerbot
 {
@@ -54,36 +54,36 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 (The War Within) - Holy Priest Spell IDs
-// Using central registry: WoW112Spells::Priest and WoW112Spells::Priest::HolyPriest
-constexpr uint32 HOLY_HEAL = WoW112Spells::Priest::HolyPriest::HEAL;
-constexpr uint32 HOLY_FLASH_HEAL = WoW112Spells::Priest::FLASH_HEAL;
-constexpr uint32 HOLY_PRAYER_OF_HEALING = WoW112Spells::Priest::HolyPriest::PRAYER_OF_HEALING;
-constexpr uint32 HOLY_RENEW = WoW112Spells::Priest::HolyPriest::RENEW;
-constexpr uint32 HOLY_PRAYER_OF_MENDING = WoW112Spells::Priest::HolyPriest::PRAYER_OF_MENDING;
-constexpr uint32 HOLY_CIRCLE_OF_HEALING = WoW112Spells::Priest::HolyPriest::CIRCLE_OF_HEALING;
-constexpr uint32 HOLY_HOLY_WORD_SERENITY = WoW112Spells::Priest::HolyPriest::HOLY_WORD_SERENITY;
-constexpr uint32 HOLY_HOLY_WORD_SANCTIFY = WoW112Spells::Priest::HolyPriest::HOLY_WORD_SANCTIFY;
-constexpr uint32 HOLY_HOLY_WORD_SALVATION = WoW112Spells::Priest::HolyPriest::HOLY_WORD_SALVATION;
-constexpr uint32 HOLY_DIVINE_HYMN = WoW112Spells::Priest::HolyPriest::DIVINE_HYMN;
-constexpr uint32 HOLY_GUARDIAN_SPIRIT = WoW112Spells::Priest::HolyPriest::GUARDIAN_SPIRIT;
-constexpr uint32 HOLY_APOTHEOSIS = WoW112Spells::Priest::HolyPriest::APOTHEOSIS;
-constexpr uint32 HOLY_DIVINE_STAR = WoW112Spells::Priest::Discipline::DIVINE_STAR;
-constexpr uint32 HOLY_HALO = WoW112Spells::Priest::Discipline::HALO;
-constexpr uint32 HOLY_HOLY_FIRE = WoW112Spells::Priest::HolyPriest::HOLY_FIRE;
-constexpr uint32 HOLY_SMITE = WoW112Spells::Priest::SMITE;
-constexpr uint32 HOLY_SYMBOL_OF_HOPE = WoW112Spells::Priest::HolyPriest::SYMBOL_OF_HOPE;
-constexpr uint32 HOLY_FADE = WoW112Spells::Priest::FADE;
-constexpr uint32 HOLY_DESPERATE_PRAYER = WoW112Spells::Priest::DESPERATE_PRAYER;
-constexpr uint32 HOLY_POWER_WORD_FORTITUDE = WoW112Spells::Priest::POWER_WORD_FORTITUDE;
-constexpr uint32 HOLY_PURIFY = WoW112Spells::Priest::PURIFY;
+// WoW 12.0 (The War Within) - Holy Priest Spell IDs
+// Using central registry: WoW120Spells::Priest and WoW120Spells::Priest::HolyPriest
+constexpr uint32 HOLY_HEAL = WoW120Spells::Priest::HolyPriest::HEAL;
+constexpr uint32 HOLY_FLASH_HEAL = WoW120Spells::Priest::FLASH_HEAL;
+constexpr uint32 HOLY_PRAYER_OF_HEALING = WoW120Spells::Priest::HolyPriest::PRAYER_OF_HEALING;
+constexpr uint32 HOLY_RENEW = WoW120Spells::Priest::HolyPriest::RENEW;
+constexpr uint32 HOLY_PRAYER_OF_MENDING = WoW120Spells::Priest::HolyPriest::PRAYER_OF_MENDING;
+constexpr uint32 HOLY_CIRCLE_OF_HEALING = WoW120Spells::Priest::HolyPriest::CIRCLE_OF_HEALING;
+constexpr uint32 HOLY_HOLY_WORD_SERENITY = WoW120Spells::Priest::HolyPriest::HOLY_WORD_SERENITY;
+constexpr uint32 HOLY_HOLY_WORD_SANCTIFY = WoW120Spells::Priest::HolyPriest::HOLY_WORD_SANCTIFY;
+constexpr uint32 HOLY_HOLY_WORD_SALVATION = WoW120Spells::Priest::HolyPriest::HOLY_WORD_SALVATION;
+constexpr uint32 HOLY_DIVINE_HYMN = WoW120Spells::Priest::HolyPriest::DIVINE_HYMN;
+constexpr uint32 HOLY_GUARDIAN_SPIRIT = WoW120Spells::Priest::HolyPriest::GUARDIAN_SPIRIT;
+constexpr uint32 HOLY_APOTHEOSIS = WoW120Spells::Priest::HolyPriest::APOTHEOSIS;
+constexpr uint32 HOLY_DIVINE_STAR = WoW120Spells::Priest::Discipline::DIVINE_STAR;
+constexpr uint32 HOLY_HALO = WoW120Spells::Priest::Discipline::HALO;
+constexpr uint32 HOLY_HOLY_FIRE = WoW120Spells::Priest::HolyPriest::HOLY_FIRE;
+constexpr uint32 HOLY_SMITE = WoW120Spells::Priest::SMITE;
+constexpr uint32 HOLY_SYMBOL_OF_HOPE = WoW120Spells::Priest::HolyPriest::SYMBOL_OF_HOPE;
+constexpr uint32 HOLY_FADE = WoW120Spells::Priest::FADE;
+constexpr uint32 HOLY_DESPERATE_PRAYER = WoW120Spells::Priest::DESPERATE_PRAYER;
+constexpr uint32 HOLY_POWER_WORD_FORTITUDE = WoW120Spells::Priest::POWER_WORD_FORTITUDE;
+constexpr uint32 HOLY_PURIFY = WoW120Spells::Priest::PURIFY;
 
 // NEW: TrinityCore 11.2 Talent Spell IDs
-// See central registry: WoW112Spells::Priest::HolyPriest
-constexpr uint32 HOLY_EMPYREAL_BLAZE = 372616;         // -> WoW112Spells::Priest::HolyPriest::EMPYREAL_BLAZE
-constexpr uint32 HOLY_EMPYREAL_BLAZE_AURA = 372617;    // -> WoW112Spells::Priest::HolyPriest::EMPYREAL_BLAZE_AURA
-constexpr uint32 HOLY_POWER_SURGE = 453109;            // -> WoW112Spells::Priest::HolyPriest::POWER_SURGE
-constexpr uint32 HOLY_POWER_SURGE_PERIODIC = 453112;   // -> WoW112Spells::Priest::HolyPriest::POWER_SURGE_PERIODIC
+// See central registry: WoW120Spells::Priest::HolyPriest
+constexpr uint32 HOLY_EMPYREAL_BLAZE = 372616;         // -> WoW120Spells::Priest::HolyPriest::EMPYREAL_BLAZE
+constexpr uint32 HOLY_EMPYREAL_BLAZE_AURA = 372617;    // -> WoW120Spells::Priest::HolyPriest::EMPYREAL_BLAZE_AURA
+constexpr uint32 HOLY_POWER_SURGE = 453109;            // -> WoW120Spells::Priest::HolyPriest::POWER_SURGE
+constexpr uint32 HOLY_POWER_SURGE_PERIODIC = 453112;   // -> WoW120Spells::Priest::HolyPriest::POWER_SURGE_PERIODIC
 
 // Renew HoT tracker
 class RenewTracker

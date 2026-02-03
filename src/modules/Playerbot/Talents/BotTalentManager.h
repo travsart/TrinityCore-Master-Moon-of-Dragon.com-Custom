@@ -87,7 +87,7 @@ struct SpecChoice
  * Features:
  * - Specialization selection (intelligent role distribution)
  * - Talent loadout application (database-driven)
- * - Dual-spec support (WoW 11.2 feature, unlocks at level 10)
+ * - Dual-spec support (WoW 12.0 feature, unlocks at level 10)
  * - Hero talent support (levels 71-80)
  * - TrinityCore API integration (InitTalentForLevel, LearnTalent, etc.)
  * - Immutable loadout cache (lock-free reads)
@@ -263,12 +263,12 @@ public:
     bool SetupBotTalents(Player* bot, uint8 specId, uint32 level) override;
 
     // ====================================================================
-    // DUAL-SPEC SUPPORT (WoW 11.2 Feature)
+    // DUAL-SPEC SUPPORT (WoW 12.0 Feature)
     // ====================================================================
 
     /**
      * Check if level supports dual-spec
-     * WoW 11.2: Dual-spec unlocks at level 10
+     * WoW 12.0: Dual-spec unlocks at level 10
      */
     bool SupportsDualSpec(uint32 level) const override
     {
@@ -297,12 +297,12 @@ public:
     bool SetupDualSpec(Player* bot, uint8 spec1, uint8 spec2, uint32 level) override;
 
     // ====================================================================
-    // HERO TALENTS (WoW 11.2 Feature, Levels 71-80)
+    // HERO TALENTS (WoW 12.0 Feature, Levels 71-80)
     // ====================================================================
 
     /**
      * Check if level supports hero talents
-     * WoW 11.2: Hero talents unlock at level 71
+     * WoW 12.0: Hero talents unlock at level 71
      */
     bool SupportsHeroTalents(uint32 level) const override
     {

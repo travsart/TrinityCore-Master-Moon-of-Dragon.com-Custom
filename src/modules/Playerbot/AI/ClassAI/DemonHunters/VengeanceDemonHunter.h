@@ -15,7 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -45,46 +45,46 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// VENGEANCE DEMON HUNTER SPELL IDs (WoW 11.2 - The War Within)
-// Using centralized spell registry from SpellValidation_WoW112.h
+// VENGEANCE DEMON HUNTER SPELL IDs (WoW 12.0 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW120.h
 // Note: Uses enum to maintain compatibility with DemonHunterAI.h and existing code
 // ============================================================================
 
 enum VengeanceSpells
 {
-    // Pain Generators - Using central registry: WoW112Spells::DemonHunter::Vengeance
-    FRACTURE                 = WoW112Spells::DemonHunter::Vengeance::FRACTURE,
-    FEL_DEVASTATION          = WoW112Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
+    // Pain Generators - Using central registry: WoW120Spells::DemonHunter::Vengeance
+    FRACTURE                 = WoW120Spells::DemonHunter::Vengeance::FRACTURE,
+    FEL_DEVASTATION          = WoW120Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
 
     // Pain Spenders - use DemonHunterSpells from DemonHunterAI.h for SOUL_CLEAVE, SPIRIT_BOMB
-    FEL_DEVASTATION_SPENDER  = WoW112Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
+    FEL_DEVASTATION_SPENDER  = WoW120Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
 
-    // Sigils - Using central registry: WoW112Spells::DemonHunter::Vengeance
-    SIGIL_OF_CHAINS          = WoW112Spells::DemonHunter::Vengeance::SIGIL_OF_CHAINS,
+    // Sigils - Using central registry: WoW120Spells::DemonHunter::Vengeance
+    SIGIL_OF_CHAINS          = WoW120Spells::DemonHunter::Vengeance::SIGIL_OF_CHAINS,
 
-    // Threat and Utility - Using central registry: WoW112Spells::DemonHunter::Vengeance
-    INFERNAL_STRIKE          = WoW112Spells::DemonHunter::Vengeance::INFERNAL_STRIKE,
-    THROW_GLAIVE_TANK        = WoW112Spells::DemonHunter::Vengeance::THROW_GLAIVE_TANK,
-    TORMENT                  = WoW112Spells::DemonHunter::Vengeance::TORMENT,
-    CONSUME_MAGIC_TANK       = WoW112Spells::DemonHunter::CONSUME_MAGIC,
+    // Threat and Utility - Using central registry: WoW120Spells::DemonHunter::Vengeance
+    INFERNAL_STRIKE          = WoW120Spells::DemonHunter::Vengeance::INFERNAL_STRIKE,
+    THROW_GLAIVE_TANK        = WoW120Spells::DemonHunter::Vengeance::THROW_GLAIVE_TANK,
+    TORMENT                  = WoW120Spells::DemonHunter::Vengeance::TORMENT,
+    CONSUME_MAGIC_TANK       = WoW120Spells::DemonHunter::CONSUME_MAGIC,
 
-    // Defensive Cooldowns - Using central registry: WoW112Spells::DemonHunter::Vengeance
-    LAST_RESORT              = WoW112Spells::DemonHunter::Vengeance::LAST_RESORT,
-    FEL_DEVASTATION_DEF      = WoW112Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
+    // Defensive Cooldowns - Using central registry: WoW120Spells::DemonHunter::Vengeance
+    LAST_RESORT              = WoW120Spells::DemonHunter::Vengeance::LAST_RESORT,
+    FEL_DEVASTATION_DEF      = WoW120Spells::DemonHunter::Vengeance::FEL_DEVASTATION,
 
-    // Passives/Procs - Using central registry: WoW112Spells::DemonHunter::Vengeance
-    IMMOLATION_AURA_TANK     = WoW112Spells::DemonHunter::Vengeance::IMMOLATION_AURA_TANK,
-    SOUL_FRAGMENTS_BUFF      = WoW112Spells::DemonHunter::Vengeance::SOUL_FRAGMENT,
-    PAINBRINGER_BUFF         = WoW112Spells::DemonHunter::Vengeance::PAINBRINGER_BUFF,
-    FRAILTY_DEBUFF           = WoW112Spells::DemonHunter::Vengeance::FRAILTY_DEBUFF,
+    // Passives/Procs - Using central registry: WoW120Spells::DemonHunter::Vengeance
+    IMMOLATION_AURA_TANK     = WoW120Spells::DemonHunter::Vengeance::IMMOLATION_AURA_TANK,
+    SOUL_FRAGMENTS_BUFF      = WoW120Spells::DemonHunter::Vengeance::SOUL_FRAGMENT,
+    PAINBRINGER_BUFF         = WoW120Spells::DemonHunter::Vengeance::PAINBRINGER_BUFF,
+    FRAILTY_DEBUFF           = WoW120Spells::DemonHunter::Vengeance::FRAILTY_DEBUFF,
 
-    // Talents - Using central registry: WoW112Spells::DemonHunter::Vengeance
-    AGONIZING_FLAMES         = WoW112Spells::DemonHunter::Vengeance::AGONIZING_FLAMES,
-    BURNING_ALIVE            = WoW112Spells::DemonHunter::Vengeance::BURNING_ALIVE,
-    FEED_THE_DEMON           = WoW112Spells::DemonHunter::Vengeance::FEED_THE_DEMON,
-    SPIRIT_BOMB_TALENT       = WoW112Spells::DemonHunter::Vengeance::SPIRIT_BOMB,
-    FRACTURE_TALENT          = WoW112Spells::DemonHunter::Vengeance::FRACTURE,
-    SOUL_BARRIER_TALENT      = WoW112Spells::DemonHunter::Vengeance::SOUL_BARRIER
+    // Talents - Using central registry: WoW120Spells::DemonHunter::Vengeance
+    AGONIZING_FLAMES         = WoW120Spells::DemonHunter::Vengeance::AGONIZING_FLAMES,
+    BURNING_ALIVE            = WoW120Spells::DemonHunter::Vengeance::BURNING_ALIVE,
+    FEED_THE_DEMON           = WoW120Spells::DemonHunter::Vengeance::FEED_THE_DEMON,
+    SPIRIT_BOMB_TALENT       = WoW120Spells::DemonHunter::Vengeance::SPIRIT_BOMB,
+    FRACTURE_TALENT          = WoW120Spells::DemonHunter::Vengeance::FRACTURE,
+    SOUL_BARRIER_TALENT      = WoW120Spells::DemonHunter::Vengeance::SOUL_BARRIER
 };
 
 // Pain resource type (simple uint32)

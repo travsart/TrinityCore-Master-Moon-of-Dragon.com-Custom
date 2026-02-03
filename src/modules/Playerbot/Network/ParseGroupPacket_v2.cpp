@@ -21,7 +21,7 @@ namespace Playerbot
  * TEMPORARY IMPLEMENTATION: Opcode-Only Detection
  *
  * This version detects WHICH packets are sent but doesn't parse packet contents.
- * This is because WoW 11.2 ServerPacket classes only have Write() methods, not Read() methods.
+ * This is because WoW 12.0 ServerPacket classes only have Write() methods, not Read() methods.
  *
  * Full packet parsing requires hooking BEFORE packet serialization to access typed packet objects.
  * See PLAYERBOT_PACKET_SNIFFER_STATUS.md for details.

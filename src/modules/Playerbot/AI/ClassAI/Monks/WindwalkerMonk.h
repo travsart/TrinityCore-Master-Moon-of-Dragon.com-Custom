@@ -15,7 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -40,21 +40,21 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// WINDWALKER MONK SPELL IDs (WoW 11.2 - The War Within)
-// Using centralized spell registry from SpellValidation_WoW112.h
+// WINDWALKER MONK SPELL IDs (WoW 12.0 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW120.h
 // ============================================================================
 
 namespace WindwalkerMonkSpells
 {
     // Import from central registry - Monk common spells
-    using namespace WoW112Spells::Monk;
+    using namespace WoW120Spells::Monk;
 
     // Chi Generators
     constexpr uint32 TIGER_PALM_WIND          = Windwalker::TIGER_PALM_WW;
     constexpr uint32 EXPEL_HARM_WIND          = EXPEL_HARM;
     constexpr uint32 CHI_WAVE_WIND            = Windwalker::CHI_WAVE_WW;
     constexpr uint32 CHI_BURST_WIND           = Windwalker::CHI_BURST_WW;
-    constexpr uint32 CRACKLING_JADE_LIGHTNING_WW = WoW112Spells::Monk::CRACKLING_JADE_LIGHTNING;
+    constexpr uint32 CRACKLING_JADE_LIGHTNING_WW = WoW120Spells::Monk::CRACKLING_JADE_LIGHTNING;
 
     // Chi Spenders
     constexpr uint32 RISING_SUN_KICK          = Windwalker::RISING_SUN_KICK_WW;

@@ -12,7 +12,7 @@
 #include "Player.h"
 #include "../Quest/QuestEventBus.h"
 #include "QuestPackets.h"
-#include "QueryPackets.h"  // WoW 11.2: QuestPOIQueryResponse is in Query namespace
+#include "QueryPackets.h"  // WoW 12.0: QuestPOIQueryResponse is in Query namespace
 #include "Log.h"
 
 namespace Playerbot
@@ -139,7 +139,7 @@ void ParseTypedQuestGiverOfferRewardMessage(WorldSession* session, WorldPackets:
     event.type = QuestEventType::QUEST_OFFER_REWARD;
     event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
-    event.questId = packet.QuestData.QuestID;  // WoW 11.2: QuestID is in nested QuestData
+    event.questId = packet.QuestData.QuestID;  // WoW 12.0: QuestID is in nested QuestData
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::NONE;
@@ -285,7 +285,7 @@ void ParseTypedQuestUpdateComplete(WorldSession* session, WorldPackets::Quest::Q
         bot->GetName(), packet.QuestID);
 }
 
-// QuestUpdateFailed packet doesn't exist in WoW 11.2 - removed
+// QuestUpdateFailed packet doesn't exist in WoW 12.0 - removed
 
 void ParseTypedQuestUpdateFailedTimer(WorldSession* session, WorldPackets::Quest::QuestUpdateFailedTimer const& packet)
 {
@@ -339,7 +339,7 @@ void ParseTypedQuestConfirmAccept(WorldSession* session, WorldPackets::Quest::Qu
         bot->GetName(), packet.QuestID);
 }
 
-void ParseTypedQuestPOIQueryResponse(WorldSession* session, WorldPackets::Query::QuestPOIQueryResponse const& packet)  // WoW 11.2: In Query namespace
+void ParseTypedQuestPOIQueryResponse(WorldSession* session, WorldPackets::Query::QuestPOIQueryResponse const& packet)  // WoW 12.0: In Query namespace
 {
     if (!session)
         return;
@@ -362,7 +362,7 @@ void ParseTypedQuestPOIQueryResponse(WorldSession* session, WorldPackets::Query:
     QuestEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_POI_QUERY_RESPONSE (typed): {} POIs",
-        bot->GetName(), packet.QuestPOIDataStats.size());  // WoW 11.2: Field is QuestPOIDataStats, not QuestPOIData
+        bot->GetName(), packet.QuestPOIDataStats.size());  // WoW 12.0: Field is QuestPOIDataStats, not QuestPOIData
 }
 
 // ================================================================================================
@@ -381,10 +381,10 @@ void RegisterQuestPacketHandlers()
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateAddCreditSimple>(&ParseTypedQuestUpdateAddCreditSimple);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateAddCredit>(&ParseTypedQuestUpdateAddCredit);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateComplete>(&ParseTypedQuestUpdateComplete);
-    // QuestUpdateFailed doesn't exist in WoW 11.2 - removed
+    // QuestUpdateFailed doesn't exist in WoW 12.0 - removed
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateFailedTimer>(&ParseTypedQuestUpdateFailedTimer);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestConfirmAccept>(&ParseTypedQuestConfirmAccept);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Query::QuestPOIQueryResponse>(&ParseTypedQuestPOIQueryResponse);  // WoW 11.2: Moved to Query namespace
+    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Query::QuestPOIQueryResponse>(&ParseTypedQuestPOIQueryResponse);  // WoW 12.0: Moved to Query namespace
 
     TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Registered {} Quest packet typed handlers", 13);
 }

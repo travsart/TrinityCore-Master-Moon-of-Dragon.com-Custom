@@ -31,8 +31,8 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
-// Central Spell Registry - See WoW112Spells::Druid namespace
-#include "../SpellValidation_WoW112.h"
+// Central Spell Registry - See WoW120Spells::Druid namespace
+#include "../SpellValidation_WoW120.h"
 
 namespace Playerbot
 {
@@ -49,26 +49,26 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 (The War Within) - Restoration Druid Spell IDs
-// Using central registry: WoW112Spells::Druid and WoW112Spells::Druid::Restoration
-constexpr uint32 RESTO_REJUVENATION = WoW112Spells::Druid::REJUVENATION;
-constexpr uint32 RESTO_REGROWTH = WoW112Spells::Druid::REGROWTH;
-constexpr uint32 RESTO_WILD_GROWTH = WoW112Spells::Druid::WILD_GROWTH;
-constexpr uint32 RESTO_SWIFTMEND = WoW112Spells::Druid::SWIFTMEND;
-constexpr uint32 RESTO_LIFEBLOOM = WoW112Spells::Druid::Restoration::LIFEBLOOM;
-constexpr uint32 RESTO_EFFLORESCENCE = WoW112Spells::Druid::Restoration::EFFLORESCENCE;
-constexpr uint32 RESTO_TRANQUILITY = WoW112Spells::Druid::Restoration::TRANQUILITY;
-constexpr uint32 RESTO_IRONBARK = WoW112Spells::Druid::Restoration::IRONBARK;
-constexpr uint32 RESTO_NATURES_SWIFTNESS = WoW112Spells::Druid::Restoration::NATURES_SWIFTNESS;
-constexpr uint32 RESTO_CENARION_WARD = WoW112Spells::Druid::Restoration::CENARION_WARD;
-constexpr uint32 RESTO_FLOURISH = WoW112Spells::Druid::Restoration::FLOURISH;
-constexpr uint32 RESTO_INCARNATION_TREE = WoW112Spells::Druid::Restoration::INCARNATION_TREE;
-constexpr uint32 RESTO_NOURISH = WoW112Spells::Druid::Restoration::NOURISH;
-constexpr uint32 RESTO_HEALING_TOUCH = WoW112Spells::Druid::Restoration::HEALING_TOUCH;
-constexpr uint32 RESTO_INNERVATE = WoW112Spells::Druid::INNERVATE;
-constexpr uint32 RESTO_BARKSKIN = WoW112Spells::Druid::BARKSKIN;
-constexpr uint32 RESTO_RENEWAL = WoW112Spells::Druid::RENEWAL;
-constexpr uint32 RESTO_MOONFIRE = WoW112Spells::Druid::MOONFIRE;
+// WoW 12.0 (The War Within) - Restoration Druid Spell IDs
+// Using central registry: WoW120Spells::Druid and WoW120Spells::Druid::Restoration
+constexpr uint32 RESTO_REJUVENATION = WoW120Spells::Druid::REJUVENATION;
+constexpr uint32 RESTO_REGROWTH = WoW120Spells::Druid::REGROWTH;
+constexpr uint32 RESTO_WILD_GROWTH = WoW120Spells::Druid::WILD_GROWTH;
+constexpr uint32 RESTO_SWIFTMEND = WoW120Spells::Druid::SWIFTMEND;
+constexpr uint32 RESTO_LIFEBLOOM = WoW120Spells::Druid::Restoration::LIFEBLOOM;
+constexpr uint32 RESTO_EFFLORESCENCE = WoW120Spells::Druid::Restoration::EFFLORESCENCE;
+constexpr uint32 RESTO_TRANQUILITY = WoW120Spells::Druid::Restoration::TRANQUILITY;
+constexpr uint32 RESTO_IRONBARK = WoW120Spells::Druid::Restoration::IRONBARK;
+constexpr uint32 RESTO_NATURES_SWIFTNESS = WoW120Spells::Druid::Restoration::NATURES_SWIFTNESS;
+constexpr uint32 RESTO_CENARION_WARD = WoW120Spells::Druid::Restoration::CENARION_WARD;
+constexpr uint32 RESTO_FLOURISH = WoW120Spells::Druid::Restoration::FLOURISH;
+constexpr uint32 RESTO_INCARNATION_TREE = WoW120Spells::Druid::Restoration::INCARNATION_TREE;
+constexpr uint32 RESTO_NOURISH = WoW120Spells::Druid::Restoration::NOURISH;
+constexpr uint32 RESTO_HEALING_TOUCH = WoW120Spells::Druid::Restoration::HEALING_TOUCH;
+constexpr uint32 RESTO_INNERVATE = WoW120Spells::Druid::INNERVATE;
+constexpr uint32 RESTO_BARKSKIN = WoW120Spells::Druid::BARKSKIN;
+constexpr uint32 RESTO_RENEWAL = WoW120Spells::Druid::RENEWAL;
+constexpr uint32 RESTO_MOONFIRE = WoW120Spells::Druid::MOONFIRE;
 
 // Mana resource is defined in CombatSpecializationTemplates.h as uint32
 // No custom ManaResource struct needed - use ManaResource (uint32 typedef)

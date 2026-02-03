@@ -25,7 +25,7 @@ namespace Playerbot
 {
 
 /**
- * @brief Mount types based on WoW 11.2 mount system
+ * @brief Mount types based on WoW 12.0 mount system
  */
 enum class MountType : uint8
 {

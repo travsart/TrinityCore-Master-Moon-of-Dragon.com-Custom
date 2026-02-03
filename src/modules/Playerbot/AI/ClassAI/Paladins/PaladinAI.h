@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112_Part2.h"
+#include "../SpellValidation_WoW120_Part2.h"
 #include "Position.h"
 #include <memory>
 #include <chrono>
@@ -69,73 +69,73 @@ private:
     void DelegateToSpecialization(::Unit* target);
 
     // Paladin-specific spell IDs (comprehensive list for all specs)
-    // Paladin Spell IDs - Using central registry (WoW 11.2 only)
+    // Paladin Spell IDs - Using central registry (WoW 12.0 only)
     enum PaladinSpells
     {
         // Interrupts
-        REBUKE = WoW112Spells::Paladin::Common::REBUKE,
-        HAMMER_OF_JUSTICE = WoW112Spells::Paladin::Common::HAMMER_OF_JUSTICE,
+        REBUKE = WoW120Spells::Paladin::Common::REBUKE,
+        HAMMER_OF_JUSTICE = WoW120Spells::Paladin::Common::HAMMER_OF_JUSTICE,
 
         // Defensive Cooldowns
-        DIVINE_SHIELD = WoW112Spells::Paladin::Common::DIVINE_SHIELD,
-        SHIELD_OF_VENGEANCE = WoW112Spells::Paladin::Common::SHIELD_OF_VENGEANCE,
-        BLESSING_OF_PROTECTION = WoW112Spells::Paladin::Common::BLESSING_OF_PROTECTION,
-        ARDENT_DEFENDER = WoW112Spells::Paladin::Common::ARDENT_DEFENDER,
-        GUARDIAN_OF_ANCIENT_KINGS = WoW112Spells::Paladin::Common::GUARDIAN_OF_ANCIENT_KINGS,
-        LAY_ON_HANDS = WoW112Spells::Paladin::Common::LAY_ON_HANDS,
-        DIVINE_PROTECTION = WoW112Spells::Paladin::Common::DIVINE_PROTECTION,
+        DIVINE_SHIELD = WoW120Spells::Paladin::Common::DIVINE_SHIELD,
+        SHIELD_OF_VENGEANCE = WoW120Spells::Paladin::Common::SHIELD_OF_VENGEANCE,
+        BLESSING_OF_PROTECTION = WoW120Spells::Paladin::Common::BLESSING_OF_PROTECTION,
+        ARDENT_DEFENDER = WoW120Spells::Paladin::Common::ARDENT_DEFENDER,
+        GUARDIAN_OF_ANCIENT_KINGS = WoW120Spells::Paladin::Common::GUARDIAN_OF_ANCIENT_KINGS,
+        LAY_ON_HANDS = WoW120Spells::Paladin::Common::LAY_ON_HANDS,
+        DIVINE_PROTECTION = WoW120Spells::Paladin::Common::DIVINE_PROTECTION,
 
         // Offensive Cooldowns
-        AVENGING_WRATH = WoW112Spells::Paladin::Common::AVENGING_WRATH,
-        CRUSADE = WoW112Spells::Paladin::Common::CRUSADE,
-        HOLY_AVENGER = WoW112Spells::Paladin::Common::HOLY_AVENGER,
-        EXECUTION_SENTENCE = WoW112Spells::Paladin::Common::EXECUTION_SENTENCE,
+        AVENGING_WRATH = WoW120Spells::Paladin::Common::AVENGING_WRATH,
+        CRUSADE = WoW120Spells::Paladin::Common::CRUSADE,
+        HOLY_AVENGER = WoW120Spells::Paladin::Common::HOLY_AVENGER,
+        EXECUTION_SENTENCE = WoW120Spells::Paladin::Common::EXECUTION_SENTENCE,
 
         // Holy Power Generators
-        CRUSADER_STRIKE = WoW112Spells::Paladin::Common::CRUSADER_STRIKE,
-        BLADE_OF_JUSTICE = WoW112Spells::Paladin::Common::BLADE_OF_JUSTICE,
-        HAMMER_OF_THE_RIGHTEOUS = WoW112Spells::Paladin::Common::HAMMER_OF_THE_RIGHTEOUS,
-        JUDGMENT = WoW112Spells::Paladin::Common::JUDGMENT,
-        WAKE_OF_ASHES = WoW112Spells::Paladin::Common::WAKE_OF_ASHES,
+        CRUSADER_STRIKE = WoW120Spells::Paladin::Common::CRUSADER_STRIKE,
+        BLADE_OF_JUSTICE = WoW120Spells::Paladin::Common::BLADE_OF_JUSTICE,
+        HAMMER_OF_THE_RIGHTEOUS = WoW120Spells::Paladin::Common::HAMMER_OF_THE_RIGHTEOUS,
+        JUDGMENT = WoW120Spells::Paladin::Common::JUDGMENT,
+        WAKE_OF_ASHES = WoW120Spells::Paladin::Common::WAKE_OF_ASHES,
 
         // Holy Power Spenders
-        TEMPLARS_VERDICT = WoW112Spells::Paladin::Common::TEMPLARS_VERDICT,
-        FINAL_VERDICT = WoW112Spells::Paladin::Common::FINAL_VERDICT,
-        DIVINE_STORM = WoW112Spells::Paladin::Common::DIVINE_STORM,
-        SHIELD_OF_THE_RIGHTEOUS = WoW112Spells::Paladin::Common::SHIELD_OF_THE_RIGHTEOUS,
-        WORD_OF_GLORY = WoW112Spells::Paladin::Common::WORD_OF_GLORY,
+        TEMPLARS_VERDICT = WoW120Spells::Paladin::Common::TEMPLARS_VERDICT,
+        FINAL_VERDICT = WoW120Spells::Paladin::Common::FINAL_VERDICT,
+        DIVINE_STORM = WoW120Spells::Paladin::Common::DIVINE_STORM,
+        SHIELD_OF_THE_RIGHTEOUS = WoW120Spells::Paladin::Common::SHIELD_OF_THE_RIGHTEOUS,
+        WORD_OF_GLORY = WoW120Spells::Paladin::Common::WORD_OF_GLORY,
 
         // AoE Abilities
-        CONSECRATION = WoW112Spells::Paladin::Common::CONSECRATION,
-        HAMMER_OF_LIGHT = WoW112Spells::Paladin::Protection::LIGHTS_GUIDANCE, // Hero talent (Templar)
+        CONSECRATION = WoW120Spells::Paladin::Common::CONSECRATION,
+        HAMMER_OF_LIGHT = WoW120Spells::Paladin::Protection::LIGHTS_GUIDANCE, // Hero talent (Templar)
 
-        // Auras (WoW 11.2)
-        RETRIBUTION_AURA = WoW112Spells::Paladin::Common::RETRIBUTION_AURA,
-        DEVOTION_AURA = WoW112Spells::Paladin::Common::DEVOTION_AURA,
-        CRUSADER_AURA = WoW112Spells::Paladin::Common::CRUSADER_AURA,
-        CONCENTRATION_AURA = WoW112Spells::Paladin::CONCENTRATION_AURA,
+        // Auras (WoW 12.0)
+        RETRIBUTION_AURA = WoW120Spells::Paladin::Common::RETRIBUTION_AURA,
+        DEVOTION_AURA = WoW120Spells::Paladin::Common::DEVOTION_AURA,
+        CRUSADER_AURA = WoW120Spells::Paladin::Common::CRUSADER_AURA,
+        CONCENTRATION_AURA = WoW120Spells::Paladin::CONCENTRATION_AURA,
 
-        // Blessings (WoW 11.2)
-        BLESSING_OF_FREEDOM = WoW112Spells::Paladin::Common::BLESSING_OF_FREEDOM,
-        BLESSING_OF_SACRIFICE = WoW112Spells::Paladin::BLESSING_OF_SACRIFICE,
+        // Blessings (WoW 12.0)
+        BLESSING_OF_FREEDOM = WoW120Spells::Paladin::Common::BLESSING_OF_FREEDOM,
+        BLESSING_OF_SACRIFICE = WoW120Spells::Paladin::BLESSING_OF_SACRIFICE,
 
         // Healing Abilities (for Holy spec)
-        FLASH_OF_LIGHT = WoW112Spells::Paladin::Common::FLASH_OF_LIGHT,
-        HOLY_LIGHT = WoW112Spells::Paladin::Common::HOLY_LIGHT,
-        HOLY_SHOCK = WoW112Spells::Paladin::Common::HOLY_SHOCK,
-        LIGHT_OF_DAWN = WoW112Spells::Paladin::Common::LIGHT_OF_DAWN,
-        BEACON_OF_LIGHT = WoW112Spells::Paladin::Common::BEACON_OF_LIGHT,
+        FLASH_OF_LIGHT = WoW120Spells::Paladin::Common::FLASH_OF_LIGHT,
+        HOLY_LIGHT = WoW120Spells::Paladin::Common::HOLY_LIGHT,
+        HOLY_SHOCK = WoW120Spells::Paladin::Common::HOLY_SHOCK,
+        LIGHT_OF_DAWN = WoW120Spells::Paladin::Common::LIGHT_OF_DAWN,
+        BEACON_OF_LIGHT = WoW120Spells::Paladin::Common::BEACON_OF_LIGHT,
 
         // Utility
-        HAND_OF_RECKONING = WoW112Spells::Paladin::Common::HAND_OF_RECKONING,
-        CLEANSE = WoW112Spells::Paladin::Common::CLEANSE,
-        CLEANSE_TOXINS = WoW112Spells::Paladin::CLEANSE_TOXINS,
-        HAMMER_OF_WRATH = WoW112Spells::Paladin::Common::HAMMER_OF_WRATH,
-        BLINDING_LIGHT = WoW112Spells::Paladin::Common::BLINDING_LIGHT,
-        TURN_EVIL = WoW112Spells::Paladin::TURN_EVIL,
+        HAND_OF_RECKONING = WoW120Spells::Paladin::Common::HAND_OF_RECKONING,
+        CLEANSE = WoW120Spells::Paladin::Common::CLEANSE,
+        CLEANSE_TOXINS = WoW120Spells::Paladin::CLEANSE_TOXINS,
+        HAMMER_OF_WRATH = WoW120Spells::Paladin::Common::HAMMER_OF_WRATH,
+        BLINDING_LIGHT = WoW120Spells::Paladin::Common::BLINDING_LIGHT,
+        TURN_EVIL = WoW120Spells::Paladin::TURN_EVIL,
 
         // Movement
-        DIVINE_STEED = WoW112Spells::Paladin::Common::DIVINE_STEED
+        DIVINE_STEED = WoW120Spells::Paladin::Common::DIVINE_STEED
     };
 
 

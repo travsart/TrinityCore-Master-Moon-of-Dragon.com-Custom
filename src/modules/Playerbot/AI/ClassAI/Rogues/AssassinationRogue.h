@@ -30,9 +30,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
-// Central Spell Registry - See WoW112Spells::Rogue namespace
-#include "../SpellValidation_WoW112.h"
-#include "../SpellValidation_WoW112_Part2.h"
+// Central Spell Registry - See WoW120Spells::Rogue namespace
+#include "../SpellValidation_WoW120.h"
+#include "../SpellValidation_WoW120_Part2.h"
 
 namespace Playerbot
 {
@@ -57,16 +57,16 @@ class AssassinationRogueRefactored : public MeleeDpsSpecialization<ComboPointsAs
 {
 public:
     // Assassination Rogue Spell IDs
-    // Using central registry: WoW112Spells::Rogue and WoW112Spells::Rogue::Assassination
-    static constexpr uint32 GARROTE = WoW112Spells::Rogue::Assassination::GARROTE;
-    static constexpr uint32 RUPTURE = WoW112Spells::Rogue::Assassination::RUPTURE;
-    static constexpr uint32 ENVENOM = WoW112Spells::Rogue::Assassination::ENVENOM;
-    static constexpr uint32 VENDETTA = WoW112Spells::Rogue::Assassination::VENDETTA;
-    static constexpr uint32 MUTILATE = WoW112Spells::Rogue::Assassination::MUTILATE;
-    static constexpr uint32 FAN_OF_KNIVES = WoW112Spells::Rogue::FAN_OF_KNIVES;
-    static constexpr uint32 CRIMSON_TEMPEST = WoW112Spells::Rogue::Assassination::CRIMSON_TEMPEST;
-    static constexpr uint32 EXSANGUINATE = WoW112Spells::Rogue::Assassination::EXSANGUINATE;
-    static constexpr uint32 KINGSBANE = WoW112Spells::Rogue::Assassination::KINGSBANE;
+    // Using central registry: WoW120Spells::Rogue and WoW120Spells::Rogue::Assassination
+    static constexpr uint32 GARROTE = WoW120Spells::Rogue::Assassination::GARROTE;
+    static constexpr uint32 RUPTURE = WoW120Spells::Rogue::Assassination::RUPTURE;
+    static constexpr uint32 ENVENOM = WoW120Spells::Rogue::Assassination::ENVENOM;
+    static constexpr uint32 VENDETTA = WoW120Spells::Rogue::Assassination::VENDETTA;
+    static constexpr uint32 MUTILATE = WoW120Spells::Rogue::Assassination::MUTILATE;
+    static constexpr uint32 FAN_OF_KNIVES = WoW120Spells::Rogue::FAN_OF_KNIVES;
+    static constexpr uint32 CRIMSON_TEMPEST = WoW120Spells::Rogue::Assassination::CRIMSON_TEMPEST;
+    static constexpr uint32 EXSANGUINATE = WoW120Spells::Rogue::Assassination::EXSANGUINATE;
+    static constexpr uint32 KINGSBANE = WoW120Spells::Rogue::Assassination::KINGSBANE;
 
 
 public:

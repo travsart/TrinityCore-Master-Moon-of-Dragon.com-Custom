@@ -36,7 +36,7 @@
  * #     Default: 5
  * Playerbot.Auction.DefaultStrategy = 5
  *
- * # Enable commodity trading (WoW 11.2 region-wide market)
+ * # Enable commodity trading (WoW 12.0 region-wide market)
  * #     Default: 1 (enabled)
  * Playerbot.Auction.CommodityEnabled = 1
  *

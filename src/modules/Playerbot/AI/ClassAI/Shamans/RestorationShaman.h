@@ -31,9 +31,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
-// Central Spell Registry - See WoW112Spells::Shaman namespace
-#include "../SpellValidation_WoW112.h"
-#include "../SpellValidation_WoW112_Part2.h"
+// Central Spell Registry - See WoW120Spells::Shaman namespace
+#include "../SpellValidation_WoW120.h"
+#include "../SpellValidation_WoW120_Part2.h"
 
 namespace Playerbot
 {
@@ -50,27 +50,27 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 (The War Within) - Restoration Shaman Spell IDs
-// Using central registry: WoW112Spells::Shaman and WoW112Spells::Shaman::Restoration
-constexpr uint32 REST_HEALING_WAVE = WoW112Spells::Shaman::Restoration::HEALING_WAVE;
-constexpr uint32 REST_HEALING_SURGE = WoW112Spells::Shaman::Restoration::HEALING_SURGE;
-constexpr uint32 REST_CHAIN_HEAL = WoW112Spells::Shaman::Restoration::CHAIN_HEAL;
-constexpr uint32 REST_RIPTIDE = WoW112Spells::Shaman::Restoration::RIPTIDE;
-constexpr uint32 REST_HEALING_RAIN = WoW112Spells::Shaman::Restoration::HEALING_RAIN;
-constexpr uint32 REST_WELLSPRING = WoW112Spells::Shaman::Restoration::WELLSPRING;
-constexpr uint32 REST_HEALING_TIDE_TOTEM = WoW112Spells::Shaman::Restoration::HEALING_TIDE_TOTEM;
-constexpr uint32 REST_CLOUDBURST_TOTEM = WoW112Spells::Shaman::Restoration::CLOUDBURST_TOTEM;
-constexpr uint32 REST_SPIRIT_LINK_TOTEM = WoW112Spells::Shaman::Restoration::SPIRIT_LINK_TOTEM;
-constexpr uint32 REST_EARTHEN_WALL_TOTEM = WoW112Spells::Shaman::Restoration::EARTHEN_WALL_TOTEM;
-constexpr uint32 REST_ANCESTRAL_PROTECTION_TOTEM = WoW112Spells::Shaman::Restoration::ANCESTRAL_PROTECTION_TOTEM;
-constexpr uint32 REST_ASCENDANCE = WoW112Spells::Shaman::Restoration::ASCENDANCE_RESTO;
-constexpr uint32 REST_UNLEASH_LIFE = WoW112Spells::Shaman::Restoration::UNLEASH_LIFE;
-constexpr uint32 REST_EARTH_SHIELD = WoW112Spells::Shaman::Restoration::EARTH_SHIELD;
-constexpr uint32 REST_WATER_SHIELD = WoW112Spells::Shaman::Restoration::WATER_SHIELD;
-constexpr uint32 REST_PURIFY_SPIRIT = WoW112Spells::Shaman::Restoration::PURIFY_SPIRIT;
-constexpr uint32 REST_SPIRITWALKERS_GRACE = WoW112Spells::Shaman::Restoration::SPIRITWALKERS_GRACE;
-constexpr uint32 REST_ASTRAL_SHIFT = WoW112Spells::Shaman::ASTRAL_SHIFT;
-constexpr uint32 REST_WIND_SHEAR = WoW112Spells::Shaman::WIND_SHEAR;
+// WoW 12.0 (The War Within) - Restoration Shaman Spell IDs
+// Using central registry: WoW120Spells::Shaman and WoW120Spells::Shaman::Restoration
+constexpr uint32 REST_HEALING_WAVE = WoW120Spells::Shaman::Restoration::HEALING_WAVE;
+constexpr uint32 REST_HEALING_SURGE = WoW120Spells::Shaman::Restoration::HEALING_SURGE;
+constexpr uint32 REST_CHAIN_HEAL = WoW120Spells::Shaman::Restoration::CHAIN_HEAL;
+constexpr uint32 REST_RIPTIDE = WoW120Spells::Shaman::Restoration::RIPTIDE;
+constexpr uint32 REST_HEALING_RAIN = WoW120Spells::Shaman::Restoration::HEALING_RAIN;
+constexpr uint32 REST_WELLSPRING = WoW120Spells::Shaman::Restoration::WELLSPRING;
+constexpr uint32 REST_HEALING_TIDE_TOTEM = WoW120Spells::Shaman::Restoration::HEALING_TIDE_TOTEM;
+constexpr uint32 REST_CLOUDBURST_TOTEM = WoW120Spells::Shaman::Restoration::CLOUDBURST_TOTEM;
+constexpr uint32 REST_SPIRIT_LINK_TOTEM = WoW120Spells::Shaman::Restoration::SPIRIT_LINK_TOTEM;
+constexpr uint32 REST_EARTHEN_WALL_TOTEM = WoW120Spells::Shaman::Restoration::EARTHEN_WALL_TOTEM;
+constexpr uint32 REST_ANCESTRAL_PROTECTION_TOTEM = WoW120Spells::Shaman::Restoration::ANCESTRAL_PROTECTION_TOTEM;
+constexpr uint32 REST_ASCENDANCE = WoW120Spells::Shaman::Restoration::ASCENDANCE_RESTO;
+constexpr uint32 REST_UNLEASH_LIFE = WoW120Spells::Shaman::Restoration::UNLEASH_LIFE;
+constexpr uint32 REST_EARTH_SHIELD = WoW120Spells::Shaman::Restoration::EARTH_SHIELD;
+constexpr uint32 REST_WATER_SHIELD = WoW120Spells::Shaman::Restoration::WATER_SHIELD;
+constexpr uint32 REST_PURIFY_SPIRIT = WoW120Spells::Shaman::Restoration::PURIFY_SPIRIT;
+constexpr uint32 REST_SPIRITWALKERS_GRACE = WoW120Spells::Shaman::Restoration::SPIRITWALKERS_GRACE;
+constexpr uint32 REST_ASTRAL_SHIFT = WoW120Spells::Shaman::ASTRAL_SHIFT;
+constexpr uint32 REST_WIND_SHEAR = WoW120Spells::Shaman::WIND_SHEAR;
 
 // ManaResource is already defined in CombatSpecializationTemplates.h
 // No need to redefine it here

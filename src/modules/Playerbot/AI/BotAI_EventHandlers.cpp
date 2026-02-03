@@ -345,7 +345,7 @@ void BotAI::ProcessCombatInterrupt(CombatEvent const& event)
     if (!casterSnapshot || !casterSnapshot->isHostile)
         return;
 
-    // Check if spell is interruptible (WoW 11.2: check InterruptFlags)
+    // Check if spell is interruptible (WoW 12.0: check InterruptFlags)
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(event.spellId, DIFFICULTY_NONE);
     if (!spellInfo || spellInfo->InterruptFlags == SpellInterruptFlags::None)
         return;

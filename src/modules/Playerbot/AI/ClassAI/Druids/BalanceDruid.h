@@ -25,8 +25,8 @@
 #include "../BotAI.h"
 #include "GameTime.h"
 
-// Central Spell Registry - See WoW112Spells::Druid namespace
-#include "../SpellValidation_WoW112.h"
+// Central Spell Registry - See WoW120Spells::Druid namespace
+#include "../SpellValidation_WoW120.h"
 
 namespace Playerbot
 {
@@ -44,67 +44,67 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// BALANCE DRUID SPELL IDs (WoW 11.2 - The War Within)
-// See central registry: WoW112Spells::Druid and WoW112Spells::Druid::Balance
+// BALANCE DRUID SPELL IDs (WoW 12.0 - The War Within)
+// See central registry: WoW120Spells::Druid and WoW120Spells::Druid::Balance
 // ============================================================================
 
 enum BalanceDruidSpells
 {
     // Astral Power Generators
-    WRATH                    = WoW112Spells::Druid::Balance::WRATH,
-    STARFIRE                 = WoW112Spells::Druid::Balance::STARFIRE,
-    STELLAR_FLARE            = WoW112Spells::Druid::Balance::STELLAR_FLARE,
-    FORCE_OF_NATURE          = WoW112Spells::Druid::Balance::FORCE_OF_NATURE,
+    WRATH                    = WoW120Spells::Druid::Balance::WRATH,
+    STARFIRE                 = WoW120Spells::Druid::Balance::STARFIRE,
+    STELLAR_FLARE            = WoW120Spells::Druid::Balance::STELLAR_FLARE,
+    FORCE_OF_NATURE          = WoW120Spells::Druid::Balance::FORCE_OF_NATURE,
 
     // Astral Power Spenders
-    STARSURGE                = WoW112Spells::Druid::Balance::STARSURGE,
-    STARFALL                 = WoW112Spells::Druid::Balance::STARFALL,
-    NEW_MOON                 = WoW112Spells::Druid::Balance::NEW_MOON,
-    HALF_MOON                = WoW112Spells::Druid::Balance::HALF_MOON,
-    FULL_MOON                = WoW112Spells::Druid::Balance::FULL_MOON,
+    STARSURGE                = WoW120Spells::Druid::Balance::STARSURGE,
+    STARFALL                 = WoW120Spells::Druid::Balance::STARFALL,
+    NEW_MOON                 = WoW120Spells::Druid::Balance::NEW_MOON,
+    HALF_MOON                = WoW120Spells::Druid::Balance::HALF_MOON,
+    FULL_MOON                = WoW120Spells::Druid::Balance::FULL_MOON,
 
     // DoTs
-    MOONFIRE                 = WoW112Spells::Druid::Balance::MOONFIRE_BALANCE,
-    SUNFIRE                  = WoW112Spells::Druid::Balance::SUNFIRE_BALANCE,
+    MOONFIRE                 = WoW120Spells::Druid::Balance::MOONFIRE_BALANCE,
+    SUNFIRE                  = WoW120Spells::Druid::Balance::SUNFIRE_BALANCE,
 
     // Major Cooldowns
-    INCARNATION_CHOSEN       = WoW112Spells::Druid::Balance::INCARNATION_CHOSEN,
-    CELESTIAL_ALIGNMENT      = WoW112Spells::Druid::Balance::CELESTIAL_ALIGNMENT,
-    WARRIOR_OF_ELUNE         = WoW112Spells::Druid::Balance::WARRIOR_OF_ELUNE,
-    FURY_OF_ELUNE            = WoW112Spells::Druid::Balance::FURY_OF_ELUNE,
-    CONVOKE_THE_SPIRITS      = WoW112Spells::Druid::Balance::CONVOKE_THE_SPIRITS,
+    INCARNATION_CHOSEN       = WoW120Spells::Druid::Balance::INCARNATION_CHOSEN,
+    CELESTIAL_ALIGNMENT      = WoW120Spells::Druid::Balance::CELESTIAL_ALIGNMENT,
+    WARRIOR_OF_ELUNE         = WoW120Spells::Druid::Balance::WARRIOR_OF_ELUNE,
+    FURY_OF_ELUNE            = WoW120Spells::Druid::Balance::FURY_OF_ELUNE,
+    CONVOKE_THE_SPIRITS      = WoW120Spells::Druid::Balance::CONVOKE_THE_SPIRITS,
 
     // Utility
-    MOONKIN_FORM             = WoW112Spells::Druid::MOONKIN_FORM,
-    SOLAR_BEAM               = WoW112Spells::Druid::SOLAR_BEAM,
-    TYPHOON                  = WoW112Spells::Druid::TYPHOON,
-    MIGHTY_BASH              = WoW112Spells::Druid::MIGHTY_BASH,
-    MASS_ENTANGLEMENT        = WoW112Spells::Druid::MASS_ENTANGLEMENT,
-    REMOVE_CORRUPTION        = WoW112Spells::Druid::REMOVE_CORRUPTION,
-    SOOTHE                   = WoW112Spells::Druid::SOOTHE,
-    INNERVATE                = WoW112Spells::Druid::INNERVATE,
+    MOONKIN_FORM             = WoW120Spells::Druid::MOONKIN_FORM,
+    SOLAR_BEAM               = WoW120Spells::Druid::SOLAR_BEAM,
+    TYPHOON                  = WoW120Spells::Druid::TYPHOON,
+    MIGHTY_BASH              = WoW120Spells::Druid::MIGHTY_BASH,
+    MASS_ENTANGLEMENT        = WoW120Spells::Druid::MASS_ENTANGLEMENT,
+    REMOVE_CORRUPTION        = WoW120Spells::Druid::REMOVE_CORRUPTION,
+    SOOTHE                   = WoW120Spells::Druid::SOOTHE,
+    INNERVATE                = WoW120Spells::Druid::INNERVATE,
 
     // Defensives
-    BARKSKIN                 = WoW112Spells::Druid::BARKSKIN,
-    RENEWAL                  = WoW112Spells::Druid::RENEWAL,
-    REGROWTH                 = WoW112Spells::Druid::REGROWTH,
-    BEAR_FORM                = WoW112Spells::Druid::BEAR_FORM,
-    FRENZIED_REGENERATION    = WoW112Spells::Druid::Guardian::FRENZIED_REGENERATION,
+    BARKSKIN                 = WoW120Spells::Druid::BARKSKIN,
+    RENEWAL                  = WoW120Spells::Druid::RENEWAL,
+    REGROWTH                 = WoW120Spells::Druid::REGROWTH,
+    BEAR_FORM                = WoW120Spells::Druid::BEAR_FORM,
+    FRENZIED_REGENERATION    = WoW120Spells::Druid::Guardian::FRENZIED_REGENERATION,
 
     // Eclipse System
-    ECLIPSE_SOLAR            = WoW112Spells::Druid::Balance::SOLAR_ECLIPSE,
-    ECLIPSE_LUNAR            = WoW112Spells::Druid::Balance::LUNAR_ECLIPSE,
-    BALANCE_OF_ALL_THINGS    = WoW112Spells::Druid::Balance::BALANCE_OF_ALL_THINGS,
+    ECLIPSE_SOLAR            = WoW120Spells::Druid::Balance::SOLAR_ECLIPSE,
+    ECLIPSE_LUNAR            = WoW120Spells::Druid::Balance::LUNAR_ECLIPSE,
+    BALANCE_OF_ALL_THINGS    = WoW120Spells::Druid::Balance::BALANCE_OF_ALL_THINGS,
 
     // Procs and Buffs
-    SHOOTING_STARS           = WoW112Spells::Druid::Balance::SHOOTING_STARS,
-    STARWEAVERS_WARP         = WoW112Spells::Druid::Balance::STARWEAVERS_WARP,
-    STARWEAVERS_WEFT         = WoW112Spells::Druid::Balance::STARWEAVERS_WEFT,
+    SHOOTING_STARS           = WoW120Spells::Druid::Balance::SHOOTING_STARS,
+    STARWEAVERS_WARP         = WoW120Spells::Druid::Balance::STARWEAVERS_WARP,
+    STARWEAVERS_WEFT         = WoW120Spells::Druid::Balance::STARWEAVERS_WEFT,
 
     // Talents
-    WILD_MUSHROOM            = WoW112Spells::Druid::Balance::WILD_MUSHROOM_GROUND,
-    TWIN_MOONS               = WoW112Spells::Druid::Balance::TWIN_MOONS,
-    SOUL_OF_THE_FOREST       = WoW112Spells::Druid::Balance::SOUL_OF_THE_FOREST
+    WILD_MUSHROOM            = WoW120Spells::Druid::Balance::WILD_MUSHROOM_GROUND,
+    TWIN_MOONS               = WoW120Spells::Druid::Balance::TWIN_MOONS,
+    SOUL_OF_THE_FOREST       = WoW120Spells::Druid::Balance::SOUL_OF_THE_FOREST
 };
 
 // Dual resource type for Balance Druid (Mana + Astral Power)

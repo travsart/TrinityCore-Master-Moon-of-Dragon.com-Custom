@@ -18,7 +18,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Pet.h"
 #include "PetDefines.h"
 #include "MotionMaster.h"
@@ -53,45 +53,45 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// BEAST MASTERY HUNTER SPELL IDs (WoW 11.2 - The War Within)
-// Using centralized spell registry from SpellValidation_WoW112.h
+// BEAST MASTERY HUNTER SPELL IDs (WoW 12.0 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW120.h
 // ============================================================================
 
 enum BeastMasterySpells
 {
-    // Core Abilities - Using central registry: WoW112Spells::Hunter::BeastMastery
-    SPELL_KILL_COMMAND          = WoW112Spells::Hunter::BeastMastery::KILL_COMMAND,
-    SPELL_BARBED_SHOT           = WoW112Spells::Hunter::BeastMastery::BARBED_SHOT,
-    SPELL_COBRA_SHOT            = WoW112Spells::Hunter::BeastMastery::COBRA_SHOT,
-    SPELL_BESTIAL_WRATH         = WoW112Spells::Hunter::BeastMastery::BESTIAL_WRATH,
-    SPELL_ASPECT_OF_THE_WILD    = WoW112Spells::Hunter::BeastMastery::ASPECT_OF_THE_WILD,
-    SPELL_MULTISHOT             = WoW112Spells::Hunter::BeastMastery::MULTI_SHOT_BM,
+    // Core Abilities - Using central registry: WoW120Spells::Hunter::BeastMastery
+    SPELL_KILL_COMMAND          = WoW120Spells::Hunter::BeastMastery::KILL_COMMAND,
+    SPELL_BARBED_SHOT           = WoW120Spells::Hunter::BeastMastery::BARBED_SHOT,
+    SPELL_COBRA_SHOT            = WoW120Spells::Hunter::BeastMastery::COBRA_SHOT,
+    SPELL_BESTIAL_WRATH         = WoW120Spells::Hunter::BeastMastery::BESTIAL_WRATH,
+    SPELL_ASPECT_OF_THE_WILD    = WoW120Spells::Hunter::BeastMastery::ASPECT_OF_THE_WILD,
+    SPELL_MULTISHOT             = WoW120Spells::Hunter::BeastMastery::MULTI_SHOT_BM,
 
-    // Pet Management - Using central registry: WoW112Spells::Hunter
-    SPELL_CALL_PET_1            = WoW112Spells::Hunter::CALL_PET_1,
-    SPELL_MEND_PET              = WoW112Spells::Hunter::MEND_PET,
-    SPELL_REVIVE_PET            = WoW112Spells::Hunter::REVIVE_PET,
-    SPELL_PET_ATTACK            = WoW112Spells::Hunter::PET_ATTACK,
-    SPELL_PET_FOLLOW            = WoW112Spells::Hunter::PET_FOLLOW,
-    SPELL_PET_STAY              = WoW112Spells::Hunter::PET_STAY,
+    // Pet Management - Using central registry: WoW120Spells::Hunter
+    SPELL_CALL_PET_1            = WoW120Spells::Hunter::CALL_PET_1,
+    SPELL_MEND_PET              = WoW120Spells::Hunter::MEND_PET,
+    SPELL_REVIVE_PET            = WoW120Spells::Hunter::REVIVE_PET,
+    SPELL_PET_ATTACK            = WoW120Spells::Hunter::PET_ATTACK,
+    SPELL_PET_FOLLOW            = WoW120Spells::Hunter::PET_FOLLOW,
+    SPELL_PET_STAY              = WoW120Spells::Hunter::PET_STAY,
 
-    // Talents/Special - Using central registry: WoW112Spells::Hunter::BeastMastery
-    SPELL_DIRE_BEAST            = WoW112Spells::Hunter::BeastMastery::DIRE_BEAST,
-    SPELL_BLOODSHED             = WoW112Spells::Hunter::BeastMastery::BLOODSHED,
-    SPELL_WILD_CALL             = WoW112Spells::Hunter::BeastMastery::WILD_CALL,
-    SPELL_ANIMAL_COMPANION      = WoW112Spells::Hunter::BeastMastery::ANIMAL_COMPANION,
+    // Talents/Special - Using central registry: WoW120Spells::Hunter::BeastMastery
+    SPELL_DIRE_BEAST            = WoW120Spells::Hunter::BeastMastery::DIRE_BEAST,
+    SPELL_BLOODSHED             = WoW120Spells::Hunter::BeastMastery::BLOODSHED,
+    SPELL_WILD_CALL             = WoW120Spells::Hunter::BeastMastery::WILD_CALL,
+    SPELL_ANIMAL_COMPANION      = WoW120Spells::Hunter::BeastMastery::ANIMAL_COMPANION,
 
-    // Buffs/Debuffs - Using central registry: WoW112Spells::Hunter
-    SPELL_HUNTERS_MARK          = WoW112Spells::Hunter::HUNTERS_MARK,
-    SPELL_ASPECT_OF_CHEETAH     = WoW112Spells::Hunter::ASPECT_OF_THE_CHEETAH,
-    SPELL_EXHILARATION          = WoW112Spells::Hunter::EXHILARATION,
-    SPELL_PET_FRENZY            = WoW112Spells::Hunter::BeastMastery::PET_FRENZY,
+    // Buffs/Debuffs - Using central registry: WoW120Spells::Hunter
+    SPELL_HUNTERS_MARK          = WoW120Spells::Hunter::HUNTERS_MARK,
+    SPELL_ASPECT_OF_CHEETAH     = WoW120Spells::Hunter::ASPECT_OF_THE_CHEETAH,
+    SPELL_EXHILARATION          = WoW120Spells::Hunter::EXHILARATION,
+    SPELL_PET_FRENZY            = WoW120Spells::Hunter::BeastMastery::PET_FRENZY,
 
-    // Utility - Using central registry: WoW112Spells::Hunter
-    SPELL_COUNTER_SHOT          = WoW112Spells::Hunter::COUNTER_SHOT,
-    SPELL_TRANQUILIZING_SHOT    = WoW112Spells::Hunter::TRANQUILIZING_SHOT,
-    SPELL_TAR_TRAP              = WoW112Spells::Hunter::TAR_TRAP,
-    SPELL_FREEZING_TRAP         = WoW112Spells::Hunter::FREEZING_TRAP
+    // Utility - Using central registry: WoW120Spells::Hunter
+    SPELL_COUNTER_SHOT          = WoW120Spells::Hunter::COUNTER_SHOT,
+    SPELL_TRANQUILIZING_SHOT    = WoW120Spells::Hunter::TRANQUILIZING_SHOT,
+    SPELL_TAR_TRAP              = WoW120Spells::Hunter::TAR_TRAP,
+    SPELL_FREEZING_TRAP         = WoW120Spells::Hunter::FREEZING_TRAP
 };
 
 /**
@@ -764,7 +764,7 @@ private:
     void UpdatePetManagement() { _petManager.EnsurePetActive(GetBot()->GetVictim()); }
     void SummonPet() { _petManager.SummonPet(); }
     void MendPetIfNeeded() { _petManager.MendPet(); }
-    void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
+    void FeedPetIfNeeded() { /* Feeding not implemented in WoW 12.0 */ }
     bool HasActivePet() const { return _petManager.HasActivePet(); }
     ::Playerbot::PetInfo GetPetInfo() const
     {

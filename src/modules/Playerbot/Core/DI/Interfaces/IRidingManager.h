@@ -21,7 +21,7 @@ namespace Playerbot
 {
 
 /**
- * @brief Riding skill levels matching WoW 11.2
+ * @brief Riding skill levels matching WoW 12.0
  *
  * These represent the actual skill values, not spell IDs.
  */

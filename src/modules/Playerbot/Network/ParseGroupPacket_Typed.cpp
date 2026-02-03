@@ -19,7 +19,7 @@ namespace Playerbot
 
 // ================================================================================================
 // TYPED PACKET HANDLERS
-// These handlers receive TYPED packet objects before serialization (WoW 11.2 Solution)
+// These handlers receive TYPED packet objects before serialization (WoW 12.0 Solution)
 // ================================================================================================
 
 /**
@@ -40,7 +40,7 @@ void ParseTypedReadyCheckStarted(WorldSession* session, WorldPackets::Party::Rea
     event.priority = EventPriority::HIGH;
     event.groupGuid = packet.PartyGUID;
     event.sourceGuid = packet.InitiatorGUID;
-    event.data1 = static_cast<uint32>(Milliseconds(packet.Duration).count());  // Duration in milliseconds (WoW 11.2 API)
+    event.data1 = static_cast<uint32>(Milliseconds(packet.Duration).count());  // Duration in milliseconds (WoW 12.0 API)
     event.data2 = static_cast<uint32>(packet.PartyIndex);
     event.timestamp = ::std::chrono::steady_clock::now();
 
@@ -92,8 +92,8 @@ void ParseTypedReadyCheckCompleted(WorldSession* session, WorldPackets::Party::R
     event.type = GroupEventType::READY_CHECK_COMPLETED;
     event.priority = EventPriority::MEDIUM;
     event.groupGuid = packet.PartyGUID;
-    event.data1 = 0;  // WoW 11.2: ReadyCount no longer in packet
-    event.data2 = 0;  // WoW 11.2: NotReadyCount no longer in packet
+    event.data1 = 0;  // WoW 12.0: ReadyCount no longer in packet
+    event.data2 = 0;  // WoW 12.0: NotReadyCount no longer in packet
     event.timestamp = ::std::chrono::steady_clock::now();
 
     GroupEventBus::instance()->PublishEvent(event);
@@ -141,7 +141,7 @@ void ParseTypedRaidTargetUpdateAll(WorldSession* session, WorldPackets::Party::S
     if (!bot)
         return;
 
-    // Publish individual events for each target icon (WoW 11.2: vector of pairs)
+    // Publish individual events for each target icon (WoW 12.0: vector of pairs)
     for (auto const& [symbolIndex, targetGuid] : packet.TargetIcons)
     {
         if (!targetGuid.IsEmpty())  // Check if target is valid

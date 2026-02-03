@@ -31,8 +31,8 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
-// Central Spell Registry - See WoW112Spells::Druid namespace
-#include "../SpellValidation_WoW112.h"
+// Central Spell Registry - See WoW120Spells::Druid namespace
+#include "../SpellValidation_WoW120.h"
 
 namespace Playerbot
 {
@@ -49,29 +49,29 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 (The War Within) - Feral Druid Spell IDs
-// Using central registry: WoW112Spells::Druid and WoW112Spells::Druid::Feral
-constexpr uint32 FERAL_SHRED = WoW112Spells::Druid::Feral::SHRED;
-constexpr uint32 FERAL_RAKE = WoW112Spells::Druid::Feral::RAKE;
-constexpr uint32 FERAL_RIP = WoW112Spells::Druid::Feral::RIP;
-constexpr uint32 FERAL_FEROCIOUS_BITE = WoW112Spells::Druid::Feral::FEROCIOUS_BITE;
-constexpr uint32 FERAL_SWIPE_CAT = WoW112Spells::Druid::Feral::SWIPE_CAT;
-constexpr uint32 FERAL_THRASH_CAT = WoW112Spells::Druid::Feral::THRASH_CAT;
-constexpr uint32 FERAL_BRUTAL_SLASH = WoW112Spells::Druid::Feral::BRUTAL_SLASH;
-constexpr uint32 FERAL_PRIMAL_WRATH = WoW112Spells::Druid::Feral::PRIMAL_WRATH;
-constexpr uint32 FERAL_MOONFIRE_CAT = WoW112Spells::Druid::Feral::MOONFIRE_FERAL;
-constexpr uint32 FERAL_TIGERS_FURY = WoW112Spells::Druid::Feral::TIGERS_FURY;
-constexpr uint32 FERAL_BERSERK = WoW112Spells::Druid::Feral::BERSERK;
-constexpr uint32 FERAL_INCARNATION_KING = WoW112Spells::Druid::Feral::INCARNATION_FERAL;
-constexpr uint32 FERAL_CONVOKE = WoW112Spells::Druid::Feral::CONVOKE_FERAL;
-constexpr uint32 FERAL_BLOODTALONS = WoW112Spells::Druid::Feral::BLOODTALONS;
-constexpr uint32 FERAL_CAT_FORM = WoW112Spells::Druid::CAT_FORM;
-constexpr uint32 FERAL_DASH = WoW112Spells::Druid::DASH;
-constexpr uint32 FERAL_STAMPEDING_ROAR = WoW112Spells::Druid::STAMPEDING_ROAR;
-constexpr uint32 FERAL_SURVIVAL_INSTINCTS = WoW112Spells::Druid::SURVIVAL_INSTINCTS;
-constexpr uint32 FERAL_BARKSKIN = WoW112Spells::Druid::BARKSKIN;
-constexpr uint32 FERAL_RENEWAL = WoW112Spells::Druid::RENEWAL;
-constexpr uint32 FERAL_REGROWTH = WoW112Spells::Druid::REGROWTH;
+// WoW 12.0 (The War Within) - Feral Druid Spell IDs
+// Using central registry: WoW120Spells::Druid and WoW120Spells::Druid::Feral
+constexpr uint32 FERAL_SHRED = WoW120Spells::Druid::Feral::SHRED;
+constexpr uint32 FERAL_RAKE = WoW120Spells::Druid::Feral::RAKE;
+constexpr uint32 FERAL_RIP = WoW120Spells::Druid::Feral::RIP;
+constexpr uint32 FERAL_FEROCIOUS_BITE = WoW120Spells::Druid::Feral::FEROCIOUS_BITE;
+constexpr uint32 FERAL_SWIPE_CAT = WoW120Spells::Druid::Feral::SWIPE_CAT;
+constexpr uint32 FERAL_THRASH_CAT = WoW120Spells::Druid::Feral::THRASH_CAT;
+constexpr uint32 FERAL_BRUTAL_SLASH = WoW120Spells::Druid::Feral::BRUTAL_SLASH;
+constexpr uint32 FERAL_PRIMAL_WRATH = WoW120Spells::Druid::Feral::PRIMAL_WRATH;
+constexpr uint32 FERAL_MOONFIRE_CAT = WoW120Spells::Druid::Feral::MOONFIRE_FERAL;
+constexpr uint32 FERAL_TIGERS_FURY = WoW120Spells::Druid::Feral::TIGERS_FURY;
+constexpr uint32 FERAL_BERSERK = WoW120Spells::Druid::Feral::BERSERK;
+constexpr uint32 FERAL_INCARNATION_KING = WoW120Spells::Druid::Feral::INCARNATION_FERAL;
+constexpr uint32 FERAL_CONVOKE = WoW120Spells::Druid::Feral::CONVOKE_FERAL;
+constexpr uint32 FERAL_BLOODTALONS = WoW120Spells::Druid::Feral::BLOODTALONS;
+constexpr uint32 FERAL_CAT_FORM = WoW120Spells::Druid::CAT_FORM;
+constexpr uint32 FERAL_DASH = WoW120Spells::Druid::DASH;
+constexpr uint32 FERAL_STAMPEDING_ROAR = WoW120Spells::Druid::STAMPEDING_ROAR;
+constexpr uint32 FERAL_SURVIVAL_INSTINCTS = WoW120Spells::Druid::SURVIVAL_INSTINCTS;
+constexpr uint32 FERAL_BARKSKIN = WoW120Spells::Druid::BARKSKIN;
+constexpr uint32 FERAL_RENEWAL = WoW120Spells::Druid::RENEWAL;
+constexpr uint32 FERAL_REGROWTH = WoW120Spells::Druid::REGROWTH;
 
 // Feral Druid resource type (Energy + Combo Points)
 // Uses distinct type to avoid template instantiation conflicts with Rogue specs

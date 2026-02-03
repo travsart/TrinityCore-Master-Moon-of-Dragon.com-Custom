@@ -421,7 +421,7 @@ public:
     float GetSpellRadius(uint32 spellId) const;
     float GetSpellAngle(uint32 spellId) const;
 
-    // Load WoW 11.2 mechanic data
+    // Load WoW 12.0 mechanic data
     void LoadMechanicData();
     void LoadDungeonMechanics();
     void LoadRaidMechanics();

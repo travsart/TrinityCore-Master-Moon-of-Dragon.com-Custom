@@ -197,7 +197,7 @@ RidingSkillLevel RidingManager::GetNextSkillLevel() const
     uint32 level = _bot->GetLevel();
     RidingSkillLevel current = GetCurrentSkillLevel();
 
-    // Determine next skill based on level thresholds (WoW 11.2)
+    // Determine next skill based on level thresholds (WoW 12.0)
     if (level >= 80 && current < RidingSkillLevel::MASTER)
         return RidingSkillLevel::MASTER;
     if (level >= 40 && current < RidingSkillLevel::ARTISAN)

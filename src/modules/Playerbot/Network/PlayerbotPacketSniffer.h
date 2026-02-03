@@ -117,7 +117,7 @@ public:
     static void OnPacketSend(WorldSession* session, WorldPacket const& packet);
 
     /**
-     * Typed packet interception hook (WoW 11.2 Solution)
+     * Typed packet interception hook (WoW 12.0 Solution)
      * Called from WorldSession::SendPacket<PacketType>() template overload
      * Receives typed packet BEFORE serialization, enabling full data access
      *
@@ -197,7 +197,7 @@ private:
     // Initialize opcode mapping
     static void InitializeOpcodeMapping();
 
-    // Typed packet handlers (WoW 11.2)
+    // Typed packet handlers (WoW 12.0)
     using TypedPacketHandler = ::std::function<void(WorldSession*, void const*)>;
     static inline ::std::unordered_map<::std::type_index, TypedPacketHandler> _typedPacketHandlers;
 

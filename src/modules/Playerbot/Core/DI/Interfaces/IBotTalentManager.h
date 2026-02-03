@@ -186,7 +186,7 @@ public:
 
     /**
      * Check if level supports dual-spec
-     * WoW 11.2: Dual-spec unlocks at level 10
+     * WoW 12.0: Dual-spec unlocks at level 10
      */
     virtual bool SupportsDualSpec(uint32 level) const = 0;
 
@@ -216,7 +216,7 @@ public:
 
     /**
      * Check if level supports hero talents
-     * WoW 11.2: Hero talents unlock at level 71
+     * WoW 12.0: Hero talents unlock at level 71
      */
     virtual bool SupportsHeroTalents(uint32 level) const = 0;
 

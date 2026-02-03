@@ -21,7 +21,7 @@
 #include "../Common/StatusEffectTracker.h"
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -51,29 +51,29 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 
-// WoW 11.2 (The War Within) - Arcane Mage Spell IDs
-// Use central spell registry (SpellValidation_WoW112.h)
+// WoW 12.0 (The War Within) - Arcane Mage Spell IDs
+// Use central spell registry (SpellValidation_WoW120.h)
 namespace ArcaneMageSpells
 {
     // Arcane Spec Spells
-    constexpr uint32 ARCANE_BLAST       = WoW112Spells::Mage::Arcane::ARCANE_BLAST;
-    constexpr uint32 ARCANE_MISSILES    = WoW112Spells::Mage::Arcane::ARCANE_MISSILES;
-    constexpr uint32 ARCANE_BARRAGE     = WoW112Spells::Mage::Arcane::ARCANE_BARRAGE;
-    constexpr uint32 ARCANE_SURGE       = WoW112Spells::Mage::Arcane::ARCANE_SURGE;
-    constexpr uint32 ARCANE_ORB         = WoW112Spells::Mage::Arcane::ARCANE_ORB;
-    constexpr uint32 EVOCATION          = WoW112Spells::Mage::Arcane::EVOCATION;
-    constexpr uint32 TOUCH_OF_MAGE      = WoW112Spells::Mage::Arcane::TOUCH_OF_THE_MAGI;
-    constexpr uint32 ARCANE_FAMILIAR    = WoW112Spells::Mage::Arcane::ARCANE_FAMILIAR;
-    constexpr uint32 PRESENCE_OF_MIND   = WoW112Spells::Mage::Arcane::PRESENCE_OF_MIND;
-    constexpr uint32 ARCANE_EXPLOSION   = WoW112Spells::Mage::Arcane::ARCANE_EXPLOSION;
-    constexpr uint32 SUPERNOVA          = WoW112Spells::Mage::Arcane::SUPERNOVA;
-    constexpr uint32 SHIFTING_POWER     = WoW112Spells::Mage::Arcane::SHIFTING_POWER;
+    constexpr uint32 ARCANE_BLAST       = WoW120Spells::Mage::Arcane::ARCANE_BLAST;
+    constexpr uint32 ARCANE_MISSILES    = WoW120Spells::Mage::Arcane::ARCANE_MISSILES;
+    constexpr uint32 ARCANE_BARRAGE     = WoW120Spells::Mage::Arcane::ARCANE_BARRAGE;
+    constexpr uint32 ARCANE_SURGE       = WoW120Spells::Mage::Arcane::ARCANE_SURGE;
+    constexpr uint32 ARCANE_ORB         = WoW120Spells::Mage::Arcane::ARCANE_ORB;
+    constexpr uint32 EVOCATION          = WoW120Spells::Mage::Arcane::EVOCATION;
+    constexpr uint32 TOUCH_OF_MAGE      = WoW120Spells::Mage::Arcane::TOUCH_OF_THE_MAGI;
+    constexpr uint32 ARCANE_FAMILIAR    = WoW120Spells::Mage::Arcane::ARCANE_FAMILIAR;
+    constexpr uint32 PRESENCE_OF_MIND   = WoW120Spells::Mage::Arcane::PRESENCE_OF_MIND;
+    constexpr uint32 ARCANE_EXPLOSION   = WoW120Spells::Mage::Arcane::ARCANE_EXPLOSION;
+    constexpr uint32 SUPERNOVA          = WoW120Spells::Mage::Arcane::SUPERNOVA;
+    constexpr uint32 SHIFTING_POWER     = WoW120Spells::Mage::Arcane::SHIFTING_POWER;
 
     // Common Mage Spells
-    constexpr uint32 ARCANE_INTELLECT   = WoW112Spells::Mage::ARCANE_INTELLECT;
-    constexpr uint32 ICE_BLOCK          = WoW112Spells::Mage::ICE_BLOCK;
-    constexpr uint32 MIRROR_IMAGE       = WoW112Spells::Mage::MIRROR_IMAGE;
-    constexpr uint32 TIME_WARP          = WoW112Spells::Mage::TIME_WARP;
+    constexpr uint32 ARCANE_INTELLECT   = WoW120Spells::Mage::ARCANE_INTELLECT;
+    constexpr uint32 ICE_BLOCK          = WoW120Spells::Mage::ICE_BLOCK;
+    constexpr uint32 MIRROR_IMAGE       = WoW120Spells::Mage::MIRROR_IMAGE;
+    constexpr uint32 TIME_WARP          = WoW120Spells::Mage::TIME_WARP;
 }
 
 // Make spells available in the namespace

@@ -46,7 +46,7 @@ namespace Playerbot
 {
 
 /**
- * @brief Profession types matching WoW 11.2 skill IDs
+ * @brief Profession types matching WoW 12.0 skill IDs
  */
 enum class ProfessionType : uint16
 {

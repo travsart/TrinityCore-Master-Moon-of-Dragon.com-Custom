@@ -27,7 +27,7 @@ namespace Playerbot
  * Implements ComplexResource concept requirements for template-based specialization system.
  *
  * @note Shared across Assassination, Outlaw, and Subtlety specializations
- * @since WoW 11.2 (The War Within)
+ * @since WoW 12.0 (The War Within)
  */
 struct EnergyComboResource
 {

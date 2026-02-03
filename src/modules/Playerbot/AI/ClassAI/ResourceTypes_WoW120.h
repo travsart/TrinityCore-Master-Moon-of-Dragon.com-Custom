@@ -18,9 +18,9 @@ namespace Playerbot
 {
 
 /**
- * WoW 11.2 (The War Within) Complete Resource Type System
+ * WoW 12.0 (The War Within) Complete Resource Type System
  *
- * This file defines all resource types used by the 13 classes in WoW 11.2.
+ * This file defines all resource types used by the 13 classes in WoW 12.0.
  * Each resource type is designed to work with the CombatSpecializationBase template.
  */
 

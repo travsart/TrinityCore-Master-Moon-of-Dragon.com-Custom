@@ -15,7 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"  // Central spell registry
+#include "../SpellValidation_WoW120.h"  // Central spell registry
 #include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -29,64 +29,64 @@ namespace Playerbot
 {
 
 // ============================================================================
-// BLOOD DEATH KNIGHT SPELL ALIASES (WoW 11.2 - The War Within)
+// BLOOD DEATH KNIGHT SPELL ALIASES (WoW 12.0 - The War Within)
 // Consolidated spell IDs from central registry - NO duplicates
 // ============================================================================
 
 namespace BloodDeathKnightSpells
 {
     // Rune Spenders
-    constexpr uint32 HEART_STRIKE             = WoW112Spells::DeathKnight::Blood::HEART_STRIKE;
-    constexpr uint32 BLOOD_BOIL               = WoW112Spells::DeathKnight::Blood::BLOOD_BOIL;
-    constexpr uint32 DEATHS_CARESS            = WoW112Spells::DeathKnight::Blood::DEATHS_CARESS;
-    constexpr uint32 MARROWREND               = WoW112Spells::DeathKnight::Blood::MARROWREND;
-    constexpr uint32 CONSUMPTION              = WoW112Spells::DeathKnight::Blood::CONSUMPTION;
+    constexpr uint32 HEART_STRIKE             = WoW120Spells::DeathKnight::Blood::HEART_STRIKE;
+    constexpr uint32 BLOOD_BOIL               = WoW120Spells::DeathKnight::Blood::BLOOD_BOIL;
+    constexpr uint32 DEATHS_CARESS            = WoW120Spells::DeathKnight::Blood::DEATHS_CARESS;
+    constexpr uint32 MARROWREND               = WoW120Spells::DeathKnight::Blood::MARROWREND;
+    constexpr uint32 CONSUMPTION              = WoW120Spells::DeathKnight::Blood::CONSUMPTION;
 
     // Runic Power Spenders
-    constexpr uint32 DEATH_STRIKE             = WoW112Spells::DeathKnight::DEATH_STRIKE;
-    constexpr uint32 DEATHS_AND_DECAY_BLOOD   = WoW112Spells::DeathKnight::DEATH_AND_DECAY;
-    constexpr uint32 BONESTORM                = WoW112Spells::DeathKnight::Blood::BONESTORM;
+    constexpr uint32 DEATH_STRIKE             = WoW120Spells::DeathKnight::DEATH_STRIKE;
+    constexpr uint32 DEATHS_AND_DECAY_BLOOD   = WoW120Spells::DeathKnight::DEATH_AND_DECAY;
+    constexpr uint32 BONESTORM                = WoW120Spells::DeathKnight::Blood::BONESTORM;
 
     // Active Mitigation
-    constexpr uint32 VAMPIRIC_BLOOD           = WoW112Spells::DeathKnight::Blood::VAMPIRIC_BLOOD;
-    constexpr uint32 DANCING_RUNE_WEAPON      = WoW112Spells::DeathKnight::Blood::DANCING_RUNE_WEAPON;
-    constexpr uint32 ICEBOUND_FORTITUDE       = WoW112Spells::DeathKnight::ICEBOUND_FORTITUDE;
-    constexpr uint32 ANTI_MAGIC_SHELL         = WoW112Spells::DeathKnight::ANTI_MAGIC_SHELL;
-    constexpr uint32 RUNE_TAP                 = WoW112Spells::DeathKnight::Blood::RUNE_TAP;
-    constexpr uint32 VAMPIRIC_STRIKE          = WoW112Spells::DeathKnight::Blood::VAMPIRIC_STRIKE;
+    constexpr uint32 VAMPIRIC_BLOOD           = WoW120Spells::DeathKnight::Blood::VAMPIRIC_BLOOD;
+    constexpr uint32 DANCING_RUNE_WEAPON      = WoW120Spells::DeathKnight::Blood::DANCING_RUNE_WEAPON;
+    constexpr uint32 ICEBOUND_FORTITUDE       = WoW120Spells::DeathKnight::ICEBOUND_FORTITUDE;
+    constexpr uint32 ANTI_MAGIC_SHELL         = WoW120Spells::DeathKnight::ANTI_MAGIC_SHELL;
+    constexpr uint32 RUNE_TAP                 = WoW120Spells::DeathKnight::Blood::RUNE_TAP;
+    constexpr uint32 VAMPIRIC_STRIKE          = WoW120Spells::DeathKnight::Blood::VAMPIRIC_STRIKE;
 
     // Threat Generation
-    constexpr uint32 DARK_COMMAND             = WoW112Spells::DeathKnight::DARK_COMMAND;
-    constexpr uint32 BLOOD_PLAGUE             = WoW112Spells::DeathKnight::Blood::BLOOD_PLAGUE;
-    constexpr uint32 FROST_FEVER              = WoW112Spells::DeathKnight::Frost::FROST_FEVER;
+    constexpr uint32 DARK_COMMAND             = WoW120Spells::DeathKnight::DARK_COMMAND;
+    constexpr uint32 BLOOD_PLAGUE             = WoW120Spells::DeathKnight::Blood::BLOOD_PLAGUE;
+    constexpr uint32 FROST_FEVER              = WoW120Spells::DeathKnight::Frost::FROST_FEVER;
 
     // Major Cooldowns
-    constexpr uint32 RAISE_DEAD_BLOOD         = WoW112Spells::DeathKnight::RAISE_DEAD;
-    constexpr uint32 ARMY_OF_THE_DEAD         = WoW112Spells::DeathKnight::Unholy::ARMY_OF_THE_DEAD;
-    constexpr uint32 GOREFIENDS_GRASP         = WoW112Spells::DeathKnight::Blood::GOREFIENDS_GRASP;
-    constexpr uint32 BLOODDRINKER             = WoW112Spells::DeathKnight::Blood::BLOODDRINKER;
-    constexpr uint32 TOMBSTONE                = WoW112Spells::DeathKnight::Blood::TOMBSTONE;
+    constexpr uint32 RAISE_DEAD_BLOOD         = WoW120Spells::DeathKnight::RAISE_DEAD;
+    constexpr uint32 ARMY_OF_THE_DEAD         = WoW120Spells::DeathKnight::Unholy::ARMY_OF_THE_DEAD;
+    constexpr uint32 GOREFIENDS_GRASP         = WoW120Spells::DeathKnight::Blood::GOREFIENDS_GRASP;
+    constexpr uint32 BLOODDRINKER             = WoW120Spells::DeathKnight::Blood::BLOODDRINKER;
+    constexpr uint32 TOMBSTONE                = WoW120Spells::DeathKnight::Blood::TOMBSTONE;
 
     // Utility
-    constexpr uint32 DEATH_GRIP               = WoW112Spells::DeathKnight::DEATH_GRIP;
-    constexpr uint32 DEATHS_ADVANCE           = WoW112Spells::DeathKnight::DEATHS_ADVANCE;
-    constexpr uint32 MIND_FREEZE              = WoW112Spells::DeathKnight::MIND_FREEZE;
-    constexpr uint32 ASPHYXIATE               = WoW112Spells::DeathKnight::ASPHYXIATE;
-    constexpr uint32 CONTROL_UNDEAD           = WoW112Spells::DeathKnight::CONTROL_UNDEAD;
-    constexpr uint32 RAISE_ALLY               = WoW112Spells::DeathKnight::RAISE_ALLY;
+    constexpr uint32 DEATH_GRIP               = WoW120Spells::DeathKnight::DEATH_GRIP;
+    constexpr uint32 DEATHS_ADVANCE           = WoW120Spells::DeathKnight::DEATHS_ADVANCE;
+    constexpr uint32 MIND_FREEZE              = WoW120Spells::DeathKnight::MIND_FREEZE;
+    constexpr uint32 ASPHYXIATE               = WoW120Spells::DeathKnight::ASPHYXIATE;
+    constexpr uint32 CONTROL_UNDEAD           = WoW120Spells::DeathKnight::CONTROL_UNDEAD;
+    constexpr uint32 RAISE_ALLY               = WoW120Spells::DeathKnight::RAISE_ALLY;
 
     // Procs and Buffs
-    constexpr uint32 BONE_SHIELD              = WoW112Spells::DeathKnight::Blood::BONE_SHIELD;
-    constexpr uint32 CRIMSON_SCOURGE          = WoW112Spells::DeathKnight::Blood::CRIMSON_SCOURGE;
-    constexpr uint32 HEMOSTASIS               = WoW112Spells::DeathKnight::Blood::HEMOSTASIS;
-    constexpr uint32 OSSUARY                  = WoW112Spells::DeathKnight::Blood::OSSUARY;
+    constexpr uint32 BONE_SHIELD              = WoW120Spells::DeathKnight::Blood::BONE_SHIELD;
+    constexpr uint32 CRIMSON_SCOURGE          = WoW120Spells::DeathKnight::Blood::CRIMSON_SCOURGE;
+    constexpr uint32 HEMOSTASIS               = WoW120Spells::DeathKnight::Blood::HEMOSTASIS;
+    constexpr uint32 OSSUARY                  = WoW120Spells::DeathKnight::Blood::OSSUARY;
 
     // Talents
-    constexpr uint32 BLOOD_TAP                = WoW112Spells::DeathKnight::Blood::BLOOD_TAP;
-    constexpr uint32 RAPID_DECOMPOSITION      = WoW112Spells::DeathKnight::Blood::RAPID_DECOMPOSITION;
-    constexpr uint32 HEARTBREAKER             = WoW112Spells::DeathKnight::Blood::HEARTBREAKER;
-    constexpr uint32 FOUL_BULWARK             = WoW112Spells::DeathKnight::Blood::FOUL_BULWARK;
-    constexpr uint32 RELISH_IN_BLOOD          = WoW112Spells::DeathKnight::Blood::RELISH_IN_BLOOD;
+    constexpr uint32 BLOOD_TAP                = WoW120Spells::DeathKnight::Blood::BLOOD_TAP;
+    constexpr uint32 RAPID_DECOMPOSITION      = WoW120Spells::DeathKnight::Blood::RAPID_DECOMPOSITION;
+    constexpr uint32 HEARTBREAKER             = WoW120Spells::DeathKnight::Blood::HEARTBREAKER;
+    constexpr uint32 FOUL_BULWARK             = WoW120Spells::DeathKnight::Blood::FOUL_BULWARK;
+    constexpr uint32 RELISH_IN_BLOOD          = WoW120Spells::DeathKnight::Blood::RELISH_IN_BLOOD;
 }
 using namespace BloodDeathKnightSpells;
 
@@ -596,7 +596,7 @@ private:
         // - Proper BotAI retrieval from Player instance (via custom Player extension or bot registry)
         // - ActionPriorityQueue registration for Blood DK spells (Vampiric Blood, Death Strike, Marrowrend, Heart Strike, Blood Boil)
         // - BehaviorTree construction with emergency defensives, active mitigation, bone shield maintenance, and threat generation sequences
-        // Reference: WoW 11.2 Death Knight mechanics, Blood specialization active mitigation patterns
+        // Reference: WoW 12.0 Death Knight mechanics, Blood specialization active mitigation patterns
         // BotAI* ai = dynamic_cast<BotAI*>(bot->GetPlayerAI());
         // if (!ai) return;
 

@@ -588,7 +588,7 @@ void PaladinAI::UpdateBlessingManagement()
 
     _lastBlessingTime = currentTime;
 
-    // WoW 11.2: Most blessings are removed. Paladin now has situational blessings:
+    // WoW 12.0: Most blessings are removed. Paladin now has situational blessings:
     // - Blessing of Freedom (movement utility)
     // - Blessing of Protection (physical immunity)
     // - Blessing of Sacrifice (damage sharing)

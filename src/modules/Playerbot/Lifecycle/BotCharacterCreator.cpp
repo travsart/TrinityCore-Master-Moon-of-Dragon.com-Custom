@@ -56,7 +56,7 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreateBotCharacter(
 
 bool BotCharacterCreator::IsValidRaceClassCombination(uint8 race, uint8 classId)
 {
-    // Check using WoW 11.2 data
+    // Check using WoW 12.0 data
     for (auto const& combo : CharacterCreation::VALID_COMBINATIONS)
     {
         if (combo.race == static_cast<Races>(race) &&
@@ -161,7 +161,7 @@ BotCharacterCreator::CreateResult BotCharacterCreator::ValidateCreationRequest(
     // 1. Validate race/class combination
     if (!IsValidRaceClassCombination(race, classId))
     {
-        outErrorMsg = "Invalid race/class combination for WoW 11.2";
+        outErrorMsg = "Invalid race/class combination for WoW 12.0";
         return CreateResult::INVALID_RACE_CLASS_COMBO;
     }
 

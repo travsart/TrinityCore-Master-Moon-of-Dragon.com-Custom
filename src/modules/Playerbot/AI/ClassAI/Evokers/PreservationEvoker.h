@@ -14,7 +14,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "../../Services/HealingTargetSelector.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -41,55 +41,55 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// PRESERVATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
-// See central registry: WoW112Spells::Evoker and WoW112Spells::Evoker::Preservation
+// PRESERVATION EVOKER SPELL IDs (WoW 12.0 - The War Within)
+// See central registry: WoW120Spells::Evoker and WoW120Spells::Evoker::Preservation
 // ============================================================================
 
 enum PreservationEvokerSpells
 {
     // Direct Heals
-    EMERALD_BLOSSOM      = WoW112Spells::Evoker::EMERALD_BLOSSOM,
-    VERDANT_EMBRACE      = WoW112Spells::Evoker::VERDANT_EMBRACE,
-    LIVING_FLAME_HEAL    = WoW112Spells::Evoker::Preservation::LIVING_FLAME_HEAL,
+    EMERALD_BLOSSOM      = WoW120Spells::Evoker::EMERALD_BLOSSOM,
+    VERDANT_EMBRACE      = WoW120Spells::Evoker::VERDANT_EMBRACE,
+    LIVING_FLAME_HEAL    = WoW120Spells::Evoker::Preservation::LIVING_FLAME_HEAL,
 
     // Empowered Heals
-    DREAM_BREATH         = WoW112Spells::Evoker::Preservation::DREAM_BREATH,
-    SPIRIT_BLOOM         = WoW112Spells::Evoker::Preservation::SPIRITBLOOM,
+    DREAM_BREATH         = WoW120Spells::Evoker::Preservation::DREAM_BREATH,
+    SPIRIT_BLOOM         = WoW120Spells::Evoker::Preservation::SPIRITBLOOM,
 
     // Echo System
-    ECHO                 = WoW112Spells::Evoker::Preservation::ECHO,
-    REVERSION            = WoW112Spells::Evoker::Preservation::REVERSION,
+    ECHO                 = WoW120Spells::Evoker::Preservation::ECHO,
+    REVERSION            = WoW120Spells::Evoker::Preservation::REVERSION,
 
     // Major Cooldowns
-    EMERALD_COMMUNION    = WoW112Spells::Evoker::Preservation::EMERALD_COMMUNION,
-    TEMPORAL_ANOMALY     = WoW112Spells::Evoker::Preservation::TEMPORAL_ANOMALY,
-    REWIND               = WoW112Spells::Evoker::Preservation::REWIND,
+    EMERALD_COMMUNION    = WoW120Spells::Evoker::Preservation::EMERALD_COMMUNION,
+    TEMPORAL_ANOMALY     = WoW120Spells::Evoker::Preservation::TEMPORAL_ANOMALY,
+    REWIND               = WoW120Spells::Evoker::Preservation::REWIND,
 
     // Utility
-    LIFEBIND             = WoW112Spells::Evoker::Preservation::LIFEBIND,
-    BLESSING_BRONZE      = WoW112Spells::Evoker::BLESSING_OF_THE_BRONZE,
-    TIME_DILATION        = WoW112Spells::Evoker::Preservation::TIME_DILATION,
-    STASIS               = WoW112Spells::Evoker::Preservation::STASIS,
-    RESCUE               = WoW112Spells::Evoker::RESCUE,
+    LIFEBIND             = WoW120Spells::Evoker::Preservation::LIFEBIND,
+    BLESSING_BRONZE      = WoW120Spells::Evoker::BLESSING_OF_THE_BRONZE,
+    TIME_DILATION        = WoW120Spells::Evoker::Preservation::TIME_DILATION,
+    STASIS               = WoW120Spells::Evoker::Preservation::STASIS,
+    RESCUE               = WoW120Spells::Evoker::RESCUE,
 
     // Defensive (shared with other Evoker specs)
-    PRES_OBSIDIAN_SCALES = WoW112Spells::Evoker::OBSIDIAN_SCALES,
-    PRES_RENEWING_BLAZE  = WoW112Spells::Evoker::RENEWING_BLAZE,
-    TWIN_GUARDIAN        = WoW112Spells::Evoker::Preservation::TWIN_GUARDIAN,
+    PRES_OBSIDIAN_SCALES = WoW120Spells::Evoker::OBSIDIAN_SCALES,
+    PRES_RENEWING_BLAZE  = WoW120Spells::Evoker::RENEWING_BLAZE,
+    TWIN_GUARDIAN        = WoW120Spells::Evoker::Preservation::TWIN_GUARDIAN,
 
     // Essence Generation
-    AZURE_STRIKE_PRES    = WoW112Spells::Evoker::AZURE_STRIKE,
-    DISINTEGRATE_PRES    = WoW112Spells::Evoker::DISINTEGRATE,
+    AZURE_STRIKE_PRES    = WoW120Spells::Evoker::AZURE_STRIKE,
+    DISINTEGRATE_PRES    = WoW120Spells::Evoker::DISINTEGRATE,
 
     // Procs
-    ESSENCE_BURST_PRES   = WoW112Spells::Evoker::Preservation::ESSENCE_BURST_PRES,
-    CALL_OF_YSERA        = WoW112Spells::Evoker::Preservation::CALL_OF_YSERA,
+    ESSENCE_BURST_PRES   = WoW120Spells::Evoker::Preservation::ESSENCE_BURST_PRES,
+    CALL_OF_YSERA        = WoW120Spells::Evoker::Preservation::CALL_OF_YSERA,
 
     // Talents
-    FIELD_OF_DREAMS      = WoW112Spells::Evoker::Preservation::FIELD_OF_DREAMS,
-    FLOW_STATE           = WoW112Spells::Evoker::Preservation::FLOW_STATE,
-    LIFEFORCE_MENDER     = WoW112Spells::Evoker::Preservation::LIFEFORCE_MENDER,
-    TEMPORAL_COMPRESSION = WoW112Spells::Evoker::Preservation::TEMPORAL_COMPRESSION
+    FIELD_OF_DREAMS      = WoW120Spells::Evoker::Preservation::FIELD_OF_DREAMS,
+    FLOW_STATE           = WoW120Spells::Evoker::Preservation::FLOW_STATE,
+    LIFEFORCE_MENDER     = WoW120Spells::Evoker::Preservation::LIFEFORCE_MENDER,
+    TEMPORAL_COMPRESSION = WoW120Spells::Evoker::Preservation::TEMPORAL_COMPRESSION
 };
 
 // Essence resource (same as Devastation)

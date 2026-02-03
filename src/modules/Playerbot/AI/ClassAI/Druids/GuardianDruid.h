@@ -31,8 +31,8 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
-// Central Spell Registry - See WoW112Spells::Druid namespace
-#include "../SpellValidation_WoW112.h"
+// Central Spell Registry - See WoW120Spells::Druid namespace
+#include "../SpellValidation_WoW120.h"
 
 namespace Playerbot
 {
@@ -49,26 +49,26 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 (The War Within) - Guardian Druid Spell IDs
-// Using central registry: WoW112Spells::Druid and WoW112Spells::Druid::Guardian
-constexpr uint32 GUARDIAN_MANGLE = WoW112Spells::Druid::Guardian::MANGLE;
-constexpr uint32 GUARDIAN_THRASH = WoW112Spells::Druid::Guardian::THRASH_BEAR;
-constexpr uint32 GUARDIAN_SWIPE = WoW112Spells::Druid::Guardian::SWIPE_BEAR;
-constexpr uint32 GUARDIAN_MAUL = WoW112Spells::Druid::Guardian::MAUL;
-constexpr uint32 GUARDIAN_IRONFUR = WoW112Spells::Druid::Guardian::IRONFUR;
-constexpr uint32 GUARDIAN_FRENZIED_REGENERATION = WoW112Spells::Druid::Guardian::FRENZIED_REGENERATION;
-constexpr uint32 GUARDIAN_BARKSKIN = WoW112Spells::Druid::BARKSKIN;
-constexpr uint32 GUARDIAN_SURVIVAL_INSTINCTS = WoW112Spells::Druid::SURVIVAL_INSTINCTS;
-constexpr uint32 GUARDIAN_PULVERIZE = WoW112Spells::Druid::Guardian::PULVERIZE;
-constexpr uint32 GUARDIAN_INCARNATION_BEAR = WoW112Spells::Druid::Guardian::INCARNATION_GUARDIAN;
-constexpr uint32 GUARDIAN_BERSERK = WoW112Spells::Druid::Guardian::BERSERK_GUARDIAN;
-constexpr uint32 GUARDIAN_MOONFIRE = WoW112Spells::Druid::Guardian::MOONFIRE_BEAR;
-constexpr uint32 GUARDIAN_RAGE_OF_SLEEPER = WoW112Spells::Druid::Guardian::RAGE_OF_THE_SLEEPER;
-constexpr uint32 GUARDIAN_BEAR_FORM = WoW112Spells::Druid::BEAR_FORM;
-constexpr uint32 GUARDIAN_BRISTLING_FUR = WoW112Spells::Druid::Guardian::BRISTLING_FUR;
-constexpr uint32 GUARDIAN_RENEWAL = WoW112Spells::Druid::RENEWAL;
-constexpr uint32 GUARDIAN_REGROWTH = WoW112Spells::Druid::REGROWTH;
-constexpr uint32 GUARDIAN_GROWL = WoW112Spells::Druid::Guardian::GROWL;
+// WoW 12.0 (The War Within) - Guardian Druid Spell IDs
+// Using central registry: WoW120Spells::Druid and WoW120Spells::Druid::Guardian
+constexpr uint32 GUARDIAN_MANGLE = WoW120Spells::Druid::Guardian::MANGLE;
+constexpr uint32 GUARDIAN_THRASH = WoW120Spells::Druid::Guardian::THRASH_BEAR;
+constexpr uint32 GUARDIAN_SWIPE = WoW120Spells::Druid::Guardian::SWIPE_BEAR;
+constexpr uint32 GUARDIAN_MAUL = WoW120Spells::Druid::Guardian::MAUL;
+constexpr uint32 GUARDIAN_IRONFUR = WoW120Spells::Druid::Guardian::IRONFUR;
+constexpr uint32 GUARDIAN_FRENZIED_REGENERATION = WoW120Spells::Druid::Guardian::FRENZIED_REGENERATION;
+constexpr uint32 GUARDIAN_BARKSKIN = WoW120Spells::Druid::BARKSKIN;
+constexpr uint32 GUARDIAN_SURVIVAL_INSTINCTS = WoW120Spells::Druid::SURVIVAL_INSTINCTS;
+constexpr uint32 GUARDIAN_PULVERIZE = WoW120Spells::Druid::Guardian::PULVERIZE;
+constexpr uint32 GUARDIAN_INCARNATION_BEAR = WoW120Spells::Druid::Guardian::INCARNATION_GUARDIAN;
+constexpr uint32 GUARDIAN_BERSERK = WoW120Spells::Druid::Guardian::BERSERK_GUARDIAN;
+constexpr uint32 GUARDIAN_MOONFIRE = WoW120Spells::Druid::Guardian::MOONFIRE_BEAR;
+constexpr uint32 GUARDIAN_RAGE_OF_SLEEPER = WoW120Spells::Druid::Guardian::RAGE_OF_THE_SLEEPER;
+constexpr uint32 GUARDIAN_BEAR_FORM = WoW120Spells::Druid::BEAR_FORM;
+constexpr uint32 GUARDIAN_BRISTLING_FUR = WoW120Spells::Druid::Guardian::BRISTLING_FUR;
+constexpr uint32 GUARDIAN_RENEWAL = WoW120Spells::Druid::RENEWAL;
+constexpr uint32 GUARDIAN_REGROWTH = WoW120Spells::Druid::REGROWTH;
+constexpr uint32 GUARDIAN_GROWL = WoW120Spells::Druid::Guardian::GROWL;
 
 // Ironfur stacking tracker
 class GuardianIronfurTracker

@@ -70,13 +70,13 @@ bool UnifiedInterruptSystem::Initialize()
     if (_initialized)
         return true;
 
-    // Initialize InterruptDatabase (WoW 11.2 spell data)
+    // Initialize InterruptDatabase (WoW 12.0 spell data)
     InterruptDatabase::Initialize();
 
     _initTime = ::std::chrono::system_clock::now();
     _initialized = true;
 
-    TC_LOG_INFO("playerbot.interrupt", "UnifiedInterruptSystem initialized with WoW 11.2 spell database");
+    TC_LOG_INFO("playerbot.interrupt", "UnifiedInterruptSystem initialized with WoW 12.0 spell database");
     return true;
 }
 
@@ -295,7 +295,7 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
 
 InterruptPriority UnifiedInterruptSystem::GetSpellPriority(uint32 spellId, uint8 mythicLevel)
 {
-    // Query InterruptDatabase for WoW 11.2 spell priority with M+ scaling
+    // Query InterruptDatabase for WoW 12.0 spell priority with M+ scaling
     return InterruptDatabase::GetSpellPriority(spellId, mythicLevel);
 }
 

@@ -1622,7 +1622,7 @@ std::vector<uint8> BotTemplateRepository::GetValidRaces(uint8 playerClass, Facti
 {
     std::vector<uint8> races;
 
-    // WoW 11.2 (The War Within) class/race combinations
+    // WoW 12.0 (The War Within) class/race combinations
     // This is a comprehensive list including all allied races
     //
     // NOTE (2026-01-12): Earthen races (85=Alliance, 84=Horde) are DISABLED

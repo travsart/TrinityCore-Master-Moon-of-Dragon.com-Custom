@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Position.h"
 #include "Group.h"
 #include "Creature.h"
@@ -750,82 +750,82 @@ private:
     static constexpr uint32 TOUCH_OF_DEATH_THRESHOLD = 15; // 15% health
 
     // Spell IDs
-    // Monk Spell IDs - Using central registry (WoW 11.2)
-    // All spell IDs now reference WoW112Spells::Monk namespace for consistency
+    // Monk Spell IDs - Using central registry (WoW 12.0)
+    // All spell IDs now reference WoW120Spells::Monk namespace for consistency
     enum MonkSpells
     {
         // Chi generators
-        TIGER_PALM = WoW112Spells::Monk::Common::TIGER_PALM,
-        EXPEL_HARM = WoW112Spells::Monk::Common::EXPEL_HARM,
-        CHI_WAVE = WoW112Spells::Monk::Common::CHI_WAVE,
-        CHI_BURST = WoW112Spells::Monk::Common::CHI_BURST,
+        TIGER_PALM = WoW120Spells::Monk::Common::TIGER_PALM,
+        EXPEL_HARM = WoW120Spells::Monk::Common::EXPEL_HARM,
+        CHI_WAVE = WoW120Spells::Monk::Common::CHI_WAVE,
+        CHI_BURST = WoW120Spells::Monk::Common::CHI_BURST,
 
         // Basic attacks
-        BLACKOUT_KICK = WoW112Spells::Monk::Common::BLACKOUT_KICK,
-        RISING_SUN_KICK = WoW112Spells::Monk::Common::RISING_SUN_KICK,
-        SPINNING_CRANE_KICK = WoW112Spells::Monk::Common::SPINNING_CRANE_KICK,
+        BLACKOUT_KICK = WoW120Spells::Monk::Common::BLACKOUT_KICK,
+        RISING_SUN_KICK = WoW120Spells::Monk::Common::RISING_SUN_KICK,
+        SPINNING_CRANE_KICK = WoW120Spells::Monk::Common::SPINNING_CRANE_KICK,
 
         // Windwalker abilities
-        FISTS_OF_FURY = WoW112Spells::Monk::Common::FISTS_OF_FURY,
-        WHIRLING_DRAGON_PUNCH = WoW112Spells::Monk::Common::WHIRLING_DRAGON_PUNCH,
-        STORM_EARTH_AND_FIRE = WoW112Spells::Monk::Common::STORM_EARTH_AND_FIRE,
-        TOUCH_OF_DEATH = WoW112Spells::Monk::Common::TOUCH_OF_DEATH,
-        FLYING_SERPENT_KICK = WoW112Spells::Monk::Common::FLYING_SERPENT_KICK,
-        MARK_OF_THE_CRANE = WoW112Spells::Monk::Common::MARK_OF_THE_CRANE,
-        RUSHING_JADE_WIND = WoW112Spells::Monk::Common::RUSHING_JADE_WIND,
-        SERENITY = WoW112Spells::Monk::Common::SERENITY,
+        FISTS_OF_FURY = WoW120Spells::Monk::Common::FISTS_OF_FURY,
+        WHIRLING_DRAGON_PUNCH = WoW120Spells::Monk::Common::WHIRLING_DRAGON_PUNCH,
+        STORM_EARTH_AND_FIRE = WoW120Spells::Monk::Common::STORM_EARTH_AND_FIRE,
+        TOUCH_OF_DEATH = WoW120Spells::Monk::Common::TOUCH_OF_DEATH,
+        FLYING_SERPENT_KICK = WoW120Spells::Monk::Common::FLYING_SERPENT_KICK,
+        MARK_OF_THE_CRANE = WoW120Spells::Monk::Common::MARK_OF_THE_CRANE,
+        RUSHING_JADE_WIND = WoW120Spells::Monk::Common::RUSHING_JADE_WIND,
+        SERENITY = WoW120Spells::Monk::Common::SERENITY,
 
         // Brewmaster abilities
-        KEG_SMASH = WoW112Spells::Monk::Common::KEG_SMASH,
-        BREATH_OF_FIRE = WoW112Spells::Monk::Common::BREATH_OF_FIRE,
-        CELESTIAL_BREW = WoW112Spells::Monk::Common::CELESTIAL_BREW,       // Replaced IRONSKIN_BREW in WoW 11.2
-        PURIFYING_BREW = WoW112Spells::Monk::Common::PURIFYING_BREW,
-        FORTIFYING_BREW = WoW112Spells::Monk::Common::FORTIFYING_BREW,
-        BLACK_OX_BREW = WoW112Spells::Monk::Common::BLACK_OX_BREW,
-        STAGGER = WoW112Spells::Monk::Common::STAGGER,
-        STAGGER_HEAVY = WoW112Spells::Monk::Common::STAGGER_HEAVY,
-        STAGGER_MODERATE = WoW112Spells::Monk::Common::STAGGER_MODERATE,
-        STAGGER_LIGHT = WoW112Spells::Monk::Common::STAGGER_LIGHT,
-        ZEN_MEDITATION = WoW112Spells::Monk::Common::ZEN_MEDITATION,
-        DAMPEN_HARM = WoW112Spells::Monk::Common::DAMPEN_HARM,
+        KEG_SMASH = WoW120Spells::Monk::Common::KEG_SMASH,
+        BREATH_OF_FIRE = WoW120Spells::Monk::Common::BREATH_OF_FIRE,
+        CELESTIAL_BREW = WoW120Spells::Monk::Common::CELESTIAL_BREW,       // Replaced IRONSKIN_BREW in WoW 12.0
+        PURIFYING_BREW = WoW120Spells::Monk::Common::PURIFYING_BREW,
+        FORTIFYING_BREW = WoW120Spells::Monk::Common::FORTIFYING_BREW,
+        BLACK_OX_BREW = WoW120Spells::Monk::Common::BLACK_OX_BREW,
+        STAGGER = WoW120Spells::Monk::Common::STAGGER,
+        STAGGER_HEAVY = WoW120Spells::Monk::Common::STAGGER_HEAVY,
+        STAGGER_MODERATE = WoW120Spells::Monk::Common::STAGGER_MODERATE,
+        STAGGER_LIGHT = WoW120Spells::Monk::Common::STAGGER_LIGHT,
+        ZEN_MEDITATION = WoW120Spells::Monk::Common::ZEN_MEDITATION,
+        DAMPEN_HARM = WoW120Spells::Monk::Common::DAMPEN_HARM,
 
         // Mistweaver abilities
-        RENEWING_MIST = WoW112Spells::Monk::Common::RENEWING_MIST,
-        ENVELOPING_MIST = WoW112Spells::Monk::Common::ENVELOPING_MIST,
-        VIVIFY = WoW112Spells::Monk::Common::VIVIFY,
-        ESSENCE_FONT = WoW112Spells::Monk::Common::ESSENCE_FONT,
-        SOOTHING_MIST = WoW112Spells::Monk::Common::SOOTHING_MIST,
-        LIFE_COCOON = WoW112Spells::Monk::Common::LIFE_COCOON,
-        REVIVAL = WoW112Spells::Monk::Common::REVIVAL,
-        THUNDER_FOCUS_TEA = WoW112Spells::Monk::Common::THUNDER_FOCUS_TEA,
-        MANA_TEA = WoW112Spells::Monk::Common::MANA_TEA,
-        TEACHINGS_OF_THE_MONASTERY = WoW112Spells::Monk::Common::TEACHINGS_OF_THE_MONASTERY,
-        SHEILUNS_GIFT = WoW112Spells::Monk::Common::SHEILUNS_GIFT,         // WoW 11.2 ID: 399491
+        RENEWING_MIST = WoW120Spells::Monk::Common::RENEWING_MIST,
+        ENVELOPING_MIST = WoW120Spells::Monk::Common::ENVELOPING_MIST,
+        VIVIFY = WoW120Spells::Monk::Common::VIVIFY,
+        ESSENCE_FONT = WoW120Spells::Monk::Common::ESSENCE_FONT,
+        SOOTHING_MIST = WoW120Spells::Monk::Common::SOOTHING_MIST,
+        LIFE_COCOON = WoW120Spells::Monk::Common::LIFE_COCOON,
+        REVIVAL = WoW120Spells::Monk::Common::REVIVAL,
+        THUNDER_FOCUS_TEA = WoW120Spells::Monk::Common::THUNDER_FOCUS_TEA,
+        MANA_TEA = WoW120Spells::Monk::Common::MANA_TEA,
+        TEACHINGS_OF_THE_MONASTERY = WoW120Spells::Monk::Common::TEACHINGS_OF_THE_MONASTERY,
+        SHEILUNS_GIFT = WoW120Spells::Monk::Common::SHEILUNS_GIFT,         // WoW 12.0 ID: 399491
 
         // Mobility
-        ROLL = WoW112Spells::Monk::Common::ROLL,
-        CHI_TORPEDO = WoW112Spells::Monk::Common::CHI_TORPEDO,
-        TRANSCENDENCE = WoW112Spells::Monk::Common::TRANSCENDENCE,
-        TRANSCENDENCE_TRANSFER = WoW112Spells::Monk::Common::TRANSCENDENCE_TRANSFER,
-        TIGERS_LUST = WoW112Spells::Monk::Common::TIGERS_LUST,
+        ROLL = WoW120Spells::Monk::Common::ROLL,
+        CHI_TORPEDO = WoW120Spells::Monk::Common::CHI_TORPEDO,
+        TRANSCENDENCE = WoW120Spells::Monk::Common::TRANSCENDENCE,
+        TRANSCENDENCE_TRANSFER = WoW120Spells::Monk::Common::TRANSCENDENCE_TRANSFER,
+        TIGERS_LUST = WoW120Spells::Monk::Common::TIGERS_LUST,
 
         // Utility and crowd control
-        PARALYSIS = WoW112Spells::Monk::Common::PARALYSIS,
-        LEG_SWEEP = WoW112Spells::Monk::Common::LEG_SWEEP,
-        SPEAR_HAND_STRIKE = WoW112Spells::Monk::Common::SPEAR_HAND_STRIKE,
-        RING_OF_PEACE = WoW112Spells::Monk::Common::RING_OF_PEACE,
-        CRACKLING_JADE_LIGHTNING = WoW112Spells::Monk::Common::CRACKLING_JADE_LIGHTNING,
-        DETOX = WoW112Spells::Monk::Common::DETOX,
-        RESUSCITATE = WoW112Spells::Monk::Common::RESUSCITATE,
-        PROVOKE = WoW112Spells::Monk::Common::PROVOKE,                     // Taunt
+        PARALYSIS = WoW120Spells::Monk::Common::PARALYSIS,
+        LEG_SWEEP = WoW120Spells::Monk::Common::LEG_SWEEP,
+        SPEAR_HAND_STRIKE = WoW120Spells::Monk::Common::SPEAR_HAND_STRIKE,
+        RING_OF_PEACE = WoW120Spells::Monk::Common::RING_OF_PEACE,
+        CRACKLING_JADE_LIGHTNING = WoW120Spells::Monk::Common::CRACKLING_JADE_LIGHTNING,
+        DETOX = WoW120Spells::Monk::Common::DETOX,
+        RESUSCITATE = WoW120Spells::Monk::Common::RESUSCITATE,
+        PROVOKE = WoW120Spells::Monk::Common::PROVOKE,                     // Taunt
 
         // Defensive cooldowns
-        TOUCH_OF_KARMA = WoW112Spells::Monk::Common::TOUCH_OF_KARMA,
-        DIFFUSE_MAGIC = WoW112Spells::Monk::Common::DIFFUSE_MAGIC,
+        TOUCH_OF_KARMA = WoW120Spells::Monk::Common::TOUCH_OF_KARMA,
+        DIFFUSE_MAGIC = WoW120Spells::Monk::Common::DIFFUSE_MAGIC,
 
         // Talents - using central registry where available
-        EYE_OF_THE_TIGER = WoW112Spells::Monk::Common::EYE_OF_THE_TIGER,
-        ENERGIZING_ELIXIR = WoW112Spells::Monk::Common::ENERGIZING_ELIXIR
+        EYE_OF_THE_TIGER = WoW120Spells::Monk::Common::EYE_OF_THE_TIGER,
+        ENERGIZING_ELIXIR = WoW120Spells::Monk::Common::ENERGIZING_ELIXIR
     };
 
     // Advanced specialization management methods

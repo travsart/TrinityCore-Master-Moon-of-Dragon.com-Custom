@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include <memory>
 #include <chrono>
 #include <unordered_map>
@@ -26,54 +26,54 @@ class VengeanceDemonHunterRefactored;
 using HavocDemonHunter = HavocDemonHunterRefactored;
 using VengeanceDemonHunter = VengeanceDemonHunterRefactored;
 
-// DemonHunter Spell IDs - Using central registry (WoW 11.2)
+// DemonHunter Spell IDs - Using central registry (WoW 12.0)
 enum DemonHunterSpells
 {
     // Havoc abilities
-    CHAOS_STRIKE = WoW112Spells::DemonHunter::Common::CHAOS_STRIKE,
-    BLADE_DANCE = WoW112Spells::DemonHunter::Common::BLADE_DANCE,
-    DEATH_SWEEP = WoW112Spells::DemonHunter::Common::DEATH_SWEEP,
-    ANNIHILATION = WoW112Spells::DemonHunter::Common::ANNIHILATION,
-    METAMORPHOSIS_HAVOC = WoW112Spells::DemonHunter::Common::METAMORPHOSIS_HAVOC,
-    EYE_BEAM = WoW112Spells::DemonHunter::Common::EYE_BEAM,
-    DEMONS_BITE = WoW112Spells::DemonHunter::Common::DEMONS_BITE,
-    FEL_BARRAGE = WoW112Spells::DemonHunter::Common::FEL_BARRAGE,
+    CHAOS_STRIKE = WoW120Spells::DemonHunter::Common::CHAOS_STRIKE,
+    BLADE_DANCE = WoW120Spells::DemonHunter::Common::BLADE_DANCE,
+    DEATH_SWEEP = WoW120Spells::DemonHunter::Common::DEATH_SWEEP,
+    ANNIHILATION = WoW120Spells::DemonHunter::Common::ANNIHILATION,
+    METAMORPHOSIS_HAVOC = WoW120Spells::DemonHunter::Common::METAMORPHOSIS_HAVOC,
+    EYE_BEAM = WoW120Spells::DemonHunter::Common::EYE_BEAM,
+    DEMONS_BITE = WoW120Spells::DemonHunter::Common::DEMONS_BITE,
+    FEL_BARRAGE = WoW120Spells::DemonHunter::Common::FEL_BARRAGE,
 
     // Vengeance abilities
-    SOUL_CLEAVE = WoW112Spells::DemonHunter::Common::SOUL_CLEAVE,
-    SPIRIT_BOMB = WoW112Spells::DemonHunter::Common::SPIRIT_BOMB,
-    METAMORPHOSIS_VENGEANCE = WoW112Spells::DemonHunter::Common::METAMORPHOSIS_VENGEANCE,
-    SHEAR = WoW112Spells::DemonHunter::Common::SHEAR,
-    SOUL_BARRIER = WoW112Spells::DemonHunter::Common::SOUL_BARRIER,
+    SOUL_CLEAVE = WoW120Spells::DemonHunter::Common::SOUL_CLEAVE,
+    SPIRIT_BOMB = WoW120Spells::DemonHunter::Common::SPIRIT_BOMB,
+    METAMORPHOSIS_VENGEANCE = WoW120Spells::DemonHunter::Common::METAMORPHOSIS_VENGEANCE,
+    SHEAR = WoW120Spells::DemonHunter::Common::SHEAR,
+    SOUL_BARRIER = WoW120Spells::DemonHunter::Common::SOUL_BARRIER,
 
     // Defensive abilities
-    BLUR = WoW112Spells::DemonHunter::Common::BLUR,
-    DARKNESS = WoW112Spells::DemonHunter::Common::DARKNESS,
-    NETHERWALK = WoW112Spells::DemonHunter::Common::NETHERWALK,
+    BLUR = WoW120Spells::DemonHunter::Common::BLUR,
+    DARKNESS = WoW120Spells::DemonHunter::Common::DARKNESS,
+    NETHERWALK = WoW120Spells::DemonHunter::Common::NETHERWALK,
 
     // Shared abilities
-    DEMON_SPIKES = WoW112Spells::DemonHunter::Common::DEMON_SPIKES,
-    IMMOLATION_AURA = WoW112Spells::DemonHunter::Common::IMMOLATION_AURA,
-    FIERY_BRAND = WoW112Spells::DemonHunter::Common::FIERY_BRAND,
-    FEL_RUSH = WoW112Spells::DemonHunter::Common::FEL_RUSH,
-    VENGEFUL_RETREAT = WoW112Spells::DemonHunter::Common::VENGEFUL_RETREAT,
-    CONSUME_MAGIC = WoW112Spells::DemonHunter::Common::CONSUME_MAGIC,
-    SIGIL_OF_FLAME = WoW112Spells::DemonHunter::Common::SIGIL_OF_FLAME,
-    SIGIL_OF_SILENCE = WoW112Spells::DemonHunter::Common::SIGIL_OF_SILENCE,
-    SIGIL_OF_MISERY = WoW112Spells::DemonHunter::Common::SIGIL_OF_MISERY,
-    CHAOS_NOVA = WoW112Spells::DemonHunter::Common::CHAOS_NOVA,
+    DEMON_SPIKES = WoW120Spells::DemonHunter::Common::DEMON_SPIKES,
+    IMMOLATION_AURA = WoW120Spells::DemonHunter::Common::IMMOLATION_AURA,
+    FIERY_BRAND = WoW120Spells::DemonHunter::Common::FIERY_BRAND,
+    FEL_RUSH = WoW120Spells::DemonHunter::Common::FEL_RUSH,
+    VENGEFUL_RETREAT = WoW120Spells::DemonHunter::Common::VENGEFUL_RETREAT,
+    CONSUME_MAGIC = WoW120Spells::DemonHunter::Common::CONSUME_MAGIC,
+    SIGIL_OF_FLAME = WoW120Spells::DemonHunter::Common::SIGIL_OF_FLAME,
+    SIGIL_OF_SILENCE = WoW120Spells::DemonHunter::Common::SIGIL_OF_SILENCE,
+    SIGIL_OF_MISERY = WoW120Spells::DemonHunter::Common::SIGIL_OF_MISERY,
+    CHAOS_NOVA = WoW120Spells::DemonHunter::Common::CHAOS_NOVA,
 
     // Utility/Interrupts
-    DISRUPT = WoW112Spells::DemonHunter::Common::DISRUPT,
-    IMPRISON = WoW112Spells::DemonHunter::Common::IMPRISON,
+    DISRUPT = WoW120Spells::DemonHunter::Common::DISRUPT,
+    IMPRISON = WoW120Spells::DemonHunter::Common::IMPRISON,
 
     // Offensive cooldowns
-    NEMESIS = WoW112Spells::DemonHunter::Common::NEMESIS,
+    NEMESIS = WoW120Spells::DemonHunter::Common::NEMESIS,
 
     // Talent abilities
-    MOMENTUM_TALENT = WoW112Spells::DemonHunter::Common::MOMENTUM_TALENT,
-    DEMONIC_TALENT = WoW112Spells::DemonHunter::Common::DEMONIC_TALENT,
-    BLIND_FURY_TALENT = WoW112Spells::DemonHunter::Common::BLIND_FURY_TALENT
+    MOMENTUM_TALENT = WoW120Spells::DemonHunter::Common::MOMENTUM_TALENT,
+    DEMONIC_TALENT = WoW120Spells::DemonHunter::Common::DEMONIC_TALENT,
+    BLIND_FURY_TALENT = WoW120Spells::DemonHunter::Common::BLIND_FURY_TALENT
 };
 
 class TC_GAME_API DemonHunterAI : public ClassAI

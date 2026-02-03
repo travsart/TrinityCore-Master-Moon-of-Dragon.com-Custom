@@ -656,7 +656,7 @@ bool MountManager::UpdateRidingForLevel()
     bool learnedAnything = false;
 
     // ========================================================================
-    // RIDING SKILL PROGRESSION (WoW 11.2 Thresholds)
+    // RIDING SKILL PROGRESSION (WoW 12.0 Thresholds)
     // ========================================================================
     // Level 10: Apprentice Riding (60% ground) - skill 75
     // Level 20: Journeyman Riding (100% ground) - still skill 75, faster mounts

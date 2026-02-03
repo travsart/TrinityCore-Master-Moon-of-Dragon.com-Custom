@@ -69,7 +69,7 @@ public:
 
     /**
      * @brief Validate race/class combination
-     * @return true if combination is valid in WoW 11.2
+     * @return true if combination is valid in WoW 12.0
      */
     static bool IsValidRaceClassCombination(uint8 race, uint8 classId);
 

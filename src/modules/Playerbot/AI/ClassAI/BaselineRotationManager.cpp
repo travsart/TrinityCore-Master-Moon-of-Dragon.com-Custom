@@ -753,7 +753,7 @@ void HunterBaselineRotation::ApplyBuffs(Player* bot)
 void BaselineRotationManager::InitializeRogueBaseline()
 {
     ::std::vector<BaselineAbility> abilities;
-    // WoW 11.2 (The War Within) spell IDs:
+    // WoW 12.0 (The War Within) spell IDs:
     // - Sinister Strike: 193315 (retail), NOT 1752 (classic)
     // - Eviscerate: 196819 (retail)
     abilities.emplace_back(193315, 1, 40, 0, 10.0f, true);  // Sinister Strike (retail)
@@ -780,7 +780,7 @@ void BaselineRotationManager::InitializeDeathKnightBaseline()
 void BaselineRotationManager::InitializeShamanBaseline()
 {
     ::std::vector<BaselineAbility> abilities;
-    // WoW 11.2 (The War Within) spell IDs:
+    // WoW 12.0 (The War Within) spell IDs:
     // - Lightning Bolt: 188196 (retail), NOT 403 (classic)
     // - Primal Strike: 73899 (retail)
     abilities.emplace_back(188196, 1, 0, 0, 10.0f, false);  // Lightning Bolt (retail)
@@ -799,7 +799,7 @@ void BaselineRotationManager::InitializeMageBaseline()
 void BaselineRotationManager::InitializeWarlockBaseline()
 {
     ::std::vector<BaselineAbility> abilities;
-    // WoW 11.2 (The War Within) spell IDs:
+    // WoW 12.0 (The War Within) spell IDs:
     // - Shadow Bolt: 686 (same as classic)
     // - Corruption: 172 (same as classic)
     abilities.emplace_back(686, 1, 0, 0, 10.0f, false);    // Shadow Bolt
@@ -898,7 +898,7 @@ void WarlockBaselineRotation::ApplyBuffs(Player* bot)
     // THREAD-SAFETY FIX (2026-01-16): Use QueueSpellCast instead of bot->CastSpell()
     // ========================================================================
 
-    // Warlock pet spell IDs (WoW 11.2)
+    // Warlock pet spell IDs (WoW 12.0)
     constexpr uint32 SUMMON_IMP = 688;
     constexpr uint32 SUMMON_VOIDWALKER = 697;
 

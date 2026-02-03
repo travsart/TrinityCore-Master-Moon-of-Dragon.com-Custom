@@ -33,8 +33,8 @@
 #include "../Common/CooldownManager.h"
 #include "../../BotAI.h"
 
-// Central Spell Registry - See WoW112Spells::Priest namespace
-#include "../SpellValidation_WoW112_Part2.h"
+// Central Spell Registry - See WoW120Spells::Priest namespace
+#include "../SpellValidation_WoW120_Part2.h"
 
 namespace Playerbot
 {
@@ -51,27 +51,27 @@ using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
-// WoW 11.2 (The War Within) - Discipline Priest Spell IDs
-// Using central registry: WoW112Spells::Priest and WoW112Spells::Priest::Discipline
-constexpr uint32 DISC_SMITE = WoW112Spells::Priest::SMITE;
-constexpr uint32 DISC_PENANCE = WoW112Spells::Priest::Discipline::PENANCE;
-constexpr uint32 DISC_POWER_WORD_SHIELD = WoW112Spells::Priest::POWER_WORD_SHIELD;
-constexpr uint32 DISC_SHADOW_MEND = WoW112Spells::Priest::Discipline::SHADOW_MEND;
-constexpr uint32 DISC_PURGE_WICKED = WoW112Spells::Priest::Discipline::PURGE_THE_WICKED;
-constexpr uint32 DISC_POWER_WORD_RADIANCE = WoW112Spells::Priest::Discipline::POWER_WORD_RADIANCE;
-constexpr uint32 DISC_RAPTURE = WoW112Spells::Priest::Discipline::RAPTURE;
-constexpr uint32 DISC_PAIN_SUPPRESSION = WoW112Spells::Priest::Discipline::PAIN_SUPPRESSION;
-constexpr uint32 DISC_BARRIER = WoW112Spells::Priest::Discipline::POWER_WORD_BARRIER;
-constexpr uint32 DISC_EVANGELISM = WoW112Spells::Priest::Discipline::EVANGELISM;
-constexpr uint32 DISC_SCHISM = WoW112Spells::Priest::Discipline::SCHISM;
-constexpr uint32 DISC_MINDGAMES = WoW112Spells::Priest::Discipline::MINDGAMES;
-constexpr uint32 DISC_SHADOW_COVENANT = WoW112Spells::Priest::Discipline::SHADOW_COVENANT;
-constexpr uint32 DISC_POWER_WORD_LIFE = WoW112Spells::Priest::Discipline::POWER_WORD_LIFE;
-constexpr uint32 DISC_PURIFY = WoW112Spells::Priest::PURIFY;
-constexpr uint32 DISC_SHADOW_WORD_PAIN = WoW112Spells::Priest::SHADOW_WORD_PAIN;
-constexpr uint32 DISC_FADE = WoW112Spells::Priest::FADE;
-constexpr uint32 DISC_DESPERATE_PRAYER = WoW112Spells::Priest::DESPERATE_PRAYER;
-constexpr uint32 DISC_POWER_WORD_FORTITUDE = WoW112Spells::Priest::POWER_WORD_FORTITUDE;
+// WoW 12.0 (The War Within) - Discipline Priest Spell IDs
+// Using central registry: WoW120Spells::Priest and WoW120Spells::Priest::Discipline
+constexpr uint32 DISC_SMITE = WoW120Spells::Priest::SMITE;
+constexpr uint32 DISC_PENANCE = WoW120Spells::Priest::Discipline::PENANCE;
+constexpr uint32 DISC_POWER_WORD_SHIELD = WoW120Spells::Priest::POWER_WORD_SHIELD;
+constexpr uint32 DISC_SHADOW_MEND = WoW120Spells::Priest::Discipline::SHADOW_MEND;
+constexpr uint32 DISC_PURGE_WICKED = WoW120Spells::Priest::Discipline::PURGE_THE_WICKED;
+constexpr uint32 DISC_POWER_WORD_RADIANCE = WoW120Spells::Priest::Discipline::POWER_WORD_RADIANCE;
+constexpr uint32 DISC_RAPTURE = WoW120Spells::Priest::Discipline::RAPTURE;
+constexpr uint32 DISC_PAIN_SUPPRESSION = WoW120Spells::Priest::Discipline::PAIN_SUPPRESSION;
+constexpr uint32 DISC_BARRIER = WoW120Spells::Priest::Discipline::POWER_WORD_BARRIER;
+constexpr uint32 DISC_EVANGELISM = WoW120Spells::Priest::Discipline::EVANGELISM;
+constexpr uint32 DISC_SCHISM = WoW120Spells::Priest::Discipline::SCHISM;
+constexpr uint32 DISC_MINDGAMES = WoW120Spells::Priest::Discipline::MINDGAMES;
+constexpr uint32 DISC_SHADOW_COVENANT = WoW120Spells::Priest::Discipline::SHADOW_COVENANT;
+constexpr uint32 DISC_POWER_WORD_LIFE = WoW120Spells::Priest::Discipline::POWER_WORD_LIFE;
+constexpr uint32 DISC_PURIFY = WoW120Spells::Priest::PURIFY;
+constexpr uint32 DISC_SHADOW_WORD_PAIN = WoW120Spells::Priest::SHADOW_WORD_PAIN;
+constexpr uint32 DISC_FADE = WoW120Spells::Priest::FADE;
+constexpr uint32 DISC_DESPERATE_PRAYER = WoW120Spells::Priest::DESPERATE_PRAYER;
+constexpr uint32 DISC_POWER_WORD_FORTITUDE = WoW120Spells::Priest::POWER_WORD_FORTITUDE;
 
 // Atonement tracker - tracks which allies have Atonement buff for damage-to-healing conversion
 class AtonementTracker

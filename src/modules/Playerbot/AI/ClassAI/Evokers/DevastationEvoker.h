@@ -14,7 +14,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -39,49 +39,49 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// DEVASTATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
-// See central registry: WoW112Spells::Evoker and WoW112Spells::Evoker::Devastation
+// DEVASTATION EVOKER SPELL IDs (WoW 12.0 - The War Within)
+// See central registry: WoW120Spells::Evoker and WoW120Spells::Evoker::Devastation
 // ============================================================================
 
 enum DevastationEvokerSpells
 {
     // Essence Generators
-    AZURE_STRIKE         = WoW112Spells::Evoker::AZURE_STRIKE,
-    LIVING_FLAME         = WoW112Spells::Evoker::LIVING_FLAME,
+    AZURE_STRIKE         = WoW120Spells::Evoker::AZURE_STRIKE,
+    LIVING_FLAME         = WoW120Spells::Evoker::LIVING_FLAME,
 
     // Essence Spenders (Empowered)
-    FIRE_BREATH          = WoW112Spells::Evoker::FIRE_BREATH,
-    ETERNITY_SURGE       = WoW112Spells::Evoker::Devastation::ETERNITY_SURGE,
+    FIRE_BREATH          = WoW120Spells::Evoker::FIRE_BREATH,
+    ETERNITY_SURGE       = WoW120Spells::Evoker::Devastation::ETERNITY_SURGE,
 
     // Direct Damage
-    DISINTEGRATE         = WoW112Spells::Evoker::DISINTEGRATE,
-    PYRE                 = WoW112Spells::Evoker::Devastation::PYRE,
-    SHATTERING_STAR      = WoW112Spells::Evoker::Devastation::SHATTERING_STAR,
+    DISINTEGRATE         = WoW120Spells::Evoker::DISINTEGRATE,
+    PYRE                 = WoW120Spells::Evoker::Devastation::PYRE,
+    SHATTERING_STAR      = WoW120Spells::Evoker::Devastation::SHATTERING_STAR,
 
     // Major Cooldowns
-    DRAGONRAGE           = WoW112Spells::Evoker::Devastation::DRAGONRAGE,
-    DEEP_BREATH          = WoW112Spells::Evoker::DEEP_BREATH,
-    TIP_THE_SCALES       = WoW112Spells::Evoker::Devastation::TIP_THE_SCALES,
+    DRAGONRAGE           = WoW120Spells::Evoker::Devastation::DRAGONRAGE,
+    DEEP_BREATH          = WoW120Spells::Evoker::DEEP_BREATH,
+    TIP_THE_SCALES       = WoW120Spells::Evoker::Devastation::TIP_THE_SCALES,
 
     // Procs and Buffs
-    ESSENCE_BURST        = WoW112Spells::Evoker::Devastation::ESSENSE_BURST,
-    BURNOUT              = WoW112Spells::Evoker::Devastation::BURNOUT,
-    IRIDESCENCE_BLUE     = WoW112Spells::Evoker::Devastation::IRIDESCENCE_BLUE,
-    IRIDESCENCE_RED      = WoW112Spells::Evoker::Devastation::IRIDESCENCE_RED,
+    ESSENCE_BURST        = WoW120Spells::Evoker::Devastation::ESSENSE_BURST,
+    BURNOUT              = WoW120Spells::Evoker::Devastation::BURNOUT,
+    IRIDESCENCE_BLUE     = WoW120Spells::Evoker::Devastation::IRIDESCENCE_BLUE,
+    IRIDESCENCE_RED      = WoW120Spells::Evoker::Devastation::IRIDESCENCE_RED,
 
     // Utility
-    HOVER                = WoW112Spells::Evoker::HOVER,
-    OBSIDIAN_SCALES      = WoW112Spells::Evoker::OBSIDIAN_SCALES,
-    RENEWING_BLAZE       = WoW112Spells::Evoker::RENEWING_BLAZE,
-    QUELL                = WoW112Spells::Evoker::QUELL,
-    TAIL_SWIPE           = WoW112Spells::Evoker::TAIL_SWIPE,
-    WING_BUFFET          = WoW112Spells::Evoker::WING_BUFFET,
+    HOVER                = WoW120Spells::Evoker::HOVER,
+    OBSIDIAN_SCALES      = WoW120Spells::Evoker::OBSIDIAN_SCALES,
+    RENEWING_BLAZE       = WoW120Spells::Evoker::RENEWING_BLAZE,
+    QUELL                = WoW120Spells::Evoker::QUELL,
+    TAIL_SWIPE           = WoW120Spells::Evoker::TAIL_SWIPE,
+    WING_BUFFET          = WoW120Spells::Evoker::WING_BUFFET,
 
     // Talents
-    ANIMOSITY            = WoW112Spells::Evoker::Devastation::ANIMOSITY,
-    CATALYZE             = WoW112Spells::Evoker::Devastation::CATALYZE,
-    FEED_THE_FLAMES      = WoW112Spells::Evoker::Devastation::FEED_THE_FLAMES,
-    ONYX_LEGACY          = WoW112Spells::Evoker::Devastation::ONYX_LEGACY
+    ANIMOSITY            = WoW120Spells::Evoker::Devastation::ANIMOSITY,
+    CATALYZE             = WoW120Spells::Evoker::Devastation::CATALYZE,
+    FEED_THE_FLAMES      = WoW120Spells::Evoker::Devastation::FEED_THE_FLAMES,
+    ONYX_LEGACY          = WoW120Spells::Evoker::Devastation::ONYX_LEGACY
 };
 
 // Essence resource type for Devastation Evoker

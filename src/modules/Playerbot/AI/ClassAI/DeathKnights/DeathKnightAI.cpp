@@ -13,7 +13,7 @@
 #include "BloodDeathKnight.h"
 #include "FrostDeathKnight.h"
 #include "UnholyDeathKnight.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
 #include "Group.h"
@@ -108,17 +108,17 @@ struct DeathKnightMetrics
 };
 
 // ============================================================================
-// Death Knight Spell IDs - Using Central SpellValidation Registry (WoW 11.2)
+// Death Knight Spell IDs - Using Central SpellValidation Registry (WoW 12.0)
 // ============================================================================
-// All spell IDs sourced from SpellValidation_WoW112.h to maintain single source of truth
+// All spell IDs sourced from SpellValidation_WoW120.h to maintain single source of truth
 
 // Namespace aliases for cleaner code
-namespace DKSpells = WoW112Spells::DeathKnight;
-namespace DKBlood = WoW112Spells::DeathKnight::Blood;
-namespace DKFrost = WoW112Spells::DeathKnight::Frost;
-namespace DKUnholy = WoW112Spells::DeathKnight::Unholy;
+namespace DKSpells = WoW120Spells::DeathKnight;
+namespace DKBlood = WoW120Spells::DeathKnight::Blood;
+namespace DKFrost = WoW120Spells::DeathKnight::Frost;
+namespace DKUnholy = WoW120Spells::DeathKnight::Unholy;
 
-// Core Abilities (All Specs) - WoW 11.2
+// Core Abilities (All Specs) - WoW 12.0
 static constexpr uint32 DK_DEATH_STRIKE = DKSpells::DEATH_STRIKE;
 static constexpr uint32 DK_DEATH_AND_DECAY = DKSpells::DEATH_AND_DECAY;
 static constexpr uint32 DK_DEATH_GRIP = DKSpells::DEATH_GRIP;
@@ -134,7 +134,7 @@ static constexpr uint32 DK_DARK_COMMAND = DKSpells::DARK_COMMAND;
 static constexpr uint32 DK_ASPHYXIATE = DKSpells::ASPHYXIATE;
 static constexpr uint32 DK_DEATHS_ADVANCE = DKSpells::DEATHS_ADVANCE;
 
-// Blood Specialization - WoW 11.2
+// Blood Specialization - WoW 12.0
 static constexpr uint32 DK_HEART_STRIKE = DKBlood::HEART_STRIKE;
 static constexpr uint32 DK_BLOOD_BOIL = DKBlood::BLOOD_BOIL;
 static constexpr uint32 DK_RUNE_TAP = DKBlood::RUNE_TAP;
@@ -145,7 +145,7 @@ static constexpr uint32 DK_BLOOD_PLAGUE = DKBlood::BLOOD_PLAGUE;
 static constexpr uint32 DK_MARROWREND = DKBlood::MARROWREND;
 static constexpr uint32 DK_DEATHS_CARESS = DKBlood::DEATHS_CARESS;
 
-// Frost Specialization - WoW 11.2
+// Frost Specialization - WoW 12.0
 static constexpr uint32 DK_FROST_STRIKE = DKFrost::FROST_STRIKE;
 static constexpr uint32 DK_HOWLING_BLAST = DKFrost::HOWLING_BLAST;
 static constexpr uint32 DK_OBLITERATE = DKFrost::OBLITERATE;
@@ -155,7 +155,7 @@ static constexpr uint32 DK_FROST_FEVER = DKFrost::FROST_FEVER;
 static constexpr uint32 DK_HORN_OF_WINTER = DKFrost::HORN_OF_WINTER;
 static constexpr uint32 DK_REMORSELESS_WINTER = DKFrost::REMORSELESS_WINTER;
 
-// Unholy Specialization - WoW 11.2
+// Unholy Specialization - WoW 12.0
 static constexpr uint32 DK_SCOURGE_STRIKE = DKUnholy::SCOURGE_STRIKE;
 static constexpr uint32 DK_EPIDEMIC = DKUnholy::EPIDEMIC;
 static constexpr uint32 DK_ARMY_OF_THE_DEAD = DKUnholy::ARMY_OF_THE_DEAD;
@@ -798,7 +798,7 @@ void DeathKnightAI::UpdateBuffs()
 
     uint32 currentTime = GameTime::GetGameTimeMS();
 
-    // NOTE: Presences removed in WoW 11.2 - specializations are automatic
+    // NOTE: Presences removed in WoW 12.0 - specializations are automatic
 
     // Maintain Horn of Winter
     if (currentTime - _lastHorn > 30000 && !HasAura(DK_HORN_OF_WINTER))
@@ -1788,7 +1788,7 @@ void DeathKnightAI::ExecuteSpecializationRotation(Unit* target)
 
 void DeathKnightAI::UpdatePresenceIfNeeded()
 {
-    // NOTE: Presences removed in WoW 11.2 - specializations are automatic
+    // NOTE: Presences removed in WoW 12.0 - specializations are automatic
     // This function is kept for API compatibility but does nothing
 }
 

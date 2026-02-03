@@ -24,7 +24,7 @@
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
-#include "../SpellValidation_WoW112_Part2.h"
+#include "../SpellValidation_WoW120_Part2.h"
 
 namespace Playerbot
 {
@@ -42,67 +42,67 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// DEMONOLOGY WARLOCK SPELL IDs (WoW 11.2 - The War Within)
-// Central Registry: WoW112Spells::Warlock::Demonology in SpellValidation_WoW112_Part2.h
+// DEMONOLOGY WARLOCK SPELL IDs (WoW 12.0 - The War Within)
+// Central Registry: WoW120Spells::Warlock::Demonology in SpellValidation_WoW120_Part2.h
 // ============================================================================
 
 enum DemonologyWarlockSpells
 {
-    // Core Builders - Using central registry: WoW112Spells::Warlock::Demonology
-    HAND_OF_GULDAN           = WoW112Spells::Warlock::Demonology::HAND_OF_GULDAN,
-    DEMONBOLT                = WoW112Spells::Warlock::Demonology::DEMONBOLT,
-    SHADOW_BOLT_DEMO         = WoW112Spells::Warlock::SHADOW_BOLT,
+    // Core Builders - Using central registry: WoW120Spells::Warlock::Demonology
+    HAND_OF_GULDAN           = WoW120Spells::Warlock::Demonology::HAND_OF_GULDAN,
+    DEMONBOLT                = WoW120Spells::Warlock::Demonology::DEMONBOLT,
+    SHADOW_BOLT_DEMO         = WoW120Spells::Warlock::SHADOW_BOLT,
 
-    // Demon Summoning - Using central registry: WoW112Spells::Warlock::Demonology
-    CALL_DREADSTALKERS       = WoW112Spells::Warlock::Demonology::CALL_DREADSTALKERS,
-    SUMMON_VILEFIEND         = WoW112Spells::Warlock::Demonology::SUMMON_VILEFIEND,
-    GRIMOIRE_FELGUARD        = WoW112Spells::Warlock::Demonology::GRIMOIRE_FELGUARD,
-    NETHER_PORTAL            = WoW112Spells::Warlock::Demonology::NETHER_PORTAL,
-    SUMMON_DEMONIC_TYRANT    = WoW112Spells::Warlock::Demonology::SUMMON_DEMONIC_TYRANT,
+    // Demon Summoning - Using central registry: WoW120Spells::Warlock::Demonology
+    CALL_DREADSTALKERS       = WoW120Spells::Warlock::Demonology::CALL_DREADSTALKERS,
+    SUMMON_VILEFIEND         = WoW120Spells::Warlock::Demonology::SUMMON_VILEFIEND,
+    GRIMOIRE_FELGUARD        = WoW120Spells::Warlock::Demonology::GRIMOIRE_FELGUARD,
+    NETHER_PORTAL            = WoW120Spells::Warlock::Demonology::NETHER_PORTAL,
+    SUMMON_DEMONIC_TYRANT    = WoW120Spells::Warlock::Demonology::SUMMON_DEMONIC_TYRANT,
 
-    // Permanent Pets - Using central registry: WoW112Spells::Warlock
-    SUMMON_FELGUARD          = WoW112Spells::Warlock::SUMMON_FELGUARD,
-    SUMMON_VOIDWALKER_DEMO   = WoW112Spells::Warlock::SUMMON_VOIDWALKER,
-    SUMMON_IMP_DEMO          = WoW112Spells::Warlock::SUMMON_IMP,
-    COMMAND_DEMON_DEMO       = WoW112Spells::Warlock::COMMAND_DEMON,
+    // Permanent Pets - Using central registry: WoW120Spells::Warlock
+    SUMMON_FELGUARD          = WoW120Spells::Warlock::SUMMON_FELGUARD,
+    SUMMON_VOIDWALKER_DEMO   = WoW120Spells::Warlock::SUMMON_VOIDWALKER,
+    SUMMON_IMP_DEMO          = WoW120Spells::Warlock::SUMMON_IMP,
+    COMMAND_DEMON_DEMO       = WoW120Spells::Warlock::COMMAND_DEMON,
 
-    // Direct Damage - Using central registry: WoW112Spells::Warlock::Demonology
-    IMPLOSION                = WoW112Spells::Warlock::Demonology::IMPLOSION,
-    DEMONFIRE                = WoW112Spells::Warlock::Demonology::DEMONFIRE,
-    DOOM                     = WoW112Spells::Warlock::Demonology::DOOM,
+    // Direct Damage - Using central registry: WoW120Spells::Warlock::Demonology
+    IMPLOSION                = WoW120Spells::Warlock::Demonology::IMPLOSION,
+    DEMONFIRE                = WoW120Spells::Warlock::Demonology::DEMONFIRE,
+    DOOM                     = WoW120Spells::Warlock::Demonology::DOOM,
 
-    // Buffs and Procs - Using central registry: WoW112Spells::Warlock::Demonology
-    DEMONIC_CORE             = WoW112Spells::Warlock::Demonology::DEMONIC_CORE,
-    DEMONIC_CALLING          = WoW112Spells::Warlock::Demonology::DEMONIC_CALLING,
-    DEMONIC_STRENGTH         = WoW112Spells::Warlock::Demonology::DEMONIC_STRENGTH,
-    POWER_SIPHON             = WoW112Spells::Warlock::Demonology::POWER_SIPHON,
+    // Buffs and Procs - Using central registry: WoW120Spells::Warlock::Demonology
+    DEMONIC_CORE             = WoW120Spells::Warlock::Demonology::DEMONIC_CORE,
+    DEMONIC_CALLING          = WoW120Spells::Warlock::Demonology::DEMONIC_CALLING,
+    DEMONIC_STRENGTH         = WoW120Spells::Warlock::Demonology::DEMONIC_STRENGTH,
+    POWER_SIPHON             = WoW120Spells::Warlock::Demonology::POWER_SIPHON,
 
-    // Major Cooldowns - Using central registry: WoW112Spells::Warlock::Demonology
-    SUMMON_DEMONIC_TYRANT_CD = WoW112Spells::Warlock::Demonology::SUMMON_DEMONIC_TYRANT,
-    NETHER_PORTAL_CD         = WoW112Spells::Warlock::Demonology::NETHER_PORTAL,
-    GUILLOTINE               = WoW112Spells::Warlock::Demonology::GUILLOTINE,
+    // Major Cooldowns - Using central registry: WoW120Spells::Warlock::Demonology
+    SUMMON_DEMONIC_TYRANT_CD = WoW120Spells::Warlock::Demonology::SUMMON_DEMONIC_TYRANT,
+    NETHER_PORTAL_CD         = WoW120Spells::Warlock::Demonology::NETHER_PORTAL,
+    GUILLOTINE               = WoW120Spells::Warlock::Demonology::GUILLOTINE,
 
-    // Utility - Using central registry: WoW112Spells::Warlock::Demonology
-    SOUL_STRIKE              = WoW112Spells::Warlock::Demonology::SOUL_STRIKE,
-    FEL_DOMINATION           = WoW112Spells::Warlock::Demonology::FEL_DOMINATION,
-    HEALTH_FUNNEL_DEMO       = WoW112Spells::Warlock::HEALTH_FUNNEL,
-    BANISH_DEMO              = WoW112Spells::Warlock::BANISH,
-    FEAR_DEMO                = WoW112Spells::Warlock::FEAR,
-    MORTAL_COIL_DEMO         = WoW112Spells::Warlock::MORTAL_COIL,
-    SHADOWFURY               = WoW112Spells::Warlock::SHADOWFURY,
+    // Utility - Using central registry: WoW120Spells::Warlock::Demonology
+    SOUL_STRIKE              = WoW120Spells::Warlock::Demonology::SOUL_STRIKE,
+    FEL_DOMINATION           = WoW120Spells::Warlock::Demonology::FEL_DOMINATION,
+    HEALTH_FUNNEL_DEMO       = WoW120Spells::Warlock::HEALTH_FUNNEL,
+    BANISH_DEMO              = WoW120Spells::Warlock::BANISH,
+    FEAR_DEMO                = WoW120Spells::Warlock::FEAR,
+    MORTAL_COIL_DEMO         = WoW120Spells::Warlock::MORTAL_COIL,
+    SHADOWFURY               = WoW120Spells::Warlock::SHADOWFURY,
 
-    // Defensives - Using central registry: WoW112Spells::Warlock
-    UNENDING_RESOLVE_DEMO    = WoW112Spells::Warlock::UNENDING_RESOLVE,
-    DARK_PACT_DEMO           = WoW112Spells::Warlock::Affliction::DARK_PACT,
-    DEMONIC_CIRCLE_TELEPORT_DEMO = WoW112Spells::Warlock::DEMONIC_CIRCLE_TELEPORT,
-    DEMONIC_GATEWAY_DEMO     = WoW112Spells::Warlock::DEMONIC_GATEWAY,
-    BURNING_RUSH_DEMO        = WoW112Spells::Warlock::BURNING_RUSH,
+    // Defensives - Using central registry: WoW120Spells::Warlock
+    UNENDING_RESOLVE_DEMO    = WoW120Spells::Warlock::UNENDING_RESOLVE,
+    DARK_PACT_DEMO           = WoW120Spells::Warlock::Affliction::DARK_PACT,
+    DEMONIC_CIRCLE_TELEPORT_DEMO = WoW120Spells::Warlock::DEMONIC_CIRCLE_TELEPORT,
+    DEMONIC_GATEWAY_DEMO     = WoW120Spells::Warlock::DEMONIC_GATEWAY,
+    BURNING_RUSH_DEMO        = WoW120Spells::Warlock::BURNING_RUSH,
 
-    // Talents - Using central registry: WoW112Spells::Warlock::Demonology
-    FROM_THE_SHADOWS         = WoW112Spells::Warlock::Demonology::FROM_THE_SHADOWS,
-    SOUL_CONDUIT_DEMO        = WoW112Spells::Warlock::Demonology::SOUL_CONDUIT,
-    INNER_DEMONS             = WoW112Spells::Warlock::Demonology::INNER_DEMONS,
-    CARNIVOROUS_STALKERS     = WoW112Spells::Warlock::Demonology::CARNIVOROUS_STALKERS
+    // Talents - Using central registry: WoW120Spells::Warlock::Demonology
+    FROM_THE_SHADOWS         = WoW120Spells::Warlock::Demonology::FROM_THE_SHADOWS,
+    SOUL_CONDUIT_DEMO        = WoW120Spells::Warlock::Demonology::SOUL_CONDUIT,
+    INNER_DEMONS             = WoW120Spells::Warlock::Demonology::INNER_DEMONS,
+    CARNIVOROUS_STALKERS     = WoW120Spells::Warlock::Demonology::CARNIVOROUS_STALKERS
 };
 
 // Dual resource type for Demonology Warlock

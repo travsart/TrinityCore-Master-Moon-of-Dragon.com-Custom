@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include <unordered_map>
@@ -22,12 +22,12 @@
 namespace Playerbot
 {
 
-// Namespace aliases for Evoker spells from central registry (WoW 11.2)
-namespace EvokerSpells = WoW112Spells::Evoker;
-namespace EvokerDevastation = WoW112Spells::Evoker::Devastation;
-namespace EvokerPreservation = WoW112Spells::Evoker::Preservation;
-namespace EvokerAugmentation = WoW112Spells::Evoker::Augmentation;
-namespace EvokerCommon = WoW112Spells::Evoker::Common;
+// Namespace aliases for Evoker spells from central registry (WoW 12.0)
+namespace EvokerSpells = WoW120Spells::Evoker;
+namespace EvokerDevastation = WoW120Spells::Evoker::Devastation;
+namespace EvokerPreservation = WoW120Spells::Evoker::Preservation;
+namespace EvokerAugmentation = WoW120Spells::Evoker::Augmentation;
+namespace EvokerCommon = WoW120Spells::Evoker::Common;
 
 // Forward declarations for specialization classes (QW-4 FIX)
 class DevastationEvokerRefactored;
@@ -134,56 +134,56 @@ public:
     explicit EvokerAI(Player* bot);
     ~EvokerAI();
 
-    // Evoker Spell IDs - Using central registry (WoW 11.2)
+    // Evoker Spell IDs - Using central registry (WoW 12.0)
     enum EvokerSpells
     {
         // Basic abilities
-        AZURE_STRIKE = WoW112Spells::Evoker::Common::AZURE_STRIKE,
-        LIVING_FLAME = WoW112Spells::Evoker::Common::LIVING_FLAME,
-        HOVER = WoW112Spells::Evoker::HOVER,
-        SOAR = WoW112Spells::Evoker::SOAR,
+        AZURE_STRIKE = WoW120Spells::Evoker::Common::AZURE_STRIKE,
+        LIVING_FLAME = WoW120Spells::Evoker::Common::LIVING_FLAME,
+        HOVER = WoW120Spells::Evoker::HOVER,
+        SOAR = WoW120Spells::Evoker::SOAR,
 
         // Devastation abilities
-        ETERNITYS_SURGE = WoW112Spells::Evoker::Common::ETERNITYS_SURGE,
-        DISINTEGRATE = WoW112Spells::Evoker::Common::DISINTEGRATE,
-        PYRE = WoW112Spells::Evoker::Devastation::PYRE,
-        DEEP_BREATH = WoW112Spells::Evoker::Common::DEEP_BREATH,
-        FIRE_BREATH = WoW112Spells::Evoker::Common::FIRE_BREATH,
-        AZURE_STRIKE_DEVASTATION = WoW112Spells::Evoker::Common::AZURE_STRIKE,
+        ETERNITYS_SURGE = WoW120Spells::Evoker::Common::ETERNITYS_SURGE,
+        DISINTEGRATE = WoW120Spells::Evoker::Common::DISINTEGRATE,
+        PYRE = WoW120Spells::Evoker::Devastation::PYRE,
+        DEEP_BREATH = WoW120Spells::Evoker::Common::DEEP_BREATH,
+        FIRE_BREATH = WoW120Spells::Evoker::Common::FIRE_BREATH,
+        AZURE_STRIKE_DEVASTATION = WoW120Spells::Evoker::Common::AZURE_STRIKE,
 
         // Preservation abilities
-        DREAM_BREATH = WoW112Spells::Evoker::Common::DREAM_BREATH,
-        SPIRIT_BLOOM = WoW112Spells::Evoker::Common::SPIRITBLOOM,
-        SPIRITBLOOM = WoW112Spells::Evoker::Common::SPIRITBLOOM,
-        EMERALD_BLOSSOM = WoW112Spells::Evoker::Common::EMERALD_BLOSSOM,
-        VERDANT_EMBRACE = WoW112Spells::Evoker::Common::VERDANT_EMBRACE,
-        LIFEBIND = WoW112Spells::Evoker::Common::LIFEBIND,
-        EMERALD_COMMUNION = WoW112Spells::Evoker::Common::EMERALD_COMMUNION,
-        TEMPORAL_ANOMALY = WoW112Spells::Evoker::Common::TEMPORAL_ANOMALY,
+        DREAM_BREATH = WoW120Spells::Evoker::Common::DREAM_BREATH,
+        SPIRIT_BLOOM = WoW120Spells::Evoker::Common::SPIRITBLOOM,
+        SPIRITBLOOM = WoW120Spells::Evoker::Common::SPIRITBLOOM,
+        EMERALD_BLOSSOM = WoW120Spells::Evoker::Common::EMERALD_BLOSSOM,
+        VERDANT_EMBRACE = WoW120Spells::Evoker::Common::VERDANT_EMBRACE,
+        LIFEBIND = WoW120Spells::Evoker::Common::LIFEBIND,
+        EMERALD_COMMUNION = WoW120Spells::Evoker::Common::EMERALD_COMMUNION,
+        TEMPORAL_ANOMALY = WoW120Spells::Evoker::Common::TEMPORAL_ANOMALY,
 
         // Augmentation abilities
-        EBON_MIGHT = WoW112Spells::Evoker::Common::EBON_MIGHT,
-        BREATH_OF_EONS = WoW112Spells::Evoker::Common::BREATH_OF_EONS,
-        PRESCIENCE = WoW112Spells::Evoker::Common::PRESCIENCE,
-        BLISTERING_SCALES = WoW112Spells::Evoker::Common::BLISTERING_SCALES,
+        EBON_MIGHT = WoW120Spells::Evoker::Common::EBON_MIGHT,
+        BREATH_OF_EONS = WoW120Spells::Evoker::Common::BREATH_OF_EONS,
+        PRESCIENCE = WoW120Spells::Evoker::Common::PRESCIENCE,
+        BLISTERING_SCALES = WoW120Spells::Evoker::Common::BLISTERING_SCALES,
 
         // Utility abilities
-        BLESSING_OF_THE_BRONZE = WoW112Spells::Evoker::Common::BLESSING_OF_THE_BRONZE,
-        LANDSLIDE = WoW112Spells::Evoker::Common::LANDSLIDE,
-        TAIL_SWIPE = WoW112Spells::Evoker::Common::TAIL_SWIPE,
-        WING_BUFFET = WoW112Spells::Evoker::Common::WING_BUFFET,
-        SLEEP_WALK = WoW112Spells::Evoker::Common::SLEEP_WALK,
-        SPELL_QUELL = WoW112Spells::Evoker::Common::QUELL,
-        SPELL_DRAGONRAGE = WoW112Spells::Evoker::Common::DRAGONRAGE,
+        BLESSING_OF_THE_BRONZE = WoW120Spells::Evoker::Common::BLESSING_OF_THE_BRONZE,
+        LANDSLIDE = WoW120Spells::Evoker::Common::LANDSLIDE,
+        TAIL_SWIPE = WoW120Spells::Evoker::Common::TAIL_SWIPE,
+        WING_BUFFET = WoW120Spells::Evoker::Common::WING_BUFFET,
+        SLEEP_WALK = WoW120Spells::Evoker::Common::SLEEP_WALK,
+        SPELL_QUELL = WoW120Spells::Evoker::Common::QUELL,
+        SPELL_DRAGONRAGE = WoW120Spells::Evoker::Common::DRAGONRAGE,
 
         // Defensive abilities
-        OBSIDIAN_SCALES = WoW112Spells::Evoker::OBSIDIAN_SCALES,
-        RENEWING_BLAZE = WoW112Spells::Evoker::RENEWING_BLAZE,
-        RESCUE = WoW112Spells::Evoker::RESCUE,
+        OBSIDIAN_SCALES = WoW120Spells::Evoker::OBSIDIAN_SCALES,
+        RENEWING_BLAZE = WoW120Spells::Evoker::RENEWING_BLAZE,
+        RESCUE = WoW120Spells::Evoker::RESCUE,
 
         // Movement abilities
-        DEEP_BREATH_MOVEMENT = WoW112Spells::Evoker::Common::DEEP_BREATH,
-        SOAR_MOVEMENT = WoW112Spells::Evoker::SOAR,
+        DEEP_BREATH_MOVEMENT = WoW120Spells::Evoker::Common::DEEP_BREATH,
+        SOAR_MOVEMENT = WoW120Spells::Evoker::SOAR,
 
         // Additional constants - Using central registry where available
         ECHO = EvokerPreservation::ECHO, // Preservation echo mechanic (364343)

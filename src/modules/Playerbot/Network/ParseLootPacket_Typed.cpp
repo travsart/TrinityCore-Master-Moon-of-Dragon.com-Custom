@@ -140,7 +140,7 @@ void ParseTypedStartLootRoll(WorldSession* session, WorldPackets::Loot::StartLoo
     event.priority = LootEventPriority::HIGH;
     event.looterGuid = bot->GetGUID();
     event.itemGuid = packet.LootObj;
-    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
+    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 12.0: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
     event.lootType = LootType::CORPSE;
     event.timestamp = ::std::chrono::steady_clock::now();
@@ -191,7 +191,7 @@ void ParseTypedLootRollWon(WorldSession* session, WorldPackets::Loot::LootRollWo
     event.priority = LootEventPriority::HIGH;
     event.looterGuid = packet.Winner;  // The player who won
     event.itemGuid = packet.LootObj;
-    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
+    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 12.0: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
     event.lootType = LootType::CORPSE;
     event.timestamp = ::std::chrono::steady_clock::now();
@@ -217,7 +217,7 @@ void ParseTypedLootAllPassed(WorldSession* session, WorldPackets::Loot::LootAllP
     event.priority = LootEventPriority::MEDIUM;
     event.looterGuid = bot->GetGUID();
     event.itemGuid = packet.LootObj;
-    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
+    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 12.0: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
     event.lootType = LootType::CORPSE;
     event.timestamp = ::std::chrono::steady_clock::now();

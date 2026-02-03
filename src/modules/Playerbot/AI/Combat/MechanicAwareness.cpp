@@ -1454,7 +1454,7 @@ float MechanicDatabase::GetSpellAngle(uint32 spellId) const
 
 void MechanicDatabase::LoadMechanicData()
 {
-    // Load WoW 11.2 mechanic data
+    // Load WoW 12.0 mechanic data
     // This would be populated from database or configuration
 
     // Example entries for common mechanics
@@ -1468,13 +1468,13 @@ void MechanicDatabase::LoadMechanicData()
 void MechanicDatabase::LoadDungeonMechanics()
 {
     // Load dungeon-specific mechanics
-    // Would be populated with actual WoW 11.2 dungeon mechanics
+    // Would be populated with actual WoW 12.0 dungeon mechanics
 }
 
 void MechanicDatabase::LoadRaidMechanics()
 {
     // Load raid-specific mechanics
-    // Would be populated with actual WoW 11.2 raid mechanics
+    // Would be populated with actual WoW 12.0 raid mechanics
 }
 
 } // namespace Playerbot

@@ -19,7 +19,7 @@
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
+#include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
 // Phase 5 Integration
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
@@ -45,40 +45,40 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 
 // ============================================================================
-// FURY WARRIOR SPELL ALIASES - Using Central Registry (WoW 11.2.7)
+// FURY WARRIOR SPELL ALIASES - Using Central Registry (WoW 12.0.7)
 // ============================================================================
 namespace FuryWarriorSpells
 {
-    // Core Warrior spells (from WoW112Spells::Warrior)
-    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW112Spells::Warrior::BATTLE_SHOUT;
-    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW112Spells::Warrior::COMMANDING_SHOUT;
-    constexpr uint32 SPELL_CHARGE            = WoW112Spells::Warrior::CHARGE;
-    constexpr uint32 SPELL_BERSERKER_RAGE    = WoW112Spells::Warrior::BERSERKER_RAGE;
+    // Core Warrior spells (from WoW120Spells::Warrior)
+    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW120Spells::Warrior::BATTLE_SHOUT;
+    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW120Spells::Warrior::COMMANDING_SHOUT;
+    constexpr uint32 SPELL_CHARGE            = WoW120Spells::Warrior::CHARGE;
+    constexpr uint32 SPELL_BERSERKER_RAGE    = WoW120Spells::Warrior::BERSERKER_RAGE;
 
     // Fury Core Rotation
-    constexpr uint32 SPELL_BLOODTHIRST       = WoW112Spells::Warrior::Fury::BLOODTHIRST;
-    constexpr uint32 SPELL_RAMPAGE           = WoW112Spells::Warrior::Fury::RAMPAGE;
-    constexpr uint32 SPELL_RAGING_BLOW       = WoW112Spells::Warrior::Fury::RAGING_BLOW;
-    constexpr uint32 SPELL_EXECUTE           = WoW112Spells::Warrior::Fury::EXECUTE;
-    constexpr uint32 SPELL_WHIRLWIND         = WoW112Spells::Warrior::Fury::WHIRLWIND;
-    constexpr uint32 SPELL_ONSLAUGHT         = WoW112Spells::Warrior::Fury::ONSLAUGHT;
+    constexpr uint32 SPELL_BLOODTHIRST       = WoW120Spells::Warrior::Fury::BLOODTHIRST;
+    constexpr uint32 SPELL_RAMPAGE           = WoW120Spells::Warrior::Fury::RAMPAGE;
+    constexpr uint32 SPELL_RAGING_BLOW       = WoW120Spells::Warrior::Fury::RAGING_BLOW;
+    constexpr uint32 SPELL_EXECUTE           = WoW120Spells::Warrior::Fury::EXECUTE;
+    constexpr uint32 SPELL_WHIRLWIND         = WoW120Spells::Warrior::Fury::WHIRLWIND;
+    constexpr uint32 SPELL_ONSLAUGHT         = WoW120Spells::Warrior::Fury::ONSLAUGHT;
 
     // Fury Cooldowns
-    constexpr uint32 SPELL_RECKLESSNESS      = WoW112Spells::Warrior::Fury::RECKLESSNESS;
-    constexpr uint32 SPELL_ENRAGED_REGENERATION = WoW112Spells::Warrior::Fury::ENRAGED_REGENERATION;
-    constexpr uint32 SPELL_BLADESTORM        = WoW112Spells::Warrior::Fury::BLADESTORM;
-    constexpr uint32 SPELL_RAVAGER           = WoW112Spells::Warrior::Fury::RAVAGER;
-    constexpr uint32 SPELL_ODYN_FURY         = WoW112Spells::Warrior::Fury::ODYN_FURY;
-    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW112Spells::Warrior::Fury::THUNDEROUS_ROAR;
-    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW112Spells::Warrior::Fury::CHAMPIONS_SPEAR;
+    constexpr uint32 SPELL_RECKLESSNESS      = WoW120Spells::Warrior::Fury::RECKLESSNESS;
+    constexpr uint32 SPELL_ENRAGED_REGENERATION = WoW120Spells::Warrior::Fury::ENRAGED_REGENERATION;
+    constexpr uint32 SPELL_BLADESTORM        = WoW120Spells::Warrior::Fury::BLADESTORM;
+    constexpr uint32 SPELL_RAVAGER           = WoW120Spells::Warrior::Fury::RAVAGER;
+    constexpr uint32 SPELL_ODYN_FURY         = WoW120Spells::Warrior::Fury::ODYN_FURY;
+    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW120Spells::Warrior::Fury::THUNDEROUS_ROAR;
+    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW120Spells::Warrior::Fury::CHAMPIONS_SPEAR;
 
     // Enrage and Buffs
-    constexpr uint32 SPELL_ENRAGE            = WoW112Spells::Warrior::Fury::ENRAGE;
-    constexpr uint32 SPELL_WHIRLWIND_BUFF    = WoW112Spells::Warrior::Fury::WHIRLWIND_BUFF;
+    constexpr uint32 SPELL_ENRAGE            = WoW120Spells::Warrior::Fury::ENRAGE;
+    constexpr uint32 SPELL_WHIRLWIND_BUFF    = WoW120Spells::Warrior::Fury::WHIRLWIND_BUFF;
 
     // Hero Talents
-    constexpr uint32 SPELL_SLAYERS_STRIKE    = WoW112Spells::Warrior::Fury::SLAYERS_STRIKE;
-    constexpr uint32 SPELL_THUNDER_BLAST     = WoW112Spells::Warrior::Fury::THUNDER_BLAST;
+    constexpr uint32 SPELL_SLAYERS_STRIKE    = WoW120Spells::Warrior::Fury::SLAYERS_STRIKE;
+    constexpr uint32 SPELL_THUNDER_BLAST     = WoW120Spells::Warrior::Fury::THUNDER_BLAST;
 }
 
 /**

@@ -386,7 +386,7 @@ private:
     static constexpr float INTERACTION_RANGE = 5.0f;       // Must be within 5 yards of NPC
     static constexpr float ARRIVAL_THRESHOLD = 10.0f;      // Consider arrived within 10 yards
 
-    // Riding skill spell IDs (WoW 11.2)
+    // Riding skill spell IDs (WoW 12.0)
     static constexpr uint32 SPELL_APPRENTICE_RIDING = 33388;
     static constexpr uint32 SPELL_JOURNEYMAN_RIDING = 33391;
     static constexpr uint32 SPELL_EXPERT_RIDING = 34090;
@@ -395,7 +395,7 @@ private:
     static constexpr uint32 SPELL_COLD_WEATHER_FLYING = 54197;
     static constexpr uint32 SPELL_FLIGHT_MASTERS_LICENSE = 90267;
 
-    // Gold costs in copper (WoW 11.2 - significantly reduced from earlier expansions)
+    // Gold costs in copper (WoW 12.0 - significantly reduced from earlier expansions)
     static constexpr uint64 COST_APPRENTICE = 40000;       // 4 gold
     static constexpr uint64 COST_JOURNEYMAN = 500000;      // 50 gold
     static constexpr uint64 COST_EXPERT = 2500000;         // 250 gold

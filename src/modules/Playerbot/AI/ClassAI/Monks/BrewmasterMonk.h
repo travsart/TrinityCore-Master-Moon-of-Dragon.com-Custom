@@ -16,7 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../../Services/ThreatAssistant.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -41,14 +41,14 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// BREWMASTER MONK SPELL IDs (WoW 11.2 - The War Within)
-// Using centralized spell registry from SpellValidation_WoW112.h
+// BREWMASTER MONK SPELL IDs (WoW 12.0 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW120.h
 // ============================================================================
 
 namespace BrewmasterMonkSpells
 {
     // Import from central registry - Monk common spells
-    using namespace WoW112Spells::Monk;
+    using namespace WoW120Spells::Monk;
 
     // Chi Generators
     constexpr uint32 KEG_SMASH                = Brewmaster::KEG_SMASH;

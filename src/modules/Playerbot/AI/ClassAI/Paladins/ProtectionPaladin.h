@@ -15,7 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
+#include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -31,60 +31,60 @@ namespace Playerbot
 {
 
 // ============================================================================
-// PROTECTION PALADIN SPELL ALIASES (WoW 11.2 - The War Within)
+// PROTECTION PALADIN SPELL ALIASES (WoW 12.0 - The War Within)
 // Consolidated spell IDs from central registry - NO duplicates
 // ============================================================================
 
 namespace ProtectionPaladinSpells
 {
     // Holy Power Generators
-    constexpr uint32 JUDGMENT_PROT           = WoW112Spells::Paladin::Protection::JUDGMENT_PROT;
-    constexpr uint32 HAMMER_OF_WRATH_PROT    = WoW112Spells::Paladin::HAMMER_OF_WRATH;
-    constexpr uint32 BLESSED_HAMMER          = WoW112Spells::Paladin::Protection::BLESSED_HAMMER;
-    constexpr uint32 AVENGERS_SHIELD         = WoW112Spells::Paladin::Protection::AVENGERS_SHIELD;
+    constexpr uint32 JUDGMENT_PROT           = WoW120Spells::Paladin::Protection::JUDGMENT_PROT;
+    constexpr uint32 HAMMER_OF_WRATH_PROT    = WoW120Spells::Paladin::HAMMER_OF_WRATH;
+    constexpr uint32 BLESSED_HAMMER          = WoW120Spells::Paladin::Protection::BLESSED_HAMMER;
+    constexpr uint32 AVENGERS_SHIELD         = WoW120Spells::Paladin::Protection::AVENGERS_SHIELD;
 
     // Holy Power Spenders
-    constexpr uint32 SHIELD_OF_THE_RIGHTEOUS = WoW112Spells::Paladin::Protection::SHIELD_OF_THE_RIGHTEOUS;
-    constexpr uint32 WORD_OF_GLORY_PROT      = WoW112Spells::Paladin::WORD_OF_GLORY;
-    constexpr uint32 LIGHT_OF_THE_PROTECTOR  = WoW112Spells::Paladin::Protection::LIGHT_OF_THE_PROTECTOR;
+    constexpr uint32 SHIELD_OF_THE_RIGHTEOUS = WoW120Spells::Paladin::Protection::SHIELD_OF_THE_RIGHTEOUS;
+    constexpr uint32 WORD_OF_GLORY_PROT      = WoW120Spells::Paladin::WORD_OF_GLORY;
+    constexpr uint32 LIGHT_OF_THE_PROTECTOR  = WoW120Spells::Paladin::Protection::LIGHT_OF_THE_PROTECTOR;
 
     // Threat Generation
-    constexpr uint32 CONSECRATION            = WoW112Spells::Paladin::CONSECRATION;
-    constexpr uint32 HAMMER_OF_THE_RIGHTEOUS = WoW112Spells::Paladin::Protection::HAMMER_OF_THE_RIGHTEOUS;
+    constexpr uint32 CONSECRATION            = WoW120Spells::Paladin::CONSECRATION;
+    constexpr uint32 HAMMER_OF_THE_RIGHTEOUS = WoW120Spells::Paladin::Protection::HAMMER_OF_THE_RIGHTEOUS;
 
     // Active Mitigation
-    constexpr uint32 GUARDIAN_OF_ANCIENT_KINGS = WoW112Spells::Paladin::Protection::GUARDIAN_OF_ANCIENT_KINGS;
-    constexpr uint32 ARDENT_DEFENDER         = WoW112Spells::Paladin::Protection::ARDENT_DEFENDER;
-    constexpr uint32 DIVINE_PROTECTION_PROT  = WoW112Spells::Paladin::DIVINE_PROTECTION;
-    constexpr uint32 BLESSING_OF_SPELLWARDING = WoW112Spells::Paladin::Protection::BLESSING_OF_SPELLWARDING;
+    constexpr uint32 GUARDIAN_OF_ANCIENT_KINGS = WoW120Spells::Paladin::Protection::GUARDIAN_OF_ANCIENT_KINGS;
+    constexpr uint32 ARDENT_DEFENDER         = WoW120Spells::Paladin::Protection::ARDENT_DEFENDER;
+    constexpr uint32 DIVINE_PROTECTION_PROT  = WoW120Spells::Paladin::DIVINE_PROTECTION;
+    constexpr uint32 BLESSING_OF_SPELLWARDING = WoW120Spells::Paladin::Protection::BLESSING_OF_SPELLWARDING;
 
     // Major Cooldowns
-    constexpr uint32 AVENGING_WRATH_PROT     = WoW112Spells::Paladin::AVENGING_WRATH;
-    constexpr uint32 SENTINEL                = WoW112Spells::Paladin::Protection::SENTINEL;
-    constexpr uint32 FINAL_STAND             = WoW112Spells::Paladin::Protection::FINAL_STAND;
+    constexpr uint32 AVENGING_WRATH_PROT     = WoW120Spells::Paladin::AVENGING_WRATH;
+    constexpr uint32 SENTINEL                = WoW120Spells::Paladin::Protection::SENTINEL;
+    constexpr uint32 FINAL_STAND             = WoW120Spells::Paladin::Protection::FINAL_STAND;
 
     // Utility
-    constexpr uint32 HAND_OF_RECKONING       = WoW112Spells::Paladin::HAND_OF_RECKONING;
-    constexpr uint32 BLESSING_OF_FREEDOM_PROT = WoW112Spells::Paladin::BLESSING_OF_FREEDOM;
-    constexpr uint32 BLESSING_OF_PROTECTION_PROT = WoW112Spells::Paladin::BLESSING_OF_PROTECTION;
-    constexpr uint32 LAY_ON_HANDS_PROT       = WoW112Spells::Paladin::LAY_ON_HANDS;
-    constexpr uint32 DIVINE_SHIELD_PROT      = WoW112Spells::Paladin::DIVINE_SHIELD;
-    constexpr uint32 CLEANSE_TOXINS          = WoW112Spells::Paladin::CLEANSE_TOXINS;
+    constexpr uint32 HAND_OF_RECKONING       = WoW120Spells::Paladin::HAND_OF_RECKONING;
+    constexpr uint32 BLESSING_OF_FREEDOM_PROT = WoW120Spells::Paladin::BLESSING_OF_FREEDOM;
+    constexpr uint32 BLESSING_OF_PROTECTION_PROT = WoW120Spells::Paladin::BLESSING_OF_PROTECTION;
+    constexpr uint32 LAY_ON_HANDS_PROT       = WoW120Spells::Paladin::LAY_ON_HANDS;
+    constexpr uint32 DIVINE_SHIELD_PROT      = WoW120Spells::Paladin::DIVINE_SHIELD;
+    constexpr uint32 CLEANSE_TOXINS          = WoW120Spells::Paladin::CLEANSE_TOXINS;
 
     // Auras
-    constexpr uint32 DEVOTION_AURA_PROT      = WoW112Spells::Paladin::DEVOTION_AURA;
-    constexpr uint32 CONCENTRATION_AURA_PROT = WoW112Spells::Paladin::CONCENTRATION_AURA;
-    constexpr uint32 RETRIBUTION_AURA_PROT   = WoW112Spells::Paladin::RETRIBUTION_AURA;
+    constexpr uint32 DEVOTION_AURA_PROT      = WoW120Spells::Paladin::DEVOTION_AURA;
+    constexpr uint32 CONCENTRATION_AURA_PROT = WoW120Spells::Paladin::CONCENTRATION_AURA;
+    constexpr uint32 RETRIBUTION_AURA_PROT   = WoW120Spells::Paladin::RETRIBUTION_AURA;
 
     // Procs and Buffs
-    constexpr uint32 GRAND_CRUSADER          = WoW112Spells::Paladin::Protection::GRAND_CRUSADER;
-    constexpr uint32 SHINING_LIGHT           = WoW112Spells::Paladin::Protection::SHINING_LIGHT;
+    constexpr uint32 GRAND_CRUSADER          = WoW120Spells::Paladin::Protection::GRAND_CRUSADER;
+    constexpr uint32 SHINING_LIGHT           = WoW120Spells::Paladin::Protection::SHINING_LIGHT;
 
     // Talents
-    constexpr uint32 SERAPHIM                = WoW112Spells::Paladin::Protection::SERAPHIM;
-    constexpr uint32 BULWARK_OF_RIGHTEOUS_FURY = WoW112Spells::Paladin::Protection::BULWARK_OF_RIGHTEOUS_FURY;
-    constexpr uint32 MOMENT_OF_GLORY         = WoW112Spells::Paladin::Protection::MOMENT_OF_GLORY;
-    constexpr uint32 FIRST_AVENGER           = WoW112Spells::Paladin::Protection::FIRST_AVENGER;
+    constexpr uint32 SERAPHIM                = WoW120Spells::Paladin::Protection::SERAPHIM;
+    constexpr uint32 BULWARK_OF_RIGHTEOUS_FURY = WoW120Spells::Paladin::Protection::BULWARK_OF_RIGHTEOUS_FURY;
+    constexpr uint32 MOMENT_OF_GLORY         = WoW120Spells::Paladin::Protection::MOMENT_OF_GLORY;
+    constexpr uint32 FIRST_AVENGER           = WoW120Spells::Paladin::Protection::FIRST_AVENGER;
 }
 using namespace ProtectionPaladinSpells;
 

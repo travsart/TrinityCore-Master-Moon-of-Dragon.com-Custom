@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112_Part2.h"
+#include "../SpellValidation_WoW120_Part2.h"
 #include "Position.h"
 #include "../../Combat/BotThreatManager.h"
 #include "../../Combat/TargetSelector.h"
@@ -230,62 +230,62 @@ private:
     static constexpr float MULTI_TARGET_THRESHOLD = 3.0f; // 3+ enemies
     static constexpr uint32 FORMATION_CHECK_INTERVAL = 2000; // 2 seconds
 
-    // Spell IDs - Using central registry (WoW 11.2)
+    // Spell IDs - Using central registry (WoW 12.0)
     enum WarriorSpells
     {
         // Stances
-        BATTLE_STANCE = WoW112Spells::Warrior::Common::BATTLE_STANCE,
-        DEFENSIVE_STANCE = WoW112Spells::Warrior::Common::DEFENSIVE_STANCE,
-        BERSERKER_STANCE = WoW112Spells::Warrior::Common::BERSERKER_STANCE,
+        BATTLE_STANCE = WoW120Spells::Warrior::Common::BATTLE_STANCE,
+        DEFENSIVE_STANCE = WoW120Spells::Warrior::Common::DEFENSIVE_STANCE,
+        BERSERKER_STANCE = WoW120Spells::Warrior::Common::BERSERKER_STANCE,
 
         // Basic attacks
-        HEROIC_STRIKE = WoW112Spells::Warrior::Common::HEROIC_STRIKE,
-        CLEAVE = WoW112Spells::Warrior::Common::CLEAVE,
-        WHIRLWIND = WoW112Spells::Warrior::Common::WHIRLWIND,
+        HEROIC_STRIKE = WoW120Spells::Warrior::Common::HEROIC_STRIKE,
+        CLEAVE = WoW120Spells::Warrior::Common::CLEAVE,
+        WHIRLWIND = WoW120Spells::Warrior::Common::WHIRLWIND,
 
         // Arms abilities
-        MORTAL_STRIKE = WoW112Spells::Warrior::Common::MORTAL_STRIKE,
-        COLOSSUS_SMASH = WoW112Spells::Warrior::Common::COLOSSUS_SMASH,
-        OVERPOWER = WoW112Spells::Warrior::Common::OVERPOWER,
-        REND = WoW112Spells::Warrior::Common::REND,
+        MORTAL_STRIKE = WoW120Spells::Warrior::Common::MORTAL_STRIKE,
+        COLOSSUS_SMASH = WoW120Spells::Warrior::Common::COLOSSUS_SMASH,
+        OVERPOWER = WoW120Spells::Warrior::Common::OVERPOWER,
+        REND = WoW120Spells::Warrior::Common::REND,
 
         // Fury abilities
-        BLOODTHIRST = WoW112Spells::Warrior::Common::BLOODTHIRST,
-        RAMPAGE = WoW112Spells::Warrior::Common::RAMPAGE,
-        RAGING_BLOW = WoW112Spells::Warrior::Common::RAGING_BLOW,
-        EXECUTE = WoW112Spells::Warrior::Common::EXECUTE,
+        BLOODTHIRST = WoW120Spells::Warrior::Common::BLOODTHIRST,
+        RAMPAGE = WoW120Spells::Warrior::Common::RAMPAGE,
+        RAGING_BLOW = WoW120Spells::Warrior::Common::RAGING_BLOW,
+        EXECUTE = WoW120Spells::Warrior::Common::EXECUTE,
 
         // Protection abilities
-        SHIELD_SLAM = WoW112Spells::Warrior::Common::SHIELD_SLAM,
-        THUNDER_CLAP = WoW112Spells::Warrior::Common::THUNDER_CLAP,
-        REVENGE = WoW112Spells::Warrior::Common::REVENGE,
-        DEVASTATE = WoW112Spells::Warrior::Common::DEVASTATE,
-        SHIELD_BLOCK = WoW112Spells::Warrior::Common::SHIELD_BLOCK,
+        SHIELD_SLAM = WoW120Spells::Warrior::Common::SHIELD_SLAM,
+        THUNDER_CLAP = WoW120Spells::Warrior::Common::THUNDER_CLAP,
+        REVENGE = WoW120Spells::Warrior::Common::REVENGE,
+        DEVASTATE = WoW120Spells::Warrior::Common::DEVASTATE,
+        SHIELD_BLOCK = WoW120Spells::Warrior::Common::SHIELD_BLOCK,
 
         // Defensive cooldowns
-        SHIELD_WALL = WoW112Spells::Warrior::Common::SHIELD_WALL,
-        LAST_STAND = WoW112Spells::Warrior::Common::LAST_STAND,
-        SPELL_REFLECTION = WoW112Spells::Warrior::Common::SPELL_REFLECTION,
+        SHIELD_WALL = WoW120Spells::Warrior::Common::SHIELD_WALL,
+        LAST_STAND = WoW120Spells::Warrior::Common::LAST_STAND,
+        SPELL_REFLECTION = WoW120Spells::Warrior::Common::SPELL_REFLECTION,
 
         // Offensive cooldowns
-        RECKLESSNESS = WoW112Spells::Warrior::Common::RECKLESSNESS,
-        BLADESTORM = WoW112Spells::Warrior::Common::BLADESTORM,
-        AVATAR = WoW112Spells::Warrior::Common::AVATAR,
+        RECKLESSNESS = WoW120Spells::Warrior::Common::RECKLESSNESS,
+        BLADESTORM = WoW120Spells::Warrior::Common::BLADESTORM,
+        AVATAR = WoW120Spells::Warrior::Common::AVATAR,
 
         // Movement abilities
-        CHARGE = WoW112Spells::Warrior::Common::CHARGE,
-        INTERCEPT = WoW112Spells::Warrior::Common::INTERVENE, // INTERCEPT merged with INTERVENE in 11.2
-        HEROIC_LEAP = WoW112Spells::Warrior::Common::HEROIC_LEAP,
+        CHARGE = WoW120Spells::Warrior::Common::CHARGE,
+        INTERCEPT = WoW120Spells::Warrior::Common::INTERVENE, // INTERCEPT merged with INTERVENE in 11.2
+        HEROIC_LEAP = WoW120Spells::Warrior::Common::HEROIC_LEAP,
 
         // Utility
-        PUMMEL = WoW112Spells::Warrior::Common::PUMMEL,
+        PUMMEL = WoW120Spells::Warrior::Common::PUMMEL,
         DISARM = 676, // Removed in modern WoW, keeping legacy ID
-        TAUNT = WoW112Spells::Warrior::Common::TAUNT,
+        TAUNT = WoW120Spells::Warrior::Common::TAUNT,
         SUNDER_ARMOR = 7386, // Removed in modern WoW, keeping legacy ID
 
         // Buffs
-        BATTLE_SHOUT = WoW112Spells::Warrior::Common::BATTLE_SHOUT,
-        COMMANDING_SHOUT = WoW112Spells::Warrior::Common::COMMANDING_SHOUT,
+        BATTLE_SHOUT = WoW120Spells::Warrior::Common::BATTLE_SHOUT,
+        COMMANDING_SHOUT = WoW120Spells::Warrior::Common::COMMANDING_SHOUT,
 
         // Weapon buffs (if applicable)
         WEAPON_MASTER = 16538 // Passive talent, no spell ID needed

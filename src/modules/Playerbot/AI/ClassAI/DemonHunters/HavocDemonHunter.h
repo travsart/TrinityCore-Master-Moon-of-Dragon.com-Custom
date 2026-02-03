@@ -17,7 +17,7 @@
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
@@ -49,55 +49,55 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// HAVOC DEMON HUNTER SPELL IDs (WoW 11.2 - The War Within)
-// Using centralized spell registry from SpellValidation_WoW112.h
+// HAVOC DEMON HUNTER SPELL IDs (WoW 12.0 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW120.h
 // Note: Uses enum to maintain compatibility with DemonHunterAI.h and existing code
 // ============================================================================
 
 enum HavocSpells
 {
-    // Core Abilities - Using central registry: WoW112Spells::DemonHunter::Havoc
-    SPELL_DEMONS_BITE           = WoW112Spells::DemonHunter::Havoc::DEMONS_BITE,
-    SPELL_CHAOS_STRIKE          = WoW112Spells::DemonHunter::Havoc::CHAOS_STRIKE,
-    SPELL_ANNIHILATION          = WoW112Spells::DemonHunter::Havoc::ANNIHILATION,
-    SPELL_BLADE_DANCE           = WoW112Spells::DemonHunter::Havoc::BLADE_DANCE,
-    SPELL_DEATH_SWEEP           = WoW112Spells::DemonHunter::Havoc::DEATH_SWEEP,
-    SPELL_EYE_BEAM              = WoW112Spells::DemonHunter::Havoc::EYE_BEAM,
-    SPELL_IMMOLATION_AURA       = WoW112Spells::DemonHunter::Havoc::IMMOLATION_AURA,
-    SPELL_FEL_RUSH              = WoW112Spells::DemonHunter::FEL_RUSH,
-    SPELL_VENGEFUL_RETREAT      = WoW112Spells::DemonHunter::VENGEFUL_RETREAT,
+    // Core Abilities - Using central registry: WoW120Spells::DemonHunter::Havoc
+    SPELL_DEMONS_BITE           = WoW120Spells::DemonHunter::Havoc::DEMONS_BITE,
+    SPELL_CHAOS_STRIKE          = WoW120Spells::DemonHunter::Havoc::CHAOS_STRIKE,
+    SPELL_ANNIHILATION          = WoW120Spells::DemonHunter::Havoc::ANNIHILATION,
+    SPELL_BLADE_DANCE           = WoW120Spells::DemonHunter::Havoc::BLADE_DANCE,
+    SPELL_DEATH_SWEEP           = WoW120Spells::DemonHunter::Havoc::DEATH_SWEEP,
+    SPELL_EYE_BEAM              = WoW120Spells::DemonHunter::Havoc::EYE_BEAM,
+    SPELL_IMMOLATION_AURA       = WoW120Spells::DemonHunter::Havoc::IMMOLATION_AURA,
+    SPELL_FEL_RUSH              = WoW120Spells::DemonHunter::FEL_RUSH,
+    SPELL_VENGEFUL_RETREAT      = WoW120Spells::DemonHunter::VENGEFUL_RETREAT,
 
-    // Major Cooldowns - Using central registry: WoW112Spells::DemonHunter
-    SPELL_METAMORPHOSIS         = WoW112Spells::DemonHunter::METAMORPHOSIS_HAVOC,
-    SPELL_FEL_BARRAGE           = WoW112Spells::DemonHunter::Havoc::FEL_BARRAGE,
-    SPELL_CHAOS_NOVA            = WoW112Spells::DemonHunter::CHAOS_NOVA,
-    SPELL_DARKNESS              = WoW112Spells::DemonHunter::DARKNESS,
-    SPELL_BLUR                  = WoW112Spells::DemonHunter::BLUR,
+    // Major Cooldowns - Using central registry: WoW120Spells::DemonHunter
+    SPELL_METAMORPHOSIS         = WoW120Spells::DemonHunter::METAMORPHOSIS_HAVOC,
+    SPELL_FEL_BARRAGE           = WoW120Spells::DemonHunter::Havoc::FEL_BARRAGE,
+    SPELL_CHAOS_NOVA            = WoW120Spells::DemonHunter::CHAOS_NOVA,
+    SPELL_DARKNESS              = WoW120Spells::DemonHunter::DARKNESS,
+    SPELL_BLUR                  = WoW120Spells::DemonHunter::BLUR,
 
-    // Talents/Passives - Using central registry: WoW112Spells::DemonHunter::Havoc
-    SPELL_DEMONIC               = WoW112Spells::DemonHunter::Havoc::DEMONIC,
-    SPELL_MOMENTUM              = WoW112Spells::DemonHunter::Havoc::MOMENTUM,
-    SPELL_BLIND_FURY            = WoW112Spells::DemonHunter::Havoc::BLIND_FURY,
-    SPELL_FIRST_BLOOD           = WoW112Spells::DemonHunter::Havoc::FIRST_BLOOD,
-    SPELL_TRAIL_OF_RUIN         = WoW112Spells::DemonHunter::Havoc::TRAIL_OF_RUIN,
-    SPELL_CHAOS_CLEAVE          = WoW112Spells::DemonHunter::Havoc::CHAOS_CLEAVE,
-    SPELL_CYCLE_OF_HATRED       = WoW112Spells::DemonHunter::Havoc::CYCLE_OF_HATRED,
+    // Talents/Passives - Using central registry: WoW120Spells::DemonHunter::Havoc
+    SPELL_DEMONIC               = WoW120Spells::DemonHunter::Havoc::DEMONIC,
+    SPELL_MOMENTUM              = WoW120Spells::DemonHunter::Havoc::MOMENTUM,
+    SPELL_BLIND_FURY            = WoW120Spells::DemonHunter::Havoc::BLIND_FURY,
+    SPELL_FIRST_BLOOD           = WoW120Spells::DemonHunter::Havoc::FIRST_BLOOD,
+    SPELL_TRAIL_OF_RUIN         = WoW120Spells::DemonHunter::Havoc::TRAIL_OF_RUIN,
+    SPELL_CHAOS_CLEAVE          = WoW120Spells::DemonHunter::Havoc::CHAOS_CLEAVE,
+    SPELL_CYCLE_OF_HATRED       = WoW120Spells::DemonHunter::Havoc::CYCLE_OF_HATRED,
 
-    // Utility - Using central registry: WoW112Spells::DemonHunter
-    SPELL_DISRUPT               = WoW112Spells::DemonHunter::DISRUPT,
-    SPELL_CONSUME_MAGIC         = WoW112Spells::DemonHunter::CONSUME_MAGIC,
-    SPELL_IMPRISON              = WoW112Spells::DemonHunter::IMPRISON,
-    SPELL_SPECTRAL_SIGHT        = WoW112Spells::DemonHunter::SPECTRAL_SIGHT,
-    SPELL_TORMENT               = WoW112Spells::DemonHunter::Havoc::TORMENT,
+    // Utility - Using central registry: WoW120Spells::DemonHunter
+    SPELL_DISRUPT               = WoW120Spells::DemonHunter::DISRUPT,
+    SPELL_CONSUME_MAGIC         = WoW120Spells::DemonHunter::CONSUME_MAGIC,
+    SPELL_IMPRISON              = WoW120Spells::DemonHunter::IMPRISON,
+    SPELL_SPECTRAL_SIGHT        = WoW120Spells::DemonHunter::SPECTRAL_SIGHT,
+    SPELL_TORMENT               = WoW120Spells::DemonHunter::Havoc::TORMENT,
 
-    // Buffs/Debuffs - Using central registry: WoW112Spells::DemonHunter::Havoc
-    BUFF_MOMENTUM               = WoW112Spells::DemonHunter::Havoc::BUFF_MOMENTUM,
-    BUFF_FURIOUS_GAZE           = WoW112Spells::DemonHunter::Havoc::BUFF_FURIOUS_GAZE,
-    BUFF_METAMORPHOSIS          = WoW112Spells::DemonHunter::Havoc::BUFF_METAMORPHOSIS,
-    BUFF_PREPARED               = WoW112Spells::DemonHunter::Havoc::BUFF_PREPARED,
-    BUFF_IMMOLATION_AURA        = WoW112Spells::DemonHunter::Havoc::IMMOLATION_AURA,
-    BUFF_BLADE_DANCE            = WoW112Spells::DemonHunter::Havoc::BLADE_DANCE,
-    BUFF_BLUR                   = WoW112Spells::DemonHunter::BLUR
+    // Buffs/Debuffs - Using central registry: WoW120Spells::DemonHunter::Havoc
+    BUFF_MOMENTUM               = WoW120Spells::DemonHunter::Havoc::BUFF_MOMENTUM,
+    BUFF_FURIOUS_GAZE           = WoW120Spells::DemonHunter::Havoc::BUFF_FURIOUS_GAZE,
+    BUFF_METAMORPHOSIS          = WoW120Spells::DemonHunter::Havoc::BUFF_METAMORPHOSIS,
+    BUFF_PREPARED               = WoW120Spells::DemonHunter::Havoc::BUFF_PREPARED,
+    BUFF_IMMOLATION_AURA        = WoW120Spells::DemonHunter::Havoc::IMMOLATION_AURA,
+    BUFF_BLADE_DANCE            = WoW120Spells::DemonHunter::Havoc::BLADE_DANCE,
+    BUFF_BLUR                   = WoW120Spells::DemonHunter::BLUR
 };
 
 // Fury resource type (simple uint32)

@@ -27,7 +27,7 @@ void ParseTypedSpellCooldown(WorldSession* session, WorldPackets::Spells::SpellC
         CooldownEvent event;
         event.type = CooldownEventType::SPELL_COOLDOWN_START;
         event.casterGuid = packet.Caster;
-        event.spellId = cooldownEntry.SrecID;  // WoW 11.2: Field is SrecID, not SpellID
+        event.spellId = cooldownEntry.SrecID;  // WoW 12.0: Field is SrecID, not SpellID
         event.itemId = 0;
         event.category = 0;
         event.cooldownMs = cooldownEntry.ForcedCooldown;
@@ -76,7 +76,7 @@ void ParseTypedClearCooldown(WorldSession* session, WorldPackets::Spells::ClearC
 
     CooldownEvent event;
     event.type = CooldownEventType::SPELL_COOLDOWN_CLEAR;
-    event.casterGuid = bot->GetGUID();  // WoW 11.2: ClearCooldown has no CasterGUID field, use bot GUID
+    event.casterGuid = bot->GetGUID();  // WoW 12.0: ClearCooldown has no CasterGUID field, use bot GUID
     event.spellId = static_cast<uint32>(packet.SpellID);
     event.itemId = 0;
     event.category = 0;
@@ -99,7 +99,7 @@ void ParseTypedClearCooldowns(WorldSession* session, WorldPackets::Spells::Clear
     if (!bot)
         return;
 
-    for (int32 spellId : packet.SpellID)  // WoW 11.2: Field is SpellID (singular), not SpellIDs (plural)
+    for (int32 spellId : packet.SpellID)  // WoW 12.0: Field is SpellID (singular), not SpellIDs (plural)
     {
         CooldownEvent event;
         event.type = CooldownEventType::SPELL_COOLDOWN_CLEAR;

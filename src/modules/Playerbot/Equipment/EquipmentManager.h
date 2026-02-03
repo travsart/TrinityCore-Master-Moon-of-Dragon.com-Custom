@@ -37,7 +37,7 @@ namespace Playerbot
 {
 
 /**
- * @brief Stat types for item comparison based on WoW 11.2 itemMods
+ * @brief Stat types for item comparison based on WoW 12.0 itemMods
  */
 enum class StatType : uint8
 {

@@ -3,7 +3,7 @@
  *
  * World of Warcraft 11.2 (The War Within) Spell ID Validation - Part 2
  *
- * This file contains validated spell IDs for WoW 11.2 including
+ * This file contains validated spell IDs for WoW 12.0 including
  * Hero Talent abilities for Paladin through Warrior specializations.
  */
 
@@ -11,11 +11,11 @@
 
 namespace Playerbot
 {
-namespace WoW112Spells
+namespace WoW120Spells
 {
 
 // ============================================================================
-// PALADIN SPELLS - Updated for 11.2
+// PALADIN SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Paladin
@@ -237,7 +237,7 @@ namespace Paladin
 }
 
 // ============================================================================
-// PRIEST SPELLS - Updated for 11.2
+// PRIEST SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Priest
@@ -453,7 +453,7 @@ namespace Priest
 }
 
 // ============================================================================
-// ROGUE SPELLS - Updated for 11.2
+// ROGUE SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Rogue
@@ -677,7 +677,7 @@ namespace Rogue
 }
 
 // ============================================================================
-// SHAMAN SPELLS - Updated for 11.2
+// SHAMAN SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Shaman
@@ -892,7 +892,7 @@ namespace Shaman
 }
 
 // ============================================================================
-// WARLOCK SPELLS - Updated for 11.2
+// WARLOCK SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Warlock
@@ -1130,7 +1130,7 @@ namespace Warlock
 }
 
 // ============================================================================
-// WARRIOR SPELLS - Updated for 11.2.7 (The War Within)
+// WARRIOR SPELLS - Updated for 12.0.7 (The War Within)
 // ============================================================================
 
 namespace Warrior
@@ -1353,5 +1353,5 @@ namespace Warrior
     }
 }
 
-} // namespace WoW112Spells
+} // namespace WoW120Spells
 } // namespace Playerbot

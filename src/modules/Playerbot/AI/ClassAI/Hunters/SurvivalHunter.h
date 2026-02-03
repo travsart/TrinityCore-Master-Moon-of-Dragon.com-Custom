@@ -16,7 +16,7 @@
 #include "../Common/StatusEffectTracker.h"
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
@@ -56,51 +56,51 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// SURVIVAL HUNTER SPELL IDs (WoW 11.2 - The War Within)
-// Using centralized spell registry from SpellValidation_WoW112.h
+// SURVIVAL HUNTER SPELL IDs (WoW 12.0 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW120.h
 // ============================================================================
 
 enum SurvivalSpells
 {
-    // Core Melee Abilities - Using central registry: WoW112Spells::Hunter::Survival
-    SPELL_RAPTOR_STRIKE        = WoW112Spells::Hunter::Survival::RAPTOR_STRIKE,
-    SPELL_MONGOOSE_BITE        = WoW112Spells::Hunter::Survival::MONGOOSE_BITE,
-    SPELL_CARVE                = WoW112Spells::Hunter::Survival::CARVE,
-    SPELL_BUTCHERY             = WoW112Spells::Hunter::Survival::BUTCHERY,
-    SPELL_COORDINATED_ASSAULT  = WoW112Spells::Hunter::Survival::COORDINATED_ASSAULT,
-    SPELL_FLANKING_STRIKE      = WoW112Spells::Hunter::Survival::FLANKING_STRIKE,
+    // Core Melee Abilities - Using central registry: WoW120Spells::Hunter::Survival
+    SPELL_RAPTOR_STRIKE        = WoW120Spells::Hunter::Survival::RAPTOR_STRIKE,
+    SPELL_MONGOOSE_BITE        = WoW120Spells::Hunter::Survival::MONGOOSE_BITE,
+    SPELL_CARVE                = WoW120Spells::Hunter::Survival::CARVE,
+    SPELL_BUTCHERY             = WoW120Spells::Hunter::Survival::BUTCHERY,
+    SPELL_COORDINATED_ASSAULT  = WoW120Spells::Hunter::Survival::COORDINATED_ASSAULT,
+    SPELL_FLANKING_STRIKE      = WoW120Spells::Hunter::Survival::FLANKING_STRIKE,
 
-    // Wildfire Bombs - Using central registry: WoW112Spells::Hunter::Survival
-    SPELL_WILDFIRE_BOMB        = WoW112Spells::Hunter::Survival::WILDFIRE_BOMB,
-    SPELL_SHRAPNEL_BOMB        = WoW112Spells::Hunter::Survival::SHRAPNEL_BOMB,
-    SPELL_PHEROMONE_BOMB       = WoW112Spells::Hunter::Survival::PHEROMONE_BOMB,
-    SPELL_VOLATILE_BOMB        = WoW112Spells::Hunter::Survival::VOLATILE_BOMB,
-    SPELL_WILDFIRE_INFUSION    = WoW112Spells::Hunter::Survival::WILDFIRE_INFUSION,
+    // Wildfire Bombs - Using central registry: WoW120Spells::Hunter::Survival
+    SPELL_WILDFIRE_BOMB        = WoW120Spells::Hunter::Survival::WILDFIRE_BOMB,
+    SPELL_SHRAPNEL_BOMB        = WoW120Spells::Hunter::Survival::SHRAPNEL_BOMB,
+    SPELL_PHEROMONE_BOMB       = WoW120Spells::Hunter::Survival::PHEROMONE_BOMB,
+    SPELL_VOLATILE_BOMB        = WoW120Spells::Hunter::Survival::VOLATILE_BOMB,
+    SPELL_WILDFIRE_INFUSION    = WoW120Spells::Hunter::Survival::WILDFIRE_INFUSION,
 
-    // DoTs and Debuffs - Using central registry: WoW112Spells::Hunter::Survival
-    SPELL_SERPENT_STING        = WoW112Spells::Hunter::Survival::SERPENT_STING,
-    SPELL_INTERNAL_BLEEDING    = WoW112Spells::Hunter::Survival::INTERNAL_BLEEDING,
-    SPELL_BLOODSEEKER          = WoW112Spells::Hunter::Survival::BLOODSEEKER,
+    // DoTs and Debuffs - Using central registry: WoW120Spells::Hunter::Survival
+    SPELL_SERPENT_STING        = WoW120Spells::Hunter::Survival::SERPENT_STING,
+    SPELL_INTERNAL_BLEEDING    = WoW120Spells::Hunter::Survival::INTERNAL_BLEEDING,
+    SPELL_BLOODSEEKER          = WoW120Spells::Hunter::Survival::BLOODSEEKER,
 
-    // Focus Management - Using central registry: WoW112Spells::Hunter::Survival
-    SPELL_KILL_COMMAND_SURV    = WoW112Spells::Hunter::Survival::KILL_COMMAND_SURVIVAL,
-    SPELL_TERMS_OF_ENGAGEMENT  = WoW112Spells::Hunter::Survival::TERMS_OF_ENGAGEMENT,
-    SPELL_HARPOON              = WoW112Spells::Hunter::Survival::HARPOON,
+    // Focus Management - Using central registry: WoW120Spells::Hunter::Survival
+    SPELL_KILL_COMMAND_SURV    = WoW120Spells::Hunter::Survival::KILL_COMMAND_SURVIVAL,
+    SPELL_TERMS_OF_ENGAGEMENT  = WoW120Spells::Hunter::Survival::TERMS_OF_ENGAGEMENT,
+    SPELL_HARPOON              = WoW120Spells::Hunter::Survival::HARPOON,
 
-    // Utility - Using central registry: WoW112Spells::Hunter::Survival
-    SPELL_ASPECT_OF_EAGLE      = WoW112Spells::Hunter::Survival::ASPECT_OF_THE_EAGLE,
-    SPELL_MUZZLE               = WoW112Spells::Hunter::Survival::MUZZLE,
-    SPELL_STEEL_TRAP           = WoW112Spells::Hunter::Survival::STEEL_TRAP,
-    SPELL_GUERRILLA_TACTICS    = WoW112Spells::Hunter::Survival::GUERRILLA_TACTICS,
+    // Utility - Using central registry: WoW120Spells::Hunter::Survival
+    SPELL_ASPECT_OF_EAGLE      = WoW120Spells::Hunter::Survival::ASPECT_OF_THE_EAGLE,
+    SPELL_MUZZLE               = WoW120Spells::Hunter::Survival::MUZZLE,
+    SPELL_STEEL_TRAP           = WoW120Spells::Hunter::Survival::STEEL_TRAP,
+    SPELL_GUERRILLA_TACTICS    = WoW120Spells::Hunter::Survival::GUERRILLA_TACTICS,
 
-    // Pet - Using central registry: WoW112Spells::Hunter
-    SPELL_CALL_PET_SURV        = WoW112Spells::Hunter::CALL_PET_1,
-    SPELL_MEND_PET_SURV        = WoW112Spells::Hunter::MEND_PET,
+    // Pet - Using central registry: WoW120Spells::Hunter
+    SPELL_CALL_PET_SURV        = WoW120Spells::Hunter::CALL_PET_1,
+    SPELL_MEND_PET_SURV        = WoW120Spells::Hunter::MEND_PET,
 
-    // Defensives - Using central registry: WoW112Spells::Hunter
-    SPELL_ASPECT_TURTLE_SURV   = WoW112Spells::Hunter::ASPECT_OF_THE_TURTLE,
-    SPELL_EXHILARATION_SURV    = WoW112Spells::Hunter::EXHILARATION,
-    SPELL_SURVIVAL_OF_FITTEST  = WoW112Spells::Hunter::SURVIVAL_OF_THE_FITTEST
+    // Defensives - Using central registry: WoW120Spells::Hunter
+    SPELL_ASPECT_TURTLE_SURV   = WoW120Spells::Hunter::ASPECT_OF_THE_TURTLE,
+    SPELL_EXHILARATION_SURV    = WoW120Spells::Hunter::EXHILARATION,
+    SPELL_SURVIVAL_OF_FITTEST  = WoW120Spells::Hunter::SURVIVAL_OF_THE_FITTEST
 };
 
 /**
@@ -957,7 +957,7 @@ private:
     void UpdatePetManagement() { _petManager.EnsurePetActive(GetBot()->GetVictim()); }
     void SummonPet() { GetBot()->CastSpell(CastSpellTargetArg(GetBot()), SPELL_CALL_PET_SURV); }
     void MendPetIfNeeded() { if (_petManager.HasActivePet()) _petManager.EnsurePetActive(GetBot()->GetVictim()); }
-    void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
+    void FeedPetIfNeeded() { /* Feeding not implemented in WoW 12.0 */ }
     bool HasActivePet() const { return _petManager.HasActivePet(); }
     ::Playerbot::PetInfo GetPetInfo() const
     {

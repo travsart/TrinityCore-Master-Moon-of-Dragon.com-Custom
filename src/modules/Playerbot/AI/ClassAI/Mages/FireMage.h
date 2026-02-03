@@ -21,7 +21,7 @@
 #include "../Common/StatusEffectTracker.h"
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -49,29 +49,29 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 
-// WoW 11.2 (The War Within) - Fire Mage Spell IDs
-// Use central spell registry (SpellValidation_WoW112.h)
+// WoW 12.0 (The War Within) - Fire Mage Spell IDs
+// Use central spell registry (SpellValidation_WoW120.h)
 namespace FireMageSpells
 {
     // Fire Spec Spells
-    constexpr uint32 FIRE_FIREBALL        = WoW112Spells::Mage::FIREBALL;
-    constexpr uint32 FIRE_PYROBLAST       = WoW112Spells::Mage::Fire::PYROBLAST;
-    constexpr uint32 FIRE_FIRE_BLAST      = WoW112Spells::Mage::Fire::FIRE_BLAST;
+    constexpr uint32 FIRE_FIREBALL        = WoW120Spells::Mage::FIREBALL;
+    constexpr uint32 FIRE_PYROBLAST       = WoW120Spells::Mage::Fire::PYROBLAST;
+    constexpr uint32 FIRE_FIRE_BLAST      = WoW120Spells::Mage::Fire::FIRE_BLAST;
     constexpr uint32 FIRE_FIREBLAST       = FIRE_FIRE_BLAST;  // Alias for consistency
-    constexpr uint32 FIRE_SCORCH          = WoW112Spells::Mage::Fire::SCORCH;
-    constexpr uint32 FIRE_FLAMESTRIKE     = WoW112Spells::Mage::Fire::FLAMESTRIKE;
-    constexpr uint32 FIRE_PHOENIX_FLAMES  = WoW112Spells::Mage::Fire::PHOENIX_FLAMES;
-    constexpr uint32 FIRE_COMBUSTION      = WoW112Spells::Mage::Fire::COMBUSTION;
-    constexpr uint32 FIRE_DRAGON_BREATH   = WoW112Spells::Mage::DRAGONS_BREATH;
-    constexpr uint32 FIRE_METEOR          = WoW112Spells::Mage::Fire::METEOR;
-    constexpr uint32 FIRE_LIVING_BOMB     = WoW112Spells::Mage::Fire::LIVING_BOMB;
-    constexpr uint32 FIRE_BLAZING_BARRIER = WoW112Spells::Mage::Fire::BLAZING_BARRIER;
+    constexpr uint32 FIRE_SCORCH          = WoW120Spells::Mage::Fire::SCORCH;
+    constexpr uint32 FIRE_FLAMESTRIKE     = WoW120Spells::Mage::Fire::FLAMESTRIKE;
+    constexpr uint32 FIRE_PHOENIX_FLAMES  = WoW120Spells::Mage::Fire::PHOENIX_FLAMES;
+    constexpr uint32 FIRE_COMBUSTION      = WoW120Spells::Mage::Fire::COMBUSTION;
+    constexpr uint32 FIRE_DRAGON_BREATH   = WoW120Spells::Mage::DRAGONS_BREATH;
+    constexpr uint32 FIRE_METEOR          = WoW120Spells::Mage::Fire::METEOR;
+    constexpr uint32 FIRE_LIVING_BOMB     = WoW120Spells::Mage::Fire::LIVING_BOMB;
+    constexpr uint32 FIRE_BLAZING_BARRIER = WoW120Spells::Mage::Fire::BLAZING_BARRIER;
 
     // Common Mage Spells
-    constexpr uint32 FIRE_ICE_BLOCK       = WoW112Spells::Mage::ICE_BLOCK;
-    constexpr uint32 FIRE_MIRROR_IMAGE    = WoW112Spells::Mage::MIRROR_IMAGE;
-    constexpr uint32 FIRE_SHIFTING_POWER  = WoW112Spells::Mage::SHIFTING_POWER_COMMON;
-    constexpr uint32 FIRE_TIME_WARP       = WoW112Spells::Mage::TIME_WARP;
+    constexpr uint32 FIRE_ICE_BLOCK       = WoW120Spells::Mage::ICE_BLOCK;
+    constexpr uint32 FIRE_MIRROR_IMAGE    = WoW120Spells::Mage::MIRROR_IMAGE;
+    constexpr uint32 FIRE_SHIFTING_POWER  = WoW120Spells::Mage::SHIFTING_POWER_COMMON;
+    constexpr uint32 FIRE_TIME_WARP       = WoW120Spells::Mage::TIME_WARP;
 }
 
 // Make spells available in the namespace

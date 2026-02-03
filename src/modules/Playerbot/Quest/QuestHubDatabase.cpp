@@ -729,7 +729,7 @@ namespace Playerbot
             }
 
             // Execute query for this batch
-            // WoW 11.2: Level info is in DB2 via ContentTuningID, not in quest_template columns
+            // WoW 12.0: Level info is in DB2 via ContentTuningID, not in quest_template columns
             ::std::string query = "SELECT DISTINCT qr.id, qr.quest, qt.ContentTuningID, qt.AllowableRaces "
                                "FROM creature_queststarter qr "
                                "INNER JOIN quest_template qt ON qr.quest = qt.ID "
@@ -808,11 +808,11 @@ namespace Playerbot
             // Assign quest data to hub
             hub.questIds.assign(uniqueQuests.begin(), uniqueQuests.end());
 
-            // WoW 11.2: Level ranges are determined dynamically via ContentTuningID in DB2
+            // WoW 12.0: Level ranges are determined dynamically via ContentTuningID in DB2
             // For initial hub classification, use zone-based approximations
             // This will be refined at runtime when bots query for appropriate hubs
             hub.minLevel = 1;
-            hub.maxLevel = 70; // Max level in WoW 11.2
+            hub.maxLevel = 70; // Max level in WoW 12.0
 
             // Refine hub name with zone info if available
     if (hub.zoneId > 0)

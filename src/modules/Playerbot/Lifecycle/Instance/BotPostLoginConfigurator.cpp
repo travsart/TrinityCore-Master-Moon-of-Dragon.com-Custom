@@ -983,7 +983,7 @@ GearSetTemplate const* BotPostLoginConfigurator::SelectGearSet(BotTemplate const
 }
 
 // ============================================================================
-// SPELL LEARNING VERIFICATION - Modern WoW 11.2 Approach
+// SPELL LEARNING VERIFICATION - Modern WoW 12.0 Approach
 // ============================================================================
 // In modern WoW (since Patch 5.0.4 / MoP 2012), ALL combat spells are learned
 // automatically on level up. Class trainers no longer exist for combat abilities.

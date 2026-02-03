@@ -10,7 +10,7 @@
 
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
@@ -34,29 +34,29 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// AUGMENTATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
-// See central registry: WoW112Spells::Evoker and WoW112Spells::Evoker::Augmentation
+// AUGMENTATION EVOKER SPELL IDs (WoW 12.0 - The War Within)
+// See central registry: WoW120Spells::Evoker and WoW120Spells::Evoker::Augmentation
 // ============================================================================
 
 enum AugmentationEvokerSpells
 {
     // Core Buffs
-    EBON_MIGHT           = WoW112Spells::Evoker::Augmentation::EBON_MIGHT,
-    PRESCIENCE           = WoW112Spells::Evoker::Augmentation::PRESCIENCE,
-    BLISTERING_SCALES    = WoW112Spells::Evoker::Augmentation::BLISTERING_SCALES,
+    EBON_MIGHT           = WoW120Spells::Evoker::Augmentation::EBON_MIGHT,
+    PRESCIENCE           = WoW120Spells::Evoker::Augmentation::PRESCIENCE,
+    BLISTERING_SCALES    = WoW120Spells::Evoker::Augmentation::BLISTERING_SCALES,
 
     // Empowered Abilities
-    BREATH_OF_EONS       = WoW112Spells::Evoker::Augmentation::BREATH_OF_EONS,
+    BREATH_OF_EONS       = WoW120Spells::Evoker::Augmentation::BREATH_OF_EONS,
 
     // Essence Generation
-    AZURE_STRIKE_AUG     = WoW112Spells::Evoker::AZURE_STRIKE,
-    ERUPTION             = WoW112Spells::Evoker::Augmentation::ERUPTION,
+    AZURE_STRIKE_AUG     = WoW120Spells::Evoker::AZURE_STRIKE,
+    ERUPTION             = WoW120Spells::Evoker::Augmentation::ERUPTION,
 
     // Utility (shared with other Evoker specs)
-    AUG_OBSIDIAN_SCALES  = WoW112Spells::Evoker::OBSIDIAN_SCALES,
-    AUG_RENEWING_BLAZE   = WoW112Spells::Evoker::RENEWING_BLAZE,
-    AUG_QUELL            = WoW112Spells::Evoker::QUELL,
-    AUG_HOVER            = WoW112Spells::Evoker::HOVER
+    AUG_OBSIDIAN_SCALES  = WoW120Spells::Evoker::OBSIDIAN_SCALES,
+    AUG_RENEWING_BLAZE   = WoW120Spells::Evoker::RENEWING_BLAZE,
+    AUG_QUELL            = WoW120Spells::Evoker::QUELL,
+    AUG_HOVER            = WoW120Spells::Evoker::HOVER
 };
 
 struct EssenceResourceAug

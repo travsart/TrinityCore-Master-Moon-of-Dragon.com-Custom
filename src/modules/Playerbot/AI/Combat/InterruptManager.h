@@ -30,7 +30,7 @@ class SpellInfo;
 namespace Playerbot
 {
 
-// Interrupt priority levels for WoW 11.2 encounters
+// Interrupt priority levels for WoW 12.0 encounters
 enum class InterruptPriority : uint8
 {
     CRITICAL = 0,           // Must interrupt immediately (healing, fear, etc.)
@@ -76,7 +76,7 @@ enum class InterruptMethod : uint8
     FEAR = 7               // Fear to interrupt
 };
 
-// Interrupt target information for WoW 11.2
+// Interrupt target information for WoW 12.0
 struct InterruptTarget
 {
     ObjectGuid guid;
@@ -98,7 +98,7 @@ struct InterruptTarget
     ::std::string spellName;
     ::std::string targetName;
 
-    // WoW 11.2 specific fields
+    // WoW 12.0 specific fields
     bool isMythicPlus;
     uint8 mythicLevel;
     bool hasInterruptImmunity;
@@ -120,7 +120,7 @@ struct InterruptTarget
                        assignmentStatus(InterruptAssignment::UNASSIGNED) {}
 };
 
-// Interrupt capability information for WoW 11.2 abilities
+// Interrupt capability information for WoW 12.0 abilities
 struct InterruptCapability
 {
     uint32 spellId;
@@ -140,7 +140,7 @@ struct InterruptCapability
     InterruptPriority minPriority;
     ::std::vector<InterruptType> effectiveAgainst;
 
-    // WoW 11.2 specific fields
+    // WoW 12.0 specific fields
     uint32 lockoutDuration;  // Duration of spell school lockout
     uint32 schoolMask;       // Which schools this locks out
     bool isHeroTalent;       // Hero talent ability
@@ -319,7 +319,7 @@ public:
     bool CanInterruptInTime(const InterruptTarget& target, InterruptMethod method);
     uint32 GetOptimalInterruptTiming(const InterruptTarget& target);
 
-    // Group coordination for WoW 11.2
+    // Group coordination for WoW 12.0
     void CoordinateInterruptsWithGroup(const ::std::vector<Player*>& groupMembers);
     bool ShouldLetOthersInterrupt(const InterruptTarget& target);
     void RegisterInterruptAttempt(const InterruptTarget& target);
@@ -345,7 +345,7 @@ public:
     bool HandleInterruptFailure(const InterruptTarget& target, const InterruptResult& result);
     void RequestEmergencyAssist(const InterruptTarget& target);
 
-    // Advanced interrupt strategies for WoW 11.2
+    // Advanced interrupt strategies for WoW 12.0
     void HandleMultipleInterruptTargets();
     void OptimizeInterruptRotation();
     void ManageInterruptCooldowns();
@@ -437,7 +437,7 @@ private:
     ::std::vector<InterruptTarget> _trackedTargets;
     ::std::vector<InterruptCapability> _interruptCapabilities;
 
-    // WoW 11.2 specific tracking
+    // WoW 12.0 specific tracking
     ::std::unordered_map<uint32, uint32> _schoolLockouts;  // School mask -> expiry time
     ::std::unordered_map<ObjectGuid, uint32> _targetImmunities;  // Target -> immunity expiry
     GroupInterruptData _groupData;
@@ -480,7 +480,7 @@ private:
     // Solution: Use std::recursive_mutex to allow same thread to acquire lock multiple times
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
-    // Constants for WoW 11.2
+    // Constants for WoW 12.0
     static constexpr uint32 DEFAULT_REACTION_TIME = 250;        // 250ms reaction time
     static constexpr float DEFAULT_MAX_RANGE = 30.0f;          // 30 yards max interrupt range
     static constexpr uint32 DEFAULT_SCAN_INTERVAL = 100;       // 100ms scan interval

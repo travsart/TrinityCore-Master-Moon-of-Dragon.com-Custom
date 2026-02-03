@@ -287,7 +287,7 @@ void MonkAI::UpdateBuffs()
         return;
 
     // Note: Legacy of the White Tiger / Legacy of the Emperor were removed in modern WoW
-    // These raid-wide stat buffs are no longer available in WoW 11.2
+    // These raid-wide stat buffs are no longer available in WoW 12.0
 
     // Specialization-specific buff management
     ChrSpecialization spec = bot->GetPrimarySpecialization();
@@ -296,7 +296,7 @@ void MonkAI::UpdateBuffs()
     {
         case 268: // Brewmaster
         {
-            // Maintain Celestial Brew uptime when tanking (replaced Ironskin Brew in WoW 11.2)
+            // Maintain Celestial Brew uptime when tanking (replaced Ironskin Brew in WoW 12.0)
     if (!bot->HasAura(CELESTIAL_BREW) && bot->IsInCombat())
             {
                 if (bot->HasSpell(CELESTIAL_BREW) && HasEnoughResource(CELESTIAL_BREW))
@@ -1178,7 +1178,7 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
         }
     }
 
-    // Maintain Celestial Brew (replaced Ironskin Brew in WoW 11.2)
+    // Maintain Celestial Brew (replaced Ironskin Brew in WoW 12.0)
     if (CanUseAbility(CELESTIAL_BREW))
     {
         if (!GetBot()->HasAura(CELESTIAL_BREW))

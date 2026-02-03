@@ -15,7 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -42,14 +42,14 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
-// MISTWEAVER MONK SPELL IDs (WoW 11.2 - The War Within)
-// Using centralized spell registry from SpellValidation_WoW112.h
+// MISTWEAVER MONK SPELL IDs (WoW 12.0 - The War Within)
+// Using centralized spell registry from SpellValidation_WoW120.h
 // ============================================================================
 
 namespace MistweaverMonkSpells
 {
     // Import from central registry - Monk common spells
-    using namespace WoW112Spells::Monk;
+    using namespace WoW120Spells::Monk;
 
     // Direct Heals
     constexpr uint32 VIVIFY                  = Mistweaver::VIVIFY;
@@ -89,7 +89,7 @@ namespace MistweaverMonkSpells
     constexpr uint32 SPINNING_CRANE_KICK_MIST = Mistweaver::SPINNING_CRANE_KICK_MW;
 
     // Procs and Buffs
-    constexpr uint32 TEACHINGS_OF_THE_MONASTERY_MW = WoW112Spells::Monk::TEACHINGS_OF_THE_MONASTERY;
+    constexpr uint32 TEACHINGS_OF_THE_MONASTERY_MW = WoW120Spells::Monk::TEACHINGS_OF_THE_MONASTERY;
     constexpr uint32 ANCIENT_TEACHINGS       = Mistweaver::ANCIENT_TEACHINGS;
     constexpr uint32 FAELINE_STOMP           = Mistweaver::FAELINE_STOMP;
 

@@ -10,14 +10,14 @@
 #pragma once
 
 #include "CombatSpecializationBase.h"
-#include "ResourceTypes_WoW112.h"
+#include "ResourceTypes_WoW120.h"
 #include <type_traits>
 
 namespace Playerbot
 {
 
 /**
- * Enhanced Combat Specialization Template for WoW 11.2
+ * Enhanced Combat Specialization Template for WoW 12.0
  *
  * This template provides specialized resource handling for all 13 classes.
  * Each class specialization inherits from this template with their specific resource type.

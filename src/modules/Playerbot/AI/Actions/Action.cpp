@@ -29,8 +29,8 @@
 #include "DBCEnums.h"
 #include "SharedDefines.h"
 #include "CommonActions.h"
-#include "../ClassAI/SpellValidation_WoW112.h"
-#include "../ClassAI/SpellValidation_WoW112_Part2.h"
+#include "../ClassAI/SpellValidation_WoW120.h"
+#include "../ClassAI/SpellValidation_WoW120_Part2.h"
 
 namespace Playerbot
 {
@@ -451,7 +451,7 @@ void ActionFactory::RegisterAction(::std::string const& name,
     ::std::vector<::std::shared_ptr<Action>> actions;
     ChrSpecialization specEnum = static_cast<ChrSpecialization>(spec);
 
-    using namespace WoW112Spells;
+    using namespace WoW120Spells;
 
     switch (classId)
     {
@@ -1119,7 +1119,7 @@ void ActionFactory::RegisterAction(::std::string const& name,
 
 ::std::vector<::std::shared_ptr<Action>> ActionFactory::CreateCombatActions(uint8 classId)
 {
-    using namespace WoW112Spells;
+    using namespace WoW120Spells;
 
     ::std::vector<::std::shared_ptr<Action>> actions;
 

@@ -275,7 +275,7 @@ bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
             continue;
         }
 
-        // Create and equip item with WoW 11.2 ItemContext system
+        // Create and equip item with WoW 12.0 ItemContext system
         // Use ITEM_CONTEXT_NONE for standard bot gear (not from dungeons/raids)
         Item* newItem = player->EquipNewItem(equipDest, itemEntry, ItemContext::NONE, true);
 

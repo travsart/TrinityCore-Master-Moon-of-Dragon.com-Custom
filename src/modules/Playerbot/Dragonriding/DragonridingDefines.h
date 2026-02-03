@@ -18,7 +18,7 @@ namespace Dragonriding
 {
 
 // ============================================================================
-// RETAIL SPELL IDS (from wowhead.com - WoW 11.2.7)
+// RETAIL SPELL IDS (from wowhead.com - WoW 12.0.7)
 // ============================================================================
 // Using REAL retail spell IDs ensures:
 // - Client already has icons, names, tooltips, animations
@@ -101,7 +101,7 @@ constexpr uint32 FLIGHT_CAPABILITY_NORMAL = 0;        // Normal flying (no drago
 
 // ============================================================================
 // RETAIL-ACCURATE BASE VALUES
-// These match WoW 11.2.7 dragonriding mechanics
+// These match WoW 12.0.7 dragonriding mechanics
 // ============================================================================
 
 // Vigor/Charges (now called "Skyriding Charges" in 11.2.7)

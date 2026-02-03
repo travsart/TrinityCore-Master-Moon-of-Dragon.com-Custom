@@ -1018,7 +1018,7 @@ public:
 };
 
 // ============================================================================
-// VEHICLE SCRIPT - Mount & Vehicle Control (CRITICAL for WoW 11.2)
+// VEHICLE SCRIPT - Mount & Vehicle Control (CRITICAL for WoW 12.0)
 // ============================================================================
 
 class PlayerbotVehicleScript : public VehicleScript

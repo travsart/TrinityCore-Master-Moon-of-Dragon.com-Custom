@@ -15,7 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
+#include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -32,61 +32,61 @@ namespace Playerbot
 {
 
 // ============================================================================
-// HOLY PALADIN SPELL ALIASES (WoW 11.2 - The War Within)
+// HOLY PALADIN SPELL ALIASES (WoW 12.0 - The War Within)
 // Consolidated spell IDs from central registry - NO duplicates
 // ============================================================================
 
 namespace HolyPaladinSpells
 {
     // Holy Power Generators
-    constexpr uint32 HOLY_SHOCK               = WoW112Spells::Paladin::Holy::HOLY_SHOCK;
-    constexpr uint32 CRUSADER_STRIKE_HOLY     = WoW112Spells::Paladin::CRUSADER_STRIKE;
-    constexpr uint32 JUDGMENT_HOLY            = WoW112Spells::Paladin::Holy::JUDGMENT_HOLY;
+    constexpr uint32 HOLY_SHOCK               = WoW120Spells::Paladin::Holy::HOLY_SHOCK;
+    constexpr uint32 CRUSADER_STRIKE_HOLY     = WoW120Spells::Paladin::CRUSADER_STRIKE;
+    constexpr uint32 JUDGMENT_HOLY            = WoW120Spells::Paladin::Holy::JUDGMENT_HOLY;
 
     // Holy Power Spenders
-    constexpr uint32 WORD_OF_GLORY            = WoW112Spells::Paladin::WORD_OF_GLORY;
-    constexpr uint32 LIGHT_OF_DAWN            = WoW112Spells::Paladin::Holy::LIGHT_OF_DAWN;
-    constexpr uint32 SHIELD_OF_THE_RIGHTEOUS_HOLY = WoW112Spells::Paladin::Protection::SHIELD_OF_THE_RIGHTEOUS;
+    constexpr uint32 WORD_OF_GLORY            = WoW120Spells::Paladin::WORD_OF_GLORY;
+    constexpr uint32 LIGHT_OF_DAWN            = WoW120Spells::Paladin::Holy::LIGHT_OF_DAWN;
+    constexpr uint32 SHIELD_OF_THE_RIGHTEOUS_HOLY = WoW120Spells::Paladin::Protection::SHIELD_OF_THE_RIGHTEOUS;
 
     // Direct Heals
-    constexpr uint32 FLASH_OF_LIGHT           = WoW112Spells::Paladin::FLASH_OF_LIGHT;
-    constexpr uint32 HOLY_LIGHT               = WoW112Spells::Paladin::HOLY_LIGHT;
-    constexpr uint32 DIVINE_TOLL              = WoW112Spells::Paladin::Protection::DIVINE_TOLL;
+    constexpr uint32 FLASH_OF_LIGHT           = WoW120Spells::Paladin::FLASH_OF_LIGHT;
+    constexpr uint32 HOLY_LIGHT               = WoW120Spells::Paladin::HOLY_LIGHT;
+    constexpr uint32 DIVINE_TOLL              = WoW120Spells::Paladin::Protection::DIVINE_TOLL;
 
     // AoE Heals
-    constexpr uint32 LIGHT_OF_THE_MARTYR      = WoW112Spells::Paladin::Holy::LIGHT_OF_THE_MARTYR;
-    constexpr uint32 BEACON_OF_LIGHT          = WoW112Spells::Paladin::Holy::BEACON_OF_LIGHT;
-    constexpr uint32 BEACON_OF_FAITH          = WoW112Spells::Paladin::Holy::BEACON_OF_FAITH;
-    constexpr uint32 BEACON_OF_VIRTUE         = WoW112Spells::Paladin::Holy::BEACON_OF_VIRTUE;
+    constexpr uint32 LIGHT_OF_THE_MARTYR      = WoW120Spells::Paladin::Holy::LIGHT_OF_THE_MARTYR;
+    constexpr uint32 BEACON_OF_LIGHT          = WoW120Spells::Paladin::Holy::BEACON_OF_LIGHT;
+    constexpr uint32 BEACON_OF_FAITH          = WoW120Spells::Paladin::Holy::BEACON_OF_FAITH;
+    constexpr uint32 BEACON_OF_VIRTUE         = WoW120Spells::Paladin::Holy::BEACON_OF_VIRTUE;
 
     // Cooldowns
-    constexpr uint32 AVENGING_WRATH_HOLY      = WoW112Spells::Paladin::Holy::AVENGING_WRATH_HOLY;
-    constexpr uint32 AVENGING_CRUSADER        = WoW112Spells::Paladin::Holy::AVENGING_CRUSADER;
-    constexpr uint32 HOLY_AVENGER             = WoW112Spells::Paladin::Holy::HOLY_AVENGER;
-    constexpr uint32 DIVINE_PROTECTION        = WoW112Spells::Paladin::DIVINE_PROTECTION;
-    constexpr uint32 BLESSING_OF_SACRIFICE    = WoW112Spells::Paladin::BLESSING_OF_SACRIFICE;
+    constexpr uint32 AVENGING_WRATH_HOLY      = WoW120Spells::Paladin::Holy::AVENGING_WRATH_HOLY;
+    constexpr uint32 AVENGING_CRUSADER        = WoW120Spells::Paladin::Holy::AVENGING_CRUSADER;
+    constexpr uint32 HOLY_AVENGER             = WoW120Spells::Paladin::Holy::HOLY_AVENGER;
+    constexpr uint32 DIVINE_PROTECTION        = WoW120Spells::Paladin::DIVINE_PROTECTION;
+    constexpr uint32 BLESSING_OF_SACRIFICE    = WoW120Spells::Paladin::BLESSING_OF_SACRIFICE;
 
     // Utility
-    constexpr uint32 CLEANSE                  = WoW112Spells::Paladin::CLEANSE;
-    constexpr uint32 BLESSING_OF_FREEDOM      = WoW112Spells::Paladin::BLESSING_OF_FREEDOM;
-    constexpr uint32 BLESSING_OF_PROTECTION   = WoW112Spells::Paladin::BLESSING_OF_PROTECTION;
-    constexpr uint32 LAY_ON_HANDS             = WoW112Spells::Paladin::LAY_ON_HANDS;
-    constexpr uint32 DIVINE_SHIELD            = WoW112Spells::Paladin::DIVINE_SHIELD;
+    constexpr uint32 CLEANSE                  = WoW120Spells::Paladin::CLEANSE;
+    constexpr uint32 BLESSING_OF_FREEDOM      = WoW120Spells::Paladin::BLESSING_OF_FREEDOM;
+    constexpr uint32 BLESSING_OF_PROTECTION   = WoW120Spells::Paladin::BLESSING_OF_PROTECTION;
+    constexpr uint32 LAY_ON_HANDS             = WoW120Spells::Paladin::LAY_ON_HANDS;
+    constexpr uint32 DIVINE_SHIELD            = WoW120Spells::Paladin::DIVINE_SHIELD;
 
     // Buffs/Auras
-    constexpr uint32 INFUSION_OF_LIGHT        = WoW112Spells::Paladin::Holy::INFUSION_OF_LIGHT;
-    constexpr uint32 GLIMMER_OF_LIGHT         = WoW112Spells::Paladin::Holy::GLIMMER_OF_LIGHT;
-    constexpr uint32 AURA_MASTERY             = WoW112Spells::Paladin::Holy::AURA_MASTERY;
+    constexpr uint32 INFUSION_OF_LIGHT        = WoW120Spells::Paladin::Holy::INFUSION_OF_LIGHT;
+    constexpr uint32 GLIMMER_OF_LIGHT         = WoW120Spells::Paladin::Holy::GLIMMER_OF_LIGHT;
+    constexpr uint32 AURA_MASTERY             = WoW120Spells::Paladin::Holy::AURA_MASTERY;
 
     // Auras
-    constexpr uint32 DEVOTION_AURA            = WoW112Spells::Paladin::DEVOTION_AURA;
-    constexpr uint32 CONCENTRATION_AURA       = WoW112Spells::Paladin::CONCENTRATION_AURA;
-    constexpr uint32 RETRIBUTION_AURA         = WoW112Spells::Paladin::RETRIBUTION_AURA;
+    constexpr uint32 DEVOTION_AURA            = WoW120Spells::Paladin::DEVOTION_AURA;
+    constexpr uint32 CONCENTRATION_AURA       = WoW120Spells::Paladin::CONCENTRATION_AURA;
+    constexpr uint32 RETRIBUTION_AURA         = WoW120Spells::Paladin::RETRIBUTION_AURA;
 
     // Talents
-    constexpr uint32 DIVINE_FAVOR             = WoW112Spells::Paladin::Holy::DIVINE_FAVOR;
-    constexpr uint32 AWAKENING                = WoW112Spells::Paladin::Holy::AWAKENING;
-    constexpr uint32 UNBREAKABLE_SPIRIT       = WoW112Spells::Paladin::Holy::UNBREAKABLE_SPIRIT;
+    constexpr uint32 DIVINE_FAVOR             = WoW120Spells::Paladin::Holy::DIVINE_FAVOR;
+    constexpr uint32 AWAKENING                = WoW120Spells::Paladin::Holy::AWAKENING;
+    constexpr uint32 UNBREAKABLE_SPIRIT       = WoW120Spells::Paladin::Holy::UNBREAKABLE_SPIRIT;
 }
 using namespace HolyPaladinSpells;
 

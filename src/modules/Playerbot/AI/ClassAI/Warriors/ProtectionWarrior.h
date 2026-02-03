@@ -19,7 +19,7 @@
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
+#include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
 #include "Item.h"
 #include "ItemDefines.h"
 #include "../../Services/ThreatAssistant.h"  // Phase 5C: Unified threat service
@@ -48,39 +48,39 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 
 // ============================================================================
-// PROTECTION WARRIOR SPELL ALIASES - Using Central Registry (WoW 11.2.7)
+// PROTECTION WARRIOR SPELL ALIASES - Using Central Registry (WoW 12.0.7)
 // ============================================================================
 namespace ProtectionWarriorSpells
 {
-    // Core Warrior spells (from WoW112Spells::Warrior)
-    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW112Spells::Warrior::BATTLE_SHOUT;
-    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW112Spells::Warrior::COMMANDING_SHOUT;
-    constexpr uint32 SPELL_CHARGE            = WoW112Spells::Warrior::CHARGE;
-    constexpr uint32 SPELL_TAUNT             = WoW112Spells::Warrior::TAUNT;
-    constexpr uint32 SPELL_RALLYING_CRY      = WoW112Spells::Warrior::RALLYING_CRY;
-    constexpr uint32 SPELL_SPELL_REFLECTION  = WoW112Spells::Warrior::SPELL_REFLECTION;
+    // Core Warrior spells (from WoW120Spells::Warrior)
+    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW120Spells::Warrior::BATTLE_SHOUT;
+    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW120Spells::Warrior::COMMANDING_SHOUT;
+    constexpr uint32 SPELL_CHARGE            = WoW120Spells::Warrior::CHARGE;
+    constexpr uint32 SPELL_TAUNT             = WoW120Spells::Warrior::TAUNT;
+    constexpr uint32 SPELL_RALLYING_CRY      = WoW120Spells::Warrior::RALLYING_CRY;
+    constexpr uint32 SPELL_SPELL_REFLECTION  = WoW120Spells::Warrior::SPELL_REFLECTION;
 
     // Protection Core Rotation
-    constexpr uint32 SPELL_SHIELD_SLAM       = WoW112Spells::Warrior::Protection::SHIELD_SLAM;
-    constexpr uint32 SPELL_THUNDER_CLAP      = WoW112Spells::Warrior::Protection::THUNDER_CLAP;
-    constexpr uint32 SPELL_REVENGE           = WoW112Spells::Warrior::Protection::REVENGE;
-    constexpr uint32 SPELL_DEVASTATE         = WoW112Spells::Warrior::Protection::DEVASTATE;
-    constexpr uint32 SPELL_SHIELD_BLOCK      = WoW112Spells::Warrior::Protection::SHIELD_BLOCK;
-    constexpr uint32 SPELL_IGNORE_PAIN       = WoW112Spells::Warrior::Protection::IGNORE_PAIN;
-    constexpr uint32 SPELL_DEMORALIZING_SHOUT = WoW112Spells::Warrior::Protection::DEMORALIZING_SHOUT;
-    constexpr uint32 SPELL_CHALLENGING_SHOUT = WoW112Spells::Warrior::Protection::CHALLENGING_SHOUT;
+    constexpr uint32 SPELL_SHIELD_SLAM       = WoW120Spells::Warrior::Protection::SHIELD_SLAM;
+    constexpr uint32 SPELL_THUNDER_CLAP      = WoW120Spells::Warrior::Protection::THUNDER_CLAP;
+    constexpr uint32 SPELL_REVENGE           = WoW120Spells::Warrior::Protection::REVENGE;
+    constexpr uint32 SPELL_DEVASTATE         = WoW120Spells::Warrior::Protection::DEVASTATE;
+    constexpr uint32 SPELL_SHIELD_BLOCK      = WoW120Spells::Warrior::Protection::SHIELD_BLOCK;
+    constexpr uint32 SPELL_IGNORE_PAIN       = WoW120Spells::Warrior::Protection::IGNORE_PAIN;
+    constexpr uint32 SPELL_DEMORALIZING_SHOUT = WoW120Spells::Warrior::Protection::DEMORALIZING_SHOUT;
+    constexpr uint32 SPELL_CHALLENGING_SHOUT = WoW120Spells::Warrior::Protection::CHALLENGING_SHOUT;
 
     // Protection Cooldowns
-    constexpr uint32 SPELL_LAST_STAND        = WoW112Spells::Warrior::Protection::LAST_STAND;
-    constexpr uint32 SPELL_SHIELD_WALL       = WoW112Spells::Warrior::Protection::SHIELD_WALL;
-    constexpr uint32 SPELL_AVATAR            = WoW112Spells::Warrior::Protection::AVATAR;
-    constexpr uint32 SPELL_RAVAGER           = WoW112Spells::Warrior::Protection::RAVAGER;
-    constexpr uint32 SPELL_SHIELD_CHARGE     = WoW112Spells::Warrior::Protection::SHIELD_CHARGE;
-    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW112Spells::Warrior::Protection::THUNDEROUS_ROAR;
-    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW112Spells::Warrior::Protection::CHAMPIONS_SPEAR;
+    constexpr uint32 SPELL_LAST_STAND        = WoW120Spells::Warrior::Protection::LAST_STAND;
+    constexpr uint32 SPELL_SHIELD_WALL       = WoW120Spells::Warrior::Protection::SHIELD_WALL;
+    constexpr uint32 SPELL_AVATAR            = WoW120Spells::Warrior::Protection::AVATAR;
+    constexpr uint32 SPELL_RAVAGER           = WoW120Spells::Warrior::Protection::RAVAGER;
+    constexpr uint32 SPELL_SHIELD_CHARGE     = WoW120Spells::Warrior::Protection::SHIELD_CHARGE;
+    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW120Spells::Warrior::Protection::THUNDEROUS_ROAR;
+    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW120Spells::Warrior::Protection::CHAMPIONS_SPEAR;
 
     // Procs
-    constexpr uint32 SPELL_REVENGE_PROC      = WoW112Spells::Warrior::REVENGE_PROC;
+    constexpr uint32 SPELL_REVENGE_PROC      = WoW120Spells::Warrior::REVENGE_PROC;
 }
 
 // Make Protection Warrior spell constants available in the class below
@@ -532,7 +532,7 @@ protected:
 
             _threatPriority.pop();
 
-        // Note: Stances removed in WoW 11.2.7 (Legion 7.0+)
+        // Note: Stances removed in WoW 12.0.7 (Legion 7.0+)
         // Protection Warriors automatically have passive tank benefits
 
         // Initial Shield Block

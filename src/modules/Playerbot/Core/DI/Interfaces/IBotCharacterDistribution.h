@@ -30,7 +30,7 @@ struct RaceClassCombination;
 /**
  * @brief Interface for Bot Character Distribution
  *
- * Manages realistic race/class distribution based on WoW 11.2 statistics with:
+ * Manages realistic race/class distribution based on WoW 12.0 statistics with:
  * - Database-driven race/class distribution
  * - Gender distribution with race-specific preferences
  * - Class popularity tracking

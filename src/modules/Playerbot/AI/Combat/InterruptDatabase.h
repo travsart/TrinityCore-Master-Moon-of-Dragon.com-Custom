@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * WoW 11.2 (The War Within) Interrupt Priority Database
+ * WoW 12.0 (The War Within) Interrupt Priority Database
  * Comprehensive spell interrupt priorities and configurations
  */
 
@@ -15,7 +15,7 @@
 namespace Playerbot
 {
 
-// WoW 11.2 Spell Categories for interrupt prioritization
+// WoW 12.0 Spell Categories for interrupt prioritization
 enum class SpellCategory : uint8
 {
     // Healing
@@ -81,7 +81,7 @@ struct SpellInterruptConfig
 class TC_GAME_API InterruptDatabase
 {
 public:
-    // Initialize the database with WoW 11.2 spell data
+    // Initialize the database with WoW 12.0 spell data
     static void Initialize();
 
     // Query methods
@@ -109,7 +109,7 @@ private:
     static bool _initialized;
 };
 
-// WoW 11.2 Class Interrupt Abilities
+// WoW 12.0 Class Interrupt Abilities
 struct ClassInterruptAbility
 {
     uint32 spellId;
@@ -137,7 +137,7 @@ struct ClassInterruptAbility
           resourceCost(resCost), offGCD(gcd), charges(chr) {}
 };
 
-// WoW 11.2 Interrupt ability database
+// WoW 12.0 Interrupt ability database
 namespace InterruptAbilities
 {
     // Death Knight
@@ -227,7 +227,7 @@ namespace InterruptAbilities
     uint32 GetSchoolLockoutDuration(uint32 spellId);
 }
 
-// WoW 11.2 Critical Spells Database (must interrupt)
+// WoW 12.0 Critical Spells Database (must interrupt)
 namespace CriticalSpells
 {
     // Dungeon spells
@@ -305,7 +305,7 @@ namespace CriticalSpells
     }
 }
 
-// WoW 11.2 Mythic+ scaling configurations
+// WoW 12.0 Mythic+ scaling configurations
 struct MythicPlusConfig
 {
     uint8 level;

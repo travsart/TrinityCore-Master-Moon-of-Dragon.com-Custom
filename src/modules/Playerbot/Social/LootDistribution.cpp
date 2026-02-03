@@ -1276,7 +1276,7 @@ bool LootDistribution::IsItemForMainSpec(const LootItem& item)
     {
         uint8 playerClass = _bot->GetClass();
 
-        // Armor type restrictions by class (WoW 11.2)
+        // Armor type restrictions by class (WoW 12.0)
         switch (playerClass)
         {
             case CLASS_WARRIOR:
@@ -1527,7 +1527,7 @@ bool LootDistribution::IsItemUsefulForOffSpec(const LootItem& item)
     uint8 invType = item.itemTemplate->GetInventoryType();
 
     // Define potential off-specs for each class and check if item is useful
-    // WoW 11.2 class/spec matrix
+    // WoW 12.0 class/spec matrix
     std::vector<ChrSpecialization> possibleOffSpecs;
 
     switch (playerClass)

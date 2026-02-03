@@ -62,7 +62,7 @@ struct ClassPopularity
  * Bot Character Distribution System
  *
  * Features:
- * - Database-driven realistic race/class distribution based on WoW 11.2 statistics
+ * - Database-driven realistic race/class distribution based on WoW 12.0 statistics
  * - Gender distribution with race-specific preferences
  * - Class popularity tracking (PvE, PvP, M+, Raid)
  * - Cumulative distribution for O(log n) random selection

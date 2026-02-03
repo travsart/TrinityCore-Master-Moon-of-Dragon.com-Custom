@@ -596,7 +596,7 @@ bool VendorInteractionManager::FitsWithinBudget(uint64 goldCost, PurchasePriorit
         return reagents;
 
     uint32 classId = m_bot->GetClass();
-    // Class-specific reagents (WoW 11.2 item IDs)
+    // Class-specific reagents (WoW 12.0 item IDs)
     // Note: These are examples - actual item IDs should be verified in game DB
     switch (classId)
     {

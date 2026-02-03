@@ -158,7 +158,7 @@ public:
 private:
     bool IsFinisher(uint32 spellId) const
     {
-        // WoW 11.2 finishers - EXPOSE_ARMOR removed from game
+        // WoW 12.0 finishers - EXPOSE_ARMOR removed from game
         return spellId == RogueAI::SLICE_AND_DICE || spellId == RogueAI::RUPTURE ||
                spellId == RogueAI::EVISCERATE || spellId == RogueAI::KIDNEY_SHOT ||
                spellId == RogueAI::ENVENOM || spellId == RogueAI::CRIMSON_TEMPEST ||
@@ -661,7 +661,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         }
     }
 
-    // NOTE: EXPOSE_ARMOR removed from WoW 11.2
+    // NOTE: EXPOSE_ARMOR removed from WoW 12.0
     // Armor reduction is now provided by other debuffs (Colossus Smash, etc.)
 
     // Kidney Shot for control
@@ -1146,7 +1146,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
             break;
 
         case 2: // Subtlety
-            // NOTE: HEMORRHAGE removed from WoW 11.2
+            // NOTE: HEMORRHAGE removed from WoW 12.0
             // Subtlety now uses Shadowstrike (from stealth/Shadow Dance) and Backstab
             if (CanUseAbility(SHADOWSTRIKE))
             {
@@ -1270,7 +1270,7 @@ void RogueAI::ApplyPoisons()
                 break;
 
             case 2: // Subtlety
-                // NOTE: MIND_NUMBING_POISON renamed to NUMBING_POISON in WoW 11.2
+                // NOTE: MIND_NUMBING_POISON renamed to NUMBING_POISON in WoW 12.0
                 poisonSpell = NUMBING_POISON;
                 break;
         }
@@ -1357,7 +1357,7 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
 
 bool RogueAI::IsFinisher(uint32 spellId) const
 {
-    // WoW 11.2 finishers - EXPOSE_ARMOR and DEADLY_THROW removed from game
+    // WoW 12.0 finishers - EXPOSE_ARMOR and DEADLY_THROW removed from game
     return spellId == SLICE_AND_DICE || spellId == RUPTURE ||
            spellId == EVISCERATE || spellId == KIDNEY_SHOT ||
            spellId == ENVENOM || spellId == CRIMSON_TEMPEST ||

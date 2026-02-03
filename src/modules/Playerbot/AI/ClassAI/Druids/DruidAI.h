@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include <memory>
 #include <chrono>
 
@@ -128,86 +128,86 @@ private:
     uint32 GetComboPoints() const;
 
     // Spell ID constants
-    // Druid Spell IDs - Using central registry (WoW 11.2)
+    // Druid Spell IDs - Using central registry (WoW 12.0)
     enum DruidSpells
     {
         // Forms
-        BEAR_FORM = WoW112Spells::Druid::Common::BEAR_FORM,
-        CAT_FORM = WoW112Spells::Druid::Common::CAT_FORM,
-        MOONKIN_FORM = WoW112Spells::Druid::Common::MOONKIN_FORM,
-        TREE_OF_LIFE = WoW112Spells::Druid::Common::TREE_OF_LIFE,
-        TRAVEL_FORM = WoW112Spells::Druid::Common::TRAVEL_FORM,
+        BEAR_FORM = WoW120Spells::Druid::Common::BEAR_FORM,
+        CAT_FORM = WoW120Spells::Druid::Common::CAT_FORM,
+        MOONKIN_FORM = WoW120Spells::Druid::Common::MOONKIN_FORM,
+        TREE_OF_LIFE = WoW120Spells::Druid::Common::TREE_OF_LIFE,
+        TRAVEL_FORM = WoW120Spells::Druid::Common::TRAVEL_FORM,
 
         // Interrupts
-        SKULL_BASH_BEAR = WoW112Spells::Druid::Common::SKULL_BASH_BEAR,
-        SKULL_BASH_CAT = WoW112Spells::Druid::Common::SKULL_BASH_CAT,
-        SOLAR_BEAM = WoW112Spells::Druid::Common::SOLAR_BEAM,
-        TYPHOON = WoW112Spells::Druid::Common::TYPHOON,
-        MIGHTY_BASH = WoW112Spells::Druid::Common::MIGHTY_BASH,
+        SKULL_BASH_BEAR = WoW120Spells::Druid::Common::SKULL_BASH_BEAR,
+        SKULL_BASH_CAT = WoW120Spells::Druid::Common::SKULL_BASH_CAT,
+        SOLAR_BEAM = WoW120Spells::Druid::Common::SOLAR_BEAM,
+        TYPHOON = WoW120Spells::Druid::Common::TYPHOON,
+        MIGHTY_BASH = WoW120Spells::Druid::Common::MIGHTY_BASH,
 
         // Defensive abilities
-        BARKSKIN = WoW112Spells::Druid::Common::BARKSKIN,
-        SURVIVAL_INSTINCTS = WoW112Spells::Druid::Common::SURVIVAL_INSTINCTS,
-        FRENZIED_REGENERATION = WoW112Spells::Druid::Common::FRENZIED_REGENERATION,
-        IRONBARK = WoW112Spells::Druid::Common::IRONBARK,
-        CENARION_WARD = WoW112Spells::Druid::Common::CENARION_WARD,
+        BARKSKIN = WoW120Spells::Druid::Common::BARKSKIN,
+        SURVIVAL_INSTINCTS = WoW120Spells::Druid::Common::SURVIVAL_INSTINCTS,
+        FRENZIED_REGENERATION = WoW120Spells::Druid::Common::FRENZIED_REGENERATION,
+        IRONBARK = WoW120Spells::Druid::Common::IRONBARK,
+        CENARION_WARD = WoW120Spells::Druid::Common::CENARION_WARD,
 
         // Feral offensive
-        TIGERS_FURY = WoW112Spells::Druid::Common::TIGERS_FURY,
-        BERSERK_CAT = WoW112Spells::Druid::Common::BERSERK_CAT,
-        INCARNATION_KING = WoW112Spells::Druid::Common::INCARNATION_KING,
+        TIGERS_FURY = WoW120Spells::Druid::Common::TIGERS_FURY,
+        BERSERK_CAT = WoW120Spells::Druid::Common::BERSERK_CAT,
+        INCARNATION_KING = WoW120Spells::Druid::Common::INCARNATION_KING,
 
         // Feral abilities
-        SHRED = WoW112Spells::Druid::Common::SHRED,
-        RAKE = WoW112Spells::Druid::Common::RAKE,
-        RIP = WoW112Spells::Druid::Common::RIP,
-        FEROCIOUS_BITE = WoW112Spells::Druid::Common::FEROCIOUS_BITE,
-        SAVAGE_ROAR = WoW112Spells::Druid::Common::SAVAGE_ROAR,
-        SWIPE_CAT = WoW112Spells::Druid::Common::SWIPE_CAT,
-        THRASH_CAT = WoW112Spells::Druid::Common::THRASH_CAT,
-        PRIMAL_WRATH = WoW112Spells::Druid::Common::PRIMAL_WRATH,
+        SHRED = WoW120Spells::Druid::Common::SHRED,
+        RAKE = WoW120Spells::Druid::Common::RAKE,
+        RIP = WoW120Spells::Druid::Common::RIP,
+        FEROCIOUS_BITE = WoW120Spells::Druid::Common::FEROCIOUS_BITE,
+        SAVAGE_ROAR = WoW120Spells::Druid::Common::SAVAGE_ROAR,
+        SWIPE_CAT = WoW120Spells::Druid::Common::SWIPE_CAT,
+        THRASH_CAT = WoW120Spells::Druid::Common::THRASH_CAT,
+        PRIMAL_WRATH = WoW120Spells::Druid::Common::PRIMAL_WRATH,
 
         // Guardian abilities
-        MANGLE_BEAR = WoW112Spells::Druid::Common::MANGLE_BEAR,
-        MAUL = WoW112Spells::Druid::Common::MAUL,
-        IRONFUR = WoW112Spells::Druid::Common::IRONFUR,
-        THRASH_BEAR = WoW112Spells::Druid::Common::THRASH_BEAR,
-        SWIPE_BEAR = WoW112Spells::Druid::Common::SWIPE_BEAR,
-        BERSERK_BEAR = WoW112Spells::Druid::Common::BERSERK_BEAR,
-        INCARNATION_GUARDIAN = WoW112Spells::Druid::Common::INCARNATION_GUARDIAN,
-        PULVERIZE = WoW112Spells::Druid::Common::PULVERIZE,
+        MANGLE_BEAR = WoW120Spells::Druid::Common::MANGLE_BEAR,
+        MAUL = WoW120Spells::Druid::Common::MAUL,
+        IRONFUR = WoW120Spells::Druid::Common::IRONFUR,
+        THRASH_BEAR = WoW120Spells::Druid::Common::THRASH_BEAR,
+        SWIPE_BEAR = WoW120Spells::Druid::Common::SWIPE_BEAR,
+        BERSERK_BEAR = WoW120Spells::Druid::Common::BERSERK_BEAR,
+        INCARNATION_GUARDIAN = WoW120Spells::Druid::Common::INCARNATION_GUARDIAN,
+        PULVERIZE = WoW120Spells::Druid::Common::PULVERIZE,
 
         // Balance abilities
-        WRATH = WoW112Spells::Druid::Common::WRATH,
-        STARFIRE = WoW112Spells::Druid::Common::STARFIRE,
-        MOONFIRE = WoW112Spells::Druid::Common::MOONFIRE,
-        SUNFIRE = WoW112Spells::Druid::Common::SUNFIRE,
-        STARSURGE = WoW112Spells::Druid::Common::STARSURGE,
-        STARFALL = WoW112Spells::Druid::Common::STARFALL,
-        CELESTIAL_ALIGNMENT = WoW112Spells::Druid::Common::CELESTIAL_ALIGNMENT,
-        INCARNATION_BALANCE = WoW112Spells::Druid::Common::INCARNATION_BALANCE,
+        WRATH = WoW120Spells::Druid::Common::WRATH,
+        STARFIRE = WoW120Spells::Druid::Common::STARFIRE,
+        MOONFIRE = WoW120Spells::Druid::Common::MOONFIRE,
+        SUNFIRE = WoW120Spells::Druid::Common::SUNFIRE,
+        STARSURGE = WoW120Spells::Druid::Common::STARSURGE,
+        STARFALL = WoW120Spells::Druid::Common::STARFALL,
+        CELESTIAL_ALIGNMENT = WoW120Spells::Druid::Common::CELESTIAL_ALIGNMENT,
+        INCARNATION_BALANCE = WoW120Spells::Druid::Common::INCARNATION_BALANCE,
         // NOTE: LUNAR_STRIKE and SOLAR_WRATH were removed in WoW 11.x
         // They were merged with STARFIRE and WRATH respectively
 
         // Restoration abilities
-        REJUVENATION = WoW112Spells::Druid::Common::REJUVENATION,
-        REGROWTH = WoW112Spells::Druid::Common::REGROWTH,
-        LIFEBLOOM = WoW112Spells::Druid::Common::LIFEBLOOM,
-        HEALING_TOUCH = WoW112Spells::Druid::Common::HEALING_TOUCH,
-        WILD_GROWTH = WoW112Spells::Druid::Common::WILD_GROWTH,
-        SWIFTMEND = WoW112Spells::Druid::Common::SWIFTMEND,
-        TRANQUILITY = WoW112Spells::Druid::Common::TRANQUILITY,
-        INCARNATION_TREE = WoW112Spells::Druid::Common::INCARNATION_TREE,
-        NATURES_SWIFTNESS = WoW112Spells::Druid::Common::NATURES_SWIFTNESS,
-        EFFLORESCENCE = WoW112Spells::Druid::Common::EFFLORESCENCE,
+        REJUVENATION = WoW120Spells::Druid::Common::REJUVENATION,
+        REGROWTH = WoW120Spells::Druid::Common::REGROWTH,
+        LIFEBLOOM = WoW120Spells::Druid::Common::LIFEBLOOM,
+        HEALING_TOUCH = WoW120Spells::Druid::Common::HEALING_TOUCH,
+        WILD_GROWTH = WoW120Spells::Druid::Common::WILD_GROWTH,
+        SWIFTMEND = WoW120Spells::Druid::Common::SWIFTMEND,
+        TRANQUILITY = WoW120Spells::Druid::Common::TRANQUILITY,
+        INCARNATION_TREE = WoW120Spells::Druid::Common::INCARNATION_TREE,
+        NATURES_SWIFTNESS = WoW120Spells::Druid::Common::NATURES_SWIFTNESS,
+        EFFLORESCENCE = WoW120Spells::Druid::Common::EFFLORESCENCE,
 
         // Utility
-        REMOVE_CORRUPTION = WoW112Spells::Druid::Common::REMOVE_CORRUPTION,
-        NATURES_CURE = WoW112Spells::Druid::Common::NATURES_CURE,
-        REBIRTH = WoW112Spells::Druid::Common::REBIRTH,
-        INNERVATE = WoW112Spells::Druid::Common::INNERVATE,
-        STAMPEDING_ROAR = WoW112Spells::Druid::Common::STAMPEDING_ROAR,
-        MARK_OF_THE_WILD = WoW112Spells::Druid::MARK_OF_THE_WILD
+        REMOVE_CORRUPTION = WoW120Spells::Druid::Common::REMOVE_CORRUPTION,
+        NATURES_CURE = WoW120Spells::Druid::Common::NATURES_CURE,
+        REBIRTH = WoW120Spells::Druid::Common::REBIRTH,
+        INNERVATE = WoW120Spells::Druid::Common::INNERVATE,
+        STAMPEDING_ROAR = WoW120Spells::Druid::Common::STAMPEDING_ROAR,
+        MARK_OF_THE_WILD = WoW120Spells::Druid::MARK_OF_THE_WILD
     };
 };
 

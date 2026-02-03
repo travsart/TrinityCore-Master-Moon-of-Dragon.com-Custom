@@ -23,7 +23,7 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
 
     for (auto const& auraInfo : packet.Auras)
     {
-        // WoW 11.2: AuraInfo structure changed
+        // WoW 12.0: AuraInfo structure changed
         // - AuraDataChanged → AuraData.has_value() (Optional<AuraDataInfo>)
         // - SpellID → AuraData->SpellID (nested in AuraDataInfo)
 

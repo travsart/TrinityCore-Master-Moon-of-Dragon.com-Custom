@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112_Part2.h"
+#include "../SpellValidation_WoW120_Part2.h"
 #include "../BaselineRotationManager.h"
 #include "Position.h"
 #include <memory>
@@ -153,66 +153,66 @@ private:
     static constexpr uint32 PSYCHIC_SCREAM_COOLDOWN = 30000; // 30 seconds
     static constexpr float MANA_CONSERVATION_THRESHOLD = 0.3f; // 30%
     static constexpr float EMERGENCY_HEALTH_THRESHOLD = 0.25f; // 25%
-    // Note: FEAR_WARD_COOLDOWN and INNER_FIRE_DURATION removed - spells no longer exist in WoW 11.2
+    // Note: FEAR_WARD_COOLDOWN and INNER_FIRE_DURATION removed - spells no longer exist in WoW 12.0
 
-    // Spell IDs - Using central registry (WoW 11.2)
+    // Spell IDs - Using central registry (WoW 12.0)
     enum PriestSpells
     {
         // Utility spells
-        DISPEL_MAGIC = WoW112Spells::Priest::Common::DISPEL_MAGIC,
-        MASS_DISPEL = WoW112Spells::Priest::Common::MASS_DISPEL,
-        PSYCHIC_SCREAM = WoW112Spells::Priest::Common::PSYCHIC_SCREAM,
-        FADE = WoW112Spells::Priest::Common::FADE,
-        DESPERATE_PRAYER = WoW112Spells::Priest::Common::DESPERATE_PRAYER,
-        SILENCE = WoW112Spells::Priest::Common::SILENCE,
-        PURIFY = WoW112Spells::Priest::Common::PURIFY,
-        DISPERSION = WoW112Spells::Priest::Common::DISPERSION,
-        LEAP_OF_FAITH = WoW112Spells::Priest::Common::LEAP_OF_FAITH,
-        SHACKLE_UNDEAD = WoW112Spells::Priest::Common::SHACKLE_UNDEAD,
+        DISPEL_MAGIC = WoW120Spells::Priest::Common::DISPEL_MAGIC,
+        MASS_DISPEL = WoW120Spells::Priest::Common::MASS_DISPEL,
+        PSYCHIC_SCREAM = WoW120Spells::Priest::Common::PSYCHIC_SCREAM,
+        FADE = WoW120Spells::Priest::Common::FADE,
+        DESPERATE_PRAYER = WoW120Spells::Priest::Common::DESPERATE_PRAYER,
+        SILENCE = WoW120Spells::Priest::Common::SILENCE,
+        PURIFY = WoW120Spells::Priest::Common::PURIFY,
+        DISPERSION = WoW120Spells::Priest::Common::DISPERSION,
+        LEAP_OF_FAITH = WoW120Spells::Priest::Common::LEAP_OF_FAITH,
+        SHACKLE_UNDEAD = WoW120Spells::Priest::Common::SHACKLE_UNDEAD,
 
         // Buffs
-        POWER_WORD_FORTITUDE = WoW112Spells::Priest::Common::POWER_WORD_FORTITUDE,
-        POWER_INFUSION = WoW112Spells::Priest::Common::POWER_INFUSION,
-        LEVITATE = WoW112Spells::Priest::Common::LEVITATE,
-        SYMBOL_OF_HOPE = WoW112Spells::Priest::HolyPriest::SYMBOL_OF_HOPE,
+        POWER_WORD_FORTITUDE = WoW120Spells::Priest::Common::POWER_WORD_FORTITUDE,
+        POWER_INFUSION = WoW120Spells::Priest::Common::POWER_INFUSION,
+        LEVITATE = WoW120Spells::Priest::Common::LEVITATE,
+        SYMBOL_OF_HOPE = WoW120Spells::Priest::HolyPriest::SYMBOL_OF_HOPE,
 
         // Healing spells (Common)
-        FLASH_HEAL = WoW112Spells::Priest::Common::FLASH_HEAL,
-        HEAL = WoW112Spells::Priest::Common::HEAL,
-        RENEW = WoW112Spells::Priest::Common::RENEW,
-        PRAYER_OF_MENDING = WoW112Spells::Priest::Common::PRAYER_OF_MENDING,
-        POWER_WORD_SHIELD = WoW112Spells::Priest::Common::POWER_WORD_SHIELD,
+        FLASH_HEAL = WoW120Spells::Priest::Common::FLASH_HEAL,
+        HEAL = WoW120Spells::Priest::Common::HEAL,
+        RENEW = WoW120Spells::Priest::Common::RENEW,
+        PRAYER_OF_MENDING = WoW120Spells::Priest::Common::PRAYER_OF_MENDING,
+        POWER_WORD_SHIELD = WoW120Spells::Priest::Common::POWER_WORD_SHIELD,
 
         // Damage spells (Common)
-        SMITE = WoW112Spells::Priest::Common::SMITE,
-        SHADOW_WORD_PAIN = WoW112Spells::Priest::Common::SHADOW_WORD_PAIN,
-        SHADOW_WORD_DEATH = WoW112Spells::Priest::Common::SHADOW_WORD_DEATH,
-        MIND_BLAST = WoW112Spells::Priest::Common::MIND_BLAST,
-        HOLY_FIRE = WoW112Spells::Priest::Common::HOLY_FIRE,
-        VAMPIRIC_TOUCH = WoW112Spells::Priest::Common::VAMPIRIC_TOUCH,
-        MIND_FLAY = WoW112Spells::Priest::Common::MIND_FLAY,
+        SMITE = WoW120Spells::Priest::Common::SMITE,
+        SHADOW_WORD_PAIN = WoW120Spells::Priest::Common::SHADOW_WORD_PAIN,
+        SHADOW_WORD_DEATH = WoW120Spells::Priest::Common::SHADOW_WORD_DEATH,
+        MIND_BLAST = WoW120Spells::Priest::Common::MIND_BLAST,
+        HOLY_FIRE = WoW120Spells::Priest::Common::HOLY_FIRE,
+        VAMPIRIC_TOUCH = WoW120Spells::Priest::Common::VAMPIRIC_TOUCH,
+        MIND_FLAY = WoW120Spells::Priest::Common::MIND_FLAY,
 
         // Holy spec
-        HOLY_WORD_SERENITY = WoW112Spells::Priest::Common::HOLY_WORD_SERENITY,
-        HOLY_WORD_SANCTIFY = WoW112Spells::Priest::Common::HOLY_WORD_SANCTIFY,
-        CIRCLE_OF_HEALING = WoW112Spells::Priest::Common::CIRCLE_OF_HEALING,
-        GUARDIAN_SPIRIT = WoW112Spells::Priest::HolyPriest::GUARDIAN_SPIRIT,
-        DIVINE_HYMN = WoW112Spells::Priest::HolyPriest::DIVINE_HYMN,
-        PRAYER_OF_HEALING = WoW112Spells::Priest::HolyPriest::PRAYER_OF_HEALING,
+        HOLY_WORD_SERENITY = WoW120Spells::Priest::Common::HOLY_WORD_SERENITY,
+        HOLY_WORD_SANCTIFY = WoW120Spells::Priest::Common::HOLY_WORD_SANCTIFY,
+        CIRCLE_OF_HEALING = WoW120Spells::Priest::Common::CIRCLE_OF_HEALING,
+        GUARDIAN_SPIRIT = WoW120Spells::Priest::HolyPriest::GUARDIAN_SPIRIT,
+        DIVINE_HYMN = WoW120Spells::Priest::HolyPriest::DIVINE_HYMN,
+        PRAYER_OF_HEALING = WoW120Spells::Priest::HolyPriest::PRAYER_OF_HEALING,
 
         // Discipline spec
-        PENANCE = WoW112Spells::Priest::Discipline::PENANCE,
-        SHADOW_MEND = WoW112Spells::Priest::Discipline::SHADOW_MEND,
-        PAIN_SUPPRESSION = WoW112Spells::Priest::Discipline::PAIN_SUPPRESSION,
-        POWER_WORD_BARRIER = WoW112Spells::Priest::Discipline::POWER_WORD_BARRIER,
-        RAPTURE = WoW112Spells::Priest::Discipline::RAPTURE,
+        PENANCE = WoW120Spells::Priest::Discipline::PENANCE,
+        SHADOW_MEND = WoW120Spells::Priest::Discipline::SHADOW_MEND,
+        PAIN_SUPPRESSION = WoW120Spells::Priest::Discipline::PAIN_SUPPRESSION,
+        POWER_WORD_BARRIER = WoW120Spells::Priest::Discipline::POWER_WORD_BARRIER,
+        RAPTURE = WoW120Spells::Priest::Discipline::RAPTURE,
 
         // Shadow spec
-        SHADOWFORM = WoW112Spells::Priest::Common::SHADOWFORM,
-        DEVOURING_PLAGUE = WoW112Spells::Priest::Common::DEVOURING_PLAGUE,
-        VAMPIRIC_EMBRACE = WoW112Spells::Priest::Shadow::VAMPIRIC_EMBRACE,
-        VOID_ERUPTION = WoW112Spells::Priest::Shadow::VOID_ERUPTION,
-        VOID_BOLT = WoW112Spells::Priest::Shadow::VOID_BOLT
+        SHADOWFORM = WoW120Spells::Priest::Common::SHADOWFORM,
+        DEVOURING_PLAGUE = WoW120Spells::Priest::Common::DEVOURING_PLAGUE,
+        VAMPIRIC_EMBRACE = WoW120Spells::Priest::Shadow::VAMPIRIC_EMBRACE,
+        VOID_ERUPTION = WoW120Spells::Priest::Shadow::VOID_ERUPTION,
+        VOID_BOLT = WoW120Spells::Priest::Shadow::VOID_BOLT
     };
 };
 

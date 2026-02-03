@@ -36,7 +36,7 @@ void ParseTypedChat(WorldSession* session, WorldPackets::Chat::Chat const& packe
         bot->GetGUID(),
         packet.SenderName,
         packet.ChatText,
-        static_cast<ChatMsg>(packet.SlashCmd),  // WoW 11.2: SlashCmd is uint8, cast to ChatMsg enum
+        static_cast<ChatMsg>(packet.SlashCmd),  // WoW 12.0: SlashCmd is uint8, cast to ChatMsg enum
         static_cast<Language>(packet._Language),
         packet._Channel,
         packet.AchievementID
@@ -166,7 +166,7 @@ void ParseTypedTradeStatus(WorldSession* session, WorldPackets::Trade::TradeStat
         return;
 
     SocialEvent event = SocialEvent::TradeStatusChanged(
-        packet.Partner,  // WoW 11.2: Field is Partner, not PartnerGuid
+        packet.Partner,  // WoW 12.0: Field is Partner, not PartnerGuid
         bot->GetGUID(),
         static_cast<uint8>(packet.Status)
     );

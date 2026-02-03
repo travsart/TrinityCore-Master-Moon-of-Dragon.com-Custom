@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include "../../Combat/BotThreatManager.h"
@@ -194,59 +194,59 @@ private:
         }
     } _combatMetrics;
 
-    // Mage spell IDs - Using central registry (WoW 11.2)
-    static constexpr uint32 ARCANE_MISSILES = WoW112Spells::Mage::Common::ARCANE_MISSILES;
-    static constexpr uint32 ARCANE_BLAST = WoW112Spells::Mage::Common::ARCANE_BLAST;
-    static constexpr uint32 ARCANE_BARRAGE = WoW112Spells::Mage::Common::ARCANE_BARRAGE;
-    static constexpr uint32 ARCANE_ORB = WoW112Spells::Mage::Common::ARCANE_ORB;
-    static constexpr uint32 ARCANE_POWER = WoW112Spells::Mage::Common::ARCANE_POWER;
-    static constexpr uint32 ARCANE_INTELLECT = WoW112Spells::Mage::Common::ARCANE_INTELLECT;
-    static constexpr uint32 ARCANE_EXPLOSION = WoW112Spells::Mage::Common::ARCANE_EXPLOSION;
+    // Mage spell IDs - Using central registry (WoW 12.0)
+    static constexpr uint32 ARCANE_MISSILES = WoW120Spells::Mage::Common::ARCANE_MISSILES;
+    static constexpr uint32 ARCANE_BLAST = WoW120Spells::Mage::Common::ARCANE_BLAST;
+    static constexpr uint32 ARCANE_BARRAGE = WoW120Spells::Mage::Common::ARCANE_BARRAGE;
+    static constexpr uint32 ARCANE_ORB = WoW120Spells::Mage::Common::ARCANE_ORB;
+    static constexpr uint32 ARCANE_POWER = WoW120Spells::Mage::Common::ARCANE_POWER;
+    static constexpr uint32 ARCANE_INTELLECT = WoW120Spells::Mage::Common::ARCANE_INTELLECT;
+    static constexpr uint32 ARCANE_EXPLOSION = WoW120Spells::Mage::Common::ARCANE_EXPLOSION;
 
     // Fire spells
-    static constexpr uint32 FIREBALL = WoW112Spells::Mage::Common::FIREBALL;
-    static constexpr uint32 FIRE_BLAST = WoW112Spells::Mage::Common::FIRE_BLAST;
-    static constexpr uint32 PYROBLAST = WoW112Spells::Mage::Common::PYROBLAST;
-    static constexpr uint32 FLAMESTRIKE = WoW112Spells::Mage::Common::FLAMESTRIKE;
-    static constexpr uint32 SCORCH = WoW112Spells::Mage::Common::SCORCH;
-    static constexpr uint32 COMBUSTION = WoW112Spells::Mage::Common::COMBUSTION;
-    static constexpr uint32 LIVING_BOMB = WoW112Spells::Mage::Common::LIVING_BOMB;
-    static constexpr uint32 DRAGON_BREATH = WoW112Spells::Mage::Common::DRAGONS_BREATH;
+    static constexpr uint32 FIREBALL = WoW120Spells::Mage::Common::FIREBALL;
+    static constexpr uint32 FIRE_BLAST = WoW120Spells::Mage::Common::FIRE_BLAST;
+    static constexpr uint32 PYROBLAST = WoW120Spells::Mage::Common::PYROBLAST;
+    static constexpr uint32 FLAMESTRIKE = WoW120Spells::Mage::Common::FLAMESTRIKE;
+    static constexpr uint32 SCORCH = WoW120Spells::Mage::Common::SCORCH;
+    static constexpr uint32 COMBUSTION = WoW120Spells::Mage::Common::COMBUSTION;
+    static constexpr uint32 LIVING_BOMB = WoW120Spells::Mage::Common::LIVING_BOMB;
+    static constexpr uint32 DRAGON_BREATH = WoW120Spells::Mage::Common::DRAGONS_BREATH;
 
     // Frost spells
-    static constexpr uint32 FROSTBOLT = WoW112Spells::Mage::Common::FROSTBOLT;
-    static constexpr uint32 ICE_LANCE = WoW112Spells::Mage::Common::ICE_LANCE;
-    static constexpr uint32 FROZEN_ORB = WoW112Spells::Mage::Common::FROZEN_ORB;
-    static constexpr uint32 BLIZZARD = WoW112Spells::Mage::Common::BLIZZARD;
-    static constexpr uint32 CONE_OF_COLD = WoW112Spells::Mage::Common::CONE_OF_COLD;
-    static constexpr uint32 ICY_VEINS = WoW112Spells::Mage::Common::ICY_VEINS;
-    static constexpr uint32 WATER_ELEMENTAL = WoW112Spells::Mage::Common::SUMMON_WATER_ELEMENTAL;
-    static constexpr uint32 ICE_BARRIER = WoW112Spells::Mage::Common::ICE_BARRIER;
-    static constexpr uint32 FROST_NOVA = WoW112Spells::Mage::Common::FROST_NOVA;
+    static constexpr uint32 FROSTBOLT = WoW120Spells::Mage::Common::FROSTBOLT;
+    static constexpr uint32 ICE_LANCE = WoW120Spells::Mage::Common::ICE_LANCE;
+    static constexpr uint32 FROZEN_ORB = WoW120Spells::Mage::Common::FROZEN_ORB;
+    static constexpr uint32 BLIZZARD = WoW120Spells::Mage::Common::BLIZZARD;
+    static constexpr uint32 CONE_OF_COLD = WoW120Spells::Mage::Common::CONE_OF_COLD;
+    static constexpr uint32 ICY_VEINS = WoW120Spells::Mage::Common::ICY_VEINS;
+    static constexpr uint32 WATER_ELEMENTAL = WoW120Spells::Mage::Common::SUMMON_WATER_ELEMENTAL;
+    static constexpr uint32 ICE_BARRIER = WoW120Spells::Mage::Common::ICE_BARRIER;
+    static constexpr uint32 FROST_NOVA = WoW120Spells::Mage::Common::FROST_NOVA;
 
     // Crowd control
-    static constexpr uint32 POLYMORPH = WoW112Spells::Mage::Common::POLYMORPH;
-    static constexpr uint32 COUNTERSPELL = WoW112Spells::Mage::Common::COUNTERSPELL;
+    static constexpr uint32 POLYMORPH = WoW120Spells::Mage::Common::POLYMORPH;
+    static constexpr uint32 COUNTERSPELL = WoW120Spells::Mage::Common::COUNTERSPELL;
 
     // Defensive abilities
-    static constexpr uint32 BLINK = WoW112Spells::Mage::Common::BLINK;
-    static constexpr uint32 SHIMMER = WoW112Spells::Mage::Common::SHIMMER;
-    static constexpr uint32 INVISIBILITY = WoW112Spells::Mage::Common::INVISIBILITY;
-    static constexpr uint32 GREATER_INVISIBILITY = WoW112Spells::Mage::Common::GREATER_INVISIBILITY;
-    static constexpr uint32 ICE_BLOCK = WoW112Spells::Mage::Common::ICE_BLOCK;
-    static constexpr uint32 BLAZING_BARRIER = WoW112Spells::Mage::Common::BLAZING_BARRIER;
+    static constexpr uint32 BLINK = WoW120Spells::Mage::Common::BLINK;
+    static constexpr uint32 SHIMMER = WoW120Spells::Mage::Common::SHIMMER;
+    static constexpr uint32 INVISIBILITY = WoW120Spells::Mage::Common::INVISIBILITY;
+    static constexpr uint32 GREATER_INVISIBILITY = WoW120Spells::Mage::Common::GREATER_INVISIBILITY;
+    static constexpr uint32 ICE_BLOCK = WoW120Spells::Mage::Common::ICE_BLOCK;
+    static constexpr uint32 BLAZING_BARRIER = WoW120Spells::Mage::Common::BLAZING_BARRIER;
 
     // Utility
-    static constexpr uint32 MIRROR_IMAGE = WoW112Spells::Mage::MIRROR_IMAGE;
-    static constexpr uint32 PRESENCE_OF_MIND = WoW112Spells::Mage::Common::PRESENCE_OF_MIND;
-    static constexpr uint32 TIME_WARP = WoW112Spells::Mage::Common::TIME_WARP;
-    static constexpr uint32 TELEPORT_STORMWIND = WoW112Spells::Mage::Common::TELEPORT_STORMWIND;
-    static constexpr uint32 TELEPORT_IRONFORGE = WoW112Spells::Mage::Common::TELEPORT_IRONFORGE;
-    static constexpr uint32 PORTAL_STORMWIND = WoW112Spells::Mage::Common::PORTAL_STORMWIND;
-    static constexpr uint32 PORTAL_IRONFORGE = WoW112Spells::Mage::Common::PORTAL_IRONFORGE;
+    static constexpr uint32 MIRROR_IMAGE = WoW120Spells::Mage::MIRROR_IMAGE;
+    static constexpr uint32 PRESENCE_OF_MIND = WoW120Spells::Mage::Common::PRESENCE_OF_MIND;
+    static constexpr uint32 TIME_WARP = WoW120Spells::Mage::Common::TIME_WARP;
+    static constexpr uint32 TELEPORT_STORMWIND = WoW120Spells::Mage::Common::TELEPORT_STORMWIND;
+    static constexpr uint32 TELEPORT_IRONFORGE = WoW120Spells::Mage::Common::TELEPORT_IRONFORGE;
+    static constexpr uint32 PORTAL_STORMWIND = WoW120Spells::Mage::Common::PORTAL_STORMWIND;
+    static constexpr uint32 PORTAL_IRONFORGE = WoW120Spells::Mage::Common::PORTAL_IRONFORGE;
 
     // Conjure spells
-    static constexpr uint32 CONJURE_REFRESHMENT = WoW112Spells::Mage::CONJURE_REFRESHMENT;
+    static constexpr uint32 CONJURE_REFRESHMENT = WoW120Spells::Mage::CONJURE_REFRESHMENT;
 
     // Helper methods
     bool IsChanneling();

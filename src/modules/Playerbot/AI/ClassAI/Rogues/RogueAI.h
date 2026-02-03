@@ -11,7 +11,7 @@
 #define ROGUE_AI_H
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112_Part2.h"
+#include "../SpellValidation_WoW120_Part2.h"
 #include "Position.h"
 #include "Unit.h"
 #include "../Combat/BotThreatManager.h"
@@ -171,89 +171,89 @@ private:
     uint32 _lastPoison;
 
 public:
-    // Rogue Spell IDs - Using central registry (WoW 11.2)
-    // See WoW112Spells::Rogue namespace in SpellValidation_WoW112_Part2.h
+    // Rogue Spell IDs - Using central registry (WoW 12.0)
+    // See WoW120Spells::Rogue namespace in SpellValidation_WoW120_Part2.h
     enum RogueSpells
     {
         // ====================================================================
         // Combo Point Builders - All specs use central registry
         // ====================================================================
-        SINISTER_STRIKE = WoW112Spells::Rogue::Common::SINISTER_STRIKE,
-        BACKSTAB = WoW112Spells::Rogue::Common::BACKSTAB,
-        MUTILATE = WoW112Spells::Rogue::Common::MUTILATE,
-        SHIV = WoW112Spells::Rogue::Common::SHIV,
-        AMBUSH = WoW112Spells::Rogue::Common::AMBUSH,
-        GARROTE = WoW112Spells::Rogue::Common::GARROTE,
-        CHEAP_SHOT = WoW112Spells::Rogue::Common::CHEAP_SHOT,
-        SHADOWSTRIKE = WoW112Spells::Rogue::Common::SHADOWSTRIKE,
+        SINISTER_STRIKE = WoW120Spells::Rogue::Common::SINISTER_STRIKE,
+        BACKSTAB = WoW120Spells::Rogue::Common::BACKSTAB,
+        MUTILATE = WoW120Spells::Rogue::Common::MUTILATE,
+        SHIV = WoW120Spells::Rogue::Common::SHIV,
+        AMBUSH = WoW120Spells::Rogue::Common::AMBUSH,
+        GARROTE = WoW120Spells::Rogue::Common::GARROTE,
+        CHEAP_SHOT = WoW120Spells::Rogue::Common::CHEAP_SHOT,
+        SHADOWSTRIKE = WoW120Spells::Rogue::Common::SHADOWSTRIKE,
 
         // ====================================================================
         // Combo Point Finishers - Using central registry
         // ====================================================================
-        SLICE_AND_DICE = WoW112Spells::Rogue::Common::SLICE_AND_DICE,
-        RUPTURE = WoW112Spells::Rogue::Common::RUPTURE,
-        EVISCERATE = WoW112Spells::Rogue::Common::EVISCERATE,
-        KIDNEY_SHOT = WoW112Spells::Rogue::Common::KIDNEY_SHOT,
-        ENVENOM = WoW112Spells::Rogue::Common::ENVENOM,
-        CRIMSON_TEMPEST = WoW112Spells::Rogue::Common::CRIMSON_TEMPEST,
-        BETWEEN_THE_EYES = WoW112Spells::Rogue::Common::BETWEEN_THE_EYES,
+        SLICE_AND_DICE = WoW120Spells::Rogue::Common::SLICE_AND_DICE,
+        RUPTURE = WoW120Spells::Rogue::Common::RUPTURE,
+        EVISCERATE = WoW120Spells::Rogue::Common::EVISCERATE,
+        KIDNEY_SHOT = WoW120Spells::Rogue::Common::KIDNEY_SHOT,
+        ENVENOM = WoW120Spells::Rogue::Common::ENVENOM,
+        CRIMSON_TEMPEST = WoW120Spells::Rogue::Common::CRIMSON_TEMPEST,
+        BETWEEN_THE_EYES = WoW120Spells::Rogue::Common::BETWEEN_THE_EYES,
 
         // ====================================================================
         // Cooldowns - Using central registry
         // ====================================================================
-        BLADE_FLURRY = WoW112Spells::Rogue::Common::BLADE_FLURRY,
-        ADRENALINE_RUSH = WoW112Spells::Rogue::Common::ADRENALINE_RUSH,
-        KILLING_SPREE = WoW112Spells::Rogue::Common::KILLING_SPREE,
-        VENDETTA = WoW112Spells::Rogue::Common::VENDETTA,
-        SHADOW_BLADES = WoW112Spells::Rogue::Common::SHADOW_BLADES,
-        COLD_BLOOD = WoW112Spells::Rogue::Common::COLD_BLOOD,
-        SHADOW_DANCE = WoW112Spells::Rogue::Common::SHADOW_DANCE,
-        SHADOWSTEP = WoW112Spells::Rogue::Common::SHADOWSTEP,
-        SYMBOLS_OF_DEATH = WoW112Spells::Rogue::Common::SYMBOLS_OF_DEATH,
-        MARKED_FOR_DEATH = WoW112Spells::Rogue::Common::MARKED_FOR_DEATH,
+        BLADE_FLURRY = WoW120Spells::Rogue::Common::BLADE_FLURRY,
+        ADRENALINE_RUSH = WoW120Spells::Rogue::Common::ADRENALINE_RUSH,
+        KILLING_SPREE = WoW120Spells::Rogue::Common::KILLING_SPREE,
+        VENDETTA = WoW120Spells::Rogue::Common::VENDETTA,
+        SHADOW_BLADES = WoW120Spells::Rogue::Common::SHADOW_BLADES,
+        COLD_BLOOD = WoW120Spells::Rogue::Common::COLD_BLOOD,
+        SHADOW_DANCE = WoW120Spells::Rogue::Common::SHADOW_DANCE,
+        SHADOWSTEP = WoW120Spells::Rogue::Common::SHADOWSTEP,
+        SYMBOLS_OF_DEATH = WoW120Spells::Rogue::Common::SYMBOLS_OF_DEATH,
+        MARKED_FOR_DEATH = WoW120Spells::Rogue::Common::MARKED_FOR_DEATH,
 
         // ====================================================================
         // Utility - Using central registry
         // ====================================================================
-        KICK = WoW112Spells::Rogue::Common::KICK,
-        BLIND = WoW112Spells::Rogue::Common::BLIND,
-        SAP = WoW112Spells::Rogue::Common::SAP,
-        VANISH = WoW112Spells::Rogue::Common::VANISH,
-        STEALTH = WoW112Spells::Rogue::Common::STEALTH,
-        SPRINT = WoW112Spells::Rogue::Common::SPRINT,
-        CLOAK_OF_SHADOWS = WoW112Spells::Rogue::Common::CLOAK_OF_SHADOWS,
-        EVASION = WoW112Spells::Rogue::Common::EVASION,
-        FEINT = WoW112Spells::Rogue::Common::FEINT,
-        TRICKS_OF_THE_TRADE = WoW112Spells::Rogue::Common::TRICKS_OF_THE_TRADE,
+        KICK = WoW120Spells::Rogue::Common::KICK,
+        BLIND = WoW120Spells::Rogue::Common::BLIND,
+        SAP = WoW120Spells::Rogue::Common::SAP,
+        VANISH = WoW120Spells::Rogue::Common::VANISH,
+        STEALTH = WoW120Spells::Rogue::Common::STEALTH,
+        SPRINT = WoW120Spells::Rogue::Common::SPRINT,
+        CLOAK_OF_SHADOWS = WoW120Spells::Rogue::Common::CLOAK_OF_SHADOWS,
+        EVASION = WoW120Spells::Rogue::Common::EVASION,
+        FEINT = WoW120Spells::Rogue::Common::FEINT,
+        TRICKS_OF_THE_TRADE = WoW120Spells::Rogue::Common::TRICKS_OF_THE_TRADE,
 
         // ====================================================================
         // Poisons - Using central registry
         // ====================================================================
-        DEADLY_POISON = WoW112Spells::Rogue::Common::DEADLY_POISON,
-        INSTANT_POISON = WoW112Spells::Rogue::Common::INSTANT_POISON,
-        WOUND_POISON = WoW112Spells::Rogue::Common::WOUND_POISON,
-        NUMBING_POISON = WoW112Spells::Rogue::NUMBING_POISON,
-        CRIPPLING_POISON = WoW112Spells::Rogue::Common::CRIPPLING_POISON,
+        DEADLY_POISON = WoW120Spells::Rogue::Common::DEADLY_POISON,
+        INSTANT_POISON = WoW120Spells::Rogue::Common::INSTANT_POISON,
+        WOUND_POISON = WoW120Spells::Rogue::Common::WOUND_POISON,
+        NUMBING_POISON = WoW120Spells::Rogue::NUMBING_POISON,
+        CRIPPLING_POISON = WoW120Spells::Rogue::Common::CRIPPLING_POISON,
 
         // ====================================================================
         // AoE - Using central registry
         // ====================================================================
-        FAN_OF_KNIVES = WoW112Spells::Rogue::Common::FAN_OF_KNIVES,
+        FAN_OF_KNIVES = WoW120Spells::Rogue::Common::FAN_OF_KNIVES,
 
         // ====================================================================
         // Assassination Spec - Using central registry
         // ====================================================================
-        DEATHMARK = WoW112Spells::Rogue::Assassination::DEATHMARK,
-        POISONED_KNIFE = WoW112Spells::Rogue::Assassination::POISONED_KNIFE,
+        DEATHMARK = WoW120Spells::Rogue::Assassination::DEATHMARK,
+        POISONED_KNIFE = WoW120Spells::Rogue::Assassination::POISONED_KNIFE,
 
         // ====================================================================
         // Talents - Using central registry where available
         // ====================================================================
         VIGOR = 14983, // Passive talent for energy pool (still used in 11.2)
-        DEEPER_STRATAGEM = WoW112Spells::Rogue::Subtlety::DEEPER_STRATAGEM
+        DEEPER_STRATAGEM = WoW120Spells::Rogue::Subtlety::DEEPER_STRATAGEM
 
         // ====================================================================
-        // REMOVED SPELLS (Not in WoW 11.2):
+        // REMOVED SPELLS (Not in WoW 12.0):
         // - HEMORRHAGE (16511) - Removed from game
         // - EXPOSE_ARMOR (8647) - Removed from game
         // - DEADLY_THROW (26679) - Removed from game

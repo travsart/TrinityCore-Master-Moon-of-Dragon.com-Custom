@@ -237,7 +237,7 @@ struct BotInterruptStats
  *
  * Features:
  * - Thread-safe coordination for 5000+ bots (from InterruptCoordinator)
- * - Comprehensive spell database with WoW 11.2 data (from InterruptDatabase)
+ * - Comprehensive spell database with WoW 12.0 data (from InterruptDatabase)
  * - Sophisticated plan-based decision-making (from InterruptManager)
  * - Rotation fairness system (from InterruptRotationManager)
  * - Fallback logic with 6 alternative methods (from InterruptRotationManager)

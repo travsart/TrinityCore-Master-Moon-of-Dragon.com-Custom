@@ -19,7 +19,7 @@
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
+#include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
 // Phase 5 Integration
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
@@ -43,59 +43,59 @@ using bot::ai::SpellCategory;
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 
 // ============================================================================
-// ARMS WARRIOR SPELL ALIASES - Using Central Registry (WoW 11.2.7)
+// ARMS WARRIOR SPELL ALIASES - Using Central Registry (WoW 12.0.7)
 // ============================================================================
-// All spell IDs from WoW112Spells::Warrior and WoW112Spells::Warrior::Arms
+// All spell IDs from WoW120Spells::Warrior and WoW120Spells::Warrior::Arms
 namespace ArmsWarriorSpells
 {
-    // Core Warrior spells (from WoW112Spells::Warrior)
-    using namespace WoW112Spells::Warrior;
+    // Core Warrior spells (from WoW120Spells::Warrior)
+    using namespace WoW120Spells::Warrior;
 
-    // Arms-specific spells (from WoW112Spells::Warrior::Arms)
+    // Arms-specific spells (from WoW120Spells::Warrior::Arms)
     // Aliased with SPELL_ prefix for consistency
-    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW112Spells::Warrior::BATTLE_SHOUT;
-    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW112Spells::Warrior::COMMANDING_SHOUT;
-    constexpr uint32 SPELL_CHARGE            = WoW112Spells::Warrior::CHARGE;
+    constexpr uint32 SPELL_BATTLE_SHOUT      = WoW120Spells::Warrior::BATTLE_SHOUT;
+    constexpr uint32 SPELL_COMMANDING_SHOUT  = WoW120Spells::Warrior::COMMANDING_SHOUT;
+    constexpr uint32 SPELL_CHARGE            = WoW120Spells::Warrior::CHARGE;
 
     // Arms Rotation
-    constexpr uint32 SPELL_MORTAL_STRIKE     = WoW112Spells::Warrior::Arms::MORTAL_STRIKE;
-    constexpr uint32 SPELL_COLOSSUS_SMASH    = WoW112Spells::Warrior::Arms::COLOSSUS_SMASH;
-    constexpr uint32 SPELL_OVERPOWER         = WoW112Spells::Warrior::Arms::OVERPOWER;
-    constexpr uint32 SPELL_EXECUTE           = WoW112Spells::Warrior::Arms::EXECUTE;
-    constexpr uint32 SPELL_WHIRLWIND         = WoW112Spells::Warrior::Arms::WHIRLWIND;
-    constexpr uint32 SPELL_REND              = WoW112Spells::Warrior::Arms::REND;
-    constexpr uint32 SPELL_CLEAVE            = WoW112Spells::Warrior::Arms::CLEAVE;
-    constexpr uint32 SPELL_SLAM              = WoW112Spells::Warrior::Arms::SLAM;
+    constexpr uint32 SPELL_MORTAL_STRIKE     = WoW120Spells::Warrior::Arms::MORTAL_STRIKE;
+    constexpr uint32 SPELL_COLOSSUS_SMASH    = WoW120Spells::Warrior::Arms::COLOSSUS_SMASH;
+    constexpr uint32 SPELL_OVERPOWER         = WoW120Spells::Warrior::Arms::OVERPOWER;
+    constexpr uint32 SPELL_EXECUTE           = WoW120Spells::Warrior::Arms::EXECUTE;
+    constexpr uint32 SPELL_WHIRLWIND         = WoW120Spells::Warrior::Arms::WHIRLWIND;
+    constexpr uint32 SPELL_REND              = WoW120Spells::Warrior::Arms::REND;
+    constexpr uint32 SPELL_CLEAVE            = WoW120Spells::Warrior::Arms::CLEAVE;
+    constexpr uint32 SPELL_SLAM              = WoW120Spells::Warrior::Arms::SLAM;
 
     // Arms Cooldowns
-    constexpr uint32 SPELL_WARBREAKER        = WoW112Spells::Warrior::Arms::WARBREAKER;
-    constexpr uint32 SPELL_SWEEPING_STRIKES  = WoW112Spells::Warrior::Arms::SWEEPING_STRIKES;
-    constexpr uint32 SPELL_BLADESTORM        = WoW112Spells::Warrior::Arms::BLADESTORM;
-    constexpr uint32 SPELL_AVATAR            = WoW112Spells::Warrior::Arms::AVATAR;
-    constexpr uint32 SPELL_DIE_BY_THE_SWORD  = WoW112Spells::Warrior::Arms::DIE_BY_THE_SWORD;
-    constexpr uint32 SPELL_DEFENSIVE_STANCE  = WoW112Spells::Warrior::Arms::DEFENSIVE_STANCE;
-    constexpr uint32 SPELL_SKULLSPLITTER     = WoW112Spells::Warrior::Arms::SKULLSPLITTER;
-    constexpr uint32 SPELL_RAVAGER           = WoW112Spells::Warrior::Arms::RAVAGER;
-    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW112Spells::Warrior::Arms::THUNDEROUS_ROAR;
-    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW112Spells::Warrior::Arms::CHAMPIONS_SPEAR;
+    constexpr uint32 SPELL_WARBREAKER        = WoW120Spells::Warrior::Arms::WARBREAKER;
+    constexpr uint32 SPELL_SWEEPING_STRIKES  = WoW120Spells::Warrior::Arms::SWEEPING_STRIKES;
+    constexpr uint32 SPELL_BLADESTORM        = WoW120Spells::Warrior::Arms::BLADESTORM;
+    constexpr uint32 SPELL_AVATAR            = WoW120Spells::Warrior::Arms::AVATAR;
+    constexpr uint32 SPELL_DIE_BY_THE_SWORD  = WoW120Spells::Warrior::Arms::DIE_BY_THE_SWORD;
+    constexpr uint32 SPELL_DEFENSIVE_STANCE  = WoW120Spells::Warrior::Arms::DEFENSIVE_STANCE;
+    constexpr uint32 SPELL_SKULLSPLITTER     = WoW120Spells::Warrior::Arms::SKULLSPLITTER;
+    constexpr uint32 SPELL_RAVAGER           = WoW120Spells::Warrior::Arms::RAVAGER;
+    constexpr uint32 SPELL_THUNDEROUS_ROAR   = WoW120Spells::Warrior::Arms::THUNDEROUS_ROAR;
+    constexpr uint32 SPELL_CHAMPIONS_SPEAR   = WoW120Spells::Warrior::Arms::CHAMPIONS_SPEAR;
 
     // Deep Wounds (DoT)
-    constexpr uint32 SPELL_DEEP_WOUNDS       = WoW112Spells::Warrior::Arms::DEEP_WOUNDS;
-    constexpr uint32 SPELL_DEEP_WOUNDS_DEBUFF = WoW112Spells::Warrior::Arms::DEEP_WOUNDS_DEBUFF;
+    constexpr uint32 SPELL_DEEP_WOUNDS       = WoW120Spells::Warrior::Arms::DEEP_WOUNDS;
+    constexpr uint32 SPELL_DEEP_WOUNDS_DEBUFF = WoW120Spells::Warrior::Arms::DEEP_WOUNDS_DEBUFF;
 
     // Procs (from central registry)
-    constexpr uint32 SPELL_OVERPOWER_PROC    = WoW112Spells::Warrior::OVERPOWER_PROC;
-    constexpr uint32 SPELL_SUDDEN_DEATH_PROC = WoW112Spells::Warrior::SUDDEN_DEATH_PROC;
+    constexpr uint32 SPELL_OVERPOWER_PROC    = WoW120Spells::Warrior::OVERPOWER_PROC;
+    constexpr uint32 SPELL_SUDDEN_DEATH_PROC = WoW120Spells::Warrior::SUDDEN_DEATH_PROC;
 
     // Hero Talents - Slayer
-    constexpr uint32 SPELL_SLAYERS_STRIKE      = WoW112Spells::Warrior::Arms::SLAYERS_STRIKE;
-    constexpr uint32 SPELL_OVERWHELMING_BLADES = WoW112Spells::Warrior::Arms::OVERWHELMING_BLADES;
-    constexpr uint32 SPELL_SLAYERS_DOMINANCE   = WoW112Spells::Warrior::Arms::SLAYERS_DOMINANCE;
+    constexpr uint32 SPELL_SLAYERS_STRIKE      = WoW120Spells::Warrior::Arms::SLAYERS_STRIKE;
+    constexpr uint32 SPELL_OVERWHELMING_BLADES = WoW120Spells::Warrior::Arms::OVERWHELMING_BLADES;
+    constexpr uint32 SPELL_SLAYERS_DOMINANCE   = WoW120Spells::Warrior::Arms::SLAYERS_DOMINANCE;
 
     // Hero Talents - Colossus
-    constexpr uint32 SPELL_DEMOLISH          = WoW112Spells::Warrior::Arms::DEMOLISH;
-    constexpr uint32 SPELL_COLOSSAL_MIGHT    = WoW112Spells::Warrior::Arms::COLOSSAL_MIGHT;
-    constexpr uint32 SPELL_MARTIAL_PROWESS   = WoW112Spells::Warrior::Arms::MARTIAL_PROWESS;
+    constexpr uint32 SPELL_DEMOLISH          = WoW120Spells::Warrior::Arms::DEMOLISH;
+    constexpr uint32 SPELL_COLOSSAL_MIGHT    = WoW120Spells::Warrior::Arms::COLOSSAL_MIGHT;
+    constexpr uint32 SPELL_MARTIAL_PROWESS   = WoW120Spells::Warrior::Arms::MARTIAL_PROWESS;
 }
 
 /**
@@ -105,8 +105,8 @@ namespace ArmsWarriorSpells
  * - Inherits from MeleeDpsSpecialization<RageResource> for role defaults
  * - Automatically gets UpdateCooldowns, CanUseAbility, OnCombatStart/End
  * - Uses specialized rage management as primary resource
- * - Uses central spell registry (SpellValidation_WoW112_Part2.h)
- * - WoW 11.2.7 (The War Within) spell IDs
+ * - Uses central spell registry (SpellValidation_WoW120_Part2.h)
+ * - WoW 12.0.7 (The War Within) spell IDs
  */
 class ArmsWarriorRefactored : public MeleeDpsSpecialization<RageResource>
 {

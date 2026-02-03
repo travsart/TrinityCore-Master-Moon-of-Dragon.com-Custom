@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * World of Warcraft 11.2 (The War Within) Spell ID Validation
+ * World of Warcraft 12.0 (The War Within) Spell ID Validation
  *
- * This file contains all validated spell IDs for WoW 11.2 including
+ * This file contains all validated spell IDs for WoW 12.0 including
  * Hero Talent abilities for all 39 specializations.
  */
 
@@ -11,11 +11,11 @@
 
 namespace Playerbot
 {
-namespace WoW112Spells
+namespace WoW120Spells
 {
 
 // ============================================================================
-// DEATH KNIGHT SPELLS - Updated for 11.2
+// DEATH KNIGHT SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace DeathKnight
@@ -186,7 +186,7 @@ namespace DeathKnight
 }
 
 // ============================================================================
-// DEMON HUNTER SPELLS - Updated for 11.2
+// DEMON HUNTER SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace DemonHunter
@@ -368,7 +368,7 @@ namespace DemonHunter
 }
 
 // ============================================================================
-// DRUID SPELLS - Updated for 11.2
+// DRUID SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Druid
@@ -653,7 +653,7 @@ namespace Druid
 }
 
 // ============================================================================
-// EVOKER SPELLS - Updated for 11.2
+// EVOKER SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Evoker
@@ -839,7 +839,7 @@ namespace Evoker
 }
 
 // ============================================================================
-// HUNTER SPELLS - Updated for 11.2
+// HUNTER SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Hunter
@@ -1058,7 +1058,7 @@ namespace Hunter
 }
 
 // ============================================================================
-// MAGE SPELLS - Updated for 11.2
+// MAGE SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Mage
@@ -1267,7 +1267,7 @@ namespace Mage
 }
 
 // ============================================================================
-// MONK SPELLS - Updated for 11.2
+// MONK SPELLS - Updated for 12.0
 // ============================================================================
 
 namespace Monk
@@ -1521,5 +1521,5 @@ namespace Monk
 
 // Continued in next part due to length...
 
-} // namespace WoW112Spells
+} // namespace WoW120Spells
 } // namespace Playerbot

@@ -11,7 +11,7 @@
 #define TRINITY_HUNTERPLAYERAI_H
 
 #include "../ClassAI.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Position.h"
 #include "ObjectGuid.h"
@@ -267,55 +267,55 @@ private:
 
 public:
     // Hunter Spell IDs
-    // Hunter Spell IDs - Using central registry (WoW 11.2)
+    // Hunter Spell IDs - Using central registry (WoW 12.0)
     enum HunterSpells
     {
         // Shots and Attacks
-        STEADY_SHOT = WoW112Spells::Hunter::Common::STEADY_SHOT,
-        ARCANE_SHOT = WoW112Spells::Hunter::Common::ARCANE_SHOT,
-        MULTI_SHOT = WoW112Spells::Hunter::Common::MULTI_SHOT,
-        AIMED_SHOT = WoW112Spells::Hunter::Common::AIMED_SHOT,
-        KILL_SHOT = WoW112Spells::Hunter::Common::KILL_SHOT,
-        EXPLOSIVE_SHOT = WoW112Spells::Hunter::Common::EXPLOSIVE_SHOT,
-        SERPENT_STING = WoW112Spells::Hunter::Common::SERPENT_STING,
-        CONCUSSIVE_SHOT = WoW112Spells::Hunter::Common::CONCUSSIVE_SHOT,
+        STEADY_SHOT = WoW120Spells::Hunter::Common::STEADY_SHOT,
+        ARCANE_SHOT = WoW120Spells::Hunter::Common::ARCANE_SHOT,
+        MULTI_SHOT = WoW120Spells::Hunter::Common::MULTI_SHOT,
+        AIMED_SHOT = WoW120Spells::Hunter::Common::AIMED_SHOT,
+        KILL_SHOT = WoW120Spells::Hunter::Common::KILL_SHOT,
+        EXPLOSIVE_SHOT = WoW120Spells::Hunter::Common::EXPLOSIVE_SHOT,
+        SERPENT_STING = WoW120Spells::Hunter::Common::SERPENT_STING,
+        CONCUSSIVE_SHOT = WoW120Spells::Hunter::Common::CONCUSSIVE_SHOT,
 
         // Pet Abilities
-        KILL_COMMAND = WoW112Spells::Hunter::Common::KILL_COMMAND,
-        MEND_PET = WoW112Spells::Hunter::Common::MEND_PET,
-        REVIVE_PET = WoW112Spells::Hunter::Common::REVIVE_PET,
-        CALL_PET = WoW112Spells::Hunter::Common::CALL_PET,
-        MASTER_S_CALL = WoW112Spells::Hunter::Common::MASTERS_CALL,
+        KILL_COMMAND = WoW120Spells::Hunter::Common::KILL_COMMAND,
+        MEND_PET = WoW120Spells::Hunter::Common::MEND_PET,
+        REVIVE_PET = WoW120Spells::Hunter::Common::REVIVE_PET,
+        CALL_PET = WoW120Spells::Hunter::Common::CALL_PET,
+        MASTER_S_CALL = WoW120Spells::Hunter::Common::MASTERS_CALL,
 
         // Traps
-        FREEZING_TRAP = WoW112Spells::Hunter::Common::FREEZING_TRAP,
-        EXPLOSIVE_TRAP = WoW112Spells::Hunter::Common::EXPLOSIVE_TRAP,
-        TAR_TRAP = WoW112Spells::Hunter::Common::TAR_TRAP,
+        FREEZING_TRAP = WoW120Spells::Hunter::Common::FREEZING_TRAP,
+        EXPLOSIVE_TRAP = WoW120Spells::Hunter::Common::EXPLOSIVE_TRAP,
+        TAR_TRAP = WoW120Spells::Hunter::Common::TAR_TRAP,
 
         // Defensive/Utility
-        HUNTER_DISENGAGE = WoW112Spells::Hunter::Common::DISENGAGE,
-        FEIGN_DEATH = WoW112Spells::Hunter::Common::FEIGN_DEATH,
-        DETERRENCE = WoW112Spells::Hunter::Common::ASPECT_OF_THE_TURTLE, // Renamed to Aspect of the Turtle in 11.2
-        EXHILARATION = WoW112Spells::Hunter::Common::EXHILARATION,
-        SCATTER_SHOT = WoW112Spells::Hunter::Common::SCATTER_SHOT,
-        COUNTER_SHOT = WoW112Spells::Hunter::Common::COUNTER_SHOT,
+        HUNTER_DISENGAGE = WoW120Spells::Hunter::Common::DISENGAGE,
+        FEIGN_DEATH = WoW120Spells::Hunter::Common::FEIGN_DEATH,
+        DETERRENCE = WoW120Spells::Hunter::Common::ASPECT_OF_THE_TURTLE, // Renamed to Aspect of the Turtle in 11.2
+        EXHILARATION = WoW120Spells::Hunter::Common::EXHILARATION,
+        SCATTER_SHOT = WoW120Spells::Hunter::Common::SCATTER_SHOT,
+        COUNTER_SHOT = WoW120Spells::Hunter::Common::COUNTER_SHOT,
 
-        // Aspects (WoW 11.2 only)
-        ASPECT_OF_THE_WILD = WoW112Spells::Hunter::Common::ASPECT_OF_THE_WILD,
-        ASPECT_OF_THE_CHEETAH = WoW112Spells::Hunter::Common::ASPECT_OF_THE_CHEETAH,
-        ASPECT_OF_THE_TURTLE = WoW112Spells::Hunter::Common::ASPECT_OF_THE_TURTLE,
+        // Aspects (WoW 12.0 only)
+        ASPECT_OF_THE_WILD = WoW120Spells::Hunter::Common::ASPECT_OF_THE_WILD,
+        ASPECT_OF_THE_CHEETAH = WoW120Spells::Hunter::Common::ASPECT_OF_THE_CHEETAH,
+        ASPECT_OF_THE_TURTLE = WoW120Spells::Hunter::Common::ASPECT_OF_THE_TURTLE,
 
         // Marks/Debuffs
-        HUNTER_S_MARK = WoW112Spells::Hunter::Common::HUNTERS_MARK,
+        HUNTER_S_MARK = WoW120Spells::Hunter::Common::HUNTERS_MARK,
 
         // Cooldowns
-        RAPID_FIRE = WoW112Spells::Hunter::Common::RAPID_FIRE,
-        BESTIAL_WRATH = WoW112Spells::Hunter::Common::BESTIAL_WRATH,
-        TRUESHOT = WoW112Spells::Hunter::Common::TRUESHOT,
-        BARRAGE = WoW112Spells::Hunter::Common::BARRAGE,
-        VOLLEY = WoW112Spells::Hunter::Common::VOLLEY,
+        RAPID_FIRE = WoW120Spells::Hunter::Common::RAPID_FIRE,
+        BESTIAL_WRATH = WoW120Spells::Hunter::Common::BESTIAL_WRATH,
+        TRUESHOT = WoW120Spells::Hunter::Common::TRUESHOT,
+        BARRAGE = WoW120Spells::Hunter::Common::BARRAGE,
+        VOLLEY = WoW120Spells::Hunter::Common::VOLLEY,
 
-        // Note: Tracking spells were removed in WoW 11.2 - no longer supported
+        // Note: Tracking spells were removed in WoW 12.0 - no longer supported
     };
 };
 

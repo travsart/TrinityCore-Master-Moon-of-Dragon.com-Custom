@@ -12,7 +12,7 @@
  *
  * ENTERPRISE-GRADE RETAIL SPELL INTEGRATION
  *
- * This module uses REAL retail spell IDs (from wowhead.com WoW 11.2.7):
+ * This module uses REAL retail spell IDs (from wowhead.com WoW 12.0.7):
  *   369536 = Soar (Dracthyr racial - initiates dragonriding)
  *   372608 = Surge Forward (primary forward burst)
  *   372610 = Skyward Ascent (upward burst)

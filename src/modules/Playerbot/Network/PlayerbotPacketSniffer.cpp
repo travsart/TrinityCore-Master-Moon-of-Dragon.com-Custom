@@ -31,7 +31,7 @@ void PlayerbotPacketSniffer::Initialize()
     // Initialize opcode mapping
     InitializeOpcodeMapping();
 
-    // Register typed packet handlers (WoW 11.2)
+    // Register typed packet handlers (WoW 12.0)
     RegisterGroupPacketHandlers();
     RegisterCombatPacketHandlers();
     RegisterCooldownPacketHandlers();
@@ -162,7 +162,7 @@ PacketCategory PlayerbotPacketSniffer::CategorizePacket(OpcodeServer opcode)
 
 void PlayerbotPacketSniffer::InitializeOpcodeMapping()
 {
-    // DEPRECATED: Opcode-based packet routing is no longer used in WoW 11.2
+    // DEPRECATED: Opcode-based packet routing is no longer used in WoW 12.0
     // All packet handling now occurs via typed packet handlers registered in
     // Register*PacketHandlers() functions (see Parse*Packet_Typed.cpp files)
     //

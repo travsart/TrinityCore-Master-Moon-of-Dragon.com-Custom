@@ -121,7 +121,7 @@ struct LevelBracket
 
     bool SupportsDualSpec() const
     {
-        return minLevel >= 10;  // WoW 11.2: Dual-spec unlocks at level 10
+        return minLevel >= 10;  // WoW 12.0: Dual-spec unlocks at level 10
     }
 
     bool IsEndgame() const

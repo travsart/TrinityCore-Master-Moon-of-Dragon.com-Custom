@@ -1213,7 +1213,7 @@ void CooldownStackingOptimizer::InitializeDeathKnightCooldowns()
 
 void CooldownStackingOptimizer::InitializeMonkCooldowns()
 {
-    // WoW 11.2 Monk cooldowns - full spec support
+    // WoW 12.0 Monk cooldowns - full spec support
 
     // ========== BREWMASTER (Tank) ==========
     // Invoke Niuzao, the Black Ox - Major defensive/DPS cooldown
@@ -1364,7 +1364,7 @@ void CooldownStackingOptimizer::InitializeMonkCooldowns()
 
 void CooldownStackingOptimizer::InitializeDemonHunterCooldowns()
 {
-    // WoW 11.2 Demon Hunter cooldowns - full spec support
+    // WoW 12.0 Demon Hunter cooldowns - full spec support
 
     // ========== HAVOC (DPS) ==========
     // Metamorphosis - Major DPS cooldown

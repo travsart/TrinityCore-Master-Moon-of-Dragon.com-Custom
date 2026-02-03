@@ -96,7 +96,7 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
         ::Powers tcPowerType = static_cast<::Powers>(powerInfo.Power);
         int32 maxPower = unit->GetMaxPower(tcPowerType);
 
-        // Map to Playerbot::Powers enum (WoW 11.2: limited subset)
+        // Map to Playerbot::Powers enum (WoW 12.0: limited subset)
         Powers botPowerType = Powers::POWER_MANA;  // Default
     switch (powerInfo.Power)
         {

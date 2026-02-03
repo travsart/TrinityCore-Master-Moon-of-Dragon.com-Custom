@@ -21,7 +21,7 @@
 #include "../Common/StatusEffectTracker.h"
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
-#include "../SpellValidation_WoW112.h"
+#include "../SpellValidation_WoW120.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -50,29 +50,29 @@ using bot::ai::SpellCategory;
 
 // Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 
-// WoW 11.2 (The War Within) - Frost Mage Spell IDs
-// Use central spell registry (SpellValidation_WoW112.h)
+// WoW 12.0 (The War Within) - Frost Mage Spell IDs
+// Use central spell registry (SpellValidation_WoW120.h)
 namespace FrostMageSpells
 {
     // Frost Spec Spells
-    constexpr uint32 FROST_FROSTBOLT              = WoW112Spells::Mage::FROSTBOLT;
-    constexpr uint32 FROST_ICE_LANCE              = WoW112Spells::Mage::Frost::ICE_LANCE;
-    constexpr uint32 FROST_FLURRY                 = WoW112Spells::Mage::Frost::FLURRY;
-    constexpr uint32 FROST_FROZEN_ORB             = WoW112Spells::Mage::Frost::FROZEN_ORB;
-    constexpr uint32 FROST_BLIZZARD               = WoW112Spells::Mage::Frost::BLIZZARD;
-    constexpr uint32 FROST_COMET_STORM            = WoW112Spells::Mage::Frost::COMET_STORM;
-    constexpr uint32 FROST_RAY_OF_FROST           = WoW112Spells::Mage::Frost::RAY_OF_FROST;
-    constexpr uint32 FROST_GLACIAL_SPIKE          = WoW112Spells::Mage::Frost::GLACIAL_SPIKE;
-    constexpr uint32 FROST_ICY_VEINS              = WoW112Spells::Mage::Frost::ICY_VEINS;
-    constexpr uint32 FROST_CONE_OF_COLD           = WoW112Spells::Mage::Frost::CONE_OF_COLD;
-    constexpr uint32 FROST_FREEZE                 = WoW112Spells::Mage::Frost::FREEZE;
-    constexpr uint32 FROST_SUMMON_WATER_ELEMENTAL = WoW112Spells::Mage::Frost::SUMMON_WATER_ELEMENTAL;
-    constexpr uint32 FROST_ICE_BARRIER            = WoW112Spells::Mage::Frost::ICE_BARRIER;
+    constexpr uint32 FROST_FROSTBOLT              = WoW120Spells::Mage::FROSTBOLT;
+    constexpr uint32 FROST_ICE_LANCE              = WoW120Spells::Mage::Frost::ICE_LANCE;
+    constexpr uint32 FROST_FLURRY                 = WoW120Spells::Mage::Frost::FLURRY;
+    constexpr uint32 FROST_FROZEN_ORB             = WoW120Spells::Mage::Frost::FROZEN_ORB;
+    constexpr uint32 FROST_BLIZZARD               = WoW120Spells::Mage::Frost::BLIZZARD;
+    constexpr uint32 FROST_COMET_STORM            = WoW120Spells::Mage::Frost::COMET_STORM;
+    constexpr uint32 FROST_RAY_OF_FROST           = WoW120Spells::Mage::Frost::RAY_OF_FROST;
+    constexpr uint32 FROST_GLACIAL_SPIKE          = WoW120Spells::Mage::Frost::GLACIAL_SPIKE;
+    constexpr uint32 FROST_ICY_VEINS              = WoW120Spells::Mage::Frost::ICY_VEINS;
+    constexpr uint32 FROST_CONE_OF_COLD           = WoW120Spells::Mage::Frost::CONE_OF_COLD;
+    constexpr uint32 FROST_FREEZE                 = WoW120Spells::Mage::Frost::FREEZE;
+    constexpr uint32 FROST_SUMMON_WATER_ELEMENTAL = WoW120Spells::Mage::Frost::SUMMON_WATER_ELEMENTAL;
+    constexpr uint32 FROST_ICE_BARRIER            = WoW120Spells::Mage::Frost::ICE_BARRIER;
 
     // Common Mage Spells
-    constexpr uint32 FROST_ICE_BLOCK              = WoW112Spells::Mage::ICE_BLOCK;
-    constexpr uint32 FROST_MIRROR_IMAGE           = WoW112Spells::Mage::MIRROR_IMAGE;
-    constexpr uint32 FROST_SHIFTING_POWER         = WoW112Spells::Mage::SHIFTING_POWER_COMMON;
+    constexpr uint32 FROST_ICE_BLOCK              = WoW120Spells::Mage::ICE_BLOCK;
+    constexpr uint32 FROST_MIRROR_IMAGE           = WoW120Spells::Mage::MIRROR_IMAGE;
+    constexpr uint32 FROST_SHIFTING_POWER         = WoW120Spells::Mage::SHIFTING_POWER_COMMON;
 }
 
 // Make spells available in the namespace

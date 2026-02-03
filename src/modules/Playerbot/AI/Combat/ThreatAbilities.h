@@ -55,7 +55,7 @@ struct ThreatAbilityData
           isPassive(passive), minLevel(level), name(n) {}
 };
 
-// WoW 11.2 Threat Abilities Database
+// WoW 12.0 Threat Abilities Database
 class TC_GAME_API ThreatAbilitiesDB
 {
 public:
@@ -82,7 +82,7 @@ private:
     ::std::unordered_map<Classes, ::std::vector<uint32>> _classAbilities;
 };
 
-// WoW 11.2 Spell IDs for threat abilities
+// WoW 12.0 Spell IDs for threat abilities
 namespace ThreatSpells
 {
     // === WARRIOR ===

@@ -580,7 +580,7 @@ void ProfessionDatabase::InitializeRaceBonuses()
 {
     _raceBonuses.clear();
 
-    // WoW 11.2 Racial Profession Bonuses
+    // WoW 12.0 Racial Profession Bonuses
 
     // TAUREN (+15 Herbalism)
     _raceBonuses[RACE_TAUREN][ProfessionType::HERBALISM] = 15;

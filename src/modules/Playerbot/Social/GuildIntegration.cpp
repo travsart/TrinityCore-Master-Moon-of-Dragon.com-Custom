@@ -1658,7 +1658,7 @@ void GuildIntegration::AnalyzeConsumableNeeds(std::vector<uint32>& neededItems) 
     if (!_bot)
         return;
 
-    // Common consumable IDs for different purposes (WoW 11.2)
+    // Common consumable IDs for different purposes (WoW 12.0)
     static const std::vector<uint32> healthPotions = { 191379, 191380, 191381 }; // Healing Potions
     static const std::vector<uint32> manaPotions = { 191382, 191383, 191384 };   // Mana Potions
     static const std::vector<uint32> flasks = { 191327, 191328, 191329, 191330 }; // Dragonflight Flasks

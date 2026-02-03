@@ -21,7 +21,7 @@ namespace Playerbot
 
 // ================================================================================================
 // TYPED PACKET HANDLERS - COMBAT CATEGORY
-// These handlers receive TYPED packet objects before serialization (WoW 11.2 Solution)
+// These handlers receive TYPED packet objects before serialization (WoW 12.0 Solution)
 // ================================================================================================
 
 /**
@@ -37,7 +37,7 @@ void ParseTypedSpellStart(WorldSession* session, WorldPackets::Spells::SpellStar
     if (!bot)
         return;
 
-    // WoW 11.2: TargetGUID removed, extract from Target.Unit or HitTargets[0]
+    // WoW 12.0: TargetGUID removed, extract from Target.Unit or HitTargets[0]
     ObjectGuid targetGuid = packet.Cast.Target.Unit;
     if (targetGuid.IsEmpty() && !packet.Cast.HitTargets.empty())
         targetGuid = packet.Cast.HitTargets[0];
@@ -68,7 +68,7 @@ void ParseTypedSpellGo(WorldSession* session, WorldPackets::Spells::SpellGo cons
     if (!bot)
         return;
 
-    // WoW 11.2: TargetGUID removed, extract from Target.Unit or HitTargets[0]
+    // WoW 12.0: TargetGUID removed, extract from Target.Unit or HitTargets[0]
     ObjectGuid targetGuid = packet.Cast.Target.Unit;
     if (targetGuid.IsEmpty() && !packet.Cast.HitTargets.empty())
         targetGuid = packet.Cast.HitTargets[0];
@@ -195,7 +195,7 @@ void ParseTypedSpellInterrupt(WorldSession* session, WorldPackets::CombatLog::Sp
         packet.Caster,
         packet.Victim,
         packet.InterruptedSpellID,
-        packet.SpellID  // WoW 11.2: Field is SpellID, not InterruptingSpellID
+        packet.SpellID  // WoW 12.0: Field is SpellID, not InterruptingSpellID
     );
 
     CombatEventBus::instance()->PublishEvent(event);
@@ -223,7 +223,7 @@ void ParseTypedSpellDispel(WorldSession* session, WorldPackets::CombatLog::Spell
         CombatEvent event;
         event.type = CombatEventType::SPELL_DISPELLED;
         event.priority = CombatEventPriority::HIGH;
-        event.casterGuid = packet.CasterGUID;  // WoW 11.2: Field is CasterGUID, not DispellerGUID
+        event.casterGuid = packet.CasterGUID;  // WoW 12.0: Field is CasterGUID, not DispellerGUID
         event.targetGuid = packet.TargetGUID;
         event.victimGuid = packet.TargetGUID;
         event.spellId = packet.DispelledBySpellID;
@@ -266,7 +266,7 @@ void ParseTypedAttackStart(WorldSession* session, WorldPackets::Combat::AttackSt
 
 /**
  * Attack Stop - Typed Handler
- * WoW 11.2: Server packet is SAttackStop, not AttackStop (which is client packet)
+ * WoW 12.0: Server packet is SAttackStop, not AttackStop (which is client packet)
  */
 void ParseTypedAttackStop(WorldSession* session, WorldPackets::Combat::SAttackStop const& packet)
 {
@@ -277,11 +277,11 @@ void ParseTypedAttackStop(WorldSession* session, WorldPackets::Combat::SAttackSt
     if (!bot)
         return;
 
-    // WoW 11.2: SAttackStop only has Attacker and Victim, no NowDead field
+    // WoW 12.0: SAttackStop only has Attacker and Victim, no NowDead field
     CombatEvent event = CombatEvent::AttackStop(
         packet.Attacker,
         packet.Victim,
-        false  // NowDead field doesn't exist in WoW 11.2
+        false  // NowDead field doesn't exist in WoW 12.0
     );
 
     CombatEventBus::instance()->PublishEvent(event);
@@ -337,7 +337,7 @@ void RegisterCombatPacketHandlers()
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::CombatLog::SpellInterruptLog>(&ParseTypedSpellInterrupt);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::CombatLog::SpellDispellLog>(&ParseTypedSpellDispel);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Combat::AttackStart>(&ParseTypedAttackStart);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Combat::SAttackStop>(&ParseTypedAttackStop);  // WoW 11.2: SAttackStop is server packet
+    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Combat::SAttackStop>(&ParseTypedAttackStop);  // WoW 12.0: SAttackStop is server packet
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Combat::AIReaction>(&ParseTypedAIReaction);
 
     TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Registered {} Combat packet typed handlers", 10);

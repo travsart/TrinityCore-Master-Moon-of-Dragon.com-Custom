@@ -15,7 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112.h"  // Central spell registry
+#include "../SpellValidation_WoW120.h"  // Central spell registry
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -29,62 +29,62 @@ namespace Playerbot
 {
 
 // ============================================================================
-// UNHOLY DEATH KNIGHT SPELL ALIASES (WoW 11.2 - The War Within)
+// UNHOLY DEATH KNIGHT SPELL ALIASES (WoW 12.0 - The War Within)
 // Consolidated spell IDs from central registry - NO duplicates
 // ============================================================================
 
 namespace UnholyDeathKnightSpells
 {
     // Rune Spenders
-    constexpr uint32 FESTERING_STRIKE         = WoW112Spells::DeathKnight::Unholy::FESTERING_STRIKE;
-    constexpr uint32 SCOURGE_STRIKE           = WoW112Spells::DeathKnight::Unholy::SCOURGE_STRIKE;
-    constexpr uint32 CLAWING_SHADOWS          = WoW112Spells::DeathKnight::Unholy::CLAWING_SHADOWS;
-    constexpr uint32 EPIDEMIC                 = WoW112Spells::DeathKnight::Unholy::EPIDEMIC;
-    constexpr uint32 DEFILE                   = WoW112Spells::DeathKnight::Unholy::DEFILE;
+    constexpr uint32 FESTERING_STRIKE         = WoW120Spells::DeathKnight::Unholy::FESTERING_STRIKE;
+    constexpr uint32 SCOURGE_STRIKE           = WoW120Spells::DeathKnight::Unholy::SCOURGE_STRIKE;
+    constexpr uint32 CLAWING_SHADOWS          = WoW120Spells::DeathKnight::Unholy::CLAWING_SHADOWS;
+    constexpr uint32 EPIDEMIC                 = WoW120Spells::DeathKnight::Unholy::EPIDEMIC;
+    constexpr uint32 DEFILE                   = WoW120Spells::DeathKnight::Unholy::DEFILE;
 
     // Runic Power Spenders
-    constexpr uint32 DEATH_COIL               = WoW112Spells::DeathKnight::DEATH_COIL;
-    constexpr uint32 DARK_TRANSFORMATION      = WoW112Spells::DeathKnight::Unholy::DARK_TRANSFORMATION;
+    constexpr uint32 DEATH_COIL               = WoW120Spells::DeathKnight::DEATH_COIL;
+    constexpr uint32 DARK_TRANSFORMATION      = WoW120Spells::DeathKnight::Unholy::DARK_TRANSFORMATION;
 
     // Diseases
-    constexpr uint32 VIRULENT_PLAGUE          = WoW112Spells::DeathKnight::Unholy::VIRULENT_PLAGUE;
-    constexpr uint32 OUTBREAK                 = WoW112Spells::DeathKnight::Unholy::OUTBREAK;
+    constexpr uint32 VIRULENT_PLAGUE          = WoW120Spells::DeathKnight::Unholy::VIRULENT_PLAGUE;
+    constexpr uint32 OUTBREAK                 = WoW120Spells::DeathKnight::Unholy::OUTBREAK;
 
     // Pet Management
-    constexpr uint32 RAISE_DEAD_UNHOLY        = WoW112Spells::DeathKnight::RAISE_DEAD;
-    constexpr uint32 SUMMON_GARGOYLE          = WoW112Spells::DeathKnight::Unholy::SUMMON_GARGOYLE;
-    constexpr uint32 ARMY_OF_THE_DEAD_UNHOLY  = WoW112Spells::DeathKnight::Unholy::ARMY_OF_THE_DEAD;
-    constexpr uint32 APOCALYPSE               = WoW112Spells::DeathKnight::Unholy::APOCALYPSE;
-    constexpr uint32 RAISE_ABOMINATION        = WoW112Spells::DeathKnight::Unholy::RAISE_ABOMINATION;
+    constexpr uint32 RAISE_DEAD_UNHOLY        = WoW120Spells::DeathKnight::RAISE_DEAD;
+    constexpr uint32 SUMMON_GARGOYLE          = WoW120Spells::DeathKnight::Unholy::SUMMON_GARGOYLE;
+    constexpr uint32 ARMY_OF_THE_DEAD_UNHOLY  = WoW120Spells::DeathKnight::Unholy::ARMY_OF_THE_DEAD;
+    constexpr uint32 APOCALYPSE               = WoW120Spells::DeathKnight::Unholy::APOCALYPSE;
+    constexpr uint32 RAISE_ABOMINATION        = WoW120Spells::DeathKnight::Unholy::RAISE_ABOMINATION;
 
     // Major Cooldowns
-    constexpr uint32 UNHOLY_ASSAULT           = WoW112Spells::DeathKnight::Unholy::UNHOLY_ASSAULT;
-    constexpr uint32 UNHOLY_BLIGHT            = WoW112Spells::DeathKnight::Unholy::UNHOLY_BLIGHT;
-    constexpr uint32 SOUL_REAPER              = WoW112Spells::DeathKnight::Unholy::SOUL_REAPER;
+    constexpr uint32 UNHOLY_ASSAULT           = WoW120Spells::DeathKnight::Unholy::UNHOLY_ASSAULT;
+    constexpr uint32 UNHOLY_BLIGHT            = WoW120Spells::DeathKnight::Unholy::UNHOLY_BLIGHT;
+    constexpr uint32 SOUL_REAPER              = WoW120Spells::DeathKnight::Unholy::SOUL_REAPER;
 
     // Utility
-    constexpr uint32 DEATH_GRIP_UNHOLY        = WoW112Spells::DeathKnight::DEATH_GRIP;
-    constexpr uint32 MIND_FREEZE_UNHOLY       = WoW112Spells::DeathKnight::MIND_FREEZE;
-    constexpr uint32 CHAINS_OF_ICE_UNHOLY     = WoW112Spells::DeathKnight::CHAINS_OF_ICE;
-    constexpr uint32 DARK_COMMAND_UNHOLY      = WoW112Spells::DeathKnight::DARK_COMMAND;
-    constexpr uint32 ANTI_MAGIC_SHELL_UNHOLY  = WoW112Spells::DeathKnight::ANTI_MAGIC_SHELL;
-    constexpr uint32 ICEBOUND_FORTITUDE_UNHOLY = WoW112Spells::DeathKnight::ICEBOUND_FORTITUDE;
-    constexpr uint32 DEATHS_ADVANCE_UNHOLY    = WoW112Spells::DeathKnight::DEATHS_ADVANCE;
-    constexpr uint32 CONTROL_UNDEAD_UNHOLY    = WoW112Spells::DeathKnight::CONTROL_UNDEAD;
-    constexpr uint32 RAISE_ALLY_UNHOLY        = WoW112Spells::DeathKnight::RAISE_ALLY;
+    constexpr uint32 DEATH_GRIP_UNHOLY        = WoW120Spells::DeathKnight::DEATH_GRIP;
+    constexpr uint32 MIND_FREEZE_UNHOLY       = WoW120Spells::DeathKnight::MIND_FREEZE;
+    constexpr uint32 CHAINS_OF_ICE_UNHOLY     = WoW120Spells::DeathKnight::CHAINS_OF_ICE;
+    constexpr uint32 DARK_COMMAND_UNHOLY      = WoW120Spells::DeathKnight::DARK_COMMAND;
+    constexpr uint32 ANTI_MAGIC_SHELL_UNHOLY  = WoW120Spells::DeathKnight::ANTI_MAGIC_SHELL;
+    constexpr uint32 ICEBOUND_FORTITUDE_UNHOLY = WoW120Spells::DeathKnight::ICEBOUND_FORTITUDE;
+    constexpr uint32 DEATHS_ADVANCE_UNHOLY    = WoW120Spells::DeathKnight::DEATHS_ADVANCE;
+    constexpr uint32 CONTROL_UNDEAD_UNHOLY    = WoW120Spells::DeathKnight::CONTROL_UNDEAD;
+    constexpr uint32 RAISE_ALLY_UNHOLY        = WoW120Spells::DeathKnight::RAISE_ALLY;
 
     // Procs and Buffs
-    constexpr uint32 SUDDEN_DOOM              = WoW112Spells::DeathKnight::Unholy::SUDDEN_DOOM;
-    constexpr uint32 RUNIC_CORRUPTION         = WoW112Spells::DeathKnight::Unholy::RUNIC_CORRUPTION;
-    constexpr uint32 FESTERING_WOUND          = WoW112Spells::DeathKnight::Unholy::FESTERING_WOUND;
-    constexpr uint32 UNHOLY_STRENGTH          = WoW112Spells::DeathKnight::Unholy::UNHOLY_STRENGTH;
+    constexpr uint32 SUDDEN_DOOM              = WoW120Spells::DeathKnight::Unholy::SUDDEN_DOOM;
+    constexpr uint32 RUNIC_CORRUPTION         = WoW120Spells::DeathKnight::Unholy::RUNIC_CORRUPTION;
+    constexpr uint32 FESTERING_WOUND          = WoW120Spells::DeathKnight::Unholy::FESTERING_WOUND;
+    constexpr uint32 UNHOLY_STRENGTH          = WoW120Spells::DeathKnight::Unholy::UNHOLY_STRENGTH;
 
     // Talents
-    constexpr uint32 BURSTING_SORES           = WoW112Spells::DeathKnight::Unholy::BURSTING_SORES;
-    constexpr uint32 INFECTED_CLAWS           = WoW112Spells::DeathKnight::Unholy::INFECTED_CLAWS;
-    constexpr uint32 ALL_WILL_SERVE           = WoW112Spells::DeathKnight::Unholy::ALL_WILL_SERVE;
-    constexpr uint32 UNHOLY_PACT              = WoW112Spells::DeathKnight::Unholy::UNHOLY_PACT;
-    constexpr uint32 SUPERSTRAIN              = WoW112Spells::DeathKnight::Unholy::SUPERSTRAIN;
+    constexpr uint32 BURSTING_SORES           = WoW120Spells::DeathKnight::Unholy::BURSTING_SORES;
+    constexpr uint32 INFECTED_CLAWS           = WoW120Spells::DeathKnight::Unholy::INFECTED_CLAWS;
+    constexpr uint32 ALL_WILL_SERVE           = WoW120Spells::DeathKnight::Unholy::ALL_WILL_SERVE;
+    constexpr uint32 UNHOLY_PACT              = WoW120Spells::DeathKnight::Unholy::UNHOLY_PACT;
+    constexpr uint32 SUPERSTRAIN              = WoW120Spells::DeathKnight::Unholy::SUPERSTRAIN;
 
     // Aliases with UNHOLY_ prefix for RegisterSpell compatibility
     constexpr uint32 UNHOLY_ANTIMAGIC_SHELL = ANTI_MAGIC_SHELL_UNHOLY;
@@ -648,7 +648,7 @@ private:
         // - Proper BotAI retrieval from Player instance (via custom Player extension or bot registry)
         // - ActionPriorityQueue registration for Unholy DK spells (Anti-Magic Shell, Army of the Dead, Apocalypse, Festering Strike, Scourge Strike, Death Coil)
         // - BehaviorTree construction with burst cooldowns, Festering Wound management, wound application/bursting, and runic power dump
-        // Reference: WoW 11.2 Death Knight mechanics, Unholy specialization pet management and Festering Wound stacking patterns
+        // Reference: WoW 12.0 Death Knight mechanics, Unholy specialization pet management and Festering Wound stacking patterns
         // Commenting out for now until BotAI integration is implemented
         /*
         BotAI* ai = this->GetBot()->GetBotAI();

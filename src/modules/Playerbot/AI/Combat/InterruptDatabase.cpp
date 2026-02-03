@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * WoW 11.2 Interrupt Database Implementation
+ * WoW 12.0 Interrupt Database Implementation
  */
 
 #include "InterruptDatabase.h"

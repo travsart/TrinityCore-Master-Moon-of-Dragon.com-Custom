@@ -18,7 +18,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../SpellValidation_WoW112_Part2.h"  // Central spell registry
+#include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
 
 // Phase 5 Integration: Decision Systems
 #include "../../Decision/ActionPriorityQueue.h"
@@ -29,47 +29,47 @@ namespace Playerbot
 {
 
 // ============================================================================
-// RETRIBUTION PALADIN SPELL ALIASES (WoW 11.2 - The War Within)
+// RETRIBUTION PALADIN SPELL ALIASES (WoW 12.0 - The War Within)
 // Consolidated spell IDs from central registry - NO duplicates
-// NOTE: Seals, Exorcism, Holy Wrath removed (don't exist in WoW 11.2)
+// NOTE: Seals, Exorcism, Holy Wrath removed (don't exist in WoW 12.0)
 // ============================================================================
 
 namespace RetributionPaladinSpells
 {
     // Holy Power Generators
-    constexpr uint32 SPELL_BLADE_OF_JUSTICE    = WoW112Spells::Paladin::Retribution::BLADE_OF_JUSTICE;
-    constexpr uint32 SPELL_CRUSADER_STRIKE     = WoW112Spells::Paladin::CRUSADER_STRIKE;
-    constexpr uint32 SPELL_JUDGMENT            = WoW112Spells::Paladin::JUDGMENT;
-    constexpr uint32 SPELL_WAKE_OF_ASHES       = WoW112Spells::Paladin::Retribution::WAKE_OF_ASHES;
-    constexpr uint32 SPELL_HAMMER_OF_WRATH     = WoW112Spells::Paladin::HAMMER_OF_WRATH;
+    constexpr uint32 SPELL_BLADE_OF_JUSTICE    = WoW120Spells::Paladin::Retribution::BLADE_OF_JUSTICE;
+    constexpr uint32 SPELL_CRUSADER_STRIKE     = WoW120Spells::Paladin::CRUSADER_STRIKE;
+    constexpr uint32 SPELL_JUDGMENT            = WoW120Spells::Paladin::JUDGMENT;
+    constexpr uint32 SPELL_WAKE_OF_ASHES       = WoW120Spells::Paladin::Retribution::WAKE_OF_ASHES;
+    constexpr uint32 SPELL_HAMMER_OF_WRATH     = WoW120Spells::Paladin::HAMMER_OF_WRATH;
 
     // Holy Power Spenders
-    constexpr uint32 SPELL_TEMPLARS_VERDICT    = WoW112Spells::Paladin::Retribution::TEMPLARS_VERDICT;
-    constexpr uint32 SPELL_FINAL_VERDICT       = WoW112Spells::Paladin::Retribution::FINAL_VERDICT;
-    constexpr uint32 SPELL_DIVINE_STORM        = WoW112Spells::Paladin::Retribution::DIVINE_STORM;
-    constexpr uint32 SPELL_JUSTICARS_VENGEANCE = WoW112Spells::Paladin::Retribution::JUSTICARS_VENGEANCE;
+    constexpr uint32 SPELL_TEMPLARS_VERDICT    = WoW120Spells::Paladin::Retribution::TEMPLARS_VERDICT;
+    constexpr uint32 SPELL_FINAL_VERDICT       = WoW120Spells::Paladin::Retribution::FINAL_VERDICT;
+    constexpr uint32 SPELL_DIVINE_STORM        = WoW120Spells::Paladin::Retribution::DIVINE_STORM;
+    constexpr uint32 SPELL_JUSTICARS_VENGEANCE = WoW120Spells::Paladin::Retribution::JUSTICARS_VENGEANCE;
 
     // Cooldowns
-    constexpr uint32 SPELL_AVENGING_WRATH      = WoW112Spells::Paladin::AVENGING_WRATH;
-    constexpr uint32 SPELL_CRUSADE             = WoW112Spells::Paladin::Retribution::CRUSADE;
-    constexpr uint32 SPELL_EXECUTION_SENTENCE  = WoW112Spells::Paladin::Retribution::EXECUTION_SENTENCE;
-    constexpr uint32 SPELL_FINAL_RECKONING     = WoW112Spells::Paladin::Retribution::FINAL_RECKONING;
-    constexpr uint32 SPELL_SHIELD_OF_VENGEANCE = WoW112Spells::Paladin::Retribution::SHIELD_OF_VENGEANCE;
+    constexpr uint32 SPELL_AVENGING_WRATH      = WoW120Spells::Paladin::AVENGING_WRATH;
+    constexpr uint32 SPELL_CRUSADE             = WoW120Spells::Paladin::Retribution::CRUSADE;
+    constexpr uint32 SPELL_EXECUTION_SENTENCE  = WoW120Spells::Paladin::Retribution::EXECUTION_SENTENCE;
+    constexpr uint32 SPELL_FINAL_RECKONING     = WoW120Spells::Paladin::Retribution::FINAL_RECKONING;
+    constexpr uint32 SPELL_SHIELD_OF_VENGEANCE = WoW120Spells::Paladin::Retribution::SHIELD_OF_VENGEANCE;
 
     // Utility
-    constexpr uint32 SPELL_CONSECRATION        = WoW112Spells::Paladin::CONSECRATION;
-    constexpr uint32 SPELL_HAMMER_OF_JUSTICE   = WoW112Spells::Paladin::HAMMER_OF_JUSTICE;
-    constexpr uint32 SPELL_REBUKE              = WoW112Spells::Paladin::REBUKE;
-    constexpr uint32 SPELL_BLESSING_OF_FREEDOM = WoW112Spells::Paladin::BLESSING_OF_FREEDOM;
-    constexpr uint32 SPELL_DIVINE_SHIELD       = WoW112Spells::Paladin::DIVINE_SHIELD;
+    constexpr uint32 SPELL_CONSECRATION        = WoW120Spells::Paladin::CONSECRATION;
+    constexpr uint32 SPELL_HAMMER_OF_JUSTICE   = WoW120Spells::Paladin::HAMMER_OF_JUSTICE;
+    constexpr uint32 SPELL_REBUKE              = WoW120Spells::Paladin::REBUKE;
+    constexpr uint32 SPELL_BLESSING_OF_FREEDOM = WoW120Spells::Paladin::BLESSING_OF_FREEDOM;
+    constexpr uint32 SPELL_DIVINE_SHIELD       = WoW120Spells::Paladin::DIVINE_SHIELD;
 
     // Auras
-    constexpr uint32 SPELL_RETRIBUTION_AURA    = WoW112Spells::Paladin::RETRIBUTION_AURA;
+    constexpr uint32 SPELL_RETRIBUTION_AURA    = WoW120Spells::Paladin::RETRIBUTION_AURA;
 
     // Procs
-    constexpr uint32 SPELL_ART_OF_WAR          = WoW112Spells::Paladin::Retribution::ART_OF_WAR;
-    constexpr uint32 SPELL_DIVINE_PURPOSE      = WoW112Spells::Paladin::Retribution::DIVINE_PURPOSE_RET;
-    constexpr uint32 SPELL_BLADE_OF_WRATH      = WoW112Spells::Paladin::Retribution::BLADE_OF_WRATH;
+    constexpr uint32 SPELL_ART_OF_WAR          = WoW120Spells::Paladin::Retribution::ART_OF_WAR;
+    constexpr uint32 SPELL_DIVINE_PURPOSE      = WoW120Spells::Paladin::Retribution::DIVINE_PURPOSE_RET;
+    constexpr uint32 SPELL_BLADE_OF_WRATH      = WoW120Spells::Paladin::Retribution::BLADE_OF_WRATH;
 }
 using namespace RetributionPaladinSpells;
 
@@ -145,7 +145,7 @@ public:
     {
         Player* bot = this->GetBot();
 
-        // Maintain Retribution Aura (WoW 11.2)
+        // Maintain Retribution Aura (WoW 12.0)
         if (!bot->HasAura(SPELL_RETRIBUTION_AURA))
         {
             this->CastSpell(SPELL_RETRIBUTION_AURA, bot);
@@ -161,7 +161,7 @@ protected:
     // ========================================================================
 
     /**
-     * Execute abilities based on priority system (WoW 11.2)
+     * Execute abilities based on priority system (WoW 12.0)
      */
     void ExecutePriorityRotation(::Unit* target)
     {
@@ -192,7 +192,7 @@ protected:
             }
         }
 
-        // Blade of Justice - Primary Holy Power generator (WoW 11.2)
+        // Blade of Justice - Primary Holy Power generator (WoW 12.0)
         if (this->CanUseAbility(SPELL_BLADE_OF_JUSTICE))
         {
             this->CastSpell(SPELL_BLADE_OF_JUSTICE, target);
@@ -200,7 +200,7 @@ protected:
             return;
         }
 
-        // Wake of Ashes - AoE HP generator (WoW 11.2)
+        // Wake of Ashes - AoE HP generator (WoW 12.0)
         if (_hasArtOfWar && this->CanUseAbility(SPELL_WAKE_OF_ASHES))
         {
             this->CastSpell(SPELL_WAKE_OF_ASHES, this->GetBot());
@@ -234,7 +234,7 @@ protected:
     }
 
     /**
-     * Check for Retribution-specific procs (WoW 11.2)
+     * Check for Retribution-specific procs (WoW 12.0)
      */
     void CheckForProcs()
     {
@@ -248,7 +248,7 @@ protected:
     }
 
     /**
-     * NOTE: Seal twisting removed - Seals don't exist in WoW 11.2 (removed in Legion 7.0)
+     * NOTE: Seal twisting removed - Seals don't exist in WoW 12.0 (removed in Legion 7.0)
      * This function is kept as a stub for API compatibility.
      */
     void UpdateSealTwisting()
@@ -270,7 +270,7 @@ protected:
 
     void OnCombatStartSpecific(::Unit* target) override
     {
-        // Pop offensive cooldowns at start for burst (WoW 11.2)
+        // Pop offensive cooldowns at start for burst (WoW 12.0)
         if (ShouldUseCooldowns(target))
         {
             Player* bot = this->GetBot();
@@ -526,7 +526,7 @@ protected:
                                 })
                             })
                         }),
-                        // Generate HP (WoW 11.2)
+                        // Generate HP (WoW 12.0)
                         Sequence("Generate Holy Power", {
                             Condition("HP < 5", [this](Player* bot, Unit*) {
                                 return this->_holyPower.GetAvailable() < 5;
@@ -573,7 +573,7 @@ protected:
                 }),
 
                 // ================================================================
-                // TIER 3: COOLDOWN USAGE (WoW 11.2)
+                // TIER 3: COOLDOWN USAGE (WoW 12.0)
                 // ================================================================
                 Sequence("Use Cooldowns", {
                     Condition("Boss or pack", [this](Player* bot, Unit* target) {
@@ -611,7 +611,7 @@ protected:
                 }),
 
                 // ================================================================
-                // TIER 4: STANDARD DPS ROTATION (WoW 11.2)
+                // TIER 4: STANDARD DPS ROTATION (WoW 12.0)
                 // ================================================================
                 Sequence("Standard Rotation", {
                     Selector("Rotation Priority", {
@@ -668,7 +668,7 @@ private:
     CooldownManager _cooldowns;
     // ========================================================================
     // SPELL IDs now defined in RetributionPaladinSpells namespace above
-    // Legacy spells removed: Seals, Exorcism, Holy Wrath (don't exist in WoW 11.2)
+    // Legacy spells removed: Seals, Exorcism, Holy Wrath (don't exist in WoW 12.0)
     // ========================================================================
 
     // ========================================================================

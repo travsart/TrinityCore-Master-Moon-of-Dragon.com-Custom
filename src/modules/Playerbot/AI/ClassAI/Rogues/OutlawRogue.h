@@ -25,9 +25,9 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
-// Central Spell Registry - See WoW112Spells::Rogue namespace
-#include "../SpellValidation_WoW112.h"
-#include "../SpellValidation_WoW112_Part2.h"
+// Central Spell Registry - See WoW120Spells::Rogue namespace
+#include "../SpellValidation_WoW120.h"
+#include "../SpellValidation_WoW120_Part2.h"
 
 namespace Playerbot
 {
@@ -49,36 +49,36 @@ using bot::ai::SpellCategory;
 // NOTE: ComboPointsOutlaw is defined in RogueResourceTypes.h (spec-specific resource type)
 
 // ============================================================================
-// OUTLAW ROGUE SPELL IDs (WoW 11.2 - The War Within) - UNIQUE ONLY
-// See central registry: WoW112Spells::Rogue and WoW112Spells::Rogue::Outlaw
+// OUTLAW ROGUE SPELL IDs (WoW 12.0 - The War Within) - UNIQUE ONLY
+// See central registry: WoW120Spells::Rogue and WoW120Spells::Rogue::Outlaw
 // ============================================================================
 
 enum OutlawSpells
 {
-    // WoW 11.2 Outlaw-specific spells
-    // Using central registry: WoW112Spells::Rogue and WoW112Spells::Rogue::Outlaw
-    PISTOL_SHOT              = WoW112Spells::Rogue::Outlaw::PISTOL_SHOT,
-    BETWEEN_THE_EYES         = WoW112Spells::Rogue::Outlaw::BETWEEN_THE_EYES,
-    DISPATCH_OUTLAW          = WoW112Spells::Rogue::Outlaw::DISPATCH,
+    // WoW 12.0 Outlaw-specific spells
+    // Using central registry: WoW120Spells::Rogue and WoW120Spells::Rogue::Outlaw
+    PISTOL_SHOT              = WoW120Spells::Rogue::Outlaw::PISTOL_SHOT,
+    BETWEEN_THE_EYES         = WoW120Spells::Rogue::Outlaw::BETWEEN_THE_EYES,
+    DISPATCH_OUTLAW          = WoW120Spells::Rogue::Outlaw::DISPATCH,
 
     // Roll the Bones System (Outlaw unique)
-    ROLL_THE_BONES           = WoW112Spells::Rogue::Outlaw::ROLL_THE_BONES,
-    BUFF_RUTHLESS_PRECISION  = WoW112Spells::Rogue::Outlaw::RUTHLESS_PRECISION,
-    BUFF_GRAND_MELEE         = WoW112Spells::Rogue::Outlaw::GRAND_MELEE,
-    BUFF_BROADSIDE           = WoW112Spells::Rogue::Outlaw::BROADSIDE,
-    BUFF_TRUE_BEARING        = WoW112Spells::Rogue::Outlaw::TRUE_BEARING,
-    BUFF_SKULL_AND_CROSSBONES = WoW112Spells::Rogue::Outlaw::SKULL_AND_CROSSBONES,
-    BUFF_BURIED_TREASURE     = WoW112Spells::Rogue::Outlaw::BURIED_TREASURE,
+    ROLL_THE_BONES           = WoW120Spells::Rogue::Outlaw::ROLL_THE_BONES,
+    BUFF_RUTHLESS_PRECISION  = WoW120Spells::Rogue::Outlaw::RUTHLESS_PRECISION,
+    BUFF_GRAND_MELEE         = WoW120Spells::Rogue::Outlaw::GRAND_MELEE,
+    BUFF_BROADSIDE           = WoW120Spells::Rogue::Outlaw::BROADSIDE,
+    BUFF_TRUE_BEARING        = WoW120Spells::Rogue::Outlaw::TRUE_BEARING,
+    BUFF_SKULL_AND_CROSSBONES = WoW120Spells::Rogue::Outlaw::SKULL_AND_CROSSBONES,
+    BUFF_BURIED_TREASURE     = WoW120Spells::Rogue::Outlaw::BURIED_TREASURE,
 
     // Talents (Outlaw specific)
-    BLADE_RUSH               = WoW112Spells::Rogue::Outlaw::BLADE_RUSH,
-    OPPORTUNITY_PROC         = WoW112Spells::Rogue::Outlaw::OPPORTUNITY_PROC,
-    GHOSTLY_STRIKE           = WoW112Spells::Rogue::Outlaw::GHOSTLY_STRIKE,
-    DREADBLADES              = WoW112Spells::Rogue::Outlaw::DREADBLADES,
+    BLADE_RUSH               = WoW120Spells::Rogue::Outlaw::BLADE_RUSH,
+    OPPORTUNITY_PROC         = WoW120Spells::Rogue::Outlaw::OPPORTUNITY_PROC,
+    GHOSTLY_STRIKE           = WoW120Spells::Rogue::Outlaw::GHOSTLY_STRIKE,
+    DREADBLADES              = WoW120Spells::Rogue::Outlaw::DREADBLADES,
 
     // Outlaw-specific utility
-    FEINT_OUTLAW             = WoW112Spells::Rogue::FEINT,
-    MARKED_FOR_DEATH         = WoW112Spells::Rogue::MARKED_FOR_DEATH
+    FEINT_OUTLAW             = WoW120Spells::Rogue::FEINT,
+    MARKED_FOR_DEATH         = WoW120Spells::Rogue::MARKED_FOR_DEATH
 };
 
 // ============================================================================

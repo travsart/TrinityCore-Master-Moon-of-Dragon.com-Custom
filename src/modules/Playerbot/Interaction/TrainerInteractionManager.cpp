@@ -639,7 +639,7 @@ void TrainerInteractionManager::InitializeEssentialSpellsCache()
     m_essentialSpellsCache.clear();
 
     // Add class-specific essential spells
-    // These are placeholder spell IDs - should be replaced with actual WoW 11.2 spell IDs
+    // These are placeholder spell IDs - should be replaced with actual WoW 12.0 spell IDs
     uint8 classId = m_bot->GetClass();
 
     switch (classId)
