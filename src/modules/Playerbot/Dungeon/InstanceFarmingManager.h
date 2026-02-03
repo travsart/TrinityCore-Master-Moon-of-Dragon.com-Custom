@@ -57,8 +57,9 @@ enum class FarmingContentType : uint8
 /**
  * @enum InstanceDifficulty
  * @brief Instance difficulty settings
+ * @note WoW 12.0: Changed from uint8 to int16 to match core Difficulty type
  */
-enum class InstanceDifficulty : uint8
+enum class InstanceDifficulty : int16
 {
     NORMAL = 0,
     HEROIC,

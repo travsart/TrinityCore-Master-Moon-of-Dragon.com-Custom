@@ -415,8 +415,8 @@ void PlayerBotHooks::RegisterHooks()
 
         IncrementHookCall("OnDifficultyChanged");
 
-        // Publish difficulty change event
-        GroupEvent event = GroupEvent::DifficultyChanged(group->GetGUID(), static_cast<uint8>(difficulty));
+        // Publish difficulty change event (WoW 12.0: Difficulty is int16)
+        GroupEvent event = GroupEvent::DifficultyChanged(group->GetGUID(), static_cast<int16>(difficulty));
         GroupEventBus::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Group {} difficulty changed to {}",

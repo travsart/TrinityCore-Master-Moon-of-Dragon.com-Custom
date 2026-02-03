@@ -77,8 +77,9 @@ enum class HealerAssignment : uint8
 /**
  * @enum RaidDifficulty
  * @brief Raid instance difficulty
+ * @note WoW 12.0: Changed from uint8 to int16 to match core Difficulty type
  */
-enum class RaidDifficulty : uint8
+enum class RaidDifficulty : int16
 {
     NORMAL = 0,
     HEROIC = 1,

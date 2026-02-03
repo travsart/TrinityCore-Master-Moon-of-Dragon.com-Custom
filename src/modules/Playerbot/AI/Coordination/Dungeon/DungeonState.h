@@ -38,8 +38,9 @@ enum class DungeonState : uint8
 /**
  * @enum DungeonDifficulty
  * @brief Dungeon difficulty modes
+ * @note WoW 12.0: Changed from uint8 to int16 to match core Difficulty type
  */
-enum class DungeonDifficulty : uint8
+enum class DungeonDifficulty : int16
 {
     NORMAL = 0,
     HEROIC = 1,

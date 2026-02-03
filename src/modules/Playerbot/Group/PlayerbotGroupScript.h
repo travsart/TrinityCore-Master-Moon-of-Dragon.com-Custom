@@ -149,10 +149,10 @@ private:
         // Target icons (8 raid markers)
         ::std::array<ObjectGuid, 8> targetIcons;
 
-        // Difficulty settings
-        uint8 dungeonDifficulty{0};
-        uint8 raidDifficulty{0};
-        uint8 legacyRaidDifficulty{0};
+        // Difficulty settings (WoW 12.0: Changed from uint8 to int16)
+        int16 dungeonDifficulty{0};
+        int16 raidDifficulty{0};
+        int16 legacyRaidDifficulty{0};
 
         // Ready check
         bool readyCheckActive{false};

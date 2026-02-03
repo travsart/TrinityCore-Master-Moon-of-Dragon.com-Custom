@@ -137,7 +137,7 @@ struct GroupEvent
     static GroupEvent TargetIconChanged(ObjectGuid groupGuid, uint8 icon, ObjectGuid targetGuid);
     static GroupEvent RaidMarkerChanged(ObjectGuid groupGuid, uint32 markerId, Position const& position);
     static GroupEvent LootMethodChanged(ObjectGuid groupGuid, uint8 lootMethod);
-    static GroupEvent DifficultyChanged(ObjectGuid groupGuid, uint8 difficulty);
+    static GroupEvent DifficultyChanged(ObjectGuid groupGuid, int16 difficulty);  // WoW 12.0: Difficulty is int16
 };
 
 } // namespace Playerbot

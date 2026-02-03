@@ -193,7 +193,7 @@ GroupEvent GroupEvent::LootMethodChanged(ObjectGuid groupGuid, uint8 lootMethod)
     return event;
 }
 
-GroupEvent GroupEvent::DifficultyChanged(ObjectGuid groupGuid, uint8 difficulty)
+GroupEvent GroupEvent::DifficultyChanged(ObjectGuid groupGuid, int16 difficulty)
 {
     GroupEvent event;
     event.type = GroupEventType::DIFFICULTY_CHANGED;
