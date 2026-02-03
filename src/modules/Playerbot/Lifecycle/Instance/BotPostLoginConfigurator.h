@@ -47,6 +47,9 @@ struct BotPendingConfiguration
     uint32 battlegroundIdToQueue = 0; // If > 0, queue bot for this BG after configuration
     uint32 arenaTypeToQueue = 0;      // If > 0, queue bot for this arena type after configuration
 
+    // Instance Bot Flag - marks bot for idle timeout and restricted behavior
+    bool markAsInstanceBot = false;  // If true, mark as instance bot after login
+
     // Timing
     std::chrono::steady_clock::time_point createdAt;
 

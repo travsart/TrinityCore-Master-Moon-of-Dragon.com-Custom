@@ -12,6 +12,7 @@
 #include "Equipment/BotGearFactory.h"
 #include "LFG/LFGBotManager.h"
 #include "PvP/BGBotManager.h"
+#include "Session/BotWorldSessionMgr.h"
 #include "BattlegroundMgr.h"
 #include "Player.h"
 #include "Item.h"
@@ -432,6 +433,19 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
         TC_LOG_WARN("module.playerbot.configurator",
             "Partially configured bot {} in {}ms (some steps failed)",
             player->GetName(), durationMs);
+    }
+
+    // Step 9: Mark as instance bot if flagged
+    // CRITICAL FIX (2026-02-03): Instance bot marking must happen AFTER login completes
+    // Previously, MarkAsInstanceBot() was called immediately after AddPlayerBot() in JITBotFactory,
+    // but AddPlayerBot() only queues the spawn - the session doesn't exist yet!
+    // Now we mark the bot here, where the session is guaranteed to exist.
+    if (config.markAsInstanceBot)
+    {
+        sBotWorldSessionMgr->MarkAsInstanceBot(playerGuid);
+        TC_LOG_INFO("module.playerbot.configurator",
+            "Marked bot {} as INSTANCE BOT (idle timeout enabled, restricted behavior)",
+            player->GetName());
     }
 
     // CRITICAL: Add to recently configured set BEFORE removing pending config

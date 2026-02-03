@@ -1022,21 +1022,18 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
                 ++loginSuccessCount;
 
                 // ====================================================================
-                // CRITICAL FIX (2026-01-22): Mark JIT bots as INSTANCE BOTS!
+                // NOTE: Instance bot marking is now handled via BotPostLoginConfigurator!
                 // ====================================================================
-                // Without this, JIT bots would:
-                // - NOT get the 60-second idle logout timeout
-                // - Stay online forever causing bot explosion (1500+ bots)
-                // - Do quests and other activities (pool flag not set)
-                // - Cause massive server lag (50s+ response times)
+                // Previously, we called MarkAsInstanceBot() here, but AddPlayerBot()
+                // only queues the spawn to _pendingSpawns - the session doesn't exist yet!
+                // This caused "session not found" errors and bots not being properly tracked.
                 //
-                // By marking as instance bot, they get:
-                // - Auto-logout after 60 seconds if not in queue/group/instance
-                // - Restricted behavior (no questing, just queue and fight)
+                // The fix: Set markAsInstanceBot=true in BotPendingConfiguration (done in
+                // BotCloneEngine.cpp), and BotPostLoginConfigurator::ApplyPendingConfiguration()
+                // will call MarkAsInstanceBot() AFTER the session is created.
                 // ====================================================================
-                sBotWorldSessionMgr->MarkAsInstanceBot(botGuid);
 
-                TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in bot {} (account {}), marked as INSTANCE BOT",
+                TC_LOG_DEBUG("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in bot {} (account {}), will be marked as INSTANCE BOT after login completes",
                     botGuid.ToString(), accountId);
                 BOT_TRACK_SUCCESS(BotOperationCategory::SPAWN, "JITBotFactory::LoginBot", botGuid);
             }
@@ -1052,7 +1049,7 @@ RequestProgress JITBotFactory::ProcessRequest(FactoryRequest& request)
             }
         }
 
-        TC_LOG_INFO("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in {}/{} bots (all marked as INSTANCE BOTS)",
+        TC_LOG_INFO("playerbot.jit", "JITBotFactory::ProcessRequest - Logged in {}/{} bots (will be marked as INSTANCE BOTS after post-login config)",
             loginSuccessCount, progress.created);
 
         // Determine status - STRICT requirements to ensure full groups

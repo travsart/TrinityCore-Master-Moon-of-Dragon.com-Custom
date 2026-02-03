@@ -1687,6 +1687,10 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
         }
     }
 
+    // Mark as instance bot - this will be applied after login by BotPostLoginConfigurator
+    // CRITICAL: This ensures warm pool bots get proper idle timeout and restricted behavior
+    pendingConfig.markAsInstanceBot = true;
+
     sBotPostLoginConfigurator->RegisterPendingConfig(std::move(pendingConfig));
 
     TC_LOG_INFO("playerbot.pool", "InstanceBotPool::WarmUpBot - Registered pending config for bot {} (level={}, spec={}, gearScore={}, contentId={}, type={})",

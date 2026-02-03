@@ -620,6 +620,10 @@ CloneResult BotCloneEngine::ExecuteClone(
     pendingConfig.battlegroundIdToQueue = battlegroundIdToQueue;
     pendingConfig.arenaTypeToQueue = arenaTypeToQueue;
 
+    // Mark as instance bot - this will be applied after login by BotPostLoginConfigurator
+    // CRITICAL: This ensures JIT bots get proper idle timeout and restricted behavior
+    pendingConfig.markAsInstanceBot = true;
+
     sBotPostLoginConfigurator->RegisterPendingConfig(std::move(pendingConfig));
 
     TC_LOG_DEBUG("playerbot.clone",
