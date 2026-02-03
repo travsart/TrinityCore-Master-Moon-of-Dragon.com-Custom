@@ -399,6 +399,19 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
                 TC_LOG_INFO("module.playerbot.session", "Queuing bot for removal (name unavailable)");
             }
 
+            // CRITICAL FIX (Map.cpp:1968 use-after-free crash):
+            // Mark bot as destroyed BEFORE clearing update mask to prevent re-adding to _updateObjects.
+            //
+            // Problem: After ClearUpdateMask(true) removes bot from _updateObjects, bot AI continues
+            // running and may modify properties. Property setters call AddToObjectUpdateIfNeeded()
+            // which re-adds the bot to _updateObjects. When bot is finally destroyed during logout,
+            // MapUpdater worker threads find a dangling pointer -> ACCESS_VIOLATION.
+            //
+            // Solution: Set m_isDestroyedObject=true FIRST. This blocks AddToObjectUpdateIfNeeded()
+            // from ever re-adding the bot to _updateObjects (check added in BaseEntity.cpp).
+            player->SetDestroyedObject(true);
+            TC_LOG_DEBUG("module.playerbot.session", "Marked bot {} as destroyed to prevent _updateObjects re-add", playerGuid.ToString());
+
             // CRITICAL FIX (Cell::Visit crash - CellImpl.h:65):
             // Clear visibility notification flags BEFORE queuing for removal.
             //

@@ -462,13 +462,14 @@ void QueueStatePoller::DoPollBGQueue(BattlegroundTypeId bgTypeId, BattlegroundBr
     snapshot.hordeCount = hordeCount;
     snapshot.minPlayersPerTeam = minPlayers;
     snapshot.maxPlayersPerTeam = maxPlayers;
-    snapshot.allianceShortage = static_cast<int32>(minPlayers) - static_cast<int32>(allianceCount);
-    snapshot.hordeShortage = static_cast<int32>(minPlayers) - static_cast<int32>(hordeCount);
+    // Use maxPlayers for shortage calculation - we want to fill the BG, not just meet minimum
+    snapshot.allianceShortage = static_cast<int32>(maxPlayers) - static_cast<int32>(allianceCount);
+    snapshot.hordeShortage = static_cast<int32>(maxPlayers) - static_cast<int32>(hordeCount);
     snapshot.timestamp = time(nullptr);
 
     TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: BG Poll - Type={} Bracket={} Alliance={}/{} Horde={}/{} Shortage=A:{}/H:{}",
         static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket),
-        allianceCount, minPlayers, hordeCount, minPlayers,
+        allianceCount, maxPlayers, hordeCount, maxPlayers,
         snapshot.allianceShortage, snapshot.hordeShortage);
 
     // Process shortage if detected
