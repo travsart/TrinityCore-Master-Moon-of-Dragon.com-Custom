@@ -321,6 +321,7 @@ public:
 
     Player* GetBot() const { return _bot; }
     ObjectGuid GetBotGuid() const { return _bot ? _bot->GetGUID() : ObjectGuid::Empty; }
+    ObjectGuid GetCachedBotGuid() const { return _cachedBotGuid; }  // Safe during destructor
 
     // ========================================================================
     // LIFECYCLE MANAGEMENT - Two-Phase AddToWorld Pattern
@@ -957,6 +958,7 @@ protected:
 protected:
     // Core components
     Player* _bot;
+    ObjectGuid _cachedBotGuid;  // Cached at construction for safe destructor cleanup
     BotAIState _aiState = BotAIState::SOLO;
     ObjectGuid _currentTarget;
 

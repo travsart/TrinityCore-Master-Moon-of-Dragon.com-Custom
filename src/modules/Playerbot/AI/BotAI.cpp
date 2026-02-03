@@ -124,7 +124,10 @@ std::vector<uint32> BotAI::GetCompletableQuestIds() const
 // CONSTRUCTOR / DESTRUCTOR
 // ============================================================================
 
-BotAI::BotAI(Player* bot, bool instanceOnlyMode) : _bot(bot), _instanceOnlyMode(instanceOnlyMode)
+BotAI::BotAI(Player* bot, bool instanceOnlyMode)
+    : _bot(bot)
+    , _cachedBotGuid(bot ? bot->GetGUID() : ObjectGuid::Empty)  // Cache for safe destructor cleanup
+    , _instanceOnlyMode(instanceOnlyMode)
 {
     // Initialize performance tracking
     _performanceMetrics.lastUpdate = std::chrono::steady_clock::now();

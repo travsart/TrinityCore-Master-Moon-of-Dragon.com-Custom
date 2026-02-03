@@ -23,6 +23,7 @@
 
 #include "BotAI.h"
 #include "GameTime.h"
+#include "Core/Events/GenericEventBus.h"
 #include "Group/GroupEventBus.h"
 #include "Combat/CombatEventBus.h"
 #include "Cooldown/CooldownEventBus.h"
@@ -92,28 +93,29 @@ void BotAI::SubscribeToEventBuses()
 
 void BotAI::UnsubscribeFromEventBuses()
 {
-    if (!_bot)
+    // CRITICAL FIX: Use cached GUID instead of _bot pointer during destructor
+    // The Player object may already be destroyed when BotAI destructor runs,
+    // making _bot a dangling pointer. Using the cached GUID is safe.
+    if (_cachedBotGuid.IsEmpty())
         return;
 
-    // CRITICAL: Unsubscribe from all event buses to prevent dangling pointers
-    GroupEventBus::instance()->Unsubscribe(this);
-    CombatEventBus::instance()->Unsubscribe(this);
-    CooldownEventBus::instance()->Unsubscribe(this);
-    AuraEventBus::instance()->Unsubscribe(this);
-    LootEventBus::instance()->Unsubscribe(this);
-    QuestEventBus::instance()->Unsubscribe(this);
-    ResourceEventBus::instance()->Unsubscribe(this);
-    SocialEventBus::instance()->Unsubscribe(this);
-    AuctionEventBus::instance()->Unsubscribe(this);
-    NPCEventBus::instance()->Unsubscribe(this);
-    InstanceEventBus::instance()->Unsubscribe(this);
-    ProfessionEventBus::instance()->Unsubscribe(this);
+    // CRITICAL: Unsubscribe from all event buses using GUID (safe during destructor)
+    // Call the underlying template directly with the new UnsubscribeByGuid method
+    EventBus<GroupEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<CombatEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<CooldownEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<AuraEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<LootEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<QuestEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<ResourceEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<SocialEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<AuctionEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<NPCEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<InstanceEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
+    EventBus<ProfessionEvent>::instance()->UnsubscribeByGuid(_cachedBotGuid);
 
-    // CRITICAL: Use GetGUID().ToString() instead of GetName() during destructor
-    // GetName() may access invalid memory during bot destruction
-    // This prevents ACCESS_VIOLATION crash at BotAI_EventHandlers.cpp line 110
     TC_LOG_DEBUG("playerbot.events", "Bot unsubscribed from all event buses (GUID: {})",
-        _bot->GetGUID().ToString());
+        _cachedBotGuid.ToString());
 }
 
 // ============================================================================

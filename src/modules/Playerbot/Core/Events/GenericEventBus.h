@@ -286,6 +286,31 @@ public:
     }
 
     /**
+     * @brief Unsubscribe a bot by GUID (safe for use during destructor)
+     *
+     * This overload is specifically designed for use during BotAI destruction,
+     * when the Player object may already be destroyed but we have a cached GUID.
+     *
+     * @param botGuid The cached GUID of the bot to unsubscribe
+     *
+     * Thread Safety: Yes (mutex-protected)
+     * Performance: O(1) average case (hash map erase)
+     */
+    void UnsubscribeByGuid(ObjectGuid const& botGuid)
+    {
+        if (botGuid.IsEmpty())
+            return;
+
+        std::lock_guard lock(_subscriptionMutex);
+
+        _subscriptions.erase(botGuid);
+        _subscriberPointers.erase(botGuid);
+
+        TC_LOG_DEBUG("playerbot.events", "EventBus: Bot {} unsubscribed by GUID from all events",
+            botGuid.ToString());
+    }
+
+    /**
      * @brief Unsubscribe a bot from specific event types
      *
      * Removes subscription for specific event types while keeping other subscriptions.
