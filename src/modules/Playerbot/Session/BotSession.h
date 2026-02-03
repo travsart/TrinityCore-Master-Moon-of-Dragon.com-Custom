@@ -204,6 +204,11 @@ public:
     /// Idle timeout for instance bots (60 seconds = 1 minute)
     static constexpr uint32 INSTANCE_BOT_IDLE_TIMEOUT_MS = 60 * 1000;
 
+    /// Queue timeout for instance bots (5 minutes)
+    /// If a bot has been queued for content (BG/LFG) for longer than this without
+    /// actually getting into the content, it will be logged out to prevent accumulation
+    static constexpr uint32 INSTANCE_BOT_QUEUE_TIMEOUT_MS = 5 * 60 * 1000;
+
     // Process pending async login operations
     void ProcessPendingLogin();
 
@@ -505,13 +510,24 @@ private:
     /// Whether this bot is an instance bot (JIT or warm pool)
     std::atomic<bool> _isInstanceBot{false};
 
+    /// Time when bot was marked as instance bot (for queue timeout)
+    std::atomic<uint32> _instanceBotStartTime{0};
+
     /// Accumulated idle time in milliseconds
     /// Reset to 0 when bot enters queue or group, incremented when idle
     std::atomic<uint32> _idleAccumulatorMs{0};
 
+    /// Accumulated queue time in milliseconds (time spent waiting in queue without content starting)
+    /// This prevents bots from sitting in queue forever when BG/LFG never pops
+    std::atomic<uint32> _queueAccumulatorMs{0};
+
     /// Whether bot was active (in queue/group) last check
     /// Used to detect transition from active to idle
     std::atomic<bool> _wasActiveLastCheck{true};
+
+    /// Whether bot has ever entered actual instanced content (dungeon/BG/arena)
+    /// Used to distinguish "waiting in queue" from "actually playing"
+    std::atomic<bool> _hasEnteredInstance{false};
 
     // Deleted copy operations
     BotSession(BotSession const&) = delete;

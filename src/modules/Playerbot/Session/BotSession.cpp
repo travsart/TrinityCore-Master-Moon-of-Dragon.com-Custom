@@ -3134,15 +3134,19 @@ void BotSession::SetInstanceBot(bool isInstanceBot)
 
     if (isInstanceBot)
     {
-        // Reset idle state when marked as instance bot
+        // Reset idle and queue state when marked as instance bot
         _idleAccumulatorMs.store(0);
+        _queueAccumulatorMs.store(0);
         _wasActiveLastCheck.store(true);
+        _hasEnteredInstance.store(false);
+        _instanceBotStartTime.store(GameTime::GetGameTimeMS());
 
         Player* player = GetPlayer();
         TC_LOG_INFO("module.playerbot.instance",
-            "Bot {} marked as INSTANCE BOT - will auto-logout after {}s if idle",
+            "Bot {} marked as INSTANCE BOT - idle timeout: {}s, queue timeout: {}s",
             player ? player->GetName() : "unknown",
-            INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000);
+            INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000,
+            INSTANCE_BOT_QUEUE_TIMEOUT_MS / 1000);
     }
 }
 
@@ -3203,23 +3207,82 @@ bool BotSession::UpdateIdleStateAndCheckLogout(uint32 diff)
     if (!player)
         return false;
 
-    bool isActive = IsInActiveInstanceState();
+    // ========================================================================
+    // CHECK 1: Has bot entered actual instanced content?
+    // ========================================================================
+    // If bot is inside an instance (dungeon/raid/BG/arena), mark it as having
+    // "entered" - this means it's actively participating, not just waiting.
+    Map* map = player->GetMap();
+    bool inInstancedContent = map && (map->IsDungeon() || map->IsRaid() ||
+                                       map->IsBattleground() || map->IsBattleArena());
 
-    if (isActive)
+    if (inInstancedContent)
     {
-        // Bot is active - reset idle accumulator
-        if (_idleAccumulatorMs.load() > 0)
+        // Bot is actually in instanced content - mark it and reset queue timer
+        if (!_hasEnteredInstance.exchange(true))
         {
-            TC_LOG_DEBUG("module.playerbot.instance",
-                "Bot {} became ACTIVE (in queue/group/instance) - resetting idle timer",
+            TC_LOG_INFO("module.playerbot.instance",
+                "Bot {} ENTERED instanced content - queue timeout disabled",
                 player->GetName());
         }
+        _queueAccumulatorMs.store(0);
         _idleAccumulatorMs.store(0);
         _wasActiveLastCheck.store(true);
         return false;
     }
 
-    // Bot is idle - accumulate idle time
+    // ========================================================================
+    // CHECK 2: Is bot in an "active" state (queue/group)?
+    // ========================================================================
+    bool isActive = IsInActiveInstanceState();
+
+    if (isActive)
+    {
+        // Bot is in queue or group but NOT in actual instanced content
+        // Reset idle timer but accumulate queue time (if never entered instance)
+        if (_idleAccumulatorMs.load() > 0)
+        {
+            TC_LOG_DEBUG("module.playerbot.instance",
+                "Bot {} became ACTIVE (in queue/group) - resetting idle timer",
+                player->GetName());
+        }
+        _idleAccumulatorMs.store(0);
+        _wasActiveLastCheck.store(true);
+
+        // If bot has never entered instance, accumulate queue time
+        if (!_hasEnteredInstance.load())
+        {
+            uint32 currentQueue = _queueAccumulatorMs.load();
+            uint32 newQueue = currentQueue + diff;
+            _queueAccumulatorMs.store(newQueue);
+
+            // Check if queue timeout exceeded
+            if (newQueue >= INSTANCE_BOT_QUEUE_TIMEOUT_MS)
+            {
+                TC_LOG_INFO("module.playerbot.instance",
+                    "⏰ Bot {} QUEUE TIMEOUT ({} seconds in queue without content starting) - "
+                    "scheduling logout to prevent accumulation",
+                    player->GetName(), INSTANCE_BOT_QUEUE_TIMEOUT_MS / 1000);
+                return true;
+            }
+
+            // Log progress every 60 seconds
+            uint32 oldMinutes = currentQueue / 60000;
+            uint32 newMinutes = newQueue / 60000;
+            if (newMinutes > oldMinutes)
+            {
+                TC_LOG_DEBUG("module.playerbot.instance",
+                    "Bot {} waiting in queue for {}m / {}m",
+                    player->GetName(), newQueue / 60000, INSTANCE_BOT_QUEUE_TIMEOUT_MS / 60000);
+            }
+        }
+
+        return false;
+    }
+
+    // ========================================================================
+    // CHECK 3: Bot is idle (not in queue/group/instance)
+    // ========================================================================
     bool wasActive = _wasActiveLastCheck.exchange(false);
     if (wasActive)
     {
@@ -3233,7 +3296,7 @@ bool BotSession::UpdateIdleStateAndCheckLogout(uint32 diff)
     uint32 newIdle = currentIdle + diff;
     _idleAccumulatorMs.store(newIdle);
 
-    // Check if timeout exceeded
+    // Check if idle timeout exceeded
     if (newIdle >= INSTANCE_BOT_IDLE_TIMEOUT_MS)
     {
         TC_LOG_INFO("module.playerbot.instance",
