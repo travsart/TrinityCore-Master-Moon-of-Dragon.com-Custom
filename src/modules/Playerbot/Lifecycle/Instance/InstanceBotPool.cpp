@@ -1594,10 +1594,12 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     // stayed at level 1 because no pending config was registered.
     // ========================================================================
 
-    // Get slot info (accountId and target level)
+    // Get slot info (accountId, target level, and queue info)
     uint32 accountId = 0;
     uint32 targetLevel = 1;
     uint32 specId = 0;
+    uint32 contentId = 0;
+    InstanceType instanceType = InstanceType::Dungeon;
     {
         std::shared_lock lock(_slotsMutex);
         auto it = _slots.find(botGuid);
@@ -1610,6 +1612,9 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
         accountId = it->second.accountId;
         targetLevel = it->second.level;  // Level from pool slot metadata
         specId = it->second.specId;
+        // Get queue info set by AssignBot
+        contentId = it->second.currentContentId;
+        instanceType = it->second.currentInstanceType;
     }
 
     // Fallback: Try to get account ID from CharacterCache if not in slot
@@ -1654,10 +1659,38 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     pendingConfig.targetGearScore = targetLevel * 10;  // Approximate gear score based on level
     pendingConfig.createdAt = std::chrono::steady_clock::now();
 
+    // CRITICAL FIX: Set queue info so bot auto-queues for content after login
+    // This fixes the issue where warm pool bots are "assigned" but never actually
+    // queued for BG because they weren't in the world when QueueStatePoller tried
+    // to call ObjectAccessor::FindPlayer()
+    if (contentId > 0)
+    {
+        switch (instanceType)
+        {
+            case InstanceType::Battleground:
+                pendingConfig.battlegroundIdToQueue = contentId;
+                TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Bot {} will queue for BG {} after login",
+                    botGuid.ToString(), contentId);
+                break;
+            case InstanceType::Dungeon:
+                pendingConfig.dungeonIdToQueue = contentId;
+                TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Bot {} will queue for dungeon {} after login",
+                    botGuid.ToString(), contentId);
+                break;
+            case InstanceType::Arena:
+                pendingConfig.arenaTypeToQueue = contentId;
+                TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Bot {} will queue for arena {} after login",
+                    botGuid.ToString(), contentId);
+                break;
+            default:
+                break;
+        }
+    }
+
     sBotPostLoginConfigurator->RegisterPendingConfig(std::move(pendingConfig));
 
-    TC_LOG_INFO("playerbot.pool", "InstanceBotPool::WarmUpBot - Registered pending config for bot {} (level={}, spec={}, gearScore={})",
-        botGuid.ToString(), targetLevel, specId, pendingConfig.targetGearScore);
+    TC_LOG_INFO("playerbot.pool", "InstanceBotPool::WarmUpBot - Registered pending config for bot {} (level={}, spec={}, gearScore={}, contentId={}, type={})",
+        botGuid.ToString(), targetLevel, specId, pendingConfig.targetGearScore, contentId, static_cast<uint8>(instanceType));
 
     // Use BotSpawner to spawn the bot (same flow as regular bots)
     // This uses the proven workflow: SpawnBot -> async character selection -> login
