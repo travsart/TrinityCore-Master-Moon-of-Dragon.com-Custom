@@ -475,10 +475,10 @@ bool BotMovementUtil::IsMovingToDestination(Player* bot, Position const& destina
 }
 
 // ============================================================================
-// NEW: TrinityCore 11.2 Movement Features - Implementation
+// NEW: TrinityCore 12.0 Movement Features - Implementation
 // ============================================================================
 // These methods leverage the new MoveRandom() and MovePath() player support
-// added in TrinityCore 11.2 (commits 12743dd0e7, 1db1a0e57f)
+// added in TrinityCore 12.0 (commits 12743dd0e7, 1db1a0e57f)
 // ============================================================================
 
 bool BotMovementUtil::MoveRandomAround(Player* bot, float wanderDistance,
@@ -565,7 +565,7 @@ bool BotMovementUtil::MoveRandomAroundPosition(Player* bot, Position const& cent
         return false;
     }
 
-    // Use TrinityCore 11.2's MoveRandom() for players
+    // Use TrinityCore 12.0's MoveRandom() for players
     // NEW: This now works for players (previously creature-only)
     TC_LOG_DEBUG("module.playerbot.movement",
         "MoveRandomAroundPosition: Bot {} starting random wander (center={:.1f},{:.1f},{:.1f}, radius={:.1f}yd, walk={})",
@@ -586,7 +586,7 @@ bool BotMovementUtil::MoveRandomAroundPosition(Player* bot, Position const& cent
         return true;
     }
 
-    // Start random movement using TrinityCore 11.2 API
+    // Start random movement using TrinityCore 12.0 API
     mm->MoveRandom(wanderDistance, duration, Optional<float>{}, speedMode);
 
     return true;
@@ -650,7 +650,7 @@ bool BotMovementUtil::MoveAlongPath(Player* bot, uint32 pathId, bool repeatable,
         "MoveAlongPath: Bot {} starting path {} (repeatable={}, walk={})",
         bot->GetName(), pathId, repeatable ? "yes" : "no", forceWalk ? "yes" : "no");
 
-    // Use TrinityCore 11.2's MovePath() for players
+    // Use TrinityCore 12.0's MovePath() for players
     // NEW: This now works for players (previously creature-only)
     mm->MovePath(pathId, repeatable,
         Optional<Milliseconds>{},                  // duration

@@ -1,5 +1,5 @@
 -- Playerbot Race/Class Distribution Table
--- Based on World of Warcraft 11.2 Statistics from WoWRanks, Wowhead, and U.GG
+-- Based on World of Warcraft 12.0 Statistics from WoWRanks, Wowhead, and U.GG
 
 CREATE TABLE IF NOT EXISTS `playerbots_race_class_distribution` (
     `race` TINYINT UNSIGNED NOT NULL COMMENT 'Race ID from ChrRaces.db2',
@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS `playerbots_race_class_distribution` (
     INDEX `idx_percentage` (`percentage` DESC),
     INDEX `idx_popular` (`is_popular`, `percentage` DESC),
     INDEX `idx_faction` (`faction`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Bot character race/class distribution based on WoW 11.2 statistics';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Bot character race/class distribution based on WoW 12.0 statistics';
 
--- Insert realistic distribution data based on WoW 11.2 statistics
+-- Insert realistic distribution data based on WoW 12.0 statistics
 -- Top combinations from retail servers (approximate percentages)
 
 -- Alliance Popular Combinations

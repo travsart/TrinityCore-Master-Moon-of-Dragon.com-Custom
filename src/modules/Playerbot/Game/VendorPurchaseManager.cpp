@@ -526,7 +526,7 @@ namespace Playerbot
         // Check limited stock
     if (vendorItem->maxcount != 0)
         {
-            // Note: GetVendorItemCurrentCount is not const in TrinityCore 11.2
+            // Note: GetVendorItemCurrentCount is not const in TrinityCore 12.0
             Creature* mutableVendor = const_cast<Creature*>(vendor);
             if (mutableVendor->GetVendorItemCurrentCount(vendorItem) < quantity)
                 return VendorPurchaseResult::ITEM_SOLD_OUT;

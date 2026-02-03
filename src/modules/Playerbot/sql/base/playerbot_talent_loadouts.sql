@@ -27,7 +27,7 @@ CREATE TABLE `playerbot_talent_loadouts` (
 -- Example Loadouts (Warrior - Arms Spec)
 -- ====================================================================
 -- Note: These are placeholder entries. Actual talent IDs must be added
--- based on WoW 11.2 spell IDs from DBC/DB2 files
+-- based on WoW 12.0 spell IDs from DBC/DB2 files
 -- ====================================================================
 
 INSERT INTO `playerbot_talent_loadouts`

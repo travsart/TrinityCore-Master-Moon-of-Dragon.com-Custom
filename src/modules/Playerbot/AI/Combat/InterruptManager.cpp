@@ -31,6 +31,9 @@
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
 #include "UnitAI.h"
+// WoW 12.0: SpellAttr16 and SpellPvpModifier support
+#include "DB2Stores.h"
+#include "DB2Structure.h"
 
 namespace Playerbot
 {
@@ -1493,6 +1496,103 @@ void InterruptManager::Reset()
     // Reset interrupt manager state
     // Clear any tracked state variables that exist in the private section
     // Note: Actual member variables need to be checked in the header
+}
+
+// ============================================================================
+// INTERRUPT UTILS - STATIC METHODS
+// ============================================================================
+
+// WoW 12.0: SpellAttr16 Infrastructure
+// These methods provide infrastructure for checking SpellAttr16 flags.
+// All 32 flags are currently UNK (undocumented) in WoW 12.0, but this
+// infrastructure is ready for when flags become documented.
+
+bool InterruptUtils::HasAnySpellAttr16(uint32 spellId)
+{
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return false;
+
+    // Check if any SpellAttr16 bits are set by checking each bit
+    for (uint32 bit = 0; bit < 32; ++bit)
+    {
+        SpellAttr16 attr = static_cast<SpellAttr16>(1u << bit);
+        if (spellInfo->HasAttribute(attr))
+            return true;
+    }
+
+    return false;
+}
+
+bool InterruptUtils::HasSpellAttr16(uint32 spellId, SpellAttr16 attribute)
+{
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return false;
+
+    return spellInfo->HasAttribute(attribute);
+}
+
+// WoW 12.0: SpellPvpModifier Support
+// Access PvpMultiplier from SpellEffectEntry for PvP interrupt priority assessment
+
+float InterruptUtils::GetPvPInterruptMultiplier(uint32 spellId, uint8 effectIndex)
+{
+    // Access SpellEffectEntry from DB2 store
+    for (SpellEffectEntry const* effectEntry : sSpellEffectStore)
+    {
+        if (effectEntry && effectEntry->SpellID == static_cast<int32>(spellId) &&
+            effectEntry->EffectIndex == effectIndex)
+        {
+            // Return PvpMultiplier if valid, otherwise 1.0 (no modification)
+            return effectEntry->PvpMultiplier > 0.0f ? effectEntry->PvpMultiplier : 1.0f;
+        }
+    }
+
+    return 1.0f;
+}
+
+bool InterruptUtils::IsPvPHighPriorityInterrupt(uint32 spellId)
+{
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return false;
+
+    // Check each effect's PvP multiplier
+    // Spells with multiplier > 0.9 (less than 10% reduction) are particularly
+    // dangerous in PvP and should be high priority for interruption
+    for (uint8 i = 0; i < spellInfo->GetEffects().size(); ++i)
+    {
+        float mult = GetPvPInterruptMultiplier(spellId, i);
+        if (mult > 0.9f && mult > 0.0f)
+        {
+            // This effect has minimal PvP reduction - high priority interrupt
+            SpellEffectInfo const& effect = spellInfo->GetEffect(static_cast<SpellEffIndex>(i));
+
+            // Check if this is a damage or healing effect
+            SpellEffectName effectType = effect.Effect;
+            switch (effectType)
+            {
+                case SPELL_EFFECT_SCHOOL_DAMAGE:
+                case SPELL_EFFECT_HEAL:
+                case SPELL_EFFECT_HEAL_PCT:
+                case SPELL_EFFECT_WEAPON_DAMAGE:
+                case SPELL_EFFECT_NORMALIZED_WEAPON_DMG:
+                case SPELL_EFFECT_WEAPON_PERCENT_DAMAGE:
+                case SPELL_EFFECT_DAMAGE_FROM_MAX_HEALTH_PCT:
+                case SPELL_EFFECT_HEAL_MAX_HEALTH:
+                    // High damage/healing with minimal PvP reduction = high priority
+                    TC_LOG_DEBUG("playerbot.interrupt",
+                        "IsPvPHighPriorityInterrupt: Spell {} effect {} has PvpMultiplier {:.2f} - HIGH PRIORITY",
+                        spellId, i, mult);
+                    return true;
+                default:
+                    break;
+            }
+        }
+    }
+
+    return false;
 }
 
 } // namespace Playerbot

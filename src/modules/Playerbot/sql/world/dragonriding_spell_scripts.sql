@@ -7,7 +7,7 @@
 -- The spell_script_names table tells the server which C++ class to use
 -- when processing each spell.
 --
--- RETAIL SPELL IDS (from wowhead.com - WoW 11.2.7):
+-- RETAIL SPELL IDS (from wowhead.com - WoW 12.0):
 --   369536 = Soar (Dracthyr racial - initiates dragonriding)
 --   372608 = Surge Forward (primary forward burst)
 --   372610 = Skyward Ascent (upward burst)

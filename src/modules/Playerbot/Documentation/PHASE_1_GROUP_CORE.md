@@ -296,7 +296,7 @@ TEST(TargetAssist, LeaderTargetSync) {
 ## Risk Mitigation
 
 ### Technical Risks
-1. **Opcode Compatibility**: May need updates for WoW 11.2
+1. **Opcode Compatibility**: May need updates for WoW 12.0
    - Mitigation: Early testing with trinity-integration-tester
 
 2. **Threading Issues**: Group operations across threads

@@ -326,7 +326,7 @@ namespace Playerbot
         dtNavMeshQuery const* query = GetNavMeshQuery(map);
         if (!query)
         {
-            // Map doesn't have IsInLineOfSight in TrinityCore 11.2
+            // Map doesn't have IsInLineOfSight in TrinityCore 12.0
             // Use simple distance check as fallback
             float distance = start.GetExactDist(&end);
             bool hasLOS = (distance < 100.0f);

@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Successfully migrated the TrinityCore Playerbot packet interception system from legacy binary parsing (using `WorldPacket.Read()`) to WoW 11.2's typed packet hooks system. This migration solves the fundamental problem that WoW 11.2 `ServerPacket` classes only have `Write()` methods (no `Read()` methods), making traditional packet deserialization impossible.
+Successfully migrated the TrinityCore Playerbot packet interception system from legacy binary parsing (using `WorldPacket.Read()`) to WoW 12.0's typed packet hooks system. This migration solves the fundamental problem that WoW 12.0 `ServerPacket` classes only have `Write()` methods (no `Read()` methods), making traditional packet deserialization impossible.
 
 **Solution**: Intercept typed packets BEFORE serialization using C++ template overloads in core, providing full access to strongly-typed packet data.
 
@@ -16,18 +16,18 @@ Successfully migrated the TrinityCore Playerbot packet interception system from 
 
 ## Problem Statement
 
-### The WoW 11.2 Packet API Change
+### The WoW 12.0 Packet API Change
 
-In WoW 11.2, TrinityCore's packet system changed fundamentally:
+In WoW 12.0, TrinityCore's packet system changed fundamentally:
 
 ```cpp
-// OLD (Pre-11.2): ServerPacket had Read() methods
+// OLD (Pre-12.0): ServerPacket had Read() methods
 class ServerPacket {
     void Write();
     void Read();  // ← Available for deserialization
 };
 
-// NEW (WoW 11.2): ServerPacket ONLY has Write()
+// NEW (WoW 12.0): ServerPacket ONLY has Write()
 class ServerPacket {
     void Write();  // Only serialization, no Read()
 };
@@ -488,7 +488,7 @@ struct Statistics {
 - ✅ Zero breaking changes to existing code
 
 **Core Integration Justification**:
-- **Why core modification needed**: WoW 11.2 packets require pre-serialization interception
+- **Why core modification needed**: WoW 12.0 packets require pre-serialization interception
 - **Why module-only insufficient**: No hooks exist in core for typed packet observation
 - **Solution**: Minimal template overloads using observer pattern
 
@@ -875,7 +875,7 @@ struct EventAnalytics {
 
 - [ServerPacket API](https://trinitycore.atlassian.net/wiki/spaces/tc/pages/2130149/ServerPacket+API)
 - [WorldSession Hooks](https://trinitycore.atlassian.net/wiki/spaces/tc/pages/2130150/WorldSession+Hooks)
-- [WoW 11.2 Packet Changes](https://trinitycore.atlassian.net/wiki/spaces/tc/pages/2130151/WoW+11.2+Packet+System)
+- [WoW 12.0 Packet Changes](https://trinitycore.atlassian.net/wiki/spaces/tc/pages/2130151/WoW+12.0+Packet+System)
 
 ### Project Documentation
 
@@ -887,13 +887,13 @@ struct EventAnalytics {
 
 - [IKE3 Playerbot (Legacy)](https://github.com/ike3/mangosbot) - Original inspiration
 - [TrinityCore Module System](https://github.com/TrinityCore/TrinityCore/wiki/Modules)
-- [WoW 11.2 The War Within](https://worldofwarcraft.blizzard.com/en-us/news/24106455)
+- [WoW 12.0 The War Within](https://worldofwarcraft.blizzard.com/en-us/news/24106455)
 
 ---
 
 ## Conclusion
 
-The Typed Packet Hooks migration successfully solved the WoW 11.2 packet deserialization problem by:
+The Typed Packet Hooks migration successfully solved the WoW 12.0 packet deserialization problem by:
 
 1. ✅ Intercepting packets BEFORE serialization using template overloads
 2. ✅ Providing full access to strongly-typed packet data
@@ -903,7 +903,7 @@ The Typed Packet Hooks migration successfully solved the WoW 11.2 packet deseria
 6. ✅ Achieving <5 μs packet processing time (<0.01% CPU per bot)
 7. ✅ Preserving backward compatibility (zero breaking changes)
 
-The system is production-ready and provides a solid foundation for bot AI development in WoW 11.2.
+The system is production-ready and provides a solid foundation for bot AI development in WoW 12.0.
 
 **Status**: ✅ **MIGRATION COMPLETE** (100%)
 

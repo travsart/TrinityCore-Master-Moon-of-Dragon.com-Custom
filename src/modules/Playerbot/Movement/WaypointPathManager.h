@@ -9,7 +9,7 @@
  * WAYPOINT PATH MANAGER
  *
  * Enterprise-grade waypoint path management for bot navigation.
- * Leverages TrinityCore 11.2's MovePath() support for players (commit 1db1a0e57f).
+ * Leverages TrinityCore 12.0's MovePath() support for players (commit 1db1a0e57f).
  *
  * Features:
  * - Dynamic runtime path creation (no database required)

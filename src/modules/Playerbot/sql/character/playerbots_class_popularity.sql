@@ -1,5 +1,5 @@
 -- Playerbot Class Popularity Table
--- Based on World of Warcraft 11.2 class distribution and gameplay preferences
+-- Based on World of Warcraft 12.0 class distribution and gameplay preferences
 
 CREATE TABLE IF NOT EXISTS `playerbots_class_popularity` (
     `class` TINYINT UNSIGNED NOT NULL PRIMARY KEY COMMENT 'Class ID from ChrClasses.db2',
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `playerbots_class_popularity` (
     INDEX `idx_raid` (`raid_popularity` DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Bot character class popularity statistics';
 
--- Insert class popularity data based on WoW 11.2 statistics
+-- Insert class popularity data based on WoW 12.0 statistics
 -- Data from WoWRanks, Raider.IO, and PvP leaderboards
 
 INSERT INTO `playerbots_class_popularity` VALUES
@@ -42,4 +42,4 @@ INSERT INTO `playerbots_class_popularity` VALUES
 (13, 'Evoker', 3.0, 3.2, 2.1, 3.8, 2.9);             -- Newest class, ranged dps/heal
 
 -- Additional metadata could be added for seasonal adjustments
--- This represents a snapshot of 11.2 popularity that can be updated
+-- This represents a snapshot of 12.0 popularity that can be updated

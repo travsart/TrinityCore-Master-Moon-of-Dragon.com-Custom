@@ -172,16 +172,16 @@ public:
     static bool IsMovingToDestination(Player* bot, Position const& destination, float tolerance = 1.0f);
 
     // ========================================================================
-    // NEW: TrinityCore 11.2 Movement Features
+    // NEW: TrinityCore 12.0 Movement Features
     // ========================================================================
     // These methods leverage the new MoveRandom() and MovePath() player support
-    // added in TrinityCore 11.2 (commits 12743dd0e7, 1db1a0e57f)
+    // added in TrinityCore 12.0 (commits 12743dd0e7, 1db1a0e57f)
     // ========================================================================
 
     /**
      * Start random wandering around current position
      *
-     * NEW: Uses TrinityCore 11.2's MoveRandom() for players.
+     * NEW: Uses TrinityCore 12.0's MoveRandom() for players.
      * Creates natural idle behavior by wandering around a center point.
      *
      * Use Cases:
@@ -230,7 +230,7 @@ public:
     /**
      * Follow a waypoint path by ID
      *
-     * NEW: Uses TrinityCore 11.2's MovePath() for players.
+     * NEW: Uses TrinityCore 12.0's MovePath() for players.
      * Allows bots to follow predefined waypoint paths for smooth navigation.
      *
      * Use Cases:

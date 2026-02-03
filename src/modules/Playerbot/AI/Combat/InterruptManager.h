@@ -504,6 +504,51 @@ public:
     static bool IsSpellChanneled(uint32 spellId);
     static float GetSpellDangerRating(uint32 spellId);
 
+    // ========================================================================
+    // WoW 12.0 SPELL ATTRIBUTE CHECKS (SpellAttr16 Infrastructure)
+    // ========================================================================
+
+    /**
+     * @brief Check if a spell has any SpellAttr16 flags
+     * @param spellId The spell ID to check
+     * @return True if the spell has any Attr16 flags set
+     *
+     * Note: As of WoW 12.0, all SpellAttr16 flags are UNK (undocumented).
+     * This infrastructure is ready for when flags become documented.
+     * Known flags: SPELL_ATTR16_UNK0 through SPELL_ATTR16_UNK31
+     */
+    static bool HasAnySpellAttr16(uint32 spellId);
+
+    /**
+     * @brief Check if a spell has a specific SpellAttr16 flag
+     * @param spellId The spell ID to check
+     * @param attribute The SpellAttr16 flag to check
+     * @return True if the spell has the specified attribute
+     */
+    static bool HasSpellAttr16(uint32 spellId, SpellAttr16 attribute);
+
+    /**
+     * @brief Get PvP multiplier for spell interrupt priority assessment
+     * @param spellId The spell ID to check
+     * @param effectIndex The effect index (default 0)
+     * @return PvP multiplier value (1.0 = no reduction, <1.0 = reduced in PvP)
+     *
+     * Uses SpellPvpModifier data from SpellEffectEntry to determine
+     * if a spell is particularly dangerous in PvP (high multiplier)
+     * or already reduced (low multiplier).
+     */
+    static float GetPvPInterruptMultiplier(uint32 spellId, uint8 effectIndex = 0);
+
+    /**
+     * @brief Check if spell should have increased interrupt priority in PvP
+     * @param spellId The spell ID to check
+     * @return True if the spell should be prioritized for interruption in PvP
+     *
+     * Spells with PvpMultiplier > 0.9 (less than 10% reduction) are considered
+     * particularly dangerous in PvP and should be higher priority for interrupts.
+     */
+    static bool IsPvPHighPriorityInterrupt(uint32 spellId);
+
     // Class-specific interrupt utilities
     static ::std::vector<uint32> GetClassInterruptSpells(uint8 playerClass);
     static uint32 GetBestInterruptSpell(uint8 playerClass, InterruptType type);

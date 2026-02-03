@@ -237,7 +237,7 @@ void BotChatCommandHandler::SendResponse(CommandContext const& context, CommandR
     // Build chat packet
     WorldPacket data(SMSG_CHAT, 200);
 
-    // Packet structure for SMSG_CHAT in TrinityCore 11.2
+    // Packet structure for SMSG_CHAT in TrinityCore 12.0
     data << uint8(context.isWhisper ? CHAT_MSG_WHISPER : CHAT_MSG_PARTY);
     data << uint32(context.lang);
     data << context.bot->GetGUID();

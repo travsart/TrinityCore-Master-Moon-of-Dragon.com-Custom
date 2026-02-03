@@ -544,7 +544,7 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     // COMBAT LOG PACKETS - PHASE 3 COMPLETE IMPLEMENTATION
     // ========================================================================
     // These packets make bot damage/healing/actions appear in combat logs and meters
-    // Reference: CombatLogPackets.h in TrinityCore 11.2
+    // Reference: CombatLogPackets.h in TrinityCore 12.0
 
     // Spell Damage (Non-Melee)
     _relayOpcodes.insert(SMSG_SPELL_NON_MELEE_DAMAGE_LOG);   // Spell damage (fireballs, nukes, etc.)

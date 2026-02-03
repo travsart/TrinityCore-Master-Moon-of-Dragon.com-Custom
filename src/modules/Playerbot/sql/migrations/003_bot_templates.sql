@@ -12,7 +12,7 @@
 -- - Gear set configurations for different item level tiers
 -- - Talent builds per spec/role
 -- - Action bar layouts per spec
--- - Class/spec/role mappings with WoW 11.2 data
+-- - Class/spec/role mappings with WoW 12.0 data
 --
 -- Tables:
 -- - playerbot_spec_info: Master class/spec reference data
@@ -29,7 +29,7 @@
 -- ============================================================================
 -- TABLE: playerbot_spec_info
 -- ============================================================================
--- Master reference table for all WoW 11.2 class specializations.
+-- Master reference table for all WoW 12.0 class specializations.
 -- This is the authoritative source for class/spec/role mappings.
 -- ============================================================================
 
@@ -53,9 +53,9 @@ CREATE TABLE `playerbot_spec_info` (
     INDEX `idx_class_role` (`class_id`, `role`),
     INDEX `idx_enabled` (`enabled`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Master class/spec reference for WoW 11.2 (The War Within)';
+COMMENT='Master class/spec reference for WoW 12.0 (The War Within)';
 
--- Insert all WoW 11.2 specializations
+-- Insert all WoW 12.0 specializations
 INSERT INTO `playerbot_spec_info`
     (`spec_id`, `class_id`, `class_name`, `spec_name`, `role`, `spec_index`, `stat_priority`, `armor_type`, `primary_stat`) VALUES
 -- Warrior (class 1)
@@ -126,7 +126,7 @@ INSERT INTO `playerbot_spec_info`
 -- ============================================================================
 -- TABLE: playerbot_class_race_matrix
 -- ============================================================================
--- Valid class/race combinations per faction for WoW 11.2.
+-- Valid class/race combinations per faction for WoW 12.0.
 -- Used when creating bots to ensure valid combinations.
 -- ============================================================================
 
@@ -144,9 +144,9 @@ CREATE TABLE `playerbot_class_race_matrix` (
     INDEX `idx_class_faction` (`class_id`, `faction`),
     INDEX `idx_enabled` (`enabled`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Valid class/race combinations for WoW 11.2';
+COMMENT='Valid class/race combinations for WoW 12.0';
 
--- Insert valid class/race combinations for WoW 11.2
+-- Insert valid class/race combinations for WoW 12.0
 -- Alliance races: Human(1), Dwarf(3), Night Elf(4), Gnome(7), Draenei(11), Worgen(22),
 --                 Pandaren-A(25), Void Elf(29), Lightforged(30), Dark Iron(34), Kul Tiran(32),
 --                 Mechagnome(37), Dracthyr-A(52), Earthen-A(85)
@@ -296,7 +296,7 @@ CREATE TABLE `playerbot_bot_templates` (
     -- Metadata
     `template_name` VARCHAR(64) NOT NULL COMMENT 'Human-readable name (e.g., Warrior_Arms)',
     `version` INT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Template version for updates',
-    `patch_version` VARCHAR(16) DEFAULT '11.2.0' COMMENT 'WoW patch this template is for',
+    `patch_version` VARCHAR(16) DEFAULT '12.0.0' COMMENT 'WoW patch this template is for',
 
     -- Status
     `enabled` TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Whether template is active',

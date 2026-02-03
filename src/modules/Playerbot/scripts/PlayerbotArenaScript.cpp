@@ -13,7 +13,7 @@
  * - Monitors invitations for automatic bot acceptance
  * - Supports both rated arenas (2v2/3v3) and skirmishes
  *
- * Note: Solo Shuffle is NOT available in TrinityCore 11.2
+ * Note: Solo Shuffle is NOT available in TrinityCore 12.0
  */
 
 #include "ScriptMgr.h"
@@ -168,7 +168,7 @@ private:
                 continue;
 
             // Check if this is an arena queue
-            // In TrinityCore 11.2, BattlemasterListId maps to BattlegroundTypeId
+            // In TrinityCore 12.0, BattlemasterListId maps to BattlegroundTypeId
             BattlegroundTypeId bgTypeId = BattlegroundTypeId(queueTypeId.BattlemasterListId);
             if (bgTypeId != BATTLEGROUND_AA) // BATTLEGROUND_AA is arena
                 continue;
@@ -176,7 +176,7 @@ private:
             state.inQueue = true;
 
             // Determine bracket type and mode from queue type
-            // In 11.2, access queueTypeId members directly
+            // In 12.0, access queueTypeId members directly
             BattlegroundQueueIdType queueIdType = BattlegroundQueueIdType(queueTypeId.Type);
 
             if (queueIdType == BattlegroundQueueIdType::ArenaSkirmish)

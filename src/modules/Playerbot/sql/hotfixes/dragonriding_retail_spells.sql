@@ -21,7 +21,7 @@
 -- We only need ONE thing: an override_spell_data entry that tells the client
 -- which spells to show on the action bar when dragonriding is active.
 --
--- RETAIL SPELL IDS (from wowhead.com - WoW 11.2.7):
+-- RETAIL SPELL IDS (from wowhead.com - WoW 12.0):
 --   372608 = Surge Forward (Flap forward, 6 charges, 15s recharge)
 --   372610 = Skyward Ascent (Flap upward, 6 charges, 15s recharge)
 --   361584 = Whirling Surge (Spiral forward, 30s cooldown)
@@ -100,7 +100,7 @@ INSERT INTO override_spell_data (
     0,                      -- Slot 10: Empty
     0,                      -- PlayerActionBarFileDataID: Use default
     0,                      -- Flags: None
-    64978                   -- VerifiedBuild: WoW 11.2 build number
+    64978                   -- VerifiedBuild: WoW 12.0 build number
 );
 
 -- ============================================================================
@@ -129,7 +129,7 @@ INSERT INTO hotfix_data (
     0xCA75DF1C,             -- TableHash: OverrideSpellData.db2 (from server log!)
     900001,                 -- RecordId: The override_spell_data.ID we created
     1,                      -- Status: 1 = Valid
-    64978                   -- VerifiedBuild: WoW 11.2 build number
+    64978                   -- VerifiedBuild: WoW 12.0 build number
 );
 
 -- ============================================================================

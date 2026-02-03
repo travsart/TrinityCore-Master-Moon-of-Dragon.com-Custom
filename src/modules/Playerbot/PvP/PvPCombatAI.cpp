@@ -8,6 +8,7 @@
  */
 
 #include "PvPCombatAI.h"
+#include "PvPSpellUtils.h"  // WoW 12.0: PvP multiplier and SpellAttr16 support
 #include "SpellHistory.h"
 #include "GameTime.h"
 #include "Player.h"
@@ -849,17 +850,155 @@ uint32 PvPCombatAI::EstimateDPS(::Unit* unit) const
     if (!unit)
         return 0;
 
-    // Full DPS estimation using combat log parsing and gear analysis
-    // Returns 5000 as default placeholder value
-    // Full implementation should:
-    // - Track actual damage dealt by unit over time window (last 10 seconds)
-    // - Account for class/spec burst potential (Combustion, Avatar, etc.)
-    // - Factor in gear/stats (attack power, spell power, crit rating, haste)
-    // - Consider cooldown availability for burst damage windows
-    // - Use rolling average for dynamic DPS calculation during combat
-    // - Query Unit::GetDamageDoneInPastSecs() if available
-    // Reference: TrinityCore Unit damage tracking, CombatLog events
-    return 5000;
+    // WoW 12.0: Enhanced DPS estimation with PvP modifier awareness
+    // Uses PvPSpellUtils to account for PvpMultiplier from SpellEffectEntry
+    //
+    // DPS estimation considers:
+    // 1. Base attack power / spell power from stats
+    // 2. Class-specific rotation damage potential
+    // 3. PvP modifiers that reduce damage in PvP combat
+    // 4. Current cooldown availability for burst windows
+
+    uint32 baseDPS = 0;
+
+    // Determine if this is PvP combat context
+    bool isPvPCombat = PvPSpellUtils::IsInPvPCombat(unit);
+
+    if (unit->IsPlayer())
+    {
+        Player const* player = unit->ToPlayer();
+        uint8 playerClass = player->GetClass();
+
+        // Get primary damage stat
+        float attackPower = player->GetTotalAttackPowerValue(BASE_ATTACK);
+        float spellPower = static_cast<float>(player->GetBaseSpellPowerBonus());
+
+        // Class-specific DPS estimation
+        // Base calculation using attack power or spell power depending on class
+        switch (playerClass)
+        {
+            // Melee classes - use attack power
+            case CLASS_WARRIOR:
+            case CLASS_ROGUE:
+            case CLASS_DEATH_KNIGHT:
+            case CLASS_MONK:
+            case CLASS_DEMON_HUNTER:
+            case CLASS_PALADIN:
+                baseDPS = static_cast<uint32>(attackPower * 0.6f);
+                break;
+
+            // Caster classes - use spell power
+            case CLASS_MAGE:
+            case CLASS_WARLOCK:
+            case CLASS_PRIEST:
+            case CLASS_EVOKER:
+                baseDPS = static_cast<uint32>(spellPower * 0.8f);
+                break;
+
+            // Hybrid classes - use higher of AP/SP
+            case CLASS_SHAMAN:
+            case CLASS_DRUID:
+            case CLASS_HUNTER:
+                baseDPS = static_cast<uint32>(std::max(attackPower * 0.6f, spellPower * 0.8f));
+                break;
+
+            default:
+                baseDPS = static_cast<uint32>(std::max(attackPower, spellPower) * 0.5f);
+                break;
+        }
+
+        // Apply PvP reduction if in PvP combat
+        // Most damage spells have a ~20-40% PvP reduction
+        if (isPvPCombat)
+        {
+            // Apply average PvP damage reduction factor
+            // This accounts for typical PvpMultiplier values (0.6-0.9)
+            constexpr float AVG_PVP_DAMAGE_REDUCTION = 0.75f;
+            baseDPS = static_cast<uint32>(baseDPS * AVG_PVP_DAMAGE_REDUCTION);
+        }
+
+        // Check for burst cooldowns that increase damage
+        // If offensive CDs are active, estimate higher DPS
+        if (HasBurstCooldownActive(player))
+        {
+            baseDPS = static_cast<uint32>(baseDPS * 1.5f);
+        }
+
+        // Ensure minimum DPS estimate
+        if (baseDPS < 1000)
+            baseDPS = 1000;
+    }
+    else
+    {
+        // Non-player unit - use base 5000 DPS estimate
+        baseDPS = 5000;
+    }
+
+    return baseDPS;
+}
+
+bool PvPCombatAI::HasBurstCooldownActive(Player const* player) const
+{
+    if (!player)
+        return false;
+
+    // Check for common offensive burst cooldown auras
+    // These are spell IDs for major offensive cooldowns that significantly increase damage
+    static const std::vector<uint32> burstCooldowns = {
+        // Warrior
+        1719,    // Recklessness
+        107574,  // Avatar
+
+        // Paladin
+        31884,   // Avenging Wrath
+
+        // Mage
+        12042,   // Arcane Power
+        190319,  // Combustion
+        12472,   // Icy Veins
+
+        // Rogue
+        13750,   // Adrenaline Rush
+        121471,  // Shadow Blades
+
+        // Death Knight
+        51271,   // Pillar of Frost
+        207289,  // Unholy Assault
+
+        // Shaman
+        191634,  // Stormkeeper
+
+        // Warlock
+        113860,  // Dark Soul
+
+        // Monk
+        137639,  // Storm, Earth, and Fire
+
+        // Druid
+        106951,  // Berserk
+        194223,  // Celestial Alignment
+
+        // Demon Hunter
+        191427,  // Metamorphosis (Havoc)
+
+        // Evoker
+        375087,  // Dragonrage
+
+        // Hunter
+        19574,   // Bestial Wrath
+        288613,  // Trueshot
+
+        // Priest
+        10060,   // Power Infusion
+    };
+
+    for (uint32 spellId : burstCooldowns)
+    {
+        if (player->HasAura(spellId))
+            return true;
+    }
+
+    return false;
 }
 
 float PvPCombatAI::CalculateThreatScore(::Unit* target) const

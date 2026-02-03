@@ -344,6 +344,7 @@ private:
     bool IsHealer(::Unit* unit) const;
     bool IsCaster(::Unit* unit) const;
     uint32 EstimateDPS(::Unit* unit) const;
+    bool HasBurstCooldownActive(Player const* player) const;  // WoW 12.0: PvP burst detection
     float CalculateThreatScore(::Unit* target) const;
     bool IsInCCRange(::Unit* target, CCType ccType) const;
     bool HasCCAvailable(CCType ccType) const;

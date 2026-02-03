@@ -54,8 +54,8 @@ namespace Playerbot
  * - CHARGE     → MoveCharge()
  * - KNOCKBACK  → MoveKnockbackFrom()
  * - CUSTOM     → LaunchMoveSpline()
- * - RANDOM     → MoveRandom() [NEW: TrinityCore 11.2 - natural idle wandering]
- * - PATH       → MovePath() [NEW: TrinityCore 11.2 - waypoint-based navigation]
+ * - RANDOM     → MoveRandom() [NEW: TrinityCore 12.0 - natural idle wandering]
+ * - PATH       → MovePath() [NEW: TrinityCore 12.0 - waypoint-based navigation]
  */
 enum class MovementRequestType : uint8
 {
@@ -136,7 +136,7 @@ struct IdleMovementParams
 /**
  * Random wandering movement parameters (MoveRandom)
  *
- * NEW: Leverages TrinityCore 11.2's MoveRandom() support for players.
+ * NEW: Leverages TrinityCore 12.0's MoveRandom() support for players.
  * Creates natural idle behavior by wandering around a center point.
  *
  * Use Cases:
@@ -164,7 +164,7 @@ struct RandomMovementParams
 /**
  * Waypoint path movement parameters (MovePath)
  *
- * NEW: Leverages TrinityCore 11.2's MovePath() support for players.
+ * NEW: Leverages TrinityCore 12.0's MovePath() support for players.
  * Allows bots to follow predefined waypoint paths for smooth navigation.
  *
  * Use Cases:
@@ -276,7 +276,7 @@ public:
     /**
      * Construct random wandering movement request
      *
-     * NEW: Uses TrinityCore 11.2's MoveRandom() for natural idle behavior.
+     * NEW: Uses TrinityCore 12.0's MoveRandom() for natural idle behavior.
      *
      * @param priority Movement priority
      * @param centerPos Center point to wander around
@@ -298,7 +298,7 @@ public:
     /**
      * Construct waypoint path movement request
      *
-     * NEW: Uses TrinityCore 11.2's MovePath() for waypoint-based navigation.
+     * NEW: Uses TrinityCore 12.0's MovePath() for waypoint-based navigation.
      *
      * @param priority Movement priority
      * @param pathId Waypoint path ID
@@ -436,8 +436,8 @@ private:
         FollowMovementParams,
         JumpMovementParams,
         IdleMovementParams,
-        RandomMovementParams,                     // NEW: TrinityCore 11.2 MoveRandom()
-        PathMovementParams                        // NEW: TrinityCore 11.2 MovePath()
+        RandomMovementParams,                     // NEW: TrinityCore 12.0 MoveRandom()
+        PathMovementParams                        // NEW: TrinityCore 12.0 MovePath()
     >;
 
     Params _params;

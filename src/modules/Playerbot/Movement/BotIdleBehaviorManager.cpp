@@ -366,7 +366,7 @@ bool BotIdleBehaviorManager::StartWander()
     // Calculate wander duration
     Milliseconds duration = GetRandomDuration(config.minWanderDuration, config.maxWanderDuration);
 
-    // Start wandering using TrinityCore 11.2's MoveRandom for players
+    // Start wandering using TrinityCore 12.0's MoveRandom for players
     bool success = BotMovementUtil::MoveRandomAroundPosition(
         _bot,
         _centerPosition,

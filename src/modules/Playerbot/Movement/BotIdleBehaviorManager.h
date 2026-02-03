@@ -11,7 +11,7 @@
  * Enterprise-grade idle behavior management for PlayerBot.
  * Creates natural, human-like idle behavior when bots are waiting.
  *
- * NEW: Leverages TrinityCore 11.2's MoveRandom() support for players
+ * NEW: Leverages TrinityCore 12.0's MoveRandom() support for players
  * (commit 12743dd0e7) to create smooth wandering behavior.
  *
  * Features:
@@ -100,7 +100,7 @@ enum class IdleBehaviorState : uint8
  * Bot Idle Behavior Manager
  *
  * Manages natural idle behavior for bots when they're not actively engaged.
- * Uses TrinityCore 11.2's MoveRandom() for smooth wandering.
+ * Uses TrinityCore 12.0's MoveRandom() for smooth wandering.
  */
 class TC_GAME_API BotIdleBehaviorManager
 {

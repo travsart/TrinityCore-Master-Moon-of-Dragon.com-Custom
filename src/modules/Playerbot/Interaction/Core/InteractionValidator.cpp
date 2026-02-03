@@ -470,7 +470,7 @@ namespace Playerbot
         if (!trainerData)
             return false;
 
-        // In TrinityCore 11.2, trainer spell validation is handled internally
+        // In TrinityCore 12.0, trainer spell validation is handled internally
         // We just check if trainer exists and is accessible
         // The actual spell learning validation happens in Trainer::SendSpells
         return true;
@@ -482,7 +482,7 @@ namespace Playerbot
             return false;
 
         // Learn mount/riding skills - check spell name or attributes
-        // Note: SPELL_EFFECT_SUMMON_MOUNT may not exist in TrinityCore 11.2
+        // Note: SPELL_EFFECT_SUMMON_MOUNT may not exist in TrinityCore 12.0
         // Alternative: Check if spell creates a mount aura or has mount-related attributes
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
@@ -494,7 +494,7 @@ namespace Playerbot
         // This would need more complex logic to check professions
 
         // For class abilities, rely on trainer validation system
-        // TrinityCore 11.2 handles spell family validation internally
+        // TrinityCore 12.0 handles spell family validation internally
         return true;
     }
 
@@ -520,7 +520,7 @@ namespace Playerbot
         // would require more complex logic through spell requirements
 
         // Check class requirement - SpellFamilyName validation
-        // In TrinityCore 11.2, spell family validation is handled internally by spell learning system
+        // In TrinityCore 12.0, spell family validation is handled internally by spell learning system
         // We rely on the trainer system to validate spell availability
         return true;
     }

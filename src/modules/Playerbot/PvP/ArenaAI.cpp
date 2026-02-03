@@ -8,6 +8,7 @@
  */
 
 #include "ArenaAI.h"
+#include "PvPSpellUtils.h"  // WoW 12.0: PvP multiplier and SpellAttr16 support
 #include "GameTime.h"
 #include "Player.h"
 #include "Unit.h"
