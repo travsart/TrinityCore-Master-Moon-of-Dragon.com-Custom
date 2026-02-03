@@ -12,6 +12,7 @@
 #include "Core/DI/Interfaces/IObjectiveTracker.h"  // ObjectivePriority
 #include "../BotAI.h"
 #include "Player.h"
+#include "../../Session/BotSession.h"  // For IsInstanceBot check
 #include "Group.h"
 #include "QuestDef.h"
 #include "ObjectAccessor.h"
@@ -91,6 +92,15 @@ bool QuestStrategy::IsActive(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+
+    // CRITICAL: Instance bots should NEVER quest - they exist only for BG/dungeon
+    // This prevents SmartAI thread-safety crashes when accepting quests from worker threads
+    if (BotSession* session = dynamic_cast<BotSession*>(bot->GetSession()))
+    {
+        if (session->IsInstanceBot())
+            return false;
+    }
+
     // NOT active during combat (combat takes priority)
     if (bot->IsInCombat())
         return false;
@@ -107,6 +117,14 @@ float QuestStrategy::GetRelevance(BotAI* ai) const
         return 0.0f;
 
     Player* bot = ai->GetBot();
+
+    // Instance bots should NEVER quest - return 0 relevance
+    if (BotSession* session = dynamic_cast<BotSession*>(bot->GetSession()))
+    {
+        if (session->IsInstanceBot())
+            return 0.0f;
+    }
+
     // Combat has higher priority - return 0 if in combat
     if (bot->IsInCombat())
         return 0.0f;
