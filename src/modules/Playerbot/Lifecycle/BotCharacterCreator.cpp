@@ -23,7 +23,7 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "../Session/BotSession.h"
-#include "Data/WoW112CharacterCreation.h"
+#include "Data/WoW120CharacterCreation.h"
 #include "CharacterPackets.h"
 #include <random>
 

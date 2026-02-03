@@ -784,8 +784,8 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotScripts.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Instance/InstanceBotScripts.h
 
-    # WoW 11.2 Character Creation Data
-    ${CMAKE_CURRENT_SOURCE_DIR}/Data/WoW112CharacterCreation.h
+    # WoW 12.0 Character Creation Data
+    ${CMAKE_CURRENT_SOURCE_DIR}/Data/WoW120CharacterCreation.h
 )
 
 # ============================================================================

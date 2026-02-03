@@ -1,12 +1,17 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2024-2026 TrinityCore <https://www.trinitycore.org/>
  *
- * WoW 11.2 (The War Within) Character Creation Data
+ * WoW 12.0 (The War Within Season 2+) Character Creation Data
  * Complete implementation guide for bot character creation
+ *
+ * WoW 12.0 Changes:
+ * - Spirit stat re-added (MAX_STATS = 5)
+ * - Difficulty type changed to int16
+ * - Item Level Squish Era system added
  */
 
-#ifndef PLAYERBOT_WOW112_CHARACTER_CREATION_H
-#define PLAYERBOT_WOW112_CHARACTER_CREATION_H
+#ifndef PLAYERBOT_WOW120_CHARACTER_CREATION_H
+#define PLAYERBOT_WOW120_CHARACTER_CREATION_H
 
 #include "Define.h"
 #include "SharedDefines.h"
@@ -19,25 +24,25 @@ namespace Playerbot
 {
 
 // ===================================================================================
-// WOW 11.2 CHARACTER CREATION DATA
+// WOW 12.0 CHARACTER CREATION DATA
 // ===================================================================================
 
 namespace CharacterCreation
 {
-    // Starting level for new characters in WoW 11.2
+    // Starting level for new characters in WoW 12.0
     constexpr uint8 DEFAULT_STARTING_LEVEL = 10;  // New characters start at level 10 in TWW
     constexpr uint8 ALLIED_RACE_STARTING_LEVEL = 10;  // Allied races also start at 10
     constexpr uint8 DEMON_HUNTER_STARTING_LEVEL = 10;  // DH normalized to 10
     constexpr uint8 DEATH_KNIGHT_STARTING_LEVEL = 10;  // DK normalized to 10
     constexpr uint8 EVOKER_STARTING_LEVEL = 58;  // Evokers start at 58 in Forbidden Reach
-    constexpr uint8 HERO_CLASS_MIN_LEVEL_REQUIREMENT = 0;  // No level requirement in 11.2
+    constexpr uint8 HERO_CLASS_MIN_LEVEL_REQUIREMENT = 0;  // No level requirement in 12.0
 
     // Maximum number of certain classes per realm
     constexpr uint8 MAX_EVOKERS_PER_REALM = 1;  // Only 1 Evoker per realm initially (lifted after first max level)
     constexpr uint8 MAX_DEMON_HUNTERS_PER_REALM = 1;  // Only 1 DH per realm (can be lifted)
 
     // ===================================================================================
-    // RACE/CLASS COMBINATIONS (WoW 11.2 - The War Within)
+    // RACE/CLASS COMBINATIONS (WoW 12.0 - The War Within Season 2+)
     // ===================================================================================
 
     struct RaceClassCombination
@@ -49,7 +54,7 @@ namespace CharacterCreation
         uint32 unlockAchievement;  // Achievement ID required to unlock (0 if none)
     };
 
-    // Valid Race/Class combinations for WoW 11.2
+    // Valid Race/Class combinations for WoW 12.0
     // Note: Almost all race/class restrictions have been lifted in recent expansions
     inline const ::std::vector<RaceClassCombination> VALID_COMBINATIONS = {
         // ========== ALLIANCE RACES ==========
@@ -464,7 +469,7 @@ namespace CharacterCreation
     };
 
     // ===================================================================================
-    // BASE STATS BY RACE/CLASS (11.2 Values)
+    // BASE STATS BY RACE/CLASS (12.0 Values)
     // ===================================================================================
 
     struct BaseStats
@@ -475,6 +480,7 @@ namespace CharacterCreation
         uint32 agility;
         uint32 stamina;
         uint32 intellect;
+        uint32 spirit;  // WoW 12.0: Spirit stat re-added (MAX_STATS = 5)
     };
 
     // Simplified base stat calculation - actual values from DBC data
@@ -495,6 +501,7 @@ namespace CharacterCreation
                 stats.agility = 20;
                 stats.intellect = 20;
                 stats.stamina = 32;
+                stats.spirit = 18;  // WoW 12.0: Spirit for minor mana regen
                 break;
 
             case CLASS_HUNTER:
@@ -505,6 +512,7 @@ namespace CharacterCreation
                 stats.agility = 31;
                 stats.intellect = 20;
                 stats.stamina = 30;
+                stats.spirit = 18;  // WoW 12.0: Spirit for minor mana regen
                 break;
 
             case CLASS_PRIEST:
@@ -515,6 +523,7 @@ namespace CharacterCreation
                 stats.agility = 20;
                 stats.intellect = 31;
                 stats.stamina = 29;
+                stats.spirit = 28;  // WoW 12.0: Casters have high spirit for mana regen
                 break;
 
             case CLASS_SHAMAN:
@@ -523,6 +532,7 @@ namespace CharacterCreation
                 stats.agility = 22;
                 stats.intellect = 27;
                 stats.stamina = 30;
+                stats.spirit = 25;  // WoW 12.0: Hybrids have moderate spirit
                 break;
 
             default:
@@ -530,6 +540,7 @@ namespace CharacterCreation
                 stats.agility = 20;
                 stats.intellect = 20;
                 stats.stamina = 30;
+                stats.spirit = 18;  // WoW 12.0: Default spirit value
                 break;
         }
 
@@ -583,6 +594,7 @@ namespace CharacterCreation
             stats.agility *= 3;
             stats.stamina *= 3;
             stats.intellect *= 3;
+            stats.spirit *= 3;  // WoW 12.0: Spirit scaling for Evokers
         }
 
         return stats;
@@ -721,4 +733,4 @@ namespace CharacterCreation
 } // namespace CharacterCreation
 } // namespace Playerbot
 
-#endif // PLAYERBOT_WOW112_CHARACTER_CREATION_H
+#endif // PLAYERBOT_WOW120_CHARACTER_CREATION_H
