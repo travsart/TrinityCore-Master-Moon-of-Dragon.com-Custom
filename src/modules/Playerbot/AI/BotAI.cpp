@@ -329,9 +329,12 @@ BotAI::~BotAI()
     // garbage data, causing std::bad_alloc when string tries huge allocation.
 
     // Phase 4: Cleanup Shared Blackboard
-    if (_sharedBlackboard && _bot)
+    // CRITICAL FIX: Use _cachedBotGuid instead of _bot->GetGUID()!
+    // During destructor, _bot may be a dangling pointer to already-freed memory.
+    // Using _cachedBotGuid is safe - it was captured in the constructor.
+    if (_sharedBlackboard && !_cachedBotGuid.IsEmpty())
     {
-        BlackboardManager::RemoveBotBlackboard(_bot->GetGUID());
+        BlackboardManager::RemoveBotBlackboard(_cachedBotGuid);
         _sharedBlackboard = nullptr;
     }
 
