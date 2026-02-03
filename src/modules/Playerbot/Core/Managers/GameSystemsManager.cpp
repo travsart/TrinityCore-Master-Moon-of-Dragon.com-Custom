@@ -26,6 +26,8 @@
 #include "Professions/GatheringMaterialsBridge.h"
 #include "Professions/ProfessionAuctionBridge.h"
 #include "Professions/AuctionMaterialsBridge.h"
+#include "Session/BotSessionManager.h"  // For IsInstanceBot check
+#include "Session/BotSession.h"         // For BotSession::IsInstanceBot()
 
 // Manager implementations (for unique_ptr destruction)
 #include "AI/BehaviorPriorityManager.h"  // For unique_ptr<BehaviorPriorityManager> destruction
@@ -456,6 +458,16 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     }
 
     // ========================================================================
+    // INSTANCE BOT CHECK - Skip non-essential managers for pool/JIT bots
+    // ========================================================================
+    // Instance bots (warm pool, JIT) are single-purpose bots for BG/Arena/Dungeon/Raid.
+    // They don't need humanization, battle pets, banking, professions, mounts, etc.
+    // This significantly reduces CPU usage for instance-only bots.
+    bool isInstanceBot = false;
+    if (BotSession* session = BotSessionManager::GetBotSession(_bot->GetSession()))
+        isInstanceBot = session->IsInstanceBot();
+
+    // ========================================================================
     // PHASE 7.1: EVENT DISPATCHER - Process queued events first
     // ========================================================================
     if (_eventDispatcher)
@@ -497,77 +509,87 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // ========================================================================
 
     // Trade manager handles vendor interactions, repairs, and consumables
+    // KEEP for instance bots - they may need repairs
     if (_tradeManager)
         _tradeManager->Update(diff);
 
-    // Gathering manager handles mining, herbalism, skinning
-    if (_gatheringManager)
-        _gatheringManager->Update(diff);
-
     // ========================================================================
-    // THROTTLED BRIDGE UPDATES - Don't need every-frame updates
+    // WORLD BOT ONLY MANAGERS - Skip for instance bots (BG/Arena/Dungeon/Raid)
+    // These managers handle open-world activities not relevant to instances
     // ========================================================================
-
-    // Gathering materials bridge coordinates gathering with crafting needs (2 sec throttle)
-    _gatheringBridgeTimer += diff;
-    if (_gatheringBridgeTimer >= 2000)
+    if (!isInstanceBot)
     {
-        _gatheringBridgeTimer = 0;
-        if (_gatheringMaterialsBridge)
-            _gatheringMaterialsBridge->Update(diff);
-    }
+        // Gathering manager handles mining, herbalism, skinning
+        if (_gatheringManager)
+            _gatheringManager->Update(diff);
 
-    // Auction materials bridge optimizes material sourcing (2 sec throttle)
-    _auctionBridgeTimer += diff;
-    if (_auctionBridgeTimer >= 2000)
-    {
-        _auctionBridgeTimer = 0;
-        if (_auctionMaterialsBridge)
-            _auctionMaterialsBridge->Update(diff);
-    }
+        // ========================================================================
+        // THROTTLED BRIDGE UPDATES - Don't need every-frame updates
+        // ========================================================================
 
-    // Profession auction bridge handles selling materials/crafts (5 sec throttle)
-    _professionBridgeTimer += diff;
-    if (_professionBridgeTimer >= 5000)
-    {
-        _professionBridgeTimer = 0;
-        if (_professionAuctionBridge)
-            _professionAuctionBridge->Update(_bot, diff);
-    }
+        // Gathering materials bridge coordinates gathering with crafting needs (2 sec throttle)
+        _gatheringBridgeTimer += diff;
+        if (_gatheringBridgeTimer >= 2000)
+        {
+            _gatheringBridgeTimer = 0;
+            if (_gatheringMaterialsBridge)
+                _gatheringMaterialsBridge->Update(diff);
+        }
 
-    // Auction manager handles auction house buying, selling, and market scanning (5 sec throttle)
-    _auctionUpdateTimer += diff;
-    if (_auctionUpdateTimer >= 5000)
-    {
-        _auctionUpdateTimer = 0;
-        if (_auctionManager)
-            _auctionManager->Update(diff);
-    }
+        // Auction materials bridge optimizes material sourcing (2 sec throttle)
+        _auctionBridgeTimer += diff;
+        if (_auctionBridgeTimer >= 2000)
+        {
+            _auctionBridgeTimer = 0;
+            if (_auctionMaterialsBridge)
+                _auctionMaterialsBridge->Update(diff);
+        }
+
+        // Profession auction bridge handles selling materials/crafts (5 sec throttle)
+        _professionBridgeTimer += diff;
+        if (_professionBridgeTimer >= 5000)
+        {
+            _professionBridgeTimer = 0;
+            if (_professionAuctionBridge)
+                _professionAuctionBridge->Update(_bot, diff);
+        }
+
+        // Auction manager handles auction house buying, selling, and market scanning (5 sec throttle)
+        _auctionUpdateTimer += diff;
+        if (_auctionUpdateTimer >= 5000)
+        {
+            _auctionUpdateTimer = 0;
+            if (_auctionManager)
+                _auctionManager->Update(diff);
+        }
+
+        // Banking manager handles personal banking automation (5 sec throttle - banking is slow)
+        _bankingCheckTimer += diff;
+        if (_bankingCheckTimer >= 5000)
+        {
+            _bankingCheckTimer = 0;
+            if (_bankingManager)
+                _bankingManager->Update(diff);
+        }
+
+        // Farming coordinator handles profession skill leveling automation (2 sec throttle)
+        _farmingUpdateTimer += diff;
+        if (_farmingUpdateTimer >= 2000)
+        {
+            _farmingUpdateTimer = 0;
+            if (_farmingCoordinator)
+                _farmingCoordinator->Update(_bot, diff);
+        }
+    } // end !isInstanceBot
 
     // Group coordinator handles group/raid mechanics, role assignment, and coordination
+    // KEEP for instance bots - they need group coordination in dungeons/raids/BGs
     if (_groupCoordinator)
         _groupCoordinator->Update(diff);
 
-    // Banking manager handles personal banking automation (5 sec throttle - banking is slow)
-    _bankingCheckTimer += diff;
-    if (_bankingCheckTimer >= 5000)
-    {
-        _bankingCheckTimer = 0;
-        if (_bankingManager)
-            _bankingManager->Update(diff);
-    }
-
-    // Farming coordinator handles profession skill leveling automation (2 sec throttle)
-    _farmingUpdateTimer += diff;
-    if (_farmingUpdateTimer >= 2000)
-    {
-        _farmingUpdateTimer = 0;
-        if (_farmingCoordinator)
-            _farmingCoordinator->Update(_bot, diff);
-    }
-
     // ========================================================================
     // EQUIPMENT AUTO-EQUIP - Check every 10 seconds
+    // KEEP for instance bots - they get leveled and geared by BotPostLoginConfigurator
     // ========================================================================
     _equipmentCheckTimer += diff;
     if (_equipmentCheckTimer >= 10000) // 10 seconds
@@ -578,46 +600,57 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     }
 
     // ========================================================================
-    // MOUNT AUTOMATION - 200ms throttle (responsive but not every frame)
-    // PERFORMANCE FIX: Mounting doesn't need 60fps updates
+    // MORE WORLD BOT ONLY MANAGERS - Skip for instance bots
     // ========================================================================
-    _mountUpdateTimer += diff;
-    if (_mountUpdateTimer >= 200)
+    if (!isInstanceBot)
     {
-        _mountUpdateTimer = 0;
-        if (_mountManager)
-            _mountManager->Update(diff);
-    }
+        // ========================================================================
+        // MOUNT AUTOMATION - 200ms throttle (responsive but not every frame)
+        // PERFORMANCE FIX: Mounting doesn't need 60fps updates
+        // ========================================================================
+        _mountUpdateTimer += diff;
+        if (_mountUpdateTimer >= 200)
+        {
+            _mountUpdateTimer = 0;
+            if (_mountManager)
+                _mountManager->Update(diff);
+        }
+
+        // ========================================================================
+        // RIDING ACQUISITION - 5 sec throttle (skill learning is rare)
+        // PERFORMANCE FIX: Riding trainers don't require constant checking
+        // ========================================================================
+        _ridingUpdateTimer += diff;
+        if (_ridingUpdateTimer >= 5000)
+        {
+            _ridingUpdateTimer = 0;
+            if (_ridingManager)
+                _ridingManager->Update(diff);
+        }
+
+        // ========================================================================
+        // HUMANIZATION SYSTEM - Update for human-like behavior
+        // Instance bots don't need humanization - they're focused on their task
+        // ========================================================================
+        if (_humanizationManager)
+            _humanizationManager->Update(diff);
+
+        // ========================================================================
+        // BATTLE PET AUTOMATION - 500ms throttle (pet AI doesn't need 60fps)
+        // Instance bots don't do battle pet activities
+        // ========================================================================
+        _battlePetUpdateTimer += diff;
+        if (_battlePetUpdateTimer >= 500)
+        {
+            _battlePetUpdateTimer = 0;
+            if (_battlePetManager)
+                _battlePetManager->Update(diff);
+        }
+    } // end !isInstanceBot (world bot only managers)
 
     // ========================================================================
-    // RIDING ACQUISITION - 5 sec throttle (skill learning is rare)
-    // PERFORMANCE FIX: Riding trainers don't require constant checking
+    // PVP MANAGERS - KEEP for instance bots (needed for BG/Arena)
     // ========================================================================
-    _ridingUpdateTimer += diff;
-    if (_ridingUpdateTimer >= 5000)
-    {
-        _ridingUpdateTimer = 0;
-        if (_ridingManager)
-            _ridingManager->Update(diff);
-    }
-
-    // ========================================================================
-    // HUMANIZATION SYSTEM - Update for human-like behavior
-    // ========================================================================
-    if (_humanizationManager)
-        _humanizationManager->Update(diff);
-
-    // ========================================================================
-    // BATTLE PET AUTOMATION - 500ms throttle (pet AI doesn't need 60fps)
-    // PERFORMANCE FIX: Battle pet decisions are strategic, not reactive
-    // ========================================================================
-    _battlePetUpdateTimer += diff;
-    if (_battlePetUpdateTimer >= 500)
-    {
-        _battlePetUpdateTimer = 0;
-        if (_battlePetManager)
-            _battlePetManager->Update(diff);
-    }
 
     // ========================================================================
     // ARENA PVP AI - 100ms throttle (fast for PvP responsiveness)
@@ -644,14 +677,17 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     }
 
     // ========================================================================
-    // PROFESSION AUTOMATION - Check every 15 seconds
+    // MORE WORLD BOT ONLY - PROFESSION AUTOMATION - Check every 15 seconds
     // ========================================================================
-    _professionCheckTimer += diff;
-    if (_professionCheckTimer >= 15000) // 15 seconds
+    if (!isInstanceBot)
     {
-        _professionCheckTimer = 0;
-        if (_professionManager)
-            _professionManager->Update(diff);
+        _professionCheckTimer += diff;
+        if (_professionCheckTimer >= 15000) // 15 seconds
+        {
+            _professionCheckTimer = 0;
+            if (_professionManager)
+                _professionManager->Update(diff);
+        }
     }
 }
 
