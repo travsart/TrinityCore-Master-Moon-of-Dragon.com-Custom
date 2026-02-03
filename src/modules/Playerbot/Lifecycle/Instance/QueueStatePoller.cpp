@@ -438,9 +438,11 @@ void QueueStatePoller::DoPollBGQueue(BattlegroundTypeId bgTypeId, BattlegroundBr
 
     BattlegroundQueue& queue = sBattlegroundMgr->GetBattlegroundQueue(queueTypeId);
 
-    // Read queue counts (READ-ONLY API)
-    uint32 allianceCount = queue.GetPlayersInQueue(TEAM_ALLIANCE);
-    uint32 hordeCount = queue.GetPlayersInQueue(TEAM_HORDE);
+    // Read queue counts using the correct function that counts from m_QueuedGroups
+    // CRITICAL FIX: GetPlayersInQueue() returns from selection pool (matchmaking only)
+    // GetQueuedPlayersCount() returns actual queued players for the specific bracket
+    uint32 allianceCount = queue.GetQueuedPlayersCount(TEAM_ALLIANCE, bracket);
+    uint32 hordeCount = queue.GetQueuedPlayersCount(TEAM_HORDE, bracket);
 
     // Get requirements from template (READ-ONLY)
     BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);

@@ -422,6 +422,34 @@ uint32 BattlegroundQueue::GetPlayersInQueue(TeamId id)
     return m_SelectionPools[id].GetPlayerCount();
 }
 
+uint32 BattlegroundQueue::GetQueuedPlayersCount(TeamId teamId, BattlegroundBracketId bracketId) const
+{
+    // Count players from the actual queue, not the selection pool
+    // Selection pool is only populated during matchmaking
+    uint32 count = 0;
+
+    // Determine which queue type to check based on team
+    uint32 queueType = (teamId == TEAM_ALLIANCE) ? BG_QUEUE_NORMAL_ALLIANCE : BG_QUEUE_NORMAL_HORDE;
+
+    // Count players in normal queue for this bracket
+    for (GroupQueueInfo const* ginfo : m_QueuedGroups[bracketId][queueType])
+    {
+        // Only count players not already invited to a BG
+        if (!ginfo->IsInvitedToBGInstanceGUID)
+            count += static_cast<uint32>(ginfo->Players.size());
+    }
+
+    // Also check premade queue for this team
+    queueType = (teamId == TEAM_ALLIANCE) ? BG_QUEUE_PREMADE_ALLIANCE : BG_QUEUE_PREMADE_HORDE;
+    for (GroupQueueInfo const* ginfo : m_QueuedGroups[bracketId][queueType])
+    {
+        if (!ginfo->IsInvitedToBGInstanceGUID)
+            count += static_cast<uint32>(ginfo->Players.size());
+    }
+
+    return count;
+}
+
 bool BattlegroundQueue::InviteGroupToBG(GroupQueueInfo* ginfo, Battleground* bg, Team side)
 {
     // set side if needed
