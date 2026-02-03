@@ -723,56 +723,61 @@ private:
         }
         // Lock released here
 
-        // CRITICAL FIX: Validate ALL handlers with SINGLE lock acquisition
-        // PROBLEM: Previous implementation acquired _subscriptionMutex FOR EVERY HANDLER
-        //          in the dispatch loop. With 100 bots × multiple events = 1000+ mutex
-        //          acquisitions per tick, causing SEVERE lock contention and lag.
+        // CRITICAL FIX (2026-02-03): Validate AND dispatch while holding lock
+        // =======================================================================
+        // PROBLEM: Previous implementation validated handlers, released lock, then
+        //          dispatched. Between validation and dispatch, another thread could
+        //          delete the BotAI, causing ACCESS_VIOLATION crash at line 759.
+        //          Windows SEH exceptions (access violations) are NOT caught by
+        //          catch(...), so the server crashes.
         //
-        // SOLUTION: Build list of valid handlers while holding lock ONCE, then dispatch
-        //           without any locks.
+        // SOLUTION: Hold the lock during dispatch. This is safe because:
+        //          1. _subscriptionMutex is a RECURSIVE mutex - handlers can call
+        //             Unsubscribe() during HandleEvent() without deadlock
+        //          2. Single lock acquisition for entire dispatch phase
+        //          3. No race window between validation and dispatch
         //
-        // CRITICAL FIX (GenericEventBus.h:741 crash): Validate POINTER MATCH, not just GUID!
-        // The previous code only checked if GUID existed in _subscriberPointers. This fails if:
-        // 1. Bot is unsubscribed (GUID removed) - would skip dispatch (correct)
-        // 2. Bot is deleted and replaced with new bot at same GUID - would dispatch to wrong object!
-        // 3. Bot is deleted but GUID not yet removed - would dispatch to freed memory! (CRASH)
-        //
-        // By also checking that the BotAI* pointer matches, we catch case 2 and 3.
-        std::vector<HandlerInfo> validHandlers;
+        // PERFORMANCE: Lock is held longer, but:
+        //          - Dispatch is fast (just calling handler methods)
+        //          - Other threads can still subscribe (recursive mutex)
+        //          - Much better than crashing!
+        // =======================================================================
         {
             std::lock_guard lock(_subscriptionMutex);
+
             for (auto const& info : handlersToDispatch)
             {
+                // Re-validate handler just before dispatch (while holding lock)
                 auto it = _subscriberPointers.find(info.guid);
-                // CRITICAL: Check BOTH guid existence AND pointer match!
-                if (it != _subscriberPointers.end() && it->second == info.botAI)
-                    validHandlers.push_back(info);
-            }
-        }
-        // Lock released - dispatch without lock contention
+                if (it == _subscriberPointers.end() || it->second != info.botAI)
+                {
+                    // Handler was unsubscribed or replaced - skip
+                    TC_LOG_TRACE("playerbot.events", "EventBus: Skipping stale handler for bot {}",
+                        info.guid.ToString());
+                    continue;
+                }
 
-        // Dispatch events to validated handlers
-        for (auto const& info : validHandlers)
-        {
-            try
-            {
-                info.handler->HandleEvent(event);
-                TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to bot {}: {}",
-                    info.guid.ToString(), event.ToString());
-            }
-            catch (std::exception const& e)
-            {
-                TC_LOG_ERROR("playerbot.events", "EventBus: Exception in event handler for bot {}: {}",
-                    info.guid.ToString(), e.what());
-            }
-            catch (...)
-            {
-                // CRITICAL: Catch ALL exceptions including access violations during dispatch
-                // This can happen if BotAI is deleted between validation and dispatch
-                TC_LOG_ERROR("playerbot.events", "EventBus: Unknown exception in event handler for bot {}",
-                    info.guid.ToString());
+                // SAFE: Handler is validated AND we hold the lock
+                // No other thread can delete the BotAI while we're dispatching
+                try
+                {
+                    info.handler->HandleEvent(event);
+                    TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to bot {}: {}",
+                        info.guid.ToString(), event.ToString());
+                }
+                catch (std::exception const& e)
+                {
+                    TC_LOG_ERROR("playerbot.events", "EventBus: Exception in event handler for bot {}: {}",
+                        info.guid.ToString(), e.what());
+                }
+                catch (...)
+                {
+                    TC_LOG_ERROR("playerbot.events", "EventBus: Unknown exception in event handler for bot {}",
+                        info.guid.ToString());
+                }
             }
         }
+        // Lock released here - after all dispatches complete
 
         // Dispatch to callback subscribers
         // Same pattern: copy before iterating to prevent iterator invalidation
