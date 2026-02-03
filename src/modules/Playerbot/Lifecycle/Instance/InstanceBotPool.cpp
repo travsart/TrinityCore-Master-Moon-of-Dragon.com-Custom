@@ -17,9 +17,12 @@
 #include "Account/BotAccountMgr.h"
 #include "Config/PlayerbotConfig.h"
 #include "Session/BotWorldSessionMgr.h"
+#include "PvP/BGBotManager.h"
+#include "BattlegroundMgr.h"
 #include "CharacterCache.h"
 #include "DatabaseEnv.h"
 #include "Database/PlayerbotDatabase.h"
+#include "DB2Stores.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
@@ -1615,6 +1618,74 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
         // Get queue info set by AssignBot
         contentId = it->second.currentContentId;
         instanceType = it->second.currentInstanceType;
+    }
+
+    // ========================================================================
+    // CRITICAL FIX (2026-02-03): Handle already-online bots
+    // ========================================================================
+    // If the bot is already logged in, we should NOT try to spawn it again.
+    // Instead, queue it directly for the content (BG/Dungeon/Arena).
+    // Previously, spawn would "fail" and bot would be moved to Maintenance,
+    // causing warm pool bots to never actually join BG queues.
+    // ========================================================================
+    if (Player* existingPlayer = ObjectAccessor::FindPlayer(botGuid))
+    {
+        TC_LOG_INFO("playerbot.pool", "InstanceBotPool::WarmUpBot - Bot {} already online, queueing directly for content {}",
+            botGuid.ToString(), contentId);
+
+        // Mark as instance bot if not already
+        sBotWorldSessionMgr->MarkAsInstanceBot(botGuid);
+
+        // Queue for content based on instance type
+        bool queueSuccess = false;
+        if (contentId > 0)
+        {
+            switch (instanceType)
+            {
+                case InstanceType::Battleground:
+                {
+                    BattlegroundTypeId bgTypeId = static_cast<BattlegroundTypeId>(contentId);
+                    BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);
+                    if (bgTemplate && !bgTemplate->MapIDs.empty())
+                    {
+                        PVPDifficultyEntry const* bracketEntry = DB2Manager::GetBattlegroundBracketByLevel(
+                            bgTemplate->MapIDs.front(), existingPlayer->GetLevel());
+                        if (bracketEntry)
+                        {
+                            BattlegroundBracketId bracketId = bracketEntry->GetBracketId();
+                            queueSuccess = sBGBotManager->QueueBotForBG(existingPlayer, bgTypeId, bracketId);
+                            TC_LOG_INFO("playerbot.pool", "InstanceBotPool::WarmUpBot - Queued already-online bot {} for BG {} bracket {}: {}",
+                                botGuid.ToString(), contentId, static_cast<uint8>(bracketId), queueSuccess ? "SUCCESS" : "FAILED");
+                        }
+                    }
+                    break;
+                }
+                case InstanceType::Dungeon:
+                    // TODO: Implement direct dungeon queueing for already-online bots
+                    TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - Direct dungeon queueing not yet implemented for bot {}",
+                        botGuid.ToString());
+                    break;
+                case InstanceType::Arena:
+                    // TODO: Implement direct arena queueing for already-online bots
+                    TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - Direct arena queueing not yet implemented for bot {}",
+                        botGuid.ToString());
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Update slot state to Assigned (queued for content)
+        {
+            std::unique_lock lock(_slotsMutex);
+            auto it = _slots.find(botGuid);
+            if (it != _slots.end())
+                it->second.ForceState(PoolSlotState::Assigned);
+        }
+
+        // Call warmup complete with success (bot is already usable)
+        OnBotWarmupComplete(botGuid, true);
+        return true;
     }
 
     // Fallback: Try to get account ID from CharacterCache if not in slot
