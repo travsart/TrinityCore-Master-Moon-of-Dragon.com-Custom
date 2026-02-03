@@ -186,9 +186,29 @@ bool StartupSpawnOrchestrator::ShouldSpawnNext() const
     if (!_initialized || !_startupBegun)
         return false;
 
-    // No spawning if startup complete
+    // ========================================================================
+    // CRITICAL FIX: Allow runtime spawning after startup completes
+    // ========================================================================
+    // Previously, this returned false when COMPLETED, which blocked ALL spawning
+    // including runtime requests (BG queue, party invites, etc.).
+    // Now we allow spawning in COMPLETED phase if there are items in the queue.
+    // ========================================================================
     if (_currentPhase == StartupPhase::COMPLETED)
+    {
+        // Allow runtime spawning - just check throttler and queue
+        if (_throttler && !_throttler->CanSpawnNow())
+            return false;
+
+        // In COMPLETED phase, allow any queued requests to spawn
+        if (_priorityQueue && !_priorityQueue->IsEmpty())
+        {
+            TC_LOG_TRACE("module.playerbot.orchestrator",
+                "Runtime spawn allowed in COMPLETED phase (queue has {} items)",
+                _priorityQueue->GetTotalQueueSize());
+            return true;
+        }
         return false;
+    }
 
     // Check if throttler allows spawning
     if (_throttler && !_throttler->CanSpawnNow())
