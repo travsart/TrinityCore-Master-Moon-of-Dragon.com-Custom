@@ -1785,9 +1785,37 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         createInfo->Sex = gender;
         createInfo->UseNPE = false;  // Use classic starting zone, not New Player Experience
 
-        // Set default customizations (simplified - using basic appearance)
-        // These would normally be randomized based on the race
+        // CRITICAL FIX: Generate valid default customizations for the race/gender
+        // WoW 11.x requires valid customization choices for character creation
+        // Without this, Player::Create() fails at ValidateAppearance()
         createInfo->Customizations.clear();
+        if (auto const* options = sDB2Manager.GetCustomiztionOptions(race, gender))
+        {
+            for (ChrCustomizationOptionEntry const* option : *options)
+            {
+                // Get available choices for this option
+                if (auto const* choices = sDB2Manager.GetCustomiztionChoices(option->ID))
+                {
+                    if (!choices->empty())
+                    {
+                        // Use first valid choice for each option
+                        UF::ChrCustomizationChoice choice;
+                        choice.ChrCustomizationOptionID = option->ID;
+                        choice.ChrCustomizationChoiceID = (*choices)[0]->ID;
+                        createInfo->Customizations.push_back(choice);
+                    }
+                }
+            }
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "Generated {} customization choices for race {} gender {}",
+                createInfo->Customizations.size(), race, gender);
+        }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.spawner",
+                "No customization options found for race {} gender {} - character creation may fail",
+                race, gender);
+        }
 
         // Get the starting level from config
         uint8 startLevel = 1; // sPlayerbotConfig->GetInt("Playerbot.RandomBotLevel.Min", 1);
@@ -2055,7 +2083,38 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
         createInfo->Class = classId;
         createInfo->Sex = gender;
         createInfo->UseNPE = false;
+
+        // CRITICAL FIX: Generate valid default customizations for the race/gender
+        // WoW 11.x requires valid customization choices for character creation
+        // Without this, Player::Create() fails at ValidateAppearance()
         createInfo->Customizations.clear();
+        if (auto const* options = sDB2Manager.GetCustomiztionOptions(race, gender))
+        {
+            for (ChrCustomizationOptionEntry const* option : *options)
+            {
+                // Get available choices for this option
+                if (auto const* choices = sDB2Manager.GetCustomiztionChoices(option->ID))
+                {
+                    if (!choices->empty())
+                    {
+                        // Use first valid choice for each option
+                        UF::ChrCustomizationChoice choice;
+                        choice.ChrCustomizationOptionID = option->ID;
+                        choice.ChrCustomizationChoiceID = (*choices)[0]->ID;
+                        createInfo->Customizations.push_back(choice);
+                    }
+                }
+            }
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "Generated {} customization choices for race {} gender {}",
+                createInfo->Customizations.size(), race, gender);
+        }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.spawner",
+                "No customization options found for race {} gender {} - character creation may fail",
+                race, gender);
+        }
 
         uint8 startLevel = 1;
 
