@@ -92,8 +92,60 @@ void BotMovementController::UpdateStateMachine(uint32 diff)
 {
     if (_stateMachine)
     {
+        // Check for automatic state transitions based on environment
+        UpdateStateTransitions();
+
+        // Update current state
         _stateMachine->Update(diff);
     }
+}
+
+void BotMovementController::UpdateStateTransitions()
+{
+    if (!_stateMachine)
+        return;
+
+    MovementStateType currentState = _stateMachine->GetCurrentStateType();
+    MovementStateType appropriateState = DetermineAppropriateState();
+
+    if (appropriateState != currentState)
+    {
+        TC_LOG_DEBUG("movement.bot.state",
+            "BotMovementController: Auto-transition for {} from {} to {}",
+            _owner ? _owner->GetName() : "null",
+            static_cast<int>(currentState),
+            static_cast<int>(appropriateState));
+
+        _stateMachine->TransitionTo(appropriateState);
+    }
+}
+
+MovementStateType BotMovementController::DetermineAppropriateState() const
+{
+    if (!_owner || !_owner->IsInWorld())
+        return MovementStateType::Idle;
+
+    // Priority order: Stuck > Swimming > Falling > Ground > Idle
+
+    // Check if stuck (highest priority)
+    if (IsStuck())
+        return MovementStateType::Stuck;
+
+    // Check if in water (requires swimming)
+    if (LiquidValidator::IsSwimmingRequired(_owner))
+        return MovementStateType::Swimming;
+
+    // Check if falling (not on ground and not in flight)
+    if (_stateMachine && !_stateMachine->IsOnGround() &&
+        !_owner->HasUnitState(UNIT_STATE_IN_FLIGHT))
+        return MovementStateType::Falling;
+
+    // Check if moving on ground
+    if (_owner->isMoving())
+        return MovementStateType::Ground;
+
+    // Default to idle
+    return MovementStateType::Idle;
 }
 
 void BotMovementController::UpdateStuckDetection(uint32 diff)

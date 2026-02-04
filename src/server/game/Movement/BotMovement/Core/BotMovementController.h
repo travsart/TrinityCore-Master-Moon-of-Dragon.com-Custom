@@ -95,6 +95,10 @@ private:
     void UpdatePositionHistory(uint32 diff);
     void SyncMovementFlags();
 
+    // State machine helpers
+    void UpdateStateTransitions();
+    MovementStateType DetermineAppropriateState() const;
+
     // Handle stuck state
     void HandleStuckState();
 };
