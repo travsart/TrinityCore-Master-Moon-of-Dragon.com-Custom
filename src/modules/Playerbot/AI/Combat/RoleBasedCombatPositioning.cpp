@@ -27,6 +27,7 @@
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "UnitAI.h"
 #include <algorithm>
 #include <cmath>
@@ -148,8 +149,20 @@ void TankPositioning::HandleThreatPositioning(Player* tank, Unit* target)
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            tank->GetMotionMaster()->MovePoint(0, newPos);
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            if (BotAI* ai = GetBotAI(tank))
+            {
+                if (!ai->MoveTo(newPos, true))
+                {
+                    // Final fallback to legacy if validation fails
+                    tank->GetMotionMaster()->MovePoint(0, newPos);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                tank->GetMotionMaster()->MovePoint(0, newPos);
+            }
         }
     }
 }
@@ -775,8 +788,20 @@ void HealerPositioning::CoordinateHealerPositioning(const ::std::vector<Player*>
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            healers[i]->GetMotionMaster()->MovePoint(0, healerPositions[i]);
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            if (BotAI* ai = GetBotAI(healers[i]))
+            {
+                if (!ai->MoveTo(healerPositions[i], true))
+                {
+                    // Final fallback to legacy if validation fails
+                    healers[i]->GetMotionMaster()->MovePoint(0, healerPositions[i]);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                healers[i]->GetMotionMaster()->MovePoint(0, healerPositions[i]);
+            }
         }
     }
 }
@@ -978,8 +1003,20 @@ void DPSPositioning::DistributeMeleePositions(const ::std::vector<Player*>& mele
         }
         else
         {
-            // FALLBACK
-            meleeDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            if (BotAI* ai = GetBotAI(meleeDPS[i]))
+            {
+                if (!ai->MoveTo(pos, true))
+                {
+                    // Final fallback to legacy if validation fails
+                    meleeDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                meleeDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+            }
         }
     }
 }
@@ -1054,8 +1091,20 @@ void DPSPositioning::SpreadRangedPositions(const ::std::vector<Player*>& rangedD
         }
         else
         {
-            // FALLBACK
-            rangedDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            if (BotAI* ai = GetBotAI(rangedDPS[i]))
+            {
+                if (!ai->MoveTo(pos, true))
+                {
+                    // Final fallback to legacy if validation fails
+                    rangedDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                rangedDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+            }
         }
     }
 }
@@ -1114,8 +1163,20 @@ void DPSPositioning::AvoidFrontalCleaves(Player* dps, Unit* target, float cleave
         }
         else
         {
-            // FALLBACK
-            dps->GetMotionMaster()->MovePoint(0, safePos);
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            if (BotAI* ai = GetBotAI(dps))
+            {
+                if (!ai->MoveTo(safePos, true))
+                {
+                    // Final fallback to legacy if validation fails
+                    dps->GetMotionMaster()->MovePoint(0, safePos);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                dps->GetMotionMaster()->MovePoint(0, safePos);
+            }
         }
     }
 }
@@ -1153,8 +1214,20 @@ void DPSPositioning::AvoidTailSwipe(Player* dps, Unit* target, float swipeAngle)
         }
         else
         {
-            // FALLBACK
-            dps->GetMotionMaster()->MovePoint(0, flankPos);
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            if (BotAI* ai = GetBotAI(dps))
+            {
+                if (!ai->MoveTo(flankPos, true))
+                {
+                    // Final fallback to legacy if validation fails
+                    dps->GetMotionMaster()->MovePoint(0, flankPos);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                dps->GetMotionMaster()->MovePoint(0, flankPos);
+            }
         }
     }
 }
@@ -1704,13 +1777,37 @@ void RoleBasedCombatPositioning::CoordinateGroupPositioning(Group* group, Unit* 
     for (Player* tank : context.tanks)
     {
         Position pos = CalculateTankPosition(tank, context);
-        tank->GetMotionMaster()->MovePoint(0, pos);
+        if (BotAI* ai = GetBotAI(tank))
+        {
+            if (!ai->MoveTo(pos, true))
+            {
+                // Fallback to legacy if validation fails
+                tank->GetMotionMaster()->MovePoint(0, pos);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            tank->GetMotionMaster()->MovePoint(0, pos);
+        }
     }
 
     for (Player* healer : context.healers)
     {
         Position pos = CalculateHealerPosition(healer, context);
-        healer->GetMotionMaster()->MovePoint(0, pos);
+        if (BotAI* ai = GetBotAI(healer))
+        {
+            if (!ai->MoveTo(pos, true))
+            {
+                // Fallback to legacy if validation fails
+                healer->GetMotionMaster()->MovePoint(0, pos);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            healer->GetMotionMaster()->MovePoint(0, pos);
+        }
     }
 
     // Distribute melee DPS
@@ -1804,8 +1901,21 @@ void RoleBasedCombatPositioning::RespondToEmergency(Player* bot, const Position&
         }
         else
         {
-            // FALLBACK
-            bot->GetMotionMaster()->MovePoint(0, safeZone);
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            // Note: Emergency movement prioritizes safety over validation
+            if (BotAI* ai = GetBotAI(bot))
+            {
+                if (!ai->MoveTo(safeZone, true))
+                {
+                    // Final fallback to legacy if validation fails
+                    bot->GetMotionMaster()->MovePoint(0, safeZone);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                bot->GetMotionMaster()->MovePoint(0, safeZone);
+            }
         }  // High priority movement
 
     // _emergencyMoves++; // Member variable not declared in header
@@ -1853,7 +1963,7 @@ ThreatRole RoleBasedCombatPositioning::DetermineRole(Player* bot)
         return ThreatRole::UNDEFINED;
 
     // =========================================================================
-    // Full specialization-based role detection for TWW 11.2
+    // Full specialization-based role detection for TWW 12.0
     // Uses ChrSpecialization enum for precise role determination
     // =========================================================================
 
@@ -1874,7 +1984,7 @@ ThreatRole RoleBasedCombatPositioning::DetermineRole(Player* bot)
     }
 
     // 3. Specialization-based role determination
-    // TWW 11.2 specialization IDs from ChrSpecialization enum
+    // TWW 12.0 specialization IDs from ChrSpecialization enum
     switch (spec)
     {
         // =====================================================================
@@ -1940,7 +2050,7 @@ ThreatRole RoleBasedCombatPositioning::DetermineRole(Player* bot)
             break;
     }
 
-    // 4. Fallback: Skip gear analysis (deprecated ITEM_MOD_* constants removed in TWW 11.2)
+    // 4. Fallback: Skip gear analysis (deprecated ITEM_MOD_* constants removed in TWW 12.0)
     // In modern WoW, specialization is always set, so gear analysis is rarely needed
     // If specialization is unset, fall back directly to class-based defaults
 
