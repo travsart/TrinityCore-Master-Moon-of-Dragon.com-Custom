@@ -449,7 +449,7 @@ uint32 BotTalentManager::CalculateTalentPointsForLevel(uint32 level) const
     // TrinityCore 11.x (The War Within) talent system
     // Comprehensive talent point calculation based on actual game progression
     //
-    // TWW 11.2 Talent Point Distribution:
+    // TWW 12.0 Talent Point Distribution:
     // - Class talents: 31 points total (levels 10-70)
     // - Spec talents: 30 points total (levels 10-70)
     // - Hero talents: 10 points total (levels 71-80)
@@ -459,7 +459,7 @@ uint32 BotTalentManager::CalculateTalentPointsForLevel(uint32 level) const
         return 0;
 
     // Class talent points: Awarded at specific levels from 10-70
-    // Based on actual TWW 11.2 progression (approximately every 2 levels)
+    // Based on actual TWW 12.0 progression (approximately every 2 levels)
     uint32 classTalentPoints = 0;
     if (level >= 10)
     {
@@ -1290,7 +1290,7 @@ void BotTalentManager::DumpTalentDatabaseSQL() const
     TC_LOG_INFO("playerbot", "====================================");
     TC_LOG_INFO("playerbot", "");
     TC_LOG_INFO("playerbot", "-- SQL to update empty talent_string entries in playerbot_talent_loadouts");
-    TC_LOG_INFO("playerbot", "-- Generated from Talent.db2 data (TrinityCore 11.2)");
+    TC_LOG_INFO("playerbot", "-- Generated from Talent.db2 data (TrinityCore 12.0)");
     TC_LOG_INFO("playerbot", "");
 
     // Class names for readability

@@ -75,7 +75,7 @@ public:
     void SendPacket(WorldPacket const* packet, bool forced = false) override;
     // Note: QueuePacket hides WorldSession::QueuePacket (not virtual in base)
     // Bot sessions store packets in their own queue for bot-specific processing
-    void QueuePacket(WorldPacket&& packet);  // TrinityCore 11.2 signature
+    void QueuePacket(WorldPacket&& packet);  // TrinityCore 12.0 signature
     void QueuePacketLegacy(WorldPacket* packet);      // Legacy compatibility (takes ownership)
     bool Update(uint32 diff, PacketFilter& updater);
 

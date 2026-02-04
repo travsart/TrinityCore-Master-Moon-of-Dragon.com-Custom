@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-Advanced auction house economy system for TrinityCore PlayerBot with WoW 11.2 integration, featuring smart pricing, market analysis, and automated trading.
+Advanced auction house economy system for TrinityCore PlayerBot with WoW 12.0 integration, featuring smart pricing, market analysis, and automated trading.
 
 ## 📦 Components
 
@@ -69,7 +69,7 @@ if (sBotAuctionMgr->IsEnabled()) {
 
 ### ✅ Auction Operations
 - Create item auctions with smart pricing
-- Create commodity auctions (WoW 11.2)
+- Create commodity auctions (WoW 12.0)
 - Place strategic bids
 - Buy via buyout
 - Cancel unprofitable auctions
@@ -190,7 +190,7 @@ AuctionHouseStats stats = sBotAuctionMgr->GetBotStats(bot->GetGUID());
 │  └── Automated Execution                │
 ├─────────────────────────────────────────┤
 │  Commodity Trading System               │
-│  ├── Region-wide Markets (WoW 11.2)     │
+│  ├── Region-wide Markets (WoW 12.0)     │
 │  ├── Bulk Operations                    │
 │  └── Price Trend Analysis               │
 ├─────────────────────────────────────────┤
@@ -271,7 +271,7 @@ Run benchmarks:
 Playerbot::Testing::AuctionManagerBenchmark::RunBenchmarks();
 ```
 
-## 🎯 WoW 11.2 Features
+## 🎯 WoW 12.0 Features
 
 - ✅ Region-wide commodity markets
 - ✅ Modern AuctionHouseMgr API

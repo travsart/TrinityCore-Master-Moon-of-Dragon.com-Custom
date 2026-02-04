@@ -20,7 +20,7 @@ Phase 4.1 successfully integrates the PlayerBot event system with TrinityCore's 
 ✅ **3 Observer Implementations** - CombatEventObserver, AuraEventObserver, ResourceEventObserver
 ✅ **Type-Safe Event Data** - std::any + std::variant pattern for event payloads
 ✅ **Zero Core Modifications** - Pure module implementation using TrinityCore script API
-✅ **API Compatibility** - Full compatibility with TrinityCore 11.2 API changes
+✅ **API Compatibility** - Full compatibility with TrinityCore 12.0 API changes
 ✅ **Enterprise Quality** - Complete error handling, thread safety, performance optimization
 
 ---
@@ -286,7 +286,7 @@ RUNIC_POWER_GAINED    = 328  // Runic power gained
 // ... 12 more resource events
 ```
 
-#### 13. War Within (11.2) Events (30 events)
+#### 13. War Within (12.0) Events (30 events)
 ```cpp
 DELVE_ENTERED         = 341  // Entered Delve
 DELVE_COMPLETED       = 342  // Delve completed
@@ -627,7 +627,7 @@ using EventDataVariant = std::variant<
 
 ## API COMPATIBILITY NOTES
 
-### TrinityCore 11.2 API Changes
+### TrinityCore 12.0 API Changes
 
 #### 1. Group Iteration
 **Old API (Linked List)**:

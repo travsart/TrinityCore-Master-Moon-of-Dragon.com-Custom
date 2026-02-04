@@ -90,7 +90,7 @@ bool BaselineRotationManager::QueueSpellCast(Player* bot, uint32 spellId, ::Unit
     {
         if (result.packet)
         {
-            // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+            // TrinityCore 12.0: QueuePacket now takes WorldPacket&& instead of WorldPacket*
             session->QueuePacket(std::move(*result.packet));
             TC_LOG_TRACE("playerbot.baseline", "QueueSpellCast: Bot {} queued spell {} on {}",
                          bot->GetName(), spellId, target->GetName());
@@ -294,7 +294,7 @@ bool BaselineRotationManager::HandleAutoSpecialization(Player* bot)
         return false;
 
     // DESIGN NOTE: Specialization System
-    // TrinityCore 11.2 uses ChrSpecialization.db2 for spec definitions.
+    // TrinityCore 12.0 uses ChrSpecialization.db2 for spec definitions.
     // The BotTalentManager handles specialization selection and learning:
     // - BotTalentManager::SelectSpecialization(specId) sets active spec
     // - BotTalentManager::LearnSpecializationSpells() learns spec spells
@@ -432,7 +432,7 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         // Without this, the spell cast never happens - the packet is built but never sent.
         if (result.packet && bot->GetSession())
         {
-            // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+            // TrinityCore 12.0: QueuePacket now takes WorldPacket&& instead of WorldPacket*
             bot->GetSession()->QueuePacket(std::move(*result.packet));
             TC_LOG_ERROR("playerbot.baseline", "TryCastAbility: QUEUED spell {} packet successfully!",
                          ability.spellId);

@@ -740,7 +740,7 @@ The system is ready for:
 
 **Technologies Used**:
 - C++20
-- TrinityCore 11.2 (The War Within)
+- TrinityCore 12.0 (The War Within)
 - CMake 3.24+
 - STL (thread-safe containers)
 - TrinityCore LFG APIs

@@ -1452,7 +1452,7 @@ bool LootDistribution::IsItemForMainSpec(const LootItem& item)
     bool hasAgility = false;
     bool hasStrength = false;
 
-    // TrinityCore 11.2: Check item's primary stats
+    // TrinityCore 12.0: Check item's primary stats
     for (uint8 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
     {
         int32 statType = item.itemTemplate->GetStatModifierBonusStat(i);

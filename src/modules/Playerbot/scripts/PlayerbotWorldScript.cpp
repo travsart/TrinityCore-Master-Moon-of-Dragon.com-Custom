@@ -21,7 +21,7 @@
 #include "Core/PlayerBotHooks.h"
 #include "Dungeon/DungeonScriptLoader.h"
 // INTEGRATION REQUIRED: Re-enable when API compatibility is fixed
-// Blocked by TrinityCore 11.2 API changes - see TODO at line 144 for details
+// Blocked by TrinityCore 12.0 API changes - see TODO at line 144 for details
 // #include "Companion/MountManager.h"
 // #include "Companion/BattlePetManager.h"
 
@@ -154,7 +154,7 @@ void PlayerbotWorldScript::OnStartup()
     Playerbot::PlayerBotHooks::Initialize();
 
     // INTEGRATION REQUIRED: Initialize companion systems (MountManager, BattlePetManager)
-    // BLOCKED: These systems need API updates for TrinityCore 11.2 compatibility
+    // BLOCKED: These systems need API updates for TrinityCore 12.0 compatibility
     // API Changes Required:
     // - PassengerInfo boolean conversion -> use VehicleSeat::IsEmpty()
     // - SpellMgr::GetSpellInfo signature changed (now returns SpellInfo const*)

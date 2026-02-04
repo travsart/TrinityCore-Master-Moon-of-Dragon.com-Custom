@@ -1074,7 +1074,7 @@ float AdaptiveBehaviorManager::GetGearScore() const
     uint32 slotCount = 0;
     uint32 itemLevelSum = 0;
 
-    // Slot importance multipliers (TWW 11.2 weights)
+    // Slot importance multipliers (TWW 12.0 weights)
     static const std::unordered_map<uint8, float> slotMultipliers = {
         {EQUIPMENT_SLOT_HEAD, 1.2f},
         {EQUIPMENT_SLOT_NECK, 0.9f},
@@ -1138,7 +1138,7 @@ float AdaptiveBehaviorManager::GetGearScore() const
         // Calculate slot score: itemLevel * slotWeight * qualityMult
         float slotScore = static_cast<float>(itemLevel) * slotMultiplier * qualityMult;
 
-        // Bonus for gem sockets (TWW 11.2: each socket adds ~2% value)
+        // Bonus for gem sockets (TWW 12.0: each socket adds ~2% value)
         uint32 socketCount = 0;
         for (uint32 i = 0; i < MAX_ITEM_PROTO_SOCKETS; ++i)
         {

@@ -354,7 +354,7 @@ private:
             // This might trigger unguarded socket access during packet validation
             botSession->SendPacket(&testPacket);
 
-            // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+            // TrinityCore 12.0: QueuePacket now takes WorldPacket&& instead of WorldPacket*
             WorldPacket queuePacket(0x5678, 4);
             queuePacket << uint32(84);
             botSession->QueuePacket(std::move(queuePacket));

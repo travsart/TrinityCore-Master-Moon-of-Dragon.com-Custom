@@ -526,6 +526,12 @@ void BotSpawner::LoadConfig()
 
 bool BotSpawner::SpawnBot(SpawnRequest const& request)
 {
+    // TRACE: Log incoming request to identify spawn origin
+    TC_LOG_INFO("module.playerbot.spawner",
+        "BotSpawner::SpawnBot ENTRY - type={}, guid={}, accountId={}, bypassLimit={}",
+        static_cast<int>(request.type), request.characterGuid.ToString(),
+        request.accountId, request.bypassMaxBotsLimit);
+
     if (!ValidateSpawnRequest(request))
     {
         return false;

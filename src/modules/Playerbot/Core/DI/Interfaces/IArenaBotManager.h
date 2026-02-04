@@ -26,7 +26,7 @@ enum class ArenaBracketType : uint8
 {
     ARENA_2v2 = 0,
     ARENA_3v3 = 1,
-    ARENA_5v5 = 2,      // Note: Removed in 11.2 but kept for compatibility
+    ARENA_5v5 = 2,      // Note: Removed in 12.0 but kept for compatibility
     SKIRMISH_2v2 = 10,
     SKIRMISH_3v3 = 11
 };

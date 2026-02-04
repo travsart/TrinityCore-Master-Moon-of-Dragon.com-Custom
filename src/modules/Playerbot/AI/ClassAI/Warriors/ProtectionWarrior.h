@@ -346,7 +346,7 @@ protected:
             return;
         }
 
-        // Priority 7: Shield Charge as rage dump (replaces Heroic Strike in 11.2.7)
+        // Priority 7: Shield Charge as rage dump (replaces Heroic Strike in 12.0.7)
         if (this->_resource >= 80 && this->CanUseAbility(SPELL_SHIELD_CHARGE))
         {
 
@@ -836,7 +836,7 @@ private:
             queue->AddCondition(SPELL_SHIELD_CHARGE,
 
                 [](Player* bot, Unit*) {
-                    // Rage dump when > 80 rage (Shield Charge replaces Heroic Strike in 11.2.7)
+                    // Rage dump when > 80 rage (Shield Charge replaces Heroic Strike in 12.0.7)
 
                     return bot->GetPower(POWER_RAGE) >= 80;
 
@@ -844,7 +844,7 @@ private:
 
                 "Rage > 80 (rage dump)");
 
-            // Note: Sunder Armor is merged into Devastate in 11.2.7
+            // Note: Sunder Armor is merged into Devastate in 12.0.7
 
             TC_LOG_INFO("module.playerbot", "  PROTECTION WARRIOR: Registered {} spells in ActionPriorityQueue",
 
@@ -1224,7 +1224,7 @@ private:
 
                         }),
 
-                        // Shield Charge as rage dump (replaces Heroic Strike in 11.2.7)
+                        // Shield Charge as rage dump (replaces Heroic Strike in 12.0.7)
 
                         Sequence("Shield Charge Dump", {
 

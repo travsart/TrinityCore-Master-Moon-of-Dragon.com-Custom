@@ -8,7 +8,7 @@
  *
  * DEMON HUNTER TALENT ENHANCEMENTS
  *
- * Enterprise-grade support for new Demon Hunter talents from TrinityCore 11.2 upstream merge.
+ * Enterprise-grade support for new Demon Hunter talents from TrinityCore 12.0 upstream merge.
  * This file contains spell IDs, trackers, and helper classes for the following talents:
  *
  * VENGEANCE DEMON HUNTER TALENTS:
@@ -43,7 +43,7 @@ namespace Playerbot
 {
 
 // ============================================================================
-// SPELL IDS - NEW DEMON HUNTER TALENTS (TrinityCore 11.2)
+// SPELL IDS - NEW DEMON HUNTER TALENTS (TrinityCore 12.0)
 // ============================================================================
 
 namespace DHtalents

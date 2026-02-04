@@ -280,7 +280,7 @@ MovementRequest MovementRequest::MakeJumpMovement(
 }
 
 // ============================================================================
-// NEW: TrinityCore 11.2 Movement Features - Factory Methods
+// NEW: TrinityCore 12.0 Movement Features - Factory Methods
 // ============================================================================
 
 MovementRequest MovementRequest::MakeRandomMovement(

@@ -1,7 +1,7 @@
 # BotAuctionManager - Implementation Guide
 
 ## Overview
-Complete auction house economy system for TrinityCore PlayerBot with WoW 11.2 features including commodity markets, smart pricing, and market analysis.
+Complete auction house economy system for TrinityCore PlayerBot with WoW 12.0 features including commodity markets, smart pricing, and market analysis.
 
 ## Architecture
 
@@ -23,7 +23,7 @@ Complete auction house economy system for TrinityCore PlayerBot with WoW 11.2 fe
    - Profit calculation with AH cut (5%) consideration
 
 4. **Commodity Trading**
-   - WoW 11.2 region-wide commodity market support
+   - WoW 12.0 region-wide commodity market support
    - Bulk buying/selling operations
    - Price trend analysis for commodities
 
@@ -73,7 +73,7 @@ Playerbot.Auction.MinProfit = 10000
 #   5 = SMART_PRICING (AI-driven adaptive pricing)
 Playerbot.Auction.DefaultStrategy = 5
 
-# Enable commodity trading (WoW 11.2 region-wide market)
+# Enable commodity trading (WoW 12.0 region-wide market)
 Playerbot.Auction.CommodityEnabled = 1
 
 # Enable market maker behavior (buy underpriced, relist higher)
@@ -390,7 +390,7 @@ Check logs for:
 3. Reduce `PriceHistoryDays` (default 7)
 4. Disable market maker if not needed
 
-## WoW 11.2 Specific Features
+## WoW 12.0 Specific Features
 
 ### Commodity Markets
 - Region-wide pricing (not per-realm)
@@ -438,4 +438,4 @@ For issues or questions:
 
 ## Credits
 
-Developed for TrinityCore PlayerBot module following WoW 11.2 economy systems and TrinityCore API standards.
+Developed for TrinityCore PlayerBot module following WoW 12.0 economy systems and TrinityCore API standards.

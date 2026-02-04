@@ -47,7 +47,7 @@ Full implementations with real logic:
 - `CalculateItemValue()` (lines 59-130) - Item level, quality, stats, armor, DPS calculations
 - `CalculateUpgradeValue()` (lines 132-207) - Slot comparison with equipped items
 - `IsSignificantUpgrade()` (lines 209-214) - >5% improvement threshold
-- `CalculateStatWeight()` (lines 216-372) - Class/spec-based stat priorities for TWW 11.2
+- `CalculateStatWeight()` (lines 216-372) - Class/spec-based stat priorities for TWW 12.0
 - `CompareItems()` (lines 374-396) - Score comparison between items
 - `CalculateItemScore()` (lines 398-452) - Weighted scoring system
 - `GetStatPriorities()` (lines 454-501) - Priority list generation
@@ -228,7 +228,7 @@ Full implementations:
 - `GroupFormation.cpp` - Group positioning
 - `GroupCoordination.cpp` - Group actions
 - `DispelCoordinator.cpp` - Dispel priorities
-**Note:** Full TWW 11.2 stat weights implemented in UnifiedLootManager, but other files need review
+**Note:** Full TWW 12.0 stat weights implemented in UnifiedLootManager, but other files need review
 
 ### 4.3 Placeholder Values - COMPLETE
 **Files:** PlayerbotConfig.h, PlayerbotConfig.cpp, playerbots.conf.dist
@@ -284,7 +284,7 @@ Full implementations:
 
 ### Long-term (PRIORITY 4) - ALL COMPLETE
 1. **Migration TODOs** - COMPLETE - Spatial grid optimization in place
-2. **Simplified Implementations** - COMPLETE - Full TWW 11.2 stat weight implementation
+2. **Simplified Implementations** - COMPLETE - Full TWW 12.0 stat weight implementation
 3. **Placeholder Values** - COMPLETE - All 15 timing/limit values moved to playerbots.conf
 
 ---
@@ -295,7 +295,7 @@ Full implementations:
 
 ### Verified Complete (P1-P2)
 - **BotSpawnerAdapter** - Complete adapter pattern with BotSpawner delegation (15 methods)
-- **UnifiedLootManager** - Full loot analysis with class/spec stat weights for TWW 11.2 (7 methods)
+- **UnifiedLootManager** - Full loot analysis with class/spec stat weights for TWW 12.0 (7 methods)
 - **BankingManager** - Complete banking with TrinityCore API integration
 - **All 5 Interaction Managers** - TrainerInteraction, Innkeeper, FlightMaster, Bank, Mail
 

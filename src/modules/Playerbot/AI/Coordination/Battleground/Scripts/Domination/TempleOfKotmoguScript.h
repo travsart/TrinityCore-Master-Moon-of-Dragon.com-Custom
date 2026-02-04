@@ -14,6 +14,8 @@
 
 #include "DominationScriptBase.h"
 #include "TempleOfKotmoguData.h"
+#include "BGPositionDiscovery.h"
+#include <memory>
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -197,6 +199,41 @@ private:
     std::map<ObjectGuid, uint32> m_playerOrbs;  // player guid -> orbId
     uint32 m_allianceOrbsHeld = 0;
     uint32 m_hordeOrbsHeld = 0;
+
+    // ========================================================================
+    // DYNAMIC POSITION DISCOVERY
+    // ========================================================================
+
+    /**
+     * @brief Dynamic position discovery system
+     *
+     * Discovers actual orb positions from game objects at runtime instead of
+     * relying on hardcoded coordinates which may be wrong for the current map.
+     */
+    std::unique_ptr<BGPositionDiscovery> m_positionDiscovery;
+
+    /**
+     * @brief Cached orb positions (dynamically discovered or fallback to hardcoded)
+     */
+    std::array<Position, TempleOfKotmogu::ORB_COUNT> m_orbPositions;
+
+    /**
+     * @brief Whether dynamic discovery has been completed
+     */
+    bool m_positionsDiscovered = false;
+
+    /**
+     * @brief Initialize dynamic position discovery
+     * @return true if dynamic discovery succeeded
+     */
+    bool InitializePositionDiscovery();
+
+    /**
+     * @brief Get orb position (uses dynamic discovery if available)
+     * @param orbId Orb identifier (0-3)
+     * @return Validated orb position
+     */
+    Position GetDynamicOrbPosition(uint32 orbId) const;
 };
 
 } // namespace Playerbot::Coordination::Battleground

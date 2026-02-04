@@ -217,7 +217,7 @@ protected:
             return;
         }
 
-        // Priority 6: Onslaught as filler (11.2.7 - replaces Furious Slash)
+        // Priority 6: Onslaught as filler (12.0.7 - replaces Furious Slash)
         if (this->CanUseAbility(SPELL_ONSLAUGHT))
         {
             this->CastSpell(SPELL_ONSLAUGHT, target);

@@ -173,7 +173,7 @@ void ZoneLevelHelper::BuildZoneCache()
         info.levels.targetMin = static_cast<int16>(levels->TargetLevelMin);
         info.levels.targetMax = static_cast<int16>(levels->TargetLevelMax);
 
-        // Store zone name (AreaName is a LocalizedString with Str[] containing const char* in 11.2.7)
+        // Store zone name (AreaName is a LocalizedString with Str[] containing const char* in 12.0.7)
         if (areaEntry->AreaName.Str[DEFAULT_LOCALE] && areaEntry->AreaName.Str[DEFAULT_LOCALE][0] != '\0')
             info.zoneName = areaEntry->AreaName.Str[DEFAULT_LOCALE];
 

@@ -214,7 +214,7 @@ public:
             return _status;
         }
 
-        // TrinityCore 11.2: CalcPowerCost returns vector of all power costs
+        // TrinityCore 12.0: CalcPowerCost returns vector of all power costs
         auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
         for (auto const& cost : powerCosts)
         {

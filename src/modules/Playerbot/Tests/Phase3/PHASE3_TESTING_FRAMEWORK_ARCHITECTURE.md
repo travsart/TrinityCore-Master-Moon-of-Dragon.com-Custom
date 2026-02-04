@@ -988,7 +988,7 @@ echo "Baseline saved to: baseline/phase3_baseline_$(date +%Y%m%d).json"
 4. ✅ **Zero Memory Leaks:** Valgrind clean over 24-hour test
 5. ✅ **Zero Race Conditions:** ThreadSanitizer clean
 
-### 11.2 Performance Requirements (TARGET)
+### 12.0 Performance Requirements (TARGET)
 1. 🎯 **>30% CPU Reduction:** Measured per bot in 5000-bot scenario
 2. 🎯 **>50% Faster AI Updates:** <100µs per OnCombatUpdate() call
 3. 🎯 **Memory Stable:** <10MB per bot, stable over time

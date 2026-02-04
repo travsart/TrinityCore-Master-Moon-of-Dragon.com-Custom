@@ -30,6 +30,9 @@
 #include "Player.h"
 #include "World.h"
 
+// Playerbot module: BG invitation hook
+#include "../../modules/Playerbot/Core/PlayerBotHooks.h"
+
 /*********************************************************/
 /***            BATTLEGROUND QUEUE SYSTEM              ***/
 /*********************************************************/
@@ -500,6 +503,10 @@ bool BattlegroundQueue::InviteGroupToBG(GroupQueueInfo* ginfo, Battleground* bg,
             WorldPackets::Battleground::BattlefieldStatusNeedConfirmation battlefieldStatus;
             BattlegroundMgr::BuildBattlegroundStatusNeedConfirmation(&battlefieldStatus, bg, player, queueSlot, player->GetBattlegroundQueueJoinTime(bgQueueTypeId), INVITE_ACCEPT_WAIT_TIME, bgQueueTypeId);
             player->SendDirectMessage(battlefieldStatus.Write());
+
+            // Playerbot: Auto-accept BG invitation for bots
+            if (Playerbot::PlayerBotHooks::OnBGInvitationReceived)
+                Playerbot::PlayerBotHooks::OnBGInvitationReceived(player, bg->GetInstanceID(), bg->GetTypeID());
         }
         return true;
     }
@@ -1050,6 +1057,10 @@ bool BGQueueInviteEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
             WorldPackets::Battleground::BattlefieldStatusNeedConfirmation battlefieldStatus;
             BattlegroundMgr::BuildBattlegroundStatusNeedConfirmation(&battlefieldStatus, bg, player, queueSlot, player->GetBattlegroundQueueJoinTime(m_QueueId), INVITE_ACCEPT_WAIT_TIME - INVITATION_REMIND_TIME, m_QueueId);
             player->SendDirectMessage(battlefieldStatus.Write());
+
+            // Playerbot: Auto-accept BG invitation reminder for bots (in case initial hook was missed)
+            if (Playerbot::PlayerBotHooks::OnBGInvitationReceived)
+                Playerbot::PlayerBotHooks::OnBGInvitationReceived(player, m_BgInstanceGUID, m_BgTypeId);
         }
     }
     return true;                                            //event will be deleted

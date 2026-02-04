@@ -431,6 +431,22 @@ public:
     static inline ::std::function<void(Unit*)> OnCombatEnded = nullptr;
 
     // ========================================================================
+    // BATTLEGROUND/ARENA HOOKS
+    // ========================================================================
+
+    /**
+     * Hook: BG invitation received
+     * Called from: BattlegroundQueue when a player is invited to a BG
+     *
+     * For bots: Should trigger auto-accept of the invitation
+     *
+     * @param player The player who received the invitation
+     * @param bgInstanceGuid The BG instance GUID
+     * @param bgTypeId The type of battleground
+     */
+    static inline ::std::function<void(Player*, uint32, uint32)> OnBGInvitationReceived = nullptr;
+
+    // ========================================================================
     // UTILITY FUNCTIONS
     // ========================================================================
 

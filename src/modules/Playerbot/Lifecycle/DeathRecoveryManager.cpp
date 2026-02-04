@@ -995,7 +995,7 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
     //   2. RepopAtGraveyard() - Teleports to graveyard
     //
     // This serializes Ghost spell application with Map::Update(), preventing SpellAuras.cpp:168 crash
-    // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+    // TrinityCore 12.0: QueuePacket now takes WorldPacket&& instead of WorldPacket*
     WorldPacket repopPacket(CMSG_REPOP_REQUEST, 1);
     repopPacket << uint8(0);  // CheckInstance = false (not in instance recovery)
     m_bot->GetSession()->QueuePacket(std::move(repopPacket));
@@ -1704,7 +1704,7 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
     {
         // No corpse - use CMSG_REPOP_REQUEST to resurrect at graveyard
         // This path is safe as it doesn't involve SpawnCorpseBones
-        // TrinityCore 11.2: QueuePacket now takes WorldPacket&& instead of WorldPacket*
+        // TrinityCore 12.0: QueuePacket now takes WorldPacket&& instead of WorldPacket*
         WorldPacket repopPacket(CMSG_REPOP_REQUEST, 1);
         repopPacket << uint8(0);
         m_bot->GetSession()->QueuePacket(std::move(repopPacket));

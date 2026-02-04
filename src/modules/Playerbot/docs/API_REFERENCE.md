@@ -5,7 +5,7 @@
 This document provides complete API reference for all public interfaces in the Automated World Population System.
 
 **Version:** 1.0.0
-**WoW Version:** 11.2 (The War Within)
+**WoW Version:** 12.0 (The War Within)
 **Last Updated:** 2025-01-18
 
 ---
@@ -413,7 +413,7 @@ Check if level supports dual-spec feature.
 
 **Returns:** `true` if level >= 10, `false` otherwise
 
-**WoW 11.2:** Dual-spec unlocks at level 10
+**WoW 12.0:** Dual-spec unlocks at level 10
 
 **Example:**
 ```cpp
@@ -465,7 +465,7 @@ Check if level supports hero talents feature.
 
 **Returns:** `true` if level >= 71, `false` otherwise
 
-**WoW 11.2:** Hero talents unlock at level 71
+**WoW 12.0:** Hero talents unlock at level 71
 
 ---
 

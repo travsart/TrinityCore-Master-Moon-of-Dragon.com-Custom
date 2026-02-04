@@ -1198,7 +1198,7 @@ bool GuildIntegration::ShouldWithdrawItem( uint32 itemId)
             // Check if glyph is for our class and we don't have it
             if (itemTemplate->GetAllowableClass() != 0 && !(itemTemplate->GetAllowableClass() & _bot->GetClassMask()))
                 return false;
-            // TrinityCore 11.2: Use Effects vector instead of deprecated Spells array
+            // TrinityCore 12.0: Use Effects vector instead of deprecated Spells array
             if (!itemTemplate->Effects.empty())
             {
                 ItemEffectEntry const* effect = itemTemplate->Effects[0];
@@ -1559,7 +1559,7 @@ uint8 GuildIntegration::FindBestTabForItem(Item* item) const
 
 int8 GuildIntegration::FindEmptySlotInTab(Guild* /*guild*/, uint8 tabId) const
 {
-    // TrinityCore 11.2: Guild::GetBankTab is private, so we cannot directly inspect tabs
+    // TrinityCore 12.0: Guild::GetBankTab is private, so we cannot directly inspect tabs
     // Return first slot as default - SwapItemsWithInventory will handle actual slot finding
     if (tabId >= GUILD_BANK_MAX_TABS)
         return -1;
@@ -1574,7 +1574,7 @@ bool GuildIntegration::HasGuildBankDepositRights(uint8 /*tabId*/) const
         return false;
 
     Guild* guild = _bot->GetGuild();
-    // TrinityCore 11.2: GetMember is private, use GetGuildRank to check permissions
+    // TrinityCore 12.0: GetMember is private, use GetGuildRank to check permissions
     GuildRankId rank = static_cast<GuildRankId>(_bot->GetGuildRank());
 
     // Guild bank deposit rights are typically available to all ranks with withdraw rights
@@ -1588,7 +1588,7 @@ bool GuildIntegration::HasGuildBankWithdrawRights(uint8 /*tabId*/) const
         return false;
 
     Guild* guild = _bot->GetGuild();
-    // TrinityCore 11.2: GetMember is private, use GetGuildRank to check permissions
+    // TrinityCore 12.0: GetMember is private, use GetGuildRank to check permissions
     GuildRankId rank = static_cast<GuildRankId>(_bot->GetGuildRank());
 
     // Check for withdraw rights through rank permissions
@@ -1600,14 +1600,14 @@ int32 GuildIntegration::GetRemainingWithdrawSlots(uint8 /*tabId*/) const
     if (!_bot || !_bot->GetGuild())
         return 0;
 
-    // TrinityCore 11.2: GetMember is private, so we cannot query remaining slots directly
+    // TrinityCore 12.0: GetMember is private, so we cannot query remaining slots directly
     // Return a reasonable default; actual swap operations will validate permissions
     return GUILD_BANK_MAX_SLOTS;
 }
 
 int8 GuildIntegration::FindItemInTab(Guild* /*guild*/, uint8 tabId, uint32 /*itemId*/) const
 {
-    // TrinityCore 11.2: Guild::GetBankTab and Guild::BankTab are private
+    // TrinityCore 12.0: Guild::GetBankTab and Guild::BankTab are private
     // Cannot directly iterate guild bank contents from outside Guild class
     // Return -1 to indicate we cannot find specific items without direct API access
     if (tabId >= GUILD_BANK_MAX_TABS)
@@ -1763,7 +1763,7 @@ void GuildIntegration::AnalyzeProfessionMaterialNeeds(std::vector<uint32>& neede
 
 void GuildIntegration::AnalyzeEquipmentUpgrades(Guild* /*guild*/, std::vector<std::pair<uint8, uint8>>& /*upgradeLocations*/) const
 {
-    // TrinityCore 11.2: Guild::BankTab and Guild::GetBankTab are private
+    // TrinityCore 12.0: Guild::BankTab and Guild::GetBankTab are private
     // Cannot directly scan guild bank items from module code
     // The SwapItemsWithInventory API handles actual bank operations
     // This function returns without populating upgradeLocations since we cannot inspect bank contents
@@ -1782,7 +1782,7 @@ bool GuildIntegration::HasRelevantProfession(uint32 itemSubClass) const
         return false;
 
     // Map item subclass to profession skill
-    // TrinityCore 11.2: Use correct ItemSubclassTradeGoods enum names
+    // TrinityCore 12.0: Use correct ItemSubclassTradeGoods enum names
     switch (itemSubClass)
     {
         case ITEM_SUBCLASS_CLOTH:
@@ -1903,7 +1903,7 @@ bool GuildIntegration::CanLearnRecipe(ItemTemplate const* itemTemplate) const
     if (requiredSkillRank > 0 && _bot->GetSkillValue(requiredSkill) < requiredSkillRank)
         return false;
 
-    // TrinityCore 11.2: Use Effects vector instead of deprecated Spells array
+    // TrinityCore 12.0: Use Effects vector instead of deprecated Spells array
     for (ItemEffectEntry const* effect : itemTemplate->Effects)
     {
         if (effect && effect->SpellID != 0 && _bot->HasSpell(effect->SpellID))

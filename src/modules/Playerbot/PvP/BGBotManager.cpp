@@ -624,7 +624,7 @@ uint32 BGBotManager::GetBGTeamSize(BattlegroundTypeId bgTypeId) const
 
 uint32 BGBotManager::GetBGMinPlayers(BattlegroundTypeId bgTypeId) const
 {
-    // TrinityCore 11.2 uses lower minimums for testing/single-player
+    // TrinityCore 12.0 uses lower minimums for testing/single-player
     // In production this would query BattlegroundTemplate
     switch (bgTypeId)
     {
@@ -783,7 +783,7 @@ bool BGBotManager::QueueBot(Player* bot, BattlegroundTypeId bgTypeId, Battlegrou
         return false;
     }
 
-    // In 11.2, BGQueueTypeId takes 4 params: (battlemasterListId, type, rated, teamSize)
+    // In 12.0, BGQueueTypeId takes 4 params: (battlemasterListId, type, rated, teamSize)
     // For regular BGs, teamSize is 0
     BattlegroundQueueTypeId bgQueueTypeId = BattlegroundMgr::BGQueueTypeId(
         static_cast<uint16>(bgTypeId),
@@ -960,7 +960,7 @@ std::vector<Player*> BGBotManager::FindAvailableBots(Team team, uint8 minLevel, 
 
 void BGBotManager::GetBracketLevelRange(BattlegroundBracketId bracket, uint8& minLevel, uint8& maxLevel) const
 {
-    // TrinityCore 11.2 uses level scaling, but we still need ranges for bot selection
+    // TrinityCore 12.0 uses level scaling, but we still need ranges for bot selection
     // These are approximate ranges based on bracket IDs
     switch (bracket)
     {
@@ -970,7 +970,7 @@ void BGBotManager::GetBracketLevelRange(BattlegroundBracketId bracket, uint8& mi
             break;
         case BG_BRACKET_ID_LAST:
         default:
-            // Max level bracket (11.2 = level 80 cap for The War Within Season 1)
+            // Max level bracket (12.0 = level 80 cap for The War Within Season 1)
             minLevel = 70;
             maxLevel = 80;
             break;

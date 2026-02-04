@@ -33,7 +33,7 @@
 #include "../Common/CooldownManager.h"
 #include "../../BotAI.h"
 
-// TrinityCore 11.2 New Priest Talents
+// TrinityCore 12.0 New Priest Talents
 #include "PriestTalentEnhancements.h"
 
 // Central Spell Registry - See WoW120Spells::Priest namespace
@@ -76,7 +76,7 @@ constexpr uint32 SHADOW_DESPERATE_PRAYER = WoW120Spells::Priest::DESPERATE_PRAYE
 constexpr uint32 SHADOW_POWER_WORD_FORTITUDE = WoW120Spells::Priest::POWER_WORD_FORTITUDE;
 constexpr uint32 SHADOW_SHADOWFORM = WoW120Spells::Priest::Shadow::SHADOWFORM;
 
-// TrinityCore 11.2 Talent Spell IDs
+// TrinityCore 12.0 Talent Spell IDs
 // Using central registry: WoW120Spells::Priest::Shadow
 constexpr uint32 SHADOW_MINDBENDER = WoW120Spells::Priest::Shadow::MINDBENDER;
 constexpr uint32 SHADOW_SHADOWFIEND = WoW120Spells::Priest::Shadow::SHADOWFIEND_SHADOW;
@@ -289,7 +289,7 @@ public:
         , _insanityTracker()
         , _voidformTracker()
         , _dotTracker()
-        , _talentState(bot)  // NEW: TrinityCore 11.2 talent state
+        , _talentState(bot)  // NEW: TrinityCore 12.0 talent state
         , _darkAscensionActive(false)
         , _darkAscensionEndTime(0)
         , _lastDarkAscensionTime(0)
@@ -416,7 +416,7 @@ private:
     }
 
     // ========================================================================
-    // NEW: TrinityCore 11.2 TALENT-BASED ROTATION ENHANCEMENTS
+    // NEW: TrinityCore 12.0 TALENT-BASED ROTATION ENHANCEMENTS
     // ========================================================================
 
     /**
@@ -665,7 +665,7 @@ private:
         uint32 insanity = _insanityTracker.GetInsanity();
 
         // ====================================================================
-        // NEW: TrinityCore 11.2 TALENT PRIORITY HANDLING
+        // NEW: TrinityCore 12.0 TALENT PRIORITY HANDLING
         // ====================================================================
 
         // Priority 1: Inescapable Torment - extend pet when active
@@ -1246,7 +1246,7 @@ private:
     VoidformTracker _voidformTracker;
     ShadowDoTTracker _dotTracker;
 
-    // NEW: TrinityCore 11.2 Talent State
+    // NEW: TrinityCore 12.0 Talent State
     PriestTalentState _talentState;
 
     bool _darkAscensionActive;
@@ -1257,7 +1257,7 @@ private:
     uint32 _lastMindgamesTime;
     uint32 _lastVampiricEmbraceTime;
 
-    // NEW: TrinityCore 11.2 Cooldown Tracking
+    // NEW: TrinityCore 12.0 Cooldown Tracking
     uint32 _lastMindbenderTime;
     uint32 _lastHaloTime;
 };

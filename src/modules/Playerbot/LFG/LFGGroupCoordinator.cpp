@@ -527,7 +527,7 @@ bool LFGGroupCoordinator::GetDungeonEntrance(uint32 dungeonId, uint32& mapId, fl
         return false;
     }
 
-    // TrinityCore 11.2: Entrance coordinates are stored in lfg_dungeon_template table,
+    // TrinityCore 12.0: Entrance coordinates are stored in lfg_dungeon_template table,
     // loaded into LFGMgr's private LFGDungeonData container. Since we can't access it,
     // query the database directly.
     QueryResult result = WorldDatabase.PQuery(

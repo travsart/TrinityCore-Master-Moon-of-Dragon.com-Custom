@@ -295,7 +295,7 @@ public:
         // Defensive/Utility
         HUNTER_DISENGAGE = WoW120Spells::Hunter::Common::DISENGAGE,
         FEIGN_DEATH = WoW120Spells::Hunter::Common::FEIGN_DEATH,
-        DETERRENCE = WoW120Spells::Hunter::Common::ASPECT_OF_THE_TURTLE, // Renamed to Aspect of the Turtle in 11.2
+        DETERRENCE = WoW120Spells::Hunter::Common::ASPECT_OF_THE_TURTLE, // Renamed to Aspect of the Turtle in 12.0
         EXHILARATION = WoW120Spells::Hunter::Common::EXHILARATION,
         SCATTER_SHOT = WoW120Spells::Hunter::Common::SCATTER_SHOT,
         COUNTER_SHOT = WoW120Spells::Hunter::Common::COUNTER_SHOT,

@@ -294,7 +294,7 @@ uint32 ArenaBotManager::PopulateTeammates(ObjectGuid playerGuid, ArenaBracketTyp
     if (!humanPlayer)
         return 0;
 
-    // Arena level range for 11.2 is max level (70-80)
+    // Arena level range for 12.0 is max level (70-80)
     uint8 humanLevel = humanPlayer->GetLevel();
     uint8 minLevel = std::max(static_cast<uint8>(1), static_cast<uint8>(humanLevel - 5));
     uint8 maxLevel = humanLevel + 5;
@@ -513,7 +513,7 @@ bool ArenaBotManager::QueueBot(Player* bot, ArenaBracketType bracketType, ArenaQ
     BattlegroundQueueIdType queueIdType = isRated ?
         BattlegroundQueueIdType::Arena : BattlegroundQueueIdType::ArenaSkirmish;
 
-    // In 11.2, BGQueueTypeId takes 4 params: (battlemasterListId, type, rated, teamSize)
+    // In 12.0, BGQueueTypeId takes 4 params: (battlemasterListId, type, rated, teamSize)
     BattlegroundQueueTypeId bgQueueTypeId = BattlegroundMgr::BGQueueTypeId(
         BATTLEGROUND_AA,    // Arena uses BATTLEGROUND_AA
         queueIdType,

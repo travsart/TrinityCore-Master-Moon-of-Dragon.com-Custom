@@ -108,7 +108,7 @@ enum ShieldSpells : uint32
 {
     SPELL_WATER_SHIELD  = ShamanRestoration::WATER_SHIELD,   // 52127
     SPELL_EARTH_SHIELD  = ShamanCommon::EARTH_SHIELD,        // 974
-    // Note: Lightning Shield removed as standalone buff in 11.2
+    // Note: Lightning Shield removed as standalone buff in 12.0
     SPELL_LIGHTNING_SHIELD = 0  // Removed/reworked
 };
 
@@ -139,7 +139,7 @@ enum UtilitySpells : uint32
     SPELL_REINCARNATION     = ShamanCommon::REINCARNATION,     // 20608
     SPELL_PURIFY_SPIRIT     = ShamanCommon::PURIFY_SPIRIT,     // 77130
 
-    // Legacy utilities (kept for reference but may not exist in 11.2)
+    // Legacy utilities (kept for reference but may not exist in 12.0)
     SPELL_WATER_WALKING     = ShamanSpells::WATER_WALKING,     // 546
     SPELL_ASTRAL_RECALL     = ShamanSpells::ASTRAL_RECALL,     // 556
     SPELL_WATER_BREATHING   = 0,  // Removed/combined with Water Walking
@@ -176,7 +176,7 @@ enum DamageSpells : uint32
     SPELL_EARTHQUAKE       = ShamanCommon::EARTHQUAKE,       // 61882
     SPELL_ELEMENTAL_BLAST  = ShamanCommon::ELEMENTAL_BLAST,  // 117014
     SPELL_LAVA_BEAM        = ShamanElemental::LAVA_BEAM,     // 114074
-    SPELL_THUNDERSTORM     = 0  // 51490 - Removed/reworked in 11.2
+    SPELL_THUNDERSTORM     = 0  // 51490 - Removed/reworked in 12.0
 };
 
 // Enhancement-specific spells - WoW 12.0
@@ -206,11 +206,11 @@ enum ElementalSpells : uint32
     SPELL_TEMPEST            = ShamanElemental::TEMPEST,              // 454009
 
     // Legacy elemental spells
-    SPELL_ELEMENTAL_MASTERY  = 0  // Removed/reworked in 11.2
+    SPELL_ELEMENTAL_MASTERY  = 0  // Removed/reworked in 12.0
 };
 
 // Talent IDs for specialization detection - WoW 12.0
-// Note: Talent detection in 11.2 uses different systems; these are kept for compatibility
+// Note: Talent detection in 12.0 uses different systems; these are kept for compatibility
 enum ShamanTalents : uint32
 {
     // Core abilities that indicate spec (used as spell checks, not talent IDs)
@@ -221,7 +221,7 @@ enum ShamanTalents : uint32
     TALENT_LAVA_LASH_TALENT          = ShamanCommon::LAVA_LASH,        // 60103 (Enhancement indicator)
     TALENT_HEALING_RAIN_TALENT       = ShamanCommon::HEALING_RAIN,     // 73920 (Restoration indicator)
 
-    // Legacy talents removed in 11.2
+    // Legacy talents removed in 12.0
     TALENT_ELEMENTAL_FOCUS     = 0,  // Removed
     TALENT_ELEMENTAL_MASTERY   = 0,  // Removed
     TALENT_LIGHTNING_OVERLOAD  = 0,  // Removed (became Mastery)

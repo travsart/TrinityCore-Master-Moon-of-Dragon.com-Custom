@@ -344,7 +344,7 @@ bool CombatBehaviorIntegration::HandleEmergencies()
             36892,   // Demonic Healthstone
         };
 
-        // TWW 11.2 healing potion item IDs
+        // TWW 12.0 healing potion item IDs
         static const uint32 HEALING_POTION_IDS[] = {
             191380,  // Potion of Withering Dreams
             191381,  // Dreamwalker's Healing Potion
@@ -362,7 +362,7 @@ bool CombatBehaviorIntegration::HandleEmergencies()
         };
 
         // Try healthstone first (higher priority)
-        // Note: Don't check cooldown via HasCooldown() as hardcoded spell IDs may not exist in 11.2
+        // Note: Don't check cooldown via HasCooldown() as hardcoded spell IDs may not exist in 12.0
         // Item use will fail gracefully if the item is on cooldown
         // WoW 12.0: CastItemUseSpell signature changed to std::array<int32, 3>
         std::array<int32, 3> misc = { 0, 0, 0 };

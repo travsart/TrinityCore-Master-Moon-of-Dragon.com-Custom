@@ -12,6 +12,7 @@
 #include "TempleOfKotmoguScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Battleground.h"
 #include "Log.h"
 
 namespace Playerbot::Coordination::Battleground
@@ -19,6 +20,17 @@ namespace Playerbot::Coordination::Battleground
 
 // Register the script
 REGISTER_BG_SCRIPT(TempleOfKotmoguScript, 998);  // TempleOfKotmogu::MAP_ID
+
+// Force linker inclusion - this function is referenced from BGScriptInit.cpp
+// to prevent MSVC from discarding this object file from the static library
+namespace BGScriptLinkerForce
+{
+    void ForceIncludeTempleOfKotmoguScript()
+    {
+        // This function exists solely to create a symbol that BGScriptInit.cpp
+        // can reference, forcing the linker to include this object file
+    }
+}
 
 // ============================================================================
 // LIFECYCLE
@@ -28,7 +40,10 @@ void TempleOfKotmoguScript::OnLoad(BattlegroundCoordinator* coordinator)
 {
     DominationScriptBase::OnLoad(coordinator);
 
-    // Cache objective data
+    // Initialize position discovery (may fail if map not ready yet)
+    InitializePositionDiscovery();
+
+    // Cache objective data (uses dynamic positions if available)
     m_cachedObjectives = GetObjectiveData();
 
     // Register world state mappings for scores
@@ -42,16 +57,29 @@ void TempleOfKotmoguScript::OnLoad(BattlegroundCoordinator* coordinator)
     m_hordeOrbsHeld = 0;
 
     TC_LOG_DEBUG("playerbots.bg.script",
-        "TempleOfKotmoguScript: Loaded with {} orbs, center bonus active",
-        TempleOfKotmogu::ORB_COUNT);
+        "TempleOfKotmoguScript: Loaded with {} orbs, center bonus active, dynamic positions={}",
+        TempleOfKotmogu::ORB_COUNT, m_positionsDiscovered ? "yes" : "no");
 }
 
 void TempleOfKotmoguScript::OnMatchStart()
 {
     DominationScriptBase::OnMatchStart();
 
+    // Retry position discovery if it failed in OnLoad (map should be ready now)
+    if (!m_positionsDiscovered)
+    {
+        if (InitializePositionDiscovery())
+        {
+            // Re-cache objective data with new positions
+            m_cachedObjectives = GetObjectiveData();
+            TC_LOG_INFO("playerbots.bg.script",
+                "TOK: Dynamic position discovery succeeded on match start!");
+        }
+    }
+
     TC_LOG_INFO("playerbots.bg.script",
-        "TOK: Match started! Strategy: Grab orbs then push center with escort");
+        "TOK: Match started! Strategy: Grab orbs then push center with escort (dynamic positions={})",
+        m_positionsDiscovered ? "yes" : "no");
 }
 
 void TempleOfKotmoguScript::OnMatchEnd(bool victory)
@@ -176,7 +204,8 @@ std::vector<BGObjectiveData> TempleOfKotmoguScript::GetObjectiveData() const
 BGObjectiveData TempleOfKotmoguScript::GetOrbData(uint32 orbId) const
 {
     BGObjectiveData orb;
-    Position pos = TempleOfKotmogu::GetOrbPosition(orbId);
+    // Use dynamic position if available, fall back to hardcoded
+    Position pos = GetDynamicOrbPosition(orbId);
 
     orb.id = orbId;
     orb.type = ObjectiveType::ORB;
@@ -712,6 +741,135 @@ float TempleOfKotmoguScript::GetOrbToOrbDistance(uint32 fromOrb, uint32 toOrb) c
 float TempleOfKotmoguScript::GetOrbToCenterDistance(uint32 orbId) const
 {
     return TempleOfKotmogu::GetOrbToCenterDistance(orbId);
+}
+
+// ============================================================================
+// DYNAMIC POSITION DISCOVERY
+// ============================================================================
+
+bool TempleOfKotmoguScript::InitializePositionDiscovery()
+{
+    // Already discovered
+    if (m_positionsDiscovered)
+        return true;
+
+    // Need coordinator and battleground
+    if (!m_coordinator)
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "TOK: Cannot initialize position discovery - no coordinator");
+        return false;
+    }
+
+    ::Battleground* bg = m_coordinator->GetBattleground();
+    if (!bg)
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "TOK: Cannot initialize position discovery - no battleground");
+        return false;
+    }
+
+    // Create discovery system
+    m_positionDiscovery = std::make_unique<BGPositionDiscovery>(bg);
+
+    if (!m_positionDiscovery->Initialize())
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "TOK: Position discovery initialization failed (map not ready?)");
+        m_positionDiscovery.reset();
+        return false;
+    }
+
+    // Discover orb game objects
+    std::vector<uint32> orbEntries = {
+        TempleOfKotmogu::GameObjects::ORANGE_ORB,
+        TempleOfKotmogu::GameObjects::BLUE_ORB,
+        TempleOfKotmogu::GameObjects::GREEN_ORB,
+        TempleOfKotmogu::GameObjects::PURPLE_ORB
+    };
+
+    auto discoveredOrbs = m_positionDiscovery->DiscoverGameObjects(orbEntries, "Orb");
+
+    // Map discovered positions to orb IDs
+    bool anyDiscovered = false;
+    for (auto const& poi : discoveredOrbs)
+    {
+        uint32 orbIndex = 0xFFFFFFFF;
+        switch (poi.gameObjectEntry)
+        {
+            case TempleOfKotmogu::GameObjects::ORANGE_ORB:
+                orbIndex = TempleOfKotmogu::Orbs::ORANGE;
+                break;
+            case TempleOfKotmogu::GameObjects::BLUE_ORB:
+                orbIndex = TempleOfKotmogu::Orbs::BLUE;
+                break;
+            case TempleOfKotmogu::GameObjects::GREEN_ORB:
+                orbIndex = TempleOfKotmogu::Orbs::GREEN;
+                break;
+            case TempleOfKotmogu::GameObjects::PURPLE_ORB:
+                orbIndex = TempleOfKotmogu::Orbs::PURPLE;
+                break;
+        }
+
+        if (orbIndex < TempleOfKotmogu::ORB_COUNT)
+        {
+            m_orbPositions[orbIndex] = poi.position;
+            m_positionDiscovery->CachePOI(poi);
+            anyDiscovered = true;
+
+            TC_LOG_INFO("playerbots.bg.script",
+                "TOK: Dynamically discovered {} at ({:.1f},{:.1f},{:.1f})",
+                TempleOfKotmogu::GetOrbName(orbIndex),
+                poi.position.GetPositionX(), poi.position.GetPositionY(),
+                poi.position.GetPositionZ());
+        }
+    }
+
+    // If no dynamic discovery, fall back to hardcoded positions
+    if (!anyDiscovered)
+    {
+        TC_LOG_WARN("playerbots.bg.script",
+            "TOK: Dynamic orb discovery failed - using hardcoded positions (may cause pathfinding issues!)");
+
+        for (uint32 i = 0; i < TempleOfKotmogu::ORB_COUNT; ++i)
+        {
+            m_orbPositions[i] = TempleOfKotmogu::GetOrbPosition(i);
+        }
+    }
+    else
+    {
+        // Fill any missing with hardcoded
+        for (uint32 i = 0; i < TempleOfKotmogu::ORB_COUNT; ++i)
+        {
+            if (m_orbPositions[i].GetPositionX() == 0.0f &&
+                m_orbPositions[i].GetPositionY() == 0.0f)
+            {
+                m_orbPositions[i] = TempleOfKotmogu::GetOrbPosition(i);
+                TC_LOG_WARN("playerbots.bg.script",
+                    "TOK: {} not discovered - using hardcoded position",
+                    TempleOfKotmogu::GetOrbName(i));
+            }
+        }
+    }
+
+    m_positionsDiscovered = true;
+    m_positionDiscovery->LogDiscoveryStatus();
+
+    return true;
+}
+
+Position TempleOfKotmoguScript::GetDynamicOrbPosition(uint32 orbId) const
+{
+    if (orbId >= TempleOfKotmogu::ORB_COUNT)
+        return Position(0, 0, 0, 0);
+
+    if (m_positionsDiscovered)
+    {
+        return m_orbPositions[orbId];
+    }
+
+    // Fall back to hardcoded
+    return TempleOfKotmogu::GetOrbPosition(orbId);
 }
 
 } // namespace Playerbot::Coordination::Battleground

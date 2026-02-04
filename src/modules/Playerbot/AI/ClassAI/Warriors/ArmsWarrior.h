@@ -189,7 +189,7 @@ public:
             }
         }
 
-        // Use Defensive Stance cooldown if low health (11.2.7 - ability, not stance)
+        // Use Defensive Stance cooldown if low health (12.0.7 - ability, not stance)
         if (bot->GetHealthPct() < 40.0f && this->CanUseAbility(SPELL_DEFENSIVE_STANCE))
         {
             this->CastSpell(SPELL_DEFENSIVE_STANCE, bot);

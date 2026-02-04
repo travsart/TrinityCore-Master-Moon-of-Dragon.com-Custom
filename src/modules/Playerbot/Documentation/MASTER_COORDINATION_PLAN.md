@@ -7,7 +7,7 @@ This master plan coordinates the development of the PlayerBot module with a focu
 ### Critical Success Metrics
 - **Primary Goal**: 5000 concurrent bots with <0.1% CPU per bot and <10MB memory per bot
 - **Testing Priority**: Group functionality with automatic invitation acceptance and combat coordination
-- **Platform**: Windows 11, Visual Studio 2022, WoW 11.2 compatibility
+- **Platform**: Windows 11, Visual Studio 2022, WoW 12.0 compatibility
 
 ## Development Phases Overview
 

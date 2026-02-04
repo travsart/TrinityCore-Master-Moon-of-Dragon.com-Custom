@@ -510,7 +510,7 @@ bool WarlockAI::SummonPet()
     // ========================================================================
 
     // Check for ANY movement state (even if visually not moving, flags may be set)
-    // Use TrinityCore 11.2 predefined masks for movement detection
+    // Use TrinityCore 12.0 predefined masks for movement detection
     bool hasMovementFlags = bot->HasUnitMovementFlag(MOVEMENTFLAG_MASK_MOVING | MOVEMENTFLAG_MASK_TURNING);
 
     if (bot->isMoving() || hasMovementFlags || bot->HasUnitState(UNIT_STATE_MOVING))
@@ -520,7 +520,7 @@ bool WarlockAI::SummonPet()
         bot->GetMotionMaster()->Clear(MOTION_PRIORITY_NORMAL);
         bot->GetMotionMaster()->MoveIdle();
 
-        // Clear movement flags using TrinityCore 11.2 masks
+        // Clear movement flags using TrinityCore 12.0 masks
         bot->RemoveUnitMovementFlag(MOVEMENTFLAG_MASK_MOVING | MOVEMENTFLAG_MASK_TURNING);
 
         // Clear unit state
@@ -771,7 +771,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
     }
     else if (static_cast<uint32>(spec) == 266) // Demonology
     {
-        // Summon Demonic Tyrant - main Demonology cooldown in 11.2
+        // Summon Demonic Tyrant - main Demonology cooldown in 12.0
         // Note: Metamorphosis and Dark Soul: Knowledge removed (Metamorphosis is Demon Hunter only)
         constexpr uint32 SUMMON_DEMONIC_TYRANT = WarlockDemonology::SUMMON_DEMONIC_TYRANT;
         if (bot->HasSpell(SUMMON_DEMONIC_TYRANT) && !bot->GetSpellHistory()->HasCooldown(SUMMON_DEMONIC_TYRANT))
@@ -792,7 +792,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
 
     // Summon Infernal/Doomguard
     if (GetNearbyEnemyCount(30.0f) >= 3 || target->GetHealthPct() > 80.0f)    {
-        // Summon Infernal - main offensive cooldown for Destruction (Doomguard removed in 11.2)
+        // Summon Infernal - main offensive cooldown for Destruction (Doomguard removed in 12.0)
         if (bot->HasSpell(WARLOCK_SUMMON_INFERNAL))
         {
             if (!bot->GetSpellHistory()->HasCooldown(WARLOCK_SUMMON_INFERNAL))
@@ -1082,7 +1082,7 @@ bool WarlockAI::ApplyCurse(Unit* target)
     if (!bot)
         return false;
 
-    // Check if target already has a curse (Curse of Elements removed in 11.2)
+    // Check if target already has a curse (Curse of Elements removed in 12.0)
     if (target->HasAura(WARLOCK_CURSE_OF_AGONY) ||
         target->HasAura(WARLOCK_CURSE_OF_TONGUES) || target->HasAura(WARLOCK_CURSE_OF_WEAKNESS) ||
         target->HasAura(WARLOCK_CURSE_OF_EXHAUSTION))
@@ -1865,7 +1865,7 @@ void WarlockAI::ManageWarlockCooldowns()
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
 
     // Summon Demonic Tyrant for Demonology (266) - main cooldown in WoW 12.0
-    // Note: Demonic Empowerment and Metamorphosis removed in 11.2
+    // Note: Demonic Empowerment and Metamorphosis removed in 12.0
     if (spec == 266)
     {
         constexpr uint32 SUMMON_DEMONIC_TYRANT = WarlockDemonology::SUMMON_DEMONIC_TYRANT;

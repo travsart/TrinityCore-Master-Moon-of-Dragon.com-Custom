@@ -90,9 +90,9 @@ void FishingSessionManager::OnShutdown()
     _stateCallbacks.clear();
     _catchCallbacks.clear();
 
+    // Note: Don't access GetBot() here - it may already be destroyed during shutdown
     TC_LOG_DEBUG("module.playerbot.humanization",
-        "FishingSessionManager::OnShutdown - Bot {} fishing manager shutdown",
-        GetBot() ? GetBot()->GetName() : "unknown");
+        "FishingSessionManager::OnShutdown - Fishing manager shutdown complete");
 }
 
 void FishingSessionManager::OnUpdate(uint32 elapsed)

@@ -26,7 +26,7 @@ const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_spellOpcode
     CMSG_PET_CAST_SPELL,                    // Pet spell cast (applies auras)
     CMSG_PET_CANCEL_AURA,                   // Pet aura cancel
     CMSG_TOTEM_DESTROYED,                   // Totem destruction (can trigger spell effects)
-    // CMSG_CAST_SPELL_EMBEDDED,            // TODO: Find 11.2 equivalent opcode
+    // CMSG_CAST_SPELL_EMBEDDED,            // TODO: Find 12.0 equivalent opcode
 };
 
 // ============================================================================
@@ -34,7 +34,7 @@ const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_spellOpcode
 // ============================================================================
 const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_itemOpcodes = {
     CMSG_USE_ITEM,                          // Can trigger spell cast → aura application
-    CMSG_LOOT_ITEM,                         // Modifies inventory (11.2 opcode)
+    CMSG_LOOT_ITEM,                         // Modifies inventory (12.0 opcode)
     CMSG_SWAP_INV_ITEM,                     // Equipment swap (can trigger on-equip effects)
     CMSG_SWAP_ITEM,                         // Bag slot swap
     CMSG_AUTO_EQUIP_ITEM,                   // Auto-equip (triggers on-equip auras)
@@ -65,7 +65,7 @@ const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_resurrectio
 // ============================================================================
 const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_movementOpcodes = {
     CMSG_MOVE_TELEPORT_ACK,                 // Teleport confirmation (updates position)
-    // CMSG_MOVE_WORLDPORT_ACK,             // TODO: Find 11.2 equivalent opcode
+    // CMSG_MOVE_WORLDPORT_ACK,             // TODO: Find 12.0 equivalent opcode
     CMSG_AREA_TRIGGER,                      // Area trigger activation (can apply auras!)
     CMSG_SUSPEND_TOKEN_RESPONSE,            // Map transfer response
 };
@@ -99,12 +99,12 @@ const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_questOpcode
 // CATEGORY 7: GROUP & RAID OPERATIONS (MODIFIES GROUP STATE)
 // ============================================================================
 const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_groupOpcodes = {
-    CMSG_PARTY_INVITE,                      // Group invite (11.2 renamed to PARTY)
+    CMSG_PARTY_INVITE,                      // Group invite (12.0 renamed to PARTY)
     CMSG_PARTY_INVITE_RESPONSE,             // Accept/decline invite
     CMSG_PARTY_UNINVITE,                    // Kick from group
     CMSG_SET_PARTY_LEADER,                  // Leader change
-    CMSG_SET_PARTY_ASSIGNMENT,              // Role assignment (11.2)
-    CMSG_SET_LOOT_METHOD,                   // Loot method change (11.2)
+    CMSG_SET_PARTY_ASSIGNMENT,              // Role assignment (12.0)
+    CMSG_SET_LOOT_METHOD,                   // Loot method change (12.0)
     CMSG_LOOT_ROLL,                         // Loot roll
     CMSG_READY_CHECK_RESPONSE,              // Ready check response
 };

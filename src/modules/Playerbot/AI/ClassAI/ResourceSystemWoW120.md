@@ -1,7 +1,7 @@
-# WoW 11.2 (The War Within) Resource System Analysis
+# WoW 12.0 (The War Within) Resource System Analysis
 
 ## Executive Summary
-This document provides a comprehensive analysis of all 13 class resource systems in World of Warcraft 11.2, including primary and secondary resources, regeneration mechanics, and special edge cases that must be handled in our template architecture.
+This document provides a comprehensive analysis of all 13 class resource systems in World of Warcraft 12.0, including primary and secondary resources, regeneration mechanics, and special edge cases that must be handled in our template architecture.
 
 ## Resource Type Matrix
 
@@ -271,7 +271,7 @@ Others:      No decay
 
 ## Special Mechanics by Expansion
 
-### The War Within (11.2) Changes
+### The War Within (12.0) Changes
 1. **Hero Talents**: Modify resource generation
    - Deathbringer (DK): Reaper's Mark affects RP generation
    - San'layn (DK): Vampiric Strike changes
@@ -420,7 +420,7 @@ class IResourceManager {
 
 ## Conclusion
 
-The WoW 11.2 resource system requires a flexible template architecture that can handle:
+The WoW 12.0 resource system requires a flexible template architecture that can handle:
 1. Simple single resources (Rage, Focus)
 2. Dual resource systems (Energy + Combo Points)
 3. Complex multi-part systems (Runes + Runic Power)

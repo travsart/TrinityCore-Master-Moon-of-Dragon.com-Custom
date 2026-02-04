@@ -104,12 +104,12 @@ constexpr uint32 FLIGHT_CAPABILITY_NORMAL = 0;        // Normal flying (no drago
 // These match WoW 12.0.7 dragonriding mechanics
 // ============================================================================
 
-// Vigor/Charges (now called "Skyriding Charges" in 11.2.7)
-constexpr uint32 BASE_MAX_VIGOR = 6;                  // All players start with 6 charges in 11.2.7
-constexpr uint32 MAX_MAX_VIGOR = 6;                   // Maximum (talents removed in 11.2.7)
+// Vigor/Charges (now called "Skyriding Charges" in 12.0.7)
+constexpr uint32 BASE_MAX_VIGOR = 6;                  // All players start with 6 charges in 12.0.7
+constexpr uint32 MAX_MAX_VIGOR = 6;                   // Maximum (talents removed in 12.0.7)
 
 // Regeneration rates (milliseconds per charge)
-// In 11.2.7, abilities have their own recharge timers:
+// In 12.0.7, abilities have their own recharge timers:
 // - Surge Forward/Skyward Ascent: 15 second recharge
 // - Whirling Surge: 30 second cooldown
 // - Aerial Halt: 10 second cooldown
@@ -122,7 +122,7 @@ constexpr uint32 UPGRADED_REGEN_GROUNDED_MS = 15000;  // 15 seconds (Yearning fo
 constexpr uint32 UPGRADED_REGEN_FLYING_MS = 5000;     // 5 seconds (Thrill Seeker talent)
 
 // ============================================================================
-// TALENT IDS (Legacy - talents simplified in 11.2.7)
+// TALENT IDS (Legacy - talents simplified in 12.0.7)
 // Keeping for potential backwards compatibility
 // ============================================================================
 
@@ -130,12 +130,12 @@ enum class DragonridingTalentId : uint32
 {
     NONE = 0,
 
-    // Vigor Capacity Branch (removed in 11.2.7 - all have 6 charges)
+    // Vigor Capacity Branch (removed in 12.0.7 - all have 6 charges)
     TAKE_TO_THE_SKIES = 1,
     DRAGONRIDING_LEARNER = 2,
     BEYOND_INFINITY = 3,
 
-    // Vigor Regen Branch (simplified in 11.2.7)
+    // Vigor Regen Branch (simplified in 12.0.7)
     DYNAMIC_STRETCHING = 10,
     RESTORATIVE_TRAVELS = 11,
     YEARNING_FOR_THE_SKY = 12,

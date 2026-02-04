@@ -249,7 +249,7 @@ public:
         // ====================================================================
         // Talents - Using central registry where available
         // ====================================================================
-        VIGOR = 14983, // Passive talent for energy pool (still used in 11.2)
+        VIGOR = 14983, // Passive talent for energy pool (still used in 12.0)
         DEEPER_STRATAGEM = WoW120Spells::Rogue::Subtlety::DEEPER_STRATAGEM
 
         // ====================================================================

@@ -149,7 +149,7 @@ class MechanicHandler {
 
 ### wow-mechanics-expert (PRIMARY - Combat Mechanics)
 **Week 2 Focus:**
-1. Implement WoW 11.2 threat formulas
+1. Implement WoW 12.0 threat formulas
 2. Create interrupt priority database
 3. Define CC diminishing returns
 4. Validate combat calculations

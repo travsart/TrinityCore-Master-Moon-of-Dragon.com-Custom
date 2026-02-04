@@ -1299,7 +1299,7 @@ float ResourceCalculator::CalculateManaRegen(Player* player)
     float maxManaScale = player->GetMaxPower(POWER_MANA) > 0 ?
         std::min(1.5f, static_cast<float>(player->GetMaxPower(POWER_MANA)) / 100000.0f) : 1.0f;
 
-    // Base regeneration coefficient (varies by expansion, 11.2 uses ~0.02 per int)
+    // Base regeneration coefficient (varies by expansion, 12.0 uses ~0.02 per int)
     constexpr float INTELLECT_REGEN_COEFFICIENT = 0.02f;
     constexpr float BASE_MANA_REGEN_PER_SECOND = 5.0f;
 
@@ -1311,7 +1311,7 @@ float ResourceCalculator::CalculateManaRegen(Player* player)
     float hasteMultiplier = 1.0f + (hastePct / 100.0f);
     baseRegen *= hasteMultiplier;
 
-    // Apply combat penalty - 11.2 has roughly 50% regen in combat for most specs
+    // Apply combat penalty - 12.0 has roughly 50% regen in combat for most specs
     bool inCombat = player->IsInCombat();
     float combatMultiplier = inCombat ? 0.5f : 1.0f;
 

@@ -392,7 +392,7 @@ protected:
         uint32 currentPain = _resource;
         uint32 now = GameTime::GetGameTimeMS();
 
-        // TrinityCore 11.2: Check talent-based priorities first
+        // TrinityCore 12.0: Check talent-based priorities first
         // This handles Painbringer, Soulmonger, Cycle of Binding, Retaliation
         if (HandleTalentPriorities(target))
             return;
@@ -523,7 +523,7 @@ protected:
     {
         uint32 currentPain = _resource;
 
-        // TrinityCore 11.2: Check talent-based priorities first
+        // TrinityCore 12.0: Check talent-based priorities first
         // Retaliation is especially valuable in AoE for damage reflection
         if (HandleTalentPriorities(target))
             return;
@@ -622,7 +622,7 @@ private:
         // Update Demon Spikes tracking
         _demonSpikes.Update();
 
-        // Update talent state (TrinityCore 11.2 new talents)
+        // Update talent state (TrinityCore 12.0 new talents)
         _talentState.Update();
 
         // Check Fiery Brand expiry
@@ -1141,7 +1141,7 @@ private:
     }
 
 private:
-    // TrinityCore 11.2 talent state (Painbringer, Soulmonger, Cycle of Binding, Retaliation)
+    // TrinityCore 12.0 talent state (Painbringer, Soulmonger, Cycle of Binding, Retaliation)
     DHTalentState _talentState;
 
     VengeanceSoulFragmentManager _soulFragments;
@@ -1160,7 +1160,7 @@ private:
     bool _immolationAuraActive;
 
     // ========================================================================
-    // TRINITYCORE 11.2 TALENT INTEGRATION HELPERS
+    // TRINITYCORE 12.0 TALENT INTEGRATION HELPERS
     // ========================================================================
 
     /**
@@ -1325,7 +1325,7 @@ private:
     }
 
     /**
-     * Integrates all TrinityCore 11.2 talent priorities into rotation.
+     * Integrates all TrinityCore 12.0 talent priorities into rotation.
      * Called at the start of rotation to handle talent-specific optimizations.
      *
      * @return true if a talent-based action was taken

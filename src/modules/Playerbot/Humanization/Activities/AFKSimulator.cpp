@@ -91,9 +91,9 @@ void AFKSimulator::OnShutdown()
 
     _callbacks.clear();
 
+    // Note: Don't access GetBot() here - it may already be destroyed during shutdown
     TC_LOG_DEBUG("module.playerbot.humanization",
-        "AFKSimulator::OnShutdown - Bot {} AFK simulator shutdown",
-        GetBot() ? GetBot()->GetName() : "unknown");
+        "AFKSimulator::OnShutdown - AFK simulator shutdown complete");
 }
 
 void AFKSimulator::OnUpdate(uint32 elapsed)

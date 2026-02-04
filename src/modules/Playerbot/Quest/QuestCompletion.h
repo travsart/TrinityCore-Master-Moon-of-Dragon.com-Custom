@@ -73,7 +73,7 @@ enum class QuestObjectiveType : uint8
     AREA_TRIGGER_ENTER      = 19,  // Enter specific area trigger (QUEST_OBJECTIVE_AREA_TRIGGER_ENTER)
     AREA_TRIGGER_EXIT       = 20,  // Exit specific area trigger (QUEST_OBJECTIVE_AREA_TRIGGER_EXIT)
     KILL_WITH_LABEL         = 21,  // Kill creature with specific label (QUEST_OBJECTIVE_KILL_WITH_LABEL)
-    UNK_1127                = 22,  // Unknown type from client 11.2.7+ (QUEST_OBJECTIVE_UNK_1127)
+    UNK_1127                = 22,  // Unknown type from client 12.0.7+ (QUEST_OBJECTIVE_UNK_1127)
 
     // ========================================================================
     // Extended Playerbot Types (IDs 100+) - For bot-specific behaviors

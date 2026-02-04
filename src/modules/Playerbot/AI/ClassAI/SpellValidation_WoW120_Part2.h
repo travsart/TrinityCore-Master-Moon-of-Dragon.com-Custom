@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * World of Warcraft 11.2 (The War Within) Spell ID Validation - Part 2
+ * World of Warcraft 12.0 (The War Within) Spell ID Validation - Part 2
  *
  * This file contains validated spell IDs for WoW 12.0 including
  * Hero Talent abilities for Paladin through Warrior specializations.
@@ -171,7 +171,7 @@ namespace Paladin
         constexpr uint32 MORNING_STAR = 431384;
     }
 
-    // Base AI Compatibility - Common Paladin spell aliases (11.2 only)
+    // Base AI Compatibility - Common Paladin spell aliases (12.0 only)
     namespace Common
     {
         // Interrupts
@@ -400,7 +400,7 @@ namespace Priest
         constexpr uint32 SHADOW_RESONANT_ENERGY = 431697;
     }
 
-    // Base AI Compatibility - Common Priest spell aliases (11.2 only)
+    // Base AI Compatibility - Common Priest spell aliases (12.0 only)
     namespace Common
     {
         // Interrupts
@@ -613,7 +613,7 @@ namespace Rogue
         constexpr uint32 SUB_SMOKE_SCREEN = 441147;
     }
 
-    // Base AI Compatibility - Common Rogue spell aliases (11.2 only)
+    // Base AI Compatibility - Common Rogue spell aliases (12.0 only)
     namespace Common
     {
         // Combo Point Builders
@@ -821,7 +821,7 @@ namespace Shaman
         constexpr uint32 RESTO_OVERSURGE = 444996;
     }
 
-    // Base AI Compatibility - Common Shaman spell aliases (11.2 only)
+    // Base AI Compatibility - Common Shaman spell aliases (12.0 only)
     namespace Common
     {
         // Interrupts
@@ -1062,7 +1062,7 @@ namespace Warlock
         constexpr uint32 INFERNO = 270545;             // Rain of Fire stun
     }
 
-    // Base AI Compatibility - Common Warlock spell aliases (11.2 only)
+    // Base AI Compatibility - Common Warlock spell aliases (12.0 only)
     namespace Common
     {
         // Core Damage
@@ -1273,7 +1273,7 @@ namespace Warrior
         constexpr uint32 STORM_SHIELD = 435223;
     }
 
-    // Base AI Compatibility - Common Warrior spell aliases (11.2 only)
+    // Base AI Compatibility - Common Warrior spell aliases (12.0 only)
     namespace Common
     {
         // Stances (deprecated in 11.x but kept for compatibility)

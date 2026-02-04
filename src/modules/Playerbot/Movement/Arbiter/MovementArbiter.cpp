@@ -472,7 +472,7 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
         {
             auto const& params = request.GetJumpParams();
 
-            // TrinityCore 11.2 API: MoveJump(id, pos, speedOrTime, minHeight, maxHeight, ...)
+            // TrinityCore 12.0 API: MoveJump(id, pos, speedOrTime, minHeight, maxHeight, ...)
             motionMaster->MoveJump(
                 params.eventId,
                 params.targetPos,
@@ -491,7 +491,7 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
         }
 
         // ====================================================================
-        // NEW: TrinityCore 11.2 Movement Types
+        // NEW: TrinityCore 12.0 Movement Types
         // ====================================================================
 
         case MovementRequestType::RANDOM:
@@ -503,7 +503,7 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
                 ? MovementWalkRunSpeedSelectionMode::ForceWalk
                 : MovementWalkRunSpeedSelectionMode::Default;
 
-            // TrinityCore 11.2 API: MoveRandom(wanderDistance, duration, speed, speedSelectionMode)
+            // TrinityCore 12.0 API: MoveRandom(wanderDistance, duration, speed, speedSelectionMode)
             // NEW: Now works for players (previously creature-only)
             motionMaster->MoveRandom(
                 params.wanderDistance,
@@ -537,7 +537,7 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
                 ? MovementWalkRunSpeedSelectionMode::ForceWalk
                 : MovementWalkRunSpeedSelectionMode::Default;
 
-            // TrinityCore 11.2 API: MovePath(pathId, repeatable, duration, speed, speedMode, ...)
+            // TrinityCore 12.0 API: MovePath(pathId, repeatable, duration, speed, speedMode, ...)
             // NEW: Now works for players (previously creature-only)
             motionMaster->MovePath(
                 params.pathId,

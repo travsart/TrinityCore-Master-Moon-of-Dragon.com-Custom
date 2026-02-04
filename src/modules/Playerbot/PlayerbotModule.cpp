@@ -60,6 +60,7 @@
 #include "Group/GroupEventBus.h"
 #include "Network/PlayerbotPacketSniffer.h"
 #include "Threading/BotActionManager.h"
+#include "AI/Coordination/Battleground/Scripts/BGScriptInit.h"
 #include "Log.h"
 #include "GitRevision.h"
 #include <chrono>
@@ -157,6 +158,9 @@ bool PlayerbotModule::Initialize()
     {
         return false;
     }
+
+    // Initialize BG Scripts (forces linker to include script object files)
+    Playerbot::Coordination::Battleground::InitializeBGScripts();
 
     // ==========================================================================
 

@@ -5,7 +5,7 @@
 This guide provides step-by-step instructions for deploying the Automated World Population System to production.
 
 **Version:** 1.0.0
-**Target:** TrinityCore with Playerbot Module (WoW 11.2)
+**Target:** TrinityCore with Playerbot Module (WoW 12.0)
 **Last Updated:** 2025-01-18
 
 ---

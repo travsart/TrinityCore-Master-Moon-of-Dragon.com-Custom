@@ -280,7 +280,7 @@ namespace Playerbot
         ::std::vector<GossipMenuOption> options;
 
         // Get gossip menu items from player's current gossip
-        // TrinityCore 11.2: GetGossipMenu() returns reference, not pointer
+        // TrinityCore 12.0: GetGossipMenu() returns reference, not pointer
         GossipMenu const& menu = bot->PlayerTalkClass->GetGossipMenu();
         {
             uint32 index = 0;

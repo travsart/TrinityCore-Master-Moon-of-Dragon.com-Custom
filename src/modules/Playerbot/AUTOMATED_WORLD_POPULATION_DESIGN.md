@@ -1,5 +1,5 @@
 # Automated World Population System - Design Document
-## WoW 11.2 (The War Within) Implementation
+## WoW 12.0 (The War Within) Implementation
 
 **Status**: Design Phase
 **Priority**: High - Foundation for living, populated game world
@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This document outlines the design for an **Automated World Population System** that distributes AI-controlled player bots across level brackets and zones to create a living, populated game world in WoW 11.2. The system automatically creates, levels, gears, and positions bots to ensure players encounter appropriate bot companions/opponents regardless of their level or location.
+This document outlines the design for an **Automated World Population System** that distributes AI-controlled player bots across level brackets and zones to create a living, populated game world in WoW 12.0. The system automatically creates, levels, gears, and positions bots to ensure players encounter appropriate bot companions/opponents regardless of their level or location.
 
 ### Key Goals
 
@@ -320,11 +320,11 @@ Default timings:
 
 ---
 
-## WoW 11.2 Adaptation Requirements
+## WoW 12.0 Adaptation Requirements
 
 ### Major Differences from 3.3.5
 
-| Aspect | 3.3.5 (WotLK) | 11.2 (The War Within) | Adaptation Needed |
+| Aspect | 3.3.5 (WotLK) | 12.0 (The War Within) | Adaptation Needed |
 |--------|---------------|----------------------|-------------------|
 | **Max Level** | 80 | 80 | ✅ Same (but different progression curve) |
 | **Talent System** | Talent trees (3 trees per class) | Specialization + Hero Talents | ⚠️ Requires new implementation |
@@ -336,12 +336,12 @@ Default timings:
 
 ### Critical Adaptations
 
-1. **Talent System**: WoW 11.2 uses a completely different talent structure
+1. **Talent System**: WoW 12.0 uses a completely different talent structure
    - Main spec talents (class tree + spec tree)
    - Hero talents (unlocked at 71+)
    - Need database of valid talent loadouts per spec
 
-2. **Gear Acquisition**: Item database is WoW 11.2 specific
+2. **Gear Acquisition**: Item database is WoW 12.0 specific
    - Query world database for items by ilvl and slot
    - Respect armor type restrictions (plate/mail/leather/cloth)
    - Consider stat weights for specs
@@ -763,13 +763,13 @@ private:
 
 ---
 
-### Item Level Mapping (WoW 11.2)
+### Item Level Mapping (WoW 12.0)
 
 Based on The War Within Season 1 itemization:
 
 ```cpp
 uint32 BotGearFactory::GetTargetIlvl(uint32 level) const {
-    // WoW 11.2 ilvl progression
+    // WoW 12.0 ilvl progression
     static const std::map<uint32, uint32> levelToIlvl = {
         // Leveling 1-70
         {1,   5},    {5,   10},   {10,  20},   {15,  30},   {20,  40},
@@ -1339,7 +1339,7 @@ WORKFLOW STEPS:
 3. IF level >= 5:
    └─ Choose 1st specialization and distribute talents
 
-4. IF level >= 10 (WoW 11.2 dual-spec unlock):
+4. IF level >= 10 (WoW 12.0 dual-spec unlock):
    ├─ Choose 2nd specialization
    ├─ Activate 2nd spec
    └─ Distribute talent points for 2nd spec
@@ -1374,7 +1374,7 @@ struct LevelBracket {
     }
 
     bool SupportsDualSpec() const {
-        // Dual spec unlocks at level 10 in WoW 11.2
+        // Dual spec unlocks at level 10 in WoW 12.0
         return minLevel >= 10;
     }
 };
@@ -1648,7 +1648,7 @@ void BotTalentManager::ActivateSpecialization(Player* bot, uint32 specId) {
   - [ ] Measure rebalance algorithm overhead
   - [ ] Optimize database queries
 - [ ] Configuration tuning
-  - [ ] Adjust default brackets for WoW 11.2 content
+  - [ ] Adjust default brackets for WoW 12.0 content
   - [ ] Balance percentages for leveling vs endgame
 
 ---
@@ -1803,7 +1803,7 @@ Playerbot.Population.SyncFactions = 1        # Alliance & Horde share brackets
 
 ## Conclusion
 
-This design adapts the proven concepts from mod-playerbots (WotLK 3.3.5) and mod-player-bot-level-brackets to the modern WoW 11.2 architecture, while respecting TrinityCore's patterns and our module-first approach.
+This design adapts the proven concepts from mod-playerbots (WotLK 3.3.5) and mod-player-bot-level-brackets to the modern WoW 12.0 architecture, while respecting TrinityCore's patterns and our module-first approach.
 
 **Key Innovations**:
 1. **TrinityCore Native Integration**: Uses `Player::GiveLevel()` - the PROPER TrinityCore leveling system
@@ -1815,7 +1815,7 @@ This design adapts the proven concepts from mod-playerbots (WotLK 3.3.5) and mod
 3. **Database-Driven Flexibility**: Gear, talents, and zones configurable via database
 4. **Performance-Conscious**: Caching and periodic updates minimize overhead
 5. **Dynamic & Adaptive**: Responds to real player activity automatically
-6. **WoW 11.2 Native**: Hero talents, modern ilvl system, new zones
+6. **WoW 12.0 Native**: Hero talents, modern ilvl system, new zones
 
 **Next Steps**:
 1. Review and approve this design

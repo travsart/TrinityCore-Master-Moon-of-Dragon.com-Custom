@@ -17,6 +17,7 @@
 #include "ObjectAccessor.h"
 #include "Core/Services/BotNpcLocationService.h"
 #include "Core/Events/CombatEventRouter.h"
+#include "PvP/BGBotManager.h"
 #include "SpellInfo.h"
 #include "SpellAuras.h"
 #include "Unit.h"
@@ -648,7 +649,29 @@ void PlayerBotHooks::RegisterHooks()
         CombatEventRouter::Instance().QueueEvent(event);
     };
 
-    TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All {} hook functions registered (including combat events)", 32);
+    // ========================================================================
+    // BATTLEGROUND/ARENA HOOKS
+    // ========================================================================
+
+    OnBGInvitationReceived = [](Player* player, uint32 bgInstanceGuid, uint32 bgTypeId)
+    {
+        if (!player)
+            return;
+
+        // Only handle bot invitations
+        if (!IsPlayerBot(player))
+            return;
+
+        IncrementHookCall("OnBGInvitationReceived");
+
+        TC_LOG_INFO("module.playerbot.hooks", "Hook: Bot {} received BG invitation (BG={}, instance={}), auto-accepting",
+            player->GetName(), bgTypeId, bgInstanceGuid);
+
+        // Auto-accept via BGBotManager
+        sBGBotManager->OnInvitationReceived(player->GetGUID(), bgInstanceGuid);
+    };
+
+    TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All {} hook functions registered (including combat events)", 33);
 }
 
 void PlayerBotHooks::UnregisterHooks()
@@ -688,6 +711,9 @@ void PlayerBotHooks::UnregisterHooks()
     OnUnitDied = nullptr;
     OnCombatStarted = nullptr;
     OnCombatEnded = nullptr;
+
+    // Clear BG/Arena hooks
+    OnBGInvitationReceived = nullptr;
 
     // Shutdown CombatEventRouter
     CombatEventRouter::Instance().Shutdown();

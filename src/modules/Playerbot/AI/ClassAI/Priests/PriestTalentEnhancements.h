@@ -8,7 +8,7 @@
  *
  * PRIEST TALENT ENHANCEMENTS
  *
- * Enterprise-grade support for new Priest talents from TrinityCore 11.2 upstream merge.
+ * Enterprise-grade support for new Priest talents from TrinityCore 12.0 upstream merge.
  * This file contains spell IDs, trackers, and helper classes for the following talents:
  *
  * SHADOW PRIEST TALENTS:
@@ -46,7 +46,7 @@ namespace Playerbot
 {
 
 // ============================================================================
-// SPELL IDS - NEW PRIEST TALENTS (TrinityCore 11.2)
+// SPELL IDS - NEW PRIEST TALENTS (TrinityCore 12.0)
 // ============================================================================
 
 namespace PriestTalents
@@ -338,7 +338,7 @@ private:
     {
         std::size_t operator()(DoTKey const& key) const
         {
-            // TrinityCore 11.2: Use std::hash<ObjectGuid> specialization
+            // TrinityCore 12.0: Use std::hash<ObjectGuid> specialization
             return std::hash<ObjectGuid>{}(key.targetGuid) ^
                    (std::hash<uint32>{}(key.spellId) << 1);
         }

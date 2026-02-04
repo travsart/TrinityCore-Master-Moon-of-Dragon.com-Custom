@@ -40,7 +40,7 @@ namespace Playerbot
  *
  * Thread-safe singleton implementation using Meyer's singleton pattern.
  *
- * Note: Solo Shuffle is NOT available in TrinityCore 11.2 (The War Within)
+ * Note: Solo Shuffle is NOT available in TrinityCore 12.0 (The War Within)
  */
 class TC_GAME_API ArenaBotManager final : public IArenaBotManager
 {

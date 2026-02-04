@@ -839,7 +839,7 @@ float BankingManager::GetDistanceToNearestBanker()
     Creature* nearestBanker = nullptr;
 
     // INTEGRATION REQUIRED: Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck API usage
-    // Needs: Research proper Trinity 11.2 API for grid-based creature searches
+    // Needs: Research proper Trinity 12.0 API for grid-based creature searches
     // Current: Using Map::GetCreatureBySpawnIdStore() iteration (works but not optimal)
     // For now, use a simpler approach by iterating nearby creatures
 

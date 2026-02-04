@@ -259,6 +259,10 @@ void BotWorldSessionMgr::Shutdown()
 
 bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId, bool bypassLimit)
 {
+    // TRACE: Log all AddPlayerBot calls to identify spawn origin
+    TC_LOG_INFO("module.playerbot.session", "?? AddPlayerBot ENTRY - guid={}, accountId={}, bypassLimit={}",
+        playerGuid.ToString(), masterAccountId, bypassLimit);
+
     if (!_enabled.load() || !_initialized.load())
     {
         TC_LOG_ERROR("module.playerbot.session", "?? BotWorldSessionMgr not enabled or initialized");

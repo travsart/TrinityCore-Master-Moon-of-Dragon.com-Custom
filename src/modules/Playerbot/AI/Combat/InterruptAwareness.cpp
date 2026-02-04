@@ -824,7 +824,7 @@ uint32 InterruptAwareness::GetUnitScanPriority(Unit* unit) const
 
             // Check for known dangerous NPC entries (raid bosses, dungeon healers)
             uint32 entry = creature->GetEntry();
-            // TWW 11.2 dungeon/raid healer entries that should be priority interrupted
+            // TWW 12.0 dungeon/raid healer entries that should be priority interrupted
             static const std::unordered_set<uint32> healerEntries = {
                 // Nerub-ar Palace healers
                 196662, 196704, 196810,
@@ -881,7 +881,7 @@ uint32 InterruptAwareness::GetUnitScanPriority(Unit* unit) const
     {
         // Get player's current specialization to check for tank role
         ChrSpecialization specId = _observer->GetPrimarySpecialization();
-        // Tank spec IDs in TWW 11.2: Protection Warrior (73), Protection Paladin (66),
+        // Tank spec IDs in TWW 12.0: Protection Warrior (73), Protection Paladin (66),
         // Blood DK (250), Guardian Druid (104), Brewmaster Monk (268), Vengeance DH (581)
         static const std::unordered_set<ChrSpecialization> tankSpecs = {
             ChrSpecialization(73), ChrSpecialization(66), ChrSpecialization(250),

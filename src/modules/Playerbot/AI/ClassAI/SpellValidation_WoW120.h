@@ -570,7 +570,7 @@ namespace Druid
         constexpr uint32 STRATEGIC_INFUSION = 481584;
     }
 
-    // Base AI Compatibility - Common Druid spell aliases (11.2 only)
+    // Base AI Compatibility - Common Druid spell aliases (12.0 only)
     namespace Common
     {
         // Forms
@@ -789,7 +789,7 @@ namespace Evoker
         constexpr uint32 EXTENDED_BATTLE = 436303;
     }
 
-    // Base AI Compatibility - Common Evoker spell aliases (11.2 only)
+    // Base AI Compatibility - Common Evoker spell aliases (12.0 only)
     namespace Common
     {
         // Basic abilities
@@ -1008,7 +1008,7 @@ namespace Hunter
         constexpr uint32 SV_LUNAR_STORM = 460406;
     }
 
-    // Base AI Compatibility - Common Hunter spell aliases (11.2 only)
+    // Base AI Compatibility - Common Hunter spell aliases (12.0 only)
     namespace Common
     {
         // Shots and Attacks
@@ -1196,7 +1196,7 @@ namespace Mage
         constexpr uint32 FROST_AUGURY_ABOUNDS = 443743;
     }
 
-    // Base AI Compatibility - Common Mage spell aliases (11.2 only)
+    // Base AI Compatibility - Common Mage spell aliases (12.0 only)
     namespace Common
     {
         // Arcane spells
@@ -1440,7 +1440,7 @@ namespace Monk
         constexpr uint32 WW_AUGUST_DYNASTY = 443029;
     }
 
-    // Base AI Compatibility - Common Monk spell aliases (11.2 only)
+    // Base AI Compatibility - Common Monk spell aliases (12.0 only)
     namespace Common
     {
         // Chi generators

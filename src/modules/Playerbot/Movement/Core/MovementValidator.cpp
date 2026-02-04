@@ -427,7 +427,7 @@ namespace Playerbot
         if (!map)
             return false;
 
-        // TrinityCore 11.2 doesn't have IsIndoors() method
+        // TrinityCore 12.0 doesn't have IsIndoors() method
         // Alternative: Check if there's a roof above by doing a LOS check upward
         PhaseShift phaseShift;
         bool hasRoof = !map->isInLineOfSight(phaseShift,

@@ -9,7 +9,7 @@ The **Automated World Population System** is a high-performance, thread-safe mod
 - **High Performance**: <0.08% CPU per bot, 8.2MB memory per bot
 - **Thread-Safe**: Lock-free architecture with ThreadPool integration
 - **Scalable**: Supports 100-5000 concurrent bots
-- **WoW 11.2 Compatible**: Full support for The War Within expansion
+- **WoW 12.0 Compatible**: Full support for The War Within expansion
 
 ---
 
@@ -1026,6 +1026,6 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
 
 **Last Updated:** 2025-01-18
 **Version:** 1.0.0
-**Compatible With:** TrinityCore WoW 11.2 (The War Within)
+**Compatible With:** TrinityCore WoW 12.0 (The War Within)
 **Architecture:** Lock-Free, Two-Phase Commit, Immutable Cache, Singleton Pattern
 **Performance:** <0.08% CPU per bot, 8.2MB memory, supports 5000 concurrent bots

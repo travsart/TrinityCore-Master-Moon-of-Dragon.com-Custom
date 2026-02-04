@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-Phase 2 successfully implements the **WoW 11.2 Typed Packet Solution** for all remaining event categories, enabling bots to intercept and process typed ServerPacket objects **before serialization**, providing full access to structured packet data.
+Phase 2 successfully implements the **WoW 12.0 Typed Packet Solution** for all remaining event categories, enabling bots to intercept and process typed ServerPacket objects **before serialization**, providing full access to structured packet data.
 
 ## 📊 Implementation Summary
 
@@ -222,7 +222,7 @@ void PlayerbotPacketSniffer::Initialize()
 
 **Added to PLAYERBOT_SOURCES** (15 files):
 ```cmake
-# Phase 2: Typed Packet Handlers (WoW 11.2 Solution)
+# Phase 2: Typed Packet Handlers (WoW 12.0 Solution)
 ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseResourcePacket_Typed.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseSocialPacket_Typed.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuctionPacket_Typed.cpp

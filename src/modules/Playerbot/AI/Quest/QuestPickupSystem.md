@@ -1,7 +1,7 @@
 # TrinityCore PlayerBot QuestPickup System - Complete Implementation Guide
 
 ## Overview
-This document provides a complete reference for implementing the QuestPickup system for TrinityCore PlayerBot module, compatible with WoW 11.2 (The War Within) quest mechanics.
+This document provides a complete reference for implementing the QuestPickup system for TrinityCore PlayerBot module, compatible with WoW 12.0 (The War Within) quest mechanics.
 
 ## Required Includes
 

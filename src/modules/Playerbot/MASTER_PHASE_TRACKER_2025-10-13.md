@@ -304,7 +304,7 @@ return false;
 **File**: `AI/Strategy/CombatMovementStrategy.cpp:250, 285, 292`
 
 #### Substeps
-**2.4.1: WoW 11.2 Spec API (4 hours)**
+**2.4.1: WoW 12.0 Spec API (4 hours)**
 - Active spec detection
 - ChrSpecialization.db2 integration
 

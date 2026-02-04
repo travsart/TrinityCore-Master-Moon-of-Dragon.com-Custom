@@ -736,7 +736,7 @@ namespace Playerbot
                 case CLASS_WARRIOR:
                     if (specId == 73) // Protection
                     {
-                        // Warrior no longer has stances in TWW 11.2
+                        // Warrior no longer has stances in TWW 12.0
                         // Use Shield Block as primary active mitigation
                         if (bot->HasSpell(2565) && !bot->GetSpellHistory()->HasCooldown(2565) &&
                             bot->GetPower(POWER_RAGE) >= 30 && !bot->HasAura(132404))
@@ -764,7 +764,7 @@ namespace Playerbot
                 case CLASS_DEATH_KNIGHT:
                     if (specId == 250) // Blood
                     {
-                        // Death Knights no longer have presences in TWW 11.2
+                        // Death Knights no longer have presences in TWW 12.0
                         // Bone Shield maintenance via Marrowrend
                         if (bot->HasSpell(195182) && !bot->HasAura(195181))
                             activeMitigationId = 195182; // Marrowrend (apply Bone Shield)
@@ -1165,7 +1165,7 @@ namespace Playerbot
             if (bot->GetSpellHistory()->HasCooldown(healSpellId))
                 return BTStatus::FAILURE;
 
-            // Check mana/resource requirements using TWW 11.2 SpellPowerCost API
+            // Check mana/resource requirements using TWW 12.0 SpellPowerCost API
             ::std::vector<SpellPowerCost> powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
             bool hasEnoughPower = true;
             for (SpellPowerCost const& cost : powerCosts)

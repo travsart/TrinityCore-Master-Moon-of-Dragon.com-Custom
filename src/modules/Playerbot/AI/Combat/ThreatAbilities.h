@@ -229,7 +229,7 @@ namespace ThreatSpells
     constexpr uint32 HEX = 51514;                    // Polymorph
 
     // === EVOKER ===
-    // Threat management (11.2 specific)
+    // Threat management (12.0 specific)
     constexpr uint32 WING_BUFFET = 357214;           // Knockback
     constexpr uint32 TAIL_SWIPE = 368970;            // Knockback
     constexpr uint32 LANDSLIDE = 358385;             // Root
@@ -237,7 +237,7 @@ namespace ThreatSpells
     constexpr uint32 BLESSING_OF_THE_BRONZE = 381748; // Threat reduction buff
 }
 
-// Hero Talent threat modifiers (11.2)
+// Hero Talent threat modifiers (12.0)
 namespace HeroTalentThreat
 {
     // Death Knight
@@ -265,7 +265,7 @@ namespace HeroTalentThreat
     constexpr float SHADO_PAN_THREAT_MOD = 1.20f;       // Defensive mastery
 }
 
-// Mythic+ scaling for threat (11.2)
+// Mythic+ scaling for threat (12.0)
 namespace MythicPlusThreat
 {
     constexpr float BASE_MYTHIC_THREAT_SCALAR = 1.0f;

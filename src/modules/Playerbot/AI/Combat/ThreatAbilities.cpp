@@ -128,7 +128,7 @@ void ThreatAbilitiesDB::Initialize()
     _abilities[THUNDERSTORM] = ThreatAbilityData(THUNDERSTORM, ThreatAbilityType::AOE_THREAT, 1.0f, 45000, 0, 0, 10.0f, false, false, 32, "Thunderstorm");
 
     // === EVOKER ABILITIES ===
-    // Threat management (11.2 specific)
+    // Threat management (12.0 specific)
     _abilities[WING_BUFFET] = ThreatAbilityData(WING_BUFFET, ThreatAbilityType::AOE_THREAT, 1.5f, 90000, 0, 0, 8.0f, false, false, 58, "Wing Buffet");
     _abilities[TAIL_SWIPE] = ThreatAbilityData(TAIL_SWIPE, ThreatAbilityType::AOE_THREAT, 1.5f, 90000, 0, 0, 8.0f, false, false, 58, "Tail Swipe");
     _abilities[LANDSLIDE] = ThreatAbilityData(LANDSLIDE, ThreatAbilityType::HIGH_THREAT, 2.0f, 90000, 0, 0, 30.0f, false, false, 58, "Landslide");

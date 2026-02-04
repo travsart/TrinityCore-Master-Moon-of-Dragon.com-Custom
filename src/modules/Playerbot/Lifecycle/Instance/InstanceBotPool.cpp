@@ -1774,6 +1774,9 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     request.accountId = accountId;
     request.characterGuid = botGuid;
     request.bypassMaxBotsLimit = true;  // Pool bots bypass MaxBots limit - they're temporary for BG/dungeon/arena
+
+    TC_LOG_INFO("playerbot.pool", "WarmUpBot - Creating SpawnRequest: type=SPECIFIC_CHARACTER, guid={}, accountId={}, bypassMaxBotsLimit={}",
+        botGuid.ToString(), accountId, request.bypassMaxBotsLimit);
     request.callback = [this, botGuid](bool success, ObjectGuid guid) {
         if (success)
         {

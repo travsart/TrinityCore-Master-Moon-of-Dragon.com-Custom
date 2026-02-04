@@ -33,7 +33,7 @@
 #include "../Common/CooldownManager.h"
 #include "../../BotAI.h"
 
-// TrinityCore 11.2 New Priest Talents
+// TrinityCore 12.0 New Priest Talents
 #include "PriestTalentEnhancements.h"
 
 // Central Spell Registry - See WoW120Spells::Priest namespace
@@ -78,7 +78,7 @@ constexpr uint32 HOLY_DESPERATE_PRAYER = WoW120Spells::Priest::DESPERATE_PRAYER;
 constexpr uint32 HOLY_POWER_WORD_FORTITUDE = WoW120Spells::Priest::POWER_WORD_FORTITUDE;
 constexpr uint32 HOLY_PURIFY = WoW120Spells::Priest::PURIFY;
 
-// NEW: TrinityCore 11.2 Talent Spell IDs
+// NEW: TrinityCore 12.0 Talent Spell IDs
 // See central registry: WoW120Spells::Priest::HolyPriest
 constexpr uint32 HOLY_EMPYREAL_BLAZE = 372616;         // -> WoW120Spells::Priest::HolyPriest::EMPYREAL_BLAZE
 constexpr uint32 HOLY_EMPYREAL_BLAZE_AURA = 372617;    // -> WoW120Spells::Priest::HolyPriest::EMPYREAL_BLAZE_AURA
@@ -246,7 +246,7 @@ public:
         : HealerSpecialization<ManaResource>(bot)
         , _renewTracker()
         , _pomTracker()
-        , _talentState(bot)  // NEW: TrinityCore 11.2 talent state
+        , _talentState(bot)  // NEW: TrinityCore 12.0 talent state
         , _apotheosisActive(false)
         , _apotheosisEndTime(0)
         , _lastApotheosisTime(0)
@@ -423,7 +423,7 @@ private:
     }
 
     // ========================================================================
-    // NEW: TrinityCore 11.2 TALENT-BASED ENHANCEMENTS
+    // NEW: TrinityCore 12.0 TALENT-BASED ENHANCEMENTS
     // ========================================================================
 
     /**
@@ -1420,7 +1420,7 @@ private:
     RenewTracker _renewTracker;
     PrayerOfMendingTracker _pomTracker;
 
-    // NEW: TrinityCore 11.2 Talent State
+    // NEW: TrinityCore 12.0 Talent State
     PriestTalentState _talentState;
 
     bool _apotheosisActive;
@@ -1432,7 +1432,7 @@ private:
     uint32 _lastSalvationTime;
     uint32 _lastSymbolOfHopeTime;
 
-    // NEW: TrinityCore 11.2 Cooldown Tracking
+    // NEW: TrinityCore 12.0 Cooldown Tracking
     uint32 _lastHaloTime;
     uint32 _lastHolyFireTime;
 

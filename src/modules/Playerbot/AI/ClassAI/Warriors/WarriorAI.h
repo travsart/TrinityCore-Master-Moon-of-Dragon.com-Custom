@@ -274,7 +274,7 @@ private:
 
         // Movement abilities
         CHARGE = WoW120Spells::Warrior::Common::CHARGE,
-        INTERCEPT = WoW120Spells::Warrior::Common::INTERVENE, // INTERCEPT merged with INTERVENE in 11.2
+        INTERCEPT = WoW120Spells::Warrior::Common::INTERVENE, // INTERCEPT merged with INTERVENE in 12.0
         HEROIC_LEAP = WoW120Spells::Warrior::Common::HEROIC_LEAP,
 
         // Utility

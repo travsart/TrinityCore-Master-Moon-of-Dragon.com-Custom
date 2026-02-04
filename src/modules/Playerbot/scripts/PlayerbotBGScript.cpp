@@ -160,7 +160,7 @@ private:
                 if (queueTypeId != BATTLEGROUND_QUEUE_NONE)
                 {
                     // Check if this is a regular BG (not arena)
-                    // In TrinityCore 11.2, BattlemasterListId maps to BattlegroundTypeId
+                    // In TrinityCore 12.0, BattlemasterListId maps to BattlegroundTypeId
                     BattlegroundTypeId type = BattlegroundTypeId(queueTypeId.BattlemasterListId);
                     if (type != BATTLEGROUND_AA) // Not arena
                     {

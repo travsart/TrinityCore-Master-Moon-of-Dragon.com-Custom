@@ -422,7 +422,7 @@ private:
     uint32 GetRecommendedPotionLevel();
     std::vector<uint32> GetClassReagents(uint8 classId);
 
-    // Stat extraction from ItemTemplate (TrinityCore 11.2 API)
+    // Stat extraction from ItemTemplate (TrinityCore 12.0 API)
     static int32 ExtractStatValue(ItemTemplate const* proto, StatType stat);
     static float CalculateTotalStats(ItemTemplate const* proto, std::vector<std::pair<StatType, float>> const& weights);
 

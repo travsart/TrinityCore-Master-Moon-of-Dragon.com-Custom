@@ -813,7 +813,7 @@ Speedup: 1000x faster (50ms → 0.05ms)
 **Default:** `1` (enabled)
 **Valid Values:**
 - `0` = Single spec only
-- `1` = Dual spec for L10+ bots (WoW 11.2 behavior)
+- `1` = Dual spec for L10+ bots (WoW 12.0 behavior)
 
 **Performance Impact:** **LOW** (~20% more talent API calls)
 
@@ -839,7 +839,7 @@ Bot logs in with Primary Spec active
 ```
 
 **Recommendations:**
-- Enable for authentic WoW 11.2 experience
+- Enable for authentic WoW 12.0 experience
 - Disable to simplify bot creation (~10% faster)
 
 ---
@@ -1351,5 +1351,5 @@ echo "==================================="
 
 **Last Updated:** 2025-01-18
 **Version:** 1.0.0
-**Compatible With:** TrinityCore WoW 11.2 (The War Within)
+**Compatible With:** TrinityCore WoW 12.0 (The War Within)
 **Total Settings:** 52 (5 global + 34 distribution + 5 gear + 3 talent + 5 positioner)

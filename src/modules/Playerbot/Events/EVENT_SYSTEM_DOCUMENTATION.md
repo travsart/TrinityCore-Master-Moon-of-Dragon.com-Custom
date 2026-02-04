@@ -21,12 +21,12 @@
 
 ## System Overview
 
-The PlayerBot Event System provides a **decoupled, type-safe, high-performance** event-driven architecture for bot AI. It solves the WoW 11.2 packet deserialization problem by intercepting typed packets BEFORE serialization, then distributing them through specialized event buses to AI subscribers.
+The PlayerBot Event System provides a **decoupled, type-safe, high-performance** event-driven architecture for bot AI. It solves the WoW 12.0 packet deserialization problem by intercepting typed packets BEFORE serialization, then distributing them through specialized event buses to AI subscribers.
 
 ### Key Features
 
 ✅ **6 Specialized Event Buses** - Group, Combat, Cooldown, Aura, Loot, Quest
-✅ **49 Typed Packet Handlers** - Full WoW 11.2 support
+✅ **49 Typed Packet Handlers** - Full WoW 12.0 support
 ✅ **Priority-Based Processing** - Critical events processed immediately
 ✅ **Thread-Safe** - Lock-free where possible, mutex-protected where necessary
 ✅ **High Performance** - <5 μs packet processing, <1 ms event delivery
@@ -41,7 +41,7 @@ The PlayerBot Event System provides a **decoupled, type-safe, high-performance**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    WoW 11.2 Typed Packets                       │
+│                    WoW 12.0 Typed Packets                       │
 │      (WorldPackets::Group::*, WorldPackets::Spells::*, ...)    │
 └────────────────────────┬────────────────────────────────────────┘
                          │
@@ -1100,10 +1100,10 @@ The following categories are planned for future implementation:
 
 ## Summary
 
-The PlayerBot Event System provides a complete, production-ready event-driven architecture for bot AI in WoW 11.2. With 49 typed packet handlers across 6 specialized event buses, flexible subscription patterns, and <5 μs packet processing performance, it forms a solid foundation for sophisticated bot behaviors.
+The PlayerBot Event System provides a complete, production-ready event-driven architecture for bot AI in WoW 12.0. With 49 typed packet handlers across 6 specialized event buses, flexible subscription patterns, and <5 μs packet processing performance, it forms a solid foundation for sophisticated bot behaviors.
 
 **Key Achievements**:
-✅ Solved WoW 11.2 packet deserialization problem
+✅ Solved WoW 12.0 packet deserialization problem
 ✅ Minimal core integration (~55 lines)
 ✅ Type-safe event distribution
 ✅ Priority-based processing

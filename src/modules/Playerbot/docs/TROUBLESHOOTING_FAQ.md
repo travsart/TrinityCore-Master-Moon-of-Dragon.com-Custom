@@ -885,7 +885,7 @@ VALUES
 
 2. **Verify Spec IDs:**
 ```cpp
-// WoW 11.2 Spec IDs (0-indexed)
+// WoW 12.0 Spec IDs (0-indexed)
 // Priest: 0=Discipline, 1=Holy, 2=Shadow
 // Ensure database uses same indexing!
 
@@ -1274,4 +1274,4 @@ procexp64.exe
 
 **Last Updated:** 2025-01-18
 **Version:** 1.0.0
-**Compatible With:** TrinityCore WoW 11.2 (The War Within)
+**Compatible With:** TrinityCore WoW 12.0 (The War Within)

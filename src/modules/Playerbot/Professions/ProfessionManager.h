@@ -70,7 +70,7 @@ enum class ProfessionType : uint16
     // Secondary Professions
     COOKING = SKILL_COOKING,                    // 185
     FISHING = SKILL_FISHING,                    // 356
-    FIRST_AID = 129                             // First Aid (if still in 11.2)
+    FIRST_AID = 129                             // First Aid (if still in 12.0)
 };
 
 /**

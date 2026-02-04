@@ -875,7 +875,7 @@ bool DefensiveBehaviorManager::ShouldUseHealthPotion() const
     // Full implementation for potion inventory check
     // Scans inventory for healing potions by item ID, verifies availability
 
-    // TWW 11.2 healing potion item IDs by expansion/tier
+    // TWW 12.0 healing potion item IDs by expansion/tier
     static const uint32 HEALING_POTION_IDS[] = {
         // TWW (Dragonflight/War Within) potions
         191380,  // Potion of Withering Dreams
@@ -991,7 +991,7 @@ bool DefensiveBehaviorManager::ShouldUseBandage() const
     // Verifies First Aid skill level and bandage availability
 
     // Note: First Aid was removed as a profession in BfA (8.0)
-    // In TWW 11.2, bandages are crafted by Tailoring instead
+    // In TWW 12.0, bandages are crafted by Tailoring instead
     // For compatibility, we check both the old skill and inventory
 
     // Check for bandages in inventory by item ID
