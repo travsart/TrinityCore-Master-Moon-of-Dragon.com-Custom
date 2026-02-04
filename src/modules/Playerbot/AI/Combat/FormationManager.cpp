@@ -21,6 +21,7 @@
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "UnitAI.h"
 #include "DataStores/DBCEnums.h"
 #include <algorithm>
@@ -399,8 +400,20 @@ void FormationManager::CoordinateMovement(const Position& destination)
             }
             else
             {
-                // FALLBACK: Direct MotionMaster if arbiter not available
-                _bot->GetMotionMaster()->MovePoint(0, myAssignedPos.GetPositionX(), myAssignedPos.GetPositionY(), myAssignedPos.GetPositionZ());
+                // FALLBACK: Use BotMovementController with validated pathfinding
+                if (BotAI* ai = GetBotAI(_bot))
+                {
+                    if (!ai->MoveTo(myAssignedPos, true))
+                    {
+                        // Final fallback to legacy if validation fails
+                        _bot->GetMotionMaster()->MovePoint(0, myAssignedPos.GetPositionX(), myAssignedPos.GetPositionY(), myAssignedPos.GetPositionZ());
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    _bot->GetMotionMaster()->MovePoint(0, myAssignedPos.GetPositionX(), myAssignedPos.GetPositionY(), myAssignedPos.GetPositionZ());
+                }
             }
         }
     }
@@ -1212,7 +1225,19 @@ void FormationManager::IssueMovementCommands()
         if (distanceToTarget > _formationSpacing * 0.5f)
         {
             // Member is too far from target position, issue movement command
-            member.player->GetMotionMaster()->MovePoint(0, member.targetPosition);
+            if (BotAI* ai = GetBotAI(member.player))
+            {
+                if (!ai->MoveTo(member.targetPosition, true))
+                {
+                    // Fallback to legacy if validation fails
+                    member.player->GetMotionMaster()->MovePoint(0, member.targetPosition);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                member.player->GetMotionMaster()->MovePoint(0, member.targetPosition);
+            }
             member.isMoving = true;
             member.isInPosition = false;
         }
@@ -1402,7 +1427,19 @@ void FormationManager::ActivateEmergencyScatter()
         }
 
         _members[i].targetPosition = Position(x, y, z);
-        _members[i].player->GetMotionMaster()->MovePoint(0, _members[i].targetPosition);
+        if (BotAI* ai = GetBotAI(_members[i].player))
+        {
+            if (!ai->MoveTo(_members[i].targetPosition, true))
+            {
+                // Fallback to legacy if validation fails
+                _members[i].player->GetMotionMaster()->MovePoint(0, _members[i].targetPosition);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            _members[i].player->GetMotionMaster()->MovePoint(0, _members[i].targetPosition);
+        }
         _members[i].isMoving = true;
         _members[i].isInPosition = false;
     }
@@ -1455,7 +1492,19 @@ void FormationManager::HandleEmergencyRegroup(const Position& /* rallyPoint */)
             continue;
 
         member.player->GetMotionMaster()->Clear();
-        member.player->GetMotionMaster()->MovePoint(0, member.targetPosition, true, {}, 7.0f); // Run speed
+        if (BotAI* ai = GetBotAI(member.player))
+        {
+            if (!ai->MoveTo(member.targetPosition, true))
+            {
+                // Fallback to legacy if validation fails
+                member.player->GetMotionMaster()->MovePoint(0, member.targetPosition, true, {}, 7.0f); // Run speed
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            member.player->GetMotionMaster()->MovePoint(0, member.targetPosition, true, {}, 7.0f); // Run speed
+        }
         member.isMoving = true;
         member.isInPosition = false;
     }
@@ -1644,7 +1693,19 @@ void FormationManager::HandleFormationBreakage()
 
             member.targetPosition = leaderPos;
             member.isInPosition = false;
-            member.player->GetMotionMaster()->MovePoint(0, leaderPos, true, {}, 7.0f);
+            if (BotAI* ai = GetBotAI(member.player))
+            {
+                if (!ai->MoveTo(leaderPos, true))
+                {
+                    // Fallback to legacy if validation fails
+                    member.player->GetMotionMaster()->MovePoint(0, leaderPos, true, {}, 7.0f);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                member.player->GetMotionMaster()->MovePoint(0, leaderPos, true, {}, 7.0f);
+            }
             member.isMoving = true;
         }
     }
