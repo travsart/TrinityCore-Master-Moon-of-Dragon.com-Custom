@@ -12,6 +12,8 @@
 #include "Group.h"  // For healer group member queries
 #include "MotionMaster.h"
 #include "Log.h"
+#include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include <algorithm>
 #include <cmath>
 
@@ -206,12 +208,36 @@ void MovementIntegration::MoveToPosition(const Position& pos, bool urgent)
         }
 
         // Use highest priority for emergency movement
-        _bot->GetMotionMaster()->MovePoint(MOTION_PRIORITY_HIGHEST, pos, true);
+        if (BotAI* ai = GetBotAI(_bot))
+        {
+            if (!ai->MoveTo(pos, true))
+            {
+                // Final fallback to legacy if validation fails
+                _bot->GetMotionMaster()->MovePoint(MOTION_PRIORITY_HIGHEST, pos, true);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            _bot->GetMotionMaster()->MovePoint(MOTION_PRIORITY_HIGHEST, pos, true);
+        }
     }
     else
     {
         // Normal priority movement - doesn't interrupt current actions
-        _bot->GetMotionMaster()->MovePoint(0, pos);
+        if (BotAI* ai = GetBotAI(_bot))
+        {
+            if (!ai->MoveTo(pos, true))
+            {
+                // Final fallback to legacy if validation fails
+                _bot->GetMotionMaster()->MovePoint(0, pos);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            _bot->GetMotionMaster()->MovePoint(0, pos);
+        }
     }
 
     // Update current command tracking
