@@ -1901,8 +1901,12 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
     try
     {
-        // Create Player object
-        Player* pCurrChar = new Player(this);
+        // P1 FIX: Create Player object with unique_ptr for automatic memory management
+        // This eliminates the need for manual delete on error paths
+        auto pCurrChar = ::std::make_unique<Player>(this);
+
+        // Note: make_unique never returns nullptr, so this check is technically unnecessary
+        // but kept for consistency with exception handling below
         if (!pCurrChar)
         {
             TC_LOG_ERROR("module.playerbot.session", "Failed to create Player object for character {}", characterGuid.ToString());
@@ -1956,7 +1960,8 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
     if (!pCurrChar->LoadFromDB(characterGuid, holder))
         {
-            delete pCurrChar;
+            // P1 FIX: No manual delete needed - unique_ptr automatically cleans up
+            // Old code (REMOVED): delete pCurrChar;
             TC_LOG_ERROR("module.playerbot.session", "Failed to load bot character {} from database - LoadFromDB returned false",
                         characterGuid.ToString());
             _loginState.store(LoginState::LOGIN_FAILED);
@@ -2017,12 +2022,13 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // Verify spell learning - in modern WoW (12.0), ALL combat spells are automatic
         // TrinityCore's LearnDefaultSkills() + LearnSpecializationSpells() should teach everything
         // This call is a safety net that re-calls the native methods in case of timing issues
-        sBotPostLoginConfigurator->ApplyClassSpells(pCurrChar);
+        sBotPostLoginConfigurator->ApplyClassSpells(pCurrChar.get());  // P1 FIX: Use .get() to pass raw pointer
         TC_LOG_DEBUG("module.playerbot.session", "Bot {} - Spell learning verification complete",
             pCurrChar->GetName());
 
-        // Set the player for this session
-        SetPlayer(pCurrChar);
+        // P1 FIX: Transfer ownership of Player to WorldSession
+        // release() extracts the raw pointer and relinquishes ownership
+        SetPlayer(pCurrChar.release());
 
         // Clear the loading state
         m_playerLoading.Clear();
@@ -2049,7 +2055,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             pCurrChar->GetName(), map->GetId(), map->GetInstanceId(), reinterpret_cast<uintptr_t>(map));
 
         // Now safely add bot to the map (matching CharacterHandler.cpp:1273 pattern)
-        if (!map->AddPlayerToMap(pCurrChar))
+        if (!map->AddPlayerToMap(pCurrChar.get()))  // P1 FIX: Use .get() to pass raw pointer
         {
             TC_LOG_ERROR("module.playerbot.session", "Failed to add bot player {} to map", characterGuid.ToString());
             _loginState.store(LoginState::LOGIN_FAILED);
@@ -2057,7 +2063,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             return;
         }
 
-        ObjectAccessor::AddObject(pCurrChar);
+        ObjectAccessor::AddObject(pCurrChar.get());  // P1 FIX: Use .get() to pass raw pointer
 
         // CRITICAL FIX: Following TrinityCore "golden source" pattern (CharacterHandler.cpp:1299)
         // SendInitialPacketsAfterAddToMap() internally calls:
@@ -2118,7 +2124,8 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             TC_LOG_INFO("module.playerbot.session", "Bot {} has pending JIT configuration - applying post-login setup",
                 pCurrChar->GetName());
 
-            if (sBotPostLoginConfigurator->ApplyPendingConfiguration(pCurrChar))
+            // P1 FIX: Use .get() to pass raw pointer to API that expects Player*
+            if (sBotPostLoginConfigurator->ApplyPendingConfiguration(pCurrChar.get()))
             {
                 TC_LOG_INFO("module.playerbot.session", "Bot {} post-login configuration applied successfully (Level={}, GS={})",
                     pCurrChar->GetName(), pCurrChar->GetLevel(), 0); // TODO: Get actual gear score
