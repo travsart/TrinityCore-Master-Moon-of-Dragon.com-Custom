@@ -24,6 +24,8 @@
 #include "GameObjectData.h"
 #include "MovementPackets.h"
 #include "../Interaction/FlightMasterManager.h"
+#include "../Core/PlayerBotHelpers.h"
+#include "../AI/BotAI.h"
 #include <queue>
 #include <algorithm>
 #include <cmath>
@@ -2218,8 +2220,20 @@ void TravelRouteManager::UpdateLegState(TravelLeg& leg, uint32 /*diff*/)
             }
             else if (leg.currentState == TravelState::IDLE || leg.currentState == TravelState::WALKING_TO_TRANSPORT)
             {
-                // Start movement
-                m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                // Use validated pathfinding for transport walking
+                if (BotAI* ai = GetBotAI(m_bot))
+                {
+                    if (!ai->MoveTo(leg.endPosition, true))
+                    {
+                        // Fallback to legacy if validation fails
+                        m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                }
                 leg.currentState = TravelState::WALKING_TO_TRANSPORT;
             }
             break;
@@ -2339,7 +2353,21 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
                         leg.startPosition.GetPositionX(), leg.startPosition.GetPositionY(), leg.startPosition.GetPositionZ(),
                         distToDeparture);
                 }
-                m_bot->GetMotionMaster()->MovePoint(0, leg.startPosition);
+
+                // Use validated pathfinding for walking to departure dock
+                if (BotAI* ai = GetBotAI(m_bot))
+                {
+                    if (!ai->MoveTo(leg.startPosition, true))
+                    {
+                        // Fallback to legacy if validation fails
+                        m_bot->GetMotionMaster()->MovePoint(0, leg.startPosition);
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    m_bot->GetMotionMaster()->MovePoint(0, leg.startPosition);
+                }
                 leg.currentState = TravelState::WALKING_TO_TRANSPORT;
             }
             else
@@ -2481,7 +2509,20 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
                                 "HandleOnTransport: Bot {} walking onto {} deck ({:.1f}yd away)",
                                 m_bot->GetName(), leg.connection->name, distToDeck);
 
-                            m_bot->GetMotionMaster()->MovePoint(0, deckWorldPos);
+                            // Use validated pathfinding for walking onto transport deck
+                            if (BotAI* ai = GetBotAI(m_bot))
+                            {
+                                if (!ai->MoveTo(deckWorldPos, true))
+                                {
+                                    // Fallback to legacy if validation fails
+                                    m_bot->GetMotionMaster()->MovePoint(0, deckWorldPos);
+                                }
+                            }
+                            else
+                            {
+                                // Non-bot player - use standard movement
+                                m_bot->GetMotionMaster()->MovePoint(0, deckWorldPos);
+                            }
                         }
                     }
                     else
@@ -2496,8 +2537,20 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
                             "HandleOnTransport: Bot {} - transport at dock, walking to gangway ({:.1f}yd to deck)",
                             m_bot->GetName(), botToTransportDist);
 
-                        // Move towards the transport deck position
-                        m_bot->GetMotionMaster()->MovePoint(0, deckWorldPos);
+                        // Use validated pathfinding for walking to gangway
+                        if (BotAI* ai = GetBotAI(m_bot))
+                        {
+                            if (!ai->MoveTo(deckWorldPos, true))
+                            {
+                                // Fallback to legacy if validation fails
+                                m_bot->GetMotionMaster()->MovePoint(0, deckWorldPos);
+                            }
+                        }
+                        else
+                        {
+                            // Non-bot player - use standard movement
+                            m_bot->GetMotionMaster()->MovePoint(0, deckWorldPos);
+                        }
                     }
                 }
                 else
@@ -2632,8 +2685,20 @@ void TravelRouteManager::HandleOnTransport(TravelLeg& leg)
                 transport->RemovePassenger(m_bot);
                 m_currentTransportGuid.Clear();
 
-                // Move to arrival position
-                m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                // Use validated pathfinding for arrival position
+                if (BotAI* ai = GetBotAI(m_bot))
+                {
+                    if (!ai->MoveTo(leg.endPosition, true))
+                    {
+                        // Fallback to legacy if validation fails
+                        m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                }
                 leg.currentState = TravelState::ARRIVING;
                 leg.stateStartTime = now;
             }
@@ -2995,7 +3060,21 @@ void TravelRouteManager::HandlePortal(TravelLeg& leg)
                         leg.startPosition.GetPositionX(), leg.startPosition.GetPositionY(), leg.startPosition.GetPositionZ(),
                         distToPortal);
                 }
-                m_bot->GetMotionMaster()->MovePoint(0, leg.startPosition);
+
+                // Use validated pathfinding for walking to portal
+                if (BotAI* ai = GetBotAI(m_bot))
+                {
+                    if (!ai->MoveTo(leg.startPosition, true))
+                    {
+                        // Fallback to legacy if validation fails
+                        m_bot->GetMotionMaster()->MovePoint(0, leg.startPosition);
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    m_bot->GetMotionMaster()->MovePoint(0, leg.startPosition);
+                }
                 leg.currentState = TravelState::WALKING_TO_TRANSPORT;
                 leg.stateStartTime = now;
             }
@@ -3208,7 +3287,21 @@ void TravelRouteManager::HandleTaxiFlight(TravelLeg& leg)
                     "HandleTaxiFlight: Bot {} walking to flight master {} ({:.1f} yards away)",
                     m_bot->GetName(), fm.name, fm.distanceFromPlayer);
 
-                m_bot->GetMotionMaster()->MovePoint(0, fm.position.GetPositionX(), fm.position.GetPositionY(), fm.position.GetPositionZ());
+                // Use validated pathfinding for walking to flight master
+                Position fmPos(fm.position.GetPositionX(), fm.position.GetPositionY(), fm.position.GetPositionZ(), 0.0f);
+                if (BotAI* ai = GetBotAI(m_bot))
+                {
+                    if (!ai->MoveTo(fmPos, true))
+                    {
+                        // Fallback to legacy if validation fails
+                        m_bot->GetMotionMaster()->MovePoint(0, fm.position.GetPositionX(), fm.position.GetPositionY(), fm.position.GetPositionZ());
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    m_bot->GetMotionMaster()->MovePoint(0, fm.position.GetPositionX(), fm.position.GetPositionY(), fm.position.GetPositionZ());
+                }
                 leg.currentState = TravelState::WALKING_TO_TRANSPORT;
                 leg.stateStartTime = now;
                 break;
@@ -3309,8 +3402,20 @@ void TravelRouteManager::HandleTaxiFlight(TravelLeg& leg)
 
                     if (distToEnd < 200.0f)
                     {
-                        // Close enough, walk the rest
-                        m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                        // Use validated pathfinding for walking after flight
+                        if (BotAI* ai = GetBotAI(m_bot))
+                        {
+                            if (!ai->MoveTo(leg.endPosition, true))
+                            {
+                                // Fallback to legacy if validation fails
+                                m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                            }
+                        }
+                        else
+                        {
+                            // Non-bot player - use standard movement
+                            m_bot->GetMotionMaster()->MovePoint(0, leg.endPosition);
+                        }
                         leg.currentState = TravelState::ARRIVING;
                         leg.stateStartTime = now;
                     }
