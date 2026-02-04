@@ -51,8 +51,15 @@ ActionResult MoveToPositionAction::Execute(BotAI* ai, ActionContext const& conte
     if (!GeneratePath(ai, context.x, context.y, context.z))
         return ActionResult::FAILED;
 
-    // Move along path
-    bot->GetMotionMaster()->MovePoint(0, context.x, context.y, context.z);
+    // NEW: Use BotMovementController for validated movement
+    Position dest(context.x, context.y, context.z, 0.0f);
+    bool success = ai->MoveTo(dest, true); // validated = true
+
+    if (!success)
+    {
+        // Fallback to legacy MotionMaster if controller fails
+        bot->GetMotionMaster()->MovePoint(0, context.x, context.y, context.z);
+    }
 
     _executionCount++;
     _successCount++;
@@ -103,9 +110,17 @@ ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& /*context*/)
         return ActionResult::FAILED;
 
     float distance = GetFollowDistance();
-    float angle = GetFollowAngle();
+    // Note: BotMovementController::MoveFollow uses distance parameter, angle is handled internally
 
-    bot->GetMotionMaster()->MoveFollow(target, distance, angle);
+    // NEW: Use BotMovementController for validated follow movement
+    bool success = ai->MoveToUnit(target, distance);
+
+    if (!success)
+    {
+        // Fallback to legacy MotionMaster if controller fails
+        float angle = GetFollowAngle();
+        bot->GetMotionMaster()->MoveFollow(target, distance, angle);
+    }
 
     _executionCount++;
     _successCount++;

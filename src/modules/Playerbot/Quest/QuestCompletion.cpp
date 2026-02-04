@@ -1337,7 +1337,7 @@ void QuestCompletion::ParseQuestObjectives(QuestProgressData& progress, const Qu
             case QUEST_OBJECTIVE_KILL_WITH_LABEL:   // 21 - Kill with label
                 internalType = QuestObjectiveType::KILL_WITH_LABEL;
                 break;
-            case QUEST_OBJECTIVE_UNK_1127:          // 22 - Unknown 11.2.7
+            case QUEST_OBJECTIVE_UNK_1127:          // 22 - Unknown 12.0.7
                 internalType = QuestObjectiveType::UNK_1127;
                 TC_LOG_DEBUG("playerbot.quest", "ParseQuestObjectives: Quest {} has unknown objective type 22 (UNK_1127)",
                     quest->GetQuestId());
@@ -2097,7 +2097,7 @@ void QuestCompletion::OnQuestCreditAdded(QuestEvent const& event)
         else
         {
             // Get other objectives from player's quest slot data
-            // TrinityCore 11.2 API: GetQuestSlotObjectiveData takes QuestObjective const&
+            // TrinityCore 12.0 API: GetQuestSlotObjectiveData takes QuestObjective const&
             current = _bot->GetQuestSlotObjectiveData(slot, obj);
         }
 
@@ -2346,7 +2346,7 @@ void QuestCompletion::CacheQuestPOIData(ObjectGuid botGuid, uint32 questId)
     poiData.questId = questId;
     poiData.lastUpdateTime = GameTime::GetGameTimeMS();
 
-    // Get POI data from ObjectMgr (TrinityCore 11.2 API: QuestPOIData)
+    // Get POI data from ObjectMgr (TrinityCore 12.0 API: QuestPOIData)
     QuestPOIData const* questPOI = sObjectMgr->GetQuestPOIData(questId);
     if (questPOI)
     {
@@ -4164,7 +4164,7 @@ void QuestCompletion::CompleteQuestDialog(Player* player, uint32 questId)
         player->PlayerTalkClass->SendQuestGiverOfferReward(quest, questGiverGuid, true);
     }
 
-    // Reward the quest - TrinityCore 11.2 API requires LootItemType and item ID
+    // Reward the quest - TrinityCore 12.0 API requires LootItemType and item ID
     uint32 rewardItemId = 0;
     if (rewardChoice < QUEST_REWARD_CHOICES_COUNT && quest->RewardChoiceItemId[rewardChoice] != 0)
         rewardItemId = quest->RewardChoiceItemId[rewardChoice];
@@ -4216,7 +4216,20 @@ void QuestCompletion::NavigateToTurnInNpc(Player* player, Creature* npc)
         npc->GetNearPoint(player, targetPos.m_positionX, targetPos.m_positionY, targetPos.m_positionZ,
             INTERACTION_DISTANCE - 1.0f, npc->GetAbsoluteAngle(player));
 
-        player->GetMotionMaster()->MovePoint(0, targetPos);
+        // NEW: Use BotMovementController for validated movement
+        if (BotAI* ai = GetBotAI(player))
+        {
+            if (!ai->MoveTo(targetPos, true))
+            {
+                // Fallback to legacy MotionMaster
+                player->GetMotionMaster()->MovePoint(0, targetPos);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            player->GetMotionMaster()->MovePoint(0, targetPos);
+        }
 
         TC_LOG_DEBUG("playerbot.quest", "QuestCompletion: Bot {} navigating to NPC {} "
             "(dist: {:.1f})", player->GetName(), npc->GetName(), dist);
@@ -4247,7 +4260,20 @@ void QuestCompletion::NavigateToTurnInGO(Player* player, GameObject* go)
         targetPos.m_positionX += std::cos(angle) * (INTERACTION_DISTANCE - 1.0f);
         targetPos.m_positionY += std::sin(angle) * (INTERACTION_DISTANCE - 1.0f);
 
-        player->GetMotionMaster()->MovePoint(0, targetPos);
+        // NEW: Use BotMovementController for validated movement
+        if (BotAI* ai = GetBotAI(player))
+        {
+            if (!ai->MoveTo(targetPos, true))
+            {
+                // Fallback to legacy MotionMaster
+                player->GetMotionMaster()->MovePoint(0, targetPos);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            player->GetMotionMaster()->MovePoint(0, targetPos);
+        }
 
         TC_LOG_DEBUG("playerbot.quest", "QuestCompletion: Bot {} navigating to GO {} "
             "(dist: {:.1f})", player->GetName(), go->GetName(), dist);
@@ -4271,7 +4297,7 @@ bool QuestCompletion::CanBotUseItem(Player* player, ItemTemplate const* item)
     if (allowableClass != 0 && !(allowableClass & player->GetClassMask()))
         return false;
 
-    // Check race requirement - TrinityCore 11.2 uses Trinity::RaceMask<int64>
+    // Check race requirement - TrinityCore 12.0 uses Trinity::RaceMask<int64>
     Trinity::RaceMask<int64> allowableRace = item->GetAllowableRace();
     if (!allowableRace.IsEmpty() && !allowableRace.HasRace(player->GetRace()))
         return false;
@@ -4438,7 +4464,7 @@ float QuestCompletion::EvaluateItemStats(Player* player, ItemTemplate const* ite
             break;
     }
 
-    // Evaluate item stats - TrinityCore 11.2 uses GetStatModifierBonusStat/GetStatPercentEditor
+    // Evaluate item stats - TrinityCore 12.0 uses GetStatModifierBonusStat/GetStatPercentEditor
     for (uint8 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
     {
         int32 statType = item->GetStatModifierBonusStat(i);
@@ -4648,7 +4674,7 @@ float QuestCompletion::CalculateQuestProgress(uint32 questId, Player* player)
         if (required == 0)
             continue;
 
-        // TrinityCore 11.2 API: GetQuestSlotObjectiveData takes QuestObjective const&
+        // TrinityCore 12.0 API: GetQuestSlotObjectiveData takes QuestObjective const&
         int32 current = player->GetQuestSlotObjectiveData(slot, objective);
         float objProgress = std::min(1.0f, static_cast<float>(std::max(0, current)) / static_cast<float>(required));
         totalProgress += objProgress;
@@ -5973,7 +5999,7 @@ void QuestCompletion::InitializeQuestProgress(Player* bot, uint32 questId)
             {
                 if (questObj.StorageIndex == static_cast<int8>(objective.objectiveIndex))
                 {
-                    // TrinityCore 11.2 API: GetQuestSlotObjectiveData takes QuestObjective reference
+                    // TrinityCore 12.0 API: GetQuestSlotObjectiveData takes QuestObjective reference
                     current = static_cast<uint32>(std::max(0, bot->GetQuestSlotObjectiveData(slot, questObj)));
                     break;
                 }
@@ -6025,7 +6051,7 @@ void QuestCompletion::InitializeQuestProgress(Player* bot, uint32 questId)
     progress.lastKnownLocation = bot->GetPosition();
 
     // Find quest giver location for potential turn-in
-    // TrinityCore 11.2 API: GetCreatureQuestInvolvedRelationReverseBounds
+    // TrinityCore 12.0 API: GetCreatureQuestInvolvedRelationReverseBounds
     auto bounds = sObjectMgr->GetCreatureQuestInvolvedRelationReverseBounds(questId);
     if (bounds.begin() != bounds.end())
     {
