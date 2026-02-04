@@ -76,7 +76,12 @@ public:
         // Start movement if not already moving
         if (!_movementStarted)
         {
-            bot->GetMotionMaster()->MovePoint(0, targetPos);
+            // Use validated pathfinding for behavior tree movement
+            if (!ai->MoveTo(targetPos, true))
+            {
+                // Fallback to legacy if validation fails
+                bot->GetMotionMaster()->MovePoint(0, targetPos);
+            }
             _movementStarted = true;
         }
 
@@ -156,7 +161,13 @@ public:
         {
             // Calculate optimal position
             float optimalDistance = (_minRange + _maxRange) / 2.0f;
-            bot->GetMotionMaster()->MoveFollow(target, optimalDistance, 0.0f);
+
+            // Use validated pathfinding for optimal range following
+            if (!ai->MoveToUnit(target, optimalDistance))
+            {
+                // Fallback to legacy if validation fails
+                bot->GetMotionMaster()->MoveFollow(target, optimalDistance, 0.0f);
+            }
             _movementStarted = true;
         }
 
@@ -296,7 +307,12 @@ public:
         // Start following if not already
         if (!_movementStarted)
         {
-            bot->GetMotionMaster()->MoveFollow(leader, _followDistance, bot->GetFollowAngle());
+            // Use validated pathfinding for leader following
+            if (!ai->MoveToUnit(leader, _followDistance))
+            {
+                // Fallback to legacy if validation fails
+                bot->GetMotionMaster()->MoveFollow(leader, _followDistance, bot->GetFollowAngle());
+            }
             _movementStarted = true;
         }
 
@@ -532,7 +548,12 @@ public:
         // Move towards healer
         if (!_movementStarted)
         {
-            bot->GetMotionMaster()->MoveFollow(nearestHealer, _maxRange * 0.8f, 0.0f);
+            // Use validated pathfinding for moving towards healer
+            if (!ai->MoveToUnit(nearestHealer, _maxRange * 0.8f))
+            {
+                // Fallback to legacy if validation fails
+                bot->GetMotionMaster()->MoveFollow(nearestHealer, _maxRange * 0.8f, 0.0f);
+            }
             _movementStarted = true;
         }
 
@@ -610,7 +631,13 @@ public:
             float y = target->GetPositionY() + _distance * ::std::sin(angle);
             float z = target->GetPositionZ();
 
-            bot->GetMotionMaster()->MovePoint(0, x, y, z);
+            // Use validated pathfinding for circling movement
+            Position dest(x, y, z, 0.0f);
+            if (!ai->MoveTo(dest, true))
+            {
+                // Fallback to legacy if validation fails
+                bot->GetMotionMaster()->MovePoint(0, x, y, z);
+            }
             _movementStarted = true;
         }
 
