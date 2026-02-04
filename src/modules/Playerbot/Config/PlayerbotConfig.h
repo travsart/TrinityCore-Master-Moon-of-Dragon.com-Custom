@@ -260,6 +260,9 @@ private:
         uint32 sessionCleanupInterval = 10000;  // Session cleanup cycle
         uint32 maxLoadingTime = 30000;          // Max bot loading time
         uint32 sessionTimeout = 60000;          // Session expiration
+        uint32 instanceBotIdleTimeout = 60000;  // Instance bot idle logout (1 min)
+        uint32 instanceBotQueueTimeout = 300000; // Instance bot queue timeout (5 min)
+        uint32 simulatedLatency = 50;           // Simulated network latency (ms)
 
         // History/transaction limits
         uint32 maxTransactionHistory = 100;     // Banking transaction log size

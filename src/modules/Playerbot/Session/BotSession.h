@@ -201,13 +201,23 @@ public:
      */
     uint32 GetIdleDurationMs() const;
 
-    /// Idle timeout for instance bots (60 seconds = 1 minute)
-    static constexpr uint32 INSTANCE_BOT_IDLE_TIMEOUT_MS = 60 * 1000;
+    /**
+     * @brief Get idle timeout for instance bots from configuration
+     * @return Timeout in milliseconds (configurable via Playerbot.Session.IdleTimeout)
+     *
+     * Default: 60000ms (1 minute)
+     * Instance bots auto-logout after this duration when not in queue/group
+     */
+    static uint32 GetInstanceBotIdleTimeout();
 
-    /// Queue timeout for instance bots (5 minutes)
-    /// If a bot has been queued for content (BG/LFG) for longer than this without
-    /// actually getting into the content, it will be logged out to prevent accumulation
-    static constexpr uint32 INSTANCE_BOT_QUEUE_TIMEOUT_MS = 5 * 60 * 1000;
+    /**
+     * @brief Get queue timeout for instance bots from configuration
+     * @return Timeout in milliseconds (configurable via Playerbot.Session.QueueTimeout)
+     *
+     * Default: 300000ms (5 minutes)
+     * Instance bots logout after waiting in queue this long without content starting
+     */
+    static uint32 GetInstanceBotQueueTimeout();
 
     // Process pending async login operations
     void ProcessPendingLogin();

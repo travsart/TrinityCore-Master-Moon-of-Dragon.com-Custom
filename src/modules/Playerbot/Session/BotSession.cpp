@@ -8,6 +8,7 @@
 #include "BotPacketRelay.h"
 #include "BotPacketSimulator.h"  // PHASE 1: Packet forging infrastructure
 #include "PacketDeferralClassifier.h"  // Selective main thread deferral
+#include "Config/PlayerbotConfig.h"  // For configuration access
 #include "AccountMgr.h"
 #include "Log.h"
 #include "WorldPacket.h"
@@ -373,7 +374,7 @@ BotSession::BotSession(uint32 bnetAccountId)
         false,                         // Is recruiter
         true),                         // is_bot = true  CRITICAL FIX: Makes IsBot() work correctly!
     _bnetAccountId(bnetAccountId),
-    _simulatedLatency(50)
+    _simulatedLatency(sPlayerbotConfig->GetUInt("Playerbot.Session.SimulatedLatency", 50))
 {
     // CRITICAL FIX: Validate account IDs and ensure proper initialization
     if (bnetAccountId == 0) {
@@ -3194,8 +3195,8 @@ void BotSession::SetInstanceBot(bool isInstanceBot)
         TC_LOG_INFO("module.playerbot.instance",
             "Bot {} marked as INSTANCE BOT - idle timeout: {}s, queue timeout: {}s",
             player ? player->GetName() : "unknown",
-            INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000,
-            INSTANCE_BOT_QUEUE_TIMEOUT_MS / 1000);
+            GetInstanceBotIdleTimeout() / 1000,
+            GetInstanceBotQueueTimeout() / 1000);
     }
 }
 
@@ -3306,12 +3307,12 @@ bool BotSession::UpdateIdleStateAndCheckLogout(uint32 diff)
             _queueAccumulatorMs.store(newQueue);
 
             // Check if queue timeout exceeded
-            if (newQueue >= INSTANCE_BOT_QUEUE_TIMEOUT_MS)
+            if (newQueue >= GetInstanceBotQueueTimeout())
             {
                 TC_LOG_INFO("module.playerbot.instance",
                     "⏰ Bot {} QUEUE TIMEOUT ({} seconds in queue without content starting) - "
                     "scheduling logout to prevent accumulation",
-                    player->GetName(), INSTANCE_BOT_QUEUE_TIMEOUT_MS / 1000);
+                    player->GetName(), GetInstanceBotQueueTimeout() / 1000);
                 return true;
             }
 
@@ -3322,7 +3323,7 @@ bool BotSession::UpdateIdleStateAndCheckLogout(uint32 diff)
             {
                 TC_LOG_DEBUG("module.playerbot.instance",
                     "Bot {} waiting in queue for {}m / {}m",
-                    player->GetName(), newQueue / 60000, INSTANCE_BOT_QUEUE_TIMEOUT_MS / 60000);
+                    player->GetName(), newQueue / 60000, GetInstanceBotQueueTimeout() / 60000);
             }
         }
 
@@ -3338,7 +3339,7 @@ bool BotSession::UpdateIdleStateAndCheckLogout(uint32 diff)
         // Just became idle - log the transition
         TC_LOG_INFO("module.playerbot.instance",
             "Bot {} became IDLE (not in queue/group/instance) - starting {}s logout timer",
-            player->GetName(), INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000);
+            player->GetName(), GetInstanceBotIdleTimeout() / 1000);
     }
 
     uint32 currentIdle = _idleAccumulatorMs.load();
@@ -3346,11 +3347,11 @@ bool BotSession::UpdateIdleStateAndCheckLogout(uint32 diff)
     _idleAccumulatorMs.store(newIdle);
 
     // Check if idle timeout exceeded
-    if (newIdle >= INSTANCE_BOT_IDLE_TIMEOUT_MS)
+    if (newIdle >= GetInstanceBotIdleTimeout())
     {
         TC_LOG_INFO("module.playerbot.instance",
             "⏰ Bot {} IDLE TIMEOUT ({} seconds) - scheduling logout to reduce server load",
-            player->GetName(), INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000);
+            player->GetName(), GetInstanceBotIdleTimeout() / 1000);
         return true;
     }
 
@@ -3361,7 +3362,7 @@ bool BotSession::UpdateIdleStateAndCheckLogout(uint32 diff)
     {
         TC_LOG_DEBUG("module.playerbot.instance",
             "Bot {} idle for {}s / {}s",
-            player->GetName(), newIdle / 1000, INSTANCE_BOT_IDLE_TIMEOUT_MS / 1000);
+            player->GetName(), newIdle / 1000, GetInstanceBotIdleTimeout() / 1000);
     }
 
     return false;
@@ -3373,6 +3374,16 @@ uint32 BotSession::GetIdleDurationMs() const
         return 0;
 
     return _idleAccumulatorMs.load();
+}
+
+uint32 BotSession::GetInstanceBotIdleTimeout()
+{
+    return sPlayerbotConfig->GetUInt("Playerbot.Session.IdleTimeout", 60000);
+}
+
+uint32 BotSession::GetInstanceBotQueueTimeout()
+{
+    return sPlayerbotConfig->GetUInt("Playerbot.Session.QueueTimeout", 300000);
 }
 
 } // namespace Playerbot

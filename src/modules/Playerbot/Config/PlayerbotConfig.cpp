@@ -601,6 +601,9 @@ void PlayerbotConfig::RefreshCache()
     _cache.sessionCleanupInterval = getConfigUInt("Playerbot.Session.CleanupInterval", 10000);
     _cache.maxLoadingTime = getConfigUInt("Playerbot.Session.MaxLoadingTime", 30000);
     _cache.sessionTimeout = getConfigUInt("Playerbot.Session.Timeout", 60000);
+    _cache.instanceBotIdleTimeout = getConfigUInt("Playerbot.Session.IdleTimeout", 60000);
+    _cache.instanceBotQueueTimeout = getConfigUInt("Playerbot.Session.QueueTimeout", 300000);
+    _cache.simulatedLatency = getConfigUInt("Playerbot.Session.SimulatedLatency", 50);
 
     // History/transaction limits
     _cache.maxTransactionHistory = getConfigUInt("Playerbot.Banking.MaxTransactionHistory", 100);
@@ -663,6 +666,9 @@ uint32 PlayerbotConfig::GetCached(std::string const& key, uint32 defaultValue) c
     if (key == "Playerbot.Session.CleanupInterval") { _metrics.cacheHits++; return _cache.sessionCleanupInterval; }
     if (key == "Playerbot.Session.MaxLoadingTime") { _metrics.cacheHits++; return _cache.maxLoadingTime; }
     if (key == "Playerbot.Session.Timeout") { _metrics.cacheHits++; return _cache.sessionTimeout; }
+    if (key == "Playerbot.Session.IdleTimeout") { _metrics.cacheHits++; return _cache.instanceBotIdleTimeout; }
+    if (key == "Playerbot.Session.QueueTimeout") { _metrics.cacheHits++; return _cache.instanceBotQueueTimeout; }
+    if (key == "Playerbot.Session.SimulatedLatency") { _metrics.cacheHits++; return _cache.simulatedLatency; }
 
     // History/transaction limits
     if (key == "Playerbot.Banking.MaxTransactionHistory") { _metrics.cacheHits++; return _cache.maxTransactionHistory; }

@@ -1578,6 +1578,25 @@ Playerbot.Session.MaxLoadingTime = 30000
 Playerbot.Session.Timeout = 60000
 Playerbot.Session.MaxConcurrentCommands = 5
 
+# Instance bot lifecycle (JIT/Warm Pool bots for dungeons/raids/BGs)
+#     IdleTimeout:    How long instance bots stay logged in when idle (ms)
+#     QueueTimeout:   Max time bots wait in queue before logging out (ms)
+#     Description:    Instance bots are created for instanced content only.
+#                     They automatically log out after idle timeout when not
+#                     in queue, group, or instance to reduce server load.
+#     Default:        60000 (1 min idle), 300000 (5 min queue)
+#     Range:          30000-300000 (30 seconds - 5 minutes)
+
+Playerbot.Session.IdleTimeout = 60000
+Playerbot.Session.QueueTimeout = 300000
+
+# Simulated network latency for bot sessions (milliseconds)
+#     Description:    Bots use simulated latency instead of real network latency
+#     Default:        50 ms (simulates good connection)
+#     Range:          10-500 ms (lower = more responsive, higher = more realistic)
+
+Playerbot.Session.SimulatedLatency = 50
+
 ###############################################################################
 # B13. DEATH RECOVERY [ALREADY WIRED]
 #
