@@ -24,6 +24,7 @@
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "UnitAI.h"
 #include <algorithm>
 #include <cmath>
@@ -928,9 +929,26 @@ bool KitingManager::ExecuteMovementToPosition(const Position& target)
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            _bot->GetMotionMaster()->MovePoint(0, target.GetPositionX(), target.GetPositionY(), target.GetPositionZ());
-            return true;
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            if (BotAI* ai = GetBotAI(_bot))
+            {
+                if (ai->MoveTo(target, true))
+                {
+                    return true;
+                }
+                else
+                {
+                    // Final fallback to legacy if validation fails
+                    _bot->GetMotionMaster()->MovePoint(0, target.GetPositionX(), target.GetPositionY(), target.GetPositionZ());
+                    return true;
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                _bot->GetMotionMaster()->MovePoint(0, target.GetPositionX(), target.GetPositionY(), target.GetPositionZ());
+                return true;
+            }
         }
     }
     catch (const ::std::exception& e)
