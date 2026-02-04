@@ -183,6 +183,15 @@ BotAI::BotAI(Player* bot, bool instanceOnlyMode)
     // Bots far from human players will have reduced update frequency
     _aiUpdateThrottler = std::make_unique<AdaptiveAIUpdateThrottler>(_bot, this);
 
+    // NEW: Initialize movement controller and register with global manager
+    if (_bot)
+    {
+        _movementController = std::make_unique<BotMovementController>(_bot);
+        sBotMovementManager->RegisterController(_bot);
+        TC_LOG_DEBUG("module.playerbot.movement", "BotAI: Movement controller initialized for bot {}",
+            _cachedBotGuid.ToString());
+    }
+
     // Initialize default strategies for basic functionality
     InitializeDefaultStrategies();
 
@@ -311,6 +320,15 @@ BotAI::~BotAI()
 {
     // Phase 4: CRITICAL - Unsubscribe from all event buses to prevent dangling pointers
     UnsubscribeFromEventBuses();
+
+    // NEW: Unregister movement controller from global manager
+    // CRITICAL: Use _cachedBotGuid instead of _bot->GetGUID() as _bot may be dangling
+    if (_movementController && !_cachedBotGuid.IsEmpty())
+    {
+        sBotMovementManager->UnregisterController(_cachedBotGuid);
+        TC_LOG_DEBUG("module.playerbot.movement", "BotAI: Movement controller unregistered for bot {}",
+            _cachedBotGuid.ToString());
+    }
 
     // ========================================================================
     // PHASE 6: GAME SYSTEMS FACADE - Automatic Manager Cleanup
@@ -524,6 +542,24 @@ void BotAI::UpdateAI(uint32 diff)
     // This allows bots to release spirit, run to corpse, and resurrect
     if (auto deathRecovery = GetDeathRecoveryManager())
         deathRecovery->Update(diff);
+
+    // ========================================================================
+    // MOVEMENT CONTROLLER - Update validated movement system FIRST
+    // ========================================================================
+    // NEW: Update movement controller for validated pathfinding and stuck detection
+    // This runs after death recovery but before normal AI to ensure movement is always updated
+    if (_movementController && _bot->IsAlive())
+    {
+        _movementController->Update(diff);
+
+        // Check for stuck state and log for debugging
+        if (_movementController->IsStuck())
+        {
+            TC_LOG_DEBUG("module.playerbot.movement", "Bot {} is stuck, recovery is being handled by controller",
+                _bot->GetName());
+            // Recovery is handled internally by the movement controller
+        }
+    }
 
     // PRIORITY: If bot is in death recovery, skip expensive AI updates
     // Death recovery handles its own movement (corpse run), so we don't need strategies/combat
@@ -2194,6 +2230,67 @@ uint32 BotAI::GetAIThrottleTier() const
         return 0; // FULL_RATE
 
     return static_cast<uint32>(_aiUpdateThrottler->GetCurrentTier());
+}
+
+// ============================================================================
+// MOVEMENT SYSTEM INTEGRATION - NEW: Validated movement helper methods
+// ============================================================================
+
+bool BotAI::MoveTo(Position const& dest, bool validated)
+{
+    if (!_movementController)
+    {
+        TC_LOG_WARN("module.playerbot.movement", "BotAI::MoveTo: Movement controller not initialized for bot {}",
+            _bot ? _bot->GetName() : "UNKNOWN");
+        return false;
+    }
+
+    if (validated)
+    {
+        // Use validated pathfinding with ground/collision/liquid checks
+        return _movementController->MoveToPosition(dest, false);
+    }
+    else
+    {
+        // Fallback to unvalidated movement (legacy behavior)
+        if (_bot && _bot->IsInWorld())
+        {
+            _bot->GetMotionMaster()->MovePoint(0, dest);
+            return true;
+        }
+        return false;
+    }
+}
+
+bool BotAI::MoveToUnit(::Unit* target, float distance)
+{
+    if (!_movementController)
+    {
+        TC_LOG_WARN("module.playerbot.movement", "BotAI::MoveToUnit: Movement controller not initialized for bot {}",
+            _bot ? _bot->GetName() : "UNKNOWN");
+        return false;
+    }
+
+    if (!target || !target->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.movement", "BotAI::MoveToUnit: Invalid target for bot {}",
+            _bot ? _bot->GetName() : "UNKNOWN");
+        return false;
+    }
+
+    // Use validated follow movement
+    return _movementController->MoveFollow(target, distance, 0.0f);
+}
+
+bool BotAI::IsMovementBlocked() const
+{
+    // Movement is blocked if controller indicates stuck or invalid state
+    return _movementController && _movementController->IsStuck();
+}
+
+bool BotAI::IsStuck() const
+{
+    return _movementController && _movementController->IsStuck();
 }
 
 } // namespace Playerbot

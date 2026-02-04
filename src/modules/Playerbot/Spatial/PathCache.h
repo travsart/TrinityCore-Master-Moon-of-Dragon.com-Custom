@@ -250,7 +250,7 @@ private:
     void EvictOldest();
 
     /**
-     * @brief Calculate new path using TrinityCore PathGenerator
+     * @brief Calculate new path using ValidatedPathGenerator (or legacy fallback)
      *
      * @param src Source position
      * @param dest Destination position
@@ -258,12 +258,33 @@ private:
      * @return PathResult with waypoints and path type
      *
      * IMPLEMENTATION:
-     * - Create PathGenerator instance
-     * - Call CalculatePath()
+     * - Check if BotMovement system is enabled
+     * - If enabled: Use ValidatedPathGenerator with ground/collision/liquid validation
+     * - If validation fails or system disabled: Fall back to CalculateNewPathLegacy
      * - Extract waypoints and path type
      * - Return result for caching
      */
     PathResult CalculateNewPath(Position const& src, Position const& dest, WorldObject const* owner);
+
+    /**
+     * @brief Legacy pathfinding fallback using standard PathGenerator
+     *
+     * @param src Source position
+     * @param dest Destination position
+     * @param owner WorldObject performing pathfinding
+     * @return PathResult with waypoints and path type
+     *
+     * IMPLEMENTATION:
+     * - Create standard PathGenerator instance (no validation)
+     * - Call CalculatePath()
+     * - Extract waypoints and path type
+     * - Return result for caching
+     *
+     * USAGE:
+     * - Fallback when ValidatedPathGenerator fails validation
+     * - Used when BotMovement system is disabled
+     */
+    PathResult CalculateNewPathLegacy(Position const& src, Position const& dest, WorldObject const* owner);
 
     Map* _map;  // Map pointer (not owned, must remain valid)
     ::std::unordered_map<uint64_t, PathResult> _cache;  // Path cache (hash key → result)

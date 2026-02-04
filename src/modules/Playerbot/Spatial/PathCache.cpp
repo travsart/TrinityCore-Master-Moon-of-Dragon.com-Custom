@@ -9,6 +9,9 @@
 
 #include "PathCache.h"
 #include "Log.h"
+#include "Movement/BotMovement/Pathfinding/ValidatedPathGenerator.h"
+#include "Movement/BotMovement/Core/BotMovementConfig.h"
+#include "Movement/BotMovement/Core/BotMovementManager.h"
 #include <cmath>
 
 namespace Playerbot
@@ -70,6 +73,50 @@ PathCache::PathResult PathCache::CalculateNewPath(Position const& src, Position 
 {
     PathResult result;
 
+    // NEW: Use ValidatedPathGenerator if BotMovement system is enabled
+    if (sBotMovementManager->GetConfig().IsEnabled())
+    {
+        ValidatedPathGenerator validatedPath(owner);
+        ValidatedPath vpResult = validatedPath.CalculateValidatedPath(src, dest, false);
+
+        if (vpResult.IsValid())
+        {
+            // Success - validated path found
+            result.points = vpResult.points;
+            result.pathType = vpResult.pathType;
+            result.length = validatedPath.GetPathLength();
+            result.timestamp = ::std::chrono::steady_clock::now();
+
+            TC_LOG_DEBUG("module.playerbot.movement",
+                "ValidatedPath SUCCESS: {} waypoints, type={}, validated={}",
+                result.points.size(),
+                static_cast<uint32>(result.pathType),
+                vpResult.validationResult.isValid);
+
+            return result;
+        }
+        else
+        {
+            // Validation failed - log reason and fallback to legacy
+            TC_LOG_WARN("module.playerbot.movement",
+                "ValidatedPath FAILED: reason='{}', falling back to legacy pathfinding",
+                vpResult.validationResult.failureReason);
+
+            // Fallback to legacy pathfinding
+            return CalculateNewPathLegacy(src, dest, owner);
+        }
+    }
+    else
+    {
+        // BotMovement system disabled - use legacy pathfinding
+        return CalculateNewPathLegacy(src, dest, owner);
+    }
+}
+
+PathCache::PathResult PathCache::CalculateNewPathLegacy(Position const& src, Position const& dest, WorldObject const* owner)
+{
+    PathResult result;
+
     // Create PathGenerator instance
     PathGenerator path(owner);
 
@@ -93,6 +140,11 @@ PathCache::PathResult PathCache::CalculateNewPath(Position const& src, Position 
     result.pathType = path.GetPathType();
     result.length = path.GetPathLength();
     result.timestamp = ::std::chrono::steady_clock::now();
+
+    TC_LOG_TRACE("module.playerbot.movement",
+        "Legacy PathGenerator: {} waypoints, type={}",
+        result.points.size(),
+        static_cast<uint32>(result.pathType));
 
     return result;
 }

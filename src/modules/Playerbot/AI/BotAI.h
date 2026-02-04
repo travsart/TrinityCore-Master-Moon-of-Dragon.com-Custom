@@ -25,6 +25,8 @@
 #include "Core/Events/IEventHandler.h"
 #include "Core/Managers/IGameSystemsManager.h"
 #include "Advanced/GroupCoordinator.h"
+#include "Movement/BotMovement/Core/BotMovementController.h"
+#include "Movement/BotMovement/Core/BotMovementManager.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -384,10 +386,21 @@ public:
     // MOVEMENT CONTROL - Strategy-driven movement
     // ========================================================================
 
+    // Legacy movement methods (keep for backward compatibility)
     void MoveTo(float x, float y, float z);
     void Follow(::Unit* target, float distance = 5.0f);
     void StopMovement();
     bool IsMoving() const;
+
+    // NEW: Movement System Integration - Validated pathfinding
+    BotMovementController* GetMovementController() { return _movementController.get(); }
+    BotMovementController const* GetMovementController() const { return _movementController.get(); }
+
+    // Movement convenience methods with validation
+    bool MoveTo(Position const& dest, bool validated = true);
+    bool MoveToUnit(::Unit* target, float distance = 0.0f);
+    bool IsMovementBlocked() const;
+    bool IsStuck() const;
 
     // ========================================================================
     // GAME SYSTEM MANAGERS - Quest, profession, trade management (Phase 6: Delegation)
@@ -1022,6 +1035,9 @@ protected:
 
     // ST-1: Adaptive AI Update Throttling - reduces CPU for bots far from human players
     std::unique_ptr<AdaptiveAIUpdateThrottler> _aiUpdateThrottler;
+
+    // Movement System Integration - Validated pathfinding and state machine
+    std::unique_ptr<BotMovementController> _movementController;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
