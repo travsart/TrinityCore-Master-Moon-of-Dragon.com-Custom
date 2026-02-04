@@ -27,6 +27,7 @@
 #include "../../Movement/Arbiter/MovementRequest.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "UnitAI.h"
 #include "ObjectAccessor.h"
 #include <algorithm>
@@ -216,8 +217,20 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                     }
                     else
                     {
-                        // FALLBACK: Direct MotionMaster call if arbiter not available
-                        _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+                        // FALLBACK: Use BotMovementController with validated pathfinding
+                        if (BotAI* ai = GetBotAI(_bot))
+                        {
+                            if (!ai->MoveTo(targetPos, true))
+                            {
+                                // Final fallback to legacy if validation fails
+                                _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+                            }
+                        }
+                        else
+                        {
+                            // Non-bot player - use standard movement
+                            _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+                        }
                     }
                 }
                 break;
@@ -253,8 +266,9 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                     }
                     else
                     {
-                        // FALLBACK: Direct MotionMaster call if arbiter not available
-                        // TrinityCore 11.2.7 API: MoveJump(id, pos, speedOrTime, minHeight, maxHeight)
+                        // FALLBACK: Use legacy MotionMaster for jump movement
+                        // Note: BotMovementController doesn't support MoveJump yet
+                        // TrinityCore 12.0.7 API: MoveJump(id, pos, speedOrTime, minHeight, maxHeight)
                         _bot->GetMotionMaster()->MoveJump(EVENT_JUMP, jumpTarget, 10.0f);
                     }
                 }
@@ -284,8 +298,20 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                     }
                     else
                     {
-                        // FALLBACK: Direct MotionMaster call if arbiter not available
-                        _bot->GetMotionMaster()->MovePoint(0, backtrackPos.GetPositionX(), backtrackPos.GetPositionY(), backtrackPos.GetPositionZ());
+                        // FALLBACK: Use BotMovementController with validated pathfinding
+                        if (BotAI* ai = GetBotAI(_bot))
+                        {
+                            if (!ai->MoveTo(backtrackPos, true))
+                            {
+                                // Final fallback to legacy if validation fails
+                                _bot->GetMotionMaster()->MovePoint(0, backtrackPos.GetPositionX(), backtrackPos.GetPositionY(), backtrackPos.GetPositionZ());
+                            }
+                        }
+                        else
+                        {
+                            // Non-bot player - use standard movement
+                            _bot->GetMotionMaster()->MovePoint(0, backtrackPos.GetPositionX(), backtrackPos.GetPositionY(), backtrackPos.GetPositionZ());
+                        }
                     }
                 }
                 break;
