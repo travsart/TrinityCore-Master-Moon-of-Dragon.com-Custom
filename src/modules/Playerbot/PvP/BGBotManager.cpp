@@ -234,7 +234,33 @@ void BGBotManager::OnInvitationReceived(ObjectGuid playerGuid, uint32 bgInstance
 
     auto itr = _queuedBots.find(playerGuid);
     if (itr == _queuedBots.end())
-        return;
+    {
+        // ========================================================================
+        // CRITICAL FIX: Auto-register bots that receive invitations
+        // ========================================================================
+        // Warm pool bots may not be in _queuedBots because they use QueueBotForBG()
+        // instead of QueueBotForBGWithTracking(). However, if a bot receives a BG
+        // invitation, we KNOW it's in the TrinityCore queue and should enter the BG.
+        //
+        // Create a placeholder entry so OnBattlegroundStart() will teleport this bot.
+        // ========================================================================
+        Player* bot = ObjectAccessor::FindPlayer(playerGuid);
+        if (!bot)
+        {
+            TC_LOG_WARN("module.playerbot.bg",
+                "BGBotManager::OnInvitationReceived - Bot {} received invitation but not online, skipping",
+                playerGuid.ToString());
+            return;
+        }
+
+        TC_LOG_INFO("module.playerbot.bg",
+            "BGBotManager::OnInvitationReceived - Auto-registering bot {} for BG {} (was not pre-registered)",
+            bot->GetName(), bgInstanceGuid);
+
+        // Create placeholder queue info with bot's current team
+        _queuedBots[playerGuid] = BotQueueInfo(ObjectGuid::Empty, BATTLEGROUND_TYPE_NONE, bot->GetTeam());
+        itr = _queuedBots.find(playerGuid);
+    }
 
     // Update bot's BG instance
     itr->second.bgInstanceGuid = bgInstanceGuid;

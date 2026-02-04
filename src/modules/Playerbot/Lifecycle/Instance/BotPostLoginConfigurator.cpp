@@ -383,17 +383,43 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
             {
                 BattlegroundBracketId bracketId = bracketEntry->GetBracketId();
 
-                if (sBGBotManager->QueueBotForBG(player, bgTypeId, bracketId))
+                // CRITICAL FIX: Use QueueBotForBGWithTracking to register in _queuedBots
+                // This ensures OnInvitationReceived processes the invitation and bot enters BG
+                // Without this, bots receive invitations but never teleport into the BG
+                if (!config.humanPlayerGuid.IsEmpty())
                 {
-                    TC_LOG_INFO("module.playerbot.configurator",
-                        "Successfully queued bot {} for BG {} bracket {}",
-                        player->GetName(), config.battlegroundIdToQueue, static_cast<uint8>(bracketId));
+                    if (sBGBotManager->QueueBotForBGWithTracking(player, bgTypeId, bracketId, config.humanPlayerGuid))
+                    {
+                        TC_LOG_INFO("module.playerbot.configurator",
+                            "Successfully queued bot {} for BG {} bracket {} (with tracking for human {})",
+                            player->GetName(), config.battlegroundIdToQueue, static_cast<uint8>(bracketId),
+                            config.humanPlayerGuid.ToString());
+                    }
+                    else
+                    {
+                        TC_LOG_WARN("module.playerbot.configurator",
+                            "Failed to queue bot {} for BG {} with tracking",
+                            player->GetName(), config.battlegroundIdToQueue);
+                    }
                 }
                 else
                 {
+                    // Fallback to non-tracking queue (bot won't auto-accept invitation properly)
                     TC_LOG_WARN("module.playerbot.configurator",
-                        "Failed to queue bot {} for BG {}",
-                        player->GetName(), config.battlegroundIdToQueue);
+                        "No humanPlayerGuid for bot {} - using non-tracking BG queue (invitation handling may fail)",
+                        player->GetName());
+                    if (sBGBotManager->QueueBotForBG(player, bgTypeId, bracketId))
+                    {
+                        TC_LOG_INFO("module.playerbot.configurator",
+                            "Successfully queued bot {} for BG {} bracket {} (WITHOUT tracking)",
+                            player->GetName(), config.battlegroundIdToQueue, static_cast<uint8>(bracketId));
+                    }
+                    else
+                    {
+                        TC_LOG_WARN("module.playerbot.configurator",
+                            "Failed to queue bot {} for BG {}",
+                            player->GetName(), config.battlegroundIdToQueue);
+                    }
                 }
             }
             else

@@ -47,6 +47,9 @@ struct BotPendingConfiguration
     uint32 battlegroundIdToQueue = 0; // If > 0, queue bot for this BG after configuration
     uint32 arenaTypeToQueue = 0;      // If > 0, queue bot for this arena type after configuration
 
+    // Human player GUID for BG/Arena queue tracking (required for invitation handling)
+    ObjectGuid humanPlayerGuid;       // The human player that triggered this bot spawn
+
     // Instance Bot Flag - marks bot for idle timeout and restricted behavior
     bool markAsInstanceBot = false;  // If true, mark as instance bot after login
 
