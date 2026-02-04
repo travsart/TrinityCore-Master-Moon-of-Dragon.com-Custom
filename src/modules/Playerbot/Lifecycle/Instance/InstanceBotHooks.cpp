@@ -18,6 +18,7 @@
 #include "InstanceBotHooks.h"
 #include "InstanceBotOrchestrator.h"
 #include "InstanceBotPool.h"
+#include "QueueStatePoller.h"
 #include "ContentRequirements.h"
 #include "JITBotFactory.h"
 #include "Player.h"
@@ -348,6 +349,18 @@ void InstanceBotHooks::OnPlayerJoinBattleground(
     {
         TC_LOG_INFO("playerbots.instance", "Battleground {} detected - preparing JIT bots for {}/faction",
             bgTypeId, requirement->playersPerFaction);
+
+        // CRITICAL FIX: Register queue with QueueStatePoller to enable warm pool
+        // The QueueStatePoller will poll this queue every 5 seconds and check if
+        // warm pool bots are available before falling back to JIT creation.
+        // This ensures warm pool bots (with bypassMaxBotsLimit=true) are used first.
+        sQueueStatePoller->RegisterActiveBGQueue(
+            static_cast<BattlegroundTypeId>(bgTypeId),
+            static_cast<BattlegroundBracketId>(bracketId)
+        );
+
+        TC_LOG_INFO("playerbots.instance", "Registered BG {} bracket {} with QueueStatePoller for warm pool integration",
+            bgTypeId, bracketId);
 
         // Create battleground request for orchestrator
         BattlegroundRequest request;
