@@ -53,6 +53,12 @@ if(BUILD_PLAYERBOT_TESTS)
         # 32 comprehensive tests for interrupt coordination and rotation system
         # 5 tests enabled, 27 disabled (awaiting mock setup)
         UnifiedInterruptSystemTest.cpp
+
+        # Movement Integration Tests (Task 6)
+        # Comprehensive tests for BotMovementController system
+        # Tests: Water detection, stuck detection, void avoidance, falling, performance
+        # Disabled until full movement system integration complete
+        # Movement/BotMovementControllerTest.cpp
     )
 
     # Create test executable
