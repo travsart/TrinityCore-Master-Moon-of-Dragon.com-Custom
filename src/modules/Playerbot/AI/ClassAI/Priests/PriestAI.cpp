@@ -28,6 +28,7 @@
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "UnitAI.h"
 #include "GameTime.h"
 
@@ -495,10 +496,20 @@ bool PriestAI::HandlePositioningPriority(::Unit* target)
             else
 
             {
-                // FALLBACK: Direct MotionMaster if arbiter not available
-
-                GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
-
+                // FALLBACK: Use BotMovementController with validated pathfinding
+                if (BotAI* ai = GetBotAI(GetBot()))
+                {
+                    if (!ai->MoveTo(optimalPos, true))
+                    {
+                        // Final fallback to legacy if validation fails
+                        GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
+                }
             }
 
             return true;

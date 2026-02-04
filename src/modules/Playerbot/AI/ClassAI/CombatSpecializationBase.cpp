@@ -31,6 +31,7 @@
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriority.h"
 #include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "UnitAI.h"
 
 namespace Playerbot
@@ -1352,11 +1353,22 @@ void CombatSpecializationBase::UpdatePositioning(::Unit* target)
             // FALLBACK: Direct MotionMaster call if arbiter not available
 
             TC_LOG_TRACE("playerbot.movement.arbiter",
-
-                "CombatSpecializationBase: Movement Arbiter not available for bot {} - using direct MotionMaster",
+                "CombatSpecializationBase: Movement Arbiter not available for bot {} - using fallback pathfinding",
                 _bot->GetName());
 
-            _bot->GetMotionMaster()->MovePoint(0, optimalPos);
+            if (BotAI* ai = GetBotAI(_bot))
+            {
+                if (!ai->MoveTo(optimalPos, true))
+                {
+                    // Final fallback to legacy if validation fails
+                    _bot->GetMotionMaster()->MovePoint(0, optimalPos);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                _bot->GetMotionMaster()->MovePoint(0, optimalPos);
+            }
 
             _metrics.positioningUpdates++;
         }
