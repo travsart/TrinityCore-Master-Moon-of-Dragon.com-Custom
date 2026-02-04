@@ -244,14 +244,27 @@ private:
                 static_cast<uint32>(bgTypeId));
         }
 
-        // HYBRID APPROACH: Use both new and old systems
+        // ========================================================================
+        // FIX: Use SINGLE system to avoid over-spawning
+        // ========================================================================
+        // Previously used "HYBRID APPROACH" that triggered THREE systems:
+        // 1. InstanceBotHooks (warm pool)
+        // 2. BGBotManager (online bots)
+        // 3. QueueStatePoller (shortage detection)
         //
-        // Step 1: Trigger the new Instance Bot System to create/reserve bots
-        // This will create bots if needed and add them to the BG queue
+        // This caused MASSIVE over-spawning because each system independently
+        // calculated "need full BG - 1 human" and spawned that many bots.
+        //
+        // NEW APPROACH: Use InstanceBotHooks as the PRIMARY system when enabled.
+        // It handles warm pool assignment, bot spawning, and proper queue tracking.
+        // Only fall back to BGBotManager if InstanceBotHooks is disabled.
+        // ========================================================================
+
         if (InstanceBotHooks::IsEnabled())
         {
+            // Use the Instance Bot System (warm pool + JIT) - handles everything
             TC_LOG_INFO("module.playerbot.bg",
-                "PlayerbotBGScript: Triggering Instance Bot System for player {} (BG Type: {}, Bracket: {})",
+                "PlayerbotBGScript: Using Instance Bot System for player {} (BG Type: {}, Bracket: {})",
                 player->GetName(), static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
 
             InstanceBotHooks::OnPlayerJoinBattleground(
@@ -260,15 +273,23 @@ private:
                 static_cast<uint32>(bracket),
                 player->GetGroup() != nullptr
             );
+
+            // NOTE: Do NOT trigger BGBotManager or QueueStatePoller here!
+            // InstanceBotHooks already handles warm pool assignment and will
+            // use QueueStatePoller internally if needed for JIT fallback.
         }
+        else
+        {
+            // Fallback: Use BGBotManager for online-only bot queueing
+            TC_LOG_INFO("module.playerbot.bg",
+                "PlayerbotBGScript: Instance Bot System disabled, using BGBotManager for player {} (BG Type: {}, Bracket: {})",
+                player->GetName(), static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
 
-        // Step 2: Use BGBotManager to add CURRENTLY ONLINE bots to queue
-        // This provides immediate bot coverage while Instance Bot System creates new bots
-        sBGBotManager->OnPlayerJoinQueue(player, bgTypeId, bracket, player->GetGroup() != nullptr);
+            sBGBotManager->OnPlayerJoinQueue(player, bgTypeId, bracket, player->GetGroup() != nullptr);
 
-        // Step 3: Register queue with QueueStatePoller for shortage detection
-        // This enables periodic polling to detect and fill any shortages
-        sQueueStatePoller->RegisterActiveBGQueue(bgTypeId, bracket);
+            // Only register with QueueStatePoller when using fallback path
+            sQueueStatePoller->RegisterActiveBGQueue(bgTypeId, bracket);
+        }
 
         // Mark as processed
         _processedPlayers.insert(playerGuid);
