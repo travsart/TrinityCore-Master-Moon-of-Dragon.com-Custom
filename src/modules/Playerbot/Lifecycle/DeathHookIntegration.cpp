@@ -2,6 +2,9 @@
  * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * DeathHookIntegration: Minimal core hooks for Playerbot death management
+ *
+ * P1 FIX: Task 7/7 from SESSION_LIFECYCLE_FIXES
+ * Updated to use unified CorpseCrashMitigation instead of separate managers
  */
 
 #include "DeathHookIntegration.h"
@@ -9,8 +12,7 @@
 #include "Corpse.h"
 #include "WorldSession.h"
 #include "Log.h"
-#include "CorpsePreventionManager.h"
-#include "SafeCorpseManager.h"
+#include "CorpseCrashMitigation.h"  // P1 FIX: Unified component replaces old managers
 #include "DeathRecoveryManager.h"
 #include "../AI/BotAI.h"
 
@@ -27,14 +29,11 @@ void DeathHookIntegration::OnPlayerPreDeath(Player* player)
     TC_LOG_DEBUG("playerbot.death.hook", "OnPlayerPreDeath: Bot {} about to die",
         player->GetName());
 
-    // Strategy 1: Try to prevent corpse creation
-    if (CorpsePreventionManager::IsEnabled() &&
-        CorpsePreventionManager::ShouldPreventCorpse(player))
-    {
-        CorpsePreventionManager::OnBotBeforeDeath(player);
-    }
+    // P1 FIX: Use unified CorpseCrashMitigation (dual-strategy pattern)
+    // This handles both prevention (strategy 1) and safe tracking (strategy 2)
+    sCorpseCrashMitigation.OnBotDeath(player);
 
-    // Always cache death location before corpse creation
+    // Also notify DeathRecoveryManager (death location caching)
     if (BotAI* ai = dynamic_cast<BotAI*>(player->GetAI()))
     {
         if (DeathRecoveryManager* drm = ai->GetDeathRecoveryManager())
@@ -47,22 +46,16 @@ void DeathHookIntegration::OnPlayerPreDeath(Player* player)
 
 void DeathHookIntegration::OnPlayerCorpseCreated(Player* player, Corpse* corpse)
 {
-    if (!player || !corpse || !player->GetSession()->IsBot())
+    if (!player || !player->GetSession()->IsBot())
         return;
 
-    TC_LOG_DEBUG("playerbot.death.hook", "OnPlayerCorpseCreated: Bot {} corpse {} created",
-        player->GetName(), corpse->GetGUID().ToString());
+    TC_LOG_DEBUG("playerbot.death.hook", "OnPlayerCorpseCreated: Bot {} corpse {}",
+        player->GetName(), corpse ? corpse->GetGUID().ToString() : "none (prevented)");
 
-    // Strategy 2: Track corpse for safe deletion
-    SafeCorpseManager::Instance().RegisterCorpse(player, corpse);
-
-    // Check if we should have prevented this corpse
-    if (CorpsePreventionManager::IsEnabled())
-    {
-        TC_LOG_WARN("playerbot.death.hook",
-            "Corpse created despite prevention for bot {} - using SafeCorpseManager fallback",
-            player->GetName());
-    }
+    // P1 FIX: Use unified CorpseCrashMitigation
+    // If corpse is null, prevention succeeded (strategy 1)
+    // If corpse exists, fallback to safe tracking (strategy 2)
+    sCorpseCrashMitigation.OnCorpseCreated(player, corpse);
 }
 
 bool DeathHookIntegration::OnCorpsePreRemove(Corpse* corpse)
@@ -71,8 +64,10 @@ bool DeathHookIntegration::OnCorpsePreRemove(Corpse* corpse)
         return true; // Allow removal
 
     ObjectGuid corpseGuid = corpse->GetGUID();
-    // Check if this corpse is safe to remove
-    if (!SafeCorpseManager::Instance().IsCorpseSafeToDelete(corpseGuid))
+
+    // P1 FIX: Use unified CorpseCrashMitigation
+    // Check if this corpse is safe to remove (strategy 2: safe tracking)
+    if (!sCorpseCrashMitigation.IsCorpseSafeToDelete(corpseGuid))
     {
         TC_LOG_DEBUG("playerbot.death.hook",
             "OnCorpsePreRemove: Delaying corpse {} removal - Map update in progress",
@@ -93,17 +88,19 @@ void DeathHookIntegration::OnPlayerPreResurrection(Player* player)
     TC_LOG_DEBUG("playerbot.death.hook", "OnPlayerPreResurrection: Bot {} about to resurrect",
         player->GetName());
 
-    // Mark any corpse as safe for deletion
+    // P1 FIX: Use unified CorpseCrashMitigation
+    // Check if bot has a tracked corpse
     ObjectGuid playerGuid = player->GetGUID();
     float x, y, z;
     uint32 mapId;
 
-    if (SafeCorpseManager::Instance().GetCorpseLocation(playerGuid, x, y, z, mapId))
+    if (sCorpseCrashMitigation.GetCorpseLocation(playerGuid, x, y, z, mapId))
     {
         // We know the player is resurrecting, so corpse can be safely removed
         // after current Map update cycle completes
         TC_LOG_DEBUG("playerbot.death.hook",
-            "Bot {} resurrecting - marking corpse for safe deletion", player->GetName());
+            "Bot {} resurrecting - corpse tracked at ({:.2f}, {:.2f}, {:.2f})",
+            player->GetName(), x, y, z);
     }
 }
 
@@ -115,6 +112,10 @@ void DeathHookIntegration::OnPlayerPostResurrection(Player* player)
     TC_LOG_DEBUG("playerbot.death.hook", "OnPlayerPostResurrection: Bot {} resurrected",
         player->GetName());
 
+    // P1 FIX: Use unified CorpseCrashMitigation
+    // Clean up death locations and corpse tracking
+    sCorpseCrashMitigation.OnBotResurrection(player);
+
     // Notify DeathRecoveryManager
     if (BotAI* ai = dynamic_cast<BotAI*>(player->GetAI()))
     {
@@ -122,12 +123,6 @@ void DeathHookIntegration::OnPlayerPostResurrection(Player* player)
         {
             drm->OnResurrection();
         }
-    }
-
-    // Check if this was a prevented corpse that got resurrected
-    if (player->GetByteValue(PLAYER_FIELD_BYTES2, 3) & 0x80)
-    {
-        CorpsePreventionManager::OnBotAfterDeath(player);
     }
 }
 

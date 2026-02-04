@@ -701,6 +701,8 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/CorpseCrashMitigation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/CorpseCrashMitigation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/ResourceMonitor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/ResourceMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnPriorityQueue.cpp
