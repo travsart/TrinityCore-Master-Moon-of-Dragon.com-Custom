@@ -29,6 +29,8 @@
 #include "../../Spatial/SpatialGridManager.h"
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
 #include "ObjectAccessor.h"
+#include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 
 namespace Playerbot
 {
@@ -219,8 +221,20 @@ PositionMovementResult PositionManager::ExecuteMovement(const Position& targetPo
         return result;
     }
 
-    // Issue new movement command
-    _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+    // Issue new movement command with validated pathfinding
+    if (BotAI* ai = GetBotAI(_bot))
+    {
+        if (!ai->MoveTo(targetPos, true))
+        {
+            // Fallback to legacy if validation fails
+            _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+        }
+    }
+    else
+    {
+        // Non-bot player - use standard movement
+        _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+    }
 
     // FIX #5: SPEED CONTROL SYSTEM - Apply sprint for critical/emergency movement
     if (result.requiresSprint)
