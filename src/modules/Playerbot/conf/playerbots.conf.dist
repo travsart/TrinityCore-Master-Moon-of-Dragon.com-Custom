@@ -3323,6 +3323,121 @@ Humanization.TimeOfDay.Enabled = 1
 
 ################################################################################
 #
+#                         BOT MOVEMENT SYSTEM
+#
+#  Validated pathfinding and movement state machine for bots
+#  Prevents common movement issues: wall clipping, void falling, etc.
+#
+################################################################################
+
+#
+#  BotMovement.Enable
+#    Description: Enable the validated movement system for bots.
+#                 When enabled, bots use ValidatedPathGenerator with ground,
+#                 collision, and liquid validation.
+#    Default:     1 (Enabled)
+#    Note:        Disable to use legacy PathGenerator (no validation)
+#
+BotMovement.Enable = 1
+
+#
+#  BotMovement.Validation.Ground
+#    Description: Enable ground validation (void detection, cliff detection).
+#                 Prevents bots from walking off edges or into void areas.
+#    Default:     1 (Enabled)
+#
+BotMovement.Validation.Ground = 1
+
+#
+#  BotMovement.Validation.Collision
+#    Description: Enable collision validation (wall detection, LOS checks).
+#                 Prevents bots from walking through walls.
+#    Default:     1 (Enabled)
+#
+BotMovement.Validation.Collision = 1
+
+#
+#  BotMovement.Validation.Liquid
+#    Description: Enable liquid validation (water detection, swimming).
+#                 Ensures proper swimming vs. walking transitions.
+#    Default:     1 (Enabled)
+#
+BotMovement.Validation.Liquid = 1
+
+#
+#  BotMovement.StuckDetection.Enable
+#    Description: Enable stuck detection and auto-recovery.
+#                 Bots will automatically detect when stuck and attempt recovery.
+#    Default:     1 (Enabled)
+#
+BotMovement.StuckDetection.Enable = 1
+
+#
+#  BotMovement.StuckDetection.Threshold
+#    Description: Distance in yards bot must move in 5 seconds to not be "stuck".
+#                 Lower values = more sensitive, higher = more tolerant.
+#    Default:     2.0
+#    Range:       0.5 - 10.0
+#
+BotMovement.StuckDetection.Threshold = 2.0
+
+#
+#  BotMovement.StuckDetection.RecoveryMaxAttempts
+#    Description: Maximum recovery attempts before teleporting to safety.
+#                 After this many failed attempts, bot teleports to hearthstone.
+#    Default:     3
+#    Range:       1 - 10
+#
+BotMovement.StuckDetection.RecoveryMaxAttempts = 3
+
+#
+#  BotMovement.PathCache.Enable
+#    Description: Enable path caching for performance.
+#                 Caches validated paths to reduce pathfinding overhead.
+#    Default:     1 (Enabled)
+#    Note:        Highly recommended for performance with many bots
+#
+BotMovement.PathCache.Enable = 1
+
+#
+#  BotMovement.PathCache.MaxSize
+#    Description: Maximum number of cached paths.
+#                 Higher = more memory but better cache hit rate.
+#    Default:     5000
+#    Range:       1000 - 50000
+#    Memory:      ~240 bytes per path (5000 = ~1.2 MB)
+#
+BotMovement.PathCache.MaxSize = 5000
+
+#
+#  BotMovement.PathCache.TTL
+#    Description: Path cache time-to-live in milliseconds.
+#                 Paths older than this are considered stale and recalculated.
+#    Default:     30000 (30 seconds)
+#    Range:       5000 - 300000 (5s - 5min)
+#
+BotMovement.PathCache.TTL = 30000
+
+#
+#  BotMovement.Debug.LogStateChanges
+#    Description: Log movement state changes (verbose).
+#                 Useful for debugging state machine transitions.
+#    Default:     0 (Disabled)
+#    Note:        Enable for development/debugging only (high log volume)
+#
+BotMovement.Debug.LogStateChanges = 0
+
+#
+#  BotMovement.Debug.LogValidationFailures
+#    Description: Log validation failures (useful for debugging).
+#                 Shows why paths were rejected (void, collision, etc.)
+#    Default:     1 (Enabled)
+#    Note:        Helps identify problematic areas in world geometry
+#
+BotMovement.Debug.LogValidationFailures = 1
+
+################################################################################
+#
 #                    ===== END OF CONFIGURATION FILE =====
 #
 #  Summary:

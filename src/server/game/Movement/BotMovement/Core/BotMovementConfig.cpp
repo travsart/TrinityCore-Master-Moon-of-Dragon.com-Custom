@@ -20,22 +20,35 @@
 
 void BotMovementConfig::Load()
 {
+    // Main enable/disable toggle
     _enabled = sConfigMgr->GetBoolDefault("BotMovement.Enable", true);
-    
+
+    // Validation level
     uint32 validationLevelValue = sConfigMgr->GetIntDefault("BotMovement.ValidationLevel", 2);
     if (validationLevelValue > static_cast<uint32>(ValidationLevel::Strict))
         validationLevelValue = static_cast<uint32>(ValidationLevel::Standard);
     _validationLevel = static_cast<ValidationLevel>(validationLevelValue);
-    
+
+    // Individual validation toggles
+    _groundValidation = sConfigMgr->GetBoolDefault("BotMovement.Validation.Ground", true);
+    _collisionValidation = sConfigMgr->GetBoolDefault("BotMovement.Validation.Collision", true);
+    _liquidValidation = sConfigMgr->GetBoolDefault("BotMovement.Validation.Liquid", true);
+
+    // Stuck detection settings
+    _stuckDetectionEnabled = sConfigMgr->GetBoolDefault("BotMovement.StuckDetection.Enable", true);
     _stuckPosThreshold = Milliseconds(sConfigMgr->GetIntDefault("BotMovement.StuckDetection.PositionThreshold", 3000));
-    _stuckDistThreshold = sConfigMgr->GetFloatDefault("BotMovement.StuckDetection.DistanceThreshold", 2.0f);
-    
-    _maxRecoveryAttempts = sConfigMgr->GetIntDefault("BotMovement.Recovery.MaxAttempts", 5);
-    
-    _pathCacheSize = sConfigMgr->GetIntDefault("BotMovement.PathCache.Size", 1000);
-    _pathCacheTTL = Seconds(sConfigMgr->GetIntDefault("BotMovement.PathCache.TTL", 60));
-    
+    _stuckDistThreshold = sConfigMgr->GetFloatDefault("BotMovement.StuckDetection.Threshold", 2.0f);
+    _maxRecoveryAttempts = sConfigMgr->GetIntDefault("BotMovement.StuckDetection.RecoveryMaxAttempts", 5);
+
+    // Path cache settings
+    _pathCacheEnabled = sConfigMgr->GetBoolDefault("BotMovement.PathCache.Enable", true);
+    _pathCacheSize = sConfigMgr->GetIntDefault("BotMovement.PathCache.MaxSize", 5000);
+    _pathCacheTTL = std::chrono::duration_cast<Seconds>(Milliseconds(sConfigMgr->GetIntDefault("BotMovement.PathCache.TTL", 30000)));
+
+    // Debug settings
     _debugLogLevel = sConfigMgr->GetIntDefault("BotMovement.Debug.LogLevel", 2);
+    _logStateChanges = sConfigMgr->GetBoolDefault("BotMovement.Debug.LogStateChanges", false);
+    _logValidationFailures = sConfigMgr->GetBoolDefault("BotMovement.Debug.LogValidationFailures", true);
 }
 
 void BotMovementConfig::Reload()
