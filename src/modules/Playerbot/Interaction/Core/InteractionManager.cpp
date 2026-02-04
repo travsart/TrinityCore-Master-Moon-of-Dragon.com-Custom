@@ -42,6 +42,8 @@
 #include "UnitDefines.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
+#include "../../Core/PlayerBotHelpers.h"
+#include "../../AI/BotAI.h"
 
 namespace Playerbot
 {
@@ -688,7 +690,7 @@ namespace Playerbot
     if (Creature* creature = target->ToCreature())
         {
             bot->PlayerTalkClass->SendCloseGossip();
-            // OnGossipSelect doesn't exist in TrinityCore 11.2 - use gossip handler instead
+            // OnGossipSelect doesn't exist in TrinityCore 12.0 - use gossip handler instead
             // The gossip selection is handled through the gossip handler system
         }
     }
@@ -791,7 +793,21 @@ namespace Playerbot
         float destY = target->GetPositionY() - (m_config.interactionRange - 0.5f) * ::std::sin(angle);
         float destZ = target->GetPositionZ();
 
-        bot->GetMotionMaster()->MovePoint(0, destX, destY, destZ);
+        // Use validated pathfinding for bot interaction positioning
+        Position dest(destX, destY, destZ, 0.0f);
+        if (BotAI* ai = GetBotAI(bot))
+        {
+            if (!ai->MoveTo(dest, true))
+            {
+                // Fallback to legacy if validation fails
+                bot->GetMotionMaster()->MovePoint(0, destX, destY, destZ);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            bot->GetMotionMaster()->MovePoint(0, destX, destY, destZ);
+        }
 
         return true;
     }
@@ -1021,7 +1037,7 @@ namespace Playerbot
     if (Creature* creature = target->ToCreature())
                     {
                         // SendPrepareGossip was removed - use PlayerTalkClass->SendGossipMenu instead
-                        // GossipMenuIds is now a vector in TrinityCore 11.2, use first entry if available
+                        // GossipMenuIds is now a vector in TrinityCore 12.0, use first entry if available
                         ::std::vector<uint32> const& gossipMenuIds = creature->GetCreatureTemplate()->GossipMenuIds;
                         uint32 gossipMenuId = gossipMenuIds.empty() ? 0 : gossipMenuIds[0];
                         bot->PlayerTalkClass->SendGossipMenu(gossipMenuId, creature->GetGUID());

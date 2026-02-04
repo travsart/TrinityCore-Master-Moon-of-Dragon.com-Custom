@@ -29,6 +29,8 @@
 #include "PathGenerator.h"
 #include "DB2Stores.h"
 #include "ObjectMgr.h"
+#include "Core/PlayerBotHelpers.h"
+#include "AI/BotAI.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -837,10 +839,27 @@ bool BattlePetManager::StartPetBattle(uint32 targetNpcId)
     float interactDistance = 5.0f;
     if (_bot->GetDistance(targetPet) > interactDistance)
     {
-        _bot->GetMotionMaster()->MovePoint(0,
-            targetPet->GetPositionX(),
-            targetPet->GetPositionY(),
-            targetPet->GetPositionZ());
+        // Use validated pathfinding for bot movement to battle pet
+        Position dest(targetPet->GetPositionX(), targetPet->GetPositionY(), targetPet->GetPositionZ(), 0.0f);
+        if (BotAI* ai = GetBotAI(_bot))
+        {
+            if (!ai->MoveTo(dest, true))
+            {
+                // Fallback to legacy if validation fails
+                _bot->GetMotionMaster()->MovePoint(0,
+                    targetPet->GetPositionX(),
+                    targetPet->GetPositionY(),
+                    targetPet->GetPositionZ());
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            _bot->GetMotionMaster()->MovePoint(0,
+                targetPet->GetPositionX(),
+                targetPet->GetPositionY(),
+                targetPet->GetPositionZ());
+        }
 
         TC_LOG_DEBUG("playerbot", "BattlePetManager: Bot {} moving to battle pet target",
             _bot->GetGUID().GetCounter());
@@ -2160,11 +2179,27 @@ bool BattlePetManager::NavigateToRarePet(uint32 speciesId)
         TC_LOG_DEBUG("playerbot", "BattlePetManager: Could not generate path to rare pet {}",
             speciesId);
 
-        // Try direct movement as fallback
-        _bot->GetMotionMaster()->MovePoint(0,
-            nearestSpawn->GetPositionX(),
-            nearestSpawn->GetPositionY(),
-            nearestSpawn->GetPositionZ());
+        // Use validated pathfinding for fallback rare pet navigation
+        Position dest(nearestSpawn->GetPositionX(), nearestSpawn->GetPositionY(), nearestSpawn->GetPositionZ(), 0.0f);
+        if (BotAI* ai = GetBotAI(_bot))
+        {
+            if (!ai->MoveTo(dest, true))
+            {
+                // Final fallback to legacy if validation fails
+                _bot->GetMotionMaster()->MovePoint(0,
+                    nearestSpawn->GetPositionX(),
+                    nearestSpawn->GetPositionY(),
+                    nearestSpawn->GetPositionZ());
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            _bot->GetMotionMaster()->MovePoint(0,
+                nearestSpawn->GetPositionX(),
+                nearestSpawn->GetPositionY(),
+                nearestSpawn->GetPositionZ());
+        }
 
         return true;
     }
@@ -2177,10 +2212,23 @@ bool BattlePetManager::NavigateToRarePet(uint32 speciesId)
         return false;
     }
 
-    // Navigate to the target position using MovePoint
+    // Navigate to the target position using validated pathfinding
     // We move to the destination directly rather than following waypoints
     G3D::Vector3 const& dest = pathPoints.back();
-    _bot->GetMotionMaster()->MovePoint(0, dest.x, dest.y, dest.z);
+    Position destPos(dest.x, dest.y, dest.z, 0.0f);
+    if (BotAI* ai = GetBotAI(_bot))
+    {
+        if (!ai->MoveTo(destPos, true))
+        {
+            // Fallback to legacy if validation fails
+            _bot->GetMotionMaster()->MovePoint(0, dest.x, dest.y, dest.z);
+        }
+    }
+    else
+    {
+        // Non-bot player - use standard movement
+        _bot->GetMotionMaster()->MovePoint(0, dest.x, dest.y, dest.z);
+    }
 
     // Store navigation target for tracking
     _navigationTarget = *nearestSpawn;

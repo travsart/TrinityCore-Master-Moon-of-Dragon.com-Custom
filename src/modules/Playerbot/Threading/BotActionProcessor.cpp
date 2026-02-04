@@ -24,6 +24,8 @@
 #include "SpellInfo.h"
 #include "DBCEnums.h"
 #include "StringFormat.h"
+#include "Core/PlayerBotHelpers.h"
+#include "AI/BotAI.h"
 
 namespace Playerbot
 {
@@ -177,8 +179,20 @@ BotActionResult BotActionProcessor::ExecuteMoveToPosition(Player* bot, BotAction
     if (!action.position.IsPositionValid())
         return BotActionResult::Failure("Invalid position");
 
-    // Move to position
-    bot->GetMotionMaster()->MovePoint(0, action.position);
+    // Use validated pathfinding for bot movement
+    if (BotAI* ai = GetBotAI(bot))
+    {
+        if (!ai->MoveTo(action.position, true))
+        {
+            // Fallback to legacy if validation fails
+            bot->GetMotionMaster()->MovePoint(0, action.position);
+        }
+    }
+    else
+    {
+        // Non-bot player - use standard movement
+        bot->GetMotionMaster()->MovePoint(0, action.position);
+    }
 
     TC_LOG_TRACE("playerbot.action",
         "Bot {} moving to position ({:.1f}, {:.1f}, {:.1f})",
@@ -197,7 +211,20 @@ BotActionResult BotActionProcessor::ExecuteFollowTarget(Player* bot, BotAction c
     if (!target->IsInWorld())
         return BotActionResult::Failure("Follow target not in world");
 
-    bot->GetMotionMaster()->MoveFollow(target, 3.0f, 0.0f);
+    // Use validated pathfinding for bot follow movement
+    if (BotAI* ai = GetBotAI(bot))
+    {
+        if (!ai->MoveToUnit(target, 3.0f))
+        {
+            // Fallback to legacy if validation fails
+            bot->GetMotionMaster()->MoveFollow(target, 3.0f, 0.0f);
+        }
+    }
+    else
+    {
+        // Non-bot player - use standard movement
+        bot->GetMotionMaster()->MoveFollow(target, 3.0f, 0.0f);
+    }
 
     TC_LOG_TRACE("playerbot.action",
         "Bot {} following {}", bot->GetName(), target->GetName());
