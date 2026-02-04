@@ -30,6 +30,7 @@
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "UnitAI.h"
 // WoW 12.0: SpellAttr16 and SpellPvpModifier support
 #include "DB2Stores.h"
@@ -561,10 +562,24 @@ bool InterruptManager::ExecuteInterruptPlan(const InterruptPlan& plan)
             }
             else
             {
-                // FALLBACK: Direct MotionMaster if arbiter not available
-                _bot->GetMotionMaster()->MovePoint(0, plan.executionPosition.GetPositionX(),
-                                                 plan.executionPosition.GetPositionY(),
-                                                 plan.executionPosition.GetPositionZ());
+                // FALLBACK: Use BotMovementController with validated pathfinding
+                if (BotAI* ai = GetBotAI(_bot))
+                {
+                    if (!ai->MoveTo(plan.executionPosition, true))
+                    {
+                        // Final fallback to legacy if validation fails
+                        _bot->GetMotionMaster()->MovePoint(0, plan.executionPosition.GetPositionX(),
+                                                         plan.executionPosition.GetPositionY(),
+                                                         plan.executionPosition.GetPositionZ());
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    _bot->GetMotionMaster()->MovePoint(0, plan.executionPosition.GetPositionX(),
+                                                     plan.executionPosition.GetPositionY(),
+                                                     plan.executionPosition.GetPositionZ());
+                }
             }
             return false;
         }
@@ -1259,8 +1274,20 @@ bool InterruptManager::AttemptLoSInterrupt(Unit* target)
     }
     else
     {
-        // Fallback to direct MotionMaster
-        _bot->GetMotionMaster()->MovePoint(0, coverPos.GetPositionX(), coverPos.GetPositionY(), coverPos.GetPositionZ());
+        // Fallback: Use BotMovementController with validated pathfinding
+        if (BotAI* ai = GetBotAI(_bot))
+        {
+            if (!ai->MoveTo(coverPos, true))
+            {
+                // Final fallback to legacy if validation fails
+                _bot->GetMotionMaster()->MovePoint(0, coverPos.GetPositionX(), coverPos.GetPositionY(), coverPos.GetPositionZ());
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            _bot->GetMotionMaster()->MovePoint(0, coverPos.GetPositionX(), coverPos.GetPositionY(), coverPos.GetPositionZ());
+        }
 
         TC_LOG_DEBUG("module.playerbot.interrupt",
             "AttemptLoSInterrupt: Bot {} (fallback) moving to cover for LoS interrupt",
@@ -1415,8 +1442,20 @@ bool InterruptManager::AttemptMovementInterrupt(Unit* target)
     }
     else
     {
-        // FALLBACK: Direct MotionMaster if arbiter not available
-        _bot->GetMotionMaster()->MovePoint(0, movePos.GetPositionX(), movePos.GetPositionY(), movePos.GetPositionZ());
+        // FALLBACK: Use BotMovementController with validated pathfinding
+        if (BotAI* ai = GetBotAI(_bot))
+        {
+            if (!ai->MoveTo(movePos, true))
+            {
+                // Final fallback to legacy if validation fails
+                _bot->GetMotionMaster()->MovePoint(0, movePos.GetPositionX(), movePos.GetPositionY(), movePos.GetPositionZ());
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            _bot->GetMotionMaster()->MovePoint(0, movePos.GetPositionX(), movePos.GetPositionY(), movePos.GetPositionZ());
+        }
     }
     return true;
 }
