@@ -23,6 +23,7 @@
 #include "MotionMaster.h"
 #include "MovementGenerator.h"
 #include "DBCEnums.h"  // For ChrSpecialization enum
+#include "Core/PlayerBotHelpers.h"
 
 namespace Playerbot
 {
@@ -735,8 +736,21 @@ bool DungeonAutonomyManager::UpdateTankAI(Player* tank, BotAI* ai, Group* group,
         TrashPack* pack = coordinator->GetCurrentPullTarget();
         if (pack)
         {
-            // Move toward next pack
-            tank->GetMotionMaster()->MovePoint(0, pack->x, pack->y, pack->z);
+            // Use validated pathfinding for pack navigation
+            Position dest(pack->x, pack->y, pack->z, 0.0f);
+            if (BotAI* ai = GetBotAI(tank))
+            {
+                if (!ai->MoveTo(dest, true))
+                {
+                    // Fallback to legacy if validation fails
+                    tank->GetMotionMaster()->MovePoint(0, pack->x, pack->y, pack->z);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                tank->GetMotionMaster()->MovePoint(0, pack->x, pack->y, pack->z);
+            }
             return true;
         }
     }
@@ -762,7 +776,20 @@ bool DungeonAutonomyManager::UpdateHealerAI(Player* healer, BotAI* ai, Group* gr
         followPos.m_positionY = tank->GetPositionY() + 15.0f * sin(angle);
         followPos.m_positionZ = tank->GetPositionZ();
 
-        healer->GetMotionMaster()->MovePoint(0, followPos);
+        // Use validated pathfinding for healer positioning
+        if (BotAI* ai = GetBotAI(healer))
+        {
+            if (!ai->MoveTo(followPos, true))
+            {
+                // Fallback to legacy if validation fails
+                healer->GetMotionMaster()->MovePoint(0, followPos);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            healer->GetMotionMaster()->MovePoint(0, followPos);
+        }
         return true;
     }
 
@@ -787,7 +814,20 @@ bool DungeonAutonomyManager::UpdateDpsAI(Player* dps, BotAI* ai, Group* group, D
         followPos.m_positionY = tank->GetPositionY() + 20.0f * sin(angle);
         followPos.m_positionZ = tank->GetPositionZ();
 
-        dps->GetMotionMaster()->MovePoint(0, followPos);
+        // Use validated pathfinding for DPS positioning
+        if (BotAI* ai = GetBotAI(dps))
+        {
+            if (!ai->MoveTo(followPos, true))
+            {
+                // Fallback to legacy if validation fails
+                dps->GetMotionMaster()->MovePoint(0, followPos);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            dps->GetMotionMaster()->MovePoint(0, followPos);
+        }
         return true;
     }
 

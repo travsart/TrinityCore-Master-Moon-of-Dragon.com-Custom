@@ -659,9 +659,22 @@ void DungeonBehavior::CoordinateTankBehavior(Player* tank, const DungeonEncounte
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            tank->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
-                optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+            // Use validated pathfinding for tank positioning
+            if (BotAI* ai = GetBotAI(tank))
+            {
+                if (!ai->MoveTo(optimalPos, true))
+                {
+                    // FALLBACK: Direct MotionMaster if validation fails
+                    tank->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                        optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                tank->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                    optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+            }
         }
     }
 
@@ -699,9 +712,22 @@ void DungeonBehavior::CoordinateHealerBehavior(Player* healer, const DungeonEnco
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            healer->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
-                safePos.GetPositionY(), safePos.GetPositionZ());
+            // Use validated pathfinding for healer positioning
+            if (BotAI* ai = GetBotAI(healer))
+            {
+                if (!ai->MoveTo(safePos, true))
+                {
+                    // FALLBACK: Direct MotionMaster if validation fails
+                    healer->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                        safePos.GetPositionY(), safePos.GetPositionZ());
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                healer->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                    safePos.GetPositionY(), safePos.GetPositionZ());
+            }
         }
     }
 
@@ -744,9 +770,22 @@ void DungeonBehavior::CoordinateDpsBehavior(Player* dps, const DungeonEncounter&
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            dps->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
-                optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+            // Use validated pathfinding for DPS positioning
+            if (BotAI* ai = GetBotAI(dps))
+            {
+                if (!ai->MoveTo(optimalPos, true))
+                {
+                    // FALLBACK: Direct MotionMaster if validation fails
+                    dps->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                        optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                dps->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                    optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+            }
         }
     }
 
@@ -876,9 +915,22 @@ void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounte
             }
             else
             {
-                // FALLBACK: Direct MotionMaster if arbiter not available
-                player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
-                    optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+                // Use validated pathfinding for player positioning
+                if (BotAI* ai = GetBotAI(player))
+                {
+                    if (!ai->MoveTo(optimalPos, true))
+                    {
+                        // FALLBACK: Direct MotionMaster if validation fails
+                        player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                            optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                        optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+                }
             }
         }
     }
@@ -979,9 +1031,22 @@ void DungeonBehavior::AvoidDangerousAreas(Player* player, const ::std::vector<Po
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            player->GetMotionMaster()->MovePoint(0, nearestSafeSpot.GetPositionX(),
-                nearestSafeSpot.GetPositionY(), nearestSafeSpot.GetPositionZ());
+            // Use validated pathfinding for safe spot movement
+            if (BotAI* ai = GetBotAI(player))
+            {
+                if (!ai->MoveTo(nearestSafeSpot, true))
+                {
+                    // FALLBACK: Direct MotionMaster if validation fails
+                    player->GetMotionMaster()->MovePoint(0, nearestSafeSpot.GetPositionX(),
+                        nearestSafeSpot.GetPositionY(), nearestSafeSpot.GetPositionZ());
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                player->GetMotionMaster()->MovePoint(0, nearestSafeSpot.GetPositionX(),
+                    nearestSafeSpot.GetPositionY(), nearestSafeSpot.GetPositionZ());
+            }
         }
 
         TC_LOG_DEBUG("module.playerbot", "Player {} moving to avoid dangerous area", player->GetName());

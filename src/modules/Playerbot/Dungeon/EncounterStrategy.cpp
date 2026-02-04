@@ -37,6 +37,7 @@
 #include "../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../AI/BotAI.h"
 #include "UnitAI.h"
+#include "../Core/PlayerBotHelpers.h"
 
 namespace Playerbot
 {
@@ -436,9 +437,22 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
             }
             else
             {
-                // FALLBACK: Direct MotionMaster if arbiter not available
-                player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
-                    safePos.GetPositionY(), safePos.GetPositionZ());
+                // Use validated pathfinding for AoE avoidance
+                if (BotAI* ai = GetBotAI(player))
+                {
+                    if (!ai->MoveTo(safePos, true))
+                    {
+                        // FALLBACK: Direct MotionMaster if validation fails
+                        player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                            safePos.GetPositionY(), safePos.GetPositionZ());
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                        safePos.GetPositionY(), safePos.GetPositionZ());
+                }
                 TC_LOG_TRACE("module.playerbot", "Player {} moving to avoid AoE", player->GetName());
             }
         }
@@ -576,9 +590,22 @@ void EncounterStrategy::UpdateEncounterPositioning(Group* group, uint32 encounte
             }
             else
             {
-                // FALLBACK: Direct MotionMaster if arbiter not available
-                player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
-                    optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+                // Use validated pathfinding for optimal positioning
+                if (BotAI* ai = GetBotAI(player))
+                {
+                    if (!ai->MoveTo(optimalPos, true))
+                    {
+                        // FALLBACK: Direct MotionMaster if validation fails
+                        player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                            optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                        optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+                }
             }
         }
     }
@@ -661,9 +688,22 @@ void EncounterStrategy::AvoidMechanicAreas(Group* group, const ::std::vector<Pos
                 }
                 else
                 {
-                    // FALLBACK: Direct MotionMaster if arbiter not available
-                    player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
-                        safePos.GetPositionY(), safePos.GetPositionZ());
+                    // Use validated pathfinding for danger zone avoidance
+                    if (BotAI* ai = GetBotAI(player))
+                    {
+                        if (!ai->MoveTo(safePos, true))
+                        {
+                            // FALLBACK: Direct MotionMaster if validation fails
+                            player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                                safePos.GetPositionY(), safePos.GetPositionZ());
+                        }
+                    }
+                    else
+                    {
+                        // Non-bot player - use standard movement
+                        player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                            safePos.GetPositionY(), safePos.GetPositionZ());
+                    }
                 }
             }
         }
@@ -1417,8 +1457,21 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
                 }
                 else
                 {
-                    // FALLBACK: Direct MotionMaster if arbiter not available
-                    player->GetMotionMaster()->MovePoint(0, x, y, z);
+                    // Use validated pathfinding for positioning
+                    Position dest(x, y, z, 0.0f);
+                    if (BotAI* ai = GetBotAI(player))
+                    {
+                        if (!ai->MoveTo(dest, true))
+                        {
+                            // FALLBACK: Direct MotionMaster if validation fails
+                            player->GetMotionMaster()->MovePoint(0, x, y, z);
+                        }
+                    }
+                    else
+                    {
+                        // Non-bot player - use standard movement
+                        player->GetMotionMaster()->MovePoint(0, x, y, z);
+                    }
                 }
                 return;
             }
@@ -1573,9 +1626,22 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            player->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(),
-                targetPos.GetPositionY(), targetPos.GetPositionZ());
+            // Use validated pathfinding for target positioning
+            if (BotAI* ai = GetBotAI(player))
+            {
+                if (!ai->MoveTo(targetPos, true))
+                {
+                    // FALLBACK: Direct MotionMaster if validation fails
+                    player->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(),
+                        targetPos.GetPositionY(), targetPos.GetPositionZ());
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                player->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(),
+                    targetPos.GetPositionY(), targetPos.GetPositionZ());
+            }
         }
     }
 }
@@ -1738,8 +1804,21 @@ void EncounterStrategy::HandleGenericSpread(::Player* player, ::Creature* boss, 
             }
             else
             {
-                // FALLBACK: Direct MotionMaster if arbiter not available
-                player->GetMotionMaster()->MovePoint(0, x, y, z);
+                // Use validated pathfinding for positioning
+                Position dest(x, y, z, 0.0f);
+                if (BotAI* ai = GetBotAI(player))
+                {
+                    if (!ai->MoveTo(dest, true))
+                    {
+                        // FALLBACK: Direct MotionMaster if validation fails
+                        player->GetMotionMaster()->MovePoint(0, x, y, z);
+                    }
+                }
+                else
+                {
+                    // Non-bot player - use standard movement
+                    player->GetMotionMaster()->MovePoint(0, x, y, z);
+                }
             }
             return;
         }
@@ -1801,9 +1880,23 @@ void EncounterStrategy::HandleGenericStack(::Player* player, ::Creature* boss)
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-            player->GetMotionMaster()->MovePoint(0, tank->GetPositionX(),
-                tank->GetPositionY(), tank->GetPositionZ());
+            // Use validated pathfinding for stacking on tank
+            Position dest(tank->GetPositionX(), tank->GetPositionY(), tank->GetPositionZ(), 0.0f);
+            if (BotAI* ai = GetBotAI(player))
+            {
+                if (!ai->MoveTo(dest, true))
+                {
+                    // FALLBACK: Direct MotionMaster if validation fails
+                    player->GetMotionMaster()->MovePoint(0, tank->GetPositionX(),
+                        tank->GetPositionY(), tank->GetPositionZ());
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                player->GetMotionMaster()->MovePoint(0, tank->GetPositionX(),
+                    tank->GetPositionY(), tank->GetPositionZ());
+            }
         }
     }
 }
