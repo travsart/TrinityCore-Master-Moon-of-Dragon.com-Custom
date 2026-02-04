@@ -21,6 +21,7 @@
 #include "Bag.h"
 #include "Creature.h"
 #include "ObjectAccessor.h"
+#include "Core/PlayerBotHelpers.h"
 #include "../Quest/UnifiedQuestManager.h"
 #include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5C: Thread-safe helpers
 #include <algorithm>
@@ -478,7 +479,11 @@ void EnhancedBotAI::UpdateSolo(uint32 diff)
 
         if (leader && GetBot()->GetExactDist2d(leader) > 10.0f)
         {
-            GetBot()->GetMotionMaster()->MoveFollow(leader, 5.0f, static_cast<float>(M_PI) / 2.0f);
+            if (!MoveToUnit(leader, 5.0f))
+            {
+                // Fallback to legacy if validation fails
+                GetBot()->GetMotionMaster()->MoveFollow(leader, 5.0f, static_cast<float>(M_PI) / 2.0f);
+            }
             TransitionToState(BotAIState::FOLLOWING);
         }
     }

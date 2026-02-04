@@ -34,6 +34,7 @@
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "UnitAI.h"
 
 namespace Playerbot
@@ -1401,9 +1402,20 @@ void HunterAI::MaintainRange(::Unit* target)
         }
         else
         {
-            // FALLBACK: Direct MotionMaster if arbiter not available
-
-            _bot->GetMotionMaster()->MovePoint(0, pos);
+            // FALLBACK: Use BotMovementController with validated pathfinding
+            if (BotAI* ai = GetBotAI(_bot))
+            {
+                if (!ai->MoveTo(pos, true))
+                {
+                    // Final fallback to legacy if validation fails
+                    _bot->GetMotionMaster()->MovePoint(0, pos);
+                }
+            }
+            else
+            {
+                // Non-bot player - use standard movement
+                _bot->GetMotionMaster()->MovePoint(0, pos);
+            }
         }
     }
     else if (distance > OPTIMAL_RANGE_MAX)

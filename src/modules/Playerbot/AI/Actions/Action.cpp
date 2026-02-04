@@ -10,6 +10,7 @@
 // Combat/ThreatManager.h removed - not used in this file
 #include "Action.h"
 #include "BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Object.h"
@@ -144,6 +145,15 @@ bool Action::DoMove(BotAI* ai, float x, float y, float z)
     if (!bot)
         return false;
 
+    Position dest(x, y, z, 0.0f);
+    if (BotAI* ai = GetBotAI(bot))
+    {
+        if (ai->MoveTo(dest, true))
+            return true;
+        // Fallback to legacy if validation fails
+    }
+
+    // Non-bot player or validation failed - use standard movement
     bot->GetMotionMaster()->MovePoint(0, x, y, z);
     return true;
 }

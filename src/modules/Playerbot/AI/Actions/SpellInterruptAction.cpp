@@ -13,6 +13,7 @@
 #include "Log.h"
 #include "ObjectAccessor.h"
 #include "../BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "../Combat/InterruptCoordinator.h"
 #include <algorithm>
 #include <thread>
@@ -461,8 +462,21 @@ ActionResult SpellInterruptAction::MoveToInterruptRange(BotAI* ai, ::Unit* targe
     float newX = target->GetPositionX() + cos(angle) * (requiredRange - 1.0f);
     float newY = target->GetPositionY() + sin(angle) * (requiredRange - 1.0f);
     float newZ = target->GetPositionZ();
-    // Move to position
-    bot->GetMotionMaster()->MovePoint(0, newX, newY, newZ);
+    // Move to position with validated pathfinding
+    Position dest(newX, newY, newZ, 0.0f);
+    if (BotAI* ai = GetBotAI(bot))
+    {
+        if (!ai->MoveTo(dest, true))
+        {
+            // Fallback to legacy if validation fails
+            bot->GetMotionMaster()->MovePoint(0, newX, newY, newZ);
+        }
+    }
+    else
+    {
+        // Non-bot player - use standard movement
+        bot->GetMotionMaster()->MovePoint(0, newX, newY, newZ);
+    }
 
     // Wait a short time for movement to start
     auto moveStart = ::std::chrono::steady_clock::now();
