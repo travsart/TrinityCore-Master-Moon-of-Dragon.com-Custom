@@ -280,112 +280,140 @@ void BotSpawner::Update(uint32 diff)
         queueHasItems = !_spawnQueue.empty();
     }
 
-    if (!_processingQueue.load() && queueHasItems)
+    // P1 FIX: ATOMIC COMPARE-EXCHANGE to prevent concurrent queue processing
+    //
+    // Problem: Check-then-set pattern allows multiple threads to enter:
+    //   Thread 1: Check _processingQueue=false ✓
+    //   Thread 2: Check _processingQueue=false ✓ (before T1 sets it!)
+    //   Thread 1: Set _processingQueue=true, enters critical section
+    //   Thread 2: Set _processingQueue=true, enters critical section ❌ DUPLICATE!
+    //
+    // Solution: compare_exchange_strong atomically checks and sets in single operation:
+    //   Thread 1: CAS(false→true) succeeds, returns true
+    //   Thread 2: CAS(false→true) fails (already true), returns false
+    //   Only Thread 1 enters critical section ✓
+    //
+    // This guarantees mutual exclusion without explicit mutex locks.
+
+    bool expected = false;
+    if (queueHasItems && _processingQueue.compare_exchange_strong(
+            expected, true, ::std::memory_order_acquire, ::std::memory_order_relaxed))
     {
-        _processingQueue.store(true);
+        // Only ONE thread can enter this block - compare_exchange guarantees atomicity
 
-        // ====================================================================
-        // Phase 2: Adaptive Throttling Integration
-        // ====================================================================
-        // Check if Phase 2 allows spawning (throttler + orchestrator + circuit breaker)
-        bool canSpawn = true;
+        // Wrap processing in try-catch to ensure flag is always reset
+        try
+        {
+            // ====================================================================
+            // Phase 2: Adaptive Throttling Integration
+            // ====================================================================
+            // Check if Phase 2 allows spawning (throttler + orchestrator + circuit breaker)
+            bool canSpawn = true;
+            if (_phase2Initialized)
+            {
+                // Check orchestrator phase allows spawning
+                canSpawn = _orchestrator.ShouldSpawnNext();
+
+                // Check throttler allows spawning (checks circuit breaker internally)
+        if (canSpawn)
+                    canSpawn = _throttler.CanSpawnNow();
+
+                if (!canSpawn)
+                {
+                    TC_LOG_TRACE("module.playerbot.spawner",
+                        "Phase 2 throttling active - spawn deferred (pressure: {}, circuit: {}, phase: {})",
+                        static_cast<uint8>(_resourceMonitor.GetPressureLevel()),
+                        static_cast<uint8>(_circuitBreaker.GetState()),
+                        static_cast<uint8>(_orchestrator.GetCurrentPhase()));
+                    _processingQueue.store(false, ::std::memory_order_release);
+                    return; // Skip spawning this update
+                }
+            }
+            // ====================================================================
+            // End Phase 2 Throttling Check
+            // ====================================================================
+
+            // ====================================================================
+            // Phase 2: Dequeue from appropriate queue
+            // ====================================================================
+            ::std::vector<SpawnRequest> requestBatch;
+
+            if (_phase2Initialized)
+            {
+                // Phase 2 ENABLED: Dequeue from priority queue
+                // Limit batch size to 1 for precise throttle control
+                auto prioRequest = _priorityQueue.DequeueNextRequest();
+                if (prioRequest.has_value())
+                {
+                    // Extract original SpawnRequest from PrioritySpawnRequest
+                    requestBatch.push_back(prioRequest->originalRequest);
+
+                    TC_LOG_TRACE("module.playerbot.spawner",
+                        "Phase 2: Dequeued spawn request with priority {} (reason: {}, age: {}ms)",
+                        static_cast<uint8>(prioRequest->priority),
+                        prioRequest->reason,
+                        prioRequest->GetAge().count());
+                }
+            }
+            else
+            {
+                // Phase 2 DISABLED: Dequeue from legacy spawn queue
+                // TBB concurrent_queue is lock-free - no mutex needed!
+                uint32 batchSize = _config.spawnBatchSize;
+                requestBatch.reserve(batchSize);
+
+                // TBB concurrent_queue: Use try_pop() instead of front()/pop()
+                // Lock-free operation - multiple threads can pop simultaneously
+        for (uint32 i = 0; i < batchSize; ++i)
+                {
+                    SpawnRequest request;
+                    if (_spawnQueue.try_pop(request))
+                    {
+                        requestBatch.push_back(request);
+                    }
+                    else
+                    {
+                        break; // Queue is empty
+                    }
+                }
+
+                TC_LOG_TRACE("module.playerbot.spawner", "Legacy: Processing {} spawn requests", requestBatch.size());
+            }
+
+            // Process requests outside the lock
+        for (SpawnRequest const& request : requestBatch)
+            {
+                bool spawnSuccess = SpawnBotInternal(request);
+
+                // ================================================================
+                // Phase 2: Record spawn result for circuit breaker and throttler
+                // ================================================================
         if (_phase2Initialized)
-        {
-            // Check orchestrator phase allows spawning
-            canSpawn = _orchestrator.ShouldSpawnNext();
-
-            // Check throttler allows spawning (checks circuit breaker internally)
-    if (canSpawn)
-                canSpawn = _throttler.CanSpawnNow();
-
-            if (!canSpawn)
-            {
-                TC_LOG_TRACE("module.playerbot.spawner",
-                    "Phase 2 throttling active - spawn deferred (pressure: {}, circuit: {}, phase: {})",
-                    static_cast<uint8>(_resourceMonitor.GetPressureLevel()),
-                    static_cast<uint8>(_circuitBreaker.GetState()),
-                    static_cast<uint8>(_orchestrator.GetCurrentPhase()));
-                _processingQueue.store(false);
-                return; // Skip spawning this update
+                {
+                    if (spawnSuccess)
+                    {
+                        _throttler.RecordSpawnSuccess();
+                        _orchestrator.OnBotSpawned();
+                    }
+                    else
+                    {
+                        _throttler.RecordSpawnFailure("SpawnBotInternal failed");
+                    }
+                }
+                // ================================================================
+                // End Phase 2 Result Recording
+                // ================================================================
             }
         }
-        // ====================================================================
-        // End Phase 2 Throttling Check
-        // ====================================================================
-
-        // ====================================================================
-        // Phase 2: Dequeue from appropriate queue
-        // ====================================================================
-        ::std::vector<SpawnRequest> requestBatch;
-
-        if (_phase2Initialized)
+        catch (...)
         {
-            // Phase 2 ENABLED: Dequeue from priority queue
-            // Limit batch size to 1 for precise throttle control
-            auto prioRequest = _priorityQueue.DequeueNextRequest();
-            if (prioRequest.has_value())
-            {
-                // Extract original SpawnRequest from PrioritySpawnRequest
-                requestBatch.push_back(prioRequest->originalRequest);
-
-                TC_LOG_TRACE("module.playerbot.spawner",
-                    "Phase 2: Dequeued spawn request with priority {} (reason: {}, age: {}ms)",
-                    static_cast<uint8>(prioRequest->priority),
-                    prioRequest->reason,
-                    prioRequest->GetAge().count());
-            }
-        }
-        else
-        {
-            // Phase 2 DISABLED: Dequeue from legacy spawn queue
-            // TBB concurrent_queue is lock-free - no mutex needed!
-            uint32 batchSize = _config.spawnBatchSize;
-            requestBatch.reserve(batchSize);
-
-            // TBB concurrent_queue: Use try_pop() instead of front()/pop()
-            // Lock-free operation - multiple threads can pop simultaneously
-    for (uint32 i = 0; i < batchSize; ++i)
-            {
-                SpawnRequest request;
-                if (_spawnQueue.try_pop(request))
-                {
-                    requestBatch.push_back(request);
-                }
-                else
-                {
-                    break; // Queue is empty
-                }
-            }
-
-            TC_LOG_TRACE("module.playerbot.spawner", "Legacy: Processing {} spawn requests", requestBatch.size());
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Exception during spawn queue processing - flag will be reset");
+            // Flag will be reset in finally block below
         }
 
-        // Process requests outside the lock
-    for (SpawnRequest const& request : requestBatch)
-        {
-            bool spawnSuccess = SpawnBotInternal(request);
-
-            // ================================================================
-            // Phase 2: Record spawn result for circuit breaker and throttler
-            // ================================================================
-    if (_phase2Initialized)
-            {
-                if (spawnSuccess)
-                {
-                    _throttler.RecordSpawnSuccess();
-                    _orchestrator.OnBotSpawned();
-                }
-                else
-                {
-                    _throttler.RecordSpawnFailure("SpawnBotInternal failed");
-                }
-            }
-            // ================================================================
-            // End Phase 2 Result Recording
-            // ================================================================
-        }
-
-        _processingQueue.store(false);
+        // Always reset flag with release semantics for proper memory ordering
+        _processingQueue.store(false, ::std::memory_order_release);
     }
 
     // Update zone populations periodically - DEADLOCK-FREE VERSION
