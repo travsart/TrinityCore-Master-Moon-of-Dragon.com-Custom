@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <cmath>
 #include "GameTime.h"
+#include "Core/PlayerBotHelpers.h"
+#include "AI/BotAI.h"
 
 namespace Playerbot
 {
@@ -352,20 +354,41 @@ namespace Playerbot
         // Get destination (last position in path)
         Position const& destination = state.path.back();
 
-        // Use MotionMaster to move to destination
-        // MovePoint parameters:
-        // - id: Movement ID (use 0 for generic movement)
-        // - destination: Target position
-        // - generatePath: true (use navmesh pathfinding)
-        player->GetMotionMaster()->MovePoint(
-            0,                          // Movement ID
-            destination,                // Destination position
-            true,                       // Generate path using navmesh
-            ::std::nullopt,              // No specific final orientation
-            ::std::nullopt               // Use default movement speed
-        );
+        // Use validated pathfinding for bot players
+        bool movementInitiated = false;
+        if (BotAI* ai = GetBotAI(player))
+        {
+            if (ai->MoveTo(destination, true))
+            {
+                movementInitiated = true;
+            }
+            else
+            {
+                // Fallback to legacy if validation fails
+                player->GetMotionMaster()->MovePoint(
+                    0,                          // Movement ID
+                    destination,                // Destination position
+                    true,                       // Generate path using navmesh
+                    ::std::nullopt,              // No specific final orientation
+                    ::std::nullopt               // Use default movement speed
+                );
+                movementInitiated = true;
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            player->GetMotionMaster()->MovePoint(
+                0,                          // Movement ID
+                destination,                // Destination position
+                true,                       // Generate path using navmesh
+                ::std::nullopt,              // No specific final orientation
+                ::std::nullopt               // Use default movement speed
+            );
+            movementInitiated = true;
+        }
 
-        state.movementInitiated = true;
+        state.movementInitiated = movementInitiated;
         state.lastUpdateTime = GameTime::GetGameTimeMS();
 
         TC_LOG_DEBUG("playerbot.pathfinding",

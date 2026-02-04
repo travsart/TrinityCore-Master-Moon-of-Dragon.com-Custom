@@ -48,6 +48,8 @@
 #include "MotionMaster.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "../../../Spatial/DoubleBufferedSpatialGrid.h"
+#include "../../../Core/PlayerBotHelpers.h"
+#include "../../../AI/BotAI.h"
 
 namespace Playerbot
 {
@@ -250,7 +252,22 @@ public:
                     float y = player->GetPositionY() + 5.0f * ::std::sin(angle);
                     float z = player->GetPositionZ();
                     TC_LOG_DEBUG("module.playerbot", "StockadeScript: Moving away from Bazil's Smoke Bomb");
-                    player->GetMotionMaster()->MovePoint(0, x, y, z);
+
+                    // Use validated pathfinding for bot players
+                    Position dest(x, y, z, 0.0f);
+                    if (BotAI* ai = GetBotAI(player))
+                    {
+                        if (!ai->MoveTo(dest, true))
+                        {
+                            // Fallback to legacy if validation fails
+                            player->GetMotionMaster()->MovePoint(0, x, y, z);
+                        }
+                    }
+                    else
+                    {
+                        // Non-bot player - use standard movement
+                        player->GetMotionMaster()->MovePoint(0, x, y, z);
+                    }
                     return;
                 }
                 break;

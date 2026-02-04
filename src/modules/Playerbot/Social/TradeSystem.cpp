@@ -42,6 +42,8 @@
 #include "Grids/Notifiers/GridNotifiers.h"
 #include "Grids/Notifiers/GridNotifiersImpl.h"
 #include "Config/PlayerbotTradeConfig.h"
+#include "Core/PlayerBotHelpers.h"
+#include "AI/BotAI.h"
 #include <algorithm>
 #include <cmath>
 
@@ -1239,8 +1241,21 @@ bool TradeSystem::NavigateToVendor(uint32 vendorGuid)
     if (!vendor)
         return false;
 
-    // Simple movement to vendor
-    _bot->GetMotionMaster()->MovePoint(0, vendor->GetPosition());
+    // Use validated pathfinding for bot movement to vendor
+    Position dest = vendor->GetPosition();
+    if (BotAI* ai = GetBotAI(_bot))
+    {
+        if (!ai->MoveTo(dest, true))
+        {
+            // Fallback to legacy if validation fails
+            _bot->GetMotionMaster()->MovePoint(0, vendor->GetPosition());
+        }
+    }
+    else
+    {
+        // Non-bot player - use standard movement
+        _bot->GetMotionMaster()->MovePoint(0, vendor->GetPosition());
+    }
 
     return true;
 }
