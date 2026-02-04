@@ -23,6 +23,7 @@
 #include "MapManager.h"
 #include "ObjectAccessor.h"
 #include "Session/BotSession.h"
+#include "../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include "Spatial/SpatialGridQueryHelpers.h"  // PHASE 2G: For snapshot-based player validation
 #include <algorithm>
 #include <random>

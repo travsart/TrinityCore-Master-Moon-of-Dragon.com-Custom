@@ -21,6 +21,7 @@
 #include "WorldSession.h"
 #include "Session/BotSession.h"
 #include "Session/BotWorldSessionMgr.h"
+#include "../../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include <sstream>
 
 namespace Playerbot

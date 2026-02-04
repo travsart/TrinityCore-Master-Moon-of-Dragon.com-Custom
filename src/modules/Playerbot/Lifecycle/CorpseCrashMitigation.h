@@ -25,6 +25,7 @@
 #include "ObjectGuid.h"
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <shared_mutex>
 #include <atomic>
 #include <chrono>
@@ -288,6 +289,9 @@ private:
 
     // Strategy 1: Death location cache (for corpse-less resurrection)
     ::std::unordered_map<ObjectGuid, CorpseLocation> _deathLocations;
+
+    // Strategy 1: Pending prevention tracking (internal flag replacement)
+    ::std::unordered_set<ObjectGuid> _pendingPrevention;
 
     // Strategy 2: Corpse tracking (fallback if prevention fails)
     ::std::unordered_map<ObjectGuid, ::std::unique_ptr<CorpseTracker>> _trackedCorpses;

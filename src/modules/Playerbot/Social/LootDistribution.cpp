@@ -21,6 +21,7 @@
 #include "WorldSession.h"
 #include "ObjectAccessor.h"
 #include "Session/BotSession.h"
+#include "../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include "Spatial/SpatialGridQueryHelpers.h"
 #include "../Group/GroupMemberResolver.h"
 #include "../Core/Diagnostics/GroupMemberDiagnostics.h"

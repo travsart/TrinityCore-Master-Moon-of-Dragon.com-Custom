@@ -23,6 +23,7 @@
 #include "Map.h"
 #include "Group.h"
 #include "Session/BotSession.h"
+#include "../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include "Core/Services/BotNpcLocationService.h"
 #include "Core/Threading/SafeGridOperations.h"  // SEH-protected grid operations
 #include <algorithm>

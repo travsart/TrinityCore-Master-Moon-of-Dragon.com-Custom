@@ -4,6 +4,7 @@
 
 #include "BotResourcePool.h"
 #include "BotSession.h"
+#include "../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include "Config/PlayerbotConfig.h"
 #include "Logging/Log.h"
 #include "Player.h"

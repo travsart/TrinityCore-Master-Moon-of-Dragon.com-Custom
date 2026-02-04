@@ -42,6 +42,7 @@
 #include "CharacterDatabase.h"
 #include "BotWorldSessionMgr.h"
 #include "Session/BotSession.h"
+#include "../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include "BotResourcePool.h"
 #include "BotAccountMgr.h"
 #include "Config/PlayerbotConfig.h"

@@ -14,6 +14,7 @@
 #include "WorldSession.h"
 #include "Log.h"
 #include "../AI/BotAI.h"
+#include "../Session/BotSession.h"
 #include "DeathRecoveryManager.h"
 
 namespace Playerbot
@@ -47,9 +48,12 @@ void CorpseCrashMitigation::OnBotDeath(Player* bot)
         // Cache death location BEFORE death for corpse-less resurrection
         CacheDeathLocation(bot);
 
-        // Mark bot for corpse prevention using custom player flag
-        // Safe because it's in the unused flag range (high byte)
-        bot->SetFlag(PLAYER_FIELD_BYTES2, 0x80000000);
+        // Mark bot for corpse prevention in our internal tracking
+        {
+            _mutex.lock();
+            _pendingPrevention.insert(bot->GetGUID());
+            _mutex.unlock();
+        }
     }
 }
 
@@ -61,8 +65,13 @@ void CorpseCrashMitigation::OnCorpseCreated(Player* bot, Corpse* corpse)
     if (!bot->GetSession()->IsBot())
         return;
 
-    // Check if this bot has corpse prevention flag
-    bool preventionAttempted = (bot->GetByteValue(PLAYER_FIELD_BYTES2, 3) & 0x80);
+    // Check if this bot has corpse prevention flag in our internal tracking
+    bool preventionAttempted = false;
+    {
+        _mutex.lock_shared();
+        preventionAttempted = (_pendingPrevention.count(bot->GetGUID()) > 0);
+        _mutex.unlock_shared();
+    }
 
     if (preventionAttempted)
     {
@@ -91,8 +100,12 @@ void CorpseCrashMitigation::OnCorpseCreated(Player* bot, Corpse* corpse)
             TrackCorpseSafely(bot, corpse);
         }
 
-        // Clear prevention flag
-        bot->RemoveFlag(PLAYER_FIELD_BYTES2, 0x80000000);
+        // Clear prevention flag from our internal tracking
+        {
+            _mutex.lock();
+            _pendingPrevention.erase(bot->GetGUID());
+            _mutex.unlock();
+        }
 
         // Decrement active prevention counter
         --_activePrevention;
@@ -115,7 +128,7 @@ void CorpseCrashMitigation::OnBotResurrection(Player* bot)
 
     ObjectGuid botGuid = bot->GetGUID();
 
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock();
 
     // Clean up death location cache
     _deathLocations.erase(botGuid);
@@ -131,6 +144,8 @@ void CorpseCrashMitigation::OnBotResurrection(Player* bot)
         TC_LOG_DEBUG("playerbot.corpse", "Bot {} resurrected - cleaned up corpse tracking",
             bot->GetName());
     }
+
+    _mutex.unlock();
 }
 
 // ============================================================================
@@ -146,7 +161,7 @@ bool CorpseCrashMitigation::TryPreventCorpse(Player* bot)
 
     // CRITICAL: Set death state to ALIVE immediately to prevent corpse creation
     // This MUST happen before TrinityCore's death handling creates the corpse
-    bot->SetDeathState(ALIVE);
+    bot->setDeathState(ALIVE);
 
     // Set bot as ghost for visual effect (but alive mechanically)
     bot->SetPlayerFlag(PLAYER_FLAGS_GHOST);
@@ -158,12 +173,18 @@ bool CorpseCrashMitigation::TryPreventCorpse(Player* bot)
     bot->SetHealth(1);
 
     // Get BotAI to handle the fake death recovery
-    if (BotAI* ai = dynamic_cast<BotAI*>(bot->GetAI()))
+    if (WorldSession* session = bot->GetSession())
     {
-        if (DeathRecoveryManager* drm = ai->GetDeathRecoveryManager())
+        if (BotSession* botSession = dynamic_cast<BotSession*>(session))
         {
-            // Initialize death recovery with cached location (no corpse needed)
-            drm->OnDeath();
+            if (BotAI* ai = botSession->GetAI())
+            {
+                if (DeathRecoveryManager* drm = ai->GetDeathRecoveryManager())
+                {
+                    // Initialize death recovery with cached location (no corpse needed)
+                    drm->OnDeath();
+                }
+            }
         }
     }
 
@@ -207,28 +228,36 @@ void CorpseCrashMitigation::CacheDeathLocation(Player* bot)
     location.z = bot->GetPositionZ();
     location.deathTime = ::std::chrono::steady_clock::now();
 
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock();
     _deathLocations[botGuid] = location;
+    _mutex.unlock();
 
     TC_LOG_DEBUG("playerbot.corpse", "Cached death location for bot {} at ({:.2f}, {:.2f}, {:.2f}) map {}",
         bot->GetName(), location.x, location.y, location.z, location.mapId);
 
     // Also notify DeathRecoveryManager if available
-    if (BotAI* ai = dynamic_cast<BotAI*>(bot->GetAI()))
+    if (WorldSession* session = bot->GetSession())
     {
-        if (DeathRecoveryManager* drm = ai->GetDeathRecoveryManager())
+        if (BotSession* botSession = dynamic_cast<BotSession*>(session))
         {
-            // DeathRecoveryManager will cache location in OnDeath()
-            // This is a pre-cache to ensure it happens BEFORE corpse creation
-            TC_LOG_TRACE("playerbot.corpse", "Pre-cached death location in unified mitigation system");
+            if (BotAI* ai = botSession->GetAI())
+            {
+                if (DeathRecoveryManager* drm = ai->GetDeathRecoveryManager())
+                {
+                    // DeathRecoveryManager will cache location in OnDeath()
+                    // This is a pre-cache to ensure it happens BEFORE corpse creation
+                    TC_LOG_TRACE("playerbot.corpse", "Pre-cached death location in unified mitigation system");
+                }
+            }
         }
     }
 }
 
 void CorpseCrashMitigation::UncacheDeathLocation(ObjectGuid botGuid)
 {
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock();
     _deathLocations.erase(botGuid);
+    _mutex.unlock();
 }
 
 // ============================================================================
@@ -255,17 +284,18 @@ void CorpseCrashMitigation::TrackCorpseSafely(Player* bot, Corpse* corpse)
     tracker->safeToDelete = false; // NOT safe until Map update completes
     tracker->referenceCount = 1;
 
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock();
     _trackedCorpses[corpseGuid] = ::std::move(tracker);
     _ownerToCorpse[ownerGuid] = corpseGuid;
+    _mutex.unlock();
 
     TC_LOG_DEBUG("playerbot.corpse", "Tracking corpse {} for bot {} at ({:.2f}, {:.2f}, {:.2f}) (strategy 2 fallback)",
-        corpseGuid.ToString(), bot->GetName(), tracker->x, tracker->y, tracker->z);
+        corpseGuid.ToString(), bot->GetName(), corpse->GetPositionX(), corpse->GetPositionY(), corpse->GetPositionZ());
 }
 
 void CorpseCrashMitigation::UntrackCorpse(ObjectGuid corpseGuid)
 {
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock();
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -276,11 +306,13 @@ void CorpseCrashMitigation::UntrackCorpse(ObjectGuid corpseGuid)
 
         TC_LOG_DEBUG("playerbot.corpse", "Untracked corpse {}", corpseGuid.ToString());
     }
+
+    _mutex.unlock();
 }
 
 bool CorpseCrashMitigation::IsCorpseSafeToDelete(ObjectGuid corpseGuid) const
 {
-    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock_shared();
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -290,6 +322,8 @@ bool CorpseCrashMitigation::IsCorpseSafeToDelete(ObjectGuid corpseGuid) const
         // 2. No active references (not in Map update)
         bool safe = it->second->safeToDelete.load() &&
                    (it->second->referenceCount.load() == 0);
+
+        _mutex.unlock_shared();
 
         if (!safe)
         {
@@ -303,13 +337,15 @@ bool CorpseCrashMitigation::IsCorpseSafeToDelete(ObjectGuid corpseGuid) const
         return safe;
     }
 
+    _mutex.unlock_shared();
+
     // Unknown corpse = not a bot corpse = safe to delete normally
     return true;
 }
 
 void CorpseCrashMitigation::MarkCorpseSafeForDeletion(ObjectGuid corpseGuid)
 {
-    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock_shared();
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -317,11 +353,13 @@ void CorpseCrashMitigation::MarkCorpseSafeForDeletion(ObjectGuid corpseGuid)
         it->second->safeToDelete = true;
         TC_LOG_DEBUG("playerbot.corpse", "Corpse {} marked safe for deletion", corpseGuid.ToString());
     }
+
+    _mutex.unlock_shared();
 }
 
 void CorpseCrashMitigation::AddCorpseReference(ObjectGuid corpseGuid)
 {
-    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock_shared();
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -330,11 +368,13 @@ void CorpseCrashMitigation::AddCorpseReference(ObjectGuid corpseGuid)
         TC_LOG_TRACE("playerbot.corpse", "Corpse {} reference++ (count={})",
             corpseGuid.ToString(), it->second->referenceCount.load());
     }
+
+    _mutex.unlock_shared();
 }
 
 void CorpseCrashMitigation::RemoveCorpseReference(ObjectGuid corpseGuid)
 {
-    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock_shared();
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -350,6 +390,8 @@ void CorpseCrashMitigation::RemoveCorpseReference(ObjectGuid corpseGuid)
                 corpseGuid.ToString());
         }
     }
+
+    _mutex.unlock_shared();
 }
 
 // ============================================================================
@@ -358,31 +400,43 @@ void CorpseCrashMitigation::RemoveCorpseReference(ObjectGuid corpseGuid)
 
 CorpseLocation const* CorpseCrashMitigation::GetDeathLocation(ObjectGuid botGuid) const
 {
-    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock_shared();
 
     auto it = _deathLocations.find(botGuid);
     if (it != _deathLocations.end())
+    {
+        _mutex.unlock_shared();
         return &it->second;
+    }
 
+    _mutex.unlock_shared();
     return nullptr;
 }
 
 bool CorpseCrashMitigation::GetCorpseLocation(ObjectGuid ownerGuid, float& x, float& y, float& z, uint32& mapId) const
 {
-    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock_shared();
 
     auto ownerIt = _ownerToCorpse.find(ownerGuid);
     if (ownerIt == _ownerToCorpse.end())
+    {
+        _mutex.unlock_shared();
         return false;
+    }
 
     auto corpseIt = _trackedCorpses.find(ownerIt->second);
     if (corpseIt == _trackedCorpses.end())
+    {
+        _mutex.unlock_shared();
         return false;
+    }
 
     x = corpseIt->second->x;
     y = corpseIt->second->y;
     z = corpseIt->second->z;
     mapId = corpseIt->second->mapId;
+
+    _mutex.unlock_shared();
 
     TC_LOG_TRACE("playerbot.corpse", "Retrieved corpse location for owner {} at ({:.2f}, {:.2f}, {:.2f})",
         ownerGuid.ToString(), x, y, z);
@@ -396,7 +450,7 @@ bool CorpseCrashMitigation::GetCorpseLocation(ObjectGuid ownerGuid, float& x, fl
 
 void CorpseCrashMitigation::CleanupExpiredCorpses()
 {
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    _mutex.lock();
 
     auto now = ::std::chrono::steady_clock::now();
 
@@ -438,6 +492,8 @@ void CorpseCrashMitigation::CleanupExpiredCorpses()
             ++it;
         }
     }
+
+    _mutex.unlock();
 }
 
 } // namespace Playerbot
