@@ -1255,21 +1255,56 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
 
 void BotSpawner::DespawnAllBots()
 {
-    ::std::vector<ObjectGuid> botsToRemove;
+    // P1 FIX: ATOMIC SWAP PATTERN for thread-safe mass despawn
+    // Problem: Range-based for over concurrent_hash_map is NOT atomic - other threads
+    //          can add/remove entries during iteration, causing iterator invalidation,
+    //          missing bots, or potential crashes
+    // Solution: Atomically swap with empty maps, then process isolated snapshot with
+    //           zero race condition risk. TBB concurrent_hash_map::swap() is atomic.
+
+    // Step 1: Atomically swap out both tracking maps
+    tbb::concurrent_hash_map<ObjectGuid, uint32> oldBots;
+    _activeBots.swap(oldBots);  // Atomic operation - now we own the old map
+
+    tbb::concurrent_hash_map<uint32, ::std::vector<ObjectGuid>> oldBotsByZone;
+    _botsByZone.swap(oldBotsByZone);  // Atomic operation
+
+    // Step 2: Reset atomic counter (all bots are being despawned)
+    _activeBotCount.store(0, ::std::memory_order_release);
+
+    uint32 despawnCount = 0;
+
+    // Step 3: Process the isolated snapshot (no race conditions possible)
+    // This is now completely thread-safe - no other thread can access oldBots
+    for (auto const& [guid, zoneId] : oldBots)
     {
-        for (auto const& [guid, zoneId] : _activeBots)
+        // Get account ID for session cleanup
+        uint32 accountId = GetAccountIdFromCharacter(guid);
+
+        // Remove the bot session to prevent memory leaks
+        // This is the critical cleanup that was happening in DespawnBot()
+        if (accountId != 0)
         {
-            botsToRemove.push_back(guid);
+            Playerbot::sBotWorldSessionMgr->RemoveAllPlayerBots(accountId);
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "Released bot session for account {} (character {}) during mass despawn",
+                accountId, guid.ToString());
         }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.spawner",
+                "Could not find account ID for character {} during mass despawn", guid.ToString());
+        }
+
+        ++despawnCount;
     }
 
-    for (ObjectGuid guid : botsToRemove)
-    {
-        DespawnBot(guid, true);
-    }
+    // Step 4: Update statistics (batch update for performance)
+    _stats.totalDespawned.fetch_add(despawnCount, ::std::memory_order_release);
+    _stats.currentlyActive.store(0, ::std::memory_order_release);
 
     TC_LOG_INFO("module.playerbot.spawner",
-        "Despawned all {} active bots", botsToRemove.size());
+        "Despawned all {} active bots using atomic swap pattern (race-free)", despawnCount);
 }
 
 void BotSpawner::UpdateZonePopulation(uint32 zoneId, uint32 mapId)

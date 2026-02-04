@@ -589,26 +589,30 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
             TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Got {}/{} Alliance and {}/{} Horde from warm pool",
                 allianceFromPool, allianceStillNeeded, hordeFromPool, hordeStillNeeded);
 
-            // Queue the bots from pool for the BG and MARK AS INSTANCE BOTS
-            // ====================================================================
-            // CRITICAL FIX (2026-01-22): Mark warm pool bots as INSTANCE BOTS!
-            // ====================================================================
-            for (ObjectGuid const& guid : poolAssignment.allianceBots)
-            {
-                if (Player* bot = ObjectAccessor::FindPlayer(guid))
-                {
-                    sBGBotManager->QueueBotForBG(bot, snapshot.bgTypeId, snapshot.bracketId);
-                    sBotWorldSessionMgr->MarkAsInstanceBot(guid);
-                }
-            }
-            for (ObjectGuid const& guid : poolAssignment.hordeBots)
-            {
-                if (Player* bot = ObjectAccessor::FindPlayer(guid))
-                {
-                    sBGBotManager->QueueBotForBG(bot, snapshot.bgTypeId, snapshot.bracketId);
-                    sBotWorldSessionMgr->MarkAsInstanceBot(guid);
-                }
-            }
+            // ========================================================================
+            // WARM POOL BOT BG QUEUEING - HANDLED BY POOL WORKFLOW
+            // ========================================================================
+            // DO NOT try to queue warm pool bots immediately here!
+            //
+            // Warm pool bots are NOT logged in at this point. They exist as database
+            // records and are being logged in asynchronously via WarmUpBot(). The
+            // queueing workflow is:
+            //
+            // 1. AssignForBattleground() -> selects bots from ready index
+            // 2. AssignBot() -> stores contentId and calls WarmUpBot()
+            // 3. WarmUpBot() -> sets pendingConfig.battlegroundIdToQueue and spawns bot
+            // 4. Bot logs in -> BotPostLoginConfigurator::ApplyPendingConfiguration()
+            // 5. ApplyPendingConfiguration() -> calls sBGBotManager->QueueBotForBG()
+            //
+            // Previously, we tried to use ObjectAccessor::FindPlayer() here, but it
+            // returned nullptr because bots weren't logged in yet. This silently
+            // failed and warm pool bots never queued for BG (the "warm bots not work"
+            // bug). JIT bots worked because they're logged in FIRST, then queued.
+            //
+            // The markAsInstanceBot flag is now set via pendingConfig.markAsInstanceBot
+            // in WarmUpBot() and applied by BotPostLoginConfigurator.
+            // ========================================================================
+            TC_LOG_DEBUG("playerbot.jit", "QueueStatePoller: Warm pool bots will queue for BG after login via BotPostLoginConfigurator");
 
             // Update remaining needs
             allianceStillNeeded = allianceStillNeeded > allianceFromPool ? allianceStillNeeded - allianceFromPool : 0;

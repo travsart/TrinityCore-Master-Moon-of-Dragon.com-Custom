@@ -986,11 +986,24 @@ BGAssignment InstanceBotPool::AssignForBattleground(
         }
     }
 
-    // Assign all selected bots
+    // DIAGNOSTIC: Log selection results before assignment
+    TC_LOG_INFO("playerbot.pool", "AssignForBattleground: Selected Alliance={} Horde={} (requested A={} H={}) from bracket {}",
+        result.allianceBots.size(), result.hordeBots.size(), allianceNeeded, hordeNeeded, static_cast<uint32>(bracket));
+
+    // Assign all selected bots - this triggers async login via WarmUpBot
+    // NOTE: Bots will NOT be immediately online after this! They need 1-2 seconds to log in.
     for (ObjectGuid guid : result.allianceBots)
-        AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel);
+    {
+        bool assigned = AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel);
+        TC_LOG_DEBUG("playerbot.pool", "AssignForBattleground: Alliance bot {} assign result: {} (async login started)",
+            guid.ToString(), assigned);
+    }
     for (ObjectGuid guid : result.hordeBots)
-        AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel);
+    {
+        bool assigned = AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel);
+        TC_LOG_DEBUG("playerbot.pool", "AssignForBattleground: Horde bot {} assign result: {} (async login started)",
+            guid.ToString(), assigned);
+    }
 
     // Record timing
     auto endTime = std::chrono::steady_clock::now();
@@ -2797,6 +2810,8 @@ std::vector<ObjectGuid> InstanceBotPool::SelectBotsFromBracket(BotRole role, Fac
         factionIdx >= static_cast<size_t>(Faction::Max) ||
         bracketIdx >= NUM_LEVEL_BRACKETS)
     {
+        TC_LOG_DEBUG("playerbot.pool", "SelectBotsFromBracket: Invalid indices - role={} faction={} bracket={}",
+            roleIdx, factionIdx, bracketIdx);
         return result;
     }
 
@@ -2804,6 +2819,11 @@ std::vector<ObjectGuid> InstanceBotPool::SelectBotsFromBracket(BotRole role, Fac
 
     uint32 available = static_cast<uint32>(bracketBots.size());
     uint32 toSelect = std::min(count, available);
+
+    // DIAGNOSTIC: Log ready index state
+    TC_LOG_INFO("playerbot.pool", "SelectBotsFromBracket: role={} faction={} bracket={} requested={} available={} selecting={}",
+        BotRoleToString(role), FactionToString(faction), static_cast<uint32>(bracket),
+        count, available, toSelect);
 
     for (uint32 i = 0; i < toSelect; ++i)
     {

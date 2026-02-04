@@ -240,25 +240,25 @@ void BGBotManager::OnInvitationReceived(ObjectGuid playerGuid, uint32 bgInstance
     itr->second.bgInstanceGuid = bgInstanceGuid;
     _bgInstanceBots[bgInstanceGuid].insert(playerGuid);
 
-    // Auto-accept the invitation for bot
+    // ========================================================================
+    // BOT BG INVITATION ACCEPTANCE
+    // ========================================================================
+    // DO NOT call bg->AddPlayer() here! At invitation time, the BG map doesn't
+    // exist yet. AddPlayer() requires GetBgMap() which asserts m_Map != nullptr.
+    //
+    // The correct flow is:
+    // 1. Bot receives invitation (here) - just record it, don't add to BG
+    // 2. BG becomes ready to start - BattlegroundMgr creates the map
+    // 3. Bot teleports in via SendToBattleground()
+    // 4. AddPlayer() is called in HandleMoveWorldPortAck() when bot arrives
+    //
+    // For bots, we auto-teleport them when the BG actually starts via
+    // OnBattlegroundStart() callback, which is when the map exists.
+    // ========================================================================
     if (Player* bot = ObjectAccessor::FindPlayer(playerGuid))
     {
-        TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::OnInvitationReceived - Bot {} accepting BG invitation",
-                     bot->GetName());
-
-        // Use BattlegroundMgr to handle the acceptance
-        // The bot will be teleported when the BG starts
-        if (Battleground* bg = sBattlegroundMgr->GetBattleground(bgInstanceGuid, itr->second.bgTypeId))
-        {
-            // Construct the queue type ID for AddPlayer
-            BattlegroundQueueTypeId queueTypeId = BattlegroundMgr::BGQueueTypeId(
-                static_cast<uint16>(itr->second.bgTypeId),
-                BattlegroundQueueIdType::Battleground,
-                false,  // Not rated
-                0       // TeamSize (0 for regular BG)
-            );
-            bg->AddPlayer(bot, queueTypeId);
-        }
+        TC_LOG_INFO("module.playerbot.bg", "BGBotManager::OnInvitationReceived - Bot {} recorded invitation for BG {} (will teleport when BG starts)",
+                     bot->GetName(), bgInstanceGuid);
     }
 }
 
