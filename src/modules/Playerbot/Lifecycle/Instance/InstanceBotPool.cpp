@@ -1773,6 +1773,7 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     request.type = SpawnRequest::SPECIFIC_CHARACTER;
     request.accountId = accountId;
     request.characterGuid = botGuid;
+    request.bypassMaxBotsLimit = true;  // Pool bots bypass MaxBots limit - they're temporary for BG/dungeon/arena
     request.callback = [this, botGuid](bool success, ObjectGuid guid) {
         if (success)
         {

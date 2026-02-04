@@ -200,7 +200,7 @@ private:
 
     // Internal spawning
     bool SpawnBotInternal(SpawnRequest const& request);
-    bool CreateBotSession(uint32 accountId, ObjectGuid characterGuid);
+    bool CreateBotSession(uint32 accountId, ObjectGuid characterGuid, bool bypassMaxBotsLimit = false);
     bool ValidateSpawnRequest(SpawnRequest const& request) const;
 
     // Phase 2: Priority assignment for spawn requests

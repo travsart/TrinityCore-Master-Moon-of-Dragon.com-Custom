@@ -62,6 +62,7 @@
 #include "MotionMaster.h"
 #include "RealmList.h"
 #include "DB2Stores.h"
+#include "DBCEnums.h"  // WoW 12.0: MAP_WOWLABS, MAP_HOUSE_INTERIOR, MAP_HOUSE_NEIGHBORHOOD
 #include "WorldSession.h"
 #include "Movement/BotWorldPositioner.h"
 #include <algorithm>
@@ -657,9 +658,10 @@ bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
     }
 }
 
-bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
+bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid, bool bypassMaxBotsLimit)
 {
-    TC_LOG_INFO("module.playerbot.spawner", " Creating bot session for account {}, character {}", accountId, characterGuid.ToString());
+    TC_LOG_INFO("module.playerbot.spawner", " Creating bot session for account {}, character {}, bypassLimit={}",
+        accountId, characterGuid.ToString(), bypassMaxBotsLimit);
 
     // DISABLED: Legacy BotSessionMgr creates invalid account IDs
     // Use the BotSessionMgr to create a new bot session with ASYNC character login (legacy approach)
@@ -672,7 +674,8 @@ bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
     // }
 
     // PRIMARY: Use the fixed native TrinityCore login approach with proper account IDs
-    if (!Playerbot::sBotWorldSessionMgr->AddPlayerBot(characterGuid, accountId))
+    // Pass bypassMaxBotsLimit for pool/JIT bots that should bypass MaxBots config
+    if (!Playerbot::sBotWorldSessionMgr->AddPlayerBot(characterGuid, accountId, bypassMaxBotsLimit))
     {
         TC_LOG_ERROR("module.playerbot.spawner",
             " Failed to create native WorldSession for character {}", characterGuid.ToString());
@@ -1085,10 +1088,11 @@ void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnReque
         return;
     }
 
-    TC_LOG_INFO("module.playerbot.spawner", " Continuing spawn with character {} for account {}", characterGuid.ToString(), actualAccountId);
+    TC_LOG_INFO("module.playerbot.spawner", " Continuing spawn with character {} for account {} (bypassLimit={})",
+        characterGuid.ToString(), actualAccountId, request.bypassMaxBotsLimit);
 
-    // Create bot session
-    if (!CreateBotSession(actualAccountId, characterGuid))
+    // Create bot session - pass bypassMaxBotsLimit for pool/JIT bots
+    if (!CreateBotSession(actualAccountId, characterGuid, request.bypassMaxBotsLimit))
     {
         TC_LOG_ERROR("module.playerbot.spawner",
             "Failed to create bot session for character {}", characterGuid.ToString());
@@ -1401,6 +1405,27 @@ bool BotSpawner::CanSpawnInZone(uint32 zoneId) const
 
 bool BotSpawner::CanSpawnOnMap(uint32 mapId) const
 {
+    // WoW 12.0: Check map type exclusions for housing and WowLabs maps
+    MapEntry const* mapEntry = sMapStore.LookupEntry(mapId);
+    if (mapEntry)
+    {
+        // Exclude housing maps (player housing interiors and neighborhoods)
+        // Exclude WowLabs maps (Plunderstorm and experimental game modes)
+        switch (mapEntry->InstanceType)
+        {
+            case MAP_WOWLABS:           // Plunderstorm/experimental
+            case MAP_HOUSE_INTERIOR:    // Player housing interior
+            case MAP_HOUSE_NEIGHBORHOOD: // Player housing neighborhood
+                TC_LOG_DEBUG("module.playerbot.spawner",
+                    "CanSpawnOnMap: Rejecting map {} - map type {} is excluded (housing/WowLabs)",
+                    mapId, static_cast<uint32>(mapEntry->InstanceType));
+                return false;
+            default:
+                break;
+        }
+    }
+
+    // Check population cap
     uint32 mapBotCount = 0;
     for (auto const& [zoneId, population] : _zonePopulations)
     {

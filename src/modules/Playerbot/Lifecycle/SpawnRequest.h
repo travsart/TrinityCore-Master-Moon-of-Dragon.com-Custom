@@ -31,6 +31,7 @@ struct SpawnRequest
     uint8 classFilter = 0;
     uint8 raceFilter = 0;
     uint32 maxBotsPerZone = 50;
+    bool bypassMaxBotsLimit = false;  // For pool/JIT bots that should bypass MaxBots config
 
     // Callback on spawn completion
     ::std::function<void(bool success, ObjectGuid guid)> callback;
