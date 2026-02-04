@@ -532,12 +532,88 @@ bool BotSpawner::SpawnBot(SpawnRequest const& request)
         static_cast<int>(request.type), request.characterGuid.ToString(),
         request.accountId, request.bypassMaxBotsLimit);
 
-    if (!ValidateSpawnRequest(request))
+    // P1 FIX: ATOMIC PRE-INCREMENT PATTERN to eliminate TOCTOU race
+    //
+    // Problem: Old pattern had time gap between check and increment:
+    //   Thread 1: Check count=99 < 100 ✓
+    //   Thread 2: Check count=99 < 100 ✓ (before T1 increments!)
+    //   Thread 1: Spawns, count becomes 100
+    //   Thread 2: Spawns, count becomes 101 ❌ OVERFLOW!
+    //
+    // Solution: Reserve slot atomically BEFORE checking cap:
+    //   Thread 1: Atomic increment 99→100 (returns 99)
+    //   Thread 2: Atomic increment 100→101 (returns 100)
+    //   Thread 1: Check 99 < 100 ✓ spawns
+    //   Thread 2: Check 100 < 100 ✗ rollback (100→99), rejects
+    //
+    // This guarantees exact cap enforcement with zero overflow risk.
+
+    // Step 1: Basic validation (non-population checks)
+    if (!ValidateSpawnRequestBasic(request))
     {
         return false;
     }
 
-    return SpawnBotInternal(request);
+    // Step 2: Atomic pre-increment - reserves slot and returns OLD value
+    // NOTE: We check the OLD value (before increment) against the cap
+    uint32 oldCount = _activeBotCount.fetch_add(1, ::std::memory_order_acquire);
+
+    // Step 3: Check global cap AFTER increment using old value
+    // If oldCount was 99 and cap is 100, we pass (slot 100 reserved)
+    // If oldCount was 100 and cap is 100, we fail (would be slot 101)
+    if (_config.respectPopulationCaps && !request.bypassMaxBotsLimit)
+    {
+        if (oldCount >= _config.maxBotsTotal)
+        {
+            // Rollback - we exceeded the cap
+            _activeBotCount.fetch_sub(1, ::std::memory_order_release);
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "SpawnBot: Rejected - global cap reached ({}/{})",
+                oldCount, _config.maxBotsTotal);
+            return false;
+        }
+    }
+
+    // Step 4: Zone cap check (best-effort - no atomic per-zone counters yet)
+    // NOTE: Zone caps may have small overflow due to lack of atomic per-zone counter
+    // This is acceptable for current requirements (global cap is the hard limit)
+    if (request.zoneId != 0 && _config.respectPopulationCaps && !request.bypassMaxBotsLimit)
+    {
+        if (!CanSpawnInZone(request.zoneId))
+        {
+            // Rollback - zone cap exceeded
+            _activeBotCount.fetch_sub(1, ::std::memory_order_release);
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "SpawnBot: Rejected - zone {} bot limit reached", request.zoneId);
+            return false;
+        }
+    }
+
+    // Step 5: Map cap check (best-effort)
+    if (request.mapId != 0 && _config.respectPopulationCaps && !request.bypassMaxBotsLimit)
+    {
+        if (!CanSpawnOnMap(request.mapId))
+        {
+            // Rollback - map cap exceeded or map type excluded
+            _activeBotCount.fetch_sub(1, ::std::memory_order_release);
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "SpawnBot: Rejected - map {} bot limit reached or excluded", request.mapId);
+            return false;
+        }
+    }
+
+    // Step 6: Spawn the bot (counter already incremented, must not double-increment!)
+    if (!SpawnBotInternal(request))
+    {
+        // Rollback on spawn failure
+        _activeBotCount.fetch_sub(1, ::std::memory_order_release);
+        TC_LOG_ERROR("module.playerbot.spawner",
+            "SpawnBot: SpawnBotInternal failed - rolled back counter");
+        return false;
+    }
+
+    // Success - counter already incremented, no rollback needed
+    return true;
 }
 
 uint32 BotSpawner::SpawnBots(::std::vector<SpawnRequest> const& requests)
@@ -695,9 +771,11 @@ bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid, bo
     return true;
 }
 
-bool BotSpawner::ValidateSpawnRequest(SpawnRequest const& request) const
+bool BotSpawner::ValidateSpawnRequestBasic(SpawnRequest const& request) const
 {
-    // Comprehensive validation for 5000 bot scalability
+    // P1 FIX: Non-population validation split out for atomic pre-increment pattern
+    // This method performs all validations EXCEPT population caps, which are now
+    // checked after atomic slot reservation to eliminate TOCTOU race
 
     // Check if spawning is enabled
     if (!_enabled.load())
@@ -732,6 +810,26 @@ bool BotSpawner::ValidateSpawnRequest(SpawnRequest const& request) const
         TC_LOG_WARN("module.playerbot.spawner", "Invalid level range: {} > {}", request.minLevel, request.maxLevel);
         return false;
     }
+
+    // NOTE: Population cap checks are now performed in SpawnBot() after atomic pre-increment
+    // This eliminates the TOCTOU race where multiple threads could pass the check simultaneously
+
+    return true;
+}
+
+bool BotSpawner::ValidateSpawnRequest(SpawnRequest const& request) const
+{
+    // DEPRECATED: This method is kept for backward compatibility with code that bypasses SpawnBot()
+    // New code should use the atomic pre-increment pattern in SpawnBot() instead
+    //
+    // WARNING: Using this method directly (without atomic pre-increment) can still cause
+    // population cap overflow due to TOCTOU race conditions
+
+    // Comprehensive validation for 5000 bot scalability
+
+    // Basic validation (non-population checks)
+    if (!ValidateSpawnRequestBasic(request))
+        return false;
 
     // Check global population caps
     if (_config.respectPopulationCaps && !CanSpawnMore())
@@ -1127,8 +1225,12 @@ void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnReque
             acc->second.push_back(characterGuid);
         }
 
-        // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
-        _activeBotCount.fetch_add(1, ::std::memory_order_release);
+        // P1 FIX: Counter increment removed - now handled by atomic pre-increment in SpawnBot()
+        // The counter is incremented atomically BEFORE spawn attempt to reserve the slot and
+        // eliminate TOCTOU race. If we increment here, we would double-count.
+        //
+        // Old code (REMOVED):
+        // _activeBotCount.fetch_add(1, ::std::memory_order_release);
     }
 
     // Update statistics

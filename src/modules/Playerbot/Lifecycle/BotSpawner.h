@@ -202,6 +202,7 @@ private:
     bool SpawnBotInternal(SpawnRequest const& request);
     bool CreateBotSession(uint32 accountId, ObjectGuid characterGuid, bool bypassMaxBotsLimit = false);
     bool ValidateSpawnRequest(SpawnRequest const& request) const;
+    bool ValidateSpawnRequestBasic(SpawnRequest const& request) const;  // P1 FIX: Non-population validation for atomic pre-increment pattern
 
     // Phase 2: Priority assignment for spawn requests
     SpawnPriority DeterminePriority(SpawnRequest const& request) const;
