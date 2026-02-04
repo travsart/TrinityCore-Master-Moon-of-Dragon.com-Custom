@@ -306,7 +306,8 @@ bool BotFactory::StageInitializeManagers(BotCreationContext& ctx)
     }
 
     ctx.ai = botAI.get();
-    ctx.session->SetAI(botAI.release()); // Transfer ownership to session
+    // P1 FIX: Pass unique_ptr directly via std::move (no .release() needed)
+    ctx.session->SetAI(::std::move(botAI)); // Transfer ownership to session
 
     // Pass the lifecycle manager to the AI so it can check state
     // The AI will use this to defer events until ACTIVE

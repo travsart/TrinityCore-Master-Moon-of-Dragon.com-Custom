@@ -226,8 +226,9 @@ public:
     void HandleBotPlayerLogin(BotLoginQueryHolder const& holder);
 
     // AI Integration (public access for GroupInvitationHandler)
-    void SetAI(BotAI* ai) { _ai = ai; }
-    BotAI* GetAI() const { return _ai; }
+    // P1 FIX: Use unique_ptr for automatic memory management (no manual delete needed)
+    void SetAI(::std::unique_ptr<BotAI> ai) { _ai = ::std::move(ai); }
+    BotAI* GetAI() const { return _ai.get(); }  // Return raw pointer for compatibility
 
     // ========================================================================
     // THREAD-SAFE FACING SYSTEM
@@ -454,7 +455,8 @@ private:
     ::std::atomic<LoginState> _loginState{LoginState::NONE};
 
     // Bot AI system
-    BotAI* _ai{nullptr};
+    // P1 FIX: unique_ptr for automatic memory management - no manual delete in destructor
+    ::std::unique_ptr<BotAI> _ai;
 
     // Packet simulation system (Phase 1 refactoring)
     ::std::unique_ptr<BotPacketSimulator> _packetSimulator;

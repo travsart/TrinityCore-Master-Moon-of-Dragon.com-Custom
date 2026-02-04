@@ -9,6 +9,7 @@
 
 #include "BotSessionFactory.h"
 #include "BotSession.h"
+#include "../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include "Lifecycle/BotSpawner.h"
 #include "Logging/Log.h"
 #include "WorldSession.h"

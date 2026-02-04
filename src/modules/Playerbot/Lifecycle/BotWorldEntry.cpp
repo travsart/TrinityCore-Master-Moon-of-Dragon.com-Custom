@@ -560,7 +560,8 @@ bool BotWorldEntry::InitializeAI()
     // ALSO store AI in session for reference (session owns the AI memory)
     if (BotSession* botSession = dynamic_cast<BotSession*>(_session.get()))
     {
-        botSession->SetAI(botAI.release());
+        // P1 FIX: Pass unique_ptr directly via std::move (no .release() needed)
+        botSession->SetAI(::std::move(botAI));
     }
     else
     {

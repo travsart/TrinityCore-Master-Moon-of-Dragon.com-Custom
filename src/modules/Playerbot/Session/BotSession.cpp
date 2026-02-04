@@ -474,17 +474,11 @@ BotSession::~BotSession()
         }
     }
 
-    // MEMORY SAFETY: Clean up AI with exception protection
-    if (_ai)
-    {
-        try {
-            delete _ai;
-        } catch (...)
-        {
-            TC_LOG_ERROR("module.playerbot.session", "Exception destroying AI for account {}", accountId);
-        }
-        _ai = nullptr;
-    }
+    // P1 FIX: AI cleanup now automatic via std::unique_ptr
+    // The unique_ptr destructor will automatically delete the BotAI object
+    // No manual delete needed - exception-safe by design
+    // Old code (REMOVED):
+    //   if (_ai) { delete _ai; _ai = nullptr; }
 
     // THREAD SAFETY: Login state cleanup (synchronous mode requires minimal cleanup)
     try {
@@ -1409,7 +1403,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 // Solution: Single atomic read of all conditions
                 bool validSnapshot = playerIsValid;
                 bool inWorldSnapshot = playerIsInWorld;
-                BotAI* aiSnapshot = _ai;  // Snapshot pointer (raw pointer for now)
+                BotAI* aiSnapshot = _ai.get();  // P1 FIX: Get raw pointer from unique_ptr
                 bool activeSnapshot = _active.load(::std::memory_order_acquire);  // Acquire semantics
 
                 // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
@@ -2148,7 +2142,8 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             auto botAI = sBotAIFactory->CreateAI(GetPlayer());
             if (botAI)
             {
-                SetAI(botAI.release()); // Transfer ownership to BotSession
+                // P1 FIX: Pass unique_ptr directly via std::move (no .release() needed)
+                SetAI(::std::move(botAI)); // Transfer ownership to BotSession
                 TC_LOG_INFO("module.playerbot.session", "Successfully created BotAI for character {}", characterGuid.ToString());
                 // CRITICAL FIX: Check if bot is already in a group at login and activate strategies
                 // This fixes the "reboot breaks groups" issue where strategies aren't activated
@@ -2226,13 +2221,12 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
     {
         TC_LOG_ERROR("module.playerbot.session", "Exception in HandleBotPlayerLogin: {}", e.what());
         // CRITICAL FIX: Clean up AI BEFORE deleting player to prevent stale _bot pointer!
-        // If AI was created at line 1916 but exception occurs later, AI holds a reference
-        // to Player. We must delete AI first to prevent use-after-free crash in UpdateAI().
-        if (_ai)
-        {
-            delete _ai;
-            _ai = nullptr;
-        }
+        // If AI was created but exception occurs later, AI holds a reference to Player.
+        // We must delete AI first to prevent use-after-free crash in UpdateAI().
+        //
+        // P1 FIX: Use unique_ptr::reset() instead of manual delete
+        _ai.reset();  // Equivalent to: if (_ai) { delete _ai; _ai = nullptr; }
+
         if (GetPlayer())
         {
             delete GetPlayer();
@@ -2245,11 +2239,10 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
     {
         TC_LOG_ERROR("module.playerbot.session", "Unknown exception in HandleBotPlayerLogin");
         // CRITICAL FIX: Clean up AI BEFORE deleting player to prevent stale _bot pointer!
-        if (_ai)
-        {
-            delete _ai;
-            _ai = nullptr;
-        }
+        //
+        // P1 FIX: Use unique_ptr::reset() instead of manual delete
+        _ai.reset();  // Equivalent to: if (_ai) { delete _ai; _ai = nullptr; }
+
         if (GetPlayer())
         {
             delete GetPlayer();

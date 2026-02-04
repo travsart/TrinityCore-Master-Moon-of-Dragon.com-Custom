@@ -58,6 +58,7 @@
 
 #include "BotPacketRelay.h"
 #include "BotSession.h"
+#include "../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include "Player.h"
 #include "Group.h"
 #include "WorldPacket.h"

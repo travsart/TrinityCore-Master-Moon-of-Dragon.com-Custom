@@ -9,6 +9,7 @@
 
 #include "BotPacketSimulator.h"
 #include "BotSession.h"
+#include "../AI/BotAI.h"  // P1 FIX: Required for unique_ptr<BotAI> in BotSession.h
 #include "WorldSession.h"
 #include "Player.h"
 #include "Log.h"
