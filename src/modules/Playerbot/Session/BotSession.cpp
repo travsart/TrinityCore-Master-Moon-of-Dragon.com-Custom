@@ -2026,10 +2026,6 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         TC_LOG_DEBUG("module.playerbot.session", "Bot {} - Spell learning verification complete",
             pCurrChar->GetName());
 
-        // P1 FIX: Transfer ownership of Player to WorldSession
-        // release() extracts the raw pointer and relinquishes ownership
-        SetPlayer(pCurrChar.release());
-
         // Clear the loading state
         m_playerLoading.Clear();
 
@@ -2142,6 +2138,11 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             TC_LOG_WARN("module.playerbot.session", "JIT CONFIG CHECK: Bot {} (GUID={}) has NO PENDING CONFIG - Level stays at {}",
                 pCurrChar->GetName(), characterGuid.ToString(), pCurrChar->GetLevel());
         }
+
+        // P1 FIX: Transfer ownership of Player to WorldSession
+        // CRITICAL: This must happen AFTER all pCurrChar usage above, but BEFORE GetPlayer() usage below
+        // release() extracts the raw pointer, relinquishes ownership, and sets pCurrChar to nullptr
+        SetPlayer(pCurrChar.release());
 
         // Create and assign BotAI to take control of the character
     if (GetPlayer())
