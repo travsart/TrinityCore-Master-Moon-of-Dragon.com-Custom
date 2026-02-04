@@ -23,6 +23,7 @@
 #include "Log.h"
 #include "World.h"
 #include "AI/BotAI.h"
+#include "Core/PlayerBotHelpers.h"
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "Movement/Arbiter/MovementRequest.h"
 #include "Movement/Arbiter/MovementPriorityMapper.h"
@@ -1314,12 +1315,24 @@ void MechanicAwareness::ExecuteMovementResponse(Player* bot, const Position& saf
     }
     else
     {
-        // FALLBACK: Direct MotionMaster call if arbiter not available
-        // This should only happen during transition period
+        // FALLBACK: Use BotMovementController with validated pathfinding
         TC_LOG_WARN("playerbot.movement.arbiter",
-            "MechanicAwareness: Bot {} has no MovementArbiter - using legacy MovePoint()",
+            "MechanicAwareness: Bot {} has no MovementArbiter - using fallback pathfinding",
             bot->GetName());
-        bot->GetMotionMaster()->MovePoint(0, safePos);
+
+        if (BotAI* ai = GetBotAI(bot))
+        {
+            if (!ai->MoveTo(safePos, true))
+            {
+                // Final fallback to legacy if validation fails
+                bot->GetMotionMaster()->MovePoint(0, safePos);
+            }
+        }
+        else
+        {
+            // Non-bot player - use standard movement
+            bot->GetMotionMaster()->MovePoint(0, safePos);
+        }
     }
 
     // Track reaction time
