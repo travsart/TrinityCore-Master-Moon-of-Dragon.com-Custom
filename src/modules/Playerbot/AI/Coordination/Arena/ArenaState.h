@@ -37,7 +37,9 @@ enum class ArenaType : uint8
 {
     ARENA_2V2 = 2,
     ARENA_3V3 = 3,
-    ARENA_5V5 = 5
+    ARENA_5V5 = 5,
+    SKIRMISH_2v2 = 12,
+    SKIRMISH_3v3 = 13
 };
 
 enum class ArenaBracket : uint8

@@ -11,7 +11,6 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
-#include "Core/DI/Interfaces/IDungeonScriptMgr.h"
 #include "DungeonScript.h"
 #include <unordered_map>
 #include <mutex>
@@ -48,7 +47,7 @@ namespace Playerbot
  * else
  *     EncounterStrategy::HandleGenericInterrupts(player, boss);
  */
-class TC_GAME_API DungeonScriptMgr final : public IDungeonScriptMgr
+class TC_GAME_API DungeonScriptMgr final 
 {
 public:
     static DungeonScriptMgr* instance();
@@ -60,13 +59,13 @@ public:
     /**
      * Initialize script manager (called once at startup)
      */
-    void Initialize() override;
+    void Initialize();
 
     /**
      * Load all dungeon scripts
      * Called by Initialize() to register scripts
      */
-    void LoadScripts() override;
+    void LoadScripts();
 
     // ============================================================================
     // SCRIPT REGISTRATION
@@ -76,14 +75,14 @@ public:
      * Register a dungeon script
      * @param script Script to register (manager takes ownership)
      */
-    void RegisterScript(DungeonScript* script) override;
+    void RegisterScript(DungeonScript* script);
 
     /**
      * Register boss entry to script mapping
      * @param bossEntry Creature entry ID for boss
      * @param script Script handling this boss
      */
-    void RegisterBossScript(uint32 bossEntry, DungeonScript* script) override;
+    void RegisterBossScript(uint32 bossEntry, DungeonScript* script);
 
     // ============================================================================
     // SCRIPT LOOKUP
@@ -94,24 +93,24 @@ public:
      * @param mapId Map ID to look up
      * @return Script pointer or nullptr if not found
      */
-    DungeonScript* GetScriptForMap(uint32 mapId) const override;
+    DungeonScript* GetScriptForMap(uint32 mapId) const;
 
     /**
      * Get script for boss entry
      * @param bossEntry Creature entry ID
      * @return Script pointer or nullptr if not found
      */
-    DungeonScript* GetScriptForBoss(uint32 bossEntry) const override;
+    DungeonScript* GetScriptForBoss(uint32 bossEntry) const;
 
     /**
      * Check if script exists for map
      */
-    bool HasScriptForMap(uint32 mapId) const override;
+    bool HasScriptForMap(uint32 mapId) const;
 
     /**
      * Check if script exists for boss
      */
-    bool HasScriptForBoss(uint32 bossEntry) const override;
+    bool HasScriptForBoss(uint32 bossEntry) const;
 
     // ============================================================================
     // MECHANIC EXECUTION (with fallback)
@@ -129,7 +128,7 @@ public:
      * @param boss Boss being fought
      * @param mechanic Mechanic type to execute
      */
-    void ExecuteBossMechanic(::Player* player, ::Creature* boss, MechanicType mechanic) override;
+    void ExecuteBossMechanic(::Player* player, ::Creature* boss, MechanicType mechanic);
 
     // ============================================================================
     // STATISTICS
@@ -138,19 +137,34 @@ public:
     /**
      * Get number of registered scripts
      */
-    uint32 GetScriptCount() const override { return _scriptCount.load(); }
+    uint32 GetScriptCount() const { return _scriptCount.load(); }
 
     /**
      * Get number of registered boss mappings
      */
-    uint32 GetBossMappingCount() const override { return _bossMappingCount.load(); }
+    uint32 GetBossMappingCount() const { return _bossMappingCount.load(); }
+
+    /**
+     * Script execution statistics
+     */
+    struct ScriptStats
+    {
+        uint32 scriptCount{0};
+        uint32 bossMappingCount{0};
+        uint32 scriptExecutions{0};
+        uint32 fallbackExecutions{0};
+        float averageExecutionTimeMs{0.0f};
+        uint32 scriptsRegistered{0};
+        uint32 bossMappings{0};
+        uint32 scriptHits{0};
+        uint32 scriptMisses{0};
+        uint32 mechanicExecutions{0};
+    };
 
     /**
      * Get statistics on script usage
      */
-    using ScriptStats = IDungeonScriptMgr::ScriptStats;
-
-    ScriptStats GetStats() const override;
+    ScriptStats GetStats() const;
 
     // ============================================================================
     // DEBUGGING
@@ -159,12 +173,12 @@ public:
     /**
      * List all registered scripts (for debugging)
      */
-    void ListAllScripts() const override;
+    void ListAllScripts() const;
 
     /**
      * Get script info by name
      */
-    DungeonScript* GetScriptByName(::std::string const& name) const override;
+    DungeonScript* GetScriptByName(::std::string const& name) const;
 
 private:
     DungeonScriptMgr();

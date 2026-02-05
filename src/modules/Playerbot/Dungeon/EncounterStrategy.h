@@ -12,7 +12,6 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "DungeonBehavior.h"
-#include "../Core/DI/Interfaces/IEncounterStrategy.h"
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
@@ -24,6 +23,73 @@
 
 namespace Playerbot
 {
+
+// Forward declaration of strategy callback type
+using StrategyCallback = ::std::function<void(Player*, Group*, DungeonEncounter const&)>;
+
+/**
+ * @brief Tank strategy for encounters
+ */
+struct TankStrategy
+{
+    bool shouldTaunt{true};
+    bool shouldKite{false};
+    bool useCooldowns{true};
+    Position preferredPosition;
+    uint32 tauntSpellId{0};
+    float threatThreshold{1.1f};
+    StrategyCallback positioningStrategy{nullptr};
+    Position optimalPosition;
+    bool requiresMovement{false};
+};
+
+/**
+ * @brief Healer strategy for encounters
+ */
+struct HealerStrategy
+{
+    bool prioritizeTanks{true};
+    bool useHoTs{true};
+    bool conserveMana{false};
+    float emergencyThreshold{0.3f};
+    float normalThreshold{0.7f};
+    uint32 emergencySpellId{0};
+    StrategyCallback healingPriorityStrategy{nullptr};
+    Position safePosition;
+    float healingThreshold{0.7f};
+    bool requiresMovement{false};
+};
+
+/**
+ * @brief DPS strategy for encounters
+ */
+struct DpsStrategy
+{
+    bool prioritizeBoss{true};
+    bool useAoE{false};
+    bool useCooldowns{true};
+    float switchTargetThreshold{0.2f};
+    uint32 burstSpellId{0};
+    StrategyCallback damageOptimizationStrategy{nullptr};
+    Position optimalPosition;
+    float threatLimit{0.9f};
+    bool canMoveDuringCast{false};
+};
+
+/**
+ * @brief Strategy execution metrics
+ */
+struct StrategyMetrics
+{
+    uint32 strategiesExecuted{0};
+    uint32 strategiesSuccessful{0};
+    uint32 mechanicsHandled{0};
+    uint32 mechanicsSuccessful{0};
+    float averageExecutionTime{0.0f};
+    float strategySuccessRate{0.0f};
+    float mechanicSuccessRate{0.0f};
+    uint32 adaptationsPerformed{0};
+};
 
 /**
  * @brief Static generic library for dungeon encounter mechanics
@@ -42,7 +108,7 @@ namespace Playerbot
  * 2. DungeonScript base class (calls these generic methods)
  * 3. Direct call to these generic methods (no script exists)
  */
-class TC_GAME_API EncounterStrategy final : public IEncounterStrategy
+class TC_GAME_API EncounterStrategy final 
 {
 public:
     // ============================================================================
@@ -108,65 +174,65 @@ public:
     static EncounterStrategy* instance();
 
     // Core strategy management
-    void ExecuteEncounterStrategy(Group* group, uint32 encounterId) override;
-    void UpdateEncounterExecution(Group* group, uint32 encounterId, uint32 diff) override;
-    void HandleEncounterMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic) override;
-    void AdaptStrategyToGroupComposition(Group* group, uint32 encounterId) override;
+    void ExecuteEncounterStrategy(Group* group, uint32 encounterId);
+    void UpdateEncounterExecution(Group* group, uint32 encounterId, uint32 diff);
+    void HandleEncounterMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic);
+    void AdaptStrategyToGroupComposition(Group* group, uint32 encounterId);
 
     // Phase-based encounter management
-    void HandleEncounterPhaseTransition(Group* group, uint32 encounterId, uint32 newPhase) override;
-    void ExecutePhaseStrategy(Group* group, uint32 encounterId, uint32 phase) override;
-    void PrepareForPhaseTransition(Group* group, uint32 encounterId, uint32 upcomingPhase) override;
+    void HandleEncounterPhaseTransition(Group* group, uint32 encounterId, uint32 newPhase);
+    void ExecutePhaseStrategy(Group* group, uint32 encounterId, uint32 phase);
+    void PrepareForPhaseTransition(Group* group, uint32 encounterId, uint32 upcomingPhase);
 
     // Mechanic-specific handlers
-    void HandleTankSwapMechanic(Group* group, Player* currentTank, Player* newTank) override;
-    void HandleStackingDebuffMechanic(Group* group, Player* affectedPlayer) override;
-    void HandleAoEDamageMechanic(Group* group, const Position& dangerZone, float radius) override;
-    void HandleAddSpawnMechanic(Group* group, const ::std::vector<Unit*>& adds) override;
-    void HandleChanneledSpellMechanic(Group* group, Unit* caster, uint32 spellId) override;
-    void HandleEnrageMechanic(Group* group, Unit* boss, uint32 timeRemaining) override;
+    void HandleTankSwapMechanic(Group* group, Player* currentTank, Player* newTank);
+    void HandleStackingDebuffMechanic(Group* group, Player* affectedPlayer);
+    void HandleAoEDamageMechanic(Group* group, const Position& dangerZone, float radius);
+    void HandleAddSpawnMechanic(Group* group, const ::std::vector<Unit*>& adds);
+    void HandleChanneledSpellMechanic(Group* group, Unit* caster, uint32 spellId);
+    void HandleEnrageMechanic(Group* group, Unit* boss, uint32 timeRemaining);
 
     // Role-specific strategy execution (types defined in IEncounterStrategy.h)
-    TankStrategy GetTankStrategy(uint32 encounterId, Player* tank) override;
-    HealerStrategy GetHealerStrategy(uint32 encounterId, Player* healer) override;
-    DpsStrategy GetDpsStrategy(uint32 encounterId, Player* dps) override;
+    TankStrategy GetTankStrategy(uint32 encounterId, Player* tank);
+    HealerStrategy GetHealerStrategy(uint32 encounterId, Player* healer);
+    DpsStrategy GetDpsStrategy(uint32 encounterId, Player* dps);
 
     // Positioning and movement strategies
-    void UpdateEncounterPositioning(Group* group, uint32 encounterId) override;
-    void HandleMovementMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic) override;
-    Position CalculateOptimalPosition(Player* player, uint32 encounterId, DungeonRole role) override;
-    void AvoidMechanicAreas(Group* group, const ::std::vector<Position>& dangerAreas) override;
+    void UpdateEncounterPositioning(Group* group, uint32 encounterId);
+    void HandleMovementMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic);
+    Position CalculateOptimalPosition(Player* player, uint32 encounterId, DungeonRole role);
+    void AvoidMechanicAreas(Group* group, const ::std::vector<Position>& dangerAreas);
 
     // Cooldown and resource management
-    void CoordinateGroupCooldowns(Group* group, uint32 encounterId) override;
-    void PlanCooldownUsage(Group* group, const DungeonEncounter& encounter) override;
-    void HandleEmergencyCooldowns(Group* group) override;
-    void OptimizeResourceUsage(Group* group, uint32 encounterId) override;
+    void CoordinateGroupCooldowns(Group* group, uint32 encounterId);
+    void PlanCooldownUsage(Group* group, const DungeonEncounter& encounter);
+    void HandleEmergencyCooldowns(Group* group);
+    void OptimizeResourceUsage(Group* group, uint32 encounterId);
 
     // Public cooldown coordination method (called by DungeonBehavior)
     void CoordinateCooldowns(Group* group, uint32 encounterId);
 
     // Adaptive strategy system
-    void AnalyzeEncounterPerformance(Group* group, uint32 encounterId) override;
-    void AdaptStrategyBasedOnFailures(Group* group, uint32 encounterId) override;
-    void LearnFromSuccessfulEncounters(Group* group, uint32 encounterId) override;
-    void AdjustDifficultyRating(uint32 encounterId, float performanceRating) override;
+    void AnalyzeEncounterPerformance(Group* group, uint32 encounterId);
+    void AdaptStrategyBasedOnFailures(Group* group, uint32 encounterId);
+    void LearnFromSuccessfulEncounters(Group* group, uint32 encounterId);
+    void AdjustDifficultyRating(uint32 encounterId, float performanceRating);
 
     // Encounter-specific strategy implementations
-    void ExecuteDeadminesStrategies(Group* group, uint32 encounterId) override;
-    void ExecuteWailingCavernsStrategies(Group* group, uint32 encounterId) override;
-    void ExecuteShadowfangKeepStrategies(Group* group, uint32 encounterId) override;
-    void ExecuteStockadeStrategies(Group* group, uint32 encounterId) override;
-    void ExecuteRazorfenKraulStrategies(Group* group, uint32 encounterId) override;
+    void ExecuteDeadminesStrategies(Group* group, uint32 encounterId);
+    void ExecuteWailingCavernsStrategies(Group* group, uint32 encounterId);
+    void ExecuteShadowfangKeepStrategies(Group* group, uint32 encounterId);
+    void ExecuteStockadeStrategies(Group* group, uint32 encounterId);
+    void ExecuteRazorfenKraulStrategies(Group* group, uint32 encounterId);
 
     // Performance monitoring (returns StrategyMetrics snapshot from IEncounterStrategy.h)
-    StrategyMetrics GetStrategyMetrics(uint32 encounterId) override;
-    StrategyMetrics GetGlobalStrategyMetrics() override;
+    StrategyMetrics GetStrategyMetrics(uint32 encounterId);
+    StrategyMetrics GetGlobalStrategyMetrics();
 
     // Configuration and settings
-    void SetStrategyComplexity(uint32 encounterId, float complexity) override; // 0.0 = simple, 1.0 = complex
-    void EnableAdaptiveStrategies(bool enable) override { _adaptiveStrategiesEnabled = enable; }
-    void SetMechanicResponseTime(uint32 responseTimeMs) override { _mechanicResponseTime = responseTimeMs; }
+    void SetStrategyComplexity(uint32 encounterId, float complexity); // 0.0 = simple, 1.0 = complex
+    void EnableAdaptiveStrategies(bool enable) { _adaptiveStrategiesEnabled = enable; }
+    void SetMechanicResponseTime(uint32 responseTimeMs) { _mechanicResponseTime = responseTimeMs; }
 
 private:
     EncounterStrategy();

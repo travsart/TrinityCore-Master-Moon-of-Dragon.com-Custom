@@ -14,7 +14,6 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Battleground.h"
-#include "../Core/DI/Interfaces/IArenaBotManager.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -26,6 +25,28 @@ class Group;
 
 namespace Playerbot
 {
+
+/**
+ * @brief Arena bracket types (previously in interface)
+ */
+enum class ArenaBracketType : uint8
+{
+    ARENA_2v2 = 0,
+    ARENA_3v3 = 1,
+    ARENA_5v5 = 2,      // Legacy
+    ARENA_10v10 = 3,    // Rated BG (not a true arena)
+    SKIRMISH_2v2 = 4,   // Unrated 2v2
+    SKIRMISH_3v3 = 5    // Unrated 3v3
+};
+
+/**
+ * @brief Arena queue modes (previously in interface)
+ */
+enum class ArenaQueueMode : uint8
+{
+    SKIRMISH = 0,   // Unrated practice
+    RATED = 1       // Rated competitive
+};
 
 /**
  * @brief Manages automatic bot recruitment for Arena queues
@@ -42,7 +63,7 @@ namespace Playerbot
  *
  * Note: Solo Shuffle is NOT available in TrinityCore 12.0 (The War Within)
  */
-class TC_GAME_API ArenaBotManager final : public IArenaBotManager
+class TC_GAME_API ArenaBotManager final 
 {
 private:
     ArenaBotManager();
@@ -62,29 +83,29 @@ public:
     // IArenaBotManager INTERFACE
     // ============================================================================
 
-    void Initialize() override;
-    void Shutdown() override;
-    void Update(uint32 diff) override;
+    void Initialize();
+    void Shutdown();
+    void Update(uint32 diff);
 
     void OnPlayerJoinQueue(Player* player, ArenaBracketType bracketType,
-                           ArenaQueueMode mode, bool asGroup) override;
-    void OnPlayerLeaveQueue(ObjectGuid playerGuid) override;
-    void OnInvitationReceived(ObjectGuid playerGuid, uint32 arenaInstanceGuid) override;
-    void OnArenaStart(Battleground* bg) override;
-    void OnArenaEnd(Battleground* bg, Team winnerTeam) override;
+                           ArenaQueueMode mode, bool asGroup);
+    void OnPlayerLeaveQueue(ObjectGuid playerGuid);
+    void OnInvitationReceived(ObjectGuid playerGuid, uint32 arenaInstanceGuid);
+    void OnArenaStart(Battleground* bg);
+    void OnArenaEnd(Battleground* bg, Team winnerTeam);
 
     uint32 PopulateTeammates(ObjectGuid playerGuid, ArenaBracketType bracketType,
-                              ArenaQueueMode mode, uint32 teammatesNeeded) override;
+                              ArenaQueueMode mode, uint32 teammatesNeeded);
     uint32 PopulateOpponents(ArenaBracketType bracketType, ArenaQueueMode mode,
-                              uint32 opponentsNeeded) override;
+                              uint32 opponentsNeeded);
 
-    bool IsBotQueued(ObjectGuid botGuid) const override;
-    void GetStatistics(uint32& totalQueued, uint32& totalAssignments) const override;
-    void SetEnabled(bool enable) override;
-    bool IsEnabled() const override { return _enabled; }
-    void CleanupStaleAssignments() override;
+    bool IsBotQueued(ObjectGuid botGuid) const;
+    void GetStatistics(uint32& totalQueued, uint32& totalAssignments) const;
+    void SetEnabled(bool enable);
+    bool IsEnabled() const { return _enabled; }
+    void CleanupStaleAssignments();
 
-    uint8 GetTeamSize(ArenaBracketType bracketType) const override;
+    uint8 GetTeamSize(ArenaBracketType bracketType) const;
 
     // ============================================================================
     // ADDITIONAL METHODS
