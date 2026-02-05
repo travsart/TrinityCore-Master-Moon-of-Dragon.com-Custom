@@ -738,7 +738,12 @@ float BGStrategyEngine::GetTimeFactor() const
     // If losing, less time = worse
     float timeRemaining = static_cast<float>(stats.remainingTime) / 1800000.0f; // 30 min max
 
-    if (IsWinning())
+    // CRITICAL FIX: Use score-based heuristic instead of IsWinning() to break infinite recursion
+    // IsWinning() → GetWinProbability() → GetTimeFactor() → IsWinning() (infinite loop!)
+    // GetScoreFactor() returns positive if ahead, negative if behind (no recursion)
+    bool currentlyAhead = (GetScoreFactor() > 0.0f);
+
+    if (currentlyAhead)
         return timeRemaining * 0.5f;
     else
         return -timeRemaining * 0.5f;
