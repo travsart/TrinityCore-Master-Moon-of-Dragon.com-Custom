@@ -190,7 +190,7 @@ class TC_GAME_API BTCheckGroupFocusTarget : public CoordinationBTNode
 public:
     BTCheckGroupFocusTarget() : CoordinationBTNode("CheckGroupFocusTarget") {}
 
-    BTStatus TickWithContext(IntegratedAIContext& context) override;
+    BTStatus TickWithContext(IntegratedAIContext& context);
 };
 
 /**
@@ -202,7 +202,7 @@ class TC_GAME_API BTFollowGroupStrategy : public CoordinationBTNode
 public:
     BTFollowGroupStrategy() : CoordinationBTNode("FollowGroupStrategy") {}
 
-    BTStatus TickWithContext(IntegratedAIContext& context) override;
+    BTStatus TickWithContext(IntegratedAIContext& context);
 };
 
 /**
@@ -218,7 +218,7 @@ public:
     {
     }
 
-    BTStatus TickWithContext(IntegratedAIContext& context) override;
+    BTStatus TickWithContext(IntegratedAIContext& context);
 
 private:
     ::std::string _cooldownType;
@@ -233,7 +233,7 @@ class TC_GAME_API BTAttackGroupFocusTarget : public CoordinationBTNode
 public:
     BTAttackGroupFocusTarget() : CoordinationBTNode("AttackGroupFocusTarget") {}
 
-    BTStatus TickWithContext(IntegratedAIContext& context) override;
+    BTStatus TickWithContext(IntegratedAIContext& context);
 };
 
 /**
@@ -245,7 +245,7 @@ class TC_GAME_API BTShareThreatInfo : public CoordinationBTNode
 public:
     BTShareThreatInfo() : CoordinationBTNode("ShareThreatInfo") {}
 
-    BTStatus TickWithContext(IntegratedAIContext& context) override;
+    BTStatus TickWithContext(IntegratedAIContext& context);
 };
 
 /**
@@ -257,7 +257,7 @@ class TC_GAME_API BTRequestGroupAssistance : public CoordinationBTNode
 public:
     BTRequestGroupAssistance() : CoordinationBTNode("RequestGroupAssistance") {}
 
-    BTStatus TickWithContext(IntegratedAIContext& context) override;
+    BTStatus TickWithContext(IntegratedAIContext& context);
 };
 
 /**
@@ -269,7 +269,7 @@ class TC_GAME_API BTRespondToZoneObjective : public CoordinationBTNode
 public:
     BTRespondToZoneObjective() : CoordinationBTNode("RespondToZoneObjective") {}
 
-    BTStatus TickWithContext(IntegratedAIContext& context) override;
+    BTStatus TickWithContext(IntegratedAIContext& context);
 };
 
 } // namespace Playerbot

@@ -672,7 +672,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     warsong.contentId = 2;  // BG_WS
     warsong.contentName = "Warsong Gulch";
     warsong.type = InstanceType::Battleground;
-    warsong.minPlayers = 1;
+    warsong.minPlayers = 20;
     warsong.maxPlayers = 20;
     warsong.minLevel = 10;
     warsong.maxLevel = 80;
@@ -687,7 +687,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     arathi.contentId = 3;  // BG_AB
     arathi.contentName = "Arathi Basin";
     arathi.type = InstanceType::Battleground;
-    arathi.minPlayers = 1;
+    arathi.minPlayers = 30;
     arathi.maxPlayers = 30;
     arathi.minLevel = 10;
     arathi.maxLevel = 80;
@@ -702,7 +702,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     eots.contentId = 7;  // BG_EY
     eots.contentName = "Eye of the Storm";
     eots.type = InstanceType::Battleground;
-    eots.minPlayers = 1;
+    eots.minPlayers = 30;
     eots.maxPlayers = 30;
     eots.minLevel = 35;
     eots.maxLevel = 80;
@@ -717,7 +717,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     alterac.contentId = 1;  // BG_AV
     alterac.contentName = "Alterac Valley";
     alterac.type = InstanceType::Battleground;
-    alterac.minPlayers = 1;
+    alterac.minPlayers = 80;
     alterac.maxPlayers = 80;
     alterac.minLevel = 45;
     alterac.maxLevel = 80;
@@ -732,7 +732,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     isleOfConquest.contentId = 30;  // BG_IC
     isleOfConquest.contentName = "Isle of Conquest";
     isleOfConquest.type = InstanceType::Battleground;
-    isleOfConquest.minPlayers = 1;
+    isleOfConquest.minPlayers = 80;
     isleOfConquest.maxPlayers = 80;
     isleOfConquest.minLevel = 71;
     isleOfConquest.maxLevel = 80;
@@ -747,7 +747,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     sota.contentId = 9;  // BG_SA
     sota.contentName = "Strand of the Ancients";
     sota.type = InstanceType::Battleground;
-    sota.minPlayers = 1;
+    sota.minPlayers = 30;
     sota.maxPlayers = 30;
     sota.minLevel = 65;
     sota.maxLevel = 80;
@@ -762,7 +762,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     twinPeaks.contentId = 108;  // BG_TP
     twinPeaks.contentName = "Twin Peaks";
     twinPeaks.type = InstanceType::Battleground;
-    twinPeaks.minPlayers = 1;
+    twinPeaks.minPlayers = 20;
     twinPeaks.maxPlayers = 20;
     twinPeaks.minLevel = 75;
     twinPeaks.maxLevel = 80;
@@ -777,7 +777,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     gilneas.contentId = 120;  // BG_BFG
     gilneas.contentName = "Battle for Gilneas";
     gilneas.type = InstanceType::Battleground;
-    gilneas.minPlayers = 1;
+    gilneas.minPlayers = 20;
     gilneas.maxPlayers = 20;
     gilneas.minLevel = 75;
     gilneas.maxLevel = 80;
@@ -792,7 +792,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     deepwind.contentId = 754;
     deepwind.contentName = "Deepwind Gorge";
     deepwind.type = InstanceType::Battleground;
-    deepwind.minPlayers = 1;
+    deepwind.minPlayers = 30;
     deepwind.maxPlayers = 30;
     deepwind.minLevel = 80;
     deepwind.maxLevel = 80;
@@ -807,7 +807,7 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     deephaul.contentId = 1014;  // BG_DEEPHAUL_RAVINE
     deephaul.contentName = "Deephaul Ravine";
     deephaul.type = InstanceType::Battleground;
-    deephaul.minPlayers = 1;
+    deephaul.minPlayers = 20;
     deephaul.maxPlayers = 20;
     deephaul.minLevel = 10;
     deephaul.maxLevel = 80;
@@ -816,6 +816,51 @@ void ContentRequirementDatabase::CreateDefaultBattlegrounds()
     deephaul.estimatedDurationMinutes = 25;
 
     AddRequirement(std::move(deephaul));
+
+    // Temple of Kotmogu (10v10) - Mists of Pandaria
+    ContentRequirement kotmogu;
+    kotmogu.contentId = 699;
+    kotmogu.contentName = "Temple of Kotmogu";
+    kotmogu.type = InstanceType::Battleground;
+    kotmogu.minPlayers = 20;
+    kotmogu.maxPlayers = 20;
+    kotmogu.minLevel = 10;
+    kotmogu.maxLevel = 80;
+    kotmogu.requiresBothFactions = true;
+    kotmogu.playersPerFaction = 10;
+    kotmogu.estimatedDurationMinutes = 15;
+
+    AddRequirement(std::move(kotmogu));
+
+    // Silvershard Mines (10v10) - Mists of Pandaria
+    ContentRequirement silvershard;
+    silvershard.contentId = 708;
+    silvershard.contentName = "Silvershard Mines";
+    silvershard.type = InstanceType::Battleground;
+    silvershard.minPlayers = 20;
+    silvershard.maxPlayers = 20;
+    silvershard.minLevel = 10;
+    silvershard.maxLevel = 80;
+    silvershard.requiresBothFactions = true;
+    silvershard.playersPerFaction = 10;
+    silvershard.estimatedDurationMinutes = 15;
+
+    AddRequirement(std::move(silvershard));
+
+    // Seething Shore (10v10) - Battle for Azeroth
+    ContentRequirement seethingShore;
+    seethingShore.contentId = 1035;
+    seethingShore.contentName = "Seething Shore";
+    seethingShore.type = InstanceType::Battleground;
+    seethingShore.minPlayers = 20;
+    seethingShore.maxPlayers = 20;
+    seethingShore.minLevel = 10;
+    seethingShore.maxLevel = 80;
+    seethingShore.requiresBothFactions = true;
+    seethingShore.playersPerFaction = 10;
+    seethingShore.estimatedDurationMinutes = 15;
+
+    AddRequirement(std::move(seethingShore));
 
     // NOTE: Random Battleground (32) is handled dynamically in GetBattlegroundRequirement()
     // by selecting a random actual BG (AV, WSG, AB, etc.) so proper team sizes are used.

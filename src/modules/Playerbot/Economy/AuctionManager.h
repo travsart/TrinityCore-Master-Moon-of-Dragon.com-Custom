@@ -8,7 +8,6 @@
 #include "DatabaseEnv.h"
 #include "Duration.h"
 #include "Util.h"
-#include "Core/DI/Interfaces/IAuctionHouse.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -21,7 +20,22 @@ class AuctionHouseObject;
 
 namespace Playerbot
 {
-    // AuctionStrategy enum defined in Core/DI/Interfaces/IAuctionHouse.h
+    // Auction strategy for bot selling/buying behavior
+    enum class AuctionStrategy : uint8
+    {
+        NONE = 0,
+        UNDERCUT,           // List below lowest competitor
+        MARKET_PRICE,       // List at market average
+        HIGH_VALUE,         // List above average for premium items
+        QUICK_SALE,         // List low for fast sale
+        FLIP,               // Buy low, sell high
+        SMART_PRICING,      // Intelligent pricing based on market conditions
+        // Additional strategy types for comprehensive auction behavior
+        CONSERVATIVE,       // Risk-averse pricing, focus on guaranteed sales
+        AGGRESSIVE,         // Competitive pricing, higher volume
+        PREMIUM,            // Premium pricing for rare/desirable items
+        MARKET_MAKER        // Balance buy/sell to stabilize market
+    };
 
     // Market condition assessment
     enum class MarketCondition : uint8
@@ -142,7 +156,7 @@ namespace Playerbot
     {
     public:
         explicit AuctionManager(Player* bot, BotAI* ai);
-        ~AuctionManager() override;
+        ~AuctionManager();
 
         // Fast atomic state queries (<0.001ms)
         bool HasActiveAuctions() const { return _hasActiveAuctions.load(::std::memory_order_acquire); }
@@ -211,10 +225,10 @@ namespace Playerbot
 
     protected:
         // BehaviorManager interface - runs every 10 seconds
-        void OnUpdate(uint32 elapsed) override;
-        bool OnInitialize() override;
-        void OnShutdown() override;
-        void OnEventInternal(Events::BotEvent const& event) override;
+        void OnUpdate(uint32 elapsed);
+        bool OnInitialize();
+        void OnShutdown();
+        void OnEventInternal(Events::BotEvent const& event);
 
     private:
 

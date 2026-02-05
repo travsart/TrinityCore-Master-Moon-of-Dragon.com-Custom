@@ -190,7 +190,7 @@ public:
     /**
      * @brief Filter events to only receive those involving group members
      */
-    bool ShouldReceiveEvent(const CombatEvent& event) const override;
+    bool ShouldReceiveEvent(const CombatEvent& event) const;
 
     /**
      * @brief Subscriber name for debugging

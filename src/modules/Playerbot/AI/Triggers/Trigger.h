@@ -11,7 +11,6 @@
 
 #include "Define.h"
 #include "Action.h"  // For ActionContext definition
-#include "../../Core/DI/Interfaces/ITriggerFactory.h"
 #include <memory>
 #include <string>
 #include <functional>
@@ -116,8 +115,8 @@ public:
     HealthTrigger(::std::string const& name, float threshold)
         : Trigger(name, TriggerType::HEALTH), _threshold(threshold) {}
 
-    virtual bool Check(BotAI* ai) const override;
-    virtual float CalculateUrgency(BotAI* ai) const override;
+    virtual bool Check(BotAI* ai) const;
+    virtual float CalculateUrgency(BotAI* ai) const;
 
     void SetThreshold(float threshold) { _threshold = threshold; }
     float GetThreshold() const { return _threshold; }
@@ -133,8 +132,8 @@ public:
     CombatTrigger(::std::string const& name)
         : Trigger(name, TriggerType::COMBAT) {}
 
-    virtual bool Check(BotAI* ai) const override;
-    virtual float CalculateUrgency(BotAI* ai) const override;
+    virtual bool Check(BotAI* ai) const;
+    virtual float CalculateUrgency(BotAI* ai) const;
 };
 
 // Timer trigger
@@ -144,7 +143,7 @@ public:
     TimerTrigger(::std::string const& name, uint32 intervalMs)
         : Trigger(name, TriggerType::TIMER), _interval(intervalMs) {}
 
-    virtual bool Check(BotAI* ai) const override;
+    virtual bool Check(BotAI* ai) const;
 
     void SetInterval(uint32 intervalMs) { _interval = intervalMs; }
     uint32 GetInterval() const { return _interval; }
@@ -161,7 +160,7 @@ public:
     DistanceTrigger(::std::string const& name, float distance)
         : Trigger(name, TriggerType::DISTANCE), _distance(distance) {}
 
-    virtual bool Check(BotAI* ai) const override;
+    virtual bool Check(BotAI* ai) const;
 
     void SetDistance(float distance) { _distance = distance; }
     float GetDistance() const { return _distance; }
@@ -178,7 +177,7 @@ public:
     QuestTrigger(::std::string const& name)
         : Trigger(name, TriggerType::QUEST) {}
 
-    virtual bool Check(BotAI* ai) const override;
+    virtual bool Check(BotAI* ai) const;
 
     // Quest-specific methods
     virtual bool HasAvailableQuest(BotAI* ai) const;
@@ -187,7 +186,7 @@ public:
 };
 
 // Trigger factory
-class TC_GAME_API TriggerFactory final : public ITriggerFactory
+class TC_GAME_API TriggerFactory final
 {
     TriggerFactory() = default;
     ~TriggerFactory() = default;
@@ -199,17 +198,17 @@ public:
 
     // Trigger registration
     void RegisterTrigger(::std::string const& name,
-                        ::std::function<::std::shared_ptr<Trigger>()> creator) override;
+                        ::std::function<::std::shared_ptr<Trigger>()> creator);
 
     // Trigger creation
-    ::std::shared_ptr<Trigger> CreateTrigger(::std::string const& name) override;
-    ::std::vector<::std::shared_ptr<Trigger>> CreateDefaultTriggers() override;
-    ::std::vector<::std::shared_ptr<Trigger>> CreateCombatTriggers() override;
-    ::std::vector<::std::shared_ptr<Trigger>> CreateQuestTriggers() override;
+    ::std::shared_ptr<Trigger> CreateTrigger(::std::string const& name);
+    ::std::vector<::std::shared_ptr<Trigger>> CreateDefaultTriggers();
+    ::std::vector<::std::shared_ptr<Trigger>> CreateCombatTriggers();
+    ::std::vector<::std::shared_ptr<Trigger>> CreateQuestTriggers();
 
     // Available triggers
-    ::std::vector<::std::string> GetAvailableTriggers() const override;
-    bool HasTrigger(::std::string const& name) const override;
+    ::std::vector<::std::string> GetAvailableTriggers() const;
+    bool HasTrigger(::std::string const& name) const;
 
 private:
     ::std::unordered_map<::std::string, ::std::function<::std::shared_ptr<Trigger>()>> _creators;

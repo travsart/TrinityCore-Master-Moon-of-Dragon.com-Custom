@@ -1370,7 +1370,7 @@ void QuestPickup::UpdateQuestPickupStatistics(uint32 botGuid, bool wasSuccessful
     }
 
     // Update average pickup time
-    float currentAvg = botMetrics.averagePickupTime.load();
+    float currentAvg = botMetrics.averagePickupTime;
     float newAvg = (currentAvg * 0.9f) + (timeSpent * 0.1f);
     botMetrics.averagePickupTime = newAvg;
 

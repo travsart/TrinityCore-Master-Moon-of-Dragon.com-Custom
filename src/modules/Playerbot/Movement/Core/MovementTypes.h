@@ -20,7 +20,6 @@
 
 namespace Playerbot
 {
-    // Forward declarations - MovementFormationType defined in Core/DI/Interfaces/IUnifiedMovementCoordinator.h
     // FormationType from GroupFormation.h is a different enum with different values
 
     // Type aliases for path representations
@@ -79,6 +78,28 @@ namespace Playerbot
         MOVEMENT_INVALID_DEST   = 5,
         MOVEMENT_NO_PATH        = 6,
         MOVEMENT_STUCK          = 7
+    };
+
+    /**
+     * @enum PositionType
+     * @brief Types of combat positions for bot positioning
+     */
+    enum class PositionType : uint8
+    {
+        MELEE_COMBAT            = 0,  // Close combat position
+        RANGED_COMBAT           = 1,  // Ranged attack position
+        HEALING_POSITION        = 2,  // Healer safe position
+        TANK_POSITION           = 3,  // Tank defensive position
+        FLANKING                = 4,  // Flanking attack position
+        BEHIND_TARGET           = 5,  // Behind target for backstab
+        SAFE_DISTANCE           = 6,  // Safe distance from danger
+        FORMATION               = 7,  // Formation-based position
+        CUSTOM                  = 8,  // Custom defined position
+        // Aliases for backward compatibility (used by PositionManager, MovementIntegration)
+        RANGED_DPS              = RANGED_COMBAT,   // Alias for ranged DPS positioning
+        HEALING                 = HEALING_POSITION, // Alias for healer positioning
+        TANKING                 = TANK_POSITION,   // Alias for tank positioning
+        KITING                  = 9                // Kiting position (maintaining distance while attacking)
     };
 
     /**

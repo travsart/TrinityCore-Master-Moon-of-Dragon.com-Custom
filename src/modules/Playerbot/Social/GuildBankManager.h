@@ -15,7 +15,6 @@
 #include "Guild.h"
 #include "Item.h"
 #include "GameTime.h"
-#include "Core/DI/Interfaces/IGuildBankManager.h"
 #include <unordered_map>
 #include <vector>
 #include <atomic>
@@ -69,7 +68,7 @@ struct GuildBankItem
  * This system provides intelligent guild bank interactions, item organization,
  * and automated deposit/withdrawal management for playerbots.
  */
-class TC_GAME_API GuildBankManager final : public IGuildBankManager
+class TC_GAME_API GuildBankManager final 
 {
 public:
     explicit GuildBankManager(Player* bot);
@@ -78,28 +77,28 @@ public:
     GuildBankManager& operator=(GuildBankManager const&) = delete;
 
     // Core guild bank operations using TrinityCore's Guild system
-    bool DepositItem(uint32 itemGuid, uint32 tabId, uint32 stackCount) override;
-    bool WithdrawItem(uint32 tabId, uint32 slotId, uint32 stackCount) override;
-    bool MoveItem(uint32 fromTab, uint32 fromSlot, uint32 toTab, uint32 toSlot) override;
-    bool CanAccessGuildBank(uint32 tabId) override;
+    bool DepositItem(uint32 itemGuid, uint32 tabId, uint32 stackCount);
+    bool WithdrawItem(uint32 tabId, uint32 slotId, uint32 stackCount);
+    bool MoveItem(uint32 fromTab, uint32 fromSlot, uint32 toTab, uint32 toSlot);
+    bool CanAccessGuildBank(uint32 tabId);
 
     // Intelligent bank management
-    void AutoOrganizeGuildBank() override;
-    void OptimizeItemPlacement() override;
-    void AnalyzeGuildBankContents() override;
+    void AutoOrganizeGuildBank();
+    void OptimizeItemPlacement();
+    void AnalyzeGuildBankContents();
     void PlanBankReorganization();
 
     // Automated deposit strategies
-    void AutoDepositItems() override;
-    void DepositExcessConsumables() override;
-    void DepositCraftingMaterials() override;
+    void AutoDepositItems();
+    void DepositExcessConsumables();
+    void DepositCraftingMaterials();
     void DepositValuableItems();
     void DepositDuplicateEquipment();
 
     // Automated withdrawal strategies
-    void AutoWithdrawNeededItems() override;
-    void WithdrawConsumables() override;
-    void WithdrawCraftingMaterials() override;
+    void AutoWithdrawNeededItems();
+    void WithdrawConsumables();
+    void WithdrawCraftingMaterials();
     void WithdrawRepairItems();
     void WithdrawRequestedItems();
 

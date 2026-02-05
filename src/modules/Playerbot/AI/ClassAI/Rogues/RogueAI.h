@@ -85,23 +85,23 @@ class RogueAI : public ClassAI
 {
 public:
     explicit RogueAI(Player* bot);
-    ~RogueAI() override;
+    ~RogueAI();
 
     // Core AI Interface
-    void UpdateRotation(Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
-    void OnCombatStart(Unit* target) override;
-    void OnCombatEnd() override;
+    void UpdateRotation(Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
+    void OnCombatStart(Unit* target);
+    void OnCombatEnd();
 
     // Resource Management
-    bool HasEnoughResource(uint32 spellId) override;
-    void ConsumeResource(uint32 spellId) override;
+    bool HasEnoughResource(uint32 spellId);
+    void ConsumeResource(uint32 spellId);
 
     // Positioning
-    Position GetOptimalPosition(Unit* target) override;
-    float GetOptimalRange(Unit* target) override;
+    Position GetOptimalPosition(Unit* target);
+    float GetOptimalRange(Unit* target);
 
     // Specialization Management
 private:

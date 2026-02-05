@@ -701,7 +701,7 @@ std::string PlayerbotConfig::GetCached(std::string const& key, std::string defau
     return GetString(key, defaultValue);
 }
 
-PlayerbotConfig::PerformanceMetrics PlayerbotConfig::GetPerformanceMetrics() const
+PerformanceMetrics PlayerbotConfig::GetPerformanceMetrics() const
 {
     std::lock_guard lock(_configMutex);
     return _metrics;

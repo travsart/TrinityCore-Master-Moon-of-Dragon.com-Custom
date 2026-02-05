@@ -51,59 +51,59 @@ class AlteracValleyScript : public SiegeScriptBase
 {
 public:
     AlteracValleyScript() = default;
-    ~AlteracValleyScript() override = default;
+    ~AlteracValleyScript() = default;
 
     // ========================================================================
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const override { return AlteracValley::MAP_ID; }
-    std::string GetName() const override { return AlteracValley::BG_NAME; }
-    BGType GetBGType() const override { return BGType::ALTERAC_VALLEY; }
-    uint32 GetMaxScore() const override { return AlteracValley::STARTING_REINFORCEMENTS; }
-    uint32 GetMaxDuration() const override { return AlteracValley::MAX_DURATION; }
-    uint8 GetTeamSize() const override { return AlteracValley::TEAM_SIZE; }
+    uint32 GetMapId() const { return AlteracValley::MAP_ID; }
+    std::string GetName() const { return AlteracValley::BG_NAME; }
+    BGType GetBGType() const { return BGType::ALTERAC_VALLEY; }
+    uint32 GetMaxScore() const { return AlteracValley::STARTING_REINFORCEMENTS; }
+    uint32 GetMaxDuration() const { return AlteracValley::MAX_DURATION; }
+    uint8 GetTeamSize() const { return AlteracValley::TEAM_SIZE; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator) override;
-    void OnMatchStart() override;
-    void OnMatchEnd(bool victory) override;
-    void OnUpdate(uint32 diff) override;
-    void OnEvent(const BGScriptEventData& event) override;
+    void OnLoad(BattlegroundCoordinator* coordinator);
+    void OnMatchStart();
+    void OnMatchEnd(bool victory);
+    void OnUpdate(uint32 diff);
+    void OnEvent(const BGScriptEventData& event);
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const override;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
-    std::vector<BGPositionData> GetStrategicPositions() const override;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
-    std::vector<BGWorldState> GetInitialWorldStates() const override;
+    std::vector<BGObjectiveData> GetObjectiveData() const;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
+    std::vector<BGPositionData> GetStrategicPositions() const;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
+    std::vector<BGWorldState> GetInitialWorldStates() const;
 
     // ========================================================================
     // WORLD STATE
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, BGObjectiveState& outState) const override;
+        uint32& outObjectiveId, BGObjectiveState& outState) const;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
-        uint32& allianceScore, uint32& hordeScore) const override;
+        uint32& allianceScore, uint32& hordeScore) const;
 
     // ========================================================================
     // STRATEGY & ROLE DISTRIBUTION
     // ========================================================================
 
     RoleDistribution GetRecommendedRoles(const StrategicDecision& decision,
-        float scoreAdvantage, uint32 timeRemaining) const override;
+        float scoreAdvantage, uint32 timeRemaining) const;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const override;
+        uint32 totalObjectives, uint32 timeRemaining) const;
 
     // ========================================================================
     // AV-SPECIFIC METHODS
@@ -166,28 +166,28 @@ protected:
     // SIEGE ABSTRACT IMPLEMENTATIONS
     // ========================================================================
 
-    uint32 GetBossEntry(uint32 faction) const override;
-    Position GetBossPosition(uint32 faction) const override;
-    std::vector<BGObjectiveData> GetGateData() const override;
-    std::vector<BGObjectiveData> GetTowerData() const override;
-    std::vector<BGObjectiveData> GetGraveyardData() const override;
+    uint32 GetBossEntry(uint32 faction) const;
+    Position GetBossPosition(uint32 faction) const;
+    std::vector<BGObjectiveData> GetGateData() const;
+    std::vector<BGObjectiveData> GetTowerData() const;
+    std::vector<BGObjectiveData> GetGraveyardData() const;
 
-    uint32 GetStartingReinforcements() const override
+    uint32 GetStartingReinforcements() const
     {
         return AlteracValley::STARTING_REINFORCEMENTS;
     }
 
-    uint32 GetReinforcementLossPerDeath() const override
+    uint32 GetReinforcementLossPerDeath() const
     {
         return AlteracValley::REINF_LOSS_PER_DEATH;
     }
 
-    uint32 GetReinforcementLossPerTower() const override
+    uint32 GetReinforcementLossPerTower() const
     {
         return AlteracValley::REINF_LOSS_PER_TOWER;
     }
 
-    bool CanAttackBoss(uint32 faction) const override;
+    bool CanAttackBoss(uint32 faction) const;
 
     // ========================================================================
     // PHASE MANAGEMENT

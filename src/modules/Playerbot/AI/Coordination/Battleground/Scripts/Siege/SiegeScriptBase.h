@@ -38,27 +38,28 @@ class SiegeScriptBase : public BGScriptBase
 {
 public:
     SiegeScriptBase() = default;
-    ~SiegeScriptBase() override = default;
+    virtual ~SiegeScriptBase() = default;
 
     // ========================================================================
-    // IBGScript overrides - Siege specific
+    // Siege specific
     // ========================================================================
 
-    bool HasVehicles() const override { return true; }
-    bool IsEpic() const override { return GetTeamSize() >= 40; }
+    virtual bool HasVehicles() const { return true; }
+    virtual bool IsEpic() const { return GetTeamSize() >= 40; }
+    virtual uint8 GetTeamSize() const = 0; // To be implemented by derived classes
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator) override;
-    void OnUpdate(uint32 diff) override;
+    void OnLoad(BattlegroundCoordinator* coordinator);
+    void OnUpdate(uint32 diff);
 
     // ========================================================================
     // VEHICLE DATA
     // ========================================================================
 
-    std::vector<BGVehicleData> GetVehicleData() const override;
+    std::vector<BGVehicleData> GetVehicleData() const;
 
     // ========================================================================
     // STRATEGY - Siege overrides
@@ -67,28 +68,28 @@ public:
     RoleDistribution GetRecommendedRoles(
         const StrategicDecision& decision,
         float scoreAdvantage,
-        uint32 timeRemaining) const override;
+        uint32 timeRemaining) const;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const override;
+        uint32 totalObjectives, uint32 timeRemaining) const;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
-        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
+        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const;
 
     // ========================================================================
     // SIEGE-SPECIFIC IMPLEMENTATIONS
     // ========================================================================
 
-    uint8 GetGatePriority(uint32 gateId) const override;
-    bool ShouldUseVehicle(ObjectGuid botGuid, uint32 vehicleEntry) const override;
+    uint8 GetGatePriority(uint32 gateId) const;
+    bool ShouldUseVehicle(ObjectGuid botGuid, uint32 vehicleEntry) const;
 
     // ========================================================================
     // EVENT HANDLING
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event) override;
-    void OnMatchStart() override;
+    void OnEvent(const BGScriptEventData& event);
+    void OnMatchStart();
 
 protected:
     // ========================================================================

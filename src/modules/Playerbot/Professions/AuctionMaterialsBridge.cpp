@@ -12,7 +12,8 @@
 #include "GatheringMaterialsBridge.h"
 #include "ProfessionAuctionBridge.h"
 #include "ProfessionManager.h"
-#include "ProfessionEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "ProfessionEvents.h"
 #include "ProfessionEvents.h"
 #include "../Professions/GatheringManager.h"
 #include "../AI/BotAI.h"
@@ -74,7 +75,7 @@ void AuctionMaterialsBridge::Initialize()
     }
 
     // Subscribe to ProfessionEventBus for event-driven reactivity (Phase 2)
-    ProfessionEventBus::instance()->SubscribeCallback(
+    EventBus<ProfessionEvent>::instance()->SubscribeCallback(
         [this](ProfessionEvent const& event) { HandleProfessionEvent(event); },
         {
             ProfessionEventType::MATERIALS_NEEDED,

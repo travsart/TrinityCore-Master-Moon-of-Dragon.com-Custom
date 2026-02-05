@@ -38,20 +38,20 @@ class DominationScriptBase : public BGScriptBase
 {
 public:
     DominationScriptBase() = default;
-    ~DominationScriptBase() override = default;
+    virtual ~DominationScriptBase() = default;
 
     // ========================================================================
-    // IBGScript overrides - Domination specific
+    // Domination specific
     // ========================================================================
 
-    bool IsDomination() const override { return true; }
+    virtual bool IsDomination() const { return true; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator) override;
-    void OnUpdate(uint32 diff) override;
+    void OnLoad(BattlegroundCoordinator* coordinator);
+    void OnUpdate(uint32 diff);
 
     // ========================================================================
     // STRATEGY - Domination overrides
@@ -60,20 +60,20 @@ public:
     RoleDistribution GetRecommendedRoles(
         const StrategicDecision& decision,
         float scoreAdvantage,
-        uint32 timeRemaining) const override;
+        uint32 timeRemaining) const;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const override;
+        uint32 totalObjectives, uint32 timeRemaining) const;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
-        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
+        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const;
 
     // ========================================================================
     // DOMINATION-SPECIFIC IMPLEMENTATIONS
@@ -82,19 +82,19 @@ public:
     /**
      * @brief Get points per tick based on node count
      */
-    uint32 GetTickPoints(uint32 nodeCount) const override;
+    uint32 GetTickPoints(uint32 nodeCount) const;
 
     /**
      * @brief Get optimal node count for guaranteed win
      */
-    uint32 GetOptimalNodeCount() const override;
+    uint32 GetOptimalNodeCount() const;
 
     // ========================================================================
     // EVENT HANDLING
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event) override;
-    void OnMatchStart() override;
+    void OnEvent(const BGScriptEventData& event);
+    void OnMatchStart();
 
 protected:
     // ========================================================================

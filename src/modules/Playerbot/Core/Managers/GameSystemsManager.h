@@ -131,7 +131,7 @@ class LootDistribution;
  * **Phase 7.1.2 Integration (2025-11-18):**
  * PvPCombatAI converted from singleton to per-bot instance (28th manager)
  */
-class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
+class TC_GAME_API GameSystemsManager final : public IGameSystemsManager 
 {
 public:
     /**
@@ -183,7 +183,7 @@ public:
     GuildIntegration* GetGuildIntegration() const { return _guildIntegration.get(); }
     LootDistribution* GetLootDistribution() const override { return _lootDistribution.get(); }
     TradeSystem* GetTradeSystem() const { return _tradeSystem.get(); }
-    DynamicQuestSystem* GetDynamicQuestSystem() const { return _dynamicQuestSystem.get(); }
+    DynamicQuestSystem* GetDynamicQuestSystem() const override { return _dynamicQuestSystem.get(); }
     ObjectiveTracker* GetObjectiveTracker() const override { return _objectiveTracker.get(); }
     QuestCompletion* GetQuestCompletion() const override { return _questCompletion.get(); }
     QuestPickup* GetQuestPickup() const override { return _questPickup.get(); }
@@ -203,7 +203,7 @@ public:
     // Note: BotWorldSessionMgr is a global singleton, use sBotWorldSessionMgr macro instead
     // BotWorldSessionMgr* GetBotWorldSessionMgr() const { return _botWorldSessionMgr.get(); }
     BotLifecycleManager* GetBotLifecycleManager() const { return _botLifecycleManager.get(); }
-    IGroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
+    Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
     CombatStateManager* GetCombatStateManager() const override { return _combatStateManager.get(); }

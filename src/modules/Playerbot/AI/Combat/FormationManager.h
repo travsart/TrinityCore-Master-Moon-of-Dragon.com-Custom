@@ -19,7 +19,6 @@
 #include <atomic>
 #include <shared_mutex>
 #include <chrono>
-#include "Core/DI/Interfaces/IUnifiedMovementCoordinator.h"
 
 // Forward declarations
 class Player;
@@ -29,10 +28,40 @@ class Group;
 namespace Playerbot
 {
 
-// DUPLICATE ENUMS REMOVED - Using definitions from IUnifiedMovementCoordinator.h
-// enum class MovementFormationType : uint8 { ... } - REMOVED
-// enum class FormationRole : uint8 { ... } - REMOVED
-// Include at line 22 provides these definitions
+/**
+ * @brief Movement formation types for group positioning
+ */
+enum class MovementFormationType : uint8
+{
+    NONE = 0,           // No specific formation
+    LINE = 1,           // Single file line
+    COLUMN = 2,         // Side by side column
+    WEDGE = 3,          // V-shaped wedge
+    DIAMOND = 4,        // Diamond formation
+    CIRCLE = 5,         // Circular formation
+    BOX = 6,            // Box/square formation
+    SPREAD = 7,         // Spread out
+    CLUSTER = 8,        // Tight cluster
+    DEFENSIVE = 9,      // Defensive formation
+    DUNGEON = 10,       // Dungeon/instance formation
+    RAID = 11,          // Raid formation
+    PVP = 12            // PvP formation
+};
+
+/**
+ * @brief Formation roles for members
+ */
+enum class FormationRole : uint8
+{
+    LEADER = 0,         // Formation leader
+    TANK = 1,           // Tank position
+    HEALER = 2,         // Healer position
+    MELEE_DPS = 3,      // Melee DPS position
+    RANGED_DPS = 4,     // Ranged DPS position
+    SUPPORT = 5,        // Support position
+    SCOUT = 6,          // Scout position
+    REAR_GUARD = 7      // Rear guard position
+};
 
 // Formation movement states
 enum class FormationMovementState : uint8

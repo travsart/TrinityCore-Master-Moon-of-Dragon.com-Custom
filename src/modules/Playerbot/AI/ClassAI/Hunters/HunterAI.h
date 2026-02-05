@@ -116,19 +116,19 @@ class HunterAI : public ClassAI
 {
 public:
     explicit HunterAI(Player* bot);
-    ~HunterAI() override;
+    ~HunterAI();
 
     // Core AI interface
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
-    void OnCombatStart(::Unit* target) override;
-    void OnCombatEnd() override;
-    bool HasEnoughResource(uint32 spellId) override;
-    void ConsumeResource(uint32 spellId) override;
-    Position GetOptimalPosition(::Unit* target) override;
-    float GetOptimalRange(::Unit* target) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
+    void OnCombatStart(::Unit* target);
+    void OnCombatEnd();
+    bool HasEnoughResource(uint32 spellId);
+    void ConsumeResource(uint32 spellId);
+    Position GetOptimalPosition(::Unit* target);
+    float GetOptimalRange(::Unit* target);
 
     // Hunter-specific methods
     Pet* GetPet() const;

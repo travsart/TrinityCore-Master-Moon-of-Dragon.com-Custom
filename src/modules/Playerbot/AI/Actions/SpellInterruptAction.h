@@ -74,10 +74,10 @@ public:
 
     // === Action Interface Implementation ===
 
-    ActionResult Execute(BotAI* ai, ActionContext const& context) override;
-    bool IsPossible(BotAI* ai) const override;
+    ActionResult Execute(BotAI* ai, ActionContext const& context);
+    bool IsPossible(BotAI* ai) const;
     uint32 GetPriority(BotAI* ai) const;
-    float GetRelevance(BotAI* ai) const override;
+    float GetRelevance(BotAI* ai) const;
 
     // Resource requirements - customizable behavior
     float GetCooldown() const override { return 0.0f; } // Varies by interrupt spell

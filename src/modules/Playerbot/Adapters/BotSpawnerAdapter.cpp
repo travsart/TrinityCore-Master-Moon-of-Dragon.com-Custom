@@ -692,7 +692,7 @@ void LegacyBotSpawnerAdapter::CheckAndSpawnForPlayers()
 // BotSpawnerFactory Implementation
 // =====================================================
 
-::std::unique_ptr<IBotSpawner> BotSpawnerFactory::CreateSpawner(SpawnerType type)
+::std::unique_ptr<BotSpawnerAdapter> BotSpawnerFactory::CreateSpawner(SpawnerType type)
 {
     if (type == SpawnerType::AUTO)
         type = DetectBestSpawnerType();
@@ -700,19 +700,9 @@ void LegacyBotSpawnerAdapter::CheckAndSpawnForPlayers()
     TC_LOG_INFO("module.playerbot.factory",
         "BotSpawnerFactory: Creating spawner of type: {}", GetSpawnerTypeName(type));
 
-    switch (type)
-    {
-        case SpawnerType::ORCHESTRATED:
-            return ::std::make_unique<BotSpawnerAdapter>();
-
-        case SpawnerType::LEGACY:
-            return ::std::make_unique<LegacyBotSpawnerAdapter>();
-
-        default:
-            TC_LOG_ERROR("module.playerbot.factory",
-                "BotSpawnerFactory: Unknown spawner type, falling back to legacy");
-            return ::std::make_unique<LegacyBotSpawnerAdapter>();
-    }
+    // Note: After DI cleanup, factory always returns BotSpawnerAdapter
+    // Legacy mode is handled internally by the adapter
+    return ::std::make_unique<BotSpawnerAdapter>();
 }
 
 BotSpawnerFactory::SpawnerType BotSpawnerFactory::DetectBestSpawnerType()

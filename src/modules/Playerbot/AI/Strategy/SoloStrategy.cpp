@@ -16,7 +16,6 @@
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
 #include "Economy/AuctionManager.h"
-#include "Core/DI/Interfaces/IAuctionHouse.h"
 #include "../Actions/Action.h"
 #include "../Triggers/Trigger.h"
 #include "../Values/Value.h"

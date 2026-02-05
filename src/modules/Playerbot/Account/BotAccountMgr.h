@@ -19,7 +19,6 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
-#include "Core/DI/Interfaces/IBotAccountMgr.h"
 #include <memory>
 #include <vector>
 #include <queue>
@@ -49,7 +48,7 @@ namespace Playerbot {
  * - Playerbot.AutoCreateAccounts: Enables/disables automatic creation
  * - Playerbot.AccountsToCreate: Override for calculated account number
  */
-class TC_GAME_API BotAccountMgr final : public IBotAccountMgr
+class TC_GAME_API BotAccountMgr final
 {
 public:
     // Singleton pattern
@@ -59,18 +58,28 @@ public:
         return &instance;
     }
 
-    // Use interface types
-    using BotAccountInfo = IBotAccountMgr::BotAccountInfo;
+    // BotAccountInfo structure
+    struct BotAccountInfo
+    {
+        uint32 bnetAccountId{0};
+        uint32 legacyAccountId{0};
+        ::std::string email;
+        ::std::string passwordHash;
+        ::std::chrono::system_clock::time_point createdAt;
+        uint32 characterCount{0};
+        bool isActive{false};
+        bool isInPool{false};
+    };
 
     // IBotAccountMgr interface implementation
-    bool Initialize() override;
-    void Shutdown() override;
+    bool Initialize();
+    void Shutdown();
 
     // Update method (call from main thread)
-    void Update(uint32 diff) override;
+    void Update(uint32 diff);
 
     // Thread-safe callback processing (call from main thread)
-    void ProcessPendingCallbacks() override;
+    void ProcessPendingCallbacks();
 
     // === ACCOUNT CREATION ===
 
@@ -79,7 +88,7 @@ public:
      * @param requestedEmail Optional specific email, auto-generated if empty
      * @return BattleNet account ID, 0 on failure
      */
-    uint32 CreateBotAccount(::std::string const& requestedEmail = "") override;
+    uint32 CreateBotAccount(::std::string const& requestedEmail = "");
 
     /**
      * Batch create multiple accounts
@@ -87,7 +96,7 @@ public:
      * @param callback Async callback with created account IDs
      */
     void CreateBotAccountsBatch(uint32 count,
-        ::std::function<void(::std::vector<uint32>)> callback) override;
+        ::std::function<void(::std::vector<uint32>)> callback);
 
     // === ACCOUNT POOL MANAGEMENT ===
 
@@ -95,26 +104,35 @@ public:
      * Pre-create accounts for instant availability
      * Uses configuration to determine target pool size
      */
-    void RefillAccountPool() override;
+    void RefillAccountPool();
 
     /**
      * Get account from pool or create new
      * @return Account ID from pool or newly created
      */
-    uint32 AcquireAccount() override;
+    uint32 AcquireAccount();
 
     /**
      * Return account to pool when bot logs out
      */
-    void ReleaseAccount(uint32 bnetAccountId) override;
+    void ReleaseAccount(uint32 bnetAccountId);
+
+    /**
+     * Mark an account as in-use without acquiring it from the pool
+     * Used when loading pool bots from database to prevent their accounts
+     * from being given to other spawn requests
+     * @param bnetAccountId Account to mark as in-use
+     * @return true if account was found and marked
+     */
+    bool MarkAccountInUse(uint32 bnetAccountId);
 
     // === ACCOUNT QUERIES ===
 
-    BotAccountInfo const* GetAccountInfo(uint32 bnetAccountId) const override;
-    uint32 GetTotalAccountCount() const override { return _totalAccounts.load(); }
-    uint32 GetTotalBotAccounts() const override { return _totalAccounts.load(); }
-    uint32 GetActiveAccountCount() const override { return _activeAccounts.load(); }
-    uint32 GetPoolSize() const override;
+    BotAccountInfo const* GetAccountInfo(uint32 bnetAccountId) const;
+    uint32 GetTotalAccountCount() const { return _totalAccounts.load(); }
+    uint32 GetTotalBotAccounts() const { return _totalAccounts.load(); }
+    uint32 GetActiveAccountCount() const { return _activeAccounts.load(); }
+    uint32 GetPoolSize() const;
 
     // === ACCOUNT DELETION ===
 
@@ -124,12 +142,12 @@ public:
      * @param callback Async completion callback
      */
     void DeleteBotAccount(uint32 bnetAccountId,
-        ::std::function<void(bool success)> callback = nullptr) override;
+        ::std::function<void(bool success)> callback = nullptr);
 
     /**
      * Delete all bot accounts (cleanup)
      */
-    void DeleteAllBotAccounts(::std::function<void(uint32 deleted)> callback = nullptr) override;
+    void DeleteAllBotAccounts(::std::function<void(uint32 deleted)> callback = nullptr);
 
     // === CHARACTER LIMIT ENFORCEMENT ===
 
@@ -138,12 +156,12 @@ public:
      * @param bnetAccountId Account to check
      * @return true if under 10 character limit
      */
-    bool CanCreateCharacter(uint32 bnetAccountId) const override;
+    bool CanCreateCharacter(uint32 bnetAccountId) const;
 
     /**
      * Update character count for account
      */
-    void UpdateCharacterCount(uint32 bnetAccountId, int8 delta) override;
+    void UpdateCharacterCount(uint32 bnetAccountId, int8 delta);
 
     // === CONFIGURATION MANAGEMENT ===
 
@@ -151,18 +169,18 @@ public:
      * Update configuration from playerbots.conf
      * Called automatically during initialization and reload
      */
-    void UpdateConfiguration() override;
+    void UpdateConfiguration();
 
     /**
      * Get calculated number of accounts needed
      * Based on Playerbot.MaxBotsTotal / 10 or Playerbot.AccountsToCreate
      */
-    uint32 GetRequiredAccountCount() const override;
+    uint32 GetRequiredAccountCount() const;
 
     /**
      * Check if automatic account creation is enabled
      */
-    bool IsAutoCreateEnabled() const override { return _autoCreateAccounts; }
+    bool IsAutoCreateEnabled() const { return _autoCreateAccounts; }
 
     /**
      * Ensure we have capacity to create additional accounts

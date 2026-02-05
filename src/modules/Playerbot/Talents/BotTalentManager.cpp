@@ -1268,9 +1268,10 @@ void BotTalentManager::PrintLoadoutReport() const
     TC_LOG_INFO("playerbot", "Loadouts by Class:");
     for (uint8 cls = CLASS_WARRIOR; cls < MAX_CLASSES; ++cls)
     {
-        if (_stats.loadoutsPerClass[cls] > 0)
+        auto it = _stats.loadoutsPerClass.find(cls);
+        if (it != _stats.loadoutsPerClass.end() && it->second > 0)
         {
-            TC_LOG_INFO("playerbot", "  Class {}: {} loadouts", cls, _stats.loadoutsPerClass[cls]);
+            TC_LOG_INFO("playerbot", "  Class {}: {} loadouts", static_cast<uint32>(cls), it->second);
         }
     }
 

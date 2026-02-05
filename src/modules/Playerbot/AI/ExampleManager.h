@@ -79,7 +79,7 @@ namespace Playerbot
         /**
          * @brief Destructor
          */
-        ~ExampleManager() override;
+        ~ExampleManager();
 
         /**
          * @brief Add a task to the queue
@@ -169,18 +169,18 @@ namespace Playerbot
          * - Proper state flag updates
          * - Performance-conscious implementation
          */
-        void OnUpdate(uint32 elapsed) override;
+        void OnUpdate(uint32 elapsed);
 
         /**
          * @brief Initialize manager on first update
          * @return true on success, false to retry
          */
-        bool OnInitialize() override;
+        bool OnInitialize();
 
         /**
          * @brief Cleanup on shutdown
          */
-        void OnShutdown() override;
+        void OnShutdown();
 
     private:
         /**

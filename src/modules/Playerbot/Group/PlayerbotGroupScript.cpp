@@ -8,7 +8,8 @@
  */
 
 #include "PlayerbotGroupScript.h"
-#include "GroupEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "GroupEvents.h"
 #include "Group.h"
 #include "GroupMgr.h"
 #include "Player.h"
@@ -417,7 +418,7 @@ void PlayerbotGroupScript::InitializeGroupState(Group* group, GroupState& state)
 
 /*static*/ void PlayerbotGroupScript::PublishEvent(GroupEvent const& event)
 {
-    GroupEventBus::instance()->PublishEvent(event);
+    EventBus<GroupEvent>::instance()->PublishEvent(event);
 }
 
 // ========================================================================

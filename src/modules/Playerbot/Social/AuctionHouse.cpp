@@ -280,7 +280,7 @@ bool AuctionHouse::CancelAuction(uint32 auctionId)
 // Intelligent auction strategies
 // ============================================================================
 
-void AuctionHouse::ExecuteAuctionStrategy(AuctionStrategy strategy)
+void AuctionHouse::ExecuteAuctionStrategy(AuctionHouseStrategy strategy)
 {
     if (!_bot || !_auctionHouseEnabled)
         return;
@@ -292,21 +292,22 @@ void AuctionHouse::ExecuteAuctionStrategy(AuctionStrategy strategy)
 
     switch (strategy)
     {
-        case AuctionStrategy::CONSERVATIVE:
+        case AuctionHouseStrategy::CONSERVATIVE:
             ExecuteConservativeStrategy(session);
             break;
-        case AuctionStrategy::AGGRESSIVE:
+        case AuctionHouseStrategy::AGGRESSIVE:
             ExecuteAggressiveStrategy(session);
             break;
-        case AuctionStrategy::OPPORTUNISTIC:
+        case AuctionHouseStrategy::OPPORTUNISTIC:
             ExecuteOpportunisticStrategy(session);
             break;
-        case AuctionStrategy::MARKET_MAKER:
+        case AuctionHouseStrategy::MARKET_MAKER:
             ExecuteMarketMakerStrategy(session);
             break;
-        case AuctionStrategy::PREMIUM:
-        case AuctionStrategy::QUICK_SALE:
-        case AuctionStrategy::SMART_PRICING:
+        case AuctionHouseStrategy::COLLECTOR:
+            ExecuteCollectorStrategy(session);
+            break;
+        case AuctionHouseStrategy::PROFIT_FOCUSED:
             ExecuteProfitFocusedStrategy(session);
             break;
         default:
@@ -608,8 +609,7 @@ uint32 AuctionHouse::StartAuctionSession(AuctionActionType primaryAction)
 
     uint32 sessionId = _nextSessionId++;
 
-    AuctionSession session(sessionId, _bot->GetGUID().GetCounter(), primaryAction);
-    session.sessionStartTime = GameTime::GetGameTimeMS();
+    AuctionSession session(sessionId, primaryAction, GameTime::GetGameTimeMS());
     session.isActive = true;
 
     _activeSessions[sessionId] = session;
@@ -680,16 +680,16 @@ uint32 AuctionHouse::CalculateOptimalListingPrice(uint32 itemId, uint32 stackSiz
 
     switch (_profile.primaryStrategy)
     {
-        case AuctionStrategy::AGGRESSIVE:
+        case AuctionHouseStrategy::AGGRESSIVE:
             undercutRate = 0.10f;
             break;
-        case AuctionStrategy::QUICK_SALE:
+        case AuctionHouseStrategy::QUICK_SALE:
             undercutRate = 0.20f;
             break;
-        case AuctionStrategy::CONSERVATIVE:
+        case AuctionHouseStrategy::CONSERVATIVE:
             undercutRate = 0.01f;
             break;
-        case AuctionStrategy::PREMIUM:
+        case AuctionHouseStrategy::PREMIUM:
             undercutRate = -0.05f;
             break;
         default:
@@ -824,13 +824,13 @@ void AuctionHouse::AdaptAuctionBehavior()
     float roi = _metrics.GetROI();
     if (roi < 0.9f)
     {
-        if (_profile.primaryStrategy == AuctionStrategy::AGGRESSIVE)
-            _profile.primaryStrategy = AuctionStrategy::CONSERVATIVE;
+        if (_profile.primaryStrategy == AuctionHouseStrategy::AGGRESSIVE)
+            _profile.primaryStrategy = AuctionHouseStrategy::CONSERVATIVE;
     }
     else if (roi > 1.5f)
     {
-        if (_profile.primaryStrategy == AuctionStrategy::CONSERVATIVE)
-            _profile.primaryStrategy = AuctionStrategy::AGGRESSIVE;
+        if (_profile.primaryStrategy == AuctionHouseStrategy::CONSERVATIVE)
+            _profile.primaryStrategy = AuctionHouseStrategy::AGGRESSIVE;
     }
 
     TC_LOG_DEBUG("playerbot.auction", "AuctionHouse: Adapted behavior for bot {} (ROI: {})", _bot->GetName(), roi);
@@ -1018,12 +1018,12 @@ void AuctionHouse::TrackCompetitorBehavior(uint32 sellerGuid, const AuctionItem&
 
 AuctionMetrics AuctionHouse::GetAuctionMetrics()
 {
-    return _metrics;
+    return _metrics;  // Uses copy constructor to load atomic values
 }
 
 AuctionMetrics AuctionHouse::GetGlobalAuctionMetrics()
 {
-    return _globalMetrics;
+    return _globalMetrics;  // Uses copy constructor to load atomic values
 }
 
 // ============================================================================
@@ -1097,14 +1097,19 @@ void AuctionHouse::SetAuctionBudget(uint32 budget)
 
 void AuctionHouse::AddToWatchList(uint32 itemId)
 {
-    _profile.watchList.insert(itemId);
+    // Only add if not already in the list
+    auto it = std::find(_profile.watchList.begin(), _profile.watchList.end(), itemId);
+    if (it == _profile.watchList.end())
+        _profile.watchList.push_back(itemId);
     TC_LOG_DEBUG("playerbot.auction", "AuctionHouse: Added item {} to watch list for bot {}",
         itemId, _bot ? _bot->GetName() : "unknown");
 }
 
 void AuctionHouse::RemoveFromWatchList(uint32 itemId)
 {
-    _profile.watchList.erase(itemId);
+    auto it = std::find(_profile.watchList.begin(), _profile.watchList.end(), itemId);
+    if (it != _profile.watchList.end())
+        _profile.watchList.erase(it);
     TC_LOG_DEBUG("playerbot.auction", "AuctionHouse: Removed item {} from watch list for bot {}",
         itemId, _bot ? _bot->GetName() : "unknown");
 }
@@ -1750,7 +1755,7 @@ void AuctionHouse::ProcessActionQueue(AuctionSession& session)
 {
     while (!session.actionQueue.empty())
     {
-        auto [actionType, targetId] = session.actionQueue.front();
+        auto [actionType, targetId, amount] = session.actionQueue.front();
         session.actionQueue.pop();
 
         switch (actionType)
@@ -1798,14 +1803,14 @@ void AuctionHouse::AdaptPricingStrategy()
 {
     float roi = _metrics.GetROI();
 
-    if (roi < 1.0f && _profile.primaryStrategy == AuctionStrategy::AGGRESSIVE)
+    if (roi < 1.0f && _profile.primaryStrategy == AuctionHouseStrategy::AGGRESSIVE)
     {
-        _profile.primaryStrategy = AuctionStrategy::CONSERVATIVE;
+        _profile.primaryStrategy = AuctionHouseStrategy::CONSERVATIVE;
         TC_LOG_DEBUG("playerbot.auction", "AuctionHouse: Adapted to conservative strategy due to poor ROI");
     }
-    else if (roi > 1.3f && _profile.primaryStrategy == AuctionStrategy::CONSERVATIVE)
+    else if (roi > 1.3f && _profile.primaryStrategy == AuctionHouseStrategy::CONSERVATIVE)
     {
-        _profile.primaryStrategy = AuctionStrategy::AGGRESSIVE;
+        _profile.primaryStrategy = AuctionHouseStrategy::AGGRESSIVE;
         TC_LOG_DEBUG("playerbot.auction", "AuctionHouse: Adapted to aggressive strategy due to good ROI");
     }
 }
@@ -1825,7 +1830,12 @@ void AuctionHouse::LearnMarketPatterns(uint32 itemId)
 void AuctionHouse::UpdatePlayerPreferences(uint32 itemId, bool wasPurchased)
 {
     if (wasPurchased && _profile.watchList.size() < 20)
-        _profile.watchList.insert(itemId);
+    {
+        // Only add if not already in the list
+        auto it = std::find(_profile.watchList.begin(), _profile.watchList.end(), itemId);
+        if (it == _profile.watchList.end())
+            _profile.watchList.push_back(itemId);
+    }
 }
 
 // ============================================================================

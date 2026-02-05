@@ -237,9 +237,9 @@ public:
     // LIFECYCLE (BehaviorManager overrides)
     // ========================================================================
 
-    bool OnInitialize() override;
-    void OnShutdown() override;
-    void OnUpdate(uint32 elapsed) override;
+    bool OnInitialize();
+    void OnShutdown();
+    void OnUpdate(uint32 elapsed);
 
     // ========================================================================
     // SESSION MANAGEMENT

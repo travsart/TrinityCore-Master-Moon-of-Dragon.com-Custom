@@ -185,12 +185,12 @@ protected:
      * - ACTIVATING_STRATEGIES: Call OnGroupJoined() if in group
      * - READY: Log initialization complete
      */
-    void OnEnter(BotInitState newState, BotInitState previousState) override;
+    void OnEnter(BotInitState newState, BotInitState previousState);
 
     /**
      * @brief Called when exiting each state
      */
-    void OnExit(BotInitState currentState, BotInitState nextState) override;
+    void OnExit(BotInitState currentState, BotInitState nextState);
 
     /**
      * @brief Called on transition failures
@@ -199,12 +199,12 @@ protected:
         BotInitState from,
         BotInitState to,
         TransitionValidation result
-    ) override;
+    );
 
     /**
      * @brief Called every Update() for state-specific logic
      */
-    void OnUpdate(uint32 diff) override;
+    void OnUpdate(uint32 diff);
 
 private:
     // ========================================================================

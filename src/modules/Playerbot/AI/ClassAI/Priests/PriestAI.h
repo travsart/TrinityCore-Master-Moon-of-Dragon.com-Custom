@@ -36,23 +36,23 @@ public:
     ~PriestAI();
 
     // ClassAI interface implementation
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 
     // Combat state callbacks
-    void OnCombatStart(::Unit* target) override;
-    void OnCombatEnd() override;
+    void OnCombatStart(::Unit* target);
+    void OnCombatEnd();
 
 protected:
     // Resource management
-    bool HasEnoughResource(uint32 spellId) override;
-    void ConsumeResource(uint32 spellId) override;
+    bool HasEnoughResource(uint32 spellId);
+    void ConsumeResource(uint32 spellId);
 
     // Positioning
-    Position GetOptimalPosition(::Unit* target) override;
-    float GetOptimalRange(::Unit* target) override;
+    Position GetOptimalPosition(::Unit* target);
+    float GetOptimalRange(::Unit* target);
 
     // Combat behavior integration - Priority handlers
     bool HandleCombatBehaviorPriorities(::Unit* target);

@@ -36,19 +36,19 @@ public:
     ~SoloStrategy() override = default;
 
     // Strategy interface
-    void InitializeActions() override;
-    void InitializeTriggers() override;
-    void InitializeValues() override;
+    void InitializeActions();
+    void InitializeTriggers();
+    void InitializeValues();
 
     // Activation
-    void OnActivate(BotAI* ai) override;
-    void OnDeactivate(BotAI* ai) override;
+    void OnActivate(BotAI* ai);
+    void OnDeactivate(BotAI* ai);
 
     // Always active for solo bots
-    bool IsActive(BotAI* ai) const override;
+    bool IsActive(BotAI* ai) const;
 
     // Update behavior
-    void UpdateBehavior(BotAI* ai, uint32 diff) override;
+    void UpdateBehavior(BotAI* ai, uint32 diff);
 
 private:
     uint32 _lastWanderTime = 0;

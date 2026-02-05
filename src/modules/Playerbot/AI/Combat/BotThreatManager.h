@@ -199,7 +199,7 @@ public:
     /**
      * @brief Filter events to only receive those involving this bot
      */
-    bool ShouldReceiveEvent(const CombatEvent& event) const override;
+    bool ShouldReceiveEvent(const CombatEvent& event) const;
 
     /**
      * @brief Subscriber name for debugging

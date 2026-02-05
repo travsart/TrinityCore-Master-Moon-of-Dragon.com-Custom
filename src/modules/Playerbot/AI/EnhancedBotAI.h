@@ -58,13 +58,13 @@ class TC_GAME_API EnhancedBotAI : public BotAI
 {
 public:
     explicit EnhancedBotAI(Player* bot);
-    ~EnhancedBotAI() override;
+    ~EnhancedBotAI();
 
     // Override base BotAI methods
-    void UpdateAI(uint32 diff) override;
-    void Reset() override;
-    void OnDeath() override;
-    void OnRespawn() override;
+    void UpdateAI(uint32 diff);
+    void Reset();
+    void OnDeath();
+    void OnRespawn();
     AIUpdateResult UpdateEnhanced(uint32 diff);
 
     // Combat events

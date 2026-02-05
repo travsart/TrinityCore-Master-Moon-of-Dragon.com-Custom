@@ -1031,13 +1031,13 @@ void QuestTurnIn::CleanupCompletedTurnIns()
  * @param botGuid Bot GUID
  * @return Turn-in metrics snapshot
  */
-IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
+QuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
     {
         auto snapshot = it->second.CreateSnapshot();
-        TurnInMetricsSnapshot result;
+        QuestTurnIn::TurnInMetricsSnapshot result;
         result.questsTurnedIn = snapshot.questsTurnedIn;
         result.turnInAttempts = snapshot.turnInAttempts;
         result.successfulTurnIns = snapshot.successfulTurnIns;
@@ -1050,17 +1050,17 @@ IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botG
         return result;
     }
 
-    return TurnInMetricsSnapshot();
+    return QuestTurnIn::TurnInMetricsSnapshot();
 }
 
 /**
  * @brief Get global turn-in metrics
  * @return Global turn-in metrics snapshot
  */
-IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
+QuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
 {
     auto snapshot = _globalMetrics.CreateSnapshot();
-    IQuestTurnIn::TurnInMetricsSnapshot result;
+    QuestTurnIn::TurnInMetricsSnapshot result;
     result.questsTurnedIn = snapshot.questsTurnedIn;
     result.turnInAttempts = snapshot.turnInAttempts;
     result.successfulTurnIns = snapshot.successfulTurnIns;

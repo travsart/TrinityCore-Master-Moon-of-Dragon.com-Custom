@@ -48,12 +48,12 @@ public:
     ~QuestStrategy() override = default;
 
     // Strategy interface
-    void InitializeActions() override;
-    void InitializeTriggers() override;
-    void InitializeValues() override;
-    bool IsActive(BotAI* ai) const override;
-    float GetRelevance(BotAI* ai) const override;
-    void UpdateBehavior(BotAI* ai, uint32 diff) override;
+    void InitializeActions();
+    void InitializeTriggers();
+    void InitializeValues();
+    bool IsActive(BotAI* ai) const;
+    float GetRelevance(BotAI* ai) const;
+    void UpdateBehavior(BotAI* ai, uint32 diff);
 
     // ========================================================================
     // GRIND FALLBACK INTEGRATION

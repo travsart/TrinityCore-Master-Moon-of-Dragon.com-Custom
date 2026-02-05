@@ -761,7 +761,7 @@ void BotLifecycleManager::StopAll(bool immediate)
     }
 }
 
-IBotLifecycleManager::GlobalStats BotLifecycleManager::GetGlobalStats() const
+GlobalStats BotLifecycleManager::GetGlobalStats() const
 {
     GlobalStats stats;
 

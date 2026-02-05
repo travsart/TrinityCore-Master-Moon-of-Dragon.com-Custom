@@ -20,7 +20,6 @@
 
 #include "Common.h"
 #include "ObjectGuid.h"
-#include "../Core/DI/Interfaces/ILFGBotSelector.h"
 #include <vector>
 #include <unordered_map>
 
@@ -43,7 +42,7 @@ class Player;
  * and static utility methods (for stateless queries) to support Phase 7
  * per-bot architecture while maintaining system-wide bot discovery.
  */
-class TC_GAME_API LFGBotSelector final : public Playerbot::ILFGBotSelector
+class TC_GAME_API LFGBotSelector final
 {
 private:
     LFGBotSelector();
@@ -113,7 +112,7 @@ public:
      * @param count Number of tanks needed
      * @return Vector of tank bot Player pointers (may be fewer than requested)
      */
-    std::vector<Player*> FindTanks(uint8 minLevel, uint8 maxLevel, uint32 count) override;
+    std::vector<Player*> FindTanks(uint8 minLevel, uint8 maxLevel, uint32 count);
 
     /**
      * @brief Find available healer bots within level range
@@ -123,7 +122,7 @@ public:
      * @param count Number of healers needed
      * @return Vector of healer bot Player pointers (may be fewer than requested)
      */
-    std::vector<Player*> FindHealers(uint8 minLevel, uint8 maxLevel, uint32 count) override;
+    std::vector<Player*> FindHealers(uint8 minLevel, uint8 maxLevel, uint32 count);
 
     /**
      * @brief Find available DPS bots within level range
@@ -133,7 +132,7 @@ public:
      * @param count Number of DPS needed
      * @return Vector of DPS bot Player pointers (may be fewer than requested)
      */
-    std::vector<Player*> FindDPS(uint8 minLevel, uint8 maxLevel, uint32 count) override;
+    std::vector<Player*> FindDPS(uint8 minLevel, uint8 maxLevel, uint32 count);
 
     /**
      * @brief Check if a bot is available for LFG queueing
@@ -149,7 +148,7 @@ public:
      * @param bot The bot to check
      * @return true if available, false otherwise
      */
-    bool IsBotAvailable(Player* bot) override;
+    bool IsBotAvailable(Player* bot);
 
     /**
      * @brief Calculate priority score for a bot to fill a specific role
@@ -166,7 +165,7 @@ public:
      * @param desiredLevel The ideal level for the dungeon
      * @return Priority score (higher is better, 0-2000+)
      */
-    uint32 CalculateBotPriority(Player* bot, uint8 desiredRole, uint8 desiredLevel) override;
+    uint32 CalculateBotPriority(Player* bot, uint8 desiredRole, uint8 desiredLevel);
 
     /**
      * @brief Set the last queue time for a bot
@@ -176,7 +175,7 @@ public:
      * @param botGuid The bot's GUID
      * @param queueTime The time the bot was queued (timestamp)
      */
-    void SetLastQueueTime(ObjectGuid botGuid, time_t queueTime) override;
+    void SetLastQueueTime(ObjectGuid botGuid, time_t queueTime);
 
     /**
      * @brief Get the last queue time for a bot
@@ -184,19 +183,19 @@ public:
      * @param botGuid The bot's GUID
      * @return Last queue timestamp, or 0 if never queued
      */
-    time_t GetLastQueueTime(ObjectGuid botGuid) override;
+    time_t GetLastQueueTime(ObjectGuid botGuid);
 
     /**
      * @brief Clear tracking data for a bot
      *
      * @param botGuid The bot's GUID
      */
-    void ClearBotTracking(ObjectGuid botGuid) override;
+    void ClearBotTracking(ObjectGuid botGuid);
 
     /**
      * @brief Clear all tracking data
      */
-    void ClearAllTracking() override;
+    void ClearAllTracking();
 
 private:
     /**

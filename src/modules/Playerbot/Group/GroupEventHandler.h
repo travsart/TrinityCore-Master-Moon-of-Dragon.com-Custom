@@ -10,7 +10,8 @@
 #ifndef PLAYERBOT_GROUP_EVENT_HANDLER_H
 #define PLAYERBOT_GROUP_EVENT_HANDLER_H
 
-#include "GroupEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "GroupEvents.h"
 #include "Define.h"
 #include <string>
 #include <memory>
@@ -158,7 +159,7 @@ class TC_GAME_API MemberJoinedHandler : public GroupEventHandler
 public:
     explicit MemberJoinedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "MemberJoinedHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -181,7 +182,7 @@ class TC_GAME_API MemberLeftHandler : public GroupEventHandler
 public:
     explicit MemberLeftHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "MemberLeftHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -204,7 +205,7 @@ class TC_GAME_API LeaderChangedHandler : public GroupEventHandler
 public:
     explicit LeaderChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "LeaderChangedHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -227,7 +228,7 @@ class TC_GAME_API GroupDisbandedHandler : public GroupEventHandler
 public:
     explicit GroupDisbandedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "GroupDisbandedHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -250,7 +251,7 @@ class TC_GAME_API LootMethodChangedHandler : public GroupEventHandler
 public:
     explicit LootMethodChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "LootMethodChangedHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -277,7 +278,7 @@ class TC_GAME_API TargetIconChangedHandler : public GroupEventHandler
 public:
     explicit TargetIconChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "TargetIconChangedHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -300,7 +301,7 @@ class TC_GAME_API ReadyCheckHandler : public GroupEventHandler
 public:
     explicit ReadyCheckHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "ReadyCheckHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -327,7 +328,7 @@ class TC_GAME_API RaidConvertedHandler : public GroupEventHandler
 public:
     explicit RaidConvertedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "RaidConvertedHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -350,7 +351,7 @@ class TC_GAME_API SubgroupChangedHandler : public GroupEventHandler
 public:
     explicit SubgroupChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "SubgroupChangedHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -373,7 +374,7 @@ class TC_GAME_API RoleAssignmentHandler : public GroupEventHandler
 public:
     explicit RoleAssignmentHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "RoleAssignmentHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
@@ -400,7 +401,7 @@ class TC_GAME_API DifficultyChangedHandler : public GroupEventHandler
 public:
     explicit DifficultyChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
-    bool HandleEvent(GroupEvent const& event) override;
+    bool HandleEvent(GroupEvent const& event);
     ::std::string GetHandlerName() const override { return "DifficultyChangedHandler"; }
     ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {

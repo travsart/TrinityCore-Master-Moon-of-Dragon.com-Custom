@@ -8,7 +8,8 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "../Auction/AuctionEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Auction/AuctionEvents.h"
 #include "AuctionHousePackets.h"
 #include "Player.h"
 #include "WorldSession.h"
@@ -36,7 +37,7 @@ void ParseTypedAuctionCommandResult(WorldSession* session, WorldPackets::Auction
         packet.ErrorCode
     );
 
-    AuctionEventBus::instance()->PublishEvent(event);
+    EventBus<AuctionEvent>::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received AUCTION_COMMAND_RESULT (typed): auction={}, cmd={}, error={}",
         bot->GetName(), packet.AuctionID, packet.Command, packet.ErrorCode);
@@ -59,7 +60,7 @@ void ParseTypedAuctionListBucketsResult(WorldSession* session, WorldPackets::Auc
         static_cast<uint32>(packet.Buckets.size())
     );
 
-    AuctionEventBus::instance()->PublishEvent(event);
+    EventBus<AuctionEvent>::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received AUCTION_LIST_BUCKETS_RESULT (typed): {} buckets",
         bot->GetName(), packet.Buckets.size());
@@ -82,7 +83,7 @@ void ParseTypedAuctionListItemsResult(WorldSession* session, WorldPackets::Aucti
         static_cast<uint32>(packet.Items.size())
     );
 
-    AuctionEventBus::instance()->PublishEvent(event);
+    EventBus<AuctionEvent>::instance()->PublishEvent(event);
     TC_LOG_TRACE("playerbot.packets", "Bot {} received AUCTION_LIST_ITEMS_RESULT (typed): {} items",
         bot->GetName(), packet.Items.size());
 }
@@ -109,7 +110,7 @@ void ParseTypedAuctionWonNotification(WorldSession* session, WorldPackets::Aucti
         0  // Bid amount not available in this packet
     );
 
-    AuctionEventBus::instance()->PublishEvent(event);
+    EventBus<AuctionEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received AUCTION_WON_NOTIFICATION (typed): auction={}, item={}",
         bot->GetName(), packet.Info.AuctionID, itemId);
@@ -133,7 +134,7 @@ void ParseTypedAuctionOutbidNotification(WorldSession* session, WorldPackets::Au
         packet.BidAmount
     );
 
-    AuctionEventBus::instance()->PublishEvent(event);
+    EventBus<AuctionEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received AUCTION_OUTBID_NOTIFICATION (typed): auction={}, newBid={}",
         bot->GetName(), packet.Info.AuctionID, packet.BidAmount);
@@ -162,7 +163,7 @@ void ParseTypedAuctionClosedNotification(WorldSession* session, WorldPackets::Au
             itemId
         );
 
-        AuctionEventBus::instance()->PublishEvent(event);
+        EventBus<AuctionEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("playerbot.packets", "Bot {} received AUCTION_CLOSED_NOTIFICATION (typed): auction={}, item={}, expired={}",
             bot->GetName(), packet.Info.AuctionID, itemId, !packet.Sold);

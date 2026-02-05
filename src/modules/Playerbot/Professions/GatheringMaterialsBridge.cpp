@@ -17,7 +17,8 @@
 #include "GameTime.h"
 #include "ProfessionManager.h"
 #include "ProfessionDatabase.h"
-#include "ProfessionEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "ProfessionEvents.h"
 #include "ProfessionEvents.h"
 #include "GatheringManager.h"
 #include "Player.h"
@@ -80,7 +81,7 @@ void GatheringMaterialsBridge::Initialize()
 
     // Subscribe to ProfessionEventBus for event-driven reactivity (Phase 2)
     // Each bot instance subscribes, but filters events by playerGuid
-    ProfessionEventBus::instance()->SubscribeCallback(
+    EventBus<ProfessionEvent>::instance()->SubscribeCallback(
         [this](ProfessionEvent const& event) { HandleProfessionEvent(event); },
         {
             ProfessionEventType::MATERIALS_NEEDED,

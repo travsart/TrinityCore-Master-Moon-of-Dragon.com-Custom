@@ -179,14 +179,14 @@ namespace Playerbot
          *
          * This calls the virtual OnInitialize() method for derived class initialization
          */
-        bool Initialize() override;
+        bool Initialize();
 
         /**
          * @brief Shutdown the manager (IManagerBase interface)
          *
          * This calls the virtual OnShutdown() method for derived class cleanup
          */
-        void Shutdown() override;
+        void Shutdown();
 
         /**
          * @brief Handle an event from the EventDispatcher (IManagerBase interface)
@@ -194,7 +194,7 @@ namespace Playerbot
          *
          * This method delegates to the virtual OnEventInternal() for derived classes to override.
          */
-        void OnEvent(Events::BotEvent const& event) override;
+        void OnEvent(Events::BotEvent const& event);
 
         /**
          * @brief Get the manager's unique identifier (IManagerBase interface)

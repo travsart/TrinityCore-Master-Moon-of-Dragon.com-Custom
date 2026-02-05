@@ -33,16 +33,16 @@ public:
     virtual ~GroupCombatStrategy() = default;
 
     // Strategy interface
-    void InitializeActions() override;
-    void InitializeTriggers() override;
-    void InitializeValues() override;
-    float GetRelevance(BotAI* ai) const override;
+    void InitializeActions();
+    void InitializeTriggers();
+    void InitializeValues();
+    float GetRelevance(BotAI* ai) const;
 
     // CRITICAL FIX: Only active when bot or group is in combat
-    bool IsActive(BotAI* ai) const override;
+    bool IsActive(BotAI* ai) const;
 
     // CRITICAL FIX: UpdateBehavior is called every frame, not GetRelevance!
-    void UpdateBehavior(BotAI* ai, uint32 diff) override;
+    void UpdateBehavior(BotAI* ai, uint32 diff);
 
     // Call when group composition changes to invalidate cache
     void OnGroupChanged() { _memberCacheDirty = true; }

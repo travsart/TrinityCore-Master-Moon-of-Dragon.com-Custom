@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "Core/DI/Interfaces/IBotSpawner.h"
 #include "Lifecycle/BotSpawner.h"  // For SpawnConfig and SpawnStats definitions
 #include "Define.h"
 #include <memory>
@@ -41,65 +40,65 @@ class BotSpawnOrchestrator;
  * spawner->SpawnBot(request);  // Delegates to orchestrator
  * ```
  */
-class TC_GAME_API BotSpawnerAdapter : public IBotSpawner
+class TC_GAME_API BotSpawnerAdapter 
 {
 public:
     BotSpawnerAdapter();
-    ~BotSpawnerAdapter() override;
+    ~BotSpawnerAdapter();
 
     // === LIFECYCLE (IBotSpawner) ===
-    bool Initialize() override;
-    void Shutdown() override;
-    void Update(uint32 diff) override;
+    bool Initialize();
+    void Shutdown();
+    void Update(uint32 diff);
 
     // === SPAWNING INTERFACE (IBotSpawner) ===
-    bool SpawnBot(SpawnRequest const& request) override;
-    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests) override;
+    bool SpawnBot(SpawnRequest const& request);
+    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests);
 
     // === POPULATION MANAGEMENT (IBotSpawner) ===
-    void SpawnToPopulationTarget() override;
-    void UpdatePopulationTargets() override;
-    bool DespawnBot(ObjectGuid guid, ::std::string const& reason) override;
-    void DespawnBot(ObjectGuid guid, bool forced = false) override;
+    void SpawnToPopulationTarget();
+    void UpdatePopulationTargets();
+    bool DespawnBot(ObjectGuid guid, ::std::string const& reason);
+    void DespawnBot(ObjectGuid guid, bool forced = false);
 
     // === QUERIES (IBotSpawner) ===
-    uint32 GetActiveBotCount() const override;
-    uint32 GetActiveBotCount(uint32 zoneId) const override;
-    bool CanSpawnMore() const override;
-    bool CanSpawnInZone(uint32 zoneId) const override;
+    uint32 GetActiveBotCount() const;
+    uint32 GetActiveBotCount(uint32 zoneId) const;
+    bool CanSpawnMore() const;
+    bool CanSpawnInZone(uint32 zoneId) const;
 
     // === CONFIGURATION (IBotSpawner) ===
-    void LoadConfig() override;
-    SpawnConfig const& GetConfig() const override;
-    void SetConfig(SpawnConfig const& config) override;
-    void SetMaxBots(uint32 maxBots) override;
-    void SetBotToPlayerRatio(float ratio) override;
-    bool IsEnabled() const override;
-    void SetEnabled(bool enabled) override;
+    void LoadConfig();
+    SpawnConfig const& GetConfig() const;
+    void SetConfig(SpawnConfig const& config);
+    void SetMaxBots(uint32 maxBots);
+    void SetBotToPlayerRatio(float ratio);
+    bool IsEnabled() const;
+    void SetEnabled(bool enabled);
 
     // === ZONE/MAP MANAGEMENT (IBotSpawner) ===
-    void DespawnAllBots() override;
-    void UpdateZonePopulation(uint32 zoneId, uint32 mapId) override;
-    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId) override;
-    ZonePopulation GetZonePopulation(uint32 zoneId) const override;
-    ::std::vector<ZonePopulation> GetAllZonePopulations() const override;
+    void DespawnAllBots();
+    void UpdateZonePopulation(uint32 zoneId, uint32 mapId);
+    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId);
+    ZonePopulation GetZonePopulation(uint32 zoneId) const;
+    ::std::vector<ZonePopulation> GetAllZonePopulations() const;
 
     // === BOT QUERIES (IBotSpawner) ===
-    bool IsBotActive(ObjectGuid guid) const override;
-    uint32 GetActiveBotCount(uint32 mapId, bool useMapId) const override;
-    ::std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const override;
-    bool CanSpawnOnMap(uint32 mapId) const override;
+    bool IsBotActive(ObjectGuid guid) const;
+    uint32 GetActiveBotCount(uint32 mapId, bool useMapId) const;
+    ::std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const;
+    bool CanSpawnOnMap(uint32 mapId) const;
 
     // === ADVANCED SPAWNING (IBotSpawner) ===
-    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid) override;
+    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid);
 
     // === STATISTICS (IBotSpawner) ===
-    SpawnStats const& GetStats() const override;
-    void ResetStats() override;
+    SpawnStats const& GetStats() const;
+    void ResetStats();
 
     // === PLAYER INTERACTION (IBotSpawner) ===
-    void OnPlayerLogin() override;
-    void CheckAndSpawnForPlayers() override;
+    void OnPlayerLogin();
+    void CheckAndSpawnForPlayers();
 
     // === ADAPTER-SPECIFIC METHODS ===
     BotSpawnOrchestrator* GetOrchestrator() const { return _orchestrator.get(); }
@@ -148,53 +147,53 @@ private:
  * This adapter allows the old BotSpawner to work with the new interface
  * during the transition period. It can be removed once migration is complete.
  */
-class TC_GAME_API LegacyBotSpawnerAdapter : public IBotSpawner
+class TC_GAME_API LegacyBotSpawnerAdapter 
 {
 public:
     LegacyBotSpawnerAdapter();
-    ~LegacyBotSpawnerAdapter() override;
+    ~LegacyBotSpawnerAdapter();
 
     // IBotSpawner implementation delegating to legacy BotSpawner
-    bool Initialize() override;
-    void Shutdown() override;
-    void Update(uint32 diff) override;
+    bool Initialize();
+    void Shutdown();
+    void Update(uint32 diff);
 
-    bool SpawnBot(SpawnRequest const& request) override;
-    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests) override;
+    bool SpawnBot(SpawnRequest const& request);
+    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests);
 
-    void SpawnToPopulationTarget() override;
-    void UpdatePopulationTargets() override;
-    bool DespawnBot(ObjectGuid guid, ::std::string const& reason) override;
-    void DespawnBot(ObjectGuid guid, bool forced = false) override;
+    void SpawnToPopulationTarget();
+    void UpdatePopulationTargets();
+    bool DespawnBot(ObjectGuid guid, ::std::string const& reason);
+    void DespawnBot(ObjectGuid guid, bool forced = false);
 
-    uint32 GetActiveBotCount() const override;
-    uint32 GetActiveBotCount(uint32 zoneId) const override;
-    bool CanSpawnMore() const override;
-    bool CanSpawnInZone(uint32 zoneId) const override;
+    uint32 GetActiveBotCount() const;
+    uint32 GetActiveBotCount(uint32 zoneId) const;
+    bool CanSpawnMore() const;
+    bool CanSpawnInZone(uint32 zoneId) const;
 
-    void SetMaxBots(uint32 maxBots) override;
-    void SetBotToPlayerRatio(float ratio) override;
-    bool IsEnabled() const override;
-    void SetEnabled(bool enabled) override;
+    void SetMaxBots(uint32 maxBots);
+    void SetBotToPlayerRatio(float ratio);
+    bool IsEnabled() const;
+    void SetEnabled(bool enabled);
 
     // Additional IBotSpawner methods
-    void LoadConfig() override;
-    SpawnConfig const& GetConfig() const override;
-    void SetConfig(SpawnConfig const& config) override;
-    void DespawnAllBots() override;
-    void UpdateZonePopulation(uint32 zoneId, uint32 mapId) override;
-    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId) override;
-    ZonePopulation GetZonePopulation(uint32 zoneId) const override;
-    ::std::vector<ZonePopulation> GetAllZonePopulations() const override;
-    bool IsBotActive(ObjectGuid guid) const override;
-    uint32 GetActiveBotCount(uint32 mapId, bool useMapId) const override;
-    ::std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const override;
-    bool CanSpawnOnMap(uint32 mapId) const override;
-    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid) override;
-    SpawnStats const& GetStats() const override;
-    void ResetStats() override;
-    void OnPlayerLogin() override;
-    void CheckAndSpawnForPlayers() override;
+    void LoadConfig();
+    SpawnConfig const& GetConfig() const;
+    void SetConfig(SpawnConfig const& config);
+    void DespawnAllBots();
+    void UpdateZonePopulation(uint32 zoneId, uint32 mapId);
+    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId);
+    ZonePopulation GetZonePopulation(uint32 zoneId) const;
+    ::std::vector<ZonePopulation> GetAllZonePopulations() const;
+    bool IsBotActive(ObjectGuid guid) const;
+    uint32 GetActiveBotCount(uint32 mapId, bool useMapId) const;
+    ::std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const;
+    bool CanSpawnOnMap(uint32 mapId) const;
+    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid);
+    SpawnStats const& GetStats() const;
+    void ResetStats();
+    void OnPlayerLogin();
+    void CheckAndSpawnForPlayers();
 
 private:
     class BotSpawner* _legacySpawner = nullptr; // Non-owning pointer to singleton
@@ -219,7 +218,7 @@ public:
         AUTO         // Auto-detect based on configuration
     };
 
-    static ::std::unique_ptr<IBotSpawner> CreateSpawner(SpawnerType type = SpawnerType::AUTO);
+    static ::std::unique_ptr<BotSpawnerAdapter> CreateSpawner(SpawnerType type = SpawnerType::AUTO);
     static SpawnerType DetectBestSpawnerType();
     static ::std::string GetSpawnerTypeName(SpawnerType type);
 

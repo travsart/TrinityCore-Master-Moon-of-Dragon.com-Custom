@@ -390,7 +390,7 @@ void BotSpawnEventBus::RecordEventProcessing(uint64 processingTimeUs)
     _stats.totalProcessingTimeUs.fetch_add(processingTimeUs);
 }
 
-IBotSpawnEventBus::EventStats const& BotSpawnEventBus::GetStats() const
+EventStats const& BotSpawnEventBus::GetStats() const
 {
     // Update snapshot from atomic internal stats
     _statsSnapshot.eventsPublished = _stats.eventsPublished.load();

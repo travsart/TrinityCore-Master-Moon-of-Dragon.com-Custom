@@ -7,7 +7,6 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
-#include "Core/DI/Interfaces/IBotDatabasePool.h"
 #include "DatabaseEnvFwd.h"
 #include "PreparedStatement.h"
 #include "QueryResult.h"
@@ -59,7 +58,7 @@ namespace Playerbot {
  *    - MUST recycle connections to prevent memory leaks
  *    - MUST monitor and limit total memory usage
  */
-class TC_GAME_API BotDatabasePool final : public IBotDatabasePool
+class TC_GAME_API BotDatabasePool final 
 {
 public:
     // Singleton with thread-safe initialization
@@ -74,47 +73,47 @@ public:
     // Initialize with connection parameters and thread counts
     bool Initialize(::std::string const& connectionString,
                    uint8 asyncThreads = 4,
-                   uint8 syncThreads = 2) override;
-    void Shutdown() override;
+                   uint8 syncThreads = 2);
+    void Shutdown();
 
     // === ASYNC QUERY OPERATIONS ===
 
     // Async query execution with callback
     void ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
                      ::std::function<void(PreparedQueryResult)> callback,
-                     uint32 timeoutMs = 30000) override;
+                     uint32 timeoutMs = 30000);
 
     // Fire-and-forget async execution (no result needed)
     void ExecuteAsyncNoResult(CharacterDatabasePreparedStatement* stmt,
-                             uint32 timeoutMs = 30000) override;
+                             uint32 timeoutMs = 30000);
 
     // Async batch operations
     void ExecuteBatchAsync(::std::vector<CharacterDatabasePreparedStatement*> const& statements,
                           ::std::function<void(::std::vector<PreparedQueryResult>)> callback,
-                          uint32 timeoutMs = 30000) override;
+                          uint32 timeoutMs = 30000);
 
     // === SYNCHRONOUS QUERY OPERATIONS ===
 
     // Synchronous query for immediate results (use sparingly)
     PreparedQueryResult ExecuteSync(CharacterDatabasePreparedStatement* stmt,
-                                   uint32 timeoutMs = 10000) override;
+                                   uint32 timeoutMs = 10000);
 
     // === PREPARED STATEMENT MANAGEMENT ===
 
     // Get prepared statement by ID
-    CharacterDatabasePreparedStatement* GetPreparedStatement(uint32 stmtId) override;
+    CharacterDatabasePreparedStatement* GetPreparedStatement(uint32 stmtId);
 
     // Cache prepared statement for reuse
-    void CachePreparedStatement(uint32 stmtId, ::std::string const& sql) override;
+    void CachePreparedStatement(uint32 stmtId, ::std::string const& sql);
 
     // === CACHING SYSTEM ===
 
     // Cache query result with TTL
     void CacheResult(::std::string const& key, PreparedQueryResult const& result,
-                    ::std::chrono::seconds ttl = ::std::chrono::seconds(60)) override;
+                    ::std::chrono::seconds ttl = ::std::chrono::seconds(60));
 
     // Get cached result
-    PreparedQueryResult GetCachedResult(::std::string const& key) override;
+    PreparedQueryResult GetCachedResult(::std::string const& key);
 
     // === PERFORMANCE MONITORING ===
 
@@ -123,9 +122,9 @@ public:
     DatabaseMetrics const& GetMetrics() const override { return _metrics; }
 
     // Performance queries
-    double GetCacheHitRate() const override;
+    double GetCacheHitRate() const;
     uint32 GetAverageResponseTime() const override { return _metrics.avgResponseTimeMs.load(); }
-    bool IsHealthy() const override;
+    bool IsHealthy() const;
 
     // Configuration
     void SetQueryTimeout(uint32 timeoutMs) override { _defaultTimeoutMs = timeoutMs; }

@@ -10,7 +10,8 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "../Combat/CombatEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Combat/CombatEvents.h"
 #include "SpellPackets.h"
 #include "CombatPackets.h"
 #include "CombatLogPackets.h"
@@ -49,7 +50,7 @@ void ParseTypedSpellStart(WorldSession* session, WorldPackets::Spells::SpellStar
         packet.Cast.CastTime
     );
 
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_START (typed): caster={}, target={}, spell={}, castTime={}ms",
         bot->GetName(), packet.Cast.CasterGUID.ToString(), targetGuid.ToString(),
@@ -79,7 +80,7 @@ void ParseTypedSpellGo(WorldSession* session, WorldPackets::Spells::SpellGo cons
         packet.Cast.SpellID
     );
 
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_GO (typed): caster={}, target={}, spell={}",
         bot->GetName(), packet.Cast.CasterGUID.ToString(), targetGuid.ToString(), packet.Cast.SpellID);
@@ -110,7 +111,7 @@ void ParseTypedSpellFailure(WorldSession* session, WorldPackets::Spells::SpellFa
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_FAILURE (typed): caster={}, spell={}, reason={}",
         bot->GetName(), packet.CasterUnit.ToString(), packet.SpellID, static_cast<uint32>(packet.Reason));
@@ -140,7 +141,7 @@ void ParseTypedSpellFailedOther(WorldSession* session, WorldPackets::Spells::Spe
     event.flags = 0;
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_FAILED_OTHER (typed): caster={}, spell={}",
         bot->GetName(), packet.CasterUnit.ToString(), packet.SpellID);
@@ -171,7 +172,7 @@ void ParseTypedSpellEnergize(WorldSession* session, WorldPackets::CombatLog::Spe
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_ENERGIZE (typed): caster={}, target={}, spell={}, amount={}, type={}",
         bot->GetName(), packet.CasterGUID.ToString(), packet.TargetGUID.ToString(),
@@ -198,7 +199,7 @@ void ParseTypedSpellInterrupt(WorldSession* session, WorldPackets::CombatLog::Sp
         packet.SpellID  // WoW 12.0: Field is SpellID, not InterruptingSpellID
     );
 
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_INTERRUPT (typed): interrupter={}, victim={}, interruptedSpell={}, interruptSpell={}",
         bot->GetName(), packet.Caster.ToString(), packet.Victim.ToString(),
@@ -233,7 +234,7 @@ void ParseTypedSpellDispel(WorldSession* session, WorldPackets::CombatLog::Spell
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
-        CombatEventBus::instance()->PublishEvent(event);
+        EventBus<CombatEvent>::instance()->PublishEvent(event);
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_DISPEL (typed): dispeller={}, target={}, dispelSpell={}, count={}",
@@ -258,7 +259,7 @@ void ParseTypedAttackStart(WorldSession* session, WorldPackets::Combat::AttackSt
         packet.Victim
     );
 
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received ATTACK_START (typed): attacker={}, victim={}",
         bot->GetName(), packet.Attacker.ToString(), packet.Victim.ToString());
@@ -284,7 +285,7 @@ void ParseTypedAttackStop(WorldSession* session, WorldPackets::Combat::SAttackSt
         false  // NowDead field doesn't exist in WoW 12.0
     );
 
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received ATTACK_STOP (typed): attacker={}, victim={}",
         bot->GetName(), packet.Attacker.ToString(), packet.Victim.ToString());
@@ -316,7 +317,7 @@ void ParseTypedAIReaction(WorldSession* session, WorldPackets::Combat::AIReactio
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
-    CombatEventBus::instance()->PublishEvent(event);
+    EventBus<CombatEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received AI_REACTION (typed): unit={}, reaction={}",
         bot->GetName(), packet.UnitGUID.ToString(), static_cast<uint32>(packet.Reaction));

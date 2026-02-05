@@ -10,7 +10,8 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "../Quest/QuestEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Quest/QuestEvents.h"
 #include "QuestPackets.h"
 #include "QueryPackets.h"  // WoW 12.0: QuestPOIQueryResponse is in Query namespace
 #include "Log.h"
@@ -43,7 +44,7 @@ void ParseTypedQuestGiverStatus(WorldSession* session, WorldPackets::Quest::Ques
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_STATUS (typed): npc={}",
         bot->GetName(), packet.QuestGiver.Guid.ToString());
 }
@@ -68,7 +69,7 @@ void ParseTypedQuestGiverQuestListMessage(WorldSession* session, WorldPackets::Q
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_LIST (typed): npc={}",
         bot->GetName(), packet.QuestGiverGUID.ToString());
@@ -94,7 +95,7 @@ void ParseTypedQuestGiverQuestDetails(WorldSession* session, WorldPackets::Quest
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_DETAILS (typed): quest={}",
         bot->GetName(), packet.QuestID);
@@ -120,7 +121,7 @@ void ParseTypedQuestGiverRequestItems(WorldSession* session, WorldPackets::Quest
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_REQUEST_ITEMS (typed): quest={}",
         bot->GetName(), packet.QuestID);
@@ -146,7 +147,7 @@ void ParseTypedQuestGiverOfferRewardMessage(WorldSession* session, WorldPackets:
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_OFFER_REWARD (typed): quest={}",
         bot->GetName(), packet.QuestData.QuestID);
@@ -172,7 +173,7 @@ void ParseTypedQuestGiverQuestComplete(WorldSession* session, WorldPackets::Ques
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     // ORPHANED CODE REMOVED: Duplicate null check fragment
     // if (!bot) { TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID"); return; }
@@ -201,7 +202,7 @@ void ParseTypedQuestGiverQuestFailed(WorldSession* session, WorldPackets::Quest:
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_FAILED (typed): quest={}",
         bot->GetName(), packet.QuestID);
@@ -227,7 +228,7 @@ void ParseTypedQuestUpdateAddCreditSimple(WorldSession* session, WorldPackets::Q
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_UPDATE_ADD_CREDIT_SIMPLE (typed): quest={}, credit={}",
         bot->GetName(), packet.QuestID, packet.ObjectID);
@@ -253,7 +254,7 @@ void ParseTypedQuestUpdateAddCredit(WorldSession* session, WorldPackets::Quest::
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_UPDATE_ADD_CREDIT (typed): quest={}, credit={}, count={}",
         bot->GetName(), packet.QuestID, packet.ObjectID, packet.Count);
@@ -279,7 +280,7 @@ void ParseTypedQuestUpdateComplete(WorldSession* session, WorldPackets::Quest::Q
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_UPDATE_COMPLETE (typed): quest={}",
         bot->GetName(), packet.QuestID);
@@ -307,7 +308,7 @@ void ParseTypedQuestUpdateFailedTimer(WorldSession* session, WorldPackets::Quest
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_UPDATE_FAILED_TIMER (typed): quest={}",
         bot->GetName(), packet.QuestID);
@@ -333,7 +334,7 @@ void ParseTypedQuestConfirmAccept(WorldSession* session, WorldPackets::Quest::Qu
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_CONFIRM_ACCEPT (typed): quest={}",
         bot->GetName(), packet.QuestID);
@@ -359,7 +360,7 @@ void ParseTypedQuestPOIQueryResponse(WorldSession* session, WorldPackets::Query:
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    QuestEventBus::instance()->PublishEvent(event);
+    EventBus<QuestEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_POI_QUERY_RESPONSE (typed): {} POIs",
         bot->GetName(), packet.QuestPOIDataStats.size());  // WoW 12.0: Field is QuestPOIDataStats, not QuestPOIData

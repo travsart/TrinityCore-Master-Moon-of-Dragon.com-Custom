@@ -10,7 +10,8 @@
 #include "PlayerBotHooks.h"
 #include "Player.h"
 #include "Group.h"
-#include "GroupEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Group/GroupEvents.h"
 #include "Log.h"
 #include "BotSession.h"
 #include "BotAI.h"
@@ -107,7 +108,7 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish event to GroupEventBus
         GroupEvent event = GroupEvent::MemberJoined(group->GetGUID(), player->GetGUID());
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Member {} joined group {}",
             player->GetName(), group->GetGUID().ToString());
@@ -122,7 +123,7 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish event to GroupEventBus
         GroupEvent event = GroupEvent::MemberLeft(group->GetGUID(), guid, static_cast<uint32>(method));
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Member {} left group {} (method: {})",
             guid.ToString(), group->GetGUID().ToString(), static_cast<uint32>(method));
@@ -137,7 +138,7 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish event to GroupEventBus
         GroupEvent event = GroupEvent::LeaderChanged(group->GetGUID(), newLeaderGuid);
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Group {} leader changed to {}",
             group->GetGUID().ToString(), newLeaderGuid.ToString());
@@ -152,10 +153,10 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish CRITICAL event to GroupEventBus
         GroupEvent event = GroupEvent::GroupDisbanded(group->GetGUID());
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
-        // Also clear all pending events for this group
-        GroupEventBus::instance()->ClearGroupEvents(group->GetGUID());
+        // TODO: Per-group event clearing not implemented in GenericEventBus
+        // GroupEventBus::ClearGroupEvents() was empty (no-op)
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Group {} disbanding",
             group->GetGUID().ToString());
@@ -177,7 +178,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Group {} converted to {}",
             group->GetGUID().ToString(), isRaid ? "raid" : "party");
@@ -200,7 +201,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Player {} moved to subgroup {} in group {}",
             playerGuid.ToString(), newSubgroup, group->GetGUID().ToString());
@@ -215,7 +216,7 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish loot method change event
         GroupEvent event = GroupEvent::LootMethodChanged(group->GetGUID(), static_cast<uint8>(method));
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Group {} loot method changed to {}",
             group->GetGUID().ToString(), static_cast<uint32>(method));
@@ -237,7 +238,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     OnMasterLooterChanged = [](Group* group, ObjectGuid masterLooterGuid)
@@ -256,7 +257,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     OnAssistantChanged = [](Group* group, ObjectGuid memberGuid, bool isAssistant)
@@ -276,7 +277,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     OnMainTankChanged = [](Group* group, ObjectGuid tankGuid)
@@ -295,7 +296,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     OnMainAssistChanged = [](Group* group, ObjectGuid assistGuid)
@@ -314,7 +315,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     OnRaidTargetIconChanged = [](Group* group, uint8 icon, ObjectGuid targetGuid)
@@ -326,7 +327,7 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish target icon event
         GroupEvent event = GroupEvent::TargetIconChanged(group->GetGUID(), icon, targetGuid);
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Group {} target icon {} set to {}",
             group->GetGUID().ToString(), icon, targetGuid.ToString());
@@ -350,7 +351,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(60000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     OnReadyCheckStarted = [](Group* group, ObjectGuid initiatorGuid, uint32 durationMs)
@@ -362,7 +363,7 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish ready check start event
         GroupEvent event = GroupEvent::ReadyCheckStarted(group->GetGUID(), initiatorGuid, durationMs);
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Ready check started in group {} by {} (duration: {}ms)",
             group->GetGUID().ToString(), initiatorGuid.ToString(), durationMs);
@@ -385,7 +386,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     OnReadyCheckCompleted = [](Group* group, bool allReady, uint32 respondedCount, uint32 totalMembers)
@@ -406,7 +407,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     OnDifficultyChanged = [](Group* group, Difficulty difficulty)
@@ -418,7 +419,7 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish difficulty change event (WoW 12.0: Difficulty is int16)
         GroupEvent event = GroupEvent::DifficultyChanged(group->GetGUID(), static_cast<int16>(difficulty));
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Group {} difficulty changed to {}",
             group->GetGUID().ToString(), static_cast<uint32>(difficulty));
@@ -441,7 +442,7 @@ void PlayerBotHooks::RegisterHooks()
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::milliseconds(60000);
 
-        GroupEventBus::instance()->PublishEvent(event);
+        EventBus<GroupEvent>::instance()->PublishEvent(event);
     };
 
     // PLAYER LIFECYCLE HOOKS

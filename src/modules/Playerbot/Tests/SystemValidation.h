@@ -23,7 +23,6 @@
 namespace Playerbot
 {
     // Interface
-    #include "Core/DI/Interfaces/ISystemValidation.h"
 
 
 enum class ValidationLevel : uint8
@@ -69,33 +68,33 @@ struct ValidationResult
  * This system provides thorough validation of all playerbot systems, detecting
  * inconsistencies, performance issues, and ensuring overall system health.
  */
-class TC_GAME_API SystemValidation final : public ISystemValidation
+class TC_GAME_API SystemValidation final 
 {
 public:
     static SystemValidation* instance();
 
     // Core validation framework
-    ValidationResult ValidateSystem(SystemComponent component, ValidationLevel level = ValidationLevel::STANDARD) override;
-    ::std::vector<ValidationResult> ValidateAllSystems(ValidationLevel level = ValidationLevel::STANDARD) override;
-    bool RunSystemHealthCheck() override;
-    void PerformSystemDiagnostics() override;
+    ValidationResult ValidateSystem(SystemComponent component, ValidationLevel level = ValidationLevel::STANDARD);
+    ::std::vector<ValidationResult> ValidateAllSystems(ValidationLevel level = ValidationLevel::STANDARD);
+    bool RunSystemHealthCheck();
+    void PerformSystemDiagnostics();
 
     // Component-specific validation
-    ValidationResult ValidateGroupManager(ValidationLevel level) override;
-    ValidationResult ValidateRoleAssignment(ValidationLevel level) override;
-    ValidationResult ValidateQuestAutomation(ValidationLevel level) override;
-    ValidationResult ValidateDungeonBehavior(ValidationLevel level) override;
-    ValidationResult ValidateLootDistribution(ValidationLevel level) override;
-    ValidationResult ValidateTradeSystem(ValidationLevel level) override;
-    ValidationResult ValidateAuctionHouse(ValidationLevel level) override;
-    ValidationResult ValidateGuildIntegration(ValidationLevel level) override;
+    ValidationResult ValidateGroupManager(ValidationLevel level);
+    ValidationResult ValidateRoleAssignment(ValidationLevel level);
+    ValidationResult ValidateQuestAutomation(ValidationLevel level);
+    ValidationResult ValidateDungeonBehavior(ValidationLevel level);
+    ValidationResult ValidateLootDistribution(ValidationLevel level);
+    ValidationResult ValidateTradeSystem(ValidationLevel level);
+    ValidationResult ValidateAuctionHouse(ValidationLevel level);
+    ValidationResult ValidateGuildIntegration(ValidationLevel level);
 
     // Data integrity validation
-    bool ValidatePlayerData(::Player* player) override;
-    bool ValidateGroupData(::Group* group) override;
-    bool ValidateGuildData(::Guild* guild) override;
-    bool ValidateQuestData(::Player* player) override;
-    bool ValidateLootData(::Group* group) override;
+    bool ValidatePlayerData(::Player* player);
+    bool ValidateGroupData(::Group* group);
+    bool ValidateGuildData(::Guild* guild);
+    bool ValidateQuestData(::Player* player);
+    bool ValidateLootData(::Group* group);
 
     // Performance validation
     struct PerformanceValidation
@@ -112,29 +111,29 @@ public:
             , memoryUsage(0), responseTime(0), throughput(0), meetsPerformanceTargets(true) {}
     };
 
-    PerformanceValidation ValidateSystemPerformance(SystemComponent component) override;
-    ::std::vector<PerformanceValidation> ValidateAllPerformance() override;
-    bool ValidateMemoryUsage() override;
-    bool ValidateResponseTimes() override;
+    PerformanceValidation ValidateSystemPerformance(SystemComponent component);
+    ::std::vector<PerformanceValidation> ValidateAllPerformance();
+    bool ValidateMemoryUsage();
+    bool ValidateResponseTimes();
 
     // Consistency validation
-    bool ValidateCrossSystemConsistency() override;
-    bool ValidateDataSynchronization() override;
-    bool ValidateStateConsistency(::Player* player) override;
-    bool ValidateGroupStateConsistency(::Group* group) override;
-    bool ValidateGuildStateConsistency(::Guild* guild) override;
+    bool ValidateCrossSystemConsistency();
+    bool ValidateDataSynchronization();
+    bool ValidateStateConsistency(::Player* player);
+    bool ValidateGroupStateConsistency(::Group* group);
+    bool ValidateGuildStateConsistency(::Guild* guild);
 
     // Configuration validation
-    bool ValidateSystemConfiguration() override;
-    bool ValidatePlayerBotConfigurations() override;
-    bool ValidateDatabaseIntegrity() override;
-    bool ValidateModuleIntegration() override;
+    bool ValidateSystemConfiguration();
+    bool ValidatePlayerBotConfigurations();
+    bool ValidateDatabaseIntegrity();
+    bool ValidateModuleIntegration();
 
     // Runtime validation
-    void EnableContinuousValidation(bool enable) override;
-    void SetValidationInterval(uint32 intervalMs) override;
-    void RegisterValidationTrigger(const ::std::string& triggerName, ::std::function<bool()> validator) override;
-    void ValidateOnEvent(const ::std::string& eventName) override;
+    void EnableContinuousValidation(bool enable);
+    void SetValidationInterval(uint32 intervalMs);
+    void RegisterValidationTrigger(const ::std::string& triggerName, ::std::function<bool()> validator);
+    void ValidateOnEvent(const ::std::string& eventName);
 
     // Validation reporting
     struct SystemHealthReport
@@ -152,16 +151,16 @@ public:
             , totalChecks(0), reportTime(::std::chrono::steady_clock::now()), systemHealthy(true) {}
     };
 
-    SystemHealthReport GenerateHealthReport() override;
-    void ExportValidationReport(const ::std::string& filename) override;
-    void LogValidationResults(const ValidationResult& result) override;
-    ::std::vector<::std::string> GetCriticalIssues() override;
+    SystemHealthReport GenerateHealthReport();
+    void ExportValidationReport(const ::std::string& filename);
+    void LogValidationResults(const ValidationResult& result);
+    ::std::vector<::std::string> GetCriticalIssues();
 
     // Automated fixing and recovery
-    bool AttemptAutomaticFix(const ValidationResult& result) override;
-    void SuggestManualFixes(const ValidationResult& result) override;
-    bool RecoverFromValidationFailure(SystemComponent component) override;
-    void RestoreSystemDefaults(SystemComponent component) override;
+    bool AttemptAutomaticFix(const ValidationResult& result);
+    void SuggestManualFixes(const ValidationResult& result);
+    bool RecoverFromValidationFailure(SystemComponent component);
+    void RestoreSystemDefaults(SystemComponent component);
 
     // Validation metrics and analytics
     struct ValidationMetrics
@@ -185,20 +184,20 @@ public:
     ValidationMetrics GetValidationMetrics() override { return _metrics; }
 
     // Advanced validation features
-    void SetupValidationSchedule(const ::std::string& schedule) override;
-    void ValidateAfterSystemChanges() override;
-    void ValidateBeforeCriticalOperations() override;
-    void MonitorSystemDegradation() override;
+    void SetupValidationSchedule(const ::std::string& schedule);
+    void ValidateAfterSystemChanges();
+    void ValidateBeforeCriticalOperations();
+    void MonitorSystemDegradation();
 
     // Custom validation rules
-    void AddCustomValidationRule(const ::std::string& ruleName, ::std::function<bool(SystemComponent)> rule) override;
-    void RemoveCustomValidationRule(const ::std::string& ruleName) override;
-    ::std::vector<::std::string> GetActiveValidationRules() override;
+    void AddCustomValidationRule(const ::std::string& ruleName, ::std::function<bool(SystemComponent)> rule);
+    void RemoveCustomValidationRule(const ::std::string& ruleName);
+    ::std::vector<::std::string> GetActiveValidationRules();
 
     // Update and maintenance
-    void Update(uint32 diff) override;
-    void ProcessValidationQueue() override;
-    void CleanupValidationData() override;
+    void Update(uint32 diff);
+    void ProcessValidationQueue();
+    void CleanupValidationData();
 
 private:
     SystemValidation();

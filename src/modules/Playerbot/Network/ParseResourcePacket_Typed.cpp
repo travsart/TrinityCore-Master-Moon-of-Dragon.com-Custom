@@ -8,7 +8,8 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "../Resource/ResourceEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Resource/ResourceEvents.h"
 #include "CombatPackets.h"
 #include "Player.h"
 #include "WorldSession.h"
@@ -50,7 +51,7 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
-    ResourceEventBus::instance()->PublishEvent(event);
+    EventBus<ResourceEvent>::instance()->PublishEvent(event);
 
     // Calculate health percent for logging
     float healthPercent = unit->GetMaxHealth() > 0 ? (static_cast<float>(packet.Health) / unit->GetMaxHealth() * 100.0f) : 0.0f;
@@ -120,7 +121,7 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
         event.timestamp = ::std::chrono::steady_clock::now();
         event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
-        ResourceEventBus::instance()->PublishEvent(event);
+        EventBus<ResourceEvent>::instance()->PublishEvent(event);
 
         // Calculate power percent for logging
         float powerPercent = maxPower > 0 ? (static_cast<float>(powerInfo.Power) / maxPower * 100.0f) : 0.0f;
@@ -162,7 +163,7 @@ void ParseTypedBreakTarget(WorldSession* session, WorldPackets::Combat::BreakTar
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
-    ResourceEventBus::instance()->PublishEvent(event);
+    EventBus<ResourceEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received BREAK_TARGET (typed): Unit {} target broken",
         bot->GetName(),

@@ -163,8 +163,8 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
         _metrics.failedValidations++;
 
     // Update average time (exponential moving average)
-    float currentAvg = _metrics.averageValidationTime.load();
-    _metrics.averageValidationTime.store(currentAvg * 0.9f + duration * 0.1f);
+    float currentAvg = _metrics.averageValidationTime;
+    _metrics.averageValidationTime = currentAvg * 0.9f + duration * 0.1f;
 
     return valid;
 }
@@ -1152,12 +1152,12 @@ void QuestValidation::Update(uint32 diff)
     }
 
     // Update validation success rate
-    uint32 totalValidations = _metrics.totalValidations.load();
-    uint32 passedValidations = _metrics.passedValidations.load();
+    uint32 totalValidations = _metrics.totalValidations;
+    uint32 passedValidations = _metrics.passedValidations;
     if (totalValidations > 0)
     {
         float successRate = static_cast<float>(passedValidations) / totalValidations;
-        _metrics.validationSuccessRate.store(successRate);
+        _metrics.validationSuccessRate = successRate;
     }
 
     // Limit cache size if it grows too large
@@ -1178,7 +1178,7 @@ void QuestValidation::Update(uint32 diff)
     }
 
     // Log performance warnings if validation is slow
-    float avgTime = _metrics.averageValidationTime.load();
+    float avgTime = _metrics.averageValidationTime;
     if (avgTime > VALIDATION_TIME_WARNING_THRESHOLD)
     {
         TC_LOG_WARN("playerbot", "QuestValidation::Update - Average validation time is high: %.2f ms (threshold: %.2f ms)",

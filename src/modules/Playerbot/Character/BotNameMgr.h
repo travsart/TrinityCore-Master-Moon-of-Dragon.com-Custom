@@ -12,7 +12,6 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
-#include "Core/DI/Interfaces/IBotNameMgr.h"
 #include <string>
 #include <mutex>
 #include <unordered_set>
@@ -21,10 +20,9 @@
 /**
  * @brief Bot Name Manager
  *
- * Implements IBotNameMgr for dependency injection compatibility.
  * Manages allocation and tracking of bot character names.
  */
-class TC_GAME_API BotNameMgr final : public IBotNameMgr
+class TC_GAME_API BotNameMgr final
 {
 public:
     BotNameMgr(BotNameMgr const&) = delete;
@@ -32,19 +30,19 @@ public:
 
     static BotNameMgr* instance();
 
-    // IBotNameMgr interface implementation
-    bool Initialize() override;
-    void Shutdown() override;
+    // Core lifecycle
+    bool Initialize();
+    void Shutdown();
 
     // Name allocation - returns empty string if no name available
-    std::string AllocateName(uint8 gender, uint32 characterGuid) override;
+    std::string AllocateName(uint8 gender, uint32 characterGuid);
 
     // Name release when character is deleted
-    void ReleaseName(uint32 characterGuid) override;
-    void ReleaseName(std::string const& name) override;
+    void ReleaseName(uint32 characterGuid);
+    void ReleaseName(std::string const& name);
 
     // Check if name is available in the name pool
-    bool IsNameAvailable(std::string const& name) const override;
+    bool IsNameAvailable(std::string const& name) const;
 
     /**
      * @brief Check if a name is in use anywhere (pool + characters table)
@@ -69,15 +67,15 @@ public:
     std::string GenerateUniqueName(uint8 gender, uint32 maxRetries = 100) const;
 
     // Get name for existing character
-    std::string GetCharacterName(uint32 characterGuid) const override;
+    std::string GetCharacterName(uint32 characterGuid) const;
 
     // Statistics
-    uint32 GetAvailableNameCount(uint8 gender) const override;
-    uint32 GetTotalNameCount() const override;
-    uint32 GetUsedNameCount() const override;
+    uint32 GetAvailableNameCount(uint8 gender) const;
+    uint32 GetTotalNameCount() const;
+    uint32 GetUsedNameCount() const;
 
     // Reload names from database
-    void ReloadNames() override;
+    void ReloadNames();
     
 private:
     BotNameMgr() = default;

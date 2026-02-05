@@ -19,7 +19,6 @@
 #include "Actions/Action.h"
 #include "Triggers/Trigger.h"
 #include "Strategy/Strategy.h"
-#include "Core/DI/Interfaces/IBotAIFactory.h"
 #include "ObjectCache.h"
 #include "Blackboard/SharedBlackboard.h"
 #include "Core/Events/IEventHandler.h"
@@ -431,19 +430,13 @@ public:
     AuctionManager* GetAuctionManager() { return _gameSystems ? _gameSystems->GetAuctionManager() : nullptr; }
     AuctionManager const* GetAuctionManager() const { return _gameSystems ? _gameSystems->GetAuctionManager() : nullptr; }
 
-    // Returns interface pointer for loose coupling
-    IGroupCoordinator* GetGroupCoordinator() { return _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr; }
-    IGroupCoordinator const* GetGroupCoordinator() const { return _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr; }
+    // Returns GroupCoordinator pointer
+    Advanced::GroupCoordinator* GetGroupCoordinator() { return _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr; }
+    Advanced::GroupCoordinator const* GetGroupCoordinator() const { return _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr; }
 
-    // Returns concrete type when Advanced features are needed
-    Advanced::GroupCoordinator* GetGroupCoordinatorAdvanced()
-    {
-        return static_cast<Advanced::GroupCoordinator*>(GetGroupCoordinator());
-    }
-    Advanced::GroupCoordinator const* GetGroupCoordinatorAdvanced() const
-    {
-        return static_cast<Advanced::GroupCoordinator const*>(GetGroupCoordinator());
-    }
+    // Alias for backward compatibility
+    Advanced::GroupCoordinator* GetGroupCoordinatorAdvanced() { return GetGroupCoordinator(); }
+    Advanced::GroupCoordinator const* GetGroupCoordinatorAdvanced() const { return GetGroupCoordinator(); }
 
     /**
      * @brief Get Tactical Group Coordinator (Phase 3)
@@ -1090,7 +1083,7 @@ public:
 // AI FACTORY - Creates appropriate AI for each class
 // ========================================================================
 
-class TC_GAME_API BotAIFactory final : public IBotAIFactory
+class TC_GAME_API BotAIFactory final
 {
     BotAIFactory() = default;
     ~BotAIFactory() = default;
@@ -1101,23 +1094,23 @@ public:
     static BotAIFactory* instance();
 
     // AI creation
-    std::unique_ptr<BotAI> CreateAI(Player* bot) override;
-    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId) override;
-    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec) override;
+    std::unique_ptr<BotAI> CreateAI(Player* bot);
+    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId);
+    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec);
 
     // Specialized AI creation
-    std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type) override;
-    std::unique_ptr<BotAI> CreatePvPAI(Player* bot) override;
-    std::unique_ptr<BotAI> CreatePvEAI(Player* bot) override;
-    std::unique_ptr<BotAI> CreateRaidAI(Player* bot) override;
+    std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type);
+    std::unique_ptr<BotAI> CreatePvPAI(Player* bot);
+    std::unique_ptr<BotAI> CreatePvEAI(Player* bot);
+    std::unique_ptr<BotAI> CreateRaidAI(Player* bot);
 
     // AI registration
     void RegisterAICreator(std::string const& type,
-                          std::function<std::unique_ptr<BotAI>(Player*)> creator) override;
+                          std::function<std::unique_ptr<BotAI>(Player*)> creator);
 
     // Initialization
-    void InitializeDefaultTriggers(BotAI* ai) override;
-    void InitializeDefaultValues(BotAI* ai) override;
+    void InitializeDefaultTriggers(BotAI* ai);
+    void InitializeDefaultValues(BotAI* ai);
 
 private:
     void InitializeDefaultStrategies(BotAI* ai);

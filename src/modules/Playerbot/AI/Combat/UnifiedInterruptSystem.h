@@ -24,7 +24,6 @@
 #include "Position.h"
 #include "InterruptDatabase.h"
 #include "InterruptManager.h"
-#include "../../Core/DI/Interfaces/IUnifiedInterruptSystem.h"
 #include <map>
 #include <vector>
 #include <set>
@@ -258,7 +257,7 @@ struct BotInterruptStats
  * - Memory overhead: <1KB per bot
  * - Scales to 5000+ concurrent bots
  */
-class TC_GAME_API UnifiedInterruptSystem final : public IUnifiedInterruptSystem
+class TC_GAME_API UnifiedInterruptSystem final 
 {
 public:
     /**
@@ -271,19 +270,19 @@ public:
      * @brief Initialize system (load spell database)
      * @return True if initialization successful
      */
-    bool Initialize() override;
+    bool Initialize();
 
     /**
      * @brief Shutdown system and cleanup
      */
-    void Shutdown() override;
+    void Shutdown();
 
     /**
      * @brief Update system for a specific bot (called per bot per update)
      * @param bot The bot to update for
      * @param diff Time since last update (ms)
      */
-    void Update(Player* bot, uint32 diff) override;
+    void Update(Player* bot, uint32 diff);
 
     // =====================================================================
     // BOT REGISTRATION
@@ -294,19 +293,19 @@ public:
      * @param bot The player bot
      * @param ai The bot's AI instance
      */
-    void RegisterBot(Player* bot, BotAI* ai) override;
+    void RegisterBot(Player* bot, BotAI* ai);
 
     /**
      * @brief Unregister bot
      * @param botGuid Bot's ObjectGuid
      */
-    void UnregisterBot(ObjectGuid botGuid) override;
+    void UnregisterBot(ObjectGuid botGuid);
 
     /**
      * @brief Update bot's interrupt capabilities (check spells, cooldowns)
      * @param bot The bot to update
      */
-    void UpdateBotCapabilities(Player* bot) override;
+    void UpdateBotCapabilities(Player* bot);
 
     // =====================================================================
     // CAST DETECTION & TRACKING
@@ -318,21 +317,21 @@ public:
      * @param spellId Spell being cast
      * @param castTime Total cast time (ms)
      */
-    void OnEnemyCastStart(Unit* caster, uint32 spellId, uint32 castTime) override;
+    void OnEnemyCastStart(Unit* caster, uint32 spellId, uint32 castTime);
 
     /**
      * @brief Register cast interruption
      * @param casterGuid Caster's GUID
      * @param spellId Interrupted spell
      */
-    void OnEnemyCastInterrupted(ObjectGuid casterGuid, uint32 spellId) override;
+    void OnEnemyCastInterrupted(ObjectGuid casterGuid, uint32 spellId);
 
     /**
      * @brief Register cast completion
      * @param casterGuid Caster's GUID
      * @param spellId Completed spell
      */
-    void OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId) override;
+    void OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId);
 
     // =====================================================================
     // ACTIVE CASTS TRACKING
@@ -361,14 +360,14 @@ public:
      * @param mythicLevel Mythic+ level (0 = normal)
      * @return Interrupt priority
      */
-    InterruptPriority GetSpellPriority(uint32 spellId, uint8 mythicLevel = 0) override;
+    InterruptPriority GetSpellPriority(uint32 spellId, uint8 mythicLevel = 0);
 
     /**
      * @brief Check if spell requires immediate interrupt
      * @param spellId Spell to check
      * @return True if always interrupt
      */
-    bool ShouldAlwaysInterrupt(uint32 spellId) override;
+    bool ShouldAlwaysInterrupt(uint32 spellId);
 
     // =====================================================================
     // DECISION MAKING & PLANNING
@@ -403,7 +402,7 @@ public:
      * @param plan The plan to execute
      * @return True if execution successful
      */
-    bool ExecuteInterruptPlan(Player* bot, UnifiedInterruptPlan const& plan) override;
+    bool ExecuteInterruptPlan(Player* bot, UnifiedInterruptPlan const& plan);
 
     // =====================================================================
     // GROUP COORDINATION & ASSIGNMENT
@@ -413,7 +412,7 @@ public:
      * @brief Coordinate interrupt assignments for a group (thread-safe)
      * @param group The group to coordinate
      */
-    void CoordinateGroupInterrupts(Group* group) override;
+    void CoordinateGroupInterrupts(Group* group);
 
     /**
      * @brief Check if bot should interrupt now
@@ -422,7 +421,7 @@ public:
      * @param spellId OUT: Spell to use
      * @return True if should interrupt
      */
-    bool ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& targetGuid, uint32& spellId) override;
+    bool ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& targetGuid, uint32& spellId);
 
     /**
      * @brief Get next interrupt assignment for bot
@@ -436,7 +435,7 @@ public:
      * @param botGuid Bot that executed
      * @param success Whether interrupt succeeded
      */
-    void OnInterruptExecuted(ObjectGuid botGuid, bool success) override;
+    void OnInterruptExecuted(ObjectGuid botGuid, bool success);
 
     // =====================================================================
     // ROTATION SYSTEM
@@ -454,7 +453,7 @@ public:
      * @param botGuid Bot that interrupted
      * @param spellId Interrupt spell used
      */
-    void MarkInterruptUsed(ObjectGuid botGuid, uint32 spellId) override;
+    void MarkInterruptUsed(ObjectGuid botGuid, uint32 spellId);
 
     // =====================================================================
     // FALLBACK LOGIC
@@ -467,7 +466,7 @@ public:
      * @param failedSpellId The interrupt that failed
      * @return True if fallback successful
      */
-    bool HandleFailedInterrupt(Player* bot, Unit* target, uint32 failedSpellId) override;
+    bool HandleFailedInterrupt(Player* bot, Unit* target, uint32 failedSpellId);
 
     /**
      * @brief Select best fallback method for situation
@@ -485,7 +484,7 @@ public:
      * @param method The fallback method
      * @return True if successful
      */
-    bool ExecuteFallback(Player* bot, Unit* target, FallbackMethod method) override;
+    bool ExecuteFallback(Player* bot, Unit* target, FallbackMethod method);
 
     // =====================================================================
     // MOVEMENT INTEGRATION
@@ -497,7 +496,7 @@ public:
      * @param target The interrupt target
      * @return True if movement requested
      */
-    bool RequestInterruptPositioning(Player* bot, Unit* target) override;
+    bool RequestInterruptPositioning(Player* bot, Unit* target);
 
     /**
      * @brief Calculate optimal interrupt position
@@ -527,13 +526,13 @@ public:
     /**
      * @brief Reset all statistics
      */
-    void ResetStatistics() override;
+    void ResetStatistics();
 
     /**
      * @brief Get formatted status string for debugging
      * @return Human-readable status
      */
-    ::std::string GetStatusString() const override;
+    ::std::string GetStatusString() const;
 
 private:
     UnifiedInterruptSystem();

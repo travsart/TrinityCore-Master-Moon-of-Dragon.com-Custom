@@ -248,9 +248,9 @@ public:
     // LIFECYCLE (BehaviorManager override)
     // ========================================================================
 
-    bool Initialize() override;
-    void Update(uint32 diff) override;
-    void Shutdown() override;
+    bool Initialize();
+    void Update(uint32 diff);
+    void Shutdown();
 
     // ========================================================================
     // CORE BANKING OPERATIONS

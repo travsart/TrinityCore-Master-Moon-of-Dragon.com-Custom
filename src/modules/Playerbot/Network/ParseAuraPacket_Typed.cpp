@@ -5,7 +5,8 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "../Aura/AuraEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Aura/AuraEvents.h"
 #include "SpellPackets.h"
 #include "Log.h"
 
@@ -34,7 +35,7 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
         event.auraSlot = auraInfo.Slot;
         event.stackCount = auraInfo.AuraData.has_value() ? auraInfo.AuraData->Applications : 0;
         event.timestamp = ::std::chrono::steady_clock::now();
-        AuraEventBus::instance()->PublishEvent(event);
+        EventBus<AuraEvent>::instance()->PublishEvent(event);
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received AURA_UPDATE (typed): {} auras",
@@ -60,7 +61,7 @@ void ParseTypedSetFlatSpellModifier(WorldSession* session, WorldPackets::Spells:
         event.stackCount = 0;
         event.timestamp = ::std::chrono::steady_clock::now();
 
-        AuraEventBus::instance()->PublishEvent(event);
+        EventBus<AuraEvent>::instance()->PublishEvent(event);
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SET_FLAT_SPELL_MODIFIER (typed)",
@@ -86,7 +87,7 @@ void ParseTypedSetPctSpellModifier(WorldSession* session, WorldPackets::Spells::
         event.stackCount = 0;
         event.timestamp = ::std::chrono::steady_clock::now();
 
-        AuraEventBus::instance()->PublishEvent(event);
+        EventBus<AuraEvent>::instance()->PublishEvent(event);
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SET_PCT_SPELL_MODIFIER (typed)",
@@ -112,7 +113,7 @@ void ParseTypedDispelFailed(WorldSession* session, WorldPackets::Spells::DispelF
         event.stackCount = 0;
         event.timestamp = ::std::chrono::steady_clock::now();
 
-        AuraEventBus::instance()->PublishEvent(event);
+        EventBus<AuraEvent>::instance()->PublishEvent(event);
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received DISPEL_FAILED (typed): {} spells",

@@ -8,7 +8,6 @@
 #include "Define.h"
 #include "DoubleBufferedSpatialGrid.h"
 #include "Threading/LockHierarchy.h"
-#include "Core/DI/Interfaces/ISpatialGridManager.h"
 #include <unordered_map>
 #include <memory>
 #include <shared_mutex>
@@ -34,7 +33,7 @@ namespace Playerbot
  * - Old code: sSpatialGridManager.GetGrid(mapId)
  * - New code: Services::Container().Resolve<ISpatialGridManager>()->GetGrid(mapId)
  */
-class TC_GAME_API SpatialGridManager final : public ISpatialGridManager
+class TC_GAME_API SpatialGridManager final
 {
 public:
     // Configuration constants
@@ -48,14 +47,14 @@ public:
     }
 
     // ISpatialGridManager interface implementation
-    void CreateGrid(Map* map) override;
-    void DestroyGrid(uint32 mapId) override;
-    DoubleBufferedSpatialGrid* GetGrid(uint32 mapId) override;
-    DoubleBufferedSpatialGrid* GetGrid(Map* map) override;
-    void DestroyAllGrids() override;
-    void UpdateGrid(uint32 mapId) override;
-    void UpdateGrid(Map* map) override;
-    size_t GetGridCount() const override;
+    void CreateGrid(Map* map);
+    void DestroyGrid(uint32 mapId);
+    DoubleBufferedSpatialGrid* GetGrid(uint32 mapId);
+    DoubleBufferedSpatialGrid* GetGrid(Map* map);
+    void DestroyAllGrids();
+    void UpdateGrid(uint32 mapId);
+    void UpdateGrid(Map* map);
+    size_t GetGridCount() const;
 
     // ========================================================================
     // PERFORMANCE OPTIMIZATION: Combined Get + Create

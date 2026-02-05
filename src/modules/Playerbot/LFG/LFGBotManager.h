@@ -23,7 +23,6 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "LFG.h"
-#include "Core/DI/Interfaces/ILFGBotManager.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -50,7 +49,7 @@ namespace lfg
  *
  * Thread-safe singleton implementation using Meyer's singleton pattern.
  */
-class TC_GAME_API LFGBotManager final : public ILFGBotManager
+class TC_GAME_API LFGBotManager final 
 {
 private:
     LFGBotManager();
@@ -72,19 +71,19 @@ public:
      * @brief Initialize the LFG Bot Manager
      * Must be called once during server startup
      */
-    void Initialize() override;
+    void Initialize();
 
     /**
      * @brief Shutdown and cleanup the LFG Bot Manager
      * Called during server shutdown
      */
-    void Shutdown() override;
+    void Shutdown();
 
     /**
      * @brief Update manager state (called from world update loop)
      * @param diff Time elapsed since last update in milliseconds
      */
-    void Update(uint32 diff) override;
+    void Update(uint32 diff);
 
     /**
      * @brief Called when a human player joins the LFG queue
@@ -102,7 +101,7 @@ public:
      *
      * @param playerGuid GUID of the player leaving queue
      */
-    void OnPlayerLeaveQueue(ObjectGuid playerGuid) override;
+    void OnPlayerLeaveQueue(ObjectGuid playerGuid);
 
     /**
      * @brief Called when an LFG proposal is received
@@ -111,7 +110,7 @@ public:
      * @param proposalId The proposal ID
      * @param proposal The proposal data structure
      */
-    void OnProposalReceived(uint32 proposalId, lfg::LfgProposal const& proposal) override;
+    void OnProposalReceived(uint32 proposalId, lfg::LfgProposal const& proposal);
 
     /**
      * @brief Called when a role check begins
@@ -120,7 +119,7 @@ public:
      * @param groupGuid The group GUID
      * @param botGuid The bot GUID (if specific bot, otherwise empty for all bots)
      */
-    void OnRoleCheckReceived(ObjectGuid groupGuid, ObjectGuid botGuid = ObjectGuid::Empty) override;
+    void OnRoleCheckReceived(ObjectGuid groupGuid, ObjectGuid botGuid = ObjectGuid::Empty);
 
     /**
      * @brief Called when a group is formed successfully
@@ -128,7 +127,7 @@ public:
      *
      * @param groupGuid The group GUID
      */
-    void OnGroupFormed(ObjectGuid groupGuid) override;
+    void OnGroupFormed(ObjectGuid groupGuid);
 
     /**
      * @brief Called when a proposal fails or is declined
@@ -136,7 +135,7 @@ public:
      *
      * @param proposalId The failed proposal ID
      */
-    void OnProposalFailed(uint32 proposalId) override;
+    void OnProposalFailed(uint32 proposalId);
 
     /**
      * @brief Manually populate queue with bots for a specific player
@@ -147,7 +146,7 @@ public:
      * @param dungeons Set of dungeons to queue for
      * @return Number of bots successfully queued
      */
-    uint32 PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lfg::LfgDungeonSet const& dungeons) override;
+    uint32 PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lfg::LfgDungeonSet const& dungeons);
 
     /**
      * @brief Check if a bot is currently assigned to an LFG queue
@@ -155,7 +154,7 @@ public:
      * @param botGuid The bot's GUID
      * @return true if bot is queued, false otherwise
      */
-    bool IsBotQueued(ObjectGuid botGuid) const override;
+    bool IsBotQueued(ObjectGuid botGuid) const;
 
     /**
      * @brief Get statistics about current bot assignments
@@ -163,27 +162,27 @@ public:
      * @param totalQueued Output: Total number of bots currently queued
      * @param totalAssignments Output: Total number of active human->bot assignments
      */
-    void GetStatistics(uint32& totalQueued, uint32& totalAssignments) const override;
+    void GetStatistics(uint32& totalQueued, uint32& totalAssignments) const;
 
     /**
      * @brief Enable or disable the LFG bot system
      *
      * @param enable true to enable, false to disable
      */
-    void SetEnabled(bool enable) override;
+    void SetEnabled(bool enable);
 
     /**
      * @brief Check if the LFG bot system is enabled
      *
      * @return true if enabled, false otherwise
      */
-    bool IsEnabled() const override { return _enabled; }
+    bool IsEnabled() const { return _enabled; }
 
     /**
      * @brief Clean up stale queue assignments
      * Removes bots that have been queued for too long without forming a group
      */
-    void CleanupStaleAssignments() override;
+    void CleanupStaleAssignments();
 
     /**
      * @brief Queue a JIT-created bot for a specific dungeon

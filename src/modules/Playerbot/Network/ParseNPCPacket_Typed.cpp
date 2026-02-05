@@ -8,7 +8,8 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "../NPC/NPCEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "NPC/NPCEvents.h"
 #include "NPCPackets.h"
 #include "BankPackets.h"
 #include "PetitionPackets.h"
@@ -57,7 +58,7 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
         ::std::to_string(packet.RandomTextID.value_or(0))
     );
 
-    NPCEventBus::instance()->PublishEvent(event);
+    EventBus<NPCEvent>::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GOSSIP_MESSAGE (typed): npc={}, menu={}, options={}",
         bot->GetName(), packet.GossipGUID.ToString(), packet.GossipID, items.size());
@@ -81,7 +82,7 @@ void ParseTypedGossipComplete(WorldSession* session, WorldPackets::NPC::GossipCo
         ObjectGuid::Empty  // No NPC GUID available in packet
     );
 
-    NPCEventBus::instance()->PublishEvent(event);
+    EventBus<NPCEvent>::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GOSSIP_COMPLETE (typed)",
         bot->GetName());
@@ -112,7 +113,7 @@ void ParseTypedVendorInventory(WorldSession* session, WorldPackets::NPC::VendorI
         ::std::move(items)
     );
 
-    NPCEventBus::instance()->PublishEvent(event);
+    EventBus<NPCEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received VENDOR_INVENTORY (typed): vendor={}, items={}",
         bot->GetName(), packet.Vendor.ToString(), items.size());
@@ -151,7 +152,7 @@ void ParseTypedTrainerList(WorldSession* session, WorldPackets::NPC::TrainerList
         packet.Greeting
     );
 
-    NPCEventBus::instance()->PublishEvent(event);
+    EventBus<NPCEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received TRAINER_LIST (typed): trainer={}, spells={}",
         bot->GetName(), packet.TrainerGUID.ToString(), spells.size());
@@ -176,7 +177,7 @@ void ParseTypedTrainerBuyFailed(WorldSession* session, WorldPackets::NPC::Traine
         "" // Error message not provided in packet
     );
 
-    NPCEventBus::instance()->PublishEvent(event);
+    EventBus<NPCEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received TRAINER_BUY_FAILED (typed): reason={}",
         bot->GetName(), packet.TrainerFailedReason);
@@ -203,7 +204,7 @@ void ParseTypedNPCInteractionOpen(WorldSession* session, WorldPackets::NPC::NPCI
             packet.Npc
         );
 
-        NPCEventBus::instance()->PublishEvent(event);
+        EventBus<NPCEvent>::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("playerbot.packets", "Bot {} received NPC_INTERACTION_OPEN (typed): npc={}, type={}",
             bot->GetName(), packet.Npc.ToString(), static_cast<int32>(packet.InteractionType));
@@ -228,7 +229,7 @@ void ParseTypedPetitionShowList(WorldSession* session, WorldPackets::Petition::S
         {} // Empty vector - petition entries not provided in show list packet
     );
 
-    NPCEventBus::instance()->PublishEvent(event);
+    EventBus<NPCEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received PETITION_SHOW_LIST (typed): npc={}, price={}",
         bot->GetName(), packet.Unit.ToString(), packet.Price);
@@ -258,7 +259,7 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
         packet.Owner,
         { static_cast<uint32>(packet.PetitionID) }
     );
-    NPCEventBus::instance()->PublishEvent(event);
+    EventBus<NPCEvent>::instance()->PublishEvent(event);
 
     // ========================================================================
     // AUTO-SIGN GUILD CHARTER FOR BOTS

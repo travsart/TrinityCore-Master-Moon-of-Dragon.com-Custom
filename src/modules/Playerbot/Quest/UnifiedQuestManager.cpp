@@ -1488,14 +1488,14 @@ void UnifiedQuestManager::TurnInModule::ValidateTurnInState(Player* bot, uint32 
         systems->GetQuestTurnIn()->ValidateTurnInState(bot, questId);
 }
 
-TurnInMetrics UnifiedQuestManager::TurnInModule::GetBotTurnInMetrics(uint32 botGuid)
+QuestTurnIn::TurnInMetricsSnapshot UnifiedQuestManager::TurnInModule::GetBotTurnInMetrics(uint32 botGuid)
 {
     if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestTurnIn()->GetBotTurnInMetrics(botGuid);
     return {};
 }
 
-TurnInMetrics UnifiedQuestManager::TurnInModule::GetGlobalTurnInMetrics()
+QuestTurnIn::TurnInMetricsSnapshot UnifiedQuestManager::TurnInModule::GetGlobalTurnInMetrics()
 {
     if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestTurnIn()->GetGlobalTurnInMetrics();
@@ -2404,12 +2404,12 @@ QuestMetrics UnifiedQuestManager::GetGlobalQuestMetrics()
     return _dynamic->GetGlobalQuestMetrics();
 }
 
-TurnInMetrics UnifiedQuestManager::GetBotTurnInMetrics(uint32 botGuid)
+QuestTurnIn::TurnInMetricsSnapshot UnifiedQuestManager::GetBotTurnInMetrics(uint32 botGuid)
 {
     return _turnIn->GetBotTurnInMetrics(botGuid);
 }
 
-TurnInMetrics UnifiedQuestManager::GetGlobalTurnInMetrics()
+QuestTurnIn::TurnInMetricsSnapshot UnifiedQuestManager::GetGlobalTurnInMetrics()
 {
     return _turnIn->GetGlobalTurnInMetrics();
 }

@@ -182,7 +182,7 @@ class TC_GAME_API BTWarriorExecute : public ClassBTNode
 {
 public:
     BTWarriorExecute() : ClassBTNode("WarriorExecute", WowClass::WARRIOR) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 /**
@@ -192,7 +192,7 @@ class TC_GAME_API BTWarriorShieldBlock : public ClassBTNode
 {
 public:
     BTWarriorShieldBlock() : ClassBTNode("WarriorShieldBlock", WowClass::WARRIOR) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 /**
@@ -202,7 +202,7 @@ class TC_GAME_API BTWarriorRecklessness : public ClassBTNode
 {
 public:
     BTWarriorRecklessness() : ClassBTNode("WarriorRecklessness", WowClass::WARRIOR) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 // ============================================================================
@@ -216,7 +216,7 @@ class TC_GAME_API BTPriestPowerWordShield : public ClassBTNode
 {
 public:
     BTPriestPowerWordShield() : ClassBTNode("PriestPowerWordShield", WowClass::PRIEST) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 /**
@@ -226,7 +226,7 @@ class TC_GAME_API BTPriestPrayerOfMending : public ClassBTNode
 {
 public:
     BTPriestPrayerOfMending() : ClassBTNode("PriestPrayerOfMending", WowClass::PRIEST) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 /**
@@ -236,7 +236,7 @@ class TC_GAME_API BTPriestShadowWordPain : public ClassBTNode
 {
 public:
     BTPriestShadowWordPain() : ClassBTNode("PriestShadowWordPain", WowClass::PRIEST) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 // ============================================================================
@@ -250,7 +250,7 @@ class TC_GAME_API BTMageArcaneBlast : public ClassBTNode
 {
 public:
     BTMageArcaneBlast() : ClassBTNode("MageArcaneBlast", WowClass::MAGE) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 /**
@@ -260,7 +260,7 @@ class TC_GAME_API BTMagePolymorph : public ClassBTNode
 {
 public:
     BTMagePolymorph() : ClassBTNode("MagePolymorph", WowClass::MAGE) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 /**
@@ -270,7 +270,7 @@ class TC_GAME_API BTMageArcaneIntellect : public ClassBTNode
 {
 public:
     BTMageArcaneIntellect() : ClassBTNode("MageArcaneIntellect", WowClass::MAGE) {}
-    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override;
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard);
 };
 
 } // namespace Playerbot

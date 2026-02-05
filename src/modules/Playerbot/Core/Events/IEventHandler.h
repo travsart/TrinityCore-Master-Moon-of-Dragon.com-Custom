@@ -26,7 +26,7 @@ namespace Playerbot
  *
  * **Usage:**
  * ```cpp
- * class BotAI : public IEventHandler<LootEvent>,
+ * class BotAI <LootEvent>,
  *               public IEventHandler<QuestEvent>
  * {
  *     void HandleEvent(LootEvent const& event) override { ... }

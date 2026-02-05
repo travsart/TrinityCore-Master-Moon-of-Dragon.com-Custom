@@ -10,7 +10,6 @@
 #pragma once
 
 #include "Define.h"
-#include "../../Core/DI/Interfaces/IStrategyFactory.h"
 #include "../../Core/Combat/CombatContextDetector.h"
 #include "ObjectGuid.h"
 #include <memory>
@@ -157,9 +156,9 @@ class TC_GAME_API CombatStrategy : public Strategy
 public:
     CombatStrategy(::std::string const& name) : Strategy(name) {}
 
-    virtual void InitializeActions() override;
-    virtual void InitializeTriggers() override;
-    virtual float GetRelevance(BotAI* ai) const override;
+    virtual void InitializeActions();
+    virtual void InitializeTriggers();
+    virtual float GetRelevance(BotAI* ai) const;
 
     // Combat-specific methods
     virtual bool ShouldFlee(BotAI* ai) const;
@@ -173,9 +172,9 @@ class TC_GAME_API SocialStrategy : public Strategy
 public:
     SocialStrategy(::std::string const& name) : Strategy(name) {}
 
-    virtual void InitializeActions() override;
-    virtual void InitializeTriggers() override;
-    virtual float GetRelevance(BotAI* ai) const override;
+    virtual void InitializeActions();
+    virtual void InitializeTriggers();
+    virtual float GetRelevance(BotAI* ai) const;
 
     // Social-specific methods
     virtual bool ShouldGroupWith(Player* player) const;
@@ -184,7 +183,7 @@ public:
 };
 
 // Strategy factory
-class TC_GAME_API StrategyFactory final : public IStrategyFactory
+class TC_GAME_API StrategyFactory final
 {
     StrategyFactory() = default;
     ~StrategyFactory() = default;
@@ -196,18 +195,18 @@ public:
 
     // Strategy registration
     void RegisterStrategy(::std::string const& name,
-                         ::std::function<::std::unique_ptr<Strategy>()> creator) override;
+                         ::std::function<::std::unique_ptr<Strategy>()> creator);
 
     // Strategy creation
-    ::std::unique_ptr<Strategy> CreateStrategy(::std::string const& name) override;
-    ::std::vector<::std::unique_ptr<Strategy>> CreateClassStrategies(uint8 classId, uint8 spec) override;
-    ::std::vector<::std::unique_ptr<Strategy>> CreateLevelStrategies(uint8 level) override;
-    ::std::vector<::std::unique_ptr<Strategy>> CreatePvPStrategies() override;
-    ::std::vector<::std::unique_ptr<Strategy>> CreatePvEStrategies() override;
+    ::std::unique_ptr<Strategy> CreateStrategy(::std::string const& name);
+    ::std::vector<::std::unique_ptr<Strategy>> CreateClassStrategies(uint8 classId, uint8 spec);
+    ::std::vector<::std::unique_ptr<Strategy>> CreateLevelStrategies(uint8 level);
+    ::std::vector<::std::unique_ptr<Strategy>> CreatePvPStrategies();
+    ::std::vector<::std::unique_ptr<Strategy>> CreatePvEStrategies();
 
     // Available strategies
-    ::std::vector<::std::string> GetAvailableStrategies() const override;
-    bool HasStrategy(::std::string const& name) const override;
+    ::std::vector<::std::string> GetAvailableStrategies() const;
+    bool HasStrategy(::std::string const& name) const;
 
 private:
     ::std::unordered_map<::std::string, ::std::function<::std::unique_ptr<Strategy>()>> _creators;

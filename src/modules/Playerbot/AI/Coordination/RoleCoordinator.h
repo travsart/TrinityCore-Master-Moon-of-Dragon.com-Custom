@@ -100,7 +100,7 @@ protected:
 class TC_GAME_API TankCoordinator : public RoleCoordinator
 {
 public:
-    void Update(GroupCoordinator* group, uint32 diff) override;
+    void Update(GroupCoordinator* group, uint32 diff);
     void UpdateWithCache(GroupCoordinator* group, uint32 diff, RoleCache const& cache);
     GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::TANK; }
 
@@ -159,7 +159,7 @@ private:
 class TC_GAME_API HealerCoordinator : public RoleCoordinator
 {
 public:
-    void Update(GroupCoordinator* group, uint32 diff) override;
+    void Update(GroupCoordinator* group, uint32 diff);
     void UpdateWithCache(GroupCoordinator* group, uint32 diff, RoleCache const& cache);
     GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::HEALER; }
 
@@ -253,7 +253,7 @@ public:
 class TC_GAME_API DPSCoordinator : public RoleCoordinator
 {
 public:
-    void Update(GroupCoordinator* group, uint32 diff) override;
+    void Update(GroupCoordinator* group, uint32 diff);
     void UpdateWithCache(GroupCoordinator* group, uint32 diff, RoleCache const& cache);
     GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::DPS_MELEE; } // Handles both melee and ranged
 

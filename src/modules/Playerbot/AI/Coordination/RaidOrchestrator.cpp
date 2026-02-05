@@ -102,7 +102,7 @@ void RaidOrchestrator::Update(uint32 diff)
     UpdateRaidStats();
 }
 
-IGroupCoordinator* RaidOrchestrator::GetGroupCoordinator(uint32 groupIndex)
+GroupCoordinatorPtr* RaidOrchestrator::GetGroupCoordinator(uint32 groupIndex)
 {
     // GroupCoordinator is now per-bot, not per-group
     // Return the GroupCoordinator of the first bot found in the specified subgroup
@@ -317,7 +317,7 @@ void RaidOrchestrator::UpdateGroupCoordinators(uint32 diff)
         if (!gameSystems)
             continue;
 
-        IGroupCoordinator* coordinator = gameSystems->GetGroupCoordinator();
+        GroupCoordinator* coordinator = gameSystems->GetGroupCoordinator();
         if (!coordinator)
             continue;
 

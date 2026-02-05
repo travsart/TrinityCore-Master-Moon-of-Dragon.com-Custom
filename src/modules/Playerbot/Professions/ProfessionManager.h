@@ -35,7 +35,6 @@
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
-#include "../Core/DI/Interfaces/IProfessionManager.h"
 #include <unordered_set>
 #include <vector>
 #include <memory>
@@ -198,7 +197,7 @@ struct ProfessionMetrics
     }
 };
 
-class TC_GAME_API ProfessionManager final : public IProfessionManager
+class TC_GAME_API ProfessionManager final
 {
 public:
     /**
@@ -216,42 +215,42 @@ public:
      * Initialize profession system on server startup
      * NOTE: This is now a no-op. Use ProfessionDatabase::instance()->Initialize() instead.
      */
-    void Initialize() override;
+    void Initialize();
 
     /**
      * Update profession automation for this bot (called periodically)
      */
-    void Update(uint32 diff) override;
+    void Update(uint32 diff);
 
     /**
      * Learn profession for this bot
      */
-    bool LearnProfession(ProfessionType profession) override;
+    bool LearnProfession(ProfessionType profession);
 
     /**
      * Check if this bot has profession
      */
-    bool HasProfession(ProfessionType profession) const override;
+    bool HasProfession(ProfessionType profession) const;
 
     /**
      * Get profession skill level for this bot
      */
-    uint16 GetProfessionSkill(ProfessionType profession) const override;
+    uint16 GetProfessionSkill(ProfessionType profession) const;
 
     /**
      * Get max profession skill for this bot
      */
-    uint16 GetMaxProfessionSkill(ProfessionType profession) const override;
+    uint16 GetMaxProfessionSkill(ProfessionType profession) const;
 
     /**
      * Get all professions for this bot
      */
-    std::vector<ProfessionSkillInfo> GetPlayerProfessions() const override;
+    std::vector<ProfessionSkillInfo> GetPlayerProfessions() const;
 
     /**
      * Unlearn profession (for respec)
      */
-    bool UnlearnProfession(ProfessionType profession) override;
+    bool UnlearnProfession(ProfessionType profession);
 
     // ============================================================================
     // AUTO-LEARN SYSTEM
@@ -261,45 +260,45 @@ public:
      * Auto-learn professions based on class
      * Called when bot is created or profession slots are empty
      */
-    void AutoLearnProfessionsForClass() override;
+    void AutoLearnProfessionsForClass();
 
     /**
      * Get recommended professions for class
      * Queries ProfessionDatabase
      */
-    std::vector<ProfessionType> GetRecommendedProfessions(uint8 classId) const override;
+    std::vector<ProfessionType> GetRecommendedProfessions(uint8 classId) const;
 
     /**
      * Check if profession is suitable for class
      * Queries ProfessionDatabase
      */
-    bool IsProfessionSuitableForClass(uint8 classId, ProfessionType profession) const override;
+    bool IsProfessionSuitableForClass(uint8 classId, ProfessionType profession) const;
 
     /**
      * Get profession category
      * Queries ProfessionDatabase
      */
-    ProfessionCategory GetProfessionCategory(ProfessionType profession) const override;
+    ProfessionCategory GetProfessionCategory(ProfessionType profession) const;
 
     /**
      * Get beneficial profession pair for a given profession
      * Example: Mining → Blacksmithing/Engineering/Jewelcrafting
      * Queries ProfessionDatabase
      */
-    std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const override;
+    std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const;
 
     /**
      * Check if two professions form a beneficial pair
      * Queries ProfessionDatabase
      */
-    bool IsBeneficialPair(ProfessionType prof1, ProfessionType prof2) const override;
+    bool IsBeneficialPair(ProfessionType prof1, ProfessionType prof2) const;
 
     /**
      * Get race-specific profession skill bonus
      * Example: Tauren +15 Herbalism, Blood Elf +10 Enchanting
      * Queries ProfessionDatabase
      */
-    uint16 GetRaceProfessionBonus(uint8 raceId, ProfessionType profession) const override;
+    uint16 GetRaceProfessionBonus(uint8 raceId, ProfessionType profession) const;
 
     // ============================================================================
     // RECIPE MANAGEMENT
@@ -308,38 +307,38 @@ public:
     /**
      * Learn recipe for this bot
      */
-    bool LearnRecipe(uint32 recipeId) override;
+    bool LearnRecipe(uint32 recipeId);
 
     /**
      * Check if this bot knows recipe
      */
-    bool KnowsRecipe(uint32 recipeId) const override;
+    bool KnowsRecipe(uint32 recipeId) const;
 
     /**
      * Get all recipes for profession
      * Queries ProfessionDatabase
      */
-    std::vector<RecipeInfo> GetRecipesForProfession(ProfessionType profession) const override;
+    std::vector<RecipeInfo> GetRecipesForProfession(ProfessionType profession) const;
 
     /**
      * Get craftable recipes for this bot (has skill + reagents)
      */
-    std::vector<RecipeInfo> GetCraftableRecipes(ProfessionType profession) const override;
+    std::vector<RecipeInfo> GetCraftableRecipes(ProfessionType profession) const;
 
     /**
      * Get optimal recipe for leveling (highest skill-up chance)
      */
-    RecipeInfo const* GetOptimalLevelingRecipe(ProfessionType profession) const override;
+    RecipeInfo const* GetOptimalLevelingRecipe(ProfessionType profession) const;
 
     /**
      * Check if this bot can craft recipe
      */
-    bool CanCraftRecipe(RecipeInfo const& recipe) const override;
+    bool CanCraftRecipe(RecipeInfo const& recipe) const;
 
     /**
      * Get skill-up probability for recipe (0.0-1.0)
      */
-    float GetSkillUpChance(RecipeInfo const& recipe) const override;
+    float GetSkillUpChance(RecipeInfo const& recipe) const;
 
     // ============================================================================
     // CRAFTING AUTOMATION
@@ -348,46 +347,46 @@ public:
     /**
      * Auto-level profession by crafting optimal recipes
      */
-    bool AutoLevelProfession(ProfessionType profession) override;
+    bool AutoLevelProfession(ProfessionType profession);
 
     /**
      * Craft item (single craft)
      */
-    bool CraftItem(RecipeInfo const& recipe, uint32 quantity = 1) override;
+    bool CraftItem(RecipeInfo const& recipe, uint32 quantity = 1);
 
     /**
      * Queue crafting task for automation
      */
-    void QueueCraft(uint32 recipeId, uint32 quantity) override;
+    void QueueCraft(uint32 recipeId, uint32 quantity);
 
     /**
      * Process crafting queue (called in Update)
      */
-    void ProcessCraftingQueue(uint32 diff) override;
+    void ProcessCraftingQueue(uint32 diff);
 
     /**
      * Check if this bot has materials for recipe
      */
-    bool HasMaterialsForRecipe(RecipeInfo const& recipe) const override;
+    bool HasMaterialsForRecipe(RecipeInfo const& recipe) const;
 
     /**
      * Get missing materials for recipe
      */
-    std::vector<std::pair<uint32, uint32>> GetMissingMaterials(RecipeInfo const& recipe) const override;
+    std::vector<std::pair<uint32, uint32>> GetMissingMaterials(RecipeInfo const& recipe) const;
 
     // ============================================================================
     // AUTOMATION PROFILES
     // ============================================================================
 
-    void SetAutomationProfile(ProfessionAutomationProfile const& profile) override;
-    ProfessionAutomationProfile GetAutomationProfile() const override;
+    void SetAutomationProfile(ProfessionAutomationProfile const& profile);
+    ProfessionAutomationProfile GetAutomationProfile() const;
 
     // ============================================================================
     // METRICS
     // ============================================================================
 
-    ProfessionMetrics const& GetMetrics() const override;
-    ProfessionMetrics const& GetGlobalMetrics() const override;
+    ProfessionMetrics const& GetMetrics() const;
+    ProfessionMetrics const& GetGlobalMetrics() const;
 
 private:
     // ============================================================================

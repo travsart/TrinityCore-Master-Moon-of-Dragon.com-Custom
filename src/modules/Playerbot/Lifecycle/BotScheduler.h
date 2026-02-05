@@ -12,7 +12,6 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
-#include "Core/DI/Interfaces/IBotScheduler.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -154,7 +153,7 @@ struct SchedulerStats
     }
 };
 
-class TC_GAME_API BotScheduler final : public IBotScheduler
+class TC_GAME_API BotScheduler final 
 {
 public:
     BotScheduler(BotScheduler const&) = delete;
@@ -167,68 +166,68 @@ public:
     using SchedulerStats = Playerbot::SchedulerStats;
 
     // Initialization and shutdown
-    bool Initialize() override;
-    void Shutdown() override;
-    void Update(uint32 diff) override;
+    bool Initialize();
+    void Shutdown();
+    void Update(uint32 diff);
 
     // Configuration management
-    void LoadConfig() override;
-    SchedulerConfig const& GetConfig() const override { return _config; }
-    void SetConfig(SchedulerConfig const& config) override { _config = config; }
+    void LoadConfig();
+    SchedulerConfig const& GetConfig() const { return _config; }
+    void SetConfig(SchedulerConfig const& config) { _config = config; }
 
     // Activity pattern management
-    void LoadActivityPatterns() override;
-    void RegisterPattern(::std::string const& name, ActivityPattern const& pattern) override;
-    ActivityPattern const* GetPattern(::std::string const& name) const override;
-    ::std::vector<::std::string> GetAvailablePatterns() const override;
-    bool RemovePattern(::std::string const& name) override;
+    void LoadActivityPatterns();
+    void RegisterPattern(::std::string const& name, ActivityPattern const& pattern);
+    ActivityPattern const* GetPattern(::std::string const& name) const;
+    ::std::vector<::std::string> GetAvailablePatterns() const;
+    bool RemovePattern(::std::string const& name);
 
     // Bot scheduling operations
-    void ScheduleBot(ObjectGuid guid, ::std::string const& patternName = "default") override;
-    void UnscheduleBot(ObjectGuid guid) override;
-    void ScheduleAction(ScheduleEntry const& entry) override;
-    void ScheduleLogin(ObjectGuid guid, ::std::chrono::system_clock::time_point when) override;
-    void ScheduleLogout(ObjectGuid guid, ::std::chrono::system_clock::time_point when) override;
+    void ScheduleBot(ObjectGuid guid, ::std::string const& patternName = "default");
+    void UnscheduleBot(ObjectGuid guid);
+    void ScheduleAction(ScheduleEntry const& entry);
+    void ScheduleLogin(ObjectGuid guid, ::std::chrono::system_clock::time_point when);
+    void ScheduleLogout(ObjectGuid guid, ::std::chrono::system_clock::time_point when);
 
     // Pattern assignment and management
-    void AssignPattern(ObjectGuid guid, ::std::string const& patternName) override;
-    ::std::string GetBotPattern(ObjectGuid guid) const override;
-    BotScheduleState const* GetBotScheduleState(ObjectGuid guid) const override;
+    void AssignPattern(ObjectGuid guid, ::std::string const& patternName);
+    ::std::string GetBotPattern(ObjectGuid guid) const;
+    BotScheduleState const* GetBotScheduleState(ObjectGuid guid) const;
 
     // Time calculation algorithms
-    ::std::chrono::system_clock::time_point CalculateNextLogin(ObjectGuid guid) override;
-    ::std::chrono::system_clock::time_point CalculateNextLogout(ObjectGuid guid) override;
+    ::std::chrono::system_clock::time_point CalculateNextLogin(ObjectGuid guid);
+    ::std::chrono::system_clock::time_point CalculateNextLogout(ObjectGuid guid);
     ::std::chrono::system_clock::time_point CalculateSessionEnd(ObjectGuid guid, uint32 minDuration, uint32 maxDuration);
 
     // Schedule processing and execution
-    void ProcessSchedule() override;
-    void ExecuteScheduledAction(ScheduleEntry const& entry) override;
+    void ProcessSchedule();
+    void ExecuteScheduledAction(ScheduleEntry const& entry);
     void ProcessPendingActions();
 
     // Query operations
-    bool IsBotScheduled(ObjectGuid guid) const override;
-    bool IsBotActive(ObjectGuid guid) const override;
-    uint32 GetScheduledBotCount() const override;
+    bool IsBotScheduled(ObjectGuid guid) const;
+    bool IsBotActive(ObjectGuid guid) const;
+    uint32 GetScheduledBotCount() const;
     ::std::vector<ObjectGuid> GetScheduledBots() const;
     ::std::vector<ScheduleEntry> GetUpcomingActions(uint32 minutes = 60) const;
 
     // Statistics and monitoring
-    SchedulerStats const& GetStats() const override { return _stats; }
-    void ResetStats() override;
+    SchedulerStats const& GetStats() const { return _stats; }
+    void ResetStats();
 
     // Lifecycle management interface
     ::std::vector<ScheduledAction> GetBotsReadyForLogin(uint32 maxCount = 10);
     ::std::vector<ScheduledAction> GetBotsReadyForLogout(uint32 maxCount = 10);
-    void OnBotLoggedIn(ObjectGuid guid) override;
-    void OnBotLoginFailed(ObjectGuid guid, ::std::string const& reason = "") override;
-    void SetEnabled(bool enabled) override { _enabled = enabled; }
-    bool IsEnabled() const override { return _enabled.load(); }
+    void OnBotLoggedIn(ObjectGuid guid);
+    void OnBotLoginFailed(ObjectGuid guid, ::std::string const& reason = "");
+    void SetEnabled(bool enabled) { _enabled = enabled; }
+    bool IsEnabled() const { return _enabled.load(); }
     void UpdateScheduleDatabase();
 
     // Admin and debug commands
-    void DumpSchedule() const override;
+    void DumpSchedule() const;
     void DumpBotSchedule(ObjectGuid guid) const;
-    bool ValidateSchedule() const override;
+    bool ValidateSchedule() const;
 
 private:
     BotScheduler() = default;

@@ -21,6 +21,7 @@
 #include "LFGMgr.h"
 #include "Player.h"
 #include "Log.h"
+#include "DB2Stores.h"  // For BattlemasterList DBC lookup (BG player counts)
 
 namespace Playerbot
 {
@@ -454,6 +455,33 @@ void QueueStatePoller::DoPollBGQueue(BattlegroundTypeId bgTypeId, BattlegroundBr
 
     uint32 minPlayers = bgTemplate->GetMinPlayersPerTeam();
     uint32 maxPlayers = bgTemplate->GetMaxPlayersPerTeam();
+
+    // ========================================================================
+    // FIX: Handle BGs with missing/zero player counts in battleground_template
+    // Many BGs (Temple of Kotmogu, Silvershard Mines, newer Warsong Gulch, etc.)
+    // have MinPlayersPerTeam=0 and MaxPlayersPerTeam=0 in battleground_template.
+    // Fall back to BattlemasterList DBC which has authoritative player counts.
+    // ========================================================================
+    if (maxPlayers == 0)
+    {
+        // Look up from BattlemasterList DBC - this is the authoritative source
+        BattlemasterListEntry const* bgEntry = sBattlemasterListStore.LookupEntry(static_cast<uint32>(bgTypeId));
+        if (bgEntry && bgEntry->MaxPlayers > 0)
+        {
+            // DBC stores total players, we need per-team (divide by 2)
+            maxPlayers = static_cast<uint32>(bgEntry->MaxPlayers) / 2;
+            minPlayers = maxPlayers;  // Use same value - BG won't start until full
+
+            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: BG {} using DBC size {}v{} (total {})",
+                static_cast<uint32>(bgTypeId), maxPlayers, maxPlayers, bgEntry->MaxPlayers);
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot.jit", "QueueStatePoller: BG {} has no player count in template or DBC, skipping",
+                static_cast<uint32>(bgTypeId));
+            return;
+        }
+    }
 
     // Build snapshot
     uint64 key = MakeBGKey(bgTypeId, bracket);

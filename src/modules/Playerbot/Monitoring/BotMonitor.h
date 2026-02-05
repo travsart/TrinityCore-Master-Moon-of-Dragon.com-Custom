@@ -22,7 +22,6 @@
 #include "Threading/LockHierarchy.h"
 #include "Define.h"
 #include "ObjectGuid.h"
-#include "Core/DI/Interfaces/IBotMonitor.h"
 #include <map>
 #include <vector>
 #include <deque>
@@ -42,7 +41,7 @@ namespace Playerbot
      *
      * Thread-safe singleton implementation for concurrent access.
      */
-    class TC_GAME_API BotMonitor final : public IBotMonitor
+    class TC_GAME_API BotMonitor final 
     {
     public:
         /**
@@ -56,18 +55,18 @@ namespace Playerbot
          * @brief Initialize monitoring system
          * @return true if initialization successful
          */
-        bool Initialize() override;
+        bool Initialize();
 
         /**
          * @brief Shutdown monitoring system
          */
-        void Shutdown() override;
+        void Shutdown();
 
         /**
          * @brief Update monitoring system (called periodically)
          * @param diff Time since last update in milliseconds
          */
-        void Update(uint32 diff) override;
+        void Update(uint32 diff);
 
         // =====================================================================
         // METRICS COLLECTION
@@ -77,20 +76,20 @@ namespace Playerbot
          * @brief Capture current performance snapshot
          * @return Current performance metrics snapshot
          */
-        PerformanceSnapshot CaptureSnapshot() override;
+        PerformanceSnapshot CaptureSnapshot();
 
         /**
          * @brief Get most recent snapshot
          * @return Most recent performance snapshot
          */
-        PerformanceSnapshot GetLatestSnapshot() const override;
+        PerformanceSnapshot GetLatestSnapshot() const;
 
         /**
          * @brief Get historical snapshots
          * @param count Number of snapshots to retrieve (default: all)
          * @return Vector of historical snapshots (newest first)
          */
-        ::std::vector<PerformanceSnapshot> GetSnapshotHistory(uint32 count = 0) const override;
+        ::std::vector<PerformanceSnapshot> GetSnapshotHistory(uint32 count = 0) const;
 
         // =====================================================================
         // ACTIVITY TRACKING
@@ -100,51 +99,51 @@ namespace Playerbot
          * @brief Record bot entering combat
          * @param botGuid Bot's ObjectGuid
          */
-        void RecordBotCombatStart(ObjectGuid botGuid) override;
+        void RecordBotCombatStart(ObjectGuid botGuid);
 
         /**
          * @brief Record bot leaving combat
          * @param botGuid Bot's ObjectGuid
          */
-        void RecordBotCombatEnd(ObjectGuid botGuid) override;
+        void RecordBotCombatEnd(ObjectGuid botGuid);
 
         /**
          * @brief Record bot starting quest
          * @param botGuid Bot's ObjectGuid
          */
-        void RecordBotQuestStart(ObjectGuid botGuid) override;
+        void RecordBotQuestStart(ObjectGuid botGuid);
 
         /**
          * @brief Record bot completing quest
          * @param botGuid Bot's ObjectGuid
          */
-        void RecordBotQuestEnd(ObjectGuid botGuid) override;
+        void RecordBotQuestEnd(ObjectGuid botGuid);
 
         /**
          * @brief Record bot death
          * @param botGuid Bot's ObjectGuid
          */
-        void RecordBotDeath(ObjectGuid botGuid) override;
+        void RecordBotDeath(ObjectGuid botGuid);
 
         /**
          * @brief Record bot resurrection
          * @param botGuid Bot's ObjectGuid
          */
-        void RecordBotResurrection(ObjectGuid botGuid) override;
+        void RecordBotResurrection(ObjectGuid botGuid);
 
         /**
          * @brief Record bot update timing
          * @param botGuid Bot's ObjectGuid
          * @param updateTimeMs Update time in milliseconds
          */
-        void RecordBotUpdateTime(ObjectGuid botGuid, double updateTimeMs) override;
+        void RecordBotUpdateTime(ObjectGuid botGuid, double updateTimeMs);
 
         /**
          * @brief Record AI decision timing
          * @param botGuid Bot's ObjectGuid
          * @param decisionTimeMs Decision time in milliseconds
          */
-        void RecordAIDecisionTime(ObjectGuid botGuid, double decisionTimeMs) override;
+        void RecordAIDecisionTime(ObjectGuid botGuid, double decisionTimeMs);
 
         // =====================================================================
         // RESOURCE TRACKING
@@ -154,31 +153,31 @@ namespace Playerbot
          * @brief Record database query execution
          * @param queryTimeMs Query execution time in milliseconds
          */
-        void RecordDatabaseQuery(double queryTimeMs) override;
+        void RecordDatabaseQuery(double queryTimeMs);
 
         /**
          * @brief Record database cache hit
          */
-        void RecordDatabaseCacheHit() override;
+        void RecordDatabaseCacheHit();
 
         /**
          * @brief Record database cache miss
          */
-        void RecordDatabaseCacheMiss() override;
+        void RecordDatabaseCacheMiss();
 
         /**
          * @brief Record error occurrence
          * @param category Error category (e.g., "Combat", "Movement", "Database")
          * @param message Error message
          */
-        void RecordError(::std::string const& category, ::std::string const& message) override;
+        void RecordError(::std::string const& category, ::std::string const& message);
 
         /**
          * @brief Record warning occurrence
          * @param category Warning category
          * @param message Warning message
          */
-        void RecordWarning(::std::string const& category, ::std::string const& message) override;
+        void RecordWarning(::std::string const& category, ::std::string const& message);
 
         // =====================================================================
         // TREND ANALYSIS
@@ -188,25 +187,25 @@ namespace Playerbot
          * @brief Get CPU usage trend data
          * @return TrendData for CPU usage over time
          */
-        TrendData GetCpuTrend() const override;
+        TrendData GetCpuTrend() const;
 
         /**
          * @brief Get memory usage trend data
          * @return TrendData for memory usage over time
          */
-        TrendData GetMemoryTrend() const override;
+        TrendData GetMemoryTrend() const;
 
         /**
          * @brief Get active bot count trend data
          * @return TrendData for bot count over time
          */
-        TrendData GetBotCountTrend() const override;
+        TrendData GetBotCountTrend() const;
 
         /**
          * @brief Get database query performance trend
          * @return TrendData for database query times
          */
-        TrendData GetQueryTimeTrend() const override;
+        TrendData GetQueryTimeTrend() const;
 
         // =====================================================================
         // ALERT MANAGEMENT
@@ -216,38 +215,38 @@ namespace Playerbot
          * @brief Get current alert thresholds
          * @return Current alert threshold configuration
          */
-        AlertThresholds GetAlertThresholds() const override;
+        AlertThresholds GetAlertThresholds() const;
 
         /**
          * @brief Set alert thresholds
          * @param thresholds New alert threshold configuration
          */
-        void SetAlertThresholds(AlertThresholds const& thresholds) override;
+        void SetAlertThresholds(AlertThresholds const& thresholds);
 
         /**
          * @brief Get active alerts
          * @param minLevel Minimum alert level to retrieve (default: WARNING)
          * @return Vector of active alerts
          */
-        ::std::vector<PerformanceAlert> GetActiveAlerts(AlertLevel minLevel = AlertLevel::WARNING) const override;
+        ::std::vector<PerformanceAlert> GetActiveAlerts(AlertLevel minLevel = AlertLevel::WARNING) const;
 
         /**
          * @brief Get alert history
          * @param count Number of alerts to retrieve (default: 100)
          * @return Vector of historical alerts (newest first)
          */
-        ::std::vector<PerformanceAlert> GetAlertHistory(uint32 count = 100) const override;
+        ::std::vector<PerformanceAlert> GetAlertHistory(uint32 count = 100) const;
 
         /**
          * @brief Clear alert history
          */
-        void ClearAlertHistory() override;
+        void ClearAlertHistory();
 
         /**
          * @brief Register alert callback
          * @param callback Function to call when alert is triggered
          */
-        void RegisterAlertCallback(::std::function<void(PerformanceAlert const&)> callback) override;
+        void RegisterAlertCallback(::std::function<void(PerformanceAlert const&)> callback);
 
         // =====================================================================
         // STATISTICS
@@ -257,18 +256,18 @@ namespace Playerbot
          * @brief Get formatted statistics summary
          * @return Human-readable statistics string
          */
-        ::std::string GetStatisticsSummary() const override;
+        ::std::string GetStatisticsSummary() const;
 
         /**
          * @brief Get uptime in seconds
          * @return System uptime since initialization
          */
-        uint64 GetUptimeSeconds() const override;
+        uint64 GetUptimeSeconds() const;
 
         /**
          * @brief Reset all statistics
          */
-        void ResetStatistics() override;
+        void ResetStatistics();
 
     private:
         BotMonitor();

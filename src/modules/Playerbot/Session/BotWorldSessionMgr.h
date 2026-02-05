@@ -6,7 +6,6 @@
 #define BOT_WORLD_SESSION_MGR_H
 
 #include "Define.h"
-#include "../../Core/DI/Interfaces/IBotWorldSessionMgr.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "QueryHolder.h"
@@ -32,7 +31,7 @@ namespace Playerbot {
  * Clean implementation using TrinityCore''s native login pattern
  * Based on mod-playerbots'' proven approach with modern enhancements
  */
-class TC_GAME_API BotWorldSessionMgr final : public IBotWorldSessionMgr
+class TC_GAME_API BotWorldSessionMgr final
 {
 public:
     // Thread-safe singleton
@@ -43,36 +42,36 @@ public:
     }
 
     // Basic lifecycle
-    bool Initialize() override;
-    void Shutdown() override;
+    bool Initialize();
+    void Shutdown();
 
     // Bot management using TrinityCore''s native login
-    bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0, bool bypassLimit = false) override;
-    void RemovePlayerBot(ObjectGuid playerGuid) override;
+    bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0, bool bypassLimit = false);
+    void RemovePlayerBot(ObjectGuid playerGuid);
     Player* GetPlayerBot(ObjectGuid playerGuid) const;
 
     // Session updates
-    void UpdateSessions(uint32 diff) override;
+    void UpdateSessions(uint32 diff);
 
     // Deferred packet processing (main thread only!)
     // Processes packets queued by worker threads that require serialization with Map::Update()
-    uint32 ProcessAllDeferredPackets() override;
+    uint32 ProcessAllDeferredPackets();
 
     // Administrative
-    uint32 GetBotCount() const override;
-    bool IsEnabled() const override { return _enabled.load(); }
-    void SetEnabled(bool enabled) override { _enabled.store(enabled); }
+    uint32 GetBotCount() const;
+    bool IsEnabled() const { return _enabled.load(); }
+    void SetEnabled(bool enabled) { _enabled.store(enabled); }
 
     // Character login trigger (compatibility with existing system)
-    void TriggerCharacterLoginForAllSessions() override;
+    void TriggerCharacterLoginForAllSessions();
 
     // Chat command support - NEW APIs for command system
-    ::std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const override;
-    void RemoveAllPlayerBots(uint32 accountId) override;
-    uint32 GetBotCountByAccount(uint32 accountId) const override;
+    ::std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const;
+    void RemoveAllPlayerBots(uint32 accountId);
+    uint32 GetBotCountByAccount(uint32 accountId) const;
 
     // All-bots operations (for LFG, BG, etc.)
-    ::std::vector<Player*> GetAllBotPlayers() const override;
+    ::std::vector<Player*> GetAllBotPlayers() const;
 
     // Check if a bot is currently in the loading queue
     // Used by ProcessPendingBGQueues to avoid double-queuing race conditions

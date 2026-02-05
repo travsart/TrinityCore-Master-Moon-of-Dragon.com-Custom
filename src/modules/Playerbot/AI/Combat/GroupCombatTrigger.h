@@ -65,21 +65,21 @@ public:
      * @param ai The bot AI instance
      * @return true if group is in combat and bot should engage
      */
-    bool Check(BotAI* ai) const override;
+    bool Check(BotAI* ai) const;
 
     /**
      * Evaluate trigger and generate action result
      * @param ai The bot AI instance
      * @return TriggerResult with suggested action and context
      */
-    TriggerResult Evaluate(BotAI* ai) const override;
+    TriggerResult Evaluate(BotAI* ai) const;
 
     /**
      * Calculate urgency of combat engagement
      * @param ai The bot AI instance
      * @return Urgency value 0.0-1.0 (higher = more urgent)
      */
-    float CalculateUrgency(BotAI* ai) const override;
+    float CalculateUrgency(BotAI* ai) const;
 
     // Group combat detection
     /**

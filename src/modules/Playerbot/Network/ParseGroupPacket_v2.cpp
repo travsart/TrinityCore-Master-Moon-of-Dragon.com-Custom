@@ -47,7 +47,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::READY_CHECK_STARTED;
             event.priority = EventPriority::HIGH;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - READY_CHECK_STARTED detected", bot->GetName());
             break;
@@ -59,7 +59,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::READY_CHECK_RESPONSE;
             event.priority = EventPriority::NORMAL;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - READY_CHECK_RESPONSE detected", bot->GetName());
             break;
@@ -71,7 +71,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::READY_CHECK_COMPLETED;
             event.priority = EventPriority::NORMAL;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - READY_CHECK_COMPLETED detected", bot->GetName());
             break;
@@ -83,7 +83,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::WORLD_MARKER_CHANGED;
             event.priority = EventPriority::LOW;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - RAID_MARKERS_CHANGED detected", bot->GetName());
             break;
@@ -95,7 +95,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::LEADER_CHANGED;
             event.priority = GroupEventType::HIGH;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - GROUP_NEW_LEADER detected", bot->GetName());
             break;
@@ -107,7 +107,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::MEMBER_JOINED;
             event.priority = EventPriority::NORMAL;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - PARTY_UPDATE detected", bot->GetName());
             break;
@@ -120,7 +120,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::MEMBER_STATS_CHANGED;
             event.priority = EventPriority::LOW;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - PARTY_MEMBER_STATE detected", bot->GetName());
             break;
@@ -132,7 +132,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::GROUP_DISBANDED;
             event.priority = EventPriority::HIGH;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - GROUP_DESTROYED detected", bot->GetName());
             break;
@@ -144,7 +144,7 @@ void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket
             event.type = GroupEventType::INVITE_DECLINED;
             event.priority = EventPriority::NORMAL;
             event.timestamp = ::std::chrono::steady_clock::now();
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
 
             TC_LOG_DEBUG("playerbot.packets", "Bot {} - GROUP_DECLINE detected", bot->GetName());
             break;

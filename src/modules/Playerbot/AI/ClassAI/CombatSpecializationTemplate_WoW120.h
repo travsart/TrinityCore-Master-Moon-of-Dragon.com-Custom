@@ -375,10 +375,10 @@ public:
     explicit BloodDeathKnight(Player* bot)
         : CombatSpecializationTemplate<RuneResource>(bot, CombatRole::TANK) {}
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 
     // Death Knight specific methods
     bool HasRunes(uint32 blood, uint32 frost, uint32 unholy) const
@@ -398,10 +398,10 @@ public:
     explicit FrostDeathKnight(Player* bot)
         : CombatSpecializationTemplate<RuneResource>(bot, CombatRole::MELEE_DPS) {}
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 class UnholyDeathKnight : public CombatSpecializationTemplate<RuneResource>
@@ -410,10 +410,10 @@ public:
     explicit UnholyDeathKnight(Player* bot)
         : CombatSpecializationTemplate<RuneResource>(bot, CombatRole::MELEE_DPS) {}
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 // Demon Hunter specializations
@@ -426,10 +426,10 @@ public:
         _resource = SimpleResource(120, 0.0f, 0.0f); // Fury: max 120, no regen
     }
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 class VengeanceDemonHunter : public CombatSpecializationTemplate<SimpleResource>
@@ -441,10 +441,10 @@ public:
         _resource = SimpleResource(100, 0.0f, 0.0f); // Pain: max 100, no regen
     }
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 // Druid specializations (complex due to forms)
@@ -454,10 +454,10 @@ public:
     explicit BalanceDruid(Player* bot)
         : CombatSpecializationTemplate<AstralPowerResource>(bot, CombatRole::RANGED_DPS) {}
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 class FeralDruid : public CombatSpecializationTemplate<ComboPointResource>
@@ -466,10 +466,10 @@ public:
     explicit FeralDruid(Player* bot)
         : CombatSpecializationTemplate<ComboPointResource>(bot, CombatRole::MELEE_DPS) {}
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 class GuardianDruid : public CombatSpecializationTemplate<SimpleResource>
@@ -481,10 +481,10 @@ public:
         _resource = SimpleResource(100, 0.0f, 1.0f); // Rage: max 100, decay 1/sec
     }
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 class RestorationDruid : public CombatSpecializationTemplate<SimpleResource>
@@ -496,10 +496,10 @@ public:
         _resource = SimpleResource(100000, 0.0f, 0.0f); // Mana only
     }
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 // Evoker specializations
@@ -509,10 +509,10 @@ public:
     explicit DevastationEvoker(Player* bot)
         : CombatSpecializationTemplate<EssenceResource>(bot, CombatRole::RANGED_DPS) {}
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 
     bool HasEssence(uint8 charges = 1) const { return _resource.HasEssence(charges); }
     void ConsumeEssence(uint8 charges = 1) { _resource.ConsumeEssence(charges); }
@@ -524,10 +524,10 @@ public:
     explicit PreservationEvoker(Player* bot)
         : CombatSpecializationTemplate<EssenceResource>(bot, CombatRole::HEALER) {}
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 class AugmentationEvoker : public CombatSpecializationTemplate<EssenceResource>
@@ -536,10 +536,10 @@ public:
     explicit AugmentationEvoker(Player* bot)
         : CombatSpecializationTemplate<EssenceResource>(bot, CombatRole::HYBRID) {}
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 // Hunter specializations
@@ -552,10 +552,10 @@ public:
         _resource = SimpleResource(100, 5.0f, 0.0f); // Focus: max 100, regen 5/sec
     }
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 class MarksmanshipHunter : public CombatSpecializationTemplate<SimpleResource>
@@ -567,10 +567,10 @@ public:
         _resource = SimpleResource(100, 5.0f, 0.0f); // Focus
     }
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 class SurvivalHunter : public CombatSpecializationTemplate<SimpleResource>
@@ -582,10 +582,10 @@ public:
         _resource = SimpleResource(100, 5.0f, 0.0f); // Focus
     }
 
-    void UpdateRotation(::Unit* target) override;
-    void UpdateBuffs() override;
-    void UpdateCooldowns(uint32 diff) override;
-    bool CanUseAbility(uint32 spellId) override;
+    void UpdateRotation(::Unit* target);
+    void UpdateBuffs();
+    void UpdateCooldowns(uint32 diff);
+    bool CanUseAbility(uint32 spellId);
 };
 
 // Additional class specializations would follow the same pattern...

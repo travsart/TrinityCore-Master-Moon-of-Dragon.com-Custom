@@ -69,17 +69,17 @@ public:
     // STRATEGY INTERFACE
     // ========================================================================
 
-    void InitializeActions() override;
-    void InitializeTriggers() override;
-    void InitializeValues() override;
+    void InitializeActions();
+    void InitializeTriggers();
+    void InitializeValues();
 
-    void OnActivate(BotAI* ai) override;
-    void OnDeactivate(BotAI* ai) override;
+    void OnActivate(BotAI* ai);
+    void OnDeactivate(BotAI* ai);
 
-    bool IsActive(BotAI* ai) const override;
-    float GetRelevance(BotAI* ai) const override;
+    bool IsActive(BotAI* ai) const;
+    float GetRelevance(BotAI* ai) const;
 
-    void UpdateBehavior(BotAI* ai, uint32 diff) override;
+    void UpdateBehavior(BotAI* ai, uint32 diff);
 
     // ========================================================================
     // GRINDING STATE

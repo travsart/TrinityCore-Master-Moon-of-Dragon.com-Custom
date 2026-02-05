@@ -30,7 +30,7 @@ struct CombatEvent;
  *
  * Usage Example:
  * @code
- * class InterruptCoordinator : public ICombatEventSubscriber {
+ * class InterruptCoordinator  {
  * public:
  *     void OnCombatEvent(const CombatEvent& event) override {
  *         if (event.type == CombatEventType::SPELL_CAST_START) {

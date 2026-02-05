@@ -20,7 +20,6 @@
 
 #include "Common.h"
 #include "LFG.h"
-#include "../Core/DI/Interfaces/ILFGRoleDetector.h"
 
 class Player;
 
@@ -35,7 +34,7 @@ class Player;
  *
  * Singleton implementation using Meyer's singleton pattern (thread-safe).
  */
-class TC_GAME_API LFGRoleDetector final : public ILFGRoleDetector
+class TC_GAME_API LFGRoleDetector final 
 {
 private:
     LFGRoleDetector();
@@ -62,7 +61,7 @@ public:
      * @param player The player to analyze
      * @return Role bitmask (PLAYER_ROLE_TANK/HEALER/DAMAGE)
      */
-    uint8 DetectPlayerRole(Player* player) override;
+    uint8 DetectPlayerRole(Player* player);
 
     /**
      * @brief Detect role specifically for a bot
@@ -73,7 +72,7 @@ public:
      * @param bot The bot player to analyze
      * @return Role bitmask (PLAYER_ROLE_TANK/HEALER/DAMAGE)
      */
-    uint8 DetectBotRole(Player* bot) override;
+    uint8 DetectBotRole(Player* bot);
 
     /**
      * @brief Check if a player can perform a specific role
@@ -85,7 +84,7 @@ public:
      * @param role The role to validate (single role, not bitmask)
      * @return true if player can perform this role, false otherwise
      */
-    bool CanPerformRole(Player* player, uint8 role) override;
+    bool CanPerformRole(Player* player, uint8 role);
 
     /**
      * @brief Get the best role for a player based on current state
@@ -96,7 +95,7 @@ public:
      * @param player The player to analyze
      * @return Single role value (PLAYER_ROLE_TANK/HEALER/DAMAGE)
      */
-    uint8 GetBestRoleForPlayer(Player* player) override;
+    uint8 GetBestRoleForPlayer(Player* player);
 
     /**
      * @brief Get all roles a player can perform
@@ -107,7 +106,7 @@ public:
      * @param player The player to analyze
      * @return Role bitmask of all performable roles
      */
-    uint8 GetAllPerformableRoles(Player* player) override;
+    uint8 GetAllPerformableRoles(Player* player);
 
     /**
      * @brief Detect role from talent specialization ID
@@ -116,7 +115,7 @@ public:
      * @param specId The specialization ID
      * @return Role for this spec (PLAYER_ROLE_TANK/HEALER/DAMAGE)
      */
-    uint8 GetRoleFromSpecialization(Player* player, uint32 specId) override;
+    uint8 GetRoleFromSpecialization(Player* player, uint32 specId);
 
 private:
     /**

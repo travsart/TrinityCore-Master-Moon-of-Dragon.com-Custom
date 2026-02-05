@@ -167,7 +167,7 @@ public:
      * @brief Filter events to only receive enemy casts
      * Optimizes event delivery by filtering at subscription level
      */
-    bool ShouldReceiveEvent(const CombatEvent& event) const override;
+    bool ShouldReceiveEvent(const CombatEvent& event) const;
 
     /**
      * @brief Subscriber name for debugging

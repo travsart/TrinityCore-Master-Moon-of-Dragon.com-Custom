@@ -11,7 +11,6 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
-#include "Core/DI/Interfaces/IUnifiedLootManager.h"
 #include "LootDistribution.h"
 #include "Player.h"
 #include "Group.h"
@@ -50,14 +49,14 @@ namespace Playerbot
  * - DistributionModule delegates to existing LootDistribution system
  * - Ready for future feature development
  */
-class TC_GAME_API UnifiedLootManager final : public IUnifiedLootManager
+class TC_GAME_API UnifiedLootManager final 
 {
 public:
     static UnifiedLootManager* instance();
 
     // Singleton management
     UnifiedLootManager();
-    ~UnifiedLootManager() override;
+    ~UnifiedLootManager();
 
     // Non-copyable, non-movable
     UnifiedLootManager(UnifiedLootManager const&) = delete;
@@ -69,57 +68,57 @@ public:
     // ANALYSIS MODULE INTERFACE
     // ========================================================================
 
-    float CalculateItemValue(Player* player, LootItem const& item) override;
-    float CalculateUpgradeValue(Player* player, LootItem const& item) override;
-    bool IsSignificantUpgrade(Player* player, LootItem const& item) override;
-    float CalculateStatWeight(Player* player, uint32 statType) override;
-    float CompareItems(Player* player, LootItem const& newItem, Item const* currentItem) override;
-    float CalculateItemScore(Player* player, LootItem const& item) override;
-    std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player) override;
+    float CalculateItemValue(Player* player, LootItem const& item);
+    float CalculateUpgradeValue(Player* player, LootItem const& item);
+    bool IsSignificantUpgrade(Player* player, LootItem const& item);
+    float CalculateStatWeight(Player* player, uint32 statType);
+    float CompareItems(Player* player, LootItem const& newItem, Item const* currentItem);
+    float CalculateItemScore(Player* player, LootItem const& item);
+    std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player);
 
     // ========================================================================
     // COORDINATION MODULE INTERFACE
     // ========================================================================
 
-    void InitiateLootSession(Group* group, Loot* loot) override;
-    void ProcessLootSession(Group* group, uint32 lootSessionId) override;
-    void CompleteLootSession(uint32 lootSessionId) override;
-    void HandleLootSessionTimeout(uint32 lootSessionId) override;
-    void OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items) override;
-    void PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items) override;
-    void OptimizeLootSequence(Group* group, std::vector<LootItem>& items) override;
-    void FacilitateGroupLootDiscussion(Group* group, LootItem const& item) override;
-    void HandleLootConflictResolution(Group* group, LootItem const& item) override;
-    void BroadcastLootRecommendations(Group* group, LootItem const& item) override;
-    void OptimizeLootEfficiency(Group* group) override;
-    void MinimizeLootTime(Group* group, uint32 sessionId) override;
-    void MaximizeLootFairness(Group* group, uint32 sessionId) override;
+    void InitiateLootSession(Group* group, Loot* loot);
+    void ProcessLootSession(Group* group, uint32 lootSessionId);
+    void CompleteLootSession(uint32 lootSessionId);
+    void HandleLootSessionTimeout(uint32 lootSessionId);
+    void OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items);
+    void PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items);
+    void OptimizeLootSequence(Group* group, std::vector<LootItem>& items);
+    void FacilitateGroupLootDiscussion(Group* group, LootItem const& item);
+    void HandleLootConflictResolution(Group* group, LootItem const& item);
+    void BroadcastLootRecommendations(Group* group, LootItem const& item);
+    void OptimizeLootEfficiency(Group* group);
+    void MinimizeLootTime(Group* group, uint32 sessionId);
+    void MaximizeLootFairness(Group* group, uint32 sessionId);
 
     // ========================================================================
     // DISTRIBUTION MODULE INTERFACE
     // ========================================================================
 
-    void DistributeLoot(Group* group, LootItem const& item) override;
-    void HandleLootRoll(Player* player, uint32 rollId, LootRollType rollType) override;
+    void DistributeLoot(Group* group, LootItem const& item);
+    void HandleLootRoll(Player* player, uint32 rollId, LootRollType rollType);
     LootRollType DetermineLootDecision(Player* player, LootItem const& item,
-                                        LootDecisionStrategy strategy) override;
-    LootPriority CalculateLootPriority(Player* player, LootItem const& item) override;
-    bool ShouldRollNeed(Player* player, LootItem const& item) override;
-    bool ShouldRollGreed(Player* player, LootItem const& item) override;
-    bool IsItemForClass(Player* player, LootItem const& item) override;
-    bool IsItemForMainSpec(Player* player, LootItem const& item) override;
-    bool IsItemForOffSpec(Player* player, LootItem const& item) override;
-    void ExecuteLootDistribution(Group* group, uint32 rollId) override;
-    void ResolveRollTies(Group* group, uint32 rollId) override;
-    void HandleLootNinja(Group* group, uint32 suspectedPlayer) override;
+                                        LootDecisionStrategy strategy);
+    LootPriority CalculateLootPriority(Player* player, LootItem const& item);
+    bool ShouldRollNeed(Player* player, LootItem const& item);
+    bool ShouldRollGreed(Player* player, LootItem const& item);
+    bool IsItemForClass(Player* player, LootItem const& item);
+    bool IsItemForMainSpec(Player* player, LootItem const& item);
+    bool IsItemForOffSpec(Player* player, LootItem const& item);
+    void ExecuteLootDistribution(Group* group, uint32 rollId);
+    void ResolveRollTies(Group* group, uint32 rollId);
+    void HandleLootNinja(Group* group, uint32 suspectedPlayer);
 
     // ========================================================================
     // UNIFIED OPERATIONS
     // ========================================================================
 
-    void ProcessCompleteLootFlow(Group* group, Loot* loot) override;
-    std::string GetLootRecommendation(Player* player, LootItem const& item) override;
-    std::string GetLootStatistics() const override;
+    void ProcessCompleteLootFlow(Group* group, Loot* loot);
+    std::string GetLootRecommendation(Player* player, LootItem const& item);
+    std::string GetLootStatistics() const;
 
 private:
     // ========================================================================

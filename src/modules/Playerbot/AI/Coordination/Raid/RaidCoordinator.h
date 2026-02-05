@@ -48,7 +48,7 @@ class RaidEncounterManager;
  *
  * Implements ICombatEventSubscriber to receive combat events.
  */
-class RaidCoordinator : public ICombatEventSubscriber
+class RaidCoordinator 
 {
 public:
     RaidCoordinator(Map* raidInstance, const ::std::vector<Player*>& raidMembers);
@@ -66,8 +66,8 @@ public:
     // ICOMBATEVENTSUBSCRIBER INTERFACE
     // ========================================================================
 
-    void OnCombatEvent(const CombatEventData& event) override;
-    CombatEventType GetSubscribedEvents() const override;
+    void OnCombatEvent(const CombatEventData& event);
+    CombatEventType GetSubscribedEvents() const;
     uint8 GetPriority() const override { return 50; }  // High priority for raid
 
     // ========================================================================

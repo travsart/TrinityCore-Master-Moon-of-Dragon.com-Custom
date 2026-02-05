@@ -12,7 +12,6 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "Position.h"
-#include "../../Core/DI/Interfaces/IUnifiedMovementCoordinator.h"
 #include "../../Movement/Core/MovementTypes.h"
 #include <vector>
 #include <array>
@@ -254,8 +253,8 @@ class MeleePositionStrategy : public PositionStrategyBase
 public:
     explicit MeleePositionStrategy(Map* map) : PositionStrategyBase(map) {}
 
-    Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange) override;
-    float EvaluatePositionScore(const Position& pos, Player* bot, Unit* target) const override;
+    Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange);
+    float EvaluatePositionScore(const Position& pos, Player* bot, Unit* target) const;
 
 private:
     Position GetBackstabPosition(Unit* target) const;
@@ -268,8 +267,8 @@ class RangedPositionStrategy : public PositionStrategyBase
 public:
     explicit RangedPositionStrategy(Map* map) : PositionStrategyBase(map) {}
 
-    Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange) override;
-    float EvaluatePositionScore(const Position& pos, Player* bot, Unit* target) const override;
+    Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange);
+    float EvaluatePositionScore(const Position& pos, Player* bot, Unit* target) const;
 
 private:
     Position GetKitingPosition(Player* bot, Unit* target) const;
@@ -282,8 +281,8 @@ class TankPositionStrategy : public PositionStrategyBase
 public:
     explicit TankPositionStrategy(Map* map) : PositionStrategyBase(map) {}
 
-    Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange) override;
-    void UpdateFormationPositions(::std::vector<Player*> bots, Unit* centerTarget) override;
+    Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange);
+    void UpdateFormationPositions(::std::vector<Player*> bots, Unit* centerTarget);
 
 private:
     Position GetTankingPosition(Unit* target, bool mainTank = true) const;
@@ -296,8 +295,8 @@ class HealerPositionStrategy : public PositionStrategyBase
 public:
     explicit HealerPositionStrategy(Map* map) : PositionStrategyBase(map) {}
 
-    Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange) override;
-    float EvaluatePositionScore(const Position& pos, Player* bot, Unit* target) const override;
+    Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange);
+    float EvaluatePositionScore(const Position& pos, Player* bot, Unit* target) const;
 
 private:
     Position GetSafeHealingPosition(Player* bot, ::std::vector<Player*> allies) const;

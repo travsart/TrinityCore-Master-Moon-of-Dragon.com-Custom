@@ -20,7 +20,6 @@
 #include "Define.h"
 #include "SharedDefines.h"
 #include "Position.h"
-#include "Core/DI/Interfaces/IBotWorldPositioner.h"
 #include <atomic>
 #include <vector>
 #include <unordered_map>
@@ -178,6 +177,30 @@ struct ZonePlacement
 };
 
 /**
+ * Positioner Statistics
+ * Tracks zone placement statistics
+ */
+struct PositionerStats
+{
+    uint32 totalPlacements{0};
+    uint32 successfulPlacements{0};
+    uint32 failedPlacements{0};
+    uint32 zonesCached{0};
+    uint32 starterZonePlacements{0};
+    uint32 capitalCityFallbacks{0};
+    // Zone category tracking
+    uint32 totalZones{0};
+    uint32 starterZones{0};
+    uint32 levelingZones{0};
+    uint32 endgameZones{0};
+    uint32 capitalCities{0};
+    // Teleport tracking
+    uint32 teleportsFailed{0};
+    uint32 botsPlaced{0};
+    std::unordered_map<uint32, uint32> placementsPerZone;
+};
+
+/**
  * Zone Selection Result
  * Returned when selecting a zone for bot placement
  */
@@ -231,13 +254,10 @@ struct ZoneChoice
  * - Endgame Zones (L60-80): The War Within content zones
  * - Capital Cities (All levels): Faction capitals
  */
-class TC_GAME_API BotWorldPositioner final : public IBotWorldPositioner
+class TC_GAME_API BotWorldPositioner final 
 {
 public:
     static BotWorldPositioner* instance();
-
-    // IBotWorldPositioner interface implementation
-    using PositionerStats = Playerbot::PositionerStats;
 
     // ====================================================================
     // INITIALIZATION (Called once at server startup)
@@ -248,17 +268,17 @@ public:
      * MUST be called before any zone operations
      * Single-threaded execution required
      */
-    bool LoadZones() override;
+    bool LoadZones();
 
     /**
      * Reload zones (for hot-reload during development)
      */
-    void ReloadZones() override;
+    void ReloadZones();
 
     /**
      * Check if zones are ready
      */
-    bool IsReady() const override
+    bool IsReady() const
     {
         return _initialized.load(::std::memory_order_acquire);
     }
@@ -282,7 +302,7 @@ public:
      * @param race          Bot race (for starter zone selection)
      * @return              ZoneChoice with selected zone
      */
-    ZoneChoice SelectZone(uint32 level, TeamId faction, uint8 race = 0) override;
+    ZoneChoice SelectZone(uint32 level, TeamId faction, uint8 race = 0);
 
     /**
      * Get starter zone for specific race
@@ -292,19 +312,19 @@ public:
      * @param faction       Faction (for validation)
      * @return              ZoneChoice for starter zone
      */
-    ZoneChoice GetStarterZone(uint8 race, TeamId faction) override;
+    ZoneChoice GetStarterZone(uint8 race, TeamId faction);
 
     /**
      * Get all zones valid for level and faction
      * Useful for debugging and validation
      */
-    ::std::vector<ZonePlacement const*> GetValidZones(uint32 level, TeamId faction) const override;
+    ::std::vector<ZonePlacement const*> GetValidZones(uint32 level, TeamId faction) const;
 
     /**
      * Get random capital city for faction
      * Fallback option when no other zone is suitable
      */
-    ZoneChoice GetCapitalCity(TeamId faction) override;
+    ZoneChoice GetCapitalCity(TeamId faction);
 
     // ====================================================================
     // TELEPORTATION (MAIN THREAD ONLY - Player API)
@@ -325,7 +345,7 @@ public:
      * @param placement     Zone placement from SelectZone()
      * @return              True if successful
      */
-    bool TeleportToZone(Player* bot, ZonePlacement const* placement) override;
+    bool TeleportToZone(Player* bot, ZonePlacement const* placement);
 
     /**
      * Complete workflow: Select zone + teleport in one call
@@ -337,7 +357,7 @@ public:
      * @param race          Bot race
      * @return              True if successful
      */
-    bool PlaceBot(Player* bot, uint32 level, TeamId faction, uint8 race) override;
+    bool PlaceBot(Player* bot, uint32 level, TeamId faction, uint8 race);
 
     // ====================================================================
     // ZONE QUERIES (Thread-safe, lock-free cache access)
@@ -347,25 +367,25 @@ public:
      * Get zone placement by zone ID
      * Thread-safe, returns cached placement
      */
-    ZonePlacement const* GetZonePlacement(uint32 zoneId) const override;
+    ZonePlacement const* GetZonePlacement(uint32 zoneId) const;
 
     /**
      * Get zone name by zone ID
      */
-    ::std::string GetZoneName(uint32 zoneId) const override;
+    ::std::string GetZoneName(uint32 zoneId) const;
 
     /**
      * Check if zone is valid for level/faction
      */
-    bool IsZoneValid(uint32 zoneId, uint32 level, TeamId faction) const override;
+    bool IsZoneValid(uint32 zoneId, uint32 level, TeamId faction) const;
 
     // ====================================================================
     // STATISTICS & DEBUGGING
     // ====================================================================
 
-    PositionerStats GetStats() const override { return _stats; }
-    void PrintZoneReport() const override;
-    ::std::string GetZoneSummary() const override;
+    PositionerStats GetStats() const { return _stats; }
+    void PrintZoneReport() const;
+    ::std::string GetZoneSummary() const;
 
 private:
     BotWorldPositioner() = default;

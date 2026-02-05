@@ -26,9 +26,6 @@
 #include <functional>
 #include <chrono>
 
-    // Interface
-    #include "Core/DI/Interfaces/IPlayerbotCharacterDBInterface.h"
-
 namespace Playerbot
 {
     // Forward declarations
@@ -40,16 +37,16 @@ namespace Playerbot
      * Enterprise-grade database interface wrapper that solves the sync/async mismatch
      * between TrinityCore's sync-only statements and Playerbot's async operations
      */
-    class PlayerbotCharacterDBInterface final : public IPlayerbotCharacterDBInterface
+    class PlayerbotCharacterDBInterface final
     {
     public:
         // Singleton instance
         static PlayerbotCharacterDBInterface* instance();
 
         // Initialization and shutdown
-        bool Initialize() override;
-        void Shutdown() override;
-        void Update(uint32 diff) override;
+        bool Initialize();
+        void Shutdown();
+        void Update(uint32 diff);
 
         // === Primary Interface Methods ===
 
@@ -58,7 +55,7 @@ namespace Playerbot
          * @param statementId The statement index from CharacterDatabaseStatements enum
          * @return Prepared statement or nullptr if invalid/unavailable
          */
-        CharacterDatabasePreparedStatement* GetPreparedStatement(CharacterDatabaseStatements statementId) override;
+        CharacterDatabasePreparedStatement* GetPreparedStatement(CharacterDatabaseStatements statementId);
 
         /**
          * Execute async query with automatic routing based on statement type
@@ -84,27 +81,27 @@ namespace Playerbot
          * @param stmt The prepared statement to execute
          * @return Query result or nullptr on failure
          */
-        PreparedQueryResult ExecuteSync(CharacterDatabasePreparedStatement* stmt) override;
+        PreparedQueryResult ExecuteSync(CharacterDatabasePreparedStatement* stmt);
 
         /**
          * Begin a database transaction with proper isolation
          * @return Transaction handle
          */
-        CharacterDatabaseTransaction BeginTransaction() override;
+        CharacterDatabaseTransaction BeginTransaction();
 
         /**
          * Commit a transaction with safety checks
          * @param trans The transaction to commit
          * @param async Whether to commit asynchronously
          */
-        void CommitTransaction(CharacterDatabaseTransaction trans, bool async = true) override;
+        void CommitTransaction(CharacterDatabaseTransaction trans, bool async = true);
 
         /**
          * Execute a direct SQL query (for migrations/setup only)
          * @param sql The SQL query to execute
          * @return True if successful
          */
-        bool ExecuteDirectSQL(::std::string const& sql) override;
+        bool ExecuteDirectSQL(::std::string const& sql);
 
         // === Context Detection ===
 
@@ -112,20 +109,20 @@ namespace Playerbot
          * Check if current thread is in async context
          * @return True if in async worker thread
          */
-        bool IsAsyncContext() const override;
+        bool IsAsyncContext() const;
 
         /**
          * Check if statement requires synchronous execution
          * @param statementId The statement to check
          * @return True if statement must be executed synchronously
          */
-        bool IsSyncOnlyStatement(uint32 statementId) const override;
+        bool IsSyncOnlyStatement(uint32 statementId) const;
 
         /**
          * Get the main thread ID for context detection
          * @return Main thread ID
          */
-        ::std::thread::id GetMainThreadId() const override { return _mainThreadId; }
+        ::std::thread::id GetMainThreadId() const { return _mainThreadId; }
 
         // === Performance Metrics ===
 
@@ -154,7 +151,7 @@ namespace Playerbot
         };
 
         Metrics const& GetMetrics() const { return _metrics; }
-        void ResetMetrics() override { _metrics.Reset(); }
+        void ResetMetrics() { _metrics.Reset(); }
 
         // === Configuration ===
 
@@ -206,12 +203,12 @@ namespace Playerbot
         /**
          * Process sync queue on main thread
          */
-        void ProcessSyncQueue() override;
+        void ProcessSyncQueue();
 
         /**
          * Initialize statement classification
          */
-        void InitializeStatementClassification() override;
+        void InitializeStatementClassification();
 
         /**
          * Detect current execution context

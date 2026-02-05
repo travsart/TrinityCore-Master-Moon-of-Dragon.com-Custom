@@ -14,7 +14,6 @@
 #include "Player.h"
 #include "Group.h"
 #include "GroupRoleEnums.h"
-#include "../Core/DI/Interfaces/IRoleAssignment.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -28,6 +27,122 @@ class Group;
 
 namespace Playerbot
 {
+
+// Role performance tracking (previously in IRoleAssignment interface)
+struct RolePerformance
+{
+    uint32 successfulAssignments{0};
+    uint32 failedAssignments{0};
+    std::atomic<float> averageEffectiveness{0.5f};
+    uint32 lastAssignmentTime{0};
+
+    // Additional tracking fields for detailed role performance
+    std::atomic<uint32> successfulEncounters{0};
+    std::atomic<uint32> failedEncounters{0};
+    std::atomic<uint32> assignmentsAccepted{0};
+    std::atomic<uint32> assignmentsDeclined{0};
+    std::atomic<float> performanceRating{0.5f};
+    std::chrono::steady_clock::time_point lastPerformanceUpdate{};
+
+    float GetSuccessRate() const
+    {
+        uint32 total = successfulAssignments + failedAssignments;
+        return total > 0 ? static_cast<float>(successfulAssignments) / total : 0.5f;
+    }
+
+    // Copy constructor for atomic members
+    RolePerformance() = default;
+    RolePerformance(RolePerformance const& other)
+        : successfulAssignments(other.successfulAssignments)
+        , failedAssignments(other.failedAssignments)
+        , averageEffectiveness(other.averageEffectiveness.load())
+        , lastAssignmentTime(other.lastAssignmentTime)
+        , successfulEncounters(other.successfulEncounters.load())
+        , failedEncounters(other.failedEncounters.load())
+        , assignmentsAccepted(other.assignmentsAccepted.load())
+        , assignmentsDeclined(other.assignmentsDeclined.load())
+        , performanceRating(other.performanceRating.load())
+        , lastPerformanceUpdate(other.lastPerformanceUpdate)
+    {}
+
+    RolePerformance& operator=(RolePerformance const& other)
+    {
+        if (this != &other)
+        {
+            successfulAssignments = other.successfulAssignments;
+            failedAssignments = other.failedAssignments;
+            averageEffectiveness.store(other.averageEffectiveness.load());
+            lastAssignmentTime = other.lastAssignmentTime;
+            successfulEncounters.store(other.successfulEncounters.load());
+            failedEncounters.store(other.failedEncounters.load());
+            assignmentsAccepted.store(other.assignmentsAccepted.load());
+            assignmentsDeclined.store(other.assignmentsDeclined.load());
+            performanceRating.store(other.performanceRating.load());
+            lastPerformanceUpdate = other.lastPerformanceUpdate;
+        }
+        return *this;
+    }
+};
+
+// Role statistics for monitoring (previously in IRoleAssignment interface)
+struct RoleStatistics
+{
+    std::unordered_map<GroupRole, uint32> roleAssignmentCounts;
+    std::unordered_map<GroupRole, float> roleSuccessRates;
+    std::atomic<uint32> totalAssignments{0};
+    std::atomic<uint32> totalReassignments{0};
+    float averageCompositionScore{0.0f};
+
+    // Additional atomic counters for thread-safe updates
+    std::atomic<uint32> successfulAssignments{0};
+    std::atomic<uint32> roleConflicts{0};
+    std::atomic<uint32> emergencyFills{0};
+    std::chrono::steady_clock::time_point lastStatsUpdate{};
+
+    void Reset()
+    {
+        roleAssignmentCounts.clear();
+        roleSuccessRates.clear();
+        totalAssignments.store(0);
+        totalReassignments.store(0);
+        averageCompositionScore = 0.0f;
+        successfulAssignments.store(0);
+        roleConflicts.store(0);
+        emergencyFills.store(0);
+        lastStatsUpdate = std::chrono::steady_clock::now();
+    }
+
+    // Copy constructor for atomic members
+    RoleStatistics() = default;
+    RoleStatistics(RoleStatistics const& other)
+        : roleAssignmentCounts(other.roleAssignmentCounts)
+        , roleSuccessRates(other.roleSuccessRates)
+        , totalAssignments(other.totalAssignments.load())
+        , totalReassignments(other.totalReassignments.load())
+        , averageCompositionScore(other.averageCompositionScore)
+        , successfulAssignments(other.successfulAssignments.load())
+        , roleConflicts(other.roleConflicts.load())
+        , emergencyFills(other.emergencyFills.load())
+        , lastStatsUpdate(other.lastStatsUpdate)
+    {}
+
+    RoleStatistics& operator=(RoleStatistics const& other)
+    {
+        if (this != &other)
+        {
+            roleAssignmentCounts = other.roleAssignmentCounts;
+            roleSuccessRates = other.roleSuccessRates;
+            totalAssignments.store(other.totalAssignments.load());
+            totalReassignments.store(other.totalReassignments.load());
+            averageCompositionScore = other.averageCompositionScore;
+            successfulAssignments.store(other.successfulAssignments.load());
+            roleConflicts.store(other.roleConflicts.load());
+            emergencyFills.store(other.emergencyFills.load());
+            lastStatsUpdate = other.lastStatsUpdate;
+        }
+        return *this;
+    }
+};
 
 struct RoleScore
 {
@@ -102,7 +217,7 @@ struct GroupComposition
     }
 };
 
-class TC_GAME_API RoleAssignment final : public IRoleAssignment
+class TC_GAME_API RoleAssignment final
 {
 public:
     explicit RoleAssignment(Player* bot);
@@ -111,68 +226,68 @@ public:
     RoleAssignment& operator=(RoleAssignment const&) = delete;
 
     // Core role assignment
-    bool AssignRoles(Group* group, RoleAssignmentStrategy strategy = RoleAssignmentStrategy::OPTIMAL_ASSIGNMENT) override;
-    bool AssignRole(GroupRole role, Group* group) override;
-    bool SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* group) override;
-    void OptimizeRoleDistribution(Group* group) override;
+    bool AssignRoles(Group* group, RoleAssignmentStrategy strategy = RoleAssignmentStrategy::OPTIMAL_ASSIGNMENT);
+    bool AssignRole(GroupRole role, Group* group);
+    bool SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* group);
+    void OptimizeRoleDistribution(Group* group);
 
     // Role analysis and scoring
-    PlayerRoleProfile AnalyzePlayerCapabilities() override;
-    std::vector<RoleScore> CalculateRoleScores(Group* group) override;
-    GroupRole RecommendRole(Group* group) override;
-    float CalculateRoleSynergy(GroupRole role, Group* group) override;
+    PlayerRoleProfile AnalyzePlayerCapabilities();
+    std::vector<RoleScore> CalculateRoleScores(Group* group);
+    GroupRole RecommendRole(Group* group);
+    float CalculateRoleSynergy(GroupRole role, Group* group);
 
     // Group composition analysis
-    GroupComposition AnalyzeGroupComposition(Group* group) override;
-    bool IsCompositionViable(const GroupComposition& composition) override;
-    std::vector<GroupRole> GetMissingRoles(Group* group) override;
-    std::vector<uint32> FindPlayersForRole(GroupRole role, const std::vector<Player*>& candidates) override;
+    GroupComposition AnalyzeGroupComposition(Group* group);
+    bool IsCompositionViable(const GroupComposition& composition);
+    std::vector<GroupRole> GetMissingRoles(Group* group);
+    std::vector<uint32> FindPlayersForRole(GroupRole role, const std::vector<Player*>& candidates);
 
     // Dynamic role adjustment
-    void HandleRoleConflict(Group* group, GroupRole conflictedRole) override;
-    void RebalanceRoles(Group* group) override;
-    void AdaptToGroupChanges(Group* group, Player* newMember = nullptr, Player* leavingMember = nullptr) override;
-    bool CanPlayerSwitchRole(GroupRole newRole, Group* group) override;
+    void HandleRoleConflict(Group* group, GroupRole conflictedRole);
+    void RebalanceRoles(Group* group);
+    void AdaptToGroupChanges(Group* group, Player* newMember = nullptr, Player* leavingMember = nullptr);
+    bool CanPlayerSwitchRole(GroupRole newRole, Group* group);
 
     // Content-specific role optimization
-    void OptimizeForDungeon(Group* group, uint32 dungeonId) override;
-    void OptimizeForRaid(Group* group, uint32 raidId) override;
-    void OptimizeForPvP(Group* group, uint32 battlegroundId) override;
-    void OptimizeForQuesting(Group* group, uint32 questId) override;
+    void OptimizeForDungeon(Group* group, uint32 dungeonId);
+    void OptimizeForRaid(Group* group, uint32 raidId);
+    void OptimizeForPvP(Group* group, uint32 battlegroundId);
+    void OptimizeForQuesting(Group* group, uint32 questId);
 
     // Role preferences and constraints
-    void SetPlayerRolePreference(GroupRole preferredRole) override;
-    GroupRole GetPlayerRolePreference() override;
-    void SetRoleFlexibility(bool isFlexible) override;
-    void AddRoleConstraint(GroupRole role, RoleCapability capability) override;
+    void SetPlayerRolePreference(GroupRole preferredRole);
+    GroupRole GetPlayerRolePreference();
+    void SetRoleFlexibility(bool isFlexible);
+    void AddRoleConstraint(GroupRole role, RoleCapability capability);
 
-    // Role performance tracking (RolePerformance defined in IRoleAssignment.h interface)
-    RolePerformance GetPlayerRolePerformance(GroupRole role) override;
-    void UpdateRolePerformance(GroupRole role, bool wasSuccessful, float effectiveness) override;
+    // Role performance tracking
+    RolePerformance GetPlayerRolePerformance(GroupRole role);
+    void UpdateRolePerformance(GroupRole role, bool wasSuccessful, float effectiveness);
 
     // Role assignment validation
-    bool ValidateRoleAssignment(Group* group) override;
-    std::vector<std::string> GetRoleAssignmentIssues(Group* group) override;
-    bool CanGroupFunction(Group* group) override;
+    bool ValidateRoleAssignment(Group* group);
+    std::vector<std::string> GetRoleAssignmentIssues(Group* group);
+    bool CanGroupFunction(Group* group);
 
     // Emergency role filling
-    bool FillEmergencyRole(Group* group, GroupRole urgentRole) override;
-    std::vector<uint32> FindEmergencyReplacements(GroupRole role, uint32 minLevel, uint32 maxLevel) override;
-    void HandleRoleEmergency(Group* group, uint32 disconnectedPlayerGuid) override;
+    bool FillEmergencyRole(Group* group, GroupRole urgentRole);
+    std::vector<uint32> FindEmergencyReplacements(GroupRole role, uint32 minLevel, uint32 maxLevel);
+    void HandleRoleEmergency(Group* group, uint32 disconnectedPlayerGuid);
 
-    // Role statistics and monitoring (RoleStatistics defined in IRoleAssignment.h interface)
-    RoleStatistics GetGlobalRoleStatistics() override;
-    void UpdateRoleStatistics() override;
+    // Role statistics and monitoring
+    RoleStatistics GetGlobalRoleStatistics();
+    void UpdateRoleStatistics();
 
     // Configuration and settings
-    void SetRoleAssignmentStrategy(Group* group, RoleAssignmentStrategy strategy) override;
-    void SetContentTypeRequirements(uint32 contentId, const std::unordered_map<GroupRole, uint32>& requirements) override;
+    void SetRoleAssignmentStrategy(Group* group, RoleAssignmentStrategy strategy);
+    void SetContentTypeRequirements(uint32 contentId, const std::unordered_map<GroupRole, uint32>& requirements);
     void EnableAutoRoleAssignment(bool enable) { _autoAssignmentEnabled = enable; }
 
     // Update and maintenance
-    void Update(uint32 diff) override;
-    void RefreshPlayerProfiles() override;
-    void CleanupInactiveProfiles() override;
+    void Update(uint32 diff);
+    void RefreshPlayerProfiles();
+    void CleanupInactiveProfiles();
 
 private:
     Player* _bot;

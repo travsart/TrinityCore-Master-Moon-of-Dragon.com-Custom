@@ -21,7 +21,6 @@
 #include <atomic>
 #include <shared_mutex>
 #include <chrono>
-#include "Core/DI/Interfaces/IUnifiedMovementCoordinator.h"
 #include "../../Movement/Core/MovementTypes.h"
 
 // Forward declarations

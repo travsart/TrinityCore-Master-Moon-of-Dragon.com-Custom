@@ -40,7 +40,7 @@ class CrowdControlManager;  // From Phase 2 (DR tracking)
  *
  * Subscribes to combat events via ICombatEventSubscriber for reactive decision-making.
  */
-class ArenaCoordinator : public ICombatEventSubscriber
+class ArenaCoordinator 
 {
 public:
     ArenaCoordinator(Battleground* arena, ::std::vector<Player*> team);
@@ -165,8 +165,8 @@ public:
     // ICOMBATEVENTSUBSCRIBER
     // ========================================================================
 
-    void OnCombatEvent(const CombatEvent& event) override;
-    CombatEventType GetSubscribedEventTypes() const override;
+    void OnCombatEvent(const CombatEvent& event);
+    CombatEventType GetSubscribedEventTypes() const;
     uint8 GetPriority() const override { return 40; }  // High priority for arena
 
     // ========================================================================

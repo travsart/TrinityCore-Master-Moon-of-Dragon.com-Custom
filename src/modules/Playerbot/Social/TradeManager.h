@@ -158,7 +158,7 @@ namespace Playerbot
     {
     public:
         explicit TradeManager(Player* bot, BotAI* ai);
-        ~TradeManager() override;
+        ~TradeManager();
 
         // Core trade operations
         bool InitiateTrade(Player* target, ::std::string const& reason = "");
@@ -233,10 +233,10 @@ namespace Playerbot
 
     protected:
         // BehaviorManager interface - runs every 5 seconds
-        void OnUpdate(uint32 elapsed) override;
-        bool OnInitialize() override;
-        void OnShutdown() override;
-        void OnEventInternal(Events::BotEvent const& event) override;
+        void OnUpdate(uint32 elapsed);
+        bool OnInitialize();
+        void OnShutdown();
+        void OnEventInternal(Events::BotEvent const& event);
 
     private:
         // Internal state management

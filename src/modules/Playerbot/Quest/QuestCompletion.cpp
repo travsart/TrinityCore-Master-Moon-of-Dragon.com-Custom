@@ -8,7 +8,8 @@
  */
 
 #include "QuestCompletion.h"
-#include "QuestEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "QuestEvents.h"
 #include "Core/Events/GenericEventBus.h"
 #include "GameTime.h"
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
@@ -1775,10 +1776,10 @@ void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
  * @param botGuid Bot GUID
  * @return Completion metrics
  */
-IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
+QuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
-    IQuestCompletion::QuestCompletionMetricsSnapshot result{};
+    QuestCompletion::QuestCompletionMetricsSnapshot result{};
 
     if (it != _botMetrics.end())
     {
@@ -1801,10 +1802,10 @@ IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompleti
  * @brief Get global completion metrics
  * @return Global completion metrics
  */
-IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetGlobalCompletionMetrics()
+QuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetGlobalCompletionMetrics()
 {
     auto snapshot = _globalMetrics.CreateSnapshot();
-    IQuestCompletion::QuestCompletionMetricsSnapshot result{};
+    QuestCompletion::QuestCompletionMetricsSnapshot result{};
     result.questsStarted = snapshot.questsStarted;
     result.questsCompleted = snapshot.questsCompleted;
     result.questsFailed = snapshot.questsFailed;
@@ -6107,7 +6108,7 @@ void QuestCompletion::InitializeQuestProgress(Player* bot, uint32 questId)
     trackingEvent.type = QuestEventType::QUEST_OBJECTIVE_COMPLETE;  // Use existing enum value
     trackingEvent.playerGuid = bot->GetGUID();
     trackingEvent.questId = questId;
-    QuestEventBus::instance()->PublishEvent(trackingEvent);
+    EventBus<QuestEvent>::instance()->PublishEvent(trackingEvent);
 }
 
 // ============================================================================

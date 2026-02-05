@@ -23,20 +23,20 @@ public:
     virtual ~ResourceRaceScriptBase() = default;
 
     // ========== IDENTIFICATION ==========
-    bool IsDomination() const override { return false; }
+    bool IsDomination() const { return false; }
 
     // ========== LIFECYCLE ==========
-    void OnLoad(BattlegroundCoordinator* coordinator) override;
-    void OnUpdate(uint32 diff) override;
-    void OnEvent(const BGScriptEventData& event) override;
+    void OnLoad(BattlegroundCoordinator* coordinator);
+    void OnUpdate(uint32 diff);
+    void OnEvent(const BGScriptEventData& event);
 
     // ========== STRATEGY ==========
     RoleDistribution GetRecommendedRoles(const StrategicDecision& decision,
-        float scoreAdvantage, uint32 timeRemaining) const override;
+        float scoreAdvantage, uint32 timeRemaining) const;
     void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage,
-        uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const override;
-    uint8 GetObjectiveAttackPriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const override;
-    uint8 GetObjectiveDefensePriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const override;
+        uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const;
+    uint8 GetObjectiveAttackPriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const;
+    uint8 GetObjectiveDefensePriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const;
 
     // ========== RESOURCE RACE SPECIFIC ==========
     virtual uint32 GetCartCount() const = 0;

@@ -31,52 +31,52 @@ public:
     // BASIC ACCESSORS (Override DominationScriptBase)
     // ========================================================================
 
-    uint32 GetMapId() const override { return DeepwindGorge::MAP_ID; }
-    std::string GetName() const override { return DeepwindGorge::BG_NAME; }
-    BGType GetBGType() const override { return BGType::DEEPWIND_GORGE; }
-    uint32 GetMaxScore() const override { return DeepwindGorge::MAX_SCORE; }
-    uint32 GetMaxDuration() const override { return DeepwindGorge::MAX_DURATION; }
-    uint8 GetTeamSize() const override { return DeepwindGorge::TEAM_SIZE; }
-    uint32 GetOptimalNodeCount() const override { return DeepwindGorge::Strategy::OPTIMAL_NODE_COUNT; }
+    uint32 GetMapId() const { return DeepwindGorge::MAP_ID; }
+    std::string GetName() const { return DeepwindGorge::BG_NAME; }
+    BGType GetBGType() const { return BGType::DEEPWIND_GORGE; }
+    uint32 GetMaxScore() const { return DeepwindGorge::MAX_SCORE; }
+    uint32 GetMaxDuration() const { return DeepwindGorge::MAX_DURATION; }
+    uint8 GetTeamSize() const { return DeepwindGorge::TEAM_SIZE; }
+    uint32 GetOptimalNodeCount() const { return DeepwindGorge::Strategy::OPTIMAL_NODE_COUNT; }
 
     // ========================================================================
     // LIFECYCLE METHODS
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator) override;
-    void OnMatchStart() override;
-    void OnMatchEnd(bool victory) override;
-    void OnUpdate(uint32 diff) override;
-    void OnEvent(const BGScriptEventData& event) override;
+    void OnLoad(BattlegroundCoordinator* coordinator);
+    void OnMatchStart();
+    void OnMatchEnd(bool victory);
+    void OnUpdate(uint32 diff);
+    void OnEvent(const BGScriptEventData& event);
 
     // ========================================================================
     // OBJECTIVE DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const override;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
-    std::vector<BGPositionData> GetStrategicPositions() const override;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
-    std::vector<BGWorldState> GetInitialWorldStates() const override;
+    std::vector<BGObjectiveData> GetObjectiveData() const;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
+    std::vector<BGPositionData> GetStrategicPositions() const;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
+    std::vector<BGWorldState> GetInitialWorldStates() const;
 
     // ========================================================================
     // WORLD STATE INTERPRETATION
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId,
-                            BGObjectiveState& outState) const override;
+                            BGObjectiveState& outState) const;
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
-                                uint32& allianceScore, uint32& hordeScore) const override;
+                                uint32& allianceScore, uint32& hordeScore) const;
 
     // ========================================================================
     // STRATEGY AND ROLE DISTRIBUTION
     // ========================================================================
 
     RoleDistribution GetRecommendedRoles(const StrategicDecision& decision,
-                                        float scoreAdvantage, uint32 timeRemaining) const override;
+                                        float scoreAdvantage, uint32 timeRemaining) const;
     void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage,
                        uint32 controlledCount, uint32 totalObjectives,
-                       uint32 timeRemaining) const override;
+                       uint32 timeRemaining) const;
 
     // ========================================================================
     // CART-SPECIFIC METHODS (Deepwind Gorge unique mechanics)
@@ -135,11 +135,11 @@ protected:
     // DOMINATION BASE OVERRIDES
     // ========================================================================
 
-    uint32 GetNodeCount() const override { return DeepwindGorge::NODE_COUNT; }
-    BGObjectiveData GetNodeData(uint32 nodeIndex) const override;
-    std::vector<uint32> GetTickPointsTable() const override;
-    uint32 GetTickInterval() const override { return DeepwindGorge::TICK_INTERVAL; }
-    uint32 GetDefaultCaptureTime() const override { return DeepwindGorge::CAPTURE_TIME; }
+    uint32 GetNodeCount() const { return DeepwindGorge::NODE_COUNT; }
+    BGObjectiveData GetNodeData(uint32 nodeIndex) const;
+    std::vector<uint32> GetTickPointsTable() const;
+    uint32 GetTickInterval() const { return DeepwindGorge::TICK_INTERVAL; }
+    uint32 GetDefaultCaptureTime() const { return DeepwindGorge::CAPTURE_TIME; }
 
 private:
     // ========================================================================

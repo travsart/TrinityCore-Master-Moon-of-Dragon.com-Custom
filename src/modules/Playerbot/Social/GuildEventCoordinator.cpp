@@ -102,7 +102,7 @@ uint32 GuildEventCoordinator::CreateGuildEvent(Player* organizer, const GuildEve
     _globalMetrics.eventsCreated++;
     _guildMetrics[newEvent.guildId].eventsCreated++;
     _playerParticipation[organizer->GetGUID().GetCounter()].totalEventsCreated++;
-    _playerParticipation[organizer->GetGUID().GetCounter()].organizedEvents.push_back(eventId);
+    _playerParticipation[organizer->GetGUID().GetCounter()].organizedEvents++;
 
     // Send notifications
     BroadcastEventAnnouncement(eventId);
@@ -687,12 +687,12 @@ void GuildEventCoordinator::ExecuteGuildEvent(uint32 eventId)
     }
 
     // Update metrics
-    _guildMetrics[event.guildId].totalParticipants.fetch_add(event.confirmedMembers.size());
+    _guildMetrics[event.guildId].totalParticipants += static_cast<uint32>(event.confirmedMembers.size());
 
     // Update participant tracking
     for (uint32 memberGuid : event.confirmedMembers)
     {
-        _playerParticipation[memberGuid].participatedEvents.push_back(eventId);
+        _playerParticipation[memberGuid].participatedEvents++;
         _playerParticipation[memberGuid].totalEventsAttended++;
         _playerParticipation[memberGuid].lastEventActivity = GameTime::GetGameTimeMS();
     }
@@ -804,8 +804,10 @@ void GuildEventCoordinator::HandleEventCompletion(uint32 eventId)
         auto& participation = _playerParticipation[memberGuid];
         participation.participationRating = std::min(1.0f, participation.participationRating + 0.05f);
 
-        // Update event type preferences
-        participation.eventTypePreferences[event.eventType]++;
+        // Update event type preferences - add event type if not already present
+        auto& prefs = participation.eventTypePreferences;
+        if (std::find(prefs.begin(), prefs.end(), event.eventType) == prefs.end())
+            prefs.push_back(event.eventType);
     }
 
     // Update organizer rating
@@ -1342,15 +1344,7 @@ EventMetrics GuildEventCoordinator::GetPlayerEventMetrics()
     {
         const EventParticipation& participation = it->second;
         metrics.eventsCreated = participation.totalEventsCreated;
-        metrics.eventsCompleted = 0; // Count completed events
-
-        for (uint32 eventId : participation.participatedEvents)
-        {
-            auto eventIt = _guildEvents.find(eventId);
-            if (eventIt != _guildEvents.end() && eventIt->second.status == EventStatus::COMPLETED)
-                metrics.eventsCompleted++;
-        }
-
+        metrics.eventsCompleted = participation.eventsAttended;  // Use attendance count as completed proxy
         metrics.totalParticipants = participation.totalEventsAttended;
         metrics.averageAttendance = participation.participationRating;
         metrics.organizationEfficiency = participation.organizationRating;
@@ -1986,7 +1980,7 @@ void GuildEventCoordinator::HandleEventLogistics(uint32 eventId)
         // Update attendance metrics
         float currentAttendance = (float)presentCount / (float)event.confirmedMembers.size();
         _guildMetrics[event.guildId].averageAttendance =
-            (_guildMetrics[event.guildId].averageAttendance.load() + currentAttendance) / 2.0f;
+            (_guildMetrics[event.guildId].averageAttendance + currentAttendance) / 2.0f;
     }
 }
 
@@ -2072,22 +2066,22 @@ void GuildEventCoordinator::UpdateEventMetrics(uint32 eventId, bool wasSuccessfu
 
     if (wasSuccessful)
     {
-        float efficiency = metrics.organizationEfficiency.load();
+        float efficiency = metrics.organizationEfficiency;
         metrics.organizationEfficiency = std::min(1.0f, efficiency + 0.02f);
 
-        float satisfaction = metrics.memberSatisfaction.load();
+        float satisfaction = metrics.memberSatisfaction;
         metrics.memberSatisfaction = std::min(1.0f, satisfaction + 0.03f);
     }
     else
     {
-        float efficiency = metrics.organizationEfficiency.load();
+        float efficiency = metrics.organizationEfficiency;
         metrics.organizationEfficiency = std::max(0.0f, efficiency - 0.05f);
 
-        float satisfaction = metrics.memberSatisfaction.load();
+        float satisfaction = metrics.memberSatisfaction;
         metrics.memberSatisfaction = std::max(0.0f, satisfaction - 0.05f);
     }
 
-    metrics.lastUpdate = std::chrono::steady_clock::now();
+    metrics.lastUpdate = GameTime::GetGameTimeMS();
 }
 
 void GuildEventCoordinator::UpdateEventParticipation(uint32 eventId, bool wasOrganizer)
@@ -2099,12 +2093,12 @@ void GuildEventCoordinator::UpdateEventParticipation(uint32 eventId, bool wasOrg
 
     if (wasOrganizer)
     {
-        participation.organizedEvents.push_back(eventId);
+        participation.organizedEvents++;
         participation.totalEventsCreated++;
     }
     else
     {
-        participation.participatedEvents.push_back(eventId);
+        participation.participatedEvents++;
         participation.totalEventsAttended++;
     }
 

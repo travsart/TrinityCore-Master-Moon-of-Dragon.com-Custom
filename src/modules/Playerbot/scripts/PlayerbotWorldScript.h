@@ -39,7 +39,7 @@ public:
      * - Session management
      * - Performance monitoring
      */
-    void OnUpdate(uint32 diff) override;
+    void OnUpdate(uint32 diff);
 
     /**
      * @brief Called when configuration is loaded or reloaded
@@ -50,7 +50,7 @@ public:
      * - Performance parameters
      * - Feature flags
      */
-    void OnConfigLoad(bool reload) override;
+    void OnConfigLoad(bool reload);
 
     /**
      * @brief Called during world startup
@@ -60,7 +60,7 @@ public:
      * - Initialize performance monitoring
      * - Start background services
      */
-    void OnStartup() override;
+    void OnStartup();
 
     /**
      * @brief Called when world shutdown is initiated
@@ -72,7 +72,7 @@ public:
      * - Save state to database
      * - Release resources
      */
-    void OnShutdownInitiate(ShutdownExitCode code, ShutdownMask mask) override;
+    void OnShutdownInitiate(ShutdownExitCode code, ShutdownMask mask);
 
 private:
     /**

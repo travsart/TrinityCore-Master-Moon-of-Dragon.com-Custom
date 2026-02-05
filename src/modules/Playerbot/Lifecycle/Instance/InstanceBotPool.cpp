@@ -2517,6 +2517,7 @@ void InstanceBotPool::LoadFromDatabase()
     uint32 loadedCount = 0;
     uint32 orphanedCount = 0;
     std::vector<uint64> orphanedGuids; // Collect orphaned GUIDs for cleanup
+    std::vector<uint32> accountsToMark; // Collect account IDs to mark as in-use
 
     do
     {
@@ -2600,6 +2601,12 @@ void InstanceBotPool::LoadFromDatabase()
         _slots[guid] = slot;
         ++loadedCount;
 
+        // Collect account ID to mark as in-use (prevent zone spawning from using pool bot accounts)
+        if (slot.accountId > 0)
+        {
+            accountsToMark.push_back(slot.accountId);
+        }
+
         TC_LOG_DEBUG("playerbot.pool", "Loaded warm pool bot: {} ({}) Role={} Faction={} Level={}",
             slot.botName, guid.ToString(),
             BotRoleToString(slot.role), FactionToString(slot.faction), slot.level);
@@ -2607,6 +2614,26 @@ void InstanceBotPool::LoadFromDatabase()
     } while (result->NextRow());
 
     lock.unlock();
+
+    // ========================================================================
+    // CRITICAL FIX: Mark pool bot accounts as in-use in BotAccountMgr
+    // This prevents zone-based spawning from acquiring pool bot accounts,
+    // which would cause character selection to find pool bot characters and
+    // spawn them with bypassLimit=false (causing "MAX BOTS LIMIT" errors)
+    // ========================================================================
+    if (!accountsToMark.empty())
+    {
+        uint32 markedCount = 0;
+        for (uint32 accountId : accountsToMark)
+        {
+            if (sBotAccountMgr->MarkAccountInUse(accountId))
+            {
+                ++markedCount;
+            }
+        }
+        TC_LOG_INFO("playerbot.pool", "Marked {} pool bot accounts as in-use in BotAccountMgr",
+            markedCount);
+    }
 
     // Rebuild ready index with loaded bots
     RebuildReadyIndex();

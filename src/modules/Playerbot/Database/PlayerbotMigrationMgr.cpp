@@ -571,7 +571,7 @@ void PlayerbotMigrationMgr::LogMigrationError(std::string const& version, std::s
     MIGRATION_LOG_ERROR(version, "Migration failed: {}", error);
 }
 
-PlayerbotMigrationMgr::MigrationStatus PlayerbotMigrationMgr::GetMigrationStatus()
+MigrationStatus PlayerbotMigrationMgr::GetMigrationStatus()
 {
     MigrationStatus status;
     status.currentVersion = GetCurrentVersion();

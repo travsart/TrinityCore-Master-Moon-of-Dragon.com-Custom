@@ -18,7 +18,6 @@
 #ifndef TRINITYCORE_RAID_ORCHESTRATOR_H
 #define TRINITYCORE_RAID_ORCHESTRATOR_H
 
-#include "../../Core/DI/Interfaces/IGroupCoordinator.h"
 #include "RoleCoordinator.h"
 #include "Define.h"
 #include "ObjectGuid.h"
@@ -27,8 +26,11 @@
 #include <memory>
 #include <string>
 
-// Forward declaration - concrete implementation is in Advanced layer
+// Forward declarations
 namespace Playerbot { namespace Advanced { class GroupCoordinator; } }
+
+// Forward declare GroupCoordinator as the concrete type (replacing IGroupCoordinator interface)
+using GroupCoordinatorPtr = ::Playerbot::Advanced::GroupCoordinator;
 
 class Group;
 
@@ -108,9 +110,9 @@ public:
     /**
      * @brief Get group coordinator by index
      * @param groupIndex Group index (0-7)
-     * @return Interface pointer to group coordinator, nullptr if invalid index
+     * @return Pointer to group coordinator, nullptr if invalid index
      */
-    IGroupCoordinator* GetGroupCoordinator(uint32 groupIndex);
+    GroupCoordinatorPtr* GetGroupCoordinator(uint32 groupIndex);
 
     /**
      * @brief Get role coordinator manager
@@ -228,7 +230,7 @@ private:
     void AssignDPSToAdds();
 
     Group* _raid;
-    ::std::vector<::std::unique_ptr<IGroupCoordinator>> _groupCoordinators;
+    ::std::vector<::std::unique_ptr<GroupCoordinatorPtr>> _groupCoordinators;
     RoleCoordinatorManager _roleCoordinatorManager;
 
     // Raid state
@@ -327,9 +329,9 @@ class TC_GAME_API OnyxiaStrategy : public BossEncounterStrategy
 public:
     uint32 GetBossEntry() const override { return 10184; } // Onyxia
 
-    void Execute(RaidOrchestrator* orchestrator, EncounterPhase phase) override;
+    void Execute(RaidOrchestrator* orchestrator, EncounterPhase phase);
 
-    EncounterPhase DetectPhase(float bossHealthPct) const override;
+    EncounterPhase DetectPhase(float bossHealthPct) const;
 };
 
 } // namespace Coordination

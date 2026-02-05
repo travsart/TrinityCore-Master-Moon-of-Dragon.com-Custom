@@ -50,7 +50,7 @@ class BattlegroundCoordinator : public ICombatEventSubscriber
 {
 public:
     BattlegroundCoordinator(Battleground* bg, ::std::vector<Player*> bots);
-    ~BattlegroundCoordinator();
+    ~BattlegroundCoordinator() override;
 
     // ========================================================================
     // LIFECYCLE
@@ -300,6 +300,7 @@ public:
     void OnCombatEvent(const CombatEvent& event) override;
     CombatEventType GetSubscribedEventTypes() const override;
     int32 GetEventPriority() const override { return 35; }
+    const char* GetSubscriberName() const override { return "BattlegroundCoordinator"; }
 
     // ========================================================================
     // SUB-MANAGER ACCESS

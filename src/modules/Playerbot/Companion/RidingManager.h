@@ -10,7 +10,6 @@
 #pragma once
 
 #include "Define.h"
-#include "Core/DI/Interfaces/IRidingManager.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
@@ -24,6 +23,83 @@ namespace Playerbot
 // Forward declarations
 class MountManager;
 class UnifiedMovementCoordinator;
+
+/**
+ * @brief Riding skill levels in WoW
+ */
+enum class RidingSkillLevel : uint8
+{
+    NONE = 0,
+    APPRENTICE = 1,     // Level 10, 60% ground speed
+    JOURNEYMAN = 2,     // Level 20, 100% ground speed
+    EXPERT = 3,         // Level 30, 150% flying speed
+    ARTISAN = 4,        // Level 40, 280% flying speed
+    MASTER = 5,         // Level 80, 310% flying speed
+    COLD_WEATHER = 6,   // Cold weather flying for Northrend
+    FLIGHT_MASTERS = 7  // Flight master's license
+};
+
+/**
+ * @brief State machine for riding/mount acquisition
+ */
+enum class RidingAcquisitionState : uint8
+{
+    IDLE = 0,                   // Not acquiring anything
+    NEED_RIDING_SKILL = 1,      // Bot needs riding skill
+    TRAVELING_TO_TRAINER = 2,   // Traveling to riding trainer
+    AT_TRAINER = 3,             // At trainer, ready to learn
+    LEARNING_SKILL = 4,         // Learning the skill
+    NEED_MOUNT = 5,             // Bot needs mount
+    TRAVELING_TO_VENDOR = 6,    // Traveling to mount vendor
+    AT_VENDOR = 7,              // At vendor, ready to buy
+    PURCHASING_MOUNT = 8,       // Purchasing mount
+    COMPLETE = 9,               // Acquisition complete (alias for COMPLETED)
+    COMPLETED = 9,              // Acquisition complete
+    FAILED = 10                 // Acquisition failed
+};
+
+/**
+ * @brief Information about a riding trainer
+ */
+struct RidingTrainerInfo
+{
+    uint32 creatureEntry{0};
+    ::std::string name;
+    uint32 mapId{0};
+    float x{0.0f};
+    float y{0.0f};
+    float z{0.0f};
+    float orientation{0.0f};
+    uint32 faction{0};                                    // Faction ID (not TeamId for flexibility)
+    uint8 race{0};                                        // Race mask
+    RidingSkillLevel maxSkillLevel{RidingSkillLevel::MASTER};
+    RidingSkillLevel maxSkill{RidingSkillLevel::MASTER};  // Alias for maxSkillLevel
+    uint32 goldCostCopper{0};                             // Cost in copper
+
+    RidingTrainerInfo() = default;
+};
+
+/**
+ * @brief Information about a mount vendor
+ */
+struct MountVendorInfo
+{
+    uint32 creatureEntry{0};
+    ::std::string name;
+    uint32 mapId{0};
+    float x{0.0f};
+    float y{0.0f};
+    float z{0.0f};
+    float orientation{0.0f};
+    uint32 faction{0};          // Faction ID
+    uint8 raceMask{0};          // Races that can use these mounts
+    uint8 race{0};              // Primary race for this vendor
+    uint32 mountSpellId{0};     // Mount spell sold by this vendor
+    uint32 goldCostCopper{0};   // Cost in copper
+    ::std::vector<uint32> mountSpellIds;  // Multiple mount spells if any
+
+    MountVendorInfo() = default;
+};
 
 /**
  * @brief Riding Manager - Humanized riding skill and mount acquisition
@@ -50,7 +126,7 @@ class UnifiedMovementCoordinator;
  * 3. State machine: Find trainer -> Travel -> Learn -> Find vendor -> Travel -> Buy
  * 4. Once complete, MountManager handles actual mounting
  */
-class TC_GAME_API RidingManager final : public IRidingManager
+class TC_GAME_API RidingManager final
 {
 public:
     /**
@@ -64,54 +140,54 @@ public:
     // LIFECYCLE (IRidingManager interface)
     // ========================================================================
 
-    void Initialize() override;
-    void Update(uint32 diff) override;
+    void Initialize();
+    void Update(uint32 diff);
 
     // ========================================================================
     // SKILL CHECKING (IRidingManager interface)
     // ========================================================================
 
-    RidingSkillLevel GetCurrentSkillLevel() const override;
-    RidingSkillLevel GetNextSkillLevel() const override;
-    bool NeedsRidingSkill() const override;
-    bool NeedsMount() const override;
-    bool CanAffordNextSkill() const override;
-    bool CanAffordMount() const override;
+    RidingSkillLevel GetCurrentSkillLevel() const;
+    RidingSkillLevel GetNextSkillLevel() const;
+    bool NeedsRidingSkill() const;
+    bool NeedsMount() const;
+    bool CanAffordNextSkill() const;
+    bool CanAffordMount() const;
 
     // ========================================================================
     // TRAINER/VENDOR LOOKUP (IRidingManager interface)
     // ========================================================================
 
-    RidingTrainerInfo const* FindNearestTrainer(RidingSkillLevel skillLevel) const override;
-    MountVendorInfo const* FindNearestMountVendor() const override;
-    std::vector<RidingTrainerInfo> FindAllTrainers() const override;
-    std::vector<MountVendorInfo> FindAllMountVendors() const override;
+    RidingTrainerInfo const* FindNearestTrainer(RidingSkillLevel skillLevel) const;
+    MountVendorInfo const* FindNearestMountVendor() const;
+    std::vector<RidingTrainerInfo> FindAllTrainers() const;
+    std::vector<MountVendorInfo> FindAllMountVendors() const;
 
     // ========================================================================
     // ACQUISITION STATE MACHINE (IRidingManager interface)
     // ========================================================================
 
-    RidingAcquisitionState GetAcquisitionState() const override;
-    bool StartRidingAcquisition(RidingSkillLevel skillLevel = RidingSkillLevel::NONE) override;
-    bool StartMountAcquisition() override;
-    void CancelAcquisition() override;
-    bool IsAcquiring() const override;
+    RidingAcquisitionState GetAcquisitionState() const;
+    bool StartRidingAcquisition(RidingSkillLevel skillLevel = RidingSkillLevel::NONE);
+    bool StartMountAcquisition();
+    void CancelAcquisition();
+    bool IsAcquiring() const;
 
     // ========================================================================
     // INSTANT LEARNING (IRidingManager interface)
     // ========================================================================
 
-    bool InstantLearnRiding(RidingSkillLevel skillLevel) override;
-    bool InstantLearnMount(uint32 mountSpellId) override;
+    bool InstantLearnRiding(RidingSkillLevel skillLevel);
+    bool InstantLearnMount(uint32 mountSpellId);
 
     // ========================================================================
     // CONFIGURATION (IRidingManager interface)
     // ========================================================================
 
-    void SetAutoAcquireEnabled(bool enabled) override;
-    bool IsAutoAcquireEnabled() const override;
-    void SetMinReserveGold(uint64 goldCopper) override;
-    uint64 GetMinReserveGold() const override;
+    void SetAutoAcquireEnabled(bool enabled);
+    bool IsAutoAcquireEnabled() const;
+    void SetMinReserveGold(uint64 goldCopper);
+    uint64 GetMinReserveGold() const;
 
     // ========================================================================
     // METRICS

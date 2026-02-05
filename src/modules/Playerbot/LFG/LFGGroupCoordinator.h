@@ -13,7 +13,6 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "LFG.h"
-#include "Core/DI/Interfaces/ILFGGroupCoordinator.h"
 #include <unordered_map>
 #include <vector>
 #include <mutex>
@@ -63,7 +62,7 @@ namespace Playerbot
  * - All public methods are thread-safe
  * - Internal mutex protects shared data
  */
-class TC_GAME_API LFGGroupCoordinator final : public ILFGGroupCoordinator
+class TC_GAME_API LFGGroupCoordinator final 
 {
 public:
     /**
@@ -75,7 +74,7 @@ public:
      * Initialize the coordinator
      * Called once during server startup
      */
-    void Initialize() override;
+    void Initialize();
 
     /**
      * Update coordinator state
@@ -83,13 +82,13 @@ public:
      *
      * @param diff Time since last update in milliseconds
      */
-    void Update(uint32 diff) override;
+    void Update(uint32 diff);
 
     /**
      * Shutdown the coordinator
      * Called during server shutdown
      */
-    void Shutdown() override;
+    void Shutdown();
 
     // ========================================================================
     // GROUP FORMATION
@@ -103,7 +102,7 @@ public:
      * @param dungeonId LFG dungeon ID
      * @return true if group was successfully formed
      */
-    bool OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId) override;
+    bool OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId);
 
     /**
      * Handle group ready check completion
@@ -112,7 +111,7 @@ public:
      * @param groupGuid GUID of the group
      * @return true if teleportation was initiated
      */
-    bool OnGroupReady(ObjectGuid groupGuid) override;
+    bool OnGroupReady(ObjectGuid groupGuid);
 
     // ========================================================================
     // DUNGEON TELEPORTATION
@@ -136,7 +135,7 @@ public:
      * @param dungeonId LFG dungeon ID
      * @return true if teleportation was initiated for all members
      */
-    bool TeleportGroupToDungeon(Group* group, uint32 dungeonId) override;
+    bool TeleportGroupToDungeon(Group* group, uint32 dungeonId);
 
     /**
      * Check if player can be teleported to dungeon
@@ -146,7 +145,7 @@ public:
      * @param dungeonId LFG dungeon ID
      * @return true if player can be teleported
      */
-    bool CanTeleportToDungeon(Player const* player, uint32 dungeonId) const override;
+    bool CanTeleportToDungeon(Player const* player, uint32 dungeonId) const;
 
     /**
      * Get dungeon entrance location
@@ -160,7 +159,7 @@ public:
      * @param orientation Output: Orientation
      * @return true if dungeon entrance was found
      */
-    bool GetDungeonEntrance(uint32 dungeonId, uint32& mapId, float& x, float& y, float& z, float& orientation) const override;
+    bool GetDungeonEntrance(uint32 dungeonId, uint32& mapId, float& x, float& y, float& z, float& orientation) const;
 
     // ========================================================================
     // TELEPORT STATE MANAGEMENT
@@ -174,7 +173,7 @@ public:
      * @param dungeonId LFG dungeon ID
      * @param timestamp Time of teleport request
      */
-    void TrackTeleport(ObjectGuid playerGuid, uint32 dungeonId, uint32 timestamp) override;
+    void TrackTeleport(ObjectGuid playerGuid, uint32 dungeonId, uint32 timestamp);
 
     /**
      * Clear player teleport tracking
@@ -182,7 +181,7 @@ public:
      *
      * @param playerGuid Player GUID
      */
-    void ClearTeleport(ObjectGuid playerGuid) override;
+    void ClearTeleport(ObjectGuid playerGuid);
 
     /**
      * Check if player has pending teleport
@@ -190,7 +189,7 @@ public:
      * @param playerGuid Player GUID
      * @return true if player has a pending teleport
      */
-    bool HasPendingTeleport(ObjectGuid playerGuid) const override;
+    bool HasPendingTeleport(ObjectGuid playerGuid) const;
 
     /**
      * Get pending teleport dungeon ID
@@ -198,7 +197,7 @@ public:
      * @param playerGuid Player GUID
      * @return Dungeon ID, or 0 if no pending teleport
      */
-    uint32 GetPendingTeleportDungeon(ObjectGuid playerGuid) const override;
+    uint32 GetPendingTeleportDungeon(ObjectGuid playerGuid) const;
 
     // ========================================================================
     // CONFIGURATION
@@ -207,23 +206,23 @@ public:
     /**
      * Enable/disable coordinator
      */
-    void SetEnabled(bool enabled) override { _enabled = enabled; }
+    void SetEnabled(bool enabled) { _enabled = enabled; }
 
     /**
      * Check if coordinator is enabled
      */
-    bool IsEnabled() const override { return _enabled; }
+    bool IsEnabled() const { return _enabled; }
 
     /**
      * Set teleport timeout (milliseconds)
      * Default: 30000 (30 seconds)
      */
-    void SetTeleportTimeout(uint32 timeout) override { _teleportTimeout = timeout; }
+    void SetTeleportTimeout(uint32 timeout) { _teleportTimeout = timeout; }
 
     /**
      * Get teleport timeout
      */
-    uint32 GetTeleportTimeout() const override { return _teleportTimeout; }
+    uint32 GetTeleportTimeout() const { return _teleportTimeout; }
 
 private:
     // Prevent direct instantiation

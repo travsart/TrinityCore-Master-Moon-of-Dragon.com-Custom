@@ -62,10 +62,10 @@ public:
     virtual ~SoloCombatStrategy() = default;
 
     // Strategy interface implementation
-    void InitializeActions() override;
-    void InitializeTriggers() override;
-    void InitializeValues() override;
-    float GetRelevance(BotAI* ai) const override;
+    void InitializeActions();
+    void InitializeTriggers();
+    void InitializeValues();
+    float GetRelevance(BotAI* ai) const;
 
     /**
      * @brief Check if strategy should be active
@@ -77,7 +77,7 @@ public:
      *  - Bot is in combat (bot->IsInCombat() = true)
      *  - Strategy is explicitly activated (_active flag set)
      */
-    bool IsActive(BotAI* ai) const override;
+    bool IsActive(BotAI* ai) const;
 
     /**
      * @brief Main combat positioning update (called every frame when active)
@@ -92,7 +92,7 @@ public:
      *
      * Performance: <0.1ms per call (just positioning logic)
      */
-    void UpdateBehavior(BotAI* ai, uint32 diff) override;
+    void UpdateBehavior(BotAI* ai, uint32 diff);
 
 private:
     /**

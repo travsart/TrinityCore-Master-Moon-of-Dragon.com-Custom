@@ -15,7 +15,6 @@
 #include "QuestDef.h"
 #include "Creature.h"
 #include "Position.h"
-#include "../Core/DI/Interfaces/IQuestTurnIn.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -110,7 +109,7 @@ struct TurnInBatch
         , batchPriority(100), scheduledTime(0), isOptimized(false) {}
 };
 
-class TC_GAME_API QuestTurnIn final : public IQuestTurnIn
+class TC_GAME_API QuestTurnIn final 
 {
 public:
     explicit QuestTurnIn(Player* bot);
@@ -119,54 +118,54 @@ public:
     QuestTurnIn& operator=(QuestTurnIn const&) = delete;
 
     // Core turn-in functionality
-    bool TurnInQuest(uint32 questId, Player* bot) override;
-    void ProcessQuestTurnIn(Player* bot, uint32 questId) override;
-    void ProcessBatchTurnIn(Player* bot, const TurnInBatch& batch) override;
-    void ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs = 0) override;
+    bool TurnInQuest(uint32 questId, Player* bot);
+    void ProcessQuestTurnIn(Player* bot, uint32 questId);
+    void ProcessBatchTurnIn(Player* bot, const TurnInBatch& batch);
+    void ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs = 0);
 
     // Quest completion detection
-    std::vector<uint32> GetCompletedQuests(Player* bot) override;
-    bool IsQuestReadyForTurnIn(uint32 questId, Player* bot) override;
-    void MonitorQuestCompletion(Player* bot) override;
-    void HandleQuestCompletion(Player* bot, uint32 questId) override;
+    std::vector<uint32> GetCompletedQuests(Player* bot);
+    bool IsQuestReadyForTurnIn(uint32 questId, Player* bot);
+    void MonitorQuestCompletion(Player* bot);
+    void HandleQuestCompletion(Player* bot, uint32 questId);
 
     // Turn-in planning and optimization
-    void PlanOptimalTurnInRoute(Player* bot) override;
-    TurnInBatch CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds) override;
-    void OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns) override;
-    void MinimizeTurnInTravel(Player* bot) override;
+    void PlanOptimalTurnInRoute(Player* bot);
+    TurnInBatch CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds);
+    void OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns);
+    void MinimizeTurnInTravel(Player* bot);
 
     // Quest giver location and navigation
-    bool FindQuestTurnInNpc(Player* bot, uint32 questId) override;
-    Position GetQuestTurnInLocation(uint32 questId) override;
-    bool NavigateToQuestGiver(Player* bot, uint32 questGiverGuid) override;
-    bool IsAtQuestGiver(Player* bot, uint32 questGiverGuid) override;
+    bool FindQuestTurnInNpc(Player* bot, uint32 questId);
+    Position GetQuestTurnInLocation(uint32 questId);
+    bool NavigateToQuestGiver(Player* bot, uint32 questGiverGuid);
+    bool IsAtQuestGiver(Player* bot, uint32 questGiverGuid);
 
     // Reward selection and optimization
-    void AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot) override;
-    uint32 SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) override;
-    void EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot) override;
-    float CalculateItemValue(const QuestRewardItem& reward, Player* bot) override;
+    void AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot);
+    uint32 SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy);
+    void EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot);
+    float CalculateItemValue(const QuestRewardItem& reward, Player* bot);
 
     // Group turn-in coordination
-    void CoordinateGroupTurnIns(Group* group) override;
-    void SynchronizeGroupRewardSelection(Group* group, uint32 questId) override;
-    void HandleGroupTurnInConflicts(Group* group, uint32 questId) override;
-    void ShareTurnInProgress(Group* group) override;
+    void CoordinateGroupTurnIns(Group* group);
+    void SynchronizeGroupRewardSelection(Group* group, uint32 questId);
+    void HandleGroupTurnInConflicts(Group* group, uint32 questId);
+    void ShareTurnInProgress(Group* group);
 
     // Turn-in dialog and interaction
-    void HandleQuestGiverDialog(Player* bot, uint32 questGiverGuid, uint32 questId) override;
-    void SelectQuestReward(Player* bot, uint32 questId, uint32 rewardIndex) override;
-    void ConfirmQuestTurnIn(Player* bot, uint32 questId) override;
-    void HandleTurnInDialog(Player* bot, uint32 questId) override;
+    void HandleQuestGiverDialog(Player* bot, uint32 questGiverGuid, uint32 questId);
+    void SelectQuestReward(Player* bot, uint32 questId, uint32 rewardIndex);
+    void ConfirmQuestTurnIn(Player* bot, uint32 questId);
+    void HandleTurnInDialog(Player* bot, uint32 questId);
 
     // Advanced turn-in strategies
-    void ExecuteImmediateTurnInStrategy(Player* bot) override;
-    void ExecuteBatchTurnInStrategy(Player* bot) override;
-    void ExecuteOptimalRoutingStrategy(Player* bot) override;
-    void ExecuteGroupCoordinationStrategy(Player* bot) override;
-    void ExecuteRewardOptimizationStrategy(Player* bot) override;
-    void ExecuteChainContinuationStrategy(Player* bot) override;
+    void ExecuteImmediateTurnInStrategy(Player* bot);
+    void ExecuteBatchTurnInStrategy(Player* bot);
+    void ExecuteOptimalRoutingStrategy(Player* bot);
+    void ExecuteGroupCoordinationStrategy(Player* bot);
+    void ExecuteRewardOptimizationStrategy(Player* bot);
+    void ExecuteChainContinuationStrategy(Player* bot);
 
     // Turn-in performance monitoring
     struct TurnInMetrics
@@ -239,33 +238,36 @@ public:
         }
     };
 
-    TurnInMetricsSnapshot GetBotTurnInMetrics(uint32 botGuid) override;
-    TurnInMetricsSnapshot GetGlobalTurnInMetrics() override;
+    // Type alias for metrics snapshot
+    using TurnInMetricsSnapshot = TurnInMetrics::Snapshot;
+
+    TurnInMetricsSnapshot GetBotTurnInMetrics(uint32 botGuid);
+    TurnInMetricsSnapshot GetGlobalTurnInMetrics();
 
     // Quest chain management
-    void HandleQuestChainProgression(Player* bot, uint32 completedQuestId) override;
-    uint32 GetNextQuestInChain(uint32 completedQuestId) override;
-    void AutoAcceptFollowUpQuests(Player* bot, uint32 completedQuestId) override;
-    void PrioritizeChainQuests(Player* bot) override;
+    void HandleQuestChainProgression(Player* bot, uint32 completedQuestId);
+    uint32 GetNextQuestInChain(uint32 completedQuestId);
+    void AutoAcceptFollowUpQuests(Player* bot, uint32 completedQuestId);
+    void PrioritizeChainQuests(Player* bot);
 
     // Configuration and settings
-    void SetTurnInStrategy(uint32 botGuid, TurnInStrategy strategy) override;
-    TurnInStrategy GetTurnInStrategy(uint32 botGuid) override;
-    void SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStrategy strategy) override;
-    RewardSelectionStrategy GetRewardSelectionStrategy(uint32 botGuid) override;
-    void SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold) override;
+    void SetTurnInStrategy(uint32 botGuid, TurnInStrategy strategy);
+    TurnInStrategy GetTurnInStrategy(uint32 botGuid);
+    void SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStrategy strategy);
+    RewardSelectionStrategy GetRewardSelectionStrategy(uint32 botGuid);
+    void SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold);
 
     // Error handling and recovery
-    void HandleTurnInError(Player* bot, uint32 questId, const std::string& error) override;
-    void RecoverFromTurnInFailure(Player* bot, uint32 questId) override;
-    void RetryFailedTurnIn(Player* bot, uint32 questId) override;
-    void ValidateTurnInState(Player* bot, uint32 questId) override;
+    void HandleTurnInError(Player* bot, uint32 questId, const std::string& error);
+    void RecoverFromTurnInFailure(Player* bot, uint32 questId);
+    void RetryFailedTurnIn(Player* bot, uint32 questId);
+    void ValidateTurnInState(Player* bot, uint32 questId);
 
     // Update and maintenance
-    void Update(uint32 diff) override;
-    void UpdateBotTurnIns(Player* bot, uint32 diff) override;
-    void ProcessScheduledTurnIns() override;
-    void CleanupCompletedTurnIns() override;
+    void Update(uint32 diff);
+    void UpdateBotTurnIns(Player* bot, uint32 diff);
+    void ProcessScheduledTurnIns();
+    void CleanupCompletedTurnIns();
 
 private:
     Player* _bot;

@@ -24,18 +24,18 @@
 #include "BotAI.h"
 #include "GameTime.h"
 #include "Core/Events/GenericEventBus.h"
-#include "Group/GroupEventBus.h"
-#include "Combat/CombatEventBus.h"
-#include "Cooldown/CooldownEventBus.h"
-#include "Aura/AuraEventBus.h"
-#include "Loot/LootEventBus.h"
-#include "Quest/QuestEventBus.h"
-#include "Resource/ResourceEventBus.h"
-#include "Social/SocialEventBus.h"
-#include "Auction/AuctionEventBus.h"
-#include "NPC/NPCEventBus.h"
-#include "Instance/InstanceEventBus.h"
-#include "Professions/ProfessionEventBus.h"
+#include "Group/GroupEvents.h"
+#include "Combat/CombatEvents.h"
+#include "Cooldown/CooldownEvents.h"
+#include "Aura/AuraEvents.h"
+#include "Loot/LootEvents.h"
+#include "Quest/QuestEvents.h"
+#include "Resource/ResourceEvents.h"
+#include "Social/SocialEvents.h"
+#include "Auction/AuctionEvents.h"
+#include "NPC/NPCEvents.h"
+#include "Instance/InstanceEvents.h"
+#include "Professions/ProfessionEvents.h"
 #include "Social/TradeManager.h"
 #include "Economy/AuctionManager.h"
 #include "Advanced/GroupCoordinator.h"
@@ -71,18 +71,78 @@ void BotAI::SubscribeToEventBuses()
         return;
 
     // Subscribe to all event buses for comprehensive event handling
-    GroupEventBus::instance()->SubscribeAll(this);
-    CombatEventBus::instance()->SubscribeAll(this);
-    CooldownEventBus::instance()->SubscribeAll(this);
-    AuraEventBus::instance()->SubscribeAll(this);
-    LootEventBus::instance()->SubscribeAll(this);
-    QuestEventBus::instance()->SubscribeAll(this);
-    ResourceEventBus::instance()->SubscribeAll(this);
-    SocialEventBus::instance()->SubscribeAll(this);
-    AuctionEventBus::instance()->SubscribeAll(this);
-    NPCEventBus::instance()->SubscribeAll(this);
-    InstanceEventBus::instance()->SubscribeAll(this);
-    ProfessionEventBus::instance()->SubscribeAll(this);
+    {
+        std::vector<GroupEventType> allGroupTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(GroupEventType::MAX_EVENT_TYPE); ++i)
+            allGroupTypes.push_back(static_cast<GroupEventType>(i));
+        EventBus<GroupEvent>::instance()->Subscribe(this, allGroupTypes);
+    }
+    {
+        std::vector<CombatEventType> allCombatTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(CombatEventType::MAX_COMBAT_EVENT); ++i)
+            allCombatTypes.push_back(static_cast<CombatEventType>(i));
+        EventBus<CombatEvent>::instance()->Subscribe(this, allCombatTypes);
+    }
+    {
+        std::vector<CooldownEventType> allCooldownTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(CooldownEventType::MAX_COOLDOWN_EVENT); ++i)
+            allCooldownTypes.push_back(static_cast<CooldownEventType>(i));
+        EventBus<CooldownEvent>::instance()->Subscribe(this, allCooldownTypes);
+    }
+    {
+        std::vector<AuraEventType> allAuraTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(AuraEventType::MAX_AURA_EVENT); ++i)
+            allAuraTypes.push_back(static_cast<AuraEventType>(i));
+        EventBus<AuraEvent>::instance()->Subscribe(this, allAuraTypes);
+    }
+    {
+        std::vector<LootEventType> allLootTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(LootEventType::MAX_LOOT_EVENT); ++i)
+            allLootTypes.push_back(static_cast<LootEventType>(i));
+        EventBus<LootEvent>::instance()->Subscribe(this, allLootTypes);
+    }
+    {
+        std::vector<QuestEventType> allQuestTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(QuestEventType::MAX_QUEST_EVENT); ++i)
+            allQuestTypes.push_back(static_cast<QuestEventType>(i));
+        EventBus<QuestEvent>::instance()->Subscribe(this, allQuestTypes);
+    }
+    {
+        std::vector<ResourceEventType> allResourceTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(ResourceEventType::MAX_RESOURCE_EVENT); ++i)
+            allResourceTypes.push_back(static_cast<ResourceEventType>(i));
+        EventBus<ResourceEvent>::instance()->Subscribe(this, allResourceTypes);
+    }
+    {
+        std::vector<SocialEventType> allSocialTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(SocialEventType::MAX_SOCIAL_EVENT); ++i)
+            allSocialTypes.push_back(static_cast<SocialEventType>(i));
+        EventBus<SocialEvent>::instance()->Subscribe(this, allSocialTypes);
+    }
+    {
+        std::vector<AuctionEventType> allAuctionTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(AuctionEventType::MAX_AUCTION_EVENT); ++i)
+            allAuctionTypes.push_back(static_cast<AuctionEventType>(i));
+        EventBus<AuctionEvent>::instance()->Subscribe(this, allAuctionTypes);
+    }
+    {
+        std::vector<NPCEventType> allNPCTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(NPCEventType::MAX_NPC_EVENT); ++i)
+            allNPCTypes.push_back(static_cast<NPCEventType>(i));
+        EventBus<NPCEvent>::instance()->Subscribe(this, allNPCTypes);
+    }
+    {
+        std::vector<InstanceEventType> allInstanceTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(InstanceEventType::MAX_INSTANCE_EVENT); ++i)
+            allInstanceTypes.push_back(static_cast<InstanceEventType>(i));
+        EventBus<InstanceEvent>::instance()->Subscribe(this, allInstanceTypes);
+    }
+    {
+        std::vector<ProfessionEventType> allProfessionTypes;
+        for (uint8 i = 0; i < static_cast<uint8>(ProfessionEventType::MAX_PROFESSION_EVENT); ++i)
+            allProfessionTypes.push_back(static_cast<ProfessionEventType>(i));
+        EventBus<ProfessionEvent>::instance()->Subscribe(this, allProfessionTypes);
+    }
 
     // CRITICAL: Use GetGUID().ToString() instead of GetName() during constructor
     // GetName() accesses m_name which may not be initialized yet during bot construction

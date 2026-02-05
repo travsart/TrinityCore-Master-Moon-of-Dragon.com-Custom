@@ -225,7 +225,7 @@ void ObjectiveTracker::UpdateProgressMetrics(Player* bot, const QuestObjectiveDa
 
     // Update bot-specific analytics
     auto& analytics = _botAnalytics[botGuid];
-    analytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
+    analytics.lastAnalyticsUpdate = GameTime::GetGameTimeMS();
 
     // Check objective completion
     if (objective.requiredCount <= objective.currentCount)
@@ -1350,8 +1350,8 @@ void ObjectiveTracker::UpdateTrackingAnalytics(uint32 botGuid, const ObjectiveSt
         _globalAnalytics.objectivesFailed++;
     }
 
-    analytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
-    _globalAnalytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
+    analytics.lastAnalyticsUpdate = GameTime::GetGameTimeMS();
+    _globalAnalytics.lastAnalyticsUpdate = GameTime::GetGameTimeMS();
 }
 
 void ObjectiveTracker::Update(uint32 diff)
@@ -1368,7 +1368,7 @@ void ObjectiveTracker::Update(uint32 diff)
     CleanupInactiveTracking();
 
     // Update global analytics
-    _globalAnalytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
+    _globalAnalytics.lastAnalyticsUpdate = GameTime::GetGameTimeMS();
 }
 
 void ObjectiveTracker::UpdateBotTracking(Player* bot, uint32 diff)

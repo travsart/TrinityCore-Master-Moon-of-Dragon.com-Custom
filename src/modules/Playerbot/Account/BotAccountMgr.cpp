@@ -609,6 +609,58 @@ void BotAccountMgr::ReleaseAccount(uint32 bnetAccountId)
     }
 }
 
+bool BotAccountMgr::MarkAccountInUse(uint32 bnetAccountId)
+{
+    ::std::lock_guard lock(_poolMutex);
+
+    // Check if account exists
+    auto it = _accounts.find(bnetAccountId);
+    if (it == _accounts.end())
+    {
+        // Account not tracked by BotAccountMgr - this is OK for pool bots
+        // that were created before BotAccountMgr was introduced
+        TC_LOG_DEBUG("module.playerbot.account",
+            "MarkAccountInUse: Account {} not in BotAccountMgr tracking (may be legacy pool account)",
+            bnetAccountId);
+        return false;
+    }
+
+    // Check if already active
+    if (it->second.isActive)
+    {
+        TC_LOG_DEBUG("module.playerbot.account",
+            "MarkAccountInUse: Account {} already marked as active", bnetAccountId);
+        return true;
+    }
+
+    // Remove from pool if it's there
+    // We need to rebuild the queue without this account
+    if (it->second.isInPool)
+    {
+        ::std::queue<uint32> newPool;
+        while (!_accountPool.empty())
+        {
+            uint32 pooledId = _accountPool.front();
+            _accountPool.pop();
+            if (pooledId != bnetAccountId)
+            {
+                newPool.push(pooledId);
+            }
+        }
+        _accountPool = ::std::move(newPool);
+        it->second.isInPool = false;
+    }
+
+    // Mark as active
+    it->second.isActive = true;
+    _activeAccounts.fetch_add(1);
+
+    TC_LOG_DEBUG("module.playerbot.account",
+        "MarkAccountInUse: Account {} marked as in-use (pool bot)", bnetAccountId);
+
+    return true;
+}
+
 uint32 BotAccountMgr::GetPoolSize() const
 {
     ::std::lock_guard lock(_poolMutex);

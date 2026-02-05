@@ -16,7 +16,6 @@
 #include "Creature.h"
 #include "GameObject.h"
 #include "Position.h"
-#include "../Core/DI/Interfaces/IQuestCompletion.h"
 #include "../Core/Events/IEventHandler.h"
 #include "QuestEvents.h"
 #include <unordered_map>
@@ -235,7 +234,7 @@ struct CachedQuestPOI
  * - <0.01% CPU per bot for quest tracking
  * - Zero DB polling for progress tracking
  */
-class TC_GAME_API QuestCompletion final : public IQuestCompletion
+class TC_GAME_API QuestCompletion final 
 {
 public:
     explicit QuestCompletion(Player* bot);
@@ -260,26 +259,26 @@ public:
     // ========================================================================
     // CORE QUEST COMPLETION MANAGEMENT
     // ========================================================================
-    bool StartQuestCompletion(uint32 questId, Player* bot) override;
-    void UpdateQuestProgress(Player* bot) override;
-    void CompleteQuest(uint32 questId, Player* bot) override;
-    bool TurnInQuest(uint32 questId, Player* bot) override;
+    bool StartQuestCompletion(uint32 questId, Player* bot);
+    void UpdateQuestProgress(Player* bot);
+    void CompleteQuest(uint32 questId, Player* bot);
+    bool TurnInQuest(uint32 questId, Player* bot);
 
     // Objective tracking and execution
-    void TrackQuestObjectives(Player* bot) override;
-    void ExecuteObjective(Player* bot, QuestObjectiveData& objective) override;
-    void UpdateObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex) override;
-    bool IsObjectiveComplete(const QuestObjectiveData& objective) override;
+    void TrackQuestObjectives(Player* bot);
+    void ExecuteObjective(Player* bot, QuestObjectiveData& objective);
+    void UpdateObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex);
+    bool IsObjectiveComplete(const QuestObjectiveData& objective);
 
     // Objective-specific handlers - Legacy (mapped to TrinityCore types)
-    void HandleKillObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleCollectObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleLocationObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleGameObjectObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleSpellCastObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleEmoteObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleEscortObjective(Player* bot, QuestObjectiveData& objective) override;
+    void HandleKillObjective(Player* bot, QuestObjectiveData& objective);
+    void HandleCollectObjective(Player* bot, QuestObjectiveData& objective);
+    void HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& objective);
+    void HandleLocationObjective(Player* bot, QuestObjectiveData& objective);
+    void HandleGameObjectObjective(Player* bot, QuestObjectiveData& objective);
+    void HandleSpellCastObjective(Player* bot, QuestObjectiveData& objective);
+    void HandleEmoteObjective(Player* bot, QuestObjectiveData& objective);
+    void HandleEscortObjective(Player* bot, QuestObjectiveData& objective);
 
     // ========================================================================
     // NEW TRINITYCORE OBJECTIVE HANDLERS (Phase 1 Quest System Completion)
@@ -449,34 +448,34 @@ public:
     uint32 FindReputationSource(Player* bot, uint32 factionId);
 
     // Navigation and pathfinding
-    void NavigateToObjective(Player* bot, const QuestObjectiveData& objective) override;
-    bool FindObjectiveTarget(Player* bot, QuestObjectiveData& objective) override;
-    std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) override;
-    Position GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective) override;
+    void NavigateToObjective(Player* bot, const QuestObjectiveData& objective);
+    bool FindObjectiveTarget(Player* bot, QuestObjectiveData& objective);
+    std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective);
+    Position GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective);
 
     // Group coordination for quest completion
-    void CoordinateGroupQuestCompletion(Group* group, uint32 questId) override;
-    void ShareObjectiveProgress(Group* group, uint32 questId) override;
-    void SynchronizeGroupObjectives(Group* group, uint32 questId) override;
-    void HandleGroupObjectiveConflict(Group* group, uint32 questId, uint32 objectiveIndex) override;
+    void CoordinateGroupQuestCompletion(Group* group, uint32 questId);
+    void ShareObjectiveProgress(Group* group, uint32 questId);
+    void SynchronizeGroupObjectives(Group* group, uint32 questId);
+    void HandleGroupObjectiveConflict(Group* group, uint32 questId, uint32 objectiveIndex);
 
     // Quest completion optimization
-    void OptimizeQuestCompletionOrder(Player* bot) override;
-    void OptimizeObjectiveSequence(Player* bot, uint32 questId) override;
-    void FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds) override;
-    void MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives) override;
+    void OptimizeQuestCompletionOrder(Player* bot);
+    void OptimizeObjectiveSequence(Player* bot, uint32 questId);
+    void FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds);
+    void MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives);
 
     // Stuck detection and recovery
-    void DetectStuckState(Player* bot, uint32 questId) override;
-    void HandleStuckObjective(Player* bot, QuestObjectiveData& objective) override;
-    void RecoverFromStuckState(Player* bot, uint32 questId) override;
-    void SkipProblematicObjective(Player* bot, QuestObjectiveData& objective) override;
+    void DetectStuckState(Player* bot, uint32 questId);
+    void HandleStuckObjective(Player* bot, QuestObjectiveData& objective);
+    void RecoverFromStuckState(Player* bot, uint32 questId);
+    void SkipProblematicObjective(Player* bot, QuestObjectiveData& objective);
 
     // Quest turn-in management
-    void ProcessQuestTurnIn(Player* bot, uint32 questId) override;
-    bool FindQuestTurnInNpc(Player* bot, uint32 questId) override;
-    void HandleQuestRewardSelection(Player* bot, uint32 questId) override;
-    void CompleteQuestDialog(Player* bot, uint32 questId) override;
+    void ProcessQuestTurnIn(Player* bot, uint32 questId);
+    bool FindQuestTurnInNpc(Player* bot, uint32 questId);
+    void HandleQuestRewardSelection(Player* bot, uint32 questId);
+    void CompleteQuestDialog(Player* bot, uint32 questId);
 
     // Performance monitoring
     struct QuestCompletionMetrics
@@ -553,38 +552,41 @@ public:
         }
     };
 
-    QuestCompletionMetricsSnapshot GetBotCompletionMetrics(uint32 botGuid) override;
-    QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
+    // Type alias for metrics snapshot
+    using QuestCompletionMetricsSnapshot = QuestCompletionMetrics::Snapshot;
+
+    QuestCompletionMetricsSnapshot GetBotCompletionMetrics(uint32 botGuid);
+    QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics();
 
     // Quest data analysis
-    std::vector<uint32> GetActiveQuests(Player* bot) override;
-    std::vector<uint32> GetCompletableQuests(Player* bot) override;
-    uint32 GetHighestPriorityQuest(Player* bot) override;
-    float CalculateQuestProgress(uint32 questId, Player* bot) override;
+    std::vector<uint32> GetActiveQuests(Player* bot);
+    std::vector<uint32> GetCompletableQuests(Player* bot);
+    uint32 GetHighestPriorityQuest(Player* bot);
+    float CalculateQuestProgress(uint32 questId, Player* bot);
 
     // Configuration and settings
-    void SetQuestCompletionStrategy(uint32 botGuid, QuestCompletionStrategy strategy) override;
-    QuestCompletionStrategy GetQuestCompletionStrategy(uint32 botGuid) override;
-    void SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests) override;
-    void EnableGroupCoordination(uint32 botGuid, bool enable) override;
+    void SetQuestCompletionStrategy(uint32 botGuid, QuestCompletionStrategy strategy);
+    QuestCompletionStrategy GetQuestCompletionStrategy(uint32 botGuid);
+    void SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests);
+    void EnableGroupCoordination(uint32 botGuid, bool enable);
 
     // Advanced quest completion features
-    void HandleDungeonQuests(Player* bot, uint32 dungeonId) override;
-    void HandlePvPQuests(Player* bot, uint32 battlegroundId) override;
-    void HandleSeasonalQuests(Player* bot) override;
-    void HandleDailyQuests(Player* bot) override;
+    void HandleDungeonQuests(Player* bot, uint32 dungeonId);
+    void HandlePvPQuests(Player* bot, uint32 battlegroundId);
+    void HandleSeasonalQuests(Player* bot);
+    void HandleDailyQuests(Player* bot);
 
     // Error handling and recovery
-    void HandleQuestCompletionError(Player* bot, uint32 questId, const std::string& error) override;
-    void RecoverFromCompletionFailure(Player* bot, uint32 questId) override;
-    void AbandonUncompletableQuest(Player* bot, uint32 questId) override;
-    void DiagnoseCompletionIssues(Player* bot, uint32 questId) override;
+    void HandleQuestCompletionError(Player* bot, uint32 questId, const std::string& error);
+    void RecoverFromCompletionFailure(Player* bot, uint32 questId);
+    void AbandonUncompletableQuest(Player* bot, uint32 questId);
+    void DiagnoseCompletionIssues(Player* bot, uint32 questId);
 
     // Update and maintenance
-    void Update(uint32 diff) override;
-    void UpdateBotQuestCompletion(Player* bot, uint32 diff) override;
-    void CleanupCompletedQuests() override;
-    void ValidateQuestStates() override;
+    void Update(uint32 diff);
+    void UpdateBotQuestCompletion(Player* bot, uint32 diff);
+    void CleanupCompletedQuests();
+    void ValidateQuestStates();
 
     // ========================================================================
     // LIFECYCLE HOOK INTEGRATION (Phase 0)

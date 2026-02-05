@@ -82,7 +82,7 @@ public:
      *
      * @param diff Time since last update in milliseconds
      */
-    void OnCombatUpdate(uint32 diff) override;
+    void OnCombatUpdate(uint32 diff);
 
     /**
      * Override from BotAI - handles out-of-combat updates
@@ -91,7 +91,7 @@ public:
      *
      * @param diff Time since last update in milliseconds
      */
-    void OnNonCombatUpdate(uint32 diff) override;
+    void OnNonCombatUpdate(uint32 diff);
 
     // ========================================================================
     // PURE VIRTUAL COMBAT INTERFACE - Must be implemented by each class
@@ -130,12 +130,12 @@ public:
      * Called when entering combat
      * @param target Initial combat target
      */
-    void OnCombatStart(::Unit* target) override;
+    void OnCombatStart(::Unit* target);
 
     /**
      * Called when leaving combat
      */
-    void OnCombatEnd() override;
+    void OnCombatEnd();
 
     /**
      * Called when switching targets during combat
@@ -285,7 +285,7 @@ public:
     uint32 GetSpellCooldown(uint32 spellId);
 
     // Spell casting (overrides BotAI virtual method)
-    ::SpellCastResult CastSpell(uint32 spellId, ::Unit* target = nullptr) override;
+    ::SpellCastResult CastSpell(uint32 spellId, ::Unit* target = nullptr);
 
     // Target selection helpers
     ::Unit* GetBestAttackTarget();

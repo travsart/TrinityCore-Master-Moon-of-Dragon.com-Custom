@@ -8,7 +8,8 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "../Social/SocialEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Social/SocialEvents.h"
 #include "ChatPackets.h"
 #include "GuildPackets.h"
 #include "TradePackets.h"
@@ -42,7 +43,7 @@ void ParseTypedChat(WorldSession* session, WorldPackets::Chat::Chat const& packe
         packet.AchievementID
     );
 
-    SocialEventBus::instance()->PublishEvent(event);
+    EventBus<SocialEvent>::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received CHAT (typed): from={}, type={}, msg={}",
         bot->GetName(), packet.SenderName, packet.SlashCmd, packet.ChatText.substr(0, 50));
@@ -66,7 +67,7 @@ void ParseTypedEmote(WorldSession* session, WorldPackets::Chat::Emote const& pac
         packet.EmoteID
     );
 
-    SocialEventBus::instance()->PublishEvent(event);
+    EventBus<SocialEvent>::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received EMOTE (typed): from={}, emote={}",
         bot->GetName(), packet.Guid.ToString(), packet.EmoteID);
@@ -90,7 +91,7 @@ void ParseTypedTextEmote(WorldSession* session, WorldPackets::Chat::STextEmote c
         packet.EmoteID
     );
 
-    SocialEventBus::instance()->PublishEvent(event);
+    EventBus<SocialEvent>::instance()->PublishEvent(event);
     TC_LOG_TRACE("playerbot.packets", "Bot {} received TEXT_EMOTE (typed): from={}, emote={}",
         bot->GetName(), packet.SourceGUID.ToString(), packet.EmoteID);
 }
@@ -117,7 +118,7 @@ void ParseTypedGuildInvite(WorldSession* session, WorldPackets::Guild::GuildInvi
         packet.GuildGUID.GetCounter()
     );
 
-    SocialEventBus::instance()->PublishEvent(event);
+    EventBus<SocialEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received GUILD_INVITE (typed): inviter={}, guild={}",
         bot->GetName(), inviterName, packet.GuildGUID.ToString());
@@ -147,7 +148,7 @@ void ParseTypedGuildEvent(WorldSession* session, WorldPackets::Guild::GuildEvent
         message
     );
 
-    SocialEventBus::instance()->PublishEvent(event);
+    EventBus<SocialEvent>::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GUILD_EVENT (typed): guild={}, msg={}",
         bot->GetName(), guild->GetId(), message);
@@ -171,7 +172,7 @@ void ParseTypedTradeStatus(WorldSession* session, WorldPackets::Trade::TradeStat
         static_cast<uint8>(packet.Status)
     );
 
-    SocialEventBus::instance()->PublishEvent(event);
+    EventBus<SocialEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received TRADE_STATUS (typed): partner={}, status={}",
         bot->GetName(), packet.Partner.ToString(), static_cast<uint32>(packet.Status));

@@ -880,11 +880,11 @@ GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guildId)
         // In a real implementation, we'd check if the player belongs to the specified guild
         const GuildMetrics& playerMetrics = metricsPair.second;
 
-        combinedMetrics.guildInteractions += playerMetrics.guildInteractions.load();
-        combinedMetrics.chatMessages += playerMetrics.chatMessages.load();
-        combinedMetrics.bankTransactions += playerMetrics.bankTransactions.load();
-        combinedMetrics.eventsParticipated += playerMetrics.eventsParticipated.load();
-        combinedMetrics.helpfulActions += playerMetrics.helpfulActions.load();
+        combinedMetrics.guildInteractions += playerMetrics.guildInteractions;
+        combinedMetrics.chatMessages += playerMetrics.chatMessages;
+        combinedMetrics.bankTransactions += playerMetrics.bankTransactions;
+        combinedMetrics.eventsParticipated += playerMetrics.eventsParticipated;
+        combinedMetrics.helpfulActions += playerMetrics.helpfulActions;
     }
 
     return combinedMetrics;
@@ -1302,8 +1302,8 @@ void GuildIntegration::UpdateGuildMetrics(GuildActivityType activity, bool wasSu
         }
     }
 
-    metrics.lastUpdate = std::chrono::steady_clock::now();
-    _globalMetrics.lastUpdate = std::chrono::steady_clock::now();
+    metrics.lastUpdate = GameTime::GetGameTimeMS();
+    _globalMetrics.lastUpdate = GameTime::GetGameTimeMS();
 }
 
 void GuildIntegration::Update(uint32 /*diff*/)

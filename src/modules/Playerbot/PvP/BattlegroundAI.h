@@ -16,7 +16,6 @@
 #include "Position.h"
 #include "Battleground.h"
 #include "../AI/Coordination/Battleground/BGState.h"
-#include "Core/DI/Interfaces/IBattlegroundAI.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -177,7 +176,7 @@ struct BGMetrics
  * - Resource management
  * - Adaptive strategies based on score
  */
-class TC_GAME_API BattlegroundAI final : public IBattlegroundAI
+class TC_GAME_API BattlegroundAI final 
 {
 public:
     static BattlegroundAI* instance();
@@ -186,8 +185,8 @@ public:
     // INITIALIZATION
     // ============================================================================
 
-    void Initialize() override;
-    void Update(::Player* player, uint32 diff) override;
+    void Initialize();
+    void Update(::Player* player, uint32 diff);
 
     // ============================================================================
     // ROLE MANAGEMENT
@@ -196,22 +195,22 @@ public:
     /**
      * Assign role to player based on class/spec
      */
-    void AssignRole(::Player* player, BGType bgType) override;
+    void AssignRole(::Player* player, BGType bgType);
 
     /**
      * Get player's current BG role
      */
-    BGRole GetPlayerRole(::Player* player) const override;
+    BGRole GetPlayerRole(::Player* player) const;
 
     /**
      * Switch player to new role
      */
-    bool SwitchRole(::Player* player, BGRole newRole) override;
+    bool SwitchRole(::Player* player, BGRole newRole);
 
     /**
      * Check if role is appropriate for class
      */
-    bool IsRoleAppropriate(::Player* player, BGRole role) const override;
+    bool IsRoleAppropriate(::Player* player, BGRole role) const;
 
     // ============================================================================
     // OBJECTIVE MANAGEMENT
@@ -220,34 +219,34 @@ public:
     /**
      * Get all active objectives for battleground
      */
-    ::std::vector<BGObjective> GetActiveObjectives(::Player* player) const override;
+    ::std::vector<BGObjective> GetActiveObjectives(::Player* player) const;
 
     /**
      * Get highest priority objective for player
      */
-    BGObjective GetPlayerObjective(::Player* player) const override;
+    BGObjective GetPlayerObjective(::Player* player) const;
 
     /**
      * Assign players to objective
      */
-    bool AssignObjective(::Player* player, BGObjective const& objective) override;
+    bool AssignObjective(::Player* player, BGObjective const& objective);
 
     /**
      * Complete objective
      */
-    bool CompleteObjective(::Player* player, BGObjective const& objective) override;
+    bool CompleteObjective(::Player* player, BGObjective const& objective);
 
     /**
      * Check if objective is being attacked
      */
-    bool IsObjectiveContested(BGObjective const& objective) const override;
+    bool IsObjectiveContested(BGObjective const& objective) const;
 
     // ============================================================================
     // BG-SPECIFIC STRATEGIES
     // ============================================================================
 
     // Warsong Gulch / Twin Peaks
-    void ExecuteWSGStrategy(::Player* player) override;
+    void ExecuteWSGStrategy(::Player* player);
     bool PickupFlag(::Player* player);
     bool ReturnFlag(::Player* player);
     ::Player* FindFriendlyFlagCarrier(::Player* player) const;
@@ -271,7 +270,7 @@ public:
         Coordination::Battleground::IBGScript* script);
 
     // Arathi Basin / Battle for Gilneas
-    void ExecuteABStrategy(::Player* player) override;
+    void ExecuteABStrategy(::Player* player);
     bool CaptureBase(::Player* player, Position const& baseLocation);
     bool DefendBase(::Player* player, Position const& baseLocation);
     Position FindBestBaseToCapture(::Player* player) const;
@@ -279,35 +278,35 @@ public:
     bool IsBaseUnderAttack(Position const& baseLocation) const;
 
     // Alterac Valley
-    void ExecuteAVStrategy(::Player* player) override;
+    void ExecuteAVStrategy(::Player* player);
     bool CaptureGraveyard(::Player* player);
     bool CaptureTower(::Player* player);
     bool KillBoss(::Player* player);
     bool EscortNPC(::Player* player);
 
     // Eye of the Storm
-    void ExecuteEOTSStrategy(::Player* player) override;
+    void ExecuteEOTSStrategy(::Player* player);
     bool CaptureFlagEOTS(::Player* player);
     bool CaptureBaseEOTS(::Player* player);
 
     // Strand of the Ancients / Isle of Conquest
-    void ExecuteSiegeStrategy(::Player* player) override;
+    void ExecuteSiegeStrategy(::Player* player);
     bool OperateSiegeWeapon(::Player* player);
     bool AttackGate(::Player* player);
     bool DefendGate(::Player* player);
 
     // Temple of Kotmogu
-    void ExecuteKotmoguStrategy(::Player* player) override;
+    void ExecuteKotmoguStrategy(::Player* player);
     bool PickupOrb(::Player* player);
     bool DefendOrbCarrier(::Player* player);
 
     // Silvershard Mines
-    void ExecuteSilvershardStrategy(::Player* player) override;
+    void ExecuteSilvershardStrategy(::Player* player);
     bool CaptureCart(::Player* player);
     bool DefendCart(::Player* player);
 
     // Deepwind Gorge
-    void ExecuteDeepwindStrategy(::Player* player) override;
+    void ExecuteDeepwindStrategy(::Player* player);
     bool CaptureMine(::Player* player);
     bool DefendMine(::Player* player);
 
@@ -318,22 +317,22 @@ public:
     /**
      * Group up for objective
      */
-    bool GroupUpForObjective(::Player* player, BGObjective const& objective) override;
+    bool GroupUpForObjective(::Player* player, BGObjective const& objective);
 
     /**
      * Find nearby team members
      */
-    ::std::vector<::Player*> GetNearbyTeammates(::Player* player, float range) const override;
+    ::std::vector<::Player*> GetNearbyTeammates(::Player* player, float range) const;
 
     /**
      * Call for backup at location
      */
-    bool CallForBackup(::Player* player, Position const& location) override;
+    bool CallForBackup(::Player* player, Position const& location);
 
     /**
      * Respond to backup call
      */
-    bool RespondToBackupCall(::Player* player, Position const& location) override;
+    bool RespondToBackupCall(::Player* player, Position const& location);
 
     // ============================================================================
     // POSITIONING
@@ -342,17 +341,17 @@ public:
     /**
      * Move to objective location
      */
-    bool MoveToObjective(::Player* player, BGObjective const& objective) override;
+    bool MoveToObjective(::Player* player, BGObjective const& objective);
 
     /**
      * Take defensive position
      */
-    bool TakeDefensivePosition(::Player* player, Position const& location) override;
+    bool TakeDefensivePosition(::Player* player, Position const& location);
 
     /**
      * Check if player is at objective
      */
-    bool IsAtObjective(::Player* player, BGObjective const& objective) const override;
+    bool IsAtObjective(::Player* player, BGObjective const& objective) const;
 
     // ============================================================================
     // ADAPTIVE STRATEGY
@@ -361,36 +360,36 @@ public:
     /**
      * Adjust strategy based on score
      */
-    void AdjustStrategyBasedOnScore(::Player* player) override;
+    void AdjustStrategyBasedOnScore(::Player* player);
 
     /**
      * Check if team is winning
      */
-    bool IsTeamWinning(::Player* player) const override;
+    bool IsTeamWinning(::Player* player) const;
 
     /**
      * Switch to defensive strategy when winning
      */
-    void SwitchToDefensiveStrategy(::Player* player) override;
+    void SwitchToDefensiveStrategy(::Player* player);
 
     /**
      * Switch to aggressive strategy when losing
      */
-    void SwitchToAggressiveStrategy(::Player* player) override;
+    void SwitchToAggressiveStrategy(::Player* player);
 
     // ============================================================================
     // PROFILES
     // ============================================================================
 
-    void SetStrategyProfile(uint32 playerGuid, BGStrategyProfile const& profile) override;
-    BGStrategyProfile GetStrategyProfile(uint32 playerGuid) const override;
+    void SetStrategyProfile(uint32 playerGuid, BGStrategyProfile const& profile);
+    BGStrategyProfile GetStrategyProfile(uint32 playerGuid) const;
 
     // ============================================================================
     // METRICS
     // ============================================================================
 
-    BGMetrics const& GetPlayerMetrics(uint32 playerGuid) const override;
-    BGMetrics const& GetGlobalMetrics() const override;
+    BGMetrics const& GetPlayerMetrics(uint32 playerGuid) const;
+    BGMetrics const& GetGlobalMetrics() const;
 
 private:
     BattlegroundAI();

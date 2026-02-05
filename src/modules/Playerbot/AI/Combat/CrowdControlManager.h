@@ -230,7 +230,7 @@ namespace Playerbot
         /**
          * @brief Filter events to only receive those relevant to CC
          */
-        bool ShouldReceiveEvent(const CombatEvent& event) const override;
+        bool ShouldReceiveEvent(const CombatEvent& event) const;
 
         /**
          * @brief Subscriber name for debugging

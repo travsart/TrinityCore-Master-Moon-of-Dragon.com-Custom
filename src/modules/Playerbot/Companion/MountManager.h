@@ -10,7 +10,6 @@
 #pragma once
 
 #include "Define.h"
-#include "Core/DI/Interfaces/IMountManager.h"
 #include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
@@ -113,7 +112,7 @@ struct MountAutomationProfile
  * - Each bot has independent mount state
  * - Shared mount database across all bots (static)
  */
-class TC_GAME_API MountManager final : public IMountManager
+class TC_GAME_API MountManager final
 {
 public:
     /**
@@ -130,32 +129,32 @@ public:
     /**
      * Initialize mount system on server startup
      */
-    void Initialize() override;
+    void Initialize();
 
     /**
      * Update mount automation for player (called periodically)
      */
-    void Update(uint32 diff) override;
+    void Update(uint32 diff);
 
     /**
      * Mount player with best available mount
      */
-    bool MountPlayer() override;
+    bool MountPlayer();
 
     /**
      * Dismount player
      */
-    bool DismountPlayer() override;
+    bool DismountPlayer();
 
     /**
      * Check if player is mounted
      */
-    bool IsMounted() const override;
+    bool IsMounted() const;
 
     /**
      * Check if player should auto-mount (distance check)
      */
-    bool ShouldAutoMount(Position const& destination) const override;
+    bool ShouldAutoMount(Position const& destination) const;
 
     // ============================================================================
     // MOUNT SELECTION
@@ -164,42 +163,42 @@ public:
     /**
      * Get best mount for current zone and player state
      */
-    MountInfo const* GetBestMount() const override;
+    MountInfo const* GetBestMount() const;
 
     /**
      * Get flying mount if zone allows flying
      */
-    MountInfo const* GetFlyingMount() const override;
+    MountInfo const* GetFlyingMount() const;
 
     /**
      * Get ground mount
      */
-    MountInfo const* GetGroundMount() const override;
+    MountInfo const* GetGroundMount() const;
 
     /**
      * Get aquatic mount for underwater travel
      */
-    MountInfo const* GetAquaticMount() const override;
+    MountInfo const* GetAquaticMount() const;
 
     /**
      * Get dragonriding mount
      */
-    MountInfo const* GetDragonridingMount() const override;
+    MountInfo const* GetDragonridingMount() const;
 
     /**
      * Check if player can use flying mount in current zone
      */
-    bool CanUseFlyingMount() const override;
+    bool CanUseFlyingMount() const;
 
     /**
      * Check if player is underwater
      */
-    bool IsPlayerUnderwater() const override;
+    bool IsPlayerUnderwater() const;
 
     /**
      * Check if zone allows dragonriding
      */
-    bool CanUseDragonriding() const override;
+    bool CanUseDragonriding() const;
 
     // ============================================================================
     // MOUNT COLLECTION
@@ -208,27 +207,27 @@ public:
     /**
      * Get all mounts player knows
      */
-    std::vector<MountInfo> GetPlayerMounts() const override;
+    std::vector<MountInfo> GetPlayerMounts() const;
 
     /**
      * Check if player knows mount
      */
-    bool KnowsMount(uint32 spellId) const override;
+    bool KnowsMount(uint32 spellId) const;
 
     /**
      * Learn mount spell
      */
-    bool LearnMount(uint32 spellId) override;
+    bool LearnMount(uint32 spellId);
 
     /**
      * Get mount count for player
      */
-    uint32 GetMountCount() const override;
+    uint32 GetMountCount() const;
 
     /**
      * Check if mount is usable by player (level, skill, class restrictions)
      */
-    bool CanUseMount(MountInfo const& mount) const override;
+    bool CanUseMount(MountInfo const& mount) const;
 
     // ============================================================================
     // RIDING SKILL
@@ -237,29 +236,29 @@ public:
     /**
      * Get player riding skill level
      */
-    uint32 GetRidingSkill() const override;
+    uint32 GetRidingSkill() const;
 
     /**
      * Check if player has riding skill
      */
-    bool HasRidingSkill() const override;
+    bool HasRidingSkill() const;
 
     /**
      * Learn riding skill (apprentice, journeyman, expert, artisan, master)
      */
-    bool LearnRidingSkill(uint32 skillLevel) override;
+    bool LearnRidingSkill(uint32 skillLevel);
 
     /**
      * Get max mount speed based on riding skill
      */
-    MountSpeed GetMaxMountSpeed() const override;
+    MountSpeed GetMaxMountSpeed() const;
 
     /**
      * Update riding skill and mounts for bot's current level
      * Called during level-up to automatically teach riding skills and mounts
      * Level thresholds: 10 (Apprentice), 20 (Journeyman), 30 (Expert), 40 (Artisan), 80 (Master)
      */
-    bool UpdateRidingForLevel() override;
+    bool UpdateRidingForLevel();
 
     // ============================================================================
     // MULTI-PASSENGER MOUNTS
@@ -268,29 +267,29 @@ public:
     /**
      * Check if mount is multi-passenger
      */
-    bool IsMultiPassengerMount(MountInfo const& mount) const override;
+    bool IsMultiPassengerMount(MountInfo const& mount) const;
 
     /**
      * Get available passenger seats
      */
-    uint32 GetAvailablePassengerSeats() const override;
+    uint32 GetAvailablePassengerSeats() const;
 
     /**
      * Add passenger to mount
      */
-    bool AddPassenger(::Player* passenger) override;
+    bool AddPassenger(::Player* passenger);
 
     /**
      * Remove passenger from mount
      */
-    bool RemovePassenger(::Player* passenger) override;
+    bool RemovePassenger(::Player* passenger);
 
     // ============================================================================
     // AUTOMATION PROFILES
     // ============================================================================
 
-    void SetAutomationProfile(MountAutomationProfile const& profile) override;
-    MountAutomationProfile GetAutomationProfile() const override;
+    void SetAutomationProfile(MountAutomationProfile const& profile);
+    MountAutomationProfile GetAutomationProfile() const;
 
     // ============================================================================
     // METRICS
@@ -328,17 +327,17 @@ private:
     // INITIALIZATION HELPERS
     // ============================================================================
 
-    void LoadMountDatabase() override;
-    void InitializeVanillaMounts() override;
-    void InitializeTBCMounts() override;
-    void InitializeWrathMounts() override;
-    void InitializeCataclysmMounts() override;
-    void InitializePandariaMounts() override;
-    void InitializeDraenorMounts() override;
-    void InitializeLegionMounts() override;
-    void InitializeBfAMounts() override;
-    void InitializeShadowlandsMounts() override;
-    void InitializeDragonflightMounts() override;
+    void LoadMountDatabase();
+    void InitializeVanillaMounts();
+    void InitializeTBCMounts();
+    void InitializeWrathMounts();
+    void InitializeCataclysmMounts();
+    void InitializePandariaMounts();
+    void InitializeDraenorMounts();
+    void InitializeLegionMounts();
+    void InitializeBfAMounts();
+    void InitializeShadowlandsMounts();
+    void InitializeDragonflightMounts();
     void InitializeWarWithinMounts();
 
     // ============================================================================

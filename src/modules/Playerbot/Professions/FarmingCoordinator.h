@@ -35,7 +35,6 @@
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
 #include "ProfessionManager.h"
-#include "../Core/DI/Interfaces/IFarmingCoordinator.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -168,7 +167,7 @@ struct FarmingStatistics
  * - Constructed per-bot with Player* reference
  * - Destroyed with bot cleanup
  */
-class TC_GAME_API FarmingCoordinator final : public IFarmingCoordinator
+class TC_GAME_API FarmingCoordinator final
 {
 public:
     /**
@@ -189,24 +188,24 @@ public:
     /**
      * Initialize farming coordinator (called once per bot)
      */
-    void Initialize() override;
+    void Initialize();
 
     /**
      * Update farming coordination (called periodically)
      */
-    void Update(::Player* player, uint32 diff) override;
+    void Update(::Player* player, uint32 diff);
 
     /**
      * Enable/disable farming coordination for this bot
      */
-    void SetEnabled(bool enabled) override;
-    bool IsEnabled() const override;
+    void SetEnabled(bool enabled);
+    bool IsEnabled() const;
 
     /**
      * Get coordination profile for this bot
      */
-    void SetCoordinatorProfile(FarmingCoordinatorProfile const& profile) override;
-    FarmingCoordinatorProfile GetCoordinatorProfile() const override;
+    void SetCoordinatorProfile(FarmingCoordinatorProfile const& profile);
+    FarmingCoordinatorProfile GetCoordinatorProfile() const;
 
     // ============================================================================
     // SKILL ANALYSIS
@@ -216,30 +215,30 @@ public:
      * Check if profession skill needs catch-up farming
      * Returns true if skill gap exceeds threshold
      */
-    bool NeedsFarming(ProfessionType profession) const override;
+    bool NeedsFarming(ProfessionType profession) const;
 
     /**
      * Calculate skill gap for profession
      * Returns: (target skill) - (current skill)
      * Positive = behind, Negative = ahead
      */
-    int32 GetSkillGap(ProfessionType profession) const override;
+    int32 GetSkillGap(ProfessionType profession) const;
 
     /**
      * Get target skill level for character level
      * Formula: character_level × skillLevelMultiplier
      */
-    uint16 GetTargetSkillLevel(ProfessionType profession) const override;
+    uint16 GetTargetSkillLevel(ProfessionType profession) const;
 
     /**
      * Get professions that need farming (sorted by priority)
      */
-    std::vector<ProfessionType> GetProfessionsNeedingFarm() const override;
+    std::vector<ProfessionType> GetProfessionsNeedingFarm() const;
 
     /**
      * Calculate recommended farming duration based on skill gap
      */
-    uint32 CalculateFarmingDuration(ProfessionType profession) const override;
+    uint32 CalculateFarmingDuration(ProfessionType profession) const;
 
     // ============================================================================
     // FARMING SESSION MANAGEMENT
@@ -248,32 +247,32 @@ public:
     /**
      * Start farming session for profession
      */
-    bool StartFarmingSession(ProfessionType profession, FarmingSessionType sessionType = FarmingSessionType::SKILL_CATCHUP) override;
+    bool StartFarmingSession(ProfessionType profession, FarmingSessionType sessionType = FarmingSessionType::SKILL_CATCHUP);
 
     /**
      * Stop active farming session
      */
-    void StopFarmingSession() override;
+    void StopFarmingSession();
 
     /**
      * Get active farming session for this bot
      */
-    FarmingSession const* GetActiveFarmingSession() const override;
+    FarmingSession const* GetActiveFarmingSession() const;
 
     /**
      * Check if this bot has active farming session
      */
-    bool HasActiveFarmingSession() const override;
+    bool HasActiveFarmingSession() const;
 
     /**
      * Update farming session progress
      */
-    void UpdateFarmingSession(uint32 diff) override;
+    void UpdateFarmingSession(uint32 diff);
 
     /**
      * Check if farming session should end
      */
-    bool ShouldEndFarmingSession(FarmingSession const& session) const override;
+    bool ShouldEndFarmingSession(FarmingSession const& session) const;
 
     // ============================================================================
     // ZONE SELECTION
@@ -282,12 +281,12 @@ public:
     /**
      * Get optimal farming zone for profession and skill level
      */
-    FarmingZoneInfo const* GetOptimalFarmingZone(ProfessionType profession) const override;
+    FarmingZoneInfo const* GetOptimalFarmingZone(ProfessionType profession) const;
 
     /**
      * Get all suitable zones for skill level
      */
-    std::vector<FarmingZoneInfo> GetSuitableZones(ProfessionType profession) const override;
+    std::vector<FarmingZoneInfo> GetSuitableZones(ProfessionType profession) const;
 
     /**
      * Calculate zone score based on:
@@ -296,7 +295,7 @@ public:
      * - Skill-up potential
      * - Safety (PvP risk)
      */
-    float CalculateZoneScore(FarmingZoneInfo const& zone) const override;
+    float CalculateZoneScore(FarmingZoneInfo const& zone) const;
 
     // ============================================================================
     // MATERIAL MANAGEMENT
@@ -305,17 +304,17 @@ public:
     /**
      * Check if material stockpile target reached
      */
-    bool HasReachedStockpileTarget(uint32 itemId) const override;
+    bool HasReachedStockpileTarget(uint32 itemId) const;
 
     /**
      * Get current material count in inventory
      */
-    uint32 GetMaterialCount(uint32 itemId) const override;
+    uint32 GetMaterialCount(uint32 itemId) const;
 
     /**
      * Get materials needed for auction house target
      */
-    std::vector<std::pair<uint32, uint32>> GetNeededMaterials(ProfessionType profession) const override;
+    std::vector<std::pair<uint32, uint32>> GetNeededMaterials(ProfessionType profession) const;
 
     // ============================================================================
     // STATISTICS
@@ -324,7 +323,7 @@ public:
     /**
      * Get statistics for this bot
      */
-    FarmingStatistics const& GetStatistics() const override;
+    FarmingStatistics const& GetStatistics() const;
 
     /**
      * Get global statistics across all bots
@@ -334,7 +333,7 @@ public:
     /**
      * Reset statistics for this bot
      */
-    void ResetStatistics() override;
+    void ResetStatistics();
 
 private:
     // Non-copyable

@@ -57,7 +57,7 @@
 #include "AI/ClassAI/ClassBehaviorTreeRegistry.h"
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
-#include "Group/GroupEventBus.h"
+#include "Group/GroupEvents.h"
 #include "Network/PlayerbotPacketSniffer.h"
 
 // Domain-Specific EventBus System
@@ -424,7 +424,7 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     lastTime = t5;
 
     // Update GroupEventBus to process pending group events
-    Playerbot::GroupEventBus::instance()->ProcessEvents(diff);
+    Playerbot::EventBus<Playerbot::GroupEvent>::instance()->ProcessEvents(100);
     auto t6 = std::chrono::high_resolution_clock::now();
     auto groupEventTime = std::chrono::duration_cast<std::chrono::microseconds>(t6 - lastTime).count();
     lastTime = t6;

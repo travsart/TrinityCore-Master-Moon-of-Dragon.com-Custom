@@ -20,7 +20,6 @@
 #include "Define.h"
 #include "SharedDefines.h"
 #include "ZoneLevelHelper.h"
-#include "Core/DI/Interfaces/IBotLevelDistribution.h"
 #include <atomic>
 #include <array>
 #include <vector>
@@ -236,21 +235,19 @@ struct DistributionStats
  * - Expansion tiers: Starting(1-10), Chromie(10-60), DF(60-70), TWW(70-80)
  * - Target percentages configurable via Playerbot.Population.Tier.*.Pct
  */
-class TC_GAME_API BotLevelDistribution final : public IBotLevelDistribution
+class TC_GAME_API BotLevelDistribution final
 {
 public:
     static BotLevelDistribution* instance();
 
-    // IBotLevelDistribution interface implementation
-
     // Initialization
-    bool LoadConfig() override;
-    void ReloadConfig() override;
+    bool LoadConfig();
+    void ReloadConfig();
 
     // Bracket selection
-    LevelBracket const* SelectBracket(TeamId faction) const override;
+    LevelBracket const* SelectBracket(TeamId faction) const;
     LevelBracket const* SelectBracketWeighted(TeamId faction) const;
-    LevelBracket const* GetBracketForLevel(uint32 level, TeamId faction) const override;
+    LevelBracket const* GetBracketForLevel(uint32 level, TeamId faction) const;
 
     // Tier-based selection (new API)
     LevelBracket const* SelectTier(TeamId faction, ExpansionTier tier) const;
@@ -260,25 +257,25 @@ public:
     DistributionStats GetDistributionStats() const;
     ::std::vector<LevelBracket const*> GetUnderpopulatedBrackets(TeamId faction) const;
     ::std::vector<LevelBracket const*> GetOverpopulatedBrackets(TeamId faction) const;
-    bool IsDistributionBalanced(TeamId faction) const override;
+    bool IsDistributionBalanced(TeamId faction) const;
 
     // Counter updates
-    void IncrementBracket(uint32 level, TeamId faction) override;
-    void DecrementBracket(uint32 level, TeamId faction) override;
-    void RecalculateDistribution() override;
+    void IncrementBracket(uint32 level, TeamId faction);
+    void DecrementBracket(uint32 level, TeamId faction);
+    void RecalculateDistribution();
 
     // Configuration queries
-    uint32 GetNumBrackets() const override { return NUM_TIERS; }
+    uint32 GetNumBrackets() const { return NUM_TIERS; }
     float GetTolerancePercent() const { return 15.0f; }  // ±15% tolerance
-    bool IsEnabled() const override { return m_enabled; }
-    bool IsDynamicDistribution() const override { return m_dynamicDistribution; }
+    bool IsEnabled() const { return m_enabled; }
+    bool IsDynamicDistribution() const { return m_dynamicDistribution; }
 
     // Zone-level integration
     bool IsLevelValidForZone(uint32 level, uint32 zoneId) const;
     uint32 GetRecommendedLevelForZone(uint32 zoneId) const;
 
     // Debugging
-    void PrintDistributionReport() const override;
+    void PrintDistributionReport() const;
     ::std::string GetDistributionSummary() const;
 
     // Number of expansion tiers

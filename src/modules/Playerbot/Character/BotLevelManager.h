@@ -21,7 +21,6 @@
 #include "Threading/LockHierarchy.h"
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
-#include "Core/DI/Interfaces/IBotLevelManager.h"
 #include "../Equipment/BotGearFactory.h"  // Need full definition for std::unique_ptr<GearSet>
 #include <atomic>
 #include <vector>
@@ -142,7 +141,115 @@ struct BotCreationTask
  * - Automatic rebalancing (future enhancement)
  * - Statistics reporting
  */
-class TC_GAME_API BotLevelManager final : public IBotLevelManager
+/**
+ * @brief Snapshot of statistics for the level manager (copyable)
+ */
+struct LevelManagerStatsSnapshot
+{
+    uint64 botsCreated{0};
+    uint64 botsProcessed{0};
+    uint64 tasksPrepared{0};
+    uint64 tasksApplied{0};
+    uint64 tasksQueued{0};
+    uint64 levelUps{0};
+    uint64 gearSetsApplied{0};
+    uint64 talentsApplied{0};
+    uint64 zonesAssigned{0};
+    uint64 errors{0};
+
+    LevelManagerStatsSnapshot() = default;
+};
+
+/**
+ * @brief Thread-safe statistics for the level manager
+ */
+struct LevelManagerStats
+{
+    ::std::atomic<uint64> botsCreated{0};
+    ::std::atomic<uint64> botsProcessed{0};
+    ::std::atomic<uint64> tasksPrepared{0};
+    ::std::atomic<uint64> tasksApplied{0};
+    ::std::atomic<uint64> tasksQueued{0};
+    ::std::atomic<uint64> levelUps{0};
+    ::std::atomic<uint64> gearSetsApplied{0};
+    ::std::atomic<uint64> talentsApplied{0};
+    ::std::atomic<uint64> zonesAssigned{0};
+    ::std::atomic<uint64> errors{0};
+    // Task tracking
+    ::std::atomic<uint64> totalTasksSubmitted{0};
+    ::std::atomic<uint64> totalTasksCompleted{0};
+    ::std::atomic<uint64> totalTasksFailed{0};
+    ::std::atomic<uint64> totalApplyTimeMs{0};
+    ::std::atomic<uint32> averageApplyTimeMs{0};
+    // Prep time tracking
+    ::std::atomic<uint64> totalPrepTimeMs{0};
+    ::std::atomic<uint32> averagePrepTimeMs{0};
+    // Operations tracking
+    ::std::atomic<uint64> totalLevelUps{0};
+    ::std::atomic<uint64> totalTalentApplications{0};
+    ::std::atomic<uint64> totalGearApplications{0};
+    ::std::atomic<uint64> totalTeleports{0};
+    // Failure tracking
+    ::std::atomic<uint64> levelUpFailures{0};
+    ::std::atomic<uint64> talentFailures{0};
+    ::std::atomic<uint64> gearFailures{0};
+    ::std::atomic<uint64> teleportFailures{0};
+    // Queue tracking
+    ::std::atomic<uint32> currentQueueSize{0};
+    ::std::atomic<uint32> peakQueueSize{0};
+
+    LevelManagerStats() = default;
+
+    // Reset all statistics to zero
+    void Reset()
+    {
+        botsCreated.store(0, ::std::memory_order_relaxed);
+        botsProcessed.store(0, ::std::memory_order_relaxed);
+        tasksPrepared.store(0, ::std::memory_order_relaxed);
+        tasksApplied.store(0, ::std::memory_order_relaxed);
+        tasksQueued.store(0, ::std::memory_order_relaxed);
+        levelUps.store(0, ::std::memory_order_relaxed);
+        gearSetsApplied.store(0, ::std::memory_order_relaxed);
+        talentsApplied.store(0, ::std::memory_order_relaxed);
+        zonesAssigned.store(0, ::std::memory_order_relaxed);
+        errors.store(0, ::std::memory_order_relaxed);
+        totalTasksSubmitted.store(0, ::std::memory_order_relaxed);
+        totalTasksCompleted.store(0, ::std::memory_order_relaxed);
+        totalTasksFailed.store(0, ::std::memory_order_relaxed);
+        totalApplyTimeMs.store(0, ::std::memory_order_relaxed);
+        averageApplyTimeMs.store(0, ::std::memory_order_relaxed);
+        totalPrepTimeMs.store(0, ::std::memory_order_relaxed);
+        averagePrepTimeMs.store(0, ::std::memory_order_relaxed);
+        totalLevelUps.store(0, ::std::memory_order_relaxed);
+        totalTalentApplications.store(0, ::std::memory_order_relaxed);
+        totalGearApplications.store(0, ::std::memory_order_relaxed);
+        totalTeleports.store(0, ::std::memory_order_relaxed);
+        levelUpFailures.store(0, ::std::memory_order_relaxed);
+        talentFailures.store(0, ::std::memory_order_relaxed);
+        gearFailures.store(0, ::std::memory_order_relaxed);
+        teleportFailures.store(0, ::std::memory_order_relaxed);
+        currentQueueSize.store(0, ::std::memory_order_relaxed);
+        peakQueueSize.store(0, ::std::memory_order_relaxed);
+    }
+
+    LevelManagerStatsSnapshot GetSnapshot() const
+    {
+        LevelManagerStatsSnapshot snapshot;
+        snapshot.botsCreated = botsCreated.load(::std::memory_order_relaxed);
+        snapshot.botsProcessed = botsProcessed.load(::std::memory_order_relaxed);
+        snapshot.tasksPrepared = tasksPrepared.load(::std::memory_order_relaxed);
+        snapshot.tasksApplied = tasksApplied.load(::std::memory_order_relaxed);
+        snapshot.tasksQueued = tasksQueued.load(::std::memory_order_relaxed);
+        snapshot.levelUps = levelUps.load(::std::memory_order_relaxed);
+        snapshot.gearSetsApplied = gearSetsApplied.load(::std::memory_order_relaxed);
+        snapshot.talentsApplied = talentsApplied.load(::std::memory_order_relaxed);
+        snapshot.zonesAssigned = zonesAssigned.load(::std::memory_order_relaxed);
+        snapshot.errors = errors.load(::std::memory_order_relaxed);
+        return snapshot;
+    }
+};
+
+class TC_GAME_API BotLevelManager final
 {
 public:
     static BotLevelManager* instance();
@@ -154,18 +261,18 @@ public:
      * MUST be called before any bot operations
      * Single-threaded execution required
      */
-    bool Initialize() override;
+    bool Initialize();
 
     /**
      * Shutdown all subsystems
      * Called during server shutdown
      */
-    void Shutdown() override;
+    void Shutdown();
 
     /**
      * Check if manager is ready
      */
-    bool IsReady() const override
+    bool IsReady() const
     {
         return _initialized.load(::std::memory_order_acquire);
     }
@@ -187,7 +294,7 @@ public:
      * @param bot           Bot player object
      * @return              Task ID (0 if failed)
      */
-    uint64 CreateBotAsync(Player* bot) override;
+    uint64 CreateBotAsync(Player* bot);
 
     /**
      * Create multiple bots in batch (async)
@@ -196,7 +303,7 @@ public:
      * @param bots          Vector of bot player objects
      * @return              Number of tasks submitted
      */
-    uint32 CreateBotsAsync(::std::vector<Player*> const& bots) override;
+    uint32 CreateBotsAsync(::std::vector<Player*> const& bots);
 
     /**
      * Process queued bot creation tasks (main thread only)
@@ -207,7 +314,7 @@ public:
      * @param maxBots       Maximum bots to process (default: 10)
      * @return              Number of bots processed
      */
-    uint32 ProcessBotCreationQueue(uint32 maxBots = 10) override;
+    uint32 ProcessBotCreationQueue(uint32 maxBots = 10);
 
     // ====================================================================
     // DISTRIBUTION MANAGEMENT
@@ -220,26 +327,26 @@ public:
      * @param faction       TEAM_ALLIANCE or TEAM_HORDE
      * @return              Level bracket, or nullptr if none available
      */
-    LevelBracket const* SelectLevelBracket(TeamId faction) override;
+    LevelBracket const* SelectLevelBracket(TeamId faction);
 
     /**
      * Check distribution balance
      * Returns true if all brackets within tolerance (±15%)
      */
-    bool IsDistributionBalanced() const override;
+    bool IsDistributionBalanced() const;
 
     /**
      * Get distribution deviation percentage
      * 0% = perfect balance, >15% = needs rebalancing
      */
-    float GetDistributionDeviation() const override;
+    float GetDistributionDeviation() const;
 
     /**
      * Force rebalance distribution
      * Redistributes bots to match target percentages
      * Analyzes over/underpopulated brackets and coordinates spawning
      */
-    void RebalanceDistribution() override;
+    void RebalanceDistribution();
 
 private:
     /**
@@ -252,11 +359,9 @@ private:
     // STATISTICS & MONITORING
     // ====================================================================
 
-    using LevelManagerStats = Playerbot::LevelManagerStats;
-
-    LevelManagerStats GetStats() const override { return _stats; }
-    void PrintReport() const override;
-    ::std::string GetSummary() const override;
+    LevelManagerStatsSnapshot GetStats() const { return _stats.GetSnapshot(); }
+    void PrintReport() const;
+    ::std::string GetSummary() const;
 
     // ====================================================================
     // CONFIGURATION
@@ -266,12 +371,12 @@ private:
      * Set maximum bots to process per update
      * Default: 10
      */
-    void SetMaxBotsPerUpdate(uint32 maxBots) override
+    void SetMaxBotsPerUpdate(uint32 maxBots)
     {
         _maxBotsPerUpdate.store(maxBots, ::std::memory_order_release);
     }
 
-    uint32 GetMaxBotsPerUpdate() const override
+    uint32 GetMaxBotsPerUpdate() const
     {
         return _maxBotsPerUpdate.load(::std::memory_order_acquire);
     }
@@ -279,7 +384,7 @@ private:
     /**
      * Enable/disable verbose logging
      */
-    void SetVerboseLogging(bool enabled) override
+    void SetVerboseLogging(bool enabled)
     {
         _verboseLogging.store(enabled, ::std::memory_order_release);
     }

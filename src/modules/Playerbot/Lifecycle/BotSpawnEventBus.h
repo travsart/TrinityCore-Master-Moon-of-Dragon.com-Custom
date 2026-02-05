@@ -13,7 +13,6 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
-#include "Core/DI/Interfaces/IBotSpawnEventBus.h"
 #include <functional>
 #include <memory>
 #include <vector>
@@ -106,6 +105,23 @@ struct PopulationChangedEvent : public BotSpawnEvent
         : BotSpawnEvent(BotSpawnEventType::POPULATION_CHANGED), zoneId(zone), oldBotCount(oldCount), newBotCount(newCount) {}
 };
 
+// Public-facing event statistics (copyable snapshot)
+struct EventStats
+{
+    uint64 eventsPublished{0};
+    uint64 eventsProcessed{0};
+    uint64 eventsDropped{0};
+    uint64 totalProcessingTimeUs{0};
+    uint32 queuedEvents{0};
+    float averageProcessingTimeUs{0.0f};
+
+    // Calculate average processing time from totals
+    float GetAverageProcessingTimeUs() const
+    {
+        return eventsProcessed > 0 ? static_cast<float>(totalProcessingTimeUs) / eventsProcessed : 0.0f;
+    }
+};
+
 // Internal statistics with atomic members for thread-safe tracking
 struct InternalEventStats
 {
@@ -148,7 +164,7 @@ struct InternalEventStats
  * - Automatic event deduplication
  * - Memory-efficient event storage
  */
-class TC_GAME_API BotSpawnEventBus final : public IBotSpawnEventBus
+class TC_GAME_API BotSpawnEventBus final 
 {
 public:
     using EventHandler = ::std::function<void(::std::shared_ptr<BotSpawnEvent>)>;
@@ -160,42 +176,42 @@ public:
     static BotSpawnEventBus* instance();
 
     // Lifecycle
-    bool Initialize() override;
-    void Shutdown() override;
-    void Update(uint32 diff) override;
+    bool Initialize();
+    void Shutdown();
+    void Update(uint32 diff);
 
     // === EVENT PUBLISHING ===
-    void PublishEvent(::std::shared_ptr<BotSpawnEvent> event) override;
+    void PublishEvent(::std::shared_ptr<BotSpawnEvent> event);
 
     // Convenience methods for common events
-    void PublishSpawnRequest(SpawnRequest const& request, ::std::function<void(bool, ObjectGuid)> callback) override;
-    void PublishCharacterSelected(ObjectGuid characterGuid, SpawnRequest const& request) override;
-    void PublishSessionCreated(::std::shared_ptr<BotSession> session, SpawnRequest const& request) override;
-    void PublishSpawnCompleted(ObjectGuid botGuid, bool success, ::std::string const& details = "") override;
-    void PublishPopulationChanged(uint32 zoneId, uint32 oldCount, uint32 newCount) override;
+    void PublishSpawnRequest(SpawnRequest const& request, ::std::function<void(bool, ObjectGuid)> callback);
+    void PublishCharacterSelected(ObjectGuid characterGuid, SpawnRequest const& request);
+    void PublishSessionCreated(::std::shared_ptr<BotSession> session, SpawnRequest const& request);
+    void PublishSpawnCompleted(ObjectGuid botGuid, bool success, ::std::string const& details = "");
+    void PublishPopulationChanged(uint32 zoneId, uint32 oldCount, uint32 newCount);
 
     // === EVENT SUBSCRIPTION ===
     using HandlerId = uint64;
 
-    HandlerId Subscribe(BotSpawnEventType eventType, EventHandler handler) override;
-    HandlerId SubscribeToAll(EventHandler handler) override;
-    void Unsubscribe(HandlerId handlerId) override;
+    HandlerId Subscribe(BotSpawnEventType eventType, EventHandler handler);
+    HandlerId SubscribeToAll(EventHandler handler);
+    void Unsubscribe(HandlerId handlerId);
 
     // === EVENT PROCESSING ===
-    void ProcessEvents() override;
-    void ProcessEventsOfType(BotSpawnEventType eventType) override;
+    void ProcessEvents();
+    void ProcessEventsOfType(BotSpawnEventType eventType);
 
     // === PERFORMANCE AND MONITORING ===
-    IBotSpawnEventBus::EventStats const& GetStats() const override;
-    void ResetStats() override;
+    EventStats const& GetStats() const;
+    void ResetStats();
 
     // === CONFIGURATION ===
-    void SetMaxQueueSize(uint32 maxSize) override { _maxQueueSize = maxSize; }
-    void SetBatchSize(uint32 batchSize) override { _batchSize = batchSize; }
-    void SetProcessingEnabled(bool enabled) override { _processingEnabled = enabled; }
+    void SetMaxQueueSize(uint32 maxSize) { _maxQueueSize = maxSize; }
+    void SetBatchSize(uint32 batchSize) { _batchSize = batchSize; }
+    void SetProcessingEnabled(bool enabled) { _processingEnabled = enabled; }
 
-    uint32 GetQueuedEventCount() const override { return _stats.queuedEvents.load(); }
-    bool IsHealthy() const override;
+    uint32 GetQueuedEventCount() const { return _stats.queuedEvents.load(); }
+    bool IsHealthy() const;
 
 private:
     // Event queue management
@@ -231,7 +247,7 @@ private:
 
     // Performance tracking
     mutable InternalEventStats _stats;
-    mutable IBotSpawnEventBus::EventStats _statsSnapshot;
+    mutable EventStats _statsSnapshot;
     void RecordEventProcessing(uint64 processingTimeUs);
 
     // Configuration

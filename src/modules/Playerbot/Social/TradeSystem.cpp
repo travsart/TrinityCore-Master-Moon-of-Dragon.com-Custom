@@ -1847,7 +1847,7 @@ void TradeSystem::AnalyzeTradePatterns()
     float successRate = history.recentTradeOutcomes.empty() ? 0.0f :
                        static_cast<float>(successful) / history.recentTradeOutcomes.size();
 
-    _globalMetrics.tradeSuccessRate.store(successRate);
+    _globalMetrics.tradeSuccessRate = successRate;
 }
 
 void TradeSystem::LearnFromTradeOutcomes(uint32 sessionId, bool wasSuccessful)
@@ -2074,11 +2074,11 @@ void TradeSystem::UpdateTradeMetrics(const TradeSession& session, bool wasSucces
     totalValue += session.initiatorGold;
 
     // Simple moving average
-    float currentAvg = _globalMetrics.averageTradeValue.load();
+    float currentAvg = _globalMetrics.averageTradeValue;
     float newAvg = (currentAvg * 0.9f) + (totalValue * 0.1f);
-    _globalMetrics.averageTradeValue.store(newAvg);
+    _globalMetrics.averageTradeValue = newAvg;
 
-    _globalMetrics.lastUpdate = std::chrono::steady_clock::now();
+    _globalMetrics.lastUpdate = GameTime::GetGameTimeMS();
 }
 
 } // namespace Playerbot

@@ -17,7 +17,6 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
-#include "Core/DI/Interfaces/IDeadlockDetector.h"
 #include <string>
 #include <vector>
 #include <chrono>
@@ -79,7 +78,7 @@ struct DeadlockReport
  * - Automatic deadlock detection
  * - Rich diagnostic output for Visual Studio
  */
-class TC_GAME_API DeadlockDetector final : public IDeadlockDetector
+class TC_GAME_API DeadlockDetector final 
 {
 public:
     static DeadlockDetector* instance()
@@ -89,12 +88,12 @@ public:
     }
 
     // Initialization
-    bool Initialize() override;
-    void Shutdown() override;
+    bool Initialize();
+    void Shutdown();
 
     // Thread registration (for named threads)
-    void RegisterThread(::std::thread::id threadId, ::std::string const& name) override;
-    void UnregisterThread(::std::thread::id threadId) override;
+    void RegisterThread(::std::thread::id threadId, ::std::string const& name);
+    void UnregisterThread(::std::thread::id threadId);
 
     // Deadlock detection
     DeadlockReport DetectFutureDeadlock(
@@ -102,19 +101,19 @@ public:
         uint32 futureIndex,
         uint32 totalFutures,
         uint32 waitTimeMs,
-        ::std::thread::id waitingThreadId) override;
+        ::std::thread::id waitingThreadId);
 
     // Call stack capture
-    ::std::vector<CallStackFrame> CaptureCallStack(uint32 skipFrames = 0, uint32 maxFrames = 64) override;
-    ThreadState CaptureThreadState(::std::thread::id threadId) override;
+    ::std::vector<CallStackFrame> CaptureCallStack(uint32 skipFrames = 0, uint32 maxFrames = 64);
+    ThreadState CaptureThreadState(::std::thread::id threadId);
 
     // Diagnostic output
-    void DumpDeadlockReport(DeadlockReport const& report, ::std::string const& outputFile) override;
-    void LogDeadlockReport(DeadlockReport const& report) override;
+    void DumpDeadlockReport(DeadlockReport const& report, ::std::string const& outputFile);
+    void LogDeadlockReport(DeadlockReport const& report);
 
     // Visual Studio integration
-    void WriteVisualStudioBreakpointFile(DeadlockReport const& report) override;
-    void LaunchVisualStudioDebugger(DeadlockReport const& report) override;
+    void WriteVisualStudioBreakpointFile(DeadlockReport const& report);
+    void LaunchVisualStudioDebugger(DeadlockReport const& report);
 
     // Configuration
     void SetCallStackCaptureEnabled(bool enabled) override { _captureCallStacks = enabled; }
@@ -123,7 +122,7 @@ public:
 
     // Statistics
     uint32 GetTotalDeadlocksDetected() const override { return _totalDeadlocks; }
-    ::std::vector<DeadlockReport> GetRecentDeadlocks(uint32 count = 10) const override;
+    ::std::vector<DeadlockReport> GetRecentDeadlocks(uint32 count = 10) const;
 
 private:
     DeadlockDetector() = default;

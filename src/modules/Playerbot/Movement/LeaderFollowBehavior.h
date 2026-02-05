@@ -137,15 +137,15 @@ public:
     ~LeaderFollowBehavior() = default;
 
     // Strategy interface implementation
-    virtual void InitializeActions() override;
-    virtual void InitializeTriggers() override;
-    virtual void InitializeValues() override;
-    virtual float GetRelevance(BotAI* ai) const override;
-    virtual void OnActivate(BotAI* ai) override;
-    virtual void OnDeactivate(BotAI* ai) override;
+    virtual void InitializeActions();
+    virtual void InitializeTriggers();
+    virtual void InitializeValues();
+    virtual float GetRelevance(BotAI* ai) const;
+    virtual void OnActivate(BotAI* ai);
+    virtual void OnDeactivate(BotAI* ai);
 
     // Override UpdateBehavior for every-frame updates with no throttling
-    virtual void UpdateBehavior(BotAI* ai, uint32 diff) override;
+    virtual void UpdateBehavior(BotAI* ai, uint32 diff);
 
     // Main follow behavior update - now called from UpdateBehavior
     void UpdateFollowBehavior(BotAI* ai, uint32 diff);

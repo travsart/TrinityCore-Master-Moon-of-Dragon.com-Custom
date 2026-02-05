@@ -64,14 +64,14 @@ public:
      * @param ai The bot AI instance
      * @return true if bot can assist a target
      */
-    bool IsPossible(BotAI* ai) const override;
+    bool IsPossible(BotAI* ai) const;
 
     /**
      * Check if action is useful in current context
      * @param ai The bot AI instance
      * @return true if assistance would be beneficial
      */
-    bool IsUseful(BotAI* ai) const override;
+    bool IsUseful(BotAI* ai) const;
 
     /**
      * Execute the target assist action
@@ -79,7 +79,7 @@ public:
      * @param context Action context with target information
      * @return ActionResult indicating success or failure
      */
-    ActionResult Execute(BotAI* ai, ActionContext const& context) override;
+    ActionResult Execute(BotAI* ai, ActionContext const& context);
 
     // Target selection methods
     /**

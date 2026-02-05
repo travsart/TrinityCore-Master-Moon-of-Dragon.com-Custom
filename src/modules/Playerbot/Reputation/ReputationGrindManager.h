@@ -408,9 +408,9 @@ protected:
     // BEHAVIOR MANAGER INTERFACE
     // ========================================================================
 
-    void OnUpdate(uint32 elapsed) override;
-    bool OnInitialize() override;
-    void OnShutdown() override;
+    void OnUpdate(uint32 elapsed);
+    bool OnInitialize();
+    void OnShutdown();
 
 private:
     // ========================================================================

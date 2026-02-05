@@ -393,7 +393,7 @@ public:
     /**
      * @brief Filter events to dungeon context
      */
-    [[nodiscard]] bool ShouldReceiveEvent(const CombatEvent& event) const override;
+    [[nodiscard]] bool ShouldReceiveEvent(const CombatEvent& event) const;
 
     /**
      * @brief Subscriber name

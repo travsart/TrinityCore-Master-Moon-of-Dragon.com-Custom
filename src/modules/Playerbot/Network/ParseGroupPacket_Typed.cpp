@@ -10,7 +10,8 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "GroupEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "../Group/GroupEvents.h"
 #include "PartyPackets.h"
 #include "Log.h"
 
@@ -44,7 +45,7 @@ void ParseTypedReadyCheckStarted(WorldSession* session, WorldPackets::Party::Rea
     event.data2 = static_cast<uint32>(packet.PartyIndex);
     event.timestamp = ::std::chrono::steady_clock::now();
 
-    GroupEventBus::instance()->PublishEvent(event);
+    EventBus<GroupEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received READY_CHECK_STARTED (typed): initiator={}, duration={}ms, partyIndex={}",
         bot->GetName(), packet.InitiatorGUID.ToString(), Milliseconds(packet.Duration).count(), packet.PartyIndex);
@@ -70,7 +71,7 @@ void ParseTypedReadyCheckResponse(WorldSession* session, WorldPackets::Party::Re
     event.data1 = packet.IsReady ? 1 : 0;
     event.timestamp = ::std::chrono::steady_clock::now();
 
-    GroupEventBus::instance()->PublishEvent(event);
+    EventBus<GroupEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received READY_CHECK_RESPONSE (typed): player={}, ready={}",
         bot->GetName(), packet.Player.ToString(), packet.IsReady ? "YES" : "NO");
@@ -96,7 +97,7 @@ void ParseTypedReadyCheckCompleted(WorldSession* session, WorldPackets::Party::R
     event.data2 = 0;  // WoW 12.0: NotReadyCount no longer in packet
     event.timestamp = ::std::chrono::steady_clock::now();
 
-    GroupEventBus::instance()->PublishEvent(event);
+    EventBus<GroupEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received READY_CHECK_COMPLETED (typed): partyGuid={}",
         bot->GetName(), packet.PartyGUID.ToString());
@@ -123,7 +124,7 @@ void ParseTypedRaidTargetUpdateSingle(WorldSession* session, WorldPackets::Party
     event.data2 = static_cast<uint32>(packet.PartyIndex);
     event.timestamp = ::std::chrono::steady_clock::now();
 
-    GroupEventBus::instance()->PublishEvent(event);
+    EventBus<GroupEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received RAID_TARGET_UPDATE_SINGLE (typed): target={}, symbol={}, changedBy={}",
         bot->GetName(), packet.Target.ToString(), packet.Symbol, packet.ChangedBy.ToString());
@@ -154,7 +155,7 @@ void ParseTypedRaidTargetUpdateAll(WorldSession* session, WorldPackets::Party::S
             event.data2 = static_cast<uint32>(packet.PartyIndex);
             event.timestamp = ::std::chrono::steady_clock::now();
 
-            GroupEventBus::instance()->PublishEvent(event);
+            EventBus<GroupEvent>::instance()->PublishEvent(event);
         }
     }
 
@@ -181,7 +182,7 @@ void ParseTypedGroupNewLeader(WorldSession* session, WorldPackets::Party::GroupN
     event.data1 = static_cast<uint32>(packet.PartyIndex);
     event.timestamp = ::std::chrono::steady_clock::now();
 
-    GroupEventBus::instance()->PublishEvent(event);
+    EventBus<GroupEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received GROUP_NEW_LEADER (typed): partyIndex={}",
         bot->GetName(), packet.PartyIndex);

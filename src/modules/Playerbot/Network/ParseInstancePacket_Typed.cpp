@@ -8,7 +8,8 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "../Instance/InstanceEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Instance/InstanceEvents.h"
 #include "InstancePackets.h"
 #include "Player.h"
 #include "WorldSession.h"
@@ -34,7 +35,7 @@ void ParseTypedInstanceReset(WorldSession* session, WorldPackets::Instance::Inst
         packet.MapID
     );
 
-    InstanceEventBus::instance()->PublishEvent(event);
+    EventBus<InstanceEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_RESET (typed): map={}",
         bot->GetName(), packet.MapID);
@@ -58,7 +59,7 @@ void ParseTypedInstanceResetFailed(WorldSession* session, WorldPackets::Instance
         packet.ResetFailedReason
     );
 
-    InstanceEventBus::instance()->PublishEvent(event);
+    EventBus<InstanceEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_RESET_FAILED (typed): map={}, reason={}",
         bot->GetName(), packet.MapID, packet.ResetFailedReason);
@@ -82,7 +83,7 @@ void ParseTypedInstanceEncounterEngageUnit(WorldSession* session, WorldPackets::
         packet.TargetFramePriority
     );
 
-    InstanceEventBus::instance()->PublishEvent(event);
+    EventBus<InstanceEvent>::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received INSTANCE_ENCOUNTER_ENGAGE_UNIT (typed): unit={}, priority={}",
         bot->GetName(), packet.Unit.ToString(), packet.TargetFramePriority);
@@ -120,7 +121,7 @@ void ParseTypedInstanceInfo(WorldSession* session, WorldPackets::Instance::Insta
             ::std::move(bossStates)
         );
 
-        InstanceEventBus::instance()->PublishEvent(event);
+        EventBus<InstanceEvent>::instance()->PublishEvent(event);
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_INFO (typed): {} locks",
@@ -143,7 +144,7 @@ void ParseTypedRaidGroupOnly(WorldSession* session, WorldPackets::Instance::Raid
         bot->GetGUID()
     );
 
-    InstanceEventBus::instance()->PublishEvent(event);
+    EventBus<InstanceEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received RAID_GROUP_ONLY (typed): delay={}, reason={}",
         bot->GetName(), packet.Delay, packet.Reason);
@@ -169,7 +170,7 @@ void ParseTypedInstanceSaveCreated(WorldSession* session, WorldPackets::Instance
         0  // Instance ID not in packet
     );
 
-    InstanceEventBus::instance()->PublishEvent(event);
+    EventBus<InstanceEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_SAVE_CREATED (typed): gm={}",
         bot->GetName(), packet.Gm);
@@ -193,7 +194,7 @@ void ParseTypedRaidInstanceMessage(WorldSession* session, WorldPackets::Instance
         ::std::string(packet.WarningMessage)
     );
 
-    InstanceEventBus::instance()->PublishEvent(event);
+    EventBus<InstanceEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received RAID_INSTANCE_MESSAGE (typed): map={}, type={}, msg={}",
         bot->GetName(), packet.MapID, packet.Type, packet.WarningMessage);

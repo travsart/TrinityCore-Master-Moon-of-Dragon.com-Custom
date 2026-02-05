@@ -99,7 +99,7 @@ bool BotLevelManager::Initialize()
     _verboseLogging.store(sPlayerbotConfig->GetBool("Playerbot.LevelManager.VerboseLogging", false), ::std::memory_order_release);
 
     // Reset statistics
-    _stats = LevelManagerStats();
+    _stats.Reset();
 
     _initialized.store(true, ::std::memory_order_release);
 
@@ -796,9 +796,9 @@ void BotLevelManager::QueueMainThreadTask(::std::shared_ptr<BotCreationTask> tas
     // No lock needed - level queue is per-bot instance data
     _mainThreadQueue.push(task);
 
-    _stats.currentQueueSize = static_cast<uint32>(_mainThreadQueue.size());
-    if (_stats.currentQueueSize > _stats.peakQueueSize)
-        _stats.peakQueueSize = _stats.currentQueueSize;
+    _stats.currentQueueSize.store(static_cast<uint32>(_mainThreadQueue.size()), ::std::memory_order_relaxed);
+    if (_stats.currentQueueSize.load(::std::memory_order_relaxed) > _stats.peakQueueSize.load(::std::memory_order_relaxed))
+        _stats.peakQueueSize.store(_stats.currentQueueSize.load(::std::memory_order_relaxed), ::std::memory_order_relaxed);
 }
 
 ::std::shared_ptr<BotCreationTask> BotLevelManager::DequeueTask()
@@ -810,7 +810,7 @@ void BotLevelManager::QueueMainThreadTask(::std::shared_ptr<BotCreationTask> tas
     auto task = _mainThreadQueue.front();
     _mainThreadQueue.pop();
 
-    _stats.currentQueueSize = static_cast<uint32>(_mainThreadQueue.size());
+    _stats.currentQueueSize.store(static_cast<uint32>(_mainThreadQueue.size()), ::std::memory_order_relaxed);
 
     return task;
 }
@@ -1091,40 +1091,40 @@ void BotLevelManager::PrintReport() const
     TC_LOG_INFO("playerbot", "BOT LEVEL MANAGER - FINAL REPORT");
     TC_LOG_INFO("playerbot", "====================================================================");
     TC_LOG_INFO("playerbot", "Creation Statistics:");
-    TC_LOG_INFO("playerbot", "  Tasks Submitted:     {}", _stats.totalTasksSubmitted);
-    TC_LOG_INFO("playerbot", "  Tasks Completed:     {}", _stats.totalTasksCompleted);
-    TC_LOG_INFO("playerbot", "  Tasks Failed:        {}", _stats.totalTasksFailed);
+    TC_LOG_INFO("playerbot", "  Tasks Submitted:     {}", _stats.totalTasksSubmitted.load());
+    TC_LOG_INFO("playerbot", "  Tasks Completed:     {}", _stats.totalTasksCompleted.load());
+    TC_LOG_INFO("playerbot", "  Tasks Failed:        {}", _stats.totalTasksFailed.load());
     TC_LOG_INFO("playerbot", "  Success Rate:        {:.1f}%",
-        _stats.totalTasksSubmitted > 0 ? (100.0f * _stats.totalTasksCompleted / _stats.totalTasksSubmitted) : 0.0f);
+        _stats.totalTasksSubmitted.load() > 0 ? (100.0f * _stats.totalTasksCompleted.load() / _stats.totalTasksSubmitted.load()) : 0.0f);
     TC_LOG_INFO("playerbot", "");
     TC_LOG_INFO("playerbot", "Queue Statistics:");
-    TC_LOG_INFO("playerbot", "  Current Queue:       {}", _stats.currentQueueSize);
-    TC_LOG_INFO("playerbot", "  Peak Queue:          {}", _stats.peakQueueSize);
+    TC_LOG_INFO("playerbot", "  Current Queue:       {}", _stats.currentQueueSize.load());
+    TC_LOG_INFO("playerbot", "  Peak Queue:          {}", _stats.peakQueueSize.load());
     TC_LOG_INFO("playerbot", "");
     TC_LOG_INFO("playerbot", "Performance:");
-    TC_LOG_INFO("playerbot", "  Avg Prep Time:       {}ms", _stats.averagePrepTimeMs);
-    TC_LOG_INFO("playerbot", "  Avg Apply Time:      {}ms", _stats.averageApplyTimeMs);
+    TC_LOG_INFO("playerbot", "  Avg Prep Time:       {}ms", _stats.averagePrepTimeMs.load());
+    TC_LOG_INFO("playerbot", "  Avg Apply Time:      {}ms", _stats.averageApplyTimeMs.load());
     TC_LOG_INFO("playerbot", "");
     TC_LOG_INFO("playerbot", "System Operations:");
-    TC_LOG_INFO("playerbot", "  Level-ups:           {}", _stats.totalLevelUps);
-    TC_LOG_INFO("playerbot", "  Gear Applied:        {}", _stats.totalGearApplications);
-    TC_LOG_INFO("playerbot", "  Talents Applied:     {}", _stats.totalTalentApplications);
-    TC_LOG_INFO("playerbot", "  Teleports:           {}", _stats.totalTeleports);
+    TC_LOG_INFO("playerbot", "  Level-ups:           {}", _stats.totalLevelUps.load());
+    TC_LOG_INFO("playerbot", "  Gear Applied:        {}", _stats.totalGearApplications.load());
+    TC_LOG_INFO("playerbot", "  Talents Applied:     {}", _stats.totalTalentApplications.load());
+    TC_LOG_INFO("playerbot", "  Teleports:           {}", _stats.totalTeleports.load());
     TC_LOG_INFO("playerbot", "");
     TC_LOG_INFO("playerbot", "Failures:");
-    TC_LOG_INFO("playerbot", "  Level-up Failures:   {}", _stats.levelUpFailures);
-    TC_LOG_INFO("playerbot", "  Gear Failures:       {}", _stats.gearFailures);
-    TC_LOG_INFO("playerbot", "  Talent Failures:     {}", _stats.talentFailures);
-    TC_LOG_INFO("playerbot", "  Teleport Failures:   {}", _stats.teleportFailures);
+    TC_LOG_INFO("playerbot", "  Level-up Failures:   {}", _stats.levelUpFailures.load());
+    TC_LOG_INFO("playerbot", "  Gear Failures:       {}", _stats.gearFailures.load());
+    TC_LOG_INFO("playerbot", "  Talent Failures:     {}", _stats.talentFailures.load());
+    TC_LOG_INFO("playerbot", "  Teleport Failures:   {}", _stats.teleportFailures.load());
     TC_LOG_INFO("playerbot", "====================================================================");
 }
 
 ::std::string BotLevelManager::GetSummary() const
 {
     ::std::ostringstream oss;
-    oss << "BotLevelManager: " << _stats.totalTasksCompleted << " bots created, "
-        << _stats.currentQueueSize << " queued, "
-        << _stats.averageApplyTimeMs << "ms avg";
+    oss << "BotLevelManager: " << _stats.totalTasksCompleted.load() << " bots created, "
+        << _stats.currentQueueSize.load() << " queued, "
+        << _stats.averageApplyTimeMs.load() << "ms avg";
     return oss.str();
 }
 

@@ -7,7 +7,6 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
-#include "Core/DI/Interfaces/IBotLifecycleManager.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <unordered_map>
@@ -15,6 +14,7 @@
 #include <chrono>
 #include <atomic>
 #include <mutex>
+#include <functional>
 
 class Player;
 
@@ -251,12 +251,32 @@ private:
 };
 
 /**
+ * Global statistics for all bots
+ */
+struct GlobalStats
+{
+    uint32 totalBots{0};
+    uint32 activeBots{0};
+    uint32 idleBots{0};
+    uint32 combatBots{0};
+    uint32 questingBots{0};
+    uint32 offlineBots{0};
+    uint64 totalCpuTime{0};
+    size_t totalMemoryUsage{0};
+    float averageUpdateTime{0.0f};
+    float avgAiUpdateTime{0.0f};           // Average AI update time in ms
+    uint32 totalActionsExecuted{0};
+    uint32 totalActionsPerSecond{0};       // Actions per second rate
+    uint32 totalEncounters{0};
+    float successRate{0.0f};
+};
+
+/**
  * Global Bot Lifecycle Manager
  *
- * Implements IBotLifecycleManager for dependency injection compatibility.
  * Manages all bot lifecycles in the system
  */
-class TC_GAME_API BotLifecycleManager final : public IBotLifecycleManager
+class TC_GAME_API BotLifecycleManager final 
 {
 public:
     explicit BotLifecycleManager(Player* bot);
@@ -272,25 +292,25 @@ public:
      * @param session The bot's session
      * @return Shared pointer to the lifecycle controller
      */
-    std::shared_ptr<BotLifecycle> CreateBotLifecycle(ObjectGuid botGuid, std::shared_ptr<BotSession> session) override;
+    std::shared_ptr<BotLifecycle> CreateBotLifecycle(ObjectGuid botGuid, std::shared_ptr<BotSession> session);
 
     /**
      * Remove a bot lifecycle
      * @param botGuid The bot's GUID
      */
-    void RemoveBotLifecycle(ObjectGuid botGuid) override;
+    void RemoveBotLifecycle(ObjectGuid botGuid);
 
     /**
      * Get a bot's lifecycle controller
      * @param botGuid The bot's GUID
      * @return Shared pointer to lifecycle, nullptr if not found
      */
-    std::shared_ptr<BotLifecycle> GetBotLifecycle(ObjectGuid botGuid) const override;
+    std::shared_ptr<BotLifecycle> GetBotLifecycle(ObjectGuid botGuid) const;
 
     /**
      * Get all active bot lifecycles
      */
-    std::vector<std::shared_ptr<BotLifecycle>> GetActiveLifecycles() const override;
+    std::vector<std::shared_ptr<BotLifecycle>> GetActiveLifecycles() const;
 
     // === Global Updates ===
 
@@ -298,46 +318,49 @@ public:
      * Update all bot lifecycles
      * @param diff Time since last update in milliseconds
      */
-    void UpdateAll(uint32 diff) override;
+    void UpdateAll(uint32 diff);
 
     /**
      * Stop all bots
      * @param immediate If true, stop immediately without cleanup
      */
-    void StopAll(bool immediate = false) override;
+    void StopAll(bool immediate = false);
 
     // === Statistics ===
-    // GlobalStats defined in IBotLifecycleManager.h interface
 
     /**
      * Get global statistics
      */
-    GlobalStats GetGlobalStats() const override;
+    GlobalStats GetGlobalStats() const;
 
     /**
      * Print performance report
      */
-    void PrintPerformanceReport() const override;
+    void PrintPerformanceReport() const;
 
     // === Configuration ===
 
     /**
      * Set maximum concurrent bot logins
      */
-    void SetMaxConcurrentLogins(uint32 max) override { _maxConcurrentLogins = max; }
+    void SetMaxConcurrentLogins(uint32 max) { _maxConcurrentLogins = max; }
 
     /**
      * Set bot update interval
      */
-    void SetUpdateInterval(uint32 intervalMs) override { _updateInterval = intervalMs; }
+    void SetUpdateInterval(uint32 intervalMs) { _updateInterval = intervalMs; }
 
     // === Event Broadcasting ===
 
     /**
+     * Lifecycle event handler callback type
+     */
+    using LifecycleEventHandler = std::function<void(ObjectGuid, BotLifecycleState, BotLifecycleState)>;
+
+    /**
      * Register for lifecycle events
      */
-    using LifecycleEventHandler = IBotLifecycleManager::LifecycleEventHandler;
-    void RegisterEventHandler(LifecycleEventHandler handler) override;
+    void RegisterEventHandler(LifecycleEventHandler handler);
 
 private:
     Player* _bot;

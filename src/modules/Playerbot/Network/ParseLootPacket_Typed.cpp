@@ -10,7 +10,8 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "../Loot/LootEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Loot/LootEvents.h"
 #include "LootPackets.h"
 #include "Log.h"
 
@@ -42,7 +43,7 @@ void ParseTypedLootResponse(WorldSession* session, WorldPackets::Loot::LootRespo
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_RESPONSE (typed): {} items, {} copper",
         bot->GetName(), packet.Items.size(), packet.Coins);
@@ -68,7 +69,7 @@ void ParseTypedLootReleaseResponse(WorldSession* session, WorldPackets::Loot::Lo
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_RELEASE_RESPONSE (typed)",
         bot->GetName());
@@ -94,7 +95,7 @@ void ParseTypedLootRemoved(WorldSession* session, WorldPackets::Loot::LootRemove
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_REMOVED (typed): slot={}",
         bot->GetName(), packet.LootListID);
@@ -120,7 +121,7 @@ void ParseTypedLootMoneyNotify(WorldSession* session, WorldPackets::Loot::LootMo
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_MONEY_NOTIFY (typed): {} copper, soleLooter={}",
         bot->GetName(), packet.Money, packet.SoleLooter);
@@ -146,7 +147,7 @@ void ParseTypedStartLootRoll(WorldSession* session, WorldPackets::Loot::StartLoo
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::milliseconds(packet.RollTime);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received START_LOOT_ROLL (typed): item={} x{}",
         bot->GetName(), packet.Item.Loot.ItemID, packet.Item.Quantity);
@@ -172,7 +173,7 @@ void ParseTypedLootRoll(WorldSession* session, WorldPackets::Loot::LootRollBroad
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_ROLL (typed): player={}, rollType={}, roll={}",
         bot->GetName(), packet.Player.ToString(), static_cast<uint32>(packet.RollType), packet.Roll);
 }
@@ -197,7 +198,7 @@ void ParseTypedLootRollWon(WorldSession* session, WorldPackets::Loot::LootRollWo
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_ROLL_WON (typed): winner={}, item={}, roll={}",
         bot->GetName(), packet.Winner.ToString(), packet.Item.Loot.ItemID, packet.Roll);
@@ -223,7 +224,7 @@ void ParseTypedLootAllPassed(WorldSession* session, WorldPackets::Loot::LootAllP
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_ALL_PASSED (typed): item={}",
         bot->GetName(), packet.Item.Loot.ItemID);
@@ -249,7 +250,7 @@ void ParseTypedMasterLootCandidateList(WorldSession* session, WorldPackets::Loot
     event.timestamp = ::std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
-    LootEventBus::instance()->PublishEvent(event);
+    EventBus<LootEvent>::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received MASTER_LOOT_LIST (typed): {} candidates",
         bot->GetName(), packet.Players.size());

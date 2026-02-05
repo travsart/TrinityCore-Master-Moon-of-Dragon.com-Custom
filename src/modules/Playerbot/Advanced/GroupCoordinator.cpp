@@ -26,7 +26,8 @@
 #include "QuestDef.h"
 #include "SharedDefines.h"
 #include "Loot/Loot.h"
-#include "Group/GroupEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "Group/GroupEvents.h"
 #include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5C: Thread-safe helpers
 #include <algorithm>
 

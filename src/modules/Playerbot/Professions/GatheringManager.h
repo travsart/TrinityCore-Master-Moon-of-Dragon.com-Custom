@@ -573,18 +573,18 @@ namespace Playerbot
          * @brief Main update method called every 1 second
          * @param elapsed Time since last update in milliseconds
          */
-        void OnUpdate(uint32 elapsed) override;
+        void OnUpdate(uint32 elapsed);
 
         /**
          * @brief Initialize manager on first update
          * @return true if initialization successful, false to retry
          */
-        bool OnInitialize() override;
+        bool OnInitialize();
 
         /**
          * @brief Cleanup on shutdown
          */
-        void OnShutdown() override;
+        void OnShutdown();
 
     private:
         // ========================================================================

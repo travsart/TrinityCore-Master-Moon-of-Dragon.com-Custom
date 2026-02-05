@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "Core/DI/Interfaces/IConfigManager.h"
 #include <unordered_map>
 #include <string>
 
@@ -30,7 +29,7 @@ namespace Playerbot::Testing
  * Provides a simple in-memory configuration store for testing
  * without file I/O or complex validation logic.
  */
-class MockConfigManager final : public IConfigManager
+class MockConfigManager final 
 {
 public:
     MockConfigManager() : _initialized(false) {}

@@ -164,7 +164,7 @@ public:
     /**
      * @brief Destructor - ensures cleanup
      */
-    ~CombatStateManager() override;
+    ~CombatStateManager();
 
     // ========================================================================
     // BEHAVIORMANAGER INTERFACE
@@ -182,7 +182,7 @@ public:
      * @return true if initialization successful, false otherwise
      * @throws None - logs error if EventDispatcher unavailable
      */
-    bool OnInitialize() override;
+    bool OnInitialize();
 
     /**
      * @brief Shutdown the manager and unsubscribe from all events
@@ -193,7 +193,7 @@ public:
      *
      * @note Always safe to call multiple times (idempotent)
      */
-    void OnShutdown() override;
+    void OnShutdown();
 
     /**
      * @brief Update method (required by BehaviorManager)
@@ -204,7 +204,7 @@ public:
      *
      * @param elapsed Time elapsed since last update in milliseconds
      */
-    void OnUpdate(uint32 elapsed) override;
+    void OnUpdate(uint32 elapsed);
 
     /**
      * @brief Handle incoming DAMAGE_TAKEN events
@@ -237,13 +237,13 @@ public:
      * @note This method is called on the main thread (EventDispatcher guarantees)
      * @note Performance: <50 microseconds typical execution time
      */
-    void OnEventInternal(Events::BotEvent const& event) override;
+    void OnEventInternal(Events::BotEvent const& event);
 
     /**
      * @brief Get manager identifier for logging
      * @return "CombatStateManager"
      */
-    ::std::string GetManagerId() const override;
+    ::std::string GetManagerId() const;
 
     // ========================================================================
     // STATISTICS & MONITORING

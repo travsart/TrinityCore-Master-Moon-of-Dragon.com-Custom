@@ -40,8 +40,8 @@ namespace Test
 class GroupFunctionalityTests : public ::testing::Test
 {
 protected:
-    void SetUp() override;
-    void TearDown() override;
+    void SetUp();
+    void TearDown();
 
     // Test environment and utilities
     TestEnvironment* m_env;
@@ -92,7 +92,7 @@ private:
 class GroupInvitationTests : public GroupFunctionalityTests
 {
 protected:
-    void SetUp() override;
+    void SetUp();
 
     // Invitation-specific helpers
     void SendGroupInvitation(const ::std::string& leaderName, const ::std::string& targetName);
@@ -107,7 +107,7 @@ protected:
 class LeaderFollowTests : public GroupFunctionalityTests
 {
 protected:
-    void SetUp() override;
+    void SetUp();
 
     // Following-specific helpers
     void MoveLeaderToPosition(const Position& destination);
@@ -124,7 +124,7 @@ protected:
 class GroupCombatTests : public GroupFunctionalityTests
 {
 protected:
-    void SetUp() override;
+    void SetUp();
 
     // Combat-specific helpers
     void EngageTarget(const ObjectGuid& targetGuid);
@@ -142,7 +142,7 @@ protected:
 class GroupPerformanceTests : public GroupFunctionalityTests
 {
 protected:
-    void SetUp() override;
+    void SetUp();
 
     // Performance test methods
     void TestMemoryUsageUnderLoad();
@@ -159,7 +159,7 @@ protected:
 class GroupStressTests : public GroupFunctionalityTests
 {
 protected:
-    void SetUp() override;
+    void SetUp();
 
     // Stress test scenarios
     void TestMultipleGroupsConcurrency();
@@ -181,7 +181,7 @@ private:
 class GroupEdgeCaseTests : public GroupFunctionalityTests
 {
 protected:
-    void SetUp() override;
+    void SetUp();
 
     // Edge case scenarios
     void TestLeaderDisconnection();

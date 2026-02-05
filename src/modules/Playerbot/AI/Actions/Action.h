@@ -10,7 +10,6 @@
 #pragma once
 
 #include "Define.h"
-#include "../../Core/DI/Interfaces/IActionFactory.h"
 #include "G3D/Vector3.h"
 #include <memory>
 #include <string>
@@ -138,8 +137,8 @@ class TC_GAME_API MovementAction : public Action
 public:
     MovementAction(::std::string const& name) : Action(name) {}
 
-    virtual bool IsPossible(BotAI* ai) const override;
-    virtual ActionResult Execute(BotAI* ai, ActionContext const& context) override;
+    virtual bool IsPossible(BotAI* ai) const;
+    virtual ActionResult Execute(BotAI* ai, ActionContext const& context);
 
     // Movement-specific methods
     virtual bool GeneratePath(BotAI* ai, float x, float y, float z);
@@ -158,7 +157,7 @@ class TC_GAME_API CombatAction : public Action
 public:
     CombatAction(::std::string const& name) : Action(name) {}
 
-    virtual bool IsUseful(BotAI* ai) const override;
+    virtual bool IsUseful(BotAI* ai) const;
 
     // Combat-specific methods
     virtual float GetThreat(BotAI* /*ai*/) const { return 0.0f; }
@@ -174,9 +173,9 @@ public:
     SpellAction(::std::string const& name, uint32 spellId)
         : CombatAction(name), _spellId(spellId) {}
 
-    virtual bool IsPossible(BotAI* ai) const override;
-    virtual bool IsUseful(BotAI* ai) const override;
-    virtual ActionResult Execute(BotAI* ai, ActionContext const& context) override;
+    virtual bool IsPossible(BotAI* ai) const;
+    virtual bool IsUseful(BotAI* ai) const;
+    virtual ActionResult Execute(BotAI* ai, ActionContext const& context);
 
     uint32 GetSpellId() const { return _spellId; }
 
@@ -185,7 +184,7 @@ protected:
 };
 
 // Action factory
-class TC_GAME_API ActionFactory final : public IActionFactory
+class TC_GAME_API ActionFactory final
 {
     ActionFactory() = default;
     ~ActionFactory() = default;
@@ -197,17 +196,17 @@ public:
 
     // Action registration
     void RegisterAction(::std::string const& name,
-                       ::std::function<::std::shared_ptr<Action>()> creator) override;
+                       ::std::function<::std::shared_ptr<Action>()> creator);
 
     // Action creation
-    ::std::shared_ptr<Action> CreateAction(::std::string const& name) override;
-    ::std::vector<::std::shared_ptr<Action>> CreateClassActions(uint8 classId, uint8 spec) override;
-    ::std::vector<::std::shared_ptr<Action>> CreateCombatActions(uint8 classId) override;
-    ::std::vector<::std::shared_ptr<Action>> CreateMovementActions() override;
+    ::std::shared_ptr<Action> CreateAction(::std::string const& name);
+    ::std::vector<::std::shared_ptr<Action>> CreateClassActions(uint8 classId, uint8 spec);
+    ::std::vector<::std::shared_ptr<Action>> CreateCombatActions(uint8 classId);
+    ::std::vector<::std::shared_ptr<Action>> CreateMovementActions();
 
     // Available actions
-    ::std::vector<::std::string> GetAvailableActions() const override;
-    bool HasAction(::std::string const& name) const override;
+    ::std::vector<::std::string> GetAvailableActions() const;
+    bool HasAction(::std::string const& name) const;
 
 private:
     ::std::unordered_map<::std::string, ::std::function<::std::shared_ptr<Action>()>> _creators;

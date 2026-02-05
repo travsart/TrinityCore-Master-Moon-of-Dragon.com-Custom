@@ -14,7 +14,6 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Battleground.h"
-#include "../Core/DI/Interfaces/IBGBotManager.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -40,7 +39,7 @@ namespace Playerbot
  *
  * Thread-safe singleton implementation using Meyer's singleton pattern.
  */
-class TC_GAME_API BGBotManager final : public IBGBotManager
+class TC_GAME_API BGBotManager final
 {
 private:
     BGBotManager();
@@ -60,26 +59,26 @@ public:
     // IBGBotManager INTERFACE
     // ============================================================================
 
-    void Initialize() override;
-    void Shutdown() override;
-    void Update(uint32 diff) override;
+    void Initialize();
+    void Shutdown();
+    void Update(uint32 diff);
 
     void OnPlayerJoinQueue(Player* player, BattlegroundTypeId bgTypeId,
-                           BattlegroundBracketId bracket, bool asGroup) override;
-    void OnPlayerLeaveQueue(ObjectGuid playerGuid) override;
-    void OnInvitationReceived(ObjectGuid playerGuid, uint32 bgInstanceGuid) override;
-    void OnBattlegroundStart(Battleground* bg) override;
-    void OnBattlegroundEnd(Battleground* bg, Team winnerTeam) override;
+                           BattlegroundBracketId bracket, bool asGroup);
+    void OnPlayerLeaveQueue(ObjectGuid playerGuid);
+    void OnInvitationReceived(ObjectGuid playerGuid, uint32 bgInstanceGuid);
+    void OnBattlegroundStart(Battleground* bg);
+    void OnBattlegroundEnd(Battleground* bg, Team winnerTeam);
 
     uint32 PopulateQueue(ObjectGuid playerGuid, BattlegroundTypeId bgTypeId,
                          BattlegroundBracketId bracket,
-                         uint32 neededAlliance, uint32 neededHorde) override;
+                         uint32 neededAlliance, uint32 neededHorde);
 
-    bool IsBotQueued(ObjectGuid botGuid) const override;
-    void GetStatistics(uint32& totalQueued, uint32& totalAssignments) const override;
-    void SetEnabled(bool enable) override;
-    bool IsEnabled() const override { return _enabled; }
-    void CleanupStaleAssignments() override;
+    bool IsBotQueued(ObjectGuid botGuid) const;
+    void GetStatistics(uint32& totalQueued, uint32& totalAssignments) const;
+    void SetEnabled(bool enable);
+    bool IsEnabled() const { return _enabled; }
+    void CleanupStaleAssignments();
 
     // ============================================================================
     // ADDITIONAL METHODS

@@ -34,36 +34,36 @@ class CTFScriptBase : public BGScriptBase
 {
 public:
     CTFScriptBase() = default;
-    ~CTFScriptBase() override = default;
+    virtual ~CTFScriptBase() = default;
 
     // ========================================================================
-    // IBGScript overrides - CTF specific
+    // CTF specific
     // ========================================================================
 
-    bool IsCTF() const override { return true; }
+    virtual bool IsCTF() const { return true; }
 
     // Default CTF values
-    uint32 GetMaxScore() const override { return 3; }
-    uint32 GetMaxDuration() const override { return 25 * MINUTE * IN_MILLISECONDS; }
-    uint8 GetTeamSize() const override { return 10; }
+    virtual uint32 GetMaxScore() const { return 3; }
+    virtual uint32 GetMaxDuration() const { return 25 * MINUTE * IN_MILLISECONDS; }
+    virtual uint8 GetTeamSize() const { return 10; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator) override;
-    void OnUpdate(uint32 diff) override;
+    void OnLoad(BattlegroundCoordinator* coordinator);
+    void OnUpdate(uint32 diff);
 
     // ========================================================================
     // CTF-SPECIFIC IMPLEMENTATIONS
     // ========================================================================
 
     std::vector<Position> GetEscortFormation(
-        const Position& fcPos, uint8 escortCount) const override;
+        const Position& fcPos, uint8 escortCount) const;
 
-    std::vector<Position> GetFlagRoomPositions(uint32 faction) const override;
+    std::vector<Position> GetFlagRoomPositions(uint32 faction) const;
 
-    uint32 GetFlagDebuffSpellId(uint8 stackCount) const override;
+    uint32 GetFlagDebuffSpellId(uint8 stackCount) const;
 
     // ========================================================================
     // STRATEGY - CTF overrides
@@ -72,27 +72,27 @@ public:
     RoleDistribution GetRecommendedRoles(
         const StrategicDecision& decision,
         float scoreAdvantage,
-        uint32 timeRemaining) const override;
+        uint32 timeRemaining) const;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const override;
+        uint32 totalObjectives, uint32 timeRemaining) const;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const override;
+        BGObjectiveState state, uint32 faction) const;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
-        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
+        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const;
 
     // ========================================================================
     // EVENT HANDLING
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event) override;
-    void OnMatchStart() override;
+    void OnEvent(const BGScriptEventData& event);
+    void OnMatchStart();
 
 protected:
     // ========================================================================

@@ -8,7 +8,8 @@
  */
 
 #include "GroupEventHandler.h"
-#include "GroupEventBus.h"
+#include "Core/Events/GenericEventBus.h"
+#include "GroupEvents.h"
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
@@ -787,7 +788,7 @@ void GroupEventHandlerFactory::RegisterHandlers(::std::vector<::std::unique_ptr<
     for (auto const& handler : handlers)
     {
         auto eventTypes = handler->GetSubscribedEvents();
-        GroupEventBus::instance()->Subscribe(botAI, eventTypes);
+        EventBus<GroupEvent>::instance()->Subscribe(botAI, eventTypes);
 
         TC_LOG_DEBUG("playerbot.group", "Registered handler '{}' for {} event types",
             handler->GetHandlerName(), eventTypes.size());
@@ -801,7 +802,7 @@ void GroupEventHandlerFactory::UnregisterHandlers(BotAI* botAI)
     if (!botAI)
         return;
 
-    GroupEventBus::instance()->Unsubscribe(botAI);
+    EventBus<GroupEvent>::instance()->Unsubscribe(botAI);
 
     TC_LOG_INFO("playerbot.group", "Unregistered all event handlers for bot");
 }
