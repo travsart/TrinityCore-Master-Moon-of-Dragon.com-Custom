@@ -327,13 +327,15 @@ public:
      * @param bracketLevel Level bracket
      * @param allianceNeeded Alliance bots needed
      * @param hordeNeeded Horde bots needed
+     * @param humanPlayerGuid Human player GUID for BG invitation tracking
      * @return BGAssignment with both faction bot lists
      */
     BGAssignment AssignForBattleground(
         uint32 bgTypeId,
         uint32 bracketLevel,
         uint32 allianceNeeded,
-        uint32 hordeNeeded);
+        uint32 hordeNeeded,
+        ObjectGuid humanPlayerGuid = ObjectGuid::Empty);
 
     /**
      * @brief Assign bots for arena
@@ -655,9 +657,11 @@ private:
      * @param contentId Content ID
      * @param type Instance type
      * @param targetLevel Target level for the bot (player's level to match)
+     * @param humanPlayerGuid Human player GUID for BG invitation tracking (optional)
      * @return true if assignment succeeded
      */
-    bool AssignBot(ObjectGuid botGuid, uint32 instanceId, uint32 contentId, InstanceType type, uint32 targetLevel);
+    bool AssignBot(ObjectGuid botGuid, uint32 instanceId, uint32 contentId, InstanceType type, uint32 targetLevel,
+                   ObjectGuid humanPlayerGuid = ObjectGuid::Empty);
 
     // ========================================================================
     // INTERNAL METHODS - ReadyIndex Management

@@ -72,11 +72,11 @@ struct DiscoveredPOI
  *   BGPositionDiscovery discovery(battleground);
  *   discovery.Initialize();
  *
- *   // Discover orbs dynamically
- *   auto orbPOIs = discovery.DiscoverGameObjects({212093, 212094, 212095, 212096}, "Orb");
+ *   // Discover orbs dynamically (ToK orb entries: Blue=212091, Purple=212092, Green=212093, Orange=212094)
+ *   auto orbPOIs = discovery.DiscoverGameObjects({212091, 212092, 212093, 212094}, "Orb");
  *
  *   // Validate and correct a position
- *   Position targetPos(1784.58f, 1200.85f, 29.31f, 0.0f);
+ *   Position targetPos(1850.17f, 1250.12f, 13.21f, 0.0f);  // Orange orb position
  *   auto validation = discovery.ValidatePosition(someBot, targetPos);
  *   if (validation.isReachable)
  *       MoveToPosition(bot, validation.correctedPosition);

@@ -46,34 +46,36 @@ namespace Orbs
 
 // ============================================================================
 // ORB POSITIONS (Corner spawns)
+// CRITICAL: These must match TrinityCore's battleground_temple_of_kotmogu.cpp
+// The Z level is ~13 (arena floor), NOT 29 (some elevated area)
 // ============================================================================
 
-constexpr float ORANGE_ORB_X = 1784.58f;
-constexpr float ORANGE_ORB_Y = 1200.85f;
-constexpr float ORANGE_ORB_Z = 29.31f;
+constexpr float ORANGE_ORB_X = 1850.1666f;
+constexpr float ORANGE_ORB_Y = 1250.1180f;
+constexpr float ORANGE_ORB_Z = 13.2056f;
 constexpr float ORANGE_ORB_O = 3.93f;  // Facing center
 
-constexpr float BLUE_ORB_X = 1784.58f;
-constexpr float BLUE_ORB_Y = 1374.95f;
-constexpr float BLUE_ORB_Z = 29.31f;
+constexpr float BLUE_ORB_X = 1716.9479f;
+constexpr float BLUE_ORB_Y = 1250.0173f;
+constexpr float BLUE_ORB_Z = 13.3266f;
 constexpr float BLUE_ORB_O = 5.50f;  // Facing center
 
-constexpr float GREEN_ORB_X = 1680.28f;
-constexpr float GREEN_ORB_Y = 1200.85f;
-constexpr float GREEN_ORB_Z = 29.31f;
+constexpr float GREEN_ORB_X = 1716.8923f;
+constexpr float GREEN_ORB_Y = 1416.6180f;
+constexpr float GREEN_ORB_Z = 13.2056f;
 constexpr float GREEN_ORB_O = 0.79f;  // Facing center
 
-constexpr float PURPLE_ORB_X = 1680.28f;
-constexpr float PURPLE_ORB_Y = 1374.95f;
-constexpr float PURPLE_ORB_Z = 29.31f;
+constexpr float PURPLE_ORB_X = 1850.2170f;
+constexpr float PURPLE_ORB_Y = 1416.8229f;
+constexpr float PURPLE_ORB_Z = 13.3382f;
 constexpr float PURPLE_ORB_O = 2.36f;  // Facing center
 
 // Array for iteration
 constexpr float ORB_POSITIONS[][4] = {
-    { ORANGE_ORB_X, ORANGE_ORB_Y, ORANGE_ORB_Z, ORANGE_ORB_O },  // Orange - NE
-    { BLUE_ORB_X, BLUE_ORB_Y, BLUE_ORB_Z, BLUE_ORB_O },          // Blue - NW
-    { GREEN_ORB_X, GREEN_ORB_Y, GREEN_ORB_Z, GREEN_ORB_O },      // Green - SE
-    { PURPLE_ORB_X, PURPLE_ORB_Y, PURPLE_ORB_Z, PURPLE_ORB_O }   // Purple - SW
+    { ORANGE_ORB_X, ORANGE_ORB_Y, ORANGE_ORB_Z, ORANGE_ORB_O },  // Orange
+    { BLUE_ORB_X, BLUE_ORB_Y, BLUE_ORB_Z, BLUE_ORB_O },          // Blue
+    { GREEN_ORB_X, GREEN_ORB_Y, GREEN_ORB_Z, GREEN_ORB_O },      // Green
+    { PURPLE_ORB_X, PURPLE_ORB_Y, PURPLE_ORB_Z, PURPLE_ORB_O }   // Purple
 };
 
 inline Position GetOrbPosition(uint32 orbId)
@@ -476,11 +478,11 @@ namespace WorldStates
 
 namespace GameObjects
 {
-    // Orb objects
-    constexpr uint32 ORANGE_ORB = 212093;
-    constexpr uint32 BLUE_ORB = 212094;
-    constexpr uint32 GREEN_ORB = 212095;
-    constexpr uint32 PURPLE_ORB = 212096;
+    // Orb objects - MUST match TrinityCore's battleground_temple_of_kotmogu.cpp
+    constexpr uint32 BLUE_ORB = 212091;
+    constexpr uint32 PURPLE_ORB = 212092;
+    constexpr uint32 GREEN_ORB = 212093;
+    constexpr uint32 ORANGE_ORB = 212094;
 
     // Doors
     constexpr uint32 ALLIANCE_DOOR = 212686;

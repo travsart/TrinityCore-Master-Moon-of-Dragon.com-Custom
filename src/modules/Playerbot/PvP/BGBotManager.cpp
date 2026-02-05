@@ -269,23 +269,22 @@ void BGBotManager::OnInvitationReceived(ObjectGuid playerGuid, uint32 bgInstance
     // ========================================================================
     // BOT BG INVITATION ACCEPTANCE
     // ========================================================================
-    // DO NOT call bg->AddPlayer() here! At invitation time, the BG map doesn't
-    // exist yet. AddPlayer() requires GetBgMap() which asserts m_Map != nullptr.
+    // IMPORTANT: This hook is called from within BattlegroundQueue::InviteGroupToBG
+    // which is iterating over the queue. We MUST NOT modify any queue data structures
+    // here or call functions that do, as this would corrupt the iterator.
     //
-    // The correct flow is:
-    // 1. Bot receives invitation (here) - just record it, don't add to BG
-    // 2. BG becomes ready to start - BattlegroundMgr creates the map
-    // 3. Bot teleports in via SendToBattleground()
-    // 4. AddPlayer() is called in HandleMoveWorldPortAck() when bot arrives
-    //
-    // For bots, we auto-teleport them when the BG actually starts via
-    // OnBattlegroundStart() callback, which is when the map exists.
+    // Instead, we just record the invitation. The bot will be teleported when:
+    // 1. OnBattlegroundStart() is called (BG transitions to IN_PROGRESS)
+    // 2. Or via the Update() loop which processes pending teleports
     // ========================================================================
-    if (Player* bot = ObjectAccessor::FindPlayer(playerGuid))
-    {
-        TC_LOG_INFO("module.playerbot.bg", "BGBotManager::OnInvitationReceived - Bot {} recorded invitation for BG {} (will teleport when BG starts)",
-                     bot->GetName(), bgInstanceGuid);
-    }
+
+    // Mark that this bot needs to teleport when the BG is ready
+    itr->second.needsTeleport = true;
+
+    TC_LOG_INFO("module.playerbot.bg",
+        "BGBotManager::OnInvitationReceived - Bot {} invitation recorded for BG {} (will teleport when safe)",
+        ObjectAccessor::FindPlayer(playerGuid) ? ObjectAccessor::FindPlayer(playerGuid)->GetName() : "unknown",
+        bgInstanceGuid);
 }
 
 void BGBotManager::OnBattlegroundStart(Battleground* bg)
@@ -482,6 +481,9 @@ void BGBotManager::OnBattlegroundEnd(Battleground* bg, Team winnerTeam)
         }
         _bgInstanceBots.erase(itr);
     }
+
+    // Cleanup human entry time tracking
+    _bgHumanEntryTime.erase(bgInstanceGuid);
 }
 
 // ============================================================================
@@ -788,6 +790,27 @@ bool BGBotManager::QueueBotForBGWithTracking(Player* bot, BattlegroundTypeId bgT
     BOT_TRACK_SUCCESS(BotOperationCategory::BG_QUEUE, "BGBotManager::QueueBotForBGWithTracking", bot->GetGUID());
 
     return true;
+}
+
+ObjectGuid BGBotManager::GetQueuedHumanForBG(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket) const
+{
+    std::lock_guard lock(_mutex);
+
+    for (auto const& [humanGuid, info] : _humanPlayers)
+    {
+        if (info.bgTypeId == bgTypeId && info.bracket == bracket)
+        {
+            TC_LOG_DEBUG("module.playerbot.bg",
+                "GetQueuedHumanForBG: Found human {} queued for BG type {} bracket {}",
+                humanGuid.ToString(), static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
+            return humanGuid;
+        }
+    }
+
+    TC_LOG_DEBUG("module.playerbot.bg",
+        "GetQueuedHumanForBG: No human found queued for BG type {} bracket {}",
+        static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
+    return ObjectGuid::Empty;
 }
 
 void BGBotManager::CalculateNeededBots(BattlegroundTypeId bgTypeId, Team humanTeam,
@@ -1233,6 +1256,57 @@ void BGBotManager::ProcessPendingInvitations()
                 TC_LOG_WARN("module.playerbot.bg",
                     "ProcessPendingInvitations - Bot {} invited to BG instance {} but BG not found",
                     bot->GetName(), ginfo.IsInvitedToBGInstanceGUID);
+                continue;
+            }
+
+            // ================================================================
+            // CHECK: Wait for human player to enter BG first
+            // ================================================================
+            // Bots should only teleport after a human has entered the BG and
+            // a delay has passed. This ensures the BG is ready and mimics
+            // natural player behavior.
+            // ================================================================
+            uint32 bgInstanceId = bg->GetInstanceID();
+
+            // Check if any human player is in this BG
+            bool humanInBG = false;
+            for (auto const& playerPair : bg->GetPlayers())
+            {
+                Player* bgPlayer = ObjectAccessor::FindPlayer(playerPair.first);
+                if (bgPlayer && !PlayerBotHooks::IsPlayerBot(bgPlayer))
+                {
+                    humanInBG = true;
+                    break;
+                }
+            }
+
+            if (!humanInBG)
+            {
+                // No human in BG yet - skip for now
+                TC_LOG_DEBUG("module.playerbot.bg",
+                    "ProcessPendingInvitations - Bot {} waiting for human to enter BG {} first",
+                    bot->GetName(), bgInstanceId);
+                continue;
+            }
+
+            // Human is in BG - track entry time if not already
+            auto humanEntryItr = _bgHumanEntryTime.find(bgInstanceId);
+            if (humanEntryItr == _bgHumanEntryTime.end())
+            {
+                _bgHumanEntryTime[bgInstanceId] = GameTime::GetGameTimeMS();
+                humanEntryItr = _bgHumanEntryTime.find(bgInstanceId);
+                TC_LOG_INFO("module.playerbot.bg",
+                    "ProcessPendingInvitations - Human detected in BG {}, bots will teleport in {} seconds",
+                    bgInstanceId, BOT_TELEPORT_DELAY / IN_MILLISECONDS);
+            }
+
+            uint32 timeSinceHumanEntry = GameTime::GetGameTimeMS() - humanEntryItr->second;
+            if (timeSinceHumanEntry < BOT_TELEPORT_DELAY)
+            {
+                // Delay hasn't passed yet - skip for now
+                TC_LOG_DEBUG("module.playerbot.bg",
+                    "ProcessPendingInvitations - Bot {} waiting for teleport delay ({}/{}ms)",
+                    bot->GetName(), timeSinceHumanEntry, BOT_TELEPORT_DELAY);
                 continue;
             }
 

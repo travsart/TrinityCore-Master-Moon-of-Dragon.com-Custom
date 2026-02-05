@@ -599,6 +599,24 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
     GetBracketLevelRange(static_cast<PoolBracket>(snapshot.bracketId), minLevel, maxLevel);
     uint32 bracketLevel = (minLevel + maxLevel) / 2;
 
+    // CRITICAL FIX (2026-02-05): Get the human player that triggered this BG queue
+    // This is required for proper BG invitation tracking - warm pool bots need to
+    // use QueueBotForBGWithTracking instead of QueueBotForBG so they appear in
+    // _queuedBots and can auto-accept invitations via ProcessPendingInvitations.
+    ObjectGuid humanPlayerGuid = sBGBotManager->GetQueuedHumanForBG(
+        snapshot.bgTypeId, snapshot.bracketId);
+
+    if (!humanPlayerGuid.IsEmpty())
+    {
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: Found human player {} for BG queue tracking",
+            humanPlayerGuid.ToString());
+    }
+    else
+    {
+        TC_LOG_WARN("playerbot.jit", "QueueStatePoller: No human player found for BG type {} bracket {} - bots may not receive invitations",
+            static_cast<uint32>(snapshot.bgTypeId), static_cast<uint32>(snapshot.bracketId));
+    }
+
     if (allianceStillNeeded > 0 || hordeStillNeeded > 0)
     {
         // Try to get bots from the warm pool
@@ -606,7 +624,8 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
             static_cast<uint32>(snapshot.bgTypeId),
             bracketLevel,
             allianceStillNeeded,
-            hordeStillNeeded
+            hordeStillNeeded,
+            humanPlayerGuid  // Pass human GUID for invitation tracking
         );
 
         if (poolAssignment.success)

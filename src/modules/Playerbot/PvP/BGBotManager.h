@@ -124,6 +124,17 @@ public:
     bool QueueBotForBGWithTracking(Player* bot, BattlegroundTypeId bgTypeId,
                                     BattlegroundBracketId bracket, ObjectGuid humanPlayerGuid);
 
+    /**
+     * @brief Get the first human player queued for a specific BG type and bracket
+     * @param bgTypeId The battleground type
+     * @param bracket The BG bracket
+     * @return Human player GUID if found, otherwise Empty
+     *
+     * Used by QueueStatePoller/InstanceBotPool to associate warm pool bots
+     * with the human player that triggered the queue (for invitation tracking).
+     */
+    ObjectGuid GetQueuedHumanForBG(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket) const;
+
 private:
     // ============================================================================
     // HELPER METHODS
@@ -200,13 +211,14 @@ private:
         Team team;                       ///< Faction
         time_t queueTime;                ///< When queued
         uint32 bgInstanceGuid;           ///< BG instance if invited
+        bool needsTeleport;              ///< True if bot received invitation and needs teleport
 
         BotQueueInfo() : bgTypeId(BATTLEGROUND_TYPE_NONE), team(TEAM_OTHER),
-                         queueTime(0), bgInstanceGuid(0) {}
+                         queueTime(0), bgInstanceGuid(0), needsTeleport(false) {}
 
         BotQueueInfo(ObjectGuid humanGuid, BattlegroundTypeId bgType, Team t)
             : humanPlayerGuid(humanGuid), bgTypeId(bgType), team(t),
-              queueTime(time(nullptr)), bgInstanceGuid(0) {}
+              queueTime(time(nullptr)), bgInstanceGuid(0), needsTeleport(false) {}
     };
 
     /**
@@ -243,6 +255,9 @@ private:
     /// Map of BG instance GUID -> set of bot GUIDs
     std::unordered_map<uint32, std::unordered_set<ObjectGuid>> _bgInstanceBots;
 
+    /// Map of BG instance GUID -> time when first human entered (for delayed bot teleport)
+    std::unordered_map<uint32, uint32> _bgHumanEntryTime;
+
     /// Whether the system is enabled
     std::atomic<bool> _enabled;
 
@@ -257,6 +272,9 @@ private:
 
     /// Invitation check interval (1 second - frequent check for quick BG entry)
     static constexpr uint32 INVITATION_CHECK_INTERVAL = 1 * IN_MILLISECONDS;
+
+    /// Delay before bots teleport after human enters BG (5 seconds)
+    static constexpr uint32 BOT_TELEPORT_DELAY = 5 * IN_MILLISECONDS;
 
     /// Maximum queue time before considered stale (30 minutes)
     static constexpr time_t MAX_QUEUE_TIME = 30 * MINUTE;

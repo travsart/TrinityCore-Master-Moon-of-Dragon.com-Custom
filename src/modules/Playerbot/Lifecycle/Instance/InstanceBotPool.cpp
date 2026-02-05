@@ -899,7 +899,8 @@ std::vector<ObjectGuid> InstanceBotPool::AssignForRaid(
 
 BGAssignment InstanceBotPool::AssignForBattleground(
     uint32 bgTypeId, uint32 bracketLevel,
-    uint32 allianceNeeded, uint32 hordeNeeded)
+    uint32 allianceNeeded, uint32 hordeNeeded,
+    ObjectGuid humanPlayerGuid)
 {
     auto startTime = std::chrono::steady_clock::now();
 
@@ -992,17 +993,18 @@ BGAssignment InstanceBotPool::AssignForBattleground(
 
     // Assign all selected bots - this triggers async login via WarmUpBot
     // NOTE: Bots will NOT be immediately online after this! They need 1-2 seconds to log in.
+    // CRITICAL: Pass humanPlayerGuid so bots use QueueBotForBGWithTracking for proper invitation handling
     for (ObjectGuid guid : result.allianceBots)
     {
-        bool assigned = AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel);
-        TC_LOG_DEBUG("playerbot.pool", "AssignForBattleground: Alliance bot {} assign result: {} (async login started)",
-            guid.ToString(), assigned);
+        bool assigned = AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel, humanPlayerGuid);
+        TC_LOG_DEBUG("playerbot.pool", "AssignForBattleground: Alliance bot {} assign result: {} (async login started, tracking human {})",
+            guid.ToString(), assigned, humanPlayerGuid.ToString());
     }
     for (ObjectGuid guid : result.hordeBots)
     {
-        bool assigned = AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel);
-        TC_LOG_DEBUG("playerbot.pool", "AssignForBattleground: Horde bot {} assign result: {} (async login started)",
-            guid.ToString(), assigned);
+        bool assigned = AssignBot(guid, 0, bgTypeId, InstanceType::Battleground, bracketLevel, humanPlayerGuid);
+        TC_LOG_DEBUG("playerbot.pool", "AssignForBattleground: Horde bot {} assign result: {} (async login started, tracking human {})",
+            guid.ToString(), assigned, humanPlayerGuid.ToString());
     }
 
     // Record timing
@@ -1610,12 +1612,13 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     // stayed at level 1 because no pending config was registered.
     // ========================================================================
 
-    // Get slot info (accountId, target level, and queue info)
+    // Get slot info (accountId, target level, queue info, and human player for BG tracking)
     uint32 accountId = 0;
     uint32 targetLevel = 1;
     uint32 specId = 0;
     uint32 contentId = 0;
     InstanceType instanceType = InstanceType::Dungeon;
+    ObjectGuid humanPlayerGuid;  // For BG invitation tracking
     {
         std::shared_lock lock(_slotsMutex);
         auto it = _slots.find(botGuid);
@@ -1631,6 +1634,7 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
         // Get queue info set by AssignBot
         contentId = it->second.currentContentId;
         instanceType = it->second.currentInstanceType;
+        humanPlayerGuid = it->second.humanPlayerGuid;  // For BG invitation tracking
     }
 
     // ========================================================================
@@ -1742,6 +1746,7 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
     pendingConfig.specId = specId;
     pendingConfig.targetGearScore = targetLevel * 10;  // Approximate gear score based on level
     pendingConfig.createdAt = std::chrono::steady_clock::now();
+    pendingConfig.humanPlayerGuid = humanPlayerGuid;  // For BG invitation tracking
 
     // CRITICAL FIX: Set queue info so bot auto-queues for content after login
     // This fixes the issue where warm pool bots are "assigned" but never actually
@@ -1753,8 +1758,8 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
         {
             case InstanceType::Battleground:
                 pendingConfig.battlegroundIdToQueue = contentId;
-                TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Bot {} will queue for BG {} after login",
-                    botGuid.ToString(), contentId);
+                TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Bot {} will queue for BG {} after login (tracking human {})",
+                    botGuid.ToString(), contentId, humanPlayerGuid.ToString());
                 break;
             case InstanceType::Dungeon:
                 pendingConfig.dungeonIdToQueue = contentId;
@@ -1957,7 +1962,8 @@ std::vector<ObjectGuid> InstanceBotPool::SelectBots(BotRole role, Faction factio
 }
 
 bool InstanceBotPool::AssignBot(ObjectGuid botGuid, uint32 instanceId,
-                                 uint32 contentId, InstanceType type, uint32 targetLevel)
+                                 uint32 contentId, InstanceType type, uint32 targetLevel,
+                                 ObjectGuid humanPlayerGuid)
 {
     // ========================================================================
     // REFACTORED (2026-01-12): Pool bots login on-demand via BotSpawner
@@ -1966,6 +1972,10 @@ bool InstanceBotPool::AssignBot(ObjectGuid botGuid, uint32 instanceId,
     //
     // FIX (2026-01-15): Store targetLevel in slot so WarmUpBot can register
     // the correct level in pending configuration (not the bracket level).
+    //
+    // FIX (2026-02-05): Store humanPlayerGuid for BG invitation tracking.
+    // This allows WarmUpBot to pass it to BotPendingConfiguration so that
+    // QueueBotForBGWithTracking is used instead of QueueBotForBG.
     // ========================================================================
 
     {
@@ -1979,6 +1989,7 @@ bool InstanceBotPool::AssignBot(ObjectGuid botGuid, uint32 instanceId,
         it->second.currentInstanceId = instanceId;
         it->second.currentContentId = contentId;
         it->second.currentInstanceType = type;
+        it->second.humanPlayerGuid = humanPlayerGuid;  // For BG invitation tracking
 
         // FIX: Update slot.level to target level so WarmUpBot uses correct level
         // for pending configuration. Pool bots are created at bracket midpoint

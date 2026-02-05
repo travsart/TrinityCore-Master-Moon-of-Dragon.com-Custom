@@ -89,6 +89,7 @@ struct TC_GAME_API InstanceBotSlot
     InstanceType currentInstanceType = InstanceType::Dungeon; ///< Type of current instance
     uint32 reservationId = 0;           ///< Reservation ID if reserved (0 if not)
     uint32 assignmentCount = 0;         ///< Total lifetime assignments
+    ObjectGuid humanPlayerGuid;         ///< Human player this bot is associated with (for BG invitation tracking)
 
     // ========================================================================
     // PERFORMANCE METRICS
@@ -408,6 +409,7 @@ struct TC_GAME_API InstanceBotSlot
         currentInstanceType = InstanceType::Dungeon;
         reservationId = 0;
         assignmentCount = 0;
+        humanPlayerGuid = ObjectGuid::Empty;
         totalInstanceTime = 0;
         successfulCompletions = 0;
         earlyExits = 0;
