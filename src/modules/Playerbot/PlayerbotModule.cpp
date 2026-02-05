@@ -59,10 +59,25 @@
 #include "Update/ModuleUpdateManager.h"
 #include "Group/GroupEventBus.h"
 #include "Network/PlayerbotPacketSniffer.h"
+
+// Domain-Specific EventBus System
+#include "Core/Events/GenericEventBus.h"
+#include "Combat/CombatEvents.h"
+#include "Loot/LootEvents.h"
+#include "Quest/QuestEvents.h"
+#include "Aura/AuraEvents.h"
+#include "Cooldown/CooldownEvents.h"
+#include "Resource/ResourceEvents.h"
+#include "Social/SocialEvents.h"
+#include "Auction/AuctionEvents.h"
+#include "NPC/NPCEvents.h"
+#include "Instance/InstanceEvents.h"
+#include "Professions/ProfessionEvents.h"
 #include "Threading/BotActionManager.h"
 #include "AI/Coordination/Battleground/Scripts/BGScriptInit.h"
 #include "Log.h"
 #include "GitRevision.h"
+#include "GameTime.h"
 #include <chrono>
 
 // Module state - using inline static in header for DLL compatibility
@@ -414,77 +429,147 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     auto groupEventTime = std::chrono::duration_cast<std::chrono::microseconds>(t6 - lastTime).count();
     lastTime = t6;
 
+    // ========================================================================
+    // Process Domain EventBus Queues
+    // These EventBuses receive typed events from packet parsers and hooks,
+    // and dispatch them to subscribed BotAI instances via HandleEvent().
+    // Without ProcessEvents(), events accumulate in queues indefinitely.
+    // ========================================================================
+    uint32 totalDomainEvents = 0;
+    {
+        using namespace Playerbot;
+        totalDomainEvents += EventBus<CombatEvent>::instance()->ProcessEvents(50);
+        totalDomainEvents += EventBus<LootEvent>::instance()->ProcessEvents(50);
+        totalDomainEvents += EventBus<QuestEvent>::instance()->ProcessEvents(50);
+        totalDomainEvents += EventBus<AuraEvent>::instance()->ProcessEvents(30);
+        totalDomainEvents += EventBus<CooldownEvent>::instance()->ProcessEvents(30);
+        totalDomainEvents += EventBus<ResourceEvent>::instance()->ProcessEvents(30);
+        totalDomainEvents += EventBus<SocialEvent>::instance()->ProcessEvents(30);
+        totalDomainEvents += EventBus<AuctionEvent>::instance()->ProcessEvents(20);
+        totalDomainEvents += EventBus<NPCEvent>::instance()->ProcessEvents(30);
+        totalDomainEvents += EventBus<InstanceEvent>::instance()->ProcessEvents(20);
+        totalDomainEvents += EventBus<ProfessionEvent>::instance()->ProcessEvents(20);
+
+        if (totalDomainEvents > 0)
+        {
+            TC_LOG_DEBUG("module.playerbot.events",
+                "PlayerbotModule: Processed {} domain events this cycle", totalDomainEvents);
+        }
+    }
+    auto t7 = std::chrono::high_resolution_clock::now();
+    auto domainEventTime = std::chrono::duration_cast<std::chrono::microseconds>(t7 - lastTime).count();
+    lastTime = t7;
+
+    // ========================================================================
+    // Queue Health Monitoring (every 60 seconds)
+    // Diagnostic to verify events are being drained from all domain buses
+    // ========================================================================
+    {
+        static uint32 s_lastQueueReport = 0;
+        uint32 currentTime = GameTime::GetGameTimeMS();
+        if (currentTime - s_lastQueueReport > 60000)
+        {
+            s_lastQueueReport = currentTime;
+
+            using namespace Playerbot;
+            uint32 totalQueued = 0;
+            totalQueued += EventBus<CombatEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<LootEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<QuestEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<AuraEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<CooldownEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<ResourceEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<SocialEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<AuctionEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<NPCEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<InstanceEvent>::instance()->GetQueueSize();
+            totalQueued += EventBus<ProfessionEvent>::instance()->GetQueueSize();
+
+            if (totalQueued > 0)
+            {
+                TC_LOG_INFO("module.playerbot.events",
+                    "EventBus queue health: {} events pending across 11 domain buses", totalQueued);
+            }
+            else
+            {
+                TC_LOG_DEBUG("module.playerbot.events",
+                    "EventBus queue health: All domain buses clear (0 events pending)");
+            }
+        }
+    }
+
     // Update BotProtectionRegistry for periodic maintenance
     sBotProtectionRegistry->Update(diff);
-    auto t7 = std::chrono::high_resolution_clock::now();
-    auto protectionTime = std::chrono::duration_cast<std::chrono::microseconds>(t7 - lastTime).count();
-    lastTime = t7;
+    auto t8 = std::chrono::high_resolution_clock::now();
+    auto protectionTime = std::chrono::duration_cast<std::chrono::microseconds>(t8 - lastTime).count();
+    lastTime = t8;
 
     // Update BotRetirementManager for retirement queue processing
     sBotRetirementManager->Update(diff);
-    auto t8 = std::chrono::high_resolution_clock::now();
-    auto retirementTime = std::chrono::duration_cast<std::chrono::microseconds>(t8 - lastTime).count();
-    lastTime = t8;
+    auto t9 = std::chrono::high_resolution_clock::now();
+    auto retirementTime = std::chrono::duration_cast<std::chrono::microseconds>(t9 - lastTime).count();
+    lastTime = t9;
 
     // Update BracketFlowPredictor for flow tracking
     sBracketFlowPredictor->Update(diff);
-    auto t9 = std::chrono::high_resolution_clock::now();
-    auto predictionTime = std::chrono::duration_cast<std::chrono::microseconds>(t9 - lastTime).count();
-    lastTime = t9;
+    auto t10 = std::chrono::high_resolution_clock::now();
+    auto predictionTime = std::chrono::duration_cast<std::chrono::microseconds>(t10 - lastTime).count();
+    lastTime = t10;
 
     // Update PlayerActivityTracker for player location tracking
     sPlayerActivityTracker->Update(diff);
-    auto t10 = std::chrono::high_resolution_clock::now();
-    auto activityTime = std::chrono::duration_cast<std::chrono::microseconds>(t10 - lastTime).count();
-    lastTime = t10;
+    auto t11 = std::chrono::high_resolution_clock::now();
+    auto activityTime = std::chrono::duration_cast<std::chrono::microseconds>(t11 - lastTime).count();
+    lastTime = t11;
 
     // Update DemandCalculator for spawn demand analysis
     sDemandCalculator->Update(diff);
-    auto t11 = std::chrono::high_resolution_clock::now();
-    auto demandTime = std::chrono::duration_cast<std::chrono::microseconds>(t11 - lastTime).count();
-    lastTime = t11;
+    auto t12 = std::chrono::high_resolution_clock::now();
+    auto demandTime = std::chrono::duration_cast<std::chrono::microseconds>(t12 - lastTime).count();
+    lastTime = t12;
 
     // Update PopulationLifecycleController for lifecycle orchestration
     sPopulationLifecycleController->Update(diff);
-    auto t12 = std::chrono::high_resolution_clock::now();
-    auto lifecycleTime = std::chrono::duration_cast<std::chrono::microseconds>(t12 - lastTime).count();
-    lastTime = t12;
+    auto t13 = std::chrono::high_resolution_clock::now();
+    auto lifecycleTime = std::chrono::duration_cast<std::chrono::microseconds>(t13 - lastTime).count();
+    lastTime = t13;
 
     // Update Instance Bot Systems (Hybrid Warm Pool + Elastic Overflow)
     // These systems handle JIT bot creation for dungeons, raids, BGs, and arenas
     sInstanceBotPool->Update(diff);
-    auto t13 = std::chrono::high_resolution_clock::now();
-    auto instancePoolTime = std::chrono::duration_cast<std::chrono::microseconds>(t13 - lastTime).count();
-    lastTime = t13;
-
-    sInstanceBotOrchestrator->Update(diff);
     auto t14 = std::chrono::high_resolution_clock::now();
-    auto orchestratorTime = std::chrono::duration_cast<std::chrono::microseconds>(t14 - lastTime).count();
+    auto instancePoolTime = std::chrono::duration_cast<std::chrono::microseconds>(t14 - lastTime).count();
     lastTime = t14;
 
-    sJITBotFactory->Update(diff);
+    sInstanceBotOrchestrator->Update(diff);
     auto t15 = std::chrono::high_resolution_clock::now();
-    auto jitFactoryTime = std::chrono::duration_cast<std::chrono::microseconds>(t15 - lastTime).count();
+    auto orchestratorTime = std::chrono::duration_cast<std::chrono::microseconds>(t15 - lastTime).count();
     lastTime = t15;
+
+    sJITBotFactory->Update(diff);
+    auto t16 = std::chrono::high_resolution_clock::now();
+    auto jitFactoryTime = std::chrono::duration_cast<std::chrono::microseconds>(t16 - lastTime).count();
+    lastTime = t16;
 
     // Update Queue State Poller (JIT queue shortage detection)
     sQueueStatePoller->Update(diff);
-    auto t16 = std::chrono::high_resolution_clock::now();
-    auto queuePollerTime = std::chrono::duration_cast<std::chrono::microseconds>(t16 - lastTime).count();
+    auto t17 = std::chrono::high_resolution_clock::now();
+    auto queuePollerTime = std::chrono::duration_cast<std::chrono::microseconds>(t17 - lastTime).count();
 
     // Calculate total time
-    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t16 - timeStart).count();
+    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t17 - timeStart).count();
 
     // Log if total time exceeds 100ms
     if (totalUpdateTime > 100000) // 100ms in microseconds
     {
-        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms, Protection:{:.2f}ms, Retirement:{:.2f}ms, Prediction:{:.2f}ms, Activity:{:.2f}ms, Demand:{:.2f}ms, Lifecycle:{:.2f}ms, InstPool:{:.2f}ms, Orchestrator:{:.2f}ms, JITFactory:{:.2f}ms, QueuePoller:{:.2f}ms",
+        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms, DomainEvents:{:.2f}ms, Protection:{:.2f}ms, Retirement:{:.2f}ms, Prediction:{:.2f}ms, Activity:{:.2f}ms, Demand:{:.2f}ms, Lifecycle:{:.2f}ms, InstPool:{:.2f}ms, Orchestrator:{:.2f}ms, JITFactory:{:.2f}ms, QueuePoller:{:.2f}ms",
             totalUpdateTime / 1000.0f,
             accountTime / 1000.0f,
             spawnerTime / 1000.0f,
             worldSessionTime / 1000.0f,
             charDBTime / 1000.0f,
             groupEventTime / 1000.0f,
+            domainEventTime / 1000.0f,
             protectionTime / 1000.0f,
             retirementTime / 1000.0f,
             predictionTime / 1000.0f,
