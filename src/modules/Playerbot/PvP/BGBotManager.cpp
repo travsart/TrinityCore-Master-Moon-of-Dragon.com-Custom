@@ -333,11 +333,6 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
     // =========================================================================
     // 0. CRITICAL FIX: Unregister queue from QueueStatePoller to stop spawning
     // =========================================================================
-    // When the BG starts, we MUST stop the QueueStatePoller from continuing to
-    // poll this queue. Otherwise, it will detect the "empty queue" as a shortage
-    // and spawn hundreds of bots every 5 seconds during BG gameplay.
-    //
-    // This was causing the 629 bots instead of 19 bots issue.
     BattlegroundBracketId bracket = bg->GetBracketId();
     sQueueStatePoller->UnregisterActiveBGQueue(bgTypeId, bracket);
     TC_LOG_INFO("module.playerbot.bg",
@@ -345,24 +340,47 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
         static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
 
     // =========================================================================
-    // 1. Teleport and add all bots FIRST, then create coordinator
+    // 1. Populate BG with bots (teleport invited + fill empty slots)
     // =========================================================================
-    // NOTE: Coordinator creation is deferred to the end of this method.
-    // Creating it here would result in a coordinator with 0 bots, since
-    // bots haven't been teleported into the BG yet at this point.
+    // This may have already been called during WAIT_JOIN (prep phase).
+    // PopulateBattleground is safe to call multiple times.
+    PopulateBattlegroundLocked(bg);
 
     // =========================================================================
-    // 2. CRITICAL FIX: First teleport bots that already received invitations
+    // 2. NOW create the BattlegroundCoordinator (all bots are in the BG)
     // =========================================================================
-    // These are bots that queued and received SMSG_BATTLEFIELD_STATUS_NEED_CONFIRMATION
-    // but couldn't teleport until now because the BG map didn't exist yet.
+    // This MUST be called after all bots have been teleported/added above,
+    // otherwise the coordinator would be created with 0 bots and all bots
+    // would be idle (no roles assigned, no objectives tracked).
+    sBGCoordinatorMgr->OnBattlegroundStart(bg);
+}
+
+void BGBotManager::PopulateBattleground(Battleground* bg)
+{
+    if (!_enabled || !_initialized || !bg)
+        return;
+
+    std::lock_guard lock(_mutex);
+    PopulateBattlegroundLocked(bg);
+}
+
+void BGBotManager::PopulateBattlegroundLocked(Battleground* bg)
+{
+    // NOTE: Caller must hold _mutex
+
+    uint32 bgInstanceGuid = bg->GetInstanceID();
+    BattlegroundTypeId bgTypeId = bg->GetTypeID();
+
+    // =========================================================================
+    // 1. Teleport bots that already received invitations
+    // =========================================================================
     uint32 invitedBotsAdded = 0;
     auto invitedItr = _bgInstanceBots.find(bgInstanceGuid);
     if (invitedItr != _bgInstanceBots.end())
     {
         TC_LOG_INFO("module.playerbot.bg",
-            "BGBotManager::OnBattlegroundStart - Found {} bots with pending invitations for this BG",
-            invitedItr->second.size());
+            "BGBotManager::PopulateBattleground - Found {} bots with pending invitations for BG {}",
+            invitedItr->second.size(), bgInstanceGuid);
 
         for (ObjectGuid botGuid : invitedItr->second)
         {
@@ -370,44 +388,36 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
             {
                 // Check if bot is already in this BG
                 if (bot->GetBattlegroundId() == bgInstanceGuid)
-                {
-                    TC_LOG_DEBUG("module.playerbot.bg",
-                        "BGBotManager::OnBattlegroundStart - Bot {} already in BG", bot->GetName());
                     continue;
-                }
 
                 // Get bot's team from queue info
                 auto queueItr = _queuedBots.find(botGuid);
                 Team team = (queueItr != _queuedBots.end()) ? queueItr->second.team : bot->GetTeam();
 
-                // Teleport the invited bot into the BG
-                TC_LOG_INFO("module.playerbot.bg",
-                    "BGBotManager::OnBattlegroundStart - Teleporting invited bot {} to BG",
-                    bot->GetName());
-
-                // Set up BG data for the bot
+                // Set up BG data and teleport
                 BattlegroundQueueTypeId queueTypeId = BattlegroundMgr::BGQueueTypeId(
                     bgTypeId, BattlegroundQueueIdType::Battleground, false, 0);
                 bot->SetBattlegroundId(bgInstanceGuid, bgTypeId, queueTypeId);
                 bot->SetBGTeam(team);
 
-                // Teleport to battleground
                 BattlegroundMgr::SendToBattleground(bot, bg);
                 ++invitedBotsAdded;
             }
         }
 
-        TC_LOG_INFO("module.playerbot.bg",
-            "BGBotManager::OnBattlegroundStart - Teleported {} invited bots to BG",
-            invitedBotsAdded);
+        if (invitedBotsAdded > 0)
+        {
+            TC_LOG_INFO("module.playerbot.bg",
+                "BGBotManager::PopulateBattleground - Teleported {} invited bots to BG {}",
+                invitedBotsAdded, bgInstanceGuid);
+        }
     }
 
     // =========================================================================
-    // 3. Check team population and fill remaining empty slots
+    // 2. Check team population and fill remaining empty slots
     // =========================================================================
     uint32 targetTeamSize = GetBGTeamSize(bgTypeId);
 
-    // Count players per team (including bots we just teleported)
     uint32 allianceCount = 0;
     uint32 hordeCount = 0;
 
@@ -423,23 +433,22 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
     }
 
     TC_LOG_INFO("module.playerbot.bg",
-        "BGBotManager::OnBattlegroundStart - Current population: Alliance {}/{}, Horde {}/{}",
-        allianceCount, targetTeamSize, hordeCount, targetTeamSize);
+        "BGBotManager::PopulateBattleground - BG {} population: Alliance {}/{}, Horde {}/{}",
+        bgInstanceGuid, allianceCount, targetTeamSize, hordeCount, targetTeamSize);
 
-    // Calculate missing slots
     uint32 allianceNeeded = (allianceCount < targetTeamSize) ? (targetTeamSize - allianceCount) : 0;
     uint32 hordeNeeded = (hordeCount < targetTeamSize) ? (targetTeamSize - hordeCount) : 0;
 
     if (allianceNeeded == 0 && hordeNeeded == 0)
     {
         TC_LOG_DEBUG("module.playerbot.bg",
-            "BGBotManager::OnBattlegroundStart - Teams are full, no additional bots needed");
+            "BGBotManager::PopulateBattleground - BG {} teams are full", bgInstanceGuid);
         return;
     }
 
     TC_LOG_INFO("module.playerbot.bg",
-        "BGBotManager::OnBattlegroundStart - Need to fill {} Alliance, {} Horde slots",
-        allianceNeeded, hordeNeeded);
+        "BGBotManager::PopulateBattleground - BG {} needs {} Alliance, {} Horde bots",
+        bgInstanceGuid, allianceNeeded, hordeNeeded);
 
     // Get level range for this BG
     BattlegroundTemplate const* bgTemplate = sBattlegroundMgr->GetBattlegroundTemplateByTypeId(bgTypeId);
@@ -447,9 +456,8 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
 
     if (bgTemplate && !bgTemplate->MapIDs.empty())
     {
-        // Use the BG's actual level range
         PVPDifficultyEntry const* bracketEntry = DB2Manager::GetBattlegroundBracketByLevel(
-            bgTemplate->MapIDs.front(), 80); // Use max level to get the bracket
+            bgTemplate->MapIDs.front(), 80);
         if (bracketEntry)
         {
             minLevel = bracketEntry->MinLevel;
@@ -459,7 +467,6 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
 
     uint32 botsAdded = 0;
 
-    // Queue additional Alliance bots
     if (allianceNeeded > 0)
     {
         std::vector<Player*> allianceBots = FindAvailableBots(ALLIANCE, minLevel, maxLevel, allianceNeeded);
@@ -469,13 +476,12 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
             {
                 ++botsAdded;
                 TC_LOG_DEBUG("module.playerbot.bg",
-                    "BGBotManager::OnBattlegroundStart - Added Alliance bot {} to BG",
-                    bot->GetName());
+                    "BGBotManager::PopulateBattleground - Added Alliance bot {} to BG {}",
+                    bot->GetName(), bgInstanceGuid);
             }
         }
     }
 
-    // Queue additional Horde bots
     if (hordeNeeded > 0)
     {
         std::vector<Player*> hordeBots = FindAvailableBots(HORDE, minLevel, maxLevel, hordeNeeded);
@@ -485,8 +491,8 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
             {
                 ++botsAdded;
                 TC_LOG_DEBUG("module.playerbot.bg",
-                    "BGBotManager::OnBattlegroundStart - Added Horde bot {} to BG",
-                    bot->GetName());
+                    "BGBotManager::PopulateBattleground - Added Horde bot {} to BG {}",
+                    bot->GetName(), bgInstanceGuid);
             }
         }
     }
@@ -494,17 +500,9 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
     if (botsAdded > 0)
     {
         TC_LOG_INFO("module.playerbot.bg",
-            "BGBotManager::OnBattlegroundStart - Added {} bots to fill empty slots",
-            botsAdded);
+            "BGBotManager::PopulateBattleground - Added {} bots to BG {}",
+            botsAdded, bgInstanceGuid);
     }
-
-    // =========================================================================
-    // 4. NOW create the BattlegroundCoordinator (all bots are in the BG)
-    // =========================================================================
-    // This MUST be called after all bots have been teleported/added above,
-    // otherwise the coordinator would be created with 0 bots and all bots
-    // would be idle (no roles assigned, no objectives tracked).
-    sBGCoordinatorMgr->OnBattlegroundStart(bg);
 }
 
 void BGBotManager::OnBattlegroundEnd(Battleground* bg, Team winnerTeam)

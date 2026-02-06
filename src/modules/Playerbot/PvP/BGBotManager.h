@@ -70,6 +70,16 @@ public:
     void OnBattlegroundStart(Battleground* bg);
     void OnBattlegroundEnd(Battleground* bg, Team winnerTeam);
 
+    /**
+     * @brief Populate a battleground with bots (teleport invited + fill empty slots)
+     * @param bg The battleground instance
+     *
+     * Can be called during WAIT_JOIN (prep phase) so bots are present before
+     * gates open. Also called by OnBattlegroundStart for late population.
+     * Safe to call multiple times - won't duplicate bots.
+     */
+    void PopulateBattleground(Battleground* bg);
+
     uint32 PopulateQueue(ObjectGuid playerGuid, BattlegroundTypeId bgTypeId,
                          BattlegroundBracketId bracket,
                          uint32 neededAlliance, uint32 neededHorde);
@@ -196,6 +206,11 @@ private:
      * @return true if successfully added
      */
     bool AddBotDirectlyToBG(Player* bot, Battleground* bg, Team team);
+
+    /**
+     * @brief Internal populate logic - caller must hold _mutex
+     */
+    void PopulateBattlegroundLocked(Battleground* bg);
 
     // ============================================================================
     // DATA STRUCTURES

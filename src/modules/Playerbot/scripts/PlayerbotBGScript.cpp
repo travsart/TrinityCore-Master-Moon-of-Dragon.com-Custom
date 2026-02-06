@@ -396,13 +396,15 @@ private:
                 sBGBotManager->OnBattlegroundStart(bg);
             }
 
-            // Also handle WAIT_JOIN -> detecting when BG is ready for players
-            // This gives us an early opportunity to ensure bots are queued
+            // Handle WAIT_JOIN (preparation phase) -> populate BG with bots
+            // so they are present when the human player enters during prep
             if (status == STATUS_WAIT_JOIN && lastStatus == STATUS_NONE)
             {
-                TC_LOG_DEBUG("module.playerbot.bg",
-                    "PlayerbotBGScript: Detected new BG {} (instance {}) in WAIT_JOIN status",
+                TC_LOG_INFO("module.playerbot.bg",
+                    "PlayerbotBGScript: BG {} (instance {}) entering prep phase - populating with bots",
                     bg->GetName(), instanceId);
+
+                sBGBotManager->PopulateBattleground(bg);
             }
 
             // Cleanup finished BGs from tracker
