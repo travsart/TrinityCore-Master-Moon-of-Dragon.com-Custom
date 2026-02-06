@@ -56,7 +56,7 @@ void BGRoleManager::AssignRole(ObjectGuid player, BGRole role)
 
     _assignments[player] = assignment;
 
-    TC_LOG_DEBUG("playerbot", "BGRoleManager: Assigned %s to player",
+    TC_LOG_DEBUG("playerbot", "BGRoleManager: Assigned {} to player",
                  BGRoleToString(role));
 
     UpdateRoleCounts();
@@ -193,10 +193,13 @@ ObjectGuid BGRoleManager::GetBestPlayerForRole(BGRole role) const
 
     for (const auto& bot : _coordinator->GetAliveBots())
     {
-        // Skip players already assigned to high-priority roles
         if (HasRole(bot.guid))
         {
             BGRole currentRole = GetRole(bot.guid);
+            // Skip players already assigned to the target role (prevents infinite loop)
+            if (currentRole == role)
+                continue;
+            // Skip players in high-priority roles that shouldn't be reassigned
             if (currentRole == BGRole::FLAG_CARRIER)
                 continue;
         }
@@ -249,11 +252,15 @@ void BGRoleManager::AssignAllRoles()
     TC_LOG_DEBUG("playerbot.bg", "BGRoleManager: Pass 1 - Assigned {} healers", healersAssigned);
 
     // Second pass: Fill needed roles by suitability
+    // Safety limit: no role should need more iterations than total bot count
+    uint32 maxIterations = static_cast<uint32>(bots.size()) + 1;
     for (const auto& [role, req] : _requirements)
     {
         uint32 assigned = 0;
-        while (GetRoleCount(role) < req.idealCount)
+        uint32 iterations = 0;
+        while (GetRoleCount(role) < req.idealCount && iterations < maxIterations)
         {
+            ++iterations;
             ObjectGuid best = GetBestPlayerForRole(role);
             if (best.IsEmpty())
             {
@@ -263,6 +270,12 @@ void BGRoleManager::AssignAllRoles()
 
             AssignRole(best, role);
             assigned++;
+        }
+        if (iterations >= maxIterations)
+        {
+            TC_LOG_WARN("playerbot.bg",
+                "BGRoleManager: Hit iteration limit for role {} (assigned {}/{})",
+                BGRoleToString(role), GetRoleCount(role), req.idealCount);
         }
         TC_LOG_DEBUG("playerbot.bg", "BGRoleManager: Pass 2 - Assigned {} players to role {} (need {})",
             assigned, BGRoleToString(role), req.idealCount);
