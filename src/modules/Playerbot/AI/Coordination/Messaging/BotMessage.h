@@ -198,6 +198,54 @@ struct BotMessage
         return msg;
     }
 
+    static BotMessage ClaimCC(ObjectGuid sender, ObjectGuid group, ObjectGuid target,
+                              uint32 spellId, ClaimPriority priority)
+    {
+        BotMessage msg{};
+        msg.type = BotMessageType::CLAIM_CC;
+        msg.scope = MessageScope::GROUP_BROADCAST;
+        msg.senderGuid = sender;
+        msg.groupGuid = group;
+        msg.targetGuid = target;
+        msg.spellId = spellId;
+        msg.claimPriority = priority;
+        msg.claimStatus = ClaimStatus::PENDING;
+        msg.timestamp = std::chrono::steady_clock::now();
+        msg.expiryTime = msg.timestamp + std::chrono::milliseconds(200);
+        return msg;
+    }
+
+    static BotMessage ClaimSoak(ObjectGuid sender, ObjectGuid group, ObjectGuid target,
+                                ClaimPriority priority)
+    {
+        BotMessage msg{};
+        msg.type = BotMessageType::CLAIM_SOAK;
+        msg.scope = MessageScope::GROUP_BROADCAST;
+        msg.senderGuid = sender;
+        msg.groupGuid = group;
+        msg.targetGuid = target;
+        msg.claimPriority = priority;
+        msg.claimStatus = ClaimStatus::PENDING;
+        msg.timestamp = std::chrono::steady_clock::now();
+        msg.expiryTime = msg.timestamp + std::chrono::milliseconds(200);
+        return msg;
+    }
+
+    static BotMessage RequestExternalCD(ObjectGuid sender, ObjectGuid group, ObjectGuid target, float urgency)
+    {
+        BotMessage msg{};
+        msg.type = BotMessageType::REQUEST_EXTERNAL_CD;
+        msg.scope = MessageScope::ROLE_BROADCAST;
+        msg.senderGuid = sender;
+        msg.groupGuid = group;
+        msg.targetGuid = target;
+        msg.targetRole = 1;  // Healers primarily provide externals
+        msg.value = urgency;
+        msg.timestamp = std::chrono::steady_clock::now();
+        msg.expiryTime = msg.timestamp + std::chrono::milliseconds(2000);
+        return msg;
+    }
+
     static BotMessage AnnounceCDUsage(ObjectGuid sender, ObjectGuid group,
                                        uint32 spellId, uint32 durationMs)
     {

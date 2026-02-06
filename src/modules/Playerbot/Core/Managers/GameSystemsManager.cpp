@@ -68,9 +68,17 @@ GameSystemsManager::~GameSystemsManager()
     // (managers may call UnsubscribeAll() in their destructors)
 
     // 1. High-level systems first
+    _combatCoordinationIntegrator.reset();  // Sprint 3: Must shutdown before managers it references
     _combatStateManager.reset();
     _deathRecoveryManager.reset();
     _unifiedMovementCoordinator.reset();
+
+    // Sprint 3: Combat Behaviors managers
+    _aoeDecisionManager.reset();
+    _cooldownStackingOptimizer.reset();
+    _defensiveBehaviorManager.reset();
+    _dispelCoordinator.reset();
+    _interruptRotationManager.reset();
 
     // 2. Game system managers
     _tradeManager.reset();
@@ -207,6 +215,28 @@ void GameSystemsManager::Initialize(Player* bot)
 
     // Combat state manager
     _combatStateManager = std::make_unique<CombatStateManager>(_bot, _botAI);
+
+    // ========================================================================
+    // SPRINT 3: COMBAT COORDINATION - Essential for group coordination
+    // ========================================================================
+
+    // Combat Behaviors managers - essential for group combat
+    _aoeDecisionManager = std::make_unique<AoEDecisionManager>(_botAI);
+    _cooldownStackingOptimizer = std::make_unique<CooldownStackingOptimizer>(_botAI);
+    _defensiveBehaviorManager = std::make_unique<DefensiveBehaviorManager>(_botAI);
+    _dispelCoordinator = std::make_unique<DispelCoordinator>(_botAI);
+    _interruptRotationManager = std::make_unique<InterruptRotationManager>(_botAI);
+
+    // Combat Coordination Integrator - bridges managers with BotMessageBus claim system
+    _combatCoordinationIntegrator = std::make_unique<CombatCoordinationIntegrator>(_botAI);
+
+    // Initialize CombatCoordinationIntegrator with references to combat managers
+    _combatCoordinationIntegrator->Initialize(
+        nullptr,  // InterruptCoordinatorFixed (not yet migrated)
+        _defensiveBehaviorManager.get(),
+        nullptr,  // CrowdControlManager (not yet migrated)
+        _dispelCoordinator.get()
+    );
 
     // Manager creation complete - no logging to avoid GetName() during init
 
@@ -674,6 +704,69 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
         _pvpCombatUpdateTimer = 0;
         if (_pvpCombatAI)
             _pvpCombatAI->Update(diff);
+    }
+
+    // ========================================================================
+    // SPRINT 3: COMBAT COORDINATION - Essential for all bots in groups
+    // Updates claim system, dispel coordination, interrupt rotation, etc.
+    // ========================================================================
+
+    // Combat Coordination Integrator - bridges to BotMessageBus claim system
+    // 100ms throttle - fast enough for responsive coordination
+    _combatCoordTimer += diff;
+    if (_combatCoordTimer >= 100)
+    {
+        _combatCoordTimer = 0;
+        if (_combatCoordinationIntegrator)
+            _combatCoordinationIntegrator->Update(diff);
+    }
+
+    // Combat Behaviors managers - essential for group combat
+    // 200ms throttle - responsive but not every frame
+
+    // DispelCoordinator - handles dispel rotation and claims (GAP 2 fix)
+    _dispelTimer += diff;
+    if (_dispelTimer >= 200)
+    {
+        _dispelTimer = 0;
+        if (_dispelCoordinator)
+            _dispelCoordinator->Update(diff);
+    }
+
+    // InterruptRotationManager - handles interrupt assignment and rotation
+    _interruptTimer += diff;
+    if (_interruptTimer >= 100)  // Interrupts need faster response
+    {
+        _interruptTimer = 0;
+        if (_interruptRotationManager)
+            _interruptRotationManager->Update(diff);
+    }
+
+    // AoEDecisionManager - target clustering decisions (500ms throttle)
+    _aoeTimer += diff;
+    if (_aoeTimer >= 500)
+    {
+        _aoeTimer = 0;
+        if (_aoeDecisionManager)
+            _aoeDecisionManager->Update(diff);
+    }
+
+    // CooldownStackingOptimizer - optimal CD stacking (500ms throttle)
+    _cdStackTimer += diff;
+    if (_cdStackTimer >= 500)
+    {
+        _cdStackTimer = 0;
+        if (_cooldownStackingOptimizer)
+            _cooldownStackingOptimizer->Update(diff);
+    }
+
+    // DefensiveBehaviorManager - external CD coordination (200ms throttle)
+    _defenseTimer += diff;
+    if (_defenseTimer >= 200)
+    {
+        _defenseTimer = 0;
+        if (_defensiveBehaviorManager)
+            _defensiveBehaviorManager->Update(diff);
     }
 
     // ========================================================================

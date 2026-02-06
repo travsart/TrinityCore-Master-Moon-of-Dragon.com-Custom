@@ -75,6 +75,16 @@ class ManagerRegistry;
 class HybridAIController;
 class BehaviorPriorityManager;
 
+// Combat Coordination (Sprint 3)
+class CombatCoordinationIntegrator;
+
+// Combat Behaviors managers
+class AoEDecisionManager;
+class CooldownStackingOptimizer;
+class DefensiveBehaviorManager;
+class DispelCoordinator;
+class InterruptRotationManager;
+
 namespace Advanced
 {
     class GroupCoordinator;
@@ -312,6 +322,56 @@ public:
      * @return Non-owning pointer to BehaviorPriorityManager (owned by facade)
      */
     virtual BehaviorPriorityManager* GetPriorityManager() const = 0;
+
+    // ========================================================================
+    // COMBAT COORDINATION (Sprint 3)
+    // ========================================================================
+
+    /**
+     * @brief Get combat coordination integrator
+     * Bridges combat managers with BotMessageBus claim system
+     * @return Non-owning pointer to CombatCoordinationIntegrator (owned by facade)
+     */
+    virtual CombatCoordinationIntegrator* GetCombatCoordinationIntegrator() const = 0;
+
+    // ========================================================================
+    // COMBAT BEHAVIORS MANAGERS
+    // ========================================================================
+
+    /**
+     * @brief Get AoE decision manager
+     * Target clustering and DoT spread decisions
+     * @return Non-owning pointer to AoEDecisionManager (owned by facade)
+     */
+    virtual AoEDecisionManager* GetAoEDecisionManager() const = 0;
+
+    /**
+     * @brief Get cooldown stacking optimizer
+     * 12-class cooldown database for optimal CD stacking
+     * @return Non-owning pointer to CooldownStackingOptimizer (owned by facade)
+     */
+    virtual CooldownStackingOptimizer* GetCooldownStackingOptimizer() const = 0;
+
+    /**
+     * @brief Get defensive behavior manager
+     * External defensive CD coordination (GAP 3 fix)
+     * @return Non-owning pointer to DefensiveBehaviorManager (owned by facade)
+     */
+    virtual DefensiveBehaviorManager* GetDefensiveBehaviorManager() const = 0;
+
+    /**
+     * @brief Get dispel coordinator
+     * Dispel rotation and claim system (GAP 2 fix)
+     * @return Non-owning pointer to DispelCoordinator (owned by facade)
+     */
+    virtual DispelCoordinator* GetDispelCoordinator() const = 0;
+
+    /**
+     * @brief Get interrupt rotation manager
+     * Interrupt assignment and rotation queue
+     * @return Non-owning pointer to InterruptRotationManager (owned by facade)
+     */
+    virtual InterruptRotationManager* GetInterruptRotationManager() const = 0;
 };
 
 } // namespace Playerbot

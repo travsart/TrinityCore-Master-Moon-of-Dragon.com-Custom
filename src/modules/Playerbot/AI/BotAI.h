@@ -585,6 +585,63 @@ public:
     Events::EventDispatcher const* GetEventDispatcher() const { return _gameSystems ? _gameSystems->GetEventDispatcher() : nullptr; }
 
     // ========================================================================
+    // SPRINT 3: COMBAT COORDINATION - Cross-bot coordination via claims
+    // ========================================================================
+
+    /**
+     * @brief Get Combat Coordination Integrator
+     * Bridges existing combat managers with BotMessageBus claim system
+     * @return Pointer to CombatCoordinationIntegrator, or nullptr if not initialized
+     */
+    class CombatCoordinationIntegrator* GetCombatCoordinationIntegrator()
+    {
+        return _gameSystems ? _gameSystems->GetCombatCoordinationIntegrator() : nullptr;
+    }
+    class CombatCoordinationIntegrator const* GetCombatCoordinationIntegrator() const
+    {
+        return _gameSystems ? _gameSystems->GetCombatCoordinationIntegrator() : nullptr;
+    }
+
+    /**
+     * @brief Get Dispel Coordinator for dispel rotation (GAP 2 fix)
+     * @return Pointer to DispelCoordinator, or nullptr if not initialized
+     */
+    class DispelCoordinator* GetDispelCoordinator()
+    {
+        return _gameSystems ? _gameSystems->GetDispelCoordinator() : nullptr;
+    }
+    class DispelCoordinator const* GetDispelCoordinator() const
+    {
+        return _gameSystems ? _gameSystems->GetDispelCoordinator() : nullptr;
+    }
+
+    /**
+     * @brief Get Interrupt Rotation Manager
+     * @return Pointer to InterruptRotationManager, or nullptr if not initialized
+     */
+    class InterruptRotationManager* GetInterruptRotationManager()
+    {
+        return _gameSystems ? _gameSystems->GetInterruptRotationManager() : nullptr;
+    }
+    class InterruptRotationManager const* GetInterruptRotationManager() const
+    {
+        return _gameSystems ? _gameSystems->GetInterruptRotationManager() : nullptr;
+    }
+
+    /**
+     * @brief Get Defensive Behavior Manager for external CD coordination (GAP 3 fix)
+     * @return Pointer to DefensiveBehaviorManager, or nullptr if not initialized
+     */
+    class DefensiveBehaviorManager* GetDefensiveBehaviorManager()
+    {
+        return _gameSystems ? _gameSystems->GetDefensiveBehaviorManager() : nullptr;
+    }
+    class DefensiveBehaviorManager const* GetDefensiveBehaviorManager() const
+    {
+        return _gameSystems ? _gameSystems->GetDefensiveBehaviorManager() : nullptr;
+    }
+
+    // ========================================================================
     // ST-1: ADAPTIVE AI UPDATE THROTTLING - Performance optimization
     // ========================================================================
 

@@ -560,6 +560,8 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatCoordinationIntegrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatCoordinationIntegrator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptManager.cpp
