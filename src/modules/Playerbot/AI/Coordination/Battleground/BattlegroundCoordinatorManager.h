@@ -15,6 +15,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include <mutex>
 
 class Battleground;
@@ -117,13 +118,21 @@ private:
     BattlegroundCoordinatorManager();
     ~BattlegroundCoordinatorManager();
 
+    /// Creates a coordinator for a BG on the main thread (thread-safe)
+    void CreateCoordinatorForBG(Battleground* bg);
+
+    /// Processes pending coordinator creation requests (called from main thread Update)
+    void ProcessPendingCreations();
+
     // Map of BG instance ID -> Coordinator
     std::unordered_map<uint32, std::unique_ptr<BattlegroundCoordinator>> _coordinators;
 
-    // Tracks BG instance IDs where coordinator creation is in progress
-    // (by another thread). Prevents multiple threads from redundantly
-    // running the expensive Initialize() in parallel.
-    std::unordered_set<uint32> _creatingCoordinators;
+    // BG instance ID → Battleground* queued for coordinator creation by worker threads.
+    // Processed on the main thread in Update() to avoid thread-safety issues
+    // with Battleground::GetPlayers(), map grid operations, etc.
+    // The Battleground* is safe to store because BG destruction only happens
+    // on the main thread, and we process pending creations before that.
+    std::unordered_map<uint32, Battleground*> _pendingCreations;
 
     mutable OrderedRecursiveMutex<LockOrder::BEHAVIOR_MANAGER> _mutex;
 

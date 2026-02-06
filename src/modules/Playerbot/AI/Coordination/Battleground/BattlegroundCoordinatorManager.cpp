@@ -52,6 +52,7 @@ void BattlegroundCoordinatorManager::Initialize()
     TC_LOG_INFO("playerbots.bg.coordinator", "BattlegroundCoordinatorManager: Initializing...");
 
     _coordinators.clear();
+    _pendingCreations.clear();
     _initialized = true;
 
     TC_LOG_INFO("playerbots.bg.coordinator", "BattlegroundCoordinatorManager: Initialized");
@@ -74,6 +75,7 @@ void BattlegroundCoordinatorManager::Shutdown()
     }
 
     _coordinators.clear();
+    _pendingCreations.clear();
     _initialized = false;
 
     TC_LOG_INFO("playerbots.bg.coordinator", "BattlegroundCoordinatorManager: Shut down");
@@ -85,11 +87,15 @@ void BattlegroundCoordinatorManager::Update(uint32 diff)
         return;
 
     // ========================================================================
-    // COPY-AND-RELEASE: Only hold _mutex for the map snapshot, NOT during
-    // coordinator->Update() which can be expensive (spatial cache rebuild,
-    // strategy evaluation, script updates). Holding _mutex during Update()
-    // would block ALL worker threads calling GetCoordinatorForPlayer() or
-    // UpdateBot(), causing 10-30 second thread pool hangs.
+    // PHASE 1: Process pending coordinator creations from worker threads.
+    // This runs on the MAIN THREAD where Battleground access is safe.
+    // ========================================================================
+    ProcessPendingCreations();
+
+    // ========================================================================
+    // PHASE 2: Copy-and-release for coordinator updates.
+    // Only hold _mutex for the map snapshot, NOT during coordinator->Update()
+    // which can be expensive (spatial cache rebuild, strategy evaluation).
     // ========================================================================
     std::vector<BattlegroundCoordinator*> activeCoordinators;
     {
@@ -101,7 +107,7 @@ void BattlegroundCoordinatorManager::Update(uint32 diff)
                 activeCoordinators.push_back(coordinator.get());
         }
     }
-    // _mutex released — update coordinators without blocking other threads
+    // _mutex released — update coordinators without blocking worker threads
     for (auto* coordinator : activeCoordinators)
         coordinator->Update(diff);
 }
@@ -115,81 +121,8 @@ void BattlegroundCoordinatorManager::OnBattlegroundStart(Battleground* bg)
     if (!bg || !_initialized)
         return;
 
-    uint32 bgInstanceId = bg->GetInstanceID();
-
-    // Quick check under lock: coordinator exists or creation already in progress?
-    {
-        std::lock_guard lock(_mutex);
-        if (_coordinators.find(bgInstanceId) != _coordinators.end())
-        {
-            TC_LOG_DEBUG("playerbots.bg.coordinator",
-                "BattlegroundCoordinatorManager: Coordinator already exists for BG instance {}",
-                bgInstanceId);
-            return;
-        }
-        if (_creatingCoordinators.count(bgInstanceId))
-        {
-            TC_LOG_DEBUG("playerbots.bg.coordinator",
-                "BattlegroundCoordinatorManager: Coordinator creation already in progress for BG instance {}",
-                bgInstanceId);
-            return;
-        }
-        // Mark creation in progress so other threads don't also try
-        _creatingCoordinators.insert(bgInstanceId);
-    }
-    // _mutex released — collect bots and initialize coordinator without lock
-
-    // Collect all bots in the BG
-    std::vector<Player*> bots;
-    for (auto const& itr : bg->GetPlayers())
-    {
-        if (Player* player = ObjectAccessor::FindPlayer(itr.first))
-        {
-            if (PlayerBotHooks::IsPlayerBot(player))
-                bots.push_back(player);
-        }
-    }
-
-    if (bots.empty())
-    {
-        // Clear creation flag
-        std::lock_guard lock(_mutex);
-        _creatingCoordinators.erase(bgInstanceId);
-        TC_LOG_DEBUG("playerbots.bg.coordinator",
-            "BattlegroundCoordinatorManager: No bots in BG instance {}, not creating coordinator",
-            bgInstanceId);
-        return;
-    }
-
-    TC_LOG_INFO("playerbots.bg.coordinator",
-        "BattlegroundCoordinatorManager: Creating coordinator for BG instance {} ({}) with {} bots",
-        bgInstanceId, bg->GetName(), bots.size());
-
-    // Create and initialize coordinator WITHOUT holding the lock.
-    // Initialize() is expensive: creates sub-managers, spatial cache,
-    // loads BG script which calls InitializePositionDiscovery() →
-    // FindNearestGameObject(entry, 500.0f) grid scan.
-    auto coordinator = std::make_unique<BattlegroundCoordinator>(bg, bots);
-    coordinator->Initialize();
-
-    // Re-lock to insert and clear creation flag
-    {
-        std::lock_guard lock(_mutex);
-        _creatingCoordinators.erase(bgInstanceId);
-        if (_coordinators.find(bgInstanceId) == _coordinators.end())
-        {
-            _coordinators[bgInstanceId] = std::move(coordinator);
-            TC_LOG_INFO("playerbots.bg.coordinator",
-                "BattlegroundCoordinatorManager: Coordinator created for BG {} (instance {})",
-                bg->GetName(), bgInstanceId);
-        }
-        else
-        {
-            TC_LOG_DEBUG("playerbots.bg.coordinator",
-                "BattlegroundCoordinatorManager: Another thread already created coordinator for BG instance {}, discarding duplicate",
-                bgInstanceId);
-        }
-    }
+    // OnBattlegroundStart runs on the main thread — safe to create directly
+    CreateCoordinatorForBG(bg);
 }
 
 void BattlegroundCoordinatorManager::OnBattlegroundEnd(Battleground* bg)
@@ -200,6 +133,9 @@ void BattlegroundCoordinatorManager::OnBattlegroundEnd(Battleground* bg)
     std::lock_guard lock(_mutex);
 
     uint32 bgInstanceId = bg->GetInstanceID();
+
+    // Remove from pending creations if queued
+    _pendingCreations.erase(bgInstanceId);
 
     auto itr = _coordinators.find(bgInstanceId);
     if (itr == _coordinators.end())
@@ -249,86 +185,34 @@ void BattlegroundCoordinatorManager::UpdateBot(Player* bot, uint32 diff)
 
     uint32 bgInstanceId = bg->GetInstanceID();
 
-    // ========================================================================
-    // FAST PATH: Coordinator exists — quick AddBot under lock and return.
-    // This is the common case after the first update cycle.
-    // ========================================================================
+    std::lock_guard lock(_mutex);
+
+    auto itr = _coordinators.find(bgInstanceId);
+    if (itr != _coordinators.end() && itr->second)
     {
-        std::lock_guard lock(_mutex);
-        auto itr = _coordinators.find(bgInstanceId);
-        if (itr != _coordinators.end() && itr->second)
-        {
-            // Coordinator exists, ensure this bot is tracked (handles late-joiners)
-            itr->second->AddBot(bot);
-            return;
-        }
-        // If creation is already in progress by another thread, skip — the
-        // coordinator will be available on the next update cycle (500ms).
-        if (_creatingCoordinators.count(bgInstanceId))
-            return;
-
-        // Mark creation in progress to prevent redundant Initialize() calls
-        _creatingCoordinators.insert(bgInstanceId);
-    }
-    // _mutex released — coordinator doesn't exist, need to create one
-
-    // ========================================================================
-    // SLOW PATH: No coordinator yet — create and initialize WITHOUT lock.
-    // Initialize() is expensive (grid scans, pathfinding, script loading).
-    // Holding _mutex here caused 10-30s thread pool hangs because:
-    //   1. Worker thread holds _mutex → runs Initialize() (expensive grid ops)
-    //   2. Main thread blocks on _mutex in Update() (can't update anything)
-    //   3. Other worker threads block on _mutex in GetCoordinatorForPlayer()
-    //   4. Thread pool timeout → bots never execute strategies
-    // ========================================================================
-    TC_LOG_DEBUG("playerbots.bg.coordinator",
-        "BattlegroundCoordinatorManager: Creating coordinator for late-joining bot in BG {}",
-        bgInstanceId);
-
-    // Collect all bots in the BG (no lock needed — _mutex protects _coordinators, not BG player list)
-    std::vector<Player*> bots;
-    for (auto const& playerItr : bg->GetPlayers())
-    {
-        if (Player* player = ObjectAccessor::FindPlayer(playerItr.first))
-        {
-            if (PlayerBotHooks::IsPlayerBot(player))
-                bots.push_back(player);
-        }
-    }
-
-    if (bots.empty())
-    {
-        // Clear creation flag
-        std::lock_guard lock(_mutex);
-        _creatingCoordinators.erase(bgInstanceId);
+        // Coordinator exists — ensure this bot is tracked (handles late-joiners)
+        itr->second->AddBot(bot);
         return;
     }
 
-    // Create and initialize without holding the lock
-    auto coordinator = std::make_unique<BattlegroundCoordinator>(bg, bots);
-    coordinator->Initialize();
-
-    // Re-lock to insert and clear creation flag
+    // ========================================================================
+    // No coordinator yet. DON'T create it here — we're on a WORKER THREAD.
+    //
+    // Coordinator creation calls Initialize() which accesses Battleground
+    // data (GetPlayers, GetMapId), loads BG scripts, runs map grid operations
+    // (FindNearestGameObject with 500yd radius), and does pathfinding.
+    // None of these are thread-safe from worker threads.
+    //
+    // Instead, queue a creation request for the main thread to process
+    // in the next Update() call. The coordinator will be available within
+    // one server tick (~50-100ms).
+    // ========================================================================
+    if (!_pendingCreations.count(bgInstanceId))
     {
-        std::lock_guard lock(_mutex);
-        _creatingCoordinators.erase(bgInstanceId);
-        auto itr = _coordinators.find(bgInstanceId);
-        if (itr == _coordinators.end())
-        {
-            // We won the race — insert our coordinator
-            _coordinators[bgInstanceId] = std::move(coordinator);
-            TC_LOG_INFO("playerbots.bg.coordinator",
-                "BattlegroundCoordinatorManager: Late-join coordinator created for BG instance {} with {} bots",
-                bgInstanceId, bots.size());
-        }
-        else if (itr->second)
-        {
-            // Another thread created it while we were initializing — just add our bot
-            itr->second->AddBot(bot);
-            TC_LOG_DEBUG("playerbots.bg.coordinator",
-                "BattlegroundCoordinatorManager: Coordinator already created by another thread for BG {}, added bot",
-                bgInstanceId);
-        }
+        _pendingCreations[bgInstanceId] = bg;
+        TC_LOG_DEBUG("playerbots.bg.coordinator",
+            "BattlegroundCoordinatorManager: Queued coordinator creation for BG instance {} (requested by bot {})",
+            bgInstanceId, bot->GetName());
     }
 }
 
@@ -342,6 +226,95 @@ uint32 BattlegroundCoordinatorManager::GetActiveCoordinatorCount() const
 {
     std::lock_guard lock(_mutex);
     return static_cast<uint32>(_coordinators.size());
+}
+
+// ============================================================================
+// PRIVATE — MAIN THREAD ONLY
+// ============================================================================
+
+void BattlegroundCoordinatorManager::CreateCoordinatorForBG(Battleground* bg)
+{
+    if (!bg)
+        return;
+
+    uint32 bgInstanceId = bg->GetInstanceID();
+
+    // Check if coordinator already exists
+    {
+        std::lock_guard lock(_mutex);
+        if (_coordinators.find(bgInstanceId) != _coordinators.end())
+        {
+            TC_LOG_DEBUG("playerbots.bg.coordinator",
+                "BattlegroundCoordinatorManager: Coordinator already exists for BG instance {}",
+                bgInstanceId);
+            return;
+        }
+    }
+
+    // Collect all bots in the BG (safe — we're on the main thread)
+    std::vector<Player*> bots;
+    for (auto const& itr : bg->GetPlayers())
+    {
+        if (Player* player = ObjectAccessor::FindPlayer(itr.first))
+        {
+            if (PlayerBotHooks::IsPlayerBot(player))
+                bots.push_back(player);
+        }
+    }
+
+    if (bots.empty())
+    {
+        TC_LOG_DEBUG("playerbots.bg.coordinator",
+            "BattlegroundCoordinatorManager: No bots in BG instance {}, not creating coordinator",
+            bgInstanceId);
+        return;
+    }
+
+    TC_LOG_INFO("playerbots.bg.coordinator",
+        "BattlegroundCoordinatorManager: Creating coordinator for BG instance {} ({}) with {} bots",
+        bgInstanceId, bg->GetName(), bots.size());
+
+    // Create and initialize coordinator (safe — main thread, no lock held
+    // during expensive operations like grid scans and script loading)
+    auto coordinator = std::make_unique<BattlegroundCoordinator>(bg, bots);
+    coordinator->Initialize();
+
+    // Insert under lock
+    {
+        std::lock_guard lock(_mutex);
+        if (_coordinators.find(bgInstanceId) == _coordinators.end())
+        {
+            _coordinators[bgInstanceId] = std::move(coordinator);
+            TC_LOG_INFO("playerbots.bg.coordinator",
+                "BattlegroundCoordinatorManager: Coordinator created for BG {} (instance {})",
+                bg->GetName(), bgInstanceId);
+        }
+    }
+}
+
+void BattlegroundCoordinatorManager::ProcessPendingCreations()
+{
+    // Snapshot pending creations under lock, then process without lock.
+    // This runs on the MAIN THREAD where Battleground access is safe.
+    std::unordered_map<uint32, Battleground*> pending;
+    {
+        std::lock_guard lock(_mutex);
+        if (_pendingCreations.empty())
+            return;
+        pending.swap(_pendingCreations);
+    }
+
+    for (auto const& [bgInstanceId, bg] : pending)
+    {
+        if (!bg)
+            continue;
+
+        // Validate BG is still in progress
+        if (bg->GetStatus() != STATUS_IN_PROGRESS)
+            continue;
+
+        CreateCoordinatorForBG(bg);
+    }
 }
 
 } // namespace Playerbot
