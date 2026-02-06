@@ -10,6 +10,11 @@
 
 #include "BurstCoordinator.h"
 #include "ArenaCoordinator.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
+#include "Player.h"
+#include "ObjectAccessor.h"
+#include "Group.h"
 #include "SharedDefines.h"
 #include "GameTime.h"
 #include "Log.h"
@@ -118,6 +123,21 @@ bool BurstCoordinator::StartBurst(ObjectGuid target)
 
     TC_LOG_DEBUG("playerbot", "BurstCoordinator::StartBurst - Started burst window #%u with %zu participants",
                  _burstWindowCount, _currentBurst.participants.size());
+
+    // Broadcast burst window and focus target via BotMessageBus
+    auto const& teammates = _coordinator->GetTeammates();
+    if (!teammates.empty())
+    {
+        Player* leader = ObjectAccessor::FindPlayer(teammates.front().guid);
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            ObjectGuid senderGuid = leader->GetGroup()->GetLeaderGUID();
+
+            sBotMessageBus->Publish(BotMessage::AnnounceBurstWindow(senderGuid, groupGuid, _burstDurationThreshold));
+            sBotMessageBus->Publish(BotMessage::CommandFocusTarget(senderGuid, groupGuid, target));
+        }
+    }
 
     return true;
 }

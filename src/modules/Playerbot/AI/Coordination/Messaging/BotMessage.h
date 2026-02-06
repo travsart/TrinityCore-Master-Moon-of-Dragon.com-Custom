@@ -289,6 +289,23 @@ struct BotMessage
         return msg;
     }
 
+    static BotMessage RequestTankSwap(ObjectGuid sender, ObjectGuid group, ObjectGuid bossGuid,
+                                      uint8 debuffStacks, ClaimPriority priority = ClaimPriority::HIGH)
+    {
+        BotMessage msg{};
+        msg.type = BotMessageType::REQUEST_TANK_SWAP;
+        msg.scope = MessageScope::ROLE_BROADCAST;
+        msg.senderGuid = sender;
+        msg.groupGuid = group;
+        msg.targetGuid = bossGuid;
+        msg.targetRole = 0;  // Tanks
+        msg.claimPriority = priority;
+        msg.value = static_cast<float>(debuffStacks);
+        msg.timestamp = std::chrono::steady_clock::now();
+        msg.expiryTime = msg.timestamp + std::chrono::milliseconds(3000);
+        return msg;
+    }
+
     static BotMessage CommandFocusTarget(ObjectGuid sender, ObjectGuid group, ObjectGuid target)
     {
         BotMessage msg{};
@@ -336,6 +353,57 @@ struct BotMessage
         msg.groupGuid = group;
         msg.timestamp = std::chrono::steady_clock::now();
         msg.expiryTime = msg.timestamp + std::chrono::milliseconds(1000);
+        return msg;
+    }
+
+    static BotMessage CommandWipeRecovery(ObjectGuid sender, ObjectGuid group)
+    {
+        BotMessage msg{};
+        msg.type = BotMessageType::CMD_WIPE_RECOVERY;
+        msg.scope = MessageScope::GROUP_BROADCAST;
+        msg.senderGuid = sender;
+        msg.groupGuid = group;
+        msg.timestamp = std::chrono::steady_clock::now();
+        msg.expiryTime = msg.timestamp + std::chrono::milliseconds(30000);
+        return msg;
+    }
+
+    static BotMessage CommandStopDps(ObjectGuid sender, ObjectGuid group)
+    {
+        BotMessage msg{};
+        msg.type = BotMessageType::CMD_STOP_DPS;
+        msg.scope = MessageScope::GROUP_BROADCAST;
+        msg.senderGuid = sender;
+        msg.groupGuid = group;
+        msg.timestamp = std::chrono::steady_clock::now();
+        msg.expiryTime = msg.timestamp + std::chrono::milliseconds(5000);
+        return msg;
+    }
+
+    static BotMessage CommandUseDefensives(ObjectGuid sender, ObjectGuid group)
+    {
+        BotMessage msg{};
+        msg.type = BotMessageType::CMD_USE_DEFENSIVES;
+        msg.scope = MessageScope::GROUP_BROADCAST;
+        msg.senderGuid = sender;
+        msg.groupGuid = group;
+        msg.timestamp = std::chrono::steady_clock::now();
+        msg.expiryTime = msg.timestamp + std::chrono::milliseconds(3000);
+        return msg;
+    }
+
+    static BotMessage ClaimResurrect(ObjectGuid sender, ObjectGuid group, ObjectGuid target,
+                                     ClaimPriority priority = ClaimPriority::MEDIUM)
+    {
+        BotMessage msg{};
+        msg.type = BotMessageType::CLAIM_RESURRECT;
+        msg.scope = MessageScope::GROUP_BROADCAST;
+        msg.senderGuid = sender;
+        msg.groupGuid = group;
+        msg.targetGuid = target;
+        msg.claimPriority = priority;
+        msg.timestamp = std::chrono::steady_clock::now();
+        msg.expiryTime = msg.timestamp + std::chrono::milliseconds(10000);
         return msg;
     }
 };

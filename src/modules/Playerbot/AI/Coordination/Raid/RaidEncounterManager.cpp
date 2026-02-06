@@ -6,6 +6,8 @@
 #include "RaidEncounterManager.h"
 #include "RaidCoordinator.h"
 #include "RaidTankCoordinator.h"
+#include "RaidCooldownRotation.h"
+#include "RaidPositioningManager.h"
 #include "Player.h"
 #include "Log.h"
 
@@ -138,16 +140,16 @@ std::vector<EncounterMechanic> RaidEncounterManager::GetMechanicsForPhase(Encoun
     return mechanics;
 }
 
-void RaidEncounterManager::OnSpellEvent(const CombatEventData& event)
+void RaidEncounterManager::OnSpellEvent(const CombatEvent& event)
 {
-    if (event.eventType != CombatEventType::SPELL_CAST)
+    if (event.type != CombatEventType::SPELL_CAST_SUCCESS)
         return;
 
     // Check for registered mechanics
     OnMechanicTriggered(event.spellId);
 }
 
-void RaidEncounterManager::OnAuraEvent(const CombatEventData& event)
+void RaidEncounterManager::OnAuraEvent(const CombatEvent& event)
 {
     // Check for tank swap triggers
     for (const auto& trigger : _currentEncounterInfo.swapTriggers)
@@ -157,9 +159,9 @@ void RaidEncounterManager::OnAuraEvent(const CombatEventData& event)
             RaidTankCoordinator* tankCoord = _coordinator->GetTankCoordinator();
             if (tankCoord)
             {
-                if (event.eventType == CombatEventType::AURA_APPLIED)
+                if (event.type == CombatEventType::AURA_APPLIED)
                 {
-                    tankCoord->OnSwapDebuffApplied(event.targetGuid, event.spellId, 1);
+                    tankCoord->OnSwapDebuffApplied(event.target, event.spellId, 1);
                 }
             }
         }

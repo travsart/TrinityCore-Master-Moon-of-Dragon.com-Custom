@@ -23,6 +23,8 @@
 #include "Log.h"
 #include "Core/Events/CombatEventRouter.h"
 #include "Core/Events/CombatEvent.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 #include <algorithm>
 #include <sstream>
@@ -295,6 +297,18 @@ void ThreatCoordinator::InitiateTankSwap(ObjectGuid fromTank, ObjectGuid toTank)
     _queuedResponses.push_back(reduction);
 
     _metrics.tankSwaps++;
+
+    // Announce tank swap via BotMessageBus so other bots can react
+    if (_group)
+    {
+        ObjectGuid groupGuid = _group->GetGUID();
+        if (!groupGuid.IsEmpty() && !_groupStatus.activeTargets.empty())
+        {
+            BotMessage msg = BotMessage::RequestTankSwap(
+                fromTank, groupGuid, _groupStatus.activeTargets[0], 0);
+            sBotMessageBus->Publish(msg);
+        }
+    }
 
     TC_LOG_INFO("playerbots", "ThreatCoordinator: Initiated tank swap from {} to {}",
                 fromTank.ToString(), toTank.ToString());

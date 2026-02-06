@@ -11,7 +11,10 @@
 #include "NodeController.h"
 #include "BattlegroundCoordinator.h"
 #include "Player.h"
+#include "Group.h"
 #include "Log.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 
 namespace Playerbot {
 
@@ -571,6 +574,19 @@ void NodeController::RequestReinforcements(uint32 nodeId, uint32 count)
 
     TC_LOG_DEBUG("playerbots.bg", "NodeController::RequestReinforcements - Requested %u reinforcements for node %u",
         count, nodeId);
+
+    // Broadcast defensive alert so group members activate defensives for the threatened node
+    auto friendlyPlayers = _coordinator->GetFriendlyPlayers();
+    if (!friendlyPlayers.empty())
+    {
+        Player* leader = _coordinator->GetPlayer(friendlyPlayers.front());
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            BotMessage msg = BotMessage::CommandUseDefensives(leader->GetGUID(), groupGuid);
+            sBotMessageBus->Publish(msg);
+        }
+    }
 }
 
 void NodeController::CancelReinforcementRequest(uint32 nodeId)

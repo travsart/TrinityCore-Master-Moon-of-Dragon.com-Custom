@@ -289,6 +289,16 @@ public:
     void OnClaimResolved(BotMessage const& message, ClaimStatus status);
 
     // ========================================================================
+    // MESSAGE HANDLING
+    // ========================================================================
+
+    /**
+     * Handle incoming bot-to-bot message from BotMessageBus
+     * Called by BotAI::HandleBotMessage() when message is delivered
+     */
+    void HandleIncomingMessage(BotMessage const& message) { OnBotMessage(message); }
+
+    // ========================================================================
     // CONFIGURATION
     // ========================================================================
 

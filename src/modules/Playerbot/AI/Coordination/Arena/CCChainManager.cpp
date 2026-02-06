@@ -10,9 +10,12 @@
 
 #include "CCChainManager.h"
 #include "ArenaCoordinator.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "AI/Combat/CrowdControlManager.h"
 #include "Player.h"
 #include "ObjectAccessor.h"
+#include "Group.h"
 #include "GameTime.h"
 #include "Log.h"
 #include <algorithm>
@@ -152,6 +155,25 @@ bool CCChainManager::StartChain(ObjectGuid target, bool forBurst, bool forPeel)
 
     TC_LOG_DEBUG("playerbot", "CCChainManager::StartChain - Started chain #%u with %zu links, expected duration %u ms",
                  _chainsStarted, _activeChain.links.size(), _activeChain.totalDuration);
+
+    // Broadcast CC claim via BotMessageBus
+    auto const& teammates = _coordinator->GetTeammates();
+    if (!teammates.empty())
+    {
+        Player* leader = ObjectAccessor::FindPlayer(teammates.front().guid);
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            ObjectGuid senderGuid = leader->GetGroup()->GetLeaderGUID();
+
+            // Use the first link's spell ID for the CC claim
+            uint32 ccSpellId = 0;
+            if (!_activeChain.links.empty())
+                ccSpellId = _activeChain.links[0].spellId;
+
+            sBotMessageBus->Publish(BotMessage::ClaimCC(senderGuid, groupGuid, target, ccSpellId, ClaimPriority::MEDIUM));
+        }
+    }
 
     return true;
 }

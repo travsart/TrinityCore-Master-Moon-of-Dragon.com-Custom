@@ -181,10 +181,10 @@ bool CombatCoordinationIntegrator::RequestInterrupt(ObjectGuid targetGuid, uint3
         OnClaimResolved(m, s);
     };
 
-    ClaimStatus status = BotMessageBus::Instance().SubmitClaim(msg, callback);
+    ClaimStatus status = sBotMessageBus->PublishClaim(msg, callback);
 
     // Track the claim
-    uint64 claimKey = targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_INTERRUPT) << 56);
+    uint64 claimKey = std::hash<ObjectGuid>{}(targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_INTERRUPT) << 56);
     ActiveClaim claim;
     claim.type = BotMessageType::CLAIM_INTERRUPT;
     claim.targetGuid = targetGuid;
@@ -195,7 +195,7 @@ bool CombatCoordinationIntegrator::RequestInterrupt(ObjectGuid targetGuid, uint3
 
     _metrics.interruptClaimsSubmitted++;
 
-    return status != ClaimStatus::REJECTED;
+    return status != ClaimStatus::DENIED;
 }
 
 bool CombatCoordinationIntegrator::ShouldInterrupt(ObjectGuid& targetGuid, uint32& spellId) const
@@ -204,7 +204,7 @@ bool CombatCoordinationIntegrator::ShouldInterrupt(ObjectGuid& targetGuid, uint3
     for (auto const& [key, claim] : _activeClaims)
     {
         if (claim.type == BotMessageType::CLAIM_INTERRUPT &&
-            claim.status == ClaimStatus::ACCEPTED)
+            claim.status == ClaimStatus::GRANTED)
         {
             targetGuid = claim.targetGuid;
             spellId = GetInterruptSpell();
@@ -217,7 +217,7 @@ bool CombatCoordinationIntegrator::ShouldInterrupt(ObjectGuid& targetGuid, uint3
 void CombatCoordinationIntegrator::OnInterruptExecuted(ObjectGuid targetGuid, uint32 spellId, bool success)
 {
     // Remove the claim
-    uint64 claimKey = targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_INTERRUPT) << 56);
+    uint64 claimKey = std::hash<ObjectGuid>{}(targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_INTERRUPT) << 56);
     _activeClaims.erase(claimKey);
 
     // Announce via message bus
@@ -231,7 +231,7 @@ void CombatCoordinationIntegrator::OnInterruptExecuted(ObjectGuid targetGuid, ui
         msg.spellId = spellId;
         msg.timestamp = std::chrono::steady_clock::now();
 
-        BotMessageBus::Instance().Publish(msg);
+        sBotMessageBus->Publish(msg);
     }
 }
 
@@ -256,9 +256,9 @@ bool CombatCoordinationIntegrator::RequestDispel(ObjectGuid targetGuid, uint32 a
         OnClaimResolved(m, s);
     };
 
-    ClaimStatus status = BotMessageBus::Instance().SubmitClaim(msg, callback);
+    ClaimStatus status = sBotMessageBus->PublishClaim(msg, callback);
 
-    uint64 claimKey = targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_DISPEL) << 56) ^ auraId;
+    uint64 claimKey = std::hash<ObjectGuid>{}(targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_DISPEL) << 56) ^ auraId;
     ActiveClaim claim;
     claim.type = BotMessageType::CLAIM_DISPEL;
     claim.targetGuid = targetGuid;
@@ -269,7 +269,7 @@ bool CombatCoordinationIntegrator::RequestDispel(ObjectGuid targetGuid, uint32 a
 
     _metrics.dispelClaimsSubmitted++;
 
-    return status != ClaimStatus::REJECTED;
+    return status != ClaimStatus::DENIED;
 }
 
 bool CombatCoordinationIntegrator::ShouldDispel(ObjectGuid& targetGuid, uint32& auraId) const
@@ -277,7 +277,7 @@ bool CombatCoordinationIntegrator::ShouldDispel(ObjectGuid& targetGuid, uint32& 
     for (auto const& [key, claim] : _activeClaims)
     {
         if (claim.type == BotMessageType::CLAIM_DISPEL &&
-            claim.status == ClaimStatus::ACCEPTED)
+            claim.status == ClaimStatus::GRANTED)
         {
             targetGuid = claim.targetGuid;
             auraId = claim.spellOrAuraId;
@@ -289,7 +289,7 @@ bool CombatCoordinationIntegrator::ShouldDispel(ObjectGuid& targetGuid, uint32& 
 
 void CombatCoordinationIntegrator::OnDispelExecuted(ObjectGuid targetGuid, uint32 auraId, bool success)
 {
-    uint64 claimKey = targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_DISPEL) << 56) ^ auraId;
+    uint64 claimKey = std::hash<ObjectGuid>{}(targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_DISPEL) << 56) ^ auraId;
     _activeClaims.erase(claimKey);
 }
 
@@ -372,9 +372,9 @@ bool CombatCoordinationIntegrator::RequestExternalDefensive(ObjectGuid targetGui
         OnClaimResolved(m, s);
     };
 
-    ClaimStatus status = BotMessageBus::Instance().SubmitClaim(msg, callback);
+    ClaimStatus status = sBotMessageBus->PublishClaim(msg, callback);
 
-    uint64 claimKey = targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_DEFENSIVE_CD) << 56);
+    uint64 claimKey = std::hash<ObjectGuid>{}(targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_DEFENSIVE_CD) << 56);
     ActiveClaim claim;
     claim.type = BotMessageType::CLAIM_DEFENSIVE_CD;
     claim.targetGuid = targetGuid;
@@ -385,7 +385,7 @@ bool CombatCoordinationIntegrator::RequestExternalDefensive(ObjectGuid targetGui
 
     _metrics.defensiveClaimsSubmitted++;
 
-    return status != ClaimStatus::REJECTED;
+    return status != ClaimStatus::DENIED;
 }
 
 bool CombatCoordinationIntegrator::ShouldProvideExternalCD(ObjectGuid& targetGuid, uint32& spellId) const
@@ -393,7 +393,7 @@ bool CombatCoordinationIntegrator::ShouldProvideExternalCD(ObjectGuid& targetGui
     for (auto const& [key, claim] : _activeClaims)
     {
         if (claim.type == BotMessageType::CLAIM_DEFENSIVE_CD &&
-            claim.status == ClaimStatus::ACCEPTED)
+            claim.status == ClaimStatus::GRANTED)
         {
             targetGuid = claim.targetGuid;
             spellId = claim.spellOrAuraId;
@@ -406,7 +406,7 @@ bool CombatCoordinationIntegrator::ShouldProvideExternalCD(ObjectGuid& targetGui
 void CombatCoordinationIntegrator::OnExternalCDUsed(ObjectGuid targetGuid, uint32 spellId)
 {
     // Remove claim
-    uint64 claimKey = targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_DEFENSIVE_CD) << 56);
+    uint64 claimKey = std::hash<ObjectGuid>{}(targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_DEFENSIVE_CD) << 56);
     _activeClaims.erase(claimKey);
 
     // Create protection window (GAP 3 fix)
@@ -435,7 +435,7 @@ void CombatCoordinationIntegrator::OnExternalCDUsed(ObjectGuid targetGuid, uint3
         msg.spellId = spellId;
         msg.timestamp = std::chrono::steady_clock::now();
 
-        BotMessageBus::Instance().Publish(msg);
+        sBotMessageBus->Publish(msg);
     }
 }
 
@@ -515,9 +515,9 @@ bool CombatCoordinationIntegrator::RequestCC(ObjectGuid targetGuid, uint32 spell
         OnClaimResolved(m, s);
     };
 
-    ClaimStatus status = BotMessageBus::Instance().SubmitClaim(msg, callback);
+    ClaimStatus status = sBotMessageBus->PublishClaim(msg, callback);
 
-    uint64 claimKey = targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_CC) << 56);
+    uint64 claimKey = std::hash<ObjectGuid>{}(targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_CC) << 56);
     ActiveClaim claim;
     claim.type = BotMessageType::CLAIM_CC;
     claim.targetGuid = targetGuid;
@@ -528,7 +528,7 @@ bool CombatCoordinationIntegrator::RequestCC(ObjectGuid targetGuid, uint32 spell
 
     _metrics.ccClaimsSubmitted++;
 
-    return status != ClaimStatus::REJECTED;
+    return status != ClaimStatus::DENIED;
 }
 
 bool CombatCoordinationIntegrator::ShouldCC(ObjectGuid& targetGuid, uint32& spellId) const
@@ -536,7 +536,7 @@ bool CombatCoordinationIntegrator::ShouldCC(ObjectGuid& targetGuid, uint32& spel
     for (auto const& [key, claim] : _activeClaims)
     {
         if (claim.type == BotMessageType::CLAIM_CC &&
-            claim.status == ClaimStatus::ACCEPTED)
+            claim.status == ClaimStatus::GRANTED)
         {
             targetGuid = claim.targetGuid;
             spellId = claim.spellOrAuraId;
@@ -548,7 +548,7 @@ bool CombatCoordinationIntegrator::ShouldCC(ObjectGuid& targetGuid, uint32& spel
 
 void CombatCoordinationIntegrator::OnCCExecuted(ObjectGuid targetGuid, uint32 spellId, bool success)
 {
-    uint64 claimKey = targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_CC) << 56);
+    uint64 claimKey = std::hash<ObjectGuid>{}(targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_CC) << 56);
     _activeClaims.erase(claimKey);
 
     // Update CC manager's DR tracking
@@ -569,32 +569,32 @@ void CombatCoordinationIntegrator::OnClaimResolved(BotMessage const& message, Cl
     switch (message.type)
     {
         case BotMessageType::CLAIM_INTERRUPT:
-            claimKey = message.targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_INTERRUPT) << 56);
-            if (status == ClaimStatus::ACCEPTED)
+            claimKey = std::hash<ObjectGuid>{}(message.targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_INTERRUPT) << 56);
+            if (status == ClaimStatus::GRANTED)
                 _metrics.interruptClaimsWon++;
             else
                 _metrics.interruptClaimsLost++;
             break;
 
         case BotMessageType::CLAIM_DISPEL:
-            claimKey = message.targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_DISPEL) << 56) ^ message.auraId;
-            if (status == ClaimStatus::ACCEPTED)
+            claimKey = std::hash<ObjectGuid>{}(message.targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_DISPEL) << 56) ^ message.auraId;
+            if (status == ClaimStatus::GRANTED)
                 _metrics.dispelClaimsWon++;
             else
                 _metrics.dispelClaimsLost++;
             break;
 
         case BotMessageType::CLAIM_DEFENSIVE_CD:
-            claimKey = message.targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_DEFENSIVE_CD) << 56);
-            if (status == ClaimStatus::ACCEPTED)
+            claimKey = std::hash<ObjectGuid>{}(message.targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_DEFENSIVE_CD) << 56);
+            if (status == ClaimStatus::GRANTED)
                 _metrics.defensiveClaimsWon++;
             else
                 _metrics.defensiveClaimsLost++;
             break;
 
         case BotMessageType::CLAIM_CC:
-            claimKey = message.targetGuid.GetRawValue() ^ (static_cast<uint64>(BotMessageType::CLAIM_CC) << 56);
-            if (status == ClaimStatus::ACCEPTED)
+            claimKey = std::hash<ObjectGuid>{}(message.targetGuid) ^ (static_cast<uint64>(BotMessageType::CLAIM_CC) << 56);
+            if (status == ClaimStatus::GRANTED)
                 _metrics.ccClaimsWon++;
             else
                 _metrics.ccClaimsLost++;
@@ -622,23 +622,11 @@ void CombatCoordinationIntegrator::SubscribeToMessageBus()
     if (_subscribed || _groupGuid.IsEmpty() || !_bot)
         return;
 
-    uint8 role = _ai ? _ai->GetRole() : 0;
-    uint8 subgroup = 0;
+    uint8 role = _ai ? static_cast<uint8>(GetPlayerSpecRole(_bot)) : 0;
+    uint8 subgroup = _bot->GetSubGroup();
 
-    if (_bot->GetGroup())
-    {
-        Group::MemberSlot const* slot = _bot->GetGroup()->GetMemberSlot(_bot->GetGUID());
-        if (slot)
-            subgroup = slot->group;
-    }
-
-    _subscriptionId = BotMessageBus::Instance().Subscribe(
-        _groupGuid,
-        _bot->GetGUID(),
-        role,
-        subgroup,
-        [this](BotMessage const& msg) { OnBotMessage(msg); }
-    );
+    std::vector<BotMessageType> types; // empty = subscribe to all message types
+    sBotMessageBus->Subscribe(_ai, _groupGuid, types, role, subgroup);
 
     _subscribed = true;
 }
@@ -648,9 +636,9 @@ void CombatCoordinationIntegrator::UnsubscribeFromMessageBus()
     if (!_subscribed)
         return;
 
-    BotMessageBus::Instance().Unsubscribe(_groupGuid, _bot->GetGUID());
+    if (_bot)
+        sBotMessageBus->Unsubscribe(_bot->GetGUID(), _groupGuid);
     _subscribed = false;
-    _subscriptionId = 0;
 }
 
 void CombatCoordinationIntegrator::OnBotMessage(BotMessage const& message)

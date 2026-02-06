@@ -10,6 +10,8 @@
 
 #include "WipeRecoveryManager.h"
 #include "DungeonCoordinator.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "Player.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
@@ -124,6 +126,16 @@ void WipeRecoveryManager::OnGroupWipe()
     _playersNeedingBuffs.clear();
 
     TC_LOG_DEBUG("playerbot", "WipeRecoveryManager::OnGroupWipe - Wipe detected, starting recovery");
+
+    // Broadcast wipe notification to group via BotMessageBus
+    if (_coordinator && _coordinator->GetGroup())
+    {
+        Group* group = _coordinator->GetGroup();
+        ObjectGuid groupGuid = group->GetGUID();
+        ObjectGuid leaderGuid = group->GetLeaderGUID();
+        BotMessage msg = BotMessage::CommandWipeRecovery(leaderGuid, groupGuid);
+        sBotMessageBus->Publish(msg);
+    }
 
     // Build rez queue
     BuildRezQueue();

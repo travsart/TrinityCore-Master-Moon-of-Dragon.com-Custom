@@ -301,11 +301,51 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/BotMessageBus.h
 
     # ============================================================================
-    # PHASE 3 AUDIT: Arena/Raid Coordination Files (DISCOVERED - NOT YET BUILDABLE)
+    # PHASE 3 Sprint 5: Raid Coordination Files
     # ============================================================================
-    # These 34 files were found during Sprint 1 audit but have stale APIs that
-    # need CombatEventData -> CombatEvent migration. This is Sprint 2+ work.
-    # See: .claude/PHASE3/AUDIT_RESULTS.md for full details
+
+    # AI Coordination - Raid Core
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidState.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidTankCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidTankCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidHealCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidHealCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidCooldownRotation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidCooldownRotation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidGroupManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidGroupManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidEncounterManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidEncounterManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidPositioningManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/RaidPositioningManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/KitingManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/KitingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/AddManagementSystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/AddManagementSystem.cpp
+
+    # ============================================================================
+    # PHASE 3 Sprint 6: Arena Coordination Files
+    # ============================================================================
+
+    # AI Coordination - Arena Core
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/ArenaState.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/ArenaCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/ArenaCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/ArenaPositioning.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/ArenaPositioning.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/BurstCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/BurstCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/CCChainManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/CCChainManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/DefensiveCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/DefensiveCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/KillTargetManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Arena/KillTargetManager.cpp
+
+    # ============================================================================
+    # PHASE 3: Supporting Infrastructure Files
     # ============================================================================
 
     # AI Blackboard
@@ -343,6 +383,7 @@ set(PLAYERBOT_AI_BASE_SOURCES
 
     # AI Coordination - Battleground Scripts
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/IBGScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/IBGScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/BGScriptRegistry.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/BGScriptRegistry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/BGScriptInit.h

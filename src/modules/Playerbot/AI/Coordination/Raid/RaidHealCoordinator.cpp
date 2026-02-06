@@ -472,7 +472,7 @@ void RaidHealCoordinator::SignalManaBreak()
 // EVENT HANDLERS
 // ============================================================================
 
-void RaidHealCoordinator::OnHealingEvent(const CombatEventData& /*event*/)
+void RaidHealCoordinator::OnHealingEvent(const CombatEvent& /*event*/)
 {
     // Track healing for assignment optimization
 }

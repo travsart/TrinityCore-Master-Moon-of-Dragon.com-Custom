@@ -125,6 +125,11 @@ public:
     [[nodiscard]] bool IsInDungeon() const { return _state != DungeonState::IDLE; }
 
     /**
+     * @brief Get the group this coordinator manages
+     */
+    [[nodiscard]] Group* GetGroup() const { return _group; }
+
+    /**
      * @brief Check if in combat (trash or boss)
      */
     [[nodiscard]] bool IsInCombat() const;

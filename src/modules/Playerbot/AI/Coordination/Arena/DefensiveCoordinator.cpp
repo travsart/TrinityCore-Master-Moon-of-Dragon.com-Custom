@@ -10,8 +10,11 @@
 
 #include "DefensiveCoordinator.h"
 #include "ArenaCoordinator.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "Player.h"
 #include "ObjectAccessor.h"
+#include "Group.h"
 #include "GameTime.h"
 #include "Log.h"
 #include <algorithm>
@@ -435,9 +438,20 @@ uint32 DefensiveCoordinator::GetRecommendedExternalDefensive(ObjectGuid healer, 
 
 void DefensiveCoordinator::RequestExternalDefensive(ObjectGuid requester, uint8 urgency)
 {
-    // Would trigger healer to use external CD
     TC_LOG_DEBUG("playerbot", "DefensiveCoordinator: External defensive requested, urgency %u", urgency);
-    (void)requester;
+
+    auto const& teammates = _coordinator->GetTeammates();
+    if (!teammates.empty())
+    {
+        Player* leader = ObjectAccessor::FindPlayer(teammates.front().guid);
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            BotMessage msg = BotMessage::CommandUseDefensives(requester, groupGuid);
+            msg.value = static_cast<float>(urgency);
+            sBotMessageBus->Publish(msg);
+        }
+    }
 }
 
 // ============================================================================

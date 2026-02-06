@@ -24,6 +24,8 @@
 #include "BotAI.h"
 #include "GameTime.h"
 #include "Core/Events/GenericEventBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
+#include "AI/Combat/CombatCoordinationIntegrator.h"
 #include "Group/GroupEvents.h"
 #include "Combat/CombatEvents.h"
 #include "Cooldown/CooldownEvents.h"
@@ -1042,6 +1044,29 @@ void BotAI::OnProfessionEvent(ProfessionEvent const& event)
         default:
             break;
     }
+}
+
+// ============================================================================
+// BOT-TO-BOT MESSAGE HANDLER (Phase 3: Sprint 2 - BotMessageBus)
+// ============================================================================
+
+void BotAI::HandleBotMessage(BotMessage const& message)
+{
+    if (!_bot)
+        return;
+
+    // Forward to CombatCoordinationIntegrator for claim-related messages
+    // (interrupts, dispels, defensive CDs, CC coordination)
+    if (_gameSystems)
+    {
+        auto* combatCoord = _gameSystems->GetCombatCoordinationIntegrator();
+        if (combatCoord)
+            combatCoord->HandleIncomingMessage(message);
+    }
+
+    TC_LOG_TRACE("playerbot.messaging", "Bot {}: Received message {} from {}",
+        _bot->GetName(), GetMessageTypeName(message.type),
+        message.senderGuid.ToString());
 }
 
 } // namespace Playerbot

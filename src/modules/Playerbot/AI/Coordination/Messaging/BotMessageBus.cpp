@@ -118,8 +118,8 @@ bool BotMessageBus::Publish(BotMessage const& message)
     // Route claims through ClaimResolver
     if (message.IsClaim())
     {
-        return PublishClaim(message, nullptr) == ClaimStatus::PENDING ||
-               PublishClaim(message, nullptr) == ClaimStatus::GRANTED;
+        ClaimStatus status = PublishClaim(message, nullptr);
+        return status == ClaimStatus::PENDING || status == ClaimStatus::GRANTED;
     }
 
     std::lock_guard lock(_mutex);
@@ -251,13 +251,12 @@ void BotMessageBus::DeliverMessage(GroupMessageQueue& group, BotMessage const& m
         if (botGuid == message.senderGuid)
             continue;
 
-        // Deliver via BotAI
+        // Deliver via BotAI::HandleBotMessage
         if (sub.botAI)
         {
             try
             {
-                // BotAI should implement a HandleMessage method
-                // For now, we'll just log it
+                sub.botAI->HandleBotMessage(message);
                 TC_LOG_TRACE("playerbot.messaging", "BotMessageBus: Delivered {} to {}",
                     GetMessageTypeName(message.type), botGuid.ToString());
             }

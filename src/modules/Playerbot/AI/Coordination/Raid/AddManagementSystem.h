@@ -26,8 +26,8 @@ public:
     // Add Tracking
     void OnAddSpawned(ObjectGuid guid, uint32 creatureId);
     void OnAddDied(ObjectGuid guid);
-    void OnDeathEvent(const CombatEventData& event);
-    void OnDamageEvent(const CombatEventData& event);
+    void OnDeathEvent(const CombatEvent& event);
+    void OnDamageEvent(const CombatEvent& event);
 
     // Priority Management
     void SetAddPriority(ObjectGuid guid, AddPriority priority);

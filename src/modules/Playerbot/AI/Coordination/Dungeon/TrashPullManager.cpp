@@ -10,7 +10,10 @@
 
 #include "TrashPullManager.h"
 #include "DungeonCoordinator.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "Player.h"
+#include "Group.h"
 #include "Creature.h"
 #include "ObjectAccessor.h"
 #include "SpellInfo.h"
@@ -244,6 +247,17 @@ void TrashPullManager::ExecutePull(const PullPlan& plan)
 
     // Mark pack as pulled
     OnPackPulled(plan.packId);
+
+    // Broadcast focus target (first skull-marked mob) to group via BotMessageBus
+    if (_coordinator && _coordinator->GetGroup() && !plan.markerAssignments.empty())
+    {
+        Group* group = _coordinator->GetGroup();
+        ObjectGuid groupGuid = group->GetGUID();
+        ObjectGuid leaderGuid = group->GetLeaderGUID();
+        ObjectGuid focusTarget = plan.markerAssignments[0].first;
+        BotMessage msg = BotMessage::CommandFocusTarget(leaderGuid, groupGuid, focusTarget);
+        sBotMessageBus->Publish(msg);
+    }
 
     TC_LOG_DEBUG("playerbot", "TrashPullManager::ExecutePull - Executing pull for pack %u", plan.packId);
 }

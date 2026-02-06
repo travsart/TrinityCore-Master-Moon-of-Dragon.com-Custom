@@ -64,6 +64,9 @@ namespace Advanced {
     class TacticalCoordinator;
 }
 
+// Phase 3: Bot-to-bot messaging forward declaration
+struct BotMessage;
+
 // Phase 4: Event structure forward declarations
 struct GroupEvent;
 struct CombatEvent;
@@ -920,6 +923,27 @@ public:
     void HandleEvent(InstanceEvent const& event) override { OnInstanceEvent(event); }
     void HandleEvent(GroupEvent const& event) override { OnGroupEvent(event); }
     void HandleEvent(ProfessionEvent const& event) override { OnProfessionEvent(event); }
+
+    // ========================================================================
+    // BOT-TO-BOT MESSAGING (Phase 3: Sprint 2 - BotMessageBus)
+    // ========================================================================
+
+    /**
+     * @brief Handle a bot-to-bot message from BotMessageBus
+     *
+     * Called by BotMessageBus::DeliverMessage() when this bot receives
+     * a message from another bot in the same group. Messages include
+     * claims (interrupt/dispel/defensive CD), announcements (CD usage,
+     * death, position), requests (heal, external CD), and commands
+     * (focus target, spread, stack).
+     *
+     * Default implementation delegates to CombatCoordinationIntegrator
+     * if available. ClassAI implementations may override for
+     * class-specific message handling.
+     *
+     * @param message The bot message to handle
+     */
+    virtual void HandleBotMessage(BotMessage const& message);
 
     // ========================================================================
     // PERFORMANCE METRICS - Monitoring and optimization

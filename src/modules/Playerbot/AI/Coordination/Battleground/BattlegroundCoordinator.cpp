@@ -18,8 +18,11 @@
 #include "Scripts/BGScriptRegistry.h"
 #include "Scripts/IBGScript.h"
 #include "Core/Events/CombatEventRouter.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "Player.h"
 #include "Battleground.h"
+#include "Group.h"
 #include "ObjectAccessor.h"
 #include "GameTime.h"
 #include "Log.h"
@@ -748,6 +751,18 @@ void BattlegroundCoordinator::OnStateEnter(BGState state)
             // Assign initial roles
             if (_roleManager)
                 _roleManager->AssignAllRoles();
+
+            // Broadcast use defensives (opening engagement) via BotMessageBus
+            if (!_bots.empty())
+            {
+                Player* leader = ObjectAccessor::FindPlayer(_bots.front().guid);
+                if (leader && leader->GetGroup())
+                {
+                    ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+                    BotMessage msg = BotMessage::CommandUseDefensives(leader->GetGUID(), groupGuid);
+                    sBotMessageBus->Publish(msg);
+                }
+            }
             break;
 
         case BGState::VICTORY:

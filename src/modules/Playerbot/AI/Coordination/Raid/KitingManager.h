@@ -59,7 +59,7 @@ public:
 
     // Emergency Handling
     void OnKiterDied(ObjectGuid kiter);
-    void OnDeathEvent(const CombatEventData& event);
+    void OnDeathEvent(const CombatEvent& event);
     ObjectGuid FindEmergencyKiter(ObjectGuid target) const;
 
 private:

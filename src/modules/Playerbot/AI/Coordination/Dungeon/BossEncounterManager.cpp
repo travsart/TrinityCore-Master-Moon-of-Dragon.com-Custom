@@ -10,8 +10,11 @@
 
 #include "BossEncounterManager.h"
 #include "DungeonCoordinator.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "Player.h"
 #include "Creature.h"
+#include "Group.h"
 #include "ObjectAccessor.h"
 #include "GameTime.h"
 #include "Log.h"
@@ -513,14 +516,38 @@ void BossEncounterManager::HandleTankSwapMechanic(const MechanicTrigger& trigger
 
 void BossEncounterManager::HandleSpreadMechanic(const MechanicTrigger& trigger)
 {
-    // Mechanic state is already set, nothing else needed
     TC_LOG_DEBUG("playerbot", "BossEncounterManager: Spread mechanic - spread to %.1f yards",
                  GetSpreadDistance());
+
+    // Broadcast SPREAD command via BotMessageBus
+    if (_coordinator && _coordinator->GetGroup())
+    {
+        Group* group = _coordinator->GetGroup();
+        ObjectGuid groupGuid = group->GetGUID();
+        ObjectGuid leaderGuid = group->GetLeaderGUID();
+        BotMessage msg = BotMessage::CommandSpread(leaderGuid, groupGuid);
+        sBotMessageBus->Publish(msg);
+    }
 }
 
 void BossEncounterManager::HandleStackMechanic(const MechanicTrigger& trigger)
 {
     TC_LOG_DEBUG("playerbot", "BossEncounterManager: Stack mechanic triggered");
+
+    // Broadcast STACK command via BotMessageBus
+    if (_coordinator && _coordinator->GetGroup())
+    {
+        Group* group = _coordinator->GetGroup();
+        ObjectGuid groupGuid = group->GetGUID();
+        ObjectGuid leaderGuid = group->GetLeaderGUID();
+        ObjectGuid stackOn = GetStackTarget();
+
+        // Get position of the stack target
+        Player* stackPlayer = ObjectAccessor::FindPlayer(stackOn);
+        Position stackPos = stackPlayer ? stackPlayer->GetPosition() : Position();
+        BotMessage msg = BotMessage::CommandStack(leaderGuid, groupGuid, stackPos);
+        sBotMessageBus->Publish(msg);
+    }
 }
 
 void BossEncounterManager::HandleDodgeMechanic(const MechanicTrigger& trigger)

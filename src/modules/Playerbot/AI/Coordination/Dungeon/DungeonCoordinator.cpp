@@ -23,6 +23,9 @@
 #include "GameTime.h"
 #include "Log.h"
 #include "LFG.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
+#include "AI/Coordination/ContentContextManager.h"
 
 namespace Playerbot {
 
@@ -412,6 +415,21 @@ void DungeonCoordinator::OnBossEngaged(uint32 bossId)
     {
         _bossManager->OnBossEngaged(bossId);
         TransitionTo(DungeonState::BOSS_COMBAT);
+
+        // Notify group via BotMessageBus that boss combat has started
+        // Bots subscribed to the group will receive this and adjust behavior
+        if (_group)
+        {
+            ObjectGuid groupGuid = _group->GetGUID();
+            ObjectGuid leaderGuid = _group->GetLeaderGUID();
+
+            // Check if boss strategy calls for bloodlust on pull
+            if (_bossManager->ShouldUseBloodlust())
+            {
+                BotMessage msg = BotMessage::CommandBloodlust(leaderGuid, groupGuid);
+                sBotMessageBus->Publish(msg);
+            }
+        }
     }
 }
 

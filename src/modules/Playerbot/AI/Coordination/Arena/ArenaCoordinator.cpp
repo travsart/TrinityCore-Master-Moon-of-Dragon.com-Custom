@@ -16,6 +16,8 @@
 #include "ArenaPositioning.h"
 #include "Core/Events/CombatEventRouter.h"
 #include "AI/Combat/CrowdControlManager.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "Player.h"
 #include "Battleground.h"
 #include "Group.h"
@@ -170,10 +172,7 @@ void ArenaCoordinator::Initialize()
     InitializeTeammateTracking();
 
     // Subscribe to combat events
-    if (CombatEventRouter* router = CombatEventRouter::Instance())
-    {
-        router->Subscribe(this);
-    }
+    CombatEventRouter::Instance().Subscribe(this);
 
     TC_LOG_DEBUG("playerbot", "ArenaCoordinator::Initialize - Initialized for %uv%u arena",
                  static_cast<uint8>(_type), static_cast<uint8>(_type));
@@ -182,10 +181,7 @@ void ArenaCoordinator::Initialize()
 void ArenaCoordinator::Shutdown()
 {
     // Unsubscribe from events
-    if (CombatEventRouter* router = CombatEventRouter::Instance())
-    {
-        router->Unsubscribe(this);
-    }
+    CombatEventRouter::Instance().Unsubscribe(this);
 
     _killTargetManager.reset();
     _burstCoordinator.reset();
@@ -329,6 +325,20 @@ void ArenaCoordinator::CallBurst(ObjectGuid target)
     {
         _burstCoordinator->StartBurst(target);
         _matchStats.burstWindowsInitiated++;
+    }
+
+    // Broadcast burst window + focus target via BotMessageBus
+    if (!_team.empty())
+    {
+        Player* leader = _team.front();
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            BotMessage burstMsg = BotMessage::AnnounceBurstWindow(leader->GetGUID(), groupGuid, 6000);
+            sBotMessageBus->Publish(burstMsg);
+            BotMessage focusMsg = BotMessage::CommandFocusTarget(leader->GetGUID(), groupGuid, target);
+            sBotMessageBus->Publish(focusMsg);
+        }
     }
 }
 
@@ -853,17 +863,17 @@ void ArenaCoordinator::HandleDamageTaken(const CombatEvent& event)
     // Track damage for defensive decisions
     if (_defensiveCoordinator)
     {
-        _defensiveCoordinator->OnDamageTaken(event.target, event.source, event.value);
+        _defensiveCoordinator->OnDamageTaken(event.target, event.source, event.amount);
     }
 
     // Update enemy health tracking
     if (IsEnemy(event.target))
     {
-        _matchStats.totalDamageDealt += event.value;
+        _matchStats.totalDamageDealt += event.amount;
     }
     else if (IsTeammate(event.target))
     {
-        _matchStats.totalDamageTaken += event.value;
+        _matchStats.totalDamageTaken += event.amount;
     }
 }
 
@@ -872,7 +882,7 @@ void ArenaCoordinator::HandleDamageDealt(const CombatEvent& event)
     // Similar to HandleDamageTaken but from our perspective
     if (IsTeammate(event.source) && IsEnemy(event.target))
     {
-        _matchStats.totalDamageDealt += event.value;
+        _matchStats.totalDamageDealt += event.amount;
     }
 }
 
@@ -880,7 +890,7 @@ void ArenaCoordinator::HandleHealingDone(const CombatEvent& event)
 {
     if (IsTeammate(event.source))
     {
-        _matchStats.totalHealingDone += event.value;
+        _matchStats.totalHealingDone += event.amount;
     }
 }
 

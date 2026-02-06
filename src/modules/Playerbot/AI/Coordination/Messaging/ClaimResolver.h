@@ -49,7 +49,7 @@ namespace std
         std::size_t operator()(Playerbot::ClaimKey const& key) const noexcept
         {
             std::size_t h1 = std::hash<uint8>{}(static_cast<uint8>(key.type));
-            std::size_t h2 = std::hash<uint64>{}(key.targetGuid.GetRawValue());
+            std::size_t h2 = std::hash<ObjectGuid>{}(key.targetGuid);
             std::size_t h3 = std::hash<uint32>{}(key.spellOrAuraId);
             return h1 ^ (h2 << 1) ^ (h3 << 2);
         }

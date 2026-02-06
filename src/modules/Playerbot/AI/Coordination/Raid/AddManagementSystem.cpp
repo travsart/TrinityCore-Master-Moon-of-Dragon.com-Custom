@@ -63,12 +63,12 @@ void AddManagementSystem::OnAddDied(ObjectGuid guid)
     TC_LOG_DEBUG("playerbots.raid", "AddManagementSystem::OnAddDied - Add died");
 }
 
-void AddManagementSystem::OnDeathEvent(const CombatEventData& event)
+void AddManagementSystem::OnDeathEvent(const CombatEvent& event)
 {
-    OnAddDied(event.sourceGuid);
+    OnAddDied(event.source);
 }
 
-void AddManagementSystem::OnDamageEvent(const CombatEventData& /*event*/)
+void AddManagementSystem::OnDamageEvent(const CombatEvent& /*event*/)
 {
     // Track damage for priority updates
 }

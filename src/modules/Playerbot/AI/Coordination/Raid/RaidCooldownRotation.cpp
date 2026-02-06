@@ -202,9 +202,9 @@ void RaidCooldownRotation::OnPhaseChange(uint8 phase)
     }
 }
 
-void RaidCooldownRotation::OnSpellEvent(const CombatEventData& event)
+void RaidCooldownRotation::OnSpellEvent(const CombatEvent& event)
 {
-    if (event.eventType != CombatEventType::SPELL_CAST)
+    if (event.type != CombatEventType::SPELL_CAST_SUCCESS)
         return;
 
     if (event.spellId == SPELL_BLOODLUST || event.spellId == SPELL_HEROISM ||
@@ -215,7 +215,7 @@ void RaidCooldownRotation::OnSpellEvent(const CombatEventData& event)
 
     for (auto& cd : _cooldowns)
     {
-        if (cd.playerGuid == event.sourceGuid && cd.spellId == event.spellId)
+        if (cd.playerGuid == event.source && cd.spellId == event.spellId)
         {
             cd.isAvailable = false;
             cd.remainingCooldown = cd.cooldownDuration;

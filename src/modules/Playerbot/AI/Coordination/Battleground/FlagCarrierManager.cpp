@@ -15,6 +15,8 @@
 #include "Log.h"
 #include "SpellAuras.h"
 #include "SpellAuraEffects.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 
 namespace Playerbot {
 
@@ -232,6 +234,19 @@ void FlagCarrierManager::OnFlagPickedUp(ObjectGuid player, bool isEnemyFlag)
         _friendlyFlag.isDropped = false;
 
         TC_LOG_DEBUG("playerbots.bg", "FlagCarrierManager::OnFlagPickedUp - Enemy picked up friendly flag");
+
+        // Broadcast focus target on the enemy flag carrier so bots prioritize them
+        auto friendlyPlayers = _coordinator->GetFriendlyPlayers();
+        if (!friendlyPlayers.empty())
+        {
+            Player* leader = _coordinator->GetPlayer(friendlyPlayers.front());
+            if (leader && leader->GetGroup())
+            {
+                ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+                BotMessage msg = BotMessage::CommandFocusTarget(leader->GetGUID(), groupGuid, player);
+                sBotMessageBus->Publish(msg);
+            }
+        }
     }
 }
 

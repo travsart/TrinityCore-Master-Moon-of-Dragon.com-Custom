@@ -220,7 +220,7 @@ private:
 };
 
 // Common M+ Affix IDs for reference
-namespace MythicPlusAffix
+namespace MythicPlusAffixId
 {
     constexpr uint32 FORTIFIED = 10;
     constexpr uint32 TYRANNICAL = 9;

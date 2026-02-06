@@ -235,11 +235,11 @@ void KitingManager::OnKiterDied(ObjectGuid kiter)
     }
 }
 
-void KitingManager::OnDeathEvent(const CombatEventData& event)
+void KitingManager::OnDeathEvent(const CombatEvent& event)
 {
-    if (IsKiting(event.sourceGuid))
+    if (IsKiting(event.source))
     {
-        OnKiterDied(event.sourceGuid);
+        OnKiterDied(event.source);
     }
 }
 

@@ -10,6 +10,11 @@
 
 #include "KillTargetManager.h"
 #include "ArenaCoordinator.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
+#include "Player.h"
+#include "ObjectAccessor.h"
+#include "Group.h"
 #include "GameTime.h"
 #include "Log.h"
 #include <algorithm>
@@ -77,6 +82,19 @@ void KillTargetManager::SetKillTarget(ObjectGuid target)
     _targetSetTime = GameTime::GetGameTimeMS();
 
     TC_LOG_DEBUG("playerbot", "KillTargetManager::SetKillTarget - New kill target set");
+
+    // Broadcast focus target via BotMessageBus
+    auto const& teammates = _coordinator->GetTeammates();
+    if (!teammates.empty())
+    {
+        Player* leader = ObjectAccessor::FindPlayer(teammates.front().guid);
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            ObjectGuid senderGuid = leader->GetGroup()->GetLeaderGUID();
+            sBotMessageBus->Publish(BotMessage::CommandFocusTarget(senderGuid, groupGuid, target));
+        }
+    }
 }
 
 void KillTargetManager::ClearKillTarget()

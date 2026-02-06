@@ -10,7 +10,10 @@
 
 #include "RaidTankCoordinator.h"
 #include "RaidCoordinator.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "Player.h"
+#include "Group.h"
 #include "Log.h"
 
 namespace Playerbot {
@@ -363,34 +366,34 @@ void RaidTankCoordinator::OnTauntFailed(ObjectGuid tank, ObjectGuid /*target*/)
     }
 }
 
-void RaidTankCoordinator::OnDamageEvent(const CombatEventData& event)
+void RaidTankCoordinator::OnDamageEvent(const CombatEvent& event)
 {
     // Track damage to tanks for threat estimation
     for (auto& tankInfo : _tanks)
     {
-        if (tankInfo.guid == event.targetGuid)
+        if (tankInfo.guid == event.target)
         {
             // Tank is being hit - likely has aggro
         }
     }
 }
 
-void RaidTankCoordinator::OnAuraEvent(const CombatEventData& event)
+void RaidTankCoordinator::OnAuraEvent(const CombatEvent& event)
 {
     // Check for swap trigger debuffs
     for (const auto& trigger : _swapTriggers)
     {
         if (event.spellId == trigger.debuffSpellId)
         {
-            if (IsTank(event.targetGuid))
+            if (IsTank(event.target))
             {
-                if (event.eventType == CombatEventType::AURA_APPLIED)
+                if (event.type == CombatEventType::AURA_APPLIED)
                 {
-                    OnSwapDebuffApplied(event.targetGuid, event.spellId, 1);
+                    OnSwapDebuffApplied(event.target, event.spellId, 1);
                 }
-                else if (event.eventType == CombatEventType::AURA_REMOVED)
+                else if (event.type == CombatEventType::AURA_REMOVED)
                 {
-                    OnSwapDebuffRemoved(event.targetGuid, event.spellId);
+                    OnSwapDebuffRemoved(event.target, event.spellId);
                 }
             }
         }
@@ -603,6 +606,19 @@ void RaidTankCoordinator::ExecuteSwap(ObjectGuid newTank)
 
     // Advance rotation
     AdvanceTankRotation();
+
+    // Broadcast tank swap request via BotMessageBus
+    if (_coordinator && !_coordinator->GetAllMembers().empty())
+    {
+        Player* leader = _coordinator->GetPlayer(_coordinator->GetAllMembers().front());
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            ObjectGuid bossGuid = _coordinator->GetCurrentBossTarget();
+            BotMessage msg = BotMessage::RequestTankSwap(_activeTank, groupGuid, bossGuid, 0);
+            sBotMessageBus->Publish(msg);
+        }
+    }
 }
 
 bool RaidTankCoordinator::ShouldSwapNow(ObjectGuid currentTank) const

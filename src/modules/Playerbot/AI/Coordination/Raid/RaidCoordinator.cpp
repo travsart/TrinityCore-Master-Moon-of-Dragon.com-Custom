@@ -18,7 +18,10 @@
 #include "RaidPositioningManager.h"
 #include "RaidEncounterManager.h"
 #include "Core/Events/CombatEventRouter.h"
+#include "AI/Coordination/Messaging/BotMessageBus.h"
+#include "AI/Coordination/Messaging/BotMessage.h"
 #include "Player.h"
+#include "Group.h"
 #include "Map.h"
 #include "Log.h"
 
@@ -402,6 +405,18 @@ void RaidCoordinator::CallBloodlust()
         _cooldownRotation->UseBloodlust();
 
     _matchStats.bloodlustUsed++;
+
+    // Broadcast bloodlust command via BotMessageBus
+    if (!_raidMembers.empty())
+    {
+        Player* leader = GetPlayer(_raidMembers.front());
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            BotMessage msg = BotMessage::CommandBloodlust(leader->GetGUID(), groupGuid);
+            sBotMessageBus->Publish(msg);
+        }
+    }
 }
 
 void RaidCoordinator::CallRaidDefensive()
@@ -410,6 +425,18 @@ void RaidCoordinator::CallRaidDefensive()
 
     if (_cooldownRotation)
         _cooldownRotation->UseRaidDefensive();
+
+    // Broadcast use defensives command via BotMessageBus
+    if (!_raidMembers.empty())
+    {
+        Player* leader = GetPlayer(_raidMembers.front());
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            BotMessage msg = BotMessage::CommandUseDefensives(leader->GetGUID(), groupGuid);
+            sBotMessageBus->Publish(msg);
+        }
+    }
 }
 
 void RaidCoordinator::CallBattleRez(ObjectGuid target)
@@ -420,6 +447,18 @@ void RaidCoordinator::CallBattleRez(ObjectGuid target)
         _cooldownRotation->UseBattleRez(target);
 
     _matchStats.battleRezUsed++;
+
+    // Broadcast rez claim via BotMessageBus
+    if (!_raidMembers.empty())
+    {
+        Player* leader = GetPlayer(_raidMembers.front());
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            BotMessage msg = BotMessage::ClaimResurrect(leader->GetGUID(), groupGuid, target, ClaimPriority::HIGH);
+            sBotMessageBus->Publish(msg);
+        }
+    }
 }
 
 void RaidCoordinator::CallReadyCheck()
@@ -440,6 +479,18 @@ void RaidCoordinator::CallPull(uint32 countdown)
 void RaidCoordinator::CallWipe()
 {
     TC_LOG_DEBUG("playerbots.raid", "RaidCoordinator::CallWipe - Wipe called");
+
+    // Broadcast wipe recovery command via BotMessageBus
+    if (!_raidMembers.empty())
+    {
+        Player* leader = GetPlayer(_raidMembers.front());
+        if (leader && leader->GetGroup())
+        {
+            ObjectGuid groupGuid = leader->GetGroup()->GetGUID();
+            BotMessage msg = BotMessage::CommandWipeRecovery(leader->GetGUID(), groupGuid);
+            sBotMessageBus->Publish(msg);
+        }
+    }
 
     OnRaidWipe();
 }
