@@ -25,6 +25,7 @@ REGISTER_BG_SCRIPT(SeethingShoreScript, 1803);  // SeethingShore::MAP_ID
 void SeethingShoreScript::OnLoad(BattlegroundCoordinator* coordinator)
 {
     DominationScriptBase::OnLoad(coordinator);
+    InitializeNodeTracking();
 
     TC_LOG_DEBUG("bg.playerbot", "SeethingShoreScript::OnLoad - Initializing enterprise-grade Seething Shore coordination");
 

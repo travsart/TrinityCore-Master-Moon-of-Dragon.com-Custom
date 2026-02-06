@@ -46,66 +46,66 @@ public:
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const { return SilvershardMines::MAP_ID; }
-    std::string GetName() const { return SilvershardMines::BG_NAME; }
-    BGType GetBGType() const { return BGType::SILVERSHARD_MINES; }
-    uint32 GetMaxScore() const { return SilvershardMines::MAX_SCORE; }
-    uint32 GetMaxDuration() const { return SilvershardMines::MAX_DURATION; }
-    uint8 GetTeamSize() const { return SilvershardMines::TEAM_SIZE; }
+    uint32 GetMapId() const override { return SilvershardMines::MAP_ID; }
+    std::string GetName() const override { return SilvershardMines::BG_NAME; }
+    BGType GetBGType() const override { return BGType::SILVERSHARD_MINES; }
+    uint32 GetMaxScore() const override { return SilvershardMines::MAX_SCORE; }
+    uint32 GetMaxDuration() const override { return SilvershardMines::MAX_DURATION; }
+    uint8 GetTeamSize() const override { return SilvershardMines::TEAM_SIZE; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
-    void OnUpdate(uint32 diff);
-    void OnEvent(const BGScriptEventData& event);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+    void OnUpdate(uint32 diff) override;
+    void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
-    bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const;
-    void GetScoreFromWorldStates(const std::map<int32, int32>& states, uint32& allianceScore, uint32& hordeScore) const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
+    bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const override;
+    void GetScoreFromWorldStates(const std::map<int32, int32>& states, uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // STRATEGY AND ROLES
     // ========================================================================
 
     RoleDistribution GetRecommendedRoles(const StrategicDecision& decision,
-        float scoreAdvantage, uint32 timeRemaining) const;
+        float scoreAdvantage, uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage,
         uint32 controlledCount, uint32 totalObjectives,
-        uint32 timeRemaining) const;
+        uint32 timeRemaining) const override;
 
     // ========================================================================
     // RESOURCERACE BASE IMPLEMENTATIONS
     // ========================================================================
 
-    uint32 GetCartCount() const { return SilvershardMines::CART_COUNT; }
-    Position GetCartPosition(uint32 cartId) const;
-    float GetCartProgress(uint32 cartId) const;
-    uint32 GetCartController(uint32 cartId) const;
-    bool IsCartContested(uint32 cartId) const;
-    uint32 GetPointsPerCapture() const { return SilvershardMines::POINTS_PER_CAPTURE; }
+    uint32 GetCartCount() const override { return SilvershardMines::CART_COUNT; }
+    Position GetCartPosition(uint32 cartId) const override;
+    float GetCartProgress(uint32 cartId) const override;
+    uint32 GetCartController(uint32 cartId) const override;
+    bool IsCartContested(uint32 cartId) const override;
+    uint32 GetPointsPerCapture() const override { return SilvershardMines::POINTS_PER_CAPTURE; }
 
     // Track info
-    uint32 GetTrackCount() const { return SilvershardMines::Tracks::TRACK_COUNT; }
-    std::vector<Position> GetTrackWaypoints(uint32 trackId) const;
-    uint32 GetCartOnTrack(uint32 trackId) const;
+    uint32 GetTrackCount() const override { return SilvershardMines::Tracks::TRACK_COUNT; }
+    std::vector<Position> GetTrackWaypoints(uint32 trackId) const override;
+    uint32 GetCartOnTrack(uint32 trackId) const override;
 
     // Intersection handling
-    bool HasIntersections() const { return true; }
-    std::vector<uint32> GetIntersectionIds() const;
-    uint32 GetIntersectionDecisionTime(uint32 intersectionId) const;
+    bool HasIntersections() const override { return true; }
+    std::vector<uint32> GetIntersectionIds() const override;
+    uint32 GetIntersectionDecisionTime(uint32 intersectionId) const override;
 
     // ========================================================================
     // POSITIONAL DATA PROVIDERS

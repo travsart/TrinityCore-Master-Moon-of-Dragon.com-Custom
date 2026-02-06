@@ -44,16 +44,16 @@ public:
     // Siege specific
     // ========================================================================
 
-    virtual bool HasVehicles() const { return true; }
+    virtual bool HasVehicles() const override { return true; }
     virtual bool IsEpic() const { return GetTeamSize() >= 40; }
-    virtual uint8 GetTeamSize() const = 0; // To be implemented by derived classes
+    virtual uint8 GetTeamSize() const override = 0; // To be implemented by derived classes
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnUpdate(uint32 diff);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnUpdate(uint32 diff) override;
 
     // ========================================================================
     // VEHICLE DATA
@@ -68,14 +68,14 @@ public:
     RoleDistribution GetRecommendedRoles(
         const StrategicDecision& decision,
         float scoreAdvantage,
-        uint32 timeRemaining) const;
+        uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const;
+        uint32 totalObjectives, uint32 timeRemaining) const override;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
-        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const;
+        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
 
     // ========================================================================
     // SIEGE-SPECIFIC IMPLEMENTATIONS
@@ -88,8 +88,8 @@ public:
     // EVENT HANDLING
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event);
-    void OnMatchStart();
+    void OnEvent(const BGScriptEventData& event) override;
+    void OnMatchStart() override;
 
 protected:
     // ========================================================================

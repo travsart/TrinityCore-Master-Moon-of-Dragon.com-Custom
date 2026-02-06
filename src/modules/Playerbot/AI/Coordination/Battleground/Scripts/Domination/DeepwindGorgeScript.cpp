@@ -24,6 +24,7 @@ REGISTER_BG_SCRIPT(DeepwindGorgeScript, 1105);  // DeepwindGorge::MAP_ID
 void DeepwindGorgeScript::OnLoad(BattlegroundCoordinator* coordinator)
 {
     DominationScriptBase::OnLoad(coordinator);
+    InitializeNodeTracking();
 
     TC_LOG_DEBUG("bg.playerbot", "DeepwindGorgeScript::OnLoad - Initializing enterprise-grade Deepwind Gorge coordination");
 

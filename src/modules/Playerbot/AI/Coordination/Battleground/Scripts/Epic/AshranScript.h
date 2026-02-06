@@ -63,35 +63,35 @@ public:
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
-    void OnUpdate(uint32 diff);
-    void OnEvent(const BGScriptEventData& event);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+    void OnUpdate(uint32 diff) override;
+    void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
 
     // ========================================================================
     // WORLD STATE INTERPRETATION
     // ========================================================================
 
-    bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const;
-    void GetScoreFromWorldStates(const std::map<int32, int32>& states, uint32& allianceScore, uint32& hordeScore) const;
+    bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const override;
+    void GetScoreFromWorldStates(const std::map<int32, int32>& states, uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // STRATEGY & ROLE DISTRIBUTION
     // ========================================================================
 
-    RoleDistribution GetRecommendedRoles(const StrategicDecision& decision, float scoreAdvantage, uint32 timeRemaining) const;
-    void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage, uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const;
+    RoleDistribution GetRecommendedRoles(const StrategicDecision& decision, float scoreAdvantage, uint32 timeRemaining) const override;
+    void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage, uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const override;
 
     // ========================================================================
     // ASHRAN-SPECIFIC METHODS

@@ -27,6 +27,7 @@ REGISTER_BG_SCRIPT(ArathiBasinScript, 529);  // ArathiBasin::MAP_ID
 void ArathiBasinScript::OnLoad(BattlegroundCoordinator* coordinator)
 {
     DominationScriptBase::OnLoad(coordinator);
+    InitializeNodeTracking();
 
     // Cache objective data
     m_cachedObjectives = GetObjectiveData();

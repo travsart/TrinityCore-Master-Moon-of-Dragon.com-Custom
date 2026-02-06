@@ -67,60 +67,60 @@ public:
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const { return TwinPeaks::MAP_ID; }
-    std::string GetName() const { return TwinPeaks::BG_NAME; }
-    BGType GetBGType() const { return BGType::TWIN_PEAKS; }
-    uint32 GetMaxScore() const { return TwinPeaks::MAX_SCORE; }
-    uint32 GetMaxDuration() const { return TwinPeaks::MAX_DURATION; }
-    uint8 GetTeamSize() const { return TwinPeaks::TEAM_SIZE; }
+    uint32 GetMapId() const override { return TwinPeaks::MAP_ID; }
+    std::string GetName() const override { return TwinPeaks::BG_NAME; }
+    BGType GetBGType() const override { return BGType::TWIN_PEAKS; }
+    uint32 GetMaxScore() const override { return TwinPeaks::MAX_SCORE; }
+    uint32 GetMaxDuration() const override { return TwinPeaks::MAX_DURATION; }
+    uint8 GetTeamSize() const override { return TwinPeaks::TEAM_SIZE; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
-    void OnUpdate(uint32 diff);
-    void OnEvent(const BGScriptEventData& event);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+    void OnUpdate(uint32 diff) override;
+    void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
 
     // ========================================================================
     // WORLD STATE
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, BGObjectiveState& outState) const;
+        uint32& outObjectiveId, BGObjectiveState& outState) const override;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
-        uint32& allianceScore, uint32& hordeScore) const;
+        uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // STRATEGY AND ROLES
     // ========================================================================
 
     RoleDistribution GetRecommendedRoles(const StrategicDecision& decision,
-        float scoreAdvantage, uint32 timeRemaining) const;
+        float scoreAdvantage, uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage,
         uint32 controlledCount, uint32 totalObjectives,
-        uint32 timeRemaining) const;
+        uint32 timeRemaining) const override;
 
     // ========================================================================
     // POSITIONAL DATA PROVIDERS
     // ========================================================================
 
     std::vector<Position> GetObjectivePath(
-        uint32 fromObjective, uint32 toObjective) const;
+        uint32 fromObjective, uint32 toObjective) const override;
 
     // Sniper/overlook positions
     std::vector<BGPositionData> GetSniperPositions() const;
@@ -185,42 +185,42 @@ protected:
     // CTF ABSTRACT IMPLEMENTATIONS
     // ========================================================================
 
-    Position GetAllianceFlagPosition() const
+    Position GetAllianceFlagPosition() const override
     {
         return TwinPeaks::GetAllianceFlagPos();
     }
 
-    Position GetHordeFlagPosition() const
+    Position GetHordeFlagPosition() const override
     {
         return TwinPeaks::GetHordeFlagPos();
     }
 
-    std::vector<Position> GetAllianceFlagRoomDefense() const
+    std::vector<Position> GetAllianceFlagRoomDefense() const override
     {
         return TwinPeaks::GetAllianceFlagRoomDefense();
     }
 
-    std::vector<Position> GetHordeFlagRoomDefense() const
+    std::vector<Position> GetHordeFlagRoomDefense() const override
     {
         return TwinPeaks::GetHordeFlagRoomDefense();
     }
 
-    std::vector<Position> GetMiddleChokepoints() const
+    std::vector<Position> GetMiddleChokepoints() const override
     {
         return TwinPeaks::GetMiddleChokepoints();
     }
 
-    std::vector<Position> GetSpeedBuffPositions() const
+    std::vector<Position> GetSpeedBuffPositions() const override
     {
         return TwinPeaks::GetSpeedBuffPositions();
     }
 
-    std::vector<Position> GetRestoreBuffPositions() const
+    std::vector<Position> GetRestoreBuffPositions() const override
     {
         return TwinPeaks::GetRestoreBuffPositions();
     }
 
-    std::vector<Position> GetBerserkBuffPositions() const
+    std::vector<Position> GetBerserkBuffPositions() const override
     {
         return TwinPeaks::GetBerserkBuffPositions();
     }

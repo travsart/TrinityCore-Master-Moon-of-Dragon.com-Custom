@@ -27,6 +27,7 @@ REGISTER_BG_SCRIPT(BattleForGilneasScript, 761);  // BattleForGilneas::MAP_ID
 void BattleForGilneasScript::OnLoad(BattlegroundCoordinator* coordinator)
 {
     DominationScriptBase::OnLoad(coordinator);
+    InitializeNodeTracking();
 
     // Cache objective data
     m_cachedObjectives = GetObjectiveData();

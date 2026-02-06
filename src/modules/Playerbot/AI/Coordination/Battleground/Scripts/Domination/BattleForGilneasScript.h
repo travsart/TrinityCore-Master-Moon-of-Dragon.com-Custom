@@ -46,48 +46,48 @@ public:
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const { return BattleForGilneas::MAP_ID; }
-    std::string GetName() const { return BattleForGilneas::BG_NAME; }
-    BGType GetBGType() const { return BGType::BATTLE_FOR_GILNEAS; }
-    uint32 GetMaxScore() const { return BattleForGilneas::MAX_SCORE; }
-    uint32 GetMaxDuration() const { return BattleForGilneas::MAX_DURATION; }
-    uint8 GetTeamSize() const { return BattleForGilneas::TEAM_SIZE; }
-    uint32 GetOptimalNodeCount() const { return BattleForGilneas::Strategy::OPTIMAL_NODE_COUNT; }
+    uint32 GetMapId() const override { return BattleForGilneas::MAP_ID; }
+    std::string GetName() const override { return BattleForGilneas::BG_NAME; }
+    BGType GetBGType() const override { return BGType::BATTLE_FOR_GILNEAS; }
+    uint32 GetMaxScore() const override { return BattleForGilneas::MAX_SCORE; }
+    uint32 GetMaxDuration() const override { return BattleForGilneas::MAX_DURATION; }
+    uint8 GetTeamSize() const override { return BattleForGilneas::TEAM_SIZE; }
+    uint32 GetOptimalNodeCount() const override { return BattleForGilneas::Strategy::OPTIMAL_NODE_COUNT; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
-    void OnEvent(const BGScriptEventData& event);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+    void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
 
     // ========================================================================
     // WORLD STATE INTERPRETATION
     // ========================================================================
 
-    bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const;
-    void GetScoreFromWorldStates(const std::map<int32, int32>& states, uint32& allianceScore, uint32& hordeScore) const;
+    bool InterpretWorldState(int32 stateId, int32 value, uint32& outObjectiveId, BGObjectiveState& outState) const override;
+    void GetScoreFromWorldStates(const std::map<int32, int32>& states, uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // STRATEGY & ROLE DISTRIBUTION
     // ========================================================================
 
-    void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage, uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const;
-    uint8 GetObjectiveAttackPriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const;
-    uint8 GetObjectiveDefensePriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const;
-    RoleDistribution GetRecommendedRoles(const StrategicDecision& decision, float scoreAdvantage, uint32 timeRemaining) const;
+    void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage, uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const override;
+    uint8 GetObjectiveAttackPriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const override;
+    uint8 GetObjectiveDefensePriority(uint32 objectiveId, BGObjectiveState state, uint32 faction) const override;
+    RoleDistribution GetRecommendedRoles(const StrategicDecision& decision, float scoreAdvantage, uint32 timeRemaining) const override;
 
     // ========================================================================
     // ENTERPRISE-GRADE POSITIONING
@@ -144,11 +144,11 @@ protected:
     // BASE CLASS OVERRIDES
     // ========================================================================
 
-    uint32 GetNodeCount() const { return BattleForGilneas::NODE_COUNT; }
-    BGObjectiveData GetNodeData(uint32 nodeIndex) const;
-    std::vector<uint32> GetTickPointsTable() const;
-    uint32 GetTickInterval() const { return BattleForGilneas::TICK_INTERVAL; }
-    uint32 GetDefaultCaptureTime() const { return BattleForGilneas::CAPTURE_TIME; }
+    uint32 GetNodeCount() const override { return BattleForGilneas::NODE_COUNT; }
+    BGObjectiveData GetNodeData(uint32 nodeIndex) const override;
+    std::vector<uint32> GetTickPointsTable() const override;
+    uint32 GetTickInterval() const override { return BattleForGilneas::TICK_INTERVAL; }
+    uint32 GetDefaultCaptureTime() const override { return BattleForGilneas::CAPTURE_TIME; }
 
 private:
     // ========================================================================

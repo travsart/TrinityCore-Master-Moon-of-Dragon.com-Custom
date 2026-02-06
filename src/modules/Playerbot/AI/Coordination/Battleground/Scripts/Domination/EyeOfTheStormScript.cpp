@@ -28,6 +28,7 @@ REGISTER_BG_SCRIPT(EyeOfTheStormScript, 566);  // EyeOfTheStorm::MAP_ID
 void EyeOfTheStormScript::OnLoad(BattlegroundCoordinator* coordinator)
 {
     DominationScriptBase::OnLoad(coordinator);
+    InitializeNodeTracking();
 
     m_cachedObjectives = GetObjectiveData();
 

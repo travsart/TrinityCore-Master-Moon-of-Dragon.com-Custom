@@ -62,64 +62,64 @@ public:
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const { return StrandOfTheAncients::MAP_ID; }
-    std::string GetName() const { return StrandOfTheAncients::BG_NAME; }
-    BGType GetBGType() const { return BGType::STRAND_OF_THE_ANCIENTS; }
-    uint32 GetMaxScore() const { return 0; }  // Time-based win
-    uint32 GetMaxDuration() const { return StrandOfTheAncients::MAX_DURATION; }
-    uint8 GetTeamSize() const { return StrandOfTheAncients::TEAM_SIZE; }
-    bool HasVehicles() const { return true; }
+    uint32 GetMapId() const override { return StrandOfTheAncients::MAP_ID; }
+    std::string GetName() const override { return StrandOfTheAncients::BG_NAME; }
+    BGType GetBGType() const override { return BGType::STRAND_OF_THE_ANCIENTS; }
+    uint32 GetMaxScore() const override { return 0; }  // Time-based win
+    uint32 GetMaxDuration() const override { return StrandOfTheAncients::MAX_DURATION; }
+    uint8 GetTeamSize() const override { return StrandOfTheAncients::TEAM_SIZE; }
+    bool HasVehicles() const override { return true; }
     bool HasRounds() const { return true; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
-    void OnUpdate(uint32 diff);
-    void OnEvent(const BGScriptEventData& event);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+    void OnUpdate(uint32 diff) override;
+    void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
     std::vector<BGVehicleData> GetVehicleData() const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
 
     // ========================================================================
     // WORLD STATE
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, BGObjectiveState& outState) const;
+        uint32& outObjectiveId, BGObjectiveState& outState) const override;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
-        uint32& allianceScore, uint32& hordeScore) const;
+        uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // STRATEGY & ROLE DISTRIBUTION
     // ========================================================================
 
     RoleDistribution GetRecommendedRoles(const StrategicDecision& decision,
-        float scoreAdvantage, uint32 timeRemaining) const;
+        float scoreAdvantage, uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const;
+        uint32 totalObjectives, uint32 timeRemaining) const override;
 
     // ========================================================================
     // SIEGE ABSTRACT IMPLEMENTATIONS
     // ========================================================================
 
-    uint32 GetBossEntry(uint32 faction) const;
-    Position GetBossPosition(uint32 faction) const;
-    bool CanAttackBoss(uint32 faction) const;
+    uint32 GetBossEntry(uint32 faction) const override;
+    Position GetBossPosition(uint32 faction) const override;
+    bool CanAttackBoss(uint32 faction) const override;
 
     // ========================================================================
     // SOTA-SPECIFIC METHODS
@@ -197,13 +197,13 @@ protected:
     // SIEGE ABSTRACT IMPLEMENTATIONS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetTowerData() const;
-    std::vector<BGObjectiveData> GetGraveyardData() const;
-    std::vector<BGObjectiveData> GetGateData() const;
+    std::vector<BGObjectiveData> GetTowerData() const override;
+    std::vector<BGObjectiveData> GetGraveyardData() const override;
+    std::vector<BGObjectiveData> GetGateData() const override;
 
-    uint32 GetStartingReinforcements() const { return 0; }  // No reinforcements in SOTA
-    uint32 GetReinforcementLossPerDeath() const { return 0; }
-    uint32 GetReinforcementLossPerTower() const { return 0; }
+    uint32 GetStartingReinforcements() const override { return 0; }  // No reinforcements in SOTA
+    uint32 GetReinforcementLossPerDeath() const override { return 0; }
+    uint32 GetReinforcementLossPerTower() const override { return 0; }
 
     // ========================================================================
     // PHASE MANAGEMENT

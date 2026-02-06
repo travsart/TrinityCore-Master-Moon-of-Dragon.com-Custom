@@ -47,6 +47,7 @@ namespace BGScriptLinkerForce
 void TempleOfKotmoguScript::OnLoad(BattlegroundCoordinator* coordinator)
 {
     DominationScriptBase::OnLoad(coordinator);
+    InitializeNodeTracking();
 
     // Initialize position discovery (may fail if map not ready yet)
     InitializePositionDiscovery();

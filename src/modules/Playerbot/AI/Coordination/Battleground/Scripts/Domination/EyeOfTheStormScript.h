@@ -38,42 +38,42 @@ public:
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const { return EyeOfTheStorm::MAP_ID; }
-    std::string GetName() const { return EyeOfTheStorm::BG_NAME; }
-    BGType GetBGType() const { return BGType::EYE_OF_THE_STORM; }
-    uint32 GetMaxScore() const { return EyeOfTheStorm::MAX_SCORE; }
-    uint32 GetMaxDuration() const { return EyeOfTheStorm::MAX_DURATION; }
-    uint8 GetTeamSize() const { return EyeOfTheStorm::TEAM_SIZE; }
+    uint32 GetMapId() const override { return EyeOfTheStorm::MAP_ID; }
+    std::string GetName() const override { return EyeOfTheStorm::BG_NAME; }
+    BGType GetBGType() const override { return BGType::EYE_OF_THE_STORM; }
+    uint32 GetMaxScore() const override { return EyeOfTheStorm::MAX_SCORE; }
+    uint32 GetMaxDuration() const override { return EyeOfTheStorm::MAX_DURATION; }
+    uint8 GetTeamSize() const override { return EyeOfTheStorm::TEAM_SIZE; }
 
     // Hybrid BG
-    bool HasCentralObjective() const { return true; }
+    bool HasCentralObjective() const override { return true; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnUpdate(uint32 diff);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnUpdate(uint32 diff) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
 
     // ========================================================================
     // WORLD STATE
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, BGObjectiveState& outState) const;
+        uint32& outObjectiveId, BGObjectiveState& outState) const override;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
-        uint32& allianceScore, uint32& hordeScore) const;
+        uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // STRATEGY - EOTS SPECIFIC
@@ -82,21 +82,21 @@ public:
     RoleDistribution GetRecommendedRoles(
         const StrategicDecision& decision,
         float scoreAdvantage,
-        uint32 timeRemaining) const;
+        uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const;
+        uint32 totalObjectives, uint32 timeRemaining) const override;
 
-    uint32 GetOptimalNodeCount() const { return 3; }
+    uint32 GetOptimalNodeCount() const override { return 3; }
 
     // ========================================================================
     // EVENTS
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
+    void OnEvent(const BGScriptEventData& event) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
 
     // ========================================================================
     // ENTERPRISE-GRADE FLAG RUNNING AND POSITIONING
@@ -174,11 +174,11 @@ protected:
     // DOMINATION ABSTRACT IMPLEMENTATIONS
     // ========================================================================
 
-    uint32 GetNodeCount() const { return EyeOfTheStorm::NODE_COUNT; }
-    BGObjectiveData GetNodeData(uint32 nodeIndex) const;
-    std::vector<uint32> GetTickPointsTable() const;
-    uint32 GetTickInterval() const { return EyeOfTheStorm::TICK_INTERVAL; }
-    uint32 GetDefaultCaptureTime() const { return EyeOfTheStorm::CAPTURE_TIME; }
+    uint32 GetNodeCount() const override { return EyeOfTheStorm::NODE_COUNT; }
+    BGObjectiveData GetNodeData(uint32 nodeIndex) const override;
+    std::vector<uint32> GetTickPointsTable() const override;
+    uint32 GetTickInterval() const override { return EyeOfTheStorm::TICK_INTERVAL; }
+    uint32 GetDefaultCaptureTime() const override { return EyeOfTheStorm::CAPTURE_TIME; }
 
 private:
     // ========================================================================

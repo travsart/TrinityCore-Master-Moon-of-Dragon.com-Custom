@@ -43,38 +43,38 @@ public:
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const { return ArathiBasin::MAP_ID; }
-    std::string GetName() const { return ArathiBasin::BG_NAME; }
-    BGType GetBGType() const { return BGType::ARATHI_BASIN; }
-    uint32 GetMaxScore() const { return ArathiBasin::MAX_SCORE; }
-    uint32 GetMaxDuration() const { return ArathiBasin::MAX_DURATION; }
-    uint8 GetTeamSize() const { return ArathiBasin::TEAM_SIZE; }
+    uint32 GetMapId() const override { return ArathiBasin::MAP_ID; }
+    std::string GetName() const override { return ArathiBasin::BG_NAME; }
+    BGType GetBGType() const override { return BGType::ARATHI_BASIN; }
+    uint32 GetMaxScore() const override { return ArathiBasin::MAX_SCORE; }
+    uint32 GetMaxDuration() const override { return ArathiBasin::MAX_DURATION; }
+    uint8 GetTeamSize() const override { return ArathiBasin::TEAM_SIZE; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
 
     // ========================================================================
     // WORLD STATE
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, BGObjectiveState& outState) const;
+        uint32& outObjectiveId, BGObjectiveState& outState) const override;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
-        uint32& allianceScore, uint32& hordeScore) const;
+        uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // STRATEGY - AB SPECIFIC
@@ -82,38 +82,38 @@ public:
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const;
+        uint32 totalObjectives, uint32 timeRemaining) const override;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const;
+        BGObjectiveState state, uint32 faction) const override;
 
-    uint32 GetOptimalNodeCount() const { return 3; }  // 3-cap is the classic AB strategy
+    uint32 GetOptimalNodeCount() const override { return 3; }  // 3-cap is the classic AB strategy
 
 protected:
     // ========================================================================
     // DOMINATION ABSTRACT IMPLEMENTATIONS
     // ========================================================================
 
-    uint32 GetNodeCount() const { return ArathiBasin::NODE_COUNT; }
+    uint32 GetNodeCount() const override { return ArathiBasin::NODE_COUNT; }
 
-    BGObjectiveData GetNodeData(uint32 nodeIndex) const;
+    BGObjectiveData GetNodeData(uint32 nodeIndex) const override;
 
-    std::vector<uint32> GetTickPointsTable() const;
+    std::vector<uint32> GetTickPointsTable() const override;
 
-    uint32 GetTickInterval() const { return ArathiBasin::TICK_INTERVAL; }
+    uint32 GetTickInterval() const override { return ArathiBasin::TICK_INTERVAL; }
 
-    uint32 GetDefaultCaptureTime() const { return ArathiBasin::CAPTURE_TIME; }
+    uint32 GetDefaultCaptureTime() const override { return ArathiBasin::CAPTURE_TIME; }
 
     // ========================================================================
     // EVENTS
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
+    void OnEvent(const BGScriptEventData& event) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
 
     // ========================================================================
     // ENTERPRISE-GRADE ROUTING AND POSITIONING

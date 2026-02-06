@@ -34,9 +34,9 @@ public:
     // LIFECYCLE - Default implementations
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnUnload();
-    void OnUpdate(uint32 diff);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnUnload() override;
+    void OnUpdate(uint32 diff) override;
 
     // ========================================================================
     // STRATEGY - Default implementations
@@ -45,38 +45,38 @@ public:
     RoleDistribution GetRecommendedRoles(
         const StrategicDecision& decision,
         float scoreAdvantage,
-        uint32 timeRemaining) const;
+        uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const;
+        uint32 totalObjectives, uint32 timeRemaining) const override;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const;
+        BGObjectiveState state, uint32 faction) const override;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
-        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const;
+        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
 
     BGPhaseInfo::Phase GetMatchPhase(uint32 timeRemaining,
-        uint32 allianceScore, uint32 hordeScore) const;
+        uint32 allianceScore, uint32 hordeScore) const override;
 
     // ========================================================================
     // EVENTS - Default implementations
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
+    void OnEvent(const BGScriptEventData& event) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
 
     // ========================================================================
     // UTILITY - Default implementations
     // ========================================================================
 
     Position GetTacticalPosition(
-        BGPositionData::PositionType positionType, uint32 faction) const;
+        BGPositionData::PositionType positionType, uint32 faction) const override;
 
 protected:
     // ========================================================================

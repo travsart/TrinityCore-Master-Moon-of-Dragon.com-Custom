@@ -40,19 +40,19 @@ public:
     // CTF specific
     // ========================================================================
 
-    virtual bool IsCTF() const { return true; }
+    virtual bool IsCTF() const override { return true; }
 
     // Default CTF values
-    virtual uint32 GetMaxScore() const { return 3; }
-    virtual uint32 GetMaxDuration() const { return 25 * MINUTE * IN_MILLISECONDS; }
-    virtual uint8 GetTeamSize() const { return 10; }
+    virtual uint32 GetMaxScore() const override { return 3; }
+    virtual uint32 GetMaxDuration() const override { return 25 * MINUTE * IN_MILLISECONDS; }
+    virtual uint8 GetTeamSize() const override { return 10; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnUpdate(uint32 diff);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnUpdate(uint32 diff) override;
 
     // ========================================================================
     // CTF-SPECIFIC IMPLEMENTATIONS
@@ -72,27 +72,27 @@ public:
     RoleDistribution GetRecommendedRoles(
         const StrategicDecision& decision,
         float scoreAdvantage,
-        uint32 timeRemaining) const;
+        uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const;
+        uint32 totalObjectives, uint32 timeRemaining) const override;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const;
+        BGObjectiveState state, uint32 faction) const override;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
-        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const;
+        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
 
     // ========================================================================
     // EVENT HANDLING
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event);
-    void OnMatchStart();
+    void OnEvent(const BGScriptEventData& event) override;
+    void OnMatchStart() override;
 
 protected:
     // ========================================================================

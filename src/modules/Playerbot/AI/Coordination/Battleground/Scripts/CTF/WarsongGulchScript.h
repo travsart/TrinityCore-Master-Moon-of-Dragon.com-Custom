@@ -39,93 +39,93 @@ public:
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const { return WarsongGulch::MAP_ID; }
-    std::string GetName() const { return WarsongGulch::BG_NAME; }
-    BGType GetBGType() const { return BGType::WARSONG_GULCH; }
-    uint32 GetMaxScore() const { return WarsongGulch::MAX_SCORE; }
-    uint32 GetMaxDuration() const { return WarsongGulch::MAX_DURATION; }
-    uint8 GetTeamSize() const { return WarsongGulch::TEAM_SIZE; }
+    uint32 GetMapId() const override { return WarsongGulch::MAP_ID; }
+    std::string GetName() const override { return WarsongGulch::BG_NAME; }
+    BGType GetBGType() const override { return BGType::WARSONG_GULCH; }
+    uint32 GetMaxScore() const override { return WarsongGulch::MAX_SCORE; }
+    uint32 GetMaxDuration() const override { return WarsongGulch::MAX_DURATION; }
+    uint8 GetTeamSize() const override { return WarsongGulch::TEAM_SIZE; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
 
     // ========================================================================
     // WORLD STATE
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, BGObjectiveState& outState) const;
+        uint32& outObjectiveId, BGObjectiveState& outState) const override;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
-        uint32& allianceScore, uint32& hordeScore) const;
+        uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // EVENTS
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event);
+    void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
     // UTILITY
     // ========================================================================
 
     std::vector<Position> GetObjectivePath(
-        uint32 fromObjective, uint32 toObjective) const;
+        uint32 fromObjective, uint32 toObjective) const override;
 
 protected:
     // ========================================================================
     // CTF ABSTRACT IMPLEMENTATIONS
     // ========================================================================
 
-    Position GetAllianceFlagPosition() const
+    Position GetAllianceFlagPosition() const override
     {
         return WarsongGulch::GetAllianceFlagPos();
     }
 
-    Position GetHordeFlagPosition() const
+    Position GetHordeFlagPosition() const override
     {
         return WarsongGulch::GetHordeFlagPos();
     }
 
-    std::vector<Position> GetAllianceFlagRoomDefense() const
+    std::vector<Position> GetAllianceFlagRoomDefense() const override
     {
         return WarsongGulch::GetAllianceFlagRoomDefense();
     }
 
-    std::vector<Position> GetHordeFlagRoomDefense() const
+    std::vector<Position> GetHordeFlagRoomDefense() const override
     {
         return WarsongGulch::GetHordeFlagRoomDefense();
     }
 
-    std::vector<Position> GetMiddleChokepoints() const
+    std::vector<Position> GetMiddleChokepoints() const override
     {
         return WarsongGulch::GetMiddleChokepoints();
     }
 
-    std::vector<Position> GetSpeedBuffPositions() const
+    std::vector<Position> GetSpeedBuffPositions() const override
     {
         return WarsongGulch::GetSpeedBuffPositions();
     }
 
-    std::vector<Position> GetRestoreBuffPositions() const
+    std::vector<Position> GetRestoreBuffPositions() const override
     {
         return WarsongGulch::GetRestoreBuffPositions();
     }
 
-    std::vector<Position> GetBerserkBuffPositions() const
+    std::vector<Position> GetBerserkBuffPositions() const override
     {
         return WarsongGulch::GetBerserkBuffPositions();
     }

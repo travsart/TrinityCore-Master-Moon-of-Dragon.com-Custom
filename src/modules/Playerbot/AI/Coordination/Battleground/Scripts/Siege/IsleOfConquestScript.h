@@ -59,55 +59,55 @@ public:
     // IDENTIFICATION
     // ========================================================================
 
-    uint32 GetMapId() const { return IsleOfConquest::MAP_ID; }
-    std::string GetName() const { return IsleOfConquest::BG_NAME; }
-    BGType GetBGType() const { return BGType::ISLE_OF_CONQUEST; }
-    uint32 GetMaxScore() const { return IsleOfConquest::STARTING_REINFORCEMENTS; }
-    uint32 GetMaxDuration() const { return IsleOfConquest::MAX_DURATION; }
-    uint8 GetTeamSize() const { return IsleOfConquest::TEAM_SIZE; }
-    bool HasVehicles() const { return true; }
+    uint32 GetMapId() const override { return IsleOfConquest::MAP_ID; }
+    std::string GetName() const override { return IsleOfConquest::BG_NAME; }
+    BGType GetBGType() const override { return BGType::ISLE_OF_CONQUEST; }
+    uint32 GetMaxScore() const override { return IsleOfConquest::STARTING_REINFORCEMENTS; }
+    uint32 GetMaxDuration() const override { return IsleOfConquest::MAX_DURATION; }
+    uint8 GetTeamSize() const override { return IsleOfConquest::TEAM_SIZE; }
+    bool HasVehicles() const override { return true; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnMatchStart();
-    void OnMatchEnd(bool victory);
-    void OnUpdate(uint32 diff);
-    void OnEvent(const BGScriptEventData& event);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnMatchStart() override;
+    void OnMatchEnd(bool victory) override;
+    void OnUpdate(uint32 diff) override;
+    void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
     // DATA PROVIDERS
     // ========================================================================
 
-    std::vector<BGObjectiveData> GetObjectiveData() const;
-    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const;
-    std::vector<BGPositionData> GetStrategicPositions() const;
-    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const;
+    std::vector<BGObjectiveData> GetObjectiveData() const override;
+    std::vector<BGPositionData> GetSpawnPositions(uint32 faction) const override;
+    std::vector<BGPositionData> GetStrategicPositions() const override;
+    std::vector<BGPositionData> GetGraveyardPositions(uint32 faction) const override;
     std::vector<BGVehicleData> GetVehicleData() const;
-    std::vector<BGWorldState> GetInitialWorldStates() const;
+    std::vector<BGWorldState> GetInitialWorldStates() const override;
 
     // ========================================================================
     // WORLD STATE
     // ========================================================================
 
     bool InterpretWorldState(int32 stateId, int32 value,
-        uint32& outObjectiveId, BGObjectiveState& outState) const;
+        uint32& outObjectiveId, BGObjectiveState& outState) const override;
 
     void GetScoreFromWorldStates(const std::map<int32, int32>& states,
-        uint32& allianceScore, uint32& hordeScore) const;
+        uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
     // STRATEGY & ROLE DISTRIBUTION
     // ========================================================================
 
     RoleDistribution GetRecommendedRoles(const StrategicDecision& decision,
-        float scoreAdvantage, uint32 timeRemaining) const;
+        float scoreAdvantage, uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const;
+        uint32 totalObjectives, uint32 timeRemaining) const override;
 
     // ========================================================================
     // IOC-SPECIFIC METHODS
@@ -182,28 +182,28 @@ protected:
     // SIEGE ABSTRACT IMPLEMENTATIONS
     // ========================================================================
 
-    uint32 GetBossEntry(uint32 faction) const;
-    Position GetBossPosition(uint32 faction) const;
-    std::vector<BGObjectiveData> GetGateData() const;
-    std::vector<BGObjectiveData> GetTowerData() const;
-    std::vector<BGObjectiveData> GetGraveyardData() const;
+    uint32 GetBossEntry(uint32 faction) const override;
+    Position GetBossPosition(uint32 faction) const override;
+    std::vector<BGObjectiveData> GetGateData() const override;
+    std::vector<BGObjectiveData> GetTowerData() const override;
+    std::vector<BGObjectiveData> GetGraveyardData() const override;
 
-    uint32 GetStartingReinforcements() const
+    uint32 GetStartingReinforcements() const override
     {
         return IsleOfConquest::STARTING_REINFORCEMENTS;
     }
 
-    uint32 GetReinforcementLossPerDeath() const
+    uint32 GetReinforcementLossPerDeath() const override
     {
         return IsleOfConquest::REINF_LOSS_PER_DEATH;
     }
 
-    uint32 GetReinforcementLossPerTower() const
+    uint32 GetReinforcementLossPerTower() const override
     {
         return 0; // IOC doesn't have tower destruction reinforcement loss
     }
 
-    bool CanAttackBoss(uint32 faction) const;
+    bool CanAttackBoss(uint32 faction) const override;
 
     // ========================================================================
     // PHASE MANAGEMENT

@@ -44,14 +44,14 @@ public:
     // Domination specific
     // ========================================================================
 
-    virtual bool IsDomination() const { return true; }
+    bool IsDomination() const override { return true; }
 
     // ========================================================================
     // LIFECYCLE
     // ========================================================================
 
-    void OnLoad(BattlegroundCoordinator* coordinator);
-    void OnUpdate(uint32 diff);
+    void OnLoad(BattlegroundCoordinator* coordinator) override;
+    void OnUpdate(uint32 diff) override;
 
     // ========================================================================
     // STRATEGY - Domination overrides
@@ -60,20 +60,20 @@ public:
     RoleDistribution GetRecommendedRoles(
         const StrategicDecision& decision,
         float scoreAdvantage,
-        uint32 timeRemaining) const;
+        uint32 timeRemaining) const override;
 
     void AdjustStrategy(StrategicDecision& decision,
         float scoreAdvantage, uint32 controlledCount,
-        uint32 totalObjectives, uint32 timeRemaining) const;
+        uint32 totalObjectives, uint32 timeRemaining) const override;
 
     uint8 GetObjectiveAttackPriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const;
+        BGObjectiveState state, uint32 faction) const override;
 
     uint8 GetObjectiveDefensePriority(uint32 objectiveId,
-        BGObjectiveState state, uint32 faction) const;
+        BGObjectiveState state, uint32 faction) const override;
 
     float CalculateWinProbability(uint32 allianceScore, uint32 hordeScore,
-        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const;
+        uint32 timeRemaining, uint32 objectivesControlled, uint32 faction) const override;
 
     // ========================================================================
     // DOMINATION-SPECIFIC IMPLEMENTATIONS
@@ -82,19 +82,19 @@ public:
     /**
      * @brief Get points per tick based on node count
      */
-    uint32 GetTickPoints(uint32 nodeCount) const;
+    uint32 GetTickPoints(uint32 nodeCount) const override;
 
     /**
      * @brief Get optimal node count for guaranteed win
      */
-    uint32 GetOptimalNodeCount() const;
+    uint32 GetOptimalNodeCount() const override;
 
     // ========================================================================
     // EVENT HANDLING
     // ========================================================================
 
-    void OnEvent(const BGScriptEventData& event);
-    void OnMatchStart();
+    void OnEvent(const BGScriptEventData& event) override;
+    void OnMatchStart() override;
 
 protected:
     // ========================================================================
@@ -221,6 +221,17 @@ protected:
     float m_hordeResourceRate = 0.0f;
     uint32 m_projectedAllianceWinTime = 0;
     uint32 m_projectedHordeWinTime = 0;
+
+    /**
+     * @brief Initialize node tracking maps by calling GetNodeCount()/GetNodeData()
+     *
+     * This MUST be called from the derived class's OnLoad() AFTER calling
+     * DominationScriptBase::OnLoad(). We deliberately avoid calling virtual
+     * functions from within DominationScriptBase::OnLoad() because MSVC's
+     * RelWithDebInfo vtable slot resolution can be fragile when the slot is
+     * at the boundary between base and derived vtable regions.
+     */
+    void InitializeNodeTracking();
 
 private:
     // Update timers

@@ -27,19 +27,10 @@ void DominationScriptBase::OnLoad(BattlegroundCoordinator* coordinator)
 {
     BGScriptBase::OnLoad(coordinator);
 
-    // Initialize node tracking
+    // Clear node tracking maps - will be populated by InitializeNodeTracking()
     m_nodeStates.clear();
     m_nodeCaptureProgress.clear();
     m_nodeLastContestTime.clear();
-
-    uint32 nodeCount = GetNodeCount();
-    for (uint32 i = 0; i < nodeCount; ++i)
-    {
-        BGObjectiveData nodeData = GetNodeData(i);
-        m_nodeStates[nodeData.id] = BGObjectiveState::NEUTRAL;
-        m_nodeCaptureProgress[nodeData.id] = 0.0f;
-        m_nodeLastContestTime[nodeData.id] = 0;
-    }
 
     // Reset tracking
     m_allianceScore = 0;
@@ -49,7 +40,7 @@ void DominationScriptBase::OnLoad(BattlegroundCoordinator* coordinator)
     m_allianceNodes = 0;
     m_hordeNodes = 0;
     m_contestedNodes = 0;
-    m_neutralNodes = nodeCount;
+    m_neutralNodes = 0;
 
     m_allianceResourceRate = 0.0f;
     m_hordeResourceRate = 0.0f;
@@ -58,6 +49,26 @@ void DominationScriptBase::OnLoad(BattlegroundCoordinator* coordinator)
 
     m_nodeUpdateTimer = 0;
     m_strategyUpdateTimer = 0;
+
+    // NOTE: Derived classes MUST call InitializeNodeTracking() from their OnLoad()
+    // after calling DominationScriptBase::OnLoad(). We deliberately do NOT call
+    // GetNodeCount()/GetNodeData() (virtual) here to avoid a vtable slot dispatch
+    // issue observed with MSVC RelWithDebInfo where GetNodeCount() (slot N) can
+    // dispatch to GetObjectivePath() (slot N-1) due to stale object files.
+}
+
+void DominationScriptBase::InitializeNodeTracking()
+{
+    uint32 nodeCount = GetNodeCount();
+    for (uint32 i = 0; i < nodeCount; ++i)
+    {
+        BGObjectiveData nodeData = GetNodeData(i);
+        m_nodeStates[nodeData.id] = BGObjectiveState::NEUTRAL;
+        m_nodeCaptureProgress[nodeData.id] = 0.0f;
+        m_nodeLastContestTime[nodeData.id] = 0;
+    }
+
+    m_neutralNodes = nodeCount;
 
     TC_LOG_DEBUG("playerbots.bg.script",
         "DominationScriptBase: Initialized with {} nodes for {}",
