@@ -40,8 +40,6 @@ void PlayerbotModuleAdapter::RegisterWithModuleManager()
 
 void PlayerbotModuleAdapter::OnModuleStartup()
 {
-    TC_LOG_ERROR("server.loading", "=== PlayerbotModuleAdapter::OnModuleStartup() CALLED ===");
-
     // Check if playerbot is enabled
 
     bool enabled = sPlayerbotConfig->GetBool("Playerbot.Enable", false);
@@ -88,12 +86,6 @@ void PlayerbotModuleAdapter::OnModuleUpdate(uint32 diff)
     // Check if playerbot is enabled
     if (!sPlayerbotConfig || !sPlayerbotConfig->GetBool("Playerbot.Enable", false))
         return;
-
-    static uint32 logCounter = 0;
-    if (++logCounter % 100000 == 0) // Log every 100k updates
-    {
-        TC_LOG_ERROR("server.loading", "PlayerbotModuleAdapter::OnModuleUpdate() #{}", logCounter);
-    }
 
     try
     {

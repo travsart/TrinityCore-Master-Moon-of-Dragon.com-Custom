@@ -96,6 +96,13 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/GameSystemsManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/GameSystemsManager.h
 
+    # Core Subsystem Registry
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerbotSubsystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerbotSubsystemRegistry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerbotSubsystemRegistry.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/SubsystemAdapters.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/SubsystemAdapters.h
+
     # Core Events
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.h
