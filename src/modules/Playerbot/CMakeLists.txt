@@ -146,11 +146,6 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Monitoring/BotMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Monitoring/PerformanceMetrics.h
 
-    # Interfaces
-    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSpawner.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSession.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotPerformance.h
-
     # Adapters
     ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.h
@@ -603,12 +598,10 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/CombatBehaviors/CooldownStackingOptimizer.h
 
     # Combat Event Bus
-    ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEvents.h
 
     # Cooldown Event Bus
-    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/MajorCooldownDatabase.h
@@ -616,7 +609,6 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/MajorCooldownTracker.h
 
     # Aura Event Bus
-    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.h
 
@@ -839,7 +831,6 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestValidation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/UnifiedQuestManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/UnifiedQuestManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEvents.h
 
@@ -910,7 +901,6 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupRoleEnums.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupRoleUtils.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.cpp
@@ -948,7 +938,6 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLFGPacket_Typed.cpp
 
     # Social Systems
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionHouse.cpp
@@ -980,27 +969,22 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.h
 
     # Auction Event Bus
-    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.h
 
     # NPC Event Bus
-    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.h
 
     # Instance Event Bus
-    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.h
 
     # Loot Event Bus
-    ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEvents.h
 
     # Resource Event Bus
-    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.h
 
@@ -1029,7 +1013,6 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.h
 
