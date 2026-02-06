@@ -157,6 +157,9 @@ public:
     /// Get distance from an orb to center
     float GetOrbToCenterDistance(uint32 orbId) const;
 
+    /// Get orb position (uses dynamic discovery if available, falls back to hardcoded)
+    Position GetDynamicOrbPosition(uint32 orbId) const;
+
 protected:
     // ========================================================================
     // BASE CLASS OVERRIDES
@@ -228,12 +231,6 @@ private:
      */
     bool InitializePositionDiscovery();
 
-    /**
-     * @brief Get orb position (uses dynamic discovery if available)
-     * @param orbId Orb identifier (0-3)
-     * @return Validated orb position
-     */
-    Position GetDynamicOrbPosition(uint32 orbId) const;
 };
 
 } // namespace Playerbot::Coordination::Battleground

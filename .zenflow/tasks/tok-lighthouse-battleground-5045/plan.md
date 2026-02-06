@@ -43,7 +43,8 @@ Create a detailed implementation plan based on `{@artifacts_path}/spec.md`.
 
 Plan created below. The spec defines 4 delivery phases. Each phase maps to one implementation step so that each step is a coherent, buildable, and testable unit. No automated unit tests exist for BattlegroundAI — verification is build + manual runtime testing — so test verification is "build compiles clean" at each step plus manual validation at the end.
 
-### [ ] Step: Implement PickupOrb and basic ExecuteKotmoguStrategy dispatch
+### [x] Step: Implement PickupOrb and basic ExecuteKotmoguStrategy dispatch
+<!-- chat-id: afa8c1ab-a4f1-4787-8231-62002c0b5a86 -->
 
 **Files modified:**
 - `src/modules/Playerbot/PvP/BattlegroundAI.h` (add 3 new method declarations)
@@ -98,7 +99,8 @@ Plan created below. The spec defines 4 delivery phases. Each phase maps to one i
 
 ---
 
-### [ ] Step: Implement HuntEnemyOrbCarrier and DefendOrbCarrier
+### [x] Step: Implement HuntEnemyOrbCarrier and DefendOrbCarrier
+<!-- chat-id: bb24fa42-8537-41c7-a194-96c34faa6e71 -->
 
 **Files modified:**
 - `src/modules/Playerbot/PvP/BattlegroundAI.cpp` (replace 2 stubs)
@@ -139,7 +141,8 @@ Plan created below. The spec defines 4 delivery phases. Each phase maps to one i
 
 ---
 
-### [ ] Step: Implement EscortOrbCarrier and ExecuteOrbCarrierMovement
+### [x] Step: Implement EscortOrbCarrier and ExecuteOrbCarrierMovement
+<!-- chat-id: 4ffdbd6c-29d0-406f-9af1-fb34206b35bb -->
 
 **Files modified:**
 - `src/modules/Playerbot/PvP/BattlegroundAI.cpp` (replace 2 stubs)
@@ -186,7 +189,8 @@ Plan created below. The spec defines 4 delivery phases. Each phase maps to one i
 
 ---
 
-### [ ] Step: Polish, edge cases, and full build verification
+### [x] Step: Polish, edge cases, and full build verification
+<!-- chat-id: 05be0c66-4e54-4e99-983a-fb8bee818fc2 -->
 
 **Files modified:**
 - `src/modules/Playerbot/PvP/BattlegroundAI.cpp` (modifications to all 6 functions)
