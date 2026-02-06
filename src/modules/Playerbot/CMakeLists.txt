@@ -122,8 +122,8 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Combat/CombatContextDetector.h
 
     # Core DI Interfaces
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces/IObjectiveTracker.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces/IRidingManager.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces/IObjectiveTracker.h  # TODO: File not created yet
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Core/DI/Interfaces/IRidingManager.h  # TODO: File not created yet
 
     # Events
     ${CMAKE_CURRENT_SOURCE_DIR}/Events/BotEventData.h
@@ -281,6 +281,8 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RaidOrchestrator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ZoneOrchestrator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ZoneOrchestrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ContentContextManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ContentContextManager.h
 
     # AI Coordination - Dungeon
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/DungeonState.h
@@ -294,6 +296,14 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/WipeRecoveryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/MythicPlusManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/MythicPlusManager.cpp
+
+    # AI Coordination - Messaging (Bot-to-Bot Communication)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/MessageTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/BotMessage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/ClaimResolver.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/ClaimResolver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/BotMessageBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/BotMessageBus.h
 
     # AI Blackboard
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.cpp
@@ -593,6 +603,9 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/MajorCooldownDatabase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/MajorCooldownTracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/MajorCooldownTracker.h
 
     # Aura Event Bus
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.h
@@ -1160,6 +1173,7 @@ set(PLAYERBOT_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/ResourceRace
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Battleground/Scripts/Epic
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon
     ${CMAKE_SOURCE_DIR}/src/modules/Common
     ${MYSQL_INCLUDE_DIR}

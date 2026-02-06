@@ -67,6 +67,7 @@
 #include "Quest/QuestEvents.h"
 #include "Aura/AuraEvents.h"
 #include "Cooldown/CooldownEvents.h"
+#include "Cooldown/MajorCooldownTracker.h"
 #include "Resource/ResourceEvents.h"
 #include "Social/SocialEvents.h"
 #include "Auction/AuctionEvents.h"
@@ -870,6 +871,11 @@ bool PlayerbotModule::InitializeManagers()
     Playerbot::RegisterBattlegroundPacketHandlers();
     Playerbot::RegisterLFGPacketHandlers();
     TC_LOG_INFO("server.loading", "BG/LFG typed packet handlers registered");
+
+    // Initialize Major Cooldown Tracker for raid coordination
+    TC_LOG_INFO("server.loading", "Initializing Major Cooldown Tracker...");
+    Playerbot::MajorCooldownTracker::instance()->Initialize();
+    TC_LOG_INFO("server.loading", "Major Cooldown Tracker initialized");
 
     // Register hooks with TrinityCore
     RegisterHooks();

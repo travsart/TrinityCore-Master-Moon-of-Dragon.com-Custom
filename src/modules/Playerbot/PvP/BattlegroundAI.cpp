@@ -24,6 +24,8 @@
 #include "../AI/Coordination/Battleground/BattlegroundCoordinator.h"
 #include "../AI/Coordination/Battleground/BGSpatialQueryCache.h"
 #include "../AI/Coordination/Battleground/Scripts/IBGScript.h"
+#include "../AI/Coordination/Battleground/Scripts/Domination/TempleOfKotmoguScript.h"
+#include "../AI/Coordination/Battleground/Scripts/Domination/TempleOfKotmoguData.h"
 #include "../Movement/BotMovementUtil.h"
 #include <algorithm>
 #include <cmath>
@@ -195,8 +197,30 @@ void BattlegroundAI::Update(::Player* player, uint32 diff)
 
     // Check if player is in battleground
     ::Battleground* bg = GetPlayerBattleground(player);
-    if (!bg || bg->GetStatus() != STATUS_IN_PROGRESS)
+    if (!bg)
         return;
+
+    // Handle both prep phase (WAIT_JOIN) and active phase (IN_PROGRESS)
+    BattlegroundStatus status = bg->GetStatus();
+    if (status != STATUS_IN_PROGRESS && status != STATUS_WAIT_JOIN)
+        return;
+
+    // During prep phase, just wait at spawn - don't execute strategy yet
+    if (status == STATUS_WAIT_JOIN)
+    {
+        // Log once that we're in prep mode
+        static std::unordered_map<uint32, bool> prepLogged;
+        uint32 guid = player->GetGUID().GetCounter();
+        if (!prepLogged[guid])
+        {
+            TC_LOG_INFO("playerbots.bg",
+                "BattlegroundAI: Bot {} in {} prep phase - waiting for gates to open",
+                player->GetName(), bg->GetName());
+            prepLogged[guid] = true;
+        }
+        // Don't move or execute strategy during prep - just wait
+        return;
+    }
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     uint32 currentTime = GameTime::GetGameTimeMS();
@@ -1565,36 +1589,374 @@ bool BattlegroundAI::DefendGate(::Player* player)
 // ============================================================================
 // TEMPLE OF KOTMOGU STRATEGY
 // ============================================================================
+// Uses TempleOfKotmogu:: namespace from TempleOfKotmoguData.h for positions
+// Uses TempleOfKotmoguScript via BattlegroundCoordinator for dynamic data
 
 void BattlegroundAI::ExecuteKotmoguStrategy(::Player* player)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return;
 
-    // Pick up orb or defend orb carrier
-    PickupOrb(player);
-    DefendOrbCarrier(player);
+    BGRole role = GetPlayerRole(player);
+    uint32 teamId = player->GetBGTeam();
+
+    // Check if we're carrying an orb (any of the 4 orb auras: 121175-121178)
+    bool carryingOrb = player->HasAura(121175) || player->HasAura(121176) ||
+                       player->HasAura(121177) || player->HasAura(121178);
+
+    TC_LOG_DEBUG("playerbots.bg", "TOK: {} role={} carryingOrb={}",
+        player->GetName(), static_cast<uint32>(role), carryingOrb);
+
+    // PRIORITY 1: If carrying orb, move to center for 5x points!
+    if (carryingOrb)
+    {
+        ExecuteOrbCarrierBehavior(player);
+        return;
+    }
+
+    // PRIORITY 2: Execute role-based behavior
+    switch (role)
+    {
+        case BGRole::ORB_CARRIER:
+        case BGRole::FLAG_CARRIER:
+            // Go pick up an orb
+            PickupOrb(player);
+            break;
+
+        case BGRole::FLAG_ESCORT:
+        case BGRole::NODE_DEFENDER:
+            // Find friendly orb carrier and escort/defend
+            DefendOrbCarrier(player);
+            break;
+
+        case BGRole::NODE_ATTACKER:
+        case BGRole::FLAG_HUNTER:
+            // Hunt enemy orb carriers
+            HuntEnemyOrbCarrier(player);
+            break;
+
+        default:
+            // UNASSIGNED or ROAMER - help with orbs based on team orb count
+            // If we have fewer orbs, go grab one; otherwise escort
+            PickupOrb(player);
+            break;
+    }
+}
+
+void BattlegroundAI::ExecuteOrbCarrierBehavior(::Player* player)
+{
+    if (!player || !player->IsInWorld())
+        return;
+
+    // Use proper namespace from TempleOfKotmoguData.h
+    using namespace Coordination::Battleground::TempleOfKotmogu;
+
+    // Orb carriers should move to center for 5x points!
+    Position centerPos(CENTER_X, CENTER_Y, CENTER_Z, 0.0f);
+
+    float distToCenter = player->GetExactDist(&centerPos);
+
+    // Check if already in center
+    if (distToCenter <= CENTER_RADIUS)
+    {
+        TC_LOG_DEBUG("playerbots.bg", "TOK: {} in center zone, holding for points!",
+            player->GetName());
+        // Stay in center - maybe small patrol movement
+        if (!BotMovementUtil::IsMoving(player))
+        {
+            // Small random movement within center
+            float angle = frand(0, 2 * M_PI);
+            float dist = frand(3.0f, 8.0f);
+            Position patrolPos(
+                centerPos.GetPositionX() + dist * cos(angle),
+                centerPos.GetPositionY() + dist * sin(angle),
+                centerPos.GetPositionZ(), 0.0f
+            );
+            BotMovementUtil::CorrectPositionToGround(player, patrolPos);
+            BotMovementUtil::MoveToPosition(player, patrolPos);
+        }
+    }
+    else
+    {
+        // Move to center!
+        TC_LOG_DEBUG("playerbots.bg", "TOK: {} moving to center (dist: {:.1f})",
+            player->GetName(), distToCenter);
+        BotMovementUtil::MoveToPosition(player, centerPos);
+    }
 }
 
 bool BattlegroundAI::PickupOrb(::Player* player)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return false;
 
-    // Full implementation: Find and pick up orb
-    TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} picking up orb",
-        player->GetGUID().GetCounter());
+    // Use proper namespace from TempleOfKotmoguData.h
+    using namespace Coordination::Battleground::TempleOfKotmogu;
 
-    return true;
+    uint32 teamId = player->GetBGTeam();
+
+    // Try to use script's dynamic positions (preferred)
+    BattlegroundCoordinator* coordinator = sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
+    Coordination::Battleground::IBGScript* script = coordinator ? coordinator->GetScript() : nullptr;
+    auto* tokScript = dynamic_cast<Coordination::Battleground::TempleOfKotmoguScript*>(script);
+
+    // Get orb priority for faction (from script if available)
+    ::std::vector<Position> orbPositions;
+    if (tokScript)
+    {
+        // Use script's prioritized orb list and dynamic positions
+        auto orbPriority = tokScript->GetOrbPriority(teamId);
+        for (uint32 orbId : orbPriority)
+        {
+            // Skip orbs that are already held
+            if (!tokScript->IsOrbHeld(orbId))
+            {
+                Position pos = GetOrbPosition(orbId);  // from TempleOfKotmoguData.h
+                orbPositions.push_back(pos);
+            }
+        }
+    }
+    else
+    {
+        // Fallback: Use hardcoded positions from TempleOfKotmoguData.h
+        // Determine orb priority based on faction
+        // Alliance (east side) - closer to Orange/Blue
+        // Horde (west side) - closer to Green/Purple
+        if (teamId == ALLIANCE)
+        {
+            orbPositions.push_back(GetOrbPosition(Orbs::ORANGE));
+            orbPositions.push_back(GetOrbPosition(Orbs::BLUE));
+            orbPositions.push_back(GetOrbPosition(Orbs::GREEN));
+            orbPositions.push_back(GetOrbPosition(Orbs::PURPLE));
+        }
+        else
+        {
+            orbPositions.push_back(GetOrbPosition(Orbs::GREEN));
+            orbPositions.push_back(GetOrbPosition(Orbs::PURPLE));
+            orbPositions.push_back(GetOrbPosition(Orbs::ORANGE));
+            orbPositions.push_back(GetOrbPosition(Orbs::BLUE));
+        }
+    }
+
+    // Find closest orb position
+    Position closestOrb;
+    float closestDist = 9999.0f;
+    for (const Position& orbPos : orbPositions)
+    {
+        float dist = player->GetExactDist(&orbPos);
+        if (dist < closestDist)
+        {
+            closestDist = dist;
+            closestOrb = orbPos;
+        }
+    }
+
+    TC_LOG_DEBUG("playerbots.bg", "TOK: {} moving to orb at ({:.1f},{:.1f},{:.1f}), dist: {:.1f}",
+        player->GetName(),
+        closestOrb.GetPositionX(), closestOrb.GetPositionY(), closestOrb.GetPositionZ(),
+        closestDist);
+
+    if (closestDist > 5.0f)
+    {
+        // Move to orb
+        BotMovementUtil::MoveToPosition(player, closestOrb);
+        return false;
+    }
+    else
+    {
+        // At orb location - try to interact with orb GameObject
+        std::list<GameObject*> goList;
+        player->GetGameObjectListWithEntryInGrid(goList, 0, 10.0f);
+        for (GameObject* go : goList)
+        {
+            if (!go)
+                continue;
+            GameObjectTemplate const* goInfo = go->GetGOInfo();
+            if (goInfo && goInfo->type == GAMEOBJECT_TYPE_GOOBER)
+            {
+                go->Use(player);
+                TC_LOG_INFO("playerbots.bg", "TOK: {} picked up orb!", player->GetName());
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void BattlegroundAI::HuntEnemyOrbCarrier(::Player* player)
+{
+    if (!player || !player->IsInWorld())
+        return;
+
+    // Find enemy players carrying orbs (auras 121175-121178)
+    ::Player* enemyCarrier = nullptr;
+    float closestDist = 9999.0f;
+
+    BattlegroundCoordinator* coordinator = sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
+    if (coordinator)
+    {
+        auto enemies = coordinator->QueryNearbyEnemies(player->GetPosition(), 100.0f);
+        for (auto const* snapshot : enemies)
+        {
+            if (!snapshot || !snapshot->isAlive)
+                continue;
+
+            ::Player* enemy = ObjectAccessor::FindPlayer(snapshot->guid);
+            if (!enemy || !enemy->IsAlive())
+                continue;
+
+            // Check if carrying orb
+            if (enemy->HasAura(121175) || enemy->HasAura(121176) ||
+                enemy->HasAura(121177) || enemy->HasAura(121178))
+            {
+                float dist = player->GetExactDist(enemy);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    enemyCarrier = enemy;
+                }
+            }
+        }
+    }
+
+    if (enemyCarrier)
+    {
+        TC_LOG_DEBUG("playerbots.bg", "TOK: {} hunting enemy orb carrier {} (dist: {:.1f})",
+            player->GetName(), enemyCarrier->GetName(), closestDist);
+
+        if (closestDist > 30.0f)
+        {
+            BotMovementUtil::MoveToPosition(player, enemyCarrier->GetPosition());
+        }
+        else
+        {
+            // Select target and START ATTACKING
+            player->SetSelection(enemyCarrier->GetGUID());
+
+            // CRITICAL FIX: Actually engage in combat!
+            if (enemyCarrier->IsAlive() && player->IsHostileTo(enemyCarrier))
+            {
+                if (!player->IsInCombat() || player->GetVictim() != enemyCarrier)
+                {
+                    player->Attack(enemyCarrier, true);  // true = start melee attack
+                    TC_LOG_INFO("playerbots.bg", "TOK: {} engaging enemy orb carrier {} in combat!",
+                        player->GetName(), enemyCarrier->GetName());
+                }
+            }
+
+            if (closestDist > 5.0f)
+            {
+                BotMovementUtil::ChaseTarget(player, enemyCarrier, 5.0f);
+            }
+        }
+    }
+    else
+    {
+        // No enemy carriers found - go pick up an orb instead
+        PickupOrb(player);
+    }
 }
 
 bool BattlegroundAI::DefendOrbCarrier(::Player* player)
 {
-    if (!player)
+    if (!player || !player->IsInWorld())
         return false;
 
-    // Full implementation: Find friendly orb carrier and defend
-    return true;
+    // Find friendly orb carriers
+    ::Player* friendlyCarrier = nullptr;
+    float closestDist = 9999.0f;
+
+    BattlegroundCoordinator* coordinator = sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
+    if (coordinator)
+    {
+        auto allies = coordinator->QueryNearbyAllies(player->GetPosition(), 100.0f);
+        for (auto const* snapshot : allies)
+        {
+            if (!snapshot || !snapshot->isAlive)
+                continue;
+            if (snapshot->guid == player->GetGUID())
+                continue;
+
+            ::Player* ally = ObjectAccessor::FindPlayer(snapshot->guid);
+            if (!ally || !ally->IsAlive())
+                continue;
+
+            // Check if carrying orb
+            if (ally->HasAura(121175) || ally->HasAura(121176) ||
+                ally->HasAura(121177) || ally->HasAura(121178))
+            {
+                float dist = player->GetExactDist(ally);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    friendlyCarrier = ally;
+                }
+            }
+        }
+    }
+
+    if (friendlyCarrier)
+    {
+        TC_LOG_DEBUG("playerbots.bg", "TOK: {} escorting orb carrier {} (dist: {:.1f})",
+            player->GetName(), friendlyCarrier->GetName(), closestDist);
+
+        constexpr float ESCORT_DISTANCE = 8.0f;
+        if (closestDist > ESCORT_DISTANCE * 2)
+        {
+            // Move closer
+            BotMovementUtil::MoveToPosition(player, friendlyCarrier->GetPosition());
+        }
+        else if (closestDist > ESCORT_DISTANCE)
+        {
+            // Get into escort formation
+            float angle = friendlyCarrier->GetOrientation() + M_PI;
+            Position escortPos(
+                friendlyCarrier->GetPositionX() + ESCORT_DISTANCE * 0.7f * cos(angle),
+                friendlyCarrier->GetPositionY() + ESCORT_DISTANCE * 0.7f * sin(angle),
+                friendlyCarrier->GetPositionZ(), 0.0f
+            );
+            BotMovementUtil::CorrectPositionToGround(player, escortPos);
+            BotMovementUtil::MoveToPosition(player, escortPos);
+        }
+
+        // Help kill attackers
+        if (friendlyCarrier->IsInCombat())
+        {
+            auto enemies = coordinator ? coordinator->QueryNearbyEnemies(friendlyCarrier->GetPosition(), 20.0f) : ::std::vector<BGPlayerSnapshot const*>{};
+            for (auto const* snapshot : enemies)
+            {
+                if (snapshot && snapshot->isAlive)
+                {
+                    ::Player* enemy = ObjectAccessor::FindPlayer(snapshot->guid);
+                    if (enemy && enemy->IsAlive())
+                    {
+                        // Select target and START ATTACKING
+                        player->SetSelection(enemy->GetGUID());
+
+                        // CRITICAL FIX: Actually engage in combat!
+                        if (player->IsHostileTo(enemy))
+                        {
+                            if (!player->IsInCombat() || player->GetVictim() != enemy)
+                            {
+                                player->Attack(enemy, true);
+                                TC_LOG_INFO("playerbots.bg", "TOK: {} defending orb carrier by attacking {}!",
+                                    player->GetName(), enemy->GetName());
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    else
+    {
+        // No friendly carriers - go pick up an orb
+        PickupOrb(player);
+        return false;
+    }
 }
 
 // ============================================================================
@@ -1929,16 +2291,47 @@ BGType BattlegroundAI::GetBattlegroundType(::Player* player) const
     if (!bg)
         return BGType::WARSONG_GULCH;
 
-    // Map BG type ID to BGType enum
-    // Full battleground type detection with map ID cross-reference
-    // Returns WARSONG_GULCH as default fallback
-    // Full implementation should:
-    // - Query bg->GetTypeID() to get BattlegroundTypeId
-    // - Map BattlegroundTypeId enum to BGType enum (defined in BattlegroundAI.h)
-    // - Support all battleground types (WSG, AB, AV, EOTS, SOTA, IOC, etc.)
-    // - Handle legacy and modern battleground IDs
-    // Reference: TrinityCore Battleground.h BattlegroundTypeId enum
-    return BGType::WARSONG_GULCH;
+    // CRITICAL FIX: BGType enum values ARE map IDs, so use GetMapId() directly
+    // The BGType enum in BGState.h uses map IDs:
+    //   WARSONG_GULCH = 489, TEMPLE_OF_KOTMOGU = 998, etc.
+    // This allows direct casting from the battleground's map ID
+    uint32 mapId = bg->GetMapId();
+
+    // Validate the map ID corresponds to a known BG type
+    switch (mapId)
+    {
+        case 489:   // Warsong Gulch
+            return BGType::WARSONG_GULCH;
+        case 529:   // Arathi Basin
+            return BGType::ARATHI_BASIN;
+        case 30:    // Alterac Valley
+            return BGType::ALTERAC_VALLEY;
+        case 566:   // Eye of the Storm
+            return BGType::EYE_OF_THE_STORM;
+        case 607:   // Strand of the Ancients
+            return BGType::STRAND_OF_THE_ANCIENTS;
+        case 628:   // Isle of Conquest
+            return BGType::ISLE_OF_CONQUEST;
+        case 726:   // Twin Peaks
+            return BGType::TWIN_PEAKS;
+        case 761:   // Battle for Gilneas
+            return BGType::BATTLE_FOR_GILNEAS;
+        case 727:   // Silvershard Mines
+            return BGType::SILVERSHARD_MINES;
+        case 998:   // Temple of Kotmogu
+            return BGType::TEMPLE_OF_KOTMOGU;
+        case 1105:  // Deepwind Gorge
+            return BGType::DEEPWIND_GORGE;
+        case 1803:  // Seething Shore
+            return BGType::SEETHING_SHORE;
+        case 1191:  // Ashran
+            return BGType::ASHRAN;
+        default:
+            TC_LOG_WARN("playerbots.bg",
+                "BattlegroundAI: Unknown BG map {} for bot {} - defaulting to WSG strategy",
+                mapId, player->GetName());
+            return BGType::WARSONG_GULCH;
+    }
 }
 
 ::Battleground* BattlegroundAI::GetPlayerBattleground(::Player* player) const

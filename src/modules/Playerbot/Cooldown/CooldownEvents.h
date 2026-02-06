@@ -29,7 +29,23 @@ enum class CooldownEventType : uint8
     SPELL_COOLDOWNS_CLEAR_ALL,
     ITEM_COOLDOWN_START,
     CATEGORY_COOLDOWN_START,
+    MAJOR_CD_USED,          // A major raid/group cooldown was used
+    MAJOR_CD_AVAILABLE,     // A major raid/group cooldown is available again
     MAX_COOLDOWN_EVENT
+};
+
+/**
+ * @brief Major cooldown tiers for prioritization
+ */
+enum class MajorCooldownTier : uint8
+{
+    NONE = 0,               // Not a major cooldown
+    RAID_OFFENSIVE,         // Bloodlust, Power Infusion, Innervate
+    RAID_DEFENSIVE,         // Rallying Cry, Spirit Link, Darkness, AMZ
+    EXTERNAL_MAJOR,         // Guardian Spirit, Pain Suppression, Ironbark, Life Cocoon
+    EXTERNAL_MODERATE,      // Blessing of Sacrifice, Vigilance
+    PERSONAL_MAJOR,         // Iceblock, Divine Shield, etc.
+    RESURRECTION,           // Battle Res (Rebirth, Soulstone, etc.)
 };
 
 /**
@@ -60,6 +76,7 @@ struct CooldownEvent
     uint32 category;
     uint32 cooldownMs;
     int32 modRateMs;
+    MajorCooldownTier majorCDTier;  // For MAJOR_CD_USED/MAJOR_CD_AVAILABLE events
     std::chrono::steady_clock::time_point timestamp;
     std::chrono::steady_clock::time_point expiryTime;
 
@@ -75,10 +92,14 @@ struct CooldownEvent
         return priority > other.priority;
     }
 
-    // Helper constructors
+    // Helper constructors for basic cooldown events
     static CooldownEvent SpellCooldownStart(ObjectGuid caster, uint32 spellId, uint32 cooldownMs);
     static CooldownEvent SpellCooldownClear(ObjectGuid caster, uint32 spellId);
     static CooldownEvent ItemCooldownStart(ObjectGuid caster, uint32 itemId, uint32 cooldownMs);
+
+    // Helper constructors for major cooldown coordination
+    static CooldownEvent MajorCDUsed(ObjectGuid caster, uint32 spellId, MajorCooldownTier tier, uint32 cooldownMs);
+    static CooldownEvent MajorCDAvailable(ObjectGuid caster, uint32 spellId, MajorCooldownTier tier);
 };
 
 } // namespace Playerbot
