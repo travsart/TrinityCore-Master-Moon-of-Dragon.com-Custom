@@ -1295,7 +1295,8 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
     // No need to manually update them here since they inherit from BehaviorManager
     // and have their own throttling mechanisms
 
-    // TODO: Add social interactions (chat, emotes) when implemented
+    // NOTE: Social interactions (chat, emotes) are handled by the Humanization
+    // subsystem (CityLifeBehaviorManager, ActivityExecutor) when bots are idle.
 }
 
 // ============================================================================

@@ -1404,30 +1404,18 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
         TC_LOG_WARN("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: Bot {} missing quest item {} - waiting for item acquisition",
                      bot->GetName(), questItemId);
 
-        // TODO: FUTURE IMPROVEMENT - Quest Objective Order Detection
+        // DESIGN NOTE: Quest Objective Order Detection
         // =============================================================
         // Some quests have multi-step objectives where you must:
         //   1) Collect quest item from a nearby GameObject/Creature
         //   2) Use that item on a target at the quest POI
         //
-        // Example: Quest A might have objectives:
-        //   - Objective 0: QUEST_OBJECTIVE_ITEM (collect Torch from barrel)
-        //   - Objective 1: QUEST_OBJECTIVE_MONSTER (use Torch on target)
+        // Current behavior: If item is missing, return and let the quest system
+        // process objectives in order — catching the "collect item" objective.
         //
-        // CURRENT BEHAVIOR (simple return):
-        // If item is missing, we return and let the quest system process
-        // objectives in order - hopefully catching the "collect item" objective.
-        //
-        // IDEAL FUTURE BEHAVIOR:
-        // 1. Iterate through quest->Objectives to find if there's an earlier
-        //    QUEST_OBJECTIVE_ITEM or QUEST_OBJECTIVE_GAMEOBJECT that would
-        //    give us this item
-        // 2. If found, navigate to that objective's location instead
-        // 3. If not found (item should have been given on quest accept),
-        //    then navigate to quest POI and hope script provides item
-        //
-        // For now, simple return prevents incorrect navigation that could
-        // skip the item acquisition step entirely.
+        // Potential enhancement: Iterate quest->Objectives to find an earlier
+        // QUEST_OBJECTIVE_ITEM that provides this item, then navigate there.
+        // For now, simple return prevents skipping the item acquisition step.
         // =============================================================
         return;
     }

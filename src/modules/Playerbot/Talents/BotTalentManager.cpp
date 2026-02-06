@@ -1068,8 +1068,8 @@ bool BotTalentManager::EnableDualSpec(Player* bot)
     if (!bot)
         return false;
 
-    // TODO: TrinityCore dual-spec is built-in to talent system
-    // No need to explicitly "enable" it - specs 0 and 1 are always available
+    // NOTE: TrinityCore dual-spec is built-in to the talent system.
+    // Specs 0 and 1 are always available — no explicit enable needed.
     TC_LOG_DEBUG("playerbot", "BotTalentManager: Dual-spec available for bot {}", bot->GetName());
 
     return true;

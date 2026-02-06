@@ -254,7 +254,8 @@ void PlayerbotModule::RegisterHooks()
 
 void PlayerbotModule::UnregisterHooks()
 {
-    // TODO: Unregister event hooks
+    // TrinityCore ScriptMgr does not support script deregistration at runtime.
+    // Registered hooks persist until server shutdown, which is the intended behavior.
 }
 
 void PlayerbotModule::OnWorldUpdate(uint32 diff)

@@ -71,10 +71,8 @@ void ProfessionAuctionBridge::Initialize()
     // Load shared data once (thread-safe via static initialization)
     if (!_sharedDataInitialized)
     {
-        // NOTE: AuctionHouse is now per-bot (Phase 7), removed static storage
-        // Access via: GetGameSystems(_bot)->GetAuctionHouse() in per-instance methods
-        // TODO: Review if any AuctionHouse methods need to be called during initialization
-        // Removed: _auctionHouse = AuctionHouse::instance();
+        // NOTE: AuctionHouse is per-bot (Phase 7). Access via GetGameSystems(_bot)->GetAuctionHouse()
+        // in per-instance methods. No AH calls needed during shared initialization.
         LoadDefaultStockpileConfigs();
         _sharedDataInitialized = true;
         TC_LOG_INFO("playerbot", "ProfessionAuctionBridge::Initialize - Loaded shared data (stockpile configs)");

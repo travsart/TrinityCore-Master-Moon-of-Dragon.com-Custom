@@ -155,8 +155,9 @@ void PlayerBotHooks::RegisterHooks()
         GroupEvent event = GroupEvent::GroupDisbanded(group->GetGUID());
         EventBus<GroupEvent>::instance()->PublishEvent(event);
 
-        // TODO: Per-group event clearing not implemented in GenericEventBus
-        // GroupEventBus::ClearGroupEvents() was empty (no-op)
+        // NOTE: Per-group event clearing is unnecessary — GenericEventBus events are
+        // transient and consumed each update tick. The GroupDisbanded event above
+        // is sufficient for subscribers to react and clean up their own state.
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Group {} disbanding",
             group->GetGUID().ToString());

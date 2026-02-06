@@ -26,7 +26,8 @@ const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_spellOpcode
     CMSG_PET_CAST_SPELL,                    // Pet spell cast (applies auras)
     CMSG_PET_CANCEL_AURA,                   // Pet aura cancel
     CMSG_TOTEM_DESTROYED,                   // Totem destruction (can trigger spell effects)
-    // CMSG_CAST_SPELL_EMBEDDED,            // TODO: Find 12.0 equivalent opcode
+    // NOTE: CMSG_CAST_SPELL_EMBEDDED does not exist in 12.0 — embedded casts
+    // are handled internally by the spell system, no client opcode needed.
 };
 
 // ============================================================================
@@ -65,7 +66,8 @@ const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_resurrectio
 // ============================================================================
 const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_movementOpcodes = {
     CMSG_MOVE_TELEPORT_ACK,                 // Teleport confirmation (updates position)
-    // CMSG_MOVE_WORLDPORT_ACK,             // TODO: Find 12.0 equivalent opcode
+    // NOTE: CMSG_MOVE_WORLDPORT_ACK does not exist in 12.0 — map transfers
+    // are handled via CMSG_SUSPEND_TOKEN_RESPONSE below.
     CMSG_AREA_TRIGGER,                      // Area trigger activation (can apply auras!)
     CMSG_SUSPEND_TOKEN_RESPONSE,            // Map transfer response
 };

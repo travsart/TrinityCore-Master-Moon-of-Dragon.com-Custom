@@ -1219,11 +1219,7 @@ void AddSC_playerbot_event_scripts()
     // BEFORE TrinityCore's RepopAtGraveyard() teleport could execute, causing bots to revive
     // instantly at death location instead of going through proper graveyard sequence.
     // Root Cause: OnPlayerRepop fires BEFORE RepopAtGraveyard() teleport occurs.
-    // Solution: Let DeathRecoveryManager handle resurrection after corpse run completes.
-    // TODO: DELETE BotResurrectionScript.h/cpp files - no longer needed
-    // TC_LOG_INFO("module.playerbot.scripts", " DEBUG: About to instantiate BotResurrectionScript...");
-    // new Playerbot::BotResurrectionScript();
-    // TC_LOG_INFO("module.playerbot.scripts", " DEBUG: BotResurrectionScript instantiated successfully");
+    // Solution: DeathRecoveryManager handles resurrection after corpse run completes.
     TC_LOG_INFO("module.playerbot.scripts", "  BotResurrectionScript DISABLED - DeathRecoveryManager handles resurrection");
 
     TC_LOG_INFO("module.playerbot.scripts",

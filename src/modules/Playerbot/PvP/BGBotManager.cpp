@@ -421,10 +421,13 @@ void BGBotManager::PopulateBattlegroundLocked(Battleground* bg)
     uint32 allianceCount = 0;
     uint32 hordeCount = 0;
 
+    // Count players currently in the BG
+    std::unordered_set<ObjectGuid> playersInBG;
     for (auto const& itr : bg->GetPlayers())
     {
         if (Player* player = ObjectAccessor::FindPlayer(itr.first))
         {
+            playersInBG.insert(itr.first);
             if (player->GetBGTeam() == ALLIANCE)
                 ++allianceCount;
             else
@@ -432,9 +435,34 @@ void BGBotManager::PopulateBattlegroundLocked(Battleground* bg)
         }
     }
 
+    // Also count bots already dispatched but not yet in bg->GetPlayers()
+    // (async teleport in progress). Without this, we over-spawn because
+    // the population check doesn't see in-transit bots.
+    uint32 inTransitAlliance = 0, inTransitHorde = 0;
+    auto dispatchedItr = _bgInstanceBots.find(bgInstanceGuid);
+    if (dispatchedItr != _bgInstanceBots.end())
+    {
+        for (ObjectGuid botGuid : dispatchedItr->second)
+        {
+            if (playersInBG.count(botGuid))
+                continue; // Already counted above
+
+            if (Player* bot = ObjectAccessor::FindPlayer(botGuid))
+            {
+                if (bot->GetBGTeam() == ALLIANCE)
+                    ++inTransitAlliance;
+                else
+                    ++inTransitHorde;
+            }
+        }
+    }
+
+    allianceCount += inTransitAlliance;
+    hordeCount += inTransitHorde;
+
     TC_LOG_INFO("module.playerbot.bg",
-        "BGBotManager::PopulateBattleground - BG {} population: Alliance {}/{}, Horde {}/{}",
-        bgInstanceGuid, allianceCount, targetTeamSize, hordeCount, targetTeamSize);
+        "BGBotManager::PopulateBattleground - BG {} population: Alliance {}/{} (in-transit: {}), Horde {}/{} (in-transit: {})",
+        bgInstanceGuid, allianceCount, targetTeamSize, inTransitAlliance, hordeCount, targetTeamSize, inTransitHorde);
 
     uint32 allianceNeeded = (allianceCount < targetTeamSize) ? (targetTeamSize - allianceCount) : 0;
     uint32 hordeNeeded = (hordeCount < targetTeamSize) ? (targetTeamSize - hordeCount) : 0;

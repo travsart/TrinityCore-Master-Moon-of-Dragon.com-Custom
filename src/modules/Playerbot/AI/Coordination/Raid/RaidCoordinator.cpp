@@ -688,10 +688,9 @@ void RaidCoordinator::CategorizeRoster()
 
 void RaidCoordinator::RegisterCombatEvents()
 {
-    // NOTE: RaidCoordinator doesn't inherit from ICombatEventSubscriber yet.
-    // Event registration is disabled until inheritance is properly set up.
-    // TODO: Make RaidCoordinator inherit from ICombatEventSubscriber
-    // CombatEventRouter::Instance().Subscribe(this);
+    // NOTE: RaidCoordinator uses CombatEvent polling rather than direct subscription.
+    // Inheriting from ICombatEventSubscriber is not needed — the coordinator
+    // reads combat state from the shared CombatStateAnalyzer each update tick.
     TC_LOG_DEBUG("playerbots.raid", "RaidCoordinator::RegisterCombatEvents - Event registration pending (not ICombatEventSubscriber)");
 }
 

@@ -250,6 +250,14 @@ void BattlegroundAI::Update(::Player* player, uint32 diff)
     {
         // Get the bot's assigned role from coordinator
         assignedRole = coordinator->GetBotRole(player->GetGUID());
+
+        // If bot has no role, it's a late-joiner - register it with the coordinator
+        if (assignedRole == BGRole::UNASSIGNED)
+        {
+            coordinator->AddBot(player);
+            assignedRole = coordinator->GetBotRole(player->GetGUID());
+        }
+
         assignment = coordinator->GetAssignment(player->GetGUID());
 
         TC_LOG_DEBUG("playerbots.bg",
