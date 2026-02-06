@@ -383,8 +383,15 @@ void QueueStatePoller::PollBGQueues()
 {
     std::lock_guard<decltype(_mutex)> lock(_mutex);
 
-    for (uint64 key : _activeBGQueues)
+    // Copy the set before iterating - ProcessBGShortage may unregister
+    // satisfied queues during the loop, which would invalidate iterators
+    auto activeQueues = _activeBGQueues;
+    for (uint64 key : activeQueues)
     {
+        // Skip if unregistered during this poll cycle
+        if (_activeBGQueues.find(key) == _activeBGQueues.end())
+            continue;
+
         BattlegroundTypeId bgTypeId = static_cast<BattlegroundTypeId>(key >> 32);
         BattlegroundBracketId bracket = static_cast<BattlegroundBracketId>(key & 0xFFFFFFFF);
         DoPollBGQueue(bgTypeId, bracket);
@@ -675,8 +682,15 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
     // If warm pool fully satisfied the demand, we're done
     if (allianceStillNeeded == 0 && hordeStillNeeded == 0)
     {
-        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: BG shortage fully satisfied from warm pool");
+        TC_LOG_INFO("playerbot.jit", "QueueStatePoller: BG shortage fully satisfied from warm pool - unregistering queue");
         RecordJITRequest(key);
+
+        // CRITICAL: Unregister the queue to stop further polling.
+        // Without this, the poller re-polls every 5-10 seconds and sees
+        // the queue "empty" (bots are still logging in/queueing async),
+        // spawning another full set of bots each time (massive over-spawn).
+        _activeBGQueues.erase(key);
+        _bgSnapshots.erase(key);
         return;
     }
 
@@ -765,6 +779,13 @@ void QueueStatePoller::ProcessBGShortage(BGQueueSnapshot const& snapshot)
 
     // Record JIT request time for throttling
     RecordJITRequest(key);
+
+    // Unregister the queue after submitting JIT requests.
+    // JIT bots will login and queue asynchronously. Without this, the poller
+    // re-polls and keeps spawning bots because JIT bots haven't entered the queue yet.
+    _activeBGQueues.erase(key);
+    _bgSnapshots.erase(key);
+    TC_LOG_INFO("playerbot.jit", "QueueStatePoller: BG queue unregistered after JIT submission (bots will queue after login)");
 }
 
 void QueueStatePoller::ProcessLFGShortage(LFGQueueSnapshot const& snapshot)
