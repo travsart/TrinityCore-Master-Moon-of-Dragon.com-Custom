@@ -14,6 +14,7 @@
 #include "Threading/LockHierarchy.h"
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 
 class Battleground;
@@ -118,6 +119,11 @@ private:
 
     // Map of BG instance ID -> Coordinator
     std::unordered_map<uint32, std::unique_ptr<BattlegroundCoordinator>> _coordinators;
+
+    // Tracks BG instance IDs where coordinator creation is in progress
+    // (by another thread). Prevents multiple threads from redundantly
+    // running the expensive Initialize() in parallel.
+    std::unordered_set<uint32> _creatingCoordinators;
 
     mutable OrderedRecursiveMutex<LockOrder::BEHAVIOR_MANAGER> _mutex;
 
