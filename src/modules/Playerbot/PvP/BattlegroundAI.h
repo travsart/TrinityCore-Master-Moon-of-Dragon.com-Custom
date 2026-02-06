@@ -295,12 +295,8 @@ public:
     bool AttackGate(::Player* player);
     bool DefendGate(::Player* player);
 
-    // Temple of Kotmogu
+    // Temple of Kotmogu (delegates to TempleOfKotmoguScript::ExecuteStrategy)
     void ExecuteKotmoguStrategy(::Player* player);
-    void ExecuteOrbCarrierBehavior(::Player* player);
-    bool PickupOrb(::Player* player);
-    bool DefendOrbCarrier(::Player* player);
-    void HuntEnemyOrbCarrier(::Player* player);
 
     // Silvershard Mines
     void ExecuteSilvershardStrategy(::Player* player);

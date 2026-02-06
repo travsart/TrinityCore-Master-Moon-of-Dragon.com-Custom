@@ -24,6 +24,9 @@
 #include <functional>
 #include <cstdint>
 
+// Forward declarations
+class Player;
+
 // Forward declare BattlegroundCoordinator in its actual namespace
 namespace Playerbot {
     class BattlegroundCoordinator;
@@ -718,6 +721,22 @@ public:
      * @param vehicleEntry The vehicle type
      */
     virtual bool ShouldUseVehicle(ObjectGuid botGuid, uint32 vehicleEntry) const { return true; }
+
+    // ========================================================================
+    // RUNTIME BEHAVIOR
+    // ========================================================================
+
+    /**
+     * @brief Execute BG-specific strategy for a bot player
+     *
+     * BG scripts that implement runtime behavior (movement, combat, orb pickup,
+     * etc.) override this method. The BattlegroundAI delegates to this method
+     * instead of embedding BG-specific logic.
+     *
+     * @param player The bot player to execute strategy for
+     * @return true if the script handled the player's behavior
+     */
+    virtual bool ExecuteStrategy(::Player* player) { return false; }
 
     // ========================================================================
     // UTILITY

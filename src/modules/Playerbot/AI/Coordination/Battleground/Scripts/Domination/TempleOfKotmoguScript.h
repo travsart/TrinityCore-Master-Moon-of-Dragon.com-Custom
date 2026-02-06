@@ -130,6 +130,13 @@ public:
     std::vector<uint32> GetOrbPriority(uint32 faction) const;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR (lighthouse pattern)
+    // ========================================================================
+
+    /// Execute TOK-specific strategy for a bot (overrides IBGScript)
+    bool ExecuteStrategy(::Player* player) override;
+
+    // ========================================================================
     // ENTERPRISE-GRADE POSITIONING
     // ========================================================================
 
@@ -157,6 +164,9 @@ public:
     /// Get distance from an orb to center
     float GetOrbToCenterDistance(uint32 orbId) const;
 
+    /// Get orb position (uses dynamic discovery if available, falls back to hardcoded)
+    Position GetDynamicOrbPosition(uint32 orbId) const;
+
 protected:
     // ========================================================================
     // BASE CLASS OVERRIDES
@@ -172,6 +182,25 @@ private:
     // ========================================================================
     // HELPER METHODS
     // ========================================================================
+
+    // ========================================================================
+    // RUNTIME BEHAVIOR HELPERS
+    // ========================================================================
+
+    /// Pick up the nearest available orb
+    bool PickupOrb(::Player* player);
+
+    /// Defend nearest friendly orb carrier or patrol center
+    bool DefendOrbCarrier(::Player* player);
+
+    /// Hunt and attack enemy orb carriers
+    bool HuntEnemyOrbCarrier(::Player* player);
+
+    /// Escort nearest friendly orb carrier in formation
+    bool EscortOrbCarrier(::Player* player);
+
+    /// Move orb carrier toward center or hold position
+    bool ExecuteOrbCarrierMovement(::Player* player);
 
     BGObjectiveData GetOrbData(uint32 orbId) const;
 
@@ -228,12 +257,6 @@ private:
      */
     bool InitializePositionDiscovery();
 
-    /**
-     * @brief Get orb position (uses dynamic discovery if available)
-     * @param orbId Orb identifier (0-3)
-     * @return Validated orb position
-     */
-    Position GetDynamicOrbPosition(uint32 orbId) const;
 };
 
 } // namespace Playerbot::Coordination::Battleground
