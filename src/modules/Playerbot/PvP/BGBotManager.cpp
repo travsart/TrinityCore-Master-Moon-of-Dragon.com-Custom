@@ -185,12 +185,19 @@ void BGBotManager::OnPlayerLeaveQueue(ObjectGuid playerGuid)
 
     std::lock_guard lock(_mutex);
 
+    // Track BG type/bracket for unregistration check
+    BattlegroundTypeId leavingBgType = BATTLEGROUND_TYPE_NONE;
+    BattlegroundBracketId leavingBracket = BG_BRACKET_ID_FIRST;
+
     // Check if this is a human player with assigned bots
     auto humanItr = _humanPlayers.find(playerGuid);
     if (humanItr != _humanPlayers.end())
     {
         TC_LOG_DEBUG("module.playerbot.bg", "BGBotManager::OnPlayerLeaveQueue - Human player left, removing {} bots",
                      humanItr->second.assignedBots.size());
+
+        leavingBgType = humanItr->second.bgTypeId;
+        leavingBracket = humanItr->second.bracket;
 
         for (ObjectGuid botGuid : humanItr->second.assignedBots)
         {
@@ -202,6 +209,29 @@ void BGBotManager::OnPlayerLeaveQueue(ObjectGuid playerGuid)
         }
 
         _humanPlayers.erase(humanItr);
+
+        // =========================================================================
+        // CRITICAL FIX: Check if this was the LAST human for this BG type/bracket
+        // =========================================================================
+        // If no more humans are queued for this BG, stop the QueueStatePoller from
+        // continuing to poll and spawn bots.
+        bool hasOtherHumans = false;
+        for (auto const& [guid, info] : _humanPlayers)
+        {
+            if (info.bgTypeId == leavingBgType && info.bracket == leavingBracket)
+            {
+                hasOtherHumans = true;
+                break;
+            }
+        }
+
+        if (!hasOtherHumans && leavingBgType != BATTLEGROUND_TYPE_NONE)
+        {
+            sQueueStatePoller->UnregisterActiveBGQueue(leavingBgType, leavingBracket);
+            TC_LOG_INFO("module.playerbot.bg",
+                "BGBotManager::OnPlayerLeaveQueue - Last human left BG queue type {} bracket {}, unregistered from QueueStatePoller",
+                static_cast<uint32>(leavingBgType), static_cast<uint32>(leavingBracket));
+        }
     }
     else
     {
@@ -299,6 +329,20 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
 
     TC_LOG_INFO("module.playerbot.bg", "BGBotManager::OnBattlegroundStart - BG instance {} ({}) started",
                  bgInstanceGuid, bg->GetName());
+
+    // =========================================================================
+    // 0. CRITICAL FIX: Unregister queue from QueueStatePoller to stop spawning
+    // =========================================================================
+    // When the BG starts, we MUST stop the QueueStatePoller from continuing to
+    // poll this queue. Otherwise, it will detect the "empty queue" as a shortage
+    // and spawn hundreds of bots every 5 seconds during BG gameplay.
+    //
+    // This was causing the 629 bots instead of 19 bots issue.
+    BattlegroundBracketId bracket = bg->GetBracketId();
+    sQueueStatePoller->UnregisterActiveBGQueue(bgTypeId, bracket);
+    TC_LOG_INFO("module.playerbot.bg",
+        "BGBotManager::OnBattlegroundStart - Unregistered BG queue type {} bracket {} from QueueStatePoller",
+        static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
 
     // =========================================================================
     // 1. Initialize the BattlegroundCoordinator for this BG
