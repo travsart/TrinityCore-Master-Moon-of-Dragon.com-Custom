@@ -130,6 +130,13 @@ public:
     std::vector<uint32> GetOrbPriority(uint32 faction) const;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR (lighthouse pattern)
+    // ========================================================================
+
+    /// Execute TOK-specific strategy for a bot (overrides IBGScript)
+    bool ExecuteStrategy(::Player* player) override;
+
+    // ========================================================================
     // ENTERPRISE-GRADE POSITIONING
     // ========================================================================
 
@@ -175,6 +182,25 @@ private:
     // ========================================================================
     // HELPER METHODS
     // ========================================================================
+
+    // ========================================================================
+    // RUNTIME BEHAVIOR HELPERS
+    // ========================================================================
+
+    /// Pick up the nearest available orb
+    bool PickupOrb(::Player* player);
+
+    /// Defend nearest friendly orb carrier or patrol center
+    bool DefendOrbCarrier(::Player* player);
+
+    /// Hunt and attack enemy orb carriers
+    bool HuntEnemyOrbCarrier(::Player* player);
+
+    /// Escort nearest friendly orb carrier in formation
+    bool EscortOrbCarrier(::Player* player);
+
+    /// Move orb carrier toward center or hold position
+    bool ExecuteOrbCarrierMovement(::Player* player);
 
     BGObjectiveData GetOrbData(uint32 orbId) const;
 
