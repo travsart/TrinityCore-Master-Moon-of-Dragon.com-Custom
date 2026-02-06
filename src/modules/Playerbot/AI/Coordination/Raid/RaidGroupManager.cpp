@@ -10,6 +10,63 @@
 
 namespace Playerbot {
 
+// ============================================================================
+// ROLE DETECTION HELPERS
+// ============================================================================
+
+/**
+ * Checks if a player has a tank specialization.
+ */
+static bool IsTankSpecialization(Player* player)
+{
+    if (!player)
+        return false;
+
+    ChrSpecialization spec = player->GetPrimarySpecialization();
+
+    switch (spec)
+    {
+        case ChrSpecialization::WarriorProtection:
+        case ChrSpecialization::PaladinProtection:
+        case ChrSpecialization::DeathKnightBlood:
+        case ChrSpecialization::DruidGuardian:
+        case ChrSpecialization::MonkBrewmaster:
+        case ChrSpecialization::DemonHunterVengeance:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+ * Checks if a player has a healer specialization.
+ */
+static bool IsHealerSpecialization(Player* player)
+{
+    if (!player)
+        return false;
+
+    ChrSpecialization spec = player->GetPrimarySpecialization();
+
+    switch (spec)
+    {
+        case ChrSpecialization::PriestDiscipline:
+        case ChrSpecialization::PriestHoly:
+        case ChrSpecialization::PaladinHoly:
+        case ChrSpecialization::DruidRestoration:
+        case ChrSpecialization::ShamanRestoration:
+        case ChrSpecialization::MonkMistweaver:
+        case ChrSpecialization::EvokerPreservation:
+            return true;
+        default:
+            return false;
+    }
+}
+
+// ============================================================================
+// CONSTRUCTOR
+// ============================================================================
+
 RaidGroupManager::RaidGroupManager(RaidCoordinator* coordinator)
     : _coordinator(coordinator)
 {
@@ -151,10 +208,9 @@ void RaidGroupManager::BalanceTanksAndHealers()
             if (!player)
                 continue;
 
-            uint8 role = player->GetRoleBySpecialization();
-            if (role == ROLE_TANK)
+            if (IsTankSpecialization(player))
                 group.hasTank = true;
-            else if (role == ROLE_HEALER)
+            else if (IsHealerSpecialization(player))
                 group.hasHealer = true;
         }
     }
@@ -215,10 +271,9 @@ void RaidGroupManager::UpdateGroupComposition()
             if (!player)
                 continue;
 
-            uint8 role = player->GetRoleBySpecialization();
-            if (role == ROLE_TANK)
+            if (IsTankSpecialization(player))
                 group.hasTank = true;
-            else if (role == ROLE_HEALER)
+            else if (IsHealerSpecialization(player))
                 group.hasHealer = true;
         }
     }

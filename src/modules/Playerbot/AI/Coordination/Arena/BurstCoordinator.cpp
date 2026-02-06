@@ -10,6 +10,7 @@
 
 #include "BurstCoordinator.h"
 #include "ArenaCoordinator.h"
+#include "SharedDefines.h"
 #include "GameTime.h"
 #include "Log.h"
 #include <algorithm>

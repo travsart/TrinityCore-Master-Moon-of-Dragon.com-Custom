@@ -68,7 +68,7 @@ CooldownEvent CooldownEvent::MajorCDUsed(ObjectGuid caster, uint32 spellId, Majo
 {
     CooldownEvent event;
     event.type = CooldownEventType::MAJOR_CD_USED;
-    event.priority = CooldownEventPriority::CRITICAL;
+    event.priority = CooldownEventPriority::CRITICAL;  // Major CDs are high priority
     event.casterGuid = caster;
     event.spellId = spellId;
     event.itemId = 0;
@@ -77,7 +77,7 @@ CooldownEvent CooldownEvent::MajorCDUsed(ObjectGuid caster, uint32 spellId, Majo
     event.modRateMs = 0;
     event.majorCDTier = tier;
     event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);  // Short expiry for coordination
     return event;
 }
 

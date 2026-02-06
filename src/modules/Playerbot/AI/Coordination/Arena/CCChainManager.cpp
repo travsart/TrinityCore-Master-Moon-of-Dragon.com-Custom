@@ -10,7 +10,7 @@
 
 #include "CCChainManager.h"
 #include "ArenaCoordinator.h"
-#include "Combat/CrowdControl/CrowdControlManager.h"
+#include "AI/Combat/CrowdControlManager.h"
 #include "Player.h"
 #include "ObjectAccessor.h"
 #include "GameTime.h"

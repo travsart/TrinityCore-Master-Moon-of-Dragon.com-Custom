@@ -86,6 +86,7 @@ public:
     uint32 GetRoleCount(BGRole role) const;
     bool IsRoleFilled(BGRole role) const;
     bool IsRoleNeeded(BGRole role) const;
+    size_t GetAssignmentCount() const { return _assignments.size(); }
 
     // ========================================================================
     // ROLE SUITABILITY

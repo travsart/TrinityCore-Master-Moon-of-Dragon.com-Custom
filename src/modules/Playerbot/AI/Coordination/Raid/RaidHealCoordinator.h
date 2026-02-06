@@ -11,7 +11,7 @@
 #pragma once
 
 #include "RaidState.h"
-#include "Core/Events/CombatEventData.h"
+#include "Core/Events/CombatEvent.h"
 #include <vector>
 #include <map>
 
@@ -119,7 +119,7 @@ public:
     // EVENT HANDLERS
     // ========================================================================
 
-    void OnHealingEvent(const CombatEventData& event);
+    void OnHealingEvent(const CombatEvent& event);
     void OnHealerDied(ObjectGuid healer);
     void OnTankAssigned(ObjectGuid tank);
     void OnTankDied(ObjectGuid tank);

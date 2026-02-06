@@ -11,6 +11,7 @@
 #pragma once
 
 #include "RaidState.h"
+#include "Core/Events/CombatEvent.h"
 #include "Core/Events/ICombatEventSubscriber.h"
 #include <memory>
 #include <vector>
@@ -63,12 +64,12 @@ public:
     void Update(uint32 diff);
 
     // ========================================================================
-    // ICOMBATEVENTSUBSCRIBER INTERFACE
+    // COMBAT EVENT INTERFACE
     // ========================================================================
 
-    void OnCombatEvent(const CombatEventData& event);
+    void OnCombatEvent(const CombatEvent& event);
     CombatEventType GetSubscribedEvents() const;
-    uint8 GetPriority() const override { return 50; }  // High priority for raid
+    int32 GetEventPriority() const { return 50; }  // High priority for raid
 
     // ========================================================================
     // STATE MANAGEMENT
@@ -238,11 +239,11 @@ private:
     // EVENT HANDLERS
     // ========================================================================
 
-    void HandleDamageEvent(const CombatEventData& event);
-    void HandleHealingEvent(const CombatEventData& event);
-    void HandleSpellEvent(const CombatEventData& event);
-    void HandleAuraEvent(const CombatEventData& event);
-    void HandleDeathEvent(const CombatEventData& event);
+    void HandleDamageEvent(const CombatEvent& event);
+    void HandleHealingEvent(const CombatEvent& event);
+    void HandleSpellEvent(const CombatEvent& event);
+    void HandleAuraEvent(const CombatEvent& event);
+    void HandleDeathEvent(const CombatEvent& event);
 
     // ========================================================================
     // STATE UPDATES

@@ -29,6 +29,7 @@ enum class CooldownEventType : uint8
     SPELL_COOLDOWNS_CLEAR_ALL,
     ITEM_COOLDOWN_START,
     CATEGORY_COOLDOWN_START,
+    // Major CD tracking for raid/group coordination
     MAJOR_CD_USED,          // A major raid/group cooldown was used
     MAJOR_CD_AVAILABLE,     // A major raid/group cooldown is available again
     MAX_COOLDOWN_EVENT
@@ -36,6 +37,9 @@ enum class CooldownEventType : uint8
 
 /**
  * @brief Major cooldown tiers for prioritization
+ *
+ * Used to categorize raid/group cooldowns by impact level.
+ * Higher tiers should be saved for more dangerous situations.
  */
 enum class MajorCooldownTier : uint8
 {

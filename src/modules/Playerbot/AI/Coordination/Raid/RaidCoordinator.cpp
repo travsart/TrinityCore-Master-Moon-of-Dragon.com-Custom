@@ -25,6 +25,59 @@
 namespace Playerbot {
 
 // ============================================================================
+// ROLE DETECTION HELPERS
+// ============================================================================
+
+/**
+ * Checks if a player has a tank specialization.
+ */
+static bool IsTankSpecialization(Player* player)
+{
+    if (!player)
+        return false;
+
+    ChrSpecialization spec = player->GetPrimarySpecialization();
+
+    switch (spec)
+    {
+        case ChrSpecialization::WarriorProtection:
+        case ChrSpecialization::PaladinProtection:
+        case ChrSpecialization::DeathKnightBlood:
+        case ChrSpecialization::DruidGuardian:
+        case ChrSpecialization::MonkBrewmaster:
+        case ChrSpecialization::DemonHunterVengeance:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+ * Checks if a player has a healer specialization.
+ */
+static bool IsHealerSpecialization(Player* player)
+{
+    if (!player)
+        return false;
+
+    ChrSpecialization spec = player->GetPrimarySpecialization();
+
+    switch (spec)
+    {
+        case ChrSpecialization::PriestDiscipline:
+        case ChrSpecialization::PriestHoly:
+        case ChrSpecialization::PaladinHoly:
+        case ChrSpecialization::DruidRestoration:
+        case ChrSpecialization::ShamanRestoration:
+        case ChrSpecialization::MonkMistweaver:
+        case ChrSpecialization::EvokerPreservation:
+            return true;
+        default:
+            return false;
+    }
+}
+
+// ============================================================================
 // CONSTRUCTOR / DESTRUCTOR
 // ============================================================================
 
@@ -144,44 +197,40 @@ void RaidCoordinator::Update(uint32 diff)
 }
 
 // ============================================================================
-// ICOMBATEVENTSUBSCRIBER INTERFACE
+// COMBAT EVENT INTERFACE
 // ============================================================================
 
-void RaidCoordinator::OnCombatEvent(const CombatEventData& event)
+void RaidCoordinator::OnCombatEvent(const CombatEvent& event)
 {
-    switch (event.eventType)
+    if (event.IsDamageEvent())
     {
-        case CombatEventType::DAMAGE:
-            HandleDamageEvent(event);
-            break;
-        case CombatEventType::HEALING:
-            HandleHealingEvent(event);
-            break;
-        case CombatEventType::SPELL_CAST:
-        case CombatEventType::SPELL_INTERRUPTED:
-            HandleSpellEvent(event);
-            break;
-        case CombatEventType::AURA_APPLIED:
-        case CombatEventType::AURA_REMOVED:
-            HandleAuraEvent(event);
-            break;
-        case CombatEventType::DEATH:
-            HandleDeathEvent(event);
-            break;
-        default:
-            break;
+        HandleDamageEvent(event);
+    }
+    else if (event.IsHealingEvent())
+    {
+        HandleHealingEvent(event);
+    }
+    else if (event.IsSpellEvent())
+    {
+        HandleSpellEvent(event);
+    }
+    else if (event.IsAuraEvent())
+    {
+        HandleAuraEvent(event);
+    }
+    else if (event.type == CombatEventType::UNIT_DIED)
+    {
+        HandleDeathEvent(event);
     }
 }
 
 CombatEventType RaidCoordinator::GetSubscribedEvents() const
 {
-    return CombatEventType::DAMAGE |
-           CombatEventType::HEALING |
-           CombatEventType::SPELL_CAST |
-           CombatEventType::SPELL_INTERRUPTED |
-           CombatEventType::AURA_APPLIED |
-           CombatEventType::AURA_REMOVED |
-           CombatEventType::DEATH;
+    return CombatEventType::ALL_DAMAGE |
+           CombatEventType::ALL_HEALING |
+           CombatEventType::ALL_SPELL |
+           CombatEventType::ALL_AURA |
+           CombatEventType::UNIT_DIED;
 }
 
 // ============================================================================
@@ -300,7 +349,7 @@ void RaidCoordinator::RemoveMember(ObjectGuid playerGuid)
     }
 }
 
-void RaidCoordinator::UpdateMember(ObjectGuid playerGuid)
+void RaidCoordinator::UpdateMember(ObjectGuid /*playerGuid*/)
 {
     RefreshPlayerCache();
 }
@@ -567,21 +616,18 @@ void RaidCoordinator::CategorizeRoster()
         if (!player)
             continue;
 
-        // Check player's specialization/role
-        // This is a simplified categorization
-        uint8 role = player->GetRoleBySpecialization();
-
-        switch (role)
+        // Check player's specialization/role using helper functions
+        if (IsTankSpecialization(player))
         {
-            case ROLE_TANK:
-                _tanks.push_back(guid);
-                break;
-            case ROLE_HEALER:
-                _healers.push_back(guid);
-                break;
-            default:
-                _dps.push_back(guid);
-                break;
+            _tanks.push_back(guid);
+        }
+        else if (IsHealerSpecialization(player))
+        {
+            _healers.push_back(guid);
+        }
+        else
+        {
+            _dps.push_back(guid);
         }
     }
 
@@ -591,19 +637,25 @@ void RaidCoordinator::CategorizeRoster()
 
 void RaidCoordinator::RegisterCombatEvents()
 {
-    CombatEventRouter::Instance().Subscribe(this);
+    // NOTE: RaidCoordinator doesn't inherit from ICombatEventSubscriber yet.
+    // Event registration is disabled until inheritance is properly set up.
+    // TODO: Make RaidCoordinator inherit from ICombatEventSubscriber
+    // CombatEventRouter::Instance().Subscribe(this);
+    TC_LOG_DEBUG("playerbots.raid", "RaidCoordinator::RegisterCombatEvents - Event registration pending (not ICombatEventSubscriber)");
 }
 
 void RaidCoordinator::UnregisterCombatEvents()
 {
-    CombatEventRouter::Instance().Unsubscribe(this);
+    // NOTE: RaidCoordinator doesn't inherit from ICombatEventSubscriber yet.
+    // Event unregistration is disabled until inheritance is properly set up.
+    // CombatEventRouter::Instance().Unsubscribe(this);
 }
 
 // ============================================================================
 // EVENT HANDLERS (PRIVATE)
 // ============================================================================
 
-void RaidCoordinator::HandleDamageEvent(const CombatEventData& event)
+void RaidCoordinator::HandleDamageEvent(const CombatEvent& event)
 {
     // Forward to relevant sub-managers
     if (_tankCoordinator)
@@ -613,13 +665,13 @@ void RaidCoordinator::HandleDamageEvent(const CombatEventData& event)
         _addManager->OnDamageEvent(event);
 }
 
-void RaidCoordinator::HandleHealingEvent(const CombatEventData& event)
+void RaidCoordinator::HandleHealingEvent(const CombatEvent& event)
 {
     if (_healCoordinator)
         _healCoordinator->OnHealingEvent(event);
 }
 
-void RaidCoordinator::HandleSpellEvent(const CombatEventData& event)
+void RaidCoordinator::HandleSpellEvent(const CombatEvent& event)
 {
     if (_encounterManager)
         _encounterManager->OnSpellEvent(event);
@@ -628,7 +680,7 @@ void RaidCoordinator::HandleSpellEvent(const CombatEventData& event)
         _cooldownRotation->OnSpellEvent(event);
 }
 
-void RaidCoordinator::HandleAuraEvent(const CombatEventData& event)
+void RaidCoordinator::HandleAuraEvent(const CombatEvent& event)
 {
     // Tank swap triggers
     if (_tankCoordinator)
@@ -638,9 +690,9 @@ void RaidCoordinator::HandleAuraEvent(const CombatEventData& event)
         _encounterManager->OnAuraEvent(event);
 }
 
-void RaidCoordinator::HandleDeathEvent(const CombatEventData& event)
+void RaidCoordinator::HandleDeathEvent(const CombatEvent& event)
 {
-    ObjectGuid deadGuid = event.sourceGuid;
+    ObjectGuid deadGuid = event.source;  // Who died
 
     // Check if it's a raid member
     if (IsMember(deadGuid))
@@ -782,6 +834,7 @@ void RaidCoordinator::RefreshPlayerCache()
     for (ObjectGuid guid : _raidMembers)
     {
         // Would refresh player pointers from the world
+        (void)guid;  // Suppress unused variable warning
     }
 }
 

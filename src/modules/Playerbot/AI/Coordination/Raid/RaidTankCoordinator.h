@@ -11,7 +11,7 @@
 #pragma once
 
 #include "RaidState.h"
-#include "Core/Events/CombatEventData.h"
+#include "Core/Events/CombatEvent.h"
 #include <vector>
 #include <map>
 

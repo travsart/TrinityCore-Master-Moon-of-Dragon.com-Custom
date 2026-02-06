@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ArenaState.h"
+#include "Core/Events/CombatEvent.h"
 #include "Core/Events/ICombatEventSubscriber.h"
 #include <memory>
 #include <vector>
@@ -162,12 +163,12 @@ public:
     const ArenaMatchStats& GetMatchStats() const { return _matchStats; }
 
     // ========================================================================
-    // ICOMBATEVENTSUBSCRIBER
+    // COMBAT EVENT INTERFACE
     // ========================================================================
 
     void OnCombatEvent(const CombatEvent& event);
     CombatEventType GetSubscribedEventTypes() const;
-    uint8 GetPriority() const override { return 40; }  // High priority for arena
+    int32 GetEventPriority() const { return 40; }  // High priority for arena
 
     // ========================================================================
     // SUB-MANAGER ACCESS

@@ -221,41 +221,67 @@ void BGRoleManager::AssignAllRoles()
     // Clear existing assignments
     _assignments.clear();
 
-    auto bots = _coordinator->GetAliveBots();
+    auto aliveBots = _coordinator->GetAliveBots();
+    auto allBots = _coordinator->GetAllBots();
+
+    TC_LOG_INFO("playerbot.bg", "BGRoleManager::AssignAllRoles - Total bots: {}, Alive bots: {}, Requirements: {}",
+        allBots.size(), aliveBots.size(), _requirements.size());
+
+    // Use all bots if no alive bots (they might not be flagged as alive yet during init)
+    auto& bots = aliveBots.empty() ? allBots : aliveBots;
+
+    if (bots.empty())
+    {
+        TC_LOG_WARN("playerbot.bg", "BGRoleManager::AssignAllRoles - No bots to assign roles to!");
+        return;
+    }
 
     // First pass: Assign healers
+    uint32 healersAssigned = 0;
     for (const auto& bot : bots)
     {
         if (IsHealer(bot.guid))
         {
             AssignRole(bot.guid, BGRole::HEALER_DEFENSE);
+            healersAssigned++;
         }
     }
+    TC_LOG_DEBUG("playerbot.bg", "BGRoleManager: Pass 1 - Assigned {} healers", healersAssigned);
 
     // Second pass: Fill needed roles by suitability
     for (const auto& [role, req] : _requirements)
     {
+        uint32 assigned = 0;
         while (GetRoleCount(role) < req.idealCount)
         {
             ObjectGuid best = GetBestPlayerForRole(role);
             if (best.IsEmpty())
+            {
+                TC_LOG_DEBUG("playerbot.bg", "BGRoleManager: No suitable player for role {}", BGRoleToString(role));
                 break;
+            }
 
             AssignRole(best, role);
+            assigned++;
         }
+        TC_LOG_DEBUG("playerbot.bg", "BGRoleManager: Pass 2 - Assigned {} players to role {} (need {})",
+            assigned, BGRoleToString(role), req.idealCount);
     }
 
     // Final pass: Assign remaining to roamer
+    uint32 roamersAssigned = 0;
     for (const auto& bot : bots)
     {
         if (!HasRole(bot.guid))
         {
             AssignRole(bot.guid, BGRole::ROAMER);
+            roamersAssigned++;
         }
     }
+    TC_LOG_DEBUG("playerbot.bg", "BGRoleManager: Pass 3 - Assigned {} roamers", roamersAssigned);
 
-    TC_LOG_DEBUG("playerbot", "BGRoleManager: Assigned roles to %zu players",
-                 _assignments.size());
+    TC_LOG_INFO("playerbot.bg", "BGRoleManager: Assigned roles to {} players (healers: {}, roamers: {})",
+                 _assignments.size(), healersAssigned, roamersAssigned);
 }
 
 void BGRoleManager::RebalanceRoles()

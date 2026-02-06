@@ -169,6 +169,13 @@ void BattlegroundCoordinator::Initialize()
         _bots.push_back(bgPlayer);
     }
 
+    // Assign initial roles to all bots
+    if (_roleManager && !_bots.empty())
+    {
+        _roleManager->AssignAllRoles();
+        TC_LOG_INFO("playerbot.bg", "BattlegroundCoordinator: Assigned initial roles to %zu bots", _bots.size());
+    }
+
     // Subscribe to combat events
     CombatEventRouter::Instance().Subscribe(this);
 
@@ -368,7 +375,20 @@ uint32 BattlegroundCoordinator::GetEnemyControlledObjectiveCount() const
 
 BGRole BattlegroundCoordinator::GetBotRole(ObjectGuid bot) const
 {
-    return _roleManager ? _roleManager->GetRole(bot) : BGRole::UNASSIGNED;
+    if (!_roleManager)
+    {
+        TC_LOG_WARN("playerbot.bg", "BattlegroundCoordinator::GetBotRole - No role manager!");
+        return BGRole::UNASSIGNED;
+    }
+
+    BGRole role = _roleManager->GetRole(bot);
+    if (role == BGRole::UNASSIGNED)
+    {
+        TC_LOG_DEBUG("playerbot.bg",
+            "BattlegroundCoordinator::GetBotRole - Bot {} has UNASSIGNED role (assignments: {})",
+            bot.GetCounter(), _roleManager->GetAssignmentCount());
+    }
+    return role;
 }
 
 void BattlegroundCoordinator::AssignRole(ObjectGuid bot, BGRole role)

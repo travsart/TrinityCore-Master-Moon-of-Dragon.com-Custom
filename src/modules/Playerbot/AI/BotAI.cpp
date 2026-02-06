@@ -606,7 +606,9 @@ void BotAI::UpdateAI(uint32 diff)
     if (_bot->InBattleground())
     {
         ::Battleground* bg = _bot->GetBattleground();
-        if (bg && bg->GetStatus() == STATUS_IN_PROGRESS)
+        // Activate BG AI during both prep phase (WAIT_JOIN) and active phase (IN_PROGRESS)
+        // During prep, bots should move to their positions and prepare for gates to open
+        if (bg && (bg->GetStatus() == STATUS_IN_PROGRESS || bg->GetStatus() == STATUS_WAIT_JOIN))
         {
             // DIAGNOSTIC: Log BG AI activation (throttled to once per 10 seconds per bot)
             static std::unordered_map<uint32, uint32> lastBGLog;

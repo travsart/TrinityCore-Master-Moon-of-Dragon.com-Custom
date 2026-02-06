@@ -305,6 +305,14 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/BotMessageBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging/BotMessageBus.h
 
+    # ============================================================================
+    # PHASE 3 AUDIT: Arena/Raid Coordination Files (DISCOVERED - NOT YET BUILDABLE)
+    # ============================================================================
+    # These 34 files were found during Sprint 1 audit but have stale APIs that
+    # need CombatEventData -> CombatEvent migration. This is Sprint 2+ work.
+    # See: .claude/PHASE3/AUDIT_RESULTS.md for full details
+    # ============================================================================
+
     # AI Blackboard
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.h

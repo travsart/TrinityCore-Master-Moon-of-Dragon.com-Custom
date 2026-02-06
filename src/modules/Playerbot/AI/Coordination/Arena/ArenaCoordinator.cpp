@@ -15,7 +15,7 @@
 #include "DefensiveCoordinator.h"
 #include "ArenaPositioning.h"
 #include "Core/Events/CombatEventRouter.h"
-#include "Combat/CrowdControl/CrowdControlManager.h"
+#include "AI/Combat/CrowdControlManager.h"
 #include "Player.h"
 #include "Battleground.h"
 #include "Group.h"

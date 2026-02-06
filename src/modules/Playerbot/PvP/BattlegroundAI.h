@@ -297,8 +297,10 @@ public:
 
     // Temple of Kotmogu
     void ExecuteKotmoguStrategy(::Player* player);
+    void ExecuteOrbCarrierBehavior(::Player* player);
     bool PickupOrb(::Player* player);
     bool DefendOrbCarrier(::Player* player);
+    void HuntEnemyOrbCarrier(::Player* player);
 
     // Silvershard Mines
     void ExecuteSilvershardStrategy(::Player* player);
