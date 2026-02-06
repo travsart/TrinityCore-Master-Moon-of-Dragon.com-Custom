@@ -253,6 +253,9 @@ public:
     // PLAYER TRACKING
     // ========================================================================
 
+    /// Add a late-joining bot to this coordinator (avoids duplicates)
+    void AddBot(Player* bot);
+
     const BGPlayer* GetBot(ObjectGuid guid) const;
     BGPlayer* GetBotMutable(ObjectGuid guid);
     ::std::vector<BGPlayer> GetAllBots() const;

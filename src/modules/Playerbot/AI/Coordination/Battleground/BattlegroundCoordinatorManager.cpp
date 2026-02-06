@@ -240,9 +240,8 @@ void BattlegroundCoordinatorManager::UpdateBot(Player* bot, uint32 diff)
 
     if (itr != _coordinators.end() && itr->second)
     {
-        // The coordinator's Update is called separately in the main Update loop
-        // Here we just ensure the coordinator knows about this bot
-        // The coordinator tracks bots internally
+        // Ensure the coordinator tracks this bot (handles late-joiners)
+        itr->second->AddBot(bot);
     }
 }
 

@@ -345,9 +345,11 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
         static_cast<uint32>(bgTypeId), static_cast<uint32>(bracket));
 
     // =========================================================================
-    // 1. Initialize the BattlegroundCoordinator for this BG
+    // 1. Teleport and add all bots FIRST, then create coordinator
     // =========================================================================
-    sBGCoordinatorMgr->OnBattlegroundStart(bg);
+    // NOTE: Coordinator creation is deferred to the end of this method.
+    // Creating it here would result in a coordinator with 0 bots, since
+    // bots haven't been teleported into the BG yet at this point.
 
     // =========================================================================
     // 2. CRITICAL FIX: First teleport bots that already received invitations
@@ -494,10 +496,15 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
         TC_LOG_INFO("module.playerbot.bg",
             "BGBotManager::OnBattlegroundStart - Added {} bots to fill empty slots",
             botsAdded);
-
-        // Notify coordinator that new bots were added
-        sBGCoordinatorMgr->OnBattlegroundStart(bg);
     }
+
+    // =========================================================================
+    // 4. NOW create the BattlegroundCoordinator (all bots are in the BG)
+    // =========================================================================
+    // This MUST be called after all bots have been teleported/added above,
+    // otherwise the coordinator would be created with 0 bots and all bots
+    // would be idle (no roles assigned, no objectives tracked).
+    sBGCoordinatorMgr->OnBattlegroundStart(bg);
 }
 
 void BGBotManager::OnBattlegroundEnd(Battleground* bg, Team winnerTeam)

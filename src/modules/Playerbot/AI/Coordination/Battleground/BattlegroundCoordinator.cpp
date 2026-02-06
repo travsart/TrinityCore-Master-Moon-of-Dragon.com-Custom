@@ -591,6 +591,50 @@ bool BattlegroundCoordinator::ShouldAssist(ObjectGuid bot, ObjectGuid ally) cons
 // PLAYER TRACKING
 // ============================================================================
 
+void BattlegroundCoordinator::AddBot(Player* bot)
+{
+    if (!bot)
+        return;
+
+    ObjectGuid guid = bot->GetGUID();
+
+    // Check for duplicate
+    for (const auto& existing : _bots)
+    {
+        if (existing.guid == guid)
+            return; // Already tracked
+    }
+
+    // Add to managed bots list
+    _managedBots.push_back(bot);
+
+    // Create tracking entry
+    BGPlayer bgPlayer;
+    bgPlayer.guid = guid;
+    bgPlayer.classId = bot->GetClass();
+    bgPlayer.healthPercent = bot->GetHealthPct();
+    bgPlayer.manaPercent = bot->GetPowerPct(POWER_MANA);
+    bgPlayer.isAlive = bot->IsAlive();
+    bgPlayer.x = bot->GetPositionX();
+    bgPlayer.y = bot->GetPositionY();
+    bgPlayer.z = bot->GetPositionZ();
+
+    _bots.push_back(bgPlayer);
+
+    // Assign best-fit role based on class/spec suitability
+    if (_roleManager)
+    {
+        BGRole bestRole = _roleManager->GetBestRole(guid);
+        if (bestRole == BGRole::UNASSIGNED)
+            bestRole = BGRole::ROAMER; // Safe fallback
+        _roleManager->AssignRole(guid, bestRole);
+    }
+
+    TC_LOG_INFO("playerbot.bg",
+        "BattlegroundCoordinator::AddBot - Late-joined bot {} added (total: {})",
+        bot->GetName(), _bots.size());
+}
+
 const BGPlayer* BattlegroundCoordinator::GetBot(ObjectGuid guid) const
 {
     for (const auto& bot : _bots)
