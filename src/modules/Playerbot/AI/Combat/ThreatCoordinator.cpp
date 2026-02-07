@@ -341,7 +341,7 @@ bool ThreatCoordinator::ExecuteTaunt(ObjectGuid tankGuid, Unit* target)
     if (aiIt != _botAIs.end() && aiIt->second)
     {
         // Cast the taunt
-        // MIGRATION COMPLETE (2025-10-30): Packet-based threat management
+        // Packet-based threat management via SpellPacketBuilder (thread-safe)
 
         SpellPacketBuilder::BuildOptions options;
 
@@ -400,7 +400,7 @@ bool ThreatCoordinator::ExecuteThreatReduction(ObjectGuid botGuid, float /*reduc
         {
             if (bot->HasSpell(ability.spellId) && !bot->GetSpellHistory()->HasCooldown(ability.spellId))
             {
-                // MIGRATION COMPLETE (2025-10-30): Packet-based threat management
+                // Packet-based threat management via SpellPacketBuilder (thread-safe)
 
                 SpellPacketBuilder::BuildOptions options;
 
@@ -463,7 +463,7 @@ bool ThreatCoordinator::ExecuteThreatTransfer(ObjectGuid fromBot, ObjectGuid toB
         {
             if (from->HasSpell(ability.spellId) && !from->GetSpellHistory()->HasCooldown(ability.spellId))
             {
-                // MIGRATION COMPLETE (2025-10-30): Packet-based threat management
+                // Packet-based threat management via SpellPacketBuilder (thread-safe)
 
                 SpellPacketBuilder::BuildOptions options;
 

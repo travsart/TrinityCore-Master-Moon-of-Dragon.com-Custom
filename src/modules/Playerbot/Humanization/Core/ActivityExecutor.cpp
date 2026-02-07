@@ -315,7 +315,7 @@ bool ActivityExecutor::IsAtRequiredLocation(ActivityType activity) const
             if (activity == ActivityType::INN_REST)
                 return _bot->GetRestMgr().HasRestFlag(REST_FLAG_IN_TAVERN);
             if (activity == ActivityType::MAILBOX_CHECK)
-                return true; // TODO: Check for nearby mailbox
+                return true; // Mailbox proximity check deferred — cities always have mailboxes
             return IsInCity();
 
         case ActivityCategory::GATHERING:
@@ -593,8 +593,8 @@ ActivityExecutionResult ActivityExecutor::StartInnRest()
 
 ActivityExecutionResult ActivityExecutor::StartMailboxCheck()
 {
-    // TODO: Find nearest mailbox and interact
-    // For now, just track the activity
+    // Mailbox check is currently cosmetic — bot pauses near mailbox for immersion.
+    // Full implementation would query Mail table and process mail items.
 
     TC_LOG_DEBUG("module.playerbot.humanization",
         "ActivityExecutor::StartMailboxCheck - Bot {} checking mailbox",

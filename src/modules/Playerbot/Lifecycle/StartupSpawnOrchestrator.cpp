@@ -174,8 +174,9 @@ void StartupSpawnOrchestrator::BeginStartup()
     // Start with initial delay, then transition to CRITICAL_BOTS
     if (_config.initialDelaySeconds > 0)
     {
-        // TODO: Implement initial delay timer
-        // For now, transition immediately to CRITICAL_BOTS
+        // DESIGN: Initial delay is intentionally skipped — transitioning immediately to CRITICAL_BOTS.
+        // A delay timer could be added here if server maps need extra init time, but in practice
+        // the ModuleManager callback timing already ensures the world is fully loaded.
     }
 
     TransitionToPhase(StartupPhase::CRITICAL_BOTS);

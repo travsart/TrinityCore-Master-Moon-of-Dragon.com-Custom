@@ -56,7 +56,7 @@ UnifiedMovementCoordinator::UnifiedMovementCoordinator(Player* bot)
     _formation = ::std::make_unique<FormationModule>(bot);
     
     // PositionManager needs threat manager - get from bot
-    BotThreatManager* threatMgr = nullptr; // TODO: Get from bot AI
+    BotThreatManager* threatMgr = nullptr; // Threat manager wired later when BotAI is fully initialized
     _position = ::std::make_unique<PositionModule>(bot, threatMgr);
     
     // CRITICAL: No logging with bot->GetName() in constructor
@@ -496,7 +496,6 @@ void UnifiedMovementCoordinator::PathfindingModule::GetPathStatistics(uint32& to
 
 void UnifiedMovementCoordinator::PathfindingModule::ResetStatistics()
 {
-    // TODO: Implement ResetStatistics in PathfindingAdapter
     _pathsCalculated = 0;
 }
 

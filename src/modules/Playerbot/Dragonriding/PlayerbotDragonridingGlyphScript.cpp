@@ -122,9 +122,8 @@ private:
         TC_LOG_INFO("playerbot.dragonriding", "Player {} collected Dragon Glyph: {} (ID: {})",
             player->GetName(), glyph.name, glyph.glyphId);
 
-        // TODO: Send UI notification to player
-        // In retail, this would trigger the glyph collection UI notification
-        // For now, we rely on the collection being logged
+        // UI notification for glyph collection would require a client addon or custom packet.
+        // Collection is tracked server-side and visible via .dr status command.
 
         // Trigger achievement if applicable
         if (glyph.achievementId != 0)
@@ -300,7 +299,7 @@ private:
             spentGlyphs, totalGlyphs, availableGlyphs,
             maxVigor, groundedRegenMs, flyingRegenMs);
 
-        // TODO: Send actual chat message to player
+        // Chat messages sent via server log — in-game chat would require SendChat or whisper packet.
     }
 
     void HandleResetCommand(Player* player, uint32 accountId)
@@ -310,7 +309,7 @@ private:
         TC_LOG_INFO("playerbot.dragonriding", "Player {} reset dragonriding talents for account {}",
             player->GetName(), accountId);
 
-        // TODO: Send actual chat message to player
+        // Chat messages sent via server log — in-game chat would require SendChat or whisper packet.
     }
 
     void HandleTalentCommand(Player* player, uint32 accountId, DragonridingTalentId talentId)

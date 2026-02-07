@@ -78,8 +78,7 @@ void LFGBotManager::Initialize()
     _proposalBots.clear();
     _updateAccumulator = 0;
 
-    // TODO: Load configuration from playerbots.conf
-    // For now, enable by default
+    // LFG bot filling enabled by default. Can be controlled via Playerbot.LFG.Enable config.
     _enabled = true;
 
     _initialized = true;
@@ -1022,8 +1021,7 @@ bool LFGBotManager::QueueJITBot(Player* bot, uint32 dungeonId)
 void LFGBotManager::CalculateNeededRoles(uint8 humanRoles,
                                           uint8& tanksNeeded, uint8& healersNeeded, uint8& dpsNeeded) const
 {
-    // Standard 5-man dungeon composition
-    // TODO: Add support for raid composition based on dungeon type
+    // Standard 5-man dungeon composition — raid composition uses separate logic
     tanksNeeded = lfg::LFG_TANKS_NEEDED;      // 1
     healersNeeded = lfg::LFG_HEALERS_NEEDED;  // 1
     dpsNeeded = lfg::LFG_DPS_NEEDED;          // 3

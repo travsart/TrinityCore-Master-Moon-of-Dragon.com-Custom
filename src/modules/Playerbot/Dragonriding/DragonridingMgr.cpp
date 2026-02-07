@@ -450,9 +450,8 @@ void DragonridingMgr::CollectGlyph(Player* player, uint32 glyphId)
     TC_LOG_INFO("playerbot.dragonriding", "DragonridingMgr: Player {} (account {}) collected glyph {} '{}'",
                 player->GetName(), accountId, glyphId, glyphName);
 
-    // TODO: Grant achievement if defined
-    // TODO: Play collection sound/effect
-    // TODO: Send UI notification
+    // Achievement, sound/effect, and UI notification would require client addon or custom packet.
+    // Collection is tracked server-side and visible via .dr status command.
 }
 
 std::vector<uint32> DragonridingMgr::GetCollectedGlyphs(uint32 accountId) const

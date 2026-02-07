@@ -355,13 +355,10 @@ float ResourceMonitor::CollectMemoryUsage()
 
 void ResourceMonitor::CollectDatabaseMetrics()
 {
-    // Get database connection pool metrics
-    // Note: TrinityCore doesn't expose connection pool size directly,
-    // so we'll use placeholder values for now
-    // TODO: Integrate with actual DB pool metrics when available
-
+    // LIMITATION: TrinityCore's DatabaseWorkerPool does not expose active connection count.
+    // Using placeholder values. For real monitoring, extend DatabaseWorkerPool with GetActiveConnectionCount().
     _currentMetrics.activeDbConnections = 0;
-    _currentMetrics.maxDbConnections = 100;  // Default pool size
+    _currentMetrics.maxDbConnections = 100;  // Default TrinityCore pool size
     _currentMetrics.dbConnectionUsagePercent = 0.0f;
 
     // This would require access to DatabaseWorkerPool internals

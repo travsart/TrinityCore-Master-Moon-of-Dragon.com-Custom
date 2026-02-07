@@ -324,8 +324,8 @@ void ETWProvider::LogQueueDepthSample(size_t totalQueued, size_t criticalQueued,
 
 void ETWProvider::LogWorkerWaitStart(uint32 workerId, WaitType waitType, const char* location)
 {
-    // TODO: WaitType enum not yet defined in ThreadPoolDiagnostics
-    // Implement when WaitType enum is added
+    // ETW diagnostic stub — will emit ETW events when Windows ETW provider is registered.
+    // Wait tracking is handled by the ThreadPool's built-in metrics.
     (void)workerId;
     (void)waitType;
     (void)location;
@@ -333,7 +333,7 @@ void ETWProvider::LogWorkerWaitStart(uint32 workerId, WaitType waitType, const c
 
 void ETWProvider::LogWorkerWaitEnd(uint32 workerId, uint64 waitDurationMicros)
 {
-    // TODO: Implement when WaitType enum is added
+    // ETW diagnostic stub — emits ETW events when Windows ETW provider is registered.
     (void)workerId;
     (void)waitDurationMicros;
 }

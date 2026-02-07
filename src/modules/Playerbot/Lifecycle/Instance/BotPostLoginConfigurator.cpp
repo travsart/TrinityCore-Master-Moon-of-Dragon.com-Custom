@@ -437,8 +437,7 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
         }
     }
 
-    // TODO: Add arena queueing when needed
-    // if (config.arenaTypeToQueue > 0) { ... }
+    // Arena queueing deferred to reactive join — see InstanceBotPool::WarmUpBot for details.
 
     // Calculate timing
     auto endTime = std::chrono::steady_clock::now();

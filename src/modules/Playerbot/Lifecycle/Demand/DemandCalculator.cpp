@@ -14,6 +14,8 @@
 #include "Character/BotLevelDistribution.h"
 #include "Log.h"
 #include "Config/PlayerbotConfig.h"
+#include "Quest/QuestHubDatabase.h"
+#include "Lifecycle/BotSpawner.h"
 #include <algorithm>
 #include <cmath>
 
@@ -570,24 +572,25 @@ std::vector<uint32> DemandCalculator::GetZonesForLevel(uint32 level) const
         zones = _activityTracker->GetZonesWithPlayersAtLevel(level, 10);
     }
 
-    // If no player zones, use default leveling zones
-    // TODO: Query from quest hub database or zone level ranges
+    // If no active player zones found, return empty — StartupSpawnOrchestrator
+    // handles default zone assignment for new bots.
 
     return zones;
 }
 
 bool DemandCalculator::IsQuestHub(uint32 zoneId) const
 {
-    // TODO: Query from QuestHubDatabase
-    // For now, return false
-    return false;
+    // Query QuestHubDatabase for quest hubs in this zone
+    auto const& hubDb = Playerbot::QuestHubDatabase::Instance();
+    auto hubs = hubDb.GetQuestHubsInZone(zoneId);
+    return !hubs.empty();
 }
 
 uint32 DemandCalculator::GetBotCountInZone(uint32 zoneId) const
 {
-    // TODO: Query from BotWorldSessionMgr or similar
-    // For now, return 0
-    return 0;
+    // Query BotSpawner for active bots in this zone
+    auto bots = Playerbot::sBotSpawner->GetActiveBotsInZone(zoneId);
+    return static_cast<uint32>(bots.size());
 }
 
 } // namespace Playerbot

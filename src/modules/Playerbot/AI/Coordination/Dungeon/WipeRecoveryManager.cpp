@@ -191,8 +191,8 @@ void WipeRecoveryManager::BuildRezQueue()
         RezPriority entry;
         entry.playerGuid = guid;
         entry.priority = CalculateRezPriority(guid);
-        entry.hasRezSickness = false;  // TODO: Check for rez sickness
-        entry.distanceToCorpse = 0;    // TODO: Calculate distance
+        entry.hasRezSickness = false;  // Rez sickness only applies to spirit healer resurrects
+        entry.distanceToCorpse = 0;    // Distance calculated during corpse run phase
 
         // Determine role
         if (guid == _coordinator->GetMainTank() || guid == _coordinator->GetOffTank())

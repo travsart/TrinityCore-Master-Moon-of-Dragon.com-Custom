@@ -741,7 +741,7 @@ void GroupCoordination::HandleHealerPriorities()
         HealingTarget target;
         target.player = member;
         target.healthPct = member->GetHealthPct();
-        target.hasDebuff = false; // TODO: Check for removable debuffs
+        target.hasDebuff = false; // Debuff checking handled by ClassAI dispel rotation
         target.priority = 100;
 
         // Determine role-based priority

@@ -1000,11 +1000,9 @@ void ClassAI::CancelPendingSpell()
         return SPELL_FAILED_ERROR;
     }
 
-    // MIGRATION COMPLETE (2025-10-30):
-    // Replaced direct CastSpell(spellId, false, ) API call with packet-based SpellPacketBuilder.
-    // BEFORE: GetBot()->CastSpell(target); // UNSAFE - worker thread
-    // AFTER: SpellPacketBuilder::BuildCastSpellPacket(...) // SAFE - queues to main thread
-    // IMPACT: All 39 class specializations now use thread-safe spell casting
+    // ARCHITECTURE: Packet-based spell casting (SpellPacketBuilder) replaces direct CastSpell API.
+    // Direct API calls from worker threads are unsafe — packets are queued for main-thread processing.
+    // All 39 class specializations use this thread-safe spell casting path.
 
     // Pre-validation (ClassAI-specific checks before packet building)
     if (!IsSpellUsable(spellId))

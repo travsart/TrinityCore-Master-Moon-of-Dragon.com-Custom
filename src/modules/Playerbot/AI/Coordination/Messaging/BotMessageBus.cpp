@@ -297,7 +297,9 @@ bool BotMessageBus::ShouldDeliver(BotSubscription const& sub, BotMessage const& 
             break;
 
         case MessageScope::NEARBY_BROADCAST:
-            // TODO: Implement distance check
+            // LIMITATION: Distance-based broadcast filtering not yet implemented.
+            // Currently falls through to deliver to all subscribers of matching type.
+            // Enhancement: Use SpatialGridManager::QueryNearbyPlayers() for proximity filtering.
             break;
     }
 

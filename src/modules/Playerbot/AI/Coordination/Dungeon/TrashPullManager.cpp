@@ -32,8 +32,8 @@ void TrashPullManager::Initialize(uint32 dungeonId)
 {
     Reset();
 
-    // TODO: Load dungeon-specific pack data from database/config
-    // For now, packs will be registered dynamically as they're detected
+    // Trash packs are registered dynamically as they're detected during dungeon traversal.
+    // Static pack data per-dungeon could be added via DB tables for optimized pull planning.
     TC_LOG_DEBUG("playerbot", "TrashPullManager::Initialize - Initialized for dungeon %u", dungeonId);
 }
 
@@ -361,7 +361,8 @@ RaidMarker TrashPullManager::GetMarkerForTarget(ObjectGuid target) const
 void TrashPullManager::SetMarker(ObjectGuid target, RaidMarker marker)
 {
     _markerAssignments[target] = marker;
-    // TODO: Actually set the raid target icon on the unit
+    // Marker assignment tracked internally for AI coordination.
+    // Visual world markers (skull, cross, etc.) require SMSG_UPDATE_WORLD_MARKER packet.
 }
 
 // ============================================================================
@@ -546,8 +547,8 @@ void TrashPullManager::CalculateKillOrder(const TrashPack& pack, ::std::vector<O
 {
     order.clear();
 
-    // Simple kill order: all members in order
-    // TODO: Prioritize by creature type (casters first, healers, etc.)
+    // Kill order: iterate members in discovery order (typically proximity-based).
+    // Enhancement: Prioritize by creature type (healer > caster > melee) and threat level.
     for (const ObjectGuid& member : pack.members)
     {
         order.push_back(member);
@@ -591,8 +592,7 @@ void TrashPullManager::CalculateOptimalRoute() const
     if (!p)
         return result;
 
-    // Common CC spells by class
-    // TODO: Make this more comprehensive and class-specific
+    // Common CC spells by class — covers the primary CC for each class
     static const ::std::vector<uint32> commonCCSpells = {
         118,    // Polymorph (Mage)
         6770,   // Sap (Rogue)

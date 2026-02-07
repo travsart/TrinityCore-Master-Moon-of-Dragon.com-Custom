@@ -594,7 +594,7 @@ bool InterruptRotationManager::ExecuteFallback(FallbackMethod method, Unit* cast
             {
                 if (!_bot->GetSpellHistory()->HasCooldown(SPELL_SILENCE))
                 {
-                    // MIGRATION COMPLETE (2025-10-30): Packet-based Silence fallback
+                    // Packet-based Silence fallback via SpellPacketBuilder (thread-safe)
                     SpellPacketBuilder::BuildOptions options;
                     options.skipGcdCheck = false;
                     options.skipResourceCheck = false;
@@ -617,7 +617,7 @@ bool InterruptRotationManager::ExecuteFallback(FallbackMethod method, Unit* cast
             {
                 if (!_bot->GetSpellHistory()->HasCooldown(SPELL_SOLAR_BEAM))
                 {
-                    // MIGRATION COMPLETE (2025-10-30): Packet-based Solar Beam fallback
+                    // Packet-based Solar Beam fallback via SpellPacketBuilder (thread-safe)
                     SpellPacketBuilder::BuildOptions options;
                     options.skipGcdCheck = false;
                     options.skipResourceCheck = false;
@@ -678,7 +678,7 @@ bool InterruptRotationManager::TryAlternativeInterrupt(Unit* target)
                     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
                     if (spellInfo && _bot->IsWithinLOSInMap(target))
                     {
-                        // MIGRATION COMPLETE (2025-10-30): Packet-based alternative interrupt
+                        // Packet-based alternative interrupt via SpellPacketBuilder (thread-safe)
                         SpellPacketBuilder::BuildOptions options;
                         options.skipGcdCheck = false;
                         options.skipResourceCheck = false;
@@ -740,7 +740,7 @@ void InterruptRotationManager::ProcessDelayedInterrupts()
 
             if (interrupter && target && target->IsNonMeleeSpellCast(false))
             {
-                // MIGRATION COMPLETE (2025-10-30): Packet-based delayed interrupt
+                // Packet-based delayed interrupt via SpellPacketBuilder (thread-safe)
                 SpellPacketBuilder::BuildOptions options;
                 options.skipGcdCheck = false;
                 options.skipResourceCheck = false;

@@ -562,8 +562,7 @@ MovementIntegration::CombatRole MovementIntegration::GetCombatRole() const
     if (!_bot)
         return CombatRole::MELEE_DPS;
 
-    // Simple heuristic based on class
-    // TODO: Proper role detection from spec/talents
+    // Simple class-based heuristic — full role detection from spec/talents handled by ClassAI
     switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:

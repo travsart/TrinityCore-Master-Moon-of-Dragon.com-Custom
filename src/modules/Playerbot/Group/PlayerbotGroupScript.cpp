@@ -15,6 +15,7 @@
 #include "Player.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
+#include "Core/PlayerBotHooks.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -471,9 +472,8 @@ bool PlayerbotWorldScript::GroupHasBots(Group const* group)
     {
         if (Player const* player = ObjectAccessor::FindConnectedPlayer(memberSlot.guid))
         {
-            // TODO: Check if player is a bot
-            // For now, return true if group exists (will be refined later)
-            // if (player->IsPlayerBot()) return true;
+            if (Playerbot::PlayerBotHooks::IsPlayerBot(player))
+                return true;
         }
     }
 

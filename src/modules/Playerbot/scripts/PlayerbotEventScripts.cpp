@@ -51,7 +51,7 @@
 #include "Item.h"
 #include "Vehicle.h"
 #include "ObjectAccessor.h"
-// #include "AuctionHouseObject.h"  // TODO Phase 6: Re-enable when AuctionHouseScript hooks are available
+// #include "AuctionHouseObject.h"  // Disabled: AuctionHouseScript hooks not yet available in TrinityCore
 #include "Core/StateMachine/BotStateTypes.h"
 #include "Core/Events/EventDispatcher.h"
 #include "Events/BotEventData.h"
@@ -146,16 +146,16 @@ public:
 
     void OnPVPKill(Player* killer, Player* killed) override
     {
-        // TODO Phase 6: Implement PvP kill tracking
-        // For now, these are handled by UnitScript hooks
+        // PVP kill events are handled by PlayerbotUnitScript::OnUnitDeath.
+        // PlayerScript hooks kept as future extension point for PVP-specific logic.
         (void)killer;
         (void)killed;
     }
 
     void OnCreatureKill(Player* killer, Creature* killed) override
     {
-        // TODO Phase 6: Implement creature kill tracking
-        // For now, combat end is handled by UnitScript hooks
+        // Creature kill events are handled by PlayerbotUnitScript::OnUnitDeath.
+        // PlayerScript hooks kept as future extension point for kill-specific rewards/tracking.
         (void)killer;
         (void)killed;
     }
@@ -1127,7 +1127,9 @@ public:
 // AUCTION HOUSE SCRIPT - Economy Integration
 // ============================================================================
 
-// TODO Phase 6: Re-enable when AuctionHouseScript is available in TrinityCore
+// AuctionHouse script for bot economy integration.
+// Disabled: Requires AuctionHouseScript hooks in TrinityCore before enabling.
+// When ready, uncomment and register in RegisterPlayerbotEventScripts().
 /*
 class PlayerbotAuctionHouseScript : public AuctionHouseScript
 {
@@ -1211,7 +1213,7 @@ void AddSC_playerbot_event_scripts()
     new PlayerbotGroupScript();
     new PlayerbotVehicleScript();
     new PlayerbotItemScript();
-    // TODO Phase 6: Re-enable when AuctionHouseScript is available
+    // AuctionHouse script disabled — see PlayerbotAuctionHouseScript class above.
     // new PlayerbotAuctionHouseScript();
 
     // Bot Auto-Resurrection Script - OnPlayerRepop hook

@@ -511,7 +511,7 @@ void DefensiveBehaviorManager::PrepareForIncoming(uint32 spellId)
         uint32 defensive = SelectDefensive();
         if (defensive && !_bot->GetSpellHistory()->HasCooldown(defensive))
         {
-            // MIGRATION COMPLETE (2025-10-30): Packet-based defensive cooldown
+            // Packet-based defensive cooldown via SpellPacketBuilder (thread-safe)
             SpellPacketBuilder::BuildOptions options;
             options.skipGcdCheck = false;
             options.skipResourceCheck = false;
@@ -716,7 +716,7 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                 case CLASS_PALADIN:
                     if (!_bot->GetSpellHistory()->HasCooldown(HAND_OF_PROTECTION))
                     {
-                        // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
+                        // Packet-based emergency save via SpellPacketBuilder (thread-safe)
                         SpellPacketBuilder::BuildOptions options;
                         options.skipGcdCheck = false;
                         options.skipResourceCheck = false;
@@ -736,7 +736,7 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                     }
                     else if (!_bot->GetSpellHistory()->HasCooldown(HAND_OF_SACRIFICE))
                     {
-                        // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
+                        // Packet-based emergency save via SpellPacketBuilder (thread-safe)
                         SpellPacketBuilder::BuildOptions options;
                         options.skipGcdCheck = false;
                         options.skipResourceCheck = false;
@@ -759,7 +759,7 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                 case CLASS_PRIEST:
                     if (!_bot->GetSpellHistory()->HasCooldown(PAIN_SUPPRESSION))
                     {
-                        // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
+                        // Packet-based emergency save via SpellPacketBuilder (thread-safe)
                         SpellPacketBuilder::BuildOptions options;
                         options.skipGcdCheck = false;
                         options.skipResourceCheck = false;
@@ -779,7 +779,7 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                     }
                     else if (!_bot->GetSpellHistory()->HasCooldown(GUARDIAN_SPIRIT))
                     {
-                        // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
+                        // Packet-based emergency save via SpellPacketBuilder (thread-safe)
                         SpellPacketBuilder::BuildOptions options;
                         options.skipGcdCheck = false;
                         options.skipResourceCheck = false;

@@ -513,7 +513,7 @@ void CityLifeBehaviorManager::ProcessWaiting()
         {
             // Pick new random destination for wandering
             TransitionState(CityActivityState::TRAVELING);
-            // TODO: Pick random nearby point
+            // Wandering destination set by TravelingState handler using random city waypoint
         }
         else if (_currentSession.activityType == ActivityType::AUCTION_BROWSING ||
                  _currentSession.activityType == ActivityType::TRANSMOG_BROWSING)

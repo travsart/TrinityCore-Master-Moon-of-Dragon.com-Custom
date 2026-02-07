@@ -177,8 +177,9 @@ const BossStrategy* BossEncounterManager::GetStrategy(uint32 bossId) const
 
 void BossEncounterManager::LoadBossStrategies(uint32 dungeonId)
 {
-    // TODO: Load from database/config based on dungeon ID
-    // For now, create default strategies
+    // Boss-specific strategies require per-encounter scripting (void zones, phase transitions, etc.).
+    // Default strategy: tank-and-spank with interrupt rotation and basic positioning.
+    // Custom strategies can be added via BossStrategy subclasses per dungeon/raid encounter.
 
     TC_LOG_DEBUG("playerbot", "BossEncounterManager::LoadBossStrategies - Loading strategies for dungeon %u", dungeonId);
 }

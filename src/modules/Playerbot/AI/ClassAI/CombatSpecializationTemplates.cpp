@@ -335,7 +335,7 @@ static_assert(ValidateResourceType<ChiSystem>());
 static_assert(ValidateResourceType<SoulShardSystem>());
 
 // ============================================================================
-// MIGRATION HELPERS
+// Specialization Combat Templates — Packet-Based Spell Casting Helpers
 // ============================================================================
 
 /**

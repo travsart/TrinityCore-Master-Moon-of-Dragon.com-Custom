@@ -929,9 +929,9 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
         return;
 
     // Scan for area triggers and persistent area auras (fire, poison, etc.)
-    // TODO: DEADLOCK RISK - DynamicObjects not yet supported by SpatialGridManager
-    // This is low-risk as DynamicObjects are rare and short-lived
-    // Future: Add QueryNearbyDynamicObjects() to SpatialGridManager
+    // LIMITATION: DynamicObject scanning (fire, poison ground effects) not yet implemented.
+    // Low-risk: DynamicObjects are rare and short-lived in most encounters.
+    // Enhancement: Add SpatialGridManager::QueryNearbyDynamicObjects() for ground-effect avoidance.
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = _bot->GetMap();

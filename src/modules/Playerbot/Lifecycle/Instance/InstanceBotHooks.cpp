@@ -594,7 +594,7 @@ void InstanceBotHooks::OnBattlegroundStarting(
     BattlegroundRequest request;
     request.bgTypeId = bgTypeId;
     request.bracketId = bg->GetBracketId();
-    // TODO: Get player level from content requirement or use bracket min level
+    // Player level derived from bracket — bracket min level is used by the orchestrator
     request.currentAlliancePlayers = allianceCount;
     request.currentHordePlayers = hordeCount;
     request.playerFaction = allianceCount > 0 ? Faction::Alliance : Faction::Horde;

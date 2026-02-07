@@ -295,15 +295,9 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
             return false;
         }
 
-        // TODO: Queue ACCEPT_QUEST action (experimental - BotActionQueue singleton not implemented)
-        // BotAction action;
-        // action.type = BotActionType::ACCEPT_QUEST;
-        // action.botGuid = bot->GetGUID();
-        // action.targetGuid = questGiverObjectGuid;
-        // action.questId = questId;
-        // action.priority = 7;  // Quest pickup is important
-        // action.queuedTime = GameTime::GetGameTimeMS();
-        // BotActionQueue::Instance()->Push(action);
+        // Quest is accepted directly via Player::AddQuest() above.
+        // BotActionQueue pattern was considered but not adopted — direct acceptance
+        // is simpler and works correctly since quest pickup runs on the main thread.
 
         // Update metrics
         uint32 elapsedTime = getMSTimeDiff(startTime, GameTime::GetGameTimeMS());

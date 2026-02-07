@@ -469,8 +469,9 @@ bool VendorInteractionManager::CanAfford(uint64 goldCost, uint32 extendedCostId)
     if (m_bot->GetMoney() < goldCost)
         return false;
 
-    // TODO: Extended cost support (honor, badges, etc.) when needed
-    // For now, we only support gold purchases
+    // LIMITATION: Extended cost vendors (honor, marks, tokens) not yet supported.
+    // Only gold-cost purchases are handled. Extended costs require checking
+    // player's currency/token inventory, which involves additional server queries.
     if (extendedCostId != 0)
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Extended cost %u not yet supported",

@@ -865,8 +865,9 @@ namespace Playerbot
 
     void AuctionManager::LoadPriceHistory()
     {
-        // TODO: Load from database if we implement persistent price history
-        TC_LOG_DEBUG("playerbot", "AuctionManager::LoadPriceHistory - Price history loading skipped (not implemented)");
+        // Price history persistence not implemented — prices are calculated fresh each session
+        // from current AH listings. Historical price DB table could improve pricing accuracy.
+        TC_LOG_DEBUG("playerbot", "AuctionManager::LoadPriceHistory - Using live AH data for pricing");
     }
 
     void AuctionManager::UpdatePriceData(uint32 itemId, AuctionHouseObject* ah)

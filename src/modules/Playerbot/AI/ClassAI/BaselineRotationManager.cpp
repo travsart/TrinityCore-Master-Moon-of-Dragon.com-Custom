@@ -358,10 +358,8 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         return false; // On cooldown
     }
 
-    // MIGRATION COMPLETE (2025-10-30):
-    // Replaced direct CastSpell(spellId, false, ) API call with packet-based SpellPacketBuilder.
-    // BEFORE: bot->CastSpell(castTarget); // UNSAFE - worker thread
-    // AFTER: SpellPacketBuilder::BuildCastSpellPacket(...) // SAFE - queues to main thread
+    // ARCHITECTURE: Packet-based spell casting (SpellPacketBuilder) replaces direct CastSpell API.
+    // Direct API calls from worker threads are unsafe — packets are queued for main-thread processing.
 
     // Get spell info for validation
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());

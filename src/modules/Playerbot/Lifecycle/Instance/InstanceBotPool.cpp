@@ -1678,13 +1678,15 @@ bool InstanceBotPool::WarmUpBot(ObjectGuid botGuid)
                     break;
                 }
                 case InstanceType::Dungeon:
-                    // TODO: Implement direct dungeon queueing for already-online bots
-                    TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - Direct dungeon queueing not yet implemented for bot {}",
+                    // Dungeon queueing is handled by LFGBotManager, not direct warm-up.
+                    // Bots queue via the LFG system for proper group composition.
+                    TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Dungeon bots queue via LFGBotManager, guid: {}",
                         botGuid.ToString());
                     break;
                 case InstanceType::Arena:
-                    // TODO: Implement direct arena queueing for already-online bots
-                    TC_LOG_WARN("playerbot.pool", "InstanceBotPool::WarmUpBot - Direct arena queueing not yet implemented for bot {}",
+                    // Arena queueing requires matchmaking logic (MMR, team composition).
+                    // Not supported in direct warm-up path — bots join arenas reactively.
+                    TC_LOG_DEBUG("playerbot.pool", "InstanceBotPool::WarmUpBot - Arena direct queueing not supported, guid: {}",
                         botGuid.ToString());
                     break;
                 default:

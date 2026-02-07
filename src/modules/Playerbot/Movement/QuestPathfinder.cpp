@@ -720,10 +720,8 @@ namespace Playerbot
         float speed = RUN_SPEED; // Default to running
     if (player)
         {
-            // Check if mounted (simplified check - real implementation would use Player::IsMounted())
-            // For now, assume running speed
-            // TODO: Add proper mount detection when Player API is available
-            speed = RUN_SPEED;
+            // Use actual player run speed (includes mount speed, speed buffs, and talent modifiers)
+            speed = player->GetSpeed(MOVE_RUN);
         }
 
         // Calculate travel time in seconds

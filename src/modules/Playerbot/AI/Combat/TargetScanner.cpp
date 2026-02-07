@@ -410,9 +410,9 @@ namespace Playerbot
     if (creature.level > m_bot->GetLevel() + 10)
             return false;
 
-        // TODO: LOS check would require raycasting, which needs Map access
-        // For now, skip LOS check in snapshot validation
-        // LOS will be validated later when we resolve the GUID to Unit*
+        // DESIGN: LOS check skipped during snapshot validation because snapshots
+        // contain only position data, not live Unit pointers. LOS is verified
+        // when the GUID is resolved to Unit* in the action execution phase.
 
         return true;
     }

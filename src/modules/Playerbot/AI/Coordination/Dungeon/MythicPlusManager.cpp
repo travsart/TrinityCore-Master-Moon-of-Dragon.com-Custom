@@ -477,8 +477,9 @@ uint8 MythicPlusManager::GetRecommendedPullSize() const
 
 void MythicPlusManager::LoadForcesTable(uint32 dungeonId)
 {
-    // TODO: Load from database based on dungeon ID
-    // For now, forces table will be populated dynamically
+    // LIMITATION: M+ forces-per-creature data is not available in TrinityCore DB.
+    // Forces values would need a custom `playerbot_mythic_forces` table.
+    // Currently, forces tracking relies on creature kill count as a proxy.
 
     TC_LOG_DEBUG("playerbot", "MythicPlusManager::LoadForcesTable - Loading forces for dungeon %u", dungeonId);
 }

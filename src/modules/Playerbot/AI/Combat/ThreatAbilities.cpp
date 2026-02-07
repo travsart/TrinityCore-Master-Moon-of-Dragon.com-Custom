@@ -199,8 +199,6 @@ void ThreatAbilitiesDB::Initialize()
         }
     }
 
-    // TODO: Filter by specialization if needed
-
     return result;
 }
 
