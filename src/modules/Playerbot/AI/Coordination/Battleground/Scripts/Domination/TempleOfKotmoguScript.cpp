@@ -1189,30 +1189,74 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
     }
 
     // Within range - search for the orb GameObject and use it
+    // CRITICAL: Use phase-ignoring search because dynamically spawned BG orbs
+    // may not share the bot's PhaseShift. The standard GetGameObjectListWithEntryInGrid
+    // filters by phase in its VisitImpl(), which silently drops dynamically created GOs.
     uint32 orbEntry = TOK_ORB_ENTRIES[bestOrbId];
     std::list<GameObject*> goList;
-    player->GetGameObjectListWithEntryInGrid(goList, orbEntry, TOK_OBJECTIVE_RANGE);
+
+    FindGameObjectOptions options;
+    options.GameObjectId = orbEntry;
+    options.IgnorePhases = true;
+    options.IsSpawned.reset();  // Don't filter by spawn state - dynamic GOs may differ
+    options.IgnoreNotOwnedPrivateObjects = false;
+    options.IgnorePrivateObjects = false;
+
+    constexpr float ORB_SEARCH_RADIUS = 30.0f;  // Larger radius to account for position variance
+    player->GetGameObjectListWithOptionsInGrid(goList, ORB_SEARCH_RADIUS, options);
+
+    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} searching for {} (entry {}) within {:.0f}yd: found {} GOs",
+        player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), orbEntry,
+        ORB_SEARCH_RADIUS, goList.size());
+
+    GameObject* bestGO = nullptr;
+    float bestGODist = ORB_SEARCH_RADIUS + 1.0f;
 
     for (GameObject* go : goList)
     {
-        if (!go || !go->IsWithinDistInMap(player, TOK_OBJECTIVE_RANGE))
+        if (!go)
             continue;
+
+        float goDist = player->GetExactDist(go);
+
+        TC_LOG_DEBUG("playerbots.bg", "[TOK]   GO entry={} guid={} type={} dist={:.1f} state={}",
+            go->GetEntry(), go->GetGUID().GetCounter(),
+            go->GetGOInfo() ? static_cast<uint32>(go->GetGOInfo()->type) : 999u,
+            goDist,
+            static_cast<uint32>(go->GetGoState()));
 
         GameObjectTemplate const* goInfo = go->GetGOInfo();
         if (!goInfo)
             continue;
 
         // Orbs are GAMEOBJECT_TYPE_FLAGSTAND in TOK
-        if (goInfo->type == GAMEOBJECT_TYPE_FLAGSTAND ||
-            goInfo->type == GAMEOBJECT_TYPE_GOOBER)
+        if (goInfo->type != GAMEOBJECT_TYPE_FLAGSTAND && goInfo->type != GAMEOBJECT_TYPE_GOOBER)
+            continue;
+
+        if (goDist < bestGODist)
         {
-            go->Use(player);
-            // Successfully picked up - remove from targeters (now a carrier)
-            m_orbTargeters.erase(bestOrbId);
-            TC_LOG_INFO("playerbots.bg", "[TOK] {} picked up {} (entry {})",
-                player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), orbEntry);
+            bestGODist = goDist;
+            bestGO = go;
+        }
+    }
+
+    if (bestGO)
+    {
+        // Move closer if still too far to interact
+        if (bestGODist > TOK_OBJECTIVE_RANGE)
+        {
+            BotMovementUtil::MoveToPosition(player, bestGO->GetPosition());
+            TC_LOG_DEBUG("playerbots.bg", "[TOK] {} found {} GO but too far ({:.1f}yd), moving closer",
+                player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), bestGODist);
             return true;
         }
+
+        bestGO->Use(player);
+        // Successfully picked up - remove from targeters (now a carrier)
+        m_orbTargeters.erase(bestOrbId);
+        TC_LOG_INFO("playerbots.bg", "[TOK] {} picked up {} (entry {}, dist {:.1f})",
+            player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), orbEntry, bestGODist);
+        return true;
     }
 
     // At orb location but no GO found - the orb was already picked up by someone

@@ -298,6 +298,36 @@ private:
     bool _initialized;
 
     // ============================================================================
+    // POPULATION RETRY SYSTEM
+    // ============================================================================
+
+    struct PendingPopulationInfo
+    {
+        uint32 startTime;
+        BattlegroundTypeId bgTypeId;
+    };
+
+    /// Map of BG instance GUID -> population retry info
+    std::unordered_map<uint32, PendingPopulationInfo> _pendingPopulations;
+
+    /// Accumulator for population retry checks
+    uint32 _populationRetryAccumulator = 0;
+
+    /// How often to retry populating BG instances (5 seconds)
+    static constexpr uint32 POPULATION_RETRY_INTERVAL = 5 * IN_MILLISECONDS;
+
+    /// Maximum time to keep retrying population (2 minutes - covers full prep phase)
+    static constexpr uint32 POPULATION_RETRY_MAX_DURATION = 120 * IN_MILLISECONDS;
+
+    /**
+     * @brief Process BG instances that need population retries
+     *
+     * Warm pool bots may not be fully logged in when OnBattlegroundStart fires.
+     * This periodically re-checks and fills missing team slots during the prep phase.
+     */
+    void ProcessPendingPopulations();
+
+    // ============================================================================
     // INVITATION PROCESSING
     // ============================================================================
 

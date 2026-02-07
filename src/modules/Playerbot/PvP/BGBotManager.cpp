@@ -132,6 +132,16 @@ void BGBotManager::Update(uint32 diff)
         ProcessPendingInvitations();
         _invitationCheckAccumulator = 0;
     }
+
+    // Population retry (every 5 seconds for up to 2 minutes after BG start)
+    // Handles warm pool bots that were still logging in when OnBattlegroundStart fired
+    _populationRetryAccumulator += diff;
+    if (_populationRetryAccumulator >= POPULATION_RETRY_INTERVAL)
+    {
+        if (!_pendingPopulations.empty())
+            ProcessPendingPopulations();
+        _populationRetryAccumulator = 0;
+    }
 }
 
 // ============================================================================
@@ -349,7 +359,17 @@ void BGBotManager::OnBattlegroundStart(Battleground* bg)
     PopulateBattlegroundLocked(bg);
 
     // =========================================================================
-    // 2. NOW create the BattlegroundCoordinator (all bots are in the BG)
+    // 2. Register for population retries during prep phase
+    // =========================================================================
+    // Warm pool bots may still be logging in asynchronously. Register this BG
+    // for periodic population retries so late-arriving bots get teleported in.
+    _pendingPopulations[bgInstanceGuid] = { GameTime::GetGameTimeMS(), bgTypeId };
+    TC_LOG_INFO("module.playerbot.bg",
+        "BGBotManager::OnBattlegroundStart - Registered BG {} for population retries (up to {}s)",
+        bgInstanceGuid, POPULATION_RETRY_MAX_DURATION / IN_MILLISECONDS);
+
+    // =========================================================================
+    // 3. NOW create the BattlegroundCoordinator (all bots are in the BG)
     // =========================================================================
     // This MUST be called after all bots have been teleported/added above,
     // otherwise the coordinator would be created with 0 bots and all bots
@@ -586,8 +606,9 @@ void BGBotManager::OnBattlegroundEnd(Battleground* bg, Team winnerTeam)
         sInstanceBotOrchestrator->OnInstanceEnded(bgInstanceGuid);
     }
 
-    // Cleanup human entry time tracking
+    // Cleanup tracking maps
     _bgHumanEntryTime.erase(bgInstanceGuid);
+    _pendingPopulations.erase(bgInstanceGuid);
 }
 
 // ============================================================================
@@ -1554,6 +1575,78 @@ bool BGBotManager::AddBotDirectlyToBG(Player* bot, Battleground* bg, Team team)
         team == ALLIANCE ? "Alliance" : "Horde");
 
     return true;
+}
+
+// ============================================================================
+// POPULATION RETRY SYSTEM
+// ============================================================================
+
+void BGBotManager::ProcessPendingPopulations()
+{
+    std::lock_guard lock(_mutex);
+
+    if (_pendingPopulations.empty())
+        return;
+
+    uint32 now = GameTime::GetGameTimeMS();
+    std::vector<uint32> completed;
+
+    for (auto const& [instanceId, popInfo] : _pendingPopulations)
+    {
+        // Stop retrying after max duration
+        if (now - popInfo.startTime > POPULATION_RETRY_MAX_DURATION)
+        {
+            TC_LOG_INFO("module.playerbot.bg",
+                "BGBotManager::ProcessPendingPopulations - BG {} retry timeout ({}s), stopping",
+                instanceId, POPULATION_RETRY_MAX_DURATION / IN_MILLISECONDS);
+            completed.push_back(instanceId);
+            continue;
+        }
+
+        // Find the BG instance
+        Battleground* bg = sBattlegroundMgr->GetBattleground(instanceId, popInfo.bgTypeId);
+        if (!bg || bg->GetStatus() == STATUS_WAIT_LEAVE)
+        {
+            completed.push_back(instanceId);
+            continue;
+        }
+
+        // Check current population
+        uint32 targetSize = GetBGTeamSize(bg->GetTypeID());
+        uint32 allianceCount = 0;
+        uint32 hordeCount = 0;
+
+        for (auto const& [guid, bgPlayer] : bg->GetPlayers())
+        {
+            Player* player = ObjectAccessor::FindPlayer(guid);
+            if (!player)
+                continue;
+            if (player->GetBGTeam() == ALLIANCE)
+                ++allianceCount;
+            else
+                ++hordeCount;
+        }
+
+        // Teams full - no more retries needed
+        if (allianceCount >= targetSize && hordeCount >= targetSize)
+        {
+            TC_LOG_INFO("module.playerbot.bg",
+                "BGBotManager::ProcessPendingPopulations - BG {} teams full (A:{}/{} H:{}/{}), done",
+                instanceId, allianceCount, targetSize, hordeCount, targetSize);
+            completed.push_back(instanceId);
+            continue;
+        }
+
+        // Teams not full - retry population
+        TC_LOG_INFO("module.playerbot.bg",
+            "BGBotManager::ProcessPendingPopulations - BG {} needs more bots (A:{}/{} H:{}/{}), retrying...",
+            instanceId, allianceCount, targetSize, hordeCount, targetSize);
+
+        PopulateBattlegroundLocked(bg);
+    }
+
+    for (uint32 id : completed)
+        _pendingPopulations.erase(id);
 }
 
 } // namespace Playerbot
