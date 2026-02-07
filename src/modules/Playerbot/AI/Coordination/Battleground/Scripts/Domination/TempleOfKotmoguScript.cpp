@@ -1346,6 +1346,8 @@ bool TempleOfKotmoguScript::DefendOrbCarrier(::Player* player)
             if (closestThreat)
             {
                 player->SetSelection(closestThreat->GetGUID());
+                if (!player->IsInCombat() || player->GetVictim() != closestThreat)
+                    player->Attack(closestThreat, true);
                 if (closestThreatDist > 5.0f)
                     BotMovementUtil::ChaseTarget(player, closestThreat, 5.0f);
 
@@ -1378,6 +1380,8 @@ bool TempleOfKotmoguScript::DefendOrbCarrier(::Player* player)
             if (closestThreat)
             {
                 player->SetSelection(closestThreat->GetGUID());
+                if (!player->IsInCombat() || player->GetVictim() != closestThreat)
+                    player->Attack(closestThreat, true);
                 if (closestThreatDist > 5.0f)
                     BotMovementUtil::ChaseTarget(player, closestThreat, 5.0f);
 
@@ -1404,11 +1408,37 @@ bool TempleOfKotmoguScript::DefendOrbCarrier(::Player* player)
     }
 
     // =========================================================================
-    // PHASE 3: No friendly carrier — patrol center area
+    // PHASE 3: No friendly carrier — patrol center and fight enemies
     // =========================================================================
     TC_LOG_DEBUG("playerbots.bg", "[TOK] {} no friendly carrier found, patrolling center",
         player->GetName());
 
+    // Look for enemies to fight while patrolling
+    if (coordinator)
+    {
+        float enemyDist = 0.0f;
+        auto const* nearestEnemy = coordinator->GetNearestEnemy(
+            player->GetPosition(), 30.0f, &enemyDist);
+
+        if (nearestEnemy && nearestEnemy->isAlive)
+        {
+            ::Player* enemy = ObjectAccessor::FindPlayer(nearestEnemy->guid);
+            if (enemy && enemy->IsAlive())
+            {
+                player->SetSelection(enemy->GetGUID());
+                if (!player->IsInCombat() || player->GetVictim() != enemy)
+                    player->Attack(enemy, true);
+                if (enemyDist > 5.0f)
+                    BotMovementUtil::ChaseTarget(player, enemy, 5.0f);
+
+                TC_LOG_DEBUG("playerbots.bg", "[TOK] {} engaging enemy {} while patrolling center (dist: {:.1f})",
+                    player->GetName(), enemy->GetName(), enemyDist);
+                return true;
+            }
+        }
+    }
+
+    // No enemies - move toward center
     if (!BotMovementUtil::IsMoving(player))
     {
         Position patrolPos;
@@ -1476,13 +1506,18 @@ bool TempleOfKotmoguScript::HuntEnemyOrbCarrier(::Player* player)
         TC_LOG_DEBUG("playerbots.bg", "[TOK] {} hunting enemy orb carrier {} (dist: {:.1f})",
             player->GetName(), bestTarget->GetName(), actualDist);
 
+        player->SetSelection(bestTarget->GetGUID());
+
         if (actualDist > 30.0f)
         {
             BotMovementUtil::MoveToPosition(player, bestTarget->GetPosition());
         }
         else
         {
-            player->SetSelection(bestTarget->GetGUID());
+            // Initiate auto-attack so ClassAI combat rotation kicks in
+            if (!player->IsInCombat() || player->GetVictim() != bestTarget)
+                player->Attack(bestTarget, true);
+
             if (actualDist > 5.0f)
                 BotMovementUtil::ChaseTarget(player, bestTarget, 5.0f);
         }
@@ -1504,6 +1539,8 @@ bool TempleOfKotmoguScript::HuntEnemyOrbCarrier(::Player* player)
             if (enemy && enemy->IsAlive())
             {
                 player->SetSelection(enemy->GetGUID());
+                if (!player->IsInCombat() || player->GetVictim() != enemy)
+                    player->Attack(enemy, true);
                 if (enemyDist > 5.0f)
                     BotMovementUtil::ChaseTarget(player, enemy, 5.0f);
 
@@ -1536,6 +1573,8 @@ bool TempleOfKotmoguScript::HuntEnemyOrbCarrier(::Player* player)
         if (closestEnemy)
         {
             player->SetSelection(closestEnemy->GetGUID());
+            if (!player->IsInCombat() || player->GetVictim() != closestEnemy)
+                player->Attack(closestEnemy, true);
             if (closestDist > 5.0f)
                 BotMovementUtil::ChaseTarget(player, closestEnemy, 5.0f);
 
@@ -1655,6 +1694,8 @@ bool TempleOfKotmoguScript::EscortOrbCarrier(::Player* player)
                     if (enemy && enemy->IsAlive())
                     {
                         player->SetSelection(enemy->GetGUID());
+                        if (!player->IsInCombat() || player->GetVictim() != enemy)
+                            player->Attack(enemy, true);
                         if (player->GetExactDist(enemy) > 5.0f)
                             BotMovementUtil::ChaseTarget(player, enemy, 5.0f);
 
@@ -1675,6 +1716,8 @@ bool TempleOfKotmoguScript::EscortOrbCarrier(::Player* player)
                     if (nearby && nearby->IsAlive() && nearby->IsHostileTo(player))
                     {
                         player->SetSelection(nearby->GetGUID());
+                        if (!player->IsInCombat() || player->GetVictim() != nearby)
+                            player->Attack(nearby, true);
                         if (player->GetExactDist(nearby) > 5.0f)
                             BotMovementUtil::ChaseTarget(player, nearby, 5.0f);
 
@@ -1758,15 +1801,57 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
     }
 
     // =========================================================================
-    // DECISION: Should we push to center?
+    // ALWAYS PUSH TO CENTER - center gives 3-6x more points per tick
+    // This is THE core strategy of Temple of Kotmogu
     // =========================================================================
-    bool shouldPushCenter = ShouldPushToCenter(player->GetBGTeam());
-
-    if (shouldPushCenter)
+    if (inCenter)
     {
-        // =====================================================================
-        // CENTER PUSH: Navigate along pre-calculated route to center
-        // =====================================================================
+        // Already in center — hold position and fight nearby enemies
+        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier holding center with {}",
+            player->GetName(), TempleOfKotmogu::GetOrbName(static_cast<uint32>(orbId)));
+
+        // Attack nearby enemies while holding center
+        if (coordinator)
+        {
+            float enemyDist = 0.0f;
+            auto const* nearestEnemy = coordinator->GetNearestEnemy(
+                player->GetPosition(), 20.0f, &enemyDist);
+
+            if (nearestEnemy && nearestEnemy->isAlive)
+            {
+                ::Player* enemy = ObjectAccessor::FindPlayer(nearestEnemy->guid);
+                if (enemy && enemy->IsAlive())
+                {
+                    player->SetSelection(enemy->GetGUID());
+                    if (!player->IsInCombat() || player->GetVictim() != enemy)
+                        player->Attack(enemy, true);
+                    // Don't chase far from center - stay within the zone
+                    if (enemyDist > 5.0f && enemyDist < TempleOfKotmogu::CENTER_RADIUS)
+                        BotMovementUtil::ChaseTarget(player, enemy, 5.0f);
+                    return true;
+                }
+            }
+        }
+
+        // No enemies - small random movement to avoid being static
+        if (!BotMovementUtil::IsMoving(player))
+        {
+            float angle = frand(0.0f, 2.0f * static_cast<float>(M_PI));
+            float dist = frand(2.0f, 8.0f);
+            Position holdPos;
+            holdPos.Relocate(
+                TempleOfKotmogu::CENTER_X + dist * std::cos(angle),
+                TempleOfKotmogu::CENTER_Y + dist * std::sin(angle),
+                TempleOfKotmogu::CENTER_Z
+            );
+            BotMovementUtil::CorrectPositionToGround(player, holdPos);
+            BotMovementUtil::MoveToPosition(player, holdPos);
+        }
+        return true;
+    }
+
+    // Not in center yet — navigate along route to center
+    {
         std::vector<Position> route = GetOrbCarrierRoute(static_cast<uint32>(orbId));
 
         if (!route.empty())
@@ -1793,88 +1878,11 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
 
         // Fallback: move directly to center
         Position centerPos(TempleOfKotmogu::CENTER_X, TempleOfKotmogu::CENTER_Y, TempleOfKotmogu::CENTER_Z, 0.0f);
+        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier moving directly to center with {}",
+            player->GetName(), TempleOfKotmogu::GetOrbName(static_cast<uint32>(orbId)));
         BotMovementUtil::MoveToPosition(player, centerPos);
         return true;
     }
-
-    // =========================================================================
-    // HOLD: Already in center — hold position
-    // =========================================================================
-    if (inCenter)
-    {
-        // Check if we're outnumbered in center
-        if (coordinator)
-        {
-            Position centerPos(TempleOfKotmogu::CENTER_X, TempleOfKotmogu::CENTER_Y, TempleOfKotmogu::CENTER_Z, 0.0f);
-            uint32 enemiesInCenter = coordinator->CountEnemiesInRadius(centerPos, TempleOfKotmogu::CENTER_RADIUS);
-            uint32 alliesInCenter = coordinator->CountAlliesInRadius(centerPos, TempleOfKotmogu::CENTER_RADIUS);
-
-            if (enemiesInCenter > alliesInCenter + 1)
-            {
-                // Outnumbered — retreat to a safe orb defense position
-                auto defensePositions = GetOrbDefensePositions(static_cast<uint32>(orbId));
-
-                if (!defensePositions.empty())
-                {
-                    uint32 idx = player->GetGUID().GetCounter() % defensePositions.size();
-                    Position defPos = defensePositions[idx];
-                    BotMovementUtil::CorrectPositionToGround(player, defPos);
-
-                    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier outnumbered in center (enemies={} allies={}), retreating to defense pos",
-                        player->GetName(), enemiesInCenter, alliesInCenter);
-                    BotMovementUtil::MoveToPosition(player, defPos);
-                    return true;
-                }
-            }
-        }
-
-        // Safe in center — hold position (small random movement to avoid being static)
-        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier holding center with {}",
-            player->GetName(), TempleOfKotmogu::GetOrbName(static_cast<uint32>(orbId)));
-
-        if (!BotMovementUtil::IsMoving(player))
-        {
-            float angle = frand(0.0f, 2.0f * static_cast<float>(M_PI));
-            float dist = frand(2.0f, 8.0f);
-            Position holdPos;
-            holdPos.Relocate(
-                TempleOfKotmogu::CENTER_X + dist * std::cos(angle),
-                TempleOfKotmogu::CENTER_Y + dist * std::sin(angle),
-                TempleOfKotmogu::CENTER_Z
-            );
-            BotMovementUtil::CorrectPositionToGround(player, holdPos);
-            BotMovementUtil::MoveToPosition(player, holdPos);
-        }
-        return true;
-    }
-
-    // =========================================================================
-    // DEFENSIVE: Not pushing center — hold near orb defense position
-    // =========================================================================
-    auto defensePositions = GetOrbDefensePositions(static_cast<uint32>(orbId));
-
-    if (!defensePositions.empty())
-    {
-        // Pick a position near our orb's defense zone
-        uint32 idx = player->GetGUID().GetCounter() % defensePositions.size();
-        Position defPos = defensePositions[idx];
-        float defDist = player->GetExactDist(&defPos);
-
-        if (defDist > TOK_OBJECTIVE_RANGE || !BotMovementUtil::IsMoving(player))
-        {
-            BotMovementUtil::CorrectPositionToGround(player, defPos);
-            BotMovementUtil::MoveToPosition(player, defPos);
-        }
-
-        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier holding defensively with {} (dist to def: {:.1f})",
-            player->GetName(), TempleOfKotmogu::GetOrbName(static_cast<uint32>(orbId)), defDist);
-        return true;
-    }
-
-    // Final fallback: hold at current position
-    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier holding position with {} (no route/defense data)",
-        player->GetName(), TempleOfKotmogu::GetOrbName(static_cast<uint32>(orbId)));
-    return true;
 }
 
 } // namespace Playerbot::Coordination::Battleground

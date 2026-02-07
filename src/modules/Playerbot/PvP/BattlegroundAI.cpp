@@ -1028,6 +1028,8 @@ bool BattlegroundAI::EscortFlagCarrier(::Player* player, ::Player* fc)
         {
             // Set target to attack the FC's attacker
             player->SetSelection(attacker->GetGUID());
+            if (!player->IsInCombat() || player->GetVictim() != attacker)
+                player->Attack(attacker, true);
             TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} targeting {} who is attacking FC",
                 player->GetName(), attacker->GetName());
         }
@@ -1109,6 +1111,8 @@ bool BattlegroundAI::DefendFlagRoom(::Player* player)
     {
         // Target the closest enemy in our flag room
         player->SetSelection(closestEnemy->GetGUID());
+        if (!player->IsInCombat() || player->GetVictim() != closestEnemy)
+            player->Attack(closestEnemy, true);
         TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} targeting enemy {} in flag room (cache)",
             player->GetName(), closestEnemy->GetName());
         return true;
@@ -1290,6 +1294,8 @@ bool BattlegroundAI::DefendBase(::Player* player, Position const& baseLocation)
     {
         // Target the closest enemy near base
         player->SetSelection(closestEnemy->GetGUID());
+        if (!player->IsInCombat() || player->GetVictim() != closestEnemy)
+            player->Attack(closestEnemy, true);
         TC_LOG_DEBUG("playerbots.bg", "BattlegroundAI: {} targeting enemy {} near base (cache)",
             player->GetName(), closestEnemy->GetName());
         return true;
@@ -2336,8 +2342,10 @@ void BattlegroundAI::ExecuteFlagHunterBehavior(::Player* player, ::Player* enemy
     }
     else
     {
-        // In range - target them for combat
+        // In range - target and attack
         player->SetSelection(enemyFC->GetGUID());
+        if (!player->IsInCombat() || player->GetVictim() != enemyFC)
+            player->Attack(enemyFC, true);
 
         // If close enough, start chase
         if (distance > 5.0f)
@@ -2415,6 +2423,8 @@ void BattlegroundAI::ExecuteEscortBehavior(::Player* player, ::Player* friendlyF
                     if (enemy && enemy->IsAlive())
                     {
                         player->SetSelection(enemy->GetGUID());
+                        if (!player->IsInCombat() || player->GetVictim() != enemy)
+                            player->Attack(enemy, true);
                         TC_LOG_DEBUG("playerbots.bg", "WSG: {} targeting {} attacking FC (cache)",
                             player->GetName(), enemy->GetName());
                         break;
@@ -2432,6 +2442,8 @@ void BattlegroundAI::ExecuteEscortBehavior(::Player* player, ::Player* friendlyF
                 if (nearby && nearby->IsAlive() && nearby->IsHostileTo(player))
                 {
                     player->SetSelection(nearby->GetGUID());
+                    if (!player->IsInCombat() || player->GetVictim() != nearby)
+                        player->Attack(nearby, true);
                     TC_LOG_DEBUG("playerbots.bg", "WSG: {} targeting {} attacking FC",
                         player->GetName(), nearby->GetName());
                     break;
@@ -2532,6 +2544,8 @@ void BattlegroundAI::ExecuteDefenderBehavior(::Player* player,
     if (closestEnemy && closestEnemy->IsAlive())
     {
         player->SetSelection(closestEnemy->GetGUID());
+        if (!player->IsInCombat() || player->GetVictim() != closestEnemy)
+            player->Attack(closestEnemy, true);
         TC_LOG_DEBUG("playerbots.bg", "WSG: {} targeting enemy {} in flag room (cache)",
             player->GetName(), closestEnemy->GetName());
 

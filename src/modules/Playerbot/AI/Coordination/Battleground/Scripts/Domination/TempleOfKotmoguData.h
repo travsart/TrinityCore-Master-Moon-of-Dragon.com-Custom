@@ -108,8 +108,12 @@ inline uint8 GetOrbStrategicValue(uint32 orbId)
 // CENTER ZONE (Bonus points area)
 // ============================================================================
 
-constexpr float CENTER_X = 1732.0f;
-constexpr float CENTER_Y = 1287.0f;
+// Geometric center of the arena computed from the 4 orb positions:
+//   X = (1850.17+1716.95+1716.89+1850.22)/4 = 1783.56
+//   Y = (1250.12+1250.02+1416.62+1416.82)/4 = 1333.40
+// Confirmed by healing buff midpoint: (1783.0, 1333.5)
+constexpr float CENTER_X = 1783.5f;
+constexpr float CENTER_Y = 1333.4f;
 constexpr float CENTER_Z = 13.0f;
 constexpr float CENTER_O = 0.0f;
 constexpr float CENTER_RADIUS = 25.0f;  // Distance for "center" bonus
@@ -271,38 +275,32 @@ inline std::vector<Position> GetOrbCarrierRoute(uint32 orbId)
     Position orbPos = GetOrbPosition(orbId);
     Position center = GetCenterPosition();
 
+    // Routes go from orb corner positions across the arena floor to center.
+    // All waypoints at Z≈13 (arena floor). Pathfinding handles terrain details.
     switch (orbId)
     {
-        case Orbs::ORANGE:  // NE to Center
+        case Orbs::ORANGE:  // NE corner (1850, 1250) → Center (1784, 1333)
             return {
                 orbPos,
-                { 1770.0f, 1220.0f, 25.0f, 3.93f },
-                { 1755.0f, 1250.0f, 18.0f, 3.93f },
-                { 1740.0f, 1275.0f, 15.0f, 3.93f },
+                { 1820.0f, 1290.0f, 13.0f, 3.93f },  // Midway toward center
                 center
             };
-        case Orbs::BLUE:  // NW to Center
+        case Orbs::BLUE:  // NW corner (1717, 1250) → Center (1784, 1333)
             return {
                 orbPos,
-                { 1770.0f, 1355.0f, 25.0f, 5.50f },
-                { 1755.0f, 1325.0f, 18.0f, 5.50f },
-                { 1740.0f, 1300.0f, 15.0f, 5.50f },
+                { 1750.0f, 1290.0f, 13.0f, 0.79f },  // Midway toward center
                 center
             };
-        case Orbs::GREEN:  // SE to Center
+        case Orbs::GREEN:  // SE corner (1717, 1417) → Center (1784, 1333)
             return {
                 orbPos,
-                { 1695.0f, 1220.0f, 25.0f, 0.79f },
-                { 1710.0f, 1250.0f, 18.0f, 0.79f },
-                { 1720.0f, 1275.0f, 15.0f, 0.79f },
+                { 1750.0f, 1375.0f, 13.0f, 5.50f },  // Midway toward center
                 center
             };
-        case Orbs::PURPLE:  // SW to Center
+        case Orbs::PURPLE:  // SW corner (1850, 1417) → Center (1784, 1333)
             return {
                 orbPos,
-                { 1695.0f, 1355.0f, 25.0f, 2.36f },
-                { 1710.0f, 1325.0f, 18.0f, 2.36f },
-                { 1720.0f, 1300.0f, 15.0f, 2.36f },
+                { 1820.0f, 1375.0f, 13.0f, 2.36f },  // Midway toward center
                 center
             };
         default:
