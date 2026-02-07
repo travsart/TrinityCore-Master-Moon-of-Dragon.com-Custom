@@ -1021,6 +1021,42 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
+    // PRIORITY 1.5: Rush to nearby free orb (react to dropped orbs)
+    // Any non-carrier within 40 yards of a free orb should grab it, regardless
+    // of assigned role. This prevents orbs sitting on the ground while bots
+    // escort/hunt/defend elsewhere.
+    // =========================================================================
+    {
+        float closestFreeOrbDist = std::numeric_limits<float>::max();
+        uint32 closestFreeOrbId = TempleOfKotmogu::ORB_COUNT;
+
+        for (uint32 orbId = 0; orbId < TempleOfKotmogu::ORB_COUNT; ++orbId)
+        {
+            if (IsOrbHeld(orbId))
+                continue;
+
+            Position orbPos = GetDynamicOrbPosition(orbId);
+            float dist = player->GetExactDist(&orbPos);
+            if (dist < closestFreeOrbDist)
+            {
+                closestFreeOrbDist = dist;
+                closestFreeOrbId = orbId;
+            }
+        }
+
+        if (closestFreeOrbId < TempleOfKotmogu::ORB_COUNT && closestFreeOrbDist < 40.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg", "[TOK] {} rushing to nearby free {} (dist: {:.1f}), overriding role {}",
+                player->GetName(), TempleOfKotmogu::GetOrbName(closestFreeOrbId),
+                closestFreeOrbDist, static_cast<uint32>(role));
+
+            if (PickupOrb(player))
+                return true;
+            // If PickupOrb fails (orb just got taken), fall through to role behavior
+        }
+    }
+
+    // =========================================================================
     // PRIORITY 2: Execute role-based behavior
     // =========================================================================
     switch (role)
@@ -1264,6 +1300,36 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
     m_orbTargeters.erase(bestOrbId);
     TC_LOG_DEBUG("playerbots.bg", "[TOK] {} at orb location but no GO found for {} - orb was taken, clearing target",
         player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId));
+
+    // Engage any nearby enemies at the contested orb location instead of standing idle
+    {
+        ::Playerbot::BattlegroundCoordinator* coord =
+            sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
+        if (coord)
+        {
+            float enemyDist = 0.0f;
+            auto const* nearestEnemy = coord->GetNearestEnemy(
+                player->GetPosition(), 20.0f, &enemyDist);
+
+            if (nearestEnemy && nearestEnemy->isAlive)
+            {
+                ::Player* enemy = ObjectAccessor::FindPlayer(nearestEnemy->guid);
+                if (enemy && enemy->IsAlive())
+                {
+                    player->SetSelection(enemy->GetGUID());
+                    if (!player->IsInCombat() || player->GetVictim() != enemy)
+                        player->Attack(enemy, true);
+                    if (enemyDist > 5.0f)
+                        BotMovementUtil::ChaseTarget(player, enemy, 5.0f);
+
+                    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} fighting enemy {} at contested orb location (dist: {:.1f})",
+                        player->GetName(), enemy->GetName(), enemyDist);
+                    return true;
+                }
+            }
+        }
+    }
+
     return false;
 }
 
@@ -1673,61 +1739,72 @@ bool TempleOfKotmoguScript::EscortOrbCarrier(::Player* player)
             BotMovementUtil::CorrectPositionToGround(player, escortPos);
         }
 
-        // Move to escort position if needed
-        if (carrierDist > TOK_ESCORT_DISTANCE * 1.5f || !BotMovementUtil::IsMoving(player))
-            BotMovementUtil::MoveToPosition(player, escortPos);
-
-        // If carrier is in combat, help kill attackers
-        if (friendlyCarrier->IsInCombat())
+        // Proactively engage nearby enemies near the carrier
+        // Don't wait until carrier is already being attacked — intercept threats early
+        if (coordinator)
         {
-            if (coordinator)
+            auto nearbyEnemies = coordinator->QueryNearbyEnemies(
+                friendlyCarrier->GetPosition(), 20.0f);
+
+            ::Player* closestEnemy = nullptr;
+            float closestEnemyDist = 21.0f;
+
+            for (auto const* snapshot : nearbyEnemies)
             {
-                auto nearbyEnemies = coordinator->QueryNearbyEnemies(
-                    friendlyCarrier->GetPosition(), 20.0f);
+                if (!snapshot || !snapshot->isAlive)
+                    continue;
 
-                for (auto const* snapshot : nearbyEnemies)
+                ::Player* enemy = ObjectAccessor::FindPlayer(snapshot->guid);
+                if (!enemy || !enemy->IsAlive())
+                    continue;
+
+                float dist = player->GetExactDist(enemy);
+                if (dist < closestEnemyDist)
                 {
-                    if (!snapshot || !snapshot->isAlive)
-                        continue;
-
-                    ::Player* enemy = ObjectAccessor::FindPlayer(snapshot->guid);
-                    if (enemy && enemy->IsAlive())
-                    {
-                        player->SetSelection(enemy->GetGUID());
-                        if (!player->IsInCombat() || player->GetVictim() != enemy)
-                            player->Attack(enemy, true);
-                        if (player->GetExactDist(enemy) > 5.0f)
-                            BotMovementUtil::ChaseTarget(player, enemy, 5.0f);
-
-                        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} engaging {} threatening carrier (dist: {:.1f})",
-                            player->GetName(), enemy->GetName(), player->GetExactDist(enemy));
-                        break;
-                    }
+                    closestEnemyDist = dist;
+                    closestEnemy = enemy;
                 }
             }
-            else
+
+            if (closestEnemy)
             {
-                // Fallback: legacy O(n) search near carrier
-                std::list<Player*> nearbyPlayers;
-                friendlyCarrier->GetPlayerListInGrid(nearbyPlayers, 20.0f);
+                player->SetSelection(closestEnemy->GetGUID());
+                if (!player->IsInCombat() || player->GetVictim() != closestEnemy)
+                    player->Attack(closestEnemy, true);
+                if (closestEnemyDist > 5.0f)
+                    BotMovementUtil::ChaseTarget(player, closestEnemy, 5.0f);
 
-                for (::Player* nearby : nearbyPlayers)
+                TC_LOG_DEBUG("playerbots.bg", "[TOK] {} proactively engaging {} near carrier (dist: {:.1f})",
+                    player->GetName(), closestEnemy->GetName(), closestEnemyDist);
+                return true;
+            }
+        }
+        else
+        {
+            // Fallback: legacy O(n) search near carrier
+            std::list<Player*> nearbyPlayers;
+            friendlyCarrier->GetPlayerListInGrid(nearbyPlayers, 20.0f);
+
+            for (::Player* nearby : nearbyPlayers)
+            {
+                if (nearby && nearby->IsAlive() && nearby->IsHostileTo(player))
                 {
-                    if (nearby && nearby->IsAlive() && nearby->IsHostileTo(player))
-                    {
-                        player->SetSelection(nearby->GetGUID());
-                        if (!player->IsInCombat() || player->GetVictim() != nearby)
-                            player->Attack(nearby, true);
-                        if (player->GetExactDist(nearby) > 5.0f)
-                            BotMovementUtil::ChaseTarget(player, nearby, 5.0f);
+                    player->SetSelection(nearby->GetGUID());
+                    if (!player->IsInCombat() || player->GetVictim() != nearby)
+                        player->Attack(nearby, true);
+                    if (player->GetExactDist(nearby) > 5.0f)
+                        BotMovementUtil::ChaseTarget(player, nearby, 5.0f);
 
-                        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} engaging {} threatening carrier (legacy)",
-                            player->GetName(), nearby->GetName());
-                        break;
-                    }
+                    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} proactively engaging {} near carrier (legacy)",
+                        player->GetName(), nearby->GetName());
+                    return true;
                 }
             }
         }
+
+        // No enemies near carrier — maintain escort formation
+        if (carrierDist > TOK_ESCORT_DISTANCE * 1.5f || !BotMovementUtil::IsMoving(player))
+            BotMovementUtil::MoveToPosition(player, escortPos);
 
         return true;
     }
@@ -1810,6 +1887,82 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
         TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier holding center with {}",
             player->GetName(), TempleOfKotmogu::GetOrbName(static_cast<uint32>(orbId)));
 
+        // KITING: When focused by multiple enemies and HP getting low, kite within center
+        // This keeps the carrier alive longer while still scoring center-zone points
+        if (healthPct < 60.0f && healthPct >= TOK_LOW_HEALTH_PCT && coordinator)
+        {
+            Position playerPos = player->GetPosition();
+            uint32 nearbyEnemyCount = coordinator->CountEnemiesInRadius(playerPos, 10.0f);
+
+            if (nearbyEnemyCount >= 2)
+            {
+                // Calculate average enemy position and move opposite direction
+                auto enemies = coordinator->QueryNearbyEnemies(playerPos, 10.0f);
+                float avgEX = 0.0f, avgEY = 0.0f;
+                uint32 eCount = 0;
+
+                for (auto const* snap : enemies)
+                {
+                    if (snap && snap->isAlive)
+                    {
+                        avgEX += snap->position.GetPositionX();
+                        avgEY += snap->position.GetPositionY();
+                        eCount++;
+                    }
+                }
+
+                if (eCount > 0)
+                {
+                    avgEX /= eCount;
+                    avgEY /= eCount;
+
+                    float dx = player->GetPositionX() - avgEX;
+                    float dy = player->GetPositionY() - avgEY;
+                    float len = std::sqrt(dx * dx + dy * dy);
+
+                    if (len > 0.1f)
+                    {
+                        dx /= len;
+                        dy /= len;
+
+                        // Move 12 yards away from enemy cluster, anchored to center
+                        Position kitePos;
+                        kitePos.Relocate(
+                            TempleOfKotmogu::CENTER_X + dx * 12.0f,
+                            TempleOfKotmogu::CENTER_Y + dy * 12.0f,
+                            TempleOfKotmogu::CENTER_Z
+                        );
+                        BotMovementUtil::CorrectPositionToGround(player, kitePos);
+
+                        // Only kite if we stay within center zone (don't lose points)
+                        if (IsInCenter(kitePos.GetPositionX(), kitePos.GetPositionY()))
+                        {
+                            // Still fight the closest enemy while kiting
+                            float enemyDist = 0.0f;
+                            auto const* nearestEnemy = coordinator->GetNearestEnemy(
+                                playerPos, 20.0f, &enemyDist);
+
+                            if (nearestEnemy && nearestEnemy->isAlive)
+                            {
+                                ::Player* enemy = ObjectAccessor::FindPlayer(nearestEnemy->guid);
+                                if (enemy && enemy->IsAlive())
+                                {
+                                    player->SetSelection(enemy->GetGUID());
+                                    if (!player->IsInCombat() || player->GetVictim() != enemy)
+                                        player->Attack(enemy, true);
+                                }
+                            }
+
+                            BotMovementUtil::MoveToPosition(player, kitePos);
+                            TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier kiting within center (HP: {:.0f}%, enemies: {})",
+                                player->GetName(), healthPct, nearbyEnemyCount);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
         // Attack nearby enemies while holding center
         if (coordinator)
         {
@@ -1850,8 +2003,39 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
         return true;
     }
 
-    // Not in center yet — navigate along route to center
+    // Not in center yet — navigate along route to center, fighting enemies en route
     {
+        // Engage nearby enemies while traveling — carrier should not be a passive target
+        if (coordinator)
+        {
+            float enemyDist = 0.0f;
+            auto const* nearestEnemy = coordinator->GetNearestEnemy(
+                player->GetPosition(), 15.0f, &enemyDist);
+
+            if (nearestEnemy && nearestEnemy->isAlive)
+            {
+                ::Player* enemy = ObjectAccessor::FindPlayer(nearestEnemy->guid);
+                if (enemy && enemy->IsAlive())
+                {
+                    player->SetSelection(enemy->GetGUID());
+                    if (!player->IsInCombat() || player->GetVictim() != enemy)
+                        player->Attack(enemy, true);
+
+                    // Only chase enemies within melee range — don't deviate from path
+                    if (enemyDist <= 10.0f)
+                    {
+                        if (enemyDist > 5.0f)
+                            BotMovementUtil::ChaseTarget(player, enemy, 5.0f);
+
+                        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier fighting {} en route to center (dist: {:.1f})",
+                            player->GetName(), enemy->GetName(), enemyDist);
+                        return true;
+                    }
+                    // Enemy 10-15yd: attack initiated but keep moving to center (fall through)
+                }
+            }
+        }
+
         std::vector<Position> route = GetOrbCarrierRoute(static_cast<uint32>(orbId));
 
         if (!route.empty())
