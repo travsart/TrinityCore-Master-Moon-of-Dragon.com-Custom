@@ -471,22 +471,38 @@ void QueueStatePoller::DoPollBGQueue(BattlegroundTypeId bgTypeId, BattlegroundBr
     // ========================================================================
     if (maxPlayers == 0)
     {
-        // Look up from BattlemasterList DBC - this is the authoritative source
-        BattlemasterListEntry const* bgEntry = sBattlemasterListStore.LookupEntry(static_cast<uint32>(bgTypeId));
-        if (bgEntry && bgEntry->MaxPlayers > 0)
+        // Primary fallback: BGBotManager has explicit team sizes for all supported BGs
+        maxPlayers = sBGBotManager->GetBGTeamSize(bgTypeId);
+        if (maxPlayers > 0)
         {
-            // DBC stores total players, we need per-team (divide by 2)
-            maxPlayers = static_cast<uint32>(bgEntry->MaxPlayers) / 2;
-            minPlayers = maxPlayers;  // Use same value - BG won't start until full
-
-            TC_LOG_INFO("playerbot.jit", "QueueStatePoller: BG {} using DBC size {}v{} (total {})",
-                static_cast<uint32>(bgTypeId), maxPlayers, maxPlayers, bgEntry->MaxPlayers);
+            minPlayers = maxPlayers;
+            TC_LOG_INFO("playerbot.jit",
+                "QueueStatePoller: BG {} using BGBotManager team size {}v{}",
+                static_cast<uint32>(bgTypeId), maxPlayers, maxPlayers);
         }
         else
         {
-            TC_LOG_WARN("playerbot.jit", "QueueStatePoller: BG {} has no player count in template or DBC, skipping",
+            // Secondary fallback: BattlemasterList DBC
+            // NOTE: BattlemasterListEntry::MaxPlayers is ALREADY per-team
+            // (GetMaxPlayersPerTeam() returns it directly without division)
+            BattlemasterListEntry const* bgEntry = sBattlemasterListStore.LookupEntry(
                 static_cast<uint32>(bgTypeId));
-            return;
+            if (bgEntry && bgEntry->MaxPlayers > 0)
+            {
+                maxPlayers = static_cast<uint32>(bgEntry->MaxPlayers);
+                minPlayers = maxPlayers;
+
+                TC_LOG_INFO("playerbot.jit",
+                    "QueueStatePoller: BG {} using DBC MaxPlayers={} (per-team)",
+                    static_cast<uint32>(bgTypeId), maxPlayers);
+            }
+            else
+            {
+                TC_LOG_WARN("playerbot.jit",
+                    "QueueStatePoller: BG {} has no player count in template, BGBotManager, or DBC, skipping",
+                    static_cast<uint32>(bgTypeId));
+                return;
+            }
         }
     }
 

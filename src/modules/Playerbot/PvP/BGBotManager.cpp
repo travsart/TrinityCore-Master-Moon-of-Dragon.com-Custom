@@ -786,6 +786,8 @@ uint32 BGBotManager::GetBGTeamSize(BattlegroundTypeId bgTypeId) const
     {
         case BATTLEGROUND_WS:  // Warsong Gulch
         case BATTLEGROUND_TP:  // Twin Peaks
+        case BATTLEGROUND_TK:  // Temple of Kotmogu (10v10)
+        case BATTLEGROUND_SM:  // Silvershard Mines (10v10)
             return 10;
         case BATTLEGROUND_AB:  // Arathi Basin
         case BATTLEGROUND_BFG: // Battle for Gilneas
@@ -793,6 +795,7 @@ uint32 BGBotManager::GetBGTeamSize(BattlegroundTypeId bgTypeId) const
         case BATTLEGROUND_AV:  // Alterac Valley
             return 40;
         case BATTLEGROUND_EY:  // Eye of the Storm
+        case BATTLEGROUND_DG:  // Deepwind Gorge
             return 15;
         case BATTLEGROUND_SA:  // Strand of the Ancients
             return 15;
@@ -813,10 +816,13 @@ uint32 BGBotManager::GetBGMinPlayers(BattlegroundTypeId bgTypeId) const
     {
         case BATTLEGROUND_WS:
         case BATTLEGROUND_TP:
+        case BATTLEGROUND_TK:  // Temple of Kotmogu
+        case BATTLEGROUND_SM:  // Silvershard Mines
             return 5; // 5v5 minimum
         case BATTLEGROUND_AB:
         case BATTLEGROUND_BFG:
         case BATTLEGROUND_EY:
+        case BATTLEGROUND_DG:  // Deepwind Gorge
             return 8;
         case BATTLEGROUND_AV:
         case BATTLEGROUND_IC:
