@@ -1657,9 +1657,11 @@ uint32 BotSpawner::CalculateTargetBotCount(ZonePopulation const& zone) const
     // This ensures bots spawn even with ratio = 0 or no players
     uint32 minimumBots = sPlayerbotConfig->GetUInt("Playerbot.MinimumBotsPerZone", 10);
 
-    // STATIC SPAWNING: If dynamic spawning is disabled, ALWAYS ensure minimum bots
-    // DYNAMIC SPAWNING: Only spawn minimum if we have players online
-    if (!_config.enableDynamicSpawning || sWorld->GetActiveSessionCount() > 0)
+    // Only apply minimum bot count when real human players are online.
+    // Previously, static mode always applied minimum (even with 0 humans),
+    // and dynamic mode checked GetActiveSessionCount() which includes bot sessions.
+    // Now we use _lastRealPlayerCount which correctly tracks humans only.
+    if (_lastRealPlayerCount.load() > 0)
     {
         baseTarget = ::std::max(baseTarget, minimumBots);
         TC_LOG_INFO("module.playerbot.spawner", "Zone {} - players: {}, ratio: {}, ratio target: {}, minimum: {}, final target: {}",

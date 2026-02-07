@@ -28,6 +28,7 @@
 #include "../AI/Coordination/Battleground/BattlegroundCoordinatorManager.h"
 #include "../Lifecycle/Instance/InstanceBotHooks.h"
 #include "../Lifecycle/Instance/QueueStatePoller.h"
+#include "ObjectAccessor.h"
 #include "Log.h"
 #include <unordered_set>
 #include <unordered_map>
@@ -123,6 +124,7 @@ public:
 
         _processedPlayers.clear();
         _lastQueueState.clear();
+        _bgNoHumanSince.clear();
     }
 
 private:
@@ -412,6 +414,56 @@ private:
             {
                 // BG is ending
                 _bgStatusTracker.erase(instanceId);
+                _bgNoHumanSince.erase(instanceId);
+            }
+
+            // =========================================================================
+            // CHECK: End BG when no human players remain (with grace period)
+            // =========================================================================
+            if (status == STATUS_IN_PROGRESS)
+            {
+                bool humanFound = false;
+                for (auto const& playerPair : bg->GetPlayers())
+                {
+                    Player* bgPlayer = ObjectAccessor::FindPlayer(playerPair.first);
+                    if (bgPlayer && !PlayerBotHooks::IsPlayerBot(bgPlayer))
+                    {
+                        humanFound = true;
+                        break;
+                    }
+                }
+
+                uint32 now = GameTime::GetGameTimeMS();
+
+                if (!humanFound)
+                {
+                    auto graceIt = _bgNoHumanSince.find(instanceId);
+                    if (graceIt == _bgNoHumanSince.end())
+                    {
+                        // First detection of no humans - start grace timer
+                        _bgNoHumanSince[instanceId] = now;
+                        TC_LOG_INFO("module.playerbot.bg",
+                            "PlayerbotBGScript: No human players in BG {} (instance {}) - starting {}s grace period",
+                            bg->GetName(), instanceId, NO_HUMAN_GRACE_PERIOD / IN_MILLISECONDS);
+                    }
+                    else if (now - graceIt->second >= NO_HUMAN_GRACE_PERIOD)
+                    {
+                        // Grace period expired - end the BG as a draw
+                        TC_LOG_INFO("module.playerbot.bg",
+                            "PlayerbotBGScript: No human players in BG instance {} - ending after {}s grace period",
+                            instanceId, NO_HUMAN_GRACE_PERIOD / IN_MILLISECONDS);
+
+                        bg->EndBattleground(TEAM_OTHER);
+
+                        _bgStatusTracker.erase(instanceId);
+                        _bgNoHumanSince.erase(instanceId);
+                    }
+                }
+                else
+                {
+                    // Human found - clear grace timer if it was running
+                    _bgNoHumanSince.erase(instanceId);
+                }
             }
         }
 
@@ -435,6 +487,7 @@ private:
             for (uint32 key : keysToRemove)
             {
                 _bgStatusTracker.erase(key);
+                _bgNoHumanSince.erase(key);
             }
         }
     }
@@ -478,6 +531,7 @@ private:
     // Configuration
     static constexpr uint32 BG_POLL_INTERVAL = 1000; // 1 second polling interval
     static constexpr uint32 CLEANUP_INTERVAL = 5 * MINUTE * IN_MILLISECONDS;
+    static constexpr uint32 NO_HUMAN_GRACE_PERIOD = 30 * IN_MILLISECONDS; // 30 seconds
 
     // State tracking
     uint32 _updateAccumulator = 0;
@@ -492,6 +546,9 @@ private:
 
     // BG status tracker: instanceId -> last known status
     std::unordered_map<uint32, BattlegroundStatus> _bgStatusTracker;
+
+    // Human-absence grace timer: instanceId -> timestamp when last human was detected absent
+    std::unordered_map<uint32, uint32> _bgNoHumanSince;
 };
 
 void AddSC_PlayerbotBGScript()

@@ -25,6 +25,8 @@
 #include "GameTime.h"
 #include "DB2Stores.h"
 #include "../Lifecycle/Instance/QueueStatePoller.h"
+#include "../Lifecycle/Instance/InstanceBotPool.h"
+#include "../Lifecycle/Instance/InstanceBotOrchestrator.h"
 
 namespace Playerbot
 {
@@ -552,11 +554,36 @@ void BGBotManager::OnBattlegroundEnd(Battleground* bg, Team winnerTeam)
     auto itr = _bgInstanceBots.find(bgInstanceGuid);
     if (itr != _bgInstanceBots.end())
     {
-        for (ObjectGuid botGuid : itr->second)
+        // Collect bot GUIDs before erasing (need them after map cleanup)
+        std::vector<ObjectGuid> bgBots(itr->second.begin(), itr->second.end());
+
+        // Unregister all bot assignments from tracking maps
+        for (ObjectGuid botGuid : bgBots)
         {
             UnregisterBotAssignment(botGuid);
         }
         _bgInstanceBots.erase(itr);
+
+        // Release pool bots and schedule logout for all BG bots
+        for (ObjectGuid botGuid : bgBots)
+        {
+            if (sInstanceBotPool->IsPoolBot(botGuid))
+            {
+                sInstanceBotPool->ReleaseBot(botGuid, true);
+                TC_LOG_DEBUG("module.playerbot.bg",
+                    "BGBotManager::OnBattlegroundEnd - Released pool bot {} from BG {}",
+                    botGuid.ToString(), bgInstanceGuid);
+            }
+
+            sBotWorldSessionMgr->RemovePlayerBot(botGuid);
+        }
+
+        TC_LOG_INFO("module.playerbot.bg",
+            "BGBotManager::OnBattlegroundEnd - Released and logged out {} bots from BG {}",
+            bgBots.size(), bgInstanceGuid);
+
+        // Notify orchestrator that instance has ended
+        sInstanceBotOrchestrator->OnInstanceEnded(bgInstanceGuid);
     }
 
     // Cleanup human entry time tracking
