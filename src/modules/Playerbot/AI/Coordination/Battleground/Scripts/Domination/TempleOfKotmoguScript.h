@@ -229,6 +229,15 @@ private:
     uint32 m_allianceOrbsHeld = 0;
     uint32 m_hordeOrbsHeld = 0;
 
+    /// orbId -> GUID of bot currently moving toward this orb for pickup
+    std::map<uint32, ObjectGuid> m_orbTargeters;
+
+    /// Timestamp for throttling RefreshOrbState() to once per second
+    uint32 m_lastOrbRefresh = 0;
+
+    /// Scan all BG players for orb auras and rebuild m_orbHolders/m_playerOrbs
+    void RefreshOrbState();
+
     // ========================================================================
     // DYNAMIC POSITION DISCOVERY
     // ========================================================================

@@ -18,6 +18,7 @@
 #include "Player.h"
 #include "GameObject.h"
 #include "GameObjectData.h"
+#include "GameTime.h"
 #include "SpellAuras.h"
 #include "BotMovementUtil.h"
 #include "BattlegroundCoordinatorManager.h"
@@ -930,6 +931,54 @@ static int32 GetCarriedOrbId(::Player* player)
     return -1;
 }
 
+// ============================================================================
+// REAL-TIME ORB STATE DETECTION VIA AURA SCANNING
+// ============================================================================
+
+void TempleOfKotmoguScript::RefreshOrbState()
+{
+    // Throttle to once per second
+    uint32 now = GameTime::GetGameTimeMS();
+    if (now - m_lastOrbRefresh < 1000)
+        return;
+    m_lastOrbRefresh = now;
+
+    // Need coordinator to access BG
+    if (!m_coordinator)
+        return;
+    ::Battleground* bg = m_coordinator->GetBattleground();
+    if (!bg)
+        return;
+
+    // Clear and rebuild orb state from aura scan
+    m_orbHolders.clear();
+    m_playerOrbs.clear();
+    m_allianceOrbsHeld = 0;
+    m_hordeOrbsHeld = 0;
+
+    for (auto const& [guid, bgPlayer] : bg->GetPlayers())
+    {
+        ::Player* player = ObjectAccessor::FindPlayer(guid);
+        if (!player || !player->IsAlive())
+            continue;
+
+        int32 orbId = GetCarriedOrbId(player);
+        if (orbId >= 0)
+        {
+            m_orbHolders[static_cast<uint32>(orbId)] = guid;
+            m_playerOrbs[guid] = static_cast<uint32>(orbId);
+
+            if (player->GetBGTeam() == ALLIANCE)
+                m_allianceOrbsHeld++;
+            else
+                m_hordeOrbsHeld++;
+        }
+    }
+
+    TC_LOG_DEBUG("playerbots.bg", "[TOK] RefreshOrbState: {} orbs held (Alliance={}, Horde={})",
+        static_cast<uint32>(m_orbHolders.size()), m_allianceOrbsHeld, m_hordeOrbsHeld);
+}
+
 /// Helper: get player's assigned role from coordinator
 static BGRole GetBotRole(::Player* player, ::Playerbot::BattlegroundCoordinator* coordinator)
 {
@@ -943,20 +992,30 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
     if (!player || !player->IsInWorld() || !player->IsAlive())
         return false;
 
+    // Refresh orb state from auras (throttled to once per second)
+    RefreshOrbState();
+
     ::Playerbot::BattlegroundCoordinator* coordinator =
         sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
 
     BGRole role = GetBotRole(player, coordinator);
     bool holdingOrb = IsCarryingOrb(player);
 
-    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} role={} holdingOrb={}",
-        player->GetName(), static_cast<uint32>(role), holdingOrb);
+    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} role={} holdingOrb={} orbsHeld={}",
+        player->GetName(), static_cast<uint32>(role), holdingOrb,
+        static_cast<uint32>(m_orbHolders.size()));
 
     // =========================================================================
     // PRIORITY 1: If holding orb, execute carrier movement
     // =========================================================================
     if (holdingOrb)
     {
+        // Player is now a carrier - remove from orb targeters if present
+        m_orbTargeters.erase(
+            std::find_if(m_orbTargeters.begin(), m_orbTargeters.end(),
+                [&](auto const& kv) { return kv.second == player->GetGUID(); }),
+            m_orbTargeters.end());
+
         ExecuteOrbCarrierMovement(player);
         return true;
     }
@@ -967,7 +1026,9 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
     switch (role)
     {
         case BGRole::ORB_CARRIER:
-            PickupOrb(player);
+            // Try to pick up an orb; if none available, escort a carrier instead
+            if (!PickupOrb(player))
+                EscortOrbCarrier(player);
             break;
 
         case BGRole::FLAG_ESCORT:
@@ -1013,10 +1074,25 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
         return false;
     }
 
-    // Get prioritized orb list
+    ObjectGuid myGuid = player->GetGUID();
+
+    // =========================================================================
+    // Clean stale entries from m_orbTargeters
+    // =========================================================================
+    for (auto it = m_orbTargeters.begin(); it != m_orbTargeters.end(); )
+    {
+        ::Player* targeter = ObjectAccessor::FindPlayer(it->second);
+        if (!targeter || !targeter->IsInWorld() || !targeter->IsAlive() || IsCarryingOrb(targeter))
+            it = m_orbTargeters.erase(it);
+        else
+            ++it;
+    }
+
+    // =========================================================================
+    // Find nearest available orb (not held AND not already targeted by another bot)
+    // =========================================================================
     std::vector<uint32> orbPriority = GetOrbPriority(player->GetBGTeam());
 
-    // Find nearest unheld orb
     float bestDist = std::numeric_limits<float>::max();
     uint32 bestOrbId = TempleOfKotmogu::ORB_COUNT; // invalid sentinel
     Position bestOrbPos;
@@ -1026,9 +1102,17 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
         if (orbId >= TempleOfKotmogu::ORB_COUNT)
             continue;
 
-        // Skip orbs that are currently held
+        // Skip orbs that are currently held by someone
         if (IsOrbHeld(orbId))
             continue;
+
+        // Skip orbs already targeted by another bot (splitting logic)
+        auto targeterIt = m_orbTargeters.find(orbId);
+        if (targeterIt != m_orbTargeters.end() && targeterIt->second != myGuid)
+        {
+            // Another bot is already heading for this orb - skip it
+            continue;
+        }
 
         // Get orb position (prefer dynamic discovery)
         Position orbPos = GetDynamicOrbPosition(orbId);
@@ -1042,13 +1126,57 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
         }
     }
 
-    // No available orb found
+    // If no untargeted orb available, allow targeting any unheld orb as fallback
+    // (better to double up than to do nothing)
     if (bestOrbId >= TempleOfKotmogu::ORB_COUNT)
     {
+        for (uint32 orbId : orbPriority)
+        {
+            if (orbId >= TempleOfKotmogu::ORB_COUNT)
+                continue;
+            if (IsOrbHeld(orbId))
+                continue;
+
+            Position orbPos = GetDynamicOrbPosition(orbId);
+            float dist = player->GetExactDist(&orbPos);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestOrbId = orbId;
+                bestOrbPos = orbPos;
+            }
+        }
+    }
+
+    // No available orb found at all (all 4 are held)
+    if (bestOrbId >= TempleOfKotmogu::ORB_COUNT)
+    {
+        // Clear our targeting entry since we have nothing to target
+        for (auto it = m_orbTargeters.begin(); it != m_orbTargeters.end(); ++it)
+        {
+            if (it->second == myGuid)
+            {
+                m_orbTargeters.erase(it);
+                break;
+            }
+        }
+
         TC_LOG_DEBUG("playerbots.bg", "[TOK] {} no available orbs to pick up (all held)",
             player->GetName());
         return false;
     }
+
+    // Register this bot as targeting the chosen orb
+    // First, clear any previous targeting by this bot
+    for (auto it = m_orbTargeters.begin(); it != m_orbTargeters.end(); ++it)
+    {
+        if (it->second == myGuid)
+        {
+            m_orbTargeters.erase(it);
+            break;
+        }
+    }
+    m_orbTargeters[bestOrbId] = myGuid;
 
     TC_LOG_DEBUG("playerbots.bg", "[TOK] {} targeting {} (dist: {:.1f})",
         player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), bestDist);
@@ -1079,14 +1207,19 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
             goInfo->type == GAMEOBJECT_TYPE_GOOBER)
         {
             go->Use(player);
+            // Successfully picked up - remove from targeters (now a carrier)
+            m_orbTargeters.erase(bestOrbId);
             TC_LOG_INFO("playerbots.bg", "[TOK] {} picked up {} (entry {})",
                 player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), orbEntry);
             return true;
         }
     }
 
-    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} at orb location but no interactable GO found for {} (entry {})",
-        player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), orbEntry);
+    // At orb location but no GO found - the orb was already picked up by someone
+    // Clear our targeting so we don't loop back to the same empty spot
+    m_orbTargeters.erase(bestOrbId);
+    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} at orb location but no GO found for {} - orb was taken, clearing target",
+        player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId));
     return false;
 }
 
