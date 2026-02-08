@@ -32,6 +32,7 @@
 #include "Movement/Arbiter/MovementRequest.h"
 #include "Movement/Arbiter/MovementPriorityMapper.h"
 #include "Session/BotPriorityManager.h"
+#include "Core/Diagnostics/BotCheatMask.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Spatial/DoubleBufferedSpatialGrid.h"
 #include "Player.h"
@@ -540,6 +541,51 @@ void BotAI::UpdateAI(uint32 diff)
     sBotPriorityMgr->RecordUpdateStart(_bot->GetGUID(), now);
 
     // ========================================================================
+    // RPG-STATE AI BUDGET: Reassess tier every 1 second
+    // ========================================================================
+    // Maps RPG state to budget tier (FULL/REDUCED/MINIMAL) to skip unnecessary
+    // AI phases. Combat and BG/dungeon always force FULL. Checked per-tick for
+    // instant combat escalation even between 1s reassessments.
+    _budgetReassessTimer += diff;
+    if (_budgetReassessTimer >= 1000)
+    {
+        _budgetReassessTimer = 0;
+
+        // Combat ALWAYS forces FULL regardless of RPG state
+        if (_bot->IsInCombat() || !_bot->getAttackers().empty())
+        {
+            _currentBudgetTier = AIBudgetTier::FULL;
+        }
+        // BG/Dungeon always FULL
+        else if (_bot->InBattleground() || (_bot->GetMap() && _bot->GetMap()->IsDungeon()))
+        {
+            _currentBudgetTier = AIBudgetTier::FULL;
+        }
+        // In a group — always FULL (human player may be watching)
+        else if (_bot->GetGroup())
+        {
+            _currentBudgetTier = AIBudgetTier::FULL;
+        }
+        // Use RPG state mapping for autonomous solo bots
+        else if (_rpgRoutineManager && _rpgRoutineManager->ShouldBeActive())
+        {
+            _currentBudgetTier = GetBudgetTierForRPGState(_rpgRoutineManager->GetCurrentState());
+        }
+        else
+        {
+            _currentBudgetTier = AIBudgetTier::FULL;  // safe default
+        }
+    }
+
+    // INSTANT COMBAT ESCALATION: Check EVERY tick (not just every 1s)
+    // If attacked between reassessments, immediately go to FULL
+    if (_currentBudgetTier != AIBudgetTier::FULL)
+    {
+        if (_bot->IsInCombat() || !_bot->getAttackers().empty())
+            _currentBudgetTier = AIBudgetTier::FULL;
+    }
+
+    // ========================================================================
     // DEATH RECOVERY - Runs BEFORE all other AI (even when dead/ghost)
     // ========================================================================
     // Death recovery MUST run even when bot is dead (ghost state)
@@ -565,6 +611,20 @@ void BotAI::UpdateAI(uint32 diff)
         }
     }
 
+    // Apply cheat effects (health/mana regen) — throttled: 500ms in combat, 2s out of combat
+    if (_cheatEffectTimer <= diff)
+    {
+        if (sBotCheatMask->HasAnyCheats(_bot->GetGUID()))
+        {
+            sBotCheatMask->ApplyCheatEffects(_bot);
+            _cheatEffectTimer = _bot->IsInCombat() ? 500 : 2000;
+        }
+        else
+            _cheatEffectTimer = 2000; // No cheats active, check again in 2s
+    }
+    else
+        _cheatEffectTimer -= diff;
+
     // PRIORITY: If bot is in death recovery, skip expensive AI updates
     // Death recovery handles its own movement (corpse run), so we don't need strategies/combat
     // But we still allow managers to update (see PHASE 5) to prevent system freezing
@@ -578,6 +638,12 @@ void BotAI::UpdateAI(uint32 diff)
     // Only run normal AI if NOT in death recovery
     if (!isInDeathRecovery)
     {
+    // ========================================================================
+    // BUDGET TIER: MINIMAL skips everything below (safety systems already ran)
+    // ========================================================================
+    if (_currentBudgetTier == AIBudgetTier::MINIMAL)
+        goto throttled_update_complete;
+
     // ========================================================================
     // ST-1: ADAPTIVE AI UPDATE THROTTLING - CPU optimization for far bots
     // ========================================================================
@@ -737,74 +803,75 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         _objectCache.SetGroupMembers({});
         _objectCache.SetFollowTarget(nullptr);
     }
-    // ========================================================================// PHASE 1: CORE BEHAVIORS - Always run every frame
     // ========================================================================
+    // PHASE 1: CORE BEHAVIORS - Budget-gated per RPG state
+    // ========================================================================
+    // At this point MINIMAL tier already jumped to throttled_update_complete.
+    // REDUCED and FULL both reach here.
 
-    // Update internal values and caches
+    // Update internal values and caches (REDUCED+)
     UpdateValues(diff);
 
-    // Phase 2 Week 3: Update Hybrid AI (Utility AI + Behavior Trees, throttled to 500ms)
-    UpdateHybridAI(diff);
+    // Phase 2 Week 3: Update Hybrid AI (Utility AI + Behavior Trees) — FULL only
+    if (_currentBudgetTier == AIBudgetTier::FULL)
+        UpdateHybridAI(diff);
 
-    // Update all active strategies (including follow, idle, social)
-    // CRITICAL: Must run every frame for smooth following
+    // Update all active strategies (including follow, idle, social) — REDUCED+
+    // CRITICAL: Must run every frame for smooth following/movement
     UpdateStrategies(diff);
 
-    // Process all triggers
-    ProcessTriggers();
+    // Process all triggers — FULL only
+    if (_currentBudgetTier == AIBudgetTier::FULL)
+        ProcessTriggers();
 
-    // Execute queued and triggered actions
-    UpdateActions(diff);
+    // Execute queued and triggered actions — FULL only
+    if (_currentBudgetTier == AIBudgetTier::FULL)
+        UpdateActions(diff);
 
-    // Update movement based on strategy decisions
+    // Update movement based on strategy decisions — REDUCED+
     // CRITICAL: Must run every frame for smooth movement
     UpdateMovement(diff);
 
     // ========================================================================
-    // DUNGEON AUTONOMY SYSTEM - Autonomous dungeon navigation
+    // DUNGEON AUTONOMY SYSTEM - Autonomous dungeon navigation — FULL only
     // ========================================================================
-    // Check if bot is in a dungeon and autonomy is enabled
-    // This allows tank bots to pull and navigate autonomously
-    // Player can pause at any time with .bot dungeon pause
-    if (Map* map = _bot->GetMap())
+    // Note: Bots in dungeons always have tier FULL (forced in reassessment),
+    // but guard explicitly for safety.
+    if (_currentBudgetTier == AIBudgetTier::FULL)
     {
-        if (map->IsDungeon() && _bot->GetGroup())
+        if (Map* map = _bot->GetMap())
         {
-            // Let DungeonAutonomyManager handle dungeon-specific behavior
-            // Returns true if autonomy handled this update (bot should use dungeon behavior)
-            if (sDungeonAutonomyMgr->UpdateBotInDungeon(_bot, this, diff))
+            if (map->IsDungeon() && _bot->GetGroup())
             {
-                // Dungeon autonomy is handling movement/pulling
-                // Still continue with normal AI for combat/healing
+                if (sDungeonAutonomyMgr->UpdateBotInDungeon(_bot, this, diff))
+                {
+                    // Dungeon autonomy is handling movement/pulling
+                }
             }
         }
     }
 
     // ========================================================================
-    // PHASE 2: STATE MANAGEMENT - Check for state transitions
+    // PHASE 2: STATE MANAGEMENT — FULL only
     // ========================================================================
-
-    // Update combat state (enter/exit combat detection)
-    UpdateCombatState(diff);
+    // REDUCED bots rely on instant combat escalation (per-tick check above)
+    // to switch to FULL before needing full combat state processing.
+    if (_currentBudgetTier == AIBudgetTier::FULL)
+        UpdateCombatState(diff);
 
     // ========================================================================
-    // PHASE 3: CLASS-SPECIFIC UPDATES - Combat and Non-Combat
+    // PHASE 3: CLASS-SPECIFIC UPDATES - Combat and Non-Combat — FULL only
     // ========================================================================
-
-    // Delegate to class-specific AI based on combat state
-    if (IsInCombat())
+    if (_currentBudgetTier == AIBudgetTier::FULL)
     {
-        // Virtual call to ClassAI::OnCombatUpdate() if overridden
-        // ClassAI handles rotation, cooldowns, targeting
-        // But NOT movement - that's already handled by strategies
-        OnCombatUpdate(diff);
-    }
-    else
-    {
-        // Virtual call to ClassAI::OnNonCombatUpdate() if overridden
-        // ClassAI handles pet summoning, buff application, out-of-combat prep
-        // But NOT movement - that's already handled by strategies
-        OnNonCombatUpdate(diff);
+        if (IsInCombat())
+        {
+            OnCombatUpdate(diff);
+        }
+        else
+        {
+            OnNonCombatUpdate(diff);
+        }
     }
 
     // ========================================================================
@@ -833,13 +900,21 @@ bg_update_complete:
     //
     // NOTE: Managers continue to update even during death recovery to prevent system freezing
     if (_gameSystems)
-        _gameSystems->Update(diff);
-
-    // Phase 3: Update Tactical Group Coordinator (throttled to 500ms intervals)
-    if (auto tacticalCoordinator = GetTacticalCoordinator())
     {
-        if (_bot->GetGroup())
-            tacticalCoordinator->Update(diff);
+        // Pass budget tier to GameSystemsManager for manager-level gating
+        if (auto* gsm = dynamic_cast<GameSystemsManager*>(_gameSystems.get()))
+            gsm->SetBudgetTier(_currentBudgetTier);
+        _gameSystems->Update(diff);
+    }
+
+    // Phase 3: Update Tactical Group Coordinator (throttled to 500ms) — FULL only
+    if (_currentBudgetTier == AIBudgetTier::FULL)
+    {
+        if (auto tacticalCoordinator = GetTacticalCoordinator())
+        {
+            if (_bot->GetGroup())
+                tacticalCoordinator->Update(diff);
+        }
     }
 
     // ========================================================================
@@ -848,14 +923,9 @@ bg_update_complete:
     // Legacy BotEventSystem removed - events now flow through per-bot EventDispatcher
 
     // ========================================================================
-    // PHASE 7: SOLO BEHAVIORS - Only when bot is in solo play mode
+    // PHASE 7: SOLO BEHAVIORS - Only when bot is in solo play mode — FULL only
     // ========================================================================
-
-    // Update solo behaviors (questing, gathering, autonomous combat, etc.)
-    // Only runs when bot is in solo play mode (not in group or following)
-
-    // Solo behaviors update (questing, gathering, autonomous activities)
-    if (!IsInCombat() && !IsFollowing())
+    if (_currentBudgetTier == AIBudgetTier::FULL && !IsInCombat() && !IsFollowing())
     {
         TC_LOG_TRACE("module.playerbot", "UpdateSoloBehaviors for bot {}", _bot->GetName());
         UpdateSoloBehaviors(diff);

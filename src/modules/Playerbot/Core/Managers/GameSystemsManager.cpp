@@ -490,12 +490,19 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // ========================================================================
     // INSTANCE BOT CHECK - Skip non-essential managers for pool/JIT bots
     // ========================================================================
-    // Instance bots (warm pool, JIT) are single-purpose bots for BG/Arena/Dungeon/Raid.
-    // They don't need humanization, battle pets, banking, professions, mounts, etc.
-    // This significantly reduces CPU usage for instance-only bots.
     bool isInstanceBot = false;
     if (BotSession* session = BotSessionManager::GetBotSession(_bot->GetSession()))
         isInstanceBot = session->IsInstanceBot();
+
+    // ========================================================================
+    // RPG-STATE AI BUDGET TIER - Manager-level scope gating
+    // ========================================================================
+    // FULL:    all managers run
+    // REDUCED: movement + safety + social managers only
+    // MINIMAL: only EventDispatcher (safety events) — BotAI skips GameSystems entirely
+    //          for MINIMAL via goto, but guard here for safety
+    bool isFull    = (_budgetTier == AIBudgetTier::FULL);
+    bool isReduced = (_budgetTier <= AIBudgetTier::REDUCED); // FULL or REDUCED
 
     // ========================================================================
     // PHASE 7.1: EVENT DISPATCHER - Process queued events first
@@ -521,9 +528,9 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     }
 
     // ========================================================================
-    // PHASE 7.1: MANAGER REGISTRY - Update all registered managers
+    // PHASE 7.1: MANAGER REGISTRY - Update all registered managers (REDUCED+)
     // ========================================================================
-    if (_managerRegistry)
+    if (isReduced && _managerRegistry)
     {
         uint32 managersUpdated = _managerRegistry->UpdateAll(diff);
 
@@ -538,16 +545,15 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // MANAGER UPDATES - Legacy direct updates during Phase 7 transition
     // ========================================================================
 
-    // Trade manager handles vendor interactions, repairs, and consumables
-    // KEEP for instance bots - they may need repairs
-    if (_tradeManager)
+    // Trade manager handles vendor interactions, repairs, and consumables (REDUCED+)
+    if (isReduced && _tradeManager)
         _tradeManager->Update(diff);
 
     // ========================================================================
-    // WORLD BOT ONLY MANAGERS - Skip for instance bots (BG/Arena/Dungeon/Raid)
-    // These managers handle open-world activities not relevant to instances
+    // WORLD BOT ONLY MANAGERS - Skip for instance bots AND REDUCED tier
+    // These managers handle open-world activities only needed at FULL tier
     // ========================================================================
-    if (!isInstanceBot)
+    if (isFull && !isInstanceBot)
     {
         // Gathering manager handles mining, herbalism, skinning
         if (_gatheringManager)
@@ -612,167 +618,150 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
         }
     } // end !isInstanceBot
 
-    // Group coordinator handles group/raid mechanics, role assignment, and coordination
-    // KEEP for instance bots - they need group coordination in dungeons/raids/BGs
-    if (_groupCoordinator)
+    // Group coordinator handles group/raid mechanics, role assignment, and coordination (REDUCED+)
+    if (isReduced && _groupCoordinator)
         _groupCoordinator->Update(diff);
 
     // ========================================================================
-    // EQUIPMENT AUTO-EQUIP - Check every 10 seconds
-    // KEEP for instance bots - they get leveled and geared by BotPostLoginConfigurator
+    // EQUIPMENT AUTO-EQUIP - Check every 10 seconds (FULL only)
     // ========================================================================
-    _equipmentCheckTimer += diff;
-    if (_equipmentCheckTimer >= 10000) // 10 seconds
+    if (isFull)
     {
-        _equipmentCheckTimer = 0;
-        if (_equipmentManager)
-            _equipmentManager->AutoEquipBestGear();
+        _equipmentCheckTimer += diff;
+        if (_equipmentCheckTimer >= 10000) // 10 seconds
+        {
+            _equipmentCheckTimer = 0;
+            if (_equipmentManager)
+                _equipmentManager->AutoEquipBestGear();
+        }
     }
 
     // ========================================================================
-    // MORE WORLD BOT ONLY MANAGERS - Skip for instance bots
+    // MORE WORLD BOT ONLY MANAGERS - Budget-tier gated
     // ========================================================================
     if (!isInstanceBot)
     {
-        // ========================================================================
-        // MOUNT AUTOMATION - 200ms throttle (responsive but not every frame)
-        // PERFORMANCE FIX: Mounting doesn't need 60fps updates
-        // ========================================================================
-        _mountUpdateTimer += diff;
-        if (_mountUpdateTimer >= 200)
+        // Mount automation — REDUCED+ (needed for travel states)
+        if (isReduced)
         {
-            _mountUpdateTimer = 0;
-            if (_mountManager)
-                _mountManager->Update(diff);
+            _mountUpdateTimer += diff;
+            if (_mountUpdateTimer >= 200)
+            {
+                _mountUpdateTimer = 0;
+                if (_mountManager)
+                    _mountManager->Update(diff);
+            }
         }
 
-        // ========================================================================
-        // RIDING ACQUISITION - 5 sec throttle (skill learning is rare)
-        // PERFORMANCE FIX: Riding trainers don't require constant checking
-        // ========================================================================
-        _ridingUpdateTimer += diff;
-        if (_ridingUpdateTimer >= 5000)
+        // Riding acquisition — FULL only (skill learning is rare)
+        if (isFull)
         {
-            _ridingUpdateTimer = 0;
-            if (_ridingManager)
-                _ridingManager->Update(diff);
+            _ridingUpdateTimer += diff;
+            if (_ridingUpdateTimer >= 5000)
+            {
+                _ridingUpdateTimer = 0;
+                if (_ridingManager)
+                    _ridingManager->Update(diff);
+            }
         }
 
-        // ========================================================================
-        // HUMANIZATION SYSTEM - Update for human-like behavior
-        // Instance bots don't need humanization - they're focused on their task
-        // ========================================================================
-        if (_humanizationManager)
+        // Humanization system — REDUCED+ (needed for natural behavior in travel/city)
+        if (isReduced && _humanizationManager)
             _humanizationManager->Update(diff);
 
-        // ========================================================================
-        // BATTLE PET AUTOMATION - 500ms throttle (pet AI doesn't need 60fps)
-        // Instance bots don't do battle pet activities
-        // ========================================================================
-        _battlePetUpdateTimer += diff;
-        if (_battlePetUpdateTimer >= 500)
+        // Battle pet automation — FULL only
+        if (isFull)
         {
-            _battlePetUpdateTimer = 0;
-            if (_battlePetManager)
-                _battlePetManager->Update(diff);
+            _battlePetUpdateTimer += diff;
+            if (_battlePetUpdateTimer >= 500)
+            {
+                _battlePetUpdateTimer = 0;
+                if (_battlePetManager)
+                    _battlePetManager->Update(diff);
+            }
         }
     } // end !isInstanceBot (world bot only managers)
 
     // ========================================================================
-    // PVP MANAGERS - KEEP for instance bots (needed for BG/Arena)
+    // PVP MANAGERS - FULL only (BG/Dungeon bots always have FULL tier)
     // ========================================================================
-
-    // ========================================================================
-    // ARENA PVP AI - 100ms throttle (fast for PvP responsiveness)
-    // PERFORMANCE FIX: 100ms is still responsive enough for arena
-    // ========================================================================
-    _arenaAIUpdateTimer += diff;
-    if (_arenaAIUpdateTimer >= 100)
+    if (isFull)
     {
-        _arenaAIUpdateTimer = 0;
-        if (_arenaAI)
-            _arenaAI->Update(diff);
+        _arenaAIUpdateTimer += diff;
+        if (_arenaAIUpdateTimer >= 100)
+        {
+            _arenaAIUpdateTimer = 0;
+            if (_arenaAI)
+                _arenaAI->Update(diff);
+        }
+
+        _pvpCombatUpdateTimer += diff;
+        if (_pvpCombatUpdateTimer >= 100)
+        {
+            _pvpCombatUpdateTimer = 0;
+            if (_pvpCombatAI)
+                _pvpCombatAI->Update(diff);
+        }
     }
 
     // ========================================================================
-    // PVP COMBAT AI - 100ms throttle (fast for PvP responsiveness)
-    // PERFORMANCE FIX: Comment said throttled but wasn't - now actually throttled
+    // SPRINT 3: COMBAT COORDINATION - FULL only (combat managers)
     // ========================================================================
-    _pvpCombatUpdateTimer += diff;
-    if (_pvpCombatUpdateTimer >= 100)
+    if (isFull)
     {
-        _pvpCombatUpdateTimer = 0;
-        if (_pvpCombatAI)
-            _pvpCombatAI->Update(diff);
-    }
+        _combatCoordTimer += diff;
+        if (_combatCoordTimer >= 100)
+        {
+            _combatCoordTimer = 0;
+            if (_combatCoordinationIntegrator)
+                _combatCoordinationIntegrator->Update(diff);
+        }
 
-    // ========================================================================
-    // SPRINT 3: COMBAT COORDINATION - Essential for all bots in groups
-    // Updates claim system, dispel coordination, interrupt rotation, etc.
-    // ========================================================================
+        _dispelTimer += diff;
+        if (_dispelTimer >= 200)
+        {
+            _dispelTimer = 0;
+            if (_dispelCoordinator)
+                _dispelCoordinator->Update(diff);
+        }
 
-    // Combat Coordination Integrator - bridges to BotMessageBus claim system
-    // 100ms throttle - fast enough for responsive coordination
-    _combatCoordTimer += diff;
-    if (_combatCoordTimer >= 100)
-    {
-        _combatCoordTimer = 0;
-        if (_combatCoordinationIntegrator)
-            _combatCoordinationIntegrator->Update(diff);
-    }
+        _interruptTimer += diff;
+        if (_interruptTimer >= 100)
+        {
+            _interruptTimer = 0;
+            if (_interruptRotationManager)
+                _interruptRotationManager->Update(diff);
+        }
 
-    // Combat Behaviors managers - essential for group combat
-    // 200ms throttle - responsive but not every frame
+        _aoeTimer += diff;
+        if (_aoeTimer >= 500)
+        {
+            _aoeTimer = 0;
+            if (_aoeDecisionManager)
+                _aoeDecisionManager->Update(diff);
+        }
 
-    // DispelCoordinator - handles dispel rotation and claims (GAP 2 fix)
-    _dispelTimer += diff;
-    if (_dispelTimer >= 200)
-    {
-        _dispelTimer = 0;
-        if (_dispelCoordinator)
-            _dispelCoordinator->Update(diff);
-    }
+        _cdStackTimer += diff;
+        if (_cdStackTimer >= 500)
+        {
+            _cdStackTimer = 0;
+            if (_cooldownStackingOptimizer)
+                _cooldownStackingOptimizer->Update(diff);
+        }
 
-    // InterruptRotationManager - handles interrupt assignment and rotation
-    _interruptTimer += diff;
-    if (_interruptTimer >= 100)  // Interrupts need faster response
-    {
-        _interruptTimer = 0;
-        if (_interruptRotationManager)
-            _interruptRotationManager->Update(diff);
-    }
-
-    // AoEDecisionManager - target clustering decisions (500ms throttle)
-    _aoeTimer += diff;
-    if (_aoeTimer >= 500)
-    {
-        _aoeTimer = 0;
-        if (_aoeDecisionManager)
-            _aoeDecisionManager->Update(diff);
-    }
-
-    // CooldownStackingOptimizer - optimal CD stacking (500ms throttle)
-    _cdStackTimer += diff;
-    if (_cdStackTimer >= 500)
-    {
-        _cdStackTimer = 0;
-        if (_cooldownStackingOptimizer)
-            _cooldownStackingOptimizer->Update(diff);
-    }
-
-    // DefensiveBehaviorManager - external CD coordination (200ms throttle)
-    _defenseTimer += diff;
-    if (_defenseTimer >= 200)
-    {
-        _defenseTimer = 0;
-        if (_defensiveBehaviorManager)
-            _defensiveBehaviorManager->Update(diff);
+        _defenseTimer += diff;
+        if (_defenseTimer >= 200)
+        {
+            _defenseTimer = 0;
+            if (_defensiveBehaviorManager)
+                _defensiveBehaviorManager->Update(diff);
+        }
     }
 
     // ========================================================================
-    // MORE WORLD BOT ONLY - PROFESSION AUTOMATION - Check every 15 seconds
+    // MORE WORLD BOT ONLY - PROFESSION AUTOMATION - FULL only
     // ========================================================================
-    if (!isInstanceBot)
+    if (isFull && !isInstanceBot)
     {
         _professionCheckTimer += diff;
         if (_professionCheckTimer >= 15000) // 15 seconds

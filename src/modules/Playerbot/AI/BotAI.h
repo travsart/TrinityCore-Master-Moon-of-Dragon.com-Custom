@@ -13,6 +13,7 @@
 #pragma once
 
 #include "Define.h"
+#include "AIBudgetTier.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Player.h"
@@ -646,6 +647,18 @@ public:
     }
 
     // ========================================================================
+    // RPG-STATE AI BUDGET TIER - Scope reduction per update
+    // ========================================================================
+
+    /**
+     * @brief Get current AI budget tier
+     * Controls which AI phases run each update based on RPG state.
+     * FULL = all phases, REDUCED = movement+safety, MINIMAL = safety only.
+     * Complements ST-1 throttler (frequency) with scope reduction.
+     */
+    AIBudgetTier GetCurrentBudgetTier() const { return _currentBudgetTier; }
+
+    // ========================================================================
     // ST-1: ADAPTIVE AI UPDATE THROTTLING - Performance optimization
     // ========================================================================
 
@@ -1149,6 +1162,13 @@ protected:
 
     // Debug tracking
     uint32 _lastDebugLogTime = 0;
+
+    // Cheat effect throttle timer (ms remaining)
+    uint32 _cheatEffectTimer = 0;
+
+    // RPG-State-Based AI Budget System — controls which phases run per update
+    AIBudgetTier _currentBudgetTier = AIBudgetTier::FULL;
+    uint32 _budgetReassessTimer = 0;
 };
 
 // ========================================================================

@@ -18,6 +18,7 @@
 #define PLAYERBOT_GAME_SYSTEMS_MANAGER_H
 
 #include "IGameSystemsManager.h"
+#include "AI/AIBudgetTier.h"
 #include <memory>
 
 // Manager includes
@@ -243,6 +244,12 @@ public:
     DispelCoordinator* GetDispelCoordinator() const override { return _dispelCoordinator.get(); }
     InterruptRotationManager* GetInterruptRotationManager() const override { return _interruptRotationManager.get(); }
 
+    // ========================================================================
+    // RPG-STATE AI BUDGET TIER - Manager-level scope gating
+    // ========================================================================
+    void SetBudgetTier(AIBudgetTier tier) { _budgetTier = tier; }
+    AIBudgetTier GetBudgetTier() const { return _budgetTier; }
+
 private:
     // ========================================================================
     // MANAGER INSTANCES - All 26 managers owned by facade
@@ -331,6 +338,7 @@ private:
     Player* _bot;                   // Bot player reference (non-owning)
     BotAI* _botAI;                  // BotAI reference (non-owning, needed for initialization)
     bool _initialized{false};       // Initialization state flag
+    AIBudgetTier _budgetTier{AIBudgetTier::FULL}; // RPG-state budget tier for manager gating
 
     // Update throttling timers (moved from BotAI)
     uint32 _equipmentCheckTimer{0};
