@@ -2,7 +2,11 @@
  * Copyright (C) 2024-2026 TrinityCore <https://www.trinitycore.org/>
  *
  * EnchantGemDatabase: Static database of optimal enchants and gems per
- * class/spec/slot. Loaded from the database on startup with hardcoded defaults.
+ * class/spec/slot. Loaded from DB2 client data at startup — iterates
+ * SpellItemEnchantmentStore and GemPropertiesStore, scores each entry
+ * against the spec's primary stat and role to build ranked recommendations.
+ *
+ * No SQL tables needed — all data comes from authoritative WoW client DB2.
  *
  * Follows the InterruptDatabase pattern (static Initialize, static maps,
  * static query methods).
@@ -170,13 +174,13 @@ struct GemKeyHash
 class TC_GAME_API EnchantGemDatabase
 {
 public:
-    /// Initialize from database, with hardcoded defaults as fallback.
+    /// Initialize from DB2 client data stores (SpellItemEnchantment, GemProperties).
     static void Initialize();
 
     /// Check if initialized.
     static bool IsInitialized() { return _initialized; }
 
-    /// Reload from database.
+    /// Reload from DB2 data.
     static void Reload();
 
     // ========================================================================
@@ -220,10 +224,16 @@ public:
     static uint32 GetGemCount();
 
 private:
-    static void LoadFromDatabase();
-    static void LoadDefaultEnchants();
-    static void LoadDefaultGems();
+    static void LoadEnchantsFromDB2();
+    static void LoadGemsFromDB2();
     static void EnsureInitialized();
+
+    /// Score an enchant's stat effects against a spec's role/stat priorities.
+    /// Returns 0.0 if the enchant provides no useful stats.
+    static float ScoreEnchantForSpec(uint32 enchantId, uint8 classId, int8 specRole, int8 primaryStat);
+
+    /// Map an InventoryType (from ItemSparse) to our EnchantSlotType.
+    static EnchantSlotType InventoryTypeToSlot(uint8 inventoryType);
 
     // Enchant storage: key -> sorted list (highest priority first)
     static std::unordered_map<EnchantKey, std::vector<EnchantRecommendation>, EnchantKeyHash> _enchants;

@@ -14,6 +14,7 @@
 #include "Log.h"
 #include "GameTime.h"
 #include "ObjectMgr.h"
+#include "SharedDefines.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -596,19 +597,19 @@ bool GuildTaskManager::CanBotDoTask(Player* bot, GuildTask const& task) const
     switch (task.type)
     {
         case GuildTaskType::FISH:
-            if (bot->GetSkillValue(356) == 0) // Fishing skill ID
+            if (bot->GetSkillValue(SKILL_FISHING) == 0)
                 return false;
             break;
         case GuildTaskType::MINE:
-            if (bot->GetSkillValue(186) == 0) // Mining skill ID
+            if (bot->GetSkillValue(SKILL_MINING) == 0)
                 return false;
             break;
         case GuildTaskType::HERB:
-            if (bot->GetSkillValue(182) == 0) // Herbalism skill ID
+            if (bot->GetSkillValue(SKILL_HERBALISM) == 0)
                 return false;
             break;
         case GuildTaskType::SKIN:
-            if (bot->GetSkillValue(393) == 0) // Skinning skill ID
+            if (bot->GetSkillValue(SKILL_SKINNING) == 0)
                 return false;
             break;
         case GuildTaskType::DUNGEON:
@@ -642,16 +643,16 @@ float GuildTaskManager::ScoreBotForTask(Player* bot, GuildTask const& task) cons
     switch (task.type)
     {
         case GuildTaskType::FISH:
-            score += static_cast<float>(bot->GetSkillValue(356)) / 600.0f;
+            score += static_cast<float>(bot->GetSkillValue(SKILL_FISHING)) / 600.0f;
             break;
         case GuildTaskType::MINE:
-            score += static_cast<float>(bot->GetSkillValue(186)) / 600.0f;
+            score += static_cast<float>(bot->GetSkillValue(SKILL_MINING)) / 600.0f;
             break;
         case GuildTaskType::HERB:
-            score += static_cast<float>(bot->GetSkillValue(182)) / 600.0f;
+            score += static_cast<float>(bot->GetSkillValue(SKILL_HERBALISM)) / 600.0f;
             break;
         case GuildTaskType::SKIN:
-            score += static_cast<float>(bot->GetSkillValue(393)) / 600.0f;
+            score += static_cast<float>(bot->GetSkillValue(SKILL_SKINNING)) / 600.0f;
             break;
         default:
             break;
@@ -839,34 +840,34 @@ void GuildTaskManager::LoadDefaultTemplates()
     // FISH tasks
     addTemplate(GuildTaskType::FISH, GuildTaskDifficulty::EASY,
         "Gone Fishing", "Catch fish for the guild feast.",
-        5, 15, 10, 356, 1, 200, 3, 24, 1.0f);
+        5, 15, 10, SKILL_FISHING, 1, 200, 3, 24, 1.0f);
 
     addTemplate(GuildTaskType::FISH, GuildTaskDifficulty::NORMAL,
         "Deep Sea Fishing", "Catch rare fish from challenging waters.",
-        10, 25, 40, 356, 200, 500, 5, 48, 0.7f);
+        10, 25, 40, SKILL_FISHING, 200, 500, 5, 48, 0.7f);
 
     // MINE tasks
     addTemplate(GuildTaskType::MINE, GuildTaskDifficulty::EASY,
         "Ore Collection", "Mine ore for guild crafters.",
-        5, 15, 10, 186, 1, 200, 3, 24, 1.0f);
+        5, 15, 10, SKILL_MINING, 1, 200, 3, 24, 1.0f);
 
     addTemplate(GuildTaskType::MINE, GuildTaskDifficulty::NORMAL,
         "Deep Mining Expedition", "Mine rare minerals from deep veins.",
-        10, 20, 40, 186, 200, 500, 5, 48, 0.7f);
+        10, 20, 40, SKILL_MINING, 200, 500, 5, 48, 0.7f);
 
     // HERB tasks
     addTemplate(GuildTaskType::HERB, GuildTaskDifficulty::EASY,
         "Herb Gathering", "Pick herbs for the guild alchemist.",
-        5, 15, 10, 182, 1, 200, 3, 24, 1.0f);
+        5, 15, 10, SKILL_HERBALISM, 1, 200, 3, 24, 1.0f);
 
     addTemplate(GuildTaskType::HERB, GuildTaskDifficulty::NORMAL,
         "Rare Herb Expedition", "Gather rare herbs from dangerous areas.",
-        10, 20, 40, 182, 200, 500, 5, 48, 0.7f);
+        10, 20, 40, SKILL_HERBALISM, 200, 500, 5, 48, 0.7f);
 
     // SKIN tasks
     addTemplate(GuildTaskType::SKIN, GuildTaskDifficulty::EASY,
         "Leather Procurement", "Skin creatures for guild leatherworkers.",
-        5, 15, 10, 393, 1, 200, 3, 24, 0.8f);
+        5, 15, 10, SKILL_SKINNING, 1, 200, 3, 24, 0.8f);
 
     // CRAFT tasks
     addTemplate(GuildTaskType::CRAFT, GuildTaskDifficulty::NORMAL,
