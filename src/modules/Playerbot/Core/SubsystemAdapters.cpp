@@ -24,6 +24,7 @@
 #include "Quest/QuestHubDatabase.h"
 #include "Travel/PortalDatabase.h"
 #include "Equipment/BotGearFactory.h"
+#include "Equipment/EnchantGemDatabase.h"
 #include "Network/PlayerbotPacketSniffer.h"
 #include "Cooldown/MajorCooldownTracker.h"
 #include "Threading/BotActionManager.h"
@@ -45,6 +46,10 @@
 #include "Lifecycle/Instance/InstanceBotHooks.h"
 #include "Core/Diagnostics/BotOperationTracker.h"
 #include "Lifecycle/BotSpawner.h"
+#include "Session/ServerLoadMonitor.h"
+#include "Social/GuildTaskManager.h"
+#include "Account/AccountLinkingManager.h"
+#include "Core/Diagnostics/BotCheatMask.h"
 
 // EventBus includes
 #include "Group/GroupEvents.h"
@@ -265,6 +270,21 @@ SubsystemInfo PortalDatabaseSubsystem::GetInfo() const
 bool PortalDatabaseSubsystem::Initialize()
 {
     return PortalDatabase::Instance().Initialize();
+}
+
+// ============================================================================
+// #10.5: EnchantGemDatabase (initOrder=195) NORMAL
+// ============================================================================
+
+SubsystemInfo EnchantGemDatabaseSubsystem::GetInfo() const
+{
+    return { "EnchantGemDatabase", SubsystemPriority::NORMAL, 195, 0, 0 };
+}
+
+bool EnchantGemDatabaseSubsystem::Initialize()
+{
+    Playerbot::EnchantGemDatabase::Initialize();
+    return true;
 }
 
 // ============================================================================
@@ -870,6 +890,88 @@ void DomainEventBusProcessorSubsystem::Update(uint32 /*diff*/)
 }
 
 // ============================================================================
+// #37: GuildTaskManager (initOrder=420, updateOrder=800) NORMAL
+// Generates guild tasks and assigns them to bot members for autonomous completion.
+// ============================================================================
+
+SubsystemInfo GuildTaskManagerSubsystem::GetInfo() const
+{
+    return { "GuildTaskManager", SubsystemPriority::NORMAL, 420, 800, 420 };
+}
+
+bool GuildTaskManagerSubsystem::Initialize()
+{
+    return Playerbot::GuildTaskManager::instance()->Initialize();
+}
+
+void GuildTaskManagerSubsystem::Update(uint32 diff)
+{
+    Playerbot::GuildTaskManager::instance()->Update(diff);
+}
+
+void GuildTaskManagerSubsystem::Shutdown()
+{
+    Playerbot::GuildTaskManager::instance()->Shutdown();
+}
+
+// ============================================================================
+// #38: AccountLinkingManager (initOrder=430) NORMAL
+// Links human accounts with bot accounts for permission-based access.
+// ============================================================================
+
+SubsystemInfo AccountLinkingManagerSubsystem::GetInfo() const
+{
+    return { "AccountLinkingManager", SubsystemPriority::NORMAL, 430, 0, 430 };
+}
+
+bool AccountLinkingManagerSubsystem::Initialize()
+{
+    return Playerbot::AccountLinkingManager::instance()->Initialize();
+}
+
+void AccountLinkingManagerSubsystem::Shutdown()
+{
+    Playerbot::AccountLinkingManager::instance()->Shutdown();
+}
+
+// ============================================================================
+// #39: BotCheatMask (initOrder=440) LOW
+// Per-bot cheat system for testing and debugging.
+// ============================================================================
+
+SubsystemInfo BotCheatMaskSubsystem::GetInfo() const
+{
+    return { "BotCheatMask", SubsystemPriority::LOW, 440, 0, 0 };
+}
+
+bool BotCheatMaskSubsystem::Initialize()
+{
+    Playerbot::BotCheatMask::instance()->Initialize();
+    return true;
+}
+
+// ============================================================================
+// #36: ServerLoadMonitor (updateOrder=700) NORMAL
+// Monitors server tick performance and provides dynamic reaction delay scaling.
+// ============================================================================
+
+SubsystemInfo ServerLoadMonitorSubsystem::GetInfo() const
+{
+    return { "ServerLoadMonitor", SubsystemPriority::NORMAL, 0, 700, 0 };
+}
+
+bool ServerLoadMonitorSubsystem::Initialize()
+{
+    Playerbot::ServerLoadMonitor::instance()->Initialize();
+    return true;
+}
+
+void ServerLoadMonitorSubsystem::Update(uint32 diff)
+{
+    Playerbot::ServerLoadMonitor::instance()->Update(diff);
+}
+
+// ============================================================================
 // REGISTRATION
 // ============================================================================
 
@@ -888,6 +990,7 @@ void RegisterAllSubsystems()
     registry->RegisterSubsystem(std::make_unique<ClassBehaviorTreeRegistrySubsystem>());    // 170
     registry->RegisterSubsystem(std::make_unique<QuestHubDatabaseSubsystem>());             // 180
     registry->RegisterSubsystem(std::make_unique<PortalDatabaseSubsystem>());               // 190
+    registry->RegisterSubsystem(std::make_unique<EnchantGemDatabaseSubsystem>());           // 195
     registry->RegisterSubsystem(std::make_unique<BotGearFactorySubsystem>());               // 200
     registry->RegisterSubsystem(std::make_unique<PlayerbotPacketSnifferSubsystem>());       // 210
     registry->RegisterSubsystem(std::make_unique<BGLFGPacketHandlersSubsystem>());          // 220
@@ -910,6 +1013,9 @@ void RegisterAllSubsystems()
     registry->RegisterSubsystem(std::make_unique<InstanceBotOrchestratorSubsystem>());      // 390
     registry->RegisterSubsystem(std::make_unique<InstanceBotHooksSubsystem>());             // 400
     registry->RegisterSubsystem(std::make_unique<BotOperationTrackerSubsystem>());          // 410
+    registry->RegisterSubsystem(std::make_unique<GuildTaskManagerSubsystem>());             // 420
+    registry->RegisterSubsystem(std::make_unique<AccountLinkingManagerSubsystem>());       // 430
+    registry->RegisterSubsystem(std::make_unique<BotCheatMaskSubsystem>());                // 440
 
     // Update-only subsystems (initOrder=0, updateOrder > 0)
     registry->RegisterSubsystem(std::make_unique<BotSpawnerSubsystem>());                   // update=200
@@ -918,6 +1024,7 @@ void RegisterAllSubsystems()
     // EventBus subsystems (update-only)
     registry->RegisterSubsystem(std::make_unique<GroupEventBusSubsystem>());                // update=500
     registry->RegisterSubsystem(std::make_unique<DomainEventBusProcessorSubsystem>());     // update=600
+    registry->RegisterSubsystem(std::make_unique<ServerLoadMonitorSubsystem>());             // update=700
 }
 
 } // namespace Playerbot

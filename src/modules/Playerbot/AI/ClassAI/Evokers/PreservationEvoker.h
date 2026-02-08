@@ -296,6 +296,15 @@ public:
         // Phase 5: Initialize decision systems
         InitializePreservationMechanics();
 
+        // Register healing spell efficiency tiers
+        GetEfficiencyManager().RegisterSpell(LIVING_FLAME_HEAL, HealingSpellTier::VERY_HIGH, "Living Flame");
+        GetEfficiencyManager().RegisterSpell(REVERSION, HealingSpellTier::VERY_HIGH, "Reversion");
+        GetEfficiencyManager().RegisterSpell(EMERALD_BLOSSOM, HealingSpellTier::MEDIUM, "Emerald Blossom");
+        GetEfficiencyManager().RegisterSpell(VERDANT_EMBRACE, HealingSpellTier::HIGH, "Verdant Embrace");
+        GetEfficiencyManager().RegisterSpell(DREAM_BREATH, HealingSpellTier::MEDIUM, "Dream Breath");
+        GetEfficiencyManager().RegisterSpell(SPIRIT_BLOOM, HealingSpellTier::LOW, "Spirit Bloom");
+        GetEfficiencyManager().RegisterSpell(EMERALD_COMMUNION, HealingSpellTier::EMERGENCY, "Emerald Communion");
+
         // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
         TC_LOG_DEBUG("playerbot", "PreservationEvokerRefactored created for bot GUID: {}",
             bot ? bot->GetGUID().GetCounter() : 0);
@@ -378,7 +387,7 @@ protected:
         if (criticalCount >= 1 && this->_resource.essence >= 3)
         {
             Unit* target = GetLowestHealthTarget(group);
-            if (target && this->CanCastSpell(SPIRIT_BLOOM, target))
+            if (target && IsHealAllowedByMana(SPIRIT_BLOOM) && this->CanCastSpell(SPIRIT_BLOOM, target))
             {
                 StartEmpoweredSpell(SPIRIT_BLOOM, EmpowerLevelPres::RANK_3, target);
                 return true;
@@ -425,7 +434,7 @@ protected:
         if (injuredCount >= 3)
         {
             Unit* target = GetMostInjuredTarget(group);
-            if (target && this->CanCastSpell(DREAM_BREATH, target))
+            if (target && IsHealAllowedByMana(DREAM_BREATH) && this->CanCastSpell(DREAM_BREATH, target))
             {
                 StartEmpoweredSpell(DREAM_BREATH, EmpowerLevelPres::RANK_2, target);
                 return true;
@@ -443,7 +452,7 @@ protected:
             if (member && member->GetHealthPct() < 80.0f)
                 injuredCount++;
 
-        if (injuredCount >= 3 && this->CanCastSpell(EMERALD_BLOSSOM, this->GetBot()))
+        if (injuredCount >= 3 && IsHealAllowedByMana(EMERALD_BLOSSOM) && this->CanCastSpell(EMERALD_BLOSSOM, this->GetBot()))
         {
             this->CastSpell(EMERALD_BLOSSOM, this->GetBot());
             this->_resource.Consume(3);
@@ -452,7 +461,7 @@ protected:
 
         // Verdant Embrace for single target
         Unit* target = GetLowestHealthTarget(group);
-        if (target && target->GetHealthPct() < 70.0f && this->CanCastSpell(VERDANT_EMBRACE, target))
+        if (target && target->GetHealthPct() < 70.0f && IsHealAllowedByMana(VERDANT_EMBRACE) && this->CanCastSpell(VERDANT_EMBRACE, target))
         {
             this->CastSpell(VERDANT_EMBRACE, target);
             this->_resource.Consume(1);

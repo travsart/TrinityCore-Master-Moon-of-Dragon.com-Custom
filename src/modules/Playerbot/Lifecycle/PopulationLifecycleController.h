@@ -43,6 +43,7 @@
 #include <chrono>
 #include <mutex>
 #include <shared_mutex>
+#include <memory>
 #include <vector>
 
 // Forward declaration OUTSIDE namespace for TrinityCore's Player class
@@ -57,6 +58,7 @@ class BotRetirementManager;
 class BracketFlowPredictor;
 class PlayerActivityTracker;
 class DemandCalculator;
+class PopulationPIDController;
 struct DemandSpawnRequest;
 
 /**
@@ -442,6 +444,7 @@ private:
     BracketFlowPredictor* _flowPredictor = nullptr;
     PlayerActivityTracker* _activityTracker = nullptr;
     DemandCalculator* _demandCalculator = nullptr;
+    std::unique_ptr<PopulationPIDController> _pidController;
 
     // Statistics
     mutable LifecycleStats _stats;

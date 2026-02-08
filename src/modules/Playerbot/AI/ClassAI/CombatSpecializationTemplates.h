@@ -35,6 +35,9 @@
 #include "../Combat/TargetManager.h"
 #include "../Combat/CrowdControlManager.h"
 #include "../Combat/DefensiveManager.h"
+#include "../Combat/TTKEstimator.h"
+#include "../Combat/CombatBehaviorIntegration.h"
+#include "HealingEfficiencyManager.h"
 #include <unordered_map>
 #include <concepts>
 #include <type_traits>
@@ -624,6 +627,37 @@ protected:
         return true;    }
 
     /**
+     * Check if a spell's cast time is too long for a target that will die soon.
+     * Uses the TTKEstimator from CombatBehaviorIntegration to predict time-to-kill.
+     * Returns true if the spell should be skipped (target will die before cast completes).
+     */
+    bool ShouldSkipForTTK(uint32 spellId, ::Unit* target)
+    {
+        if (!target || !GetBot())
+            return false;
+
+        auto spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+        if (!spellInfo)
+            return false;
+
+        // Only check for spells with meaningful cast times (>1s)
+        uint32 castTimeMs = spellInfo->CalcCastTime();
+        if (castTimeMs <= 1000)
+            return false;
+
+        // Get TTKEstimator from CombatBehaviorIntegration
+        CombatBehaviorIntegration* combatBehaviors = GetCombatBehaviors();
+        if (!combatBehaviors)
+            return false;
+
+        TTKEstimator* ttkEstimator = combatBehaviors->GetTTKEstimator();
+        if (!ttkEstimator)
+            return false;
+
+        return ttkEstimator->ShouldSkipLongCast(castTimeMs, target);
+    }
+
+    /**
      * Get number of enemies in range (for AoE decision making)
      */
     uint32 GetEnemiesInRange(float range) const
@@ -1170,6 +1204,7 @@ public:
         : CombatSpecializationTemplate<ResourceType>(bot)
         , _lastGroupHealTime(0)
         , _emergencyHealThreshold(0.3f)
+        , _efficiencyMgr(bot)
     {
     }
 
@@ -1415,9 +1450,27 @@ protected:
         return center;
     }
 
+    /**
+     * Get the healing efficiency manager for mana-based spell gating.
+     * Healer specs should register their spells in their constructor
+     * via GetEfficiencyManager().RegisterSpell().
+     */
+    HealingEfficiencyManager& GetEfficiencyManager() { return _efficiencyMgr; }
+    const HealingEfficiencyManager& GetEfficiencyManager() const { return _efficiencyMgr; }
+
+    /**
+     * Check if a healing spell is allowed at current mana level.
+     * Convenience wrapper around HealingEfficiencyManager.
+     */
+    bool IsHealAllowedByMana(uint32 spellId, bool tankTarget = false)
+    {
+        return _efficiencyMgr.IsSpellAllowedAtCurrentMana(spellId, tankTarget);
+    }
+
 private:
     uint32 _lastGroupHealTime;
     float _emergencyHealThreshold;
+    HealingEfficiencyManager _efficiencyMgr;
 };
 
 // ============================================================================

@@ -13,6 +13,7 @@
 #include "Prediction/BracketFlowPredictor.h"
 #include "Demand/PlayerActivityTracker.h"
 #include "Demand/DemandCalculator.h"
+#include "Demand/PopulationPIDController.h"
 #include "Character/BotLevelDistribution.h"
 #include "Log.h"
 #include "Config/PlayerbotConfig.h"
@@ -45,6 +46,17 @@ bool PopulationLifecycleController::Initialize()
 
     // Calculate initial bracket targets
     CalculateBracketTargets();
+
+    // Initialize PID controller for smooth population management
+    _pidController = std::make_unique<PopulationPIDController>();
+    PIDControllerConfig pidConfig;
+    pidConfig.Kp = 0.3f;
+    pidConfig.Ki = 0.05f;
+    pidConfig.Kd = 0.1f;
+    pidConfig.deadband = 2.0f;
+    pidConfig.outputMax = static_cast<float>(_config.maxCreationsPerHour);
+    pidConfig.outputMin = -static_cast<float>(_config.maxRetirementsPerHour);
+    _pidController->Initialize(pidConfig);
 
     // Initialize timing
     _hourStart = std::chrono::system_clock::now();
@@ -272,6 +284,27 @@ LifecycleStats PopulationLifecycleController::AnalyzePopulation()
                 _stats.playerCountPerBracket[idx] = count;
                 _stats.brackets[idx].playerCount = count;
             }
+        }
+    }
+
+    // Update PID controller with current population data per bracket
+    if (_pidController)
+    {
+        for (uint32 i = 0; i < 4; ++i)
+        {
+            _pidController->UpdateBracket(
+                i,
+                static_cast<int32>(_stats.brackets[i].currentBotCount),
+                static_cast<int32>(_stats.brackets[i].targetBotCount));
+        }
+        PIDOutput pidOutput = _pidController->ComputeAggregate();
+
+        // Log PID state periodically for diagnostics
+        if (_config.logDetailedStats)
+        {
+            TC_LOG_DEBUG("module.playerbot", "PID: spawns={} retires={} err={:.1f}",
+                pidOutput.totalRecommendedSpawns, pidOutput.totalRecommendedRetirements,
+                pidOutput.totalError);
         }
     }
 
@@ -866,8 +899,22 @@ uint32 PopulationLifecycleController::GenerateSpawnRequests()
     if (remainingRate == 0)
         return 0;
 
-    // Generate spawn requests
-    auto requests = _demandCalculator->GenerateSpawnRequests(remainingRate);
+    // Use PID controller to smooth the spawn count instead of raw deficit
+    uint32 pidAdjustedCount = remainingRate;
+    if (_pidController)
+    {
+        int32 smoothed = _pidController->GetSmoothedSpawnCount(
+            remainingRate, _config.maxRetirementsPerHour);
+        if (smoothed <= 0)
+        {
+            // PID says don't spawn (population at or above target)
+            return 0;
+        }
+        pidAdjustedCount = std::min(static_cast<uint32>(smoothed), remainingRate);
+    }
+
+    // Generate spawn requests using PID-smoothed count
+    auto requests = _demandCalculator->GenerateSpawnRequests(pidAdjustedCount);
 
     // Store in pending requests
     {

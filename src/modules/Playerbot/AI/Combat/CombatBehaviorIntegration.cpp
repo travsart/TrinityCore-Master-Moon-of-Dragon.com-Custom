@@ -18,6 +18,7 @@
 #include "CrowdControlManager.h"
 #include "DefensiveManager.h"
 #include "MovementIntegration.h"
+#include "TTKEstimator.h"
 #include "Player.h"
 #include "Group.h"
 #include "SpellInfo.h"
@@ -63,6 +64,7 @@ CombatBehaviorIntegration::CombatBehaviorIntegration(Player* bot) :
     _crowdControlManager = std::make_unique<CrowdControlManager>(bot);
     _defensiveManager = std::make_unique<DefensiveManager>(bot);
     _movementIntegration = std::make_unique<MovementIntegration>(bot, _positionManager.get());
+    _ttkEstimator = std::make_unique<TTKEstimator>(bot);
     // CRITICAL: Do NOT access bot->GetName() in constructor!
     // Bot's internal data (m_name) is not initialized during constructor chain.
     // Accessing it causes ACCESS_VIOLATION crash in string construction.
@@ -150,6 +152,9 @@ void CombatBehaviorIntegration::UpdateManagers(uint32 diff)
 
     // Update movement
     _movementIntegration->Update(diff, situation);
+
+    // Update TTK estimator
+    _ttkEstimator->Update(diff);
 
     // Update emergency flags
     _emergencyMode = _stateAnalyzer->IsWipeImminent() ||
@@ -708,6 +713,7 @@ void CombatBehaviorIntegration::Reset()
     _crowdControlManager->Reset();
     _defensiveManager->Reset();
     _movementIntegration->Reset();
+    _ttkEstimator->Reset();
 
     // Clear statistics
     _successfulActions = 0;

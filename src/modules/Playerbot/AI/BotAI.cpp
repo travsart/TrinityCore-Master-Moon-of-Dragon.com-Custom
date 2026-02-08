@@ -12,6 +12,7 @@
 
 #include "BotAI.h"
 #include "AdaptiveAIUpdateThrottler.h"
+#include "Humanization/Activities/RPGDailyRoutineManager.h"
 #include "GameTime.h"
 #include "Core/Managers/GameSystemsManager.h"
 #include "Lifecycle/BotLifecycleState.h"
@@ -190,6 +191,9 @@ BotAI::BotAI(Player* bot, bool instanceOnlyMode)
         sBotMovementManager->RegisterController(_bot);
         TC_LOG_DEBUG("module.playerbot.movement", "BotAI: Movement controller initialized for bot {}",
             _cachedBotGuid.ToString());
+
+        // RPG Daily Routine Manager - autonomous daily activity simulation
+        _rpgRoutineManager = std::make_unique<Humanization::RPGDailyRoutineManager>(_bot);
     }
 
     // Initialize default strategies for basic functionality
@@ -1213,6 +1217,14 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
     // Only run solo behaviors when in solo play mode (not grouped/following)
     if (IsInCombat() || IsFollowing())
         return;
+
+    // ========================================================================
+    // RPG DAILY ROUTINE - Autonomous activity simulation for masterless bots
+    // ========================================================================
+    if (_rpgRoutineManager)
+    {
+        _rpgRoutineManager->Update(diff);
+    }
 
     uint32 currentTime = GameTime::GetGameTimeMS();
 

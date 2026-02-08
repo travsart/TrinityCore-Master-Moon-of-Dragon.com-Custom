@@ -69,6 +69,8 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPriorityManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPerformanceMonitor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPerformanceMonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/ServerLoadMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/ServerLoadMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotHealthCheck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotHealthCheck.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.cpp
@@ -77,6 +79,8 @@ set(PLAYERBOT_CORE_SOURCES
     # Chat system
     ${CMAKE_CURRENT_SOURCE_DIR}/Chat/BotChatCommandHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Chat/BotChatCommandHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Chat/ChatTemplateManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Chat/ChatTemplateManager.h
 
     # Core hooks and helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerBotHooks.cpp
@@ -95,6 +99,9 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/IGameSystemsManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/GameSystemsManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/GameSystemsManager.h
+
+    # Core Utilities
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/DirtyValue.h
 
     # Core Subsystem Registry
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerbotSubsystem.h
@@ -123,6 +130,8 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotOperationTracker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/GroupMemberDiagnostics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/GroupMemberDiagnostics.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotCheatMask.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotCheatMask.h
 
     # Core Combat - Context Detection and Performance
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Combat/CombatContextDetector.cpp
@@ -470,11 +479,18 @@ set(PLAYERBOT_CLASSAI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassSpellDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassSpellDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CombatSpecializationTemplates.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceTypes.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/RoleSpecializations.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/BaselineRotationManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/BaselineRotationManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpellFallbackChain.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpellFallbackChain.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/HealingEfficiencyManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/HealingEfficiencyManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/HealingSpellTierData.h
 
     # ClassAI Common Utilities
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Common/StatusEffectTracker.h
@@ -634,6 +650,8 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TTKEstimator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TTKEstimator.h
 
     # Combat Behaviors
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/CombatBehaviors/DefensiveBehaviorManager.cpp
@@ -681,6 +699,8 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     # Account Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Account/AccountLinkingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Account/AccountLinkingManager.h
 
     # Character Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.cpp
@@ -726,6 +746,14 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/CityLifeBehaviorManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/AFKSimulator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/AFKSimulator.h
+
+    # RPG Daily Routine System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/RPGDailyRoutineManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/RPGDailyRoutineManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/RPGActivityScheduler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/RPGActivityScheduler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/ZoneSelector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities/ZoneSelector.h
 
     # Achievement System (Phase 3)
     ${CMAKE_CURRENT_SOURCE_DIR}/Achievements/AchievementManager.cpp
@@ -812,6 +840,8 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/PlayerActivityTracker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/DemandCalculator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/DemandCalculator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/PopulationPIDController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Demand/PopulationPIDController.h
 
     # Population Controller
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/PopulationLifecycleController.cpp
@@ -1009,6 +1039,8 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager_Events.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeSystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildTaskManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildTaskManager.h
 
     # Economy Systems
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
@@ -1043,6 +1075,10 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/BotGearFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/BotGearFactory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EnchantGemDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EnchantGemDatabase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EnchantGemManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EnchantGemManager.h
 
     # Talent System
     ${CMAKE_CURRENT_SOURCE_DIR}/Talents/BotTalentManager.cpp
@@ -1216,6 +1252,10 @@ set(PLAYERBOT_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Messaging
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Core
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Activities
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Sessions
     ${CMAKE_SOURCE_DIR}/src/modules/Common
     ${MYSQL_INCLUDE_DIR}
 )

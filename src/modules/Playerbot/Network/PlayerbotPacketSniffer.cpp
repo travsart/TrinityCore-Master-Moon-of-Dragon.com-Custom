@@ -26,12 +26,9 @@ void PlayerbotPacketSniffer::Initialize()
     if (_initialized)
         return;
 
-    TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Initializing packet interception system...");
+    TC_LOG_INFO("module.playerbot", "PlayerbotPacketSniffer: Initializing typed packet interception system...");
 
-    // Initialize opcode mapping
-    InitializeOpcodeMapping();
-
-    // Register typed packet handlers (WoW 12.0)
+    // Register typed packet handlers (WoW 12.0 - all packet handling via typed handlers)
     RegisterGroupPacketHandlers();
     RegisterCombatPacketHandlers();
     RegisterCooldownPacketHandlers();
@@ -54,8 +51,8 @@ void PlayerbotPacketSniffer::Initialize()
 
     _initialized = true;
 
-    TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Initialized with {} opcode mappings and {} typed handlers",
-        _packetCategoryMap.size(), _typedPacketHandlers.size());
+    TC_LOG_INFO("module.playerbot", "PlayerbotPacketSniffer: Initialized with {} typed handlers",
+        _typedPacketHandlers.size());
 }
 
 void PlayerbotPacketSniffer::Shutdown()
@@ -63,170 +60,30 @@ void PlayerbotPacketSniffer::Shutdown()
     if (!_initialized)
         return;
 
-    TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Shutting down...");
+    TC_LOG_INFO("module.playerbot", "PlayerbotPacketSniffer: Shutting down...");
 
     DumpStatistics();
 
-    _packetCategoryMap.clear();
+    _typedPacketHandlers.clear();
     _initialized = false;
 
-    TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Shutdown complete");
+    TC_LOG_INFO("module.playerbot", "PlayerbotPacketSniffer: Shutdown complete");
 }
 
 void PlayerbotPacketSniffer::OnPacketSend(WorldSession* session, WorldPacket const& packet)
 {
+    // Legacy opcode-based entry point. All packet handling now occurs through
+    // OnTypedPacket<T>() which receives strongly-typed packets before serialization.
+    // This method is retained as a public API entry point but only tracks stats.
+
     if (!_initialized || !session)
         return;
 
-    // Performance: Early exit if not a bot
     Player* player = session->GetPlayer();
     if (!player || !PlayerBotHooks::IsPlayerBot(player))
         return;
 
-    auto startTime = ::std::chrono::high_resolution_clock::now();
-
-    // Categorize and route packet
-    PacketCategory category = CategorizePacket(static_cast<OpcodeServer>(packet.GetOpcode()));
-    if (category != PacketCategory::UNKNOWN)
-    {
-        RouteToCategory(category, session, packet);
-
-        // Update statistics
-        _categoryPackets[static_cast<uint8>(category)].fetch_add(1, ::std::memory_order_relaxed);
-    }
-
     _totalPackets.fetch_add(1, ::std::memory_order_relaxed);
-
-    // Track processing time
-    auto endTime = ::std::chrono::high_resolution_clock::now();
-    uint64_t processingTimeUs = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count();
-
-    _totalProcessTimeUs.fetch_add(processingTimeUs, ::std::memory_order_relaxed);
-
-    // Update peak time (lock-free CAS loop)
-    uint64_t currentPeak = _peakProcessTimeUs.load(::std::memory_order_relaxed);
-    while (processingTimeUs > currentPeak &&
-           !_peakProcessTimeUs.compare_exchange_weak(currentPeak, processingTimeUs, ::std::memory_order_relaxed));
-}
-
-void PlayerbotPacketSniffer::RouteToCategory(PacketCategory category, WorldSession* session, WorldPacket const& packet)
-{
-    switch (category)
-    {
-        case PacketCategory::GROUP:
-            ParseGroupPacket(session, packet);
-            break;
-        case PacketCategory::COMBAT:
-            ParseCombatPacket(session, packet);
-            break;
-        case PacketCategory::COOLDOWN:
-            ParseCooldownPacket(session, packet);
-            break;
-        case PacketCategory::LOOT:
-            ParseLootPacket(session, packet);
-            break;
-        case PacketCategory::QUEST:
-            ParseQuestPacket(session, packet);
-            break;
-        case PacketCategory::AURA:
-            ParseAuraPacket(session, packet);
-            break;
-        case PacketCategory::RESOURCE:
-            ParseResourcePacket(session, packet);
-            break;
-        case PacketCategory::SOCIAL:
-            ParseSocialPacket(session, packet);
-            break;
-        case PacketCategory::AUCTION:
-            ParseAuctionPacket(session, packet);
-            break;
-        case PacketCategory::NPC:
-            ParseNPCPacket(session, packet);
-            break;
-        case PacketCategory::INSTANCE:
-            ParseInstancePacket(session, packet);
-            break;
-        default:
-            break;
-    }
-}
-
-PacketCategory PlayerbotPacketSniffer::CategorizePacket(OpcodeServer opcode)
-{
-    auto it = _packetCategoryMap.find(opcode);
-    if (it != _packetCategoryMap.end())
-        return it->second;
-
-    return PacketCategory::UNKNOWN;
-}
-
-void PlayerbotPacketSniffer::InitializeOpcodeMapping()
-{
-    // DEPRECATED: Opcode-based packet routing is no longer used in WoW 12.0
-    // All packet handling now occurs via typed packet handlers registered in
-    // Register*PacketHandlers() functions (see Parse*Packet_Typed.cpp files)
-    //
-    // This function is kept for backward compatibility but does nothing.
-    // The CategorizePacket() function will always return PacketCategory::UNKNOWN
-    // and typed packets are intercepted before reaching OnPacketSend().
-
-    TC_LOG_DEBUG("playerbot", "PlayerbotPacketSniffer: Opcode mapping skipped (using typed packet handlers)");
-}
-
-// Category-specific parsers (deprecated - all handling now via typed handlers)
-void PlayerbotPacketSniffer::ParseGroupPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Deprecated: All group packet handling now in ParseGroupPacket_Typed.cpp via typed handlers
-}
-
-void PlayerbotPacketSniffer::ParseCombatPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Deprecated: All combat packet handling now in ParseCombatPacket_Typed.cpp via typed handlers
-}
-
-void PlayerbotPacketSniffer::ParseCooldownPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Deprecated: All cooldown packet handling now in ParseCooldownPacket_Typed.cpp via typed handlers
-}
-
-void PlayerbotPacketSniffer::ParseLootPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Deprecated: All loot packet handling now in ParseLootPacket_Typed.cpp via typed handlers
-}
-
-void PlayerbotPacketSniffer::ParseQuestPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Deprecated: All quest packet handling now in ParseQuestPacket_Typed.cpp via typed handlers
-}
-
-void PlayerbotPacketSniffer::ParseAuraPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Deprecated: All aura packet handling now in ParseAuraPacket_Typed.cpp via typed handlers
-}
-
-void PlayerbotPacketSniffer::ParseResourcePacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Not yet implemented
-}
-
-void PlayerbotPacketSniffer::ParseSocialPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Not yet implemented
-}
-
-void PlayerbotPacketSniffer::ParseAuctionPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Not yet implemented
-}
-
-void PlayerbotPacketSniffer::ParseNPCPacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Not yet implemented
-}
-
-void PlayerbotPacketSniffer::ParseInstancePacket(WorldSession* session, WorldPacket const& packet)
-{
-    // Not yet implemented
 }
 
 // Statistics implementation
@@ -246,7 +103,8 @@ void PlayerbotPacketSniffer::ParseInstancePacket(WorldSession* session, WorldPac
     ss << "\nPackets per Category:\n";
     const char* categoryNames[] = {
         "GROUP", "COMBAT", "COOLDOWN", "LOOT", "QUEST", "AURA",
-        "RESOURCE", "SOCIAL", "AUCTION", "NPC", "INSTANCE", "UNKNOWN"
+        "RESOURCE", "SOCIAL", "AUCTION", "NPC", "INSTANCE",
+        "BATTLEGROUND", "LFG", "UNKNOWN"
     };
 
     for (uint8 i = 0; i < static_cast<uint8>(PacketCategory::MAX_CATEGORY); ++i)
@@ -298,7 +156,7 @@ PlayerbotPacketSniffer::Statistics PlayerbotPacketSniffer::GetStatistics()
 void PlayerbotPacketSniffer::DumpStatistics()
 {
     Statistics stats = GetStatistics();
-    TC_LOG_INFO("playerbot", "{}", stats.ToString());
+    TC_LOG_INFO("module.playerbot", "{}", stats.ToString());
 }
 
 } // namespace Playerbot

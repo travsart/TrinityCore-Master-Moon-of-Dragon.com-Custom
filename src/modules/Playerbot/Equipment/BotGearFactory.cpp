@@ -8,6 +8,8 @@
 
 #include "BotGearFactory.h"
 #include "EquipmentManager.h"
+#include "EnchantGemDatabase.h"
+#include "EnchantGemManager.h"
 #include "../Core/Diagnostics/BotOperationTracker.h"
 #include "Player.h"
 #include "Item.h"
@@ -368,6 +370,33 @@ bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
         {
             TC_LOG_WARN("playerbot.gear", "BotGearFactory: Cannot store consumable {} x{} for player {}: error {}",
                         consumableEntry, quantity, player->GetName(), uint32(storeResult));
+        }
+    }
+
+    // Phase 3.5: Apply enchants and gems to equipped items
+    if (_enchantItems || _gemItems)
+    {
+        if (EnchantGemDatabase::IsInitialized())
+        {
+            EnchantGemResult enchantGemResult;
+            if (_enchantItems)
+            {
+                auto er = EnchantGemManager::ApplyOptimalEnchants(player, false);
+                enchantGemResult.enchantsApplied = er.enchantsApplied;
+                enchantGemResult.enchantsSkipped = er.enchantsSkipped;
+            }
+            if (_gemItems)
+            {
+                auto gr = EnchantGemManager::ApplyOptimalGems(player, false);
+                enchantGemResult.gemsApplied = gr.gemsApplied;
+                enchantGemResult.gemsSkipped = gr.gemsSkipped;
+            }
+
+            if (enchantGemResult.TotalApplied() > 0)
+            {
+                TC_LOG_DEBUG("playerbot.gear", "BotGearFactory: Applied {} enchants + {} gems for player {}",
+                    enchantGemResult.enchantsApplied, enchantGemResult.gemsApplied, player->GetName());
+            }
         }
     }
 

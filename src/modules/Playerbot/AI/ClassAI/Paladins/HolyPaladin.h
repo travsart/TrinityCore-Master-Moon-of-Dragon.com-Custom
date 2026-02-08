@@ -238,6 +238,16 @@ public:
         // Initialize Phase 5 systems
         InitializeHolyPaladinMechanics();
 
+        // Register healing spell efficiency tiers
+        GetEfficiencyManager().RegisterSpell(HOLY_LIGHT, HealingSpellTier::VERY_HIGH, "Holy Light");
+        GetEfficiencyManager().RegisterSpell(FLASH_OF_LIGHT, HealingSpellTier::HIGH, "Flash of Light");
+        GetEfficiencyManager().RegisterSpell(HOLY_SHOCK, HealingSpellTier::VERY_HIGH, "Holy Shock");
+        GetEfficiencyManager().RegisterSpell(WORD_OF_GLORY, HealingSpellTier::VERY_HIGH, "Word of Glory");
+        GetEfficiencyManager().RegisterSpell(LIGHT_OF_DAWN, HealingSpellTier::MEDIUM, "Light of Dawn");
+        GetEfficiencyManager().RegisterSpell(LAY_ON_HANDS, HealingSpellTier::EMERGENCY, "Lay on Hands");
+        GetEfficiencyManager().RegisterSpell(DIVINE_SHIELD, HealingSpellTier::EMERGENCY, "Divine Shield");
+        GetEfficiencyManager().RegisterSpell(BEACON_OF_LIGHT, HealingSpellTier::VERY_HIGH, "Beacon of Light");
+
         // Note: Do NOT call bot->GetName() here - Player data may not be loaded yet
         TC_LOG_DEBUG("playerbot", "HolyPaladinRefactored created for bot GUID: {}",
             bot ? bot->GetGUID().GetCounter() : 0);
@@ -363,7 +373,7 @@ protected:
                         }
 
                         // Flash of Light for speed
-                        if (_infusionOfLightActive && this->CanCastSpell(FLASH_OF_LIGHT, member))
+                        if (_infusionOfLightActive && IsHealAllowedByMana(FLASH_OF_LIGHT) && this->CanCastSpell(FLASH_OF_LIGHT, member))
                         {
                             this->CastSpell(FLASH_OF_LIGHT, member);
                             _infusionOfLightActive = false;
@@ -385,7 +395,7 @@ protected:
         if (injuredCount >= 3)
         {
             // Light of Dawn for AoE healing
-            if (this->CanCastSpell(LIGHT_OF_DAWN, this->GetBot()))
+            if (IsHealAllowedByMana(LIGHT_OF_DAWN) && this->CanCastSpell(LIGHT_OF_DAWN, this->GetBot()))
             {
                 this->CastSpell(LIGHT_OF_DAWN, this->GetBot());
                 ConsumeHolyPower(3);
@@ -418,7 +428,7 @@ protected:
         // Critical: Flash of Light
         if (healthPct < 50.0f)
         {
-            if (this->CanCastSpell(FLASH_OF_LIGHT, target))
+            if (IsHealAllowedByMana(FLASH_OF_LIGHT) && this->CanCastSpell(FLASH_OF_LIGHT, target))
             {
                 this->CastSpell(FLASH_OF_LIGHT, target);
                 return;

@@ -256,6 +256,17 @@ public:
         // Phase 5: Initialize decision systems
         InitializeRestorationShamanMechanics();
 
+        // Register healing spell efficiency tiers
+        GetEfficiencyManager().RegisterSpell(REST_HEALING_WAVE, HealingSpellTier::VERY_HIGH, "Healing Wave");
+        GetEfficiencyManager().RegisterSpell(REST_RIPTIDE, HealingSpellTier::VERY_HIGH, "Riptide");
+        GetEfficiencyManager().RegisterSpell(REST_EARTH_SHIELD, HealingSpellTier::VERY_HIGH, "Earth Shield");
+        GetEfficiencyManager().RegisterSpell(REST_HEALING_SURGE, HealingSpellTier::HIGH, "Healing Surge");
+        GetEfficiencyManager().RegisterSpell(REST_CHAIN_HEAL, HealingSpellTier::MEDIUM, "Chain Heal");
+        GetEfficiencyManager().RegisterSpell(REST_HEALING_RAIN, HealingSpellTier::MEDIUM, "Healing Rain");
+        GetEfficiencyManager().RegisterSpell(REST_HEALING_TIDE_TOTEM, HealingSpellTier::EMERGENCY, "Healing Tide Totem");
+        GetEfficiencyManager().RegisterSpell(REST_SPIRIT_LINK_TOTEM, HealingSpellTier::EMERGENCY, "Spirit Link Totem");
+        GetEfficiencyManager().RegisterSpell(REST_WELLSPRING, HealingSpellTier::LOW, "Wellspring");
+
         // SAFETY: GetName() removed from constructor to prevent ACCESS_VIOLATION crash during worker thread bot login
     }
 
@@ -661,7 +672,7 @@ private:
         if (stackedAlliesCount >= 3 && stackedTarget)
         {
 
-            if (this->CanCastSpell(REST_HEALING_RAIN, stackedTarget))
+            if (IsHealAllowedByMana(REST_HEALING_RAIN) && this->CanCastSpell(REST_HEALING_RAIN, stackedTarget))
 
             {
 
@@ -680,7 +691,7 @@ private:
 
             {
 
-                if (this->CanCastSpell(REST_WELLSPRING, stackedTarget))
+                if (IsHealAllowedByMana(REST_WELLSPRING) && this->CanCastSpell(REST_WELLSPRING, stackedTarget))
 
                 {
 
@@ -714,7 +725,7 @@ private:
 
                 {
 
-                    if (this->CanCastSpell(REST_CHAIN_HEAL, member))
+                    if (IsHealAllowedByMana(REST_CHAIN_HEAL) && this->CanCastSpell(REST_CHAIN_HEAL, member))
 
                     {
 
@@ -765,7 +776,7 @@ private:
 
             {
 
-                if (this->CanCastSpell(REST_HEALING_SURGE, member))
+                if (IsHealAllowedByMana(REST_HEALING_SURGE) && this->CanCastSpell(REST_HEALING_SURGE, member))
 
                 {
 
@@ -830,7 +841,7 @@ private:
         if (bot->GetHealthPct() < 60.0f)
         {
 
-            if (this->CanCastSpell(REST_HEALING_SURGE, bot))
+            if (IsHealAllowedByMana(REST_HEALING_SURGE) && this->CanCastSpell(REST_HEALING_SURGE, bot))
 
             {
 

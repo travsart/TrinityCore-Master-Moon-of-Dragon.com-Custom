@@ -262,6 +262,16 @@ public:
         // Phase 5: Initialize decision systems
         InitializeMistweaverMechanics();
 
+        // Register healing spell efficiency tiers
+        GetEfficiencyManager().RegisterSpell(VIVIFY, HealingSpellTier::VERY_HIGH, "Vivify");
+        GetEfficiencyManager().RegisterSpell(RENEWING_MIST, HealingSpellTier::VERY_HIGH, "Renewing Mist");
+        GetEfficiencyManager().RegisterSpell(ENVELOPING_MIST, HealingSpellTier::HIGH, "Enveloping Mist");
+        GetEfficiencyManager().RegisterSpell(ESSENCE_FONT, HealingSpellTier::MEDIUM, "Essence Font");
+        GetEfficiencyManager().RegisterSpell(LIFE_COCOON, HealingSpellTier::EMERGENCY, "Life Cocoon");
+        GetEfficiencyManager().RegisterSpell(REVIVAL, HealingSpellTier::EMERGENCY, "Revival");
+        GetEfficiencyManager().RegisterSpell(SOOTHING_MIST, HealingSpellTier::VERY_HIGH, "Soothing Mist");
+        GetEfficiencyManager().RegisterSpell(THUNDER_FOCUS_TEA, HealingSpellTier::MEDIUM, "Thunder Focus Tea");
+
         TC_LOG_DEBUG("playerbot", "MistweaverMonkRefactored initialized for bot {}", bot->GetGUID().GetCounter());
     }
 
@@ -435,7 +445,7 @@ protected:
             }
 
 
-            if (lowHealthCount >= 2 && this->CanCastSpell(THUNDER_FOCUS_TEA, this->GetBot()))
+            if (lowHealthCount >= 2 && IsHealAllowedByMana(THUNDER_FOCUS_TEA) && this->CanCastSpell(THUNDER_FOCUS_TEA, this->GetBot()))
 
             {
 
@@ -539,7 +549,7 @@ protected:
                 ++injuredCount;
         }
 
-        if (injuredCount >= 3 && this->CanCastSpell(ESSENCE_FONT, this->GetBot()))
+        if (injuredCount >= 3 && IsHealAllowedByMana(ESSENCE_FONT) && this->CanCastSpell(ESSENCE_FONT, this->GetBot()))
         {
 
             this->CastSpell(ESSENCE_FONT, this->GetBot());
@@ -562,7 +572,7 @@ protected:
         float healthPct = target->GetHealthPct();
 
         // Priority 1: Enveloping Mist (strong single target HoT)
-        if (healthPct < 70.0f && this->CanCastSpell(ENVELOPING_MIST, target))
+        if (healthPct < 70.0f && IsHealAllowedByMana(ENVELOPING_MIST) && this->CanCastSpell(ENVELOPING_MIST, target))
         {
 
             this->CastSpell(ENVELOPING_MIST, target);

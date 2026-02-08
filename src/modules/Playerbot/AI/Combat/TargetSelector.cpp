@@ -1102,4 +1102,56 @@ uint32 TargetSelector::GetCachedGroupFocusCount(Unit* target) const
     return 0;
 }
 
+float TargetSelector::EstimateTimeToKill(Unit* target)
+{
+    if (!target || !target->IsAlive() || !_bot)
+        return 0.0f;
+
+    std::lock_guard<OrderedRecursiveMutex<LockOrder::BOT_AI_STATE>> lock(_mutex);
+
+    uint64 currentHealth = target->GetHealth();
+    uint64 maxHealth = target->GetMaxHealth();
+
+    if (currentHealth == 0 || maxHealth == 0)
+        return 0.0f;
+
+    // Calculate group DPS on this target by checking group members' combined output
+    float totalDPS = 0.0f;
+
+    if (Group* group = _bot->GetGroup())
+    {
+        for (Group::MemberSlot const& slot : group->GetMemberSlots())
+        {
+            Player* member = ObjectAccessor::FindPlayer(slot.guid);
+            if (!member || !member->IsInWorld() || !member->IsAlive())
+                continue;
+
+            // Check if this member is attacking the same target
+            if (Unit* memberTarget = member->GetVictim())
+            {
+                if (memberTarget->GetGUID() == target->GetGUID())
+                {
+                    // Estimate member DPS from level-based approximation
+                    // This is a rough estimate; the TTKEstimator provides more accurate
+                    // rolling-window DPS via health delta tracking
+                    float levelDPS = static_cast<float>(member->GetLevel()) * 15.0f;
+                    totalDPS += levelDPS;
+                }
+            }
+        }
+    }
+    else
+    {
+        // Solo - use bot's own estimated DPS
+        totalDPS = static_cast<float>(_bot->GetLevel()) * 15.0f;
+    }
+
+    if (totalDPS <= 0.0f)
+        return std::numeric_limits<float>::infinity();
+
+    // TTK = current health / DPS
+    float ttk = static_cast<float>(currentHealth) / totalDPS;
+    return ttk;
+}
+
 } // namespace Playerbot

@@ -53,6 +53,7 @@ class DeathRecoveryManager;
 class UnifiedMovementCoordinator; // Phase 2: Unified Movement System (Week 3 complete)
 class QuestCompletion;            // Quest completion system (Phase 0: Hook integration)
 class CombatStateManager;
+namespace Humanization { class RPGDailyRoutineManager; }
 enum class PlayerBotMovementPriority : uint8;
 
 // Two-Phase AddToWorld Lifecycle Management (Initialization Lifecycle)
@@ -1112,6 +1113,9 @@ protected:
 
     // Movement System Integration - Validated pathfinding and state machine
     std::unique_ptr<BotMovementController> _movementController;
+
+    // RPG Daily Routine - Autonomous daily activity simulation for masterless bots
+    std::unique_ptr<Humanization::RPGDailyRoutineManager> _rpgRoutineManager;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;

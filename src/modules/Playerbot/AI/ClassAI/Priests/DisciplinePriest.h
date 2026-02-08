@@ -243,6 +243,15 @@ public:
         // Initialize Phase 5 systems
         InitializeDisciplineMechanics();
 
+        // Register healing spell efficiency tiers
+        GetEfficiencyManager().RegisterSpell(DISC_POWER_WORD_SHIELD, HealingSpellTier::VERY_HIGH, "Power Word: Shield");
+        GetEfficiencyManager().RegisterSpell(DISC_SHADOW_MEND, HealingSpellTier::HIGH, "Shadow Mend");
+        GetEfficiencyManager().RegisterSpell(DISC_PENANCE, HealingSpellTier::MEDIUM, "Penance");
+        GetEfficiencyManager().RegisterSpell(DISC_POWER_WORD_RADIANCE, HealingSpellTier::LOW, "Power Word: Radiance");
+        GetEfficiencyManager().RegisterSpell(DISC_POWER_WORD_LIFE, HealingSpellTier::MEDIUM, "Power Word: Life");
+        GetEfficiencyManager().RegisterSpell(DISC_PAIN_SUPPRESSION, HealingSpellTier::EMERGENCY, "Pain Suppression");
+        GetEfficiencyManager().RegisterSpell(DISC_BARRIER, HealingSpellTier::EMERGENCY, "Power Word: Barrier");
+
         TC_LOG_DEBUG("playerbot", "DisciplinePriestRefactored initialized for bot {}", this->GetBot()->GetGUID().GetCounter());
     }
 
@@ -572,7 +581,7 @@ private:
 
                 {
 
-                    if (this->CanCastSpell(DISC_POWER_WORD_RADIANCE, member))
+                    if (IsHealAllowedByMana(DISC_POWER_WORD_RADIANCE) && this->CanCastSpell(DISC_POWER_WORD_RADIANCE, member))
 
                     {
 
@@ -637,7 +646,7 @@ private:
 
             {
 
-                if (this->CanCastSpell(DISC_SHADOW_MEND, member))
+                if (IsHealAllowedByMana(DISC_SHADOW_MEND) && this->CanCastSpell(DISC_SHADOW_MEND, member))
 
                 {
 
@@ -663,7 +672,7 @@ private:
 
                 {
 
-                    if (this->CanCastSpell(DISC_POWER_WORD_LIFE, member))
+                    if (IsHealAllowedByMana(DISC_POWER_WORD_LIFE) && this->CanCastSpell(DISC_POWER_WORD_LIFE, member))
 
                     {
 
@@ -686,7 +695,7 @@ private:
 
             {
 
-                if (this->CanCastSpell(DISC_PENANCE, member))
+                if (IsHealAllowedByMana(DISC_PENANCE) && this->CanCastSpell(DISC_PENANCE, member))
 
                 {
 
@@ -794,7 +803,7 @@ private:
         if (bot->GetHealthPct() < 60.0f)
         {
 
-            if (this->CanCastSpell(DISC_SHADOW_MEND, bot))
+            if (IsHealAllowedByMana(DISC_SHADOW_MEND) && this->CanCastSpell(DISC_SHADOW_MEND, bot))
 
             {
 
@@ -809,7 +818,7 @@ private:
         if (bot->GetHealthPct() < 70.0f)
         {
 
-            if (this->CanCastSpell(DISC_PENANCE, bot))
+            if (IsHealAllowedByMana(DISC_PENANCE) && this->CanCastSpell(DISC_PENANCE, bot))
 
             {
 

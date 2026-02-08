@@ -11,7 +11,6 @@
 #define PLAYERBOT_PACKET_SNIFFER_H
 
 #include "Define.h"
-#include "Opcodes.h"
 #include <atomic>
 #include <unordered_map>
 #include <functional>
@@ -72,35 +71,26 @@ enum class PacketCategory : uint8
  * sent to bot players, enabling real-time event detection for systems that lack
  * public TrinityCore APIs.
  *
- * **Architecture**:
+ * **Architecture (WoW 12.0 Typed Packet Pipeline)**:
  * ```
- * WorldSession::SendPacket() → OnPacketSend() → RouteToCategory() → ParseXXXPacket()
- *                                                      ↓
- *                                               Specialized Event Buses
- *                                                      ↓
- *                                               BotAI Event Subscribers
+ * WorldSession::SendPacket<T>() → OnTypedPacket<T>() → TypedPacketHandler
+ *                                                              ↓
+ *                                                    Specialized Event Buses
+ *                                                              ↓
+ *                                                    BotAI Event Subscribers
  * ```
  *
+ * Typed handlers are registered per-category in Parse*Packet_Typed.cpp files
+ * via RegisterTypedHandler<T>(), enabling full access to strongly-typed packet
+ * data before serialization.
+ *
+ * The legacy OnPacketSend() opcode-based path is retained for stats tracking only.
+ *
  * **Design Principles**:
- * - Single entry point (1-line hook in WorldSession::SendPacket)
- * - Category-based routing for modular parsing
+ * - Typed packet interception (full data access before serialization)
  * - Zero impact on real players (bot-only processing)
  * - Performance optimized (<0.01% CPU per bot)
  * - Thread-safe packet processing
- *
- * **Performance**:
- * - Packet processing: <5 μs per packet
- * - Memory overhead: <1KB per bot
- * - CPU overhead: <0.01% per bot
- *
- * **Usage Example**:
- * ```cpp
- * // In WorldSession::SendPacket()
- * #ifdef BUILD_PLAYERBOT
- * if (_player && _player->IsPlayerBot())
- *     PlayerbotPacketSniffer::OnPacketSend(this, *packet);
- * #endif
- * ```
  *
  * @note Only processes packets for bots (zero overhead for real players)
  */
@@ -166,25 +156,6 @@ public:
     static void DumpStatistics();
 
 private:
-    // Packet routing
-    static void RouteToCategory(PacketCategory category, WorldSession* session, WorldPacket const& packet);
-    static PacketCategory CategorizePacket(OpcodeServer opcode);
-
-    // Category-specific parsers
-    static void ParseGroupPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseCombatPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseCooldownPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseLootPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseQuestPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseAuraPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseResourcePacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseSocialPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseAuctionPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseNPCPacket(WorldSession* session, WorldPacket const& packet);
-    static void ParseInstancePacket(WorldSession* session, WorldPacket const& packet);
-
-    // Opcode → Category mapping
-    static inline ::std::unordered_map<OpcodeServer, PacketCategory> _packetCategoryMap;
     static inline bool _initialized = false;
 
     // Performance tracking
@@ -193,9 +164,6 @@ private:
     static inline ::std::atomic<uint64_t> _totalProcessTimeUs{0};
     static inline ::std::atomic<uint64_t> _peakProcessTimeUs{0};
     static inline ::std::chrono::steady_clock::time_point _startTime;
-
-    // Initialize opcode mapping
-    static void InitializeOpcodeMapping();
 
     // Typed packet handlers (WoW 12.0)
     using TypedPacketHandler = ::std::function<void(WorldSession*, void const*)>;

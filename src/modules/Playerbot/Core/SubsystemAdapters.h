@@ -112,6 +112,14 @@ public:
 };
 
 // 200 - NORMAL
+// 195 - NORMAL (before BotGearFactory so enchant data is available)
+class EnchantGemDatabaseSubsystem final : public IPlayerbotSubsystem
+{
+public:
+    SubsystemInfo GetInfo() const override;
+    bool Initialize() override;
+};
+
 class BotGearFactorySubsystem final : public IPlayerbotSubsystem
 {
 public:
@@ -353,6 +361,42 @@ public:
     SubsystemInfo GetInfo() const override;
     bool Initialize() override;
     void Update(uint32 diff) override;
+};
+
+// updateOrder=700 - Server Load Monitor (reaction delay scaling)
+class ServerLoadMonitorSubsystem final : public IPlayerbotSubsystem
+{
+public:
+    SubsystemInfo GetInfo() const override;
+    bool Initialize() override;
+    void Update(uint32 diff) override;
+};
+
+// initOrder=420, updateOrder=800 - Guild Task System
+class GuildTaskManagerSubsystem final : public IPlayerbotSubsystem
+{
+public:
+    SubsystemInfo GetInfo() const override;
+    bool Initialize() override;
+    void Update(uint32 diff) override;
+    void Shutdown() override;
+};
+
+// initOrder=430 - Account Linking System
+class AccountLinkingManagerSubsystem final : public IPlayerbotSubsystem
+{
+public:
+    SubsystemInfo GetInfo() const override;
+    bool Initialize() override;
+    void Shutdown() override;
+};
+
+// initOrder=440 - Bot Cheat Mask (debug/testing)
+class BotCheatMaskSubsystem final : public IPlayerbotSubsystem
+{
+public:
+    SubsystemInfo GetInfo() const override;
+    bool Initialize() override;
 };
 
 } // namespace Playerbot

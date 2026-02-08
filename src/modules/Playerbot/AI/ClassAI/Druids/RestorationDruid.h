@@ -269,6 +269,17 @@ public:
         // Phase 5: Initialize decision systems
         InitializeRestorationMechanics();
 
+        // Register healing spell efficiency tiers
+        GetEfficiencyManager().RegisterSpell(RESTO_REJUVENATION, HealingSpellTier::VERY_HIGH, "Rejuvenation");
+        GetEfficiencyManager().RegisterSpell(RESTO_LIFEBLOOM, HealingSpellTier::VERY_HIGH, "Lifebloom");
+        GetEfficiencyManager().RegisterSpell(RESTO_WILD_GROWTH, HealingSpellTier::MEDIUM, "Wild Growth");
+        GetEfficiencyManager().RegisterSpell(RESTO_REGROWTH, HealingSpellTier::HIGH, "Regrowth");
+        GetEfficiencyManager().RegisterSpell(RESTO_SWIFTMEND, HealingSpellTier::LOW, "Swiftmend");
+        GetEfficiencyManager().RegisterSpell(RESTO_TRANQUILITY, HealingSpellTier::EMERGENCY, "Tranquility");
+        GetEfficiencyManager().RegisterSpell(RESTO_IRONBARK, HealingSpellTier::EMERGENCY, "Ironbark");
+        GetEfficiencyManager().RegisterSpell(RESTO_CENARION_WARD, HealingSpellTier::MEDIUM, "Cenarion Ward");
+        GetEfficiencyManager().RegisterSpell(RESTO_FLOURISH, HealingSpellTier::LOW, "Flourish");
+
         TC_LOG_DEBUG("playerbot", "RestorationDruidRefactored initialized for bot {}", bot->GetGUID().GetCounter());
     }
 
@@ -596,7 +607,7 @@ private:
 
             Unit* target = GetGroupMemberNeedingHealing(group, 85.0f);
 
-            if (target && this->CanCastSpell(RESTO_WILD_GROWTH, target))
+            if (target && IsHealAllowedByMana(RESTO_WILD_GROWTH) && this->CanCastSpell(RESTO_WILD_GROWTH, target))
 
             {
 
@@ -638,7 +649,7 @@ private:
 
                 {
 
-                    if (this->CanCastSpell(RESTO_SWIFTMEND, member))
+                    if (IsHealAllowedByMana(RESTO_SWIFTMEND) && this->CanCastSpell(RESTO_SWIFTMEND, member))
 
                     {
 
@@ -680,7 +691,7 @@ private:
         if (tank && !_hotTracker.HasCenarionWard(tank->GetGUID()))
         {
 
-            if (this->CanCastSpell(RESTO_CENARION_WARD, tank))
+            if (IsHealAllowedByMana(RESTO_CENARION_WARD) && this->CanCastSpell(RESTO_CENARION_WARD, tank))
 
             {
 
@@ -706,7 +717,7 @@ private:
 
             {
 
-                if (this->CanCastSpell(RESTO_REGROWTH, member))
+                if (IsHealAllowedByMana(RESTO_REGROWTH) && this->CanCastSpell(RESTO_REGROWTH, member))
 
                 {
 

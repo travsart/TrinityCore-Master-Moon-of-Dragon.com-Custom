@@ -395,13 +395,33 @@ void GroupCoordination::UpdateTargetAssessment()
 {
     ::std::lock_guard lock(_targetMutex);
 
-    // Update target information
+    // Update target information including TTK estimation
     for (auto& [guid, target] : _targets)
     {
         if (Unit* unit = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(_primaryTarget), guid))
         {
             target.lastKnownPosition = unit->GetPosition();
             target.lastSeen = GameTime::GetGameTimeMS();
+
+            // Estimate TTK from group DPS on this target
+            if (unit->IsAlive())
+            {
+                uint64 health = unit->GetHealth();
+                // Count how many group members are attacking this target
+                uint32 attackerCount = static_cast<uint32>(target.assignedMembers.size());
+                if (attackerCount == 0)
+                    attackerCount = 1;
+
+                // Rough per-attacker DPS estimate based on target level
+                float estimatedGroupDPS = static_cast<float>(attackerCount) * static_cast<float>(unit->GetLevel()) * 15.0f;
+                target.estimatedTimeToKill = (estimatedGroupDPS > 0.0f)
+                    ? static_cast<float>(health) / estimatedGroupDPS
+                    : 0.0f;
+            }
+            else
+            {
+                target.estimatedTimeToKill = 0.0f;
+            }
         }
     }
 

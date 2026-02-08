@@ -35,6 +35,7 @@ namespace Playerbot
     class MovementIntegration;
     class BotThreatManager;
     class PositionManager;
+    class TTKEstimator;
 
     enum class CombatSituation : uint8;
     enum class BotRole : uint8;
@@ -157,6 +158,7 @@ namespace Playerbot
         CrowdControlManager* GetCrowdControlManager() { return _crowdControlManager.get(); }
         DefensiveManager* GetDefensiveManager() { return _defensiveManager.get(); }
         MovementIntegration* GetMovementIntegration() { return _movementIntegration.get(); }
+        TTKEstimator* GetTTKEstimator() { return _ttkEstimator.get(); }
 
         // Reset and cleanup
         void Reset();
@@ -196,6 +198,7 @@ namespace Playerbot
         ::std::unique_ptr<CrowdControlManager> _crowdControlManager;
         ::std::unique_ptr<DefensiveManager> _defensiveManager;
         ::std::unique_ptr<MovementIntegration> _movementIntegration;
+        ::std::unique_ptr<TTKEstimator> _ttkEstimator;
 
         // Action queue and recommendations
         ::std::vector<RecommendedAction> _actionQueue;
