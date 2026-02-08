@@ -5,7 +5,7 @@
  */
 
 #include "EnchantGemDatabase.h"
-#include "DatabaseEnv.h"
+#include "Database/PlayerbotDatabase.h"
 #include "Log.h"
 #include <algorithm>
 
@@ -205,7 +205,7 @@ uint32 EnchantGemDatabase::GetGemCount()
 void EnchantGemDatabase::LoadFromDatabase()
 {
     // Load enchant recommendations
-    if (QueryResult result = CharacterDatabase.Query(
+    if (QueryResult result = sPlayerbotDatabase->Query(
         "SELECT enchant_id, slot_type, class_id, spec_id, min_item_level, priority_weight, enchant_name "
         "FROM playerbot_enchant_recommendations ORDER BY priority_weight DESC"))
     {
@@ -232,7 +232,7 @@ void EnchantGemDatabase::LoadFromDatabase()
     }
 
     // Load gem recommendations
-    if (QueryResult result = CharacterDatabase.Query(
+    if (QueryResult result = sPlayerbotDatabase->Query(
         "SELECT gem_item_id, socket_color, class_id, spec_id, stat_priority, priority_weight, gem_name "
         "FROM playerbot_gem_recommendations ORDER BY priority_weight DESC"))
     {

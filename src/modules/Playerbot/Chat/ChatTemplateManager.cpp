@@ -5,7 +5,7 @@
  */
 
 #include "ChatTemplateManager.h"
-#include "DatabaseEnv.h"
+#include "Database/PlayerbotDatabase.h"
 #include "Player.h"
 #include "Log.h"
 #include "Unit.h"
@@ -119,7 +119,7 @@ void ChatTemplateManager::ReloadTemplates()
 
 void ChatTemplateManager::LoadChatTemplates()
 {
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT id, trigger_context, chat_type, message_text, "
         "filter_class, filter_race, filter_min_level, filter_max_level, "
         "weight, cooldown_ms, locale "
@@ -154,7 +154,7 @@ void ChatTemplateManager::LoadChatTemplates()
 
 void ChatTemplateManager::LoadEmoteTemplates()
 {
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT id, trigger_context, emote_id, "
         "filter_class, filter_race, weight, cooldown_ms "
         "FROM playerbot_emote_templates ORDER BY trigger_context, weight DESC");

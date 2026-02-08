@@ -5,7 +5,7 @@
  */
 
 #include "AccountLinkingManager.h"
-#include "DatabaseEnv.h"
+#include "Database/PlayerbotDatabase.h"
 #include "Log.h"
 #include "GameTime.h"
 #include "Player.h"
@@ -467,7 +467,7 @@ LinkPermission AccountLinkingManager::StringToPermission(std::string const& str)
 
 void AccountLinkingManager::LoadLinksFromDB()
 {
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT link_id, owner_account_id, bot_account_id, bot_guid, "
         "permissions, created_time, last_access_time, active "
         "FROM playerbot_account_links");
@@ -529,14 +529,14 @@ void AccountLinkingManager::SaveLinkToDB(AccountLink const& link)
         static_cast<uint16>(link.permissions),
         link.createdTime, link.lastAccessTime, link.active ? 1 : 0);
 
-    CharacterDatabase.DirectExecute(sql.c_str());
+    sPlayerbotDatabase->Execute(sql);
 }
 
 void AccountLinkingManager::DeleteLinkFromDB(uint32 linkId)
 {
     std::string sql = Trinity::StringFormat(
         "DELETE FROM playerbot_account_links WHERE link_id = {}", linkId);
-    CharacterDatabase.DirectExecute(sql.c_str());
+    sPlayerbotDatabase->Execute(sql);
 }
 
 } // namespace Playerbot

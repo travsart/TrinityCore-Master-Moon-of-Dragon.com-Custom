@@ -10,7 +10,7 @@
 #include "GuildMgr.h"
 #include "ObjectAccessor.h"
 #include "PlayerBotHooks.h"
-#include "DatabaseEnv.h"
+#include "Database/PlayerbotDatabase.h"
 #include "Log.h"
 #include "GameTime.h"
 #include "ObjectMgr.h"
@@ -742,7 +742,7 @@ void GuildTaskManager::AwardTaskRewards(GuildTask const& task)
 
 void GuildTaskManager::LoadTemplatesFromDB()
 {
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT template_id, task_type, difficulty, title_format, description_format, "
         "target_entry, min_count, max_count, required_level, required_skill, "
         "required_skill_value, zone_id, base_gold_reward, base_rep_reward, "
