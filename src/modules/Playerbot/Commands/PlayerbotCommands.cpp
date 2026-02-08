@@ -25,6 +25,7 @@
 #include "Lifecycle/BotCharacterCreator.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Core/Diagnostics/GroupMemberDiagnostics.h"
+#include "Core/Diagnostics/BotCheatMask.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -37,6 +38,7 @@
 #include "CharacterCache.h"
 #include "Group.h"
 #include "Log.h"
+#include <algorithm>
 #include <sstream>
 #include <iomanip>
 
@@ -124,6 +126,14 @@ namespace Playerbot
             { "",        HandleBotDungeonCommand,        rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
         };
 
+        static ChatCommandTable botCheatCommandTable =
+        {
+            { "list",  HandleBotCheatListCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "off",   HandleBotCheatOffCommand,  rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "mult",  HandleBotCheatMultCommand,  rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "",      HandleBotCheatCommand,      rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
+        };
+
         static ChatCommandTable botCommandTable =
         {
 
@@ -164,7 +174,9 @@ namespace Playerbot
 
             { "diag",      botDiagCommandTable },
 
-            { "dungeon",   botDungeonCommandTable }
+            { "dungeon",   botDungeonCommandTable },
+
+            { "cheat",     botCheatCommandTable }
         };
 
         static ChatCommandTable commandTable =
@@ -1709,6 +1721,227 @@ namespace Playerbot
         TC_LOG_INFO("module.playerbot.dungeon", "Dungeon aggression set to {} for group {} by {}",
             level, group->GetGUID().ToString(), player->GetName());
 
+        return true;
+    }
+
+    // =====================================================================
+    // CHEAT COMMANDS
+    // =====================================================================
+
+    bool PlayerbotCommandScript::HandleBotCheatCommand(ChatHandler* handler, std::string cheatName)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        BotCheatFlag flag = Playerbot::BotCheatMask::ParseCheatName(cheatName);
+        if (flag == BotCheatFlag::NONE)
+        {
+            handler->PSendSysMessage("Unknown cheat: '%s'. Use '.bot cheat list' for available cheats.", cheatName.c_str());
+            return false;
+        }
+
+        // Collect target bots: group members that are bots, or selected target
+        std::vector<Player*> targets;
+
+        // First check if selected target is a bot
+        Player* target = ObjectAccessor::FindPlayer(player->GetTarget());
+        if (target && target != player && target->GetSession() && target->GetSession()->IsBot())
+        {
+            targets.push_back(target);
+        }
+        else if (Group* group = player->GetGroup())
+        {
+            // Apply to all bots in the player's group
+            for (GroupReference const& ref : group->GetMembers())
+            {
+                Player* member = ref.GetSource();
+                if (member && member != player && member->GetSession() && member->GetSession()->IsBot())
+                    targets.push_back(member);
+            }
+        }
+
+        if (targets.empty())
+        {
+            handler->PSendSysMessage("No bot targets found. Select a bot or be in a group with bots.");
+            return false;
+        }
+
+        uint32 enabled = 0;
+        uint32 disabled = 0;
+        for (Player* bot : targets)
+        {
+            bool hadCheat = sBotCheatMask->HasCheat(bot->GetGUID(), flag);
+            sBotCheatMask->ToggleCheat(bot->GetGUID(), flag);
+            if (hadCheat)
+                ++disabled;
+            else
+                ++enabled;
+        }
+
+        handler->PSendSysMessage("Cheat '%s': %u bot(s) enabled, %u bot(s) disabled.",
+            cheatName.c_str(), enabled, disabled);
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotCheatListCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        // Show available cheats
+        handler->PSendSysMessage("=== Available Bot Cheats ===");
+        for (auto const& info : Playerbot::BotCheatMask::GetCheatList())
+        {
+            // Skip presets in the "available" listing
+            if (info.flag == BotCheatFlag::ALL_COMBAT ||
+                info.flag == BotCheatFlag::ALL_MOVEMENT ||
+                info.flag == BotCheatFlag::ALL)
+            {
+                handler->PSendSysMessage("  [preset] %s - %s", info.name, info.description);
+                continue;
+            }
+            handler->PSendSysMessage("  %s - %s", info.name, info.description);
+        }
+
+        // Show active cheats on group bots
+        handler->PSendSysMessage("=== Active Cheats ===");
+        bool anyActive = false;
+
+        if (Group* group = player->GetGroup())
+        {
+            for (GroupReference const& ref : group->GetMembers())
+            {
+                Player* member = ref.GetSource();
+                if (member && member != player && member->GetSession() && member->GetSession()->IsBot())
+                {
+                    std::string cheats = sBotCheatMask->FormatActiveCheats(member->GetGUID());
+                    if (cheats != "none")
+                    {
+                        handler->PSendSysMessage("  %s: %s", member->GetName().c_str(), cheats.c_str());
+                        anyActive = true;
+                    }
+                }
+            }
+        }
+
+        // Also check selected target
+        Player* target = ObjectAccessor::FindPlayer(player->GetTarget());
+        if (target && target != player && target->GetSession() && target->GetSession()->IsBot())
+        {
+            std::string cheats = sBotCheatMask->FormatActiveCheats(target->GetGUID());
+            handler->PSendSysMessage("  [target] %s: %s", target->GetName().c_str(), cheats.c_str());
+            anyActive = true;
+        }
+
+        if (!anyActive)
+            handler->PSendSysMessage("  No active cheats on any bots.");
+
+        uint32 totalCheatBots = sBotCheatMask->GetCheatBotCount();
+        if (totalCheatBots > 0)
+            handler->PSendSysMessage("Total bots with cheats: %u", totalCheatBots);
+
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotCheatOffCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        // Check if targeting a specific bot
+        Player* target = ObjectAccessor::FindPlayer(player->GetTarget());
+        if (target && target != player && target->GetSession() && target->GetSession()->IsBot())
+        {
+            sBotCheatMask->ClearAllCheats(target->GetGUID());
+            handler->PSendSysMessage("Cleared all cheats on %s.", target->GetName().c_str());
+            return true;
+        }
+
+        // Otherwise clear all group bots
+        uint32 cleared = 0;
+        if (Group* group = player->GetGroup())
+        {
+            for (GroupReference const& ref : group->GetMembers())
+            {
+                Player* member = ref.GetSource();
+                if (member && member != player && member->GetSession() && member->GetSession()->IsBot())
+                {
+                    if (sBotCheatMask->HasAnyCheats(member->GetGUID()))
+                    {
+                        sBotCheatMask->ClearAllCheats(member->GetGUID());
+                        ++cleared;
+                    }
+                }
+            }
+        }
+
+        if (cleared > 0)
+            handler->PSendSysMessage("Cleared cheats on %u bot(s).", cleared);
+        else
+            handler->PSendSysMessage("No bots had active cheats.");
+
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotCheatMultCommand(ChatHandler* handler, std::string cheatName, float multiplier)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
+
+        if (multiplier <= 0.0f || multiplier > 1000.0f)
+        {
+            handler->PSendSysMessage("Multiplier must be between 0.1 and 1000.0");
+            return false;
+        }
+
+        // Collect targets
+        std::vector<Player*> targets;
+        Player* target = ObjectAccessor::FindPlayer(player->GetTarget());
+        if (target && target != player && target->GetSession() && target->GetSession()->IsBot())
+        {
+            targets.push_back(target);
+        }
+        else if (Group* group = player->GetGroup())
+        {
+            for (GroupReference const& ref : group->GetMembers())
+            {
+                Player* member = ref.GetSource();
+                if (member && member != player && member->GetSession() && member->GetSession()->IsBot())
+                    targets.push_back(member);
+            }
+        }
+
+        if (targets.empty())
+        {
+            handler->PSendSysMessage("No bot targets found.");
+            return false;
+        }
+
+        // Apply multiplier based on cheat name
+        std::string lower = cheatName;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+        for (Player* bot : targets)
+        {
+            if (lower == "speed")
+                sBotCheatMask->SetSpeedMultiplier(bot->GetGUID(), multiplier);
+            else if (lower == "damage")
+                sBotCheatMask->SetDamageMultiplier(bot->GetGUID(), multiplier);
+            else if (lower == "xpboost" || lower == "xp")
+                sBotCheatMask->SetXPMultiplier(bot->GetGUID(), multiplier);
+            else
+            {
+                handler->PSendSysMessage("Unknown multiplier type: '%s'. Use speed, damage, or xpboost.", cheatName.c_str());
+                return false;
+            }
+        }
+
+        handler->PSendSysMessage("Set %s multiplier to %.1f on %u bot(s).",
+            cheatName.c_str(), multiplier, static_cast<uint32>(targets.size()));
         return true;
     }
 

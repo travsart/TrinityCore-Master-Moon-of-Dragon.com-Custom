@@ -116,6 +116,12 @@ namespace Playerbot
         static bool HandleBotDungeonDisableCommand(ChatHandler* handler);
         static bool HandleBotDungeonAggroCommand(ChatHandler* handler, ::std::string level);
 
+        // Cheat commands
+        static bool HandleBotCheatCommand(ChatHandler* handler, ::std::string cheatName);
+        static bool HandleBotCheatListCommand(ChatHandler* handler);
+        static bool HandleBotCheatOffCommand(ChatHandler* handler);
+        static bool HandleBotCheatMultCommand(ChatHandler* handler, ::std::string cheatName, float multiplier);
+
         // Helper methods
         static Player* FindBotByName(::std::string const& name);
         static bool ValidateRaceClass(uint8 race, uint8 classId, ChatHandler* handler);
