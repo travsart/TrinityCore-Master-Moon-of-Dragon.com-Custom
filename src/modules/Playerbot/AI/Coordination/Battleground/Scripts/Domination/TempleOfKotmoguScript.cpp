@@ -979,14 +979,6 @@ void TempleOfKotmoguScript::RefreshOrbState()
         static_cast<uint32>(m_orbHolders.size()), m_allianceOrbsHeld, m_hordeOrbsHeld);
 }
 
-/// Helper: get player's assigned role from coordinator
-static BGRole GetBotRole(::Player* player, ::Playerbot::BattlegroundCoordinator* coordinator)
-{
-    if (coordinator)
-        return coordinator->GetBotRole(player->GetGUID());
-    return BGRole::UNASSIGNED;
-}
-
 bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
 {
     if (!player || !player->IsInWorld() || !player->IsAlive())
@@ -995,18 +987,14 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
     // Refresh orb state from auras (throttled to once per second)
     RefreshOrbState();
 
-    ::Playerbot::BattlegroundCoordinator* coordinator =
-        sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
-
-    BGRole role = GetBotRole(player, coordinator);
     bool holdingOrb = IsCarryingOrb(player);
 
-    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} role={} holdingOrb={} orbsHeld={}",
-        player->GetName(), static_cast<uint32>(role), holdingOrb,
-        static_cast<uint32>(m_orbHolders.size()));
+    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} holdingOrb={} orbsHeld={} (ally={} horde={})",
+        player->GetName(), holdingOrb, static_cast<uint32>(m_orbHolders.size()),
+        m_allianceOrbsHeld, m_hordeOrbsHeld);
 
     // =========================================================================
-    // PRIORITY 1: If holding orb, execute carrier movement
+    // PRIORITY 1: If holding orb, execute carrier movement to center
     // =========================================================================
     if (holdingOrb)
     {
@@ -1021,79 +1009,127 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 1.5: Rush to nearby free orb (react to dropped orbs)
-    // Any non-carrier within 40 yards of a free orb should grab it, regardless
-    // of assigned role. This prevents orbs sitting on the ground while bots
-    // escort/hunt/defend elsewhere.
+    // PRIORITY 2: Free orb exists → pick it up
+    // Any non-carrier bot should grab a free orb. PickupOrb handles splitting
+    // via m_orbTargeters so bots don't all rush the same orb.
     // =========================================================================
     {
-        float closestFreeOrbDist = std::numeric_limits<float>::max();
-        uint32 closestFreeOrbId = TempleOfKotmogu::ORB_COUNT;
-
-        for (uint32 orbId = 0; orbId < TempleOfKotmogu::ORB_COUNT; ++orbId)
+        bool hasFreeOrb = false;
+        for (uint32 i = 0; i < TempleOfKotmogu::ORB_COUNT; ++i)
         {
-            if (IsOrbHeld(orbId))
-                continue;
-
-            Position orbPos = GetDynamicOrbPosition(orbId);
-            float dist = player->GetExactDist(&orbPos);
-            if (dist < closestFreeOrbDist)
-            {
-                closestFreeOrbDist = dist;
-                closestFreeOrbId = orbId;
-            }
+            if (!IsOrbHeld(i)) { hasFreeOrb = true; break; }
         }
 
-        if (closestFreeOrbId < TempleOfKotmogu::ORB_COUNT && closestFreeOrbDist < 40.0f)
+        if (hasFreeOrb)
         {
-            TC_LOG_DEBUG("playerbots.bg", "[TOK] {} rushing to nearby free {} (dist: {:.1f}), overriding role {}",
-                player->GetName(), TempleOfKotmogu::GetOrbName(closestFreeOrbId),
-                closestFreeOrbDist, static_cast<uint32>(role));
-
             if (PickupOrb(player))
                 return true;
-            // If PickupOrb fails (orb just got taken), fall through to role behavior
+            // If PickupOrb fails (all orbs just got taken), fall through
         }
     }
 
     // =========================================================================
-    // PRIORITY 2: Execute role-based behavior
+    // PRIORITY 3: Dynamic behavior based on current game state
+    //
+    // The coordinator role system (ROAMER/ORB_CARRIER/etc.) does not
+    // dynamically reassign roles when game state changes (orbs picked up,
+    // carriers killed, etc.). Instead, we evaluate the situation each tick
+    // and take the most useful action based on proximity and need.
+    //
+    // Split: 2/3 of bots escort friendly carriers, 1/3 hunt enemy carriers.
+    // This is deterministic per-bot via GUID hash to avoid thrashing.
     // =========================================================================
-    switch (role)
+
+    // Find nearest friendly and enemy orb carriers
+    ::Player* nearestFriendlyCarrier = nullptr;
+    float friendlyCarrierDist = std::numeric_limits<float>::max();
+    ::Player* nearestEnemyCarrier = nullptr;
+    float enemyCarrierDist = std::numeric_limits<float>::max();
+
+    for (uint32 orbId = 0; orbId < TempleOfKotmogu::ORB_COUNT; ++orbId)
     {
-        case BGRole::ORB_CARRIER:
-            // Try to pick up an orb; if none available, escort a carrier instead
-            if (!PickupOrb(player))
-                EscortOrbCarrier(player);
-            break;
+        if (!IsOrbHeld(orbId))
+            continue;
 
-        case BGRole::FLAG_ESCORT:
-            EscortOrbCarrier(player);
-            break;
+        ObjectGuid holderGuid = GetOrbHolder(orbId);
+        if (holderGuid.IsEmpty())
+            continue;
 
-        case BGRole::FLAG_HUNTER:
-        case BGRole::NODE_ATTACKER:
-            HuntEnemyOrbCarrier(player);
-            break;
+        ::Player* holder = ObjectAccessor::FindPlayer(holderGuid);
+        if (!holder || !holder->IsAlive())
+            continue;
 
-        case BGRole::NODE_DEFENDER:
-            DefendOrbCarrier(player);
-            break;
+        float dist = player->GetExactDist(holder);
 
-        case BGRole::HEALER_SUPPORT:
-            // Healers prioritize escorting carriers, fall back to defend
-            EscortOrbCarrier(player);
-            break;
-
-        case BGRole::ROAMER:
-        case BGRole::UNASSIGNED:
-        default:
-            // Default: try to pick up an orb, or hunt enemies if all held
-            if (!PickupOrb(player))
-                HuntEnemyOrbCarrier(player);
-            break;
+        if (holder->IsHostileTo(player))
+        {
+            // Prioritize center carriers (they score more points)
+            bool inCenter = IsInCenter(holder->GetPositionX(), holder->GetPositionY());
+            float effectiveDist = inCenter ? dist * 0.5f : dist;
+            if (effectiveDist < enemyCarrierDist)
+            {
+                enemyCarrierDist = effectiveDist;
+                nearestEnemyCarrier = holder;
+            }
+        }
+        else if (holder->GetGUID() != player->GetGUID())
+        {
+            if (dist < friendlyCarrierDist)
+            {
+                friendlyCarrierDist = dist;
+                nearestFriendlyCarrier = holder;
+            }
+        }
     }
 
+    // Use GUID-based hash for deterministic duty split:
+    // Slots 0,1 → prefer escort (protect our carriers)
+    // Slot 2   → prefer hunt (kill enemy carriers)
+    uint32 dutySlot = player->GetGUID().GetCounter() % 3;
+    bool preferEscort = (dutySlot < 2);
+
+    if (nearestFriendlyCarrier && nearestEnemyCarrier)
+    {
+        // Both friendly and enemy carriers exist — split duties
+        if (preferEscort && friendlyCarrierDist < 60.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg", "[TOK] {} escorting (duty=escort, carrier dist={:.1f})",
+                player->GetName(), friendlyCarrierDist);
+            EscortOrbCarrier(player);
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbots.bg", "[TOK] {} hunting enemy carrier (duty=hunt, dist={:.1f})",
+                player->GetName(), enemyCarrierDist);
+            HuntEnemyOrbCarrier(player);
+        }
+        return true;
+    }
+
+    if (nearestFriendlyCarrier)
+    {
+        // Only friendly carriers — everyone escorts
+        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} escorting (no enemy carriers, carrier dist={:.1f})",
+            player->GetName(), friendlyCarrierDist);
+        EscortOrbCarrier(player);
+        return true;
+    }
+
+    if (nearestEnemyCarrier)
+    {
+        // Only enemy carriers — everyone hunts
+        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} hunting enemy carrier (no friendly carriers, dist={:.1f})",
+            player->GetName(), enemyCarrierDist);
+        HuntEnemyOrbCarrier(player);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 4: No carriers at all — patrol center and fight enemies
+    // =========================================================================
+    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} no carriers found, patrolling center",
+        player->GetName());
+    DefendOrbCarrier(player);
     return true;
 }
 
@@ -2003,9 +2039,11 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
         return true;
     }
 
-    // Not in center yet — navigate along route to center, fighting enemies en route
+    // Not in center yet — navigate along route to center
     {
-        // Engage nearby enemies while traveling — carrier should not be a passive target
+        // Initiate combat with nearby enemies while traveling — but NEVER stop moving.
+        // The carrier's #1 goal is reaching center for maximum scoring. Attack starts
+        // combat so the class AI can cast abilities, but we always continue moving.
         if (coordinator)
         {
             float enemyDist = 0.0f;
@@ -2021,17 +2059,9 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
                     if (!player->IsInCombat() || player->GetVictim() != enemy)
                         player->Attack(enemy, true);
 
-                    // Only chase enemies within melee range — don't deviate from path
-                    if (enemyDist <= 10.0f)
-                    {
-                        if (enemyDist > 5.0f)
-                            BotMovementUtil::ChaseTarget(player, enemy, 5.0f);
-
-                        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier fighting {} en route to center (dist: {:.1f})",
-                            player->GetName(), enemy->GetName(), enemyDist);
-                        return true;
-                    }
-                    // Enemy 10-15yd: attack initiated but keep moving to center (fall through)
+                    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} carrier attacking {} en route to center (dist: {:.1f})",
+                        player->GetName(), enemy->GetName(), enemyDist);
+                    // Fall through to waypoint movement — never stop for enemies
                 }
             }
         }
