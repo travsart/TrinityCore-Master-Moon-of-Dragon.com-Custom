@@ -1220,6 +1220,8 @@ set(PLAYERBOT_PVP_SOURCES
     # Performance Optimization
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/StringInterningPool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/StringInterningPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/BandwidthTelemetry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/BandwidthTelemetry.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPoolDiagnostics.h
