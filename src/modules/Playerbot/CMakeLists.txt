@@ -636,6 +636,8 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/PreBurstResourcePooling.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatPhaseDetector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatPhaseDetector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TrinketUsageManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TrinketUsageManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptManager.cpp
