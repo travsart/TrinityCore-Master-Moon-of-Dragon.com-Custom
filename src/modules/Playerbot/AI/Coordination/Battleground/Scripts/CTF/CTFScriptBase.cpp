@@ -11,8 +11,18 @@
 
 #include "CTFScriptBase.h"
 #include "BattlegroundCoordinator.h"
+#include "BattlegroundCoordinatorManager.h"
+#include "BGSpatialQueryCache.h"
+#include "ObjectAccessor.h"
+#include "Player.h"
+#include "Battleground.h"
+#include "BattlegroundMgr.h"
+#include "GameObject.h"
+#include "GameObjectData.h"
+#include "SpellAuras.h"
 #include "Log.h"
 #include "Timer.h"
+#include "../../Movement/BotMovementUtil.h"
 #include <cmath>
 
 namespace Playerbot::Coordination::Battleground
@@ -631,6 +641,368 @@ std::vector<Position> CTFScriptBase::CalculateEscortRing(
     }
 
     return positions;
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR METHODS
+// ============================================================================
+
+void CTFScriptBase::RefreshFlagState(::Player* bot)
+{
+    uint32 now = getMSTime();
+    if (now - m_lastFlagStateRefresh < FLAG_STATE_REFRESH_INTERVAL)
+        return;
+
+    m_lastFlagStateRefresh = now;
+    m_cachedFriendlyFC = nullptr;
+    m_cachedEnemyFC = nullptr;
+
+    if (!bot || !bot->IsInWorld())
+        return;
+
+    // Try coordinator cache first (O(1))
+    ::Playerbot::BattlegroundCoordinator* coordinator =
+        sBGCoordinatorMgr->GetCoordinatorForPlayer(bot);
+
+    if (coordinator)
+    {
+        ObjectGuid friendlyGuid = coordinator->GetCachedFriendlyFC();
+        if (!friendlyGuid.IsEmpty())
+        {
+            ::Player* fc = ObjectAccessor::FindPlayer(friendlyGuid);
+            if (fc && fc->IsInWorld() && fc->IsAlive())
+                m_cachedFriendlyFC = fc;
+        }
+
+        ObjectGuid enemyGuid = coordinator->GetCachedEnemyFC();
+        if (!enemyGuid.IsEmpty())
+        {
+            ::Player* fc = ObjectAccessor::FindPlayer(enemyGuid);
+            if (fc && fc->IsInWorld() && fc->IsAlive())
+                m_cachedEnemyFC = fc;
+        }
+        return;
+    }
+
+    // Fallback: O(n) aura scan over all BG players
+    ::Battleground* bg = bot->GetBattleground();
+    if (!bg)
+        return;
+
+    uint32 teamId = bot->GetBGTeam();
+    // Friendly FC carries the enemy's flag aura
+    uint32 friendlyFCAura = (teamId == ALLIANCE) ? CTFSpells::ALLIANCE_FLAG_CARRIED : CTFSpells::HORDE_FLAG_CARRIED;
+    // Enemy FC carries our flag aura
+    uint32 enemyFCAura = (teamId == ALLIANCE) ? CTFSpells::HORDE_FLAG_CARRIED : CTFSpells::ALLIANCE_FLAG_CARRIED;
+
+    for (auto const& itr : bg->GetPlayers())
+    {
+        ::Player* bgPlayer = ObjectAccessor::FindPlayer(itr.first);
+        if (!bgPlayer || !bgPlayer->IsInWorld() || !bgPlayer->IsAlive())
+            continue;
+
+        if (bgPlayer->GetBGTeam() == teamId && bgPlayer->HasAura(friendlyFCAura))
+            m_cachedFriendlyFC = bgPlayer;
+        else if (bgPlayer->GetBGTeam() != teamId && bgPlayer->HasAura(enemyFCAura))
+            m_cachedEnemyFC = bgPlayer;
+
+        // Early out if both found
+        if (m_cachedFriendlyFC && m_cachedEnemyFC)
+            break;
+    }
+}
+
+bool CTFScriptBase::IsPlayerCarryingFlag(::Player* player)
+{
+    if (!player)
+        return false;
+    return player->HasAura(CTFSpells::ALLIANCE_FLAG_CARRIED) ||
+           player->HasAura(CTFSpells::HORDE_FLAG_CARRIED);
+}
+
+bool CTFScriptBase::RunFlagHome(::Player* bot)
+{
+    if (!bot || !bot->IsInWorld())
+        return false;
+
+    uint32 teamId = bot->GetBGTeam();
+
+    // Our capture point is our own flag room
+    Position capturePoint = (teamId == ALLIANCE)
+        ? GetAllianceFlagPosition()
+        : GetHordeFlagPosition();
+
+    float distance = bot->GetExactDist(&capturePoint);
+
+    TC_LOG_DEBUG("playerbots.bg.script", "CTF FC: {} running flag home (dist: {:.1f})",
+        bot->GetName(), distance);
+
+    if (distance > 10.0f)
+    {
+        // Run home! Attack enemies en route but never stop
+        BotMovementUtil::MoveToPosition(bot, capturePoint);
+
+        // If there's an enemy very close, attack while running
+        ::Player* nearEnemy = FindNearestEnemyPlayer(bot, 8.0f);
+        if (nearEnemy)
+            EngageTarget(bot, nearEnemy);
+    }
+    else
+    {
+        // At capture point - interact with flag stand to cap
+        TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_FLAGSTAND, 10.0f);
+    }
+
+    return true;
+}
+
+bool CTFScriptBase::PickupEnemyFlag(::Player* bot)
+{
+    if (!bot || !bot->IsInWorld())
+        return false;
+
+    uint32 teamId = bot->GetBGTeam();
+
+    // Enemy flag is at THEIR base
+    Position enemyFlagPos = (teamId == ALLIANCE)
+        ? GetHordeFlagPosition()
+        : GetAllianceFlagPosition();
+
+    float distance = bot->GetExactDist(&enemyFlagPos);
+
+    TC_LOG_DEBUG("playerbots.bg.script", "CTF: {} going to pick up enemy flag (dist: {:.1f})",
+        bot->GetName(), distance);
+
+    if (distance > 10.0f)
+    {
+        BotMovementUtil::MoveToPosition(bot, enemyFlagPos);
+    }
+    else
+    {
+        // Try flag stand first, then goober (different GO types for different BG versions)
+        if (!TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_FLAGSTAND, 10.0f))
+            TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_GOOBER, 10.0f);
+    }
+
+    return true;
+}
+
+bool CTFScriptBase::HuntEnemyFC(::Player* bot, ::Player* enemyFC)
+{
+    if (!bot || !bot->IsInWorld() || !enemyFC || !enemyFC->IsInWorld() || !enemyFC->IsAlive())
+        return false;
+
+    float distance = bot->GetExactDist(enemyFC);
+
+    TC_LOG_DEBUG("playerbots.bg.script", "CTF: {} hunting enemy FC {} (dist: {:.1f})",
+        bot->GetName(), enemyFC->GetName(), distance);
+
+    if (distance > 30.0f)
+    {
+        // Too far - move closer
+        BotMovementUtil::MoveToPosition(bot, enemyFC->GetPosition());
+    }
+    else
+    {
+        // In range - target and attack
+        EngageTarget(bot, enemyFC);
+
+        // Chase to melee range
+        if (distance > 5.0f)
+            BotMovementUtil::ChaseTarget(bot, enemyFC, 5.0f);
+    }
+
+    return true;
+}
+
+bool CTFScriptBase::EscortFriendlyFC(::Player* bot, ::Player* friendlyFC)
+{
+    if (!bot || !bot->IsInWorld() || !friendlyFC || !friendlyFC->IsInWorld())
+        return false;
+
+    float distance = bot->GetExactDist(friendlyFC);
+    constexpr float ESCORT_DISTANCE = 8.0f;
+    constexpr float MAX_ESCORT_DISTANCE = 40.0f;
+
+    TC_LOG_DEBUG("playerbots.bg.script", "CTF: {} escorting FC {} (dist: {:.1f})",
+        bot->GetName(), friendlyFC->GetName(), distance);
+
+    // Calculate escort position from formation
+    Position escortPos;
+    auto formation = GetEscortFormation(friendlyFC->GetPosition(), 4);
+    if (!formation.empty() && distance < MAX_ESCORT_DISTANCE)
+    {
+        uint32 idx = bot->GetGUID().GetCounter() % formation.size();
+        escortPos = formation[idx];
+        BotMovementUtil::CorrectPositionToGround(bot, escortPos);
+    }
+    else
+    {
+        // Fallback: follow behind FC
+        float angle = friendlyFC->GetOrientation() + static_cast<float>(M_PI);
+        escortPos.Relocate(
+            friendlyFC->GetPositionX() + ESCORT_DISTANCE * 0.7f * std::cos(angle),
+            friendlyFC->GetPositionY() + ESCORT_DISTANCE * 0.7f * std::sin(angle),
+            friendlyFC->GetPositionZ()
+        );
+        BotMovementUtil::CorrectPositionToGround(bot, escortPos);
+    }
+
+    // Move to escort position
+    if (distance > ESCORT_DISTANCE * 1.5f || !BotMovementUtil::IsMoving(bot))
+        BotMovementUtil::MoveToPosition(bot, escortPos);
+
+    // Protect the FC: attack enemies near the FC
+    if (friendlyFC->IsInCombat())
+    {
+        ::Playerbot::BattlegroundCoordinator* coordinator =
+            sBGCoordinatorMgr->GetCoordinatorForPlayer(bot);
+
+        if (coordinator)
+        {
+            auto nearbyEnemies = coordinator->QueryNearbyEnemies(friendlyFC->GetPosition(), 20.0f);
+            for (auto const* snapshot : nearbyEnemies)
+            {
+                if (snapshot && snapshot->isAlive)
+                {
+                    ::Player* enemy = ObjectAccessor::FindPlayer(snapshot->guid);
+                    if (enemy && enemy->IsAlive())
+                    {
+                        EngageTarget(bot, enemy);
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Fallback: grid search
+            std::list<::Player*> nearbyPlayers;
+            friendlyFC->GetPlayerListInGrid(nearbyPlayers, 20.0f);
+            for (::Player* nearby : nearbyPlayers)
+            {
+                if (nearby && nearby->IsAlive() && nearby->IsHostileTo(bot))
+                {
+                    EngageTarget(bot, nearby);
+                    break;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+bool CTFScriptBase::DefendOwnFlagRoom(::Player* bot)
+{
+    if (!bot || !bot->IsInWorld())
+        return false;
+
+    uint32 teamId = bot->GetBGTeam();
+
+    // Get our flag room position
+    Position flagRoomPos = (teamId == ALLIANCE)
+        ? GetAllianceFlagPosition()
+        : GetHordeFlagPosition();
+
+    // Also try flag room defense positions for better spread
+    auto defensePositions = (teamId == ALLIANCE)
+        ? GetAllianceFlagRoomDefense()
+        : GetHordeFlagRoomDefense();
+
+    Position targetPos = flagRoomPos;
+    if (!defensePositions.empty())
+    {
+        uint32 idx = bot->GetGUID().GetCounter() % defensePositions.size();
+        targetPos = defensePositions[idx];
+    }
+
+    float distance = bot->GetExactDist(&targetPos);
+    constexpr float DEFENSE_RADIUS = 25.0f;
+
+    TC_LOG_DEBUG("playerbots.bg.script", "CTF: {} defending flag room (dist: {:.1f})",
+        bot->GetName(), distance);
+
+    // Move to flag room if too far
+    if (distance > DEFENSE_RADIUS)
+    {
+        BotMovementUtil::MoveToPosition(bot, targetPos);
+        return true;
+    }
+
+    // Try to return any dropped flags first
+    if (ReturnDroppedFlag(bot))
+        return true;
+
+    // Look for enemies in the flag room
+    ::Player* closestEnemy = FindNearestEnemyPlayer(bot, DEFENSE_RADIUS);
+    if (closestEnemy)
+    {
+        EngageTarget(bot, closestEnemy);
+
+        // Chase if too far
+        float enemyDist = bot->GetExactDist(closestEnemy);
+        if (enemyDist > 5.0f)
+            BotMovementUtil::ChaseTarget(bot, closestEnemy, 5.0f);
+
+        return true;
+    }
+
+    // No enemies - patrol around flag room
+    PatrolAroundPosition(bot, flagRoomPos, 5.0f, 12.0f);
+    return true;
+}
+
+bool CTFScriptBase::ReturnDroppedFlag(::Player* bot)
+{
+    if (!bot || !bot->IsInWorld())
+        return false;
+
+    // Search for dropped flag GameObjects nearby
+    std::list<GameObject*> goList;
+    bot->GetGameObjectListWithEntryInGrid(goList, 0, 50.0f);
+
+    GameObject* droppedFlag = nullptr;
+    float closestDist = 50.0f;
+
+    for (GameObject* go : goList)
+    {
+        if (!go)
+            continue;
+
+        GameObjectTemplate const* goInfo = go->GetGOInfo();
+        if (!goInfo || goInfo->type != GAMEOBJECT_TYPE_FLAGDROP)
+            continue;
+
+        float dist = bot->GetExactDist(go);
+        if (dist < closestDist)
+        {
+            closestDist = dist;
+            droppedFlag = go;
+        }
+    }
+
+    if (!droppedFlag)
+        return false;
+
+    if (closestDist > 10.0f)
+    {
+        // Move to the dropped flag
+        Position flagPos;
+        flagPos.Relocate(droppedFlag->GetPositionX(), droppedFlag->GetPositionY(), droppedFlag->GetPositionZ());
+        BotMovementUtil::MoveToPosition(bot, flagPos);
+        TC_LOG_DEBUG("playerbots.bg.script", "CTF: {} moving to return dropped flag (dist: {:.1f})",
+            bot->GetName(), closestDist);
+    }
+    else
+    {
+        // We're at the flag - interact to return it
+        droppedFlag->Use(bot);
+        TC_LOG_INFO("playerbots.bg.script", "CTF: {} returned dropped flag!",
+            bot->GetName());
+    }
+
+    return true;
 }
 
 } // namespace Playerbot::Coordination::Battleground

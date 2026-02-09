@@ -27,6 +27,7 @@
 
 // Central Spell Registry - See WoW120Spells::Druid namespace
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -335,6 +336,40 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Balance Druid has access to: Keeper of the Grove / Elune's Chosen
+        if (_heroTalents.IsTree(HeroTalentTree::KEEPER_OF_THE_GROVE))
+        {
+            // Keeper of the Grove: Power of the Dream enhances treants, Control of the Dream
+            if (this->CanCastSpell(WoW120Spells::Druid::Balance::TREANTS_OF_THE_MOON, target))
+            {
+                this->CastSpell(WoW120Spells::Druid::Balance::TREANTS_OF_THE_MOON, target);
+                return;
+            }
+            if (this->CanCastSpell(WoW120Spells::Druid::Balance::POWER_OF_THE_DREAM, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Druid::Balance::POWER_OF_THE_DREAM, this->GetBot());
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::ELUNES_CHOSEN))
+        {
+            // Elune's Chosen: Lunar Calling empowers Starfire, Astral Insight procs
+            if (this->GetBot()->HasAura(WoW120Spells::Druid::Balance::ASTRAL_INSIGHT))
+            {
+                // Astral Insight proc active - prioritize Starsurge for empowered damage
+                if (this->CanCastSpell(WoW120Spells::Druid::Balance::STARSURGE, target))
+                {
+                    this->CastSpell(WoW120Spells::Druid::Balance::STARSURGE, target);
+                    return;
+                }
+            }
+        }
 
         // Deferred initialization of mana resources (safe now that bot is in world)
         this->_resource.DeferredInitialize(this->GetBot());
@@ -925,6 +960,9 @@ private:
     bool _starfallActive;
     uint32 _starfallEndTime;
     bool _shootingStarsProc;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

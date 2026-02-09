@@ -19,6 +19,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "Pet.h"
 #include "PetDefines.h"
 #include "MotionMaster.h"
@@ -404,6 +405,32 @@ public:
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::PACK_LEADER))
+        {
+            // Pack Leader: Vicious Hunt for coordinated pet burst
+            if (this->_resource >= 30 &&
+                this->CanCastSpell(WoW120Spells::Hunter::BeastMastery::VICIOUS_HUNT, target))
+            {
+                this->CastSpell(WoW120Spells::Hunter::BeastMastery::VICIOUS_HUNT, target);
+                this->ConsumeResource(30);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::DARK_RANGER))
+        {
+            // Dark Ranger: Black Arrow for shadow-empowered shots
+            if (this->CanCastSpell(WoW120Spells::Hunter::BeastMastery::BLACK_ARROW, target))
+            {
+                this->CastSpell(WoW120Spells::Hunter::BeastMastery::BLACK_ARROW, target);
+                return;
+            }
+        }
 
         // Ensure pet is active and attacking
         _petManager.EnsurePetActive(target);
@@ -1261,6 +1288,9 @@ private:
     // Ability timing
     uint32 _lastKillCommand;
     uint32 _lastCobraShot;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

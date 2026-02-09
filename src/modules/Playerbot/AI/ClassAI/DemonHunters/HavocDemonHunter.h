@@ -18,6 +18,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
@@ -318,6 +319,32 @@ public:
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Havoc DH has access to: Aldrachi Reaver / Fel-Scarred
+        if (_heroTalents.IsTree(HeroTalentTree::ALDRACHI_REAVER))
+        {
+            // Aldrachi Reaver: Art of the Glaive empowers glaive abilities
+            if (this->CanCastSpell(WoW120Spells::DemonHunter::Havoc::ART_OF_THE_GLAIVE, target))
+            {
+                this->CastSpell(WoW120Spells::DemonHunter::Havoc::ART_OF_THE_GLAIVE, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::FEL_SCARRED))
+        {
+            // Fel-Scarred: Enhanced Metamorphosis with Demonic Intensity
+            // Violent Transformation empowers Meta transformations
+            if (this->CanCastSpell(WoW120Spells::DemonHunter::Havoc::DEMONIC_INTENSITY, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::DemonHunter::Havoc::DEMONIC_INTENSITY, this->GetBot());
+                return;
+            }
+        }
 
         // Update Havoc-specific mechanics
         UpdateHavocState();
@@ -1765,6 +1792,9 @@ private:
     uint32 _immolationAuraEndTime;
     bool _furiousGazeActive;
     uint32 _furiousGazeEndTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

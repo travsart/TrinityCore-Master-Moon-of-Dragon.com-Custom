@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
+#include "../HeroTalentDetector.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -258,6 +259,10 @@ public:
         if (!this->GetBot())
             return;
 
+        // Lazy hero talent detection (once per bot lifetime until respec)
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
         // Update Holy Paladin state
         UpdateHolyPaladinState();
 
@@ -290,6 +295,46 @@ protected:
         Player* bot = this->GetBot();
         Group* group = bot->GetGroup();        // Update beacon targets
         UpdateBeacons(group);
+
+        // Hero talent tree rotation branching
+        // Holy Paladin has access to: Herald of the Sun / Lightsmith
+        if (_heroTalents.IsTree(HeroTalentTree::HERALD_OF_THE_SUN))
+        {
+            // Herald of the Sun: Dawnlight empowers healing with solar energy
+            // Cast Dawnlight on injured allies for HoT effect
+            Unit* dawnlightTarget = SelectHealingTarget(group);
+            if (dawnlightTarget && dawnlightTarget->GetHealthPct() < 80.0f)
+            {
+                if (this->CanCastSpell(WoW120Spells::Paladin::Holy::DAWNLIGHT, dawnlightTarget))
+                {
+                    this->CastSpell(WoW120Spells::Paladin::Holy::DAWNLIGHT, dawnlightTarget);
+                    return;
+                }
+            }
+            // Eternal Flame for sustained healing
+            if (dawnlightTarget && dawnlightTarget->GetHealthPct() < 70.0f)
+            {
+                if (this->CanCastSpell(WoW120Spells::Paladin::Holy::ETERNAL_FLAME, dawnlightTarget))
+                {
+                    this->CastSpell(WoW120Spells::Paladin::Holy::ETERNAL_FLAME, dawnlightTarget);
+                    return;
+                }
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::LIGHTSMITH))
+        {
+            // Lightsmith: Holy Armament creates sacred weapons for allies
+            // Apply Sacred Weapon buff to tank or highest-priority ally
+            Player* tank = GetMainTank(group);
+            if (tank && !tank->HasAura(WoW120Spells::Paladin::Holy::SACRED_WEAPON))
+            {
+                if (this->CanCastSpell(WoW120Spells::Paladin::Holy::HOLY_ARMAMENT, tank))
+                {
+                    this->CastSpell(WoW120Spells::Paladin::Holy::HOLY_ARMAMENT, tank);
+                    return;
+                }
+            }
+        }
 
         // Emergency healing
         if (HandleEmergencyHealing(group))
@@ -1024,6 +1069,7 @@ private:
     uint32 _avengingWrathEndTime;
     bool _infusionOfLightActive;
     uint32 _lastHolyShockTime;
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

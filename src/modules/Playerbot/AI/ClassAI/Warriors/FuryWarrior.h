@@ -20,6 +20,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
+#include "../HeroTalentDetector.h"            // Hero talent tree detection
 // Phase 5 Integration
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
@@ -171,6 +172,30 @@ protected:
     void ExecuteFuryRotation(::Unit* target)
     {
         using namespace FuryWarriorSpells;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero Talent: Mountain Thane - Thunder Blast for burst AoE damage
+        if (_heroTalents.IsTree(HeroTalentTree::MOUNTAIN_THANE))
+        {
+            if (this->CanUseAbility(SPELL_THUNDER_BLAST))
+            {
+                this->CastSpell(SPELL_THUNDER_BLAST, target);
+                return;
+            }
+        }
+
+        // Hero Talent: Slayer - Slayer's Strike weaved into rotation
+        if (_heroTalents.IsTree(HeroTalentTree::SLAYER) && _isEnraged)
+        {
+            if (this->CanUseAbility(SPELL_SLAYERS_STRIKE))
+            {
+                this->CastSpell(SPELL_SLAYERS_STRIKE, target);
+                return;
+            }
+        }
 
         // Priority 1: Maintain Enrage with Rampage
         if (ShouldUseRampage() && this->CanUseAbility(SPELL_RAMPAGE))
@@ -747,6 +772,9 @@ private:
     // Combat state
     bool _executePhaseActive;
     bool _hasDualWield;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

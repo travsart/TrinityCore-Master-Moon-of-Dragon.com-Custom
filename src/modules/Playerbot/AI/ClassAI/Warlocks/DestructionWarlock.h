@@ -26,6 +26,7 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -303,6 +304,31 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::HELLCALLER))
+        {
+            // Hellcaller: Wither replaces Immolate with stacking fire damage
+            if (!target->HasAura(WoW120Spells::Warlock::Destruction::DESTRO_WITHER) &&
+                this->CanCastSpell(WoW120Spells::Warlock::Destruction::DESTRO_WITHER, target))
+            {
+                this->CastSpell(WoW120Spells::Warlock::Destruction::DESTRO_WITHER, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::DIABOLIST))
+        {
+            // Diabolist: Diabolic Ritual for empowered infernal summoning
+            if (this->CanCastSpell(WoW120Spells::Warlock::Destruction::DESTRO_DIABOLIC_RITUAL, target))
+            {
+                this->CastSpell(WoW120Spells::Warlock::Destruction::DESTRO_DIABOLIC_RITUAL, target);
+                return;
+            }
+        }
 
         // Update Destruction state
         UpdateDestructionState();
@@ -1032,6 +1058,9 @@ private:
     DestructionHavocTracker _havocTracker;
     uint32 _backdraftStacks;
     uint32 _lastInfernalTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

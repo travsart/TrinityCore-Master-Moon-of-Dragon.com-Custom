@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -288,6 +289,10 @@ public:
 
             return;
 
+        // Lazy hero talent detection (once per bot lifetime until respec)
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(bot);
+
         // Update Mistweaver state
         UpdateMistweaverState();
 
@@ -304,6 +309,49 @@ public:
 protected:
     void ExecuteHealingRotation(const ::std::vector<Unit*>& group)
     {
+        // Hero talent tree rotation branching
+        // Mistweaver has access to: Master of Harmony / Conduit of the Celestials
+        if (_heroTalents.IsTree(HeroTalentTree::MASTER_OF_HARMONY))
+        {
+            // Master of Harmony: Aspect of Harmony accumulates vitality from healing done
+            // Release accumulated vitality as burst healing when group needs it
+            if (this->CanCastSpell(MW_ASPECT_OF_HARMONY, this->GetBot()))
+            {
+                // Use during heavy group damage or when Revival/Yulon are on cooldown
+                uint32 lowHealthCount = 0;
+                for (Unit* member : group)
+                {
+                    if (member->GetHealthPct() < 60.0f)
+                        ++lowHealthCount;
+                }
+                if (lowHealthCount >= 2)
+                {
+                    this->CastSpell(MW_ASPECT_OF_HARMONY, this->GetBot());
+                    return;
+                }
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::CONDUIT_OF_THE_CELESTIALS))
+        {
+            // Conduit of the Celestials: Celestial Conduit channels celestial healing
+            // Coordinate with major healing cooldowns for maximum throughput
+            if (this->CanCastSpell(CELESTIAL_CONDUIT, this->GetBot()))
+            {
+                uint32 injuredCount = 0;
+                for (Unit* member : group)
+                {
+                    if (member->GetHealthPct() < 70.0f)
+                        ++injuredCount;
+                }
+                // Use when multiple group members are injured
+                if (injuredCount >= 3)
+                {
+                    this->CastSpell(CELESTIAL_CONDUIT, this->GetBot());
+                    return;
+                }
+            }
+        }
+
         // Priority 1: Emergency healing
         if (HandleEmergencyHealing(group))
 
@@ -1291,6 +1339,7 @@ private:
     MistweaverSoothingMistTracker _soothingMistTracker;
     bool _thunderFocusTeaActive;
     uint32 _lastEssenceFontTime;
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

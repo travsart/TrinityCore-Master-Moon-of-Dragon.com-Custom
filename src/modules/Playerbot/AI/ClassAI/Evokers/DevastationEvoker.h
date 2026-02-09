@@ -15,6 +15,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -272,6 +273,31 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::FLAMESHAPER))
+        {
+            // Flameshaper: Engulf for empowered fire damage
+            if (this->CanCastSpell(WoW120Spells::Evoker::Devastation::ENGULF, target))
+            {
+                this->CastSpell(WoW120Spells::Evoker::Devastation::ENGULF, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SCALECOMMANDER))
+        {
+            // Scalecommander: Mass Disintegrate when 3+ enemies for cleave
+            if (this->GetEnemiesInRange(25.0f) >= 3 &&
+                this->CanCastSpell(WoW120Spells::Evoker::Devastation::MASS_DISINTEGRATE, target))
+            {
+                this->CastSpell(WoW120Spells::Evoker::Devastation::MASS_DISINTEGRATE, target);
+                return;
+            }
+        }
 
         // Update Devastation state
         UpdateDevastationState();
@@ -767,6 +793,9 @@ private:
     uint32 _essenceBurstStacks;
     uint32 _lastEternityTime;
     uint32 _lastFireBreathTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

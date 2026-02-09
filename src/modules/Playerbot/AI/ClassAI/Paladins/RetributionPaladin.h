@@ -19,6 +19,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
+#include "../HeroTalentDetector.h"
 
 // Phase 5 Integration: Decision Systems
 #include "../../Decision/ActionPriorityQueue.h"
@@ -134,6 +135,10 @@ public:
         if (!target || !target->IsHostileTo(this->GetBot()))
             return;
 
+        // Lazy hero talent detection (once per bot lifetime until respec)
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
         // Update procs and buffs
         CheckForProcs();
 
@@ -165,6 +170,43 @@ protected:
      */
     void ExecutePriorityRotation(::Unit* target)
     {
+        // Hero talent rotation branching
+        if (_heroTalents.IsTree(HeroTalentTree::TEMPLAR))
+        {
+            // Templar: Radiant Glory procs empower Templar's Verdict
+            // Shake the Heavens grants bonus damage after spenders
+            if (this->GetBot()->HasAura(WoW120Spells::Paladin::Retribution::SHAKE_THE_HEAVENS))
+            {
+                // Empowered state: prioritize Templar's Verdict for amplified damage
+                if (_holyPower.GetAvailable() >= 3 && this->CanUseAbility(SPELL_TEMPLARS_VERDICT))
+                {
+                    this->CastSpell(SPELL_TEMPLARS_VERDICT, target);
+                    _holyPower.Consume(3);
+                    return;
+                }
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::HERALD_OF_THE_SUN))
+        {
+            // Herald of the Sun: Dawnlight empowers abilities with solar energy
+            // Cast Dawnlight when available for HoT + damage amplification
+            if (this->CanUseAbility(WoW120Spells::Paladin::Retribution::RET_DAWNLIGHT))
+            {
+                this->CastSpell(WoW120Spells::Paladin::Retribution::RET_DAWNLIGHT, target);
+                return;
+            }
+            // Sun's Avatar for burst healing/damage during Avenging Wrath
+            if (_heroTalents.IsTree(HeroTalentTree::HERALD_OF_THE_SUN) &&
+                this->GetBot()->HasAura(SPELL_AVENGING_WRATH))
+            {
+                if (this->CanUseAbility(WoW120Spells::Paladin::Retribution::RET_SUNS_AVATAR))
+                {
+                    this->CastSpell(WoW120Spells::Paladin::Retribution::RET_SUNS_AVATAR, this->GetBot());
+                    return;
+                }
+            }
+        }
+
         // Hammer of Wrath (Execute phase or during Avenging Wrath)
         if (target->GetHealthPct() < 20.0f && this->CanUseAbility(SPELL_HAMMER_OF_WRATH))
         {
@@ -270,6 +312,10 @@ protected:
 
     void OnCombatStartSpecific(::Unit* target) override
     {
+        // Hero talent detection on combat start
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
         // Pop offensive cooldowns at start for burst (WoW 12.0)
         if (ShouldUseCooldowns(target))
         {
@@ -681,6 +727,7 @@ private:
     // Proc tracking
     bool _hasArtOfWar;
     bool _hasDivinePurpose;
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

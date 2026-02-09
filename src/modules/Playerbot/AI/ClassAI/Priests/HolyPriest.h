@@ -38,6 +38,7 @@
 
 // Central Spell Registry - See WoW120Spells::Priest namespace
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -300,6 +301,30 @@ public:
         if (!target || !bot)
 
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::ORACLE))
+        {
+            // Oracle: Premonition for predictive group healing
+            if (this->CanCastSpell(WoW120Spells::Priest::HolyPriest::POWER_SURGE, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Priest::HolyPriest::POWER_SURGE, this->GetBot());
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::ARCHON))
+        {
+            // Archon: Divine Halo for radiant burst healing
+            if (this->CanCastSpell(WoW120Spells::Priest::HolyPriest::DIVINE_HALO, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Priest::HolyPriest::DIVINE_HALO, this->GetBot());
+                return;
+            }
+        }
 
         UpdateHolyState();
 
@@ -1453,6 +1478,9 @@ private:
     uint32 _lastHolyFireTime;
 
     CooldownManager _cooldowns;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

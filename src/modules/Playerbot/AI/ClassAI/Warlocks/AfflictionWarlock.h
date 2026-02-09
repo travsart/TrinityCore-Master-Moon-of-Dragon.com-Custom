@@ -26,6 +26,7 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 // NOTE: BaselineRotationManager.h no longer needed - baseline rotation check
 // is now handled centrally at the dispatch level in ClassAI::OnCombatUpdate()
 
@@ -311,6 +312,31 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::HELLCALLER))
+        {
+            // Hellcaller: Wither replaces Corruption with stacking damage
+            if (!target->HasAura(WoW120Spells::Warlock::Affliction::WITHER) &&
+                this->CanCastSpell(WoW120Spells::Warlock::Affliction::WITHER, target))
+            {
+                this->CastSpell(WoW120Spells::Warlock::Affliction::WITHER, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SOUL_HARVESTER))
+        {
+            // Soul Harvester: Demonic Soul for soul shard generation burst
+            if (this->CanCastSpell(WoW120Spells::Warlock::Affliction::DEMONIC_SOUL, target))
+            {
+                this->CastSpell(WoW120Spells::Warlock::Affliction::DEMONIC_SOUL, target);
+                return;
+            }
+        }
 
         // NOTE: Baseline rotation check is now handled at the dispatch level in
         // ClassAI::OnCombatUpdate(). This method is ONLY called when the bot has
@@ -995,6 +1021,9 @@ private:
     AfflictionDoTTracker _dotTracker;
     bool _nightfallProc;
     uint32 _lastDarkglareTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

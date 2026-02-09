@@ -25,6 +25,7 @@
 #include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -303,6 +304,30 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::DIABOLIST))
+        {
+            // Diabolist: Diabolic Ritual for empowered demon summoning
+            if (this->CanCastSpell(WoW120Spells::Warlock::Demonology::DIABOLIC_RITUAL, target))
+            {
+                this->CastSpell(WoW120Spells::Warlock::Demonology::DIABOLIC_RITUAL, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SOUL_HARVESTER))
+        {
+            // Soul Harvester: Demonic Soul for enhanced soul shard generation
+            if (this->CanCastSpell(WoW120Spells::Warlock::Demonology::DEMO_DEMONIC_SOUL, target))
+            {
+                this->CastSpell(WoW120Spells::Warlock::Demonology::DEMO_DEMONIC_SOUL, target);
+                return;
+            }
+        }
 
         // Update Demonology state
         UpdateDemonologyState();
@@ -850,6 +875,9 @@ private:
     DemonologyDemonTracker _demonTracker;
     uint32 _demonicCoreStacks;
     uint32 _lastTyrantTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

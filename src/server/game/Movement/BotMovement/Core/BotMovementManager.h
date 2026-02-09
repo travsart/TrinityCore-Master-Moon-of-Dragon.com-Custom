@@ -22,7 +22,7 @@
 #include "ObjectGuid.h"
 #include "BotMovementConfig.h"
 #include "MovementMetrics.h"
-#include "PathCache.h"
+#include "../Pathfinding/PathCache.h"
 #include <unordered_map>
 
 class BotMovementController;

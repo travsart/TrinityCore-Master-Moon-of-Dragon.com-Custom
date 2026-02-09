@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"  // Central spell registry
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -322,6 +323,35 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Unholy DK has access to: San'layn / Rider of the Apocalypse
+        if (_heroTalents.IsTree(HeroTalentTree::SANLAYN))
+        {
+            // San'layn: Vampiric Strike replaces Scourge Strike with life-stealing variant
+            if (this->CanCastSpell(WoW120Spells::DeathKnight::Unholy::UNHOLY_VAMPIRIC_STRIKE, target))
+            {
+                this->CastSpell(WoW120Spells::DeathKnight::Unholy::UNHOLY_VAMPIRIC_STRIKE, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::RIDER_OF_THE_APOCALYPSE))
+        {
+            // Rider: Apocalypse summons enhanced horsemen, Morbidity enhances diseases
+            if (this->CanCastSpell(WoW120Spells::DeathKnight::Unholy::UNHOLY_APOCALYPSE, target))
+            {
+                // Use enhanced Apocalypse when target has 4+ Festering Wounds
+                if (target->HasAura(FESTERING_WOUND))
+                {
+                    this->CastSpell(WoW120Spells::DeathKnight::Unholy::UNHOLY_APOCALYPSE, target);
+                    return;
+                }
+            }
+        }
 
         // Update Unholy state
         UpdateUnholyState(target);
@@ -699,6 +729,9 @@ private:
     UnholyPetTracker _petTracker;
     bool _suddenDoomProc;
     uint32 _lastOutbreakTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

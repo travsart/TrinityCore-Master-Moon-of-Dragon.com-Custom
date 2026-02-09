@@ -35,6 +35,7 @@
 
 // Central Spell Registry - See WoW120Spells::Priest namespace
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -261,6 +262,31 @@ public:
         if (!target || !bot)
 
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::ORACLE))
+        {
+            // Oracle: Premonition for predictive healing
+            if (this->CanCastSpell(WoW120Spells::Priest::Discipline::PREMONITION, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Priest::Discipline::PREMONITION, this->GetBot());
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::VOIDWEAVER))
+        {
+            // Voidweaver: Void Blast for shadow-enhanced atonement damage
+            if (target && target->IsHostileTo(this->GetBot()) &&
+                this->CanCastSpell(WoW120Spells::Priest::Discipline::VOID_BLAST, target))
+            {
+                this->CastSpell(WoW120Spells::Priest::Discipline::VOID_BLAST, target);
+                return;
+            }
+        }
 
         UpdateDisciplineState();
 
@@ -1793,6 +1819,9 @@ private:
     uint32 _lastPainSuppressionTime;
     uint32 _lastBarrierTime;
     uint32 _lastRaptureTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

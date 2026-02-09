@@ -33,6 +33,7 @@
 
 // Central Spell Registry - See WoW120Spells::Druid namespace
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -233,6 +234,31 @@ public:
         if (!target || !bot)
 
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Guardian Druid has access to: Elune's Chosen / Druid of the Claw
+        if (_heroTalents.IsTree(HeroTalentTree::ELUNES_CHOSEN))
+        {
+            // Elune's Chosen: Lunar Beam Enhanced and Celestial Guardian buffs
+            if (this->CanCastSpell(WoW120Spells::Druid::Guardian::LUNAR_BEAM_ENHANCED, target))
+            {
+                this->CastSpell(WoW120Spells::Druid::Guardian::LUNAR_BEAM_ENHANCED, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::DRUID_OF_THE_CLAW))
+        {
+            // Druid of the Claw: Ursine Adept empowers bear form abilities
+            if (this->CanCastSpell(WoW120Spells::Druid::Guardian::URSINE_ADEPT, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Druid::Guardian::URSINE_ADEPT, this->GetBot());
+                return;
+            }
+        }
 
         UpdateGuardianState(target);
         MaintainBearForm();
@@ -1232,6 +1258,9 @@ private:
     uint32 _lastBerserkTime;
     uint32 _lastFrenziedRegenerationTime;
     uint32 _lastTaunt{0}; // Phase 5C: ThreatAssistant integration
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

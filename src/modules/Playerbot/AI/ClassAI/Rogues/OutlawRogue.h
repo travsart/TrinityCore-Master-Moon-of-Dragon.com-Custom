@@ -28,6 +28,7 @@
 // Central Spell Registry - See WoW120Spells::Rogue namespace
 #include "../SpellValidation_WoW120.h"
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -262,6 +263,31 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::TRICKSTER))
+        {
+            // Trickster: Unseen Blade for surprise burst damage
+            if (this->CanCastSpell(WoW120Spells::Rogue::Outlaw::UNSEEN_BLADE, target))
+            {
+                this->CastSpell(WoW120Spells::Rogue::Outlaw::UNSEEN_BLADE, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::FATEBOUND))
+        {
+            // Fatebound: Fate Intertwined - amplify finishers at max combo points
+            if (this->_resource.comboPoints >= 5 &&
+                this->CanCastSpell(WoW120Spells::Rogue::Outlaw::OUTLAW_FATE_INTERTWINED, target))
+            {
+                this->CastSpell(WoW120Spells::Rogue::Outlaw::OUTLAW_FATE_INTERTWINED, target);
+                return;
+            }
+        }
 
         // CRITICAL: Deferred spell initialization - bot's spell data must be loaded
         if (!_spellsInitialized && this->GetBot() && this->GetBot()->IsInWorld())
@@ -844,6 +870,9 @@ private:
     uint32 _lastSinisterStrikeTime;
     uint32 _lastDispatchTime;
     bool _spellsInitialized;  // Deferred initialization flag
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -291,11 +292,55 @@ public:
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
+        // Lazy hero talent detection (once per bot lifetime until respec)
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
         // Update Windwalker state
         UpdateWindwalkerState();
 
         // Use major cooldowns
         HandleCooldowns(target);
+
+        // Hero talent tree rotation branching
+        // Windwalker has access to: Shado-Pan / Conduit of the Celestials
+        if (_heroTalents.IsTree(HeroTalentTree::SHADO_PAN))
+        {
+            // Shado-Pan: Flurry Strikes proc from combo strikes (using different abilities)
+            // When Flurry Strikes buff is active, prioritize high-damage spenders
+            if (this->GetBot()->HasAura(WW_FLURRY_STRIKES))
+            {
+                // Flurry Strikes active - use highest impact chi spender
+                if (this->_resource.chi >= 2 && this->CanCastSpell(RISING_SUN_KICK, target))
+                {
+                    this->CastSpell(RISING_SUN_KICK, target);
+                    _hitComboTracker.RecordSpell(RISING_SUN_KICK);
+                    ConsumeChi(2);
+                    return;
+                }
+                if (this->_resource.chi >= 3 && this->CanCastSpell(FISTS_OF_FURY, target))
+                {
+                    this->CastSpell(FISTS_OF_FURY, target);
+                    _hitComboTracker.RecordSpell(FISTS_OF_FURY);
+                    ConsumeChi(3);
+                    return;
+                }
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::CONDUIT_OF_THE_CELESTIALS))
+        {
+            // Conduit of the Celestials: Celestial Conduit channels celestial power
+            // Align Celestial Conduit with Storm, Earth, and Fire for maximum burst
+            if (this->CanCastSpell(WW_CELESTIAL_CONDUIT, this->GetBot()))
+            {
+                // Use during SEF burst window or when cooldowns are up
+                if (_sefTracker.IsActive() || this->_resource.chi >= 4)
+                {
+                    this->CastSpell(WW_CELESTIAL_CONDUIT, this->GetBot());
+                    return;
+                }
+            }
+        }
 
         // Determine if AoE or single target
         uint32 enemyCount = this->GetEnemiesInRange(8.0f);
@@ -626,6 +671,7 @@ private:
     WindwalkerSEFTracker _sefTracker;
     uint32 _lastRisingSunKickTime;
     bool _comboBreaker;
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

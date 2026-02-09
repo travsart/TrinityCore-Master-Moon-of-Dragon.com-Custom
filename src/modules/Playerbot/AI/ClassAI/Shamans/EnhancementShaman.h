@@ -34,6 +34,7 @@
 // Central Spell Registry - See WoW120Spells::Shaman namespace
 #include "../SpellValidation_WoW120.h"
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -220,6 +221,30 @@ public:
         if (!target || !bot)
 
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::TOTEMIC))
+        {
+            // Totemic: Surging Totem for enhanced AoE and Lava Lash spread
+            if (this->CanCastSpell(WoW120Spells::Shaman::Enhancement::SURGING_TOTEM, target))
+            {
+                this->CastSpell(WoW120Spells::Shaman::Enhancement::SURGING_TOTEM, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::STORMBRINGER))
+        {
+            // Stormbringer: Tempest Strikes for additional nature damage procs
+            if (this->CanCastSpell(WoW120Spells::Shaman::Enhancement::ENH_TEMPEST_STRIKES, target))
+            {
+                this->CastSpell(WoW120Spells::Shaman::Enhancement::ENH_TEMPEST_STRIKES, target);
+                return;
+            }
+        }
 
         UpdateEnhancementState();
 
@@ -819,6 +844,9 @@ private:
     uint32 _lastAscendanceTime;
     uint32 _lastFeralSpiritTime;
     uint32 _lastSunderingTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

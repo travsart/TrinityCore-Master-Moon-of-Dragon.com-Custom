@@ -20,6 +20,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
+#include "../HeroTalentDetector.h"            // Hero talent tree detection
 // Phase 5 Integration
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
@@ -225,6 +226,32 @@ protected:
     void ExecuteArmsRotation(::Unit* target)
     {
         using namespace ArmsWarriorSpells;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero Talent: Colossus - Demolish replaces Colossus Smash burst window
+        if (_heroTalents.IsTree(HeroTalentTree::COLOSSUS))
+        {
+            if (this->CanUseAbility(SPELL_DEMOLISH))
+            {
+                this->CastSpell(SPELL_DEMOLISH, target);
+                _colossusSmashActive = true;
+                _lastColossusSmash = GameTime::GetGameTimeMS();
+                return;
+            }
+        }
+
+        // Hero Talent: Slayer - Slayer's Strike for extra damage during Colossus Smash
+        if (_heroTalents.IsTree(HeroTalentTree::SLAYER) && _colossusSmashActive)
+        {
+            if (this->CanUseAbility(SPELL_SLAYERS_STRIKE))
+            {
+                this->CastSpell(SPELL_SLAYERS_STRIKE, target);
+                return;
+            }
+        }
 
         // Priority 1: Colossus Smash for vulnerability window
         if (ShouldUseColossusSmash(target) && this->CanUseAbility(SPELL_COLOSSUS_SMASH))
@@ -703,6 +730,8 @@ private:
     uint32 _lastMortalStrike;
     uint32 _lastColossusSmash;
 
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

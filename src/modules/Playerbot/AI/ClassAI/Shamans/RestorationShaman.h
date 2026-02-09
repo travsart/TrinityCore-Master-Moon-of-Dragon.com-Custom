@@ -34,6 +34,7 @@
 // Central Spell Registry - See WoW120Spells::Shaman namespace
 #include "../SpellValidation_WoW120.h"
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -275,6 +276,30 @@ public:
         Player* bot = this->GetBot();
         if (!target || !bot)
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::FARSEER))
+        {
+            // Farseer: Ancestral Swiftness for instant-cast healing
+            if (this->CanCastSpell(WoW120Spells::Shaman::Restoration::RESTO_ANCESTRAL_SWIFTNESS, bot))
+            {
+                this->CastSpell(WoW120Spells::Shaman::Restoration::RESTO_ANCESTRAL_SWIFTNESS, bot);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::TOTEMIC))
+        {
+            // Totemic: Surging Totem for enhanced group healing
+            if (this->CanCastSpell(WoW120Spells::Shaman::Restoration::RESTO_SURGING_TOTEM, bot))
+            {
+                this->CastSpell(WoW120Spells::Shaman::Restoration::RESTO_SURGING_TOTEM, bot);
+                return;
+            }
+        }
 
         UpdateRestorationState();
 
@@ -1703,6 +1728,9 @@ private:
         }
         return members;
     }
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

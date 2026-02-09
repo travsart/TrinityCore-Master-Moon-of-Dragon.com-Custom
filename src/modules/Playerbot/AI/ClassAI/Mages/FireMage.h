@@ -22,6 +22,7 @@
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -221,6 +222,31 @@ public:
     {
         if (!target || !this->GetBot())
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::FROSTFIRE))
+        {
+            // Frostfire: Frostfire Bolt for hybrid elemental damage
+            if (this->CanCastSpell(WoW120Spells::Mage::Fire::FROSTFIRE_BOLT, target))
+            {
+                this->CastSpell(WoW120Spells::Mage::Fire::FROSTFIRE_BOLT, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SUNFURY))
+        {
+            // Sunfury: Invocation for solar-enhanced fire bursts
+            if (_hotStreakTracker.IsHotStreakActive() &&
+                this->CanCastSpell(WoW120Spells::Mage::Arcane::INVOCATION_SUNFURY, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Mage::Arcane::INVOCATION_SUNFURY, this->GetBot());
+                return;
+            }
+        }
 
         UpdateFireState();
 
@@ -608,6 +634,9 @@ private:
     uint32 _combustionEndTime;
 
     CooldownManager _cooldowns;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

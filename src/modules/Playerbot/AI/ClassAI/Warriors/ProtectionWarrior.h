@@ -20,6 +20,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
+#include "../HeroTalentDetector.h"            // Hero talent tree detection
 #include "Item.h"
 #include "ItemDefines.h"
 #include "../../Services/ThreatAssistant.h"  // Phase 5C: Unified threat service
@@ -288,6 +289,30 @@ protected:
 
     void ExecuteProtectionRotation(::Unit* target)
     {
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero Talent: Colossus - Demolish for massive threat burst
+        if (_heroTalents.IsTree(HeroTalentTree::COLOSSUS))
+        {
+            if (this->CanUseAbility(WoW120Spells::Warrior::Protection::DEMOLISH))
+            {
+                this->CastSpell(WoW120Spells::Warrior::Protection::DEMOLISH, target);
+                return;
+            }
+        }
+
+        // Hero Talent: Mountain Thane - Thunder Blast for AoE threat
+        if (_heroTalents.IsTree(HeroTalentTree::MOUNTAIN_THANE))
+        {
+            if (this->CanUseAbility(WoW120Spells::Warrior::Protection::THUNDER_BLAST))
+            {
+                this->CastSpell(WoW120Spells::Warrior::Protection::THUNDER_BLAST, target);
+                return;
+            }
+        }
+
         // Priority 1: Shield Slam (highest threat, dispel)
         if (_hasShieldEquipped && this->CanUseAbility(SPELL_SHIELD_SLAM))
         {
@@ -1297,6 +1322,9 @@ private:
     uint32 _lastTaunt;
     ::std::priority_queue<ThreatTarget> _threatPriority;
     ::std::unordered_map<ObjectGuid, uint32> _sunderStacks;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

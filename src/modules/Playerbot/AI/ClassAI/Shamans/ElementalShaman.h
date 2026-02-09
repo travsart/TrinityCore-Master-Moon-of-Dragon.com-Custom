@@ -34,6 +34,7 @@
 // Central Spell Registry - See WoW120Spells::Shaman namespace
 #include "../SpellValidation_WoW120.h"
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -327,6 +328,30 @@ public:
         Player* bot = this->GetBot();
         if (!target || !bot)
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::FARSEER))
+        {
+            // Farseer: Ancestral Swiftness for instant-cast Lightning Bolt/Lava Burst
+            if (this->CanCastSpell(WoW120Spells::Shaman::Elemental::ANCESTRAL_SWIFTNESS, bot))
+            {
+                this->CastSpell(WoW120Spells::Shaman::Elemental::ANCESTRAL_SWIFTNESS, bot);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::STORMBRINGER))
+        {
+            // Stormbringer: Tempest Strikes for additional nature damage procs
+            if (this->CanCastSpell(WoW120Spells::Shaman::Elemental::TEMPEST_STRIKES, target))
+            {
+                this->CastSpell(WoW120Spells::Shaman::Elemental::TEMPEST_STRIKES, target);
+                return;
+            }
+        }
 
         UpdateElementalState();
 
@@ -1012,6 +1037,9 @@ private:
     uint32 _lastPrimordialWaveTime;
     uint32 _lastFireElementalTime;
     uint32 _lastStormkeeperTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

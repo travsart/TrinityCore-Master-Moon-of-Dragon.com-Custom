@@ -33,6 +33,7 @@
 
 // Central Spell Registry - See WoW120Spells::Druid namespace
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -384,6 +385,31 @@ public:
         Player* bot = this->GetBot();
         if (!target || !bot)
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Feral Druid has access to: Druid of the Claw / Wildstalker
+        if (_heroTalents.IsTree(HeroTalentTree::DRUID_OF_THE_CLAW))
+        {
+            // Druid of the Claw: Ravage replaces Shred during stealth/Incarnation
+            if (this->CanCastSpell(WoW120Spells::Druid::Feral::RAVAGE, target))
+            {
+                this->CastSpell(WoW120Spells::Druid::Feral::RAVAGE, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::WILDSTALKER))
+        {
+            // Wildstalker: Wildshape Mastery enhances shapeshifting, Pack Hunter buffs
+            if (this->CanCastSpell(WoW120Spells::Druid::Feral::WILDSHAPE_MASTERY, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Druid::Feral::WILDSHAPE_MASTERY, this->GetBot());
+                return;
+            }
+        }
 
         UpdateFeralState(target);
         MaintainCatForm();
@@ -1527,6 +1553,9 @@ private:
 
     uint32 _lastTigersFuryTime;
     uint32 _lastBerserkTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

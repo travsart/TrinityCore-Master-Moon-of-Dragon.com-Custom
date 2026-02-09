@@ -15,6 +15,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "../../Services/HealingTargetSelector.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -312,6 +313,34 @@ public:
 
     void UpdateRotation(::Unit* target) override
     {
+        if (!target)
+            return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::CHRONOWARDEN))
+        {
+            // Chronowarden: Temporal Burst for group haste during healing
+            if (this->CanCastSpell(WoW120Spells::Evoker::Preservation::TEMPORAL_BURST, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Evoker::Preservation::TEMPORAL_BURST, this->GetBot());
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::FLAMESHAPER))
+        {
+            // Flameshaper: Engulf for damage-healing hybrid
+            if (target && target->IsHostileTo(this->GetBot()) &&
+                this->CanCastSpell(WoW120Spells::Evoker::Preservation::PRES_ENGULF, target))
+            {
+                this->CastSpell(WoW120Spells::Evoker::Preservation::PRES_ENGULF, target);
+                return;
+            }
+        }
+
         // Preservation focuses on healing, not DPS rotation
     }
 
@@ -846,6 +875,9 @@ private:
     PreservationEmpowermentTracker _empowermentTracker;
     EchoTracker _echoTracker;
     uint32 _essenceBurstStacks;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

@@ -11,6 +11,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
@@ -129,6 +130,31 @@ public:
     void UpdateRotation(::Unit* target) override
     {
         if (!target) return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::CHRONOWARDEN))
+        {
+            // Chronowarden: Threads of Fate for enhanced ally buffs
+            if (this->CanCastSpell(WoW120Spells::Evoker::Augmentation::THREADS_OF_FATE, target))
+            {
+                this->CastSpell(WoW120Spells::Evoker::Augmentation::THREADS_OF_FATE, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SCALECOMMANDER))
+        {
+            // Scalecommander: Extended Battle for prolonged ally buffs
+            if (this->CanCastSpell(WoW120Spells::Evoker::Augmentation::EXTENDED_BATTLE, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Evoker::Augmentation::EXTENDED_BATTLE, this->GetBot());
+                return;
+            }
+        }
+
         UpdateAugmentationState();
 
         // Priority 1: Maintain Ebon Might on DPS allies
@@ -338,6 +364,9 @@ protected:
 
 private:
     AugmentationBuffTracker _buffTracker;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

@@ -17,6 +17,7 @@
 #include "../ResourceTypes.h"
 #include "../../Services/ThreatAssistant.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -322,11 +323,49 @@ public:
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
+        // Lazy hero talent detection (once per bot lifetime until respec)
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
         // Update Brewmaster state
         UpdateBrewmasterState();
 
         // Handle active mitigation first
         HandleActiveMitigation();
+
+        // Hero talent tree rotation branching
+        // Brewmaster has access to: Master of Harmony / Shado-Pan
+        if (_heroTalents.IsTree(HeroTalentTree::MASTER_OF_HARMONY))
+        {
+            // Master of Harmony: Aspect of Harmony accumulates vitality from heals/damage
+            // Cast Aspect of Harmony to release accumulated vitality as burst healing/damage
+            if (this->CanCastSpell(ASPECT_OF_HARMONY, this->GetBot()))
+            {
+                // Use when stagger is moderate+ for defensive value, or during Weapons of Order burst
+                if (_staggerTracker.IsModerateStagger() || this->GetBot()->HasAura(WEAPONS_OF_ORDER))
+                {
+                    this->CastSpell(ASPECT_OF_HARMONY, this->GetBot());
+                    return;
+                }
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SHADO_PAN))
+        {
+            // Shado-Pan: Flurry Strikes proc from using different abilities (combo strikes)
+            // Prioritize Flurry Strikes when the buff is active for bonus damage/threat
+            if (this->GetBot()->HasAura(FLURRY_STRIKES))
+            {
+                // Flurry Strikes active - maximize different ability usage for more procs
+                // Keg Smash is highest priority during Flurry Strikes for AoE threat
+                if (this->_resource.energy >= 40 && this->CanCastSpell(KEG_SMASH, target))
+                {
+                    this->CastSpell(KEG_SMASH, target);
+                    _lastKegSmashTime = GameTime::GetGameTimeMS();
+                    GenerateChi(2);
+                    return;
+                }
+            }
+        }
 
         // Determine if AoE or single target
         uint32 enemyCount = this->GetEnemiesInRange(8.0f);
@@ -945,6 +984,7 @@ private:
     bool _ironskinBrewActive;
     uint32 _ironskinEndTime;
     uint32 _lastKegSmashTime;
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

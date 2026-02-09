@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"  // Central spell registry
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -303,6 +304,40 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Frost DK has access to: Rider of the Apocalypse / Deathbringer
+        if (_heroTalents.IsTree(HeroTalentTree::RIDER_OF_THE_APOCALYPSE))
+        {
+            // Rider: Death Charge gap-closer and empowered Rider's Champion strikes
+            if (this->CanCastSpell(WoW120Spells::DeathKnight::Frost::DEATH_CHARGE, target))
+            {
+                this->CastSpell(WoW120Spells::DeathKnight::Frost::DEATH_CHARGE, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::DEATHBRINGER))
+        {
+            // Deathbringer: Reaper's Mark on target triggers Wave of Souls
+            if (this->CanCastSpell(WoW120Spells::DeathKnight::Frost::FROST_REAPER_MARK, target))
+            {
+                this->CastSpell(WoW120Spells::DeathKnight::Frost::FROST_REAPER_MARK, target);
+                return;
+            }
+            // Exterminate during Reaper's Mark for bonus damage
+            if (target->HasAura(WoW120Spells::DeathKnight::Blood::REAPERS_MARK_DEBUFF))
+            {
+                if (this->CanCastSpell(WoW120Spells::DeathKnight::Frost::FROST_EXTERMINATE, target))
+                {
+                    this->CastSpell(WoW120Spells::DeathKnight::Frost::FROST_EXTERMINATE, target);
+                    return;
+                }
+            }
+        }
 
         // Update Frost state
         UpdateFrostState();
@@ -844,6 +879,9 @@ private:
     uint32 _pillarEndTime;
     bool _breathOfSindragosaActive;
     uint32 _lastRemorselessWinterTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

@@ -33,6 +33,7 @@
 
 // Central Spell Registry - See WoW120Spells::Druid namespace
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -289,6 +290,35 @@ public:
         if (!bot)
 
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Restoration Druid has access to: Keeper of the Grove / Wildstalker
+        if (_heroTalents.IsTree(HeroTalentTree::KEEPER_OF_THE_GROVE))
+        {
+            // Keeper of the Grove: Grove Guardians summon healing treants
+            if (this->CanCastSpell(WoW120Spells::Druid::Restoration::GROVE_GUARDIANS, bot))
+            {
+                // Summon grove guardians when healing is needed
+                if (bot->GetPowerPct(POWER_MANA) > 20.0f)
+                {
+                    this->CastSpell(WoW120Spells::Druid::Restoration::GROVE_GUARDIANS, bot);
+                    return;
+                }
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::WILDSTALKER))
+        {
+            // Wildstalker: Strategic Infusion enhances HoTs
+            if (this->CanCastSpell(WoW120Spells::Druid::Restoration::STRATEGIC_INFUSION, bot))
+            {
+                this->CastSpell(WoW120Spells::Druid::Restoration::STRATEGIC_INFUSION, bot);
+                return;
+            }
+        }
 
         UpdateRestorationState();
 
@@ -861,6 +891,9 @@ private:
     uint32 _lastInnervateTime;
     uint32 _lastTranquilityTime = 0;
     CooldownManager _cooldowns;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 
     // ========================================================================
     // PHASE 5: DECISION SYSTEM INTEGRATION

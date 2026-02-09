@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120_Part2.h"  // Central spell registry
+#include "../HeroTalentDetector.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -258,8 +259,39 @@ public:
 
             return;
 
+        // Lazy hero talent detection (once per bot lifetime until respec)
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
         // Update Protection state
         UpdateProtectionState();
+
+        // Hero talent rotation branching
+        if (_heroTalents.IsTree(HeroTalentTree::LIGHTSMITH))
+        {
+            // Lightsmith: Holy Armament creates Holy Bulwark for self (damage reduction)
+            if (!this->GetBot()->HasAura(WoW120Spells::Paladin::Protection::PROT_HOLY_BULWARK))
+            {
+                if (this->CanCastSpell(WoW120Spells::Paladin::Protection::PROT_HOLY_ARMAMENT, this->GetBot()))
+                {
+                    this->CastSpell(WoW120Spells::Paladin::Protection::PROT_HOLY_ARMAMENT, this->GetBot());
+                    return;
+                }
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::TEMPLAR))
+        {
+            // Templar: Light's Guidance empowers Shield of the Righteous
+            // Sacrosanct Crusade enhances Avenger's Shield after SotR
+            if (this->GetBot()->HasAura(WoW120Spells::Paladin::Protection::SACROSANCT_CRUSADE))
+            {
+                // Empowered state: prioritize Avenger's Shield for bonus damage
+                if (this->CanCastSpell(AVENGERS_SHIELD, nullptr))
+                {
+                    // Will be cast in the rotation below with enhanced damage
+                }
+            }
+        }
 
         // Determine if AoE or single target
         uint32 enemyCount = this->GetEnemiesInRange(8.0f);
@@ -1402,6 +1434,7 @@ private:
     bool _grandCrusaderProc;
     uint32 _lastJudgmentTime;
     uint32 _lastAvengersShieldTime;
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

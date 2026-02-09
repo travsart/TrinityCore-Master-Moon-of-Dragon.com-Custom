@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"  // Central spell registry
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -267,6 +268,40 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Blood DK has access to: Deathbringer / San'layn
+        if (_heroTalents.IsTree(HeroTalentTree::DEATHBRINGER))
+        {
+            // Deathbringer: Reaper's Mark amplifies damage on target, triggers Wave of Souls
+            if (this->CanCastSpell(WoW120Spells::DeathKnight::Blood::REAPER_MARK, target))
+            {
+                this->CastSpell(WoW120Spells::DeathKnight::Blood::REAPER_MARK, target);
+                return;
+            }
+            // Exterminate: empowered strike during Reaper's Mark
+            if (target->HasAura(WoW120Spells::DeathKnight::Blood::REAPERS_MARK_DEBUFF))
+            {
+                if (this->CanCastSpell(WoW120Spells::DeathKnight::Blood::EXTERMINATE, target))
+                {
+                    this->CastSpell(WoW120Spells::DeathKnight::Blood::EXTERMINATE, target);
+                    return;
+                }
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SANLAYN))
+        {
+            // San'layn: Vampiric Strike replaces Death Coil, heals and generates RP
+            if (this->CanCastSpell(VAMPIRIC_STRIKE, target))
+            {
+                this->CastSpell(VAMPIRIC_STRIKE, target);
+                return;
+            }
+        }
 
         // Update Blood state
         UpdateBloodState();
@@ -646,6 +681,9 @@ private:
     bool _crimsonScourgeProc;
     uint32 _lastDeathStrikeTime;
     uint32 _lastTaunt{0}; // Phase 5C: ThreatAssistant integration
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

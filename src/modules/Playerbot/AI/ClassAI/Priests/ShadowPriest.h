@@ -38,6 +38,7 @@
 
 // Central Spell Registry - See WoW120Spells::Priest namespace
 #include "../SpellValidation_WoW120_Part2.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 
 namespace Playerbot
 {
@@ -320,6 +321,30 @@ public:
         Player* bot = this->GetBot();
         if (!target || !bot)
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::VOIDWEAVER))
+        {
+            // Voidweaver: Void Blast for enhanced shadow burst
+            if (this->CanCastSpell(WoW120Spells::Priest::Shadow::SHADOW_VOID_BLAST, target))
+            {
+                this->CastSpell(WoW120Spells::Priest::Shadow::SHADOW_VOID_BLAST, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::ARCHON))
+        {
+            // Archon: Divine Halo (Shadow) for dark radiant burst
+            if (this->CanCastSpell(WoW120Spells::Priest::Shadow::SHADOW_DIVINE_HALO, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::Priest::Shadow::SHADOW_DIVINE_HALO, this->GetBot());
+                return;
+            }
+        }
 
         UpdateShadowState();
 
@@ -1260,6 +1285,9 @@ private:
     // NEW: TrinityCore 12.0 Cooldown Tracking
     uint32 _lastMindbenderTime;
     uint32 _lastHaloTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

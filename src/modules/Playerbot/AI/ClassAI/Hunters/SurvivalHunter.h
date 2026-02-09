@@ -17,6 +17,7 @@
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
@@ -495,6 +496,32 @@ public:
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::PACK_LEADER))
+        {
+            // Pack Leader: Vicious Hunt for coordinated melee pet burst
+            if (this->_resource >= 30 &&
+                this->CanCastSpell(WoW120Spells::Hunter::Survival::SV_VICIOUS_HUNT, target))
+            {
+                this->CastSpell(WoW120Spells::Hunter::Survival::SV_VICIOUS_HUNT, target);
+                this->ConsumeResource(30);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SENTINEL))
+        {
+            // Sentinel: Enhanced sentinel tracking for melee precision
+            if (this->CanCastSpell(WoW120Spells::Hunter::Survival::SV_SENTINEL, target))
+            {
+                this->CastSpell(WoW120Spells::Hunter::Survival::SV_SENTINEL, target);
+                return;
+            }
+        }
 
         // Ensure pet is helping
         _petManager.EnsurePetActive(target);
@@ -1566,6 +1593,9 @@ private:
 
     // Talent tracking
     bool _guerillaTacticsActive;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

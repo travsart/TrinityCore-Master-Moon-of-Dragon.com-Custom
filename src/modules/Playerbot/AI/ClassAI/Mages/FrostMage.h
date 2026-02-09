@@ -22,6 +22,7 @@
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -235,6 +236,31 @@ public:
         Player* bot = this->GetBot();
         if (!target || !bot)
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branches
+        if (_heroTalents.IsTree(HeroTalentTree::FROSTFIRE))
+        {
+            // Frostfire: Frostfire Bolt for enhanced hybrid damage
+            if (this->CanCastSpell(WoW120Spells::Mage::Frost::FROST_FROSTFIRE_BOLT, target))
+            {
+                this->CastSpell(WoW120Spells::Mage::Frost::FROST_FROSTFIRE_BOLT, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::SPELLSLINGER))
+        {
+            // Spellslinger: Splinterstorm for empowered frost shards
+            if (_fofTracker.IsActive() &&
+                this->CanCastSpell(WoW120Spells::Mage::Frost::FROST_SPLINTERSTORM, target))
+            {
+                this->CastSpell(WoW120Spells::Mage::Frost::FROST_SPLINTERSTORM, target);
+                return;
+            }
+        }
 
         UpdateFrostState();
 
@@ -717,6 +743,9 @@ private:
     uint32 _icyVeinsEndTime;
     uint32 _lastIcyVeinsTime;
     uint32 _lastFrozenOrbTime;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 };
 
 } // namespace Playerbot

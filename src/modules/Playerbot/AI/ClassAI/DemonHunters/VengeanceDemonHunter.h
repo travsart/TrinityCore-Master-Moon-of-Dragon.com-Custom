@@ -16,6 +16,7 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../SpellValidation_WoW120.h"
+#include "../HeroTalentDetector.h"      // Hero talent tree detection
 #include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -320,6 +321,31 @@ public:
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
+
+        // Detect hero talents if not yet cached
+        if (!_heroTalents.detected)
+            _heroTalents.Refresh(this->GetBot());
+
+        // Hero talent rotation branching
+        // Vengeance DH has access to: Aldrachi Reaver / Fel-Scarred
+        if (_heroTalents.IsTree(HeroTalentTree::ALDRACHI_REAVER))
+        {
+            // Aldrachi Reaver: Art of the Glaive empowers glaive abilities for threat/survivability
+            if (this->CanCastSpell(WoW120Spells::DemonHunter::Vengeance::VENG_ART_OF_THE_GLAIVE, target))
+            {
+                this->CastSpell(WoW120Spells::DemonHunter::Vengeance::VENG_ART_OF_THE_GLAIVE, target);
+                return;
+            }
+        }
+        else if (_heroTalents.IsTree(HeroTalentTree::FEL_SCARRED))
+        {
+            // Fel-Scarred: Demonic Intensity empowers Meta for more tank survivability
+            if (this->CanCastSpell(WoW120Spells::DemonHunter::Vengeance::VENG_DEMONIC_INTENSITY, this->GetBot()))
+            {
+                this->CastSpell(WoW120Spells::DemonHunter::Vengeance::VENG_DEMONIC_INTENSITY, this->GetBot());
+                return;
+            }
+        }
 
         // Update Vengeance-specific mechanics
         UpdateVengeanceState();
@@ -1158,6 +1184,9 @@ private:
     bool _metamorphosisActive;
     uint32 _metamorphosisEndTime;
     bool _immolationAuraActive;
+
+    // Hero talent detection cache (refreshed on combat start)
+    HeroTalentCache _heroTalents;
 
     // ========================================================================
     // TRINITYCORE 12.0 TALENT INTEGRATION HELPERS
