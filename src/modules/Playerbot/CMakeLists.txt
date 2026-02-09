@@ -664,6 +664,8 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatMetricsTracker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RacialAbilityManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RacialAbilityManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ProcExpiryMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ProcExpiryMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp
