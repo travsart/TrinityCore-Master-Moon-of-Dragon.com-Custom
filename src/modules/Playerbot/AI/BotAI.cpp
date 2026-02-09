@@ -17,6 +17,7 @@
 #include "Core/Managers/GameSystemsManager.h"
 #include "Lifecycle/BotLifecycleState.h"
 #include "Lifecycle/BotFactory.h"
+#include "Lifecycle/BotSaveController.h"
 #include "Advanced/TacticalCoordinator.h"
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
@@ -546,6 +547,8 @@ void BotAI::UpdateAI(uint32 diff)
     // Maps RPG state to budget tier (FULL/REDUCED/MINIMAL) to skip unnecessary
     // AI phases. Combat and BG/dungeon always force FULL. Checked per-tick for
     // instant combat escalation even between 1s reassessments.
+    AIBudgetTier previousBudgetTier = _currentBudgetTier;
+
     _budgetReassessTimer += diff;
     if (_budgetReassessTimer >= 1000)
     {
@@ -584,6 +587,10 @@ void BotAI::UpdateAI(uint32 diff)
         if (_bot->IsInCombat() || !_bot->getAttackers().empty())
             _currentBudgetTier = AIBudgetTier::FULL;
     }
+
+    // P5/P6: Handle budget tier transitions (save tiering + memory reduction)
+    if (_currentBudgetTier != previousBudgetTier)
+        OnBudgetTierTransition(previousBudgetTier, _currentBudgetTier);
 
     // ========================================================================
     // DEATH RECOVERY - Runs BEFORE all other AI (even when dead/ghost)
@@ -1379,6 +1386,27 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
 
     // NOTE: Social interactions (chat, emotes) are handled by the Humanization
     // subsystem (CityLifeBehaviorManager, ActivityExecutor) when bots are idle.
+}
+
+// ============================================================================
+// BUDGET TIER TRANSITION
+// ============================================================================
+
+void BotAI::OnBudgetTierTransition(AIBudgetTier oldTier, AIBudgetTier newTier)
+{
+    // P6: Adjust save frequency based on new tier
+    Playerbot::BotSaveController::instance()->OnBudgetTierChange(_bot, newTier);
+
+    // P5: Clear non-essential caches when transitioning to MINIMAL
+    if (newTier == AIBudgetTier::MINIMAL)
+        _objectCache.ClearNonEssential();
+
+    TC_LOG_DEBUG("module.playerbot",
+        "BotAI: {} tier {} -> {} (save interval adjusted, caches {})",
+        _bot->GetName(),
+        static_cast<uint8>(oldTier),
+        static_cast<uint8>(newTier),
+        newTier == AIBudgetTier::MINIMAL ? "pruned" : "retained");
 }
 
 // ============================================================================

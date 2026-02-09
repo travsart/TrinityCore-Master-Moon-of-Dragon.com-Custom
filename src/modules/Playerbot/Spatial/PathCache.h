@@ -201,7 +201,7 @@ public:
      */
     Statistics GetStatistics() const
     {
-        ::std::shared_lock<::std::shared_mutex> lock(_mutex);
+        ::std::shared_lock lock(_mutex);
         return _stats;
     }
 

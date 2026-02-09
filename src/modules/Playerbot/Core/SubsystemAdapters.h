@@ -399,4 +399,22 @@ public:
     bool Initialize() override;
 };
 
+// initOrder=450 - Bot Save Controller (P6/P3: save tiering + differential saves)
+class BotSaveControllerSubsystem final : public IPlayerbotSubsystem
+{
+public:
+    SubsystemInfo GetInfo() const override;
+    bool Initialize() override;
+    void Shutdown() override;
+};
+
+// updateOrder=900 - Bot Cluster Detector (R1: anti-cluster dispersal)
+class BotClusterDetectorSubsystem final : public IPlayerbotSubsystem
+{
+public:
+    SubsystemInfo GetInfo() const override;
+    bool Initialize() override;
+    void Update(uint32 diff) override;
+};
+
 } // namespace Playerbot

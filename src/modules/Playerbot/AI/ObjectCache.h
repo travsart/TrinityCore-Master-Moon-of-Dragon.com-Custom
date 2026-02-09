@@ -105,6 +105,14 @@ public:
      */
     void InvalidateCache();
 
+    /**
+     * P5: Clear non-essential caches for MINIMAL budget tier bots.
+     * Releases group, follow, and interaction caches.
+     * Keeps combat target cached for instant combat escalation.
+     * Caches repopulate naturally when bot escalates to REDUCED/FULL.
+     */
+    void ClearNonEssential();
+
     // ========================================================================
     // CACHED OBJECT ACCESS - Lock-free, zero ObjectAccessor calls
     // ========================================================================

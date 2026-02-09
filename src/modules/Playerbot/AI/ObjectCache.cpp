@@ -74,6 +74,25 @@ void ObjectCache::InvalidateCache()
     _stats.invalidations++;
 }
 
+void ObjectCache::ClearNonEssential()
+{
+    // P5: Release non-essential caches for MINIMAL tier bots.
+    // Keep _cachedTarget for instant combat escalation.
+    _cachedGroupLeader = nullptr;
+    _groupLeaderGuid = ObjectGuid::Empty;
+
+    _cachedGroupMembers.clear();
+    _groupMemberGuids.clear();
+
+    _cachedFollowTarget = nullptr;
+    _followTargetGuid = ObjectGuid::Empty;
+
+    _cachedInteractionTarget = nullptr;
+    _interactionTargetGuid = ObjectGuid::Empty;
+
+    _stats.invalidations++;
+}
+
 // ============================================================================
 // CACHED OBJECT ACCESS - Zero ObjectAccessor calls, lock-free
 // ============================================================================

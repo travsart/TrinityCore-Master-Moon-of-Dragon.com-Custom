@@ -658,6 +658,12 @@ public:
      */
     AIBudgetTier GetCurrentBudgetTier() const { return _currentBudgetTier; }
 
+    /**
+     * @brief Called when the AI budget tier changes.
+     * Handles save frequency adjustment (P6) and non-essential cache pruning (P5).
+     */
+    void OnBudgetTierTransition(AIBudgetTier oldTier, AIBudgetTier newTier);
+
     // ========================================================================
     // ST-1: ADAPTIVE AI UPDATE THROTTLING - Performance optimization
     // ========================================================================

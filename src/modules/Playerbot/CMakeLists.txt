@@ -689,6 +689,8 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridQueryHelpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridQueryHelpers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/BotClusterDetector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/BotClusterDetector.h
 )
 
 # ============================================================================
@@ -815,6 +817,8 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleState.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotFactory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSaveController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSaveController.h
 
     # Protection System
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/Protection/ProtectionReason.h

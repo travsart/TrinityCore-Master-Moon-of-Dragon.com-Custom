@@ -160,7 +160,7 @@ PathCache::PathResult PathCache::GetPath(Position const& src, Position const& de
 
     // Try shared lock first (concurrent reads)
     {
-        ::std::shared_lock<::std::shared_mutex> lock(_mutex);
+        ::std::shared_lock lock(_mutex);
         auto it = _cache.find(pathHash);
 
         if (it != _cache.end() && !it->second.IsExpired())
@@ -180,7 +180,7 @@ PathCache::PathResult PathCache::GetPath(Position const& src, Position const& de
     }
 
     // Cache miss - need to calculate new path
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    ::std::unique_lock lock(_mutex);
     ++_stats.misses;
 
     // Double-check cache after acquiring unique lock
@@ -237,7 +237,7 @@ void PathCache::EvictOldest()
 
 void PathCache::InvalidateRegion(Position const& center, float radius)
 {
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    ::std::unique_lock lock(_mutex);
 
     // For simplicity, clear entire cache when region is invalidated
     // This is acceptable because region invalidation is rare
@@ -255,7 +255,7 @@ void PathCache::InvalidateRegion(Position const& center, float radius)
 
 void PathCache::Clear()
 {
-    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
+    ::std::unique_lock lock(_mutex);
 
     uint32 clearedCount = _cache.size();
     _cache.clear();

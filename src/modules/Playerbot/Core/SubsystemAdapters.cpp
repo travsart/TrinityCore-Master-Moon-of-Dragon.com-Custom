@@ -50,6 +50,8 @@
 #include "Social/GuildTaskManager.h"
 #include "Account/AccountLinkingManager.h"
 #include "Core/Diagnostics/BotCheatMask.h"
+#include "Lifecycle/BotSaveController.h"
+#include "Spatial/BotClusterDetector.h"
 
 // EventBus includes
 #include "Group/GroupEvents.h"
@@ -972,6 +974,47 @@ void ServerLoadMonitorSubsystem::Update(uint32 diff)
 }
 
 // ============================================================================
+// BotSaveControllerSubsystem - initOrder=450
+// ============================================================================
+
+SubsystemInfo BotSaveControllerSubsystem::GetInfo() const
+{
+    return { "BotSaveController", SubsystemPriority::NORMAL, 450, 0, 450 };
+}
+
+bool BotSaveControllerSubsystem::Initialize()
+{
+    TC_LOG_INFO("module.playerbot", "BotSaveController: Initializing save tiering + differential saves");
+    return true;
+}
+
+void BotSaveControllerSubsystem::Shutdown()
+{
+    TC_LOG_INFO("module.playerbot", "BotSaveController: Shutdown (skip rate: {:.1f}%)",
+        Playerbot::BotSaveController::instance()->GetStats().GetSkipRate() * 100.0f);
+}
+
+// ============================================================================
+// BotClusterDetectorSubsystem - updateOrder=900
+// ============================================================================
+
+SubsystemInfo BotClusterDetectorSubsystem::GetInfo() const
+{
+    return { "BotClusterDetector", SubsystemPriority::NORMAL, 0, 900, 0 };
+}
+
+bool BotClusterDetectorSubsystem::Initialize()
+{
+    Playerbot::BotClusterDetector::instance()->Initialize();
+    return true;
+}
+
+void BotClusterDetectorSubsystem::Update(uint32 diff)
+{
+    Playerbot::BotClusterDetector::instance()->Update(diff);
+}
+
+// ============================================================================
 // REGISTRATION
 // ============================================================================
 
@@ -1016,6 +1059,7 @@ void RegisterAllSubsystems()
     registry->RegisterSubsystem(std::make_unique<GuildTaskManagerSubsystem>());             // 420
     registry->RegisterSubsystem(std::make_unique<AccountLinkingManagerSubsystem>());       // 430
     registry->RegisterSubsystem(std::make_unique<BotCheatMaskSubsystem>());                // 440
+    registry->RegisterSubsystem(std::make_unique<BotSaveControllerSubsystem>());            // 450
 
     // Update-only subsystems (initOrder=0, updateOrder > 0)
     registry->RegisterSubsystem(std::make_unique<BotSpawnerSubsystem>());                   // update=200
@@ -1025,6 +1069,9 @@ void RegisterAllSubsystems()
     registry->RegisterSubsystem(std::make_unique<GroupEventBusSubsystem>());                // update=500
     registry->RegisterSubsystem(std::make_unique<DomainEventBusProcessorSubsystem>());     // update=600
     registry->RegisterSubsystem(std::make_unique<ServerLoadMonitorSubsystem>());             // update=700
+
+    // Anti-cluster dispersal (update-only)
+    registry->RegisterSubsystem(std::make_unique<BotClusterDetectorSubsystem>());           // update=900
 }
 
 } // namespace Playerbot
