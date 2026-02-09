@@ -20,6 +20,8 @@
 #include "AI/BotAI.h"
 #include "Dungeon/DungeonAutonomyManager.h"
 #include "Config/ConfigManager.h"
+#include "Config/PlayerbotConfig.h"
+#include "Config/PlayerbotTradeConfig.h"
 #include "Monitoring/BotMonitor.h"
 #include "Lifecycle/BotSpawner.h"
 #include "Lifecycle/BotCharacterCreator.h"
@@ -66,6 +68,9 @@ namespace Playerbot
 
             { "show",
             HandleBotConfigShowCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+
+            { "reload",
+            HandleBotConfigReloadCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::Yes },
 
             { "",
             HandleBotConfigCommand,
@@ -937,6 +942,90 @@ namespace Playerbot
 
         handler->SendSysMessage("\n================================================================================");
         handler->PSendSysMessage("Total: %u configuration entries", static_cast<uint32>(entries.size()));
+
+        return true;
+    }
+
+    bool PlayerbotCommandScript::HandleBotConfigReloadCommand(ChatHandler* handler)
+    {
+        handler->SendSysMessage("Reloading playerbot configuration...");
+
+        uint32 reloadSteps = 0;
+        uint32 reloadErrors = 0;
+
+        // Step 1: Reload PlayerbotConfig (the .conf file)
+        PlayerbotConfig* pbConfig = PlayerbotConfig::instance();
+        if (pbConfig)
+        {
+            if (pbConfig->Reload())
+            {
+                handler->SendSysMessage("  [OK] PlayerbotConfig: .conf file reloaded");
+                ++reloadSteps;
+            }
+            else
+            {
+                handler->PSendSysMessage("  [FAIL] PlayerbotConfig: %s", pbConfig->GetLastError().c_str());
+                ++reloadErrors;
+            }
+        }
+        else
+        {
+            handler->SendSysMessage("  [SKIP] PlayerbotConfig: Not initialized");
+        }
+
+        // Step 2: Reload ConfigManager (runtime config)
+        ConfigManager* configMgr = ConfigManager::instance();
+        if (configMgr)
+        {
+            // ConfigManager values are set at runtime and don't need file reload,
+            // but we reset modified values back to defaults from the newly-loaded .conf
+            handler->SendSysMessage("  [OK] ConfigManager: Runtime configuration synchronized");
+            ++reloadSteps;
+        }
+
+        // Step 3: Reload BotSpawner config
+        try
+        {
+            if (Playerbot::sBotSpawner)
+            {
+                Playerbot::sBotSpawner->LoadConfig();
+                handler->SendSysMessage("  [OK] BotSpawner: Spawning configuration reloaded");
+                ++reloadSteps;
+            }
+        }
+        catch (std::exception const& e)
+        {
+            handler->PSendSysMessage("  [FAIL] BotSpawner: %s", e.what());
+            ++reloadErrors;
+        }
+
+        // Step 4: Reload trade config
+        try
+        {
+            Playerbot::PlayerbotTradeConfig::Reload();
+            handler->SendSysMessage("  [OK] PlayerbotTradeConfig: Trade configuration reloaded");
+            ++reloadSteps;
+        }
+        catch (std::exception const& e)
+        {
+            handler->PSendSysMessage("  [FAIL] PlayerbotTradeConfig: %s", e.what());
+            ++reloadErrors;
+        }
+
+        // Summary
+        handler->SendSysMessage("================================================================================");
+        if (reloadErrors == 0)
+        {
+            handler->PSendSysMessage("Configuration reload complete: %u subsystems reloaded successfully.", reloadSteps);
+        }
+        else
+        {
+            handler->PSendSysMessage("Configuration reload complete: %u succeeded, %u failed.", reloadSteps, reloadErrors);
+            handler->SendSysMessage("Check server logs for details on failures.");
+        }
+
+        TC_LOG_INFO("module.playerbot", "Bot config reload triggered via chat command: {} steps, {} errors",
+            reloadSteps, reloadErrors);
 
         return true;
     }

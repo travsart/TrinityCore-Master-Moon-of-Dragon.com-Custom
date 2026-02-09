@@ -91,6 +91,7 @@ namespace Playerbot
         // Configuration commands
         static bool HandleBotConfigCommand(ChatHandler* handler, ::std::string key, ::std::string value);
         static bool HandleBotConfigShowCommand(ChatHandler* handler);
+        static bool HandleBotConfigReloadCommand(ChatHandler* handler);
 
         // Monitoring dashboard commands
         static bool HandleBotMonitorCommand(ChatHandler* handler);
