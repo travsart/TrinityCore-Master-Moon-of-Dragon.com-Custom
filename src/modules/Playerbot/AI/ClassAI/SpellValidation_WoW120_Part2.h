@@ -384,6 +384,12 @@ namespace Priest
         // Insanity Resource
         constexpr uint32 INSANITY = 194022;
 
+        // Proc Buffs
+        constexpr uint32 SURGE_OF_INSANITY = 87160;      // Makes Mind Spike/Mind Flay instant
+        constexpr uint32 MIND_FLAY_INSANITY = 391403;    // Instant Mind Flay (Surge of Insanity proc)
+        constexpr uint32 MIND_SPIKE_INSANITY = 407466;   // Instant Mind Spike (Surge of Insanity proc)
+        constexpr uint32 DEATHSPEAKER = 392507;          // SW:Death becomes usable regardless of HP
+
         // The War Within Abilities
         constexpr uint32 MINDGAMES_SHADOW = 375901; // Shadow version (different from Discipline)
         constexpr uint32 HALO_SHADOW = 120644; // Shadow-specific Halo ID

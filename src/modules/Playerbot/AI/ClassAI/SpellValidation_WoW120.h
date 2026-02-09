@@ -519,6 +519,9 @@ namespace Druid
         constexpr uint32 LUNAR_BEAM = 204066;
         constexpr uint32 GROWL = 6795; // Taunt
 
+        // Procs
+        constexpr uint32 GORE = 93622; // Thrash/Swipe/Moonfire proc - resets Mangle CD, grants 4 rage
+
         // Rage Resource
         constexpr uint32 RAGE_GENERATION = 195707;
 
@@ -553,6 +556,9 @@ namespace Druid
         constexpr uint32 HEALING_TOUCH = 5185;
         constexpr uint32 IRONBARK = 102342;
         constexpr uint32 EFFLORESCENCE = 145205;
+
+        // Procs
+        constexpr uint32 CLEARCASTING_RESTO = 16870; // Omen of Clarity - free Regrowth
 
         // HoTs
         constexpr uint32 HOT_REJUVENATION = 774;

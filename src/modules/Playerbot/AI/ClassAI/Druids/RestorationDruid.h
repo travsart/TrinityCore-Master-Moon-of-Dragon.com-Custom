@@ -70,9 +70,36 @@ constexpr uint32 RESTO_INNERVATE = WoW120Spells::Druid::INNERVATE;
 constexpr uint32 RESTO_BARKSKIN = WoW120Spells::Druid::BARKSKIN;
 constexpr uint32 RESTO_RENEWAL = WoW120Spells::Druid::RENEWAL;
 constexpr uint32 RESTO_MOONFIRE = WoW120Spells::Druid::MOONFIRE;
+constexpr uint32 RESTO_CLEARCASTING = WoW120Spells::Druid::Restoration::CLEARCASTING_RESTO;
 
 // Mana resource is defined in CombatSpecializationTemplates.h as uint32
 // No custom ManaResource struct needed - use ManaResource (uint32 typedef)
+
+// ============================================================================
+// CLEARCASTING / OMEN OF CLARITY PROC TRACKER
+// ============================================================================
+// Omen of Clarity: Lifebloom HoT ticks have a chance to grant Clearcasting,
+// making the next Regrowth instant and free. Essential for mana-efficient healing.
+class RestoClearcastingTracker
+{
+public:
+    RestoClearcastingTracker() : _active(false) {}
+
+    [[nodiscard]] bool IsActive() const { return _active; }
+
+    void ConsumeProc() { _active = false; }
+
+    void Update(Player* bot)
+    {
+        if (!bot)
+            return;
+
+        _active = bot->HasAura(RESTO_CLEARCASTING);
+    }
+
+private:
+    bool _active;
+};
 
 // HoT (Heal over Time) tracking system
 class RestorationHoTTracker
@@ -242,9 +269,10 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit RestorationDruidRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
-        
+
         , _hotTracker()
         , _swiftmendTracker()
+        , _clearcastingTracker()
         , _treeFormActive(false)
         , _treeFormEndTime(0)
         
@@ -390,6 +418,9 @@ private:
 
             return;
 
+        // Update Clearcasting (Omen of Clarity) proc status
+        _clearcastingTracker.Update(bot);
+
         // _resource is uint32, no Update method - managed by base class
         UpdateCooldownStates();
     }
@@ -425,6 +456,28 @@ private:
         if (HandleEmergencyHealing(group))
 
             return;
+
+        // Priority: Consume Clearcasting proc on Regrowth (free instant Regrowth)
+        if (_clearcastingTracker.IsActive())
+        {
+            // Find most injured group member for free Regrowth
+            Unit* ccTarget = nullptr;
+            float lowestPct = 90.0f;
+            for (Unit* member : group)
+            {
+                if (member && member->GetHealthPct() < lowestPct)
+                {
+                    lowestPct = member->GetHealthPct();
+                    ccTarget = member;
+                }
+            }
+            if (ccTarget && this->CanCastSpell(RESTO_REGROWTH, ccTarget))
+            {
+                this->CastSpell(RESTO_REGROWTH, ccTarget);
+                _clearcastingTracker.ConsumeProc();
+                return; // Free Regrowth - don't waste the proc
+            }
+        }
 
         // Maintain Lifebloom on tank
         if (HandleLifebloom(group))
@@ -885,6 +938,7 @@ private:
     // Member variables
     RestorationHoTTracker _hotTracker;
     RestorationSwiftmendTracker _swiftmendTracker;
+    RestoClearcastingTracker _clearcastingTracker;
 
     bool _treeFormActive;
     uint32 _treeFormEndTime;

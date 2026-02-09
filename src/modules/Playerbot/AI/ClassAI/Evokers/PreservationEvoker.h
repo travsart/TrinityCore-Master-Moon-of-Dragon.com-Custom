@@ -372,6 +372,16 @@ public:
         ExecuteHealingRotation(group);
     }
 
+    /// Check if Essence Burst proc is active (makes next essence spender free)
+    [[nodiscard]] bool HasEssenceBurstProc() const { return _essenceBurstStacks > 0; }
+
+    /// Consume one stack of Essence Burst
+    void ConsumeEssenceBurst()
+    {
+        if (_essenceBurstStacks > 0)
+            _essenceBurstStacks--;
+    }
+
 protected:
     void ExecuteHealingRotation(const ::std::vector<Unit*>& group)
     {
@@ -381,21 +391,57 @@ protected:
         if (HandleEmergencyHealing(group))
             return;
 
-        // Priority 2: Maintain Echoes
+        // Priority 2: Consume Essence Burst proc on healing spenders (free cast)
+        if (HasEssenceBurstProc())
+        {
+            if (HandleEssenceBurstHealing(group))
+                return;
+        }
+
+        // Priority 3: Maintain Echoes
         if (HandleEchoMaintenance(group))
             return;
 
-        // Priority 3: HoT maintenance
+        // Priority 4: HoT maintenance
         if (essence >= 3 && HandleHoTMaintenance(group))
             return;
 
-        // Priority 4: Direct healing
+        // Priority 5: Direct healing
         if (essence >= 3 && HandleDirectHealing(group))
             return;
 
-        // Priority 5: Generate essence if low
+        // Priority 6: Generate essence if low
         if (essence < 3)
             GenerateEssence();
+    }
+
+    /// Spend Essence Burst proc on an expensive healing spell for free
+    bool HandleEssenceBurstHealing(const ::std::vector<Unit*>& group)
+    {
+        // Find most injured target
+        Unit* target = GetMostInjuredTarget(group);
+        if (!target || target->GetHealthPct() > 90.0f)
+            return false;
+
+        // Emerald Blossom (normally costs 3 essence - best value for free cast)
+        if (target->GetHealthPct() < 80.0f && IsHealAllowedByMana(EMERALD_BLOSSOM) &&
+            this->CanCastSpell(EMERALD_BLOSSOM, this->GetBot()))
+        {
+            this->CastSpell(EMERALD_BLOSSOM, this->GetBot());
+            ConsumeEssenceBurst(); // Free cast - don't consume essence
+            return true;
+        }
+
+        // Verdant Embrace (normally costs 1 essence - good single target heal)
+        if (target->GetHealthPct() < 70.0f && IsHealAllowedByMana(VERDANT_EMBRACE) &&
+            this->CanCastSpell(VERDANT_EMBRACE, target))
+        {
+            this->CastSpell(VERDANT_EMBRACE, target);
+            ConsumeEssenceBurst(); // Free cast
+            return true;
+        }
+
+        return false;
     }
 
     bool HandleEmergencyHealing(const ::std::vector<Unit*>& group)

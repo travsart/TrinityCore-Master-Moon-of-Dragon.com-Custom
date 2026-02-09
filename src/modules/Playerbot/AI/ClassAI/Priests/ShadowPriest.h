@@ -277,6 +277,57 @@ private:
     ::std::unordered_map<ObjectGuid, uint32> _shadowWordPainTargets; // GUID -> expiration time
 };
 
+// ============================================================================
+// SURGE OF INSANITY PROC TRACKER
+// ============================================================================
+// Surge of Insanity: Devouring Plague grants Surge of Insanity, making the next
+// Mind Flay: Insanity or Mind Spike: Insanity instant and more powerful.
+// 2 stacks max, consumed on cast.
+
+constexpr uint32 SHADOW_SURGE_OF_INSANITY = WoW120Spells::Priest::Shadow::SURGE_OF_INSANITY;
+constexpr uint32 SHADOW_MIND_FLAY_INSANITY = WoW120Spells::Priest::Shadow::MIND_FLAY_INSANITY;
+constexpr uint32 SHADOW_MIND_SPIKE_INSANITY = WoW120Spells::Priest::Shadow::MIND_SPIKE_INSANITY;
+constexpr uint32 SHADOW_DEATHSPEAKER = WoW120Spells::Priest::Shadow::DEATHSPEAKER;
+
+class SurgeOfInsanityTracker
+{
+public:
+    SurgeOfInsanityTracker() : _stacks(0), _hasMindSpike(false) {}
+
+    /// Called when Devouring Plague is cast (generates proc stacks)
+    void OnDevouringPlagueCast() { _stacks = ::std::min(_stacks + 1u, 2u); }
+
+    /// Consume one stack after casting Mind Flay/Spike: Insanity
+    void ConsumeStack()
+    {
+        if (_stacks > 0)
+            _stacks--;
+    }
+
+    [[nodiscard]] bool IsActive() const { return _stacks > 0; }
+    [[nodiscard]] uint32 GetStacks() const { return _stacks; }
+    [[nodiscard]] bool HasMindSpikeTalent() const { return _hasMindSpike; }
+
+    /// Sync with actual aura state
+    void Update(Player* bot)
+    {
+        if (!bot)
+            return;
+
+        // Check Mind Spike talent (replaces Mind Flay)
+        _hasMindSpike = bot->HasSpell(WoW120Spells::Priest::Shadow::MIND_SPIKE);
+
+        if (Aura* aura = bot->GetAura(SHADOW_SURGE_OF_INSANITY))
+            _stacks = aura->GetStackAmount();
+        else
+            _stacks = 0;
+    }
+
+private:
+    uint32 _stacks;
+    bool _hasMindSpike;
+};
+
 class ShadowPriestRefactored : public RangedDpsSpecialization<ManaResource>
 {
 public:
@@ -290,6 +341,7 @@ public:
         , _insanityTracker()
         , _voidformTracker()
         , _dotTracker()
+        , _surgeOfInsanityTracker()
         , _talentState(bot)  // NEW: TrinityCore 12.0 talent state
         , _darkAscensionActive(false)
         , _darkAscensionEndTime(0)
@@ -436,6 +488,7 @@ private:
 
         _voidformTracker.Update(bot);
         _dotTracker.Update(bot);
+        _surgeOfInsanityTracker.Update(bot);
         _talentState.Update();  // NEW: Update talent state
         UpdateCooldownStates();
     }
@@ -711,6 +764,20 @@ private:
         // ====================================================================
         // END TALENT PRIORITY HANDLING
         // ====================================================================
+
+        // Priority 3: Consume Surge of Insanity proc (instant Mind Flay/Spike: Insanity)
+        if (_surgeOfInsanityTracker.IsActive())
+        {
+            uint32 insanitySpell = _surgeOfInsanityTracker.HasMindSpikeTalent() ?
+                SHADOW_MIND_SPIKE_INSANITY : SHADOW_MIND_FLAY_INSANITY;
+            if (this->CanCastSpell(insanitySpell, target))
+            {
+                this->CastSpell(insanitySpell, target);
+                _surgeOfInsanityTracker.ConsumeStack();
+                _insanityTracker.GenerateInsanity(12); // Surge of Insanity generates extra insanity
+                return;
+            }
+        }
 
         // Enter Voidform (or Dark Ascension)
         if (insanity >= 60 && !_voidformTracker.IsActive())
@@ -1270,6 +1337,7 @@ private:
     InsanityTracker _insanityTracker;
     VoidformTracker _voidformTracker;
     ShadowDoTTracker _dotTracker;
+    SurgeOfInsanityTracker _surgeOfInsanityTracker;
 
     // NEW: TrinityCore 12.0 Talent State
     PriestTalentState _talentState;
