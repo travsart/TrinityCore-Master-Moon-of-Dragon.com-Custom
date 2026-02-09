@@ -296,6 +296,8 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ZoneOrchestrator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ContentContextManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ContentContextManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/GroupBuffCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/GroupBuffCoordinator.h
 
     # AI Coordination - Dungeon
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Dungeon/DungeonState.h
