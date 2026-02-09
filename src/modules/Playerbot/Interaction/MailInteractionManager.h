@@ -19,8 +19,7 @@ class Player;
 class Creature;
 class Item;
 class GameObject;
-class Mail;
-struct MailItemInfo;
+struct Mail;
 
 namespace Playerbot
 {
@@ -61,16 +60,16 @@ public:
     };
 
     /**
-     * @brief Mail item information
+     * @brief Mail item information for bot evaluation
      */
-    struct MailItemInfo
+    struct BotMailItemInfo
     {
         uint32 itemId;
-        uint32 itemGuid;
+        uint64 itemGuid;            // ObjectGuid::LowType
         uint32 stackCount;
         ::std::string itemName;
 
-        MailItemInfo()
+        BotMailItemInfo()
             : itemId(0), itemGuid(0), stackCount(0)
         { }
     };
@@ -80,7 +79,7 @@ public:
      */
     struct MailEvaluation
     {
-        uint32 mailId;
+        uint64 mailId;
         MailPriority priority;
         bool hasItems;
         bool hasMoney;
@@ -90,7 +89,7 @@ public:
         uint32 daysRemaining;        // Days until deletion
         bool shouldTake;             // Recommended to take
         bool shouldDelete;           // Recommended to delete
-        ::std::vector<MailItemInfo> items;
+        ::std::vector<BotMailItemInfo> items;
         ::std::string reason;          // Human-readable reason
 
         MailEvaluation()
@@ -147,7 +146,7 @@ public:
      * @param mailId Mail ID to take from
      * @return True if successfully taken
      */
-    bool TakeMail(GameObject* mailbox, uint32 mailId);
+    bool TakeMail(GameObject* mailbox, uint64 mailId);
 
     /**
      * @brief Take all items and money from all mails
@@ -162,7 +161,7 @@ public:
      * @param mailId Mail ID to delete
      * @return True if successfully deleted
      */
-    bool DeleteMail(GameObject* mailbox, uint32 mailId);
+    bool DeleteMail(GameObject* mailbox, uint64 mailId);
 
     /**
      * @brief Return a mail to sender
@@ -170,7 +169,7 @@ public:
      * @param mailId Mail ID to return
      * @return True if successfully returned
      */
-    bool ReturnMail(GameObject* mailbox, uint32 mailId);
+    bool ReturnMail(GameObject* mailbox, uint64 mailId);
 
     /**
      * @brief Smart mail processing - take valuable mail, delete spam
@@ -312,14 +311,14 @@ private:
      * @param mailId Mail ID
      * @return True if successful
      */
-    bool ExecuteTakeMail(uint32 mailId);
+    bool ExecuteTakeMail(uint64 mailId);
 
     /**
      * @brief Execute delete mail via TrinityCore API
      * @param mailId Mail ID
      * @return True if successful
      */
-    bool ExecuteDeleteMail(uint32 mailId);
+    bool ExecuteDeleteMail(uint64 mailId);
 
     /**
      * @brief Get recipient GUID from name
@@ -341,6 +340,13 @@ private:
      * @return True if system mail
      */
     bool IsSystemMail(Mail const* mail) const;
+
+    /**
+     * @brief Determine take/delete recommendations for a mail
+     * @param eval Evaluation to fill recommendations into
+     * @param mail Mail to evaluate
+     */
+    void DetermineMailRecommendations(MailEvaluation& eval, Mail const* mail) const;
 
     /**
      * @brief Record mail sent in statistics

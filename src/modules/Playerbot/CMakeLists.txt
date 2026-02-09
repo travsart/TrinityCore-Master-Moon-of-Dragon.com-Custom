@@ -985,6 +985,8 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/InnkeeperInteractionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/InnkeeperInteractionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/MailInteractionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/MailInteractionManager.h
 
     # Group System
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp

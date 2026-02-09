@@ -58,16 +58,16 @@ bool MailInteractionManager::SendMail(GameObject* mailbox, std::string const& re
     // Verify mailbox
     if (!IsMailbox(mailbox))
     {
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Invalid mailbox",
-            m_bot->GetName().c_str());
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Invalid mailbox",
+            m_bot->GetName());
         return false;
     }
 
     // Check distance
     if (!IsInMailboxRange(mailbox))
     {
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Too far from mailbox",
-            m_bot->GetName().c_str());
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Too far from mailbox",
+            m_bot->GetName());
         return false;
     }
 
@@ -75,8 +75,8 @@ bool MailInteractionManager::SendMail(GameObject* mailbox, std::string const& re
     ObjectGuid recipientGuid = GetRecipientGuid(recipient);
     if (recipientGuid.IsEmpty())
     {
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Recipient '%s' not found",
-            m_bot->GetName().c_str(), recipient.c_str());
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Recipient '{}' not found",
+            m_bot->GetName(), recipient);
         return false;
     }
 
@@ -84,8 +84,8 @@ bool MailInteractionManager::SendMail(GameObject* mailbox, std::string const& re
     uint32 itemCount = items ? static_cast<uint32>(items->size()) : 0;
     if (!CanAffordPostage(money, itemCount))
     {
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Cannot afford postage",
-            m_bot->GetName().c_str());
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Cannot afford postage",
+            m_bot->GetName());
         return false;
     }
 
@@ -96,8 +96,8 @@ bool MailInteractionManager::SendMail(GameObject* mailbox, std::string const& re
     {
         RecordMailSent(money, itemCount);
 
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Sent mail to %s with %llu copper and %u items",
-            m_bot->GetName().c_str(), recipient.c_str(), money, itemCount);
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Sent mail to {} with {} copper and {} items",
+            m_bot->GetName(), recipient, money, itemCount);
     }
 
     // Track performance
@@ -111,7 +111,7 @@ bool MailInteractionManager::SendMail(GameObject* mailbox, std::string const& re
     return success;
 }
 
-bool MailInteractionManager::TakeMail(GameObject* mailbox, uint32 mailId)
+bool MailInteractionManager::TakeMail(GameObject* mailbox, uint64 mailId)
 {
     if (!m_bot || !mailbox)
         return false;
@@ -128,8 +128,8 @@ bool MailInteractionManager::TakeMail(GameObject* mailbox, uint32 mailId)
     if (success)
     {
         m_lastStatusCheck = 0; // Invalidate cache
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Took mail %u",
-            m_bot->GetName().c_str(), mailId);
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Took mail {}",
+            m_bot->GetName(), mailId);
     }
 
     // Track performance
@@ -162,13 +162,13 @@ uint32 MailInteractionManager::TakeAllMail(GameObject* mailbox)
         }
     }
 
-    TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Took %u mails",
-        m_bot->GetName().c_str(), taken);
+    TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Took {} mails",
+        m_bot->GetName(), taken);
 
     return taken;
 }
 
-bool MailInteractionManager::DeleteMail(GameObject* mailbox, uint32 mailId)
+bool MailInteractionManager::DeleteMail(GameObject* mailbox, uint64 mailId)
 {
     if (!m_bot || !mailbox)
         return false;
@@ -182,14 +182,14 @@ bool MailInteractionManager::DeleteMail(GameObject* mailbox, uint32 mailId)
     {
         m_stats.mailsDeleted++;
         m_lastStatusCheck = 0; // Invalidate cache
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Deleted mail %u",
-            m_bot->GetName().c_str(), mailId);
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Deleted mail {}",
+            m_bot->GetName(), mailId);
     }
 
     return success;
 }
 
-bool MailInteractionManager::ReturnMail(GameObject* mailbox, uint32 mailId)
+bool MailInteractionManager::ReturnMail(GameObject* mailbox, uint64 mailId)
 {
     if (!m_bot || !mailbox)
         return false;
@@ -210,27 +210,31 @@ bool MailInteractionManager::ReturnMail(GameObject* mailbox, uint32 mailId)
 
     if (!mail)
     {
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Mail %u not found",
-            m_bot->GetName().c_str(), mailId);
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Mail {} not found",
+            m_bot->GetName(), mailId);
         return false;
     }
 
-    // Can only return mail that has items or was sent by a player
+    // Can only return mail that has items or money
     if (mail->items.empty() && mail->money == 0)
     {
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Mail %u has nothing to return",
-            m_bot->GetName().c_str(), mailId);
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Mail {} has nothing to return",
+            m_bot->GetName(), mailId);
         return false;
     }
 
-    // Return the mail using TrinityCore API
-    m_bot->SendMailResult(mailId, MAIL_RETURNED, MAIL_OK);
+    // Return the mail - notify client and mark as returned
+    m_bot->SendMailResult(mailId, MAIL_RETURNED_TO_SENDER, MAIL_OK);
+
+    // Mark mail as returned so it goes back to sender
+    mail->checked |= MAIL_CHECK_MASK_RETURNED;
+    mail->state = MAIL_STATE_CHANGED;
 
     m_stats.mailsReturned++;
     m_lastStatusCheck = 0;
 
-    TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Returned mail %u",
-        m_bot->GetName().c_str(), mailId);
+    TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Returned mail {}",
+        m_bot->GetName(), mailId);
 
     return true;
 }
@@ -258,8 +262,8 @@ uint32 MailInteractionManager::SmartProcessMail(GameObject* mailbox)
             // Check if COD is affordable
             if (mail.isCOD && !m_bot->HasEnoughMoney(mail.codAmount))
             {
-                TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Skipping COD mail %u - cannot afford %llu copper",
-                    m_bot->GetName().c_str(), mail.mailId, mail.codAmount);
+                TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Skipping COD mail {} - cannot afford {} copper",
+                    m_bot->GetName(), mail.mailId, mail.codAmount);
                 continue;
             }
 
@@ -273,8 +277,8 @@ uint32 MailInteractionManager::SmartProcessMail(GameObject* mailbox)
         }
     }
 
-    TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Smart processed %u mails",
-        m_bot->GetName().c_str(), processed);
+    TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Smart processed {} mails",
+        m_bot->GetName(), processed);
 
     return processed;
 }
@@ -318,9 +322,17 @@ MailInteractionManager::MailboxStatus MailInteractionManager::GetMailboxStatus()
         // Check expiration
         time_t expireTime = mail->expire_time;
         time_t currentServerTime = GameTime::GetGameTime();
-        uint32 daysRemaining = static_cast<uint32>((expireTime - currentServerTime) / DAY);
-        if (daysRemaining <= MAIL_EXPIRY_WARNING_DAYS)
+        if (expireTime > currentServerTime)
+        {
+            uint32 daysRemaining = static_cast<uint32>((expireTime - currentServerTime) / DAY);
+            if (daysRemaining <= MAIL_EXPIRY_WARNING_DAYS)
+                status.expiringMails++;
+        }
+        else
+        {
+            // Already expired
             status.expiringMails++;
+        }
     }
 
     // Update cache
@@ -370,9 +382,9 @@ MailInteractionManager::MailEvaluation MailInteractionManager::EvaluateMail(Mail
         eval.daysRemaining = 0;
 
     // Get item details
-    for (MailItemInfo const& itemInfo : mail->items)
+    for (::MailItemInfo const& itemInfo : mail->items)
     {
-        MailInteractionManager::MailItemInfo info;
+        BotMailItemInfo info;
         info.itemGuid = itemInfo.item_guid;
         info.itemId = itemInfo.item_template;
 
@@ -426,7 +438,7 @@ bool MailInteractionManager::HasValuableContents(Mail const* mail) const
     // Has items
     if (!mail->items.empty())
     {
-        for (MailItemInfo const& itemInfo : mail->items)
+        for (::MailItemInfo const& itemInfo : mail->items)
         {
             ItemTemplate const* tmpl = sObjectMgr->GetItemTemplate(itemInfo.item_template);
             if (tmpl && tmpl->GetQuality() >= ITEM_QUALITY_UNCOMMON)
@@ -593,7 +605,7 @@ bool MailInteractionManager::ExecuteSendMail(ObjectGuid recipientGuid, std::stri
     // Deduct postage and money from player
     m_bot->ModifyMoney(-static_cast<int64>(postage + money));
 
-    // Send the mail
+    // Send the mail using recipient's low GUID
     draft.SendMailTo(CharacterDatabaseTransaction(nullptr),
                      MailReceiver(recipientGuid.GetCounter()),
                      MailSender(m_bot),
@@ -605,7 +617,7 @@ bool MailInteractionManager::ExecuteSendMail(ObjectGuid recipientGuid, std::stri
     return true;
 }
 
-bool MailInteractionManager::ExecuteTakeMail(uint32 mailId)
+bool MailInteractionManager::ExecuteTakeMail(uint64 mailId)
 {
     if (!m_bot)
         return false;
@@ -642,13 +654,13 @@ bool MailInteractionManager::ExecuteTakeMail(uint32 mailId)
     // Take money
     if (mail->money > 0)
     {
-        m_bot->ModifyMoney(mail->money);
+        m_bot->ModifyMoney(static_cast<int64>(mail->money));
         mail->money = 0;
         mail->state = MAIL_STATE_CHANGED;
     }
 
     // Take items
-    for (auto& itemInfo : mail->items)
+    for (auto const& itemInfo : mail->items)
     {
         // Create the item for the player
         Item* item = Item::CreateItem(itemInfo.item_template, 1, ItemContext::NONE, m_bot);
@@ -689,7 +701,7 @@ bool MailInteractionManager::ExecuteTakeMail(uint32 mailId)
     return true;
 }
 
-bool MailInteractionManager::ExecuteDeleteMail(uint32 mailId)
+bool MailInteractionManager::ExecuteDeleteMail(uint64 mailId)
 {
     if (!m_bot)
         return false;
@@ -711,8 +723,8 @@ bool MailInteractionManager::ExecuteDeleteMail(uint32 mailId)
     // Don't delete mail with items or money
     if (!mail->items.empty() || mail->money > 0)
     {
-        TC_LOG_DEBUG("playerbot", "MailInteractionManager[%s]: Cannot delete mail %u - has items or money",
-            m_bot->GetName().c_str(), mailId);
+        TC_LOG_DEBUG("module.playerbot", "MailInteractionManager[{}]: Cannot delete mail {} - has items or money",
+            m_bot->GetName(), mailId);
         return false;
     }
 
@@ -743,12 +755,12 @@ bool MailInteractionManager::IsSystemMail(Mail const* mail) const
     if (!mail)
         return false;
 
-    // System mail typically uses GM stationery or has specific sender types
+    // System mail typically uses GM stationery or has no sender (sender == 0)
     return mail->stationery == MAIL_STATIONERY_GM ||
-           mail->sender.IsEmpty();
+           mail->sender == 0;
 }
 
-void MailInteractionManager::RecordMailSent(uint64 money, uint32 itemCount)
+void MailInteractionManager::RecordMailSent(uint64 money, uint32 /*itemCount*/)
 {
     m_stats.mailsSent++;
     m_stats.moneySent += money;
