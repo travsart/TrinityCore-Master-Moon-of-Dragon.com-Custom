@@ -85,6 +85,9 @@ class DefensiveBehaviorManager;
 class DispelCoordinator;
 class InterruptRotationManager;
 
+// Game Systems
+class ConsumableManager;
+
 namespace Advanced
 {
     class GroupCoordinator;
@@ -372,6 +375,17 @@ public:
      * @return Non-owning pointer to InterruptRotationManager (owned by facade)
      */
     virtual InterruptRotationManager* GetInterruptRotationManager() const = 0;
+
+    // ========================================================================
+    // GAME SYSTEMS
+    // ========================================================================
+
+    /**
+     * @brief Get consumable manager
+     * Pre-combat buffing (flasks, food, runes) and combat potion usage
+     * @return Non-owning pointer to ConsumableManager (owned by facade)
+     */
+    virtual ConsumableManager* GetConsumableManager() const = 0;
 };
 
 } // namespace Playerbot

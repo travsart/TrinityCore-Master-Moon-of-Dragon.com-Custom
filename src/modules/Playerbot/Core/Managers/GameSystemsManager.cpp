@@ -80,6 +80,9 @@ GameSystemsManager::~GameSystemsManager()
     _dispelCoordinator.reset();
     _interruptRotationManager.reset();
 
+    // Game Systems
+    _consumableManager.reset();
+
     // 2. Game system managers
     _tradeManager.reset();
     _gatheringManager.reset();
@@ -226,6 +229,10 @@ void GameSystemsManager::Initialize(Player* bot)
     _defensiveBehaviorManager = std::make_unique<DefensiveBehaviorManager>(_botAI);
     _dispelCoordinator = std::make_unique<DispelCoordinator>(_botAI);
     _interruptRotationManager = std::make_unique<InterruptRotationManager>(_botAI);
+
+    // Game Systems
+    _consumableManager = std::make_unique<ConsumableManager>(_bot, _botAI);
+    _consumableManager->Initialize();
 
     // Combat Coordination Integrator - bridges managers with BotMessageBus claim system
     _combatCoordinationIntegrator = std::make_unique<CombatCoordinationIntegrator>(_botAI);
@@ -756,6 +763,15 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
             if (_defensiveBehaviorManager)
                 _defensiveBehaviorManager->Update(diff);
         }
+    }
+
+    // ========================================================================
+    // CONSUMABLE MANAGER - REDUCED+ tier (handles pre-combat buffs + emergency potions)
+    // Has internal throttling: 5s out of combat, 500ms in combat
+    // ========================================================================
+    if (isReduced && _consumableManager)
+    {
+        _consumableManager->Update(diff);
     }
 
     // ========================================================================

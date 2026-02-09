@@ -925,6 +925,8 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/VendorPurchaseManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/VendorPurchaseManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/ConsumableManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/ConsumableManager.h
 
     # Movement System
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementTypes.h

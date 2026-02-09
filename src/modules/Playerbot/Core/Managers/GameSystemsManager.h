@@ -83,6 +83,9 @@
 #include "AI/CombatBehaviors/DispelCoordinator.h"
 #include "AI/CombatBehaviors/InterruptRotationManager.h"
 
+// Game Systems
+#include "Game/ConsumableManager.h"
+
 namespace Playerbot
 {
 
@@ -244,6 +247,9 @@ public:
     DispelCoordinator* GetDispelCoordinator() const override { return _dispelCoordinator.get(); }
     InterruptRotationManager* GetInterruptRotationManager() const override { return _interruptRotationManager.get(); }
 
+    // Game Systems
+    ConsumableManager* GetConsumableManager() const override { return _consumableManager.get(); }
+
     // ========================================================================
     // RPG-STATE AI BUDGET TIER - Manager-level scope gating
     // ========================================================================
@@ -330,6 +336,9 @@ private:
     std::unique_ptr<DefensiveBehaviorManager> _defensiveBehaviorManager;
     std::unique_ptr<DispelCoordinator> _dispelCoordinator;
     std::unique_ptr<InterruptRotationManager> _interruptRotationManager;
+
+    // Game Systems
+    std::unique_ptr<ConsumableManager> _consumableManager;
 
     // ========================================================================
     // INTERNAL STATE
