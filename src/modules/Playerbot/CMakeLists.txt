@@ -1204,6 +1204,8 @@ set(PLAYERBOT_PVP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotSpellFixes.cpp
 
     # Performance Optimization
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/StringInterningPool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/StringInterningPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPoolDiagnostics.h
