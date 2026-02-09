@@ -7,6 +7,7 @@
 #include "MovementIntegration.h"
 #include "GameTime.h"
 #include "PositionManager.h"  // Enterprise-grade positioning algorithms
+#include "LineOfSightManager.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"  // For healer group member queries
@@ -14,6 +15,7 @@
 #include "Log.h"
 #include "../BotAI.h"
 #include "Core/PlayerBotHelpers.h"
+#include "../../Movement/BotMovementUtil.h"
 #include <algorithm>
 #include <cmath>
 
@@ -492,18 +494,35 @@ MovementCommand MovementIntegration::CheckLineOfSight()
     if (!target)
         return command;
 
-    // Check LoS
+    // Check LoS using TrinityCore native check
     if (!_bot->IsWithinLOSInMap(target))
     {
-        // Need to move to get LoS
-        // Simple: move towards target
-        float angle = _bot->GetAbsoluteAngle(target);
-        float distance = 10.0f;
+        // Use LineOfSightManager for smart position finding when available
+        // This considers terrain, buildings, preferred range vs. naive "move toward target"
+        LineOfSightManager losMgr(_bot);
+        Position losPos = losMgr.FindBestLineOfSightPosition(target, 0.0f);
 
-        float x = _bot->GetPositionX() + distance * std::cos(angle);
-        float y = _bot->GetPositionY() + distance * std::sin(angle);
+        // If FindBest returned our own position (no candidates found), fall back to
+        // stepping toward the target
+        if (losPos.GetExactDist(_bot) < 2.0f)
+        {
+            losPos = losMgr.GetClosestUnblockedPosition(target);
+        }
 
-        command.destination = Position(x, y, _bot->GetPositionZ());
+        // Final fallback: move directly toward target
+        if (losPos.GetExactDist(_bot) < 2.0f)
+        {
+            float angle = _bot->GetAbsoluteAngle(target);
+            float moveDistance = std::min(10.0f, _bot->GetDistance(target) * 0.5f);
+            float x = _bot->GetPositionX() + moveDistance * std::cos(angle);
+            float y = _bot->GetPositionY() + moveDistance * std::sin(angle);
+            losPos = Position(x, y, _bot->GetPositionZ());
+        }
+
+        // Correct Z to ground level to prevent hovering/falling through terrain
+        BotMovementUtil::CorrectPositionToGround(_bot, losPos);
+
+        command.destination = losPos;
         command.urgency = MovementUrgency::HIGH;
         command.reason = MovementReason::LINE_OF_SIGHT;
         command.acceptableRadius = 2.0f;

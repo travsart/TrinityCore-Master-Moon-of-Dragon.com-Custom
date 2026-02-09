@@ -840,4 +840,810 @@ Position LoSUtils::GetLastVisiblePoint(const Position& from, const Position& to,
     return current;
 }
 
+// ============================================================================
+// MISSING METHOD IMPLEMENTATIONS
+// ============================================================================
+
+bool LineOfSightManager::WillHaveLineOfSightAfterMovement(const Position& newPos, Unit* target)
+{
+    if (!target)
+        return false;
+
+    return HasLineOfSightFromPosition(newPos, target);
+}
+
+Position LineOfSightManager::GetClosestUnblockedPosition(Unit* target)
+{
+    if (!target)
+        return _bot->GetPosition();
+
+    // Use FindBestLineOfSightPosition with a small preferred range to get closest
+    float currentDist = ::std::sqrt(_bot->GetExactDistSq(target));
+    Position best = FindBestLineOfSightPosition(target, currentDist > 5.0f ? currentDist : 10.0f);
+
+    // If FindBest returned our own position (no candidates found), try stepping toward target
+    if (best.GetExactDist(_bot) < 1.0f)
+    {
+        // Step directly toward the target in increments to find the first visible point
+        float angle = _bot->GetAbsoluteAngle(target);
+        float totalDist = currentDist;
+
+        for (float step = 3.0f; step < totalDist; step += 3.0f)
+        {
+            Position candidate;
+            candidate.m_positionX = _bot->GetPositionX() + step * ::std::cos(angle);
+            candidate.m_positionY = _bot->GetPositionY() + step * ::std::sin(angle);
+            candidate.m_positionZ = _bot->GetPositionZ();
+
+            // Correct Z to ground level
+            Map* map = _bot->GetMap();
+            if (map)
+            {
+                float groundZ = map->GetHeight(_bot->GetPhaseShift(), candidate.m_positionX,
+                                                candidate.m_positionY, candidate.m_positionZ + 5.0f);
+                if (groundZ > INVALID_HEIGHT)
+                    candidate.m_positionZ = groundZ + 0.5f;
+            }
+
+            if (HasLineOfSightFromPosition(candidate, target))
+                return candidate;
+        }
+    }
+
+    return best;
+}
+
+::std::vector<ObjectGuid> LineOfSightManager::GetBlockingObjects(Unit* target)
+{
+    ::std::vector<ObjectGuid> blockingGuids;
+    if (!target)
+        return blockingGuids;
+
+    Position from = _bot->GetPosition();
+    Position to = target->GetPosition();
+    float searchRange = from.GetExactDist(&to);
+
+    Map* map = _bot->GetMap();
+    if (!map)
+        return blockingGuids;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return blockingGuids;
+    }
+
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
+        _bot->GetPosition(), searchRange);
+
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        GameObject* obj = map->GetGameObject(guid);
+        if (!obj || !obj->IsInWorld())
+            continue;
+
+        if (obj->GetGoType() == GAMEOBJECT_TYPE_DOOR && obj->GetGoState() == GO_STATE_ACTIVE)
+            continue;
+
+        Position objPos = obj->GetPosition();
+        float objDist = ::std::sqrt(obj->GetExactDistSq(from));
+        if (objDist < searchRange && objDist > 1.0f)
+        {
+            if (LoSUtils::DoLinesIntersect(from, to, objPos, objPos))
+                blockingGuids.push_back(guid);
+        }
+    }
+
+    return blockingGuids;
+}
+
+bool LineOfSightManager::IsObstructionTemporary(const LoSResult& result)
+{
+    // Terrain and building obstructions are permanent
+    if (result.blockedByTerrain || result.blockedByBuilding)
+        return false;
+
+    // Unit obstructions are temporary (units move)
+    if (result.blockedByUnit)
+        return true;
+
+    // Object obstructions could be temporary (doors open/close)
+    if (result.blockedByObject && !result.blockingObjectGuid.IsEmpty())
+    {
+        if (_dynamicObstructions.Contains(result.blockingObjectGuid))
+            return true;
+    }
+
+    return false;
+}
+
+float LineOfSightManager::EstimateTimeUntilClearPath(Unit* target)
+{
+    if (!target)
+        return -1.0f;
+
+    LoSResult result = CheckLineOfSight(target, LoSCheckType::BASIC);
+    if (result.hasLineOfSight)
+        return 0.0f;
+
+    if (!IsObstructionTemporary(result))
+        return -1.0f; // Permanent obstruction, won't clear
+
+    // Estimate based on unit movement speeds (~7 yards/sec average)
+    if (result.blockedByUnit)
+        return 2.0f; // Rough estimate: units typically move out of the way in ~2 sec
+
+    // Dynamic objects (doors) - could be 5-30 seconds
+    return 10.0f;
+}
+
+bool LineOfSightManager::IsAngleAcceptable(const Position& from, const Position& to, float maxAngle)
+{
+    float dx = to.GetPositionX() - from.GetPositionX();
+    float dy = to.GetPositionY() - from.GetPositionY();
+    float angle = ::std::atan2(dy, dx);
+
+    // Compare against the source's orientation
+    float orientation = from.GetOrientation();
+    float diff = ::std::abs(angle - orientation);
+
+    // Normalize to [0, PI]
+    while (diff > static_cast<float>(M_PI))
+        diff = 2.0f * static_cast<float>(M_PI) - diff;
+
+    return diff <= maxAngle;
+}
+
+bool LineOfSightManager::IsWithinViewingAngle(Unit* target, float maxAngle)
+{
+    if (!target)
+        return false;
+
+    return IsAngleAcceptable(_bot->GetPosition(), target->GetPosition(), maxAngle);
+}
+
+float LineOfSightManager::CalculateViewingAngle(Unit* target)
+{
+    if (!target)
+        return static_cast<float>(M_PI);
+
+    float angle = _bot->GetAbsoluteAngle(target);
+    float orientation = _bot->GetOrientation();
+    float diff = ::std::abs(angle - orientation);
+
+    while (diff > static_cast<float>(M_PI))
+        diff = 2.0f * static_cast<float>(M_PI) - diff;
+
+    return diff;
+}
+
+bool LineOfSightManager::RequiresFacing(Unit* target, LoSCheckType checkType)
+{
+    if (!target)
+        return false;
+
+    // Movement doesn't require facing
+    if (checkType == LoSCheckType::MOVEMENT)
+        return false;
+
+    // Spell casting typically requires facing
+    if (checkType == LoSCheckType::SPELL_CASTING || checkType == LoSCheckType::HEALING ||
+        checkType == LoSCheckType::INTERRUPT)
+        return true;
+
+    // Ranged combat requires facing
+    if (checkType == LoSCheckType::RANGED_COMBAT)
+        return true;
+
+    return false;
+}
+
+Position LineOfSightManager::CalculateOptimalViewingPosition(Unit* target)
+{
+    if (!target)
+        return _bot->GetPosition();
+
+    // Find position that provides LOS and is at optimal range
+    float optimalRange = 20.0f; // Default for ranged
+    return FindBestLineOfSightPosition(target, optimalRange);
+}
+
+uint32 LineOfSightManager::CountVisibleTargets(const ::std::vector<Unit*>& targets)
+{
+    uint32 count = 0;
+    for (Unit* target : targets)
+    {
+        if (target && CanSeeTarget(target))
+            ++count;
+    }
+    return count;
+}
+
+Position LineOfSightManager::FindElevatedPosition(Unit* target)
+{
+    if (!target)
+        return _bot->GetPosition();
+
+    Position botPos = _bot->GetPosition();
+    Position targetPos = target->GetPosition();
+    Map* map = _bot->GetMap();
+    if (!map)
+        return botPos;
+
+    // Search for nearby positions that are higher than current
+    Position bestPos = botPos;
+    float bestElevation = botPos.GetPositionZ();
+
+    for (float angle = 0.0f; angle < 2.0f * static_cast<float>(M_PI); angle += static_cast<float>(M_PI) / 6.0f)
+    {
+        for (float dist = 5.0f; dist <= 20.0f; dist += 5.0f)
+        {
+            Position candidate;
+            candidate.m_positionX = botPos.GetPositionX() + dist * ::std::cos(angle);
+            candidate.m_positionY = botPos.GetPositionY() + dist * ::std::sin(angle);
+
+            float groundZ = map->GetHeight(_bot->GetPhaseShift(), candidate.m_positionX,
+                                            candidate.m_positionY, botPos.GetPositionZ() + 20.0f);
+            if (groundZ <= INVALID_HEIGHT)
+                continue;
+
+            candidate.m_positionZ = groundZ + 0.5f;
+
+            if (candidate.m_positionZ > bestElevation && HasLineOfSightFromPosition(candidate, target))
+            {
+                bestElevation = candidate.m_positionZ;
+                bestPos = candidate;
+            }
+        }
+    }
+
+    return bestPos;
+}
+
+void LineOfSightManager::UpdateDynamicObstructions()
+{
+    uint32 now = GameTime::GetGameTimeMS();
+    if (now - _lastObstructionUpdate < OBSTRUCTION_UPDATE_INTERVAL)
+        return;
+
+    _lastObstructionUpdate = now;
+
+    // Prune invalid obstructions
+    ::std::vector<ObjectGuid> toRemove;
+    for (auto const& pair : _dynamicObstructions)
+    {
+        if (!pair.second || !pair.second->IsInWorld())
+            toRemove.push_back(pair.first);
+    }
+
+    for (ObjectGuid guid : toRemove)
+        _dynamicObstructions.Remove(guid);
+}
+
+void LineOfSightManager::RegisterDynamicObstruction(GameObject* obj)
+{
+    if (!obj)
+        return;
+
+    _dynamicObstructions.Insert(obj->GetGUID(), obj);
+}
+
+void LineOfSightManager::UnregisterDynamicObstruction(GameObject* obj)
+{
+    if (!obj)
+        return;
+
+    _dynamicObstructions.Remove(obj->GetGUID());
+}
+
+bool LineOfSightManager::IsDynamicObstructionActive(ObjectGuid guid)
+{
+    auto result = _dynamicObstructions.Get(guid);
+    if (!result.has_value())
+        return false;
+
+    GameObject* obj = result.value();
+    return obj && obj->IsInWorld();
+}
+
+bool LineOfSightManager::HasSpellLineOfSight(Unit* target, uint32 spellId)
+{
+    if (!target || !spellId)
+        return false;
+
+    LoSResult result = CheckSpellLineOfSight(target, spellId);
+    return result.hasLineOfSight;
+}
+
+float LineOfSightManager::GetSpellMaxRange(uint32 spellId)
+{
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return 0.0f;
+
+    return spellInfo->GetMaxRange();
+}
+
+bool LineOfSightManager::IsSpellRangeBlocked(Unit* target, uint32 spellId)
+{
+    if (!target || !spellId)
+        return true;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return true;
+
+    float maxRange = spellInfo->GetMaxRange();
+    float dist = ::std::sqrt(_bot->GetExactDistSq(target));
+
+    return dist > maxRange;
+}
+
+LoSValidation LineOfSightManager::GetSpellLoSRequirements(uint32 spellId)
+{
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return LoSValidation::SPELL_LOS;
+
+    if (spellInfo->HasAttribute(SPELL_ATTR2_IGNORE_LINE_OF_SIGHT))
+        return LoSValidation::NONE;
+
+    return LoSValidation::SPELL_LOS;
+}
+
+bool LineOfSightManager::CanCastAoEAtPosition(const Position& targetPos, uint32 spellId)
+{
+    if (!spellId)
+        return false;
+
+    LoSResult result = CheckLineOfSight(targetPos, LoSCheckType::SPELL_CASTING);
+    return result.hasLineOfSight;
+}
+
+::std::vector<Unit*> LineOfSightManager::GetAoETargetsInLoS(const Position& centerPos, float radius)
+{
+    ::std::vector<Unit*> results;
+
+    Map* map = _bot->GetMap();
+    if (!map)
+        return results;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return results;
+    }
+
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+        centerPos, radius);
+
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        if (!unit || !unit->IsAlive())
+            continue;
+
+        if (unit->GetExactDist(&centerPos) <= radius)
+        {
+            LoSContext context;
+            context.bot = _bot;
+            context.source = _bot;
+            context.target = unit;
+            context.sourcePos = _bot->GetPosition();
+            context.targetPos = unit->GetPosition();
+            context.checkType = LoSCheckType::AREA_CHECK;
+            context.validationFlags = LoSValidation::BASIC_LOS;
+
+            LoSResult losResult = CheckLineOfSight(context);
+            if (losResult.hasLineOfSight)
+                results.push_back(unit);
+        }
+    }
+
+    return results;
+}
+
+bool LineOfSightManager::IsAoEPositionOptimal(const Position& pos, const ::std::vector<Unit*>& targets)
+{
+    if (targets.empty())
+        return false;
+
+    uint32 inLoS = 0;
+    for (Unit* target : targets)
+    {
+        if (target && HasLineOfSightFromPosition(pos, target))
+            ++inLoS;
+    }
+
+    // Optimal if we can see at least 75% of targets
+    return inLoS >= (targets.size() * 3 / 4);
+}
+
+bool LineOfSightManager::IsPathClear(const ::std::vector<Position>& waypoints)
+{
+    if (waypoints.size() < 2)
+        return true;
+
+    for (size_t i = 0; i < waypoints.size() - 1; ++i)
+    {
+        if (CheckTerrainBlocking(waypoints[i], waypoints[i + 1]))
+            return false;
+    }
+
+    return true;
+}
+
+Position LineOfSightManager::GetFirstBlockedWaypoint(const ::std::vector<Position>& waypoints)
+{
+    if (waypoints.size() < 2)
+        return waypoints.empty() ? Position() : waypoints[0];
+
+    for (size_t i = 0; i < waypoints.size() - 1; ++i)
+    {
+        if (CheckTerrainBlocking(waypoints[i], waypoints[i + 1]))
+            return waypoints[i + 1];
+    }
+
+    return waypoints.back();
+}
+
+bool LineOfSightManager::CanSeeDestination(const Position& destination)
+{
+    return !CheckTerrainBlocking(_bot->GetPosition(), destination);
+}
+
+::std::vector<Position> LineOfSightManager::GetVisibilityWaypoints(const Position& destination)
+{
+    ::std::vector<Position> waypoints;
+    Position botPos = _bot->GetPosition();
+
+    if (!CheckTerrainBlocking(botPos, destination))
+    {
+        waypoints.push_back(destination);
+        return waypoints;
+    }
+
+    // Use LoSUtils::GetLastVisiblePoint to find intermediate waypoints
+    Map* map = _bot->GetMap();
+    if (map)
+    {
+        Position lastVisible = LoSUtils::GetLastVisiblePoint(botPos, destination, map);
+        if (lastVisible.GetExactDist(&botPos) > 2.0f)
+        {
+            waypoints.push_back(lastVisible);
+            waypoints.push_back(destination);
+        }
+    }
+
+    if (waypoints.empty())
+        waypoints.push_back(destination);
+
+    return waypoints;
+}
+
+bool LineOfSightManager::IsPositionInWorld(const Position& pos)
+{
+    // Basic world coordinate bounds for WoW maps
+    return pos.GetPositionX() > -17000.0f && pos.GetPositionX() < 17000.0f &&
+           pos.GetPositionY() > -17000.0f && pos.GetPositionY() < 17000.0f;
+}
+
+bool LineOfSightManager::IsPositionAccessible(const Position& pos)
+{
+    Map* map = _bot->GetMap();
+    if (!map)
+        return false;
+
+    float groundZ = map->GetHeight(_bot->GetPhaseShift(), pos.GetPositionX(),
+                                    pos.GetPositionY(), pos.GetPositionZ() + 10.0f);
+    return groundZ > INVALID_HEIGHT;
+}
+
+float LineOfSightManager::GetGroundLevel(const Position& pos)
+{
+    Map* map = _bot->GetMap();
+    if (!map)
+        return INVALID_HEIGHT;
+
+    return map->GetHeight(_bot->GetPhaseShift(), pos.GetPositionX(),
+                          pos.GetPositionY(), pos.GetPositionZ() + 10.0f);
+}
+
+bool LineOfSightManager::IsUnderground(const Position& pos)
+{
+    float groundLevel = GetGroundLevel(pos);
+    if (groundLevel <= INVALID_HEIGHT)
+        return false;
+
+    return pos.GetPositionZ() < groundLevel - 2.0f;
+}
+
+void LineOfSightManager::UpdateMetrics()
+{
+    // Metrics are updated inline during TrackPerformance() calls
+    // This method exists for explicit periodic metric aggregation if needed
+}
+
+bool LineOfSightManager::CheckRangedCombatLineOfSight(Unit* target)
+{
+    if (!target)
+        return false;
+
+    // Ranged combat requires target within 40 yards and facing
+    float distSq = _bot->GetExactDistSq(target);
+    if (distSq > 40.0f * 40.0f)
+        return false;
+
+    float angle = _bot->GetRelativeAngle(target);
+    return ::std::abs(angle) <= static_cast<float>(M_PI) / 2.0f; // 90 degree cone
+}
+
+void LineOfSightManager::CleanupCache()
+{
+    ClearExpiredCacheEntries();
+}
+
+// ============================================================================
+// REMAINING LOSUTILS STATIC METHOD IMPLEMENTATIONS
+// ============================================================================
+
+bool LoSUtils::IsLoSBlocked(Player* source, Unit* target, ::std::string& reason)
+{
+    if (!source || !target)
+    {
+        reason = "Invalid source or target";
+        return true;
+    }
+
+    if (!source->IsWithinLOSInMap(target))
+    {
+        reason = "Line of sight blocked by terrain/objects";
+        return true;
+    }
+
+    return false;
+}
+
+bool LoSUtils::IsPointBehindPoint(const Position& observer, const Position& target, const Position& reference)
+{
+    float angleToTarget = ::std::atan2(target.GetPositionY() - observer.GetPositionY(),
+                                        target.GetPositionX() - observer.GetPositionX());
+    float angleToRef = ::std::atan2(reference.GetPositionY() - observer.GetPositionY(),
+                                     reference.GetPositionX() - observer.GetPositionX());
+
+    float diff = ::std::abs(angleToTarget - angleToRef);
+    while (diff > static_cast<float>(M_PI))
+        diff = 2.0f * static_cast<float>(M_PI) - diff;
+
+    // Behind means same general direction but farther
+    return diff < static_cast<float>(M_PI) / 4.0f &&
+           observer.GetExactDist(&target) > observer.GetExactDist(&reference);
+}
+
+Position LoSUtils::GetLineIntersection(const Position& line1Start, const Position& line1End,
+                                       const Position& line2Start, const Position& line2End)
+{
+    float x1 = line1Start.GetPositionX(), y1 = line1Start.GetPositionY();
+    float x2 = line1End.GetPositionX(), y2 = line1End.GetPositionY();
+    float x3 = line2Start.GetPositionX(), y3 = line2Start.GetPositionY();
+    float x4 = line2End.GetPositionX(), y4 = line2End.GetPositionY();
+
+    float denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    if (::std::abs(denom) < 0.0001f)
+        return line1Start; // Parallel lines, return start
+
+    float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+
+    Position result;
+    result.m_positionX = x1 + t * (x2 - x1);
+    result.m_positionY = y1 + t * (y2 - y1);
+    result.m_positionZ = line1Start.GetPositionZ();
+    return result;
+}
+
+bool LoSUtils::DoLinesIntersect(const Position& line1Start, const Position& line1End,
+                                const Position& line2Start, const Position& line2End)
+{
+    float x1 = line1Start.GetPositionX(), y1 = line1Start.GetPositionY();
+    float x2 = line1End.GetPositionX(), y2 = line1End.GetPositionY();
+    float x3 = line2Start.GetPositionX(), y3 = line2Start.GetPositionY();
+    float x4 = line2End.GetPositionX(), y4 = line2End.GetPositionY();
+
+    float denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    if (::std::abs(denom) < 0.0001f)
+        return false; // Parallel lines
+
+    float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+    float u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+    // Both parameters must be in [0, 1] for segments to intersect
+    return (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f);
+}
+
+bool LoSUtils::IsAboveGround(const Position& pos, Map* map, float threshold)
+{
+    if (!map)
+        return false;
+
+    PhaseShift emptyPhaseShift;
+    float groundZ = map->GetStaticHeight(emptyPhaseShift, pos.GetPositionX(),
+                                          pos.GetPositionY(), pos.GetPositionZ());
+    if (groundZ <= INVALID_HEIGHT)
+        return false;
+
+    return (pos.GetPositionZ() - groundZ) > threshold;
+}
+
+bool LoSUtils::IsBelowGround(const Position& pos, Map* map, float threshold)
+{
+    if (!map)
+        return false;
+
+    PhaseShift emptyPhaseShift;
+    float groundZ = map->GetStaticHeight(emptyPhaseShift, pos.GetPositionX(),
+                                          pos.GetPositionY(), pos.GetPositionZ() + 50.0f);
+    if (groundZ <= INVALID_HEIGHT)
+        return false;
+
+    return (groundZ - pos.GetPositionZ()) > threshold;
+}
+
+float LoSUtils::GetVerticalClearance(const Position& pos, Map* map)
+{
+    if (!map)
+        return 0.0f;
+
+    PhaseShift emptyPhaseShift;
+    float groundZ = map->GetStaticHeight(emptyPhaseShift, pos.GetPositionX(),
+                                          pos.GetPositionY(), pos.GetPositionZ());
+    if (groundZ <= INVALID_HEIGHT)
+        return 0.0f;
+
+    return pos.GetPositionZ() - groundZ;
+}
+
+bool LoSUtils::CanCastSpellAtPosition(Player* caster, const Position& pos, uint32 spellId)
+{
+    if (!caster || !spellId)
+        return false;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return false;
+
+    float maxRange = spellInfo->GetMaxRange();
+    if (caster->GetExactDist(&pos) > maxRange)
+        return false;
+
+    return HasLoS(caster->GetPosition(), pos, caster->GetMap());
+}
+
+float LoSUtils::GetEffectiveSpellRange(Player* caster, uint32 spellId)
+{
+    if (!caster || !spellId)
+        return 0.0f;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return 0.0f;
+
+    return spellInfo->GetMaxRange();
+}
+
+bool LoSUtils::IsAreaClear(const Position& center, float radius, Map* map)
+{
+    if (!map)
+        return false;
+
+    // Check 8 points around the center
+    for (float angle = 0.0f; angle < 2.0f * static_cast<float>(M_PI); angle += static_cast<float>(M_PI) / 4.0f)
+    {
+        Position edge;
+        edge.m_positionX = center.GetPositionX() + radius * ::std::cos(angle);
+        edge.m_positionY = center.GetPositionY() + radius * ::std::sin(angle);
+        edge.m_positionZ = center.GetPositionZ();
+
+        if (!HasLoS(center, edge, map))
+            return false;
+    }
+
+    return true;
+}
+
+::std::vector<Position> LoSUtils::GetBlockedPositionsInArea(const Position& center, float radius, Map* map)
+{
+    ::std::vector<Position> blocked;
+    if (!map)
+        return blocked;
+
+    for (float angle = 0.0f; angle < 2.0f * static_cast<float>(M_PI); angle += static_cast<float>(M_PI) / 8.0f)
+    {
+        for (float dist = radius * 0.25f; dist <= radius; dist += radius * 0.25f)
+        {
+            Position pos;
+            pos.m_positionX = center.GetPositionX() + dist * ::std::cos(angle);
+            pos.m_positionY = center.GetPositionY() + dist * ::std::sin(angle);
+            pos.m_positionZ = center.GetPositionZ();
+
+            if (!HasLoS(center, pos, map))
+                blocked.push_back(pos);
+        }
+    }
+
+    return blocked;
+}
+
+Position LoSUtils::GetClearedPositionNear(const Position& target, float searchRadius, Map* map)
+{
+    if (!map)
+        return target;
+
+    for (float angle = 0.0f; angle < 2.0f * static_cast<float>(M_PI); angle += static_cast<float>(M_PI) / 8.0f)
+    {
+        for (float dist = 2.0f; dist <= searchRadius; dist += 2.0f)
+        {
+            Position candidate;
+            candidate.m_positionX = target.GetPositionX() + dist * ::std::cos(angle);
+            candidate.m_positionY = target.GetPositionY() + dist * ::std::sin(angle);
+            candidate.m_positionZ = target.GetPositionZ();
+
+            PhaseShift emptyPhaseShift;
+            float groundZ = map->GetStaticHeight(emptyPhaseShift, candidate.m_positionX,
+                                                   candidate.m_positionY, candidate.m_positionZ + 10.0f);
+            if (groundZ > INVALID_HEIGHT)
+            {
+                candidate.m_positionZ = groundZ + 0.5f;
+                if (HasLoS(candidate, target, map))
+                    return candidate;
+            }
+        }
+    }
+
+    return target;
+}
+
+::std::vector<Position> LoSUtils::GetLoSBreakpoints(const Position& from, const Position& to, Map* map)
+{
+    ::std::vector<Position> breakpoints;
+    if (!map)
+        return breakpoints;
+
+    float totalDist = from.GetExactDist(&to);
+    uint32 steps = static_cast<uint32>(totalDist / 2.0f);
+    if (steps < 2)
+        return breakpoints;
+
+    float dx = (to.GetPositionX() - from.GetPositionX()) / steps;
+    float dy = (to.GetPositionY() - from.GetPositionY()) / steps;
+    float dz = (to.GetPositionZ() - from.GetPositionZ()) / steps;
+
+    Position prev = from;
+    bool prevVisible = true;
+
+    for (uint32 i = 1; i <= steps; ++i)
+    {
+        Position current;
+        current.m_positionX = from.GetPositionX() + dx * i;
+        current.m_positionY = from.GetPositionY() + dy * i;
+        current.m_positionZ = from.GetPositionZ() + dz * i;
+
+        bool currentVisible = HasLoS(from, current, map);
+
+        // Transition point: visible to blocked or blocked to visible
+        if (currentVisible != prevVisible)
+            breakpoints.push_back(current);
+
+        prevVisible = currentVisible;
+        prev = current;
+    }
+
+    return breakpoints;
+}
+
 } // namespace Playerbot
