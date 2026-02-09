@@ -132,6 +132,8 @@ set(PLAYERBOT_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/GroupMemberDiagnostics.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotCheatMask.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotCheatMask.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotLogFilter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Diagnostics/BotLogFilter.h
 
     # Core Combat - Context Detection and Performance
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Combat/CombatContextDetector.cpp
