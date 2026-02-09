@@ -15,6 +15,9 @@
 #include "IBGScript.h"
 #include <unordered_map>
 
+class Player;
+class Unit;
+
 namespace Playerbot::Coordination::Battleground
 {
 
@@ -108,6 +111,47 @@ protected:
      * @brief Calculate distance between two positions (2D)
      */
     static float CalculateDistance2D(float x1, float y1, float x2, float y2);
+
+    // ========================================================================
+    // SHARED RUNTIME BEHAVIOR UTILITIES
+    // ========================================================================
+
+    /**
+     * @brief Canonical target engagement: SetSelection + Attack(true)
+     * Call this whenever a bot should start attacking a target.
+     * Handles the IsInCombat/GetVictim check to avoid redundant Attack() calls.
+     */
+    static void EngageTarget(::Player* bot, ::Unit* target);
+
+    /**
+     * @brief Find the nearest alive enemy player within range
+     * Uses coordinator spatial cache (O(cells)) with legacy O(n) fallback.
+     * @param bot The bot player
+     * @param range Search radius
+     * @return Nearest enemy Player*, or nullptr if none found
+     */
+    static ::Player* FindNearestEnemyPlayer(::Player* bot, float range);
+
+    /**
+     * @brief Random patrol movement around a center position
+     * Only triggers movement if bot is currently idle (not moving).
+     * @param bot The bot player
+     * @param center Center position to patrol around
+     * @param minRadius Minimum patrol radius
+     * @param maxRadius Maximum patrol radius
+     */
+    static void PatrolAroundPosition(::Player* bot, Position const& center,
+                                      float minRadius, float maxRadius);
+
+    /**
+     * @brief Try to interact with a nearby GameObject of a specific type
+     * Uses phase-ignoring search for dynamically spawned BG objects.
+     * @param bot The bot player
+     * @param goType The GO type to search for (FLAGSTAND, FLAGDROP, GOOBER, CAPTURE_POINT)
+     * @param range Search radius
+     * @return true if a matching GO was found and Use() was called
+     */
+    static bool TryInteractWithGameObject(::Player* bot, uint32 goType, float range);
 
     /**
      * @brief Find the nearest objective from a list

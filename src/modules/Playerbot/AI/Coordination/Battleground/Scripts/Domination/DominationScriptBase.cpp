@@ -11,8 +11,14 @@
 
 #include "DominationScriptBase.h"
 #include "BattlegroundCoordinator.h"
+#include "BattlegroundCoordinatorManager.h"
+#include "ObjectAccessor.h"
+#include "Player.h"
+#include "GameObject.h"
+#include "GameObjectData.h"
 #include "Log.h"
 #include "Timer.h"
+#include "../../Movement/BotMovementUtil.h"
 #include <algorithm>
 #include <cmath>
 
@@ -665,6 +671,293 @@ void DominationScriptBase::RecalculateResourceRates()
 {
     m_allianceResourceRate = CalculateResourceRate(m_allianceNodes);
     m_hordeResourceRate = CalculateResourceRate(m_hordeNodes);
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR METHODS
+// ============================================================================
+
+void DominationScriptBase::RefreshNodeState()
+{
+    uint32 now = getMSTime();
+    if (now - m_lastNodeStateRefresh < NODE_STATE_REFRESH_INTERVAL)
+        return;
+
+    m_lastNodeStateRefresh = now;
+    UpdateNodeCounts();
+    RecalculateResourceRates();
+}
+
+bool DominationScriptBase::CaptureNode(::Player* bot, uint32 nodeIndex)
+{
+    if (!bot || !bot->IsInWorld() || nodeIndex >= GetNodeCount())
+        return false;
+
+    BGObjectiveData nodeData = GetNodeData(nodeIndex);
+    Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
+
+    float distance = bot->GetExactDist(&nodePos);
+    constexpr float CAPTURE_RANGE = 10.0f;
+
+    TC_LOG_DEBUG("playerbots.bg.script", "DOM: {} moving to capture node {} (dist: {:.1f})",
+        bot->GetName(), nodeData.name, distance);
+
+    if (distance > CAPTURE_RANGE)
+    {
+        BotMovementUtil::MoveToPosition(bot, nodePos);
+        return true;
+    }
+
+    // At the node - interact with the banner/flag GO
+    if (TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_GOOBER, CAPTURE_RANGE) ||
+        TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_CAPTURE_POINT, CAPTURE_RANGE) ||
+        TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_FLAGSTAND, CAPTURE_RANGE))
+    {
+        TC_LOG_INFO("playerbots.bg.script", "DOM: {} capturing node {}",
+            bot->GetName(), nodeData.name);
+    }
+
+    // While waiting for capture, engage any enemies
+    ::Player* nearEnemy = FindNearestEnemyPlayer(bot, 15.0f);
+    if (nearEnemy)
+        EngageTarget(bot, nearEnemy);
+
+    return true;
+}
+
+bool DominationScriptBase::DefendNode(::Player* bot, uint32 nodeIndex)
+{
+    if (!bot || !bot->IsInWorld() || nodeIndex >= GetNodeCount())
+        return false;
+
+    BGObjectiveData nodeData = GetNodeData(nodeIndex);
+    Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
+
+    float distance = bot->GetExactDist(&nodePos);
+    constexpr float DEFENSE_RADIUS = 25.0f;
+
+    // Move to node if too far
+    if (distance > DEFENSE_RADIUS)
+    {
+        BotMovementUtil::MoveToPosition(bot, nodePos);
+        return true;
+    }
+
+    // Look for enemies
+    ::Player* closestEnemy = FindNearestEnemyPlayer(bot, DEFENSE_RADIUS);
+    if (closestEnemy)
+    {
+        EngageTarget(bot, closestEnemy);
+
+        float enemyDist = bot->GetExactDist(closestEnemy);
+        if (enemyDist > 5.0f)
+            BotMovementUtil::ChaseTarget(bot, closestEnemy, 5.0f);
+
+        return true;
+    }
+
+    // If node is being contested, try to interact with it to recapture
+    auto stateIt = m_nodeStates.find(nodeIndex);
+    if (stateIt != m_nodeStates.end() && IsNodeContested(stateIt->second))
+    {
+        if (distance < 10.0f)
+        {
+            TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_GOOBER, 10.0f);
+            TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_CAPTURE_POINT, 10.0f);
+        }
+        else
+        {
+            BotMovementUtil::MoveToPosition(bot, nodePos);
+        }
+        return true;
+    }
+
+    // No enemies, not contested - patrol around node
+    PatrolAroundPosition(bot, nodePos, 5.0f, 15.0f);
+    return true;
+}
+
+uint32 DominationScriptBase::FindNearestCapturableNode(::Player* bot) const
+{
+    if (!bot || !bot->IsInWorld())
+        return UINT32_MAX;
+
+    uint32 faction = bot->GetBGTeam();
+    uint32 bestNode = UINT32_MAX;
+    float bestDist = std::numeric_limits<float>::max();
+
+    uint32 nodeCount = GetNodeCount();
+    for (uint32 i = 0; i < nodeCount; ++i)
+    {
+        auto stateIt = m_nodeStates.find(i);
+        if (stateIt == m_nodeStates.end())
+            continue;
+
+        BGObjectiveState state = stateIt->second;
+
+        // Capturable = neutral, enemy-controlled, or enemy-contested
+        bool capturable = (state == BGObjectiveState::NEUTRAL) ||
+                          IsNodeEnemy(state, faction);
+
+        if (!capturable)
+            continue;
+
+        BGObjectiveData nodeData = GetNodeData(i);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, 0.0f);
+        float dist = bot->GetExactDist(&nodePos);
+
+        if (dist < bestDist)
+        {
+            bestDist = dist;
+            bestNode = i;
+        }
+    }
+
+    return bestNode;
+}
+
+uint32 DominationScriptBase::FindNearestThreatenedNode(::Player* bot) const
+{
+    if (!bot || !bot->IsInWorld())
+        return UINT32_MAX;
+
+    uint32 faction = bot->GetBGTeam();
+    uint32 bestNode = UINT32_MAX;
+    float bestDist = std::numeric_limits<float>::max();
+
+    uint32 nodeCount = GetNodeCount();
+    for (uint32 i = 0; i < nodeCount; ++i)
+    {
+        auto stateIt = m_nodeStates.find(i);
+        if (stateIt == m_nodeStates.end())
+            continue;
+
+        BGObjectiveState state = stateIt->second;
+
+        // Threatened = friendly but contested
+        bool threatened = false;
+        if (faction == ALLIANCE)
+            threatened = (state == BGObjectiveState::ALLIANCE_CONTESTED);
+        else
+            threatened = (state == BGObjectiveState::HORDE_CONTESTED);
+
+        if (!threatened)
+            continue;
+
+        BGObjectiveData nodeData = GetNodeData(i);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, 0.0f);
+        float dist = bot->GetExactDist(&nodePos);
+
+        if (dist < bestDist)
+        {
+            bestDist = dist;
+            bestNode = i;
+        }
+    }
+
+    return bestNode;
+}
+
+uint32 DominationScriptBase::GetBestAssaultTarget(::Player* bot) const
+{
+    if (!bot || !bot->IsInWorld())
+        return UINT32_MAX;
+
+    uint32 faction = bot->GetBGTeam();
+    uint32 bestNode = UINT32_MAX;
+    float bestScore = -1.0f;
+
+    uint32 nodeCount = GetNodeCount();
+    for (uint32 i = 0; i < nodeCount; ++i)
+    {
+        auto stateIt = m_nodeStates.find(i);
+        if (stateIt == m_nodeStates.end())
+            continue;
+
+        BGObjectiveState state = stateIt->second;
+
+        // Can't assault our own nodes
+        if (IsNodeFriendly(state, faction))
+            continue;
+
+        BGObjectiveData nodeData = GetNodeData(i);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, 0.0f);
+        float dist = bot->GetExactDist(&nodePos);
+
+        // Score: higher strategic value and closer distance = better target
+        float score = static_cast<float>(nodeData.strategicValue) * 10.0f;
+
+        // Neutral nodes are higher priority than enemy-controlled
+        if (state == BGObjectiveState::NEUTRAL)
+            score += 20.0f;
+
+        // Closer nodes are preferred
+        score -= dist * 0.1f;
+
+        if (score > bestScore)
+        {
+            bestScore = score;
+            bestNode = i;
+        }
+    }
+
+    return bestNode;
+}
+
+uint32 DominationScriptBase::GetFriendlyNodeCount(::Player* bot) const
+{
+    if (!bot)
+        return 0;
+
+    uint32 faction = bot->GetBGTeam();
+    return (faction == ALLIANCE) ? m_allianceNodes : m_hordeNodes;
+}
+
+std::vector<uint32> DominationScriptBase::GetFriendlyNodes(::Player* bot) const
+{
+    std::vector<uint32> result;
+    if (!bot)
+        return result;
+
+    uint32 faction = bot->GetBGTeam();
+    uint32 nodeCount = GetNodeCount();
+
+    for (uint32 i = 0; i < nodeCount; ++i)
+    {
+        auto stateIt = m_nodeStates.find(i);
+        if (stateIt != m_nodeStates.end() && IsNodeFriendly(stateIt->second, faction))
+            result.push_back(i);
+    }
+
+    return result;
+}
+
+bool DominationScriptBase::IsNodeFriendly(BGObjectiveState state, uint32 faction)
+{
+    if (faction == ALLIANCE)
+        return state == BGObjectiveState::ALLIANCE_CONTROLLED ||
+               state == BGObjectiveState::ALLIANCE_CAPTURING;
+    else
+        return state == BGObjectiveState::HORDE_CONTROLLED ||
+               state == BGObjectiveState::HORDE_CAPTURING;
+}
+
+bool DominationScriptBase::IsNodeEnemy(BGObjectiveState state, uint32 faction)
+{
+    if (faction == ALLIANCE)
+        return state == BGObjectiveState::HORDE_CONTROLLED ||
+               state == BGObjectiveState::HORDE_CAPTURING ||
+               state == BGObjectiveState::HORDE_CONTESTED;
+    else
+        return state == BGObjectiveState::ALLIANCE_CONTROLLED ||
+               state == BGObjectiveState::ALLIANCE_CAPTURING ||
+               state == BGObjectiveState::ALLIANCE_CONTESTED;
+}
+
+bool DominationScriptBase::IsNodeContested(BGObjectiveState state)
+{
+    return state == BGObjectiveState::ALLIANCE_CONTESTED ||
+           state == BGObjectiveState::HORDE_CONTESTED;
 }
 
 } // namespace Playerbot::Coordination::Battleground

@@ -76,6 +76,19 @@ public:
         uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR
+    // ========================================================================
+
+    /**
+     * @brief Dynamic behavior tree for Eye of the Storm bot strategy
+     * Hybrid CTF/Domination: nodes provide tick rate, flag provides burst points.
+     * With 2+ nodes, some bots pursue flag; otherwise 100% node focus.
+     * @param player The bot player to execute strategy for
+     * @return true if the script handled the player's behavior
+     */
+    bool ExecuteStrategy(::Player* player) override;
+
+    // ========================================================================
     // STRATEGY - EOTS SPECIFIC
     // ========================================================================
 

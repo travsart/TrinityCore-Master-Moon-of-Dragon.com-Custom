@@ -12,6 +12,7 @@
 #include "ArathiBasinScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
 #include "Log.h"
 
 namespace Playerbot::Coordination::Battleground
@@ -74,6 +75,189 @@ void ArathiBasinScript::OnLoad(BattlegroundCoordinator* coordinator)
     TC_LOG_DEBUG("playerbots.bg.script",
         "ArathiBasinScript: Loaded with {} nodes",
         ArathiBasin::NODE_COUNT);
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR - Dynamic Behavior Tree
+// ============================================================================
+
+bool ArathiBasinScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    // Refresh node ownership state (throttled to 1s)
+    RefreshNodeState();
+
+    uint32 faction = player->GetBGTeam();
+    uint32 friendlyCount = GetFriendlyNodeCount(player);
+    uint32 nodeCount = GetNodeCount();
+
+    // =========================================================================
+    // PRIORITY 1: Uncontrolled node within 30yd -> capture it immediately
+    // =========================================================================
+    uint32 nearCapture = FindNearestCapturableNode(player);
+    if (nearCapture != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(nearCapture);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
+        float dist = player->GetExactDist(&nodePos);
+
+        if (dist < 30.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[AB] {} PRIORITY 1: capturing nearby node {} (dist={:.0f})",
+                player->GetName(), nodeData.name, dist);
+            CaptureNode(player, nearCapture);
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Friendly node CONTESTED -> rush to defend
+    // =========================================================================
+    uint32 threatened = FindNearestThreatenedNode(player);
+    if (threatened != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(threatened);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[AB] {} PRIORITY 2: defending contested node {}",
+            player->GetName(), nodeData.name);
+        DefendNode(player, threatened);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 3: Strategic duty split - 3-cap strategy
+    // =========================================================================
+    // AB classic strategy: control 3 nodes, defend them, and let tick rate win
+    std::vector<uint32> strategy3Cap = Get3CapStrategy(faction);
+    std::vector<uint32> friendlyNodes = GetFriendlyNodes(player);
+
+    // Determine if we need to attack or defend
+    bool needMoreNodes = friendlyCount < 3;
+
+    // GUID-based duty split across 10 slots
+    uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
+    if (needMoreNodes)
+    {
+        // Under 3-cap: 60% attack, 40% defend existing
+        if (dutySlot < 6) // 60% attack
+        {
+            // Find the best target from our 3-cap strategy that we don't control
+            uint32 targetNode = UINT32_MAX;
+            for (uint32 nodeId : strategy3Cap)
+            {
+                auto it = m_nodeStates.find(nodeId);
+                if (it != m_nodeStates.end() && !IsNodeFriendly(it->second, faction))
+                {
+                    targetNode = nodeId;
+                    break;
+                }
+            }
+
+            // Fallback: use GetBestAssaultTarget from base class
+            if (targetNode == UINT32_MAX)
+                targetNode = DominationScriptBase::GetBestAssaultTarget(player);
+
+            if (targetNode != UINT32_MAX)
+            {
+                BGObjectiveData nodeData = GetNodeData(targetNode);
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[AB] {} PRIORITY 3: attacking node {} (need {} more for 3-cap)",
+                    player->GetName(), nodeData.name, 3 - friendlyCount);
+                CaptureNode(player, targetNode);
+                return true;
+            }
+        }
+        else // 40% defend what we have
+        {
+            if (!friendlyNodes.empty())
+            {
+                // Spread defenders across friendly nodes
+                uint32 defIdx = dutySlot % friendlyNodes.size();
+                uint32 defNode = friendlyNodes[defIdx];
+                BGObjectiveData nodeData = GetNodeData(defNode);
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[AB] {} PRIORITY 3: defending friendly node {} (while team captures)",
+                    player->GetName(), nodeData.name);
+                DefendNode(player, defNode);
+                return true;
+            }
+        }
+    }
+    else
+    {
+        // At or above 3-cap: 70% defend, 30% attack/roam
+        if (dutySlot < 7) // 70% defend
+        {
+            if (!friendlyNodes.empty())
+            {
+                // Spread defenders across nodes, with extra weight on Blacksmith
+                uint32 defNode;
+                bool bsControlled = false;
+
+                // Check if we control Blacksmith
+                for (uint32 n : friendlyNodes)
+                {
+                    if (n == ArathiBasin::Nodes::BLACKSMITH)
+                    {
+                        bsControlled = true;
+                        break;
+                    }
+                }
+
+                // Give 2/7 defenders (slots 0,1) to Blacksmith if controlled
+                if (bsControlled && dutySlot < 2)
+                {
+                    defNode = ArathiBasin::Nodes::BLACKSMITH;
+                }
+                else
+                {
+                    // Distribute remaining defenders across all nodes
+                    uint32 defIdx = dutySlot % friendlyNodes.size();
+                    defNode = friendlyNodes[defIdx];
+                }
+
+                BGObjectiveData nodeData = GetNodeData(defNode);
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[AB] {} PRIORITY 3: defending node {} (3-cap hold)",
+                    player->GetName(), nodeData.name);
+                DefendNode(player, defNode);
+                return true;
+            }
+        }
+        else // 30% attack or roam
+        {
+            // Push for 4th/5th node when ahead
+            uint32 targetNode = DominationScriptBase::GetBestAssaultTarget(player);
+            if (targetNode != UINT32_MAX)
+            {
+                BGObjectiveData nodeData = GetNodeData(targetNode);
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[AB] {} PRIORITY 3: pushing enemy node {} (opportunistic)",
+                    player->GetName(), nodeData.name);
+                CaptureNode(player, targetNode);
+                return true;
+            }
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 4: No clear objective -> patrol nearest chokepoint
+    // =========================================================================
+    auto chokepoints = GetChokepoints();
+    if (!chokepoints.empty())
+    {
+        uint32 idx = player->GetGUID().GetCounter() % chokepoints.size();
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[AB] {} PRIORITY 4: patrolling chokepoint", player->GetName());
+        PatrolAroundPosition(player, chokepoints[idx], 5.0f, 15.0f);
+        return true;
+    }
+
+    return true;
 }
 
 // ============================================================================

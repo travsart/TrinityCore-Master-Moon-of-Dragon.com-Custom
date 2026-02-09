@@ -12,8 +12,10 @@
 #include "AshranScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
 #include "Log.h"
 #include "Timer.h"
+#include "../../../Movement/BotMovementUtil.h"
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -557,6 +559,450 @@ void AshranScript::AdjustStrategy(StrategicDecision& decision, float /*scoreAdva
     }
 
     decision.confidence = 0.8f;
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR
+// ============================================================================
+
+bool AshranScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    uint32 faction = player->GetBGTeam();
+    AshranPhase phase = GetCurrentPhase();
+
+    // =========================================================================
+    // PRIORITY 1: Enemy within 40yd -> engage immediately
+    // =========================================================================
+    if (::Player* enemy = FindNearestEnemyPlayer(player, 40.0f))
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[Ashran] {} PRIORITY 1: engaging nearby enemy {} (phase={})",
+            player->GetName(), enemy->GetName(), GetPhaseName(phase));
+        EngageTarget(player, enemy);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Phase-based strategic behavior
+    // =========================================================================
+    switch (phase)
+    {
+        case AshranPhase::OPENING:
+        {
+            // Rush to crossroads - everyone pushes center
+            Position crossroads = Ashran::GetControlPosition(Ashran::ControlPoints::CROSSROADS);
+            float dist = player->GetExactDist(&crossroads);
+
+            if (dist > 15.0f)
+            {
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[Ashran] {} PRIORITY 2 OPENING: rushing to Crossroads (dist={:.0f})",
+                    player->GetName(), dist);
+                BotMovementUtil::MoveToPosition(player, crossroads);
+                return true;
+            }
+
+            // At crossroads - try to capture it
+            if (TryInteractWithGameObject(player, 29 /*GAMEOBJECT_TYPE_CAPTURE_POINT*/, 15.0f))
+            {
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[Ashran] {} PRIORITY 2 OPENING: capturing Crossroads flag",
+                    player->GetName());
+                return true;
+            }
+
+            // At crossroads, nothing to capture - patrol around it
+            PatrolAroundPosition(player, crossroads, 5.0f, 20.0f);
+            return true;
+        }
+
+        case AshranPhase::ROAD_PUSH:
+        {
+            // GUID-based duty split: 60% push forward, 25% defend held points, 15% event
+            uint32 dutySlot = player->GetGUID().GetCounter() % 20;
+
+            if (dutySlot < 12) // 60% - road pushers
+            {
+                // Push along the Road of Glory toward enemy base
+                auto waypoints = GetRoadWaypoints();
+                if (waypoints.empty())
+                    break;
+
+                // Find the waypoint closest to our current push front
+                // Alliance pushes from high index to low, Horde pushes from low to high
+                float ourProgress = GetRoadProgress(faction);
+                size_t targetIdx;
+
+                if (faction == ALLIANCE)
+                {
+                    // Alliance pushes toward Horde (lower indices = forward for ally)
+                    // Progress 0.0 = at Alliance base, 1.0 = at Horde base
+                    targetIdx = static_cast<size_t>(ourProgress * (waypoints.size() - 1));
+                    // Push one step ahead
+                    if (targetIdx + 1 < waypoints.size())
+                        targetIdx++;
+                }
+                else
+                {
+                    // Horde pushes toward Alliance (higher indices = forward for horde)
+                    targetIdx = static_cast<size_t>((1.0f - ourProgress) * (waypoints.size() - 1));
+                    // Push one step ahead
+                    if (targetIdx > 0)
+                        targetIdx--;
+                }
+
+                targetIdx = std::min(targetIdx, waypoints.size() - 1);
+                Position const& pushTarget = waypoints[targetIdx];
+                float dist = player->GetExactDist(&pushTarget);
+
+                if (dist > 15.0f)
+                {
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[Ashran] {} PRIORITY 2 ROAD_PUSH: pushing road waypoint {} (dist={:.0f})",
+                        player->GetName(), targetIdx, dist);
+                    BotMovementUtil::MoveToPosition(player, pushTarget);
+                    return true;
+                }
+
+                // At the push point - patrol to hold ground and look for fights
+                PatrolAroundPosition(player, pushTarget, 5.0f, 25.0f);
+                return true;
+            }
+            else if (dutySlot < 17) // 25% - defend control points
+            {
+                // Defend the nearest friendly control point
+                for (uint32 i = 0; i < Ashran::ControlPoints::CONTROL_POINT_COUNT; ++i)
+                {
+                    auto it = m_controlStates.find(i);
+                    if (it == m_controlStates.end())
+                        continue;
+
+                    bool isFriendly = (faction == ALLIANCE && it->second == BGObjectiveState::ALLIANCE_CONTROLLED) ||
+                                      (faction == HORDE && it->second == BGObjectiveState::HORDE_CONTROLLED);
+                    if (!isFriendly)
+                        continue;
+
+                    auto defPositions = GetControlPointDefensePositions(i);
+                    if (defPositions.empty())
+                        continue;
+
+                    // Pick a defense position based on GUID
+                    size_t posIdx = player->GetGUID().GetCounter() % defPositions.size();
+                    Position const& defPos = defPositions[posIdx];
+                    float dist = player->GetExactDist(&defPos);
+
+                    if (dist > 10.0f)
+                    {
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[Ashran] {} PRIORITY 2 ROAD_PUSH (defend): moving to {} defense pos {} (dist={:.0f})",
+                            player->GetName(), Ashran::GetControlPointName(i), posIdx, dist);
+                        BotMovementUtil::MoveToPosition(player, defPos);
+                        return true;
+                    }
+
+                    // At defense position - patrol
+                    PatrolAroundPosition(player, defPos, 3.0f, 15.0f);
+                    return true;
+                }
+                break; // No friendly points to defend, fall through to priority 3
+            }
+            else // 15% - event participants
+            {
+                if (IsEventActive() && ShouldParticipateInEvent(m_activeEvent))
+                {
+                    auto eventPositions = GetEventPositions(m_activeEvent);
+                    if (!eventPositions.empty())
+                    {
+                        size_t posIdx = player->GetGUID().GetCounter() % eventPositions.size();
+                        Position const& eventPos = eventPositions[posIdx];
+                        float dist = player->GetExactDist(&eventPos);
+
+                        if (dist > 10.0f)
+                        {
+                            TC_LOG_DEBUG("playerbots.bg.script",
+                                "[Ashran] {} PRIORITY 2 ROAD_PUSH (event): moving to event '{}' pos {} (dist={:.0f})",
+                                player->GetName(), Ashran::GetEventName(m_activeEvent), posIdx, dist);
+                            BotMovementUtil::MoveToPosition(player, eventPos);
+                            return true;
+                        }
+
+                        // At event - interact or patrol
+                        TryInteractWithGameObject(player, 10 /*GAMEOBJECT_TYPE_GOOBER*/, 10.0f);
+                        PatrolAroundPosition(player, eventPos, 3.0f, 10.0f);
+                        return true;
+                    }
+                }
+                break; // No active event, fall through to priority 3
+            }
+        }
+
+        case AshranPhase::EVENT_FOCUS:
+        {
+            if (!IsEventActive())
+                break;
+
+            // 70% go to event, 30% hold road
+            uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
+            if (dutySlot < 7) // 70% - event participants
+            {
+                auto eventPositions = GetEventPositions(m_activeEvent);
+                if (!eventPositions.empty())
+                {
+                    size_t posIdx = player->GetGUID().GetCounter() % eventPositions.size();
+                    Position const& eventPos = eventPositions[posIdx];
+                    float dist = player->GetExactDist(&eventPos);
+
+                    if (dist > 10.0f)
+                    {
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[Ashran] {} PRIORITY 2 EVENT_FOCUS: rushing to event '{}' (dist={:.0f})",
+                            player->GetName(), Ashran::GetEventName(m_activeEvent), dist);
+                        BotMovementUtil::MoveToPosition(player, eventPos);
+                        return true;
+                    }
+
+                    // At event - interact with objects and patrol
+                    TryInteractWithGameObject(player, 10 /*GAMEOBJECT_TYPE_GOOBER*/, 10.0f);
+                    PatrolAroundPosition(player, eventPos, 3.0f, 12.0f);
+                    return true;
+                }
+            }
+            else // 30% - hold road/crossroads
+            {
+                Position crossroads = Ashran::GetControlPosition(Ashran::ControlPoints::CROSSROADS);
+                float dist = player->GetExactDist(&crossroads);
+
+                if (dist > 15.0f)
+                {
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[Ashran] {} PRIORITY 2 EVENT_FOCUS (road hold): moving to Crossroads (dist={:.0f})",
+                        player->GetName(), dist);
+                    BotMovementUtil::MoveToPosition(player, crossroads);
+                    return true;
+                }
+
+                TryInteractWithGameObject(player, 29 /*GAMEOBJECT_TYPE_CAPTURE_POINT*/, 15.0f);
+                PatrolAroundPosition(player, crossroads, 5.0f, 20.0f);
+                return true;
+            }
+            break;
+        }
+
+        case AshranPhase::BOSS_ASSAULT:
+        {
+            // 90% rush to enemy boss, 10% hold crossroads
+            uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
+            if (dutySlot < 9) // 90% - boss assault team
+            {
+                auto approachRoute = GetBossApproachRoute(faction);
+                auto raidPositions = GetBossRaidPositions(faction);
+
+                // Get boss position
+                Position bossPos = (faction == ALLIANCE) ?
+                    Ashran::GetVolrathPosition() : Ashran::GetTrembladePosition();
+                float distToBoss = player->GetExactDist(&bossPos);
+
+                // If close to boss, take raid position
+                if (distToBoss < 60.0f && !raidPositions.empty())
+                {
+                    size_t posIdx = player->GetGUID().GetCounter() % raidPositions.size();
+                    Position const& raidPos = raidPositions[posIdx];
+                    float dist = player->GetExactDist(&raidPos);
+
+                    if (dist > 5.0f)
+                    {
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[Ashran] {} PRIORITY 2 BOSS_ASSAULT: taking raid position {} (dist={:.0f})",
+                            player->GetName(), posIdx, dist);
+                        BotMovementUtil::MoveToPosition(player, raidPos);
+                        return true;
+                    }
+
+                    // In raid position - look for boss to attack
+                    PatrolAroundPosition(player, raidPos, 2.0f, 8.0f);
+                    return true;
+                }
+
+                // Not at boss yet - follow approach route
+                if (!approachRoute.empty())
+                {
+                    // Find nearest waypoint on route and advance to the next one
+                    float bestDist = std::numeric_limits<float>::max();
+                    size_t nearestIdx = 0;
+
+                    for (size_t i = 0; i < approachRoute.size(); ++i)
+                    {
+                        float d = player->GetExactDist(&approachRoute[i]);
+                        if (d < bestDist)
+                        {
+                            bestDist = d;
+                            nearestIdx = i;
+                        }
+                    }
+
+                    // Move to the next waypoint after our closest one
+                    size_t targetIdx = std::min(nearestIdx + 1, approachRoute.size() - 1);
+                    Position const& routeTarget = approachRoute[targetIdx];
+                    float dist = player->GetExactDist(&routeTarget);
+
+                    if (dist > 10.0f)
+                    {
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[Ashran] {} PRIORITY 2 BOSS_ASSAULT: following approach route wp {} (dist={:.0f})",
+                            player->GetName(), targetIdx, dist);
+                        BotMovementUtil::MoveToPosition(player, routeTarget);
+                        return true;
+                    }
+
+                    // At waypoint, move to boss directly
+                    BotMovementUtil::MoveToPosition(player, bossPos);
+                    return true;
+                }
+
+                // No route data - move directly to boss
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[Ashran] {} PRIORITY 2 BOSS_ASSAULT: direct move to boss (dist={:.0f})",
+                    player->GetName(), distToBoss);
+                BotMovementUtil::MoveToPosition(player, bossPos);
+                return true;
+            }
+            else // 10% - hold crossroads
+            {
+                Position crossroads = Ashran::GetControlPosition(Ashran::ControlPoints::CROSSROADS);
+                float dist = player->GetExactDist(&crossroads);
+
+                if (dist > 15.0f)
+                {
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[Ashran] {} PRIORITY 2 BOSS_ASSAULT (crossroads hold): moving to Crossroads (dist={:.0f})",
+                        player->GetName(), dist);
+                    BotMovementUtil::MoveToPosition(player, crossroads);
+                    return true;
+                }
+
+                TryInteractWithGameObject(player, 29 /*GAMEOBJECT_TYPE_CAPTURE_POINT*/, 15.0f);
+                PatrolAroundPosition(player, crossroads, 5.0f, 20.0f);
+                return true;
+            }
+        }
+
+        case AshranPhase::DEFENSE:
+        {
+            // Our base is under attack - 70% defend base, 30% counter-push crossroads
+            uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
+            if (dutySlot < 7) // 70% - base defense
+            {
+                // Get our stronghold position
+                uint32 ourStronghold = (faction == ALLIANCE) ?
+                    Ashran::ControlPoints::STORMSHIELD_STRONGHOLD :
+                    Ashran::ControlPoints::WARSPEAR_STRONGHOLD;
+
+                auto defPositions = GetControlPointDefensePositions(ourStronghold);
+                if (!defPositions.empty())
+                {
+                    size_t posIdx = player->GetGUID().GetCounter() % defPositions.size();
+                    Position const& defPos = defPositions[posIdx];
+                    float dist = player->GetExactDist(&defPos);
+
+                    if (dist > 10.0f)
+                    {
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[Ashran] {} PRIORITY 2 DEFENSE: rushing to base defense pos {} (dist={:.0f})",
+                            player->GetName(), posIdx, dist);
+                        BotMovementUtil::MoveToPosition(player, defPos);
+                        return true;
+                    }
+
+                    // At defense position
+                    PatrolAroundPosition(player, defPos, 3.0f, 15.0f);
+                    return true;
+                }
+
+                // No defense positions, move to stronghold directly
+                Position strongholdPos = Ashran::GetControlPosition(ourStronghold);
+                BotMovementUtil::MoveToPosition(player, strongholdPos);
+                return true;
+            }
+            else // 30% - counter-push to crossroads
+            {
+                Position crossroads = Ashran::GetControlPosition(Ashran::ControlPoints::CROSSROADS);
+                float dist = player->GetExactDist(&crossroads);
+
+                if (dist > 15.0f)
+                {
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[Ashran] {} PRIORITY 2 DEFENSE (counter-push): moving to Crossroads (dist={:.0f})",
+                        player->GetName(), dist);
+                    BotMovementUtil::MoveToPosition(player, crossroads);
+                    return true;
+                }
+
+                TryInteractWithGameObject(player, 29 /*GAMEOBJECT_TYPE_CAPTURE_POINT*/, 15.0f);
+                PatrolAroundPosition(player, crossroads, 5.0f, 20.0f);
+                return true;
+            }
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 3: Fallback -> patrol road chokepoints
+    // =========================================================================
+    auto chokepoints = GetChokepoints();
+    if (!chokepoints.empty())
+    {
+        // Pick a chokepoint based on GUID - spread bots across chokepoints
+        // Prefer chokepoints near the contested front
+        float ourProgress = GetRoadProgress(faction);
+
+        // Find the chokepoint closest to our road progress front
+        size_t bestIdx = 0;
+        float bestDist = std::numeric_limits<float>::max();
+
+        for (size_t i = 0; i < chokepoints.size(); ++i)
+        {
+            float chokeProg = Ashran::GetRoadProgressFromPosition(chokepoints[i].GetPositionX());
+            float progressDist = std::abs(chokeProg - ourProgress);
+            if (progressDist < bestDist)
+            {
+                bestDist = progressDist;
+                bestIdx = i;
+            }
+        }
+
+        // Spread bots across nearby chokepoints (+/- 2 from best)
+        size_t offset = player->GetGUID().GetCounter() % 5;
+        int32 targetIdx = static_cast<int32>(bestIdx) + static_cast<int32>(offset) - 2;
+        targetIdx = std::max(0, std::min(targetIdx, static_cast<int32>(chokepoints.size()) - 1));
+
+        Position const& chokePos = chokepoints[static_cast<size_t>(targetIdx)];
+        float dist = player->GetExactDist(&chokePos);
+
+        if (dist > 15.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[Ashran] {} PRIORITY 3: patrolling road chokepoint {} (dist={:.0f})",
+                player->GetName(), targetIdx, dist);
+            BotMovementUtil::MoveToPosition(player, chokePos);
+            return true;
+        }
+
+        PatrolAroundPosition(player, chokePos, 5.0f, 20.0f);
+        return true;
+    }
+
+    // Absolute fallback: move to crossroads
+    Position crossroads = Ashran::GetControlPosition(Ashran::ControlPoints::CROSSROADS);
+    TC_LOG_DEBUG("playerbots.bg.script",
+        "[Ashran] {} FALLBACK: moving to Crossroads",
+        player->GetName());
+    BotMovementUtil::MoveToPosition(player, crossroads);
+    return true;
 }
 
 // ============================================================================

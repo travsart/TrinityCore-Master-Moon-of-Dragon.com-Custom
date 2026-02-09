@@ -79,6 +79,18 @@ public:
     void OnEvent(const BGScriptEventData& event) override;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR
+    // ========================================================================
+
+    /**
+     * @brief Dynamic behavior tree for WSG bot strategy
+     * Evaluates game state each tick and selects the highest-priority action.
+     * @param player The bot player to execute strategy for
+     * @return true if the script handled the player's behavior
+     */
+    bool ExecuteStrategy(::Player* player) override;
+
+    // ========================================================================
     // UTILITY
     // ========================================================================
 

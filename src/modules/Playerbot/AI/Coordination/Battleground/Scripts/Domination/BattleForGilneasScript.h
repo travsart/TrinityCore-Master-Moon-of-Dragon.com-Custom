@@ -81,6 +81,19 @@ public:
     void GetScoreFromWorldStates(const std::map<int32, int32>& states, uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR
+    // ========================================================================
+
+    /**
+     * @brief Dynamic behavior tree for Battle for Gilneas bot strategy
+     * Evaluates node state each tick and assigns capture/defend duties.
+     * Uses 2-cap strategy with Waterworks priority.
+     * @param player The bot player to execute strategy for
+     * @return true if the script handled the player's behavior
+     */
+    bool ExecuteStrategy(::Player* player) override;
+
+    // ========================================================================
     // STRATEGY & ROLE DISTRIBUTION
     // ========================================================================
 

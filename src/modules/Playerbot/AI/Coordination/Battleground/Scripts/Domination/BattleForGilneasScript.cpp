@@ -12,6 +12,7 @@
 #include "BattleForGilneasScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
 #include "Log.h"
 
 namespace Playerbot::Coordination::Battleground
@@ -91,6 +92,240 @@ void BattleForGilneasScript::OnMatchEnd(bool victory)
     TC_LOG_INFO("playerbots.bg.script",
         "BFG: Match ended - {}! Final node control tracked.",
         victory ? "Victory" : "Defeat");
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR - Dynamic Behavior Tree
+// ============================================================================
+
+bool BattleForGilneasScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    // Refresh node ownership state (throttled to 1s)
+    RefreshNodeState();
+
+    uint32 faction = player->GetBGTeam();
+    uint32 friendlyCount = GetFriendlyNodeCount(player);
+    GamePhase phase = GetCurrentPhase();
+
+    // =========================================================================
+    // PRIORITY 1: Uncontrolled node within 30yd -> capture it immediately
+    // =========================================================================
+    uint32 nearCapture = FindNearestCapturableNode(player);
+    if (nearCapture != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(nearCapture);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
+        float dist = player->GetExactDist(&nodePos);
+
+        if (dist < 30.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[BFG] {} PRIORITY 1: capturing nearby node {} (dist={:.0f})",
+                player->GetName(), nodeData.name, dist);
+            CaptureNode(player, nearCapture);
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Friendly node CONTESTED -> rush to defend
+    // =========================================================================
+    uint32 threatened = FindNearestThreatenedNode(player);
+    if (threatened != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(threatened);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[BFG] {} PRIORITY 2: defending contested node {}",
+            player->GetName(), nodeData.name);
+        DefendNode(player, threatened);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 3: Phase-aware 2-cap strategy
+    // =========================================================================
+    std::vector<uint32> strategy2Cap = Get2CapStrategy(faction);
+    std::vector<uint32> friendlyNodes = GetFriendlyNodes(player);
+
+    // GUID-based duty split across 10 slots
+    uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
+    switch (phase)
+    {
+        case GamePhase::OPENING:
+        {
+            // Opening: 80% rush to capture strategy nodes, 20% roam
+            if (dutySlot < 8)
+            {
+                // Find uncaptured strategy node
+                uint32 targetNode = UINT32_MAX;
+                for (uint32 nodeId : strategy2Cap)
+                {
+                    auto it = m_nodeStates.find(nodeId);
+                    if (it != m_nodeStates.end() && !IsNodeFriendly(it->second, faction))
+                    {
+                        targetNode = nodeId;
+                        break;
+                    }
+                }
+
+                if (targetNode != UINT32_MAX)
+                {
+                    BGObjectiveData nodeData = GetNodeData(targetNode);
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[BFG] {} PRIORITY 3 (OPENING): rushing to capture {}",
+                        player->GetName(), nodeData.name);
+                    CaptureNode(player, targetNode);
+                    return true;
+                }
+            }
+            // 20% or no target: attack enemy nodes
+            {
+                uint32 targetNode = DominationScriptBase::GetBestAssaultTarget(player);
+                if (targetNode != UINT32_MAX)
+                {
+                    CaptureNode(player, targetNode);
+                    return true;
+                }
+            }
+            break;
+        }
+
+        case GamePhase::DESPERATE:
+        {
+            // Desperate: 90% all-in on Waterworks, 10% defend what we have
+            if (dutySlot < 9)
+            {
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[BFG] {} PRIORITY 3 (DESPERATE): all-in on Waterworks",
+                    player->GetName());
+                CaptureNode(player, BattleForGilneas::Nodes::WATERWORKS);
+                return true;
+            }
+            else if (!friendlyNodes.empty())
+            {
+                DefendNode(player, friendlyNodes[0]);
+                return true;
+            }
+            break;
+        }
+
+        default: // MID_GAME, LATE_GAME
+        {
+            bool needMoreNodes = friendlyCount < 2;
+
+            if (needMoreNodes)
+            {
+                // Under 2-cap: 60% attack, 40% defend existing
+                if (dutySlot < 6)
+                {
+                    uint32 targetNode = UINT32_MAX;
+                    for (uint32 nodeId : strategy2Cap)
+                    {
+                        auto it = m_nodeStates.find(nodeId);
+                        if (it != m_nodeStates.end() && !IsNodeFriendly(it->second, faction))
+                        {
+                            targetNode = nodeId;
+                            break;
+                        }
+                    }
+
+                    if (targetNode == UINT32_MAX)
+                        targetNode = DominationScriptBase::GetBestAssaultTarget(player);
+
+                    if (targetNode != UINT32_MAX)
+                    {
+                        BGObjectiveData nodeData = GetNodeData(targetNode);
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[BFG] {} PRIORITY 3: attacking node {} (need 2-cap)",
+                            player->GetName(), nodeData.name);
+                        CaptureNode(player, targetNode);
+                        return true;
+                    }
+                }
+                else if (!friendlyNodes.empty())
+                {
+                    uint32 defIdx = dutySlot % friendlyNodes.size();
+                    DefendNode(player, friendlyNodes[defIdx]);
+                    return true;
+                }
+            }
+            else
+            {
+                // At or above 2-cap: phase-aware defense ratio
+                uint32 defenseSlots = (phase == GamePhase::LATE_GAME) ? 8 : 7; // 80% or 70% defend
+
+                if (dutySlot < defenseSlots)
+                {
+                    if (!friendlyNodes.empty())
+                    {
+                        // Extra weight on Waterworks
+                        uint32 defNode;
+                        bool wwControlled = false;
+                        for (uint32 n : friendlyNodes)
+                        {
+                            if (n == BattleForGilneas::Nodes::WATERWORKS)
+                            {
+                                wwControlled = true;
+                                break;
+                            }
+                        }
+
+                        // Give 3/7 or 3/8 defenders to Waterworks
+                        if (wwControlled && dutySlot < 3)
+                        {
+                            defNode = BattleForGilneas::Nodes::WATERWORKS;
+                        }
+                        else
+                        {
+                            uint32 defIdx = dutySlot % friendlyNodes.size();
+                            defNode = friendlyNodes[defIdx];
+                        }
+
+                        BGObjectiveData nodeData = GetNodeData(defNode);
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[BFG] {} PRIORITY 3: defending node {} (2-cap hold)",
+                            player->GetName(), nodeData.name);
+                        DefendNode(player, defNode);
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Push for 3rd node
+                    uint32 targetNode = DominationScriptBase::GetBestAssaultTarget(player);
+                    if (targetNode != UINT32_MAX)
+                    {
+                        BGObjectiveData nodeData = GetNodeData(targetNode);
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[BFG] {} PRIORITY 3: pushing enemy node {} (opportunistic)",
+                            player->GetName(), nodeData.name);
+                        CaptureNode(player, targetNode);
+                        return true;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 4: No clear objective -> patrol nearest chokepoint
+    // =========================================================================
+    auto chokepoints = GetChokepoints();
+    if (!chokepoints.empty())
+    {
+        uint32 idx = player->GetGUID().GetCounter() % chokepoints.size();
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[BFG] {} PRIORITY 4: patrolling chokepoint", player->GetName());
+        PatrolAroundPosition(player, chokepoints[idx], 5.0f, 15.0f);
+        return true;
+    }
+
+    return true;
 }
 
 // ============================================================================

@@ -105,6 +105,18 @@ public:
         uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR
+    // ========================================================================
+
+    /**
+     * @brief Dynamic behavior tree for Twin Peaks bot strategy
+     * Phase-aware CTF: evaluates game phase, flag state, and score each tick.
+     * @param player The bot player to execute strategy for
+     * @return true if the script handled the player's behavior
+     */
+    bool ExecuteStrategy(::Player* player) override;
+
+    // ========================================================================
     // STRATEGY AND ROLES
     // ========================================================================
 

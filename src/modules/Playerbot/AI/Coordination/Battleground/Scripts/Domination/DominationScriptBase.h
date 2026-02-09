@@ -233,6 +233,82 @@ protected:
      */
     void InitializeNodeTracking();
 
+    // ========================================================================
+    // RUNTIME BEHAVIOR METHODS (for ExecuteStrategy)
+    // ========================================================================
+
+    /**
+     * @brief Refresh node ownership state from tracked m_nodeStates
+     * Throttled to once per second. Updates count fields.
+     */
+    void RefreshNodeState();
+
+    /**
+     * @brief Move to a node and capture it (interact with banner/flag GO)
+     * @param bot The bot player
+     * @param nodeIndex Index into node data array
+     * @return true if behavior was executed
+     */
+    bool CaptureNode(::Player* bot, uint32 nodeIndex);
+
+    /**
+     * @brief Defend a node: patrol nearby, engage enemies, recapture if contested
+     * @param bot The bot player
+     * @param nodeIndex Index into node data array
+     * @return true if behavior was executed
+     */
+    bool DefendNode(::Player* bot, uint32 nodeIndex);
+
+    /**
+     * @brief Find the nearest capturable node (neutral or enemy-controlled)
+     * @param bot The bot player
+     * @return Node index, or UINT32_MAX if none found
+     */
+    uint32 FindNearestCapturableNode(::Player* bot) const;
+
+    /**
+     * @brief Find the nearest friendly node that is under attack (contested)
+     * @param bot The bot player
+     * @return Node index, or UINT32_MAX if none found
+     */
+    uint32 FindNearestThreatenedNode(::Player* bot) const;
+
+    /**
+     * @brief Get the best assault target node for the bot's faction
+     * Considers strategic value, distance, and current defense
+     * @param bot The bot player
+     * @return Node index, or UINT32_MAX if none found
+     */
+    uint32 GetBestAssaultTarget(::Player* bot) const;
+
+    /**
+     * @brief Get number of friendly-controlled nodes for the given player's team
+     */
+    uint32 GetFriendlyNodeCount(::Player* bot) const;
+
+    /**
+     * @brief Get node indices controlled by the bot's faction
+     */
+    std::vector<uint32> GetFriendlyNodes(::Player* bot) const;
+
+    /**
+     * @brief Check if a node state is friendly to the given faction
+     */
+    static bool IsNodeFriendly(BGObjectiveState state, uint32 faction);
+
+    /**
+     * @brief Check if a node state is enemy-controlled for the given faction
+     */
+    static bool IsNodeEnemy(BGObjectiveState state, uint32 faction);
+
+    /**
+     * @brief Check if a node is contested (being captured by either side)
+     */
+    static bool IsNodeContested(BGObjectiveState state);
+
+    uint32 m_lastNodeStateRefresh = 0;
+    static constexpr uint32 NODE_STATE_REFRESH_INTERVAL = 1000;
+
 private:
     // Update timers
     uint32 m_nodeUpdateTimer = 0;

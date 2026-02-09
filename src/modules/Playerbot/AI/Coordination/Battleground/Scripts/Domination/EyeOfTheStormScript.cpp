@@ -12,9 +12,11 @@
 #include "EyeOfTheStormScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
+#include "ObjectAccessor.h"
 #include "Log.h"
 #include "Timer.h"
-#include "Timer.h"
+#include "../../../Movement/BotMovementUtil.h"
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -71,6 +73,187 @@ void EyeOfTheStormScript::OnUpdate(uint32 diff)
 
     // Additional EOTS-specific updates could go here
     // e.g., flag position tracking
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR - Dynamic Behavior Tree
+// ============================================================================
+
+bool EyeOfTheStormScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    // Refresh node ownership state (throttled to 1s)
+    RefreshNodeState();
+
+    uint32 faction = player->GetBGTeam();
+    uint32 friendlyCount = GetFriendlyNodeCount(player);
+
+    // =========================================================================
+    // PRIORITY 1: Carrying the EOTS flag -> run to nearest controlled node
+    // =========================================================================
+    // EOTS uses a center-spawning flag that must be carried to a controlled node
+    if (!m_flagCarrier.IsEmpty() && player->GetGUID() == m_flagCarrier)
+    {
+        uint32 captureNode = GetBestFlagCaptureNode(faction);
+        BGObjectiveData nodeData = GetNodeData(captureNode);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
+
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[EOTS] {} PRIORITY 1: carrying flag, running to {} for capture",
+            player->GetName(), nodeData.name);
+
+        // Attack enemies en route but keep moving
+        ::Player* enemy = FindNearestEnemyPlayer(player, 15.0f);
+        if (enemy)
+            EngageTarget(player, enemy);
+
+        BotMovementUtil::MoveToPosition(player, nodePos);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Nearby capturable node (<30yd) -> capture immediately
+    // =========================================================================
+    uint32 nearCapture = FindNearestCapturableNode(player);
+    if (nearCapture != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(nearCapture);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
+        float dist = player->GetExactDist(&nodePos);
+
+        if (dist < 30.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[EOTS] {} PRIORITY 2: capturing nearby node {} (dist={:.0f})",
+                player->GetName(), nodeData.name, dist);
+            CaptureNode(player, nearCapture);
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 3: Friendly node CONTESTED -> rush to defend
+    // =========================================================================
+    uint32 threatened = FindNearestThreatenedNode(player);
+    if (threatened != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(threatened);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[EOTS] {} PRIORITY 3: defending contested node {}",
+            player->GetName(), nodeData.name);
+        DefendNode(player, threatened);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 4: Strategic duty split based on node control
+    // =========================================================================
+    uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
+    if (friendlyCount < 2)
+    {
+        // Under 2 nodes: 100% node focus (flag worth too little)
+        uint32 targetNode = DominationScriptBase::GetBestAssaultTarget(player);
+        if (targetNode != UINT32_MAX)
+        {
+            BGObjectiveData nodeData = GetNodeData(targetNode);
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[EOTS] {} PRIORITY 4: all-in node capture {} (only {} nodes)",
+                player->GetName(), nodeData.name, friendlyCount);
+            CaptureNode(player, targetNode);
+            return true;
+        }
+    }
+    else if (friendlyCount >= 2)
+    {
+        // With 2+ nodes, split between flag runners and node control
+        // More nodes = more flag focus (flag value scales with nodes)
+        uint32 flagSlots = (friendlyCount >= 3) ? 3 : 2; // 30% or 20% flag duty
+
+        if (dutySlot < flagSlots && m_flagAtCenter)
+        {
+            // Go get the center flag
+            Position flagPos = EyeOfTheStorm::GetCenterFlagPosition();
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[EOTS] {} PRIORITY 4: going to pick up center flag (we have {} nodes)",
+                player->GetName(), friendlyCount);
+
+            // Attack enemies near flag area
+            ::Player* enemy = FindNearestEnemyPlayer(player, 20.0f);
+            if (enemy)
+                EngageTarget(player, enemy);
+
+            BotMovementUtil::MoveToPosition(player, flagPos);
+            return true;
+        }
+        else if (dutySlot < flagSlots && !m_flagCarrier.IsEmpty())
+        {
+            // Flag is being carried - escort the carrier
+            ::Player* fc = ObjectAccessor::FindPlayer(m_flagCarrier);
+            if (fc && fc->IsInWorld() && fc->IsAlive() && fc->GetBGTeam() == faction)
+            {
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[EOTS] {} PRIORITY 4: escorting flag carrier {}",
+                    player->GetName(), fc->GetName());
+
+                // Move near FC and attack threats
+                float dist = player->GetExactDist(fc);
+                if (dist > 10.0f)
+                    BotMovementUtil::MoveToPosition(player, *fc);
+
+                ::Player* enemy = FindNearestEnemyPlayer(player, 20.0f);
+                if (enemy)
+                    EngageTarget(player, enemy);
+                return true;
+            }
+        }
+
+        // Remaining slots: node control (defend or attack)
+        std::vector<uint32> friendlyNodes = GetFriendlyNodes(player);
+        uint32 defenseSlots = flagSlots + 4; // ~40% defend
+
+        if (dutySlot < defenseSlots && !friendlyNodes.empty())
+        {
+            uint32 defIdx = (dutySlot - flagSlots) % friendlyNodes.size();
+            uint32 defNode = friendlyNodes[defIdx];
+            BGObjectiveData nodeData = GetNodeData(defNode);
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[EOTS] {} PRIORITY 4: defending node {} (have {} nodes)",
+                player->GetName(), nodeData.name, friendlyCount);
+            DefendNode(player, defNode);
+            return true;
+        }
+        else
+        {
+            // Attack uncontrolled nodes
+            uint32 targetNode = DominationScriptBase::GetBestAssaultTarget(player);
+            if (targetNode != UINT32_MAX)
+            {
+                BGObjectiveData nodeData = GetNodeData(targetNode);
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[EOTS] {} PRIORITY 4: attacking node {} (opportunistic)",
+                    player->GetName(), nodeData.name);
+                CaptureNode(player, targetNode);
+                return true;
+            }
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 5: Fallback - patrol bridge chokepoints
+    // =========================================================================
+    auto bridges = GetBridgePositions();
+    if (!bridges.empty())
+    {
+        uint32 idx = player->GetGUID().GetCounter() % bridges.size();
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[EOTS] {} PRIORITY 5: patrolling bridge", player->GetName());
+        PatrolAroundPosition(player, bridges[idx], 5.0f, 15.0f);
+    }
+
+    return true;
 }
 
 // ============================================================================

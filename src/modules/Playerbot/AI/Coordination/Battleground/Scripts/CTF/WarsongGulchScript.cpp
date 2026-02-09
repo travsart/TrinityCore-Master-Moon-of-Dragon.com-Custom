@@ -12,6 +12,7 @@
 #include "WarsongGulchScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
 #include "Log.h"
 
 namespace Playerbot::Coordination::Battleground
@@ -468,6 +469,117 @@ std::vector<Position> WarsongGulchScript::GetTunnelAmbushPositions(uint32 factio
     }
 
     return positions;
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR - DYNAMIC BEHAVIOR TREE
+// ============================================================================
+
+bool WarsongGulchScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    // Refresh flag carrier state (throttled to 1s)
+    RefreshFlagState(player);
+
+    // =========================================================================
+    // PRIORITY 1: Carrying flag -> run it home!
+    // =========================================================================
+    if (IsPlayerCarryingFlag(player))
+    {
+        TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 1: carrying flag, running home",
+            player->GetName());
+        RunFlagHome(player);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Dropped friendly flag nearby -> return it
+    // =========================================================================
+    // Check if there's a dropped flag within 50yd that we should return
+    if (ReturnDroppedFlag(player))
+    {
+        TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 2: returning dropped flag",
+            player->GetName());
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 3: Enemy flag at base (no one carrying) -> pick it up
+    // =========================================================================
+    // Only send one bot to pick up (using GUID hash to prevent dog-piling)
+    if (!m_cachedFriendlyFC && !m_cachedEnemyFC)
+    {
+        // No flags in play - race to enemy flag
+        // Only a subset of bots go for pickup (the rest defend)
+        uint32 dutySlot = player->GetGUID().GetCounter() % 2;
+        if (dutySlot == 0) // 50% go pickup
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 3: going to pick up enemy flag",
+                player->GetName());
+            PickupEnemyFlag(player);
+            return true;
+        }
+        else // 50% defend flag room
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 3: defending flag room",
+                player->GetName());
+            DefendOwnFlagRoom(player);
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 4: Both FCs exist -> GUID-hash duty split
+    // =========================================================================
+    if (m_cachedFriendlyFC && m_cachedEnemyFC)
+    {
+        uint32 dutySlot = player->GetGUID().GetCounter() % 3;
+        if (dutySlot < 2) // 2/3 escort friendly FC
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 4: escorting friendly FC {}",
+                player->GetName(), m_cachedFriendlyFC->GetName());
+            EscortFriendlyFC(player, m_cachedFriendlyFC);
+        }
+        else // 1/3 hunt enemy FC
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 4: hunting enemy FC {}",
+                player->GetName(), m_cachedEnemyFC->GetName());
+            HuntEnemyFC(player, m_cachedEnemyFC);
+        }
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 5: Only friendly FC exists -> all escort
+    // =========================================================================
+    if (m_cachedFriendlyFC)
+    {
+        TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 5: escorting friendly FC {}",
+            player->GetName(), m_cachedFriendlyFC->GetName());
+        EscortFriendlyFC(player, m_cachedFriendlyFC);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 6: Only enemy FC exists -> all hunt
+    // =========================================================================
+    if (m_cachedEnemyFC)
+    {
+        TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 6: hunting enemy FC {}",
+            player->GetName(), m_cachedEnemyFC->GetName());
+        HuntEnemyFC(player, m_cachedEnemyFC);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 7: Fallback - shouldn't normally reach here
+    // =========================================================================
+    TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 7: idle fallback, defending",
+        player->GetName());
+    DefendOwnFlagRoom(player);
+    return true;
 }
 
 } // namespace Playerbot::Coordination::Battleground

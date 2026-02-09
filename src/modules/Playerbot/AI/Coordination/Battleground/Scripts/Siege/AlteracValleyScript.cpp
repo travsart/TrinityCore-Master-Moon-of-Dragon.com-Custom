@@ -12,6 +12,8 @@
 #include "AlteracValleyScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
+#include "BotMovementUtil.h"
 #include "Log.h"
 #include "Timer.h"
 
@@ -224,6 +226,494 @@ void AlteracValleyScript::OnEvent(const BGScriptEventData& event)
         default:
             break;
     }
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR
+// ============================================================================
+
+bool AlteracValleyScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    uint32 faction = player->GetBGTeam();
+    uint32 enemyFaction = (faction == ALLIANCE) ? HORDE : ALLIANCE;
+    AVPhase phase = GetCurrentPhase();
+
+    // =========================================================================
+    // PRIORITY 1: Enemy player within 20yd -> engage immediately
+    // =========================================================================
+    if (::Player* enemy = FindNearestEnemyPlayer(player, 20.0f))
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[AV] {} PRIORITY 1: engaging enemy {} within 20yd",
+            player->GetName(), enemy->GetName());
+        EngageTarget(player, enemy);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Capturable objective within 30yd -> interact with it
+    // =========================================================================
+    // AV objectives are captured via CAPTURE_POINT game objects (towers & GYs)
+    if (TryInteractWithGameObject(player, 29 /*GAMEOBJECT_TYPE_CAPTURE_POINT*/, 30.0f))
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[AV] {} PRIORITY 2: interacting with nearby capture point",
+            player->GetName());
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 3: Phase-based strategic behavior (GUID-hash duty split)
+    // =========================================================================
+    uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
+    switch (phase)
+    {
+        // -----------------------------------------------------------------
+        // OPENING: 70% rush forward toward enemy objectives, 30% defend home
+        // -----------------------------------------------------------------
+        case AVPhase::OPENING:
+        {
+            if (dutySlot < 7) // 70% rushers
+            {
+                // Move toward first uncontrolled enemy objective along rush route
+                auto rushRoute = GetRushRoute(faction);
+                if (!rushRoute.empty())
+                {
+                    // Pick a waypoint roughly based on progress (don't all stack at start)
+                    // Use dutySlot to spread bots across the rush route
+                    uint32 waypointIdx = std::min(static_cast<uint32>(dutySlot % rushRoute.size()),
+                        static_cast<uint32>(rushRoute.size() - 1));
+                    Position target = rushRoute[waypointIdx];
+
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[AV] {} OPENING: rushing forward (waypoint {})",
+                        player->GetName(), waypointIdx);
+                    Playerbot::BotMovementUtil::MoveToPosition(player, target);
+                    return true;
+                }
+            }
+            else // 30% defenders
+            {
+                // Defend home towers
+                std::vector<uint32> homeTowers;
+                for (uint32 i = 0; i < AlteracValley::Towers::COUNT; ++i)
+                {
+                    if (!m_towerStanding[i])
+                        continue;
+                    bool ourTower = (faction == ALLIANCE) ? AlteracValley::IsAllianceTower(i) :
+                                                             AlteracValley::IsHordeTower(i);
+                    if (ourTower)
+                        homeTowers.push_back(i);
+                }
+
+                if (!homeTowers.empty())
+                {
+                    uint32 towerIdx = dutySlot % homeTowers.size();
+                    auto defPositions = GetTowerDefensePositions(homeTowers[towerIdx]);
+                    if (!defPositions.empty())
+                    {
+                        uint32 posIdx = player->GetGUID().GetCounter() % defPositions.size();
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[AV] {} OPENING: defending home tower {}",
+                            player->GetName(), AlteracValley::GetTowerName(homeTowers[towerIdx]));
+                        PatrolAroundPosition(player, defPositions[posIdx], 3.0f, 10.0f);
+                        return true;
+                    }
+                }
+            }
+            break;
+        }
+
+        // -----------------------------------------------------------------
+        // TOWER_BURN: 60% attack enemy towers, 40% defend own towers
+        // -----------------------------------------------------------------
+        case AVPhase::TOWER_BURN:
+        {
+            if (dutySlot < 6) // 60% attack enemy towers
+            {
+                auto burnOrder = GetTowerBurnOrder(faction);
+                if (!burnOrder.empty())
+                {
+                    // Spread attackers across the first 2 burn targets
+                    uint32 towerTarget = burnOrder[dutySlot % std::min(size_t(2), burnOrder.size())];
+                    Position towerPos = AlteracValley::GetTowerPosition(towerTarget);
+
+                    float dist = player->GetExactDist(&towerPos);
+                    if (dist < 15.0f)
+                    {
+                        // At the tower - try to interact with the capture point
+                        if (!TryInteractWithGameObject(player, 29 /*CAPTURE_POINT*/, 15.0f))
+                        {
+                            // No interactable GO, patrol the tower
+                            auto defPos = GetTowerDefensePositions(towerTarget);
+                            if (!defPos.empty())
+                            {
+                                uint32 posIdx = player->GetGUID().GetCounter() % defPos.size();
+                                PatrolAroundPosition(player, defPos[posIdx], 3.0f, 8.0f);
+                            }
+                        }
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[AV] {} TOWER_BURN: at tower {}, capping/fighting",
+                            player->GetName(), AlteracValley::GetTowerName(towerTarget));
+                    }
+                    else
+                    {
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[AV] {} TOWER_BURN: moving to enemy tower {} (dist={:.0f})",
+                            player->GetName(), AlteracValley::GetTowerName(towerTarget), dist);
+                        Playerbot::BotMovementUtil::MoveToPosition(player, towerPos);
+                    }
+                    return true;
+                }
+            }
+            else // 40% defend friendly towers
+            {
+                std::vector<uint32> friendlyTowers;
+                for (uint32 i = 0; i < AlteracValley::Towers::COUNT; ++i)
+                {
+                    if (!m_towerStanding[i])
+                        continue;
+                    bool ourTower = (faction == ALLIANCE) ? AlteracValley::IsAllianceTower(i) :
+                                                             AlteracValley::IsHordeTower(i);
+                    if (ourTower)
+                        friendlyTowers.push_back(i);
+                }
+
+                if (!friendlyTowers.empty())
+                {
+                    uint32 towerIdx = dutySlot % friendlyTowers.size();
+                    auto defPositions = GetTowerDefensePositions(friendlyTowers[towerIdx]);
+                    if (!defPositions.empty())
+                    {
+                        uint32 posIdx = player->GetGUID().GetCounter() % defPositions.size();
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[AV] {} TOWER_BURN: defending friendly tower {}",
+                            player->GetName(), AlteracValley::GetTowerName(friendlyTowers[towerIdx]));
+                        PatrolAroundPosition(player, defPositions[posIdx], 3.0f, 10.0f);
+                        return true;
+                    }
+                }
+            }
+            break;
+        }
+
+        // -----------------------------------------------------------------
+        // GRAVEYARD_PUSH: 70% capture enemy GYs, 30% defend captured
+        // -----------------------------------------------------------------
+        case AVPhase::GRAVEYARD_PUSH:
+        {
+            if (dutySlot < 7) // 70% capture enemy graveyards
+            {
+                // Find nearest enemy or neutral graveyard to push
+                float bestDist = std::numeric_limits<float>::max();
+                uint32 bestGY = UINT32_MAX;
+
+                for (uint32 i = 0; i < AlteracValley::Graveyards::COUNT; ++i)
+                {
+                    uint32 control = m_graveyardControl[i];
+                    if (control == faction)
+                        continue; // Already ours
+
+                    Position gyPos = AlteracValley::GetGraveyardPosition(i);
+                    float dist = player->GetExactDist(&gyPos);
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        bestGY = i;
+                    }
+                }
+
+                if (bestGY != UINT32_MAX)
+                {
+                    Position gyPos = AlteracValley::GetGraveyardPosition(bestGY);
+                    if (bestDist < 15.0f)
+                    {
+                        // At the GY - try to interact
+                        if (!TryInteractWithGameObject(player, 29 /*CAPTURE_POINT*/, 15.0f))
+                        {
+                            auto defPos = GetGraveyardDefensePositions(bestGY);
+                            if (!defPos.empty())
+                            {
+                                uint32 posIdx = player->GetGUID().GetCounter() % defPos.size();
+                                PatrolAroundPosition(player, defPos[posIdx], 3.0f, 8.0f);
+                            }
+                        }
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[AV] {} GY_PUSH: capping graveyard {}",
+                            player->GetName(), AlteracValley::GetGraveyardName(bestGY));
+                    }
+                    else
+                    {
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[AV] {} GY_PUSH: moving to enemy GY {} (dist={:.0f})",
+                            player->GetName(), AlteracValley::GetGraveyardName(bestGY), bestDist);
+                        Playerbot::BotMovementUtil::MoveToPosition(player, gyPos);
+                    }
+                    return true;
+                }
+            }
+            else // 30% defend captured positions
+            {
+                // Defend our graveyards
+                std::vector<uint32> friendlyGYs;
+                for (uint32 i = 0; i < AlteracValley::Graveyards::COUNT; ++i)
+                {
+                    if (m_graveyardControl[i] == faction)
+                        friendlyGYs.push_back(i);
+                }
+
+                if (!friendlyGYs.empty())
+                {
+                    uint32 gyIdx = dutySlot % friendlyGYs.size();
+                    auto defPositions = GetGraveyardDefensePositions(friendlyGYs[gyIdx]);
+                    if (!defPositions.empty())
+                    {
+                        uint32 posIdx = player->GetGUID().GetCounter() % defPositions.size();
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[AV] {} GY_PUSH: defending friendly GY {}",
+                            player->GetName(), AlteracValley::GetGraveyardName(friendlyGYs[gyIdx]));
+                        PatrolAroundPosition(player, defPositions[posIdx], 3.0f, 10.0f);
+                        return true;
+                    }
+                }
+            }
+            break;
+        }
+
+        // -----------------------------------------------------------------
+        // BOSS_ASSAULT: 90% rush enemy boss, 10% defend critical positions
+        // -----------------------------------------------------------------
+        case AVPhase::BOSS_ASSAULT:
+        {
+            if (dutySlot < 9) // 90% rush enemy boss
+            {
+                Position bossPos = GetBossPosition(enemyFaction);
+                auto raidPositions = GetBossRaidPositions(enemyFaction);
+
+                float distToBoss = player->GetExactDist(&bossPos);
+                if (distToBoss < 40.0f && !raidPositions.empty())
+                {
+                    // In boss room - take a raid position
+                    uint32 posIdx = player->GetGUID().GetCounter() % raidPositions.size();
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[AV] {} BOSS_ASSAULT: at boss room, taking raid position {}",
+                        player->GetName(), posIdx);
+                    PatrolAroundPosition(player, raidPositions[posIdx], 1.0f, 5.0f);
+
+                    // Engage boss if nearby enemy unit
+                    if (::Player* enemy = FindNearestEnemyPlayer(player, 30.0f))
+                        EngageTarget(player, enemy);
+                }
+                else
+                {
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[AV] {} BOSS_ASSAULT: rushing to enemy boss (dist={:.0f})",
+                        player->GetName(), distToBoss);
+                    Playerbot::BotMovementUtil::MoveToPosition(player, bossPos);
+                }
+                return true;
+            }
+            else // 10% defend critical positions (our boss)
+            {
+                Position ourBossPos = GetBossPosition(faction);
+                auto ourRaidPos = GetBossRaidPositions(faction);
+                if (!ourRaidPos.empty())
+                {
+                    uint32 posIdx = player->GetGUID().GetCounter() % ourRaidPos.size();
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[AV] {} BOSS_ASSAULT: defending our boss room",
+                        player->GetName());
+                    PatrolAroundPosition(player, ourRaidPos[posIdx], 3.0f, 10.0f);
+                    return true;
+                }
+            }
+            break;
+        }
+
+        // -----------------------------------------------------------------
+        // DEFENSE: 80% defend home objectives, 20% counter-attack
+        // -----------------------------------------------------------------
+        case AVPhase::DEFENSE:
+        {
+            if (dutySlot < 8) // 80% defend home objectives
+            {
+                // Build list of all home objectives to defend (towers + GYs)
+                std::vector<Position> defenseTargets;
+                std::vector<std::string> defenseNames;
+
+                // Home towers
+                for (uint32 i = 0; i < AlteracValley::Towers::COUNT; ++i)
+                {
+                    if (!m_towerStanding[i])
+                        continue;
+                    bool ourTower = (faction == ALLIANCE) ? AlteracValley::IsAllianceTower(i) :
+                                                             AlteracValley::IsHordeTower(i);
+                    if (ourTower)
+                    {
+                        auto defPos = GetTowerDefensePositions(i);
+                        if (!defPos.empty())
+                        {
+                            uint32 posIdx = player->GetGUID().GetCounter() % defPos.size();
+                            defenseTargets.push_back(defPos[posIdx]);
+                            defenseNames.push_back(AlteracValley::GetTowerName(i));
+                        }
+                    }
+                }
+
+                // Our graveyards
+                for (uint32 i = 0; i < AlteracValley::Graveyards::COUNT; ++i)
+                {
+                    if (m_graveyardControl[i] == faction)
+                    {
+                        auto defPos = GetGraveyardDefensePositions(i);
+                        if (!defPos.empty())
+                        {
+                            uint32 posIdx = player->GetGUID().GetCounter() % defPos.size();
+                            defenseTargets.push_back(defPos[posIdx]);
+                            defenseNames.push_back(AlteracValley::GetGraveyardName(i));
+                        }
+                    }
+                }
+
+                if (!defenseTargets.empty())
+                {
+                    uint32 targetIdx = dutySlot % defenseTargets.size();
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[AV] {} DEFENSE: defending {}",
+                        player->GetName(), defenseNames[targetIdx]);
+                    PatrolAroundPosition(player, defenseTargets[targetIdx], 3.0f, 12.0f);
+                    return true;
+                }
+            }
+            else // 20% counter-attack
+            {
+                // Find nearest enemy objective to push back
+                float bestDist = std::numeric_limits<float>::max();
+                Position bestTarget;
+                bool found = false;
+
+                for (uint32 i = 0; i < AlteracValley::Towers::COUNT; ++i)
+                {
+                    if (!m_towerStanding[i])
+                        continue;
+                    bool enemyTower = (faction == ALLIANCE) ? AlteracValley::IsHordeTower(i) :
+                                                               AlteracValley::IsAllianceTower(i);
+                    if (enemyTower)
+                    {
+                        Position towerPos = AlteracValley::GetTowerPosition(i);
+                        float dist = player->GetExactDist(&towerPos);
+                        if (dist < bestDist)
+                        {
+                            bestDist = dist;
+                            bestTarget = towerPos;
+                            found = true;
+                        }
+                    }
+                }
+
+                if (found)
+                {
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[AV] {} DEFENSE: counter-attacking nearest enemy objective (dist={:.0f})",
+                        player->GetName(), bestDist);
+                    Playerbot::BotMovementUtil::MoveToPosition(player, bestTarget);
+                    return true;
+                }
+            }
+            break;
+        }
+
+        // -----------------------------------------------------------------
+        // DESPERATE: 100% rush nearest enemy objective
+        // -----------------------------------------------------------------
+        case AVPhase::DESPERATE:
+        {
+            // Find the nearest enemy objective and rush it
+            float bestDist = std::numeric_limits<float>::max();
+            Position bestTarget;
+            bool found = false;
+            std::string targetName;
+
+            // Check enemy towers
+            for (uint32 i = 0; i < AlteracValley::Towers::COUNT; ++i)
+            {
+                if (!m_towerStanding[i])
+                    continue;
+                bool enemyTower = (faction == ALLIANCE) ? AlteracValley::IsHordeTower(i) :
+                                                           AlteracValley::IsAllianceTower(i);
+                if (enemyTower)
+                {
+                    Position towerPos = AlteracValley::GetTowerPosition(i);
+                    float dist = player->GetExactDist(&towerPos);
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        bestTarget = towerPos;
+                        found = true;
+                        targetName = AlteracValley::GetTowerName(i);
+                    }
+                }
+            }
+
+            // Check enemy graveyards
+            for (uint32 i = 0; i < AlteracValley::Graveyards::COUNT; ++i)
+            {
+                if (m_graveyardControl[i] == faction || m_graveyardControl[i] == 0)
+                    continue; // Skip ours and neutral
+
+                Position gyPos = AlteracValley::GetGraveyardPosition(i);
+                float dist = player->GetExactDist(&gyPos);
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestTarget = gyPos;
+                    found = true;
+                    targetName = AlteracValley::GetGraveyardName(i);
+                }
+            }
+
+            // Enemy boss as ultimate target
+            Position bossPos = GetBossPosition(enemyFaction);
+            float bossDist = player->GetExactDist(&bossPos);
+            if (bossDist < bestDist)
+            {
+                bestTarget = bossPos;
+                found = true;
+                targetName = (enemyFaction == ALLIANCE) ? "Vanndar" : "Drek'Thar";
+            }
+
+            if (found)
+            {
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[AV] {} DESPERATE: rushing {}!",
+                    player->GetName(), targetName);
+                Playerbot::BotMovementUtil::MoveToPosition(player, bestTarget);
+                return true;
+            }
+            break;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 4: Fallback -> move toward nearest chokepoint
+    // =========================================================================
+    auto chokepoints = GetChokepoints();
+    if (!chokepoints.empty())
+    {
+        // Pick a chokepoint based on GUID for spread
+        uint32 idx = player->GetGUID().GetCounter() % chokepoints.size();
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[AV] {} FALLBACK: patrolling chokepoint {}",
+            player->GetName(), idx);
+        PatrolAroundPosition(player, chokepoints[idx], 5.0f, 15.0f);
+        return true;
+    }
+
+    return true;
 }
 
 // ============================================================================

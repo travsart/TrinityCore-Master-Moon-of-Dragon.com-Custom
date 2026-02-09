@@ -12,8 +12,10 @@
 #include "IsleOfConquestScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
 #include "Timer.h"
 #include "Log.h"
+#include "../../../Movement/BotMovementUtil.h"
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -1482,6 +1484,259 @@ uint32 IsleOfConquestScript::GetBestGateTarget(uint32 attackingFaction) const
     }
 
     return 0;  // All gates destroyed
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR - ExecuteStrategy
+// ============================================================================
+
+bool IsleOfConquestScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    uint32 faction = player->GetBGTeam();
+    uint32 targetFaction = (faction == ALLIANCE) ? HORDE : ALLIANCE;
+    IOCPhase currentPhase = GetCurrentPhase();
+
+    // =========================================================================
+    // PRIORITY 1: Enemy nearby -> engage
+    // =========================================================================
+    if (::Player* enemy = FindNearestEnemyPlayer(player, 20.0f))
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[IOC] {} PRIORITY 1: engaging enemy {} (dist={:.0f})",
+            player->GetName(), enemy->GetName(),
+            player->GetExactDist(enemy));
+        EngageTarget(player, enemy);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Nearby capturable node -> capture it
+    // =========================================================================
+    for (uint32 i = 0; i < IsleOfConquest::ObjectiveIds::NODE_COUNT; ++i)
+    {
+        if (IsNodeControlled(i, faction))
+            continue;
+
+        const auto& posData = IsleOfConquest::NodePositions::POSITIONS[i];
+        Position nodePos(posData.x, posData.y, posData.z, 0);
+        float dist = player->GetExactDist(&nodePos);
+
+        if (dist < 30.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[IOC] {} PRIORITY 2: capturing node {} (dist={:.0f})",
+                player->GetName(), IsleOfConquest::GetNodeName(i), dist);
+
+            if (dist < 8.0f)
+                TryInteractWithGameObject(player, 29 /*GAMEOBJECT_TYPE_CAPTURE_POINT*/, 10.0f);
+            else
+                BotMovementUtil::MoveToPosition(player, nodePos);
+
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 3: Phase-based duty
+    // =========================================================================
+    switch (currentPhase)
+    {
+        case IOCPhase::OPENING:
+        case IOCPhase::NODE_CAPTURE:
+        {
+            // Split between capturing nodes based on priority order
+            auto priorities = GetNodePriorityOrder(faction);
+            for (uint32 nodeId : priorities)
+            {
+                if (!IsNodeControlled(nodeId, faction))
+                {
+                    const auto& posData = IsleOfConquest::NodePositions::POSITIONS[nodeId];
+                    Position nodePos(posData.x, posData.y, posData.z, 0);
+
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[IOC] {} PRIORITY 3 (NODE_CAPTURE): moving to {}",
+                        player->GetName(), IsleOfConquest::GetNodeName(nodeId));
+                    BotMovementUtil::MoveToPosition(player, nodePos);
+                    return true;
+                }
+            }
+
+            // All nodes controlled -> defend Workshop or Hangar
+            if (IsWorkshopControlled(faction))
+            {
+                auto defPos = GetNodeDefensePositions(IsleOfConquest::ObjectiveIds::WORKSHOP);
+                if (!defPos.empty())
+                {
+                    uint32 posIdx = player->GetGUID().GetCounter() % defPos.size();
+                    PatrolAroundPosition(player, defPos[posIdx], 3.0f, 10.0f);
+                    return true;
+                }
+            }
+            break;
+        }
+
+        case IOCPhase::VEHICLE_SIEGE:
+        {
+            // Operate siege vehicles toward enemy gates
+            uint32 targetGate = GetBestGateTarget(faction);
+            if (targetGate != 0)
+            {
+                auto route = GetSiegeRoute(faction, targetGate);
+                if (!route.empty())
+                {
+                    // Move along the siege route
+                    Position destPos = route.back();
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[IOC] {} PRIORITY 3 (VEHICLE_SIEGE): siege route to gate {}",
+                        player->GetName(), targetGate);
+                    BotMovementUtil::MoveToPosition(player, destPos);
+                    return true;
+                }
+
+                auto approachPos = GetGateApproachPositions(targetGate);
+                if (!approachPos.empty())
+                {
+                    uint32 posIdx = player->GetGUID().GetCounter() % approachPos.size();
+                    BotMovementUtil::MoveToPosition(player, approachPos[posIdx]);
+                    return true;
+                }
+            }
+            break;
+        }
+
+        case IOCPhase::GATE_ASSAULT:
+        {
+            // Rush enemy gates
+            auto gatePriority = GetGatePriorityOrder(targetFaction);
+            for (uint32 gateId : gatePriority)
+            {
+                if (!IsGateDestroyed(gateId))
+                {
+                    auto approachPos = GetGateApproachPositions(gateId);
+                    if (!approachPos.empty())
+                    {
+                        uint32 posIdx = player->GetGUID().GetCounter() % approachPos.size();
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[IOC] {} PRIORITY 3 (GATE_ASSAULT): approaching gate {}",
+                            player->GetName(), gateId);
+                        BotMovementUtil::MoveToPosition(player, approachPos[posIdx]);
+                        return true;
+                    }
+                }
+            }
+            break;
+        }
+
+        case IOCPhase::BOSS_ASSAULT:
+        {
+            // 90% rush enemy boss
+            uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+            if (dutySlot < 9)
+            {
+                auto raidPositions = GetBossRaidPositions(targetFaction);
+                if (!raidPositions.empty())
+                {
+                    uint32 posIdx = player->GetGUID().GetCounter() % raidPositions.size();
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[IOC] {} PRIORITY 3 (BOSS_ASSAULT): rushing enemy boss!",
+                        player->GetName());
+                    BotMovementUtil::MoveToPosition(player, raidPositions[posIdx]);
+                    return true;
+                }
+
+                // Fallback: move to boss position directly
+                Position bossPos = GetBossPosition(targetFaction);
+                BotMovementUtil::MoveToPosition(player, bossPos);
+                return true;
+            }
+            else
+            {
+                // 10% defend our nodes
+                auto priorities = GetNodePriorityOrder(faction);
+                for (uint32 nodeId : priorities)
+                {
+                    if (IsNodeControlled(nodeId, faction))
+                    {
+                        auto defPos = GetNodeDefensePositions(nodeId);
+                        if (!defPos.empty())
+                        {
+                            uint32 posIdx = player->GetGUID().GetCounter() % defPos.size();
+                            PatrolAroundPosition(player, defPos[posIdx], 3.0f, 10.0f);
+                            return true;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+
+        case IOCPhase::DEFENSE:
+        {
+            // Protect our boss
+            Position bossPos = GetBossPosition(faction);
+            auto raidPos = GetBossRaidPositions(faction);
+            if (!raidPos.empty())
+            {
+                uint32 posIdx = player->GetGUID().GetCounter() % raidPos.size();
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[IOC] {} PRIORITY 3 (DEFENSE): defending our boss",
+                    player->GetName());
+                PatrolAroundPosition(player, raidPos[posIdx], 3.0f, 10.0f);
+                return true;
+            }
+            PatrolAroundPosition(player, bossPos, 5.0f, 15.0f);
+            return true;
+        }
+
+        case IOCPhase::DESPERATE:
+        {
+            // All-in: rush enemy boss if behind, defend if ahead
+            uint32 ourReinf = GetReinforcements(faction);
+            uint32 theirReinf = GetReinforcements(targetFaction);
+
+            if (ourReinf < theirReinf)
+            {
+                // Behind -> boss rush
+                Position bossPos = GetBossPosition(targetFaction);
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[IOC] {} PRIORITY 3 (DESPERATE): all-in boss rush!",
+                    player->GetName());
+                BotMovementUtil::MoveToPosition(player, bossPos);
+                return true;
+            }
+            else
+            {
+                // Ahead -> defend
+                Position bossPos = GetBossPosition(faction);
+                PatrolAroundPosition(player, bossPos, 5.0f, 15.0f);
+                return true;
+            }
+        }
+
+        default:
+            break;
+    }
+
+    // =========================================================================
+    // PRIORITY 4: Fallback -> patrol
+    // =========================================================================
+    {
+        auto chokepoints = GetChokepoints();
+        if (!chokepoints.empty())
+        {
+            uint32 chokeIdx = player->GetGUID().GetCounter() % chokepoints.size();
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[IOC] {} PRIORITY 4: patrolling chokepoint",
+                player->GetName());
+            PatrolAroundPosition(player, chokepoints[chokeIdx], 5.0f, 15.0f);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 } // namespace Playerbot::Coordination::Battleground

@@ -15,6 +15,7 @@
 #include "TwinPeaksScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
 #include "Log.h"
 #include <cmath>
 
@@ -145,6 +146,184 @@ void TwinPeaksScript::OnEvent(const BGScriptEventData& event)
         default:
             break;
     }
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR - Dynamic Behavior Tree
+// ============================================================================
+
+bool TwinPeaksScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    // Refresh flag carrier state (throttled to 1s)
+    RefreshFlagState(player);
+
+    // =========================================================================
+    // PRIORITY 1: Carrying flag -> run it home!
+    // =========================================================================
+    if (IsPlayerCarryingFlag(player))
+    {
+        TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 1: carrying flag, running home",
+            player->GetName());
+        RunFlagHome(player);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Dropped friendly flag nearby -> return it
+    // =========================================================================
+    if (ReturnDroppedFlag(player))
+    {
+        TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 2: returning dropped flag",
+            player->GetName());
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 3: No flags in play -> race to enemy flag / defend
+    // =========================================================================
+    if (!m_cachedFriendlyFC && !m_cachedEnemyFC)
+    {
+        // Phase-aware duty split: OPENING sends more to pickup, LATE_GAME defends more
+        uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+        uint32 pickupThreshold;
+
+        switch (m_currentPhase)
+        {
+            case TwinPeaksPhase::OPENING:
+                pickupThreshold = 7; // 70% rush enemy flag during opening
+                break;
+            case TwinPeaksPhase::MID_GAME:
+                pickupThreshold = 5; // 50% balanced
+                break;
+            case TwinPeaksPhase::LATE_GAME:
+                pickupThreshold = 4; // 40% pickup, 60% defend (protect base when ahead)
+                break;
+            case TwinPeaksPhase::DESPERATE:
+                pickupThreshold = 8; // 80% all-in rush for the flag
+                break;
+            default:
+                pickupThreshold = 5;
+                break;
+        }
+
+        if (dutySlot < pickupThreshold)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 3: going to pick up enemy flag (phase={})",
+                player->GetName(), static_cast<int>(m_currentPhase));
+            PickupEnemyFlag(player);
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 3: defending flag room (phase={})",
+                player->GetName(), static_cast<int>(m_currentPhase));
+            DefendOwnFlagRoom(player);
+        }
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 4: Both FCs exist -> phase-aware escort/hunt split
+    // =========================================================================
+    if (m_cachedFriendlyFC && m_cachedEnemyFC)
+    {
+        uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+        uint32 escortThreshold;
+
+        switch (m_currentPhase)
+        {
+            case TwinPeaksPhase::OPENING:
+                escortThreshold = 5; // 50/50 during opening
+                break;
+            case TwinPeaksPhase::MID_GAME:
+                escortThreshold = 6; // 60% escort, 40% hunt
+                break;
+            case TwinPeaksPhase::LATE_GAME:
+                // If we're ahead, escort more to protect the FC and cap
+                escortThreshold = (GetScoreAdvantage(player->GetBGTeam()) > 0) ? 7 : 4;
+                break;
+            case TwinPeaksPhase::DESPERATE:
+                escortThreshold = 3; // 30% escort, 70% hunt (need to kill their FC)
+                break;
+            default:
+                escortThreshold = 6;
+                break;
+        }
+
+        if (dutySlot < escortThreshold)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 4: escorting friendly FC {} (phase={})",
+                player->GetName(), m_cachedFriendlyFC->GetName(), static_cast<int>(m_currentPhase));
+            EscortFriendlyFC(player, m_cachedFriendlyFC);
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 4: hunting enemy FC {} (phase={})",
+                player->GetName(), m_cachedEnemyFC->GetName(), static_cast<int>(m_currentPhase));
+            HuntEnemyFC(player, m_cachedEnemyFC);
+        }
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 5: Only friendly FC exists -> mostly escort, some defend
+    // =========================================================================
+    if (m_cachedFriendlyFC)
+    {
+        // In TP, keep a small guard at our flag room even when escorting
+        uint32 dutySlot = player->GetGUID().GetCounter() % 5;
+        if (dutySlot < 4) // 80% escort
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 5: escorting friendly FC {}",
+                player->GetName(), m_cachedFriendlyFC->GetName());
+            EscortFriendlyFC(player, m_cachedFriendlyFC);
+        }
+        else // 20% defend home flag
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 5: defending flag room while FC runs",
+                player->GetName());
+            DefendOwnFlagRoom(player);
+        }
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 6: Only enemy FC exists -> hunt and defend
+    // =========================================================================
+    if (m_cachedEnemyFC)
+    {
+        // Most hunt, some go grab enemy flag to force a standoff
+        uint32 dutySlot = player->GetGUID().GetCounter() % 5;
+        if (dutySlot < 3) // 60% hunt
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 6: hunting enemy FC {}",
+                player->GetName(), m_cachedEnemyFC->GetName());
+            HuntEnemyFC(player, m_cachedEnemyFC);
+        }
+        else if (dutySlot == 3) // 20% go grab enemy flag
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 6: picking up enemy flag to force standoff",
+                player->GetName());
+            PickupEnemyFlag(player);
+        }
+        else // 20% defend
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 6: defending flag room",
+                player->GetName());
+            DefendOwnFlagRoom(player);
+        }
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 7: Fallback - shouldn't normally reach here
+    // =========================================================================
+    TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 7: fallback to flag room defense",
+        player->GetName());
+    DefendOwnFlagRoom(player);
+    return true;
 }
 
 // ============================================================================

@@ -8,8 +8,10 @@
 #include "DeepwindGorgeScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "Player.h"
 #include "Log.h"
 #include "Timer.h"
+#include "../../../Movement/BotMovementUtil.h"
 #include <algorithm>
 
 namespace Playerbot::Coordination::Battleground
@@ -814,6 +816,155 @@ float DeepwindGorgeScript::CalculateCartPriority() const
     }
 
     return priority / static_cast<float>(DeepwindGorge::CART_COUNT);
+}
+
+// ============================================================================
+// RUNTIME BEHAVIOR - ExecuteStrategy
+// ============================================================================
+
+bool DeepwindGorgeScript::ExecuteStrategy(::Player* player)
+{
+    if (!player || !player->IsInWorld() || !player->IsAlive())
+        return false;
+
+    // Refresh domination node state (throttled internally)
+    RefreshNodeState();
+
+    uint32 faction = player->GetBGTeam();
+
+    // =========================================================================
+    // PRIORITY 1: Nearby node (<30yd) capturable -> capture it
+    // =========================================================================
+    uint32 nearCapture = FindNearestCapturableNode(player);
+    if (nearCapture != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(nearCapture);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
+        float dist = player->GetExactDist(&nodePos);
+
+        if (dist < 30.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[DWG] {} PRIORITY 1: capturing nearby node {} (dist={:.0f})",
+                player->GetName(), nodeData.name, dist);
+            CaptureNode(player, nearCapture);
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Contested friendly node -> defend
+    // =========================================================================
+    uint32 threatened = FindNearestThreatenedNode(player);
+    if (threatened != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(threatened);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[DWG] {} PRIORITY 2: defending contested node {}",
+            player->GetName(), nodeData.name);
+        DefendNode(player, threatened);
+        return true;
+    }
+
+    // =========================================================================
+    // PRIORITY 3: GUID split: 60% node control, 40% cart escort
+    // =========================================================================
+    uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
+    if (dutySlot < 6)
+    {
+        // 60% -> Node control (defend or attack)
+        std::vector<uint32> friendlyNodes = GetFriendlyNodes(player);
+        uint32 friendlyCount = GetFriendlyNodeCount(player);
+
+        if (friendlyCount < GetOptimalNodeCount())
+        {
+            // Need more nodes -> attack
+            uint32 targetNode = GetBestAssaultTarget(player);
+            if (targetNode != UINT32_MAX)
+            {
+                BGObjectiveData nodeData = GetNodeData(targetNode);
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[DWG] {} PRIORITY 3: attacking node {} (need {} more)",
+                    player->GetName(), nodeData.name,
+                    GetOptimalNodeCount() - friendlyCount);
+                CaptureNode(player, targetNode);
+                return true;
+            }
+        }
+        else
+        {
+            // Have enough nodes -> defend
+            if (!friendlyNodes.empty())
+            {
+                uint32 defIdx = player->GetGUID().GetCounter() % friendlyNodes.size();
+                uint32 defNode = friendlyNodes[defIdx];
+                BGObjectiveData nodeData = GetNodeData(defNode);
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[DWG] {} PRIORITY 3: defending node {}",
+                    player->GetName(), nodeData.name);
+                DefendNode(player, defNode);
+                return true;
+            }
+        }
+    }
+    else
+    {
+        // 40% -> Cart escort
+        uint32 bestCart = GetBestCartToContest(faction);
+        if (bestCart < DeepwindGorge::CART_COUNT)
+        {
+            Position cartPos = DeepwindGorge::GetCartSpawnPosition(bestCart);
+            float cartDist = player->GetExactDist(&cartPos);
+
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[DWG] {} PRIORITY 3: cart duty - cart {} (dist={:.0f})",
+                player->GetName(), bestCart, cartDist);
+
+            // If enemy near cart, engage; otherwise escort
+            if (::Player* enemy = FindNearestEnemyPlayer(player, 20.0f))
+            {
+                EngageTarget(player, enemy);
+            }
+            else
+            {
+                auto escorts = GetCartEscortFormation(bestCart);
+                if (!escorts.empty())
+                {
+                    uint32 escortSlot = player->GetGUID().GetCounter() % escorts.size();
+                    Position escortPos(escorts[escortSlot].x, escorts[escortSlot].y,
+                                       escorts[escortSlot].z, escorts[escortSlot].orientation);
+                    BotMovementUtil::MoveToPosition(player, escortPos);
+                }
+                else
+                {
+                    BotMovementUtil::MoveToPosition(player, cartPos);
+                }
+            }
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 4: Fallback -> patrol chokepoint
+    // =========================================================================
+    {
+        auto chokepoints = GetChokepoints();
+        if (!chokepoints.empty())
+        {
+            uint32 chokeIdx = player->GetGUID().GetCounter() % chokepoints.size();
+            Position chokePos(chokepoints[chokeIdx].x, chokepoints[chokeIdx].y,
+                              chokepoints[chokeIdx].z, 0);
+
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[DWG] {} PRIORITY 4: patrolling chokepoint",
+                player->GetName());
+            PatrolAroundPosition(player, chokePos, 5.0f, 15.0f);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 } // namespace Playerbot::Coordination::Battleground

@@ -199,8 +199,69 @@ protected:
         uint8 count, float radius) const;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR METHODS (for ExecuteStrategy)
+    // ========================================================================
+
+    /**
+     * @brief Refresh flag carrier state from aura scanning
+     * Throttled to once per second. Updates m_cachedFriendlyFC and m_cachedEnemyFC.
+     */
+    void RefreshFlagState(::Player* bot);
+
+    /**
+     * @brief Check if player is carrying a flag (alliance or horde)
+     */
+    static bool IsPlayerCarryingFlag(::Player* player);
+
+    /**
+     * @brief Run the carried flag home to the capture point
+     * Handles movement to our flag room + interaction with flag stand GO.
+     * Attacks enemies en route but NEVER stops moving.
+     * @return true if behavior was executed
+     */
+    bool RunFlagHome(::Player* bot);
+
+    /**
+     * @brief Go to enemy flag location and pick it up
+     * Uses phase-ignoring GO search for flag stand.
+     * @return true if behavior was executed
+     */
+    bool PickupEnemyFlag(::Player* bot);
+
+    /**
+     * @brief Chase and attack the enemy flag carrier
+     * @return true if behavior was executed
+     */
+    bool HuntEnemyFC(::Player* bot, ::Player* enemyFC);
+
+    /**
+     * @brief Escort the friendly flag carrier in formation
+     * Attacks enemies threatening the FC.
+     * @return true if behavior was executed
+     */
+    bool EscortFriendlyFC(::Player* bot, ::Player* friendlyFC);
+
+    /**
+     * @brief Defend own flag room: patrol, engage enemies, return dropped flags
+     * @return true if behavior was executed
+     */
+    bool DefendOwnFlagRoom(::Player* bot);
+
+    /**
+     * @brief Find and return a dropped friendly flag (GAMEOBJECT_TYPE_FLAGDROP)
+     * @return true if a dropped flag was found and bot is interacting/moving to it
+     */
+    bool ReturnDroppedFlag(::Player* bot);
+
+    // ========================================================================
     // CTF STATE
     // ========================================================================
+
+    // Cached flag carriers (refreshed by RefreshFlagState)
+    ::Player* m_cachedFriendlyFC = nullptr;
+    ::Player* m_cachedEnemyFC = nullptr;
+    uint32 m_lastFlagStateRefresh = 0;
+    static constexpr uint32 FLAG_STATE_REFRESH_INTERVAL = 1000; // 1 second
 
     // Flag states (tracked from events)
     bool m_allianceFlagTaken = false;

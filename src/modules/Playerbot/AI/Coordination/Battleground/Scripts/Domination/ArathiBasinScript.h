@@ -77,6 +77,19 @@ public:
         uint32& allianceScore, uint32& hordeScore) const override;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR
+    // ========================================================================
+
+    /**
+     * @brief Dynamic behavior tree for Arathi Basin bot strategy
+     * Evaluates node state each tick and assigns capture/defend duties.
+     * Uses 3-cap strategy with Blacksmith priority.
+     * @param player The bot player to execute strategy for
+     * @return true if the script handled the player's behavior
+     */
+    bool ExecuteStrategy(::Player* player) override;
+
+    // ========================================================================
     // STRATEGY - AB SPECIFIC
     // ========================================================================
 

@@ -94,6 +94,12 @@ public:
     void AdjustStrategy(StrategicDecision& decision, float scoreAdvantage, uint32 controlledCount, uint32 totalObjectives, uint32 timeRemaining) const override;
 
     // ========================================================================
+    // RUNTIME BEHAVIOR
+    // ========================================================================
+
+    bool ExecuteStrategy(::Player* player) override;
+
+    // ========================================================================
     // ASHRAN-SPECIFIC METHODS
     // ========================================================================
 
