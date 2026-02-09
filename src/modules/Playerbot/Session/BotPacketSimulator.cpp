@@ -16,6 +16,7 @@
 #include "Timer.h"
 #include "WorldPacket.h"
 #include "Opcodes.h"
+#include "UnitDefines.h"
 
 // TrinityCore packet structures
 #include "AuthenticationPackets.h"
@@ -144,12 +145,266 @@ void BotPacketSimulator::DisablePeriodicTimeSync()
     }
 }
 
-void BotPacketSimulator::Update(uint32 diff)
+// ============================================================================
+// REACTIVE PACKET INTERCEPTION
+// ============================================================================
+
+void BotPacketSimulator::OnPacketSent(uint32 opcode)
 {
-    if (!_periodicTimeSyncEnabled)
+    // Map outgoing SMSG opcodes to atomic ACK flags.
+    // Only opcodes that require a client ACK response are handled here.
+    // Thread-safe: fetch_or is atomic and lock-free on all platforms.
+    uint16_t flag = ACK_NONE;
+
+    switch (opcode)
+    {
+        // Speed change SMSGs (9 UnitMoveType values)
+        case SMSG_MOVE_SET_WALK_SPEED:        flag = ACK_SPEED_WALK; break;
+        case SMSG_MOVE_SET_RUN_SPEED:         flag = ACK_SPEED_RUN; break;
+        case SMSG_MOVE_SET_RUN_BACK_SPEED:    flag = ACK_SPEED_RUN_BACK; break;
+        case SMSG_MOVE_SET_SWIM_SPEED:        flag = ACK_SPEED_SWIM; break;
+        case SMSG_MOVE_SET_SWIM_BACK_SPEED:   flag = ACK_SPEED_SWIM_BACK; break;
+        case SMSG_MOVE_SET_TURN_RATE:         flag = ACK_SPEED_TURN_RATE; break;
+        case SMSG_MOVE_SET_FLIGHT_SPEED:      flag = ACK_SPEED_FLIGHT; break;
+        case SMSG_MOVE_SET_FLIGHT_BACK_SPEED: flag = ACK_SPEED_FLIGHT_BACK; break;
+        case SMSG_MOVE_SET_PITCH_RATE:        flag = ACK_SPEED_PITCH_RATE; break;
+
+        // Teleport SMSGs
+        case SMSG_MOVE_TELEPORT:              flag = ACK_TELEPORT_NEAR; break;
+        case SMSG_NEW_WORLD:                  flag = ACK_WORLDPORT; break;
+
+        // Knockback
+        case SMSG_MOVE_KNOCK_BACK:            flag = ACK_KNOCKBACK; break;
+
+        // Force magnitude
+        case SMSG_MOVE_SET_MOD_MOVEMENT_FORCE_MAGNITUDE: flag = ACK_FORCE_MAGNITUDE; break;
+
+        default:
+            return; // Not an ACK-requiring opcode, skip atomic operation
+    }
+
+    _pendingAcks.fetch_or(flag, std::memory_order_relaxed);
+}
+
+// ============================================================================
+// MOVEMENT ACK PACKETS
+// ============================================================================
+
+uint32 BotPacketSimulator::GetSpeedAckOpcodeForMoveType(uint8 moveType)
+{
+    // Maps UnitMoveType enum to the corresponding CMSG speed change ACK opcode
+    // See: MovementHandler.cpp:549-560 for the reverse mapping
+    switch (moveType)
+    {
+        case MOVE_WALK:        return CMSG_MOVE_FORCE_WALK_SPEED_CHANGE_ACK;
+        case MOVE_RUN:         return CMSG_MOVE_FORCE_RUN_SPEED_CHANGE_ACK;
+        case MOVE_RUN_BACK:    return CMSG_MOVE_FORCE_RUN_BACK_SPEED_CHANGE_ACK;
+        case MOVE_SWIM:        return CMSG_MOVE_FORCE_SWIM_SPEED_CHANGE_ACK;
+        case MOVE_SWIM_BACK:   return CMSG_MOVE_FORCE_SWIM_BACK_SPEED_CHANGE_ACK;
+        case MOVE_TURN_RATE:   return CMSG_MOVE_FORCE_TURN_RATE_CHANGE_ACK;
+        case MOVE_FLIGHT:      return CMSG_MOVE_FORCE_FLIGHT_SPEED_CHANGE_ACK;
+        case MOVE_FLIGHT_BACK: return CMSG_MOVE_FORCE_FLIGHT_BACK_SPEED_CHANGE_ACK;
+        case MOVE_PITCH_RATE:  return CMSG_MOVE_FORCE_PITCH_RATE_CHANGE_ACK;
+        default:               return 0;
+    }
+}
+
+void BotPacketSimulator::SimulateSpeedChangeAck(uint8 mtype)
+{
+    if (!_session)
         return;
 
+    Player* bot = _session->GetPlayer();
+    if (!bot || !bot->IsInWorld())
+        return;
+
+    // Drain all pending ACKs for this specific speed type
+    // The handler skips all but the last ACK (when counter reaches 0), then validates speed.
+    // We process them all at once since each handler call decrements the counter.
+    while (bot->m_forced_speed_changes[mtype] > 0)
+    {
+        uint32 opcode = GetSpeedAckOpcodeForMoveType(mtype);
+        if (opcode == 0)
+            break;
+
+        float currentSpeed = bot->GetSpeed(static_cast<UnitMoveType>(mtype));
+
+        // Directly populate the packet struct fields instead of serializing through WorldPacket
+        // (operator<<(ByteBuffer&, MovementInfo const&) is not declared in any header)
+        WorldPacket data(static_cast<OpcodeClient>(opcode), 0);
+        WorldPackets::Movement::MovementSpeedAck ack(::std::move(data));
+        ack.Ack.Status = bot->m_movementInfo;
+        ack.Ack.Status.guid = bot->GetGUID();
+        ack.Ack.AckIndex = 0;
+        ack.Speed = currentSpeed;
+
+        _session->HandleForceSpeedChangeAck(ack);
+
+        TC_LOG_DEBUG("module.playerbot.packet",
+            "Bot {} simulated speed ACK: mtype={}, speed={:.2f}, remaining={}",
+            bot->GetName(), mtype, currentSpeed, bot->m_forced_speed_changes[mtype]);
+    }
+}
+
+void BotPacketSimulator::SimulateTeleportNearAck()
+{
+    if (!_session)
+        return;
+
+    Player* bot = _session->GetPlayer();
+    if (!bot || !bot->IsBeingTeleportedNear())
+        return;
+
+    TC_LOG_DEBUG("module.playerbot.packet",
+        "Bot {} simulating CMSG_MOVE_TELEPORT_ACK (near teleport)",
+        bot->GetName());
+
+    // Forge the teleport ACK packet
+    // MoveTeleportAck::Read() expects: MoverGUID + AckIndex + MoveTime
+    WorldPacket data(CMSG_MOVE_TELEPORT_ACK, 8 + 4 + 4);
+    data << bot->GetGUID();                      // MoverGUID
+    data << int32(0);                            // AckIndex (not validated by handler)
+    data << int32(GameTime::GetGameTimeMS());    // MoveTime (not validated by handler)
+
+    WorldPackets::Movement::MoveTeleportAck ackPacket(::std::move(data));
+    ackPacket.Read();
+
+    _session->HandleMoveTeleportAck(ackPacket);
+
+    TC_LOG_DEBUG("module.playerbot.packet",
+        "Bot {} teleport near ACK processed successfully",
+        bot->GetName());
+}
+
+void BotPacketSimulator::SimulateWorldportAck()
+{
+    if (!_session)
+        return;
+
+    Player* bot = _session->GetPlayer();
+    if (!bot || !bot->IsBeingTeleportedFar())
+        return;
+
+    TC_LOG_DEBUG("module.playerbot.packet",
+        "Bot {} simulating HandleMoveWorldportAck (far teleport)",
+        bot->GetName());
+
+    // HandleMoveWorldportAck() is a server-side convenience method that takes no parameters.
+    // It handles all far-teleport completion: map change, position update, initial packets.
+    _session->HandleMoveWorldportAck();
+
+    TC_LOG_DEBUG("module.playerbot.packet",
+        "Bot {} worldport ACK processed successfully",
+        bot->GetName());
+}
+
+void BotPacketSimulator::SimulateKnockbackAck()
+{
+    if (!_session)
+        return;
+
+    Player* bot = _session->GetPlayer();
+    if (!bot || !bot->IsInWorld())
+        return;
+
+    TC_LOG_DEBUG("module.playerbot.packet",
+        "Bot {} simulating CMSG_MOVE_KNOCK_BACK_ACK",
+        bot->GetName());
+
+    // Directly populate the packet struct fields instead of serializing through WorldPacket
+    // (operator<<(ByteBuffer&, MovementInfo const&) is not declared in any header)
+    WorldPacket data(CMSG_MOVE_KNOCK_BACK_ACK, 0);
+    WorldPackets::Movement::MoveKnockBackAck ackPacket(::std::move(data));
+    ackPacket.Ack.Status = bot->m_movementInfo;
+    ackPacket.Ack.Status.guid = bot->GetGUID();
+    ackPacket.Ack.AckIndex = 0;
+    // Speeds left empty (Optional not set) - handler only uses Ack.Status
+
+    _session->HandleMoveKnockBackAck(ackPacket);
+
+    TC_LOG_DEBUG("module.playerbot.packet",
+        "Bot {} knockback ACK processed, movement update broadcast to nearby players",
+        bot->GetName());
+}
+
+void BotPacketSimulator::SimulateMovementForceMagnitudeAck()
+{
+    if (!_session)
+        return;
+
+    Player* bot = _session->GetPlayer();
+    if (!bot || !bot->IsInWorld())
+        return;
+
+    // Drain all pending force magnitude ACKs
+    // The handler skips all but the last ACK (when counter reaches 0), then validates magnitude.
+    while (bot->m_movementForceModMagnitudeChanges > 0)
+    {
+        // Calculate expected magnitude from MovementForces
+        float expectedMagnitude = 1.0f;
+        if (MovementForces const* movementForces = bot->GetMovementForces())
+            expectedMagnitude = movementForces->GetModMagnitude();
+
+        // Directly populate the packet struct fields instead of serializing through WorldPacket
+        // (handler reuses MovementSpeedAck, Speed field = magnitude)
+        WorldPacket data(CMSG_MOVE_SET_MOD_MOVEMENT_FORCE_MAGNITUDE_ACK, 0);
+        WorldPackets::Movement::MovementSpeedAck ack(::std::move(data));
+        ack.Ack.Status = bot->m_movementInfo;
+        ack.Ack.Status.guid = bot->GetGUID();
+        ack.Ack.AckIndex = 0;
+        ack.Speed = expectedMagnitude;
+
+        _session->HandleMoveSetModMovementForceMagnitudeAck(ack);
+
+        TC_LOG_DEBUG("module.playerbot.packet",
+            "Bot {} simulated force magnitude ACK: magnitude={:.2f}, remaining={}",
+            bot->GetName(), expectedMagnitude, bot->m_movementForceModMagnitudeChanges);
+    }
+}
+
+// ============================================================================
+// UPDATE LOOP
+// ============================================================================
+
+void BotPacketSimulator::ProcessQueuedAcks()
+{
+    // Atomically read-and-clear all pending flags (lock-free)
+    uint16_t acks = _pendingAcks.exchange(0, std::memory_order_relaxed);
+    if (acks == ACK_NONE)
+        return;
+
+    // Speed change ACKs (bits 0-8, one per UnitMoveType)
+    if (acks & ACK_SPEED_WALK)        SimulateSpeedChangeAck(MOVE_WALK);
+    if (acks & ACK_SPEED_RUN)         SimulateSpeedChangeAck(MOVE_RUN);
+    if (acks & ACK_SPEED_RUN_BACK)    SimulateSpeedChangeAck(MOVE_RUN_BACK);
+    if (acks & ACK_SPEED_SWIM)        SimulateSpeedChangeAck(MOVE_SWIM);
+    if (acks & ACK_SPEED_SWIM_BACK)   SimulateSpeedChangeAck(MOVE_SWIM_BACK);
+    if (acks & ACK_SPEED_TURN_RATE)   SimulateSpeedChangeAck(MOVE_TURN_RATE);
+    if (acks & ACK_SPEED_FLIGHT)      SimulateSpeedChangeAck(MOVE_FLIGHT);
+    if (acks & ACK_SPEED_FLIGHT_BACK) SimulateSpeedChangeAck(MOVE_FLIGHT_BACK);
+    if (acks & ACK_SPEED_PITCH_RATE)  SimulateSpeedChangeAck(MOVE_PITCH_RATE);
+
+    // Teleport ACKs
+    if (acks & ACK_TELEPORT_NEAR)     SimulateTeleportNearAck();
+    if (acks & ACK_WORLDPORT)         SimulateWorldportAck();
+
+    // Knockback ACK
+    if (acks & ACK_KNOCKBACK)         SimulateKnockbackAck();
+
+    // Force magnitude ACK
+    if (acks & ACK_FORCE_MAGNITUDE)   SimulateMovementForceMagnitudeAck();
+}
+
+void BotPacketSimulator::Update(uint32 diff)
+{
     if (!_session || !_session->GetPlayer() || !_session->GetPlayer()->IsInWorld())
+        return;
+
+    // --- Reactive ACK processing (runs every tick, O(1) when idle) ---
+    ProcessQueuedAcks();
+
+    // --- Periodic time sync (runs every TIME_SYNC_INTERVAL ms) ---
+    if (!_periodicTimeSyncEnabled)
         return;
 
     _timeSyncCounter += diff;

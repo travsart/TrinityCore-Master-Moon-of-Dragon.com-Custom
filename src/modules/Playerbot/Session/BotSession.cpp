@@ -552,6 +552,10 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
     // Note: forced parameter is not used for bot sessions but required for interface
     (void)forced;
 
+    // Reactive movement ACK: notify simulator of SMSG packets requiring ACK response
+    if (_packetSimulator)
+        _packetSimulator->OnPacketSent(packet->GetOpcode());
+
     // CRITICAL: Intercept party invitation packets for bot handling
     if (packet->GetOpcode() == SMSG_PARTY_INVITE)
     {
