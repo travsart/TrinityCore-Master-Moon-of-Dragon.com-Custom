@@ -1163,6 +1163,8 @@ set(PLAYERBOT_PVP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonAutonomyManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonBehavior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonBehavior.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DelveBehaviorManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DelveBehaviorManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScript.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Dungeon/DungeonScriptLoader.cpp
