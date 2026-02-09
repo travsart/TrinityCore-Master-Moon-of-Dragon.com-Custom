@@ -344,6 +344,10 @@ set(PLAYERBOT_AI_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/KitingManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/AddManagementSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/AddManagementSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/TankSwapCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/TankSwapCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/CooldownSyncCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/Raid/CooldownSyncCoordinator.cpp
 
     # ============================================================================
     # PHASE 3 Sprint 6: Arena Coordination Files
@@ -666,6 +670,8 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ProactiveLoSFixer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatMetricsTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatMetricsTracker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/StructuredCombatLog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/StructuredCombatLog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RacialAbilityManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RacialAbilityManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ProcExpiryMonitor.cpp
@@ -792,6 +798,10 @@ set(PLAYERBOT_LIFECYCLE_SOURCES
     # GOD_TIER Task 8: Pet Collection System
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Collections/PetCollectionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Collections/PetCollectionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Collections/TransmogManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Collections/TransmogManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Collections/ArchaeologyManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Collections/ArchaeologyManager.h
 
     # GOD_TIER Task 10: Achievement Grinder
     ${CMAKE_CURRENT_SOURCE_DIR}/Humanization/Achievements/AchievementGrinder.cpp
@@ -951,6 +961,8 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/VendorPurchaseManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/ConsumableManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/ConsumableManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/ReagentManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/ReagentManager.h
 
     # Movement System
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementTypes.h
