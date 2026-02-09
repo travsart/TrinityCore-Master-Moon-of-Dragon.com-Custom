@@ -1067,6 +1067,8 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildTaskManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildTaskManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SummonResponseManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SummonResponseManager.h
 
     # Economy Systems
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
