@@ -1218,6 +1218,8 @@ set(PLAYERBOT_PVP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ObjectPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PacketPoolManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ShardedMetricsCollector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ShardedMetricsCollector.h
 )
 
 # ============================================================================
