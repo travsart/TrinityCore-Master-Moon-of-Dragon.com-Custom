@@ -628,6 +628,8 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatCoordinationIntegrator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatCoordinationIntegrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/AddPrioritySystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/AddPrioritySystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/IncomingDamagePredictor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/IncomingDamagePredictor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.cpp
