@@ -481,6 +481,8 @@ set(PLAYERBOT_CLASSAI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassSpellDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassSpellDatabase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpellIdValidator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpellIdValidator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CombatSpecializationTemplates.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceTypes.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/RoleSpecializations.h

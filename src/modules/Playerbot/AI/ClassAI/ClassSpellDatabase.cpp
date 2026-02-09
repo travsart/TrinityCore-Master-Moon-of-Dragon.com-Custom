@@ -6,6 +6,7 @@
  */
 
 #include "ClassSpellDatabase.h"
+#include "SpellIdValidator.h"
 #include "SpellValidation_WoW120.h"
 #include "SpellValidation_WoW120_Part2.h"
 #include "Log.h"
@@ -76,6 +77,9 @@ void ClassSpellDatabase::Initialize()
         "%zu defensive spell sets, %zu cooldown spell sets, %zu healing tier sets, %zu fallback chains",
         _rotations.size(), _statWeights.size(), _defensiveSpells.size(),
         _cooldownSpells.size(), _healingTiers.size(), _fallbackChains.size());
+
+    // Validate all spell IDs against SpellDB at startup
+    SpellIdValidator::ValidateAll();
 }
 
 void ClassSpellDatabase::EnsureInitialized()
