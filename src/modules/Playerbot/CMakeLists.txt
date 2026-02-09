@@ -660,6 +660,8 @@ set(PLAYERBOT_COMBAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/LineOfSightManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ProactiveLoSFixer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ProactiveLoSFixer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatMetricsTracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatMetricsTracker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp
