@@ -662,6 +662,22 @@ uint32 BGBotManager::PopulateQueue(ObjectGuid playerGuid, BattlegroundTypeId bgT
         "BGBotManager::PopulateQueue - Looking for bots level {}-{} for bracket {}",
         minLevel, maxLevel, static_cast<uint32>(bracket));
 
+    // CRITICAL FIX: Track human player ALWAYS, BEFORE the bot queuing loop.
+    // Warm pool bots login asynchronously and call GetQueuedHumanForBG() to find
+    // the human GUID for tracking. If we only register after botsQueued > 0,
+    // warm pool bots (which aren't logged in yet) result in botsQueued=0 and
+    // the human never gets registered, breaking invitation tracking for all bots.
+    {
+        auto& humanInfo = _humanPlayers[playerGuid];
+        humanInfo.bgTypeId = bgTypeId;
+        humanInfo.bracket = bracket;
+        humanInfo.team = humanPlayer->GetTeam();
+        TC_LOG_INFO("module.playerbot.bg",
+            "BGBotManager::PopulateQueue - Registered human {} for BG type {} bracket {} (team {})",
+            playerGuid.ToString(), static_cast<uint32>(bgTypeId),
+            static_cast<uint32>(bracket), humanPlayer->GetTeam() == ALLIANCE ? "Alliance" : "Horde");
+    }
+
     uint32 botsQueued = 0;
 
     // Queue Alliance bots
@@ -692,15 +708,6 @@ uint32 BGBotManager::PopulateQueue(ObjectGuid playerGuid, BattlegroundTypeId bgT
                 TC_LOG_DEBUG("module.playerbot.bg", "Queued Horde bot {} for BG", bot->GetName());
             }
         }
-    }
-
-    // Track human player
-    if (botsQueued > 0)
-    {
-        auto& humanInfo = _humanPlayers[playerGuid];
-        humanInfo.bgTypeId = bgTypeId;
-        humanInfo.bracket = bracket;
-        humanInfo.team = humanPlayer->GetTeam();
     }
 
     return botsQueued;
@@ -1266,35 +1273,57 @@ void BGBotManager::UnregisterAllBotsForPlayer(ObjectGuid humanGuid)
 bool BGBotManager::IsBotAvailable(Player* bot) const
 {
     if (!bot || !bot->IsInWorld())
+    {
+        TC_LOG_DEBUG("module.playerbot.bg", "IsBotAvailable: Bot is null or not in world");
         return false;
+    }
 
     // Not available if in group
     if (bot->GetGroup())
+    {
+        TC_LOG_DEBUG("module.playerbot.bg", "IsBotAvailable: Bot {} rejected - in group", bot->GetName());
         return false;
+    }
 
     // Not available if in BG
     if (bot->InBattleground())
+    {
+        TC_LOG_DEBUG("module.playerbot.bg", "IsBotAvailable: Bot {} rejected - in battleground", bot->GetName());
         return false;
+    }
 
     // Not available if in arena
     if (bot->InArena())
+    {
+        TC_LOG_DEBUG("module.playerbot.bg", "IsBotAvailable: Bot {} rejected - in arena", bot->GetName());
         return false;
+    }
 
     // Not available if in LFG queue
     // Check via player battleground queue slots
     for (uint8 i = 0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
     {
         if (bot->GetBattlegroundQueueTypeId(i) != BATTLEGROUND_QUEUE_NONE)
+        {
+            TC_LOG_DEBUG("module.playerbot.bg", "IsBotAvailable: Bot {} rejected - already in BG queue slot {}",
+                bot->GetName(), i);
             return false;
+        }
     }
 
     // Not available if dead
     if (bot->isDead())
+    {
+        TC_LOG_DEBUG("module.playerbot.bg", "IsBotAvailable: Bot {} rejected - dead", bot->GetName());
         return false;
+    }
 
     // Not available if deserter
     if (bot->HasAura(26013)) // Deserter aura ID
+    {
+        TC_LOG_DEBUG("module.playerbot.bg", "IsBotAvailable: Bot {} rejected - has deserter debuff", bot->GetName());
         return false;
+    }
 
     return true;
 }

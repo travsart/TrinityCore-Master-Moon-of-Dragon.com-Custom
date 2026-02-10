@@ -440,6 +440,14 @@ private:
     // ========================================================================
 
     /**
+     * @brief Process pending BG verification checks
+     *
+     * After warm pool claims to satisfy demand, we wait 30s then verify
+     * bots actually queued. If not enough queued, re-registers the queue.
+     */
+    void ProcessPendingBGVerifications();
+
+    /**
      * @brief Process detected BG shortage - trigger JIT if needed
      */
     void ProcessBGShortage(BGQueueSnapshot const& snapshot);
@@ -505,6 +513,17 @@ private:
     std::unordered_map<uint32, LFGQueueSnapshot> _lfgSnapshots;
     std::unordered_map<uint64, ArenaQueueSnapshot> _arenaSnapshots;
 
+    // BG queue verification - tracks warm pool assignments that need re-verification
+    // After warm pool claims success, we schedule a verification poll to confirm bots
+    // actually queued. If not enough bots queued, the queue stays registered for re-polling.
+    struct BGVerificationEntry
+    {
+        std::chrono::steady_clock::time_point verificationTime;  // When to verify
+        uint32 expectedAlliance = 0;  // How many Alliance bots we expected
+        uint32 expectedHorde = 0;     // How many Horde bots we expected
+    };
+    std::unordered_map<uint64, BGVerificationEntry> _pendingBGVerifications;
+
     // JIT throttling - last request time per queue
     std::unordered_map<uint64, std::chrono::steady_clock::time_point> _lastJITTime;
 
@@ -524,6 +543,7 @@ private:
     // Constants
     static constexpr uint32 DEFAULT_POLLING_INTERVAL = 5 * 1000;  // 5 seconds
     static constexpr uint32 DEFAULT_JIT_THROTTLE_SECONDS = 10;
+    static constexpr uint32 BG_VERIFICATION_DELAY_SECONDS = 30;   // Wait 30s before verifying warm pool bots queued
 
     // Singleton
     QueueStatePoller(QueueStatePoller const&) = delete;

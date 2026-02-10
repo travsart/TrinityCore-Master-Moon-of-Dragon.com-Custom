@@ -367,6 +367,19 @@ bool BotPostLoginConfigurator::ApplyPendingConfiguration(Player* player)
     if (config.battlegroundIdToQueue > 0)
     {
         BattlegroundTypeId bgTypeId = static_cast<BattlegroundTypeId>(config.battlegroundIdToQueue);
+
+        // CRITICAL FIX: Resurrect dead bots BEFORE attempting BG queue.
+        // Warm pool bots may have died in a previous session and are still dead at login.
+        // IsBotAvailable() rejects dead bots, causing 10/19 warm pool bots to silently fail
+        // to queue, leaving the BG with insufficient players to start.
+        if (player->isDead())
+        {
+            player->ResurrectPlayer(1.0f);
+            player->SpawnCorpseBones();
+            TC_LOG_INFO("module.playerbot.configurator",
+                "Resurrected dead bot {} before BG queue attempt", player->GetName());
+        }
+
         TC_LOG_INFO("module.playerbot.configurator",
             "Queueing JIT bot {} for battleground {} after configuration",
             player->GetName(), config.battlegroundIdToQueue);
