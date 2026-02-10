@@ -471,6 +471,11 @@ void BGBotManager::PopulateBattlegroundLocked(Battleground* bg)
 
             if (Player* bot = ObjectAccessor::FindPlayer(botGuid))
             {
+                // Bot is in the world but on wrong map → teleport failed, don't count as in-transit.
+                // A bot genuinely mid-teleport will have !IsInWorld() (loading screen).
+                if (bot->IsInWorld() && bot->GetMapId() != bg->GetMapId())
+                    continue;
+
                 if (bot->GetBGTeam() == ALLIANCE)
                     ++inTransitAlliance;
                 else

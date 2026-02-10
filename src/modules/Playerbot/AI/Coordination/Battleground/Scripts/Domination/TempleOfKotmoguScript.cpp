@@ -1178,6 +1178,11 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
         if (IsOrbHeld(orbId))
             continue;
 
+        // Skip orbs recently claimed by another bot (race condition prevention)
+        auto claimIt = m_orbClaimedUntil.find(orbId);
+        if (claimIt != m_orbClaimedUntil.end() && GameTime::GetGameTimeMS() < claimIt->second)
+            continue;
+
         // Skip orbs already targeted by another bot (splitting logic)
         auto targeterIt = m_orbTargeters.find(orbId);
         if (targeterIt != m_orbTargeters.end() && targeterIt->second != myGuid)
@@ -1207,6 +1212,11 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
             if (orbId >= TempleOfKotmogu::ORB_COUNT)
                 continue;
             if (IsOrbHeld(orbId))
+                continue;
+
+            // Also skip recently claimed orbs in fallback
+            auto claimIt = m_orbClaimedUntil.find(orbId);
+            if (claimIt != m_orbClaimedUntil.end() && GameTime::GetGameTimeMS() < claimIt->second)
                 continue;
 
             Position orbPos = GetDynamicOrbPosition(orbId);
@@ -1324,6 +1334,9 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
         }
 
         bestGO->Use(player);
+        // Mark orb as claimed for 3 seconds to prevent race condition where
+        // another bot also calls Use() before the aura is detected by RefreshOrbState()
+        m_orbClaimedUntil[bestOrbId] = GameTime::GetGameTimeMS() + 3000;
         // Successfully picked up - remove from targeters (now a carrier)
         m_orbTargeters.erase(bestOrbId);
         TC_LOG_INFO("playerbots.bg", "[TOK] {} picked up {} (entry {}, dist {:.1f})",
@@ -1345,7 +1358,7 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
         {
             float enemyDist = 0.0f;
             auto const* nearestEnemy = coord->GetNearestEnemy(
-                player->GetPosition(), 20.0f, &enemyDist);
+                player->GetPosition(), 20.0f, player->GetBGTeam(), player->GetGUID(), &enemyDist);
 
             if (nearestEnemy && nearestEnemy->isAlive)
             {
@@ -1423,7 +1436,7 @@ bool TempleOfKotmoguScript::DefendOrbCarrier(::Player* player)
         if (coordinator)
         {
             auto nearbyEnemies = coordinator->QueryNearbyEnemies(
-                friendlyCarrier->GetPosition(), TOK_DEFENSE_ESCORT_RANGE);
+                friendlyCarrier->GetPosition(), TOK_DEFENSE_ESCORT_RANGE, player->GetBGTeam());
 
             ::Player* closestThreat = nullptr;
             float closestThreatDist = TOK_DEFENSE_ESCORT_RANGE + 1.0f;
@@ -1520,7 +1533,7 @@ bool TempleOfKotmoguScript::DefendOrbCarrier(::Player* player)
     {
         float enemyDist = 0.0f;
         auto const* nearestEnemy = coordinator->GetNearestEnemy(
-            player->GetPosition(), 30.0f, &enemyDist);
+            player->GetPosition(), 30.0f, player->GetBGTeam(), player->GetGUID(), &enemyDist);
 
         if (nearestEnemy && nearestEnemy->isAlive)
         {
@@ -1633,7 +1646,7 @@ bool TempleOfKotmoguScript::HuntEnemyOrbCarrier(::Player* player)
     {
         float enemyDist = 0.0f;
         auto const* nearestEnemy = coordinator->GetNearestEnemy(
-            player->GetPosition(), 40.0f, &enemyDist);
+            player->GetPosition(), 40.0f, player->GetBGTeam(), player->GetGUID(), &enemyDist);
 
         if (nearestEnemy && nearestEnemy->isAlive)
         {
@@ -1780,7 +1793,7 @@ bool TempleOfKotmoguScript::EscortOrbCarrier(::Player* player)
         if (coordinator)
         {
             auto nearbyEnemies = coordinator->QueryNearbyEnemies(
-                friendlyCarrier->GetPosition(), 20.0f);
+                friendlyCarrier->GetPosition(), 20.0f, player->GetBGTeam());
 
             ::Player* closestEnemy = nullptr;
             float closestEnemyDist = 21.0f;
@@ -1880,14 +1893,14 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
     if (healthPct < TOK_LOW_HEALTH_PCT && coordinator)
     {
         Position playerPos = player->GetPosition();
-        uint32 nearbyEnemies = coordinator->CountEnemiesInRadius(playerPos, 30.0f);
-        uint32 nearbyAllies = coordinator->CountAlliesInRadius(playerPos, 30.0f);
+        uint32 nearbyEnemies = coordinator->CountEnemiesInRadius(playerPos, 30.0f, player->GetBGTeam());
+        uint32 nearbyAllies = coordinator->CountAlliesInRadius(playerPos, 30.0f, player->GetBGTeam());
 
         if (nearbyEnemies > nearbyAllies)
         {
             // Retreat toward nearest ally cluster
             auto const* nearestAlly = coordinator->GetNearestAlly(
-                playerPos, 60.0f, player->GetGUID());
+                playerPos, 60.0f, player->GetBGTeam(), player->GetGUID());
 
             if (nearestAlly)
             {
@@ -1928,12 +1941,12 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
         if (healthPct < 60.0f && healthPct >= TOK_LOW_HEALTH_PCT && coordinator)
         {
             Position playerPos = player->GetPosition();
-            uint32 nearbyEnemyCount = coordinator->CountEnemiesInRadius(playerPos, 10.0f);
+            uint32 nearbyEnemyCount = coordinator->CountEnemiesInRadius(playerPos, 10.0f, player->GetBGTeam());
 
             if (nearbyEnemyCount >= 2)
             {
                 // Calculate average enemy position and move opposite direction
-                auto enemies = coordinator->QueryNearbyEnemies(playerPos, 10.0f);
+                auto enemies = coordinator->QueryNearbyEnemies(playerPos, 10.0f, player->GetBGTeam());
                 float avgEX = 0.0f, avgEY = 0.0f;
                 uint32 eCount = 0;
 
@@ -1976,7 +1989,7 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
                             // Still fight the closest enemy while kiting
                             float enemyDist = 0.0f;
                             auto const* nearestEnemy = coordinator->GetNearestEnemy(
-                                playerPos, 20.0f, &enemyDist);
+                                playerPos, 20.0f, player->GetBGTeam(), player->GetGUID(), &enemyDist);
 
                             if (nearestEnemy && nearestEnemy->isAlive)
                             {
@@ -2004,7 +2017,7 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
         {
             float enemyDist = 0.0f;
             auto const* nearestEnemy = coordinator->GetNearestEnemy(
-                player->GetPosition(), 20.0f, &enemyDist);
+                player->GetPosition(), 20.0f, player->GetBGTeam(), player->GetGUID(), &enemyDist);
 
             if (nearestEnemy && nearestEnemy->isAlive)
             {
@@ -2048,7 +2061,7 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
         {
             float enemyDist = 0.0f;
             auto const* nearestEnemy = coordinator->GetNearestEnemy(
-                player->GetPosition(), 15.0f, &enemyDist);
+                player->GetPosition(), 15.0f, player->GetBGTeam(), player->GetGUID(), &enemyDist);
 
             if (nearestEnemy && nearestEnemy->isAlive)
             {

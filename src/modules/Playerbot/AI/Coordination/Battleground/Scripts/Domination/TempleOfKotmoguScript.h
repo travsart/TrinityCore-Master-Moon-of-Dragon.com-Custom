@@ -232,6 +232,9 @@ private:
     /// orbId -> GUID of bot currently moving toward this orb for pickup
     std::map<uint32, ObjectGuid> m_orbTargeters;
 
+    /// orbId -> GameTimeMS when claim expires (prevents dual pickup race condition)
+    std::map<uint32, uint32> m_orbClaimedUntil;
+
     /// Timestamp for throttling RefreshOrbState() to once per second
     uint32 m_lastOrbRefresh = 0;
 

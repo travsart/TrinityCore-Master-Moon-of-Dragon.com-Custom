@@ -860,7 +860,7 @@ bool CTFScriptBase::EscortFriendlyFC(::Player* bot, ::Player* friendlyFC)
 
         if (coordinator)
         {
-            auto nearbyEnemies = coordinator->QueryNearbyEnemies(friendlyFC->GetPosition(), 20.0f);
+            auto nearbyEnemies = coordinator->QueryNearbyEnemies(friendlyFC->GetPosition(), 20.0f, bot->GetBGTeam());
             for (auto const* snapshot : nearbyEnemies)
             {
                 if (snapshot && snapshot->isAlive)

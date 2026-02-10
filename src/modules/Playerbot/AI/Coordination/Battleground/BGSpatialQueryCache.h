@@ -342,7 +342,7 @@ public:
      * For radius=40, cells=4-9, avg_pop=0.4 → O(4) vs O(80)
      */
     std::vector<BGPlayerSnapshot const*> QueryNearbyEnemies(
-        Position const& position, float radius = NEARBY_QUERY_RADIUS) const;
+        Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Get nearby friendly players using spatial cells
@@ -351,7 +351,7 @@ public:
      * @return Vector of friendly player snapshots within radius
      */
     std::vector<BGPlayerSnapshot const*> QueryNearbyAllies(
-        Position const& position, float radius = NEARBY_QUERY_RADIUS) const;
+        Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Get all nearby players using spatial cells
@@ -374,7 +374,8 @@ public:
      * Uses cell-ordered search with early exit - stops when guaranteed closest found.
      */
     BGPlayerSnapshot const* GetNearestEnemy(
-        Position const& position, float maxRadius = NEARBY_QUERY_RADIUS,
+        Position const& position, float maxRadius, uint32 callerFaction,
+        ObjectGuid excludeGuid = ObjectGuid::Empty,
         float* outDistance = nullptr) const;
 
     /**
@@ -386,7 +387,7 @@ public:
      * @return Pointer to nearest ally snapshot, or nullptr if none
      */
     BGPlayerSnapshot const* GetNearestAlly(
-        Position const& position, float maxRadius = NEARBY_QUERY_RADIUS,
+        Position const& position, float maxRadius, uint32 callerFaction,
         ObjectGuid excludeGuid = ObjectGuid::Empty,
         float* outDistance = nullptr) const;
 
@@ -401,7 +402,7 @@ public:
      * @return Vector of enemy healer snapshots
      */
     std::vector<BGPlayerSnapshot const*> QueryNearbyEnemyHealers(
-        Position const& position, float radius = NEARBY_QUERY_RADIUS) const;
+        Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Get nearby friendly healers
@@ -410,7 +411,7 @@ public:
      * @return Vector of friendly healer snapshots
      */
     std::vector<BGPlayerSnapshot const*> QueryNearbyFriendlyHealers(
-        Position const& position, float radius = NEARBY_QUERY_RADIUS) const;
+        Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Get players attacking a target
@@ -425,7 +426,7 @@ public:
      * @param radius Search radius
      * @return Number of enemies in radius
      */
-    uint32 CountEnemiesInRadius(Position const& position, float radius) const;
+    uint32 CountEnemiesInRadius(Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Count allies in radius (optimized, no snapshot allocation)
@@ -433,7 +434,7 @@ public:
      * @param radius Search radius
      * @return Number of allies in radius
      */
-    uint32 CountAlliesInRadius(Position const& position, float radius) const;
+    uint32 CountAlliesInRadius(Position const& position, float radius, uint32 callerFaction) const;
 
     // ========================================================================
     // METRICS

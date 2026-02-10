@@ -1246,48 +1246,50 @@ BGPlayerSnapshot const* BattlegroundCoordinator::GetPlayerSnapshot(ObjectGuid gu
 }
 
 ::std::vector<BGPlayerSnapshot const*> BattlegroundCoordinator::QueryNearbyEnemies(
-    Position const& position, float radius) const
+    Position const& position, float radius, uint32 callerFaction) const
 {
     if (_spatialCache)
-        return _spatialCache->QueryNearbyEnemies(position, radius);
+        return _spatialCache->QueryNearbyEnemies(position, radius, callerFaction);
     return {};
 }
 
 ::std::vector<BGPlayerSnapshot const*> BattlegroundCoordinator::QueryNearbyAllies(
-    Position const& position, float radius) const
+    Position const& position, float radius, uint32 callerFaction) const
 {
     if (_spatialCache)
-        return _spatialCache->QueryNearbyAllies(position, radius);
+        return _spatialCache->QueryNearbyAllies(position, radius, callerFaction);
     return {};
 }
 
 BGPlayerSnapshot const* BattlegroundCoordinator::GetNearestEnemy(
-    Position const& position, float maxRadius, float* outDistance) const
+    Position const& position, float maxRadius, uint32 callerFaction,
+    ObjectGuid excludeGuid, float* outDistance) const
 {
     if (_spatialCache)
-        return _spatialCache->GetNearestEnemy(position, maxRadius, outDistance);
+        return _spatialCache->GetNearestEnemy(position, maxRadius, callerFaction, excludeGuid, outDistance);
     return nullptr;
 }
 
 BGPlayerSnapshot const* BattlegroundCoordinator::GetNearestAlly(
-    Position const& position, float maxRadius, ObjectGuid excludeGuid, float* outDistance) const
+    Position const& position, float maxRadius, uint32 callerFaction,
+    ObjectGuid excludeGuid, float* outDistance) const
 {
     if (_spatialCache)
-        return _spatialCache->GetNearestAlly(position, maxRadius, excludeGuid, outDistance);
+        return _spatialCache->GetNearestAlly(position, maxRadius, callerFaction, excludeGuid, outDistance);
     return nullptr;
 }
 
-uint32 BattlegroundCoordinator::CountEnemiesInRadius(Position const& position, float radius) const
+uint32 BattlegroundCoordinator::CountEnemiesInRadius(Position const& position, float radius, uint32 callerFaction) const
 {
     if (_spatialCache)
-        return _spatialCache->CountEnemiesInRadius(position, radius);
+        return _spatialCache->CountEnemiesInRadius(position, radius, callerFaction);
     return 0;
 }
 
-uint32 BattlegroundCoordinator::CountAlliesInRadius(Position const& position, float radius) const
+uint32 BattlegroundCoordinator::CountAlliesInRadius(Position const& position, float radius, uint32 callerFaction) const
 {
     if (_spatialCache)
-        return _spatialCache->CountAlliesInRadius(position, radius);
+        return _spatialCache->CountAlliesInRadius(position, radius, callerFaction);
     return 0;
 }
 

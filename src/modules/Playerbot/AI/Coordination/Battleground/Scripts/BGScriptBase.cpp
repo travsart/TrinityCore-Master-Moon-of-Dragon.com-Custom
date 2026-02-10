@@ -736,7 +736,7 @@ void BGScriptBase::EngageTarget(::Player* bot, ::Unit* target)
     {
         float closestDist = range + 1.0f;
         auto const* nearestSnapshot = coordinator->GetNearestEnemy(
-            bot->GetPosition(), range, &closestDist);
+            bot->GetPosition(), range, bot->GetBGTeam(), bot->GetGUID(), &closestDist);
 
         if (nearestSnapshot)
         {

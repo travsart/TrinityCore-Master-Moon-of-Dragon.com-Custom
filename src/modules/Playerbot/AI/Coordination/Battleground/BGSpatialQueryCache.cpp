@@ -403,7 +403,7 @@ bool BGSpatialQueryCache::CellOverlapsCircle(BGCellKey const& cellKey, Position 
 }
 
 std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyEnemies(
-    Position const& position, float radius) const
+    Position const& position, float radius, uint32 callerFaction) const
 {
     auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -428,8 +428,8 @@ std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyEnemies(
             BGPlayerSnapshot const& snapshot = it->second;
 
             // Filter: enemies only, alive, within radius
-            if (snapshot.bgTeam == _faction)
-                continue;  // Not enemy
+            if (snapshot.bgTeam == callerFaction)
+                continue;  // Not enemy (same faction as caller)
             if (!snapshot.isAlive)
                 continue;
 
@@ -451,7 +451,7 @@ std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyEnemies(
 }
 
 std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyAllies(
-    Position const& position, float radius) const
+    Position const& position, float radius, uint32 callerFaction) const
 {
     auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -475,8 +475,8 @@ std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyAllies(
             BGPlayerSnapshot const& snapshot = it->second;
 
             // Filter: allies only, alive, within radius
-            if (snapshot.bgTeam != _faction)
-                continue;  // Not ally
+            if (snapshot.bgTeam != callerFaction)
+                continue;  // Not ally (different faction from caller)
             if (!snapshot.isAlive)
                 continue;
 
@@ -537,7 +537,8 @@ std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyPlayers(
 }
 
 BGPlayerSnapshot const* BGSpatialQueryCache::GetNearestEnemy(
-    Position const& position, float maxRadius, float* outDistance) const
+    Position const& position, float maxRadius, uint32 callerFaction,
+    ObjectGuid excludeGuid, float* outDistance) const
 {
     auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -578,6 +579,9 @@ BGPlayerSnapshot const* BGSpatialQueryCache::GetNearestEnemy(
 
                 for (ObjectGuid guid : cellIt->second.players)
                 {
+                    if (guid == excludeGuid)
+                        continue;
+
                     auto it = _playerSnapshots.find(guid);
                     if (it == _playerSnapshots.end())
                         continue;
@@ -585,8 +589,8 @@ BGPlayerSnapshot const* BGSpatialQueryCache::GetNearestEnemy(
                     BGPlayerSnapshot const& snapshot = it->second;
 
                     // Filter: enemies only, alive
-                    if (snapshot.bgTeam == _faction)
-                        continue;
+                    if (snapshot.bgTeam == callerFaction)
+                        continue;  // Same faction as caller = not enemy
                     if (!snapshot.isAlive)
                         continue;
 
@@ -614,7 +618,8 @@ BGPlayerSnapshot const* BGSpatialQueryCache::GetNearestEnemy(
 }
 
 BGPlayerSnapshot const* BGSpatialQueryCache::GetNearestAlly(
-    Position const& position, float maxRadius, ObjectGuid excludeGuid, float* outDistance) const
+    Position const& position, float maxRadius, uint32 callerFaction,
+    ObjectGuid excludeGuid, float* outDistance) const
 {
     BGPlayerSnapshot const* nearest = nullptr;
     float nearestDistSq = maxRadius * maxRadius;
@@ -651,8 +656,8 @@ BGPlayerSnapshot const* BGSpatialQueryCache::GetNearestAlly(
 
                     BGPlayerSnapshot const& snapshot = it->second;
 
-                    if (snapshot.bgTeam != _faction)
-                        continue;
+                    if (snapshot.bgTeam != callerFaction)
+                        continue;  // Different faction from caller = not ally
                     if (!snapshot.isAlive)
                         continue;
 
@@ -679,11 +684,11 @@ BGPlayerSnapshot const* BGSpatialQueryCache::GetNearestAlly(
 // ============================================================================
 
 std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyEnemyHealers(
-    Position const& position, float radius) const
+    Position const& position, float radius, uint32 callerFaction) const
 {
     std::vector<BGPlayerSnapshot const*> result;
 
-    auto enemies = QueryNearbyEnemies(position, radius);
+    auto enemies = QueryNearbyEnemies(position, radius, callerFaction);
     for (auto const* snapshot : enemies)
     {
         if (snapshot->isHealer)
@@ -694,11 +699,11 @@ std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyEnemyHealer
 }
 
 std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::QueryNearbyFriendlyHealers(
-    Position const& position, float radius) const
+    Position const& position, float radius, uint32 callerFaction) const
 {
     std::vector<BGPlayerSnapshot const*> result;
 
-    auto allies = QueryNearbyAllies(position, radius);
+    auto allies = QueryNearbyAllies(position, radius, callerFaction);
     for (auto const* snapshot : allies)
     {
         if (snapshot->isHealer)
@@ -721,7 +726,7 @@ std::vector<BGPlayerSnapshot const*> BGSpatialQueryCache::GetPlayersAttacking(Ob
     return result;
 }
 
-uint32 BGSpatialQueryCache::CountEnemiesInRadius(Position const& position, float radius) const
+uint32 BGSpatialQueryCache::CountEnemiesInRadius(Position const& position, float radius, uint32 callerFaction) const
 {
     uint32 count = 0;
     float radiusSq = radius * radius;
@@ -741,8 +746,8 @@ uint32 BGSpatialQueryCache::CountEnemiesInRadius(Position const& position, float
                 continue;
 
             BGPlayerSnapshot const& snapshot = it->second;
-            if (snapshot.bgTeam == _faction)
-                continue;
+            if (snapshot.bgTeam == callerFaction)
+                continue;  // Same faction as caller = not enemy
             if (!snapshot.isAlive)
                 continue;
 
@@ -756,7 +761,7 @@ uint32 BGSpatialQueryCache::CountEnemiesInRadius(Position const& position, float
     return count;
 }
 
-uint32 BGSpatialQueryCache::CountAlliesInRadius(Position const& position, float radius) const
+uint32 BGSpatialQueryCache::CountAlliesInRadius(Position const& position, float radius, uint32 callerFaction) const
 {
     uint32 count = 0;
     float radiusSq = radius * radius;
@@ -776,8 +781,8 @@ uint32 BGSpatialQueryCache::CountAlliesInRadius(Position const& position, float 
                 continue;
 
             BGPlayerSnapshot const& snapshot = it->second;
-            if (snapshot.bgTeam != _faction)
-                continue;
+            if (snapshot.bgTeam != callerFaction)
+                continue;  // Different faction from caller = not ally
             if (!snapshot.isAlive)
                 continue;
 

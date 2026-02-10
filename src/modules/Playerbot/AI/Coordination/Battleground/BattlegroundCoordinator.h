@@ -167,38 +167,43 @@ public:
      * @return Vector of enemy player snapshots within radius
      */
     ::std::vector<BGPlayerSnapshot const*> QueryNearbyEnemies(
-        Position const& position, float radius = 40.0f) const;
+        Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Query nearby allies using spatial grid (O(cells) not O(n))
      * @param position Center position
      * @param radius Search radius in yards
+     * @param callerFaction The querying player's BG team (ALLIANCE/HORDE)
      * @return Vector of ally player snapshots within radius
      */
     ::std::vector<BGPlayerSnapshot const*> QueryNearbyAllies(
-        Position const& position, float radius = 40.0f) const;
+        Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Get nearest enemy with early-exit optimization
      * @param position Center position
      * @param maxRadius Maximum search radius
+     * @param callerFaction The querying player's BG team (ALLIANCE/HORDE)
+     * @param excludeGuid GUID to exclude (typically self to prevent self-attack)
      * @param outDistance Output distance to nearest enemy
      * @return Pointer to nearest enemy snapshot, or nullptr if none
      */
     BGPlayerSnapshot const* GetNearestEnemy(
-        Position const& position, float maxRadius = 40.0f,
+        Position const& position, float maxRadius, uint32 callerFaction,
+        ObjectGuid excludeGuid = ObjectGuid::Empty,
         float* outDistance = nullptr) const;
 
     /**
      * @brief Get nearest ally with early-exit optimization
      * @param position Center position
      * @param maxRadius Maximum search radius
+     * @param callerFaction The querying player's BG team (ALLIANCE/HORDE)
      * @param excludeGuid GUID to exclude (typically querying player)
      * @param outDistance Output distance to nearest ally
      * @return Pointer to nearest ally snapshot, or nullptr if none
      */
     BGPlayerSnapshot const* GetNearestAlly(
-        Position const& position, float maxRadius = 40.0f,
+        Position const& position, float maxRadius, uint32 callerFaction,
         ObjectGuid excludeGuid = ObjectGuid::Empty,
         float* outDistance = nullptr) const;
 
@@ -206,17 +211,19 @@ public:
      * @brief Count enemies in radius (no allocation)
      * @param position Center position
      * @param radius Search radius
+     * @param callerFaction The querying player's BG team (ALLIANCE/HORDE)
      * @return Number of enemies in radius
      */
-    uint32 CountEnemiesInRadius(Position const& position, float radius) const;
+    uint32 CountEnemiesInRadius(Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Count allies in radius (no allocation)
      * @param position Center position
      * @param radius Search radius
+     * @param callerFaction The querying player's BG team (ALLIANCE/HORDE)
      * @return Number of allies in radius
      */
-    uint32 CountAlliesInRadius(Position const& position, float radius) const;
+    uint32 CountAlliesInRadius(Position const& position, float radius, uint32 callerFaction) const;
 
     /**
      * @brief Get the spatial query cache (for advanced queries)
