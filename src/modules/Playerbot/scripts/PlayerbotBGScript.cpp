@@ -409,6 +409,29 @@ private:
                 sBGBotManager->PopulateBattleground(bg);
             }
 
+            // Detect transition to WAIT_LEAVE (BG just ended)
+            // CRITICAL FIX: Trigger bot cleanup when BG ends to prevent:
+            // 1. Resource leaks (bots lingering on BG map without cleanup)
+            // 2. Dangling pointers in Map::_updateObjects (use-after-free crash)
+            // 3. Pool bots never being released back to the warm pool
+            if (status == STATUS_WAIT_LEAVE && lastStatus == STATUS_IN_PROGRESS)
+            {
+                Team winner = TEAM_OTHER;
+                switch (bg->GetWinner())
+                {
+                    case PVP_TEAM_ALLIANCE: winner = ALLIANCE; break;
+                    case PVP_TEAM_HORDE:    winner = HORDE; break;
+                    default:                winner = TEAM_OTHER; break;
+                }
+
+                TC_LOG_INFO("module.playerbot.bg",
+                    "PlayerbotBGScript: BG {} (instance {}) ended (winner: {}) - triggering bot cleanup",
+                    bg->GetName(), instanceId,
+                    winner == ALLIANCE ? "Alliance" : (winner == HORDE ? "Horde" : "Draw"));
+
+                sBGBotManager->OnBattlegroundEnd(bg, winner);
+            }
+
             // Cleanup finished BGs from tracker
             if (status == STATUS_WAIT_LEAVE)
             {
@@ -452,6 +475,9 @@ private:
                         TC_LOG_INFO("module.playerbot.bg",
                             "PlayerbotBGScript: No human players in BG instance {} - ending after {}s grace period",
                             instanceId, NO_HUMAN_GRACE_PERIOD / IN_MILLISECONDS);
+
+                        // Cleanup bots BEFORE ending the BG to ensure proper removal
+                        sBGBotManager->OnBattlegroundEnd(bg, TEAM_OTHER);
 
                         bg->EndBattleground(TEAM_OTHER);
 

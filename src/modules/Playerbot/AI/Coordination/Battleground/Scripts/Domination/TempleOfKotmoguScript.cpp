@@ -23,6 +23,7 @@
 #include "BotMovementUtil.h"
 #include "BattlegroundCoordinatorManager.h"
 #include "BGSpatialQueryCache.h"
+#include "Threading/BotActionManager.h"
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -1004,27 +1005,85 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
                 [&](auto const& kv) { return kv.second == player->GetGUID(); }),
             m_orbTargeters.end());
 
+        // Clear pending pickup — orb was successfully acquired
+        m_pendingOrbPickup.erase(player->GetGUID());
+
         ExecuteOrbCarrierMovement(player);
         return true;
     }
 
     // =========================================================================
-    // PRIORITY 2: Free orb exists → pick it up
-    // Any non-carrier bot should grab a free orb. PickupOrb handles splitting
-    // via m_orbTargeters so bots don't all rush the same orb.
+    // PENDING PICKUP HOLD: If this bot queued a Use() via BotActionMgr,
+    // hold position at the orb until the main thread processes it.
+    // Without this, the bot moves away on the next worker tick and the
+    // deferred GO::CastSpell range check fails silently.
     // =========================================================================
     {
+        auto pendingIt = m_pendingOrbPickup.find(player->GetGUID());
+        if (pendingIt != m_pendingOrbPickup.end())
+        {
+            uint32 now = GameTime::GetGameTimeMS();
+            uint32 elapsed = now - pendingIt->second.queuedTime;
+
+            // Success: bot got the orb aura — clear pending, fall through to Priority 1
+            // (already handled above since holdingOrb would be true)
+
+            // Timeout: 2 seconds should be more than enough for main thread to process
+            if (elapsed > 2000)
+            {
+                TC_LOG_DEBUG("playerbots.bg", "[TOK] {} pending pickup timed out after {}ms, clearing",
+                    player->GetName(), elapsed);
+                m_pendingOrbPickup.erase(pendingIt);
+                // Fall through to normal priority evaluation
+            }
+            else
+            {
+                // Hold position at the orb — don't move anywhere
+                float distToOrb = player->GetExactDist(&pendingIt->second.orbPosition);
+                if (distToOrb > 3.0f)
+                {
+                    // Moved slightly? Move back to orb
+                    BotMovementUtil::MoveToPosition(player, pendingIt->second.orbPosition);
+                }
+                // Otherwise just stand still — the main thread will process Use() soon
+
+                TC_LOG_DEBUG("playerbots.bg", "[TOK] {} holding position at {} for pending pickup ({}ms elapsed, dist={:.1f})",
+                    player->GetName(), TempleOfKotmogu::GetOrbName(pendingIt->second.orbId),
+                    elapsed, distToOrb);
+                return true;
+            }
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 2: Free orb exists → pick it up
+    // Only truly free orbs (not held, not claimed, not search-failed) trigger
+    // pickup. PickupOrb uses GUID-based slot assignment for even distribution.
+    // =========================================================================
+    {
+        uint32 now = GameTime::GetGameTimeMS();
         bool hasFreeOrb = false;
         for (uint32 i = 0; i < TempleOfKotmogu::ORB_COUNT; ++i)
         {
-            if (!IsOrbHeld(i)) { hasFreeOrb = true; break; }
+            if (IsOrbHeld(i))
+                continue;
+            // Skip orbs already claimed (Use() queued but aura not yet detected)
+            auto claimIt = m_orbClaimedUntil.find(i);
+            if (claimIt != m_orbClaimedUntil.end() && now < claimIt->second)
+                continue;
+            // Skip orbs on search-failed cooldown — they appear "free" but have no GO
+            auto failIt = m_orbSearchFailed.find(i);
+            if (failIt != m_orbSearchFailed.end() && now < failIt->second)
+                continue;
+            hasFreeOrb = true;
+            break;
         }
 
         if (hasFreeOrb)
         {
             if (PickupOrb(player))
                 return true;
-            // If PickupOrb fails (all orbs just got taken), fall through
+            // If PickupOrb fails (all orbs just got taken), fall through to escort/hunt
         }
     }
 
@@ -1146,128 +1205,107 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
         return false;
     }
 
-    ObjectGuid myGuid = player->GetGUID();
-
     // =========================================================================
-    // Clean stale entries from m_orbTargeters
+    // Deterministic orb assignment via GUID-based slot system
+    //
+    // Old approach: "pick nearest untargeted orb" with m_orbTargeters tracking.
+    // Problem: multiple bot worker threads evaluate simultaneously, all see empty
+    // m_orbTargeters, all pick the SAME nearest orb → 1 bot on one orb, 8 on another.
+    //
+    // New approach: each bot has a fixed "preferred orb slot" from GUID % ORB_COUNT.
+    // They always try their preferred orb first, then round-robin to the next free
+    // orb. This ensures even distribution without shared mutable state or races.
     // =========================================================================
-    for (auto it = m_orbTargeters.begin(); it != m_orbTargeters.end(); )
-    {
-        ::Player* targeter = ObjectAccessor::FindPlayer(it->second);
-        if (!targeter || !targeter->IsInWorld() || !targeter->IsAlive() || IsCarryingOrb(targeter))
-            it = m_orbTargeters.erase(it);
-        else
-            ++it;
-    }
-
-    // =========================================================================
-    // Find nearest available orb (not held AND not already targeted by another bot)
-    // =========================================================================
+    uint32 now = GameTime::GetGameTimeMS();
     std::vector<uint32> orbPriority = GetOrbPriority(player->GetBGTeam());
 
-    float bestDist = std::numeric_limits<float>::max();
-    uint32 bestOrbId = TempleOfKotmogu::ORB_COUNT; // invalid sentinel
-    Position bestOrbPos;
-
+    // Build free orb list (not held, not claimed, not search-failed)
+    std::vector<uint32> freeOrbs;
     for (uint32 orbId : orbPriority)
     {
         if (orbId >= TempleOfKotmogu::ORB_COUNT)
             continue;
-
-        // Skip orbs that are currently held by someone
         if (IsOrbHeld(orbId))
             continue;
-
-        // Skip orbs recently claimed by another bot (race condition prevention)
         auto claimIt = m_orbClaimedUntil.find(orbId);
-        if (claimIt != m_orbClaimedUntil.end() && GameTime::GetGameTimeMS() < claimIt->second)
+        if (claimIt != m_orbClaimedUntil.end() && now < claimIt->second)
             continue;
-
-        // Skip orbs already targeted by another bot (splitting logic)
-        auto targeterIt = m_orbTargeters.find(orbId);
-        if (targeterIt != m_orbTargeters.end() && targeterIt->second != myGuid)
-        {
-            // Another bot is already heading for this orb - skip it
+        auto failIt = m_orbSearchFailed.find(orbId);
+        if (failIt != m_orbSearchFailed.end() && now < failIt->second)
             continue;
-        }
-
-        // Get orb position (prefer dynamic discovery)
-        Position orbPos = GetDynamicOrbPosition(orbId);
-
-        float dist = player->GetExactDist(&orbPos);
-        if (dist < bestDist)
-        {
-            bestDist = dist;
-            bestOrbId = orbId;
-            bestOrbPos = orbPos;
-        }
+        freeOrbs.push_back(orbId);
     }
 
-    // If no untargeted orb available, allow targeting any unheld orb as fallback
-    // (better to double up than to do nothing)
-    if (bestOrbId >= TempleOfKotmogu::ORB_COUNT)
+    if (freeOrbs.empty())
     {
-        for (uint32 orbId : orbPriority)
-        {
-            if (orbId >= TempleOfKotmogu::ORB_COUNT)
-                continue;
-            if (IsOrbHeld(orbId))
-                continue;
-
-            // Also skip recently claimed orbs in fallback
-            auto claimIt = m_orbClaimedUntil.find(orbId);
-            if (claimIt != m_orbClaimedUntil.end() && GameTime::GetGameTimeMS() < claimIt->second)
-                continue;
-
-            Position orbPos = GetDynamicOrbPosition(orbId);
-            float dist = player->GetExactDist(&orbPos);
-            if (dist < bestDist)
-            {
-                bestDist = dist;
-                bestOrbId = orbId;
-                bestOrbPos = orbPos;
-            }
-        }
-    }
-
-    // No available orb found at all (all 4 are held)
-    if (bestOrbId >= TempleOfKotmogu::ORB_COUNT)
-    {
-        // Clear our targeting entry since we have nothing to target
-        for (auto it = m_orbTargeters.begin(); it != m_orbTargeters.end(); ++it)
-        {
-            if (it->second == myGuid)
-            {
-                m_orbTargeters.erase(it);
-                break;
-            }
-        }
-
-        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} no available orbs to pick up (all held)",
+        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} no available orbs to pick up (all held/claimed)",
             player->GetName());
         return false;
     }
 
-    // Register this bot as targeting the chosen orb
-    // First, clear any previous targeting by this bot
-    for (auto it = m_orbTargeters.begin(); it != m_orbTargeters.end(); ++it)
+    // Deterministic slot: GUID counter mod ORB_COUNT gives a preferred slot (0-3).
+    // Map that to the faction-priority orb list, then round-robin to find the
+    // first free orb. This ensures even split: ~2-3 bots per orb for 9 bots.
+    // Stable assignment: same bot always prefers the same orb as long as it's free.
+    uint32 preferredSlot = player->GetGUID().GetCounter() % TempleOfKotmogu::ORB_COUNT;
+    uint32 bestOrbId = TempleOfKotmogu::ORB_COUNT; // sentinel
+
+    for (uint32 attempt = 0; attempt < TempleOfKotmogu::ORB_COUNT; ++attempt)
     {
-        if (it->second == myGuid)
+        uint32 checkSlot = (preferredSlot + attempt) % TempleOfKotmogu::ORB_COUNT;
+        uint32 candidateOrb = orbPriority[checkSlot];
+
+        if (std::find(freeOrbs.begin(), freeOrbs.end(), candidateOrb) != freeOrbs.end())
         {
-            m_orbTargeters.erase(it);
+            bestOrbId = candidateOrb;
             break;
         }
     }
-    m_orbTargeters[bestOrbId] = myGuid;
 
-    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} targeting {} (dist: {:.1f})",
-        player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), bestDist);
+    if (bestOrbId >= TempleOfKotmogu::ORB_COUNT)
+    {
+        TC_LOG_DEBUG("playerbots.bg", "[TOK] {} no available orbs after slot assignment",
+            player->GetName());
+        return false;
+    }
+
+    Position bestOrbPos = GetDynamicOrbPosition(bestOrbId);
+    float bestDist = player->GetExactDist(&bestOrbPos);
+
+    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} targeting {} (slot {}, dist: {:.1f})",
+        player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), preferredSlot, bestDist);
 
     // Move toward the orb if too far
     if (bestDist > TOK_OBJECTIVE_RANGE)
     {
+        // Engage nearby enemies while traveling — initiate combat so ClassAI
+        // fires abilities, but always continue movement toward the orb
+        ::Playerbot::BattlegroundCoordinator* coord =
+            sBGCoordinatorMgr->GetCoordinatorForPlayer(player);
+        if (coord)
+        {
+            float enemyDist = 0.0f;
+            auto const* nearestEnemy = coord->GetNearestEnemy(
+                player->GetPosition(), 15.0f, player->GetBGTeam(), player->GetGUID(), &enemyDist);
+
+            if (nearestEnemy && nearestEnemy->isAlive)
+            {
+                ::Player* enemy = ObjectAccessor::FindPlayer(nearestEnemy->guid);
+                if (enemy && enemy->IsAlive())
+                {
+                    player->SetSelection(enemy->GetGUID());
+                    if (!player->IsInCombat() || player->GetVictim() != enemy)
+                        player->Attack(enemy, true);
+
+                    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} engaging {} en route to {} (dist: {:.1f})",
+                        player->GetName(), enemy->GetName(),
+                        TempleOfKotmogu::GetOrbName(bestOrbId), enemyDist);
+                }
+            }
+        }
+
         BotMovementUtil::MoveToPosition(player, bestOrbPos);
-        return true; // returning true = we're working on it
+        return true;
     }
 
     // Within range - search for the orb GameObject and use it
@@ -1333,21 +1371,57 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
             return true;
         }
 
-        bestGO->Use(player);
+        // CRITICAL FIX: Do NOT call bestGO->Use(player) directly!
+        // This runs on a bot WORKER THREAD. Use() triggers the core BG script
+        // (battleground_temple_of_kotmogu::OnFlagTaken) which calls
+        // Map::UpdateSpawnGroupConditions → DespawnAll → Unit::RemoveAllAuras.
+        // These Map operations are NOT thread-safe and cause ABORT in _UnapplyAura
+        // when multiple bot workers modify the same map concurrently.
+        //
+        // Solution: Queue the interaction as a deferred action to be executed
+        // on the main thread by BotActionMgr::ProcessActions().
+        {
+            BotAction action;
+            action.type = BotActionType::INTERACT_OBJECT;
+            action.botGuid = player->GetGUID();
+            action.targetGuid = bestGO->GetGUID();
+            action.queuedTime = GameTime::GetGameTimeMS();
+            action.priority = 10;  // High priority - orb pickup is time-sensitive
+            sBotActionMgr->QueueAction(std::move(action));
+        }
+
         // Mark orb as claimed for 3 seconds to prevent race condition where
         // another bot also calls Use() before the aura is detected by RefreshOrbState()
         m_orbClaimedUntil[bestOrbId] = GameTime::GetGameTimeMS() + 3000;
+        // Clear any search-failed cooldown since we found and used the GO
+        m_orbSearchFailed.erase(bestOrbId);
         // Successfully picked up - remove from targeters (now a carrier)
         m_orbTargeters.erase(bestOrbId);
-        TC_LOG_INFO("playerbots.bg", "[TOK] {} picked up {} (entry {}, dist {:.1f})",
+
+        // CRITICAL: Record pending pickup so ExecuteStrategy holds this bot at the
+        // orb position until the main thread processes Use(). Without this, the bot
+        // moves away on the next worker tick and the spell range check fails.
+        m_pendingOrbPickup[player->GetGUID()] = PendingPickup{
+            bestOrbId,
+            bestGO->GetPosition(),
+            GameTime::GetGameTimeMS()
+        };
+
+        TC_LOG_INFO("playerbots.bg", "[TOK] {} queued pickup of {} (entry {}, dist {:.1f})",
             player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId), orbEntry, bestGODist);
         return true;
     }
 
     // At orb location but no GO found - the orb was already picked up by someone
+    // or the dynamic GO hasn't respawned/registered in grid yet.
     // Clear our targeting so we don't loop back to the same empty spot
     m_orbTargeters.erase(bestOrbId);
-    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} at orb location but no GO found for {} - orb was taken, clearing target",
+
+    // Mark this orb as search-failed for 15 seconds. This prevents the infinite loop
+    // where bots re-target a "free" orb every tick but find 0 GOs each time.
+    m_orbSearchFailed[bestOrbId] = GameTime::GetGameTimeMS() + 15000;
+
+    TC_LOG_DEBUG("playerbots.bg", "[TOK] {} at orb location but no GO found for {} - orb was taken, cooldown 15s",
         player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId));
 
     // Engage any nearby enemies at the contested orb location instead of standing idle
@@ -2083,14 +2157,21 @@ bool TempleOfKotmoguScript::ExecuteOrbCarrierMovement(::Player* player)
 
         if (!route.empty())
         {
-            // Find the next waypoint we haven't reached yet
-            Position targetWaypoint = route.back(); // default: center
-            for (size_t i = 1; i < route.size(); ++i) // skip index 0 (orb spawn)
+            // Navigate to center, using intermediate waypoints only when they're
+            // AHEAD of us (closer to center than we are). This prevents the oscillation
+            // bug where a carrier at center re-targets a midway waypoint because it was
+            // the first waypoint with dist > 10yd in a forward-only scan.
+            Position targetWaypoint = route.back(); // default: center (last point)
+            float playerToCenterDist = player->GetExactDist(&targetWaypoint);
+            for (size_t i = 1; i < route.size() - 1; ++i) // intermediate waypoints only
             {
-                float wpDist = player->GetExactDist(&route[i]);
-                if (wpDist > TOK_OBJECTIVE_RANGE)
+                Position wpPos = route[i];
+                float wpToCenterDist = wpPos.GetExactDist(&route.back());
+                // Only use this intermediate wp if we're farther from center than it is
+                // (i.e., the waypoint is between us and center, not behind us)
+                if (playerToCenterDist > wpToCenterDist + 5.0f)
                 {
-                    targetWaypoint = route[i];
+                    targetWaypoint = wpPos;
                     break;
                 }
             }

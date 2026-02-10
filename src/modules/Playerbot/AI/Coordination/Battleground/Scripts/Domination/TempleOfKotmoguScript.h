@@ -235,6 +235,24 @@ private:
     /// orbId -> GameTimeMS when claim expires (prevents dual pickup race condition)
     std::map<uint32, uint32> m_orbClaimedUntil;
 
+    /// orbId -> GameTimeMS when search-failed cooldown expires
+    /// When PickupOrb finds 0 GOs at an orb spawn, we mark that orbId as temporarily
+    /// unavailable for 15 seconds. This prevents the infinite loop where bots keep
+    /// re-targeting a "free" orb that has no physical GO (dynamic respawn timing).
+    std::map<uint32, uint32> m_orbSearchFailed;
+
+    /// Pending orb pickup: bot has queued Use() via BotActionMgr and must hold position
+    /// at the orb until the main thread processes the deferred action. Without this,
+    /// the bot moves away on the next worker tick and the GO's CastSpell range check
+    /// fails silently.
+    struct PendingPickup
+    {
+        uint32 orbId;
+        Position orbPosition;
+        uint32 queuedTime;     // GameTimeMS when Use() was queued
+    };
+    std::map<ObjectGuid, PendingPickup> m_pendingOrbPickup;
+
     /// Timestamp for throttling RefreshOrbState() to once per second
     uint32 m_lastOrbRefresh = 0;
 

@@ -14,6 +14,8 @@
 #include "ObjectAccessor.h"
 #include "Log.h"
 #include "WorldSession.h"
+#include "Account.h"
+#include "Item.h"
 #include "Group.h"
 #include "LFGMgr.h"
 #include "Config/PlayerbotConfig.h"
@@ -457,6 +459,36 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
             // We cast to Object* to access the base class public method.
             static_cast<Object*>(player)->ClearUpdateMask(true);  // true = remove from _updateObjects
             TC_LOG_DEBUG("module.playerbot.session", "Cleared update mask for bot {} to prevent Map::SendObjectUpdates crash", playerGuid.ToString());
+
+            // CRITICAL FIX (Map.cpp:1981 use-after-free crash in SendObjectUpdates):
+            // Also mark the BattlenetAccount as destroyed and clear its update objects.
+            //
+            // Problem: Player, Account, and Item each have independent BaseEntity instances
+            // that are independently added to the SAME Map::_updateObjects set. Clearing only
+            // the Player's update mask leaves Account/Item pointers in _updateObjects.
+            // When the bot is eventually destroyed during async disconnect, Account/Item memory
+            // is freed but their stale pointers persist in _updateObjects -> ACCESS_VIOLATION.
+            //
+            // Solution: Mark Account as destroyed (blocks re-add) and clear its update mask.
+            // For items, we mark them as destroyed and clear from _updateObjects too.
+            if (WorldSession* ws = player->GetSession())
+            {
+                Battlenet::Account& account = ws->GetBattlenetAccount();
+                account.SetDestroyedObject(true);
+                account.ClearUpdateMask(true);
+                TC_LOG_DEBUG("module.playerbot.session", "Cleared Account update objects for bot {}", playerGuid.ToString());
+            }
+
+            // Clear item update objects (items have independent BaseEntity in _updateObjects)
+            for (uint8 i = PLAYER_SLOT_START; i < PLAYER_SLOT_END; ++i)
+            {
+                if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                {
+                    item->SetDestroyedObject(true);
+                    static_cast<Object*>(item)->ClearUpdateMask(true);
+                }
+            }
+            TC_LOG_DEBUG("module.playerbot.session", "Cleared Item update objects for bot {}", playerGuid.ToString());
         }
 
         // Signal session termination - BotSession::Update() will return false next cycle
