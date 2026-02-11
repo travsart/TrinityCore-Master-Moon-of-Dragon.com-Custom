@@ -57,10 +57,11 @@ void StrandOfTheAncientsScript::OnMatchStart()
 {
     SiegeScriptBase::OnMatchStart();
 
-    m_matchStartTime = getMSTime();
-    m_roundStartTime = m_matchStartTime;
-    m_lastStrategyUpdate = m_matchStartTime;
-    m_lastGateCheck = m_matchStartTime;
+    uint32 now = getMSTime();
+    m_matchStartTime = now;
+    m_roundStartTime = now;
+    m_lastStrategyUpdate = now;
+    m_lastGateCheck = now;
 
     TC_LOG_DEBUG("playerbots.bg.script",
         "StrandOfTheAncientsScript: Match started, Round 1, %s",
@@ -212,7 +213,7 @@ void StrandOfTheAncientsScript::OnRoundEnded(uint32 roundTime)
     if (m_currentRound == 1)
     {
         m_round1Time = roundTime;
-        m_round1Victory = m_relicCaptured;
+        m_round1Victory = m_relicCaptured.load();
 
         TC_LOG_DEBUG("playerbots.bg.script",
             "StrandOfTheAncientsScript: Round 1 ended, time=%ums, victory=%s",
@@ -222,7 +223,7 @@ void StrandOfTheAncientsScript::OnRoundEnded(uint32 roundTime)
     {
         TC_LOG_DEBUG("playerbots.bg.script",
             "StrandOfTheAncientsScript: Round 2 ended, time=%ums (R1 time=%ums)",
-            roundTime, m_round1Time);
+            roundTime, m_round1Time.load());
     }
 }
 
@@ -1125,6 +1126,12 @@ bool StrandOfTheAncientsScript::ExecuteStrategy(::Player* player)
     if (!player || !player->IsInWorld() || !player->IsAlive())
         return false;
 
+    // If already in a vehicle, don't execute normal strategy
+    if (player->GetVehicle())
+        return true;
+
+    uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+
     // =========================================================================
     // PRIORITY 1: Enemy nearby -> engage
     // =========================================================================
@@ -1141,98 +1148,116 @@ bool StrandOfTheAncientsScript::ExecuteStrategy(::Player* player)
     if (m_isAttacker)
     {
         // =================================================================
-        // ATTACKING
+        // ATTACKING - Duty split: 30% demolisher, 40% escort, 30% infantry
         // =================================================================
 
-        // PRIORITY 2: Move to next gate/objective in tier order
-        uint32 priorityGate = GetPriorityGate();
-        if (priorityGate < StrandOfTheAncients::Gates::COUNT)
+        // If the ancient gate is destroyed, ALL rush the relic
+        if (IsAncientGateDestroyed())
         {
-            Position gatePos = StrandOfTheAncients::GetGatePosition(priorityGate);
-            float dist = player->GetExactDist(&gatePos);
-
-            // If the ancient gate is destroyed, rush the relic
-            if (IsAncientGateDestroyed())
+            auto relicPositions = GetRelicAttackPositions();
+            if (!relicPositions.empty())
             {
-                auto relicPositions = GetRelicAttackPositions();
-                if (!relicPositions.empty())
-                {
-                    uint32 posIdx = player->GetGUID().GetCounter() % relicPositions.size();
-                    TC_LOG_DEBUG("playerbots.bg.script",
-                        "[SOTA] {} PRIORITY 2 (ATK): rushing Titan Relic!",
-                        player->GetName());
-                    BotMovementUtil::MoveToPosition(player, relicPositions[posIdx]);
-
-                    // Try to interact with relic
-                    TryInteractWithGameObject(player, 10 /*GAMEOBJECT_TYPE_GOOBER*/, 10.0f);
-                    return true;
-                }
+                uint32 posIdx = player->GetGUID().GetCounter() % relicPositions.size();
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[SOTA] {} RELIC RUSH: rushing Titan Relic!",
+                    player->GetName());
+                BotMovementUtil::MoveToPosition(player, relicPositions[posIdx]);
+                TryInteractWithGameObject(player, 10 /*GAMEOBJECT_TYPE_GOOBER*/, 10.0f);
+                return true;
             }
-
-            TC_LOG_DEBUG("playerbots.bg.script",
-                "[SOTA] {} PRIORITY 2 (ATK): moving to gate {} (dist={:.0f})",
-                player->GetName(), StrandOfTheAncients::GetGateName(priorityGate), dist);
-            BotMovementUtil::MoveToPosition(player, gatePos);
-            return true;
         }
 
-        // PRIORITY 3: Operate demolishers if available
-        // Try to interact with a nearby demolisher vehicle
-        if (TryInteractWithGameObject(player, 29 /*GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING not right - use vehicle*/, 15.0f))
+        // PRIORITY 2: Demolisher duty (30% of team, slots 0-2)
+        if (dutySlot < 3)
         {
-            TC_LOG_DEBUG("playerbots.bg.script",
-                "[SOTA] {} PRIORITY 3 (ATK): interacting with demolisher",
-                player->GetName());
-            return true;
+            // Try to board a nearby demolisher
+            if (TryBoardNearbyVehicle(player, StrandOfTheAncients::Vehicles::DEMOLISHER_ENTRY, 30.0f))
+            {
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[SOTA] {} PRIORITY 2 (ATK): boarding demolisher",
+                    player->GetName());
+                return true;
+            }
+
+            // No demolisher nearby — move toward demolisher spawn
+            auto demoRoute = GetDemolisherRoute(m_currentPath);
+            if (!demoRoute.empty())
+            {
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[SOTA] {} PRIORITY 2 (ATK): moving to demolisher route",
+                    player->GetName());
+                BotMovementUtil::MoveToPosition(player, demoRoute.front());
+                return true;
+            }
+        }
+
+        // PRIORITY 3: Escort/Infantry duty (70% of team, slots 3-9)
+        {
+            uint32 priorityGate = GetPriorityGate();
+            if (priorityGate < StrandOfTheAncients::Gates::COUNT)
+            {
+                Position gatePos = StrandOfTheAncients::GetGatePosition(priorityGate);
+                float dist = player->GetExactDist(&gatePos);
+
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[SOTA] {} PRIORITY 3 (ATK): moving to gate {} (dist={:.0f})",
+                    player->GetName(), StrandOfTheAncients::GetGateName(priorityGate), dist);
+                BotMovementUtil::MoveToPosition(player, gatePos);
+                return true;
+            }
         }
     }
     else
     {
         // =================================================================
-        // DEFENDING
+        // DEFENDING - Duty split: 25% turrets, 75% gate defense
         // =================================================================
 
-        // PRIORITY 2: Defend current tier gate
-        uint32 defenseGate = GetPriorityDefenseGate();
-        if (defenseGate < StrandOfTheAncients::Gates::COUNT)
+        // PRIORITY 2: Turret duty (25% of team, slots 0-2)
+        if (dutySlot < 3)
         {
-            auto defPositions = GetGateDefensePositions(defenseGate);
-            if (!defPositions.empty())
+            // Try to board a nearby turret
+            if (TryBoardNearbyVehicle(player, StrandOfTheAncients::Vehicles::TURRET_ENTRY, 30.0f))
             {
-                uint32 posIdx = player->GetGUID().GetCounter() % defPositions.size();
-                Position defPos = defPositions[posIdx];
-                float dist = player->GetExactDist(&defPos);
-
                 TC_LOG_DEBUG("playerbots.bg.script",
-                    "[SOTA] {} PRIORITY 2 (DEF): defending gate {} (dist={:.0f})",
-                    player->GetName(), StrandOfTheAncients::GetGateName(defenseGate), dist);
+                    "[SOTA] {} PRIORITY 2 (DEF): boarding turret",
+                    player->GetName());
+                return true;
+            }
 
-                // If at position, patrol; otherwise move to it
-                if (dist < 10.0f)
-                    PatrolAroundPosition(player, defPos, 3.0f, 10.0f);
-                else
-                    BotMovementUtil::MoveToPosition(player, defPos);
-
+            // No turret nearby — move toward turret position
+            auto turretPositions = GetTurretPositions();
+            if (!turretPositions.empty())
+            {
+                uint32 turretIdx = (player->GetGUID().GetCounter() / 3) % turretPositions.size();
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[SOTA] {} PRIORITY 2 (DEF): moving to turret position",
+                    player->GetName());
+                BotMovementUtil::MoveToPosition(player, turretPositions[turretIdx]);
                 return true;
             }
         }
 
-        // PRIORITY 3: Man turrets if available
-        auto turretPositions = GetTurretPositions();
-        if (!turretPositions.empty())
+        // PRIORITY 3: Gate defense (75% of team, slots 3-9)
         {
-            // Only some bots should try turrets (25% based on GUID)
-            if (player->GetGUID().GetCounter() % 4 == 0)
+            uint32 defenseGate = GetPriorityDefenseGate();
+            if (defenseGate < StrandOfTheAncients::Gates::COUNT)
             {
-                uint32 turretIdx = (player->GetGUID().GetCounter() / 4) % turretPositions.size();
-                float dist = player->GetExactDist(&turretPositions[turretIdx]);
-
-                if (dist < 20.0f)
+                auto defPositions = GetGateDefensePositions(defenseGate);
+                if (!defPositions.empty())
                 {
+                    uint32 posIdx = player->GetGUID().GetCounter() % defPositions.size();
+                    Position defPos = defPositions[posIdx];
+                    float dist = player->GetExactDist(&defPos);
+
                     TC_LOG_DEBUG("playerbots.bg.script",
-                        "[SOTA] {} PRIORITY 3 (DEF): manning turret (dist={:.0f})",
-                        player->GetName(), dist);
-                    BotMovementUtil::MoveToPosition(player, turretPositions[turretIdx]);
+                        "[SOTA] {} PRIORITY 3 (DEF): defending gate {} (dist={:.0f})",
+                        player->GetName(), StrandOfTheAncients::GetGateName(defenseGate), dist);
+
+                    if (dist < 10.0f)
+                        PatrolAroundPosition(player, defPos, 3.0f, 10.0f);
+                    else
+                        BotMovementUtil::MoveToPosition(player, defPos);
                     return true;
                 }
             }

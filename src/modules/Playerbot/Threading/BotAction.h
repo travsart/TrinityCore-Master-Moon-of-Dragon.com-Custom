@@ -44,6 +44,10 @@ enum class BotActionType : uint8
     INTERACT_NPC,           // Talk to NPC
     LOOT_OBJECT,            // Loot creature/GameObject
 
+    // Vehicle actions
+    ENTER_VEHICLE,          // Enter a vehicle (creature with VehicleKit)
+    EXIT_VEHICLE,           // Exit current vehicle
+
     // Group actions
     ACCEPT_GROUP_INVITE,    // Accept group invitation
     LEAVE_GROUP,            // Leave current group
@@ -170,6 +174,39 @@ struct BotAction
         action.botGuid = bot;
         action.text = message;
         action.priority = 1;   // Chat is low priority
+        action.queuedTime = timestamp;
+        return action;
+    }
+
+    static BotAction InteractObject(ObjectGuid bot, ObjectGuid object, uint32 timestamp)
+    {
+        BotAction action;
+        action.type = BotActionType::INTERACT_OBJECT;
+        action.botGuid = bot;
+        action.targetGuid = object;
+        action.priority = 8;   // BG objective interaction is high priority
+        action.queuedTime = timestamp;
+        return action;
+    }
+
+    static BotAction EnterVehicle(ObjectGuid bot, ObjectGuid vehicleGuid, int8 seatId, uint32 timestamp)
+    {
+        BotAction action;
+        action.type = BotActionType::ENTER_VEHICLE;
+        action.botGuid = bot;
+        action.targetGuid = vehicleGuid;
+        action.spellId = static_cast<uint32>(seatId);  // Reuse spellId field for seat ID
+        action.priority = 8;   // Vehicle boarding is high priority
+        action.queuedTime = timestamp;
+        return action;
+    }
+
+    static BotAction ExitVehicle(ObjectGuid bot, uint32 timestamp)
+    {
+        BotAction action;
+        action.type = BotActionType::EXIT_VEHICLE;
+        action.botGuid = bot;
+        action.priority = 8;
         action.queuedTime = timestamp;
         return action;
     }

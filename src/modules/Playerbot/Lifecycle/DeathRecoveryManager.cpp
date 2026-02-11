@@ -17,7 +17,7 @@
 #include "TerrainMgr.h"
 #include "GameObject.h"  // For TransportBase and transport handling in manual teleport completion
 #include "WorldSession.h"
-#include "MovementPackets.h"  // For WorldPackets::Movement::MoveTeleportAck
+// MovementPackets.h removed - teleport ACK now handled by BotPacketSimulator
 #include "MotionMaster.h"
 #include "Log.h"
 #include "Config/PlayerbotConfig.h"
@@ -398,62 +398,47 @@ void DeathRecoveryManager::HandleReleasingSpirit(uint32 diff)
 
 void DeathRecoveryManager::HandlePendingTeleportAck(uint32 diff)
 {
-    // SPELL MOD CRASH FIX: Wait 100ms before processing teleport ack
-    // This allows the Ghost spell (8326) to stabilize and prevents
-    // Spell.cpp:603 assertion: m_spellModTakingSpell != this
+    // The BotPacketSimulator's ACK scanner (runs every 100ms from BotSession::Update(),
+    // BEFORE the AI update loop) automatically processes near-teleport ACKs when
+    // IsBeingTeleportedNear() is true. This provides the 100ms stabilization delay
+    // that prevents the Spell.cpp:603 crash (m_spellModTakingSpell assertion).
+    //
+    // This state handler just waits for the teleport to complete, then transitions.
 
     auto now = ::std::chrono::steady_clock::now();
     auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         now - m_teleportAckTime).count();
 
-    // Wait minimum 100ms for spell system to stabilize
-    if (elapsed < 100)
+    // Wait minimum 200ms for BotPacketSimulator ACK scanner to process the teleport
+    // (ACK scanner runs every 100ms, so 200ms guarantees at least one full scan cycle)
+    if (elapsed < 200)
     {
-        if (elapsed % 50 < diff) // Log every 50ms
+        if (elapsed % 50 < diff)
         {
-            TC_LOG_TRACE("playerbot.death", "⏳ Bot {} waiting for spell stabilization... {}ms elapsed",
+            TC_LOG_TRACE("playerbot.death", "Bot {} waiting for ACK scanner to process teleport... {}ms elapsed",
                 m_bot->GetName(), elapsed);
         }
         return;
     }
 
-    // Check if we still need to send teleport ack
-    if (m_needsTeleportAck && m_bot && m_bot->IsBeingTeleportedNear())
+    // Check if teleport was successfully ACKed by BotPacketSimulator
+    if (m_bot && !m_bot->IsBeingTeleportedNear())
     {
-        TC_LOG_ERROR("playerbot.death", " Bot {} processing deferred teleport ack ({}ms delay)",
+        TC_LOG_DEBUG("playerbot.death", "Bot {} teleport ACK processed by BotPacketSimulator ({}ms)",
             m_bot->GetName(), elapsed);
-        try
-        {
-            // Construct WorldPacket with CMSG_MOVE_TELEPORT_ACK data
-            WorldPacket data(CMSG_MOVE_TELEPORT_ACK, 8 + 4 + 4);
-            data << m_bot->GetGUID();        // MoverGUID
-            data << int32(0);                 // AckIndex (not validated)
-            data << int32(GameTime::GetGameTimeMS());       // MoveTime (not validated)
-            // Create MoveTeleportAck packet object and parse the data
-            WorldPackets::Movement::MoveTeleportAck ackPacket(::std::move(data));
-            ackPacket.Read();  // Parse the packet data into struct fields
-
-            // Directly call the handler (as if packet was received from client)
-            // This triggers UpdatePosition() safely through normal TrinityCore packet flow
-            m_bot->GetSession()->HandleMoveTeleportAck(ackPacket);
-
-            TC_LOG_ERROR("playerbot.death", " Bot {} HandleMoveTeleportAck() called successfully (deferred)",
-                m_bot->GetName());
-
-            m_needsTeleportAck = false;
-        }
-        catch (::std::exception const& e)
-        {
-            TC_LOG_ERROR("playerbot.death", " Bot {} EXCEPTION in deferred teleport ack: {}",
-                m_bot->GetName(), e.what());
-            m_needsTeleportAck = false; // Clear flag to prevent infinite retries
-        }
+        m_needsTeleportAck = false;
+    }
+    else if (elapsed > 5000)
+    {
+        // Safety timeout - teleport should have been ACKed within a few scan cycles
+        TC_LOG_ERROR("playerbot.death", "Bot {} teleport ACK timeout after {}ms, forcing transition",
+            m_bot->GetName(), elapsed);
+        m_needsTeleportAck = false;
     }
     else
     {
-        TC_LOG_DEBUG("playerbot.death", "Bot {} teleport ack no longer needed (IsBeingTeleportedNear={})",
-            m_bot->GetName(), m_bot ? m_bot->IsBeingTeleportedNear() : false);
-        m_needsTeleportAck = false;
+        // Still pending - wait for next update cycle
+        return;
     }
 
     // Transition to next state

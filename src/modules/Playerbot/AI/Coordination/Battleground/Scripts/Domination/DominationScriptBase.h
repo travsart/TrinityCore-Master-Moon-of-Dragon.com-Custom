@@ -309,6 +309,62 @@ protected:
     uint32 m_lastNodeStateRefresh = 0;
     static constexpr uint32 NODE_STATE_REFRESH_INTERVAL = 1000;
 
+    // ========================================================================
+    // NODE DEFENSE COMMITMENT
+    // ========================================================================
+
+    /**
+     * @brief After capturing a node, the bot commits to defending it for a period.
+     * Prevents the human-unrealistic "capture and immediately leave" pattern.
+     */
+    struct DefenseCommitment
+    {
+        uint32 nodeIndex;      // Which node to defend
+        uint32 commitTime;     // When commitment started (getMSTime)
+        uint32 durationMs;     // How long to defend (scales by game state)
+    };
+
+    std::map<ObjectGuid, DefenseCommitment> m_nodeDefenseCommitments;
+
+    /**
+     * @brief Record that a bot should defend a node after capturing it
+     * @param botGuid The bot's GUID
+     * @param nodeIndex The captured node
+     */
+    void CommitToDefense(ObjectGuid botGuid, uint32 nodeIndex);
+
+    /**
+     * @brief Check if a bot has an active defense commitment
+     * If so, execute DefendNode for the committed node and return true.
+     * @param bot The bot player
+     * @return true if the bot is under a defense commitment (behavior was handled)
+     */
+    bool CheckDefenseCommitment(::Player* bot);
+
+    /**
+     * @brief Get the defense commitment duration based on current game state
+     * Opening: 10s, Mid-game: 20s, Just lost a node: 30s
+     */
+    uint32 GetDefenseCommitmentDuration() const;
+
+    // ========================================================================
+    // REINFORCEMENT ROUTING ("INC" RESPONSE)
+    // ========================================================================
+
+    /**
+     * @brief Track when each node came under attack for reinforcement priority
+     */
+    std::map<uint32, uint32> m_nodeUnderAttackSince;
+
+    /**
+     * @brief Check if a nearby contested node needs reinforcement
+     * Bots within divert range check for contested nodes with rising priority.
+     * @param bot The bot player
+     * @param maxDivertRange Max distance to divert from current path
+     * @return Node index to reinforce, or UINT32_MAX if none
+     */
+    uint32 CheckReinforcementNeeded(::Player* bot, float maxDivertRange = 80.0f) const;
+
 private:
     // Update timers
     uint32 m_nodeUpdateTimer = 0;

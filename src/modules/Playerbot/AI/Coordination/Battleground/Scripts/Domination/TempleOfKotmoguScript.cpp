@@ -450,20 +450,44 @@ TempleOfKotmoguScript::GamePhase TempleOfKotmoguScript::GetCurrentPhase() const
     uint32 ourScore = (faction == ALLIANCE) ? m_allianceScore : m_hordeScore;
     uint32 theirScore = (faction == ALLIANCE) ? m_hordeScore : m_allianceScore;
 
-    // Desperate if we're significantly behind
-    if (ourScore + TempleOfKotmogu::Strategy::DESPERATION_THRESHOLD < theirScore &&
-        elapsed > TempleOfKotmogu::Strategy::MID_GAME_START)
+    // Phase hysteresis: use different thresholds for entering vs exiting DESPERATE
+    // Enter DESPERATE at full threshold. Exit DESPERATE only when gap closes to half threshold.
+    constexpr uint32 ENTER_THRESHOLD = TempleOfKotmogu::Strategy::DESPERATION_THRESHOLD;
+    constexpr uint32 EXIT_THRESHOLD = TempleOfKotmogu::Strategy::DESPERATION_THRESHOLD / 2;
+
+    if (elapsed > TempleOfKotmogu::Strategy::MID_GAME_START)
     {
-        return GamePhase::DESPERATE;
+        if (m_lastPhase == GamePhase::DESPERATE)
+        {
+            // Already desperate: only exit when gap narrows to half threshold
+            if (ourScore + EXIT_THRESHOLD < theirScore)
+            {
+                m_lastPhase = GamePhase::DESPERATE;
+                return GamePhase::DESPERATE;
+            }
+            // Gap narrowed enough, fall through to normal phase logic
+        }
+        else
+        {
+            // Not desperate: enter at full threshold
+            if (ourScore + ENTER_THRESHOLD < theirScore)
+            {
+                m_lastPhase = GamePhase::DESPERATE;
+                return GamePhase::DESPERATE;
+            }
+        }
     }
 
+    GamePhase phase;
     if (elapsed < TempleOfKotmogu::Strategy::OPENING_PHASE_DURATION)
-        return GamePhase::OPENING;
+        phase = GamePhase::OPENING;
+    else if (elapsed < TempleOfKotmogu::Strategy::LATE_GAME_START)
+        phase = GamePhase::MID_GAME;
+    else
+        phase = GamePhase::LATE_GAME;
 
-    if (elapsed < TempleOfKotmogu::Strategy::LATE_GAME_START)
-        return GamePhase::MID_GAME;
-
-    return GamePhase::LATE_GAME;
+    m_lastPhase = phase;
+    return phase;
 }
 
 void TempleOfKotmoguScript::ApplyPhaseStrategy(StrategicDecision& decision, GamePhase phase, float scoreAdvantage) const

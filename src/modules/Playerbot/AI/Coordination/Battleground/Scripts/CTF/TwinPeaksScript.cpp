@@ -15,6 +15,7 @@
 #include "TwinPeaksScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "BotMovementUtil.h"
 #include "Player.h"
 #include "Log.h"
 #include <cmath>
@@ -117,14 +118,14 @@ void TwinPeaksScript::OnEvent(const BGScriptEventData& event)
                 event.faction == ALLIANCE ? "Alliance" : "Horde",
                 event.primaryGuid.ToString(),
                 event.x, event.y, event.z,
-                static_cast<int>(m_currentPhase));
+                static_cast<int>(m_currentPhase.load()));
             break;
 
         case BGScriptEvent::FLAG_CAPTURED:
             TC_LOG_DEBUG("playerbots.bg.script",
                 "TwinPeaks: Flag captured! New score - Alliance: {}, Horde: {} - Phase: {}",
                 m_allianceScore, m_hordeScore,
-                static_cast<int>(m_currentPhase));
+                static_cast<int>(m_currentPhase.load()));
             break;
 
         case BGScriptEvent::FLAG_DROPPED:
@@ -133,14 +134,14 @@ void TwinPeaksScript::OnEvent(const BGScriptEventData& event)
                 event.x, event.y, event.z,
                 IsOnBridge(event.x, event.y) ? "ON BRIDGE (critical)" :
                     (IsInWater(event.x, event.y, event.z) ? "IN WATER" : "normal"),
-                static_cast<int>(m_currentPhase));
+                static_cast<int>(m_currentPhase.load()));
             break;
 
         case BGScriptEvent::FLAG_RETURNED:
             TC_LOG_DEBUG("playerbots.bg.script",
                 "TwinPeaks: Flag returned to {} base - Phase: {}",
                 event.faction == ALLIANCE ? "Alliance" : "Horde",
-                static_cast<int>(m_currentPhase));
+                static_cast<int>(m_currentPhase.load()));
             break;
 
         default:
@@ -182,105 +183,148 @@ bool TwinPeaksScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 3: No flags in play -> race to enemy flag / defend
+    // PRIORITY 3: No flags in play -> phase-aware split with mid-field control
     // =========================================================================
     if (!m_cachedFriendlyFC && !m_cachedEnemyFC)
     {
-        // Phase-aware duty split: OPENING sends more to pickup, LATE_GAME defends more
         uint32 dutySlot = player->GetGUID().GetCounter() % 10;
-        uint32 pickupThreshold;
+        // Phase-aware: pickup / defend / mid-field thresholds
+        uint32 pickupThreshold, defendThreshold; // pickup < defend < 10 (rest = mid-field)
 
-        switch (m_currentPhase)
+        switch (m_currentPhase.load())
         {
             case TwinPeaksPhase::OPENING:
-                pickupThreshold = 7; // 70% rush enemy flag during opening
+                pickupThreshold = 3; // 30% rush enemy flag
+                defendThreshold = 7; // 40% defend, 30% mid-field
                 break;
             case TwinPeaksPhase::MID_GAME:
-                pickupThreshold = 5; // 50% balanced
+                pickupThreshold = 4; // 40% pickup
+                defendThreshold = 7; // 30% defend, 30% mid-field
                 break;
             case TwinPeaksPhase::LATE_GAME:
-                pickupThreshold = 4; // 40% pickup, 60% defend (protect base when ahead)
+                pickupThreshold = 3; // 30% pickup
+                defendThreshold = 7; // 40% defend, 30% mid-field
                 break;
             case TwinPeaksPhase::DESPERATE:
-                pickupThreshold = 8; // 80% all-in rush for the flag
+                pickupThreshold = 6; // 60% all-in rush
+                defendThreshold = 8; // 20% defend, 20% mid-field
                 break;
             default:
-                pickupThreshold = 5;
+                pickupThreshold = 4;
+                defendThreshold = 7;
                 break;
         }
 
         if (dutySlot < pickupThreshold)
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 3: going to pick up enemy flag (phase={})",
-                player->GetName(), static_cast<int>(m_currentPhase));
+                player->GetName(), static_cast<int>(m_currentPhase.load()));
             PickupEnemyFlag(player);
+        }
+        else if (dutySlot < defendThreshold)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 3: defending flag room (phase={})",
+                player->GetName(), static_cast<int>(m_currentPhase.load()));
+            DefendOwnFlagRoom(player);
         }
         else
         {
-            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 3: defending flag room (phase={})",
-                player->GetName(), static_cast<int>(m_currentPhase));
-            DefendOwnFlagRoom(player);
+            // Mid-field control: hold chokepoints and contest mid
+            auto chokepoints = GetMiddleChokepoints();
+            if (!chokepoints.empty())
+            {
+                uint32 cpIdx = player->GetGUID().GetCounter() % chokepoints.size();
+                Playerbot::BotMovementUtil::MoveToPosition(player, chokepoints[cpIdx]);
+                ::Player* nearEnemy = FindNearestEnemyPlayer(player, 20.0f);
+                if (nearEnemy)
+                    EngageTarget(player, nearEnemy);
+            }
+            else
+            {
+                DefendOwnFlagRoom(player);
+            }
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 3: holding mid-field (phase={})",
+                player->GetName(), static_cast<int>(m_currentPhase.load()));
         }
         return true;
     }
 
     // =========================================================================
-    // PRIORITY 4: Both FCs exist -> phase-aware escort/hunt split
+    // PRIORITY 4: Both FCs exist -> phase-aware escort/defend/hunt split
     // =========================================================================
     if (m_cachedFriendlyFC && m_cachedEnemyFC)
     {
         uint32 dutySlot = player->GetGUID().GetCounter() % 10;
-        uint32 escortThreshold;
+        // escort / defend / hunt thresholds
+        uint32 escortThreshold, defendThreshold; // escort < defend < 10 (rest = hunt)
 
-        switch (m_currentPhase)
+        switch (m_currentPhase.load())
         {
             case TwinPeaksPhase::OPENING:
-                escortThreshold = 5; // 50/50 during opening
+                escortThreshold = 2; // 20% escort
+                defendThreshold = 6; // 40% defend, 40% hunt
                 break;
             case TwinPeaksPhase::MID_GAME:
-                escortThreshold = 6; // 60% escort, 40% hunt
+                escortThreshold = 2; // 20% escort
+                defendThreshold = 6; // 40% defend, 40% hunt
                 break;
             case TwinPeaksPhase::LATE_GAME:
-                // If we're ahead, escort more to protect the FC and cap
-                escortThreshold = (GetScoreAdvantage(player->GetBGTeam()) > 0) ? 7 : 4;
+                // If we're ahead, escort more to protect cap opportunity
+                if (GetScoreAdvantage(player->GetBGTeam()) > 0)
+                {
+                    escortThreshold = 4; // 40% escort
+                    defendThreshold = 7; // 30% defend, 30% hunt
+                }
+                else
+                {
+                    escortThreshold = 2; // 20% escort
+                    defendThreshold = 5; // 30% defend, 50% hunt
+                }
                 break;
             case TwinPeaksPhase::DESPERATE:
-                escortThreshold = 3; // 30% escort, 70% hunt (need to kill their FC)
+                escortThreshold = 1; // 10% escort
+                defendThreshold = 3; // 20% defend, 70% hunt
                 break;
             default:
-                escortThreshold = 6;
+                escortThreshold = 2;
+                defendThreshold = 6;
                 break;
         }
 
         if (dutySlot < escortThreshold)
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 4: escorting friendly FC {} (phase={})",
-                player->GetName(), m_cachedFriendlyFC->GetName(), static_cast<int>(m_currentPhase));
+                player->GetName(), m_cachedFriendlyFC->GetName(), static_cast<int>(m_currentPhase.load()));
             EscortFriendlyFC(player, m_cachedFriendlyFC);
+        }
+        else if (dutySlot < defendThreshold)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 4: defending flag room during standoff (phase={})",
+                player->GetName(), static_cast<int>(m_currentPhase.load()));
+            DefendOwnFlagRoom(player);
         }
         else
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 4: hunting enemy FC {} (phase={})",
-                player->GetName(), m_cachedEnemyFC->GetName(), static_cast<int>(m_currentPhase));
+                player->GetName(), m_cachedEnemyFC->GetName(), static_cast<int>(m_currentPhase.load()));
             HuntEnemyFC(player, m_cachedEnemyFC);
         }
         return true;
     }
 
     // =========================================================================
-    // PRIORITY 5: Only friendly FC exists -> mostly escort, some defend
+    // PRIORITY 5: Only friendly FC exists -> 60% escort / 40% defend
     // =========================================================================
     if (m_cachedFriendlyFC)
     {
-        // In TP, keep a small guard at our flag room even when escorting
         uint32 dutySlot = player->GetGUID().GetCounter() % 5;
-        if (dutySlot < 4) // 80% escort
+        if (dutySlot < 3) // 60% escort
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 5: escorting friendly FC {}",
                 player->GetName(), m_cachedFriendlyFC->GetName());
             EscortFriendlyFC(player, m_cachedFriendlyFC);
         }
-        else // 20% defend home flag
+        else // 40% defend home flag
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[TP] {} PRIORITY 5: defending flag room while FC runs",
                 player->GetName());
@@ -290,11 +334,10 @@ bool TwinPeaksScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 6: Only enemy FC exists -> hunt and defend
+    // PRIORITY 6: Only enemy FC exists -> 60% hunt / 20% grab flag / 20% defend
     // =========================================================================
     if (m_cachedEnemyFC)
     {
-        // Most hunt, some go grab enemy flag to force a standoff
         uint32 dutySlot = player->GetGUID().GetCounter() % 5;
         if (dutySlot < 3) // 60% hunt
         {
@@ -608,7 +651,7 @@ RoleDistribution TwinPeaksScript::GetRecommendedRoles(const StrategicDecision& d
     RoleDistribution roles;
 
     // Base distribution for CTF using BGRole enum
-    switch (m_currentPhase)
+    switch (m_currentPhase.load())
     {
         case TwinPeaksPhase::OPENING:
             // Opening: heavy offense to grab flag first
@@ -672,7 +715,7 @@ void TwinPeaksScript::AdjustStrategy(StrategicDecision& decision, float scoreAdv
     uint32 faction = (decision.defenseAllocation > decision.offenseAllocation) ? ALLIANCE : HORDE;
 
     // Apply phase-specific strategy
-    switch (m_currentPhase)
+    switch (m_currentPhase.load())
     {
         case TwinPeaksPhase::OPENING:
             ApplyOpeningPhaseStrategy(decision, faction);
@@ -944,6 +987,19 @@ float TwinPeaksScript::EvaluateRouteRisk(FCRouteType route, uint32 faction,
     return totalRisk;
 }
 
+std::vector<Position> TwinPeaksScript::GetFCRouteWaypoints(uint32 faction,
+    const std::vector<Position>& enemyPositions) const
+{
+    FCRouteType bestRoute = RecommendFCRoute(faction, enemyPositions);
+
+    TC_LOG_DEBUG("playerbots.bg.script", "TwinPeaks FC route: selected {} for {}",
+        bestRoute == FCRouteType::DIRECT ? "DIRECT" :
+        bestRoute == FCRouteType::NORTH ? "NORTH" : "SOUTH",
+        faction == ALLIANCE ? "Alliance" : "Horde");
+
+    return GetFCKitePath(faction, bestRoute);
+}
+
 // ============================================================================
 // PHASE AND STATE QUERIES
 // ============================================================================
@@ -1049,7 +1105,7 @@ void TwinPeaksScript::UpdatePhase(uint32 timeElapsed, uint32 timeRemaining)
     {
         TC_LOG_DEBUG("playerbots.bg.script",
             "TwinPeaks: Phase transition {} -> {} at {}ms elapsed, score: A{}-H{}",
-            static_cast<int>(m_currentPhase), static_cast<int>(newPhase),
+            static_cast<int>(m_currentPhase.load()), static_cast<int>(newPhase),
             timeElapsed, m_allianceScore, m_hordeScore);
         m_currentPhase = newPhase;
     }

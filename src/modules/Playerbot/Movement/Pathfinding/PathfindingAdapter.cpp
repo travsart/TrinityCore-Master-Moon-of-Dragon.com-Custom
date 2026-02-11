@@ -11,6 +11,7 @@
 #include "Player.h"
 #include "Map.h"
 #include "../BotMovementUtil.h"
+#include "../RoadNetwork/RoadNetworkManager.h"
 
 #include "PhaseShift.h"
 #include "Log.h"
@@ -78,6 +79,64 @@ namespace Playerbot
 
         Position start = bot->GetPosition();
         float distance = start.GetExactDist(&destination);
+
+        // Road-aware routing for long-distance travel
+        if (!forceDirect && !bot->CanFly() &&
+            sRoadNetworkMgr->HasRoadNetwork(bot->GetMapId()))
+        {
+            std::vector<Position> roadWaypoints;
+            if (sRoadNetworkMgr->CalculateRoadAwarePath(
+                    bot->GetMapId(), start, destination, roadWaypoints))
+            {
+                // Generate navmesh sub-paths between consecutive road waypoints
+                Position prev = start;
+                float totalLen = 0.0f;
+                for (Position const& wp : roadWaypoints)
+                {
+                    PathGenerator gen(bot);
+                    gen.CalculatePath(wp.GetPositionX(), wp.GetPositionY(), wp.GetPositionZ());
+                    for (auto const& pt : gen.GetPath())
+                    {
+                        path.nodes.push_back(PathNode(
+                            Position(pt.x, pt.y, pt.z), bot->GetSpeed(MOVE_RUN)));
+                    }
+                    totalLen += prev.GetExactDist(wp);
+                    prev = wp;
+                }
+                // Final segment to destination
+                PathGenerator gen(bot);
+                gen.CalculatePath(destination.GetPositionX(),
+                                  destination.GetPositionY(),
+                                  destination.GetPositionZ());
+                for (auto const& pt : gen.GetPath())
+                {
+                    path.nodes.push_back(PathNode(
+                        Position(pt.x, pt.y, pt.z), bot->GetSpeed(MOVE_RUN)));
+                }
+                totalLen += prev.GetExactDist(destination);
+
+                path.pathType = PathType::PATHFIND_NORMAL;
+                path.totalLength = totalLen;
+                path.isOptimized = false;
+
+                // Cache and return the road-aware path
+                auto endTime = ::std::chrono::high_resolution_clock::now();
+                uint32 generationTime = static_cast<uint32>(
+                    ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count());
+                path.generationCost = generationTime;
+                path.generatedTime = ::std::chrono::steady_clock::now();
+                _totalPathsGenerated.fetch_add(1);
+                _totalGenerationTime.fetch_add(generationTime);
+
+                if (_enableCaching && path.IsValid())
+                    CachePath(bot, destination, path);
+
+                TC_LOG_DEBUG("playerbot.movement",
+                    "Road-aware path for bot %s: %zu nodes, %.0f yards",
+                    bot->GetName().c_str(), path.nodes.size(), totalLen);
+                return true;
+            }
+        }
 
         // Use direct path for short distances or if forced
     if (forceDirect || distance <= _straightPathDistance)

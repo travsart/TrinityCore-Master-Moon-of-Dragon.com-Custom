@@ -220,6 +220,9 @@ private:
     /// Apply phase-specific strategy
     void ApplyPhaseStrategy(StrategicDecision& decision, GamePhase phase, float scoreAdvantage) const;
 
+    /// Phase hysteresis: track last phase to prevent rapid oscillation
+    mutable GamePhase m_lastPhase = GamePhase::OPENING;
+
     // ========================================================================
     // STATE TRACKING
     // ========================================================================

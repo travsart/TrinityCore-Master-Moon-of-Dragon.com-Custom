@@ -974,6 +974,13 @@ set(PLAYERBOT_GAMEPLAY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathOptimizer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/NavMeshInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/NavMeshInterface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/RoadNetwork/RoadNetworkTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/RoadNetwork/RoadSpatialIndex.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/RoadNetwork/RoadSpatialIndex.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/RoadNetwork/RoadGraphPathfinder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/RoadNetwork/RoadGraphPathfinder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/RoadNetwork/RoadNetworkManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/RoadNetwork/RoadNetworkManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/SwimmingBreathManager.cpp

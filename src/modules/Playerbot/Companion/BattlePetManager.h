@@ -145,6 +145,27 @@ struct AbilityInfo
 };
 
 /**
+ * @brief Pet battle workflow states for the autonomous battle loop
+ *
+ * Drives the lifecycle: find wild pet -> navigate -> battle -> capture -> repeat
+ * State machine transitions:
+ *   IDLE -> SEEKING_PET -> NAVIGATING_TO_PET -> BATTLING -> POST_BATTLE -> COOLDOWN -> IDLE
+ *                                                        -> SEEKING_HEALER -> NAVIGATING_TO_HEAL -> HEALING -> IDLE
+ */
+enum class PetBattleWorkflowState : uint8
+{
+    IDLE = 0,                ///< Not actively doing pet battles
+    SEEKING_PET = 1,         ///< Scanning for wild battle pets in range
+    NAVIGATING_TO_PET = 2,   ///< Moving to a discovered wild pet
+    BATTLING = 3,            ///< Actively in a pet battle (executing turns)
+    POST_BATTLE = 4,         ///< Battle ended, processing rewards/capture
+    SEEKING_HEALER = 5,      ///< Looking for a pet healer NPC
+    NAVIGATING_TO_HEAL = 6,  ///< Moving to the pet healer
+    HEALING = 7,             ///< Interacting with healer to restore pets
+    COOLDOWN = 8             ///< Waiting between battles
+};
+
+/**
  * @brief Battle Pet Manager - Complete battle pet automation for bots
  *
  * **Phase 6.3: Per-Bot Instance Pattern (26th Manager)**
@@ -360,6 +381,26 @@ public:
     PetBattleAutomationProfile GetAutomationProfile() const;
 
     // ============================================================================
+    // WORKFLOW STATE MACHINE
+    // ============================================================================
+
+    /**
+     * Check if bot should engage in pet battle activities
+     * Returns false if in combat, in instance/BG, dead, in group, or automation disabled
+     */
+    bool ShouldDoPetBattles() const;
+
+    /**
+     * Check if bot is actively in the pet battle workflow (not IDLE or COOLDOWN)
+     */
+    bool IsInPetBattleActivity() const;
+
+    /**
+     * Get current workflow state
+     */
+    PetBattleWorkflowState GetWorkflowState() const { return _workflowState; }
+
+    // ============================================================================
     // METRICS
     // ============================================================================
 
@@ -405,6 +446,47 @@ private:
     void OnBattleWon();
 
     // ============================================================================
+    // WORKFLOW STATE MACHINE HELPERS
+    // ============================================================================
+
+    /**
+     * Update the workflow state machine (called from Update when autoBattle enabled)
+     */
+    void UpdateWorkflow(uint32 diff);
+
+    void HandleIdleState();
+    void HandleSeekingPetState();
+    void HandleNavigatingToPetState();
+    void HandleBattlingState(uint32 diff);
+    void HandlePostBattleState();
+    void HandleSeekingHealerState();
+    void HandleNavigatingToHealState();
+    void HandleHealingState();
+    void HandleCooldownState();
+
+    /**
+     * Scan for wild battle pets within range
+     * Uses CREATURE_TYPE_WILD_PET (14) and _battlePetCreatureEntries for O(1) validation
+     * @param searchRadius Search radius in yards
+     * @return Creature entry of nearest valid wild pet, or 0 if none found
+     */
+    uint32 ScanForWildBattlePets(float searchRadius);
+
+    /**
+     * Add captured pet to TrinityCore's core BattlePetMgr journal
+     * Uses BattlePetMgr::AddPet() so the pet appears in the character's collection
+     * @param speciesId The battle pet species ID
+     * @param quality Captured quality level
+     * @param level Level of the captured pet
+     */
+    void AddPetToCoreBattlePetMgr(uint32 speciesId, PetQuality quality, uint16 level);
+
+    /**
+     * Transition to a new workflow state with logging
+     */
+    void TransitionToWorkflowState(PetBattleWorkflowState newState);
+
+    // ============================================================================
     // DATA STRUCTURES
     // ============================================================================
 
@@ -436,10 +518,19 @@ private:
     uint32 _navigationSpeciesId{0};                     // Species we're navigating to
     uint32 _pendingBattleTarget{0};                     // Queued battle target
 
+    // Workflow state machine
+    PetBattleWorkflowState _workflowState{PetBattleWorkflowState::IDLE};
+    uint32 _workflowStateEntryTime{0};                  // When we entered current state (ms)
+    uint32 _battleTurnTimer{0};                         // Accumulated time for next battle turn
+    uint32 _targetWildPetEntry{0};                      // Creature entry of target wild pet
+    Position _targetWildPetPos;                         // Position of target wild pet
+    uint32 _healerEntry{0};                             // Entry of healer NPC we're navigating to
+
     // Shared static data (all bots)
     static std::unordered_map<uint32, BattlePetInfo> _petDatabase;
     static std::unordered_map<uint32, std::vector<Position>> _rarePetSpawns;
     static std::unordered_map<uint32, AbilityInfo> _abilityDatabase;
+    static std::unordered_set<uint32> _battlePetCreatureEntries; ///< O(1) lookup of creature entries that are battle pets
     static PetMetrics _globalMetrics;
     static std::atomic<bool> _databaseInitialized;
     static std::once_flag _initFlag;

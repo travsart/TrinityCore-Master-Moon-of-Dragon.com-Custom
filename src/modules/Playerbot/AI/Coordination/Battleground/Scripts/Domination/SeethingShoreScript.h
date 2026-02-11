@@ -10,6 +10,7 @@
 
 #include "DominationScriptBase.h"
 #include "SeethingShoreData.h"
+#include <atomic>
 #include <unordered_set>
 
 namespace Playerbot::Coordination::Battleground
@@ -201,10 +202,19 @@ private:
     bool m_matchActive = false;
 
     // Phase tracking
-    SeethingShorePhase m_currentPhase = SeethingShorePhase::OPENING;
+    std::atomic<SeethingShorePhase> m_currentPhase{SeethingShorePhase::OPENING};
+    mutable SeethingShorePhase m_lastPhase = SeethingShorePhase::OPENING;
 
     // Recently captured zones (cooldown before respawn)
     std::map<uint32, uint32> m_zoneCaptureTimestamps;
+
+    // Recently spawned node tracking - high priority diversion for nearest bots
+    struct RecentSpawn {
+        uint32 zoneId = 0;
+        uint32 spawnTime = 0;
+    };
+    RecentSpawn m_recentlySpawnedNode;
+    static constexpr uint32 RECENT_SPAWN_PRIORITY_DURATION = 10000; // 10 seconds
 
     // Strategy state
     mutable uint32 m_cachedFaction = 0;

@@ -86,12 +86,34 @@ bool ArathiBasinScript::ExecuteStrategy(::Player* player)
     if (!player || !player->IsInWorld() || !player->IsAlive())
         return false;
 
+    // Check pending GO interaction — hold position if waiting for deferred Use()
+    if (CheckPendingInteraction(player))
+        return true;
+
+    // Check defense commitment — bot stays at captured node for the hold timer
+    if (CheckDefenseCommitment(player))
+        return true;
+
     // Refresh node ownership state (throttled to 1s)
     RefreshNodeState();
 
     uint32 faction = player->GetBGTeam();
     uint32 friendlyCount = GetFriendlyNodeCount(player);
     uint32 nodeCount = GetNodeCount();
+
+    // =========================================================================
+    // PRIORITY 0: Nearby contested friendly node needs reinforcement
+    // =========================================================================
+    uint32 reinforceNode = CheckReinforcementNeeded(player, 60.0f);
+    if (reinforceNode != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(reinforceNode);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[AB] {} PRIORITY 0: reinforcing contested node {}",
+            player->GetName(), nodeData.name);
+        DefendNode(player, reinforceNode);
+        return true;
+    }
 
     // =========================================================================
     // PRIORITY 1: Uncontrolled node within 30yd -> capture it immediately
@@ -111,6 +133,43 @@ bool ArathiBasinScript::ExecuteStrategy(::Player* player)
             CaptureNode(player, nearCapture);
             return true;
         }
+    }
+
+    // =========================================================================
+    // PRIORITY 1.5: Opening rush (first 60s) -> proximity-based targets
+    // Alliance: 5 to Stables, 4 to Blacksmith, 1 to Lumber Mill
+    // Horde: 5 to Farm, 4 to Blacksmith, 1 to Lumber Mill
+    // =========================================================================
+    if (GetElapsedTime() < 60000 && friendlyCount < 3)
+    {
+        uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+        uint32 targetNode;
+
+        if (faction == ALLIANCE)
+        {
+            if (dutySlot < 5)      // 50% Stables (nearest)
+                targetNode = ArathiBasin::Nodes::STABLES;
+            else if (dutySlot < 9) // 40% Blacksmith (center)
+                targetNode = ArathiBasin::Nodes::BLACKSMITH;
+            else                   // 10% Lumber Mill (flank)
+                targetNode = ArathiBasin::Nodes::LUMBER_MILL;
+        }
+        else
+        {
+            if (dutySlot < 5)      // 50% Farm (nearest)
+                targetNode = ArathiBasin::Nodes::FARM;
+            else if (dutySlot < 9) // 40% Blacksmith (center)
+                targetNode = ArathiBasin::Nodes::BLACKSMITH;
+            else                   // 10% Lumber Mill (flank)
+                targetNode = ArathiBasin::Nodes::LUMBER_MILL;
+        }
+
+        BGObjectiveData nodeData = GetNodeData(targetNode);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[AB] {} PRIORITY 1.5: opening rush to {} (slot {})",
+            player->GetName(), nodeData.name, dutySlot);
+        CaptureNode(player, targetNode);
+        return true;
     }
 
     // =========================================================================

@@ -276,6 +276,14 @@ private:
     bool m_galvangarAlive = true;
     bool m_vanndarAlive = true;
     bool m_drektharAlive = true;
+
+    // Boss GUID cache (populated on main thread via OnUpdate)
+    ObjectGuid m_vanndarGuid;
+    ObjectGuid m_drektharGuid;
+    bool m_bossGuidsResolved = false;
+
+    /// Queue attack on boss NPC via deferred action system (thread-safe)
+    void QueueBossAttack(::Player* bot, uint32 enemyFaction);
 };
 
 } // namespace Playerbot::Coordination::Battleground

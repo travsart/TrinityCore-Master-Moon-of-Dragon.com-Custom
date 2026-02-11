@@ -176,6 +176,19 @@ protected:
     bool ShouldRushBoss() const;
 
     /**
+     * @brief Try to board a nearby vehicle of the given creature entry
+     *
+     * Thread-safe: uses cached vehicle GUIDs (resolved on main thread).
+     * Queues EnterVehicle action via BotActionMgr if a free vehicle is found.
+     *
+     * @param bot The bot player
+     * @param vehicleEntry Creature entry ID of the vehicle (e.g., DEMOLISHER_ENTRY)
+     * @param maxRange Maximum search range from bot position
+     * @return true if a vehicle boarding action was queued
+     */
+    bool TryBoardNearbyVehicle(::Player* bot, uint32 vehicleEntry, float maxRange) const;
+
+    /**
      * @brief Get gate destruction order for optimal attack
      */
     std::vector<uint32> GetGateDestructionOrder(uint32 attackingFaction) const;
@@ -218,6 +231,21 @@ protected:
 
     // Vehicle tracking
     std::map<ObjectGuid, uint32> m_vehicleAssignments;  // bot -> vehicle entry
+
+    // Cached vehicle GUIDs (populated on main thread by OnUpdate, used from worker threads)
+    struct CachedVehicle
+    {
+        ObjectGuid guid;
+        uint32 entry;
+        Position pos;
+        bool hasPassengers;
+    };
+    std::vector<CachedVehicle> m_cachedVehicles;
+    uint32 m_vehicleCacheTimer = 0;
+    static constexpr uint32 VEHICLE_CACHE_INTERVAL = 3000;  // Refresh every 3s
+
+    /// Resolve vehicle GUIDs on main thread
+    void UpdateVehicleCache();
 
 private:
     // Update timers

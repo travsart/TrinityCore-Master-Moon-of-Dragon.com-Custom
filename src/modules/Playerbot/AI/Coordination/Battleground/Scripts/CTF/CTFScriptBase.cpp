@@ -13,12 +13,14 @@
 #include "BattlegroundCoordinator.h"
 #include "BattlegroundCoordinatorManager.h"
 #include "BGSpatialQueryCache.h"
+#include "BotActionManager.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "Battleground.h"
 #include "BattlegroundMgr.h"
 #include "GameObject.h"
 #include "GameObjectData.h"
+#include "SharedDefines.h"
 #include "SpellAuras.h"
 #include "Log.h"
 #include "Timer.h"
@@ -404,7 +406,7 @@ void CTFScriptBase::OnEvent(const BGScriptEventData& event)
             }
             ++m_successfulCaptures;
             TC_LOG_DEBUG("playerbots.bg.script", "CTF: Flag captured! Score: A{} - H{}",
-                m_allianceCaptures, m_hordeCaptures);
+                m_allianceCaptures.load(), m_hordeCaptures.load());
             break;
 
         case BGScriptEvent::FLAG_RETURNED:
@@ -650,15 +652,21 @@ std::vector<Position> CTFScriptBase::CalculateEscortRing(
 void CTFScriptBase::RefreshFlagState(::Player* bot)
 {
     uint32 now = getMSTime();
-    if (now - m_lastFlagStateRefresh < FLAG_STATE_REFRESH_INTERVAL)
+    if (now - m_lastFlagStateRefresh.load(std::memory_order_relaxed) < FLAG_STATE_REFRESH_INTERVAL)
         return;
 
-    m_lastFlagStateRefresh = now;
-    m_cachedFriendlyFC = nullptr;
-    m_cachedEnemyFC = nullptr;
+    m_lastFlagStateRefresh.store(now, std::memory_order_relaxed);
+
+    ::Player* friendlyFC = nullptr;
+    ::Player* enemyFC = nullptr;
 
     if (!bot || !bot->IsInWorld())
+    {
+        std::unique_lock lock(m_flagStateMutex);
+        m_cachedFriendlyFC = nullptr;
+        m_cachedEnemyFC = nullptr;
         return;
+    }
 
     // Try coordinator cache first (O(1))
     ::Playerbot::BattlegroundCoordinator* coordinator =
@@ -671,7 +679,7 @@ void CTFScriptBase::RefreshFlagState(::Player* bot)
         {
             ::Player* fc = ObjectAccessor::FindPlayer(friendlyGuid);
             if (fc && fc->IsInWorld() && fc->IsAlive())
-                m_cachedFriendlyFC = fc;
+                friendlyFC = fc;
         }
 
         ObjectGuid enemyGuid = coordinator->GetCachedEnemyFC();
@@ -679,15 +687,24 @@ void CTFScriptBase::RefreshFlagState(::Player* bot)
         {
             ::Player* fc = ObjectAccessor::FindPlayer(enemyGuid);
             if (fc && fc->IsInWorld() && fc->IsAlive())
-                m_cachedEnemyFC = fc;
+                enemyFC = fc;
         }
+
+        std::unique_lock lock(m_flagStateMutex);
+        m_cachedFriendlyFC = friendlyFC;
+        m_cachedEnemyFC = enemyFC;
         return;
     }
 
     // Fallback: O(n) aura scan over all BG players
     ::Battleground* bg = bot->GetBattleground();
     if (!bg)
+    {
+        std::unique_lock lock(m_flagStateMutex);
+        m_cachedFriendlyFC = nullptr;
+        m_cachedEnemyFC = nullptr;
         return;
+    }
 
     uint32 teamId = bot->GetBGTeam();
     // Friendly FC carries the enemy's flag aura
@@ -702,14 +719,18 @@ void CTFScriptBase::RefreshFlagState(::Player* bot)
             continue;
 
         if (bgPlayer->GetBGTeam() == teamId && bgPlayer->HasAura(friendlyFCAura))
-            m_cachedFriendlyFC = bgPlayer;
+            friendlyFC = bgPlayer;
         else if (bgPlayer->GetBGTeam() != teamId && bgPlayer->HasAura(enemyFCAura))
-            m_cachedEnemyFC = bgPlayer;
+            enemyFC = bgPlayer;
 
         // Early out if both found
-        if (m_cachedFriendlyFC && m_cachedEnemyFC)
+        if (friendlyFC && enemyFC)
             break;
     }
+
+    std::unique_lock lock(m_flagStateMutex);
+    m_cachedFriendlyFC = friendlyFC;
+    m_cachedEnemyFC = enemyFC;
 }
 
 bool CTFScriptBase::IsPlayerCarryingFlag(::Player* player)
@@ -732,26 +753,105 @@ bool CTFScriptBase::RunFlagHome(::Player* bot)
         ? GetAllianceFlagPosition()
         : GetHordeFlagPosition();
 
-    float distance = bot->GetExactDist(&capturePoint);
+    float distToCapture = bot->GetExactDist(&capturePoint);
 
-    TC_LOG_DEBUG("playerbots.bg.script", "CTF FC: {} running flag home (dist: {:.1f})",
-        bot->GetName(), distance);
-
-    if (distance > 10.0f)
-    {
-        // Run home! Attack enemies en route but never stop
-        BotMovementUtil::MoveToPosition(bot, capturePoint);
-
-        // If there's an enemy very close, attack while running
-        ::Player* nearEnemy = FindNearestEnemyPlayer(bot, 8.0f);
-        if (nearEnemy)
-            EngageTarget(bot, nearEnemy);
-    }
-    else
+    if (distToCapture <= 10.0f)
     {
         // At capture point - interact with flag stand to cap
         TryInteractWithGameObject(bot, GAMEOBJECT_TYPE_FLAGSTAND, 10.0f);
+        // Clear route state on arrival
+        m_fcRouteStates.erase(bot->GetGUID());
+        return true;
     }
+
+    // === Route Evasion System ===
+    // Select or continue a route for this FC
+    ObjectGuid botGuid = bot->GetGUID();
+    auto routeIt = m_fcRouteStates.find(botGuid);
+
+    if (routeIt == m_fcRouteStates.end())
+    {
+        // First time — select a route based on enemy positions
+        std::vector<Position> enemyPositions;
+
+        // Gather enemy positions from coordinator spatial cache (thread-safe)
+        if (m_coordinator)
+        {
+            // Sample enemy positions from mid-map area with large range
+            Position midPoint;
+            midPoint.Relocate(
+                (GetAllianceFlagPosition().GetPositionX() + GetHordeFlagPosition().GetPositionX()) / 2.0f,
+                (GetAllianceFlagPosition().GetPositionY() + GetHordeFlagPosition().GetPositionY()) / 2.0f,
+                (GetAllianceFlagPosition().GetPositionZ() + GetHordeFlagPosition().GetPositionZ()) / 2.0f);
+
+            auto enemies = m_coordinator->QueryNearbyEnemies(midPoint, 200.0f, teamId);
+            for (const auto* snapshot : enemies)
+            {
+                if (snapshot && snapshot->isAlive)
+                    enemyPositions.push_back(snapshot->position);
+            }
+        }
+
+        // Ask the derived script for route waypoints
+        auto waypoints = GetFCRouteWaypoints(teamId, enemyPositions);
+
+        if (!waypoints.empty())
+        {
+            FCRouteState state;
+            state.waypoints = std::move(waypoints);
+            state.currentWaypointIndex = 0;
+            state.routeSelectedTime = getMSTime();
+            m_fcRouteStates[botGuid] = std::move(state);
+            routeIt = m_fcRouteStates.find(botGuid);
+
+            TC_LOG_DEBUG("playerbots.bg.script", "CTF FC: {} selected route with {} waypoints",
+                bot->GetName(), routeIt->second.waypoints.size());
+        }
+    }
+
+    // Follow waypoints if we have a route, otherwise straight-line
+    if (routeIt != m_fcRouteStates.end() && !routeIt->second.waypoints.empty())
+    {
+        auto& state = routeIt->second;
+        const auto& waypoints = state.waypoints;
+
+        // Advance waypoint if close enough to current one
+        if (state.currentWaypointIndex < waypoints.size())
+        {
+            float distToWaypoint = bot->GetExactDist(&waypoints[state.currentWaypointIndex]);
+            if (distToWaypoint < 5.0f)
+            {
+                state.currentWaypointIndex++;
+            }
+        }
+
+        // Move to current waypoint, or to capture point if all waypoints passed
+        if (state.currentWaypointIndex < waypoints.size())
+        {
+            BotMovementUtil::MoveToPosition(bot, waypoints[state.currentWaypointIndex]);
+            TC_LOG_DEBUG("playerbots.bg.script", "CTF FC: {} following route waypoint {}/{} (dist: {:.1f})",
+                bot->GetName(), state.currentWaypointIndex + 1, waypoints.size(),
+                bot->GetExactDist(&waypoints[state.currentWaypointIndex]));
+        }
+        else
+        {
+            // Past all waypoints, head straight to capture point
+            BotMovementUtil::MoveToPosition(bot, capturePoint);
+        }
+    }
+    else
+    {
+        // No route available — straight-line run
+        BotMovementUtil::MoveToPosition(bot, capturePoint);
+    }
+
+    TC_LOG_DEBUG("playerbots.bg.script", "CTF FC: {} running flag home (dist: {:.1f})",
+        bot->GetName(), distToCapture);
+
+    // Attack enemies en route but never stop
+    ::Player* nearEnemy = FindNearestEnemyPlayer(bot, 8.0f);
+    if (nearEnemy)
+        EngageTarget(bot, nearEnemy);
 
     return true;
 }
@@ -876,17 +976,11 @@ bool CTFScriptBase::EscortFriendlyFC(::Player* bot, ::Player* friendlyFC)
         }
         else
         {
-            // Fallback: grid search
-            std::list<::Player*> nearbyPlayers;
-            friendlyFC->GetPlayerListInGrid(nearbyPlayers, 20.0f);
-            for (::Player* nearby : nearbyPlayers)
-            {
-                if (nearby && nearby->IsAlive() && nearby->IsHostileTo(bot))
-                {
-                    EngageTarget(bot, nearby);
-                    break;
-                }
-            }
+            // Fallback: use base class FindNearestEnemyPlayer which is thread-safe
+            // (uses coordinator spatial cache with O(n) legacy fallback)
+            ::Player* nearbyEnemy = FindNearestEnemyPlayer(bot, 20.0f);
+            if (nearbyEnemy)
+                EngageTarget(bot, nearbyEnemy);
         }
     }
 
@@ -958,20 +1052,23 @@ bool CTFScriptBase::ReturnDroppedFlag(::Player* bot)
     if (!bot || !bot->IsInWorld())
         return false;
 
-    // Search for dropped flag GameObjects nearby
+    // Use phase-ignoring search for dynamically spawned dropped flags
+    FindGameObjectOptions options;
+    options.IgnorePhases = true;
+    options.IsSpawned.reset();  // Clear default for dynamic GOs
+    options.GameObjectType = GAMEOBJECT_TYPE_FLAGDROP;
+
+    // Search 100yd radius to catch mid-field dropped flags
+    constexpr float DROPPED_FLAG_SEARCH_RANGE = 100.0f;
     std::list<GameObject*> goList;
-    bot->GetGameObjectListWithEntryInGrid(goList, 0, 50.0f);
+    bot->GetGameObjectListWithOptionsInGrid(goList, DROPPED_FLAG_SEARCH_RANGE, options);
 
     GameObject* droppedFlag = nullptr;
-    float closestDist = 50.0f;
+    float closestDist = DROPPED_FLAG_SEARCH_RANGE;
 
     for (GameObject* go : goList)
     {
         if (!go)
-            continue;
-
-        GameObjectTemplate const* goInfo = go->GetGOInfo();
-        if (!goInfo || goInfo->type != GAMEOBJECT_TYPE_FLAGDROP)
             continue;
 
         float dist = bot->GetExactDist(go);
@@ -996,9 +1093,10 @@ bool CTFScriptBase::ReturnDroppedFlag(::Player* bot)
     }
     else
     {
-        // We're at the flag - interact to return it
-        droppedFlag->Use(bot);
-        TC_LOG_INFO("playerbots.bg.script", "CTF: {} returned dropped flag!",
+        // We're at the flag - defer interaction to main thread for thread safety
+        sBotActionMgr->QueueAction(BotAction::InteractObject(
+            bot->GetGUID(), droppedFlag->GetGUID(), getMSTime()));
+        TC_LOG_INFO("playerbots.bg.script", "CTF: {} queued dropped flag return!",
             bot->GetName());
     }
 

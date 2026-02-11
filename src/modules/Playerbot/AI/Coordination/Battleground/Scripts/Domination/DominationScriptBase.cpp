@@ -226,19 +226,21 @@ void DominationScriptBase::AdjustStrategy(StrategicDecision& decision,
     }
     else
     {
-        // Close game
-        if (controlRatio > 0.5f)
+        // Close game — amplify strategy based on control
+        if (controlRatio > 0.6f)
         {
-            decision.strategy = BGStrategy::DEFENSIVE;
-            decision.reasoning = "Close game with control advantage - hold";
-            decision.defenseAllocation = 55;
+            decision.strategy = lateGame ? BGStrategy::TURTLE : BGStrategy::DEFENSIVE;
+            decision.reasoning = "Close game with strong control - hold and defend";
+            decision.defenseAllocation = lateGame ? 75 : 60;
+            decision.offenseAllocation = 100 - decision.defenseAllocation;
             decision.defendObjectives = GetDefensePriorityOrder();
         }
-        else if (controlRatio < 0.5f)
+        else if (controlRatio < 0.4f)
         {
-            decision.strategy = BGStrategy::AGGRESSIVE;
-            decision.reasoning = "Close game without control - need nodes";
-            decision.offenseAllocation = 60;
+            decision.strategy = lateGame ? BGStrategy::ALL_IN : BGStrategy::AGGRESSIVE;
+            decision.reasoning = "Close game without control - aggressive push";
+            decision.offenseAllocation = lateGame ? 75 : 65;
+            decision.defenseAllocation = 100 - decision.offenseAllocation;
             decision.attackObjectives = GetAttackPriorityOrder();
         }
         else
@@ -248,6 +250,20 @@ void DominationScriptBase::AdjustStrategy(StrategicDecision& decision,
             decision.offenseAllocation = 50;
             decision.defenseAllocation = 50;
         }
+    }
+
+    // Amplify strategy in extreme score situations:
+    // Winning by 30%+: turtle hard (80/20 defense)
+    if (scoreAdvantage > 0.3f)
+    {
+        decision.defenseAllocation = std::max(decision.defenseAllocation, static_cast<uint8>(80));
+        decision.offenseAllocation = 100 - decision.defenseAllocation;
+    }
+    // Losing by 30%+: all-in aggression (80/20 offense)
+    else if (scoreAdvantage < -0.3f)
+    {
+        decision.offenseAllocation = std::max(decision.offenseAllocation, static_cast<uint8>(80));
+        decision.defenseAllocation = 100 - decision.offenseAllocation;
     }
 
     // Calculate confidence based on position clarity
@@ -380,6 +396,8 @@ void DominationScriptBase::OnEvent(const BGScriptEventData& event)
                 m_nodeCaptureProgress[event.objectiveId] =
                     (event.newState == BGObjectiveState::ALLIANCE_CONTROLLED ||
                      event.newState == BGObjectiveState::HORDE_CONTROLLED) ? 1.0f : 0.0f;
+                // Node captured — no longer under attack
+                m_nodeUnderAttackSince.erase(event.objectiveId);
                 UpdateNodeCounts();
 
                 TC_LOG_DEBUG("playerbots.bg.script",
@@ -402,6 +420,9 @@ void DominationScriptBase::OnEvent(const BGScriptEventData& event)
             {
                 m_nodeStates[event.objectiveId] = event.newState;
                 m_nodeLastContestTime[event.objectiveId] = getMSTime();
+                // Track when node came under attack for reinforcement priority
+                if (m_nodeUnderAttackSince.find(event.objectiveId) == m_nodeUnderAttackSince.end())
+                    m_nodeUnderAttackSince[event.objectiveId] = getMSTime();
                 UpdateNodeCounts();
 
                 TC_LOG_DEBUG("playerbots.bg.script",
@@ -693,6 +714,10 @@ bool DominationScriptBase::CaptureNode(::Player* bot, uint32 nodeIndex)
     if (!bot || !bot->IsInWorld() || nodeIndex >= GetNodeCount())
         return false;
 
+    // Check pending interaction first — hold position if waiting for deferred Use()
+    if (CheckPendingInteraction(bot))
+        return true;
+
     BGObjectiveData nodeData = GetNodeData(nodeIndex);
     Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
 
@@ -715,6 +740,8 @@ bool DominationScriptBase::CaptureNode(::Player* bot, uint32 nodeIndex)
     {
         TC_LOG_INFO("playerbots.bg.script", "DOM: {} capturing node {}",
             bot->GetName(), nodeData.name);
+        // Commit to defending this node after capture
+        CommitToDefense(bot->GetGUID(), nodeIndex);
     }
 
     // While waiting for capture, engage any enemies
@@ -730,11 +757,17 @@ bool DominationScriptBase::DefendNode(::Player* bot, uint32 nodeIndex)
     if (!bot || !bot->IsInWorld() || nodeIndex >= GetNodeCount())
         return false;
 
+    // Check pending interaction first — hold position if waiting for deferred Use()
+    if (CheckPendingInteraction(bot))
+        return true;
+
     BGObjectiveData nodeData = GetNodeData(nodeIndex);
     Position nodePos(nodeData.x, nodeData.y, nodeData.z, nodeData.orientation);
 
     float distance = bot->GetExactDist(&nodePos);
     constexpr float DEFENSE_RADIUS = 25.0f;
+    constexpr float ENGAGEMENT_RADIUS = 20.0f;
+    constexpr float FLAG_LEASH_RADIUS = 20.0f;
 
     // Move to node if too far
     if (distance > DEFENSE_RADIUS)
@@ -743,16 +776,13 @@ bool DominationScriptBase::DefendNode(::Player* bot, uint32 nodeIndex)
         return true;
     }
 
-    // Look for enemies
-    ::Player* closestEnemy = FindNearestEnemyPlayer(bot, DEFENSE_RADIUS);
+    // Look for enemies — use leash-aware engagement so bots can't be kited off flag
+    ::Player* closestEnemy = FindNearestEnemyPlayer(bot, ENGAGEMENT_RADIUS);
     if (closestEnemy)
     {
-        EngageTarget(bot, closestEnemy);
-
-        float enemyDist = bot->GetExactDist(closestEnemy);
-        if (enemyDist > 5.0f)
-            BotMovementUtil::ChaseTarget(bot, closestEnemy, 5.0f);
-
+        // Use leash: engage only if enemy is within FLAG_LEASH_RADIUS of the node
+        // If enemy runs away from the flag, bot disengages and returns to defend
+        EngageTargetWithLeash(bot, closestEnemy, nodePos, FLAG_LEASH_RADIUS);
         return true;
     }
 
@@ -884,15 +914,18 @@ uint32 DominationScriptBase::GetBestAssaultTarget(::Player* bot) const
         Position nodePos(nodeData.x, nodeData.y, nodeData.z, 0.0f);
         float dist = bot->GetExactDist(&nodePos);
 
-        // Score: higher strategic value and closer distance = better target
-        float score = static_cast<float>(nodeData.strategicValue) * 10.0f;
+        // Base score from strategic value
+        float basePriority = static_cast<float>(nodeData.strategicValue) * 10.0f;
 
         // Neutral nodes are higher priority than enemy-controlled
         if (state == BGObjectiveState::NEUTRAL)
-            score += 20.0f;
+            basePriority += 20.0f;
 
-        // Closer nodes are preferred
-        score -= dist * 0.1f;
+        // Distance-weighted priority: nearby nodes strongly preferred
+        // Formula: effectivePriority = basePriority * (1.0 / (1.0 + dist/50.0))
+        // At 0yd: 100% of base. At 50yd: 50%. At 100yd: 33%. At 200yd: 20%.
+        float distFactor = 1.0f / (1.0f + dist / 50.0f);
+        float score = basePriority * distFactor;
 
         if (score > bestScore)
         {
@@ -958,6 +991,137 @@ bool DominationScriptBase::IsNodeContested(BGObjectiveState state)
 {
     return state == BGObjectiveState::ALLIANCE_CONTESTED ||
            state == BGObjectiveState::HORDE_CONTESTED;
+}
+
+// ============================================================================
+// NODE DEFENSE COMMITMENT
+// ============================================================================
+
+void DominationScriptBase::CommitToDefense(ObjectGuid botGuid, uint32 nodeIndex)
+{
+    DefenseCommitment commitment;
+    commitment.nodeIndex = nodeIndex;
+    commitment.commitTime = getMSTime();
+    commitment.durationMs = GetDefenseCommitmentDuration();
+    m_nodeDefenseCommitments[botGuid] = commitment;
+
+    TC_LOG_DEBUG("playerbots.bg.script",
+        "DOM: Bot {} committed to defend node {} for {}ms",
+        botGuid.ToString(), nodeIndex, commitment.durationMs);
+}
+
+bool DominationScriptBase::CheckDefenseCommitment(::Player* bot)
+{
+    if (!bot)
+        return false;
+
+    auto it = m_nodeDefenseCommitments.find(bot->GetGUID());
+    if (it == m_nodeDefenseCommitments.end())
+        return false;
+
+    uint32 elapsed = getMSTimeDiff(it->second.commitTime, getMSTime());
+    if (elapsed >= it->second.durationMs)
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "DOM: {} defense commitment expired after {}ms",
+            bot->GetName(), elapsed);
+        m_nodeDefenseCommitments.erase(it);
+        return false;
+    }
+
+    // Still committed — execute defense at the committed node
+    uint32 nodeIndex = it->second.nodeIndex;
+    if (nodeIndex < GetNodeCount())
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "DOM: {} defending committed node {} ({}/{}ms remaining)",
+            bot->GetName(), nodeIndex, elapsed, it->second.durationMs);
+        DefendNode(bot, nodeIndex);
+        return true;
+    }
+
+    // Invalid node — clear commitment
+    m_nodeDefenseCommitments.erase(it);
+    return false;
+}
+
+uint32 DominationScriptBase::GetDefenseCommitmentDuration() const
+{
+    uint32 elapsed = GetElapsedTime();
+
+    // Opening phase (first 60 seconds): short commitment, need to capture more
+    if (elapsed < 60000)
+        return 10000;
+
+    // Check if we recently lost a node (within last 30 seconds)
+    for (auto const& [nodeId, lastContestTime] : m_nodeLastContestTime)
+    {
+        if (getMSTimeDiff(lastContestTime, getMSTime()) < 30000)
+            return 30000;  // Extended commitment on recaptured node
+    }
+
+    // Mid-game default
+    return 20000;
+}
+
+// ============================================================================
+// REINFORCEMENT ROUTING ("INC" RESPONSE)
+// ============================================================================
+
+uint32 DominationScriptBase::CheckReinforcementNeeded(::Player* bot, float maxDivertRange) const
+{
+    if (!bot || !bot->IsInWorld())
+        return UINT32_MAX;
+
+    uint32 faction = bot->GetBGTeam();
+    uint32 bestNode = UINT32_MAX;
+    float bestPriority = 0.0f;
+
+    for (auto const& [nodeId, state] : m_nodeStates)
+    {
+        // Only reinforce our contested nodes
+        bool isOurContested = false;
+        if (faction == ALLIANCE && state == BGObjectiveState::ALLIANCE_CONTESTED)
+            isOurContested = true;
+        else if (faction == HORDE && state == BGObjectiveState::HORDE_CONTESTED)
+            isOurContested = true;
+
+        if (!isOurContested)
+            continue;
+
+        if (nodeId >= GetNodeCount())
+            continue;
+
+        BGObjectiveData nodeData = GetNodeData(nodeId);
+        Position nodePos(nodeData.x, nodeData.y, nodeData.z, 0);
+        float dist = bot->GetExactDist(&nodePos);
+
+        if (dist > maxDivertRange)
+            continue;
+
+        // Calculate reinforcement priority:
+        // - Base priority from distance (closer = higher)
+        // - Bonus from time under attack (longer = more urgent)
+        float distFactor = 1.0f / (1.0f + dist / 40.0f);
+
+        float timeFactor = 1.0f;
+        auto attackIt = m_nodeUnderAttackSince.find(nodeId);
+        if (attackIt != m_nodeUnderAttackSince.end())
+        {
+            uint32 attackDuration = getMSTimeDiff(attackIt->second, getMSTime());
+            // After 15s contested, priority ramps up significantly
+            timeFactor = 1.0f + std::min(3.0f, static_cast<float>(attackDuration) / 10000.0f);
+        }
+
+        float priority = distFactor * timeFactor;
+        if (priority > bestPriority)
+        {
+            bestPriority = priority;
+            bestNode = nodeId;
+        }
+    }
+
+    return bestNode;
 }
 
 } // namespace Playerbot::Coordination::Battleground

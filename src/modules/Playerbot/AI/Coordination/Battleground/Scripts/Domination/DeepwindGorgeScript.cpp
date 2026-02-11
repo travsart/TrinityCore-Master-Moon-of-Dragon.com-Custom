@@ -376,8 +376,28 @@ RoleDistribution DeepwindGorgeScript::GetRecommendedRoles(const StrategicDecisio
 void DeepwindGorgeScript::AdjustStrategy(StrategicDecision& decision, float scoreAdvantage,
     uint32 controlledCount, uint32 /*totalObjectives*/, uint32 timeRemaining) const
 {
+    // Score-based DESPERATE override with hysteresis
+    // Enter DESPERATE when behind by 30%+ (scoreAdvantage < -0.3), exit when gap narrows to 15%
+    DeepwindGorgePhase effectivePhase = m_currentPhase;
+    if (m_currentPhase != DeepwindGorgePhase::OPENING)
+    {
+        if (m_lastPhase == DeepwindGorgePhase::DESPERATE)
+        {
+            // Already desperate: stay until gap narrows to half threshold
+            if (scoreAdvantage < -0.15f)
+                effectivePhase = DeepwindGorgePhase::DESPERATE;
+        }
+        else
+        {
+            // Not desperate: enter at full threshold
+            if (scoreAdvantage < -0.30f)
+                effectivePhase = DeepwindGorgePhase::DESPERATE;
+        }
+    }
+    m_lastPhase = effectivePhase;
+
     // Phase-based strategy
-    switch (m_currentPhase)
+    switch (effectivePhase)
     {
         case DeepwindGorgePhase::OPENING:
             ApplyOpeningPhaseStrategy(decision, ALLIANCE);
@@ -827,10 +847,32 @@ bool DeepwindGorgeScript::ExecuteStrategy(::Player* player)
     if (!player || !player->IsInWorld() || !player->IsAlive())
         return false;
 
+    // Check pending GO interaction — hold position if waiting for deferred Use()
+    if (CheckPendingInteraction(player))
+        return true;
+
+    // Check defense commitment — bot stays at captured node for the hold timer
+    if (CheckDefenseCommitment(player))
+        return true;
+
     // Refresh domination node state (throttled internally)
     RefreshNodeState();
 
     uint32 faction = player->GetBGTeam();
+
+    // =========================================================================
+    // PRIORITY 0: Nearby contested friendly node needs reinforcement
+    // =========================================================================
+    uint32 reinforceNode = CheckReinforcementNeeded(player, 60.0f);
+    if (reinforceNode != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(reinforceNode);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[DG] {} PRIORITY 0: reinforcing contested node {}",
+            player->GetName(), nodeData.name);
+        DefendNode(player, reinforceNode);
+        return true;
+    }
 
     // =========================================================================
     // PRIORITY 1: Nearby node (<30yd) capturable -> capture it

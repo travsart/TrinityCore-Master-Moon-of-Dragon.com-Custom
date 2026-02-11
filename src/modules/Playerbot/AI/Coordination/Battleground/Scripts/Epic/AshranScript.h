@@ -14,6 +14,8 @@
 
 #include "../BGScriptBase.h"
 #include "AshranData.h"
+#include <atomic>
+#include <shared_mutex>
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -217,20 +219,31 @@ private:
     /// Handle event-related updates
     void UpdateEventStatus();
 
+    /// Queue boss NPC attack via BotActionMgr (deferred to main thread)
+    void QueueBossAttack(::Player* bot, uint32 targetFaction);
+
     // ========================================================================
     // STATE TRACKING
     // ========================================================================
 
-    float m_allianceProgress = 0.0f;              // Road position (0 = Alliance base, 1 = Horde base)
-    float m_hordeProgress = 0.0f;                  // Road position (0 = Horde base, 1 = Alliance base)
-    uint32 m_activeEvent = UINT32_MAX;            // Current active side event (UINT32_MAX = none)
-    uint32 m_eventTimer = 0;                       // Time remaining for current event
-    uint32 m_matchStartTime = 0;                   // Timestamp of match start
-    uint32 m_lastRoadUpdate = 0;                   // Last road progress update time
-    uint32 m_lastStrategyUpdate = 0;               // Last strategy evaluation time
+    // Thread-safety: OnUpdate/OnEvent writes (main thread), ExecuteStrategy reads (worker thread)
+    // C++20 std::atomic<float> is supported by MSVC and is lock-free for IEEE754
+    std::atomic<float> m_allianceProgress{0.0f};   // Road position (0 = Alliance base, 1 = Horde base)
+    std::atomic<float> m_hordeProgress{0.0f};      // Road position (0 = Horde base, 1 = Alliance base)
+    std::atomic<uint32> m_activeEvent{UINT32_MAX}; // Current active side event (UINT32_MAX = none)
+    std::atomic<uint32> m_eventTimer{0};           // Time remaining for current event
+    std::atomic<uint32> m_matchStartTime{0};       // Timestamp of match start
+    std::atomic<uint32> m_lastRoadUpdate{0};       // Last road progress update time
+    std::atomic<uint32> m_lastStrategyUpdate{0};   // Last strategy evaluation time
     std::map<uint32, BGObjectiveState> m_controlStates;  // Control point states
-    bool m_trembladeAlive = true;                  // Alliance leader status
-    bool m_volrathAlive = true;                    // Horde leader status
+    mutable std::shared_mutex m_controlStateMutex;
+    std::atomic<bool> m_trembladeAlive{true};      // Alliance leader status
+    std::atomic<bool> m_volrathAlive{true};        // Horde leader status
+
+    // Cached boss GUIDs (resolved on main thread in OnUpdate)
+    ObjectGuid m_trembladeGuid;
+    ObjectGuid m_volrathGuid;
+    std::atomic<bool> m_bossGuidsResolved{false};
 };
 
 } // namespace Playerbot::Coordination::Battleground

@@ -12,10 +12,14 @@
 #include "AlteracValleyScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "BGState.h"
+#include "BotActionManager.h"
+#include "Creature.h"
 #include "Player.h"
 #include "BotMovementUtil.h"
 #include "Log.h"
 #include "Timer.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -103,6 +107,31 @@ void AlteracValleyScript::OnUpdate(uint32 diff)
     SiegeScriptBase::OnUpdate(diff);
 
     uint32 now = getMSTime();
+
+    // Resolve boss GUIDs once on main thread (safe for grid scans)
+    if (!m_bossGuidsResolved && m_coordinator)
+    {
+        // Get any bot player in the BG for grid lookup context
+        auto bots = m_coordinator->GetAllBots();
+        if (!bots.empty())
+        {
+            if (::Player* anyBot = ObjectAccessor::FindPlayer(bots.front().guid))
+            {
+                if (::Creature* vanndar = anyBot->FindNearestCreature(
+                    AlteracValley::Bosses::VANNDAR_ENTRY, 5000.0f, true))
+                    m_vanndarGuid = vanndar->GetGUID();
+                if (::Creature* drekthar = anyBot->FindNearestCreature(
+                    AlteracValley::Bosses::DREKTHAR_ENTRY, 5000.0f, true))
+                    m_drektharGuid = drekthar->GetGUID();
+
+                m_bossGuidsResolved = true;
+                TC_LOG_DEBUG("playerbots.bg.script",
+                    "[AV] Boss GUIDs resolved - Vanndar: {}, Drek'Thar: {}",
+                    m_vanndarGuid.IsEmpty() ? "not found" : "found",
+                    m_drektharGuid.IsEmpty() ? "not found" : "found");
+            }
+        }
+    }
 
     // Update tower states periodically
     if (now - m_lastTowerCheck >= AlteracValley::Strategy::TOWER_CHECK_INTERVAL)
@@ -497,16 +526,23 @@ bool AlteracValleyScript::ExecuteStrategy(::Player* player)
                 float distToBoss = player->GetExactDist(&bossPos);
                 if (distToBoss < 40.0f && !raidPositions.empty())
                 {
-                    // In boss room - take a raid position
-                    uint32 posIdx = player->GetGUID().GetCounter() % raidPositions.size();
-                    TC_LOG_DEBUG("playerbots.bg.script",
-                        "[AV] {} BOSS_ASSAULT: at boss room, taking raid position {}",
-                        player->GetName(), posIdx);
-                    PatrolAroundPosition(player, raidPositions[posIdx], 1.0f, 5.0f);
-
-                    // Engage boss if nearby enemy unit
+                    // In boss room - engage enemy players first, then boss NPC
                     if (::Player* enemy = FindNearestEnemyPlayer(player, 30.0f))
+                    {
+                        TC_LOG_DEBUG("playerbots.bg.script",
+                            "[AV] {} BOSS_ASSAULT: engaging enemy player {} in boss room",
+                            player->GetName(), enemy->GetName());
                         EngageTarget(player, enemy);
+                    }
+                    else
+                    {
+                        // No enemy players — target the boss NPC via deferred action
+                        QueueBossAttack(player, enemyFaction);
+                    }
+
+                    // Take a raid position while fighting
+                    uint32 posIdx = player->GetGUID().GetCounter() % raidPositions.size();
+                    PatrolAroundPosition(player, raidPositions[posIdx], 1.0f, 5.0f);
                 }
                 else
                 {
@@ -1633,6 +1669,36 @@ BGObjectiveData AlteracValleyScript::GetCaptainData(uint32 faction) const
     }
 
     return captain;
+}
+
+// ============================================================================
+// BOSS TARGETING (Thread-safe via BotActionMgr)
+// ============================================================================
+
+void AlteracValleyScript::QueueBossAttack(::Player* bot, uint32 enemyFaction)
+{
+    // Get the cached boss GUID (resolved on main thread in OnUpdate)
+    ObjectGuid bossGuid = (enemyFaction == ALLIANCE) ? m_vanndarGuid : m_drektharGuid;
+
+    if (bossGuid.IsEmpty())
+    {
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[AV] {} BOSS_ASSAULT: boss GUID not yet resolved for faction {}",
+            bot->GetName(), enemyFaction == ALLIANCE ? "Alliance" : "Horde");
+        return;
+    }
+
+    // Check if bot is already attacking the boss
+    if (bot->GetVictim() && bot->GetVictim()->GetGUID() == bossGuid)
+        return;
+
+    // Queue attack via deferred action system (executes on main thread)
+    sBotActionMgr->QueueAction(Playerbot::BotAction::AttackTarget(
+        bot->GetGUID(), bossGuid, getMSTime()));
+
+    TC_LOG_DEBUG("playerbots.bg.script",
+        "[AV] {} BOSS_ASSAULT: queued attack on {} boss NPC",
+        bot->GetName(), enemyFaction == ALLIANCE ? "Vanndar" : "Drek'Thar");
 }
 
 } // namespace Playerbot::Coordination::Battleground

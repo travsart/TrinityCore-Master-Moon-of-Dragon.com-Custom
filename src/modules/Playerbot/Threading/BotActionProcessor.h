@@ -84,6 +84,8 @@ private:
     BotActionResult ExecuteUseItem(Player* bot, BotAction const& action);
     BotActionResult ExecuteEquipItem(Player* bot, BotAction const& action);
     BotActionResult ExecuteSendChatMessage(Player* bot, BotAction const& action);
+    BotActionResult ExecuteEnterVehicle(Player* bot, BotAction const& action);
+    BotActionResult ExecuteExitVehicle(Player* bot, BotAction const& action);
 
     // Helper methods
     Player* GetBot(ObjectGuid guid);

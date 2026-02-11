@@ -183,6 +183,9 @@ private:
 
     /// Get phase-specific strategy adjustments
     void ApplyPhaseStrategy(StrategicDecision& decision, GamePhase phase, float scoreAdvantage) const;
+
+    /// Phase hysteresis: track last phase to prevent rapid oscillation
+    mutable GamePhase m_lastPhase = GamePhase::OPENING;
 };
 
 } // namespace Playerbot::Coordination::Battleground

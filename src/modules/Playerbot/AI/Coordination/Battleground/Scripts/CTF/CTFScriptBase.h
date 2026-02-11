@@ -14,6 +14,8 @@
 
 #include "BGScriptBase.h"
 #include "Common.h"
+#include <atomic>
+#include <shared_mutex>
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -214,8 +216,20 @@ protected:
     static bool IsPlayerCarryingFlag(::Player* player);
 
     /**
+     * @brief Get FC route waypoints for flag running.
+     * Default returns empty (straight-line). Override in derived scripts
+     * to provide route evasion (DIRECT/NORTH/SOUTH).
+     * @param faction The FC's faction
+     * @param enemyPositions Known enemy positions for risk evaluation
+     * @return Route waypoints, empty means straight-line to capture point
+     */
+    virtual std::vector<Position> GetFCRouteWaypoints(uint32 faction,
+        const std::vector<Position>& enemyPositions) const { return {}; }
+
+    /**
      * @brief Run the carried flag home to the capture point
      * Handles movement to our flag room + interaction with flag stand GO.
+     * Uses route evasion when available (via GetFCRouteWaypoints).
      * Attacks enemies en route but NEVER stops moving.
      * @return true if behavior was executed
      */
@@ -258,31 +272,44 @@ protected:
     // ========================================================================
 
     // Cached flag carriers (refreshed by RefreshFlagState)
+    // NOTE: These raw pointers are protected by m_flagStateMutex.
+    // Always acquire a shared_lock before reading, unique_lock before writing.
     ::Player* m_cachedFriendlyFC = nullptr;
     ::Player* m_cachedEnemyFC = nullptr;
-    uint32 m_lastFlagStateRefresh = 0;
+    std::atomic<uint32> m_lastFlagStateRefresh{0};
+    mutable std::shared_mutex m_flagStateMutex;
     static constexpr uint32 FLAG_STATE_REFRESH_INTERVAL = 1000; // 1 second
 
-    // Flag states (tracked from events)
-    bool m_allianceFlagTaken = false;
-    bool m_hordeFlagTaken = false;
+    // Flag states (tracked from events — written on main, read on workers)
+    std::atomic<bool> m_allianceFlagTaken{false};
+    std::atomic<bool> m_hordeFlagTaken{false};
     ObjectGuid m_allianceFC;
     ObjectGuid m_hordeFC;
-    uint32 m_allianceFlagPickupTime = 0;
-    uint32 m_hordeFlagPickupTime = 0;
+    std::atomic<uint32> m_allianceFlagPickupTime{0};
+    std::atomic<uint32> m_hordeFlagPickupTime{0};
 
     // Score tracking
-    uint32 m_allianceCaptures = 0;
-    uint32 m_hordeCaptures = 0;
+    std::atomic<uint32> m_allianceCaptures{0};
+    std::atomic<uint32> m_hordeCaptures{0};
 
     // Overtime tracking
-    bool m_isOvertime = false;
-    uint32 m_overtimeStartTime = 0;
+    std::atomic<bool> m_isOvertime{false};
+    std::atomic<uint32> m_overtimeStartTime{0};
 
     // Performance metrics
-    uint32 m_successfulCaptures = 0;
-    uint32 m_failedCaptures = 0;  // Dropped before cap
-    uint32 m_flagReturns = 0;
+    std::atomic<uint32> m_successfulCaptures{0};
+    std::atomic<uint32> m_failedCaptures{0};  // Dropped before cap
+    std::atomic<uint32> m_flagReturns{0};
+
+    // FC route tracking - stores selected route waypoints and progress per FC
+    struct FCRouteState
+    {
+        std::vector<Position> waypoints;
+        uint32 currentWaypointIndex = 0;
+        uint32 routeSelectedTime = 0;
+    };
+    mutable std::map<ObjectGuid, FCRouteState> m_fcRouteStates;
+    mutable std::shared_mutex m_fcRouteStateMutex;
 
 private:
     // Internal update timers

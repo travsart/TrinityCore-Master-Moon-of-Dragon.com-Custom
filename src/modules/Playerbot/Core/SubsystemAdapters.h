@@ -408,6 +408,15 @@ public:
     void Shutdown() override;
 };
 
+// initOrder=155 - Road Network Manager (road-aware bot pathfinding)
+class RoadNetworkSubsystem final : public IPlayerbotSubsystem
+{
+public:
+    SubsystemInfo GetInfo() const override;
+    bool Initialize() override;
+    void Shutdown() override;
+};
+
 // updateOrder=900 - Bot Cluster Detector (R1: anti-cluster dispersal)
 class BotClusterDetectorSubsystem final : public IPlayerbotSubsystem
 {

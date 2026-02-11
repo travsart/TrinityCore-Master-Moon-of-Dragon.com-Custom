@@ -10,6 +10,7 @@
 
 #include "ResourceRaceScriptBase.h"
 #include "SilvershardMinesData.h"
+#include <atomic>
 #include <unordered_set>
 
 namespace Playerbot::Coordination::Battleground
@@ -186,7 +187,7 @@ private:
     std::map<uint32, Position> m_cartPositions;
 
     // Match state
-    SilvershardMinesPhase m_currentPhase = SilvershardMinesPhase::OPENING;
+    std::atomic<SilvershardMinesPhase> m_currentPhase{SilvershardMinesPhase::OPENING};
     uint32 m_matchElapsedTime = 0;
     uint32 m_matchStartTime = 0;
     bool m_matchActive = false;

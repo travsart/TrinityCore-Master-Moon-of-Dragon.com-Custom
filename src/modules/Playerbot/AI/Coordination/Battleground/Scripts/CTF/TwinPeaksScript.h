@@ -17,6 +17,7 @@
 
 #include "CTFScriptBase.h"
 #include "TwinPeaksData.h"
+#include <atomic>
 #include <unordered_set>
 
 namespace Playerbot::Coordination::Battleground
@@ -115,6 +116,14 @@ public:
      * @return true if the script handled the player's behavior
      */
     bool ExecuteStrategy(::Player* player) override;
+
+    /**
+     * @brief Get FC route waypoints using 3-route risk evaluation
+     * Evaluates DIRECT, NORTH, and SOUTH routes based on enemy positions.
+     * @return Waypoints for the lowest-risk route
+     */
+    std::vector<Position> GetFCRouteWaypoints(uint32 faction,
+        const std::vector<Position>& enemyPositions) const override;
 
     // ========================================================================
     // STRATEGY AND ROLES
@@ -265,7 +274,7 @@ private:
     // ========================================================================
 
     // Match state
-    TwinPeaksPhase m_currentPhase = TwinPeaksPhase::OPENING;
+    std::atomic<TwinPeaksPhase> m_currentPhase{TwinPeaksPhase::OPENING};
     uint32 m_matchElapsedTime = 0;
     uint32 m_matchStartTime = 0;
     bool m_matchActive = false;

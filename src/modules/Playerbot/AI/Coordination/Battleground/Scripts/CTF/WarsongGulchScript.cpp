@@ -12,6 +12,7 @@
 #include "WarsongGulchScript.h"
 #include "BGScriptRegistry.h"
 #include "BattlegroundCoordinator.h"
+#include "BotMovementUtil.h"
 #include "Player.h"
 #include "Log.h"
 
@@ -358,7 +359,7 @@ void WarsongGulchScript::OnEvent(const BGScriptEventData& event)
         case BGScriptEvent::FLAG_CAPTURED:
             TC_LOG_DEBUG("playerbots.bg.script",
                 "WSG: Flag captured! New score - Alliance: {}, Horde: {}",
-                m_allianceCaptures, m_hordeCaptures);
+                m_allianceCaptures.load(), m_hordeCaptures.load());
             break;
 
         case BGScriptEvent::FLAG_DROPPED:
@@ -392,6 +393,16 @@ std::vector<Position> WarsongGulchScript::GetObjectivePath(
     }
 
     return {};
+}
+
+std::vector<Position> WarsongGulchScript::GetFCRouteWaypoints(uint32 faction,
+    const std::vector<Position>& /*enemyPositions*/) const
+{
+    // WSG uses a single pre-calculated kite path per faction
+    if (faction == ALLIANCE)
+        return WarsongGulch::GetAllianceFCKitePath();
+    else
+        return WarsongGulch::GetHordeFCKitePath();
 }
 
 std::vector<Position> WarsongGulchScript::GetFlagRunRoute(uint32 faction, bool useSpeedBuff) const
@@ -506,43 +517,66 @@ bool WarsongGulchScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 3: Enemy flag at base (no one carrying) -> pick it up
+    // PRIORITY 3: No flags in play -> opening split (30% attack / 40% defend / 30% mid)
     // =========================================================================
-    // Only send one bot to pick up (using GUID hash to prevent dog-piling)
     if (!m_cachedFriendlyFC && !m_cachedEnemyFC)
     {
-        // No flags in play - race to enemy flag
-        // Only a subset of bots go for pickup (the rest defend)
-        uint32 dutySlot = player->GetGUID().GetCounter() % 2;
-        if (dutySlot == 0) // 50% go pickup
+        uint32 dutySlot = player->GetGUID().GetCounter() % 10;
+        if (dutySlot < 3) // 30% go pickup enemy flag
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 3: going to pick up enemy flag",
                 player->GetName());
             PickupEnemyFlag(player);
             return true;
         }
-        else // 50% defend flag room
+        else if (dutySlot < 7) // 40% defend flag room
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 3: defending flag room",
                 player->GetName());
             DefendOwnFlagRoom(player);
             return true;
         }
+        else // 30% hold mid-field (chokepoints)
+        {
+            auto chokepoints = GetMiddleChokepoints();
+            if (!chokepoints.empty())
+            {
+                uint32 cpIdx = player->GetGUID().GetCounter() % chokepoints.size();
+                Playerbot::BotMovementUtil::MoveToPosition(player, chokepoints[cpIdx]);
+                // Attack enemies at mid
+                ::Player* nearEnemy = FindNearestEnemyPlayer(player, 20.0f);
+                if (nearEnemy)
+                    EngageTarget(player, nearEnemy);
+            }
+            else
+            {
+                DefendOwnFlagRoom(player);
+            }
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 3: holding mid-field",
+                player->GetName());
+            return true;
+        }
     }
 
     // =========================================================================
-    // PRIORITY 4: Both FCs exist -> GUID-hash duty split
+    // PRIORITY 4: Both FCs exist -> 20% escort / 40% defend / 40% hunt
     // =========================================================================
     if (m_cachedFriendlyFC && m_cachedEnemyFC)
     {
-        uint32 dutySlot = player->GetGUID().GetCounter() % 3;
-        if (dutySlot < 2) // 2/3 escort friendly FC
+        uint32 dutySlot = player->GetGUID().GetCounter() % 5;
+        if (dutySlot == 0) // 20% escort friendly FC
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 4: escorting friendly FC {}",
                 player->GetName(), m_cachedFriendlyFC->GetName());
             EscortFriendlyFC(player, m_cachedFriendlyFC);
         }
-        else // 1/3 hunt enemy FC
+        else if (dutySlot < 3) // 40% defend base
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 4: defending flag room during standoff",
+                player->GetName());
+            DefendOwnFlagRoom(player);
+        }
+        else // 40% hunt enemy FC
         {
             TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 4: hunting enemy FC {}",
                 player->GetName(), m_cachedEnemyFC->GetName());
@@ -552,24 +586,44 @@ bool WarsongGulchScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 5: Only friendly FC exists -> all escort
+    // PRIORITY 5: Only friendly FC exists -> 60% escort / 40% defend
     // =========================================================================
     if (m_cachedFriendlyFC)
     {
-        TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 5: escorting friendly FC {}",
-            player->GetName(), m_cachedFriendlyFC->GetName());
-        EscortFriendlyFC(player, m_cachedFriendlyFC);
+        uint32 dutySlot = player->GetGUID().GetCounter() % 5;
+        if (dutySlot < 3) // 60% escort
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 5: escorting friendly FC {}",
+                player->GetName(), m_cachedFriendlyFC->GetName());
+            EscortFriendlyFC(player, m_cachedFriendlyFC);
+        }
+        else // 40% defend base
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 5: defending flag room while FC runs",
+                player->GetName());
+            DefendOwnFlagRoom(player);
+        }
         return true;
     }
 
     // =========================================================================
-    // PRIORITY 6: Only enemy FC exists -> all hunt
+    // PRIORITY 6: Only enemy FC exists -> 60% hunt / 40% defend
     // =========================================================================
     if (m_cachedEnemyFC)
     {
-        TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 6: hunting enemy FC {}",
-            player->GetName(), m_cachedEnemyFC->GetName());
-        HuntEnemyFC(player, m_cachedEnemyFC);
+        uint32 dutySlot = player->GetGUID().GetCounter() % 5;
+        if (dutySlot < 3) // 60% hunt
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 6: hunting enemy FC {}",
+                player->GetName(), m_cachedEnemyFC->GetName());
+            HuntEnemyFC(player, m_cachedEnemyFC);
+        }
+        else // 40% defend
+        {
+            TC_LOG_DEBUG("playerbots.bg.script", "[WSG] {} PRIORITY 6: defending while hunting enemy FC",
+                player->GetName());
+            DefendOwnFlagRoom(player);
+        }
         return true;
     }
 

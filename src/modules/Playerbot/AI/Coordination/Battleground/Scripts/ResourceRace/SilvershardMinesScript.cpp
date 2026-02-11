@@ -183,7 +183,7 @@ void SilvershardMinesScript::UpdatePhase(uint32 timeElapsed, uint32 timeRemainin
         const char* phaseNames[] = { "OPENING", "MID_GAME", "LATE_GAME", "DESPERATE" };
         TC_LOG_INFO("playerbot.bg.ssm", "SilvershardMinesScript: Phase transition {} -> {} "
             "(Score: A{}-H{}, Time: {}s remaining)",
-            phaseNames[static_cast<int>(m_currentPhase)],
+            phaseNames[static_cast<int>(m_currentPhase.load())],
             phaseNames[static_cast<int>(newPhase)],
             m_allianceScore, m_hordeScore,
             timeRemaining / 1000);
@@ -776,7 +776,7 @@ RoleDistribution SilvershardMinesScript::GetRecommendedRoles(const StrategicDeci
 {
     RoleDistribution roles;
 
-    switch (m_currentPhase)
+    switch (m_currentPhase.load())
     {
         case SilvershardMinesPhase::OPENING:
         {
@@ -874,7 +874,7 @@ void SilvershardMinesScript::AdjustStrategy(StrategicDecision& decision, float s
     uint32 ourFaction = (!decision.defendObjectives.empty()) ? ALLIANCE : HORDE;
 
     // Apply phase-specific adjustments
-    switch (m_currentPhase)
+    switch (m_currentPhase.load())
     {
         case SilvershardMinesPhase::OPENING:
             ApplyOpeningPhaseStrategy(decision, ourFaction);
@@ -1035,6 +1035,7 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
         return false;
 
     uint32 faction = player->GetBGTeam();
+    uint32 enemyFaction = (faction == ALLIANCE) ? HORDE : ALLIANCE;
 
     // =========================================================================
     // PRIORITY 1: Enemy within 15yd near a cart -> engage
@@ -1048,7 +1049,7 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
             if (distToCart < 30.0f)
             {
                 TC_LOG_DEBUG("playerbots.bg.script",
-                    "[SSM] {} PRIORITY 1: engaging enemy {} near cart {} (dist={:.0f})",
+                    "[SSM] {} P1: engaging enemy {} near cart {} (dist={:.0f})",
                     player->GetName(), enemy->GetName(),
                     SilvershardMines::GetCartName(cartId), distToCart);
                 EngageTarget(player, enemy);
@@ -1058,7 +1059,37 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 2: Uncontested friendly cart nearby -> escort it (move with cart)
+    // PRIORITY 2: Neutral/enemy cart within capture range -> interact to capture
+    // =========================================================================
+    for (const auto& [cartId, state] : m_ssmCartStates)
+    {
+        if (state.controller == faction && !state.contested)
+            continue;  // Already ours and uncontested
+
+        auto posIt = m_cartPositions.find(cartId);
+        if (posIt == m_cartPositions.end())
+            continue;
+
+        float distToCart = player->GetExactDist(&posIt->second);
+        if (distToCart < 15.0f)
+        {
+            TC_LOG_DEBUG("playerbots.bg.script",
+                "[SSM] {} P2: capturing/contesting cart {} (dist={:.0f}, controller={})",
+                player->GetName(), SilvershardMines::GetCartName(cartId),
+                distToCart, state.controller);
+
+            // Try to interact with the cart capture point
+            if (distToCart < 8.0f)
+                TryInteractWithGameObject(player, 29 /*GAMEOBJECT_TYPE_CAPTURE_POINT*/, 10.0f);
+            else
+                Playerbot::BotMovementUtil::MoveToPosition(player, posIt->second);
+
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // PRIORITY 3: Uncontested friendly cart nearby -> escort it (move with cart)
     // =========================================================================
     for (const auto& [cartId, state] : m_ssmCartStates)
     {
@@ -1072,7 +1103,7 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
             if (distToCart < 40.0f)
             {
                 TC_LOG_DEBUG("playerbots.bg.script",
-                    "[SSM] {} PRIORITY 2: escorting friendly cart {} (dist={:.0f})",
+                    "[SSM] {} P3: escorting friendly cart {} (dist={:.0f})",
                     player->GetName(), SilvershardMines::GetCartName(cartId), distToCart);
 
                 // Move alongside the cart using escort formation
@@ -1080,7 +1111,7 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
                 if (!escorts.empty())
                 {
                     uint32 escortSlot = player->GetGUID().GetCounter() % escorts.size();
-                    BotMovementUtil::MoveToPosition(player, escorts[escortSlot]);
+                    Playerbot::BotMovementUtil::MoveToPosition(player, escorts[escortSlot]);
                 }
                 else
                 {
@@ -1092,20 +1123,20 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 3: GUID split: 60% contest nearest enemy cart, 40% escort nearest friendly cart
+    // PRIORITY 4: GUID split: 60% contest nearest enemy/neutral cart,
+    //             40% escort nearest friendly cart
     // =========================================================================
     uint32 dutySlot = player->GetGUID().GetCounter() % 10;
 
     if (dutySlot < 6)
     {
-        // 60% -> contest nearest enemy cart
+        // 60% -> contest nearest enemy/neutral cart
         float bestDist = std::numeric_limits<float>::max();
         uint32 targetCartId = UINT32_MAX;
         Position targetPos;
 
         for (const auto& [cartId, state] : m_ssmCartStates)
         {
-            uint32 enemyFaction = (faction == ALLIANCE) ? HORDE : ALLIANCE;
             if (state.controller == enemyFaction || state.controller == 0)
             {
                 auto posIt = m_cartPositions.find(cartId);
@@ -1125,7 +1156,7 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
         if (targetCartId != UINT32_MAX)
         {
             TC_LOG_DEBUG("playerbots.bg.script",
-                "[SSM] {} PRIORITY 3: contesting enemy cart {} (dist={:.0f})",
+                "[SSM] {} P4: contesting cart {} (dist={:.0f})",
                 player->GetName(), SilvershardMines::GetCartName(targetCartId), bestDist);
 
             // Engage any enemy near the cart, otherwise move to it
@@ -1135,7 +1166,7 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
             }
             else
             {
-                BotMovementUtil::MoveToPosition(player, targetPos);
+                Playerbot::BotMovementUtil::MoveToPosition(player, targetPos);
             }
             return true;
         }
@@ -1168,14 +1199,14 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
         if (targetCartId != UINT32_MAX)
         {
             TC_LOG_DEBUG("playerbots.bg.script",
-                "[SSM] {} PRIORITY 3: escorting friendly cart {} (dist={:.0f})",
+                "[SSM] {} P4: escorting friendly cart {} (dist={:.0f})",
                 player->GetName(), SilvershardMines::GetCartName(targetCartId), bestDist);
 
             auto escorts = GetAbsoluteEscortPositions(targetPos, targetPos.GetOrientation());
             if (!escorts.empty())
             {
                 uint32 escortSlot = player->GetGUID().GetCounter() % escorts.size();
-                BotMovementUtil::MoveToPosition(player, escorts[escortSlot]);
+                Playerbot::BotMovementUtil::MoveToPosition(player, escorts[escortSlot]);
             }
             else
             {
@@ -1186,7 +1217,7 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 4: Fallback -> move to nearest cart position
+    // PRIORITY 5: Fallback -> move to nearest cart position
     // =========================================================================
     {
         float bestDist = std::numeric_limits<float>::max();
@@ -1207,9 +1238,9 @@ bool SilvershardMinesScript::ExecuteStrategy(::Player* player)
         if (found)
         {
             TC_LOG_DEBUG("playerbots.bg.script",
-                "[SSM] {} PRIORITY 4: moving to nearest cart (dist={:.0f})",
+                "[SSM] {} P5: moving to nearest cart (dist={:.0f})",
                 player->GetName(), bestDist);
-            BotMovementUtil::MoveToPosition(player, bestPos);
+            Playerbot::BotMovementUtil::MoveToPosition(player, bestPos);
             return true;
         }
     }

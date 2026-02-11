@@ -11,6 +11,12 @@
 
 #include "SiegeScriptBase.h"
 #include "BattlegroundCoordinator.h"
+#include "BGState.h"
+#include "BotActionManager.h"
+#include "ObjectAccessor.h"
+#include "Player.h"
+#include "Creature.h"
+#include "Vehicle.h"
 #include "Log.h"
 #include <algorithm>
 
@@ -59,6 +65,17 @@ void SiegeScriptBase::OnUpdate(uint32 diff)
     {
         m_siegeUpdateTimer = 0;
         UpdateSiegeState();
+    }
+
+    // Refresh vehicle GUID cache on main thread
+    if (HasVehicles())
+    {
+        m_vehicleCacheTimer += diff;
+        if (m_vehicleCacheTimer >= VEHICLE_CACHE_INTERVAL)
+        {
+            m_vehicleCacheTimer = 0;
+            UpdateVehicleCache();
+        }
     }
 }
 
@@ -477,6 +494,110 @@ void SiegeScriptBase::UpdateSiegeState()
 {
     // Periodic state updates
     // Could query actual boss HP from game state, etc.
+}
+
+// ============================================================================
+// VEHICLE SYSTEM
+// ============================================================================
+
+void SiegeScriptBase::UpdateVehicleCache()
+{
+    if (!m_coordinator)
+        return;
+
+    // Get any bot player for grid context
+    auto bots = m_coordinator->GetAllBots();
+    if (bots.empty())
+        return;
+
+    ::Player* anyBot = ObjectAccessor::FindPlayer(bots.front().guid);
+    if (!anyBot || !anyBot->IsInWorld())
+        return;
+
+    m_cachedVehicles.clear();
+
+    // Scan for vehicle creatures in the BG using GetVehicleData() entries
+    auto vehicleDataList = GetVehicleData();
+    for (const auto& vdata : vehicleDataList)
+    {
+        // Find all creatures of this entry nearby
+        std::list<::Creature*> creatures;
+        anyBot->GetCreatureListWithEntryInGrid(creatures, vdata.entry, 5000.0f);
+
+        for (::Creature* creature : creatures)
+        {
+            if (!creature || !creature->IsAlive())
+                continue;
+
+            ::Vehicle* vehicle = creature->GetVehicleKit();
+            if (!vehicle)
+                continue;
+
+            CachedVehicle cached;
+            cached.guid = creature->GetGUID();
+            cached.entry = creature->GetEntry();
+            cached.pos = creature->GetPosition();
+
+            // Check if vehicle has any empty seats
+            bool hasEmpty = false;
+            for (auto const& [seatId, seat] : vehicle->Seats)
+            {
+                if (seat.Passenger.Guid.IsEmpty())
+                {
+                    hasEmpty = true;
+                    break;
+                }
+            }
+            cached.hasPassengers = !hasEmpty;
+
+            m_cachedVehicles.push_back(cached);
+        }
+    }
+
+    TC_LOG_TRACE("playerbots.bg.script",
+        "SiegeScriptBase: Cached {} vehicles", m_cachedVehicles.size());
+}
+
+bool SiegeScriptBase::TryBoardNearbyVehicle(::Player* bot, uint32 vehicleEntry, float maxRange) const
+{
+    if (!bot || m_cachedVehicles.empty())
+        return false;
+
+    // Already in a vehicle?
+    if (bot->GetVehicle())
+        return false;
+
+    float bestDist = maxRange;
+    ObjectGuid bestGuid;
+
+    for (const auto& cached : m_cachedVehicles)
+    {
+        if (cached.entry != vehicleEntry)
+            continue;
+
+        // Skip vehicles that already have passengers (full)
+        if (cached.hasPassengers)
+            continue;
+
+        float dist = bot->GetExactDist(&cached.pos);
+        if (dist < bestDist)
+        {
+            bestDist = dist;
+            bestGuid = cached.guid;
+        }
+    }
+
+    if (bestGuid.IsEmpty())
+        return false;
+
+    // Queue enter vehicle action via BotActionMgr (thread-safe)
+    sBotActionMgr->QueueAction(Playerbot::BotAction::EnterVehicle(
+        bot->GetGUID(), bestGuid, -1, getMSTime()));
+
+    TC_LOG_DEBUG("playerbots.bg.script",
+        "[Siege] {} queued vehicle boarding (entry {}, dist={:.0f})",
+        bot->GetName(), vehicleEntry, bestDist);
+    return true;
 }
 
 } // namespace Playerbot::Coordination::Battleground

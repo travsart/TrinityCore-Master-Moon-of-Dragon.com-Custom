@@ -84,11 +84,33 @@ bool EyeOfTheStormScript::ExecuteStrategy(::Player* player)
     if (!player || !player->IsInWorld() || !player->IsAlive())
         return false;
 
+    // Check pending GO interaction — hold position if waiting for deferred Use()
+    if (CheckPendingInteraction(player))
+        return true;
+
+    // Check defense commitment — bot stays at captured node for the hold timer
+    if (CheckDefenseCommitment(player))
+        return true;
+
     // Refresh node ownership state (throttled to 1s)
     RefreshNodeState();
 
     uint32 faction = player->GetBGTeam();
     uint32 friendlyCount = GetFriendlyNodeCount(player);
+
+    // =========================================================================
+    // PRIORITY 0: Nearby contested friendly node needs reinforcement
+    // =========================================================================
+    uint32 reinforceNode = CheckReinforcementNeeded(player, 60.0f);
+    if (reinforceNode != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(reinforceNode);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[EOTS] {} PRIORITY 0: reinforcing contested node {}",
+            player->GetName(), nodeData.name);
+        DefendNode(player, reinforceNode);
+        return true;
+    }
 
     // =========================================================================
     // PRIORITY 1: Carrying the EOTS flag -> run to nearest controlled node
@@ -170,7 +192,37 @@ bool EyeOfTheStormScript::ExecuteStrategy(::Player* player)
     {
         // With 2+ nodes, split between flag runners and node control
         // More nodes = more flag focus (flag value scales with nodes)
-        uint32 flagSlots = (friendlyCount >= 3) ? 3 : 2; // 30% or 20% flag duty
+        // 4-cap: 50% flag duty, 3-cap: 30%, 2-cap: 20%
+        uint32 flagSlots = (friendlyCount >= 4) ? 5 : (friendlyCount >= 3) ? 3 : 2;
+
+        // FC ESCORT: When flag carrier exists, auto-assign 2 nearest non-FC bots as escorts
+        // This check runs BEFORE the duty slot split, so escorts are always provided
+        if (!m_flagCarrier.IsEmpty() && player->GetGUID() != m_flagCarrier)
+        {
+            ::Player* fc = ObjectAccessor::FindPlayer(m_flagCarrier);
+            if (fc && fc->IsInWorld() && fc->IsAlive() && fc->GetBGTeam() == faction)
+            {
+                float distToFC = player->GetExactDist(fc);
+                // 2 nearest non-FC bots escort (check dutySlot for determinism)
+                // Use mod 5 with low slots to ensure ~20% = 2 bots always escort
+                uint32 escortSlot = player->GetGUID().GetCounter() % 5;
+                if (escortSlot < 2 || distToFC < 15.0f)
+                {
+                    TC_LOG_DEBUG("playerbots.bg.script",
+                        "[EOTS] {} PRIORITY 4: escorting flag carrier {} (dist={:.0f})",
+                        player->GetName(), fc->GetName(), distToFC);
+
+                    // Move near FC and attack threats
+                    if (distToFC > 10.0f)
+                        BotMovementUtil::MoveToPosition(player, *fc);
+
+                    ::Player* enemy = FindNearestEnemyPlayer(player, 20.0f);
+                    if (enemy)
+                        EngageTarget(player, enemy);
+                    return true;
+                }
+            }
+        }
 
         if (dutySlot < flagSlots && m_flagAtCenter)
         {
@@ -187,27 +239,6 @@ bool EyeOfTheStormScript::ExecuteStrategy(::Player* player)
 
             BotMovementUtil::MoveToPosition(player, flagPos);
             return true;
-        }
-        else if (dutySlot < flagSlots && !m_flagCarrier.IsEmpty())
-        {
-            // Flag is being carried - escort the carrier
-            ::Player* fc = ObjectAccessor::FindPlayer(m_flagCarrier);
-            if (fc && fc->IsInWorld() && fc->IsAlive() && fc->GetBGTeam() == faction)
-            {
-                TC_LOG_DEBUG("playerbots.bg.script",
-                    "[EOTS] {} PRIORITY 4: escorting flag carrier {}",
-                    player->GetName(), fc->GetName());
-
-                // Move near FC and attack threats
-                float dist = player->GetExactDist(fc);
-                if (dist > 10.0f)
-                    BotMovementUtil::MoveToPosition(player, *fc);
-
-                ::Player* enemy = FindNearestEnemyPlayer(player, 20.0f);
-                if (enemy)
-                    EngageTarget(player, enemy);
-                return true;
-            }
         }
 
         // Remaining slots: node control (defend or attack)

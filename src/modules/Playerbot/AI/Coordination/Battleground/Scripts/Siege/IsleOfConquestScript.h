@@ -14,6 +14,8 @@
 
 #include "SiegeScriptBase.h"
 #include "IsleOfConquestData.h"
+#include <atomic>
+#include <shared_mutex>
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -283,36 +285,49 @@ private:
     /// Get best gate to target for assault
     uint32 GetBestGateTarget(uint32 attackingFaction) const;
 
+    /// Queue boss NPC attack via BotActionMgr (deferred to main thread)
+    void QueueBossAttack(::Player* bot, uint32 targetFaction);
+
     // ========================================================================
     // STATE TRACKING
     // ========================================================================
 
-    uint32 m_matchStartTime = 0;
-    uint32 m_lastStrategyUpdate = 0;
-    uint32 m_lastNodeCheck = 0;
-    uint32 m_lastVehicleCheck = 0;
+    // Thread-safety: OnUpdate/OnEvent writes (main thread), ExecuteStrategy reads (worker thread)
+    std::atomic<uint32> m_matchStartTime{0};
+    std::atomic<uint32> m_lastStrategyUpdate{0};
+    std::atomic<uint32> m_lastNodeCheck{0};
+    std::atomic<uint32> m_lastVehicleCheck{0};
 
     uint32 m_allianceReinforcements = IsleOfConquest::STARTING_REINFORCEMENTS;
     uint32 m_hordeReinforcements = IsleOfConquest::STARTING_REINFORCEMENTS;
 
     // Node states (faction control: 0=neutral, 1=alliance, 2=horde)
+    // Small arrays — single writer (main thread), stale reads are benign
     std::array<uint32, IsleOfConquest::ObjectiveIds::NODE_COUNT> m_nodeControl;
 
     // Gate states (true = intact)
     std::array<bool, 6> m_gateIntact;
 
-    // Node state map for quick lookup
+    // Node state map for quick lookup (protected by shared_mutex)
     std::map<uint32, BGObjectiveState> m_nodeStates;
+    mutable std::shared_mutex m_nodeStateMutex;
 
-    // Destroyed gates set
+    // Destroyed gates set (protected by shared_mutex)
     std::set<uint32> m_destroyedGates;
+    mutable std::shared_mutex m_gateStateMutex;
 
-    // Vehicle availability
+    // Vehicle availability (protected by shared_mutex)
     std::map<uint32, uint32> m_vehicleAvailability; // vehicleEntry -> count
+    mutable std::shared_mutex m_vehicleMutex;
 
     // Boss status
-    bool m_halfordAlive = true;
-    bool m_agmarAlive = true;
+    std::atomic<bool> m_halfordAlive{true};
+    std::atomic<bool> m_agmarAlive{true};
+
+    // Cached boss GUIDs (resolved on main thread in OnUpdate)
+    ObjectGuid m_halfordGuid;
+    ObjectGuid m_agmarGuid;
+    std::atomic<bool> m_bossGuidsResolved{false};
 };
 
 } // namespace Playerbot::Coordination::Battleground

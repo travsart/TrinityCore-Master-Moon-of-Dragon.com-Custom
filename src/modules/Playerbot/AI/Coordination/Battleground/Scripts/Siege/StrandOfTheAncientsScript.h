@@ -15,6 +15,7 @@
 #include "SiegeScriptBase.h"
 #include "StrandOfTheAncientsData.h"
 #include <array>
+#include <atomic>
 
 namespace Playerbot::Coordination::Battleground
 {
@@ -296,29 +297,31 @@ private:
     // STATE TRACKING
     // ========================================================================
 
-    uint32 m_matchStartTime = 0;
-    uint32 m_roundStartTime = 0;
-    uint32 m_lastStrategyUpdate = 0;
-    uint32 m_lastGateCheck = 0;
+    // Thread-safety: OnUpdate/OnEvent writes (main thread), ExecuteStrategy reads (worker thread)
+    std::atomic<uint32> m_matchStartTime{0};
+    std::atomic<uint32> m_roundStartTime{0};
+    std::atomic<uint32> m_lastStrategyUpdate{0};
+    std::atomic<uint32> m_lastGateCheck{0};
 
-    bool m_isAttacker = false;
-    uint32 m_currentRound = 1;
-    uint32 m_round1Time = 0;  // Time attacker took in round 1 (milliseconds)
-    bool m_round1Victory = false;  // Did attackers win in round 1?
+    std::atomic<bool> m_isAttacker{false};
+    std::atomic<uint32> m_currentRound{1};
+    std::atomic<uint32> m_round1Time{0};  // Time attacker took in round 1 (milliseconds)
+    std::atomic<bool> m_round1Victory{false};  // Did attackers win in round 1?
 
-    // Gate tracking
+    // Gate tracking (small arrays — single writer, stale reads are benign)
     std::array<bool, StrandOfTheAncients::Gates::COUNT> m_gateDestroyed;
     std::array<uint32, StrandOfTheAncients::Gates::COUNT> m_gateHealth;
 
     // Graveyard tracking
     std::array<bool, StrandOfTheAncients::Graveyards::COUNT> m_graveyardCaptured;
 
-    // Attack path state
+    // Attack path state (written on main thread during EvaluateAttackPath, read by workers)
+    // Note: AttackPath enum is small enough that torn reads won't cause logical errors
     StrandOfTheAncients::AttackPath m_currentPath = StrandOfTheAncients::AttackPath::SPLIT;
-    bool m_pathDecided = false;
+    std::atomic<bool> m_pathDecided{false};
 
     // Relic state
-    bool m_relicCaptured = false;
+    std::atomic<bool> m_relicCaptured{false};
 };
 
 } // namespace Playerbot::Coordination::Battleground

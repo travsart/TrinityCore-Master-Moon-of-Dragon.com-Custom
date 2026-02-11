@@ -103,12 +103,34 @@ bool BattleForGilneasScript::ExecuteStrategy(::Player* player)
     if (!player || !player->IsInWorld() || !player->IsAlive())
         return false;
 
+    // Check pending GO interaction — hold position if waiting for deferred Use()
+    if (CheckPendingInteraction(player))
+        return true;
+
+    // Check defense commitment — bot stays at captured node for the hold timer
+    if (CheckDefenseCommitment(player))
+        return true;
+
     // Refresh node ownership state (throttled to 1s)
     RefreshNodeState();
 
     uint32 faction = player->GetBGTeam();
     uint32 friendlyCount = GetFriendlyNodeCount(player);
     GamePhase phase = GetCurrentPhase();
+
+    // =========================================================================
+    // PRIORITY 0: Nearby contested friendly node needs reinforcement
+    // =========================================================================
+    uint32 reinforceNode = CheckReinforcementNeeded(player, 60.0f);
+    if (reinforceNode != UINT32_MAX)
+    {
+        BGObjectiveData nodeData = GetNodeData(reinforceNode);
+        TC_LOG_DEBUG("playerbots.bg.script",
+            "[BFG] {} PRIORITY 0: reinforcing contested node {}",
+            player->GetName(), nodeData.name);
+        DefendNode(player, reinforceNode);
+        return true;
+    }
 
     // =========================================================================
     // PRIORITY 1: Uncontrolled node within 30yd -> capture it immediately
@@ -620,20 +642,45 @@ BattleForGilneasScript::GamePhase BattleForGilneasScript::GetCurrentPhase() cons
     uint32 ourScore = (faction == ALLIANCE) ? allyScore : hordeScore;
     uint32 theirScore = (faction == ALLIANCE) ? hordeScore : allyScore;
 
-    // Desperate if we're significantly behind
-    if (ourScore + BattleForGilneas::Strategy::DESPERATION_THRESHOLD < theirScore &&
-        elapsed > BattleForGilneas::Strategy::MID_GAME_START)
+    // Phase hysteresis: use different thresholds for entering vs exiting DESPERATE
+    // Enter DESPERATE at full threshold. Exit DESPERATE only when gap closes to half threshold.
+    // This prevents rapid phase flipping when score oscillates near the threshold.
+    constexpr uint32 ENTER_THRESHOLD = BattleForGilneas::Strategy::DESPERATION_THRESHOLD;
+    constexpr uint32 EXIT_THRESHOLD = BattleForGilneas::Strategy::DESPERATION_THRESHOLD / 2;
+
+    if (elapsed > BattleForGilneas::Strategy::MID_GAME_START)
     {
-        return GamePhase::DESPERATE;
+        if (m_lastPhase == GamePhase::DESPERATE)
+        {
+            // Already desperate — only exit if gap narrows to EXIT_THRESHOLD
+            if (ourScore + EXIT_THRESHOLD < theirScore)
+            {
+                m_lastPhase = GamePhase::DESPERATE;
+                return GamePhase::DESPERATE;
+            }
+            // Gap narrowed enough to exit desperate
+        }
+        else
+        {
+            // Not desperate — enter if gap widens to ENTER_THRESHOLD
+            if (ourScore + ENTER_THRESHOLD < theirScore)
+            {
+                m_lastPhase = GamePhase::DESPERATE;
+                return GamePhase::DESPERATE;
+            }
+        }
     }
 
+    GamePhase phase;
     if (elapsed < BattleForGilneas::Strategy::OPENING_PHASE_DURATION)
-        return GamePhase::OPENING;
+        phase = GamePhase::OPENING;
+    else if (elapsed < BattleForGilneas::Strategy::LATE_GAME_START)
+        phase = GamePhase::MID_GAME;
+    else
+        phase = GamePhase::LATE_GAME;
 
-    if (elapsed < BattleForGilneas::Strategy::LATE_GAME_START)
-        return GamePhase::MID_GAME;
-
-    return GamePhase::LATE_GAME;
+    m_lastPhase = phase;
+    return phase;
 }
 
 void BattleForGilneasScript::ApplyPhaseStrategy(StrategicDecision& decision, GamePhase phase, float scoreAdvantage) const

@@ -24,6 +24,7 @@
 #include "SpellInfo.h"
 #include "DBCEnums.h"
 #include "StringFormat.h"
+#include "Vehicle.h"
 #include "Core/PlayerBotHelpers.h"
 #include "AI/BotAI.h"
 
@@ -105,6 +106,10 @@ BotActionResult BotActionProcessor::ExecuteAction(BotAction const& action)
             return ExecuteEquipItem(bot, action);
         case BotActionType::SEND_CHAT_MESSAGE:
             return ExecuteSendChatMessage(bot, action);
+        case BotActionType::ENTER_VEHICLE:
+            return ExecuteEnterVehicle(bot, action);
+        case BotActionType::EXIT_VEHICLE:
+            return ExecuteExitVehicle(bot, action);
         default:
             return BotActionResult::Failure("Unknown action type");
     }
@@ -514,6 +519,51 @@ GameObject* BotActionProcessor::GetGameObject(Player* bot, ObjectGuid guid)
         return nullptr;
 
     return object;
+}
+
+// ============================================================================
+// VEHICLE ACTION EXECUTORS
+// ============================================================================
+
+BotActionResult BotActionProcessor::ExecuteEnterVehicle(Player* bot, BotAction const& action)
+{
+    // Already in a vehicle?
+    if (bot->GetVehicle())
+        return BotActionResult::Failure("Bot already in a vehicle");
+
+    Creature* vehicleCreature = GetCreature(bot, action.targetGuid);
+    if (!vehicleCreature)
+        return BotActionResult::Failure("Vehicle creature not found");
+
+    if (!vehicleCreature->IsAlive())
+        return BotActionResult::Failure("Vehicle creature is dead");
+
+    Vehicle* vehicle = vehicleCreature->GetVehicleKit();
+    if (!vehicle)
+        return BotActionResult::Failure("Creature has no VehicleKit");
+
+    int8 seatId = static_cast<int8>(action.spellId);  // Reused field
+
+    // Enter vehicle (seatId -1 = first available seat)
+    bot->EnterVehicle(vehicleCreature, seatId);
+
+    TC_LOG_TRACE("playerbot.action",
+        "Bot {} entered vehicle {} (entry {}, seat {})",
+        bot->GetName(), vehicleCreature->GetName(),
+        vehicleCreature->GetEntry(), seatId);
+    return BotActionResult::Success();
+}
+
+BotActionResult BotActionProcessor::ExecuteExitVehicle(Player* bot, BotAction const& action)
+{
+    if (!bot->GetVehicle())
+        return BotActionResult::Failure("Bot not in a vehicle");
+
+    bot->ExitVehicle();
+
+    TC_LOG_TRACE("playerbot.action",
+        "Bot {} exited vehicle", bot->GetName());
+    return BotActionResult::Success();
 }
 
 } // namespace Playerbot

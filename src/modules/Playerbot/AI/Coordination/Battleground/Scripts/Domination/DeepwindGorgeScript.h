@@ -10,6 +10,7 @@
 
 #include "DominationScriptBase.h"
 #include "DeepwindGorgeData.h"
+#include <atomic>
 #include <unordered_set>
 
 namespace Playerbot::Coordination::Battleground
@@ -186,7 +187,8 @@ private:
     bool m_matchActive = false;
 
     // Phase tracking
-    DeepwindGorgePhase m_currentPhase = DeepwindGorgePhase::OPENING;
+    std::atomic<DeepwindGorgePhase> m_currentPhase{DeepwindGorgePhase::OPENING};
+    mutable DeepwindGorgePhase m_lastPhase = DeepwindGorgePhase::OPENING;
 
     // Node control tracking
     std::map<uint32, uint32> m_nodeControlFaction;  // nodeId -> faction

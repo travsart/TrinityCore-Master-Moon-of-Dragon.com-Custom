@@ -124,7 +124,7 @@ namespace Strategy
 namespace Bosses
 {
     // Alliance Boss - Vanndar Stormpike (in Dun Baldar)
-    constexpr uint32 VANNDAR_ENTRY = 11946;
+    constexpr uint32 VANNDAR_ENTRY = 11948;
     constexpr float VANNDAR_X = -1370.0f;
     constexpr float VANNDAR_Y = -219.0f;
     constexpr float VANNDAR_Z = 98.0f;

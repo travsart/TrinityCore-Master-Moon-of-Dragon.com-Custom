@@ -86,6 +86,7 @@ BattlePetManager::~BattlePetManager()
 std::unordered_map<uint32, BattlePetInfo> BattlePetManager::_petDatabase;
 std::unordered_map<uint32, std::vector<Position>> BattlePetManager::_rarePetSpawns;
 std::unordered_map<uint32, AbilityInfo> BattlePetManager::_abilityDatabase;
+std::unordered_set<uint32> BattlePetManager::_battlePetCreatureEntries;
 PetMetrics BattlePetManager::_globalMetrics;
 std::atomic<bool> BattlePetManager::_databaseInitialized{false};
 std::once_flag BattlePetManager::_initFlag;
@@ -326,6 +327,17 @@ void BattlePetManager::LoadPetDatabase()
     TC_LOG_DEBUG("playerbot.battlepet", "BattlePetManager::LoadPetDatabase: Skipping DB query (not thread-safe)");
 
     TC_LOG_INFO("playerbot", "BattlePetManager: Loaded {} battle pet species from database", _petDatabase.size());
+
+    // Build creature entry lookup cache from DB2 BattlePetSpeciesStore
+    // This allows O(1) validation of whether a creature entry is a valid battle pet
+    for (BattlePetSpeciesEntry const* speciesEntry : sBattlePetSpeciesStore)
+    {
+        if (speciesEntry && speciesEntry->CreatureID > 0)
+            _battlePetCreatureEntries.insert(speciesEntry->CreatureID);
+    }
+
+    TC_LOG_INFO("playerbot.battlepet", "BattlePetManager: Built creature entry cache with {} entries",
+        _battlePetCreatureEntries.size());
 }
 
 void BattlePetManager::InitializeAbilityDatabase()
@@ -610,7 +622,7 @@ void BattlePetManager::LoadRarePetList()
 // CORE PET MANAGEMENT
 // ============================================================================
 
-void BattlePetManager::Update(uint32 /*diff*/)
+void BattlePetManager::Update(uint32 diff)
 {
     if (!_bot)
         return;
@@ -629,16 +641,16 @@ void BattlePetManager::Update(uint32 /*diff*/)
     // Get automation profile
     PetBattleAutomationProfile profile = GetAutomationProfile();
 
-    // Auto-level pets if enabled
-    if (profile.autoLevel)
+    // Auto-level pets if enabled (only when not in active workflow)
+    if (profile.autoLevel && _workflowState == PetBattleWorkflowState::IDLE)
         AutoLevelPets();
 
-    // Track rare pet spawns if enabled
-    if (profile.collectRares)
+    // Track rare pet spawns if enabled (only when not in active workflow)
+    if (profile.collectRares && _workflowState == PetBattleWorkflowState::IDLE)
         TrackRarePetSpawns();
 
-    // Heal pets if needed
-    if (profile.healBetweenBattles)
+    // Heal pets between battles if needed (only when not in active workflow)
+    if (profile.healBetweenBattles && _workflowState == PetBattleWorkflowState::IDLE)
     {
         for (auto const& [speciesId, petInfo] : _petInstances)
         {
@@ -646,6 +658,10 @@ void BattlePetManager::Update(uint32 /*diff*/)
                 HealPet(speciesId);
         }
     }
+
+    // Run the pet battle workflow state machine when autoBattle is enabled
+    if (profile.autoBattle)
+        UpdateWorkflow(diff);
 }
 
 std::vector<BattlePetInfo> BattlePetManager::GetPlayerPets() const
@@ -702,9 +718,14 @@ bool BattlePetManager::CapturePet(uint32 speciesId, PetQuality quality)
     BattlePetInfo petInfo = _petDatabase[speciesId];
     petInfo.quality = quality;
 
-    // Add to player's collection
+    // Add to player's collection (internal tracking)
     _ownedPets.insert(speciesId);
     _petInstances[speciesId] = petInfo;
+
+    // Wire capture into TrinityCore's core BattlePetMgr journal
+    // This makes the pet visible in the player's pet journal UI
+    AddPetToCoreBattlePetMgr(speciesId, quality, static_cast<uint16>(petInfo.level));
+
     // Update metrics
     _metrics.petsCollected++;
     _globalMetrics.petsCollected++;
@@ -715,7 +736,8 @@ bool BattlePetManager::CapturePet(uint32 speciesId, PetQuality quality)
         _globalMetrics.raresCaptured++;
     }
 
-    TC_LOG_INFO("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) captured pet {} (species {}, quality {})", _bot->GetGUID().GetCounter(), petInfo.name, speciesId, static_cast<uint32>(quality));
+    TC_LOG_INFO("playerbot", "BattlePetManager: bot {} captured pet {} (species {}, quality {})",
+        _bot->GetGUID().GetCounter(), petInfo.name, speciesId, static_cast<uint32>(quality));
 
     return true;
 }
@@ -1591,10 +1613,9 @@ void BattlePetManager::AutoLevelPets()
         if (!creature || !creature->IsAlive())
             continue;
 
-        // Check if it's a battle pet (type 15 = CREATURE_TYPE_BATTLE_PET in some implementations)
-        // Also check for critter type which many wild pets use
+        // Check if it's a wild battle pet (SharedDefines.h:4966)
         uint32 creatureType = creature->GetCreatureType();
-        if (creatureType != 13 && creatureType != 15) // CREATURE_TYPE_CRITTER = 8, but varies
+        if (creatureType != CREATURE_TYPE_WILD_PET) // value 14
             continue;
 
         // Check level range (within ±3 levels of target)
@@ -2678,6 +2699,520 @@ void BattlePetManager::OnBattleWon()
     _opponentMaxHealth = 0;
     _battleStartTime = 0;
     _abilityCooldowns.clear();
+}
+
+// ============================================================================
+// WORKFLOW STATE MACHINE
+// ============================================================================
+
+bool BattlePetManager::ShouldDoPetBattles() const
+{
+    if (!_bot || !_bot->IsInWorld())
+        return false;
+
+    // Don't do pet battles if dead
+    if (!_bot->IsAlive())
+        return false;
+
+    // Don't do pet battles while in combat
+    if (_bot->IsInCombat())
+        return false;
+
+    // Don't do pet battles in instances or battlegrounds
+    if (_bot->GetMap()->IsDungeon() || _bot->GetMap()->IsBattleground())
+        return false;
+
+    // Don't do pet battles while in a group (follow leader instead)
+    if (_bot->GetGroup())
+        return false;
+
+    // Don't do pet battles if automation disabled
+    PetBattleAutomationProfile profile = GetAutomationProfile();
+    if (!profile.autoBattle)
+        return false;
+
+    // Must have at least one pet to battle with
+    if (GetPetCount() == 0)
+        return false;
+
+    return true;
+}
+
+bool BattlePetManager::IsInPetBattleActivity() const
+{
+    return _workflowState != PetBattleWorkflowState::IDLE
+        && _workflowState != PetBattleWorkflowState::COOLDOWN;
+}
+
+void BattlePetManager::TransitionToWorkflowState(PetBattleWorkflowState newState)
+{
+    if (_workflowState == newState)
+        return;
+
+    TC_LOG_DEBUG("playerbot.battlepet", "Bot {} workflow: {} -> {}",
+        _bot ? _bot->GetGUID().GetCounter() : 0,
+        static_cast<uint8>(_workflowState),
+        static_cast<uint8>(newState));
+
+    _workflowState = newState;
+    _workflowStateEntryTime = GameTime::GetGameTimeMS();
+}
+
+void BattlePetManager::UpdateWorkflow(uint32 diff)
+{
+    if (!_bot || !_bot->IsInWorld())
+        return;
+
+    // Timeout protection: 60 seconds max per state (except BATTLING which has its own timeout)
+    uint32 timeInState = GameTime::GetGameTimeMS() - _workflowStateEntryTime;
+    if (_workflowState != PetBattleWorkflowState::IDLE &&
+        _workflowState != PetBattleWorkflowState::COOLDOWN &&
+        _workflowState != PetBattleWorkflowState::BATTLING &&
+        timeInState > 60000)
+    {
+        TC_LOG_WARN("playerbot.battlepet", "Bot {} workflow timeout in state {} after {}ms, resetting to IDLE",
+            _bot->GetGUID().GetCounter(), static_cast<uint8>(_workflowState), timeInState);
+        TransitionToWorkflowState(PetBattleWorkflowState::IDLE);
+        return;
+    }
+
+    switch (_workflowState)
+    {
+        case PetBattleWorkflowState::IDLE:
+            HandleIdleState();
+            break;
+        case PetBattleWorkflowState::SEEKING_PET:
+            HandleSeekingPetState();
+            break;
+        case PetBattleWorkflowState::NAVIGATING_TO_PET:
+            HandleNavigatingToPetState();
+            break;
+        case PetBattleWorkflowState::BATTLING:
+            HandleBattlingState(diff);
+            break;
+        case PetBattleWorkflowState::POST_BATTLE:
+            HandlePostBattleState();
+            break;
+        case PetBattleWorkflowState::SEEKING_HEALER:
+            HandleSeekingHealerState();
+            break;
+        case PetBattleWorkflowState::NAVIGATING_TO_HEAL:
+            HandleNavigatingToHealState();
+            break;
+        case PetBattleWorkflowState::HEALING:
+            HandleHealingState();
+            break;
+        case PetBattleWorkflowState::COOLDOWN:
+            HandleCooldownState();
+            break;
+    }
+}
+
+void BattlePetManager::HandleIdleState()
+{
+    if (!ShouldDoPetBattles())
+        return;
+
+    // Check if pets need healing first
+    PetBattleAutomationProfile profile = GetAutomationProfile();
+    bool anyPetNeedsHealing = false;
+    bool allPetsDead = true;
+
+    for (auto const& [speciesId, petInfo] : _petInstances)
+    {
+        if (petInfo.health > 0)
+            allPetsDead = false;
+        if (NeedsHealing(speciesId))
+            anyPetNeedsHealing = true;
+    }
+
+    // If all pets are dead, seek healer
+    if (allPetsDead && !_petInstances.empty())
+    {
+        TransitionToWorkflowState(PetBattleWorkflowState::SEEKING_HEALER);
+        return;
+    }
+
+    // If healing needed and profile says heal between battles, seek healer
+    if (anyPetNeedsHealing && profile.healBetweenBattles)
+    {
+        TransitionToWorkflowState(PetBattleWorkflowState::SEEKING_HEALER);
+        return;
+    }
+
+    // Otherwise start looking for a wild pet to battle
+    TransitionToWorkflowState(PetBattleWorkflowState::SEEKING_PET);
+}
+
+void BattlePetManager::HandleSeekingPetState()
+{
+    _targetWildPetEntry = ScanForWildBattlePets(50.0f);
+
+    if (_targetWildPetEntry != 0)
+    {
+        TC_LOG_DEBUG("playerbot.battlepet", "Bot {} found wild pet entry {} to battle",
+            _bot->GetGUID().GetCounter(), _targetWildPetEntry);
+        TransitionToWorkflowState(PetBattleWorkflowState::NAVIGATING_TO_PET);
+    }
+    else
+    {
+        // No pets found - go back to idle (will retry on next update cycle)
+        TransitionToWorkflowState(PetBattleWorkflowState::IDLE);
+    }
+}
+
+void BattlePetManager::HandleNavigatingToPetState()
+{
+    if (!_bot || _targetWildPetEntry == 0)
+    {
+        TransitionToWorkflowState(PetBattleWorkflowState::IDLE);
+        return;
+    }
+
+    // Find the target creature again (it may have moved or despawned)
+    Creature* targetCreature = nullptr;
+    float searchRadius = 60.0f;
+    std::list<Creature*> creatures;
+    Trinity::AllCreaturesOfEntryInRange checker(_bot, _targetWildPetEntry, searchRadius);
+    Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(_bot, creatures, checker);
+    Cell::VisitGridObjects(_bot, searcher, searchRadius);
+
+    for (Creature* creature : creatures)
+    {
+        if (creature && creature->IsAlive())
+        {
+            targetCreature = creature;
+            break;
+        }
+    }
+
+    if (!targetCreature)
+    {
+        TC_LOG_DEBUG("playerbot.battlepet", "Bot {} target wild pet {} despawned, returning to IDLE",
+            _bot->GetGUID().GetCounter(), _targetWildPetEntry);
+        _targetWildPetEntry = 0;
+        TransitionToWorkflowState(PetBattleWorkflowState::IDLE);
+        return;
+    }
+
+    float distance = _bot->GetDistance(targetCreature);
+
+    // Close enough to start battle
+    if (distance < 5.0f)
+    {
+        if (StartPetBattle(_targetWildPetEntry))
+        {
+            TransitionToWorkflowState(PetBattleWorkflowState::BATTLING);
+            _battleTurnTimer = 0;
+        }
+        else
+        {
+            // Failed to start battle (no active team, etc.)
+            TC_LOG_DEBUG("playerbot.battlepet", "Bot {} failed to start battle with {}",
+                _bot->GetGUID().GetCounter(), _targetWildPetEntry);
+            _targetWildPetEntry = 0;
+            TransitionToWorkflowState(PetBattleWorkflowState::COOLDOWN);
+        }
+        return;
+    }
+
+    // Move toward the target
+    Position dest(targetCreature->GetPositionX(), targetCreature->GetPositionY(),
+                  targetCreature->GetPositionZ(), 0.0f);
+    if (BotAI* ai = GetBotAI(_bot))
+    {
+        if (!ai->MoveTo(dest, true))
+        {
+            _bot->GetMotionMaster()->MovePoint(0,
+                targetCreature->GetPositionX(),
+                targetCreature->GetPositionY(),
+                targetCreature->GetPositionZ());
+        }
+    }
+    else
+    {
+        _bot->GetMotionMaster()->MovePoint(0,
+            targetCreature->GetPositionX(),
+            targetCreature->GetPositionY(),
+            targetCreature->GetPositionZ());
+    }
+}
+
+void BattlePetManager::HandleBattlingState(uint32 diff)
+{
+    if (!_inBattle)
+    {
+        // Battle ended externally (forfeit, disconnect, etc.)
+        TransitionToWorkflowState(PetBattleWorkflowState::POST_BATTLE);
+        return;
+    }
+
+    // Battle timeout: 2 minutes max
+    uint32 timeInState = GameTime::GetGameTimeMS() - _workflowStateEntryTime;
+    if (timeInState > 120000)
+    {
+        TC_LOG_WARN("playerbot.battlepet", "Bot {} battle timeout after 2 minutes, forfeiting",
+            _bot->GetGUID().GetCounter());
+        ForfeitBattle();
+        TransitionToWorkflowState(PetBattleWorkflowState::POST_BATTLE);
+        return;
+    }
+
+    // Execute a battle turn every 2 seconds
+    _battleTurnTimer += diff;
+    if (_battleTurnTimer >= 2000)
+    {
+        _battleTurnTimer = 0;
+
+        if (!ExecuteBattleTurn())
+        {
+            // No valid ability could be used - check if we should switch or forfeit
+            if (ShouldSwitchPet())
+            {
+                uint32 switchTarget = SelectBestSwitchTarget();
+                if (switchTarget != 0)
+                    SwitchActivePet(switchTarget);
+            }
+            else
+            {
+                // No abilities, no switch target - forfeit
+                ForfeitBattle();
+                TransitionToWorkflowState(PetBattleWorkflowState::POST_BATTLE);
+            }
+        }
+
+        // Check if battle ended (opponent defeated triggers OnBattleWon which clears _inBattle)
+        if (!_inBattle)
+        {
+            TransitionToWorkflowState(PetBattleWorkflowState::POST_BATTLE);
+        }
+    }
+}
+
+void BattlePetManager::HandlePostBattleState()
+{
+    // Post-battle processing is handled by OnBattleWon() which is called from UseAbility()
+    // when opponent health reaches 0. By the time we get here, XP has been awarded
+    // and capture has been attempted.
+
+    _targetWildPetEntry = 0;
+
+    // Check if pets need healing
+    bool anyPetNeedsHealing = false;
+    for (auto const& [speciesId, petInfo] : _petInstances)
+    {
+        if (NeedsHealing(speciesId))
+        {
+            anyPetNeedsHealing = true;
+            break;
+        }
+    }
+
+    PetBattleAutomationProfile profile = GetAutomationProfile();
+    if (anyPetNeedsHealing && profile.healBetweenBattles)
+    {
+        TransitionToWorkflowState(PetBattleWorkflowState::SEEKING_HEALER);
+    }
+    else
+    {
+        TransitionToWorkflowState(PetBattleWorkflowState::COOLDOWN);
+    }
+}
+
+void BattlePetManager::HandleSeekingHealerState()
+{
+    _healerEntry = FindNearestPetHealer();
+
+    if (_healerEntry != 0)
+    {
+        TC_LOG_DEBUG("playerbot.battlepet", "Bot {} found pet healer entry {}",
+            _bot->GetGUID().GetCounter(), _healerEntry);
+        TransitionToWorkflowState(PetBattleWorkflowState::NAVIGATING_TO_HEAL);
+    }
+    else
+    {
+        // No healer found - just heal internally and go to cooldown
+        HealAllPets();
+        TransitionToWorkflowState(PetBattleWorkflowState::COOLDOWN);
+    }
+}
+
+void BattlePetManager::HandleNavigatingToHealState()
+{
+    if (!_bot || _healerEntry == 0)
+    {
+        HealAllPets();
+        TransitionToWorkflowState(PetBattleWorkflowState::COOLDOWN);
+        return;
+    }
+
+    // Find the healer NPC
+    Creature* healer = nullptr;
+    float searchRadius = 200.0f;
+    std::list<Creature*> creatures;
+    Trinity::AllCreaturesOfEntryInRange checker(_bot, _healerEntry, searchRadius);
+    Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(_bot, creatures, checker);
+    Cell::VisitGridObjects(_bot, searcher, searchRadius);
+
+    for (Creature* creature : creatures)
+    {
+        if (creature && creature->IsAlive() && !creature->IsHostileTo(_bot))
+        {
+            healer = creature;
+            break;
+        }
+    }
+
+    if (!healer)
+    {
+        // Healer despawned/not found - heal internally
+        HealAllPets();
+        TransitionToWorkflowState(PetBattleWorkflowState::COOLDOWN);
+        return;
+    }
+
+    float distance = _bot->GetDistance(healer);
+
+    // Close enough to interact
+    if (distance < 5.0f)
+    {
+        TransitionToWorkflowState(PetBattleWorkflowState::HEALING);
+        return;
+    }
+
+    // Move toward the healer
+    Position dest(healer->GetPositionX(), healer->GetPositionY(), healer->GetPositionZ(), 0.0f);
+    if (BotAI* ai = GetBotAI(_bot))
+    {
+        if (!ai->MoveTo(dest, true))
+        {
+            _bot->GetMotionMaster()->MovePoint(0,
+                healer->GetPositionX(), healer->GetPositionY(), healer->GetPositionZ());
+        }
+    }
+    else
+    {
+        _bot->GetMotionMaster()->MovePoint(0,
+            healer->GetPositionX(), healer->GetPositionY(), healer->GetPositionZ());
+    }
+}
+
+void BattlePetManager::HandleHealingState()
+{
+    // Use core BattlePetMgr to heal pets (simulates NPC interaction)
+    WorldSession* session = _bot->GetSession();
+    if (session)
+    {
+        BattlePets::BattlePetMgr* petMgr = session->GetBattlePetMgr();
+        if (petMgr)
+        {
+            petMgr->HealBattlePetsPct(100); // Full heal
+        }
+    }
+
+    // Also heal internal pet instances
+    HealAllPets();
+
+    TC_LOG_DEBUG("playerbot.battlepet", "Bot {} healed all pets",
+        _bot->GetGUID().GetCounter());
+
+    _healerEntry = 0;
+    TransitionToWorkflowState(PetBattleWorkflowState::COOLDOWN);
+}
+
+void BattlePetManager::HandleCooldownState()
+{
+    // Wait 10 seconds between battles
+    uint32 timeInState = GameTime::GetGameTimeMS() - _workflowStateEntryTime;
+    if (timeInState >= 10000)
+    {
+        TransitionToWorkflowState(PetBattleWorkflowState::IDLE);
+    }
+}
+
+// ============================================================================
+// WORKFLOW HELPERS
+// ============================================================================
+
+uint32 BattlePetManager::ScanForWildBattlePets(float searchRadius)
+{
+    if (!_bot || !_bot->IsInWorld())
+        return 0;
+
+    // Use AllCreaturesInRange to find all creatures, then filter by type and entry cache
+    std::list<Creature*> creatures;
+    Trinity::AllCreaturesOfEntryInRange checker(_bot, 0, searchRadius);
+    Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(_bot, creatures, checker);
+    Cell::VisitGridObjects(_bot, searcher, searchRadius);
+
+    float bestDistance = searchRadius + 1.0f;
+    uint32 bestEntry = 0;
+
+    for (Creature* creature : creatures)
+    {
+        if (!creature || !creature->IsAlive())
+            continue;
+
+        // Must be CREATURE_TYPE_WILD_PET (14)
+        if (creature->GetCreatureType() != CREATURE_TYPE_WILD_PET)
+            continue;
+
+        // Validate against our creature entry cache for extra safety
+        if (!_battlePetCreatureEntries.empty() && _battlePetCreatureEntries.count(creature->GetEntry()) == 0)
+            continue;
+
+        float distance = _bot->GetDistance(creature);
+        if (distance < bestDistance)
+        {
+            bestDistance = distance;
+            bestEntry = creature->GetEntry();
+            _targetWildPetPos.Relocate(creature->GetPositionX(), creature->GetPositionY(),
+                                        creature->GetPositionZ(), creature->GetOrientation());
+        }
+    }
+
+    return bestEntry;
+}
+
+void BattlePetManager::AddPetToCoreBattlePetMgr(uint32 speciesId, PetQuality quality, uint16 level)
+{
+    if (!_bot)
+        return;
+
+    WorldSession* session = _bot->GetSession();
+    if (!session)
+        return;
+
+    BattlePets::BattlePetMgr* petMgr = session->GetBattlePetMgr();
+    if (!petMgr)
+        return;
+
+    // Look up the BattlePetSpeciesEntry for this species
+    BattlePetSpeciesEntry const* speciesEntry = sBattlePetSpeciesStore.LookupEntry(speciesId);
+    if (!speciesEntry)
+    {
+        TC_LOG_DEBUG("playerbot.battlepet", "Bot {} AddPetToCoreBattlePetMgr: species {} not found in DB2",
+            _bot->GetGUID().GetCounter(), speciesId);
+        return;
+    }
+
+    // Get display ID using TrinityCore's selector
+    uint32 displayId = BattlePets::BattlePetMgr::SelectPetDisplay(speciesEntry);
+
+    // Roll a breed for this species
+    uint16 breed = BattlePets::BattlePetMgr::RollPetBreed(speciesId);
+
+    // Map our PetQuality enum to BattlePetBreedQuality (same underlying values: Poor=0..Legendary=5)
+    BattlePets::BattlePetBreedQuality coreQuality = static_cast<BattlePets::BattlePetBreedQuality>(
+        static_cast<uint8>(quality));
+
+    // Add the pet to the core battle pet journal
+    // Note: AddPet() checks the WellKnown flag - only learnable species can be added
+    petMgr->AddPet(speciesId, displayId, breed, coreQuality, level);
+
+    TC_LOG_DEBUG("playerbot.battlepet", "Bot {} added pet to core journal: species={}, display={}, breed={}, quality={}, level={}",
+        _bot->GetGUID().GetCounter(), speciesId, displayId, breed,
+        static_cast<uint8>(coreQuality), level);
 }
 
 } // namespace Playerbot

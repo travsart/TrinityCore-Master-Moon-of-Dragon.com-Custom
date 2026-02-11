@@ -52,6 +52,7 @@
 #include "Core/Diagnostics/BotCheatMask.h"
 #include "Lifecycle/BotSaveController.h"
 #include "Spatial/BotClusterDetector.h"
+#include "Movement/RoadNetwork/RoadNetworkManager.h"
 
 // EventBus includes
 #include "Group/GroupEvents.h"
@@ -1015,6 +1016,41 @@ void BotClusterDetectorSubsystem::Update(uint32 diff)
 }
 
 // ============================================================================
+// RoadNetworkSubsystem - initOrder=155
+// ============================================================================
+
+SubsystemInfo RoadNetworkSubsystem::GetInfo() const
+{
+    return { "RoadNetwork", SubsystemPriority::NORMAL, 155, 0, 900 };
+}
+
+bool RoadNetworkSubsystem::Initialize()
+{
+    auto* mgr = Playerbot::RoadNetworkManager::Instance();
+
+    bool enabled = sPlayerbotConfig->GetBool("Playerbot.RoadNetwork.Enable", true);
+    mgr->SetEnabled(enabled);
+
+    if (!enabled)
+    {
+        TC_LOG_INFO("module.playerbot", "RoadNetwork: Disabled by configuration");
+        return true;
+    }
+
+    std::string path = sPlayerbotConfig->GetString("Playerbot.RoadNetwork.DataPath", "roads");
+    mgr->SetMinDistance(sPlayerbotConfig->GetFloat("Playerbot.RoadNetwork.MinDistance", 200.0f));
+    mgr->SetMaxDetourRatio(sPlayerbotConfig->GetFloat("Playerbot.RoadNetwork.MaxDetourRatio", 1.5f));
+    mgr->SetMaxEntryDistance(sPlayerbotConfig->GetFloat("Playerbot.RoadNetwork.MaxEntryDistance", 200.0f));
+
+    return mgr->Initialize(path);
+}
+
+void RoadNetworkSubsystem::Shutdown()
+{
+    Playerbot::RoadNetworkManager::Instance()->Shutdown();
+}
+
+// ============================================================================
 // REGISTRATION
 // ============================================================================
 
@@ -1029,6 +1065,7 @@ void RegisterAllSubsystems()
     registry->RegisterSubsystem(std::make_unique<BotWorldSessionMgrSubsystem>());           // 130
     registry->RegisterSubsystem(std::make_unique<BotPacketRelaySubsystem>());               // 140
     registry->RegisterSubsystem(std::make_unique<BotChatCommandHandlerSubsystem>());        // 150
+    registry->RegisterSubsystem(std::make_unique<RoadNetworkSubsystem>());                  // 155
     registry->RegisterSubsystem(std::make_unique<ProfessionDatabaseSubsystem>());           // 160
     registry->RegisterSubsystem(std::make_unique<ClassBehaviorTreeRegistrySubsystem>());    // 170
     registry->RegisterSubsystem(std::make_unique<QuestHubDatabaseSubsystem>());             // 180

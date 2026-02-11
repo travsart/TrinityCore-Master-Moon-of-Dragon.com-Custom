@@ -90,6 +90,13 @@ public:
      */
     bool ExecuteStrategy(::Player* player) override;
 
+    /**
+     * @brief Get FC route waypoints using the standard kite path
+     * WSG uses a single pre-calculated kite path per faction.
+     */
+    std::vector<Position> GetFCRouteWaypoints(uint32 faction,
+        const std::vector<Position>& enemyPositions) const override;
+
     // ========================================================================
     // UTILITY
     // ========================================================================
