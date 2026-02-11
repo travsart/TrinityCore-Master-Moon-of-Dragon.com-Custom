@@ -593,6 +593,16 @@ namespace WorldPackets
             bool Disable = false;
         };
 
+        class SetInsertItemsLeftToRight final : public ClientPacket
+        {
+        public:
+            explicit SetInsertItemsLeftToRight(WorldPacket&& packet) : ClientPacket(CMSG_SET_INSERT_ITEMS_LEFT_TO_RIGHT, std::move(packet)) { }
+
+            void Read() override;
+
+            bool Enable = false;
+        };
+
         class AddItemPassive final : public ServerPacket
         {
         public:

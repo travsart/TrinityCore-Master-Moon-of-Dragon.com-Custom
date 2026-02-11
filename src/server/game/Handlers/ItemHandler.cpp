@@ -1300,3 +1300,8 @@ void WorldSession::HandleSetBankAutosortDisabled(WorldPackets::Item::SetBankAuto
 {
     _player->SetBankAutoSortDisabled(setBankAutosortDisabled.Disable);
 }
+
+void WorldSession::HandleSetInsertItemsLeftToRight(WorldPackets::Item::SetInsertItemsLeftToRight const& setInsertItemsLeftToRight)
+{
+    _player->SetInsertItemsLeftToRight(setInsertItemsLeftToRight.Enable);
+}
