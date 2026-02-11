@@ -1130,21 +1130,14 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
             }
             else
             {
-                // Carriers exist. Only bots whose preferred orb slot is free should go
-                // for pickup. The rest fall through to escort/hunt in Priority 3.
-                std::vector<uint32> orbPriority = GetOrbPriority(player->GetBGTeam());
-                uint32 preferredSlot = player->GetGUID().GetCounter() % TempleOfKotmogu::ORB_COUNT;
-                uint32 candidateOrb = orbPriority[preferredSlot];
-
-                if (!IsOrbHeld(candidateOrb))
-                {
-                    // Check claim/fail state too
-                    auto claimIt = m_orbClaimedUntil.find(candidateOrb);
-                    auto failIt = m_orbSearchFailed.find(candidateOrb);
-                    bool claimed = (claimIt != m_orbClaimedUntil.end() && now < claimIt->second);
-                    bool failed = (failIt != m_orbSearchFailed.end() && now < failIt->second);
-                    shouldAttemptPickup = !claimed && !failed;
-                }
+                // Carriers exist. We need SOME bots to pick up free orbs but NOT all.
+                // Use GUID % ORB_COUNT to get a stable slot (0-3). If the slot < freeCount,
+                // this bot is assigned to pickup duty. With 9-10 bots and 4 slots, each
+                // slot gets ~2-3 bots. So freeCount=1 sends ~2-3 bots, freeCount=2 sends
+                // ~5 bots, etc. PickupOrb() internally round-robins to find the best
+                // free orb, so no specific orb-to-slot mapping is needed at this gate.
+                uint32 botSlot = player->GetGUID().GetCounter() % TempleOfKotmogu::ORB_COUNT;
+                shouldAttemptPickup = (botSlot < freeCount);
             }
 
             if (shouldAttemptPickup)
