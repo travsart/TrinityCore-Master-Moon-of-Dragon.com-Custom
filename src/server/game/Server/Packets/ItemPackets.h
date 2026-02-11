@@ -593,6 +593,16 @@ namespace WorldPackets
             bool Disable = false;
         };
 
+        class SetSortBagsRightToLeft final : public ClientPacket
+        {
+        public:
+            explicit SetSortBagsRightToLeft(WorldPacket&& packet) : ClientPacket(CMSG_SET_SORT_BAGS_RIGHT_TO_LEFT, std::move(packet)) { }
+
+            void Read() override;
+
+            bool Enable = false;
+        };
+
         class AddItemPassive final : public ServerPacket
         {
         public:
