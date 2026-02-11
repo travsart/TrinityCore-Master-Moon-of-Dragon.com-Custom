@@ -212,6 +212,14 @@ private:
      */
     void PopulateBattlegroundLocked(Battleground* bg);
 
+    /**
+     * @brief Remove excess bots from an overpopulated team - caller must hold _mutex
+     * @param bg The battleground instance
+     * @param team The overpopulated team
+     * @param excessCount How many bots to remove
+     */
+    void TrimExcessBotsLocked(Battleground* bg, Team team, uint32 excessCount);
+
     // ============================================================================
     // DATA STRUCTURES
     // ============================================================================

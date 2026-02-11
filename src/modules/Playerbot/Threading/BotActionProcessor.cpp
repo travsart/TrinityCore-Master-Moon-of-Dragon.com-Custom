@@ -480,10 +480,11 @@ BotActionResult BotActionProcessor::ExecuteSendChatMessage(Player* bot, BotActio
 
 Player* BotActionProcessor::GetBot(ObjectGuid guid)
 {
-    // ObjectAccessor::GetPlayer is thread-safe (uses shared_mutex)
-    // Safe to call from main thread
-    Player* player = ObjectAccessor::GetPlayer(nullptr, guid);
-    if (!player || !player->IsInWorld())
+    // Use FindPlayer (HashMapHolder::Find + IsInWorld check).
+    // Do NOT use GetPlayer(Map*, guid) — it compares player->GetMap() == m,
+    // and nullptr never matches any BG map, causing 100% lookup failure.
+    Player* player = ObjectAccessor::FindPlayer(guid);
+    if (!player)
         return nullptr;
 
     return player;

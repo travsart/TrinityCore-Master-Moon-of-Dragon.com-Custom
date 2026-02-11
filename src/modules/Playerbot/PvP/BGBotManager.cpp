@@ -491,6 +491,30 @@ void BGBotManager::PopulateBattlegroundLocked(Battleground* bg)
         "BGBotManager::PopulateBattleground - BG {} population: Alliance {}/{} (in-transit: {}), Horde {}/{} (in-transit: {})",
         bgInstanceGuid, allianceCount, targetTeamSize, inTransitAlliance, hordeCount, targetTeamSize, inTransitHorde);
 
+    // =========================================================================
+    // 3. Check for OVERPOPULATION and trim excess bots
+    // =========================================================================
+    if (allianceCount > targetTeamSize)
+    {
+        uint32 excess = allianceCount - targetTeamSize;
+        TC_LOG_WARN("module.playerbot.bg",
+            "BGBotManager::PopulateBattleground - BG {} Alliance OVERPOPULATED: {}/{}, trimming {} excess bots",
+            bgInstanceGuid, allianceCount, targetTeamSize, excess);
+        TrimExcessBotsLocked(bg, ALLIANCE, excess);
+    }
+
+    if (hordeCount > targetTeamSize)
+    {
+        uint32 excess = hordeCount - targetTeamSize;
+        TC_LOG_WARN("module.playerbot.bg",
+            "BGBotManager::PopulateBattleground - BG {} Horde OVERPOPULATED: {}/{}, trimming {} excess bots",
+            bgInstanceGuid, hordeCount, targetTeamSize, excess);
+        TrimExcessBotsLocked(bg, HORDE, excess);
+    }
+
+    // =========================================================================
+    // 4. Fill remaining empty slots (under-population)
+    // =========================================================================
     uint32 allianceNeeded = (allianceCount < targetTeamSize) ? (targetTeamSize - allianceCount) : 0;
     uint32 hordeNeeded = (hordeCount < targetTeamSize) ? (targetTeamSize - hordeCount) : 0;
 
@@ -1612,6 +1636,83 @@ bool BGBotManager::AddBotDirectlyToBG(Player* bot, Battleground* bg, Team team)
 }
 
 // ============================================================================
+// OVERPOPULATION TRIM
+// ============================================================================
+
+void BGBotManager::TrimExcessBotsLocked(Battleground* bg, Team team, uint32 excessCount)
+{
+    // NOTE: Caller must hold _mutex
+    if (!bg || excessCount == 0)
+        return;
+
+    uint32 bgInstanceGuid = bg->GetInstanceID();
+    std::string teamName = (team == ALLIANCE) ? "Alliance" : "Horde";
+
+    // Collect bot GUIDs on the specified team that we track for this BG
+    auto instanceItr = _bgInstanceBots.find(bgInstanceGuid);
+    if (instanceItr == _bgInstanceBots.end())
+    {
+        TC_LOG_WARN("module.playerbot.bg",
+            "BGBotManager::TrimExcessBots - No tracked bots for BG {}, cannot trim", bgInstanceGuid);
+        return;
+    }
+
+    // Build list of removable bots (only our managed bots, matching team, currently in BG)
+    std::vector<ObjectGuid> removableBots;
+    for (ObjectGuid botGuid : instanceItr->second)
+    {
+        Player* bot = ObjectAccessor::FindPlayer(botGuid);
+        if (!bot)
+            continue;
+
+        // Only remove bots on the overpopulated team
+        if (bot->GetBGTeam() != team)
+            continue;
+
+        // Safety: Only remove actual bot players, never humans
+        if (!sBotWorldSessionMgr->GetPlayerBot(botGuid))
+            continue;
+
+        removableBots.push_back(botGuid);
+    }
+
+    if (removableBots.empty())
+    {
+        TC_LOG_WARN("module.playerbot.bg",
+            "BGBotManager::TrimExcessBots - BG {} {} team overpopulated but no removable bots found",
+            bgInstanceGuid, teamName);
+        return;
+    }
+
+    // Remove excess bots (from the end of the list — most recently iterated)
+    uint32 removed = 0;
+    for (auto it = removableBots.rbegin(); it != removableBots.rend() && removed < excessCount; ++it, ++removed)
+    {
+        ObjectGuid botGuid = *it;
+        Player* bot = ObjectAccessor::FindPlayer(botGuid);
+
+        TC_LOG_INFO("module.playerbot.bg",
+            "BGBotManager::TrimExcessBots - Removing excess {} bot {} from BG {}",
+            teamName, bot ? bot->GetName() : botGuid.ToString(), bgInstanceGuid);
+
+        // Remove from our tracking
+        instanceItr->second.erase(botGuid);
+        UnregisterBotAssignment(botGuid);
+
+        // Release pool bot if applicable
+        if (sInstanceBotPool->IsPoolBot(botGuid))
+            sInstanceBotPool->ReleaseBot(botGuid, true);
+
+        // Queue the bot for removal (async disconnect — safe during map update)
+        sBotWorldSessionMgr->RemovePlayerBot(botGuid);
+    }
+
+    TC_LOG_INFO("module.playerbot.bg",
+        "BGBotManager::TrimExcessBots - Removed {}/{} excess {} bots from BG {}",
+        removed, excessCount, teamName, bgInstanceGuid);
+}
+
+// ============================================================================
 // POPULATION RETRY SYSTEM
 // ============================================================================
 
@@ -1659,6 +1760,24 @@ void BGBotManager::ProcessPendingPopulations()
                 ++allianceCount;
             else
                 ++hordeCount;
+        }
+
+        // Trim overpopulated teams even when "full"
+        if (allianceCount > targetSize)
+        {
+            uint32 excess = allianceCount - targetSize;
+            TC_LOG_WARN("module.playerbot.bg",
+                "BGBotManager::ProcessPendingPopulations - BG {} Alliance overpopulated ({}/{}), trimming {}",
+                instanceId, allianceCount, targetSize, excess);
+            TrimExcessBotsLocked(bg, ALLIANCE, excess);
+        }
+        if (hordeCount > targetSize)
+        {
+            uint32 excess = hordeCount - targetSize;
+            TC_LOG_WARN("module.playerbot.bg",
+                "BGBotManager::ProcessPendingPopulations - BG {} Horde overpopulated ({}/{}), trimming {}",
+                instanceId, hordeCount, targetSize, excess);
+            TrimExcessBotsLocked(bg, HORDE, excess);
         }
 
         // Teams full - no more retries needed
