@@ -975,11 +975,15 @@ void TempleOfKotmoguScript::RefreshOrbState()
     if (!bg)
         return;
 
-    // Clear and rebuild orb state from aura scan
-    m_orbHolders.clear();
-    m_playerOrbs.clear();
-    m_allianceOrbsHeld = 0;
-    m_hordeOrbsHeld = 0;
+    // CRITICAL: Build new state in LOCAL variables first, then swap.
+    // Multiple worker threads call ExecuteStrategy() → RefreshOrbState() concurrently.
+    // The old pattern (clear → rebuild) left m_orbHolders EMPTY during rebuild,
+    // causing other threads to see ALL orbs as "free" → bots run to orb spawns
+    // instead of hunting carriers.
+    std::map<uint32, ObjectGuid> newOrbHolders;
+    std::map<ObjectGuid, uint32> newPlayerOrbs;
+    uint32 newAllianceOrbs = 0;
+    uint32 newHordeOrbs = 0;
 
     for (auto const& [guid, bgPlayer] : bg->GetPlayers())
     {
@@ -990,15 +994,21 @@ void TempleOfKotmoguScript::RefreshOrbState()
         int32 orbId = GetCarriedOrbId(player);
         if (orbId >= 0)
         {
-            m_orbHolders[static_cast<uint32>(orbId)] = guid;
-            m_playerOrbs[guid] = static_cast<uint32>(orbId);
+            newOrbHolders[static_cast<uint32>(orbId)] = guid;
+            newPlayerOrbs[guid] = static_cast<uint32>(orbId);
 
             if (player->GetBGTeam() == ALLIANCE)
-                m_allianceOrbsHeld++;
+                newAllianceOrbs++;
             else
-                m_hordeOrbsHeld++;
+                newHordeOrbs++;
         }
     }
+
+    // Atomic-ish swap: state goes from old-complete to new-complete, never empty
+    m_orbHolders = std::move(newOrbHolders);
+    m_playerOrbs = std::move(newPlayerOrbs);
+    m_allianceOrbsHeld = newAllianceOrbs;
+    m_hordeOrbsHeld = newHordeOrbs;
 
     TC_LOG_DEBUG("playerbots.bg", "[TOK] RefreshOrbState: {} orbs held (Alliance={}, Horde={})",
         static_cast<uint32>(m_orbHolders.size()), m_allianceOrbsHeld, m_hordeOrbsHeld);
@@ -1080,17 +1090,24 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
     }
 
     // =========================================================================
-    // PRIORITY 2: Free orb exists → pick it up
-    // Only truly free orbs (not held, not claimed, not search-failed) trigger
-    // pickup. PickupOrb uses GUID-based slot assignment for even distribution.
+    // PRIORITY 2: Free orb exists → pick it up (with carrier-awareness gating)
+    //
+    // CRITICAL: When carriers already exist, we must NOT send ALL bots to orb
+    // spawns. Only bots whose GUID-based preferred slot maps to a free orb
+    // should attempt pickup. The rest continue to escort/hunt in Priority 3.
+    // Without this gate, one dropped orb causes all 9 bots to abandon hunting.
     // =========================================================================
     {
         uint32 now = GameTime::GetGameTimeMS();
-        bool hasFreeOrb = false;
+        uint32 freeCount = 0;
+        uint32 heldCount = 0;
         for (uint32 i = 0; i < TempleOfKotmogu::ORB_COUNT; ++i)
         {
             if (IsOrbHeld(i))
+            {
+                heldCount++;
                 continue;
+            }
             // Skip orbs already claimed (Use() queued but aura not yet detected)
             auto claimIt = m_orbClaimedUntil.find(i);
             if (claimIt != m_orbClaimedUntil.end() && now < claimIt->second)
@@ -1099,15 +1116,43 @@ bool TempleOfKotmoguScript::ExecuteStrategy(::Player* player)
             auto failIt = m_orbSearchFailed.find(i);
             if (failIt != m_orbSearchFailed.end() && now < failIt->second)
                 continue;
-            hasFreeOrb = true;
-            break;
+            freeCount++;
         }
 
-        if (hasFreeOrb)
+        if (freeCount > 0)
         {
-            if (PickupOrb(player))
-                return true;
-            // If PickupOrb fails (all orbs just got taken), fall through to escort/hunt
+            bool shouldAttemptPickup = false;
+
+            if (heldCount == 0)
+            {
+                // No carriers exist at all (BG start or all orbs dropped) — everyone picks up
+                shouldAttemptPickup = true;
+            }
+            else
+            {
+                // Carriers exist. Only bots whose preferred orb slot is free should go
+                // for pickup. The rest fall through to escort/hunt in Priority 3.
+                std::vector<uint32> orbPriority = GetOrbPriority(player->GetBGTeam());
+                uint32 preferredSlot = player->GetGUID().GetCounter() % TempleOfKotmogu::ORB_COUNT;
+                uint32 candidateOrb = orbPriority[preferredSlot];
+
+                if (!IsOrbHeld(candidateOrb))
+                {
+                    // Check claim/fail state too
+                    auto claimIt = m_orbClaimedUntil.find(candidateOrb);
+                    auto failIt = m_orbSearchFailed.find(candidateOrb);
+                    bool claimed = (claimIt != m_orbClaimedUntil.end() && now < claimIt->second);
+                    bool failed = (failIt != m_orbSearchFailed.end() && now < failIt->second);
+                    shouldAttemptPickup = !claimed && !failed;
+                }
+            }
+
+            if (shouldAttemptPickup)
+            {
+                if (PickupOrb(player))
+                    return true;
+                // If PickupOrb fails (all orbs just got taken), fall through to escort/hunt
+            }
         }
     }
 
@@ -1441,9 +1486,11 @@ bool TempleOfKotmoguScript::PickupOrb(::Player* player)
     // Clear our targeting so we don't loop back to the same empty spot
     m_orbTargeters.erase(bestOrbId);
 
-    // Mark this orb as search-failed for 15 seconds. This prevents the infinite loop
+    // Mark this orb as search-failed for 3 seconds. This prevents the infinite loop
     // where bots re-target a "free" orb every tick but find 0 GOs each time.
-    m_orbSearchFailed[bestOrbId] = GameTime::GetGameTimeMS() + 15000;
+    // Was 15s but that's too long — at BG start, orb GOs may spawn slightly late
+    // and a 15s cooldown means the orb sits unclaimed for the entire opening phase.
+    m_orbSearchFailed[bestOrbId] = GameTime::GetGameTimeMS() + 3000;
 
     TC_LOG_DEBUG("playerbots.bg", "[TOK] {} at orb location but no GO found for {} - orb was taken, cooldown 15s",
         player->GetName(), TempleOfKotmogu::GetOrbName(bestOrbId));
