@@ -112,9 +112,16 @@ bool PortalDatabase::Initialize()
     uint32 portalCount = LoadPortalsFromDB();
     TC_LOG_INFO("module.playerbot.travel", "PortalDatabase: Loaded {} portal GameObjects", portalCount);
 
-    // Load destinations for all portals
+    // Pre-load terrain for all source maps before destination resolution
+    // This prevents catastrophic load/unload thrashing in TerrainMgr
+    PreloadTerrainCache();
+
+    // Load destinations for all portals (zone lookups now use cached terrain)
     uint32 destinationCount = LoadDestinations();
     TC_LOG_INFO("module.playerbot.travel", "PortalDatabase: Resolved {} portal destinations", destinationCount);
+
+    // Release terrain references now that all zone lookups are done
+    ClearTerrainCache();
 
     // Build spatial indexes
     BuildIndexes();
@@ -530,9 +537,48 @@ bool PortalDatabase::IsTeleportSpell(uint32 spellId) const
 
 uint32 PortalDatabase::GetZoneIdForPosition(uint32 mapId, Position const& pos) const
 {
-    // Use empty PhaseShift for static lookup
+    // During initialization, cache terrain references to avoid repeated load/unload.
+    // TerrainMgr uses weak_ptr - without caching, each call loads the entire terrain
+    // tree from disk (including child maps) then immediately discards it.
+    if (!_initialized && _terrainCache.find(mapId) == _terrainCache.end())
+        _terrainCache[mapId] = sTerrainMgr.LoadTerrain(mapId);
+
     PhaseShift emptyPhaseShift;
     return sTerrainMgr.GetZoneId(emptyPhaseShift, mapId, pos);
+}
+
+void PortalDatabase::PreloadTerrainCache()
+{
+    // Collect all unique map IDs from loaded portals and pre-load their terrain.
+    // This keeps shared_ptrs alive so TerrainMgr::LoadTerrain() returns the
+    // cached terrain instead of loading from disk for each portal.
+    std::set<uint32> mapIds;
+    for (PortalInfo const& portal : _portals)
+    {
+        mapIds.insert(portal.sourceMapId);
+    }
+
+    TC_LOG_DEBUG("module.playerbot.travel",
+        "PortalDatabase: Pre-loading terrain for {} unique maps", mapIds.size());
+
+    for (uint32 mapId : mapIds)
+    {
+        if (_terrainCache.find(mapId) == _terrainCache.end())
+        {
+            if (auto terrain = sTerrainMgr.LoadTerrain(mapId))
+                _terrainCache[mapId] = terrain;
+        }
+    }
+}
+
+void PortalDatabase::ClearTerrainCache()
+{
+    if (!_terrainCache.empty())
+    {
+        TC_LOG_DEBUG("module.playerbot.travel",
+            "PortalDatabase: Releasing {} cached terrain references", _terrainCache.size());
+        _terrainCache.clear();
+    }
 }
 
 // ============================================================================

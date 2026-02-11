@@ -33,6 +33,7 @@
 
 class Player;
 class GameObject;
+class TerrainInfo;
 
 namespace Playerbot
 {
@@ -579,6 +580,20 @@ private:
      */
     uint32 GetZoneIdForPosition(uint32 mapId, Position const& pos) const;
 
+    /**
+     * @brief Pre-load and cache terrain references for initialization
+     *
+     * TerrainMgr uses weak_ptr caching — without holding shared_ptrs,
+     * each GetZoneIdForPosition() call loads the entire terrain tree from disk
+     * (including all child maps) and then immediately unloads it when the
+     * temporary shared_ptr goes out of scope. For maps like Eastern Kingdoms
+     * with dozens of child instance maps, this is extremely expensive.
+     *
+     * Call before any GetZoneIdForPosition() batch, clear when done.
+     */
+    void PreloadTerrainCache();
+    void ClearTerrainCache();
+
 private:
     /// Primary storage for all portal data
     ::std::vector<PortalInfo> _portals;
@@ -606,6 +621,10 @@ private:
 
     /// Memory usage tracking
     size_t _memoryUsage = 0;
+
+    /// Temporary terrain cache held alive during initialization to prevent
+    /// repeated terrain tree load/unload cycles in TerrainMgr (which uses weak_ptr)
+    mutable ::std::unordered_map<uint32, ::std::shared_ptr<TerrainInfo>> _terrainCache;
 };
 
 } // namespace Playerbot
