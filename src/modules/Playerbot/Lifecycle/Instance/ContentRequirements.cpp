@@ -13,11 +13,13 @@
  */
 
 #include "ContentRequirements.h"
+#include "BattlegroundMgr.h"
 #include "Database/PlayerbotDatabase.h"
 #include "DatabaseEnv.h"
 #include "DB2Stores.h"
 #include "Log.h"
 #include "Random.h"
+#include "World.h"
 #include <fmt/format.h>
 
 namespace Playerbot
@@ -185,37 +187,17 @@ ContentRequirement const* ContentRequirementDatabase::GetBattlegroundRequirement
 
 ContentRequirement const* ContentRequirementDatabase::GetRandomBattlegroundRequirement_Locked() const
 {
-    // List of actual BG types to choose from (excluding Random BG itself)
-    static const std::vector<uint32> actualBGs = {
-        1,   // Alterac Valley (40v40)
-        2,   // Warsong Gulch (10v10)
-        3,   // Arathi Basin (15v15)
-        7,   // Eye of the Storm (15v15)
-        9,   // Strand of the Ancients (15v15)
-        30,  // Isle of Conquest (40v40)
-        108, // Twin Peaks (10v10)
-        120, // Battle for Gilneas (10v10)
-    };
+    // Pick a random BG from all loaded battleground requirements
+    if (_battlegrounds.empty())
+        return nullptr;
 
-    // Pick a random BG
-    uint32 randomIndex = urand(0, static_cast<uint32>(actualBGs.size() - 1));
-    uint32 selectedBgId = actualBGs[randomIndex];
+    uint32 randomIndex = urand(0, static_cast<uint32>(_battlegrounds.size() - 1));
+    auto it = _battlegrounds.begin();
+    std::advance(it, randomIndex);
 
-    auto it = _battlegrounds.find(selectedBgId);
-    if (it != _battlegrounds.end())
-    {
-        TC_LOG_INFO("playerbot.content", "Random BG selected: {} ({}v{})",
-            it->second.contentName, it->second.playersPerFaction, it->second.playersPerFaction);
-        return &it->second;
-    }
-
-    // Fallback to first available BG
-    if (!_battlegrounds.empty())
-    {
-        return &_battlegrounds.begin()->second;
-    }
-
-    return nullptr;
+    TC_LOG_INFO("playerbot.content", "Random BG selected: {} ({}v{})",
+        it->second.contentName, it->second.playersPerFaction, it->second.playersPerFaction);
+    return &it->second;
 }
 
 ContentRequirement const* ContentRequirementDatabase::GetArenaRequirement(uint32 arenaType) const
@@ -665,202 +647,69 @@ void ContentRequirementDatabase::CreateDefaultRaids()
 
 void ContentRequirementDatabase::CreateDefaultBattlegrounds()
 {
-    TC_LOG_DEBUG("playerbot.content", "ContentRequirementDatabase::CreateDefaultBattlegrounds - Creating defaults");
+    TC_LOG_DEBUG("playerbot.content", "ContentRequirementDatabase::CreateDefaultBattlegrounds - Populating from BattlemasterList DB2");
 
-    // Warsong Gulch (10v10)
-    ContentRequirement warsong;
-    warsong.contentId = 2;  // BG_WS
-    warsong.contentName = "Warsong Gulch";
-    warsong.type = InstanceType::Battleground;
-    warsong.minPlayers = 20;
-    warsong.maxPlayers = 20;
-    warsong.minLevel = 10;
-    warsong.maxLevel = 80;
-    warsong.requiresBothFactions = true;
-    warsong.playersPerFaction = 10;
-    warsong.estimatedDurationMinutes = 25;
+    uint32 count = 0;
 
-    AddRequirement(std::move(warsong));
+    for (BattlemasterListEntry const* entry : sBattlemasterListStore)
+    {
+        if (!entry)
+            continue;
 
-    // Arathi Basin (15v15)
-    ContentRequirement arathi;
-    arathi.contentId = 3;  // BG_AB
-    arathi.contentName = "Arathi Basin";
-    arathi.type = InstanceType::Battleground;
-    arathi.minPlayers = 30;
-    arathi.maxPlayers = 30;
-    arathi.minLevel = 10;
-    arathi.maxLevel = 80;
-    arathi.requiresBothFactions = true;
-    arathi.playersPerFaction = 15;
-    arathi.estimatedDurationMinutes = 20;
+        // Only battlegrounds, not arenas
+        if (entry->GetType() != BattlemasterType::Battleground)
+            continue;
 
-    AddRequirement(std::move(arathi));
+        // Skip meta/random queue entries — these are virtual queues, not real BGs
+        if (BattlegroundMgr::IsRandomBattleground(entry->ID)
+            || entry->ID == BATTLEGROUND_AA)
+            continue;
 
-    // Eye of the Storm (15v15)
-    ContentRequirement eots;
-    eots.contentId = 7;  // BG_EY
-    eots.contentName = "Eye of the Storm";
-    eots.type = InstanceType::Battleground;
-    eots.minPlayers = 30;
-    eots.maxPlayers = 30;
-    eots.minLevel = 35;
-    eots.maxLevel = 80;
-    eots.requiresBothFactions = true;
-    eots.playersPerFaction = 15;
-    eots.estimatedDurationMinutes = 20;
+        // Skip internal-only, obsolete, brawls, rated-only
+        EnumFlag<BattlemasterListFlags> flags = entry->GetFlags();
+        if (flags.HasFlag(BattlemasterListFlags::InternalOnly)
+            || flags.HasFlag(BattlemasterListFlags::ObsoleteDoNotList)
+            || flags.HasFlag(BattlemasterListFlags::IsBrawl)
+            || flags.HasFlag(BattlemasterListFlags::RatedOnly))
+            continue;
 
-    AddRequirement(std::move(eots));
+        // Must have valid player count (MaxPlayers is per-team in BattlemasterList)
+        if (entry->MaxPlayers <= 0)
+            continue;
 
-    // Alterac Valley (40v40) - CRITICAL FOR FULL PVP SUPPORT
-    ContentRequirement alterac;
-    alterac.contentId = 1;  // BG_AV
-    alterac.contentName = "Alterac Valley";
-    alterac.type = InstanceType::Battleground;
-    alterac.minPlayers = 80;
-    alterac.maxPlayers = 80;
-    alterac.minLevel = 45;
-    alterac.maxLevel = 80;
-    alterac.requiresBothFactions = true;
-    alterac.playersPerFaction = 40;
-    alterac.estimatedDurationMinutes = 45;
+        uint32 playersPerTeam = static_cast<uint32>(entry->MaxPlayers);
+        uint32 totalPlayers = playersPerTeam * 2;
 
-    AddRequirement(std::move(alterac));
+        ContentRequirement req;
+        req.contentId = entry->ID;
+        req.contentName = entry->Name[sWorld->GetDefaultDbcLocale()];
+        req.type = InstanceType::Battleground;
+        req.minPlayers = totalPlayers;
+        req.maxPlayers = totalPlayers;
+        req.minLevel = std::max(static_cast<int>(entry->MinLevel), 10);
+        req.maxLevel = std::max(static_cast<int>(entry->MaxLevel), 80);
+        req.requiresBothFactions = true;
+        req.playersPerFaction = playersPerTeam;
 
-    // Isle of Conquest (40v40)
-    ContentRequirement isleOfConquest;
-    isleOfConquest.contentId = 30;  // BG_IC
-    isleOfConquest.contentName = "Isle of Conquest";
-    isleOfConquest.type = InstanceType::Battleground;
-    isleOfConquest.minPlayers = 80;
-    isleOfConquest.maxPlayers = 80;
-    isleOfConquest.minLevel = 71;
-    isleOfConquest.maxLevel = 80;
-    isleOfConquest.requiresBothFactions = true;
-    isleOfConquest.playersPerFaction = 40;
-    isleOfConquest.estimatedDurationMinutes = 30;
+        // Estimate duration based on team size: epic BGs take longer
+        if (playersPerTeam >= 40)
+            req.estimatedDurationMinutes = 45;
+        else if (playersPerTeam >= 15)
+            req.estimatedDurationMinutes = 20;
+        else
+            req.estimatedDurationMinutes = 15;
 
-    AddRequirement(std::move(isleOfConquest));
+        TC_LOG_DEBUG("playerbot.content",
+            "  BG {}: '{}' ({}v{}, levels {}-{})",
+            entry->ID, req.contentName, playersPerTeam, playersPerTeam,
+            req.minLevel, req.maxLevel);
 
-    // Strand of the Ancients (15v15)
-    ContentRequirement sota;
-    sota.contentId = 9;  // BG_SA
-    sota.contentName = "Strand of the Ancients";
-    sota.type = InstanceType::Battleground;
-    sota.minPlayers = 30;
-    sota.maxPlayers = 30;
-    sota.minLevel = 65;
-    sota.maxLevel = 80;
-    sota.requiresBothFactions = true;
-    sota.playersPerFaction = 15;
-    sota.estimatedDurationMinutes = 20;
+        AddRequirement(std::move(req));
+        ++count;
+    }
 
-    AddRequirement(std::move(sota));
-
-    // Twin Peaks (10v10)
-    ContentRequirement twinPeaks;
-    twinPeaks.contentId = 108;  // BG_TP
-    twinPeaks.contentName = "Twin Peaks";
-    twinPeaks.type = InstanceType::Battleground;
-    twinPeaks.minPlayers = 20;
-    twinPeaks.maxPlayers = 20;
-    twinPeaks.minLevel = 75;
-    twinPeaks.maxLevel = 80;
-    twinPeaks.requiresBothFactions = true;
-    twinPeaks.playersPerFaction = 10;
-    twinPeaks.estimatedDurationMinutes = 25;
-
-    AddRequirement(std::move(twinPeaks));
-
-    // Battle for Gilneas (10v10)
-    ContentRequirement gilneas;
-    gilneas.contentId = 120;  // BG_BFG
-    gilneas.contentName = "Battle for Gilneas";
-    gilneas.type = InstanceType::Battleground;
-    gilneas.minPlayers = 20;
-    gilneas.maxPlayers = 20;
-    gilneas.minLevel = 75;
-    gilneas.maxLevel = 80;
-    gilneas.requiresBothFactions = true;
-    gilneas.playersPerFaction = 10;
-    gilneas.estimatedDurationMinutes = 20;
-
-    AddRequirement(std::move(gilneas));
-
-    // Deepwind Gorge (15v15)
-    ContentRequirement deepwind;
-    deepwind.contentId = 754;
-    deepwind.contentName = "Deepwind Gorge";
-    deepwind.type = InstanceType::Battleground;
-    deepwind.minPlayers = 30;
-    deepwind.maxPlayers = 30;
-    deepwind.minLevel = 80;
-    deepwind.maxLevel = 80;
-    deepwind.requiresBothFactions = true;
-    deepwind.playersPerFaction = 15;
-    deepwind.estimatedDurationMinutes = 15;
-
-    AddRequirement(std::move(deepwind));
-
-    // Deephaul Ravine (10v10) - The War Within
-    ContentRequirement deephaul;
-    deephaul.contentId = 1014;  // BG_DEEPHAUL_RAVINE
-    deephaul.contentName = "Deephaul Ravine";
-    deephaul.type = InstanceType::Battleground;
-    deephaul.minPlayers = 20;
-    deephaul.maxPlayers = 20;
-    deephaul.minLevel = 10;
-    deephaul.maxLevel = 80;
-    deephaul.requiresBothFactions = true;
-    deephaul.playersPerFaction = 10;
-    deephaul.estimatedDurationMinutes = 25;
-
-    AddRequirement(std::move(deephaul));
-
-    // Temple of Kotmogu (10v10) - Mists of Pandaria
-    ContentRequirement kotmogu;
-    kotmogu.contentId = 699;
-    kotmogu.contentName = "Temple of Kotmogu";
-    kotmogu.type = InstanceType::Battleground;
-    kotmogu.minPlayers = 20;
-    kotmogu.maxPlayers = 20;
-    kotmogu.minLevel = 10;
-    kotmogu.maxLevel = 80;
-    kotmogu.requiresBothFactions = true;
-    kotmogu.playersPerFaction = 10;
-    kotmogu.estimatedDurationMinutes = 15;
-
-    AddRequirement(std::move(kotmogu));
-
-    // Silvershard Mines (10v10) - Mists of Pandaria
-    ContentRequirement silvershard;
-    silvershard.contentId = 708;
-    silvershard.contentName = "Silvershard Mines";
-    silvershard.type = InstanceType::Battleground;
-    silvershard.minPlayers = 20;
-    silvershard.maxPlayers = 20;
-    silvershard.minLevel = 10;
-    silvershard.maxLevel = 80;
-    silvershard.requiresBothFactions = true;
-    silvershard.playersPerFaction = 10;
-    silvershard.estimatedDurationMinutes = 15;
-
-    AddRequirement(std::move(silvershard));
-
-    // Seething Shore (10v10) - Battle for Azeroth
-    ContentRequirement seethingShore;
-    seethingShore.contentId = 1035;
-    seethingShore.contentName = "Seething Shore";
-    seethingShore.type = InstanceType::Battleground;
-    seethingShore.minPlayers = 20;
-    seethingShore.maxPlayers = 20;
-    seethingShore.minLevel = 10;
-    seethingShore.maxLevel = 80;
-    seethingShore.requiresBothFactions = true;
-    seethingShore.playersPerFaction = 10;
-    seethingShore.estimatedDurationMinutes = 15;
-
-    AddRequirement(std::move(seethingShore));
+    TC_LOG_INFO("module.playerbot",
+        "ContentRequirementDatabase: Loaded {} battleground types from BattlemasterList DB2", count);
 
     // NOTE: Random Battleground (32) is handled dynamically in GetBattlegroundRequirement()
     // by selecting a random actual BG (AV, WSG, AB, etc.) so proper team sizes are used.
