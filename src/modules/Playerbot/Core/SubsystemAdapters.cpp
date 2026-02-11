@@ -359,19 +359,29 @@ bool MajorCooldownTrackerSubsystem::Initialize()
 }
 
 // ============================================================================
-// #15: BotActionManager (initOrder=240, shutdownOrder=100) NORMAL
-// void Initialize() wrapped as always-true. First to shut down.
+// #15: BotActionManager (initOrder=240, updateOrder=250, shutdownOrder=100) NORMAL
+// Processes deferred actions queued by worker threads (e.g. GO interactions).
+// updateOrder=250 runs early in the tick to drain the queue from the previous tick.
 // ============================================================================
 
 SubsystemInfo BotActionManagerSubsystem::GetInfo() const
 {
-    return { "BotActionManager", SubsystemPriority::NORMAL, 240, 0, 100 };
+    return { "BotActionManager", SubsystemPriority::NORMAL, 240, 250, 100 };
 }
 
 bool BotActionManagerSubsystem::Initialize()
 {
     BotActionManager::Instance()->Initialize();
     return true;
+}
+
+void BotActionManagerSubsystem::Update(uint32 /*diff*/)
+{
+    // Drain the action queue on the main thread.
+    // Worker threads queue actions (INTERACT_OBJECT, ENTER_VEHICLE, etc.)
+    // that require main-thread Map/Grid access. Without this call,
+    // queued actions accumulate forever and are never executed.
+    BotActionManager::Instance()->ProcessActions();
 }
 
 void BotActionManagerSubsystem::Shutdown()

@@ -797,6 +797,19 @@ void DeathRecoveryManager::HandleResurrecting(uint32 diff)
 
     if (m_stateTimer > 30000)
     {
+        // BATTLEGROUND FIX: In BGs, bots are never auto-resurrected because the BG spirit guide
+        // requires client-side gossip interaction that bots don't perform. Instead of falling
+        // through to RESURRECTION_FAILED → retry → corpse run, actively force-resurrect.
+        // This prevents the pathological cycle where bots run to their corpse in BGs.
+        if (m_method == ResurrectionMethod::AUTO_RESURRECT && m_bot->InBattleground())
+        {
+            TC_LOG_INFO("playerbot.death", "Bot {} in BG auto-resurrect: forcing resurrection after 30s wave timer",
+                m_bot->GetName());
+            if (ForceResurrection(ResurrectionMethod::SPIRIT_HEALER))
+                return;
+            // ForceResurrection failed (no corpse or no BotSession) — fall through to normal failure path
+        }
+
         TC_LOG_ERROR("playerbot.death", " Bot {} CRITICAL: Resurrection did not complete after 30 seconds! (IsAlive={})",
             m_bot->GetName(), m_bot->IsAlive());
         HandleResurrectionFailure("Resurrection did not complete");
@@ -809,6 +822,17 @@ void DeathRecoveryManager::HandleResurrectionFailed(uint32 diff)
     if (m_retryTimer >= RETRY_DELAY_MS)
     {
         m_retryTimer = 0;
+
+        // BATTLEGROUND FIX: Never retry via GHOST_DECIDING in BGs.
+        // GHOST_DECIDING calls DecideResurrectionMethod() which may choose CORPSE_RUN
+        // if InBattleground() returns false (BG ended during wait). Force-resurrect directly.
+        if (m_bot && m_bot->InBattleground())
+        {
+            TC_LOG_INFO("playerbot.death", "Bot {} in BG resurrection retry: forcing resurrection directly",
+                m_bot->GetName());
+            ForceResurrection(ResurrectionMethod::SPIRIT_HEALER);
+            return;
+        }
 
         if (++m_retryCount >= MAX_RETRY_ATTEMPTS)
         {

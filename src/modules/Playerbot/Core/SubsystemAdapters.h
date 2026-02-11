@@ -158,6 +158,7 @@ class BotActionManagerSubsystem final : public IPlayerbotSubsystem
 public:
     SubsystemInfo GetInfo() const override;
     bool Initialize() override;
+    void Update(uint32 diff) override;
     void Shutdown() override;
 };
 
