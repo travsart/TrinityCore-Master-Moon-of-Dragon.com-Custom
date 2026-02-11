@@ -1305,3 +1305,8 @@ void WorldSession::HandleSetSortBagsRightToLeft(WorldPackets::Item::SetSortBagsR
 {
     _player->SetSortBagsRightToLeft(setSortBagsRightToLeft.Enable);
 }
+
+void WorldSession::HandleSetInsertItemsLeftToRight(WorldPackets::Item::SetInsertItemsLeftToRight const& setInsertItemsLeftToRight)
+{
+    _player->SetInsertItemsLeftToRight(setInsertItemsLeftToRight.Enable);
+}

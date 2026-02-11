@@ -469,6 +469,7 @@ namespace WorldPackets
         class SetBackpackSellJunkDisabled;
         class SetBankAutosortDisabled;
         class SetSortBagsRightToLeft;
+        class SetInsertItemsLeftToRight;
     }
 
     namespace LFG
@@ -1564,6 +1565,7 @@ class TC_GAME_API WorldSession
         void HandleSetBackpackSellJunkDisabled(WorldPackets::Item::SetBackpackSellJunkDisabled const& setBackpackSellJunkDisabled);
         void HandleSetBankAutosortDisabled(WorldPackets::Item::SetBankAutosortDisabled const& setBankAutosortDisabled);
         void HandleSetSortBagsRightToLeft(WorldPackets::Item::SetSortBagsRightToLeft const& setSortBagsRightToLeft);
+        void HandleSetInsertItemsLeftToRight(WorldPackets::Item::SetInsertItemsLeftToRight const& setInsertItemsLeftToRight);
 
         void HandleAttackSwingOpcode(WorldPackets::Combat::AttackSwing& packet);
         void HandleAttackStopOpcode(WorldPackets::Combat::AttackStop& packet);

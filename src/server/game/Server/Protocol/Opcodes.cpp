@@ -1018,7 +1018,7 @@ void OpcodeTable::InitializeClientOpcodes()
     DEFINE_HANDLER(CMSG_SET_FACTION_INACTIVE,                               STATUS_LOGGEDIN,  PROCESS_THREADUNSAFE, &WorldSession::HandleSetFactionInactiveOpcode);
     DEFINE_HANDLER(CMSG_SET_FACTION_NOT_AT_WAR,                             STATUS_LOGGEDIN,  PROCESS_THREADUNSAFE, &WorldSession::HandleSetFactionNotAtWar);
     DEFINE_HANDLER(CMSG_SET_GAME_EVENT_DEBUG_VIEW_STATE,                    STATUS_UNHANDLED, PROCESS_THREADUNSAFE, &WorldSession::Handle_NULL);
-    DEFINE_HANDLER(CMSG_SET_INSERT_ITEMS_LEFT_TO_RIGHT,                     STATUS_UNHANDLED, PROCESS_INPLACE,      &WorldSession::Handle_NULL);
+    DEFINE_HANDLER(CMSG_SET_INSERT_ITEMS_LEFT_TO_RIGHT,                     STATUS_LOGGEDIN,  PROCESS_INPLACE,      &WorldSession::HandleSetInsertItemsLeftToRight);
     DEFINE_HANDLER(CMSG_SET_LOOT_METHOD,                                    STATUS_LOGGEDIN,  PROCESS_THREADUNSAFE, &WorldSession::HandleSetLootMethodOpcode);
     DEFINE_HANDLER(CMSG_SET_LOOT_SPECIALIZATION,                            STATUS_LOGGEDIN,  PROCESS_THREADUNSAFE, &WorldSession::HandleSetLootSpecialization);
     DEFINE_HANDLER(CMSG_SET_PARTY_ASSIGNMENT,                               STATUS_LOGGEDIN,  PROCESS_THREADUNSAFE, &WorldSession::HandleSetPartyAssignment);
