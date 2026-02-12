@@ -14005,6 +14005,12 @@ void Player::OnGossipSelect(WorldObject* source, int32 gossipOptionId, uint32 me
             break;
         case GossipOptionNpc::Vendor:
             PlayerTalkClass->SendCloseGossip();
+            // Send NIOR only; don't send VendorInventory in the same flush.
+            // The client's NIOR case 5 handler queues a UI event that sets
+            // PIM+48 = Merchant(5) and opens MerchantFrame. The frame then
+            // requests vendor data via CMSG_LIST_INVENTORY in a second round-trip,
+            // by which time PIM+48 is set and IsSellAllJunkEnabled works.
+            PlayerTalkClass->GetInteractionData().StartInteraction(guid, PlayerInteractionType::Vendor);
             {
                 WorldPackets::NPC::NPCInteractionOpenResult npcInteraction;
                 npcInteraction.Npc = guid;
@@ -14012,7 +14018,6 @@ void Player::OnGossipSelect(WorldObject* source, int32 gossipOptionId, uint32 me
                 npcInteraction.Success = true;
                 SendDirectMessage(npcInteraction.Write());
             }
-            GetSession()->SendListInventory(guid);
             break;
         case GossipOptionNpc::Taxinode:
             GetSession()->SendTaxiMenu(source->ToCreature());
