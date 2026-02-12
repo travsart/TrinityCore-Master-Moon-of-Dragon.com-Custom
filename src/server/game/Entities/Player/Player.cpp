@@ -13971,6 +13971,14 @@ void Player::OnGossipSelect(WorldObject* source, int32 gossipOptionId, uint32 me
         case GossipOptionNpc::None:
             break;
         case GossipOptionNpc::Vendor:
+            PlayerTalkClass->SendCloseGossip();
+            {
+                WorldPackets::NPC::NPCInteractionOpenResult npcInteraction;
+                npcInteraction.Npc = guid;
+                npcInteraction.InteractionType = PlayerInteractionType::Merchant;
+                npcInteraction.Success = true;
+                SendDirectMessage(npcInteraction.Write());
+            }
             GetSession()->SendListInventory(guid);
             break;
         case GossipOptionNpc::Taxinode:
