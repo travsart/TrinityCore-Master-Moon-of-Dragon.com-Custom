@@ -1557,6 +1557,5 @@ void AreaTrigger::ValuesUpdateForPlayerWithMaskSender::operator()(Player const* 
 void AreaTrigger::ClearUpdateMask(bool remove)
 {
     m_values.ClearChangesMask(&AreaTrigger::m_areaTriggerData);
-    m_values.ClearChangesMask(&AreaTrigger::m_housingPlotAreaTriggerData);
     Object::ClearUpdateMask(remove);
 }
