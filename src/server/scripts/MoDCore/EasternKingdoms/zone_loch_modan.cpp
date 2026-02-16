@@ -22,6 +22,7 @@
 #include "ObjectAccessor.h"
 #include "SpellScript.h"
 #include "SpellInfo.h"
+#include "WaypointDefines.h"
 
 enum MosshideRep
 {
@@ -189,30 +190,34 @@ enum AndoBlastenheimer
     SPELL_RIDE_VEHICLE      = 46598
 };
 
-Position const striderWaypoints[] =
-{
-    { -5027.062f, -3609.341f, 298.3368f },
-    { -5022.421f, -3608.176f, 298.2664f },
-    { -5017.780f, -3607.010f, 298.196f },
-    { -5012.820f, -3612.410f, 298.175f },
-    { -5003.470f, -3618.950f, 298.419f },
-    { -5005.520f, -3633.210f, 301.351f },
-    { -5005.900f, -3651.180f, 304.547f }, // last ground position
-    { -4977.370f, -3649.060f, 305.986f },
-    { -4875.530f, -3641.770f, 312.875f },
-    { -4804.860f, -3594.520f, 309.681f },
-    { -4786.060f, -3543.530f, 311.514f },
-    { -4765.980f, -3421.280f, 317.070f },
-    { -4710.740f, -3246.950f, 325.014f },
-    { -4565.150f, -3138.970f, 312.098f },
-    { -4510.380f, -3213.140f, 307.681f },
-    { -4561.530f, -3298.220f, 297.820f },
-    { -4795.280f, -3304.000f, 305.320f },
-    { -4785.830f, -3106.710f, 323.709f },
-    { -4725.100f, -2932.050f, 340.654f },
-    { -4755.760f, -2804.530f, 336.070f },
-    { -4807.600f, -2701.550f, 332.376f },
-    { -4815.010f, -2707.960f, 334.449f }
+WaypointPath const striderWaypoints = {
+    0,
+    {
+        {0, -5027.062f, -3609.341f, 298.3368f },
+        {1, -5022.421f, -3608.176f, 298.2664f },
+        {2, -5017.780f, -3607.010f, 298.196f },
+        {3, -5012.820f, -3612.410f, 298.175f },
+        {4, -5003.470f, -3618.950f, 298.419f },
+        {5, -5005.520f, -3633.210f, 301.351f },
+        {6, -5005.900f, -3651.180f, 304.547f }, // last ground position
+        {7, -4977.370f, -3649.060f, 305.986f },
+        {8, -4875.530f, -3641.770f, 312.875f },
+        {9, -4804.860f, -3594.520f, 309.681f },
+        {10, -4786.060f, -3543.530f, 311.514f },
+        {11, -4765.980f, -3421.280f, 317.070f },
+        {12, -4710.740f, -3246.950f, 325.014f },
+        {13, -4565.150f, -3138.970f, 312.098f },
+        {14, -4510.380f, -3213.140f, 307.681f },
+        {15, -4561.530f, -3298.220f, 297.820f },
+        {16, -4795.280f, -3304.000f, 305.320f },
+        {17, -4785.830f, -3106.710f, 323.709f },
+        {18, -4725.100f, -2932.050f, 340.654f },
+        {19, -4755.760f, -2804.530f, 336.070f },
+        {20, -4807.600f, -2701.550f, 332.376f },
+        {21, -4815.010f, -2707.960f, 334.449f }
+    },
+        WaypointMoveType::Run,
+        WaypointPathFlags::FlyingPath
 };
 
 struct npc_ando_blastenheimer : public ScriptedAI
@@ -229,7 +234,7 @@ struct npc_ando_blastenheimer : public ScriptedAI
                 if (Unit* skystrider = me->FindNearestCreature(NPC_SKYSTRIDER, 10.0f, true))
                 {
                     player->CastSpell(skystrider, SPELL_RIDE_VEHICLE, true);
-                    skystrider->GetMotionMaster()->MoveSmoothPath(0, striderWaypoints, 22, false, true);
+                    skystrider->GetMotionMaster()->MovePath(striderWaypoints,false);
                 }
             }
         }

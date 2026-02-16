@@ -450,13 +450,17 @@ struct npc_tol_dagor_getaway_boat : public ScriptedAI
 {
     npc_tol_dagor_getaway_boat(Creature* creature) : ScriptedAI(creature) { }
 
-    Position boatPath[6] = {
-    { 240.6500f, -2812.950f, -0.052747f },
-    { 245.9427f, -2807.717f,  0.052747f },
-    { 272.6615f, -2792.370f, -0.052747f },
-    { 353.6458f, -2743.795f,  0.052747f },
-    { 366.6493f, -2540.583f, -0.052747f },
-    { 396.1441f, -2403.012f, -0.052747f },
+    WaypointPath boatPath = { 1,
+        {
+        { 0, 240.6500f, -2812.950f, -0.052747f },
+        { 1, 245.9427f, -2807.717f,  0.052747f },
+        { 2, 272.6615f, -2792.370f, -0.052747f },
+        { 3, 353.6458f, -2743.795f,  0.052747f },
+        { 4, 366.6493f, -2540.583f, -0.052747f },
+        { 5, 396.1441f, -2403.012f, -0.052747f },
+        },
+        WaypointMoveType::Run,
+        WaypointPathFlags::FlyingPath
     };
 
     void IsSummonedBy(WorldObject* unit) override
@@ -470,7 +474,7 @@ struct npc_tol_dagor_getaway_boat : public ScriptedAI
             player->GetScheduler().Schedule(1s, [this, player](TaskContext /*context*/)
                 {
                     player->PlayConversation(5336);
-                    me->GetMotionMaster()->MoveSmoothPath(1, boatPath, 6, false, true);
+                    me->GetMotionMaster()->MovePath(boatPath, false);
                 })
                 .Schedule(36s, [player](TaskContext /*context*/)
                     {
@@ -509,12 +513,15 @@ class scene_tol_dagor_getaway_boat : public SceneScript
 public:
     scene_tol_dagor_getaway_boat() : SceneScript("scene_tol_dagor_getaway_boat") { }
 
-    Position boatPath[4] =
-    {
-        { 880.6389f, -585.5486f, -0.02336364f },
-    { 998.2083f, -575.0087f, -0.03875812f },
-    { 1025.792f, -619.1180f, -0.03875812f },
-    { 1040.462f, -631.7864f, -0.03875812f },
+    WaypointPath boatPath = { 2,
+        {
+            { 0, 880.6389f, -585.5486f, -0.02336364f },
+            { 1, 998.2083f, -575.0087f, -0.03875812f },
+            { 2, 1025.792f, -619.1180f, -0.03875812f },
+            { 3, 1040.462f, -631.7864f, -0.03875812f },
+        },
+        WaypointMoveType::Run,
+        WaypointPathFlags::FlyingPath
     };
 
     void OnSceneTriggerEvent(Player* player, uint32 /*sceneInstanceID*/, SceneTemplate const* /*sceneTemplate*/, std::string const& triggerName) override
@@ -526,7 +533,7 @@ public:
                 vehicleBase->NearTeleportTo(867.132f, -602.811f, -0.117634f, 1.536673f);
                 vehicleBase->GetScheduler().Schedule(2s, [this, vehicleBase, player](TaskContext /*context*/)
                     {
-                        vehicleBase->GetMotionMaster()->MoveSmoothPath(2, boatPath, 4, false, true);
+                        vehicleBase->GetMotionMaster()->MovePath(boatPath, false);
 
                         player->CastSpell(player, SPELL_GETAWAY_CONVERSATION_2, true);
                     })

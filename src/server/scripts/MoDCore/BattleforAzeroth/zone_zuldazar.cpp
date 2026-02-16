@@ -34,6 +34,7 @@
 #include "CombatAI.h"
 #include "GameObject.h"
 #include "MotionMaster.h"
+#include "WaypointDefines.h"
 
 enum ZuldazarQuests
 {
@@ -101,68 +102,86 @@ enum ZuldazarOtherEnums
     GOSSIP_MENU_1                   = 1,
 };
 
-Position const FleetScoutPath[4] =
-{
-    { -2211.135f, 887.061f, 15.813f },
-    { -2856.335f, 1000.121f, 37.971f },
-    { -3403.116f, 1072.148f, 92.939f },
-    { -3516.640f, 1106.287f, 12.677f }
+WaypointPath const FleetScoutPath = {
+    4,
+    {
+        {0, -2211.135f, 887.061f, 15.813f },
+        {1, -2856.335f, 1000.121f, 37.971f },
+        {2, -3403.116f, 1072.148f, 92.939f },
+        {3, -3516.640f, 1106.287f, 12.677f }
+    },
+        WaypointMoveType::Run,
+        WaypointPathFlags::FlyingPath
 };
-using FleetScoutPathSize = std::extent<decltype(FleetScoutPath)>;
 
-Position const HarliPath[3] =
-{
-    { -3655.419f, 1057.569f, 119.452f },
-    { -3105.406f, 694.161f, 47.528f },
-    { -3025.553f, 680.530f, 21.311f }
+WaypointPath const HarliPath = {
+    3,
+    {
+        {0, -3655.419f, 1057.569f, 119.452f },
+        {1, -3105.406f, 694.161f, 47.528f },
+        {2, -3025.553f, 680.530f, 21.311f }
+    },
+        WaypointMoveType::Run,
+        WaypointPathFlags::FlyingPath
 };
-using HarliPathSize = std::extent<decltype(HarliPath)>;
 
-Position const CaptainPath[4] =
-{
-    { -2945.962f, 761.264f, 61.791f },
-    { -2862.439f, 575.864f, 200.004f },
-    { -2129.446f, 1061.875f, 63.822f },
-    { -2051.988f, 967.388f, 10.379f }
+WaypointPath const CaptainPath = {
+    22,
+    {
+        {0, -2945.962f, 761.264f, 61.791f },
+        {1, -2862.439f, 575.864f, 200.004f },
+        {2, -2129.446f, 1061.875f, 63.822f },
+        {3, -2051.988f, 967.388f, 10.379f }
+    },
+        WaypointMoveType::Run,
+        WaypointPathFlags::FlyingPath
 };
-using CaptainPathSize = std::extent<decltype(CaptainPath)>;
 
-Position const AtaPath[17] =
-{
-    { -592.034f, 575.073f, 236.727f },
-    { -676.101f, 564.972f, 288.394f },
-    { -686.911f, 751.269f, 249.687f },
-    { -638.587f, 734.484f, 264.252f },
-    { -591.855f, 663.559f, 252.156f },
-    { -498.734f, 686.881f, 228.387f },
-    { -289.806f, 548.037f, 210.564f },
-    { -227.072f, 455.147f, 213.479f },
-    { -8.986f, 534.179f, 166.142f },
-    { 103.299f, 634.506f, 142.839f },
-    { 16.359f, 713.684f, 168.302f },
-    { -81.618f, 809.418f, 225.33f },
-    { -187.624f, 1046.54f, 298.861f },
-    { -244.168f, 1149.883f, 323.064f },
-    { -292.122f, 976.499f, 433.307f },
-    { -543.195f, 810.397f, 395.891f },
-    { -622.331f, 903.649f, 353.563f }
+WaypointPath const AtaPath = {
+    17,
+    {
+        {0, -592.034f, 575.073f, 236.727f },
+        {1, -676.101f, 564.972f, 288.394f },
+        {2, -686.911f, 751.269f, 249.687f },
+        {3, -638.587f, 734.484f, 264.252f },
+        {4, -591.855f, 663.559f, 252.156f },
+        {5, -498.734f, 686.881f, 228.387f },
+        {6, -289.806f, 548.037f, 210.564f },
+        {7, -227.072f, 455.147f, 213.479f },
+        {8, -8.986f, 534.179f, 166.142f },
+        {9, 103.299f, 634.506f, 142.839f },
+        {10, 16.359f, 713.684f, 168.302f },
+        {11, -81.618f, 809.418f, 225.33f },
+        {12, -187.624f, 1046.54f, 298.861f },
+        {13, -244.168f, 1149.883f, 323.064f },
+        {14, -292.122f, 976.499f, 433.307f },
+        {15, -543.195f, 810.397f, 395.891f },
+        {16, -622.331f, 903.649f, 353.563f }
+    },
+    WaypointMoveType::Run,
+    WaypointPathFlags::FlyingPath
 };
-using AtaPathSize = std::extent<decltype(AtaPath)>;
 
-Position const Ata2Path[3] =
-{
-    { -559.637f, 943.562f, 457.531f },
-    { -766.595f, 441.126f, 291.785f },
-    { -1386.42f, -336.053f, 436.605f }
+WaypointPath const Ata2Path = {
+    3,
+    {
+        {0, -559.637f, 943.562f, 457.531f },
+        {1, -766.595f, 441.126f, 291.785f },
+        {2, -1386.42f, -336.053f, 436.605f }
+    },
+    WaypointMoveType::Run,
+    WaypointPathFlags::FlyingPath
 };
-using Ata2PathSize = std::extent<decltype(Ata2Path)>;
 
-Position const Ata3Path[2] =
-{
-    { -361.189f, 1250.722f, 442.476f },
-    { -292.22f, 1427.115f, 382.695f }
+WaypointPath const Ata3Path = {
+    2,
+    {
+        {0, -361.189f, 1250.722f, 442.476f },
+        {1, -292.22f, 1427.115f, 382.695f }
+    },
+    WaypointMoveType::Run,
+    WaypointPathFlags::FlyingPath
 };
-using Ata3PathSize = std::extent<decltype(Ata3Path)>;
 
 // 132332
 struct npc_talanji_arrival : public ScriptedAI
@@ -404,7 +423,7 @@ struct npc_ata_the_winglord_offensively_defence : public VehicleAI
             {
                 me->GetVehicleKit();
                 player->EnterVehicle(me);
-                me->GetMotionMaster()->MoveSmoothPath(AtaPathSize::value, AtaPath, AtaPathSize::value, false, true);
+                me->GetMotionMaster()->MovePath(AtaPath, false);
             }
         }
     }
@@ -417,7 +436,7 @@ struct npc_ata_the_winglord_offensively_defence : public VehicleAI
 
     void MovementInform(uint32 /* type */, uint32 id) override
     {
-        if (id == AtaPathSize::value)
+        if (id == AtaPath.Id)
             me->DespawnOrUnsummon(100ms);
     }
 };
@@ -451,7 +470,7 @@ struct npc_ata_the_winglord_paku_master_of_winds : public VehicleAI
             {
                 me->GetVehicleKit();
                 player->EnterVehicle(me);
-                me->GetMotionMaster()->MoveSmoothPath(Ata2PathSize::value, Ata2Path, Ata2PathSize::value, false, true);
+                me->GetMotionMaster()->MovePath(Ata2Path, false);
                 whichAta = "Ata2";
             }
 
@@ -459,7 +478,7 @@ struct npc_ata_the_winglord_paku_master_of_winds : public VehicleAI
             {
                 me->GetVehicleKit();
                 player->EnterVehicle(me);
-                me->GetMotionMaster()->MoveSmoothPath(Ata3PathSize::value, Ata3Path, Ata3PathSize::value, false, true);
+                me->GetMotionMaster()->MovePath(Ata3Path, false);
                 whichAta = "Ata3";
             }
         }
@@ -480,11 +499,11 @@ struct npc_ata_the_winglord_paku_master_of_winds : public VehicleAI
     void MovementInform(uint32 /* type */, uint32 id) override
     {
         if (whichAta == "Ata2")
-            if (id == Ata2PathSize::value)
+            if (id == Ata2Path.Id)
                 me->DespawnOrUnsummon(100ms);
 
         if (whichAta == "Ata3")
-            if (id == Ata3PathSize::value)
+            if (id == Ata3Path.Id)
                 me->DespawnOrUnsummon(100ms);
     }
 };
@@ -1037,7 +1056,7 @@ struct npc_fleet_scout : public VehicleAI
                 me->GetVehicleKit();
                 player->EnterVehicle(me);
                 player->ForceCompleteQuest(QUEST_SEND_THE_SIGNAL);
-                me->GetMotionMaster()->MoveSmoothPath(FleetScoutPathSize::value, FleetScoutPath, FleetScoutPathSize::value, false, true);
+                me->GetMotionMaster()->MovePath( FleetScoutPath, false);
             }
         }
     }
@@ -1053,7 +1072,7 @@ struct npc_fleet_scout : public VehicleAI
 
     void MovementInform(uint32 /* type */, uint32 id) override
     {
-        if (id == FleetScoutPathSize::value)
+        if (id == FleetScoutPath.Id)
             me->DespawnOrUnsummon(100ms);
     }
 };
@@ -1072,7 +1091,7 @@ struct npc_harli_the_swift : public VehicleAI
                 me->GetVehicleKit();
                 player->EnterVehicle(me);
                 player->KilledMonsterCredit(NPC_BOARDING_SHIP);
-                me->GetMotionMaster()->MoveSmoothPath(HarliPathSize::value, HarliPath, HarliPathSize::value, false, true);
+                me->GetMotionMaster()->MovePath( HarliPath, false);
             }
         }
     }
@@ -1088,7 +1107,7 @@ struct npc_harli_the_swift : public VehicleAI
 
     void MovementInform(uint32 /* type */, uint32 id) override
     {
-        if (id == HarliPathSize::value)
+        if (id == HarliPath.Id)
             me->DespawnOrUnsummon(100ms);
     }
 };
@@ -1107,7 +1126,7 @@ struct npc_captain_grezko : public VehicleAI
                 me->GetVehicleKit();
                 player->EnterVehicle(me);
                 player->ForceCompleteQuest(QUEST_HOPES_BLUE_LIGHT);
-                me->GetMotionMaster()->MoveSmoothPath(CaptainPathSize::value, CaptainPath, CaptainPathSize::value, false, true);
+                me->GetMotionMaster()->MovePath(CaptainPath, false);
             }
         }
     }

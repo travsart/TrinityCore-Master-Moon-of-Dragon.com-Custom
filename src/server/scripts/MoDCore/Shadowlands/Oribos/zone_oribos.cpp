@@ -32,6 +32,7 @@
 #include "TemporarySummon.h"
 #include "ScriptedGossip.h"
 #include "TaskScheduler.h"
+#include "WaypointDefines.h"
 #include "WorldSession.h"
 
 enum Oribos
@@ -1544,11 +1545,15 @@ Position const  SpawnAttendantProtectorGroup1[4] =
 
 static const Position runCovenantPosition = { -1715.88f, 1401.94f, 5450.73f, 0.6479f };
 
-Position const  talinaraPath[2] =
-{
-    {-1780.06f, 1330.73f, 5445.86f, 3.57643f },
-    {-1787.78f, 1293.01f, 5446.91f, 4.41681f },
+WaypointPath const talinaraPath = {
+    1000,
+    {
+        {0, -1780.06f, 1330.73f, 5445.86f, 3.57643f },
+        {1, -1787.78f, 1293.01f, 5446.91f, 4.41681f },
+    },
+    WaypointMoveType::Walk
 };
+
 //177230 Highlord Bolvar Fordragon
 struct npc_highlord_bolvar_fordragon_177230 : public ScriptedAI
 {
@@ -1638,7 +1643,7 @@ private:
                 {
                     if (Creature* talinara = ObjectAccessor::GetCreature(*me, tal_inaraGUID))
                     {
-                        talinara->GetMotionMaster()->MoveSmoothPath(1000, talinaraPath, 2, true, false);
+                        talinara->GetMotionMaster()->MovePath(talinaraPath, false);
                         talinara->DespawnOrUnsummon(20000ms);
                     }
                     me->GetMotionMaster()->MovePoint(0, runCovenantPosition, true);

@@ -24,13 +24,20 @@
 #include "SpellInfo.h"
 #include "SpellScript.h"
 #include "TemporarySummon.h"
+#include "WaypointDefines.h"
 
 uint32 const pathSize2 = 2;
-Position const BoatPath[pathSize2] =
-{
-    { -9356.31f, -2414.29f, 69.6370f },
-    { -9425.49f, -2836.49f, 69.9875f },
+
+WaypointPath const BoatPath = {
+    pathSize2,
+    {
+        {0, -9356.31f, -2414.29f, 69.6370f },
+        {1, -9425.49f, -2836.49f, 69.9875f },
+    },
+    WaypointMoveType::Run,
+    WaypointPathFlags::FlyingPath
 };
+
 
 struct npc_keeshan_riverboat : public VehicleAI
 {
@@ -38,7 +45,7 @@ struct npc_keeshan_riverboat : public VehicleAI
 
     void Reset() override
     {
-        me->GetMotionMaster()->MoveSmoothPath(pathSize2, BoatPath, pathSize2, false, true);
+        me->GetMotionMaster()->MovePath(BoatPath, false);
         me->DespawnOrUnsummon(Seconds(22), Seconds(60));
     }
 };
