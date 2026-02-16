@@ -3946,12 +3946,6 @@ void Creature::ValuesUpdateForPlayerWithMaskSender::operator()(Player const* pla
     player->SendDirectMessage(&packet);
 }
 
-void Creature::ClearUpdateMask(bool remove)
-{
-    m_values.ClearChangesMask(&Creature::m_vendorData);
-    Unit::ClearUpdateMask(remove);
-}
-
 void Creature::DespawnCreaturesInArea(uint32 entry, float range)
 {
     std::list<Creature*> creatures;

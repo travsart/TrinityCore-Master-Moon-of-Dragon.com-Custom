@@ -1142,7 +1142,7 @@ struct npc_captain_grezko : public VehicleAI
 
     void MovementInform(uint32 /* type */, uint32 id) override
     {
-        if (id == CaptainPathSize::value)
+        if (id == CaptainPath.Id)
             me->DespawnOrUnsummon(100ms);
     }
 };
