@@ -1227,3 +1227,11 @@ void WorldSession::HandleSetCurrencyFlags(WorldPackets::Misc::SetCurrencyFlags c
 {
     _player->SetCurrencyFlagsFromClient(setCurrenctFlags.CurrencyID, setCurrenctFlags.Flags);
 }
+
+void WorldSession::SendCovenantPreview(ObjectGuid sender, int32 covenantID)
+{
+    WorldPackets::Misc::CovenantPreviewOpenNpc result;
+    result.ObjGUID = sender;
+    result.CovenantId = covenantID;
+    SendPacket(result.Write());
+}
