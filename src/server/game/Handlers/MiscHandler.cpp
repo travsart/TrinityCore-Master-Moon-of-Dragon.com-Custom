@@ -1223,24 +1223,6 @@ void WorldSession::HandleQueryCountdownTimer(WorldPackets::Misc::QueryCountdownT
     _player->SendDirectMessage(startTimer.Write());
 }
 
-void WorldSession::HandleQueryCountdownTimer(WorldPackets::Misc::QueryCountdownTimer& queryCountdownTimer)
-{
-    Group const* group = _player->GetGroup();
-    if (!group)
-        return;
-
-    Group::CountdownInfo const* info = group->GetCountdownInfo(queryCountdownTimer.TimerType);
-    if (!info)
-        return;
-
-    WorldPackets::Misc::StartTimer startTimer;
-    startTimer.Type = queryCountdownTimer.TimerType;
-    startTimer.TimeLeft = info->GetTimeLeft();
-    startTimer.TotalTime = info->GetTotalTime();
-
-    _player->SendDirectMessage(startTimer.Write());
-}
-
 void WorldSession::HandleSetCurrencyFlags(WorldPackets::Misc::SetCurrencyFlags const& setCurrenctFlags)
 {
     _player->SetCurrencyFlagsFromClient(setCurrenctFlags.CurrencyID, setCurrenctFlags.Flags);
