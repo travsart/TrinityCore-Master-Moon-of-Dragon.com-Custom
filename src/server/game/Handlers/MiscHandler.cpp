@@ -393,14 +393,6 @@ void WorldSession::HandleRequestCemeteryList(WorldPackets::Misc::RequestCemetery
     SendPacket(packet.Write());
 }
 
-void WorldSession::HandleSetCurrencyFlags(WorldPackets::Misc::SetCurrencyFlagsFromClient& packet)
-{
-    if (!sCurrencyTypesStore.LookupEntry(packet.CurrencyID))
-        return;
-
-    _player->SetCurrencyFlagsFromClient(packet.CurrencyID, CurrencyDbFlags(packet.Flags));
-}
-
 void WorldSession::HandleSetSelectionOpcode(WorldPackets::Misc::SetSelection& packet)
 {
     _player->SetSelection(packet.Selection);
@@ -1266,7 +1258,7 @@ void WorldSession::HandleQueryCountdownTimer(WorldPackets::Misc::QueryCountdownT
     _player->SendDirectMessage(startTimer.Write());
 }
 
-void WorldSession::HandleSetCurrencyFlags(WorldPackets::Misc::SetCurrencyFlagsFromClient const& setCurrenctFlags)
+void WorldSession::HandleSetCurrencyFlags(WorldPackets::Misc::SetCurrencyFlags const& setCurrenctFlags)
 {
     _player->SetCurrencyFlagsFromClient(setCurrenctFlags.CurrencyID, setCurrenctFlags.Flags);
 }
