@@ -123,10 +123,10 @@ namespace WorldPackets
             bool SuppressChatLog = false;
         };
 
-        class SetCurrencyFlags final : public ClientPacket
+        class SetCurrencyFlagsFromClient final : public ClientPacket
         {
         public:
-            explicit SetCurrencyFlags(WorldPacket&& packet) : ClientPacket(CMSG_SET_CURRENCY_FLAGS, std::move(packet)) { }
+            explicit SetCurrencyFlagsFromClient(WorldPacket&& packet) : ClientPacket(CMSG_SET_CURRENCY_FLAGS, std::move(packet)) { }
 
             void Read() override;
 

@@ -108,7 +108,7 @@ WorldPacket const* SetCurrency::Write()
     return &_worldPacket;
 }
 
-void SetCurrencyFlags::Read()
+void SetCurrencyFlagsFromClient::Read()
 {
     _worldPacket >> CurrencyID;
     _worldPacket >> As<uint8>(Flags);
