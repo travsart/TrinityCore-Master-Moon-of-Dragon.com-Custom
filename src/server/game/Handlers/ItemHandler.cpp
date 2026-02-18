@@ -589,6 +589,27 @@ void WorldSession::HandleListInventoryOpcode(WorldPackets::NPC::Hello& packet)
     if (!GetPlayer()->IsAlive())
         return;
 
+    // The client's IsSellAllJunkEnabled requires PIM+48 == Merchant(5).
+    // NIOR(Merchant) case 5 QUEUES a UI event that sets PIM+48; it does NOT set
+    // it synchronously during packet processing. If we send VendorInventory in
+    // the same flush, the MerchantFrame opens before the event fires → PIM+48
+    // is not yet 5 → IsSellAllJunkEnabled returns false.
+    //
+    // Fix: on the initial click, send NIOR only and mark the interaction.
+    // The client event handler sets PIM+48, opens MerchantFrame, which then
+    // sends another CMSG_LIST_INVENTORY to fetch the actual vendor data.
+    if (!GetPlayer()->PlayerTalkClass->GetInteractionData().IsInteractingWith(packet.Unit, PlayerInteractionType::Vendor))
+    {
+        GetPlayer()->PlayerTalkClass->GetInteractionData().StartInteraction(packet.Unit, PlayerInteractionType::Vendor);
+
+        WorldPackets::NPC::NPCInteractionOpenResult npcInteraction;
+        npcInteraction.Npc = packet.Unit;
+        npcInteraction.InteractionType = PlayerInteractionType::Merchant;
+        npcInteraction.Success = true;
+        SendPacket(npcInteraction.Write());
+        return;
+    }
+
     SendListInventory(packet.Unit);
 }
 
@@ -1299,4 +1320,93 @@ void WorldSession::HandleSetBackpackSellJunkDisabled(WorldPackets::Item::SetBack
 void WorldSession::HandleSetBankAutosortDisabled(WorldPackets::Item::SetBankAutosortDisabled const& setBankAutosortDisabled)
 {
     _player->SetBankAutoSortDisabled(setBankAutosortDisabled.Disable);
+}
+
+void WorldSession::HandleSetSortBagsRightToLeft(WorldPackets::Item::SetSortBagsRightToLeft const& setSortBagsRightToLeft)
+{
+    _player->SetSortBagsRightToLeft(setSortBagsRightToLeft.Enable);
+}
+
+void WorldSession::HandleSetInsertItemsLeftToRight(WorldPackets::Item::SetInsertItemsLeftToRight const& setInsertItemsLeftToRight)
+{
+    _player->SetInsertItemsLeftToRight(setInsertItemsLeftToRight.Enable);
+}
+
+void WorldSession::HandleSellAllJunkItems(WorldPackets::Item::SellAllJunkItems& sellAllJunkItems)
+{
+    Creature* creature = GetPlayer()->GetNPCIfCanInteractWith(sellAllJunkItems.VendorGUID, UNIT_NPC_FLAG_VENDOR, UNIT_NPC_FLAG_2_NONE);
+    if (!creature)
+    {
+        _player->SendSellError(SELL_ERR_CANT_FIND_VENDOR, nullptr, ObjectGuid::Empty);
+        return;
+    }
+
+    if ((creature->GetCreatureTemplate()->flags_extra & CREATURE_FLAG_EXTRA_NO_SELL_VENDOR) != 0)
+    {
+        _player->SendSellError(SELL_ERR_CANT_SELL_TO_THIS_MERCHANT, creature, ObjectGuid::Empty);
+        return;
+    }
+
+    // remove fake death
+    if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
+        GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
+
+    // collect junk items first - can't modify inventory while iterating
+    std::vector<Item*> junkItems;
+    _player->ForEachItem(ItemSearchLocation::Inventory, [this, &junkItems](Item* item)
+    {
+        if (item->GetQuality() != ITEM_QUALITY_POOR)
+            return ItemSearchCallbackResult::Continue;
+
+        if (item->GetSellPrice(_player) == 0)
+            return ItemSearchCallbackResult::Continue;
+
+        if (item->IsRefundable())
+            return ItemSearchCallbackResult::Continue;
+
+        if (_player->GetLootGUID() == item->GetGUID())
+            return ItemSearchCallbackResult::Continue;
+
+        if (item->IsNotEmptyBag())
+            return ItemSearchCallbackResult::Continue;
+
+        // check per-bag junk sell exclusion
+        if (item->GetBagSlot() == INVENTORY_SLOT_BAG_0)
+        {
+            if (_player->IsBackpackSellJunkDisabled())
+                return ItemSearchCallbackResult::Continue;
+        }
+        else
+        {
+            uint32 bagIndex = item->GetBagSlot() - INVENTORY_SLOT_BAG_START;
+            if (bagIndex < _player->m_activePlayerData->BagSlotFlags.size()
+                && _player->GetBagSlotFlags(bagIndex).HasFlag(BagSlotFlags::ExcludeJunkSell))
+                return ItemSearchCallbackResult::Continue;
+        }
+
+        junkItems.push_back(item);
+        return ItemSearchCallbackResult::Continue;
+    });
+
+    for (Item* item : junkItems)
+    {
+        uint32 sellPrice = item->GetSellPrice(_player);
+
+        uint64 money = uint64(sellPrice) * item->GetCount();
+
+        using BuybackStorageType = std::remove_cvref_t<decltype(_player->m_activePlayerData->BuybackPrice[0])>;
+        if (money > std::numeric_limits<BuybackStorageType>::max())
+            continue;
+
+        if (!_player->ModifyMoney(money))
+            continue;
+
+        _player->UpdateCriteria(CriteriaType::MoneyEarnedFromSales, money);
+        _player->UpdateCriteria(CriteriaType::SellItemsToVendors, 1);
+
+        _player->RemoveItem(item->GetBagSlot(), item->GetSlot(), true);
+        _player->ItemRemovedQuestCheck(item->GetEntry(), item->GetCount());
+        RemoveItemFromUpdateQueueOf(item, _player);
+        _player->AddItemToBuyBackSlot(item);
+    }
 }
