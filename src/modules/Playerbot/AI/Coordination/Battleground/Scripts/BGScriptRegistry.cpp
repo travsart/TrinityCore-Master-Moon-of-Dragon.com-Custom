@@ -12,6 +12,7 @@
 #include "BGScriptRegistry.h"
 #include "Log.h"
 #include <sstream>
+#include <mutex>
 
 namespace Playerbot::Coordination::Battleground
 {

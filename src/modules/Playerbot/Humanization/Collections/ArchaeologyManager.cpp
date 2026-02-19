@@ -8,6 +8,7 @@
 #include "Log.h"
 #include "SpellMgr.h"
 #include "Map.h"
+#include <mutex>
 
 namespace Playerbot
 {

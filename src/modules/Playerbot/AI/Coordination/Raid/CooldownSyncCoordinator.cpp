@@ -13,6 +13,7 @@
 #include "GameTime.h"
 #include "SharedDefines.h"
 #include <algorithm>
+#include <mutex>
 
 namespace Playerbot
 {
