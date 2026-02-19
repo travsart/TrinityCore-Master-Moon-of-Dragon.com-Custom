@@ -23,6 +23,7 @@
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
+#include "Cell.h"
 #include "GridNotifiers.h"
 #include "ThreatManager.h"
 #include <shared_mutex>

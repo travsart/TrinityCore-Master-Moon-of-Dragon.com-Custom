@@ -54,10 +54,12 @@
 #include "../Lifecycle/Instance/BotPostLoginConfigurator.h"
 #include "../Lifecycle/Instance/InstanceBotOrchestrator.h"
 #include "../Dungeon/DungeonAutonomyManager.h"
+#include "BotMovementManager.h"
 #include "Map.h"
 #include <chrono>
 #include <set>
 #include <unordered_map>
+
 
 namespace Playerbot
 {
