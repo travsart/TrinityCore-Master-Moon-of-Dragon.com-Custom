@@ -10,6 +10,7 @@
 #include "StringInterningPool.h"
 #include "Log.h"
 #include <sstream>
+#include <mutex>
 
 namespace Playerbot
 {

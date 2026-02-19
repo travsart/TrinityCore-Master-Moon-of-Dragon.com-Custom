@@ -36,6 +36,7 @@
 #include <shared_mutex>
 #include <atomic>
 #include <vector>
+#include <memory>
 
 namespace Playerbot
 {
