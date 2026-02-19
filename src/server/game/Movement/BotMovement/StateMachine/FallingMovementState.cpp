@@ -162,7 +162,7 @@ float FallingMovementState::CalculateFallDamage(float fallHeight) const
     return std::min(damagePercent, 100.0f);
 }
 
-void FallingMovementState::ApplyFallingPhysics(MovementStateMachine* sm, uint32 diff)
+void FallingMovementState::ApplyFallingPhysics(MovementStateMachine* sm, [[maybe_unused]]uint32 diff)
 {
     Unit* owner = GetOwner(sm);
     if (!owner || !owner->IsInWorld())

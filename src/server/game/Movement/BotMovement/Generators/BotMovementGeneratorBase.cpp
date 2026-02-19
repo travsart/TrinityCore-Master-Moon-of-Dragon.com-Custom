@@ -181,13 +181,13 @@ void BotMovementGeneratorBase::SyncMovementFlags(Unit* owner)
     }
 }
 
-void BotMovementGeneratorBase::UpdateStateMachine(Unit* owner, uint32 diff)
+void BotMovementGeneratorBase::UpdateStateMachine([[maybe_unused]] Unit* owner, [[maybe_unused]] uint32 diff)
 {
     // State machine update would be handled by controller
     // This is a hook point for generators that want to influence state
 }
 
-void BotMovementGeneratorBase::UpdateStuckDetection(Unit* owner, uint32 diff)
+void BotMovementGeneratorBase::UpdateStuckDetection([[maybe_unused]] Unit* owner, [[maybe_unused]] uint32 diff)
 {
     // Stuck detection update would be handled by controller
     // This is a hook point for generators that want to contribute to detection

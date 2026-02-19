@@ -36,7 +36,7 @@ void GroundMovementState::OnEnter(MovementStateMachine* sm, MovementState* /*pre
     TC_LOG_DEBUG("movement.bot.state", "GroundMovementState: Entered ground movement state");
 }
 
-void GroundMovementState::OnExit(MovementStateMachine* sm, MovementState* /*nextState*/)
+void GroundMovementState::OnExit([[maybe_unused]]MovementStateMachine* sm, MovementState* /*nextState*/)
 {
     TC_LOG_DEBUG("movement.bot.state", "GroundMovementState: Exiting ground movement state");
 }

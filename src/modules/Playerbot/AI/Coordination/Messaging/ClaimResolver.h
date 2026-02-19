@@ -17,6 +17,7 @@
 #include <mutex>
 #include <chrono>
 #include <functional>
+#include <atomic>
 
 namespace Playerbot
 {

@@ -39,7 +39,7 @@ void StuckState::OnEnter(MovementStateMachine* sm, MovementState* prevState)
         prevState ? prevState->GetName() : "null");
 }
 
-void StuckState::OnExit(MovementStateMachine* sm, MovementState* nextState)
+void StuckState::OnExit(MovementStateMachine* sm, [[maybe_unused]] MovementState* nextState)
 {
     Unit* owner = GetOwner(sm);
     TC_LOG_DEBUG("movement.bot.state", "StuckState: Bot {} recovered after {}ms and {} attempts",

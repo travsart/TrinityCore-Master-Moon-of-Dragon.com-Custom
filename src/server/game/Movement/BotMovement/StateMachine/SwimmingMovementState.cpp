@@ -115,7 +115,7 @@ bool SwimmingMovementState::CheckStillInWater(MovementStateMachine* sm)
     return LiquidValidator::IsSwimmingRequired(owner);
 }
 
-bool SwimmingMovementState::CheckNeedToSurface(MovementStateMachine* sm)
+bool SwimmingMovementState::CheckNeedToSurface([[maybe_unused]] MovementStateMachine* sm)
 {
     if (!_needsAir)
         return false;

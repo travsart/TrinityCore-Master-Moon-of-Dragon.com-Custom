@@ -35,7 +35,7 @@ void IdleState::OnEnter(MovementStateMachine* sm, MovementState* /*prevState*/)
     }
 }
 
-void IdleState::OnExit(MovementStateMachine* sm, MovementState* /*nextState*/)
+void IdleState::OnExit([[maybe_unused]]MovementStateMachine* sm, MovementState* /*nextState*/)
 {
     TC_LOG_DEBUG("movement.bot.state", "IdleState: Exiting idle state");
 }

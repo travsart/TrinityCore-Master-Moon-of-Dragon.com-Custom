@@ -115,7 +115,7 @@ void MovementStateMachine::ProcessPendingTransition()
     }
 
     MovementState* oldState = _currentState;
-    MovementStateType oldStateType = _currentStateType;
+    [[maybe_unused]] MovementStateType oldStateType = _currentStateType;
 
     TC_LOG_DEBUG("movement.bot.state", "MovementStateMachine: Transitioning from {} to {}",
         oldState ? oldState->GetName() : "null", newState->GetName());
@@ -209,7 +209,7 @@ void MovementStateMachine::ApplyStateMovementFlags()
     if (!owner || !owner->IsInWorld())
         return;
 
-    uint32 requiredFlags = _currentState->GetRequiredMovementFlags();
+    [[maybe_unused]] uint32 requiredFlags = _currentState->GetRequiredMovementFlags();
 
     // Handle swimming flag specially
     if (_currentStateType == MovementStateType::Swimming)
