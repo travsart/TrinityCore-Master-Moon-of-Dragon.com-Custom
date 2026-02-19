@@ -43,14 +43,14 @@ BotMovementController* BotMovementGeneratorBase::GetController(Unit* owner) cons
 
 MovementStateMachine* BotMovementGeneratorBase::GetStateMachine(Unit* owner) const
 {
-    BotMovementController* controller = GetController(owner);
+    [[maybe_unused]]BotMovementController* controller = GetController(owner);
     // Note: Controller would need to expose state machine - for now return null
     return nullptr;
 }
 
 StuckDetector* BotMovementGeneratorBase::GetStuckDetector(Unit* owner) const
 {
-    BotMovementController* controller = GetController(owner);
+    [[maybe_unused]]BotMovementController* controller = GetController(owner);
     // Note: Controller would need to expose stuck detector - for now return null
     return nullptr;
 }

@@ -8,6 +8,7 @@
 #include "SpellAuras.h"
 #include "GameTime.h"
 #include "Log.h"
+#include <mutex>
 
 namespace Playerbot
 {

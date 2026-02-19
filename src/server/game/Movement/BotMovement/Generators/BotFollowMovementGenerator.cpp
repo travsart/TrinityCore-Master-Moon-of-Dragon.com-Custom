@@ -206,7 +206,7 @@ void BotFollowMovementGenerator::UpdatePetSpeed(Unit* owner)
     // Match speed with target for smooth following
     if (owner->IsPet() && target->GetTypeId() == TYPEID_PLAYER)
     {
-        if (Player* player = target->ToPlayer())
+        if ([[maybe_unused]]Player* player = target->ToPlayer())
         {
             owner->UpdateSpeed(MOVE_RUN);
             owner->UpdateSpeed(MOVE_WALK);
