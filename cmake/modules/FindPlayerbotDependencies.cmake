@@ -248,7 +248,8 @@ set(CMAKE_REQUIRED_LIBRARIES ${MYSQL_LIBRARIES})
 set(CMAKE_REQUIRED_INCLUDES ${MYSQL_INCLUDE_DIRS})
 
 check_cxx_source_compiles("
-    #include <mysql.h>
+    #include <mysql/mysql.h>
+
     int main() {
         const char* version = mysql_get_client_info();
         MYSQL* mysql = mysql_init(nullptr);

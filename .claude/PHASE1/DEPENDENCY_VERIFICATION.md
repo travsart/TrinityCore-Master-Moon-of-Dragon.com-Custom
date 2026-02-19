@@ -198,7 +198,7 @@ private:
 #include <boost/asio/version.hpp>
 
 // MySQL Headers
-#include <mysql.h>
+#include <mysql/mysql.h>
 
 namespace Playerbot {
 
