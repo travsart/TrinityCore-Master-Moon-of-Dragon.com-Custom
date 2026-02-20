@@ -1345,6 +1345,7 @@ function(configure_playerbot_library TARGET_NAME)
 
     target_link_libraries(${TARGET_NAME}
         PUBLIC
+            game
             game-interface
             shared
             database
