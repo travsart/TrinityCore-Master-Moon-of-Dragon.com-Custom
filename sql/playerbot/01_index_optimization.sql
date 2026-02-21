@@ -31,9 +31,12 @@ ANALYZE TABLE `item_instance`;
 -- =====================================================
 
 -- Drop redundant indexes (if they exist)
-DROP INDEX IF EXISTS `idx_online` ON `characters`;
-DROP INDEX IF EXISTS `idx_account` ON `characters`;
-DROP INDEX IF EXISTS `idx_name` ON `characters`;
+-- DROP INDEX IF EXISTS `idx_online` ON `characters`; -- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
+-- DROP INDEX IF EXISTS `idx_account` ON `characters`;-- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
+-- DROP INDEX IF EXISTS `idx_name` ON `characters`;-- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
+CALL drop_index_if_exists('characters', 'idx_online');
+CALL drop_index_if_exists('characters', 'idx_account');
+CALL drop_index_if_exists('characters', 'idx_name');
 
 -- =====================================================
 -- PHASE 3: CREATE HIGH-PERFORMANCE INDEXES
@@ -41,84 +44,102 @@ DROP INDEX IF EXISTS `idx_name` ON `characters`;
 
 -- Characters table: Core bot queries
 -- Covering index for bot login queries (includes all needed columns)
+CALL drop_index_if_exists('characters', 'idx_bot_login_covering');
 CREATE INDEX `idx_bot_login_covering` ON `characters`
     (`account`, `online`, `guid`, `name`, `race`, `class`, `level`, `zone`, `map`, `position_x`, `position_y`, `position_z`)
     COMMENT 'Covering index for bot login queries - eliminates table lookups';
 
 -- Composite index for bot selection and filtering
+CALL drop_index_if_exists('characters', 'idx_bot_selection');
 CREATE INDEX `idx_bot_selection` ON `characters`
     (`online`, `level`, `class`, `zone`)
     COMMENT 'Optimized for bot selection by criteria';
 
 -- Unique index for fast name lookups
+CALL drop_index_if_exists('characters', 'idx_unique_name');
 CREATE UNIQUE INDEX `idx_unique_name` ON `characters` (`name`)
     COMMENT 'Fast name resolution for bot commands';
 
 -- Index for account-based bot queries
+CALL drop_index_if_exists('characters', 'idx_account_guid');
 CREATE INDEX `idx_account_guid` ON `characters` (`account`, `guid`)
     COMMENT 'Fast account to bot mapping';
 
 -- Index for zone-based bot queries (finding nearby bots)
+CALL drop_index_if_exists('characters', 'idx_zone_map_position');
 CREATE INDEX `idx_zone_map_position` ON `characters`
     (`zone`, `map`, `position_x`, `position_y`)
     COMMENT 'Spatial queries for nearby bot detection';
 
 -- Character stats: Fast stat retrieval
+CALL drop_index_if_exists('characters', 'idx_stats_guid');
 CREATE INDEX `idx_stats_guid` ON `character_stats` (`guid`)
     COMMENT 'Fast stat retrieval for combat calculations';
 
 -- Character spells: Spell availability checks
+CALL drop_index_if_exists('characters', 'idx_spell_guid_spell');
 CREATE INDEX `idx_spell_guid_spell` ON `character_spell` (`guid`, `spell`)
     COMMENT 'Fast spell availability checks';
 
 -- Character actions: Action bar queries
+CALL drop_index_if_exists('characters', 'idx_action_guid_composite');
 CREATE INDEX `idx_action_guid_composite` ON `character_action`
     (`guid`, `spec`, `button`)
     COMMENT 'Fast action bar retrieval';
 
 -- Character inventory: Equipment and bag queries
+CALL drop_index_if_exists('characters', 'idx_inventory_guid_slot');
 CREATE INDEX `idx_inventory_guid_slot` ON `character_inventory`
     (`guid`, `slot`, `bag`)
     COMMENT 'Fast inventory access for equipment checks';
 
 -- Item instance: Fast item property lookups
+CALL drop_index_if_exists('characters', 'idx_item_owner_guid');
 CREATE INDEX `idx_item_owner_guid` ON `item_instance` (`owner_guid`)
     COMMENT 'Fast item ownership queries';
 
 -- Character auras: Active buff/debuff queries
+CALL drop_index_if_exists('characters', 'idx_aura_guid_composite');
 CREATE INDEX `idx_aura_guid_composite` ON `character_aura`
-    (`guid`, `caster_guid`, `spell`)
+    (`guid`, `casterGuid`, `spell`)
     COMMENT 'Fast aura state queries';
 
 -- Character quest status: Quest progression
+CALL drop_index_if_exists('characters', 'idx_quest_guid_status');
 CREATE INDEX `idx_quest_guid_status` ON `character_queststatus`
     (`guid`, `status`, `quest`)
     COMMENT 'Fast quest status checks';
 
 -- Character reputation: Faction standing queries
+CALL drop_index_if_exists('characters', 'idx_reputation_guid_faction');
 CREATE INDEX `idx_reputation_guid_faction` ON `character_reputation`
     (`guid`, `faction`, `standing`)
     COMMENT 'Fast reputation checks';
 
 -- Character skills: Skill level queries
+CALL drop_index_if_exists('characters', 'idx_skills_guid_skill');
 CREATE INDEX `idx_skills_guid_skill` ON `character_skills`
     (`guid`, `skill`, `value`)
     COMMENT 'Fast skill checks for crafting/gathering';
 
 -- Character talents: Spec and talent queries
+CALL drop_index_if_exists('characters', 'idx_talent_guid_spec');
 CREATE INDEX `idx_talent_guid_spec` ON `character_talent`
     (`guid`, `talentGroup`)
     COMMENT 'Fast talent/spec retrieval';
 
 -- Group member: Fast group queries
+CALL drop_index_if_exists('characters', 'idx_group_member_composite');
 CREATE INDEX `idx_group_member_composite` ON `group_member`
     (`memberGuid`, `guid`)
     COMMENT 'Bidirectional group lookups';
 
+CALL drop_index_if_exists('characters', 'idx_group_guid');
 CREATE INDEX `idx_group_guid` ON `group_member` (`guid`)
     COMMENT 'Fast group member listing';
 
 -- Guild member: Guild roster queries
+CALL drop_index_if_exists('characters', 'idx_guild_member_guid');
 CREATE INDEX `idx_guild_member_guid` ON `guild_member` (`guid`)
     COMMENT 'Fast guild membership checks';
 

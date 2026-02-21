@@ -31,9 +31,9 @@ ANALYZE TABLE `item_instance`;
 -- =====================================================
 
 -- Drop redundant indexes (if they exist)
-DROP INDEX IF EXISTS `idx_online` ON `characters`;
-DROP INDEX IF EXISTS `idx_account` ON `characters`;
-DROP INDEX IF EXISTS `idx_name` ON `characters`;
+-- DROP INDEX IF EXISTS `idx_online` ON `characters`; -- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
+-- DROP INDEX IF EXISTS `idx_account` ON `characters`; -- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
+-- DROP INDEX IF EXISTS `idx_name` ON `characters`; -- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
 
 -- =====================================================
 -- PHASE 3: CREATE HIGH-PERFORMANCE INDEXES
@@ -87,7 +87,7 @@ CREATE INDEX `idx_item_owner_guid` ON `item_instance` (`owner_guid`)
 
 -- Character auras: Active buff/debuff queries
 CREATE INDEX `idx_aura_guid_composite` ON `character_aura`
-    (`guid`, `caster_guid`, `spell`)
+    (`guid`, `casterGuid`, `spell`)
     COMMENT 'Fast aura state queries';
 
 -- Character quest status: Quest progression
