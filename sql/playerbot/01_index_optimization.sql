@@ -165,9 +165,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_state` (
     INDEX `idx_zone_online` (`zone`, `online`),
     INDEX `idx_follow_target` (`follow_target`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-PARTITION BY HASH(guid DIV 1000)
-PARTITIONS 10
-COMMENT='High-performance bot state table with partitioning';
+COMMENT='High-performance bot state table';
 
 -- Create memory table for ultra-fast bot session cache
 CREATE TABLE IF NOT EXISTS `playerbot_session_cache` (
@@ -423,17 +421,6 @@ EXPLAIN SELECT c.guid, c.name, c.level
 FROM characters c
 INNER JOIN group_member gm ON c.guid = gm.memberGuid
 WHERE gm.guid = 1;
-
--- Show index usage statistics
-SELECT
-    table_name,
-    index_name,
-    cardinality,
-    ROUND((data_length + index_length) / 1024 / 1024, 2) AS size_mb
-FROM information_schema.statistics
-WHERE table_schema = DATABASE()
-AND table_name IN ('characters', 'playerbot_state', 'playerbot_session_cache')
-ORDER BY table_name, seq_in_index;
 
 -- =====================================================
 -- SUCCESS METRICS
