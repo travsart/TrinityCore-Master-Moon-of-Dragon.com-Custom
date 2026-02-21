@@ -212,6 +212,7 @@ BEGIN
 END$$
 
 -- Find bots by criteria (optimized filtering)
+DROP PROCEDURE IF EXISTS `sp_find_bots_by_criteria`;
 CREATE PROCEDURE `sp_find_bots_by_criteria`(
     IN p_min_level INT,
     IN p_max_level INT,
