@@ -148,6 +148,7 @@ CREATE INDEX `idx_guild_member_guid` ON `guild_member` (`guid`)
 -- =====================================================
 
 -- Create partitioned table for bot state (high-frequency updates)
+DROP TABLE IF EXISTS `playerbot_state`;
 CREATE TABLE IF NOT EXISTS `playerbot_state` (
     `guid` INT UNSIGNED NOT NULL,
     `online` TINYINT UNSIGNED NOT NULL DEFAULT 0,
@@ -168,6 +169,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_state` (
 COMMENT='High-performance bot state table';
 
 -- Create memory table for ultra-fast bot session cache
+DROP TABLE IF EXISTS `playerbot_session_cache`;
 CREATE TABLE IF NOT EXISTS `playerbot_session_cache` (
     `guid` INT UNSIGNED NOT NULL PRIMARY KEY,
     `account` INT UNSIGNED NOT NULL,
@@ -350,14 +352,17 @@ DELIMITER ;
 USE `auth`;
 
 -- Account table optimizations
+CALL drop_index_if_exists('account', 'idx_account_playerbot');
 CREATE INDEX `idx_account_playerbot` ON `account`
     (`id`, `username`, `last_login`)
     COMMENT 'Optimized for bot account queries';
 
+CALL drop_index_if_exists('account', 'idx_username_lookup');
 CREATE INDEX `idx_username_lookup` ON `account` (`username`)
     COMMENT 'Fast username lookups';
 
 -- Create bot account tracking table
+DROP TABLE IF EXISTS `playerbot_accounts`;
 CREATE TABLE IF NOT EXISTS `playerbot_accounts` (
     `account_id` INT UNSIGNED NOT NULL PRIMARY KEY,
     `bot_count` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -373,6 +378,7 @@ COMMENT='Track bot accounts for fast filtering';
 USE `characters`;
 
 -- Create performance monitoring table
+DROP TABLE IF EXISTS `playerbot_performance`;
 CREATE TABLE IF NOT EXISTS `playerbot_performance` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
