@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `playerbots_names` (
   KEY `idx_gender` (`gender`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci 
   COMMENT='Random bot name pool';
-DELETE FROM `playerbot_names`;
+DELETE FROM `playerbots_names`;
 
 -- Table: playerbots_names_used
 -- Purpose: Track which names are currently in use
