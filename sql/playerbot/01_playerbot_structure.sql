@@ -7,7 +7,6 @@
 
 -- Table: playerbot_accounts
 -- Purpose: Track bot accounts and their metadata
-DROP TABLE IF EXISTS `playerbot_accounts`;
 CREATE TABLE IF NOT EXISTS `playerbot_accounts` (
   `account_id` INT UNSIGNED NOT NULL,
   `is_bot` TINYINT(1) NOT NULL DEFAULT 1,
@@ -30,7 +29,6 @@ CREATE TABLE IF NOT EXISTS `playerbot_accounts` (
 -- Table: playerbots_names
 -- Purpose: Pool of unique names for bot character generation
 -- IMPORTANT: Each name can only be used ONCE across all characters
-DROP TABLE IF EXISTS `playerbots_names`;
 CREATE TABLE IF NOT EXISTS `playerbots_names` (
   `name_id` INT(11) NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL,
@@ -43,7 +41,6 @@ CREATE TABLE IF NOT EXISTS `playerbots_names` (
 
 -- Table: playerbots_names_used
 -- Purpose: Track which names are currently in use
-DROP TABLE IF EXISTS `playerbots_names_used`;
 CREATE TABLE IF NOT EXISTS `playerbots_names_used` (
   `name_id` INT(11) NOT NULL,
   `character_guid` INT UNSIGNED NOT NULL,
@@ -61,7 +58,6 @@ CREATE TABLE IF NOT EXISTS `playerbots_names_used` (
 
 -- Table: playerbot_characters
 -- Purpose: Track bot characters and their properties
-DROP TABLE IF EXISTS `playerbot_characters`;
 CREATE TABLE IF NOT EXISTS `playerbot_characters` (
   `guid` INT UNSIGNED NOT NULL,
   `account_id` INT UNSIGNED NOT NULL,
@@ -87,7 +83,6 @@ CREATE TABLE IF NOT EXISTS `playerbot_characters` (
 
 -- Table: playerbot_race_distribution
 -- Purpose: Configurable race distribution for bot generation
-DROP TABLE IF EXISTS `playerbot_race_distribution`;
 CREATE TABLE IF NOT EXISTS `playerbot_race_distribution` (
   `race` TINYINT UNSIGNED NOT NULL,
   `weight` FLOAT NOT NULL DEFAULT 1.0,
@@ -114,7 +109,6 @@ ON DUPLICATE KEY UPDATE weight = VALUES(weight);
 
 -- Table: playerbot_class_distribution
 -- Purpose: Configurable class distribution for bot generation
-DROP TABLE IF EXISTS `playerbot_class_distribution`;
 CREATE TABLE IF NOT EXISTS `playerbot_class_distribution` (
   `class` TINYINT UNSIGNED NOT NULL,
   `weight` FLOAT NOT NULL DEFAULT 1.0,
@@ -143,7 +137,6 @@ ON DUPLICATE KEY UPDATE weight = VALUES(weight);
 
 -- Table: playerbot_race_class_multipliers
 -- Purpose: Adjust probability of specific race/class combinations
-DROP TABLE IF EXISTS `playerbot_race_class_multipliers`;
 CREATE TABLE IF NOT EXISTS `playerbot_race_class_multipliers` (
   `race` TINYINT UNSIGNED NOT NULL,
   `class` TINYINT UNSIGNED NOT NULL,
@@ -172,7 +165,6 @@ ON DUPLICATE KEY UPDATE multiplier = VALUES(multiplier);
 
 -- Table: playerbot_config
 -- Purpose: Store runtime configuration values
-DROP TABLE IF EXISTS `playerbot_config`;
 CREATE TABLE IF NOT EXISTS `playerbot_config` (
   `key` VARCHAR(100) NOT NULL,
   `value` TEXT,
@@ -196,7 +188,6 @@ ON DUPLICATE KEY UPDATE value = VALUES(value);
 
 -- Table: playerbot_performance_metrics
 -- Purpose: Track performance metrics for optimization
-DROP TABLE IF EXISTS `playerbot_performance_metrics`;
 CREATE TABLE IF NOT EXISTS `playerbot_performance_metrics` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `metric_name` VARCHAR(100) NOT NULL,
