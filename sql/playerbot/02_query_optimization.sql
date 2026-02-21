@@ -12,6 +12,7 @@ DELIMITER $$
 -- =====================================================
 
 -- Single bot login with all required data in one query
+DROP PROCEDURE IF EXISTS `sp_bot_login_optimized`;
 CREATE PROCEDURE `sp_bot_login_optimized`(
     IN p_guid INT UNSIGNED,
     OUT p_success BOOLEAN
@@ -81,6 +82,7 @@ END$$
 -- =====================================================
 
 -- Batch load multiple bots (replaces N+1 queries)
+DROP PROCEDURE IF EXISTS `sp_batch_load_bots`;
 CREATE PROCEDURE `sp_batch_load_bots`(
     IN p_account_id INT UNSIGNED,
     IN p_limit INT UNSIGNED
@@ -155,6 +157,7 @@ END$$
 -- =====================================================
 
 -- Create prepared statements for frequent queries
+DROP PROCEDURE IF EXISTS `sp_init_prepared_statements`;
 CREATE PROCEDURE `sp_init_prepared_statements`()
 BEGIN
     -- Bot position update
@@ -179,6 +182,7 @@ END$$
 -- =====================================================
 
 -- Find nearby bots (spatial query optimization)
+DROP PROCEDURE IF EXISTS `sp_find_nearby_bots`;
 CREATE PROCEDURE `sp_find_nearby_bots`(
     IN p_x FLOAT,
     IN p_y FLOAT,
@@ -234,6 +238,7 @@ END$$
 -- =====================================================
 
 -- Bulk save bot states (replaces individual updates)
+DROP PROCEDURE IF EXISTS `sp_bulk_save_bot_states`;
 CREATE PROCEDURE `sp_bulk_save_bot_states`(
     IN p_state_data JSON
 )
@@ -316,6 +321,7 @@ END$$
 -- =====================================================
 
 -- Preload frequently accessed bots into cache
+DROP PROCEDURE IF EXISTS `sp_preload_bot_cache`;
 CREATE PROCEDURE `sp_preload_bot_cache`(
     IN p_account_id INT UNSIGNED
 )
@@ -341,6 +347,7 @@ END$$
 -- =====================================================
 
 -- Log query performance
+DROP PROCEDURE IF EXISTS `sp_log_query_performance`;
 CREATE PROCEDURE `sp_log_query_performance`(
     IN p_operation VARCHAR(50),
     IN p_start_time DATETIME(6),
