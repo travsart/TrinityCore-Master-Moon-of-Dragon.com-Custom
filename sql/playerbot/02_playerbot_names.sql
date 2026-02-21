@@ -81,7 +81,7 @@ INSERT INTO `playerbots_names` (`name`, `gender`) VALUES
 ('Deborah', 1), ('Martha', 1), ('Maria', 1), ('Heather', 1), ('Diane', 1),
 
 -- Night Elf style names
-('Tyrande', 1), ('Maiev', 1), ('Shandris', 1), ('Azshara', 1), ('Elune', 1),
+('Tyranda', 1), ('Maiev', 1), ('Shandris', 1), ('Azshara', 1), ('Elune', 1),
 ('Feathermoon', 1), ('Whisperwind', 1), ('Starweaver', 1), ('Moonwhisper', 1), ('Shadowsong', 1),
 ('Starfall', 1), ('Nightwhisper', 1), ('Dawnweaver', 1), ('Moonfire', 1), ('Starlight', 1),
 
