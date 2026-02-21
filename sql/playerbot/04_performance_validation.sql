@@ -12,6 +12,7 @@ DELIMITER $$
 -- =====================================================
 
 -- Test single bot login performance
+DROP PROCEDURE IF EXISTS `sp_test_bot_login_performance`;
 CREATE PROCEDURE `sp_test_bot_login_performance`(
     IN p_iterations INT,
     OUT p_avg_time_ms DECIMAL(10,2),
@@ -79,6 +80,7 @@ BEGIN
 END$$
 
 -- Test batch bot spawn performance
+DROP PROCEDURE IF EXISTS `sp_test_batch_spawn_performance`;
 CREATE PROCEDURE `sp_test_batch_spawn_performance`(
     IN p_bot_count INT,
     OUT p_total_time_ms DECIMAL(10,2),
@@ -136,6 +138,7 @@ BEGIN
 END$$
 
 -- Test query performance for various operations
+DROP PROCEDURE IF EXISTS `sp_test_query_performance`;
 CREATE PROCEDURE `sp_test_query_performance`()
 BEGIN
     DECLARE v_start DATETIME(6);
@@ -238,6 +241,7 @@ END$$
 -- INDEX EFFECTIVENESS ANALYSIS
 -- =====================================================
 
+DROP PROCEDURE IF EXISTS `sp_analyze_index_effectiveness`;
 CREATE PROCEDURE `sp_analyze_index_effectiveness`()
 BEGIN
     -- Index usage statistics
@@ -284,6 +288,7 @@ END$$
 -- CONNECTION POOL MONITORING
 -- =====================================================
 
+DROP PROCEDURE IF EXISTS `sp_monitor_connection_pool`;
 CREATE PROCEDURE `sp_monitor_connection_pool`()
 BEGIN
     -- Current connections
@@ -333,7 +338,7 @@ END$$
 -- =====================================================
 -- CACHE PERFORMANCE MONITORING
 -- =====================================================
-
+DROP PROCEDURE IF EXISTS `sp_monitor_cache_performance`;
 CREATE PROCEDURE `sp_monitor_cache_performance`()
 BEGIN
     -- Table cache statistics
@@ -391,6 +396,7 @@ END$$
 -- COMPREHENSIVE PERFORMANCE REPORT
 -- =====================================================
 
+DROP PROCEDURE IF EXISTS `sp_generate_performance_report`;
 CREATE PROCEDURE `sp_generate_performance_report`()
 BEGIN
     DECLARE v_bot_login_avg DECIMAL(10,2);
@@ -457,7 +463,7 @@ END$$
 -- =====================================================
 -- REAL-TIME MONITORING
 -- =====================================================
-
+DROP PROCEDURE IF EXISTS `sp_monitor_real_time`;
 CREATE PROCEDURE `sp_monitor_real_time`(
     IN p_duration_seconds INT
 )
