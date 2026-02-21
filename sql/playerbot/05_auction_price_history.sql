@@ -13,6 +13,13 @@ CREATE TABLE IF NOT EXISTS `playerbot_auction_price_history` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Tracks historical auction prices for bot market analysis';
 
+CALL drop_index_if_exists('playerbot_auction_price_history', 'idx_item_price');
+CALL drop_index_if_exists('playerbot_auction_price_history', 'idx_recent');
+-- Indexes for performance
+ALTER TABLE `playerbot_auction_price_history`
+    ADD INDEX `idx_item_price` (`item_id`, `price`),
+    ADD INDEX `idx_recent` (`timestamp` DESC);
+
 -- Bot auction statistics
 CREATE TABLE IF NOT EXISTS `playerbot_auction_stats` (
     `bot_guid` BIGINT UNSIGNED NOT NULL,
@@ -87,11 +94,6 @@ CREATE EVENT IF NOT EXISTS `evt_cleanup_auction_price_history`
 ON SCHEDULE EVERY 1 DAY
 STARTS CURRENT_TIMESTAMP
 DO CALL sp_cleanup_auction_price_history(7);
-
--- Indexes for performance
-ALTER TABLE `playerbot_auction_price_history`
-    ADD INDEX `idx_item_price` (`item_id`, `price`),
-    ADD INDEX `idx_recent` (`timestamp` DESC);
 
 -- Example queries for market analysis:
 
