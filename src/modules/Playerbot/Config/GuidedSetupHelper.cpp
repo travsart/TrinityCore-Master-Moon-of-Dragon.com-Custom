@@ -334,6 +334,7 @@ std::vector<std::string> GuidedSetupHelper::GetConfigSearchPaths()
         "./etc",                                      // Installed path (bin/etc)
         "../etc",                                     // Installed path (relative to bin)
         "./conf",                                     // Source conf directory
+        "../conf",                                     // Source conf directory
         "src/modules/Playerbot/conf",                 // Source directory
         "../src/modules/Playerbot/conf"               // Alternative source directory
     };
