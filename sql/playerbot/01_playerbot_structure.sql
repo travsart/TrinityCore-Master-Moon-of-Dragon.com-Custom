@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_accounts` (
   CONSTRAINT `chk_character_limit` CHECK (`character_count` <= 10)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
   COMMENT='Metadata for bot-controlled accounts';
+DELETE FROM `playerbot_accounts`;
 
 -- --------------------------------------------------------
 -- Name Management Tables
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS `playerbots_names` (
   KEY `idx_gender` (`gender`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci 
   COMMENT='Random bot name pool';
+DELETE FROM `playerbot_names`;
 
 -- Table: playerbots_names_used
 -- Purpose: Track which names are currently in use
@@ -51,6 +53,7 @@ CREATE TABLE IF NOT EXISTS `playerbots_names_used` (
     REFERENCES `playerbots_names` (`name_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
   COMMENT='Tracks which bot is using which name';
+DELETE FROM `playerbots_names_used`;
 
 -- --------------------------------------------------------
 -- Character Management Tables
@@ -76,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_characters` (
     REFERENCES `playerbot_accounts` (`account_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
   COMMENT='Bot character metadata';
-
+DELETE FROM `playerbot_characters`;
 -- --------------------------------------------------------
 -- Character Distribution Tables
 -- --------------------------------------------------------
@@ -92,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_race_distribution` (
   PRIMARY KEY (`race`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Race distribution weights for bot generation';
+  DELETE FROM `playerbot_race_distribution`;
 
 -- Insert default race distribution based on WoW statistics
 INSERT INTO `playerbot_race_distribution` (`race`, `weight`, `male_ratio`, `faction`) VALUES
@@ -134,6 +138,7 @@ INSERT INTO `playerbot_class_distribution` (`class`, `weight`, `tank_capable`, `
 (11, 10.9, 1, 1), -- Druid
 (12, 7.9, 1, 0)   -- Demon Hunter
 ON DUPLICATE KEY UPDATE weight = VALUES(weight);
+DELETE FROM `playerbot_class_distribution`;
 
 -- Table: playerbot_race_class_multipliers
 -- Purpose: Adjust probability of specific race/class combinations
@@ -159,6 +164,7 @@ INSERT INTO `playerbot_race_class_multipliers` (`race`, `class`, `multiplier`) V
 (3, 3, 1.8)    -- Dwarf Hunter
 ON DUPLICATE KEY UPDATE multiplier = VALUES(multiplier);
 
+DELETE FROM `playerbot_race_class_multipliers`;
 -- --------------------------------------------------------
 -- Configuration Tables
 -- --------------------------------------------------------
@@ -173,6 +179,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_config` (
   PRIMARY KEY (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
   COMMENT='Runtime configuration for playerbot system';
+DELETE FROM `playerbot_config`;
 
 -- Insert default configuration values
 INSERT INTO `playerbot_config` (`key`, `value`, `description`) VALUES
@@ -197,7 +204,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_performance_metrics` (
   KEY `idx_metric_time` (`metric_name`, `recorded_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
   COMMENT='Performance metrics tracking';
-
+DELETE FROM `playerbot_performance_metrics`;
 -- --------------------------------------------------------
 -- Database Triggers for Character Count Management
 -- --------------------------------------------------------
