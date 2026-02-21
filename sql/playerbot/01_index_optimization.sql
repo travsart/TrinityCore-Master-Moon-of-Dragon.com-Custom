@@ -4,6 +4,171 @@
 -- MySQL 9.4 Optimizations with Partitioning
 -- =====================================================
 
+use `auth`;
+
+DELIMITER $$
+
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+use `characters`;
+DELIMITER $$
+
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+use `hotfixes`;
+
+DELIMITER $$
+
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+
+use `playerbot`;
+
+DELIMITER $$
+
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+use `world`;
+
+DELIMITER $$
+
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
 -- Switch to characters database
 USE `characters`;
 
