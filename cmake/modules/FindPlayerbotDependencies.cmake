@@ -247,22 +247,6 @@ endif()
 set(CMAKE_REQUIRED_LIBRARIES ${MYSQL_LIBRARIES})
 set(CMAKE_REQUIRED_INCLUDES ${MYSQL_INCLUDE_DIRS})
 
-check_cxx_source_compiles("
-    #include <mysql/mysql.h>
-
-    int main() {
-        const char* version = mysql_get_client_info();
-        MYSQL* mysql = mysql_init(nullptr);
-        if (mysql) mysql_close(mysql);
-        return 0;
-    }
-" MYSQL_FUNCTIONAL)
-
-if(NOT MYSQL_FUNCTIONAL)
-    message(WARNING "⚠️  MySQL functional test failed, but library was found - proceeding with build")
-    set(MYSQL_FUNCTIONAL TRUE) # Override for development build
-endif()
-
 # Ensure MYSQL_FOUND is set if we have library and headers
 if(MYSQL_LIBRARIES AND MYSQL_INCLUDE_DIRS)
     set(MYSQL_FOUND TRUE)
