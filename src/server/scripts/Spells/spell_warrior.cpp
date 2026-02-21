@@ -83,6 +83,8 @@ enum WarriorSpells
     SPELL_WARRIOR_IMPROVED_HEROIC_LEAP              = 157449,
     SPELL_WARRIOR_MORTAL_STRIKE                     = 12294,
     SPELL_WARRIOR_MORTAL_WOUNDS                     = 115804,
+    SPELL_WARRIOR_OVERPOWER                         = 7384,
+    SPELL_WARRIOR_OVERPOWERING_FINISH               = 400205,
     SPELL_WARRIOR_POWERFUL_ENRAGE                   = 440277,
     SPELL_WARRIOR_RALLYING_CRY                      = 97463,
     SPELL_WARRIOR_RAVAGER                           = 228920,
@@ -107,6 +109,7 @@ enum WarriorSpells
     SPELL_WARRIOR_SUDDEN_DEATH_BUFF                 = 52437,
     SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_1   = 12723,
     SPELL_WARRIOR_SWEEPING_STRIKES_EXTRA_ATTACK_2   = 26654,
+    SPELL_WARRIOR_TACTICIAN_ACTION_BUTTON_GLOW      = 199854,
     SPELL_WARRIOR_TAUNT                             = 355,
     SPELL_WARRIOR_THUNDER_CLAP_SLOW                 = 435203,
     SPELL_WARRIOR_TITANIC_RAGE                      = 394329,
@@ -574,7 +577,7 @@ class spell_warr_deft_experience : public SpellScript
         Unit const* caster = GetCaster();
         if (Aura* enrageAura = caster->GetAura(SPELL_WARRIOR_ENRAGE))
             if (AuraEffect const* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_DEFT_EXPERIENCE, EFFECT_1))
-                enrageAura->SetDuration(enrageAura->GetDuration() + aurEff->GetAmount());
+                enrageAura->SetDuration(enrageAura->GetDuration() + (aurEff->GetAmount() * (IsHitCrit() ? 2 : 1)));
     }
 
     void Register() override
@@ -739,63 +742,6 @@ class spell_warr_frenzied_enrage : public SpellScript
     }
 };
 
-// 335082 - frenzy
-class spell_warr_frenzy : public AuraScript
-{
-public:
-    void SetTargetGUID(ObjectGuid const& guid) { _targetGUID = guid; }
-    ObjectGuid const& GetTargetGUID() const { return _targetGUID; }
-
-private:
-    void Register() override { }
-
-    ObjectGuid _targetGUID;
-};
-
-// 335077 - Frenzy (attached to 184367 - Rampage)
-class spell_warr_frenzy_rampage : public SpellScript
-{
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo({ SPELL_WARRIOR_FRENZY_BUFF, SPELL_WARRIOR_FRENZY_TALENT });
-    }
-
-    bool Load() override
-    {
-        return GetCaster()->HasAura(SPELL_WARRIOR_FRENZY_TALENT);
-    }
-
-    void HandleAfterCast(SpellEffIndex /*effIndex*/) const
-    {
-        Unit* caster = GetCaster();
-        Unit* hitUnit = GetHitUnit();
-
-        if (hitUnit != GetExplTargetUnit())
-            return;
-
-        caster->CastSpell(nullptr, SPELL_WARRIOR_FRENZY_BUFF, CastSpellExtraArgsInit{
-            .TriggerFlags = TRIGGERED_IGNORE_CAST_IN_PROGRESS | TRIGGERED_DONT_REPORT_CAST_ERROR,
-            .TriggeringSpell = GetSpell()
-        });
-
-        if (Aura* frenzyAura = caster->GetAura(SPELL_WARRIOR_FRENZY_BUFF))
-        {
-            if (spell_warr_frenzy* script = frenzyAura->GetScript<spell_warr_frenzy>())
-            {
-                if (!script->GetTargetGUID().IsEmpty() && script->GetTargetGUID() != hitUnit->GetGUID())
-                    frenzyAura->SetStackAmount(1);
-
-                script->SetTargetGUID(hitUnit->GetGUID());
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_warr_frenzy_rampage::HandleAfterCast, EFFECT_0, SPELL_EFFECT_DUMMY);
-    }
-};
-
 // 392792 - Frothing Berserker
 class spell_warr_frothing_berserker : public AuraScript
 {
@@ -836,6 +782,39 @@ class spell_warr_frothing_berserker : public AuraScript
         DoCheckEffectProc += AuraCheckEffectProcFn(spell_warr_frothing_berserker::CheckSpecialization<ChrSpecialization::WarriorFury>, EFFECT_1, SPELL_AURA_DUMMY);
         DoCheckEffectProc += AuraCheckEffectProcFn(spell_warr_frothing_berserker::CheckSpecialization<ChrSpecialization::WarriorProtection>, EFFECT_2, SPELL_AURA_DUMMY);
         OnEffectProc += AuraEffectProcFn(spell_warr_frothing_berserker::HandleProc, EFFECT_ALL, SPELL_AURA_DUMMY);
+    }
+};
+
+// 400205 - Overpowering Finish (attached to 7384 - Overpower)
+class spell_warr_overpowering_finish : public SpellScript
+{
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellEffect({ { SPELL_WARRIOR_OVERPOWERING_FINISH, EFFECT_1 } });
+    }
+
+    bool Load() override
+    {
+        return GetCaster()->HasAura(SPELL_WARRIOR_OVERPOWERING_FINISH);
+    }
+
+    void CalculateDamage(SpellEffectInfo const& /*effectInfo*/, Unit const* victim, int32& /*damage*/, int32& /*flatMod*/, float& pctMod) const
+    {
+        Aura const* talent = GetCaster()->GetAura(SPELL_WARRIOR_OVERPOWERING_FINISH);
+        if (!talent)
+            return;
+
+        AuraEffect const* healthPct = talent->GetEffect(EFFECT_1);
+        if (!healthPct || !victim->HealthBelowPct(healthPct->GetAmount()))
+            return;
+
+        if (AuraEffect const* dmgIncrease = talent->GetEffect(EFFECT_0))
+            AddPct(pctMod, dmgIncrease->GetAmount());
+    }
+
+    void Register() override
+    {
+        CalcDamage += SpellCalcDamageFn(spell_warr_overpowering_finish::CalculateDamage);
     }
 };
 
@@ -1545,6 +1524,46 @@ class spell_warr_sweeping_strikes : public AuraScript
     Unit* _procTarget = nullptr;
 };
 
+// 184783 - Tactician
+class spell_warr_tactician : public AuraScript
+{
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_WARRIOR_OVERPOWER, SPELL_WARRIOR_TACTICIAN_ACTION_BUTTON_GLOW })
+            && sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_OVERPOWER, DIFFICULTY_NONE)->ChargeCategoryId;
+    }
+
+    static bool CheckEffectProc(AuraScript const&, AuraEffect const* aurEff, ProcEventInfo const& eventInfo)
+    {
+        SpellInfo const* procSpell = eventInfo.GetSpellInfo();
+        if (!procSpell)
+            return false;
+
+        if (!procSpell->CalcPowerCost(POWER_RAGE, false, eventInfo.GetActor(), SpellSchoolMask(procSpell->SchoolMask)))
+            return false;
+
+        return roll_chance_i(aurEff->GetAmount());
+    }
+
+    static void HandleProc(AuraScript const&, AuraEffect const* aurEff, ProcEventInfo const& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+        SpellInfo const* overpowerInfo = sSpellMgr->AssertSpellInfo(SPELL_WARRIOR_OVERPOWER, DIFFICULTY_NONE);
+        caster->GetSpellHistory()->RestoreCharge(overpowerInfo->ChargeCategoryId);
+        caster->CastSpell(caster, SPELL_WARRIOR_TACTICIAN_ACTION_BUTTON_GLOW, CastSpellExtraArgsInit{
+            .TriggerFlags = TRIGGERED_IGNORE_CAST_IN_PROGRESS | TRIGGERED_DONT_REPORT_CAST_ERROR,
+            .TriggeringSpell = eventInfo.GetProcSpell(),
+            .TriggeringAura = aurEff
+        });
+    }
+
+    void Register() override
+    {
+        DoCheckEffectProc += AuraCheckEffectProcFn(spell_warr_tactician::CheckEffectProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        OnEffectProc += AuraEffectProcFn(spell_warr_tactician::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+    }
+};
+
 // 388933 - Tenderize
 class spell_warr_tenderize : public AuraScript
 {
@@ -1833,8 +1852,6 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_enrage_proc);
     RegisterSpellScript(spell_warr_execute_damage);
     RegisterSpellScript(spell_warr_frenzied_enrage);
-    RegisterSpellScript(spell_warr_frenzy);
-    RegisterSpellScript(spell_warr_frenzy_rampage);
     RegisterSpellScript(spell_warr_frothing_berserker);
     RegisterSpellScript(spell_warr_fueled_by_violence);
     RegisterSpellScript(spell_warr_heroic_leap);
@@ -1848,6 +1865,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_invigorating_fury);
     RegisterSpellScript(spell_warr_item_t10_prot_4p_bonus);
     RegisterSpellScript(spell_warr_mortal_strike);
+    RegisterSpellScript(spell_warr_overpowering_finish);
     RegisterSpellScript(spell_warr_pain_and_gain_heal);
     RegisterSpellScript(spell_warr_powerful_enrage);
     RegisterSpellScript(spell_warr_raging_blow_cooldown_reset);
@@ -1861,6 +1879,7 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_strategist);
     RegisterSpellScript(spell_warr_sudden_death);
     RegisterSpellScript(spell_warr_sweeping_strikes);
+    RegisterSpellScript(spell_warr_tactician);
     RegisterSpellScript(spell_warr_tenderize);
     RegisterSpellScript(spell_warr_thunder_clap);
     RegisterSpellScript(spell_warr_thunder_clap_rend);
