@@ -72,74 +72,74 @@ CREATE INDEX `idx_zone_map_position` ON `characters`
     COMMENT 'Spatial queries for nearby bot detection';
 
 -- Character stats: Fast stat retrieval
-CALL drop_index_if_exists('characters', 'idx_stats_guid');
+CALL drop_index_if_exists('character_stats', 'idx_stats_guid');
 CREATE INDEX `idx_stats_guid` ON `character_stats` (`guid`)
     COMMENT 'Fast stat retrieval for combat calculations';
 
 -- Character spells: Spell availability checks
-CALL drop_index_if_exists('characters', 'idx_spell_guid_spell');
+CALL drop_index_if_exists('character_spell', 'idx_spell_guid_spell');
 CREATE INDEX `idx_spell_guid_spell` ON `character_spell` (`guid`, `spell`)
     COMMENT 'Fast spell availability checks';
 
 -- Character actions: Action bar queries
-CALL drop_index_if_exists('characters', 'idx_action_guid_composite');
+CALL drop_index_if_exists('character_action', 'idx_action_guid_composite');
 CREATE INDEX `idx_action_guid_composite` ON `character_action`
     (`guid`, `spec`, `button`)
     COMMENT 'Fast action bar retrieval';
 
 -- Character inventory: Equipment and bag queries
-CALL drop_index_if_exists('characters', 'idx_inventory_guid_slot');
+CALL drop_index_if_exists('character_inventory', 'idx_inventory_guid_slot');
 CREATE INDEX `idx_inventory_guid_slot` ON `character_inventory`
     (`guid`, `slot`, `bag`)
     COMMENT 'Fast inventory access for equipment checks';
 
 -- Item instance: Fast item property lookups
-CALL drop_index_if_exists('characters', 'idx_item_owner_guid');
+CALL drop_index_if_exists('item_instance', 'idx_item_owner_guid');
 CREATE INDEX `idx_item_owner_guid` ON `item_instance` (`owner_guid`)
     COMMENT 'Fast item ownership queries';
 
 -- Character auras: Active buff/debuff queries
-CALL drop_index_if_exists('characters', 'idx_aura_guid_composite');
+CALL drop_index_if_exists('character_aura', 'idx_aura_guid_composite');
 CREATE INDEX `idx_aura_guid_composite` ON `character_aura`
     (`guid`, `casterGuid`, `spell`)
     COMMENT 'Fast aura state queries';
 
 -- Character quest status: Quest progression
-CALL drop_index_if_exists('characters', 'idx_quest_guid_status');
+CALL drop_index_if_exists('character_queststatus', 'idx_quest_guid_status');
 CREATE INDEX `idx_quest_guid_status` ON `character_queststatus`
     (`guid`, `status`, `quest`)
     COMMENT 'Fast quest status checks';
 
 -- Character reputation: Faction standing queries
-CALL drop_index_if_exists('characters', 'idx_reputation_guid_faction');
+CALL drop_index_if_exists('character_reputation', 'idx_reputation_guid_faction');
 CREATE INDEX `idx_reputation_guid_faction` ON `character_reputation`
     (`guid`, `faction`, `standing`)
     COMMENT 'Fast reputation checks';
 
 -- Character skills: Skill level queries
-CALL drop_index_if_exists('characters', 'idx_skills_guid_skill');
+CALL drop_index_if_exists('character_skills', 'idx_skills_guid_skill');
 CREATE INDEX `idx_skills_guid_skill` ON `character_skills`
     (`guid`, `skill`, `value`)
     COMMENT 'Fast skill checks for crafting/gathering';
 
 -- Character talents: Spec and talent queries
-CALL drop_index_if_exists('characters', 'idx_talent_guid_spec');
+CALL drop_index_if_exists('character_talent', 'idx_talent_guid_spec');
 CREATE INDEX `idx_talent_guid_spec` ON `character_talent`
     (`guid`, `talentGroup`)
     COMMENT 'Fast talent/spec retrieval';
 
 -- Group member: Fast group queries
-CALL drop_index_if_exists('characters', 'idx_group_member_composite');
+CALL drop_index_if_exists('group_member', 'idx_group_member_composite');
 CREATE INDEX `idx_group_member_composite` ON `group_member`
     (`memberGuid`, `guid`)
     COMMENT 'Bidirectional group lookups';
 
-CALL drop_index_if_exists('characters', 'idx_group_guid');
+CALL drop_index_if_exists('group_member', 'idx_group_guid');
 CREATE INDEX `idx_group_guid` ON `group_member` (`guid`)
     COMMENT 'Fast group member listing';
 
 -- Guild member: Guild roster queries
-CALL drop_index_if_exists('characters', 'idx_guild_member_guid');
+CALL drop_index_if_exists('guild_member', 'idx_guild_member_guid');
 CREATE INDEX `idx_guild_member_guid` ON `guild_member` (`guid`)
     COMMENT 'Fast guild membership checks';
 
