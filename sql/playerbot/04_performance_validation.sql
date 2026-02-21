@@ -106,14 +106,16 @@ BEGIN
     SELECT ci.guid, ci.slot, ci.item
     FROM character_inventory ci
     WHERE ci.guid IN (
-        SELECT guid FROM characters WHERE account > 0 LIMIT p_bot_count
+        -- SELECT guid FROM characters WHERE account > 0 LIMIT p_bot_count
+        SELECT guid FROM characters WHERE account > 0
     ) AND ci.bag = 0 AND ci.slot < 19;
 
     -- Simulate batch spell load
     SELECT cs.guid, cs.spell
     FROM character_spell cs
     WHERE cs.guid IN (
-        SELECT guid FROM characters WHERE account > 0 LIMIT p_bot_count
+        SELECT guid FROM characters WHERE account > 0
+        -- SELECT guid FROM characters WHERE account > 0 LIMIT p_bot_count -- This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery
     ) AND cs.active = 1;
 
     SET v_end = NOW(6);
