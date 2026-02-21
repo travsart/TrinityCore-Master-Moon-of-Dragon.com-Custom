@@ -193,6 +193,7 @@ COMMENT='In-memory cache for ultra-fast bot session lookups';
 
 DELIMITER $$
 
+DROP PROCEDURE IF EXISTS sp_playerbot_login;
 -- Optimized bot login procedure
 CREATE PROCEDURE `sp_playerbot_login`(
     IN p_guid INT UNSIGNED
@@ -231,6 +232,7 @@ BEGIN
 END$$
 
 -- Batch bot spawn procedure
+DROP PROCEDURE IF EXISTS sp_playerbot_batch_spawn;
 CREATE PROCEDURE `sp_playerbot_batch_spawn`(
     IN p_account INT UNSIGNED,
     IN p_count INT UNSIGNED
@@ -269,6 +271,7 @@ BEGIN
 END$$
 
 -- Fast bot state retrieval
+DROP PROCEDURE IF EXISTS sp_playerbot_get_state;
 CREATE PROCEDURE `sp_playerbot_get_state`(
     IN p_guid INT UNSIGNED
 )
@@ -290,6 +293,7 @@ BEGIN
 END$$
 
 -- Batch update bot positions
+DROP PROCEDURE IF EXISTS sp_playerbot_update_positions;
 CREATE PROCEDURE `sp_playerbot_update_positions`(
     IN p_positions TEXT
 )
