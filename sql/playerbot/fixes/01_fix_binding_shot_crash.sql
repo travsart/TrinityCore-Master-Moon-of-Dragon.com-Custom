@@ -10,7 +10,7 @@
 --
 -- This SQL must be applied to the WORLD database.
 -- ============================================================================
-
+use world;
 -- Update areatrigger_template to use Playerbot's fixed script
 UPDATE `areatrigger_template`
 SET `ScriptName` = 'at_hun_binding_shot_playerbot'

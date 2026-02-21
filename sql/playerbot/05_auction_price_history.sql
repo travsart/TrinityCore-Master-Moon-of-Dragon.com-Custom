@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_market_cache` (
 COMMENT='Caches market analysis data for bot decision making';
 
 -- Cleanup stored procedure for old price history
+DROP PROCEDURE IF EXISTS `sp_cleanup_auction_price_history`;
 DELIMITER $$
 CREATE PROCEDURE `sp_cleanup_auction_price_history`(IN days_to_keep INT)
 BEGIN
