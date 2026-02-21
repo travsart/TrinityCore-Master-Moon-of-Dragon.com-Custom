@@ -207,6 +207,10 @@ std::string PlayerbotConfig::FindConfigFile() const
         "./etc/playerbots.conf",                // etc subdirectory
         "../etc/playerbots.conf",               // Parent etc directory
         "/usr/local/etc/playerbots.conf",       // System etc directory
+        "./conf/playerbots.conf",               // Source conf directory
+        "../conf/playerbots.conf",              // Parent conf directory
+        "./conf/modules/playerbots.conf",       // Source conf modules directory
+        "../conf/modules/playerbots.conf",      // Parent conf modules directory
         "./playerbots.conf.dist"                // Distribution template as fallback
     };
 
