@@ -556,6 +556,7 @@ COMMENT='Track playerbot operation performance';
 -- =====================================================
 -- PHASE 8: UPDATE STATISTICS
 -- =====================================================
+USE `characters`;
 
 -- Update all table statistics for query optimizer
 ANALYZE TABLE `characters`;
