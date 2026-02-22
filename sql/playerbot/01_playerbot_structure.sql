@@ -214,7 +214,7 @@ DELIMITER $$
 -- Trigger: Update character count on character creation
 DROP TRIGGER IF EXISTS `trg_bot_character_insert`$$
 CREATE TRIGGER `trg_bot_character_insert` 
-AFTER INSERT ON `characters`
+AFTER INSERT ON `characters.characters`
 FOR EACH ROW
 BEGIN
     IF EXISTS (SELECT 1 FROM playerbot_accounts WHERE account_id = NEW.account AND is_bot = 1) THEN
@@ -227,7 +227,7 @@ END$$
 -- Trigger: Update character count on character deletion
 DROP TRIGGER IF EXISTS `trg_bot_character_delete`$$
 CREATE TRIGGER `trg_bot_character_delete` 
-AFTER DELETE ON `characters`
+AFTER DELETE ON `characters.characters`
 FOR EACH ROW
 BEGIN
     IF EXISTS (SELECT 1 FROM playerbot_accounts WHERE account_id = OLD.account AND is_bot = 1) THEN
