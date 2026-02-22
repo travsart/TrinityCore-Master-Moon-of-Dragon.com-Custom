@@ -607,6 +607,10 @@ void BotTemplateRepository::LoadFromDatabase()
         // Note: Database stores role as TINYINT (0=Tank, 1=Healer, 2=DPS), not string
         tmpl->role = static_cast<BotRole>(fields[4].GetUInt8());
 
+        TC_LOG_ERROR("playerbot.template",
+                "PRINTING OUTTTTTTTT: id={}, name='{}', class_id={}, spec_id={}, role={}",
+                tmpl->templateId, tmpl->templateName, tmpl->playerClass, tmpl->specId, tmpl->role);
+
         // VALIDATION: Skip invalid templates with class_id=0 (not a valid WoW class)
         // This can happen due to corrupt database entries
         if (tmpl->playerClass == 0 || tmpl->playerClass > 13)
