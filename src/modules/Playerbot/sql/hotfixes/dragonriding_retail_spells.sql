@@ -35,7 +35,7 @@
 -- ============================================================================
 -- Remove any previous custom spell attempts in the 900000+ range
 -- These are no longer needed since we're using retail spells
-
+use `hotfixes`; -- Connect to your hotfixes database (adjust name as needed)
 DELETE FROM hotfix_data WHERE TableHash IN (
     -- Spell table hash
     0xC8D8FADF,
