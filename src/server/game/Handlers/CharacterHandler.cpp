@@ -581,7 +581,10 @@ bool WorldSession::ValidateAppearance(Races race, Classes playerClass, Gender ge
 {
     std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
     if (!options)
+    {
+        TC_LOG_ERROR("entities.player", "WorldSession::ValidateAppearance: No customization options for race {} gender {}", race, gender);
         return false;
+    }
 
     uint32 previousOption = 0;
 
