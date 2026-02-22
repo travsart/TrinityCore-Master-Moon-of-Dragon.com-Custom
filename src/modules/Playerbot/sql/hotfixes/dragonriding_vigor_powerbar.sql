@@ -218,7 +218,7 @@ INSERT INTO `playerbot_dragonriding_glyph_templates` (`glyph_id`, `map_id`, `zon
 
 -- Record this migration
 INSERT INTO `playerbot_migrations` (`version`, `description`, `checksum`)
-VALUES ('1.0.0-dragonriding', 'Add dragonriding progression tables (glyphs, talents)', MD5('dragonriding_tables.sql'))
+VALUES ('1.0.0-dragonriding', 'Add dragonriding progression tables (glyphs, talents)', '1fcde6d66e7a4bf56b787fb94eae7324')
 ON DUPLICATE KEY UPDATE `applied_at` = CURRENT_TIMESTAMP;
 
 -- ============================================================================
