@@ -303,14 +303,11 @@ void BotWorldPositioner::LoadZonesFromDatabase()
     auto questHubs = QueryAndClusterQuestHubs();
     for (size_t i = 0; i < questHubs.size(); ++i)
     {
-        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Looping {}/{} - Merging quest hub into zones", i + 1, questHubs.size());
-
         QuestHub const& hub = questHubs[i];
         if (_disabledZones.count(hub.zoneId))
             continue;
 
         MergeQuestHubIntoZone(hub, zoneLevelInfo);
-        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Merged {}/{}", i + 1, questHubs.size());
     }
 
     // Step 5: Query graveyards as fallback (fourth priority)
@@ -321,7 +318,6 @@ void BotWorldPositioner::LoadZonesFromDatabase()
             continue;
         MergeSpawnPointIntoZone(gy, zoneLevelInfo);
     }
-    TC_LOG_ERROR("playerbot", "Graveyards merged into zones...");
 
     // Step 6: Convert discovered zones to ZonePlacement structs
 
@@ -367,15 +363,18 @@ void BotWorldPositioner::LoadZonesFromDatabase()
         // Don't add zones without a name (invalid zone IDs)
         if (zone.zoneName.empty() || zone.zoneName == "Unknown Zone")
         {
+             TC_LOG_ERROR("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() -  best.npcName {} has no valid name, skipping",  best.npcName);
             zone.zoneName = best.npcName.empty() ? "Zone " + ::std::to_string(zoneId) : best.npcName + " Area";
         }
-
+         TC_LOG_ERROR("playerbot", "Finalized zone {}: '{}' (L{}-{}, {})", zone.zoneId, zone.zoneName, zone.minLevel, zone.maxLevel,
+            zone.faction == TEAM_ALLIANCE ? "Alliance" : (zone.faction == TEAM_HORDE ? "Horde" : "Neutral"));
         _zones.push_back(zone);
 
         TC_LOG_DEBUG("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Added zone {} '{}' (L{}-{}, {})",
             zone.zoneId, zone.zoneName, zone.minLevel, zone.maxLevel,
             zone.faction == TEAM_ALLIANCE ? "Alliance" : (zone.faction == TEAM_HORDE ? "Horde" : "Neutral"));
     }
+        TC_LOG_ERROR("playerbot", "BotWorldPositioner: Discovered {} zones from database in {}ms", _zones.size(), elapsed);
 
     uint32 elapsed = getMSTimeDiff(startTime, getMSTime());
     TC_LOG_INFO("playerbot", "BotWorldPositioner: Discovered {} zones from database in {}ms", _zones.size(), elapsed);
