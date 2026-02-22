@@ -23,7 +23,7 @@
 -- STEP 1: CLEAN UP OLD SCRIPT BINDINGS
 -- ============================================================================
 -- Remove all previous bindings for dragonriding spells (both old custom and retail)
-
+USE `world`;
 DELETE FROM `spell_script_names` WHERE `spell_id` IN (
     -- Retail spell IDs
     369536,   -- Soar
