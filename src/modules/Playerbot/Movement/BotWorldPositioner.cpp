@@ -303,16 +303,14 @@ void BotWorldPositioner::LoadZonesFromDatabase()
     auto questHubs = QueryAndClusterQuestHubs();
     for (size_t i = 0; i < questHubs.size(); ++i)
     {
-        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Looping");
+        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Looping {}/{} - Merging quest hub into zones", i + 1, questHubs.size());
 
         QuestHub const& hub = questHubs[i];
         if (_disabledZones.count(hub.zoneId))
             continue;
-        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Merging");
 
         MergeQuestHubIntoZone(hub, zoneLevelInfo);
-        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Merged");
-
+        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Merged {}/{}", i + 1, questHubs.size());
     }
 
     // Step 5: Query graveyards as fallback (fourth priority)
@@ -323,6 +321,7 @@ void BotWorldPositioner::LoadZonesFromDatabase()
             continue;
         MergeSpawnPointIntoZone(gy, zoneLevelInfo);
     }
+    TC_LOG_ERROR("playerbot", "Graveyards merged into zones...");
 
     // Step 6: Convert discovered zones to ZonePlacement structs
 
@@ -363,7 +362,8 @@ void BotWorldPositioner::LoadZonesFromDatabase()
         zone.faction = best.factionTemplateId > 0 ? DetermineFaction(best.factionTemplateId) : TEAM_NEUTRAL;
         zone.zoneName = GetZoneNameFromDBC(zoneId);
         zone.isStarterZone = IsStarterZoneByContent(zoneId, levelInfo.minLevel, levelInfo.maxLevel);
-
+        TC_LOG_ERROR("playerbot", "Further processing zone {}: '{}' (L{}-{}, {})", zone.zoneId, zone.zoneName, zone.minLevel, zone.maxLevel,
+            zone.faction == TEAM_ALLIANCE ? "Alliance" : (zone.faction == TEAM_HORDE ? "Horde" : "Neutral"));
         // Don't add zones without a name (invalid zone IDs)
         if (zone.zoneName.empty() || zone.zoneName == "Unknown Zone")
         {
@@ -615,15 +615,11 @@ void BotWorldPositioner::ApplyConfigOverrides()
 
     // Filter for significant hubs (2+ quest givers)
     result.reserve(hubsByLocation.size());
-    TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Filtering hubs for significant quest giver clusters...");
-
     for (auto const& [key, hub] : hubsByLocation)
     {
         if (hub.questGiverCount >= 2)
             result.push_back(hub);
     }
-    TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Done filtering hubs for significant quest giver clusters...");
-
     TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Clustered {} quest hubs from {} grid cells", result.size(), hubsByLocation.size());
     return result;
 }
