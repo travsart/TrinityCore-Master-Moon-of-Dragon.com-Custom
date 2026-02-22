@@ -563,8 +563,7 @@ void BotWorldPositioner::ApplyConfigOverrides()
         return result;
     }
 
-    TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Query complete, processing results...");
-    // TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Query complete, processing results...");
+    TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Query complete, processing results...");
 
     // Cluster quest givers by spatial proximity (100 yard grid cells)
     constexpr float CLUSTER_GRID_SIZE = 100.0f;
@@ -587,7 +586,7 @@ void BotWorldPositioner::ApplyConfigOverrides()
         // Get zone from areaId if not populated (fast DBC lookup)
         if (zoneId == 0 && areaId > 0)
         {
-             TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Row {}: map={}, areaId={}, no zoneId, looking up zone from areaId...", rowCount, mapId, areaId);
+            TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Row {}: map={}, areaId={}, no zoneId, looking up zone from areaId...", rowCount, mapId, areaId);
             zoneId = GetZoneIdFromAreaId(areaId);
         }
 
@@ -611,12 +610,12 @@ void BotWorldPositioner::ApplyConfigOverrides()
             hub.zoneId = zoneId;
             hub.faction = DetermineFaction(factionId);
         }
-        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Row {}: Adding quest giver entry {} to hub at map {}, zone {}, grid ({}, {}), position ({}, {}, {})",
-            rowCount, entry, mapId, zoneId, gridX, gridY,x,y,z);
         hub.AddQuestGiver(x, y, z);
+        TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Row {}: Added quest giver entry {} to hub at map {}, zone {}, grid ({}, {}), position ({}, {}, {})",
+            rowCount, entry, mapId, zoneId, gridX, gridY,x,y,z);
 
     } while (dbResult->NextRow());
-
+    C_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Finished processing {} rows, found {} unique grid cells", rowCount, hubsByLocation.size());
     TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Processed {} rows, found {} grid cells", rowCount, hubsByLocation.size());
 
     // Filter for significant hubs (2+ quest givers)
