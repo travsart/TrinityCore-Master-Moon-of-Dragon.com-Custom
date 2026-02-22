@@ -78,6 +78,7 @@ bool BotWorldPositioner::LoadZones()
     if (dbLoadEnabled)
     {
         LoadZonesFromDatabase();
+        TC_LOG_WARN("playerbot", "LoadZonesFromDatabase: Loaded {} zones from database", _zones.size());
     }
 
     // Step 3: Apply config overrides to database-loaded zones
@@ -358,31 +359,24 @@ void BotWorldPositioner::LoadZonesFromDatabase()
         zone.faction = best.factionTemplateId > 0 ? DetermineFaction(best.factionTemplateId) : TEAM_NEUTRAL;
         zone.zoneName = GetZoneNameFromDBC(zoneId);
         zone.isStarterZone = IsStarterZoneByContent(zoneId, levelInfo.minLevel, levelInfo.maxLevel);
-        TC_LOG_ERROR("playerbot", "Further processing zone {}: '{}' (L{}-{}, {})", zone.zoneId, zone.zoneName, zone.minLevel, zone.maxLevel,
-            zone.faction == TEAM_ALLIANCE ? "Alliance" : (zone.faction == TEAM_HORDE ? "Horde" : "Neutral"));
+
         // Don't add zones without a name (invalid zone IDs)
         if (zone.zoneName.empty() || zone.zoneName == "Unknown Zone")
         {
-             TC_LOG_ERROR("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() -  best.npcName {} has no valid name, skipping",  best.npcName);
             zone.zoneName = best.npcName.empty() ? "Zone " + ::std::to_string(zoneId) : best.npcName + " Area";
         }
-         TC_LOG_ERROR("playerbot", "Finalized zone {}: '{}' (L{}-{}, {})", zone.zoneId, zone.zoneName, zone.minLevel, zone.maxLevel,
-            zone.faction == TEAM_ALLIANCE ? "Alliance" : (zone.faction == TEAM_HORDE ? "Horde" : "Neutral"));
         _zones.push_back(zone);
 
         TC_LOG_DEBUG("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Added zone {} '{}' (L{}-{}, {})",
             zone.zoneId, zone.zoneName, zone.minLevel, zone.maxLevel,
             zone.faction == TEAM_ALLIANCE ? "Alliance" : (zone.faction == TEAM_HORDE ? "Horde" : "Neutral"));
     }
-        TC_LOG_ERROR("playerbot", "BotWorldPositioner: Discovered {} zones from database", _zones.size());
-
     uint32 elapsed = getMSTimeDiff(startTime, getMSTime());
     TC_LOG_INFO("playerbot", "BotWorldPositioner: Discovered {} zones from database in {}ms", _zones.size(), elapsed);
 }
 
 void BotWorldPositioner::ApplyConfigOverrides()
 {
-
     for (auto& zone : _zones)
     {
         auto overrideIt = _configOverrides.find(zone.zoneId);
