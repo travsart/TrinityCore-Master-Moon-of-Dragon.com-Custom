@@ -374,7 +374,7 @@ void BotWorldPositioner::LoadZonesFromDatabase()
             zone.zoneId, zone.zoneName, zone.minLevel, zone.maxLevel,
             zone.faction == TEAM_ALLIANCE ? "Alliance" : (zone.faction == TEAM_HORDE ? "Horde" : "Neutral"));
     }
-        TC_LOG_ERROR("playerbot", "BotWorldPositioner: Discovered {} zones from database in {}ms", _zones.size(), elapsed);
+        TC_LOG_ERROR("playerbot", "BotWorldPositioner: Discovered {} zones from database", _zones.size());
 
     uint32 elapsed = getMSTimeDiff(startTime, getMSTime());
     TC_LOG_INFO("playerbot", "BotWorldPositioner: Discovered {} zones from database in {}ms", _zones.size(), elapsed);
