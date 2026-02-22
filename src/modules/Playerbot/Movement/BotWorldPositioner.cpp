@@ -310,7 +310,7 @@ TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - MergeSpa
     for (size_t i = 0; i < questHubs.size(); ++i)
     {
         QuestHub const& hub = questHubs[i];
-        TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - QuestHub {}: zoneId={}, numQuests={}", i, hub.zoneId, hub.questIds.size());
+        TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - QuestHub {}: zoneId={}", i, hub.zoneId);
         if (_disabledZones.count(hub.zoneId))
             continue;
         MergeQuestHubIntoZone(hub, zoneLevelInfo);
