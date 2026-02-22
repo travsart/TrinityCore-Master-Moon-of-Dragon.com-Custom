@@ -618,16 +618,6 @@ void BotTemplateRepository::LoadFromDatabase()
             continue;
         }
 
-        // Also validate spec_id is not 0
-        if (tmpl->specId == 0)
-        {
-            TC_LOG_ERROR("playerbot.template",
-                "SKIPPING INVALID TEMPLATE: id={}, name='{}' has invalid spec_id=0. "
-                "Run fix_corrupt_template_entry.sql to clean up database.",
-                tmpl->templateId, tmpl->templateName);
-            continue;
-        }
-
         // Get class and spec names
         tmpl->className = GetClassName(tmpl->playerClass);
         tmpl->specName = GetSpecName(tmpl->specId);
