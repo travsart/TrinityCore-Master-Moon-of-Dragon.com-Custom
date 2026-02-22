@@ -1,6 +1,6 @@
 -- Playerbot Auction Price History Tables
 -- Optional: Persistent price tracking for market analysis
-
+USE `playerbot`;
 -- Price history table for trend analysis
 CREATE TABLE IF NOT EXISTS `playerbot_auction_price_history` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -12,6 +12,13 @@ CREATE TABLE IF NOT EXISTS `playerbot_auction_price_history` (
     KEY `idx_timestamp` (`timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Tracks historical auction prices for bot market analysis';
+
+CALL drop_index_if_exists('playerbot_auction_price_history', 'idx_item_price');
+CALL drop_index_if_exists('playerbot_auction_price_history', 'idx_recent');
+-- Indexes for performance
+ALTER TABLE `playerbot_auction_price_history`
+    ADD INDEX `idx_item_price` (`item_id`, `price`),
+    ADD INDEX `idx_recent` (`timestamp` DESC);
 
 -- Bot auction statistics
 CREATE TABLE IF NOT EXISTS `playerbot_auction_stats` (
@@ -71,6 +78,7 @@ CREATE TABLE IF NOT EXISTS `playerbot_market_cache` (
 COMMENT='Caches market analysis data for bot decision making';
 
 -- Cleanup stored procedure for old price history
+DROP PROCEDURE IF EXISTS `sp_cleanup_auction_price_history`;
 DELIMITER $$
 CREATE PROCEDURE `sp_cleanup_auction_price_history`(IN days_to_keep INT)
 BEGIN
@@ -86,11 +94,6 @@ CREATE EVENT IF NOT EXISTS `evt_cleanup_auction_price_history`
 ON SCHEDULE EVERY 1 DAY
 STARTS CURRENT_TIMESTAMP
 DO CALL sp_cleanup_auction_price_history(7);
-
--- Indexes for performance
-ALTER TABLE `playerbot_auction_price_history`
-    ADD INDEX `idx_item_price` (`item_id`, `price`),
-    ADD INDEX `idx_recent` (`timestamp` DESC);
 
 -- Example queries for market analysis:
 

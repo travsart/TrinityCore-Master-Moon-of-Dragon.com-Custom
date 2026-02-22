@@ -4,7 +4,7 @@
 -- Purpose: Store predefined talent loadouts for automated bot creation
 -- Integration: Used by BotTalentManager for instant level-up scenarios
 -- ====================================================================
-
+use `playerbot`;
 DROP TABLE IF EXISTS `playerbot_talent_loadouts`;
 
 CREATE TABLE `playerbot_talent_loadouts` (

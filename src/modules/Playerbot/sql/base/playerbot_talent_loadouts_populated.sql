@@ -9,7 +9,7 @@
 -- Coverage: 22/39 specializations have populated talent data
 -- Missing Data: Tank and healer specs require manual curation
 -- ====================================================================
-
+use `playerbot`;
 DROP TABLE IF EXISTS `playerbot_talent_loadouts`;
 
 CREATE TABLE `playerbot_talent_loadouts` (

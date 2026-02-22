@@ -8,7 +8,7 @@
 -- Talent strings are EMPTY and need to be populated with actual spell IDs
 -- See schema comments for details on talent string format
 -- ====================================================================
-
+use `playerbot`;
 -- Clean slate
 TRUNCATE TABLE `playerbot_talent_loadouts`;
 

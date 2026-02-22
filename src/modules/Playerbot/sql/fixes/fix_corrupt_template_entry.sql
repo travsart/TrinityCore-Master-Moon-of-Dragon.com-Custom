@@ -8,7 +8,7 @@
 -- Root cause: Unknown - possibly manual insert or migration bug
 -- Effect: GetValidRaces returns empty for class 0, template rejected for Horde
 -- ============================================================================
-
+use `playerbot`;
 -- Delete any templates with invalid class_id (0 is not a valid WoW class)
 DELETE FROM `playerbot_bot_templates` WHERE `class_id` = 0;
 

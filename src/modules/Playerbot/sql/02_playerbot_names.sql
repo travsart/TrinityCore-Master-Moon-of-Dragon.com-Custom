@@ -1,6 +1,6 @@
 -- Sample bot names for the Playerbot system
 -- This file populates the playerbots_names table with a variety of names
-
+USE `playerbot`;
 -- Clear existing names (optional - comment out if you want to append)
 -- TRUNCATE TABLE playerbots_names;
 
@@ -42,7 +42,7 @@ INSERT INTO `playerbots_names` (`name`, `gender`) VALUES
 ('Broxigar', 0), ('Varok', 0), ('Nazgrim', 0), ('Malkorok', 0), ('Zaela', 0),
 
 -- Undead style names
-('Sylvanas', 0), ('Nathanos', 0), ('Putress', 0), ('Faranell', 0), ('Belmont', 0),
+('Sylvana', 0), ('Nathanos', 0), ('Putress', 0), ('Faranell', 0), ('Belmont', 0),
 ('Varimathras', 0), ('Balnazzar', 0), ('Detheroc', 0), ('Tichondrius', 0), ('Anetheron', 0),
 ('Archimonde', 0), ('Mannoroth', 0), ('Magtheridon', 0), ('Azgalor', 0), ('Kazzak', 0),
 
@@ -81,12 +81,12 @@ INSERT INTO `playerbots_names` (`name`, `gender`) VALUES
 ('Deborah', 1), ('Martha', 1), ('Maria', 1), ('Heather', 1), ('Diane', 1),
 
 -- Night Elf style names
-('Tyrande', 1), ('Maiev', 1), ('Shandris', 1), ('Azshara', 1), ('Elune', 1),
-('Feathermoon', 1), ('Whisperwind', 1), ('Starweaver', 1), ('Moonwhisper', 1), ('Shadowsong', 1),
+('Tyranda', 1), ('Maiev', 1), ('Shandris', 1), ('Azshara', 1), ('Elune', 1),
+('Feathermoon', 1), ('Awhisperwind', 1), ('Starweaver', 1), ('Moonwhisper', 1), ('Ashadowsong', 1),
 ('Starfall', 1), ('Nightwhisper', 1), ('Dawnweaver', 1), ('Moonfire', 1), ('Starlight', 1),
 
 -- Dwarf style names
-('Moira', 1), ('Bronzebeard', 1), ('Ironforge', 1), ('Wildhammer', 1), ('Anvilmar', 1),
+('Moira', 1), ('Bronzebeard', 1), ('Forgehammer', 1), ('Wildhammer', 1), ('Anvilmar', 1),
 ('Stormhammer', 1), ('Goldbeard', 1), ('Ironfoot', 1), ('Stoneform', 1), ('Deepforge', 1),
 
 -- Gnome style names
@@ -95,34 +95,34 @@ INSERT INTO `playerbots_names` (`name`, `gender`) VALUES
 
 -- Draenei style names
 ('Yrel', 1), ('Ishanah', 1), ('Naielle', 1), ('Askara', 1), ('Dornaa', 1),
-('Nobundo', 1), ('Khallia', 1), ('Emony', 1), ('Jessera', 1), ('Anchorite', 1),
+('Nobundoua', 1), ('Khallia', 1), ('Emony', 1), ('Jessera', 1), ('Anchorite', 1),
 
 -- Orc style names
-('Draka', 1), ('Aggra', 1), ('Garona', 1), ('Zaela', 1), ('Geyah', 1),
+('Draka', 1), ('Aggra', 1), ('Garona', 1), ('Zaelea', 1), ('Geyah', 1),
 ('Kashur', 1), ('Greatmother', 1), ('Mankrik', 1), ('Sheyala', 1), ('Thura', 1),
 
 -- Undead style names
-('Sylvanas', 1), ('Calia', 1), ('Lilian', 1), ('Voss', 1), ('Faranell', 1),
+('Sylvanas', 1), ('Calia', 1), ('Lilian', 1), ('Voss', 1), ('Faranall', 1),
 ('Velonara', 1), ('Delaryn', 1), ('Sira', 1), ('Arthura', 1), ('Renee', 1),
 
 -- Tauren style names
-('Magatha', 1), ('Hamuul', 1), ('Melor', 1), ('Tawnbranch', 1), ('Windtotem', 1),
-('Skyhorn', 1), ('Highmountain', 1), ('Riverwind', 1), ('Eagletalon', 1), ('Moonwhisper', 1),
+('Magatha', 1), ('Hamuulaa', 1), ('Melor', 1), ('Tawnbranch', 1), ('Windtotem', 1),
+('Skyhorn', 1), ('Highmount', 1), ('Riverwind', 1), ('Eagletalon', 1), ('Moondarkwhisper', 1),
 
 -- Troll style names
 ('Zentabra', 1), ('Vanira', 1), ('Shadra', 1), ('Bethekk', 1), ('Shirvallah', 1),
-('Hireek', 1), ('Jeklik', 1), ('Marli', 1), ('Arlokk', 1), ('Shadehunter', 1),
+('Hireek', 1), ('Jeklikia', 1), ('Marlii', 1), ('Arlok', 1), ('Shadehunter', 1),
 
 -- Blood Elf style names
-('Liadrin', 1), ('Valeera', 1), ('Alleria', 1), ('Vereesa', 1), ('Sylvanas', 1),
-('Sunweaver', 1), ('Dawnblade', 1), ('Goldensword', 1), ('Brightwing', 1), ('Sunseeker', 1),
-('Dawnrunner', 1), ('Sunsorrow', 1), ('Bloodwatcher', 1), ('Spellbinder', 1), ('Sunreaver', 1),
+('Liadrin', 1), ('Valeera', 1), ('Allea', 1), ('Vereesa', 1), ('Sylvannas', 1),
+('Sunweaver', 1), ('Dawnblade', 1), ('Goldensword', 1), ('Brightfeather', 1), ('Sunseeker', 1),
+('Dawnrunner', 1), ('Sunsorrow', 1), ('Bloodwatcher', 1), ('Spellbinder', 1), ('Sunreaverous', 1),
 
 -- Additional generic fantasy names
 ('Alexis', 1), ('Brianna', 1), ('Catherine', 1), ('Diana', 1), ('Elena', 1),
 ('Fiona', 1), ('Gabrielle', 1), ('Hannah', 1), ('Isabella', 1), ('Jasmine', 1),
 ('Kaitlyn', 1), ('Lily', 1), ('Madison', 1), ('Natalie', 1), ('Olivia', 1),
-('Penelope', 1), ('Quinn', 1), ('Rachel', 1), ('Sophia', 1), ('Taylor', 1),
+('Penelope', 1), ('Quinna', 1), ('Rachel', 1), ('Sophia', 1), ('Taylor', 1),
 ('Uma', 1), ('Victoria', 1), ('Wendy', 1), ('Xena', 1), ('Yasmine', 1), ('Zoe', 1),
 
 -- Additional fantasy-themed female names

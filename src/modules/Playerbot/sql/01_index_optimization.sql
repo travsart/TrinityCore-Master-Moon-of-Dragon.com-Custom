@@ -4,6 +4,168 @@
 -- MySQL 9.4 Optimizations with Partitioning
 -- =====================================================
 
+use `auth`;
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
+DELIMITER $$
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+use `characters`;
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
+DELIMITER $$
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+use `hotfixes`;
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
+DELIMITER $$
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+
+use `playerbot`;
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
+DELIMITER $$
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+use `world`;
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
+DELIMITER $$
+
+CREATE PROCEDURE drop_index_if_exists(
+    IN in_table_name VARCHAR(64),
+    IN in_index_name VARCHAR(64)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+
+    -- Check if the index exists in the current database
+    SELECT COUNT(*)
+    INTO idx_count
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = in_table_name
+      AND INDEX_NAME = in_index_name;
+
+    -- Drop the index if found
+    IF idx_count > 0 THEN
+        SET @sql = CONCAT('DROP INDEX ', in_index_name, ' ON ', in_table_name);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        SELECT CONCAT('Index "', in_index_name, '" dropped from table "', in_table_name, '".') AS message;
+    ELSE
+        SELECT CONCAT('Index "', in_index_name, '" does not exist on table "', in_table_name, '".') AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
 -- Switch to characters database
 USE `characters`;
 
@@ -32,8 +194,11 @@ ANALYZE TABLE `item_instance`;
 
 -- Drop redundant indexes (if they exist)
 -- DROP INDEX IF EXISTS `idx_online` ON `characters`; -- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
--- DROP INDEX IF EXISTS `idx_account` ON `characters`; -- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
--- DROP INDEX IF EXISTS `idx_name` ON `characters`; -- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
+-- DROP INDEX IF EXISTS `idx_account` ON `characters`;-- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
+-- DROP INDEX IF EXISTS `idx_name` ON `characters`;-- DROP INDEX IF EXISTS does not exist in mysql 9.6 https://dev.mysql.com/doc/refman/9.6/en/drop-index.html
+CALL drop_index_if_exists('characters', 'idx_online');
+CALL drop_index_if_exists('characters', 'idx_account');
+CALL drop_index_if_exists('characters', 'idx_name');
 
 -- =====================================================
 -- PHASE 3: CREATE HIGH-PERFORMANCE INDEXES
@@ -41,92 +206,111 @@ ANALYZE TABLE `item_instance`;
 
 -- Characters table: Core bot queries
 -- Covering index for bot login queries (includes all needed columns)
+CALL drop_index_if_exists('characters', 'idx_bot_login_covering');
 CREATE INDEX `idx_bot_login_covering` ON `characters`
     (`account`, `online`, `guid`, `name`, `race`, `class`, `level`, `zone`, `map`, `position_x`, `position_y`, `position_z`)
     COMMENT 'Covering index for bot login queries - eliminates table lookups';
 
 -- Composite index for bot selection and filtering
+CALL drop_index_if_exists('characters', 'idx_bot_selection');
 CREATE INDEX `idx_bot_selection` ON `characters`
     (`online`, `level`, `class`, `zone`)
     COMMENT 'Optimized for bot selection by criteria';
 
 -- Unique index for fast name lookups
+CALL drop_index_if_exists('characters', 'idx_unique_name');
 CREATE UNIQUE INDEX `idx_unique_name` ON `characters` (`name`)
     COMMENT 'Fast name resolution for bot commands';
 
 -- Index for account-based bot queries
+CALL drop_index_if_exists('characters', 'idx_account_guid');
 CREATE INDEX `idx_account_guid` ON `characters` (`account`, `guid`)
     COMMENT 'Fast account to bot mapping';
 
 -- Index for zone-based bot queries (finding nearby bots)
+CALL drop_index_if_exists('characters', 'idx_zone_map_position');
 CREATE INDEX `idx_zone_map_position` ON `characters`
     (`zone`, `map`, `position_x`, `position_y`)
     COMMENT 'Spatial queries for nearby bot detection';
 
 -- Character stats: Fast stat retrieval
+CALL drop_index_if_exists('character_stats', 'idx_stats_guid');
 CREATE INDEX `idx_stats_guid` ON `character_stats` (`guid`)
     COMMENT 'Fast stat retrieval for combat calculations';
 
 -- Character spells: Spell availability checks
+CALL drop_index_if_exists('character_spell', 'idx_spell_guid_spell');
 CREATE INDEX `idx_spell_guid_spell` ON `character_spell` (`guid`, `spell`)
     COMMENT 'Fast spell availability checks';
 
 -- Character actions: Action bar queries
+CALL drop_index_if_exists('character_action', 'idx_action_guid_composite');
 CREATE INDEX `idx_action_guid_composite` ON `character_action`
     (`guid`, `spec`, `button`)
     COMMENT 'Fast action bar retrieval';
 
 -- Character inventory: Equipment and bag queries
+CALL drop_index_if_exists('character_inventory', 'idx_inventory_guid_slot');
 CREATE INDEX `idx_inventory_guid_slot` ON `character_inventory`
     (`guid`, `slot`, `bag`)
     COMMENT 'Fast inventory access for equipment checks';
 
 -- Item instance: Fast item property lookups
+CALL drop_index_if_exists('item_instance', 'idx_item_owner_guid');
 CREATE INDEX `idx_item_owner_guid` ON `item_instance` (`owner_guid`)
     COMMENT 'Fast item ownership queries';
 
 -- Character auras: Active buff/debuff queries
+CALL drop_index_if_exists('character_aura', 'idx_aura_guid_composite');
 CREATE INDEX `idx_aura_guid_composite` ON `character_aura`
     (`guid`, `casterGuid`, `spell`)
     COMMENT 'Fast aura state queries';
 
 -- Character quest status: Quest progression
+CALL drop_index_if_exists('character_queststatus', 'idx_quest_guid_status');
 CREATE INDEX `idx_quest_guid_status` ON `character_queststatus`
     (`guid`, `status`, `quest`)
     COMMENT 'Fast quest status checks';
 
 -- Character reputation: Faction standing queries
+CALL drop_index_if_exists('character_reputation', 'idx_reputation_guid_faction');
 CREATE INDEX `idx_reputation_guid_faction` ON `character_reputation`
     (`guid`, `faction`, `standing`)
     COMMENT 'Fast reputation checks';
 
 -- Character skills: Skill level queries
+CALL drop_index_if_exists('character_skills', 'idx_skills_guid_skill');
 CREATE INDEX `idx_skills_guid_skill` ON `character_skills`
     (`guid`, `skill`, `value`)
     COMMENT 'Fast skill checks for crafting/gathering';
 
 -- Character talents: Spec and talent queries
+CALL drop_index_if_exists('character_talent', 'idx_talent_guid_spec');
 CREATE INDEX `idx_talent_guid_spec` ON `character_talent`
     (`guid`, `talentGroup`)
     COMMENT 'Fast talent/spec retrieval';
 
 -- Group member: Fast group queries
+CALL drop_index_if_exists('group_member', 'idx_group_member_composite');
 CREATE INDEX `idx_group_member_composite` ON `group_member`
     (`memberGuid`, `guid`)
     COMMENT 'Bidirectional group lookups';
 
+CALL drop_index_if_exists('group_member', 'idx_group_guid');
 CREATE INDEX `idx_group_guid` ON `group_member` (`guid`)
     COMMENT 'Fast group member listing';
 
 -- Guild member: Guild roster queries
+CALL drop_index_if_exists('guild_member', 'idx_guild_member_guid');
 CREATE INDEX `idx_guild_member_guid` ON `guild_member` (`guid`)
     COMMENT 'Fast guild membership checks';
 
 -- =====================================================
 -- PHASE 4: PARTITIONING FOR SCALE (5000+ BOTS)
 -- =====================================================
-
+use `playerbot`;
 -- Create partitioned table for bot state (high-frequency updates)
+DROP TABLE IF EXISTS `playerbot_state`;
 CREATE TABLE IF NOT EXISTS `playerbot_state` (
     `guid` INT UNSIGNED NOT NULL,
     `online` TINYINT UNSIGNED NOT NULL DEFAULT 0,
@@ -144,11 +328,10 @@ CREATE TABLE IF NOT EXISTS `playerbot_state` (
     INDEX `idx_zone_online` (`zone`, `online`),
     INDEX `idx_follow_target` (`follow_target`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-PARTITION BY HASH(guid DIV 1000)
-PARTITIONS 10
-COMMENT='High-performance bot state table with partitioning';
+COMMENT='High-performance bot state table';
 
 -- Create memory table for ultra-fast bot session cache
+DROP TABLE IF EXISTS `playerbot_session_cache`;
 CREATE TABLE IF NOT EXISTS `playerbot_session_cache` (
     `guid` INT UNSIGNED NOT NULL PRIMARY KEY,
     `account` INT UNSIGNED NOT NULL,
@@ -174,6 +357,7 @@ COMMENT='In-memory cache for ultra-fast bot session lookups';
 
 DELIMITER $$
 
+DROP PROCEDURE IF EXISTS sp_playerbot_login;
 -- Optimized bot login procedure
 CREATE PROCEDURE `sp_playerbot_login`(
     IN p_guid INT UNSIGNED
@@ -212,6 +396,7 @@ BEGIN
 END$$
 
 -- Batch bot spawn procedure
+DROP PROCEDURE IF EXISTS sp_playerbot_batch_spawn;
 CREATE PROCEDURE `sp_playerbot_batch_spawn`(
     IN p_account INT UNSIGNED,
     IN p_count INT UNSIGNED
@@ -250,6 +435,7 @@ BEGIN
 END$$
 
 -- Fast bot state retrieval
+DROP PROCEDURE IF EXISTS sp_playerbot_get_state;
 CREATE PROCEDURE `sp_playerbot_get_state`(
     IN p_guid INT UNSIGNED
 )
@@ -271,6 +457,7 @@ BEGIN
 END$$
 
 -- Batch update bot positions
+DROP PROCEDURE IF EXISTS sp_playerbot_update_positions;
 CREATE PROCEDURE `sp_playerbot_update_positions`(
     IN p_positions TEXT
 )
@@ -327,14 +514,19 @@ DELIMITER ;
 USE `auth`;
 
 -- Account table optimizations
+CALL drop_index_if_exists('account', 'idx_account_playerbot');
 CREATE INDEX `idx_account_playerbot` ON `account`
     (`id`, `username`, `last_login`)
     COMMENT 'Optimized for bot account queries';
 
+CALL drop_index_if_exists('account', 'idx_username_lookup');
 CREATE INDEX `idx_username_lookup` ON `account` (`username`)
     COMMENT 'Fast username lookups';
 
+USE `playerbot`;
+
 -- Create bot account tracking table
+DROP TABLE IF EXISTS `playerbot_accounts`;
 CREATE TABLE IF NOT EXISTS `playerbot_accounts` (
     `account_id` INT UNSIGNED NOT NULL PRIMARY KEY,
     `bot_count` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -347,9 +539,8 @@ COMMENT='Track bot accounts for fast filtering';
 -- PHASE 7: STATISTICS AND MONITORING
 -- =====================================================
 
-USE `characters`;
-
 -- Create performance monitoring table
+DROP TABLE IF EXISTS `playerbot_performance`;
 CREATE TABLE IF NOT EXISTS `playerbot_performance` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -402,17 +593,6 @@ EXPLAIN SELECT c.guid, c.name, c.level
 FROM characters c
 INNER JOIN group_member gm ON c.guid = gm.memberGuid
 WHERE gm.guid = 1;
-
--- Show index usage statistics
-SELECT
-    table_name,
-    index_name,
-    cardinality,
-    ROUND((data_length + index_length) / 1024 / 1024, 2) AS size_mb
-FROM information_schema.statistics
-WHERE table_schema = DATABASE()
-AND table_name IN ('characters', 'playerbot_state', 'playerbot_session_cache')
-ORDER BY table_name, seq_in_index;
 
 -- =====================================================
 -- SUCCESS METRICS

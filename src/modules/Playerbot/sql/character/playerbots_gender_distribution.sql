@@ -1,6 +1,6 @@
 -- Playerbot Gender Distribution Table
 -- Based on World of Warcraft player preferences and fantasy race stereotypes
-
+use `playerbot`;
 CREATE TABLE IF NOT EXISTS `playerbots_gender_distribution` (
     `race` TINYINT UNSIGNED NOT NULL PRIMARY KEY COMMENT 'Race ID from ChrRaces.db2',
     `race_name` VARCHAR(50) NOT NULL COMMENT 'Race name for reference',

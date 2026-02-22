@@ -37,11 +37,11 @@ max_connections = 10000
 max_user_connections = 5000
 
 # Thread handling for high concurrency
-thread_handling = pool-of-threads
-thread_pool_size = 16
-thread_pool_max_threads = 1000
-thread_pool_stall_limit = 60
-thread_pool_idle_timeout = 60
+# thread_handling = pool-of-threads
+# thread_pool_size = 16
+# thread_pool_max_threads = 1000
+# thread_pool_stall_limit = 60
+# thread_pool_idle_timeout = 60
 
 # Connection thread caching
 thread_cache_size = 500
@@ -67,11 +67,11 @@ innodb_buffer_pool_instances = 16
 innodb_buffer_pool_chunk_size = 128M
 
 # Log files for write performance
-innodb_log_file_size = 2G
-innodb_log_files_in_group = 3
-innodb_log_buffer_size = 64M
-innodb_flush_log_at_trx_commit = 2
-innodb_flush_log_at_timeout = 1
+# innodb_log_file_size = 2G
+# innodb_log_files_in_group = 3
+# innodb_log_buffer_size = 64M
+# innodb_flush_log_at_trx_commit = 2
+# innodb_flush_log_at_timeout = 1
 
 # I/O optimization
 innodb_io_capacity = 4000
@@ -146,8 +146,8 @@ tmp_table_size = 2G
 table_open_cache = 8000
 table_open_cache_instances = 16
 table_definition_cache = 4000
-metadata_locks_cache_size = 1024
-metadata_locks_hash_instances = 64
+# metadata_locks_cache_size = 1024
+# metadata_locks_hash_instances = 64
 
 # =====================================================
 # QUERY OPTIMIZATION
@@ -179,15 +179,15 @@ max_prepared_stmt_count = 500000
 # =====================================================
 # BINARY LOGGING (for replication/backup)
 # =====================================================
-server-id = 1
-log_bin = mysql-bin
-binlog_format = ROW
-binlog_row_image = MINIMAL
-expire_logs_days = 7
-max_binlog_size = 1G
-binlog_cache_size = 4M
-binlog_stmt_cache_size = 4M
-sync_binlog = 100
+# server-id = 1
+# log_bin = mysql-bin
+# binlog_format = ROW
+# binlog_row_image = MINIMAL
+# expire_logs_days = 7
+# max_binlog_size = 1G
+# binlog_cache_size = 4M
+# binlog_stmt_cache_size = 4M
+# sync_binlog = 100
 
 # =====================================================
 # SLOW QUERY LOG
@@ -227,12 +227,12 @@ performance-schema-instrument = 'wait/lock/table/%=ON'
 # REPLICATION (for read replicas)
 # =====================================================
 # Master configuration
-gtid_mode = ON
-enforce_gtid_consistency = ON
-binlog_gtid_simple_recovery = 1
-replica_parallel_workers = 16
-replica_parallel_type = LOGICAL_CLOCK
-replica_preserve_commit_order = 1
+# gtid_mode = ON
+# enforce_gtid_consistency = ON
+# binlog_gtid_simple_recovery = 1
+# replica_parallel_workers = 16
+# replica_parallel_type = LOGICAL_CLOCK
+# replica_preserve_commit_order = 1
 
 # =====================================================
 # SECURITY

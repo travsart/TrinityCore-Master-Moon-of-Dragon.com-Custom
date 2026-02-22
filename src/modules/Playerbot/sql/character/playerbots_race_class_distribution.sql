@@ -1,6 +1,6 @@
 -- Playerbot Race/Class Distribution Table
 -- Based on World of Warcraft 12.0 Statistics from WoWRanks, Wowhead, and U.GG
-
+use `playerbot`;
 CREATE TABLE IF NOT EXISTS `playerbots_race_class_distribution` (
     `race` TINYINT UNSIGNED NOT NULL COMMENT 'Race ID from ChrRaces.db2',
     `class` TINYINT UNSIGNED NOT NULL COMMENT 'Class ID from ChrClasses.db2',

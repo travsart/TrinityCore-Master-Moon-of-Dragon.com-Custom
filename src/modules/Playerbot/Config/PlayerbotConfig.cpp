@@ -304,6 +304,7 @@ void PlayerbotConfig::LoadProfile()
     std::string profileName = GetString("Playerbot.Profile", "");
 
     // If no profile specified, use individual settings
+    // @TODO this did not accept empty string?
     if (profileName.empty())
     {
         TC_LOG_DEBUG("server.loading", "PlayerbotConfig: No profile specified, using individual settings");

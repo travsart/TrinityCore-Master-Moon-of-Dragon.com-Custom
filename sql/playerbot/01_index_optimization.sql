@@ -308,7 +308,7 @@ CREATE INDEX `idx_guild_member_guid` ON `guild_member` (`guid`)
 -- =====================================================
 -- PHASE 4: PARTITIONING FOR SCALE (5000+ BOTS)
 -- =====================================================
-
+use `playerbot`;
 -- Create partitioned table for bot state (high-frequency updates)
 DROP TABLE IF EXISTS `playerbot_state`;
 CREATE TABLE IF NOT EXISTS `playerbot_state` (
@@ -523,6 +523,8 @@ CALL drop_index_if_exists('account', 'idx_username_lookup');
 CREATE INDEX `idx_username_lookup` ON `account` (`username`)
     COMMENT 'Fast username lookups';
 
+USE `playerbot`;
+
 -- Create bot account tracking table
 DROP TABLE IF EXISTS `playerbot_accounts`;
 CREATE TABLE IF NOT EXISTS `playerbot_accounts` (
@@ -536,8 +538,6 @@ COMMENT='Track bot accounts for fast filtering';
 -- =====================================================
 -- PHASE 7: STATISTICS AND MONITORING
 -- =====================================================
-
-USE `characters`;
 
 -- Create performance monitoring table
 DROP TABLE IF EXISTS `playerbot_performance`;

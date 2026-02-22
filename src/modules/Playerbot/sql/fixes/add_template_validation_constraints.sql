@@ -10,7 +10,7 @@
 --
 -- MySQL 8.0.16+ required for CHECK constraint support
 -- ============================================================================
-
+use `playerbot`;
 -- First, clean up any existing invalid entries
 DELETE FROM `playerbot_bot_templates` WHERE `class_id` = 0 OR `class_id` > 13;
 DELETE FROM `playerbot_bot_templates` WHERE `spec_id` = 0;

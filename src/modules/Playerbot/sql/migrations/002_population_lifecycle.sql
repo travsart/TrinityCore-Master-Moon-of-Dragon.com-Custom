@@ -14,7 +14,7 @@
 -- ============================================================================
 -- PROTECTION TABLES
 -- ============================================================================
-
+use `playerbot`;
 -- Bot protection status tracking
 -- Determines which bots cannot be retired due to social connections
 CREATE TABLE IF NOT EXISTS `playerbot_protection_status` (

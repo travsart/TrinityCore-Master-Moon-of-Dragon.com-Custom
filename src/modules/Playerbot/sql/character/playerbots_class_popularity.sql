@@ -1,6 +1,6 @@
 -- Playerbot Class Popularity Table
 -- Based on World of Warcraft 12.0 class distribution and gameplay preferences
-
+use `playerbot`;
 CREATE TABLE IF NOT EXISTS `playerbots_class_popularity` (
     `class` TINYINT UNSIGNED NOT NULL PRIMARY KEY COMMENT 'Class ID from ChrClasses.db2',
     `class_name` VARCHAR(50) NOT NULL COMMENT 'Class name for reference',

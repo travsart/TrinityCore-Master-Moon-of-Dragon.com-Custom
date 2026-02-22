@@ -7,7 +7,7 @@
 --
 -- Install into: Playerbot database (same as consolidated_playerbot_schema.sql)
 -- ============================================================================
-
+use `playerbot`;
 -- Set default engine and charset
 SET default_storage_engine = InnoDB;
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;

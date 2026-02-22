@@ -1,6 +1,6 @@
 -- Playerbot Race/Class Gender Override Table
 -- Specific gender preferences for certain race/class combinations
-
+use `playerbot`;
 CREATE TABLE IF NOT EXISTS `playerbots_race_class_gender` (
     `race` TINYINT UNSIGNED NOT NULL COMMENT 'Race ID from ChrRaces.db2',
     `class` TINYINT UNSIGNED NOT NULL COMMENT 'Class ID from ChrClasses.db2',

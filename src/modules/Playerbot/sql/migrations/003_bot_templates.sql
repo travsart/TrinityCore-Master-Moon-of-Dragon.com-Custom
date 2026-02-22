@@ -32,7 +32,7 @@
 -- Master reference table for all WoW 12.0 class specializations.
 -- This is the authoritative source for class/spec/role mappings.
 -- ============================================================================
-
+use `playerbot`;
 DROP TABLE IF EXISTS `playerbot_spec_info`;
 CREATE TABLE `playerbot_spec_info` (
     `spec_id` INT UNSIGNED NOT NULL COMMENT 'ChrSpecialization.db2 ID',
