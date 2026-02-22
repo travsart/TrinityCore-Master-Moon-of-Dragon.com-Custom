@@ -279,43 +279,36 @@ void BotWorldPositioner::LoadZonesFromDatabase()
 {
     uint32 startTime = getMSTime();
 
-     TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - Starting database zone discovery");
     // Step 1: Get zone level ranges from quest data
     auto zoneLevelInfo = QueryZoneLevelRanges();
-TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - QueryZoneLevelRanges");
+
     // Step 2: Query innkeepers (highest priority spawn points)
     auto innkeepers = QueryInnkeepers();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - QueryInnkeepers");
     for (auto const& innkeeper : innkeepers)
     {
         if (_disabledZones.count(innkeeper.zoneId))
             continue;
         MergeSpawnPointIntoZone(innkeeper, zoneLevelInfo);
     }
-TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - MergeSpawnPointIntoZone");
     // Step 3: Query flight masters (second priority)
     auto flightMasters = QueryFlightMasters();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - QueryFlightMasters");
     for (auto const& fm : flightMasters)
     {
         if (_disabledZones.count(fm.zoneId))
             continue;
         MergeSpawnPointIntoZone(fm, zoneLevelInfo);
     }
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - MergeSpawnPointIntoZone");
 
     // Step 4: Query and cluster quest hubs (third priority)
     auto questHubs = QueryAndClusterQuestHubs();
-    TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - QueryAndClusterQuestHubs");
     for (size_t i = 0; i < questHubs.size(); ++i)
     {
         QuestHub const& hub = questHubs[i];
-        TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - QuestHub {}: zoneId={}", i, hub.zoneId);
         if (_disabledZones.count(hub.zoneId))
             continue;
         MergeQuestHubIntoZone(hub, zoneLevelInfo);
     }
-TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZonesFromDatabase() - MergeQuestHubIntoZone");
+
     // Step 5: Query graveyards as fallback (fourth priority)
     auto graveyards = QueryGraveyards();
     for (auto const& gy : graveyards)
@@ -615,7 +608,7 @@ void BotWorldPositioner::ApplyConfigOverrides()
             rowCount, entry, mapId, zoneId, gridX, gridY,x,y,z);
 
     } while (dbResult->NextRow());
-    C_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Finished processing {} rows, found {} unique grid cells", rowCount, hubsByLocation.size());
+    TC_LOG_ERROR("playerbot", "QueryAndClusterQuestHubs() - Finished processing {} rows, found {} unique grid cells", rowCount, hubsByLocation.size());
     TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Processed {} rows, found {} grid cells", rowCount, hubsByLocation.size());
 
     // Filter for significant hubs (2+ quest givers)
