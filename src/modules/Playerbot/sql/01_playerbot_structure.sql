@@ -225,7 +225,7 @@ DROP PROCEDURE IF EXISTS `pb_safe_add_index`;
 -- --------------------------------------------------------
 -- Stored Procedures for Name Management
 -- --------------------------------------------------------
-
+DELIMITER $$
 
 -- Procedure: AllocateName
 -- Purpose: Allocate a name to a character
@@ -273,7 +273,7 @@ BEGIN
     WHERE character_guid = p_character_guid;
 END$$
 
-
+DELIMITER ;
 -- --------------------------------------------------------
 -- Function to check name availability
 -- --------------------------------------------------------
