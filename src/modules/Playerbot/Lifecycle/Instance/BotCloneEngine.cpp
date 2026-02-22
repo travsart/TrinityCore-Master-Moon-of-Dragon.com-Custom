@@ -979,33 +979,9 @@ void BotCloneEngine::LoadNamePool()
 {
     TC_LOG_INFO("playerbot.clone", "BotCloneEngine::LoadNamePool - Loading name pools");
 
-    // Default fantasy-style names
-    // These would typically be loaded from database or config file
-
-    _maleNames = {
-        "Aldric", "Borin", "Cedric", "Darian", "Eldric",
-        "Falric", "Galric", "Hadric", "Ivric", "Jarric",
-        "Kaldric", "Lorric", "Malric", "Norric", "Olric",
-        "Perric", "Quilric", "Raldric", "Seldric", "Talric",
-        "Uldric", "Valdric", "Waldric", "Xaldric", "Yaldric",
-        "Aldrin", "Borin", "Corrin", "Darrin", "Eldrin",
-        "Falrin", "Galrin", "Hadrin", "Ivrin", "Jarrin",
-        "Kaldrin", "Lorrin", "Malrin", "Norrin", "Olrin",
-        "Theron", "Gareth", "Roland", "Edmund", "Alfred",
-        "Oswald", "Leofric", "Godwin", "Edgar", "Harold"
-    };
-
-    _femaleNames = {
-        "Alara", "Brynn", "Cyra", "Darya", "Elara",
-        "Freya", "Gwyra", "Hilda", "Ilara", "Jyra",
-        "Kyra", "Lyra", "Myra", "Nyra", "Olara",
-        "Petra", "Quara", "Ryra", "Syra", "Tyra",
-        "Ulara", "Vyra", "Wyra", "Xyra", "Yara",
-        "Aldara", "Belinda", "Cordelia", "Diana", "Elena",
-        "Fiona", "Giselle", "Helena", "Iris", "Julia",
-        "Katrina", "Lavinia", "Miranda", "Natalia", "Ophelia",
-        "Rowena", "Sabrina", "Thalia", "Vivian", "Winifred"
-    };
+    // Loaded from DB now
+    _maleNames = {};
+    _femaleNames = {};
 
     // Load additional names from playerbot database if available
     QueryResult result = sPlayerbotDatabase->Query("SELECT name, gender FROM playerbots_names");
