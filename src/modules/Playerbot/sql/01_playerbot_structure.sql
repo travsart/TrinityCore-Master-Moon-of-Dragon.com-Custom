@@ -222,87 +222,87 @@ CALL `pb_safe_add_index`('playerbots_names', 'idx_playerbots_names_name_gender',
 
 DROP PROCEDURE IF EXISTS `pb_safe_add_index`;
 
--- --------------------------------------------------------
--- Stored Procedures for Name Management
--- --------------------------------------------------------
-DELIMITER $$
+-- -- --------------------------------------------------------
+-- -- Stored Procedures for Name Management
+-- -- --------------------------------------------------------
+-- DELIMITER $$
 
--- Procedure: AllocateName
--- Purpose: Allocate a name to a character
-DROP PROCEDURE IF EXISTS AllocateName$$
-CREATE PROCEDURE AllocateName(
-    IN p_gender TINYINT(3),
-    IN p_character_guid INT,
-    OUT p_name_id INT(11),
-    OUT p_name VARCHAR(255),
-    OUT p_success BOOLEAN
-)
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SET p_success = FALSE;
-    END;
+-- -- Procedure: AllocateName
+-- -- Purpose: Allocate a name to a character
+-- DROP PROCEDURE IF EXISTS AllocateName$$
+-- CREATE PROCEDURE AllocateName(
+--     IN p_gender TINYINT(3),
+--     IN p_character_guid INT,
+--     OUT p_name_id INT(11),
+--     OUT p_name VARCHAR(255),
+--     OUT p_success BOOLEAN
+-- )
+-- BEGIN
+--     DECLARE EXIT HANDLER FOR SQLEXCEPTION
+--     BEGIN
+--         ROLLBACK;
+--         SET p_success = FALSE;
+--     END;
     
-    START TRANSACTION;
+--     START TRANSACTION;
     
-    -- Get random available name
-    CALL GetRandomAvailableName(p_gender, p_name_id, p_name);
+--     -- Get random available name
+--     CALL GetRandomAvailableName(p_gender, p_name_id, p_name);
     
-    IF p_name_id IS NOT NULL THEN
-        -- Mark name as used
-        INSERT INTO playerbots_names_used (name_id, character_guid)
-        VALUES (p_name_id, p_character_guid);
+--     IF p_name_id IS NOT NULL THEN
+--         -- Mark name as used
+--         INSERT INTO playerbots_names_used (name_id, character_guid)
+--         VALUES (p_name_id, p_character_guid);
         
-        SET p_success = TRUE;
-        COMMIT;
-    ELSE
-        SET p_success = FALSE;
-        ROLLBACK;
-    END IF;
-END$$
+--         SET p_success = TRUE;
+--         COMMIT;
+--     ELSE
+--         SET p_success = FALSE;
+--         ROLLBACK;
+--     END IF;
+-- END$$
 
--- Procedure: ReleaseName
--- Purpose: Release a name back to the pool
-DROP PROCEDURE IF EXISTS ReleaseName$$
-CREATE PROCEDURE ReleaseName(
-    IN p_character_guid INT
-)
-BEGIN
-    DELETE FROM playerbots_names_used 
-    WHERE character_guid = p_character_guid;
-END$$
+-- -- Procedure: ReleaseName
+-- -- Purpose: Release a name back to the pool
+-- DROP PROCEDURE IF EXISTS ReleaseName$$
+-- CREATE PROCEDURE ReleaseName(
+--     IN p_character_guid INT
+-- )
+-- BEGIN
+--     DELETE FROM playerbots_names_used 
+--     WHERE character_guid = p_character_guid;
+-- END$$
 
-DELIMITER ;
--- --------------------------------------------------------
--- Function to check name availability
--- --------------------------------------------------------
+-- DELIMITER ;
+-- -- --------------------------------------------------------
+-- -- Function to check name availability
+-- -- --------------------------------------------------------
 
-DELIMITER $$
+-- DELIMITER $$
 
-DROP FUNCTION IF EXISTS IsNameAvailable$$
-CREATE FUNCTION IsNameAvailable(p_name VARCHAR(255)) 
-RETURNS BOOLEAN
-DETERMINISTIC
-READS SQL DATA
-BEGIN
-    DECLARE v_is_available BOOLEAN DEFAULT FALSE;
-    DECLARE v_name_id INT;
+-- DROP FUNCTION IF EXISTS IsNameAvailable$$
+-- CREATE FUNCTION IsNameAvailable(p_name VARCHAR(255)) 
+-- RETURNS BOOLEAN
+-- DETERMINISTIC
+-- READS SQL DATA
+-- BEGIN
+--     DECLARE v_is_available BOOLEAN DEFAULT FALSE;
+--     DECLARE v_name_id INT;
     
-    -- Get name_id for the name
-    SELECT name_id INTO v_name_id
-    FROM playerbots_names
-    WHERE name = p_name
-    LIMIT 1;
+--     -- Get name_id for the name
+--     SELECT name_id INTO v_name_id
+--     FROM playerbots_names
+--     WHERE name = p_name
+--     LIMIT 1;
     
-    -- Check if name_id exists and is not in use
-    IF v_name_id IS NOT NULL THEN
-        SELECT NOT EXISTS(
-            SELECT 1 FROM playerbots_names_used 
-            WHERE name_id = v_name_id
-        ) INTO v_is_available;
-    END IF;
+--     -- Check if name_id exists and is not in use
+--     IF v_name_id IS NOT NULL THEN
+--         SELECT NOT EXISTS(
+--             SELECT 1 FROM playerbots_names_used 
+--             WHERE name_id = v_name_id
+--         ) INTO v_is_available;
+--     END IF;
     
-    RETURN v_is_available;
-END$$
-DELIMITER ;
+--     RETURN v_is_available;
+-- END$$
+-- DELIMITER ;
