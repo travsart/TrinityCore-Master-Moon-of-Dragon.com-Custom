@@ -1,6 +1,6 @@
 -- Playerbot Database Schema
 -- This creates all necessary tables for the Playerbot module
-
+USE `playerbot`;
 -- --------------------------------------------------------
 -- Account Management Tables
 -- --------------------------------------------------------

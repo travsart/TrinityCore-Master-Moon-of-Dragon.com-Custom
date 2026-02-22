@@ -20,7 +20,7 @@
 -- ============================================================================
 -- HELPER PROCEDURE: Add column if it doesn't exist (MySQL-compatible)
 -- ============================================================================
-
+USE `playerbot`;
 DROP PROCEDURE IF EXISTS `playerbot_add_column_if_not_exists`;
 DELIMITER //
 CREATE PROCEDURE `playerbot_add_column_if_not_exists`(

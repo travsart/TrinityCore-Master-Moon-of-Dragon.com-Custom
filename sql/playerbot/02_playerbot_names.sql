@@ -1,6 +1,6 @@
 -- Sample bot names for the Playerbot system
 -- This file populates the playerbots_names table with a variety of names
-
+USE `playerbot`;
 -- Clear existing names (optional - comment out if you want to append)
 -- TRUNCATE TABLE playerbots_names;
 

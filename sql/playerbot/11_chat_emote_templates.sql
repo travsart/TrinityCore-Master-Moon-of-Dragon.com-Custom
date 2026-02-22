@@ -3,7 +3,7 @@
 -- These tables store contextual chat messages and emotes that bots use
 -- to appear more human-like.
 -- ============================================================================
-
+USE `playerbot`;
 DROP TABLE IF EXISTS `playerbot_chat_templates`;
 CREATE TABLE `playerbot_chat_templates` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,

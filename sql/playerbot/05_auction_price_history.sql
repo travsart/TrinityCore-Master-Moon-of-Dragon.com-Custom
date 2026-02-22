@@ -1,6 +1,6 @@
 -- Playerbot Auction Price History Tables
 -- Optional: Persistent price tracking for market analysis
-
+USE `playerbot`;
 -- Price history table for trend analysis
 CREATE TABLE IF NOT EXISTS `playerbot_auction_price_history` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,

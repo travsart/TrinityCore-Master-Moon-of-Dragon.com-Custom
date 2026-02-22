@@ -5,9 +5,8 @@
 -- =====================================================
 
 use `auth`;
-
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
 DELIMITER $$
-
 CREATE PROCEDURE drop_index_if_exists(
     IN in_table_name VARCHAR(64),
     IN in_index_name VARCHAR(64)
@@ -38,8 +37,8 @@ END$$
 DELIMITER ;
 
 use `characters`;
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
 DELIMITER $$
-
 CREATE PROCEDURE drop_index_if_exists(
     IN in_table_name VARCHAR(64),
     IN in_index_name VARCHAR(64)
@@ -70,9 +69,8 @@ END$$
 DELIMITER ;
 
 use `hotfixes`;
-
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
 DELIMITER $$
-
 CREATE PROCEDURE drop_index_if_exists(
     IN in_table_name VARCHAR(64),
     IN in_index_name VARCHAR(64)
@@ -104,9 +102,8 @@ DELIMITER ;
 
 
 use `playerbot`;
-
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
 DELIMITER $$
-
 CREATE PROCEDURE drop_index_if_exists(
     IN in_table_name VARCHAR(64),
     IN in_index_name VARCHAR(64)
@@ -137,7 +134,7 @@ END$$
 DELIMITER ;
 
 use `world`;
-
+DROP PROCEDURE IF EXISTS drop_index_if_exists;
 DELIMITER $$
 
 CREATE PROCEDURE drop_index_if_exists(

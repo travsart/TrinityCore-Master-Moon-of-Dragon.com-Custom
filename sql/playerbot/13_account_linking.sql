@@ -2,7 +2,7 @@
 -- Account Linking System for Playerbot
 -- Links human player accounts with bot accounts for permission-based access
 -- ============================================================================
-
+USE `playerbot`;
 DROP TABLE IF EXISTS `playerbot_account_links`;
 CREATE TABLE `playerbot_account_links` (
     `link_id`            MEDIUMINT UNSIGNED NOT NULL,

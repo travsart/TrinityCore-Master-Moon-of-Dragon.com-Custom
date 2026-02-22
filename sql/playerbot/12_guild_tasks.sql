@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Guild Task Templates for Playerbot GuildTaskManager
 -- ============================================================================
-
+USE `playerbot`;
 DROP TABLE IF EXISTS `playerbot_guild_task_templates`;
 CREATE TABLE `playerbot_guild_task_templates` (
     `template_id`          MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,

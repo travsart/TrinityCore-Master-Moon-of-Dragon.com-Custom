@@ -19,7 +19,7 @@
 -- - BotSpawner's characters are NOT in this table, so they're preserved
 --
 -- ============================================================================
-
+USE `playerbot`;
 DROP TABLE IF EXISTS `playerbot_jit_bots`;
 CREATE TABLE `playerbot_jit_bots` (
     `bot_guid` BIGINT UNSIGNED NOT NULL COMMENT 'JIT bot character GUID',

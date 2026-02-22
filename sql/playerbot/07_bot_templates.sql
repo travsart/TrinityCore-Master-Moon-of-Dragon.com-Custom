@@ -24,7 +24,7 @@
 -- - playerbot_class_race_matrix: Valid class/race combinations
 --
 -- ============================================================================
-
+USE `playerbot`;
 -- Disable foreign key checks to allow dropping tables in any order
 SET FOREIGN_KEY_CHECKS = 0;
 

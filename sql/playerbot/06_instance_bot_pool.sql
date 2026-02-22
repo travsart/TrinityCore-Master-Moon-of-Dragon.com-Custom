@@ -29,6 +29,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Main registry of bots in the warm pool. Persists bot assignments,
 -- state, and performance metrics across server restarts.
 -- ============================================================================
+use `playerbot`;
 
 DROP TABLE IF EXISTS `playerbot_instance_pool`;
 CREATE TABLE `playerbot_instance_pool` (
