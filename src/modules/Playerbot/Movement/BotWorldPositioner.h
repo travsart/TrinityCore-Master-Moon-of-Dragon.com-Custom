@@ -95,7 +95,7 @@ struct ZoneLevelInfo
 // ============================================================================
 // QUEST HUB - Clustered group of quest givers in a location
 // ============================================================================
-struct QuestHub
+struct QuestHubCluster
 {
     uint32 mapId;
     uint32 zoneId;
@@ -105,7 +105,7 @@ struct QuestHub
     uint32 questGiverCount;
     TeamId faction;
 
-    QuestHub() : mapId(0), zoneId(0), centroidX(0), centroidY(0), centroidZ(0),
+    QuestHubCluster() : mapId(0), zoneId(0), centroidX(0), centroidY(0), centroidZ(0),
                  questGiverCount(0), faction(TEAM_NEUTRAL) {}
 
     void AddQuestGiver(float x, float y, float z)
@@ -424,7 +424,7 @@ private:
      * Query quest givers and cluster them into quest hubs
      * Uses spatial clustering to find town/camp centers
      */
-    ::std::vector<QuestHub> QueryAndClusterQuestHubs();
+    ::std::vector<QuestHubCluster> QueryAndClusterQuestHubs();
 
     /**
      * Query graveyards as fallback spawn points
@@ -482,7 +482,7 @@ private:
     /**
      * Merge quest hub into zones
      */
-    void MergeQuestHubIntoZone(QuestHub const& hub,
+    void MergeQuestHubIntoZone(QuestHubCluster const& hub,
                                 ::std::unordered_map<uint32, ZoneLevelInfo> const& levelInfo);
 
     /**

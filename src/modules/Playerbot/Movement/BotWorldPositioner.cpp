@@ -304,7 +304,7 @@ void BotWorldPositioner::LoadZonesFromDatabase()
     auto questHubs = QueryAndClusterQuestHubs();
     for (size_t i = 0; i < questHubs.size(); ++i)
     {
-        QuestHub const& hub = questHubs[i];
+        QuestHubCluster const& hub = questHubs[i];
         if (_disabledZones.count(hub.zoneId))
             continue;
 
@@ -530,10 +530,10 @@ void BotWorldPositioner::ApplyConfigOverrides()
     return result;
 }
 
-::std::vector<QuestHub> BotWorldPositioner::QueryAndClusterQuestHubs()
+::std::vector<QuestHubCluster> BotWorldPositioner::QueryAndClusterQuestHubs()
 {
-    ::std::vector<QuestHub> result;
-    ::std::unordered_map<uint64, QuestHub> hubsByLocation;  // Grid cell -> hub
+    ::std::vector<QuestHubCluster> result;
+    ::std::unordered_map<uint64, QuestHubCluster> hubsByLocation;  // Grid cell -> hub
 
     TC_LOG_DEBUG("playerbot", "QueryAndClusterQuestHubs() - Starting database query...");
 
@@ -864,7 +864,7 @@ void BotWorldPositioner::MergeSpawnPointIntoZone(DbSpawnPoint const& spawnPoint,
     _zoneSpawnPoints[zoneId].push_back(spawnPoint);
 }
 
-void BotWorldPositioner::MergeQuestHubIntoZone(QuestHub const& hub,
+void BotWorldPositioner::MergeQuestHubIntoZone(QuestHubCluster const& hub,
                                                  ::std::unordered_map<uint32, ZoneLevelInfo> const& levelInfo)
 {
     // Convert quest hub to DbSpawnPoint
