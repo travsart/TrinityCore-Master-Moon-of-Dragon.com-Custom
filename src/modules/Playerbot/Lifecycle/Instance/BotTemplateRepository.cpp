@@ -608,8 +608,8 @@ void BotTemplateRepository::LoadFromDatabase()
         tmpl->role = static_cast<BotRole>(fields[4].GetUInt8());
 
         TC_LOG_ERROR("playerbot.template",
-                "PRINTING OUTTTTTTTT: id={}, name='{}', class_id={}, spec_id={}, role={}",
-                tmpl->templateId, tmpl->templateName, tmpl->playerClass, tmpl->specId, tmpl->role);
+                "PRINTING OUTTTTTTTT: id={}, name={}, class_id={}, spec_id={}, role={}",
+                tmpl->templateId, tmpl->templateName, tmpl->playerClass, tmpl->specId, tmpl->role->value);
 
         // VALIDATION: Skip invalid templates with class_id=0 (not a valid WoW class)
         // This can happen due to corrupt database entries
