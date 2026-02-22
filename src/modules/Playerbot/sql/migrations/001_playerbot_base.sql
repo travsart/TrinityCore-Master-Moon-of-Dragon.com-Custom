@@ -766,6 +766,26 @@ INSERT INTO `playerbots_race_class_gender` VALUES (1,4,0,65,1,'2025-10-08 17:30:
 /*!40000 ALTER TABLE `playerbots_race_class_gender` ENABLE KEYS */;
 UNLOCK TABLES;
 
+
+DROP TABLE IF EXISTS `bot_account_metadata`;
+
+CREATE TABLE `bot_account_metadata` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `account_id` int unsigned NOT NULL,
+  `bnet_account_id`  int unsigned NOT NULL,
+  `email` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Email address of the account',
+  `character_count` int UNSIGNED NOT NULL COMMENT 'Number of bots created on this account',
+  `expansion` tinyint unsigned NOT NULL DEFAULT '10',
+  `locale` VARCHAR(32) DEFAULT 'enUS',
+  `last_ip` VARCHAR(45) DEFAULT NULL COMMENT 'Last known IP address',
+  `join_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Account join date',
+  `last_login` TIMESTAMP NULL DEFAULT NULL COMMENT 'Last login time',
+  `total_time_played` INT UNSIGNED NOT NULL DEFAULT '0' COMMENT 'Total time played across all bots (in seconds)',
+  `notes` VARCHAR(255) DEFAULT NULL COMMENT 'Notes',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Bot account metadata';
 --
 -- Dumping routines for database 'playerbot_playerbot'
 --

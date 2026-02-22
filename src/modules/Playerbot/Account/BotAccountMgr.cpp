@@ -838,7 +838,7 @@ void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
            << info.bnetAccountId << ", "
            << "'" << info.email << "', "
            << info.characterCount << ", "
-           << "0, "  // expansion (default 0)
+           << "10, "  // expansion (default 0)
            << "'enUS', "  // locale (default enUS)
            << "NULL, "  // last_ip
            << "NOW(), "  // join_date
