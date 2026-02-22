@@ -1008,7 +1008,7 @@ void BotCloneEngine::LoadNamePool()
     };
 
     // Load additional names from playerbot database if available
-    QueryResult result = sPlayerbotDatabase->Query("SELECT name, gender FROM playerbot_name_pool");
+    QueryResult result = sPlayerbotDatabase->Query("SELECT name, gender FROM playerbots_names");
     if (result)
     {
         do
