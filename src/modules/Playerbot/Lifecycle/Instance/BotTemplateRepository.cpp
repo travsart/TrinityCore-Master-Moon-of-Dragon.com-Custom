@@ -607,18 +607,15 @@ void BotTemplateRepository::LoadFromDatabase()
         // Note: Database stores role as TINYINT (0=Tank, 1=Healer, 2=DPS), not string
         tmpl->role = static_cast<BotRole>(fields[4].GetUInt8());
 
-        TC_LOG_ERROR("playerbot.template",
-                "PRINTING OUTTTTTTTT: id={}, name={}, class_id={}, spec_id={}",
-                tmpl->templateId, tmpl->templateName, tmpl->playerClass, tmpl->specId);
-
         // VALIDATION: Skip invalid templates with class_id=0 (not a valid WoW class)
         // This can happen due to corrupt database entries
+        // @todo For some reason the first entry is not set. There is no row in the db with all 0 fields. Muting log
         if (tmpl->playerClass == 0 || tmpl->playerClass > 13)
         {
-            TC_LOG_ERROR("playerbot.template",
-                "SKIPPING INVALID TEMPLATE: id={}, name='{}' has invalid class_id={} (valid: 1-13). "
-                "Run fix_corrupt_template_entry.sql to clean up database.",
-                tmpl->templateId, tmpl->templateName, tmpl->playerClass);
+            // TC_LOG_ERROR("playerbot.template",
+            //     "SKIPPING INVALID TEMPLATE: id={}, name='{}' has invalid class_id={} (valid: 1-13). "
+            //     "Run fix_corrupt_template_entry.sql to clean up database.",
+            //     tmpl->templateId, tmpl->templateName, tmpl->playerClass);
             continue;
         }
 
