@@ -152,17 +152,18 @@ public:
     {
         BuffStore.clear();
 
-        QueryResult result = WorldDatabase.Query("SELECT spell_id FROM player_buff ORDER BY spell_id ASC");
-        if (!result)
-        {
-            TC_LOG_WARN("misc", "BuffCommand: No buffs found in 'player_buff' table.");
-            return;
-        }
+        // @todo what is this for?
+        // QueryResult result = WorldDatabase.Query("SELECT spell_id FROM player_buff ORDER BY spell_id ASC");
+        // if (!result)
+        // {
+        //     TC_LOG_WARN("misc", "BuffCommand: No buffs found in 'player_buff' table.");
+        //     return;
+        // }
 
-        do
-        {
-            BuffStore.push_back((*result)[0].GetUInt32());
-        } while (result->NextRow());
+        // do
+        // {
+        //     BuffStore.push_back((*result)[0].GetUInt32());
+        // } while (result->NextRow());
 
         TC_LOG_INFO("misc", "BuffCommand: Loaded %u buff spell IDs from database.", (uint32)BuffStore.size());
     }
