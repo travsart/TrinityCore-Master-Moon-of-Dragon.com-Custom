@@ -1926,15 +1926,6 @@ bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, u
     if (req->AchievementID /*&& !HasAchieved(req->AchievementID)*/)
         return false;
 
-    if (req->QuestID)
-    {
-        if (!_player)
-            return false;
-
-        if (!_player->IsQuestRewarded(req->QuestID))
-            return false;
-    }
-
     if (checkRequiredDependentChoices)
     {
         if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(req->ID))
