@@ -66,6 +66,7 @@
 #include "DBCEnums.h"  // WoW 12.0: MAP_WOWLABS, MAP_HOUSE_INTERIOR, MAP_HOUSE_NEIGHBORHOOD
 #include "WorldSession.h"
 #include "Movement/BotWorldPositioner.h"
+#include "BotCustomizationGenerator.h"
 #include <algorithm>
 #include <chrono>
 #include <sstream>
@@ -1988,26 +1989,25 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         // WoW 11.x requires valid customization choices for character creation
         // Without this, Player::Create() fails at ValidateAppearance()
         createInfo->Customizations.clear();
-        if (auto const* options = sDB2Manager.GetCustomiztionOptions(race, gender))
-        {
-            for (ChrCustomizationOptionEntry const* option : *options)
+
+        uint32 optionCount = 0;
+        if (auto const* optionVector = sDB2Manager.GetCustomiztionOptions(race, gender)) {
+            for (ChrCustomizationOptionEntry const* optionEntry : *optionVector)
             {
-                // Get available choices for this option
-                if (auto const* choices = sDB2Manager.GetCustomiztionChoices(option->ID))
+                if (!optionEntry) continue;
+
+                UF::ChrCustomizationChoice option;
+                option.optionId = optionEntry->ID;
+                option.availableChoices = GetValidChoicesForOption(optionEntry->ID);
+                option.isRequired = IsRequiredOption(optionEntry->ID);
+                option.defaultChoice = GetDefaultChoice(optionEntry->ID);
+
+                if (!option.availableChoices.empty() || option.isRequired)
                 {
-                    if (!choices->empty())
-                    {
-                        // Use first valid choice for each option
-                        UF::ChrCustomizationChoice choice;
-                        choice.ChrCustomizationOptionID = option->ID;
-                        choice.ChrCustomizationChoiceID = (*choices)[0]->ID;
-                        createInfo->Customizations.push_back(choice);
-                    }
+                    createInfo->Customizations.push_back(choice);.push_back(option);
+                    ++optionCount;
                 }
             }
-            TC_LOG_DEBUG("module.playerbot.spawner",
-                "Generated {} customization choices for race {} gender {}",
-                createInfo->Customizations.size(), race, gender);
         }
         else
         {
@@ -2017,6 +2017,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         }
 
         // Get the starting level from config
+        // @todo add config
         uint8 startLevel = 1; // sPlayerbotConfig->GetInt("Playerbot.RandomBotLevel.Min", 1);
 
         // Check if this race/class combination is valid

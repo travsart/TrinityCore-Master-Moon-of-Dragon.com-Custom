@@ -38,8 +38,8 @@ void BotCustomizationGenerator::Initialize()
 
         for (uint8 gender = GENDER_MALE; gender <= GENDER_FEMALE; ++gender) {
             // Verify this race/gender combination has a valid model
-    if (sDB2Manager.GetChrModel(raceEntry->ID, gender))
-    {
+            if (sDB2Manager.GetChrModel(raceEntry->ID, gender))
+            {
                 LoadCustomizationOptions(raceEntry->ID, gender);
                 ++totalCombinations;
 

@@ -247,8 +247,6 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreatePlayerObject(
     createInfo->HardcoreSelfFound = false;
     createInfo->TimerunningSeasonID = 0;
 
-    TC_LOG_ERROR("module.playerbot", "BotCharacterCreator: Creating bot character race={} class {} gender={} name='{}'", race, classId, gender, name);
-
     // Initialize customizations (empty for bots - can be enhanced later)
     // Note: Customizations array is already default-initialized by CharacterCreateInfo constructor
 
