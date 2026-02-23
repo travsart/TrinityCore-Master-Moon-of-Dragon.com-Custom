@@ -1911,7 +1911,8 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
     return CreateBotCharacter(accountId);
 }
 
-bool BotSpawner::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, Races race, Classes playerClass,
+
+bool BotSpawner::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass,
     bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices) const
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements))
