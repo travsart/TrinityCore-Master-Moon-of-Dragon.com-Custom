@@ -1990,7 +1990,6 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         // Without this, Player::Create() fails at ValidateAppearance()
         createInfo->Customizations.clear();
 
-        uint32 optionCount = 0;
         if (auto const* optionVector = sDB2Manager.GetCustomiztionOptions(race, gender)) {
             for (ChrCustomizationOptionEntry const* optionEntry : *optionVector)
             {
@@ -1999,12 +1998,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                 UF::ChrCustomizationChoice choice;
                 choice.ChrCustomizationOptionID = optionEntry->ID;
                 choice.ChrCustomizationChoiceID = Playerbot::BotCustomizationGenerator::GetDefaultChoice(optionEntry->ID);
-
-                if (!option.availableChoices.empty() || option.isRequired)
-                {
-                    createInfo->Customizations.push_back(choice);
-                    ++optionCount;
-                }
+                createInfo->Customizations.push_back(choice);
             }
         }
         else
