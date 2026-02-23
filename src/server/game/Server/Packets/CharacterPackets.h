@@ -27,7 +27,6 @@
 #include "SharedDefines.h"
 #include "UnitDefines.h"
 #include "UpdateFields.h"
-#include "BotCustomizationGenerator.h"
 #include <array>
 #include <memory>
 
@@ -61,7 +60,7 @@ namespace WorldPackets
             uint8 Race            = RACE_NONE;
             uint8 Class           = CLASS_NONE;
             uint8 Sex             = GENDER_NONE;
-            Array<CustomizationOption, 250> Customizations;
+            Array<ChrCustomizationChoice, 250> Customizations;
             Optional<int32> TemplateSet;
             int32 TimerunningSeasonID = 0;
             bool IsTrialBoost     = false;
