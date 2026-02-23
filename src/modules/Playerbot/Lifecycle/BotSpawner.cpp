@@ -1911,8 +1911,7 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
 }
 
 
-bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass,
-    bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices)
+bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass)
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements))
         return true;
@@ -1925,33 +1924,6 @@ bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, u
 
     if (req->AchievementID /*&& !HasAchieved(req->AchievementID)*/)
         return false;
-
-    if (checkRequiredDependentChoices)
-    {
-        if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(req->ID))
-        {
-            for (auto const& [chrCustomizationOptionId, requiredChoicesForOption] : *requiredChoices)
-            {
-                bool hasRequiredChoiceForOption = false;
-                for (uint32 requiredChoice : requiredChoicesForOption)
-                {
-                    auto choiceItr = std::find_if(selectedChoices.begin(), selectedChoices.end(), [requiredChoice](UF::ChrCustomizationChoice const& choice)
-                    {
-                        return choice.ChrCustomizationChoiceID == requiredChoice;
-                    });
-
-                    if (choiceItr != selectedChoices.end())
-                    {
-                        hasRequiredChoiceForOption = true;
-                        break;
-                    }
-                }
-
-                if (!hasRequiredChoiceForOption)
-                    return false;
-            }
-        }
-    }
 
     return true;
 }
@@ -2043,7 +2015,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         for (ChrCustomizationOptionEntry const* option : *options)
         {
             ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
-            if (optionReq && !MeetsChrCustomizationReq(optionReq, classId, false, MakeChrCustomizationChoiceRange(customizations)))
+            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId))
                 continue;
 
             // Loop over the options until the first one fits
@@ -2051,7 +2023,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
             {
                 ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
-                if (choiceReq && !MeetsChrCustomizationReq(choiceReq, classId, false, MakeChrCustomizationChoiceRange(customizations)))
+                if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId))
                     continue;
 
                 ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
