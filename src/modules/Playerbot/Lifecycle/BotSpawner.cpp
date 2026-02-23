@@ -1912,7 +1912,7 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
 
 
 bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass,
-    bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices) const
+    bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices)
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements))
         return true;
@@ -1924,9 +1924,6 @@ bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, u
         return false;
 
     if (req->AchievementID /*&& !HasAchieved(req->AchievementID)*/)
-        return false;
-
-    if (req->ItemModifiedAppearanceID && !GetCollectionMgr()->HasItemAppearance(req->ItemModifiedAppearanceID).first)
         return false;
 
     if (req->QuestID)
