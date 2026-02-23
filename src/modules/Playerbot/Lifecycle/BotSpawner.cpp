@@ -1996,15 +1996,13 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             {
                 if (!optionEntry) continue;
 
-                UF::ChrCustomizationChoice option;
-                option.optionId = optionEntry->ID;
-                option.availableChoices = GetValidChoicesForOption(optionEntry->ID);
-                option.isRequired = IsRequiredOption(optionEntry->ID);
-                option.defaultChoice = GetDefaultChoice(optionEntry->ID);
+                UF::ChrCustomizationChoice choice;
+                choice.ChrCustomizationOptionID = optionEntry->ID;
+                choice.ChrCustomizationChoiceID = GetDefaultChoice(optionEntry->ID);
 
                 if (!option.availableChoices.empty() || option.isRequired)
                 {
-                    createInfo->Customizations.push_back(choice);.push_back(option);
+                    createInfo->Customizations.push_back(choice);
                     ++optionCount;
                 }
             }
@@ -2015,6 +2013,30 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                 "No customization options found for race {} gender {} - character creation may fail",
                 race, gender);
         }
+
+
+ if (auto const* options = sDB2Manager.GetCustomiztionOptions(race, gender))
+        {
+            for (ChrCustomizationOptionEntry const* option : *options)
+            {
+                // Get available choices for this option
+                if (auto const* choices = sDB2Manager.GetCustomiztionChoices(option->ID))
+                {
+                    if (!choices->empty())
+                    {
+                        // Use first valid choice for each option
+                        UF::ChrCustomizationChoice choice;
+
+                        createInfo->Customizations.push_back(choice);
+                    }
+                }
+            }
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "Generated {} customization choices for race {} gender {}",
+                createInfo->Customizations.size(), race, gender);
+        }
+
+
 
         // Get the starting level from config
         // @todo add config
