@@ -1567,7 +1567,6 @@ bool BotSpawner::IsBotActive(ObjectGuid guid) const
     return result;
 }
 
-
 bool BotSpawner::CanSpawnMore() const
 {
     return GetActiveBotCount() < _config.maxBotsTotal;
@@ -1912,7 +1911,7 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
 }
 
 
-bool BotSpawner::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass,
+bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass,
     bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices) const
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements))
