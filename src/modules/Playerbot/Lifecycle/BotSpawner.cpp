@@ -47,6 +47,8 @@
 #include "BotAccountMgr.h"
 #include "Config/PlayerbotConfig.h"
 #include "PlayerbotDatabase.h"
+#include "IteratorPair.h"
+#include "DB2Stores.h"
 #include "BotCharacterDistribution.h"
 #include "BotNameMgr.h"
 #include "BotCharacterCreator.h"
