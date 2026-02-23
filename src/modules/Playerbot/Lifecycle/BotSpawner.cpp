@@ -1990,25 +1990,31 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         // Without this, Player::Create() fails at ValidateAppearance()
         createInfo->Customizations.clear();
 
-        if (auto const* optionVector = sDB2Manager.GetCustomiztionOptions(race, gender)) {
-            for (ChrCustomizationOptionEntry const* optionEntry : *optionVector)
-            {
-                if (!optionEntry) continue;
+        std::vector<UF::ChrCustomizationChoice> customizations;
 
-                UF::ChrCustomizationChoice choice;
-                choice.ChrCustomizationOptionID = optionEntry->ID;
-                choice.ChrCustomizationChoiceID = Playerbot::BotCustomizationGenerator::GetDefaultChoice(optionEntry->ID);
-                createInfo->Customizations.push_back(choice);
-                TC_LOG_ERROR("module.playerbot.spawner",
-                    "Added customization option {} with choice {} for race {} gender {}", 
-                    choice.ChrCustomizationOptionID, choice.ChrCustomizationChoiceID, race, gender);
-            }
-        }
-        else
+        std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(target->getRace(), gender);
+        for (ChrCustomizationOptionEntry const* option : *options)
         {
-            TC_LOG_WARN("module.playerbot.spawner",
-                "No customization options found for race {} gender {} - character creation may fail",
-                race, gender);
+            ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
+            if (optionReq && !sWorld->MeetsChrCustomizationReq(optionReq, classId, false, MakeChrCustomizationChoiceRange(customizations)))
+                continue;
+
+            // Loop over the options until the first one fits
+            std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
+            for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
+            {
+                ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
+                if (choiceReq && !sWorld->MeetsChrCustomizationReq(choiceReq, classId, false, MakeChrCustomizationChoiceRange(customizations)))
+                    continue;
+
+                ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
+                UF::ChrCustomizationChoice choice;
+                choice.ChrCustomizationOptionID = option->ID;
+                choice.ChrCustomizationChoiceID = choiceEntry->ID;
+                customizations.push_back(choice);
+                createInfo->Customizations.push_back(choice);
+                break;
+            }
         }
 
         // Get the starting level from config
