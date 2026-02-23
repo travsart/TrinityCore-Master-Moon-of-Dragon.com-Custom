@@ -2039,7 +2039,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         std::vector<UF::ChrCustomizationChoice> customizations;
       
-        std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(target->getRace(), gender);
+        std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
         for (ChrCustomizationOptionEntry const* option : *options)
         {
             ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
