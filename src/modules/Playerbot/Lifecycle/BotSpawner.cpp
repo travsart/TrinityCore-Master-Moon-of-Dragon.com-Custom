@@ -1913,7 +1913,7 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
 
 
 bool BotSpawner::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass,
-    bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices) const
+    bool checkRequiredDependentChoices, Trinity::IteratorPair<WorldPackets::Character::ChrCustomizationChoice const*> selectedChoices) const
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements))
         return true;
