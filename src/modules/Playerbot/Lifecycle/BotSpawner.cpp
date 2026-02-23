@@ -1998,7 +1998,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
                 UF::ChrCustomizationChoice choice;
                 choice.ChrCustomizationOptionID = optionEntry->ID;
-                choice.ChrCustomizationChoiceID = GetDefaultChoice(optionEntry->ID);
+                choice.ChrCustomizationChoiceID = Playerbot::BotCustomizationGenerator::GetDefaultChoice(optionEntry->ID);
 
                 if (!option.availableChoices.empty() || option.isRequired)
                 {
