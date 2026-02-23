@@ -217,8 +217,7 @@ private:
 
     // Character creation
     ObjectGuid CreateCharacterForAccount(uint32 accountId, SpawnRequest const& request);
-    bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, Races race, Classes playerClass,bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices) const
-    // NOTE: CreateBotCharacter moved to public section for InstanceBotPool access
+    bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, Races race, Classes playerClass,bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices) const;    // NOTE: CreateBotCharacter moved to public section for InstanceBotPool access
 
     // Population calculations
     void CalculateZoneTargets();
