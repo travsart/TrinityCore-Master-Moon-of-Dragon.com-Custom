@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "IteratorPair.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
