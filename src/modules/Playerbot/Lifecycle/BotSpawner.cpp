@@ -1999,6 +1999,9 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                 choice.ChrCustomizationOptionID = optionEntry->ID;
                 choice.ChrCustomizationChoiceID = Playerbot::BotCustomizationGenerator::GetDefaultChoice(optionEntry->ID);
                 createInfo->Customizations.push_back(choice);
+                TC_LOG_ERROR("module.playerbot.spawner",
+                    "Added customization option {} with choice {} for race {} gender {}", 
+                    choice.ChrCustomizationOptionID, choice.ChrCustomizationChoiceID, race, gender);
             }
         }
         else
@@ -2007,30 +2010,6 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                 "No customization options found for race {} gender {} - character creation may fail",
                 race, gender);
         }
-
-
- if (auto const* options = sDB2Manager.GetCustomiztionOptions(race, gender))
-        {
-            for (ChrCustomizationOptionEntry const* option : *options)
-            {
-                // Get available choices for this option
-                if (auto const* choices = sDB2Manager.GetCustomiztionChoices(option->ID))
-                {
-                    if (!choices->empty())
-                    {
-                        // Use first valid choice for each option
-                        UF::ChrCustomizationChoice choice;
-
-                        createInfo->Customizations.push_back(choice);
-                    }
-                }
-            }
-            TC_LOG_DEBUG("module.playerbot.spawner",
-                "Generated {} customization choices for race {} gender {}",
-                createInfo->Customizations.size(), race, gender);
-        }
-
-
 
         // Get the starting level from config
         // @todo add config
