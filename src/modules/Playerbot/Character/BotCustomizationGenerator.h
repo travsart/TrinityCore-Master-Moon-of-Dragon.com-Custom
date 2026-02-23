@@ -56,31 +56,6 @@ public:
      */
     static void Initialize();
 
-private:
-    struct CustomizationOption {
-        uint32 optionId;
-        ::std::vector<uint32> availableChoices;
-        bool isRequired;
-        uint32 defaultChoice;
-    };
-
-    // Cache of valid customization options per race/gender
-    inline static ::std::unordered_map<uint64, ::std::vector<CustomizationOption>> _customizationCache;
-    inline static bool _initialized = false;
-
-    /**
-     * @brief Get cache key for race/gender combination
-     */
-    static uint64 GetCacheKey(uint8 race, uint8 gender)
-    {
-        return (uint64(race) << 8) | uint64(gender);
-    }
-
-    /**
-     * @brief Load customization options for specific race/gender from DBC
-     */
-    static void LoadCustomizationOptions(uint8 race, uint8 gender);
-
     /**
      * @brief Get valid customization choices for an option
      */
@@ -106,6 +81,31 @@ private:
      */
     static bool ValidateCustomizations(uint8 race, uint8 gender,
         ::std::array<WorldPackets::Character::ChrCustomizationChoice, 250> const& customizations);
+
+private:
+    struct CustomizationOption {
+        uint32 optionId;
+        ::std::vector<uint32> availableChoices;
+        bool isRequired;
+        uint32 defaultChoice;
+    };
+
+    // Cache of valid customization options per race/gender
+    inline static ::std::unordered_map<uint64, ::std::vector<CustomizationOption>> _customizationCache;
+    inline static bool _initialized = false;
+
+    /**
+     * @brief Get cache key for race/gender combination
+     */
+    static uint64 GetCacheKey(uint8 race, uint8 gender)
+    {
+        return (uint64(race) << 8) | uint64(gender);
+    }
+
+    /**
+     * @brief Load customization options for specific race/gender from DBC
+     */
+    static void LoadCustomizationOptions(uint8 race, uint8 gender);
 };
 
 } // namespace Playerbot
