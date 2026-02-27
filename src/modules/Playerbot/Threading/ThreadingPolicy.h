@@ -131,8 +131,10 @@ namespace Threading
     {
     public:
         LockFreeState()
-            : _state(::std::make_shared<T>()), _version(0)
-        {}
+            : _version(0)
+        {
+            ::std::atomic_store_explicit(&_state, ::std::make_shared<T>(), ::std::memory_order_release);
+        }
 
         void Update(T newState)
         {
@@ -159,7 +161,7 @@ namespace Threading
         }
 
     private:
-        ::std::shared_ptr<T> _state;
+        ::std::atomic<::std::shared_ptr<T>> _state;
         ::std::atomic<uint64> _version;
     };
 
