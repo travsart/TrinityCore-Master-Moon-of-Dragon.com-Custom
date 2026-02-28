@@ -2025,7 +2025,6 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                     continue;
 
                 ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
-                choiceEntry.
                 UF::ChrCustomizationChoice choice;
                 choice.ChrCustomizationOptionID = option->ID;
                 choice.ChrCustomizationChoiceID = choiceEntry->ID;
