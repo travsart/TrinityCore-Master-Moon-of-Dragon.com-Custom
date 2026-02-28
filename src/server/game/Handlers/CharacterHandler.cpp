@@ -591,8 +591,10 @@ bool WorldSession::ValidateAppearance(Races race, Classes playerClass, Gender ge
     for (UF::ChrCustomizationChoice playerChoice : customizations)
     {
         // check uniqueness of options
-        if (playerChoice.ChrCustomizationOptionID == previousOption)
+        if (playerChoice.ChrCustomizationOptionID == previousOption){
+            TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: Possible hacking-attempt detected: Player {} has duplicate customization option {}-{}.", _player ? _player->GetGUID().ToString() : "unknown", playerChoice.ChrCustomizationOptionID, previousOption);
             return false;
+        }
 
         previousOption = playerChoice.ChrCustomizationOptionID;
 
@@ -603,16 +605,22 @@ bool WorldSession::ValidateAppearance(Races race, Classes playerClass, Gender ge
         });
 
         // option not found for race/gender combination
-        if (customizationOptionDataItr == options->end())
+        if (customizationOptionDataItr == options->end()){
+            TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: option not found for race/gender combination");
             return false;
+        }
 
         if (ChrCustomizationReqEntry const* req = sChrCustomizationReqStore.LookupEntry((*customizationOptionDataItr)->ChrCustomizationReqID))
-            if (!MeetsChrCustomizationReq(req, race, playerClass, false, customizations))
+            if (!MeetsChrCustomizationReq(req, race, playerClass, false, customizations)){
+                TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: option not MeetsChrCustomizationReq");
                 return false;
+            }
 
         std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(playerChoice.ChrCustomizationOptionID);
-        if (!choicesForOption)
+        if (!choicesForOption){
+            TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: no choices for option ID {}", playerChoice.ChrCustomizationOptionID);
             return false;
+        }
 
         auto customizationChoiceDataItr = std::find_if(choicesForOption->begin(), choicesForOption->end(), [&](ChrCustomizationChoiceEntry const* choice)
         {
@@ -621,11 +629,17 @@ bool WorldSession::ValidateAppearance(Races race, Classes playerClass, Gender ge
 
         // choice not found for option
         if (customizationChoiceDataItr == choicesForOption->end())
+        {
+            TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: choice not found for option ID {}", playerChoice.ChrCustomizationOptionID);
             return false;
+        }
 
-        if (ChrCustomizationReqEntry const* req = sChrCustomizationReqStore.LookupEntry((*customizationChoiceDataItr)->ChrCustomizationReqID))
-            if (!MeetsChrCustomizationReq(req, race, playerClass, true, customizations))
+        if (ChrCustomizationReqEntry const* req = sChrCustomizationReqStore.LookupEntry((*customizationChoiceDataItr)->ChrCustomizationReqID)){
+            if (!MeetsChrCustomizationReq(req, race, playerClass, true, customizations)) {
+                TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: choice does not meet customization requirements");
                 return false;
+            }
+        }
     }
 
     return true;
