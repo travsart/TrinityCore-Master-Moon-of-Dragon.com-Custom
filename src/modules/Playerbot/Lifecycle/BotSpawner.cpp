@@ -2027,25 +2027,25 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                     }
                 }
             }
-            if(createInfo->Customizations.empty()) {
-                // Loop over the options until the first one fits
-                uint32 choiceIdFound = 0;
-                std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
-                for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
-                {
-                    ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
-                    if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId))
-                        continue;
+            // if(createInfo->Customizations.empty()) {
+            //     // Loop over the options until the first one fits
+            //     uint32 choiceIdFound = 0;
+            //     std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
+            //     for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
+            //     {
+            //         ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
+            //         if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId))
+            //             continue;
 
-                    ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
-                    UF::ChrCustomizationChoice choice;
-                    choice.ChrCustomizationOptionID = option->ID;
-                    choice.ChrCustomizationChoiceID = choiceEntry->ID;
-                    choiceIdFound = choiceEntry->ID;
-                    createInfo->Customizations.push_back(choice);
-                    break;
-                }
-            }
+            //         ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
+            //         UF::ChrCustomizationChoice choice;
+            //         choice.ChrCustomizationOptionID = option->ID;
+            //         choice.ChrCustomizationChoiceID = choiceEntry->ID;
+            //         choiceIdFound = choiceEntry->ID;
+            //         createInfo->Customizations.push_back(choice);
+            //         break;
+            //     }
+            // }
         }
 
         if(createInfo->Customizations.empty())
