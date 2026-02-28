@@ -2016,20 +2016,17 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId))
                 continue;
 
-            // Loop over the options until the first one fits
-            std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetRequiredCustomizationChoices(option->ID);
-            for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
+            // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
+            std::vector<std::pair<uint32, std::vector<uint32>>> requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(option->ID);
+            for (auto const& [chrCustomizationOptionId, requiredChoicesForOption] : *requiredChoices)
             {
-                ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
-                if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId))
-                    continue;
-
-                ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
-                UF::ChrCustomizationChoice choice;
-                choice.ChrCustomizationOptionID = option->ID;
-                choice.ChrCustomizationChoiceID = choiceEntry->ID;
-                createInfo->Customizations.push_back(choice);
-                break;
+                for (uint32 choiceId : requiredChoicesForOption)
+                {
+                    UF::ChrCustomizationChoice choice;
+                    choice.ChrCustomizationOptionID = chrCustomizationOptionId;
+                    choice.ChrCustomizationChoiceID = choiceId;
+                    createInfo->Customizations.push_back(choice);
+                }
             }
         }
 
