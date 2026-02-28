@@ -1913,9 +1913,6 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
 
 bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass)
 {
-    if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements))
-        return true;
-
     if (req->ClassMask && !(req->ClassMask & (1 << (playerClass - 1))))
         return false;
 
