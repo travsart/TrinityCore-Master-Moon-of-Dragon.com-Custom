@@ -152,39 +152,42 @@ DELETE FROM `playerbot_performance_metrics`;
 -- Database Triggers for Character Count Management
 -- --------------------------------------------------------
 
-USE `characters`;
-DELIMITER $$
+-- USE `characters`;
 
--- Trigger: Update character count on character creation
-DROP TRIGGER IF EXISTS `trg_bot_character_insert`$$
-CREATE TRIGGER `trg_bot_character_insert` 
-AFTER INSERT ON `characters`
-FOR EACH ROW
-BEGIN
-    IF EXISTS (SELECT 1 FROM playerbot.playerbot_accounts WHERE account_id = NEW.account AND is_bot = 1) THEN
-        UPDATE playerbot.playerbot_accounts 
-        SET character_count = character_count + 1 
-        WHERE account_id = NEW.account;
-    END IF;
-END$$
+-- ALTER TABLE characters ADD is_bot TINYINT NOT NULL DEFAULT 0;
 
--- Trigger: Update character count on character deletion
-DROP TRIGGER IF EXISTS `trg_bot_character_delete`$$
-CREATE TRIGGER `trg_bot_character_delete` 
-AFTER DELETE ON `characters`
-FOR EACH ROW
-BEGIN
-    IF EXISTS (SELECT 1 FROM playerbot.playerbot_accounts WHERE account_id = OLD.account AND is_bot = 1) THEN
-        UPDATE playerbot.playerbot_accounts 
-        SET character_count = GREATEST(0, character_count - 1)
-        WHERE account_id = OLD.account;
+-- DELIMITER $$
+
+-- -- Trigger: Update character count on character creation
+-- DROP TRIGGER IF EXISTS `trg_bot_character_insert`$$
+-- CREATE TRIGGER `trg_bot_character_insert` 
+-- AFTER INSERT ON `characters`
+-- FOR EACH ROW
+-- BEGIN
+--     IF EXISTS (SELECT 1 FROM playerbot.playerbot_accounts WHERE account_id = NEW.account AND is_bot = 1) THEN
+--         UPDATE playerbot.playerbot_accounts 
+--         SET character_count = character_count + 1 
+--         WHERE account_id = NEW.account;
+--     END IF;
+-- END$$
+
+-- -- Trigger: Update character count on character deletion
+-- DROP TRIGGER IF EXISTS `trg_bot_character_delete`$$
+-- CREATE TRIGGER `trg_bot_character_delete` 
+-- AFTER DELETE ON `characters`
+-- FOR EACH ROW
+-- BEGIN
+--     IF EXISTS (SELECT 1 FROM playerbot.playerbot_accounts WHERE account_id = OLD.account AND is_bot = 1) THEN
+--         UPDATE playerbot.playerbot_accounts 
+--         SET character_count = GREATEST(0, character_count - 1)
+--         WHERE account_id = OLD.account;
         
-        -- Also release the name
-        DELETE FROM playerbot.playerbots_names_used WHERE character_guid = OLD.guid;
-    END IF;
-END$$
+--         -- Also release the name
+--         DELETE FROM playerbot.playerbots_names_used WHERE character_guid = OLD.guid;
+--     END IF;
+-- END$$
 
-DELIMITER ;
+-- DELIMITER ;
 
 USE `playerbot`;
 -- --------------------------------------------------------

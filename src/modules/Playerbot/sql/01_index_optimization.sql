@@ -68,8 +68,6 @@ END$$
 
 DELIMITER ;
 
-ALTER TABLE characters ADD is_bot TINYINT NOT NULL DEFAULT 0;
-
 use `hotfixes`;
 DROP PROCEDURE IF EXISTS drop_index_if_exists;
 DELIMITER $$
