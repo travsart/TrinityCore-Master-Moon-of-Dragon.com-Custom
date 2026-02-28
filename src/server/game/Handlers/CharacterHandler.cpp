@@ -523,28 +523,43 @@ void WorldSession::HandleCharUndeleteEnumOpcode(WorldPackets::Character::EnumCha
 bool WorldSession::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, Races race, Classes playerClass,
     bool checkRequiredDependentChoices, Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices) const
 {
-    if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements))
+    if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements)){
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: HasRequirements flag not set for requirement ID {}, skipping checks", req->ID);
         return true;
+    }
 
-    if (req->ClassMask && !(req->ClassMask & (1 << (playerClass - 1))))
+    if (req->ClassMask && !(req->ClassMask & (1 << (playerClass - 1)))){
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: class {} class mask {} does not match requirement", playerClass, req->ClassMask);
         return false;
+    }
 
     if (race != RACE_NONE && !req->RaceMask.IsEmpty() && req->RaceMask.RawValue != -1 && !req->RaceMask.HasRace(race))
+    {
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: race {} race mask {} does not match requirement", race, req->RaceMask.RawValue);
         return false;
+    }
 
-    if (req->AchievementID /*&& !HasAchieved(req->AchievementID)*/)
+    if (req->AchievementID /*&& !HasAchieved(req->AchievementID)*/){
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required achievement ID {}", req->AchievementID);
         return false;
+    }
 
-    if (req->ItemModifiedAppearanceID && !GetCollectionMgr()->HasItemAppearance(req->ItemModifiedAppearanceID).first)
+    if (req->ItemModifiedAppearanceID && !GetCollectionMgr()->HasItemAppearance(req->ItemModifiedAppearanceID).first){
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required item modified appearance ID {}", req->ItemModifiedAppearanceID);
         return false;
+    }
 
     if (req->QuestID)
     {
-        if (!_player)
+        if (!_player){
+            TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player is null");
             return false;
+        }
 
-        if (!_player->IsQuestRewarded(req->QuestID))
+        if (!_player->IsQuestRewarded(req->QuestID)){
+            TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required quest ID {}", req->QuestID);
             return false;
+        }
     }
 
     if (checkRequiredDependentChoices)
@@ -568,8 +583,10 @@ bool WorldSession::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req,
                     }
                 }
 
-                if (!hasRequiredChoiceForOption)
+                if (!hasRequiredChoiceForOption){
+                    TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required choice for option ID {}", chrCustomizationOptionId);
                     return false;
+                }
             }
         }
     }
