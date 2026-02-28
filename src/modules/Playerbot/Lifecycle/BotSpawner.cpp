@@ -2009,8 +2009,6 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         // Without this, Player::Create() fails at ValidateAppearance()
         createInfo->Customizations.clear();
 
-        std::vector<UF::ChrCustomizationChoice> customizations;
-      
         std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
         for (ChrCustomizationOptionEntry const* option : *options)
         {
@@ -2019,7 +2017,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                 continue;
 
             // Loop over the options until the first one fits
-            std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
+            std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetRequiredCustomizationChoices(option->ID);
             for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
             {
                 ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
@@ -2027,10 +2025,10 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                     continue;
 
                 ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
+                choiceEntry.
                 UF::ChrCustomizationChoice choice;
                 choice.ChrCustomizationOptionID = option->ID;
                 choice.ChrCustomizationChoiceID = choiceEntry->ID;
-                customizations.push_back(choice);
                 createInfo->Customizations.push_back(choice);
                 break;
             }

@@ -525,25 +525,6 @@ CREATE INDEX `idx_username_lookup` ON `account` (`username`)
 
 USE `playerbot`;
 
--- Create bot account tracking table
--- Table: playerbot_accounts
--- Purpose: Track bot accounts and their metadata
-CREATE TABLE IF NOT EXISTS `playerbot_accounts` (
-  `account_id` INT UNSIGNED NOT NULL,
-  `is_bot` TINYINT(1) NOT NULL DEFAULT 1,
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
-  `character_count` INT UNSIGNED NOT NULL DEFAULT 0,
-  `last_login` TIMESTAMP NULL DEFAULT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`account_id`),
-  KEY `idx_is_bot` (`is_bot`),
-  KEY `idx_is_active` (`is_active`),
-  KEY `idx_character_count` (`character_count`),
-  CONSTRAINT `chk_character_limit` CHECK (`character_count` <= 10)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
-  COMMENT='Metadata for bot-controlled accounts';
-DELETE FROM `playerbot_accounts`;
-
 -- =====================================================
 -- PHASE 7: STATISTICS AND MONITORING
 -- =====================================================
