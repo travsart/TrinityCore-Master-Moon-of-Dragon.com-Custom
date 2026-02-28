@@ -2017,7 +2017,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                 continue;
 
             // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
-            if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(req->ID))
+            if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(option->ID))
             {
                 for (auto const& [chrCustomizationOptionId, requiredChoicesForOption] : *requiredChoices)
                 {
