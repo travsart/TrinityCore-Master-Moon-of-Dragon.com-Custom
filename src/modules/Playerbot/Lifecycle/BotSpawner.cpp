@@ -2016,6 +2016,24 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId))
                 continue;
 
+            // Loop over the options until the first one fits
+            uint32 choiceIdFound = 0;
+            std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
+            for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
+            {
+                ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
+                if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId))
+                    continue;
+
+                ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
+                UF::ChrCustomizationChoice choice;
+                choice.ChrCustomizationOptionID = option->ID;
+                choice.ChrCustomizationChoiceID = choiceEntry->ID;
+                choiceIdFound = choiceEntry->ID;
+                createInfo->Customizations.push_back(choice);
+                break;
+            }
+            
             // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
             if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(option->ID))
             {
@@ -2023,6 +2041,9 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                 {
                     for (uint32 choiceId : requiredChoicesForOption)
                     {
+                        if(choiceId != choiceIdFound)
+                            continue; // We already added the first valid choice for this option
+                        
                         UF::ChrCustomizationChoice choice;
                         choice.ChrCustomizationOptionID = chrCustomizationOptionId;
                         choice.ChrCustomizationChoiceID = choiceId;
@@ -2031,6 +2052,15 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
                 }
             }
         }
+
+        if(createInfo->Customizations.empty())
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Failed to generate valid customizations for bot character creation");
+            sBotNameMgr->ReleaseName(name);
+            return ObjectGuid::Empty;
+        }
+        TC_LOG_TRACE("module.playerbot.spawner", "Generated {} valid customizations for bot character", createInfo->Customizations.size());
 
         // Get the starting level from config
         // @todo add config

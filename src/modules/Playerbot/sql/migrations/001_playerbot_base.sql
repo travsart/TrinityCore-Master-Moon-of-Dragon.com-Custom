@@ -115,15 +115,21 @@ CREATE TABLE `playerbot_accounts` (
   `email` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `is_bot` tinyint(1) NOT NULL DEFAULT '1',
-  `bot_count` tinyint unsigned NOT NULL DEFAULT '0',
-  `max_bots` tinyint unsigned NOT NULL DEFAULT '10',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `character_count` INT UNSIGNED NOT NULL DEFAULT 0,
   `account_status` enum('ACTIVE','SUSPENDED','DISABLED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ACTIVE',
   `last_activity` timestamp NULL DEFAULT NULL,
+  `last_login` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`account_id`),
   UNIQUE KEY `uk_account_name` (`account_name`),
   UNIQUE KEY `uk_email` (`email`),
   KEY `idx_bot_accounts` (`is_bot`,`account_status`),
   KEY `idx_activity` (`last_activity`)
+  KEY `idx_is_bot` (`is_bot`),
+  KEY `idx_is_active` (`is_active`),
+  KEY `idx_character_count` (`character_count`),
+  CONSTRAINT `chk_character_limit` CHECK (`character_count` <= 10)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bot account management';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
