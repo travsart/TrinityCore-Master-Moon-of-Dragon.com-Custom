@@ -120,12 +120,11 @@ CREATE TABLE `playerbot_accounts` (
   `account_status` enum('ACTIVE','SUSPENDED','DISABLED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ACTIVE',
   `last_activity` timestamp NULL DEFAULT NULL,
   `last_login` TIMESTAMP NULL DEFAULT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`account_id`),
   UNIQUE KEY `uk_account_name` (`account_name`),
   UNIQUE KEY `uk_email` (`email`),
   KEY `idx_bot_accounts` (`is_bot`,`account_status`),
-  KEY `idx_activity` (`last_activity`)
+  KEY `idx_activity` (`last_activity`),
   KEY `idx_is_bot` (`is_bot`),
   KEY `idx_is_active` (`is_active`),
   KEY `idx_character_count` (`character_count`),
