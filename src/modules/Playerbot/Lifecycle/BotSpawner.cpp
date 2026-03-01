@@ -2133,17 +2133,18 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
 
         createInfo->Customizations.clear();
         Trinity::IteratorPair<UF::ChrCustomizationChoice const*> nullChoices = MakeChrCustomizationChoiceRange(createInfo->Customizations);
-
+        vector<int32> const* reqOptions;
         std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
         for (ChrCustomizationOptionEntry const* option : *options)
         {
-             TC_LOG_ERROR("module.playerbot.spawner", "Processing customization option {} for race {} and gender {}: option ID {}, req ID {}",
-                 option->ID, race, gender, option->ID, option->ChrCustomizationReqID);
+             TC_LOG_ERROR("module.playerbot.spawner", "Processing customization option {} for race {} and gender {}:, req ID {}",
+                 option->ID, race, gender, option->ChrCustomizationReqID);
 
             ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
             if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, nullChoices))
                 continue;
-
+            reqOptions.push_back(option->ChrCustomizationReqID);
+            
             // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
             if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(option->ID))
             {
@@ -2179,9 +2180,9 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
             // }
         }
         Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices = MakeChrCustomizationChoiceRange(createInfo->Customizations);
-        for(auto const& customization : createInfo->Customizations)
+        for(int32 reqId : reqOptions)
         {
-            ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(customization.ChrCustomizationReqID);
+            ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(reqId);
             if(!MeetsChrCustomizationReq(optionReq, race, classId, true, selectedChoices))
             {
                 TC_LOG_ERROR("module.playerbot.spawner",
