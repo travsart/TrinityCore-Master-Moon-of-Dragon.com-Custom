@@ -69,12 +69,11 @@
 #include "WorldSession.h"
 #include "Movement/BotWorldPositioner.h"
 #include "BotCustomizationGenerator.h"
-#include "PacketUtilities.h"
+#include "IteratorPair.h"
 #include <algorithm>
 #include <chrono>
 #include <sstream>
 #include <unordered_set>
-#include <array>
 
 namespace Playerbot
 {
@@ -1912,8 +1911,18 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
     return CreateBotCharacter(accountId);
 }
 
+template<typename Container>
+Trinity::IteratorPair<UF::ChrCustomizationChoice const*> MakeChrCustomizationChoiceRange(Container const& container)
+{
+    static_assert(std::is_same<typename Container::value_type, UF::ChrCustomizationChoice>::value,
+        "MakeChrCustomizationChoiceRange must be used with containers of UF::ChrCustomizationChoice");
+
+    return { container.data(), container.data() + container.size() };
+}
+
+
 bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass, bool checkRequiredDependentChoices,
-    Array<UF::ChrCustomizationChoice,250> selectedChoices)
+   Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices)
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements)){
         TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: HasRequirements flag not set for requirement ID {}, skipping checks", req->ID);
@@ -2131,7 +2140,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
                  option->ID, race, gender, option->ID, option->ChrCustomizationReqID);
 
             ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
-            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, createInfo->Customizations))
+            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, nullptr))
                 continue;
 
             // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
@@ -2168,9 +2177,10 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
             //     }
             // }
         }
+        Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices = MakeChrCustomizationChoiceRange(createInfo->Customizations);
         for(auto const& customization : createInfo->Customizations)
         {
-            if(!MeetsChrCustomizationReq(customization.ChrCustomizationOptionID, race, classId, true, createInfo->Customizations))
+            if(!MeetsChrCustomizationReq(customization.ChrCustomizationOptionID, race, classId, true, selectedChoices))
             {
                 TC_LOG_ERROR("module.playerbot.spawner",
                     "Failed to generate valid customizations for bot character creation {} {} {} {} {}", name, race, classId, gender, customization.ChrCustomizationOptionID);
