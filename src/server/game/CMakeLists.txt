@@ -29,14 +29,6 @@ target_link_libraries(game-interface
     shared
     mmaps_common)
 
-# if(BUILD_PLAYERBOT)
-#   target_include_directories(game-interface
-#     PRIVATE
-#       ${CMAKE_SOURCE_DIR}/src/modules/Playerbot)
-# endif()
-
-
-
 add_library(game)
 
 CollectAndAddSourceFiles(
@@ -66,7 +58,9 @@ if(BUILD_PLAYERBOT)
       BUILD_PLAYERBOT=1)
   target_include_directories(game
     PRIVATE
-      ${CMAKE_SOURCE_DIR}/src/modules/Playerbot)
+      ${CMAKE_SOURCE_DIR}/src/modules/Playerbot
+      ${CMAKE_SOURCE_DIR}/src/modules/Playerbot/config
+  )
   # Link to playerbot-dependencies to get TBB include paths for BotSpawner.h
   if(TARGET playerbot-dependencies)
     target_link_libraries(game PRIVATE playerbot-dependencies)
