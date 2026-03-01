@@ -2150,7 +2150,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
             for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
             {
                 ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
-                if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId, false, createInfo->Customizations))
+                if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId, false, nullChoices))
                     continue;
 
                 ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
