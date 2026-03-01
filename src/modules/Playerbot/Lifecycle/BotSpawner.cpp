@@ -1928,7 +1928,6 @@ bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, u
 ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 {
     TC_LOG_TRACE("module.playerbot.spawner", "Creating bot character for account {}", accountId);
-
     try
     {
         // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character
@@ -1993,256 +1992,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         }
         TC_LOG_TRACE("module.playerbot.spawner", "Allocated name '{}' for bot character", name);
 
-        // Create character info structure
-        auto createInfo = ::std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
-        createInfo->Name = name;
-        createInfo->Race = race;
-        createInfo->Class = classId;
-        createInfo->Sex = gender;
-        createInfo->UseNPE = false;  // Use classic starting zone, not New Player Experience
-
-        // CRITICAL FIX: Generate valid default customizations for the race/gender
-        // WoW 11.x requires valid customization choices for character creation
-        // Without this, Player::Create() fails at ValidateAppearance()
-        createInfo->Customizations.clear();
-
-        std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
-        for (ChrCustomizationOptionEntry const* option : *options)
-        {
-            ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
-            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId))
-                continue;
-
-            // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
-            if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(option->ID))
-            {
-                for (auto const& [chrCustomizationOptionId, requiredChoicesForOption] : *requiredChoices)
-                {
-                    for (uint32 choiceId : requiredChoicesForOption)
-                    {                        
-                        UF::ChrCustomizationChoice choice;
-                        choice.ChrCustomizationOptionID = chrCustomizationOptionId;
-                        choice.ChrCustomizationChoiceID = choiceId;
-                        createInfo->Customizations.push_back(choice);
-                    }
-                }
-            }
-            // if(createInfo->Customizations.empty()) {
-            //     // Loop over the options until the first one fits
-            //     uint32 choiceIdFound = 0;
-            //     std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
-            //     for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
-            //     {
-            //         ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
-            //         if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId))
-            //             continue;
-
-            //         ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
-            //         UF::ChrCustomizationChoice choice;
-            //         choice.ChrCustomizationOptionID = option->ID;
-            //         choice.ChrCustomizationChoiceID = choiceEntry->ID;
-            //         choiceIdFound = choiceEntry->ID;
-            //         createInfo->Customizations.push_back(choice);
-            //         break;
-            //     }
-            // }
-        }
-
-        if(createInfo->Customizations.empty())
-        {
-            TC_LOG_ERROR("module.playerbot.spawner",
-                "Failed to generate valid customizations for bot character creation");
-            sBotNameMgr->ReleaseName(name);
-            return ObjectGuid::Empty;
-        }
-        TC_LOG_TRACE("module.playerbot.spawner", "Generated {} valid customizations for bot character", createInfo->Customizations.size());
-
-        // Get the starting level from config
-        // @todo add config
-        uint8 startLevel = 1; // sPlayerbotConfig->GetInt("Playerbot.RandomBotLevel.Min", 1);
-
-        // Check if this race/class combination is valid
-        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(classId);
-        ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race);
-
-        if (!classEntry || !raceEntry)
-        {
-            TC_LOG_ERROR("module.playerbot.spawner", "Invalid race ({}) or class ({}) for bot character creation", race, classId);
-            sBotNameMgr->ReleaseName(name);
-            return ObjectGuid::Empty;
-        }
-        TC_LOG_TRACE("module.playerbot.spawner", "Race/class validation succeeded");
-
-        // Create a TEMPORARY bot session for character creation only
-        // CRITICAL: Use BotSession::Create() to create a standalone session for character creation.
-        // Standalone sessions are not added to any update loop, preventing infinite update loops
-        // during the creation process.
-        ::std::shared_ptr<BotSession> tempSession = BotSession::Create(accountId);
-        if (!tempSession)
-        {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to create temp bot session for character creation (Account: {})", accountId);
-            sBotNameMgr->ReleaseName(name);
-            return ObjectGuid::Empty;
-        }
-        TC_LOG_TRACE("module.playerbot.spawner", "Temporary bot session created for character creation");
-
-        // Use smart pointer with proper RAII cleanup to prevent memory leaks
-        ::std::unique_ptr<Player> newChar = ::std::make_unique<Player>(tempSession.get());
-
-        // REMOVED: MotionMaster initialization - this will be handled automatically during Player::Create()
-        // The MotionMaster needs the Player to be fully constructed before initialization
-
-        TC_LOG_TRACE("module.playerbot.spawner", "Creating Player object with GUID {}", guidLow);
-        if (!newChar->Create(guidLow, createInfo.get()))
-        {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to create Player object for bot character (Race: {}, Class: {})", race, classId);
-            sBotNameMgr->ReleaseName(name);
-            // Cleanup will be handled automatically by unique_ptr and shared_ptr
-            return ObjectGuid::Empty;
-        }
-        TC_LOG_TRACE("module.playerbot.spawner", "Player::Create() succeeded");
-
-        // Account ID is automatically set through the bot session - no manual setting needed
-
-        // Set starting level if different from 1
-        TC_LOG_TRACE("module.playerbot.spawner", "Setting character properties (level: {})", startLevel);
-        if (startLevel > 1)
-        {
-            newChar->SetLevel(startLevel);
-        }
-
-        newChar->setCinematic(1); // Skip intro cinematics for bots
-        newChar->SetAtLoginFlag(AT_LOGIN_FIRST);
-
-        // POSITION VALIDATION FIX: Ensure bot has valid position before saving
-        // Position defaults to (0,0,0) and IsPositionValid() returns TRUE for (0,0,0)
-        // because it only checks coordinate bounds, not gameplay validity.
-        // This caused bots to be saved with invalid positions on wrong maps.
-        if (newChar->GetPositionX() == 0.0f && newChar->GetPositionY() == 0.0f && newChar->GetPositionZ() == 0.0f)
-        {
-            TC_LOG_ERROR("module.playerbot.spawner",
-                "POSITION BUG DETECTED: Bot {} has (0,0,0) position after Create()! "
-                "Race: {}, Class: {}. Attempting to fix using playercreateinfo.",
-                name, race, classId);
-
-            // Get correct starting position from playercreateinfo
-            PlayerInfo const* info = sObjectMgr->GetPlayerInfo(race, classId);
-            if (info)
-            {
-                PlayerInfo::CreatePosition const& startPos = info->createPosition;
-                newChar->Relocate(startPos.Loc);
-                newChar->SetHomebind(startPos.Loc, newChar->GetAreaId());
-
-                TC_LOG_INFO("module.playerbot.spawner",
-                    "Position fixed: Bot {} relocated to ({:.2f}, {:.2f}, {:.2f}) on map {}",
-                    name, startPos.Loc.GetPositionX(), startPos.Loc.GetPositionY(),
-                    startPos.Loc.GetPositionZ(), startPos.Loc.GetMapId());
-            }
-            else
-            {
-                TC_LOG_ERROR("module.playerbot.spawner",
-                    "CRITICAL: Cannot fix position - no PlayerInfo for race {} class {}",
-                    race, classId);
-            }
-        }
-
-        // Save to database
-        TC_LOG_TRACE("module.playerbot.spawner", "Saving character to database");
-        // Use PlayerbotCharacterDBInterface for safe transaction handling
-        CharacterDatabaseTransaction characterTransaction = sPlayerbotCharDB->BeginTransaction();
-        LoginDatabaseTransaction loginTransaction = LoginDatabase.BeginTransaction();
-
-        newChar->SaveToDB(loginTransaction, characterTransaction, true);
-        TC_LOG_TRACE("module.playerbot.spawner", "SaveToDB() completed");
-
-        // Update character count for account - with safe statement access to prevent memory corruption
-        TC_LOG_TRACE("module.playerbot.spawner", "Updating character count for account {}", accountId);
-        LoginDatabasePreparedStatement* charCountStmt = GetSafeLoginPreparedStatement(LOGIN_REP_REALM_CHARACTERS, "LOGIN_REP_REALM_CHARACTERS");
-        if (!charCountStmt)
-        {
-            return ObjectGuid::Empty;
-        }
-        charCountStmt->setUInt32(0, 1); // Increment by 1
-        charCountStmt->setUInt32(1, accountId);
-        charCountStmt->setUInt32(2, sRealmList->GetCurrentRealmId().Realm);
-        loginTransaction->Append(charCountStmt);
-
-        // Commit transactions with proper error handling
-        TC_LOG_TRACE("module.playerbot.spawner", "Committing database transactions");
-        try
-        {
-            // Use PlayerbotCharacterDBInterface for safe transaction commit
-            sPlayerbotCharDB->CommitTransaction(characterTransaction);
-            LoginDatabase.CommitTransaction(loginTransaction);
-            TC_LOG_TRACE("module.playerbot.spawner", "Database transactions committed successfully");
-        }
-        catch (::std::exception const& e)
-        {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to commit transactions: {}", e.what());
-            sBotNameMgr->ReleaseName(name);
-            // No need to release session - we used BotSession::Create() which doesn't add to any manager
-            return ObjectGuid::Empty;
-        }
-
-        // Clean up the Player object properly before returning
-        newChar->CleanupsBeforeDelete();
-        newChar.reset(); // Explicit cleanup
-        // tempSession will be automatically cleaned up when shared_ptr goes out of scope
-
-        // CRITICAL: Wait for async commit to complete before returning
-        // The async commit is queued but not instant - we must verify the character
-        // exists in the database before returning, otherwise subsequent operations
-        // (gear scaling, talents, login) will fail because the character doesn't exist yet.
-        bool characterExists = false;
-        for (int retry = 0; retry < 100; ++retry)  // 100 * 50ms = 5 seconds max
-        {
-            // Use direct SQL query to check if character exists (avoids prepared statement issues)
-            ::std::string checkSql = Trinity::StringFormat(
-                "SELECT 1 FROM characters WHERE guid = {}",
-                characterGuid.GetCounter());
-
-            QueryResult checkResult = CharacterDatabase.Query(checkSql.c_str());
-            if (checkResult)
-            {
-                characterExists = true;
-                TC_LOG_TRACE("module.playerbot.spawner",
-                    "Bot character {} verified in database after {} retries",
-                    name, retry);
-                break;
-            }
-
-            // Wait a bit for async commit to complete
-            ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
-        }
-
-        if (!characterExists)
-        {
-            TC_LOG_ERROR("module.playerbot.spawner",
-                "Bot character {} ({}) was not found in database after 5 seconds - async commit may have failed",
-                name, characterGuid.ToString());
-            sBotNameMgr->ReleaseName(name);
-            return ObjectGuid::Empty;
-        }
-
-        // CRITICAL FIX: Add to CharacterCache so name queries work properly
-        // Without this, the group UI shows "??" for bot names because
-        // PlayerGuidLookupData::Initialize() returns false when the guid
-        // is not in CharacterCache (even if the player is online).
-        sCharacterCache->AddCharacterCacheEntry(
-            characterGuid,
-            accountId,
-            name,
-            gender,
-            race,
-            classId,
-            startLevel,
-            false // Not deleted
-        );
-
-        TC_LOG_INFO("module.playerbot.spawner", "Successfully created bot character: {} ({}) - Race: {}, Class: {}, Level: {} for account {}",
-            name, characterGuid.ToString(), uint32(race), uint32(classId), uint32(startLevel), accountId);
-
-        return characterGuid;
+       return CreateBotCharacter(accountId, race, classId, gender, name);
     }
     catch (::std::exception const& e)
     {
@@ -2252,13 +2002,6 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
     }
 }
 
-// =============================================================================
-// CreateBotCharacter - Template-based overload with specific race/class/gender/name
-// =============================================================================
-// This overload allows BotCloneEngine and JITBotFactory to create bots from templates
-// using the async-safe database path (sPlayerbotCharDB) instead of crashing
-// BotCharacterCreator path.
-// =============================================================================
 ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 classId, uint8 gender, ::std::string const& name)
 {
     TC_LOG_INFO("module.playerbot.spawner", "Creating bot character for account {} with template: race={}, class={}, gender={}, name={}",
@@ -2325,37 +2068,58 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
         createInfo->Sex = gender;
         createInfo->UseNPE = false;
 
-        // CRITICAL FIX: Generate valid default customizations for the race/gender
-        // WoW 11.x requires valid customization choices for character creation
-        // Without this, Player::Create() fails at ValidateAppearance()
         createInfo->Customizations.clear();
-        if (auto const* options = sDB2Manager.GetCustomiztionOptions(race, gender))
+
+        std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
+        for (ChrCustomizationOptionEntry const* option : *options)
         {
-            for (ChrCustomizationOptionEntry const* option : *options)
+            ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
+            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId))
+                continue;
+
+            // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
+            if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(option->ID))
             {
-                // Get available choices for this option
-                if (auto const* choices = sDB2Manager.GetCustomiztionChoices(option->ID))
+                for (auto const& [chrCustomizationOptionId, requiredChoicesForOption] : *requiredChoices)
                 {
-                    if (!choices->empty())
-                    {
-                        // Use first valid choice for each option
+                    for (uint32 choiceId : requiredChoicesForOption)
+                    {                        
                         UF::ChrCustomizationChoice choice;
-                        choice.ChrCustomizationOptionID = option->ID;
-                        choice.ChrCustomizationChoiceID = (*choices)[0]->ID;
+                        choice.ChrCustomizationOptionID = chrCustomizationOptionId;
+                        choice.ChrCustomizationChoiceID = choiceId;
                         createInfo->Customizations.push_back(choice);
                     }
                 }
             }
-            TC_LOG_DEBUG("module.playerbot.spawner",
-                "Generated {} customization choices for race {} gender {}",
-                createInfo->Customizations.size(), race, gender);
+            // if(createInfo->Customizations.empty()) {
+            //     // Loop over the options until the first one fits
+            //     uint32 choiceIdFound = 0;
+            //     std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
+            //     for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
+            //     {
+            //         ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
+            //         if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId))
+            //             continue;
+
+            //         ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
+            //         UF::ChrCustomizationChoice choice;
+            //         choice.ChrCustomizationOptionID = option->ID;
+            //         choice.ChrCustomizationChoiceID = choiceEntry->ID;
+            //         choiceIdFound = choiceEntry->ID;
+            //         createInfo->Customizations.push_back(choice);
+            //         break;
+            //     }
+            // }
         }
-        else
+
+        if(createInfo->Customizations.empty())
         {
-            TC_LOG_WARN("module.playerbot.spawner",
-                "No customization options found for race {} gender {} - character creation may fail",
-                race, gender);
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Failed to generate valid customizations for bot character creation");
+            sBotNameMgr->ReleaseName(name);
+            return ObjectGuid::Empty;
         }
+        TC_LOG_TRACE("module.playerbot.spawner", "Generated {} valid customizations for bot character", createInfo->Customizations.size());
 
         // @todo make this configurable 
         uint8 startLevel = 1;
