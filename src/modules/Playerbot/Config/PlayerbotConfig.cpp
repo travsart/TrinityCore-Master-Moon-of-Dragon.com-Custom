@@ -555,17 +555,6 @@ void PlayerbotConfig::InitializeLogging()
 
     // Test the ModuleLogManager's direct logging method that should route to Playerbot.log
     mgr->LogModuleMessage("playerbot", 1, "LOGGING TEST: ModuleLogManager is working!");
-
-    // Test direct TC_LOG call to our created logger
-    TC_LOG_ERROR("module.playerbot.file", "LOGGING TEST: Direct TC_LOG to module.playerbot.file logger is working!");
-
-    // Also test a simple write to verify the file is writable
-    std::ofstream testFile("Playerbot_DirectTest.log");
-    if (testFile.is_open())
-    {
-        testFile << "DIRECT FILE TEST: This proves file writing works" << std::endl;
-        testFile.close();
-    }
 }
 
 void PlayerbotConfig::RefreshCache()
