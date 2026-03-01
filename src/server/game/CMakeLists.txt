@@ -29,11 +29,11 @@ target_link_libraries(game-interface
     shared
     mmaps_common)
 
-if(BUILD_PLAYERBOT)
-  target_include_directories(game-interface
-    PRIVATE
-      ${CMAKE_SOURCE_DIR}/src/modules/Playerbot)
-endif()
+# if(BUILD_PLAYERBOT)
+#   target_include_directories(game-interface
+#     PRIVATE
+#       ${CMAKE_SOURCE_DIR}/src/modules/Playerbot)
+# endif()
 
 
 
