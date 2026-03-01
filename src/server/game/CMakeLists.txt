@@ -59,7 +59,7 @@ if(BUILD_PLAYERBOT)
   target_include_directories(game
     PRIVATE
       ${CMAKE_SOURCE_DIR}/src/modules/Playerbot
-      ${CMAKE_SOURCE_DIR}/src/modules/Playerbot/config
+      ${CMAKE_SOURCE_DIR}/src/modules/Playerbot/Config
   )
   # Link to playerbot-dependencies to get TBB include paths for BotSpawner.h
   if(TARGET playerbot-dependencies)
