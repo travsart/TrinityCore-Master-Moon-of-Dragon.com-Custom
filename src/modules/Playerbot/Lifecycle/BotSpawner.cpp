@@ -73,6 +73,7 @@
 #include <chrono>
 #include <sstream>
 #include <unordered_set>
+#include <array>
 
 namespace Playerbot
 {
