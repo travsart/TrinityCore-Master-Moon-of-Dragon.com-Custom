@@ -571,6 +571,7 @@ bool WorldSession::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req,
                 bool hasRequiredChoiceForOption = false;
                 for (uint32 requiredChoice : requiredChoicesForOption)
                 {
+                    TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player required choice {} for option ID {}", requiredChoice, chrCustomizationOptionId);
                     auto choiceItr = std::find_if(selectedChoices.begin(), selectedChoices.end(), [requiredChoice](UF::ChrCustomizationChoice const& choice)
                     {
                         return choice.ChrCustomizationChoiceID == requiredChoice;

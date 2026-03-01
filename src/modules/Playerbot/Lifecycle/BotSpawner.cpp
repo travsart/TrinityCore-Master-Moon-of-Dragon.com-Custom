@@ -2261,7 +2261,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 // =============================================================================
 ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 classId, uint8 gender, ::std::string const& name)
 {
-    TC_LOG_TRACE("module.playerbot.spawner", "Creating bot character for account {} with template: race={}, class={}, gender={}, name={}",
+    TC_LOG_INFO("module.playerbot.spawner", "Creating bot character for account {} with template: race={}, class={}, gender={}, name={}",
         accountId, race, classId, gender, name);
 
     try
@@ -2357,6 +2357,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
                 race, gender);
         }
 
+        // @todo make this configurable 
         uint8 startLevel = 1;
 
         // Create a TEMPORARY bot session for character creation only

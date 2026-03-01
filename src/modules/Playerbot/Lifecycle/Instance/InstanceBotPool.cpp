@@ -1519,6 +1519,8 @@ ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, Faction faction, PoolBra
         return ObjectGuid::Empty;
     }
 
+    TC_LOG_WARN("playerbot.pool", "InstanceBotPool::CreatePoolBot - Picked template for role {} faction {}",
+        BotRoleToString(role), FactionToString(faction));
     // Step 2: Get race for faction from template
     uint8 race = tmpl->GetRandomRace(faction);
     if (race == 0)
@@ -1535,6 +1537,7 @@ ObjectGuid InstanceBotPool::CreatePoolBot(BotRole role, Faction faction, PoolBra
         TC_LOG_WARN("playerbot.pool", "InstanceBotPool::CreatePoolBot - Failed to allocate account");
         return ObjectGuid::Empty;
     }
+    TC_LOG_WARN("playerbot.pool", "InstanceBotPool::CreatePoolBot - Account {}", accountId);
 
     // Step 4: Create character using BotSpawner's working async-safe method
     // NOTE: BotSpawner::CreateBotCharacter uses sPlayerbotCharDB which handles sync/async properly

@@ -16,39 +16,40 @@
  */
 
 #include "BotMovementConfig.h"
+#include "PlayerbotConfig.h"
 #include "Config.h"
 
 void BotMovementConfig::Load()
 {
     // Main enable/disable toggle
-    _enabled = sConfigMgr->GetBoolDefault("BotMovement.Enable", true);
+    _enabled = sPlayerbotConfig->GetBool("BotMovement.Enable", true);
 
     // Validation level
-    uint32 validationLevelValue = sConfigMgr->GetIntDefault("BotMovement.ValidationLevel", 2);
+    uint32 validationLevelValue = sPlayerbotConfig->GetInt("BotMovement.ValidationLevel", 2);
     if (validationLevelValue > static_cast<uint32>(ValidationLevel::Strict))
         validationLevelValue = static_cast<uint32>(ValidationLevel::Standard);
     _validationLevel = static_cast<ValidationLevel>(validationLevelValue);
 
     // Individual validation toggles
-    _groundValidation = sConfigMgr->GetBoolDefault("BotMovement.Validation.Ground", true);
-    _collisionValidation = sConfigMgr->GetBoolDefault("BotMovement.Validation.Collision", true);
-    _liquidValidation = sConfigMgr->GetBoolDefault("BotMovement.Validation.Liquid", true);
+    _groundValidation = sPlayerbotConfig->GetBool("BotMovement.Validation.Ground", true);
+    _collisionValidation = sPlayerbotConfig->GetBool("BotMovement.Validation.Collision", true);
+    _liquidValidation = sPlayerbotConfig->GetBool("BotMovement.Validation.Liquid", true);
 
     // Stuck detection settings
-    _stuckDetectionEnabled = sConfigMgr->GetBoolDefault("BotMovement.StuckDetection.Enable", true);
-    _stuckPosThreshold = Milliseconds(sConfigMgr->GetIntDefault("BotMovement.StuckDetection.PositionThreshold", 3000));
-    _stuckDistThreshold = sConfigMgr->GetFloatDefault("BotMovement.StuckDetection.Threshold", 2.0f);
-    _maxRecoveryAttempts = sConfigMgr->GetIntDefault("BotMovement.StuckDetection.RecoveryMaxAttempts", 5);
+    _stuckDetectionEnabled = sPlayerbotConfig->GetBool("BotMovement.StuckDetection.Enable", true);
+    _stuckPosThreshold = Milliseconds(sPlayerbotConfig->GetInt("BotMovement.StuckDetection.PositionThreshold", 3000));
+    _stuckDistThreshold = sPlayerbotConfig->GetFloat("BotMovement.StuckDetection.Threshold", 2.0f);
+    _maxRecoveryAttempts = sPlayerbotConfig->GetInt("BotMovement.StuckDetection.RecoveryMaxAttempts", 5);
 
     // Path cache settings
-    _pathCacheEnabled = sConfigMgr->GetBoolDefault("BotMovement.PathCache.Enable", true);
-    _pathCacheSize = sConfigMgr->GetIntDefault("BotMovement.PathCache.MaxSize", 5000);
-    _pathCacheTTL = std::chrono::duration_cast<Seconds>(Milliseconds(sConfigMgr->GetIntDefault("BotMovement.PathCache.TTL", 30000)));
+    _pathCacheEnabled = sPlayerbotConfig->GetBool("BotMovement.PathCache.Enable", true);
+    _pathCacheSize = sPlayerbotConfig->GetInt("BotMovement.PathCache.MaxSize", 5000);
+    _pathCacheTTL = std::chrono::duration_cast<Seconds>(Milliseconds(sPlayerbotConfig->GetInt("BotMovement.PathCache.TTL", 30000)));
 
     // Debug settings
-    _debugLogLevel = sConfigMgr->GetIntDefault("BotMovement.Debug.LogLevel", 2);
-    _logStateChanges = sConfigMgr->GetBoolDefault("BotMovement.Debug.LogStateChanges", false);
-    _logValidationFailures = sConfigMgr->GetBoolDefault("BotMovement.Debug.LogValidationFailures", true);
+    _debugLogLevel = sPlayerbotConfig->GetInt("BotMovement.Debug.LogLevel", 2);
+    _logStateChanges = sPlayerbotConfig->GetBool("BotMovement.Debug.LogStateChanges", false);
+    _logValidationFailures = sPlayerbotConfig->GetBool("BotMovement.Debug.LogValidationFailures", true);
 }
 
 void BotMovementConfig::Reload()
