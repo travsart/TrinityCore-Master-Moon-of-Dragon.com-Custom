@@ -2140,7 +2140,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
                  option->ID, race, gender, option->ID, option->ChrCustomizationReqID);
 
             ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
-            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, nullptr))
+            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, std::nullopt))
                 continue;
 
             // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
@@ -2180,7 +2180,8 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
         Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices = MakeChrCustomizationChoiceRange(createInfo->Customizations);
         for(auto const& customization : createInfo->Customizations)
         {
-            if(!MeetsChrCustomizationReq(customization.ChrCustomizationOptionID, race, classId, true, selectedChoices))
+            ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(customization.ChrCustomizationOptionID);
+            if(!MeetsChrCustomizationReq(optionReq, race, classId, true, selectedChoices))
             {
                 TC_LOG_ERROR("module.playerbot.spawner",
                     "Failed to generate valid customizations for bot character creation {} {} {} {} {}", name, race, classId, gender, customization.ChrCustomizationOptionID);
