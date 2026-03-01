@@ -2181,7 +2181,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
         Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices = MakeChrCustomizationChoiceRange(createInfo->Customizations);
         for(auto const& customization : createInfo->Customizations)
         {
-            ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(customization.ChrCustomizationOptionID);
+            ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(customization.ChrCustomizationReqID);
             if(!MeetsChrCustomizationReq(optionReq, race, classId, true, selectedChoices))
             {
                 TC_LOG_ERROR("module.playerbot.spawner",
