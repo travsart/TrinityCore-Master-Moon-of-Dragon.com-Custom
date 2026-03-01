@@ -2186,7 +2186,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
             if(!MeetsChrCustomizationReq(optionReq, race, classId, true, selectedChoices))
             {
                 TC_LOG_ERROR("module.playerbot.spawner",
-                    "Failed to generate valid customizations for bot character creation {} {} {} {} {}", name, race, classId, gender, customization.ChrCustomizationOptionID);
+                    "Failed to generate valid customizations for bot character creation {} {} {} {} {}", name, race, classId, gender, reqId);
                 sBotNameMgr->ReleaseName(name);
                 return ObjectGuid::Empty;
             }
