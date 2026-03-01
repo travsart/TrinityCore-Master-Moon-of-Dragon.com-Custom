@@ -1922,7 +1922,7 @@ Trinity::IteratorPair<UF::ChrCustomizationChoice const*> MakeChrCustomizationCho
 
 
 bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass, bool checkRequiredDependentChoices,
-   Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices)
+    std::optional<Trinity::IteratorPair<UF::ChrCustomizationChoice const*>> selectedChoices = std::nullptr_t)
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements)){
         TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: HasRequirements flag not set for requirement ID {}, skipping checks", req->ID);
@@ -2140,7 +2140,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
                  option->ID, race, gender, option->ID, option->ChrCustomizationReqID);
 
             ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
-            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, std::nullopt))
+            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, std::nullptr))
                 continue;
 
             // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
