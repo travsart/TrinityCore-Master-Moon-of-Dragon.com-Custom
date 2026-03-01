@@ -2157,6 +2157,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
                         choice.ChrCustomizationChoiceID = choiceId;
                         createInfo->Customizations.push_back(choice);
                         TC_LOG_ERROR("module.playerbot.spawner", "Adding choice for option {} choice {} ", chrCustomizationOptionId, choiceId);
+                        break;
                     }
                 }
             }
