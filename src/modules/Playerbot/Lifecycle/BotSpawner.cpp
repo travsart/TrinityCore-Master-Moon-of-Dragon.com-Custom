@@ -1922,7 +1922,7 @@ Trinity::IteratorPair<UF::ChrCustomizationChoice const*> MakeChrCustomizationCho
 
 
 bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass, bool checkRequiredDependentChoices,
-    std::optional<Trinity::IteratorPair<UF::ChrCustomizationChoice const*>> selectedChoices)
+    Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices)
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements)){
         TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: HasRequirements flag not set for requirement ID {}, skipping checks", req->ID);
