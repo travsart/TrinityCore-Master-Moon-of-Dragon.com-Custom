@@ -624,7 +624,7 @@ bool WorldSession::ValidateAppearance(Races race, Classes playerClass, Gender ge
 
         // option not found for race/gender combination
         if (customizationOptionDataItr == options->end()){
-            TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: option not found for race/gender combination {}", playerChoice.ChrCustomizationOptionID);
+            TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: option not found for race/gender combination {} {} {}", playerChoice.ChrCustomizationOptionID, race, gender);
             return false;
         }
 

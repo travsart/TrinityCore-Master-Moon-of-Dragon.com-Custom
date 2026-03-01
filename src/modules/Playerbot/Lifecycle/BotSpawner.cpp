@@ -1910,24 +1910,76 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
     return CreateBotCharacter(accountId);
 }
 
-
-bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass)
+bool WorldSession::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass, bool checkRequiredDependentChoices,
+    Array<ChrCustomizationChoice> selectedChoices) const
 {
-    if (req->ClassMask && !(req->ClassMask & (1 << (playerClass - 1))))
+    if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements)){
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: HasRequirements flag not set for requirement ID {}, skipping checks", req->ID);
+        return true;
+    }
+
+    if (req->ClassMask && !(req->ClassMask & (1 << (playerClass - 1)))){
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: class {} class mask {} does not match requirement", playerClass, req->ClassMask);
         return false;
+    }
 
     if (race != RACE_NONE && !req->RaceMask.IsEmpty() && req->RaceMask.RawValue != -1 && !req->RaceMask.HasRace(race))
+    {
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: race {} race mask {} does not match requirement", race, req->RaceMask.RawValue);
         return false;
+    }
 
-    if (req->AchievementID /*&& !HasAchieved(req->AchievementID)*/)
+    if (req->AchievementID /*&& !HasAchieved(req->AchievementID)*/){
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required achievement ID {}", req->AchievementID);
         return false;
+    }
+
+    if (req->ItemModifiedAppearanceID && !GetCollectionMgr()->HasItemAppearance(req->ItemModifiedAppearanceID).first){
+        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required item modified appearance ID {}", req->ItemModifiedAppearanceID);
+        return false;
+    }
+
+    if (req->QuestID)
+    {
+        return false;
+    }
+
+    if (checkRequiredDependentChoices)
+    {
+        if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(req->ID))
+        {
+            for (auto const& [chrCustomizationOptionId, requiredChoicesForOption] : *requiredChoices)
+            {
+                bool hasRequiredChoiceForOption = false;
+                for (uint32 requiredChoice : requiredChoicesForOption)
+                {
+                    TC_LOG_ERROR("entities.player.cheat", "MeetsChrCustomizationReq: player required choice {} for option ID {}", requiredChoice, chrCustomizationOptionId);
+                    auto choiceItr = std::find_if(selectedChoices.begin(), selectedChoices.end(), [requiredChoice](UF::ChrCustomizationChoice const& choice)
+                    {
+                        return choice.ChrCustomizationChoiceID == requiredChoice;
+                    });
+
+                    if (choiceItr != selectedChoices.end())
+                    {
+                        hasRequiredChoiceForOption = true;
+                        break;
+                    }
+                }
+
+                if (!hasRequiredChoiceForOption){
+                    TC_LOG_ERROR("entities.player.cheat", "MeetsChrCustomizationReq: player does not have required choice for option ID {}", chrCustomizationOptionId);
+                    return false;
+                }
+            }
+        }
+    }
 
     return true;
 }
 
 ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 {
-    TC_LOG_TRACE("module.playerbot.spawner", "Creating bot character for account {}", accountId);
+    TC_LOG_ERROR("module.playerbot.spawner", "CreateBotCharacter-simple: Creating bot character for account {}", accountId);
     try
     {
         // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character
@@ -2004,7 +2056,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
 ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 classId, uint8 gender, ::std::string const& name)
 {
-    TC_LOG_INFO("module.playerbot.spawner", "Creating bot character for account {} with template: race={}, class={}, gender={}, name={}",
+    TC_LOG_ERROR("module.playerbot.spawner", "Creating bot character for account {} with template: race={}, class={}, gender={}, name={}",
         accountId, race, classId, gender, name);
 
     try
@@ -2073,8 +2125,11 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
         std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
         for (ChrCustomizationOptionEntry const* option : *options)
         {
+             TC_LOG_ERROR("module.playerbot.spawner", "Processing customization option {} for race {} and gender {}: option ID {}, req ID {}",
+                 option->ID, race, gender, option->ID, option->ChrCustomizationReqID);
+
             ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
-            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId))
+            if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, createInfo->Customizations))
                 continue;
 
             // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
@@ -2098,7 +2153,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
             //     for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
             //     {
             //         ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
-            //         if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId))
+            //         if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId, false, createInfo->Customizations))
             //             continue;
 
             //         ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
@@ -2111,11 +2166,22 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
             //     }
             // }
         }
+        for(auto const& customization : createInfo->Customizations)
+        {
+            if(!MeetsChrCustomizationReq(customization.ChrCustomizationOptionID, race, classId, true, createInfo->Customizations))
+            {
+                TC_LOG_ERROR("module.playerbot.spawner",
+                    "Failed to generate valid customizations for bot character creation {} {} {} {} {}", name, race, classId, gender, customization.ChrCustomizationOptionID);
+                sBotNameMgr->ReleaseName(name);
+                return ObjectGuid::Empty;
+            }
+        }
+        
 
         if(createInfo->Customizations.empty())
         {
             TC_LOG_ERROR("module.playerbot.spawner",
-                "Failed to generate valid customizations for bot character creation");
+                "Failed to generate valid customizations for bot character creation {} {} {} {}", name, race, classId, gender);
             sBotNameMgr->ReleaseName(name);
             return ObjectGuid::Empty;
         }
