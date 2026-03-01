@@ -360,8 +360,7 @@ bool PlayerbotWorldScript::IsPlayerbotEnabled() const
         loggedOnce = true;
     }
 
-    // TEMPORARY: Force enable for testing the WorldScript integration
-    return true;
+    return enabled;
 }
 
 void PlayerbotWorldScript::UpdateMetrics(uint32 updateTime)

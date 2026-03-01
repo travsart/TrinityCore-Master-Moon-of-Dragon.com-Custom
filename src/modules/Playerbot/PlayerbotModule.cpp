@@ -87,7 +87,7 @@
 
 bool PlayerbotModule::Initialize()
 {
-    TC_LOG_INFO("module.playerbot", "Initializing Playerbot Module...");
+    TC_LOG_ERROR("module.playerbot", "Initializing Playerbot Module...");
 
     // Run guided setup check FIRST - ensures config file exists
     // This will create a default config from .dist if missing

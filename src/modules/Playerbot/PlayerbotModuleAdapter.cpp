@@ -45,11 +45,11 @@ void PlayerbotModuleAdapter::OnModuleStartup()
     bool enabled = sPlayerbotConfig->GetBool("Playerbot.Enable", false);
     if (!enabled)
     {
-        TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Playerbot disabled (Playerbot.Enable = false)");
+        TC_LOG_ERROR("module.playerbot", "PlayerbotModuleAdapter: Playerbot disabled (Playerbot.Enable = false)");
         return;
     }
 
-    TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Playerbot enabled - initializing bot spawning systems");
+    TC_LOG_ERROR("module.playerbot", "PlayerbotModuleAdapter: Playerbot enabled - initializing bot spawning systems");
 
     try
     {

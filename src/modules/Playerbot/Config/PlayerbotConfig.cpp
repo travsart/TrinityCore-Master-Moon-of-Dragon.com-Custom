@@ -72,6 +72,7 @@ bool PlayerbotConfig::Initialize()
 
     // DEBUG: Print critical config values to verify they were read correctly
     TC_LOG_ERROR("server.loading", "🔧 PlayerbotConfig DEBUG - Critical spawn values:");
+    TC_LOG_ERROR("server.loading", "🔧   Playerbot.Enable = {}", GetUInt("Playerbot.Enable", 0));
     TC_LOG_ERROR("server.loading", "🔧   Playerbot.Spawn.MaxTotal = {}", GetUInt("Playerbot.Spawn.MaxTotal", 80));
     TC_LOG_ERROR("server.loading", "🔧   Playerbot.Startup.Phase1.TargetBots = {}", GetInt("Playerbot.Startup.Phase1.TargetBots", 100));
     TC_LOG_ERROR("server.loading", "🔧   Playerbot.MaxBots = {}", GetInt("Playerbot.MaxBots", 100));
