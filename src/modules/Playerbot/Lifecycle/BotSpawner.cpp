@@ -69,6 +69,7 @@
 #include "WorldSession.h"
 #include "Movement/BotWorldPositioner.h"
 #include "BotCustomizationGenerator.h"
+#include "PacketUtilities.h"
 #include <algorithm>
 #include <chrono>
 #include <sstream>
