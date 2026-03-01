@@ -1912,7 +1912,7 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
     return CreateBotCharacter(accountId);
 }
 
-bool BotSpawner::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass, bool checkRequiredDependentChoices,
+bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass, bool checkRequiredDependentChoices,
     Array<UF::ChrCustomizationChoice> selectedChoices)
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements)){
