@@ -2144,6 +2144,23 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
             if (optionReq && !MeetsChrCustomizationReq(optionReq, race, classId, false, nullChoices))
                 continue;
             reqOptions.push_back(option->ChrCustomizationReqID);
+
+            std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
+            uint32 choiceIdFound = 0;
+            for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
+            {
+                ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
+                if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId, false, createInfo->Customizations))
+                    continue;
+
+                ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
+                UF::ChrCustomizationChoice choice;
+                choice.ChrCustomizationOptionID = option->ID;
+                choice.ChrCustomizationChoiceID = choiceEntry->ID;
+                choiceIdFound = choiceEntry->ID;
+                createInfo->Customizations.push_back(choice);
+                break;
+            }
             
             // Loop over the options until the first one fits the requirements, then break (we just need one valid choice per option)
             if (std::vector<std::pair<uint32, std::vector<uint32>>> const* requiredChoices = sDB2Manager.GetRequiredCustomizationChoices(option->ID))
@@ -2151,7 +2168,9 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
                 for (auto const& [chrCustomizationOptionId, requiredChoicesForOption] : *requiredChoices)
                 {
                     for (uint32 choiceId : requiredChoicesForOption)
-                    {                        
+                    {            
+                        if(choiceIdFound == choiceId)
+                            continue; // Already added this choice for the option
                         UF::ChrCustomizationChoice choice;
                         choice.ChrCustomizationOptionID = chrCustomizationOptionId;
                         choice.ChrCustomizationChoiceID = choiceId;
