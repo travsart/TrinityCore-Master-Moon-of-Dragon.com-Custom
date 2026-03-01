@@ -1925,28 +1925,28 @@ bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, u
     Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices)
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements)){
-        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: HasRequirements flag not set for requirement ID {}, skipping checks", req->ID);
+        TC_LOG_ERROR("entities.player.cheat", "MeetsChrCustomizationReq: HasRequirements flag not set for requirement ID {}, skipping checks", req->ID);
         return true;
     }
 
     if (req->ClassMask && !(req->ClassMask & (1 << (playerClass - 1)))){
-        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: class {} class mask {} does not match requirement", playerClass, req->ClassMask);
+        TC_LOG_ERROR("entities.player.cheat", "MeetsChrCustomizationReq: class {} class mask {} does not match requirement", playerClass, req->ClassMask);
         return false;
     }
 
     if (race != RACE_NONE && !req->RaceMask.IsEmpty() && req->RaceMask.RawValue != -1 && !req->RaceMask.HasRace(race))
     {
-        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: race {} race mask {} does not match requirement", race, req->RaceMask.RawValue);
+        TC_LOG_ERROR("entities.player.cheat", "MeetsChrCustomizationReq: race {} race mask {} does not match requirement", race, req->RaceMask.RawValue);
         return false;
     }
 
     if (req->AchievementID /*&& !HasAchieved(req->AchievementID)*/){
-        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required achievement ID {}", req->AchievementID);
+        TC_LOG_ERROR("entities.player.cheat", "MeetsChrCustomizationReq: player does not have required achievement ID {}", req->AchievementID);
         return false;
     }
 
     if (req->ItemModifiedAppearanceID){
-        TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required item modified appearance ID {}", req->ItemModifiedAppearanceID);
+        TC_LOG_ERROR("entities.player.cheat", "MeetsChrCustomizationReq: player does not have required item modified appearance ID {}", req->ItemModifiedAppearanceID);
         return false;
     }
 
@@ -2067,7 +2067,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
 ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 classId, uint8 gender, ::std::string const& name)
 {
-    TC_LOG_ERROR("module.playerbot.spawner", "Creating bot character for account {} with template: race={}, class={}, gender={}, name={}",
+    TC_LOG_DEBUG("module.playerbot.spawner", "Creating bot character for account {} with template: race={}, class={}, gender={}, name={}",
         accountId, race, classId, gender, name);
 
     try
@@ -2137,7 +2137,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
         std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
         for (ChrCustomizationOptionEntry const* option : *options)
         {
-             TC_LOG_ERROR("module.playerbot.spawner", "Processing customization option {} for race {} and gender {}:, req ID {}",
+             TC_LOG_DEBUG("module.playerbot.spawner", "Processing customization option {} for race {} and gender {}:, req ID {}",
                  option->ID, race, gender, option->ChrCustomizationReqID);
 
             ChrCustomizationReqEntry const* optionReq = sChrCustomizationReqStore.LookupEntry(option->ChrCustomizationReqID);
@@ -2175,30 +2175,11 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
                         choice.ChrCustomizationOptionID = chrCustomizationOptionId;
                         choice.ChrCustomizationChoiceID = choiceId;
                         createInfo->Customizations.push_back(choice);
-                        TC_LOG_ERROR("module.playerbot.spawner", "Adding choice for option {} choice {} ", chrCustomizationOptionId, choiceId);
+                        TC_LOG_DEBUG("module.playerbot.spawner", "Adding choice for option {} choice {} ", chrCustomizationOptionId, choiceId);
                         break;
                     }
                 }
             }
-            // if(createInfo->Customizations.empty()) {
-            //     // Loop over the options until the first one fits
-            //     uint32 choiceIdFound = 0;
-            //     std::vector<ChrCustomizationChoiceEntry const*> const* choicesForOption = sDB2Manager.GetCustomiztionChoices(option->ID);
-            //     for (ChrCustomizationChoiceEntry const* choiceForOption : *choicesForOption)
-            //     {
-            //         ChrCustomizationReqEntry const* choiceReq = sChrCustomizationReqStore.LookupEntry(choiceForOption->ChrCustomizationReqID);
-            //         if (choiceReq && !MeetsChrCustomizationReq(choiceReq, race, classId, false, createInfo->Customizations))
-            //             continue;
-
-            //         ChrCustomizationChoiceEntry const* choiceEntry = choicesForOption->at(0);
-            //         UF::ChrCustomizationChoice choice;
-            //         choice.ChrCustomizationOptionID = option->ID;
-            //         choice.ChrCustomizationChoiceID = choiceEntry->ID;
-            //         choiceIdFound = choiceEntry->ID;
-            //         createInfo->Customizations.push_back(choice);
-            //         break;
-            //     }
-            // }
         }
         Trinity::IteratorPair<UF::ChrCustomizationChoice const*> selectedChoices = MakeChrCustomizationChoiceRange(createInfo->Customizations);
         for(int32 reqId : reqOptions)
