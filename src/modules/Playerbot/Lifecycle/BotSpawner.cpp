@@ -2133,7 +2133,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId, uint8 race, uint8 cl
 
         createInfo->Customizations.clear();
         Trinity::IteratorPair<UF::ChrCustomizationChoice const*> nullChoices = MakeChrCustomizationChoiceRange(createInfo->Customizations);
-        vector<int32> const* reqOptions;
+        std::vector<int32> reqOptions;
         std::vector<ChrCustomizationOptionEntry const*> const* options = sDB2Manager.GetCustomiztionOptions(race, gender);
         for (ChrCustomizationOptionEntry const* option : *options)
         {
