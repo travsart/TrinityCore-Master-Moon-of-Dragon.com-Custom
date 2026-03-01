@@ -1911,7 +1911,7 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
 }
 
 bool BotSpawner::MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, uint8 playerClass, bool checkRequiredDependentChoices,
-    Array<ChrCustomizationChoice> selectedChoices)
+    Array<UF::ChrCustomizationChoice> selectedChoices)
 {
     if (!req->GetFlags().HasFlag(ChrCustomizationReqFlag::HasRequirements)){
         TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: HasRequirements flag not set for requirement ID {}, skipping checks", req->ID);
