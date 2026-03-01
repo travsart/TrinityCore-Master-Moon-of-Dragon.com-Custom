@@ -1936,7 +1936,7 @@ bool MeetsChrCustomizationReq(ChrCustomizationReqEntry const* req, uint8 race, u
         return false;
     }
 
-    if (req->ItemModifiedAppearanceID && !GetCollectionMgr()->HasItemAppearance(req->ItemModifiedAppearanceID).first){
+    if (req->ItemModifiedAppearanceID){
         TC_LOG_ERROR("entities.player.cheat", "ValidateAppearance: player does not have required item modified appearance ID {}", req->ItemModifiedAppearanceID);
         return false;
     }
