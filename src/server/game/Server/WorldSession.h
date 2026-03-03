@@ -471,7 +471,6 @@ namespace WorldPackets
         class SetBankAutosortDisabled;
         class SetSortBagsRightToLeft;
         class SetInsertItemsLeftToRight;
-        class SellAllJunkItems;
     }
 
     namespace LFG
