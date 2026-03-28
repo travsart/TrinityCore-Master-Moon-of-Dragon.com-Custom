@@ -238,20 +238,21 @@ public:
     }
 };
 
+using namespace Trinity::ChatCommands;
 class free_share_scripts : public CommandScript
 {
 public:
     free_share_scripts() : CommandScript("free_share_scripts") {}
 
-    std::vector<ChatCommand> GetCommands() const override
+    std::span<ChatCommandBuilder const> GetCommands() const override
     {
-        static std::vector<ChatCommand> typingCommandTable =
+        static ChatCommandTable typimgCommandTable =
         {
             { "on",              rbac::RBAC_PERM_COMMAND_TYPING_ON,     false,      &HandleTypingOnCommand,     "Enables typing animation."},
             { "off",             rbac::RBAC_PERM_COMMAND_TYPING_OFF,    false,      &HandleTypingOffCommand,    "Disables typing animation."},
         };
 
-        static std::vector<ChatCommand> commandTable =
+        static ChatCommandTable commandTable =
         {
             { "barbershop",      rbac::RBAC_PERM_COMMAND_BARBER,        false,      &HandleBarberCommand,       "Opens the barbershop interface."},
             { "castgroup",       rbac::RBAC_PERM_COMMAND_CAST_GROUP,    false,      &HandleCastGroupCommand,    "Syntax: .castgroup <spellId>\nCasts a spell on your entire group."},

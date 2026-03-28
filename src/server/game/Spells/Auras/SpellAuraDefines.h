@@ -577,7 +577,7 @@ enum AuraType : uint32
     SPELL_AURA_MOD_ALTERNATIVE_DEFAULT_TEAM                 = 490,
     SPELL_AURA_MOD_HONOR_GAIN_PCT                           = 491,
     SPELL_AURA_492                                          = 492,
-    SPELL_AURA_493                                          = 493, // 1 spell, 267116 - Animal Companion (modifies Call Pet)
+    SPELL_AURA_ANIMAL_COMPANION                             = 493, // 1 spell, 267116 - Animal Companion (modifies Call Pet)
     SPELL_AURA_SET_POWER_POINT_CHARGE                       = 494, // NYI
     SPELL_AURA_TRIGGER_SPELL_ON_EXPIRE                      = 495,
     SPELL_AURA_ALLOW_CHANGING_EQUIPMENT_IN_TORGHAST         = 496, // NYI
@@ -735,7 +735,7 @@ enum AuraType : uint32
     SPELL_AURA_ADD_FLAT_PVP_MODIFIER_BY_SPELL_LABEL         = 648,
     SPELL_AURA_ADD_PCT_PVP_MODIFIER_BY_SPELL_LABEL          = 649,
     SPELL_AURA_650                                          = 650,
-    SPELL_AURA_651                                          = 651,
+    SPELL_AURA_ENABLE_EVENT_TRANSMOG_OUTFIT                 = 651,
     SPELL_AURA_652                                          = 652,
     SPELL_AURA_653                                          = 653,
     SPELL_AURA_654                                          = 654,

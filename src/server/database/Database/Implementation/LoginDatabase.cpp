@@ -191,9 +191,8 @@ void LoginDatabaseConnection::DoPrepareStatements()
     PrepareStatement(LOGIN_SEL_BNET_TRANSMOG_ILLUSIONS, "SELECT blobIndex, illusionMask FROM battlenet_account_transmog_illusions WHERE battlenetAccountId = ? ORDER BY blobIndex DESC", CONNECTION_ASYNC);
     PrepareStatement(LOGIN_INS_BNET_TRANSMOG_ILLUSIONS, "INSERT INTO battlenet_account_transmog_illusions (battlenetAccountId, blobIndex, illusionMask) VALUES (?, ?, ?) "
         "ON DUPLICATE KEY UPDATE illusionMask = illusionMask | VALUES(illusionMask)", CONNECTION_ASYNC);
-    PrepareStatement(LOGIN_SEL_BNET_TRANSMOG_SET_FAVORITES, "SELECT transmogSetId FROM battlenet_transmog_set_favorites WHERE battlenetAccountId = ?", CONNECTION_ASYNC);
-    PrepareStatement(LOGIN_INS_BNET_TRANSMOG_SET_FAVORITE, "INSERT IGNORE INTO battlenet_transmog_set_favorites (battlenetAccountId, transmogSetId) VALUES (?, ?)", CONNECTION_ASYNC);
-    PrepareStatement(LOGIN_DEL_BNET_TRANSMOG_SET_FAVORITE, "DELETE FROM battlenet_transmog_set_favorites WHERE battlenetAccountId = ? AND transmogSetId = ?", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_SEL_BNET_TRANSMOG_OUTFITS, "SELECT transmogOutfitId FROM battlenet_account_transmog_outfits WHERE battlenetAccountId = ?", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_INS_BNET_TRANSMOG_OUTFITS, "INSERT IGNORE INTO battlenet_account_transmog_outfits (battlenetAccountId, transmogOutfitId) VALUES (?, ?)", CONNECTION_ASYNC);
     PrepareStatement(LOGIN_SEL_BNET_WARBAND_SCENES, "SELECT warbandSceneId, isFavorite, hasFanfare FROM battlenet_account_warband_scenes WHERE battlenetAccountId = ?", CONNECTION_ASYNC);
     PrepareStatement(LOGIN_INS_BNET_WARBAND_SCENE, "INSERT INTO battlenet_account_warband_scenes (battlenetAccountId, warbandSceneId, isFavorite, hasFanfare) VALUES (?, ?, ?, ?) "
         "ON DUPLICATE KEY UPDATE isFavorite = VALUES(isFavorite)", CONNECTION_ASYNC);

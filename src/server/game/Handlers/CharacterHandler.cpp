@@ -63,6 +63,8 @@
 #include "SocialMgr.h"
 #include "StringConvert.h"
 #include "SystemPackets.h"
+#include "SpellAuraEffects.h"
+#include "TransmogMgr.h"
 #include "Util.h"
 #include "World.h"
 #include <boost/circular_buffer.hpp>
@@ -259,9 +261,17 @@ bool LoginQueryHolder::Initialize()
     stmt->setUInt64(0, lowGuid);
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFITS, stmt);
 
-    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_TRANSMOG_OUTFIT_SITUATIONS);
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_TRANSMOG_OUTFIT);
     stmt->setUInt64(0, lowGuid);
-    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SITUATIONS, stmt);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_TRANSMOG_OUTFIT_SITUATION);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SITUATION, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_TRANSMOG_OUTFIT_SLOT);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SLOT, stmt);
 
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_CUF_PROFILES);
     stmt->setUInt64(0, lowGuid);
@@ -1649,6 +1659,20 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder const& holder)
     if (!pCurrChar->IsStandState() && !pCurrChar->HasUnitState(UNIT_STATE_STUNNED))
         pCurrChar->SetStandState(UNIT_STAND_STATE_STAND);
 
+    // Summon animal companion on login if aura is active
+    if (pCurrChar->GetPet() && pCurrChar->GetAnimalCompanion().IsEmpty())
+    {
+        Unit::AuraEffectList const& animalCompanion = pCurrChar->GetAuraEffectsByType(SPELL_AURA_ANIMAL_COMPANION);
+        for (AuraEffect const* aurEff : animalCompanion)
+        {
+            if (uint32 triggerSpell = aurEff->GetSpellEffectInfo().TriggerSpell)
+            {
+                if (sSpellMgr->GetSpellInfo(triggerSpell, DIFFICULTY_NONE))
+                    pCurrChar->CastSpell(pCurrChar, triggerSpell, true);
+            }
+        }
+    }
+
     pCurrChar->UpdateAverageItemLevelTotal();
     pCurrChar->UpdateAverageItemLevelEquipped();
 
@@ -1715,12 +1739,6 @@ void WorldSession::SendFeatureSystemStatus()
                 rule.Value = value;
         }, gameRule.Value);
     }
-
-    // Force GameRule 109 (TransmogEnabled) to be true for the client UI
-    WorldPackets::System::GameRuleValuePair& transmogRule = features.GameRules.emplace_back();
-    transmogRule.Rule = 109; // TransmogEnabled
-    transmogRule.Value = 1;  // True
-    transmogRule.ValueF = 0.0f;
 
     features.AddonChatThrottle.MaxTries = 10;
     features.AddonChatThrottle.TriesRestoredPerSecond = 1;
@@ -2224,10 +2242,7 @@ void WorldSession::HandleEquipmentSetSave(WorldPackets::EquipmentSet::SaveEquipm
         auto validateIllusion = [this](uint32 enchantId) -> bool
         {
             SpellItemEnchantmentEntry const* illusion = sSpellItemEnchantmentStore.LookupEntry(enchantId);
-            if (!illusion)
-                return false;
-
-            if (!illusion->ItemVisual || !illusion->GetFlags().HasFlag(SpellItemEnchantmentFlags::AllowTransmog))
+            if (!illusion || !TransmogMgr::GetTransmogIllusionForSpellItemEnchantment(enchantId))
                 return false;
 
             if (!ConditionMgr::IsPlayerMeetingCondition(_player, illusion->TransmogUseConditionID))

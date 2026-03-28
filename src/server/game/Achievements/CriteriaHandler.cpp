@@ -3227,10 +3227,9 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                 {
                     itemSubclass = itemTemplate->GetSubClass();
 
-                    if (ItemModifiedAppearanceEntry const* itemModifiedAppearance = sDB2Manager.GetItemModifiedAppearance(visibleItem.ItemID, visibleItem.ItemAppearanceModID))
-                        if (ItemModifiedAppearanceExtraEntry const* itemModifiedAppearaceExtra = sItemModifiedAppearanceExtraStore.LookupEntry(itemModifiedAppearance->ID))
-                            if (itemModifiedAppearaceExtra->DisplayWeaponSubclassID > 0)
-                                itemSubclass = itemModifiedAppearaceExtra->DisplayWeaponSubclassID;
+                    if (ItemModifiedAppearanceExtraEntry const* itemModifiedAppearaceExtra = sItemModifiedAppearanceExtraStore.LookupEntry(visibleItem.ItemModifiedAppearanceID))
+                        if (itemModifiedAppearaceExtra->DisplayWeaponSubclassID > 0)
+                            itemSubclass = itemModifiedAppearaceExtra->DisplayWeaponSubclassID;
                 }
             }
             if (itemSubclass != reqValue)
@@ -3247,10 +3246,9 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                 {
                     itemSubclass = itemTemplate->GetSubClass();
 
-                    if (ItemModifiedAppearanceEntry const* itemModifiedAppearance = sDB2Manager.GetItemModifiedAppearance(visibleItem.ItemID, visibleItem.ItemAppearanceModID))
-                        if (ItemModifiedAppearanceExtraEntry const* itemModifiedAppearaceExtra = sItemModifiedAppearanceExtraStore.LookupEntry(itemModifiedAppearance->ID))
-                            if (itemModifiedAppearaceExtra->DisplayWeaponSubclassID > 0)
-                                itemSubclass = itemModifiedAppearaceExtra->DisplayWeaponSubclassID;
+                    if (ItemModifiedAppearanceExtraEntry const* itemModifiedAppearaceExtra = sItemModifiedAppearanceExtraStore.LookupEntry(visibleItem.ItemModifiedAppearanceID))
+                        if (itemModifiedAppearaceExtra->DisplayWeaponSubclassID > 0)
+                            itemSubclass = itemModifiedAppearaceExtra->DisplayWeaponSubclassID;
                 }
             }
             if (itemSubclass != reqValue)
@@ -4945,6 +4943,33 @@ void CriteriaMgr::LoadCriteriaData()
     while (result->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded {} additional criteria data in {} ms", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void CriteriaMgr::ReloadQuestObjectiveLinks()
+{
+    // Build new quest objective lookup from current quest templates
+    std::unordered_map<uint32 /*criteriaTreeID*/, QuestObjective const*> questObjectiveCriteriaTreeIds;
+    for (auto const& [questId, quest] : sObjectMgr->GetQuestTemplates())
+    {
+        for (QuestObjective const& objective : quest->Objectives)
+        {
+            if (objective.Type != QUEST_OBJECTIVE_CRITERIA_TREE)
+                continue;
+
+            if (objective.ObjectID)
+                questObjectiveCriteriaTreeIds[objective.ObjectID] = &objective;
+        }
+    }
+
+    // Re-link all criteria trees that have quest objectives
+    for (auto& [treeId, criteriaTree] : _criteriaTrees)
+    {
+        if (!criteriaTree->QuestObjective)
+            continue;
+
+        auto itr = questObjectiveCriteriaTreeIds.find(criteriaTree->Entry->ID);
+        criteriaTree->QuestObjective = (itr != questObjectiveCriteriaTreeIds.end()) ? itr->second : nullptr;
+    }
 }
 
 CriteriaTree const* CriteriaMgr::GetCriteriaTree(uint32 criteriaTreeId) const

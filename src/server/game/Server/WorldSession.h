@@ -557,6 +557,7 @@ namespace WorldPackets
         class ChromieTimeSelectExpansion;
         class OpenTradeskillNpc;
         class RequestWeeklyRewards;
+        class RequestStoreFrontInfoUpdate;
     }
 
     namespace Movement
@@ -646,9 +647,11 @@ namespace WorldPackets
         class PetStopAttack;
         class PetSpellAutocast;
         class PetRename;
+        class SetPetSpecializationClient;
         class PetAction;
         class PetCancelAura;
         class PetSetAction;
+        class SetPetFavorite;
     }
 
     namespace Petition
@@ -842,6 +845,9 @@ namespace WorldPackets
         class ClearNewAppearance;
         class TransmogOutfitNew;
         class TransmogOutfitUpdateInfo;
+        class TransmogOutfitNew;
+        class TransmogOutfitUpdateInfo;
+        class TransmogOutfitUpdateSituations;
         class TransmogOutfitUpdateSlots;
     }
 
@@ -1684,9 +1690,11 @@ class TC_GAME_API WorldSession
         void HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spellid, uint16 flag, ObjectGuid guid2, Position const& pos);
         void HandleQueryPetName(WorldPackets::Query::QueryPetName& packet);
         void HandlePetSetAction(WorldPackets::Pet::PetSetAction& packet);
+        void HandleSetPetFavorite(WorldPackets::Pet::SetPetFavorite& packet);
         void HandlePetAbandon(WorldPackets::Pet::PetAbandon& packet);
         void HandlePetAbandonByNumber(WorldPackets::Pet::PetAbandonByNumber const& petAbandonByNumber);
         void HandlePetRename(WorldPackets::Pet::PetRename& packet);
+        void HandleSetPetSpecialization(WorldPackets::Pet::SetPetSpecializationClient& packet);
         void HandlePetCancelAuraOpcode(WorldPackets::Spells::PetCancelAura& packet);
         void HandlePetSpellAutocastOpcode(WorldPackets::Pet::PetSpellAutocast& packet);
         void HandlePetCastSpellOpcode(WorldPackets::Spells::PetCastSpell& petCastSpell);
@@ -1824,34 +1832,10 @@ class TC_GAME_API WorldSession
 
         // Transmogrification
         void HandleTransmogrifyItems(WorldPackets::Transmogrification::TransmogrifyItems& transmogrifyItems);
-        void HandleTransmogOutfitUpdateSlots(WorldPackets::Transmogrification::TransmogOutfitUpdateSlots& packet);
-        void HandleTransmogOutfitNew(WorldPackets::Transmogrification::TransmogOutfitNew& packet);
-        void HandleTransmogOutfitUpdateInfo(WorldPackets::Transmogrification::TransmogOutfitUpdateInfo& packet);
-        void HandleClearNewAppearance(WorldPackets::Transmogrification::ClearNewAppearance& packet);
-        // TransmogBridge: addon-message-based workaround for 12.x client serializer bug.
-        // The client's CommitAndApplyAllPending C++ serializer omits HEAD/MH/OH/enchants
-        // and sends stale IMAIDs for all other slots. A client addon sends correct IMAIDs
-        // via hybrid snapshot (GetViewedOutfitSlotInfo) + hook overlay (SetPendingTransmog).
-        // HandleTransmogOutfitUpdateSlots defers finalization so the addon message can
-        // merge overrides before save/apply.
-        struct TransmogBridgeOverride
-        {
-            uint8  ClientSlot;   // Client API slot index (0=HEAD, 1=SHOULDER, ..., 13=OH)
-            int32  TransmogID;   // IMAID, 0 = clear appearance
-            int32  IllusionID = 0;   // SpellItemEnchantmentID, 0 = clear illusion
-            bool   HasIllusion = false; // true if addon explicitly provided illusion data
-            bool   FromHook = false;   // true = SetPendingTransmog hook (always trust), false = snapshot/fallback
-        };
-        struct TransmogBridgePendingOutfit
-        {
-            EquipmentSetInfo::EquipmentSetData Outfit;
-            bool HasAnyAppearance = false;
-        };
-        void FinalizeTransmogBridgePendingOutfit();
-        std::vector<TransmogBridgeOverride> _transmogBridgeOverrides;
-        std::string _transmogBridgePartialPayload;
-        Optional<TransmogBridgePendingOutfit> _transmogBridgePendingOutfit;
-        bool _transmogBridgeWaitOneUpdate = false;
+        void HandleTransmogOutfitNew(WorldPackets::Transmogrification::TransmogOutfitNew const& transmogOutfitNew);
+        void HandleTransmogOutfitUpdateInfo(WorldPackets::Transmogrification::TransmogOutfitUpdateInfo const& transmogOutfitUpdateInfo);
+        void HandleTransmogOutfitUpdateSituations(WorldPackets::Transmogrification::TransmogOutfitUpdateSituations const& transmogOutfitUpdateSituations);
+        void HandleTransmogOutfitUpdateSlots(WorldPackets::Transmogrification::TransmogOutfitUpdateSlots const& transmogOutfitUpdateSlots);
 
         // Miscellaneous
         void HandleSpellClick(WorldPackets::Spells::SpellClick& spellClick);
@@ -1874,6 +1858,7 @@ class TC_GAME_API WorldSession
         void HandleSetCurrencyFlags(WorldPackets::Misc::SetCurrencyFlags const& setCurrenctFlags);
         void HandleOverrideScreenFlash(WorldPackets::Misc::OverrideScreenFlash& overrideScreenFlash);
         void HandleChromieTimeSelectExpansion(WorldPackets::Misc::ChromieTimeSelectExpansion& chromieTimeSelectExpansion);
+        void HandleRequestStoreFrontInfoUpdate(WorldPackets::Misc::RequestStoreFrontInfoUpdate& packet);
 
         // Commentator
         void HandleAccountNotificationAcknowledge(WorldPackets::Misc::AccountNotificationAcknowledge& packet);

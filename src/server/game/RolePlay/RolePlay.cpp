@@ -778,8 +778,15 @@ void Roleplay::CreateCustomNpcFromPlayer(Player* player, std::string const& key)
             int32 displayId = pItem->GetDisplayId(player);
             if (displayId == 0) {
                 // weird case with items that don't have appearancemod of 0, just pick first appearance in the list
-                if (ItemModifiedAppearanceEntry const* appearanceMod = sDB2Manager.GetItemModifiedAppearance(pItem->GetEntry(), 0))
-                    displayId = sDB2Manager.GetItemDisplayId(pItem->GetEntry(), appearanceMod->ItemAppearanceModifierID);
+                for (ItemModifiedAppearanceEntry const* appearanceMod : sItemModifiedAppearanceStore)
+                {
+                    if ((uint32)appearanceMod->ItemID == pItem->GetEntry() && appearanceMod->OrderIndex == 0) {
+                        if (ItemAppearanceEntry const* itemAppearance = sItemAppearanceStore.LookupEntry(appearanceMod->ItemAppearanceID))
+                            displayId = itemAppearance->ItemDisplayInfoID;
+
+                        break;
+                    }
+                }
             }
             co->outfitdisplays[slot] = displayId;
         }

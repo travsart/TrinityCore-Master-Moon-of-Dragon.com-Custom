@@ -133,6 +133,8 @@
 #include "TradeData.h"
 #include "TraitMgr.h"
 #include "TraitPacketsCommon.h"
+#include "TransmogMgr.h"
+#include "TransmogrificationPackets.h"
 #include "Transport.h"
 #include "UpdateData.h"
 #include "Util.h"
@@ -577,6 +579,8 @@ bool Player::Create(ObjectGuid::LowType guidlow, WorldPackets::Character::Charac
     }
 
     GetThreatManager().Initialize();
+
+    EquipTransmogOutfit(0, TransmogSituationTrigger::Manual, false);
 
     return true;
 }
@@ -4193,6 +4197,18 @@ void Player::DeleteFromDB(ObjectGuid playerguid, uint32 accountId, bool updateRe
             stmt->setUInt64(0, guid);
             trans->Append(stmt);
 
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_TRANSMOG_OUTFIT_SITUATION_BY_CHAR);
+            stmt->setUInt64(0, guid);
+            trans->Append(stmt);
+
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_TRANSMOG_OUTFIT_SLOT_BY_CHAR);
+            stmt->setUInt64(0, guid);
+            trans->Append(stmt);
+
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_TRANSMOG_OUTFIT_BY_CHAR);
+            stmt->setUInt64(0, guid);
+            trans->Append(stmt);
+
             stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GUILD_EVENTLOG_BY_PLAYER);
             stmt->setUInt64(0, guid);
             stmt->setUInt64(1, guid);
@@ -4573,17 +4589,10 @@ Corpse* Player::CreateCorpse()
     corpse->SetFactionTemplate(sChrRacesStore.AssertEntry(GetRace())->FactionID);
 
     for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
-    {
-        if (m_items[i])
-        {
-            uint32 itemDisplayId = m_items[i]->GetDisplayId(this);
-            // Always use base item's InventoryType for skeleton attachment, not the
-            // transmog source — transmog visual comes from GetDisplayId() already.
-            uint32 itemInventoryType = m_items[i]->GetTemplate()->GetInventoryType();
-
-            corpse->SetItem(i, itemDisplayId | (itemInventoryType << 24));
-        }
-    }
+        if (ItemModifiedAppearanceEntry const* itemModifiedAppearance = sItemModifiedAppearanceStore.LookupEntry(m_playerData->VisibleItems[i].ItemModifiedAppearanceID))
+            if (ItemAppearanceEntry const* itemAppearance = sItemAppearanceStore.LookupEntry(itemModifiedAppearance->ItemAppearanceID))
+                if (ItemEntry const* item = sItemStore.LookupEntry(itemModifiedAppearance->ItemID))
+                    corpse->SetItem(i, itemAppearance->ItemDisplayInfoID | int32(item->InventoryType) << 24);
 
     // register for player, but not show
     GetMap()->AddCorpse(corpse);
@@ -6239,7 +6248,7 @@ bool Player::IsActionButtonDataValid(uint8 button, uint64 action, uint8 type) co
         case ACTION_BUTTON_MACRO:
         case ACTION_BUTTON_EQSET:
         case ACTION_BUTTON_DROPDOWN:
-        case ACTION_BUTTON_TRANSMOG_OUTFIT:
+        case ACTION_BUTTON_OUTFIT:
             break;
         default:
             TC_LOG_ERROR("entities.player", "Player::IsActionButtonDataValid: Unknown action type {}", type);
@@ -12140,64 +12149,129 @@ void Player::QuickEquipItem(uint16 pos, Item* pItem)
     }
 }
 
-void Player::SetVisibleItemSlot(uint8 slot, Item* pItem)
+void Player::SetVisibleItemSlot(uint8 slot, Item const* item)
 {
-    auto itemField = m_values.ModifyValue(&Player::m_playerData).ModifyValue(&UF::PlayerData::VisibleItems, slot);
-    if (pItem)
+    auto setVisibleItemSlot = [this](uint32 slot, int32 itemId, int32 secondaryItemModifiedAppearanceId, int32 conditionalItemAppearanceId,
+        uint16 itemAppearanceModId, uint16 itemVisual, uint32 itemModifiedAppearanceId, TransmogOutfitSlotOption transmogSlotOption,
+        bool hasTransmog, bool hasIllusion)
     {
-        // --- Compute all values first for logging ---
-        uint32 transmogAppearance = pItem->GetModifier(AppearanceModifierSlotBySpec[GetActiveTalentGroup()]);
-        if (!transmogAppearance)
-            transmogAppearance = pItem->GetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_ALL_SPECS);
-
-        uint32 illusionEnchant = pItem->GetModifier(IllusionModifierSlotBySpec[GetActiveTalentGroup()]);
-        if (!illusionEnchant)
-            illusionEnchant = pItem->GetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_ALL_SPECS);
-
-        uint8 displayType = 0;
-        if (uint32 modAppearId = pItem->GetVisibleModifiedAppearanceId(this))
-            if (ItemModifiedAppearanceEntry const* modAppear = sItemModifiedAppearanceStore.LookupEntry(modAppearId))
-                if (ItemAppearanceEntry const* appear = sItemAppearanceStore.LookupEntry(modAppear->ItemAppearanceID))
-                    displayType = uint8(appear->DisplayType);
-
-        int32 secondaryIMA = pItem->GetVisibleSecondaryModifiedAppearanceId(this);
-        uint16 appearModID = pItem->GetVisibleAppearanceModId(this);
-        uint16 itemVisual = pItem->GetVisibleItemVisual(this);
-        uint32 modifiedAppearID = pItem->GetVisibleModifiedAppearanceId(this);
-
-        // Stock TC behavior: ItemID = transmog source's item entry (via GetVisibleEntry).
-        // The client uses ItemID for both visual model and skeleton attachment.
-        int32 visibleItemID = pItem->GetVisibleEntry(this);
-
-        TC_LOG_DEBUG("entities.player.items",
-            "SetVisibleItemSlot: Player={} Slot={} BaseEntry={} VisItemID={} IMAID={} AppearModID={} DisplayType={} HasTmog={} HasIllusion={} ItemVisual={} SecondaryIMA={}",
-            GetName(), slot, pItem->GetEntry(), visibleItemID, modifiedAppearID,
-            appearModID, displayType, transmogAppearance != 0, illusionEnchant != 0,
-            itemVisual, secondaryIMA);
-
-        // --- Stock TC fields (always set) ---
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemID), visibleItemID);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::SecondaryItemModifiedAppearanceID), secondaryIMA);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemAppearanceModID), appearModID);
+        auto itemField = m_values.ModifyValue(&Player::m_playerData).ModifyValue(&UF::PlayerData::VisibleItems, slot);
+        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemID), itemId);
+        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::SecondaryItemModifiedAppearanceID), secondaryItemModifiedAppearanceId);
+        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ConditionalItemAppearanceID), conditionalItemAppearanceId);
+        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemAppearanceModID), itemAppearanceModId);
         SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemVisual), itemVisual);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemModifiedAppearanceID), modifiedAppearID);
+        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemModifiedAppearanceID), itemModifiedAppearanceId);
+        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::TransmogSlotOption), AsUnderlyingType(transmogSlotOption));
+        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::HasTransmog), hasTransmog);
+        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::HasIllusion), hasIllusion);
 
-        // --- Custom fields (12.x rendering hints) ---
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::HasTransmog), transmogAppearance != 0);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::HasIllusion), illusionEnchant != 0);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::Field_18), displayType);
+        auto transmogMetadata = m_values.ModifyValue(&Player::m_activePlayerData).ModifyValue(&UF::ActivePlayerData::TransmogMetadata);
+        if (slot == EQUIPMENT_SLOT_MAINHAND)
+            SetUpdateFieldValue(transmogMetadata.ModifyValue(&UF::TransmogOutfitMetadata::StampedOptionMainHand), AsUnderlyingType(transmogSlotOption));
+        else if (slot == EQUIPMENT_SLOT_OFFHAND)
+            SetUpdateFieldValue(transmogMetadata.ModifyValue(&UF::TransmogOutfitMetadata::StampedOptionOffHand), AsUnderlyingType(transmogSlotOption));
+    };
+
+    if (item)
+    {
+        TransmogOutfitSlotOption transmogSlotOption = item->GetTemplate()->GetWeaponTransmogOutfitSlotOption();
+        if (transmogSlotOption == TransmogOutfitSlotOption::TwoHandedWeapon && CanTitanGrip())
+            transmogSlotOption = TransmogOutfitSlotOption::FuryTwoHandedWeapon;
+
+        int32 itemId = item->GetVisibleEntry(this);
+        int32 secondaryItemModifiedAppearanceId = item->GetVisibleSecondaryModifiedAppearanceId(this);
+        int32 conditionalItemAppearanceId = 0;
+        uint16 itemAppearanceModId = item->GetVisibleAppearanceModId(this);
+        uint16 itemVisual = item->GetVisibleItemVisual(this);
+        uint32 itemModifiedAppearanceId = item->GetVisibleModifiedAppearanceId(this);
+        bool hasTransmog = false;
+        bool hasIllusion = false;
+
+        if (!m_activePlayerData->ViewedOutfit->Slots.empty())
+        {
+            TransmogMgr::TransmogOutfitSlotAndOptionInfo const* slotInfo = TransmogMgr::GetSlotAndOption(EquipmentSlots(slot), transmogSlotOption);
+            if (transmogSlotOption != TransmogOutfitSlotOption::None)
+            {
+                // check if artifact override is active
+                static constexpr int32 MaxArtifactSpecializations = AsUnderlyingType(TransmogOutfitSlotOption::ArtifactSpecFour) - AsUnderlyingType(TransmogOutfitSlotOption::ArtifactSpecOne) + 1;
+                int32 specIndex = GetPrimarySpecializationEntry()->OrderIndex;
+                if (specIndex >= 0 && specIndex < MaxArtifactSpecializations)
+                {
+                    TransmogOutfitSlotOption artifactOption = static_cast<TransmogOutfitSlotOption>(AsUnderlyingType(TransmogOutfitSlotOption::ArtifactSpecOne) + specIndex);
+                    TransmogMgr::TransmogOutfitSlotAndOptionInfo const* artifactSlotInfo = TransmogMgr::GetSlotAndOption(EquipmentSlots(slot), artifactOption);
+                    if (artifactSlotInfo && static_cast<TransmogOutfitDisplayType>(*m_activePlayerData->ViewedOutfit->Slots[artifactSlotInfo->SlotIndex].AppearanceDisplayType) == TransmogOutfitDisplayType::Assigned)
+                    {
+                        transmogSlotOption = artifactOption;
+                        slotInfo = artifactSlotInfo;
+                    }
+                }
+            }
+
+            if (slotInfo)
+            {
+                auto isTransmogDisplayed = [](TransmogOutfitDisplayType displayType)
+                {
+                    return displayType == TransmogOutfitDisplayType::Assigned || displayType == TransmogOutfitDisplayType::Hidden;
+                };
+
+                UF::TransmogOutfitSlotData const& transmogOutfitItem = m_activePlayerData->ViewedOutfit->Slots[slotInfo->SlotIndex];
+                if (isTransmogDisplayed(static_cast<TransmogOutfitDisplayType>(*transmogOutfitItem.AppearanceDisplayType)))
+                {
+                    if (ItemModifiedAppearanceEntry const* itemModifiedAppearance = sItemModifiedAppearanceStore.LookupEntry(transmogOutfitItem.ItemModifiedAppearanceID))
+                    {
+                        TransmogHolidayEntry const* transmogHoliday = sTransmogHolidayStore.LookupEntry(itemModifiedAppearance->ItemID);
+                        if (!transmogHoliday || IsHolidayActive(static_cast<HolidayIds>(transmogHoliday->RequiredTransmogHoliday)))
+                        {
+                            itemId = itemModifiedAppearance->ItemID;
+                            itemAppearanceModId = itemModifiedAppearance->ItemAppearanceModifierID;
+                            itemModifiedAppearanceId = itemModifiedAppearance->ID;
+                            hasTransmog = true;
+                        }
+                    }
+                }
+
+                auto getSecondaryItemModifiedAppearance = [isTransmogDisplayed](UF::TransmogOutfitSlotData const& secondaryTransmogOutfitItem) -> int32
+                {
+                    if (isTransmogDisplayed(static_cast<TransmogOutfitDisplayType>(*secondaryTransmogOutfitItem.AppearanceDisplayType))
+                        || static_cast<TransmogOutfitDisplayType>(*secondaryTransmogOutfitItem.AppearanceDisplayType) == TransmogOutfitDisplayType::Equipped)
+                    {
+                        if (ItemModifiedAppearanceEntry const* itemModifiedAppearance = sItemModifiedAppearanceStore.LookupEntry(secondaryTransmogOutfitItem.ItemModifiedAppearanceID))
+                        {
+                            TransmogHolidayEntry const* transmogHoliday = sTransmogHolidayStore.LookupEntry(itemModifiedAppearance->ItemID);
+                            if (!transmogHoliday || IsHolidayActive(static_cast<HolidayIds>(transmogHoliday->RequiredTransmogHoliday)))
+                                return secondaryTransmogOutfitItem.ItemModifiedAppearanceID;
+                        }
+                    }
+                    return 0;
+                };
+
+                if (TransmogOutfitSlotInfoEntry const* secondarySlot = sTransmogOutfitSlotInfoStore.LookupEntry(slotInfo->Slot->SecondarySlotID))
+                    if (TransmogMgr::TransmogOutfitSlotAndOptionInfo const* secondarySlotInfo = TransmogMgr::GetSlotAndOption(secondarySlot->GetSlot(), transmogSlotOption))
+                        secondaryItemModifiedAppearanceId = getSecondaryItemModifiedAppearance(m_activePlayerData->ViewedOutfit->Slots[secondarySlotInfo->SlotIndex]);
+
+                if (TransmogOutfitSlotOptionEntry const* secondarySlotOption = sTransmogOutfitSlotOptionInfoStore.LookupEntry(slotInfo->SlotOption ? slotInfo->SlotOption->SecondaryOptionID : 0))
+                    if (TransmogMgr::TransmogOutfitSlotAndOptionInfo const* secondarySlotInfo = TransmogMgr::GetSlotAndOption(slotInfo->Slot->GetSlot(), secondarySlotOption->GetOption()))
+                        secondaryItemModifiedAppearanceId = getSecondaryItemModifiedAppearance(m_activePlayerData->ViewedOutfit->Slots[secondarySlotInfo->SlotIndex]);
+
+                if (secondaryItemModifiedAppearanceId)
+                    hasTransmog = true;
+
+                if (isTransmogDisplayed(static_cast<TransmogOutfitDisplayType>(*transmogOutfitItem.IllusionDisplayType)))
+                {
+                    if (SpellItemEnchantmentEntry const* spellItemEnchantment = sSpellItemEnchantmentStore.LookupEntry(transmogOutfitItem.SpellItemEnchantmentID))
+                        itemVisual = spellItemEnchantment->ItemVisual;
+
+                    hasIllusion = true;
+                }
+            }
+        }
+
+        setVisibleItemSlot(slot, itemId, secondaryItemModifiedAppearanceId, conditionalItemAppearanceId, itemAppearanceModId,
+            itemVisual, itemModifiedAppearanceId, transmogSlotOption, hasTransmog, hasIllusion);
     }
     else
-    {
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemID), 0);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::SecondaryItemModifiedAppearanceID), 0);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemAppearanceModID), 0);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemVisual), 0);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::ItemModifiedAppearanceID), 0);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::HasTransmog), false);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::HasIllusion), false);
-        SetUpdateFieldValue(itemField.ModifyValue(&UF::VisibleItem::Field_18), 0);
-    }
+        setVisibleItemSlot(slot, 0, 0, 0, 0, 0, 0, TransmogOutfitSlotOption::None, false, false);
 }
 
 void Player::VisualizeItem(uint8 slot, Item* pItem)
@@ -14956,6 +15030,7 @@ void Player::AddQuestAndCheckCompletion(Quest const* quest, Object* questGiver)
                 e->OnQuestAccept(this, questGiver->ToCreature(), quest);
 #endif
 
+            sScriptMgr->OnQuestAccept(this, questGiver->ToCreature(), quest);
             questGiver->ToCreature()->AI()->OnQuestAccept(this, quest);
             break;
         case TYPEID_ITEM:
@@ -17969,171 +18044,14 @@ void Player::_LoadEquipmentSets(PreparedQueryResult result)
     } while (result->NextRow());
 }
 
-void Player::_LoadTransmogOutfits(PreparedQueryResult result)
+void Player::_LoadTransmogCustomSets(PreparedQueryResult result)
 {
     //             0         1     2         3            4            5            6            7            8            9
     //SELECT setguid, setindex, name, iconname, ignore_mask, appearance0, appearance1, appearance2, appearance3, appearance4,
     //             10           11           12           13           14            15            16            17            18            19            20            21
     //    appearance5, appearance6, appearance7, appearance8, appearance9, appearance10, appearance11, appearance12, appearance13, appearance14, appearance15, appearance16,
-    //              22            23               24              25                          26                          27        28
-    //    appearance17, appearance18, mainHandEnchant, offHandEnchant, secondaryShoulderAppearance, secondaryShoulderSlot, active
-    //    FROM character_transmog_outfits WHERE guid = ? ORDER BY setindex
-
-    // Always initialize TransmogMetadata with defaults matching retail sniff
-    {
-        auto metaField = m_values.ModifyValue(&Player::m_activePlayerData).ModifyValue(&UF::ActivePlayerData::TransmogMetadata);
-        SetUpdateFieldValue(metaField.ModifyValue(&UF::TransmogOutfitMetadata::CostMod), 1.0f);
-        SetUpdateFieldValue(metaField.ModifyValue(&UF::TransmogOutfitMetadata::Locked), false);
-        SetUpdateFieldValue(metaField.ModifyValue(&UF::TransmogOutfitMetadata::SituationTrigger), uint8(2));
-        SetUpdateFieldValue(metaField.ModifyValue(&UF::TransmogOutfitMetadata::TransmogOutfitID), uint32(1));
-        SetUpdateFieldValue(metaField.ModifyValue(&UF::TransmogOutfitMetadata::StampedOptionMainHand), uint8(2));
-        SetUpdateFieldValue(metaField.ModifyValue(&UF::TransmogOutfitMetadata::StampedOptionOffHand), uint8(0));
-    }
-
-    // Build the 30-slot layout matching retail sniff exactly
-    // Slots 0-11: base armor slots (Slot=equipmentSlot, SlotOption=0)
-    // Slots 12-20: Slot=12 (MainHand) with weapon sub-slot SlotOptions: 1,6,2,3,7,8,9,10,11
-    // Slots 21-29: Slot=13 (OffHand) with weapon sub-slot SlotOptions: 1,6,7,5,4,8,9,10,11
-    struct SlotDef { int8 slot; uint8 slotOption; uint8 equipSlot; };
-    static const SlotDef fullSlotLayout[30] =
-    {
-        // Base armor slots (12) — slot IDs and ORDER match client expectations
-        // Equipment slot mapping corrected for TWW
-        { 0,  0, EQUIPMENT_SLOT_HEAD },
-        { 1,  0, EQUIPMENT_SLOT_SHOULDERS },
-        { 2,  0, EQUIPMENT_SLOT_SHOULDERS },   // Secondary shoulder (right side)
-        { 6,  0, EQUIPMENT_SLOT_BODY },         // Slot 6 = Shirt
-        { 4,  0, EQUIPMENT_SLOT_CHEST },
-        { 9,  0, EQUIPMENT_SLOT_WAIST },        // Slot 9 = Belt
-        { 10, 0, EQUIPMENT_SLOT_LEGS },          // Slot 10 = Pants
-        { 11, 0, EQUIPMENT_SLOT_FEET },          // Slot 11 = Boots
-        { 7,  0, EQUIPMENT_SLOT_WRISTS },        // Slot 7 = Wrists
-        { 8,  0, EQUIPMENT_SLOT_HANDS },         // Slot 8 = Gloves
-        { 3,  0, EQUIPMENT_SLOT_BACK },          // Slot 3 = Cloak
-        { 5,  0, EQUIPMENT_SLOT_TABARD },        // Slot 5 = Tabard
-        // MainHand weapon sub-slots (9): Slot=12
-        { 12, 1,  EQUIPMENT_SLOT_MAINHAND },
-        { 12, 6,  EQUIPMENT_SLOT_MAINHAND },
-        { 12, 2,  EQUIPMENT_SLOT_MAINHAND },
-        { 12, 3,  EQUIPMENT_SLOT_MAINHAND },
-        { 12, 7,  EQUIPMENT_SLOT_MAINHAND },
-        { 12, 8,  EQUIPMENT_SLOT_MAINHAND },
-        { 12, 9,  EQUIPMENT_SLOT_MAINHAND },
-        { 12, 10, EQUIPMENT_SLOT_MAINHAND },
-        { 12, 11, EQUIPMENT_SLOT_MAINHAND },
-        // OffHand weapon sub-slots (9): Slot=13
-        { 13, 1,  EQUIPMENT_SLOT_OFFHAND },
-        { 13, 6,  EQUIPMENT_SLOT_OFFHAND },
-        { 13, 7,  EQUIPMENT_SLOT_OFFHAND },
-        { 13, 5,  EQUIPMENT_SLOT_OFFHAND },
-        { 13, 4,  EQUIPMENT_SLOT_OFFHAND },
-        { 13, 8,  EQUIPMENT_SLOT_OFFHAND },
-        { 13, 9,  EQUIPMENT_SLOT_OFFHAND },
-        { 13, 10, EQUIPMENT_SLOT_OFFHAND },
-        { 13, 11, EQUIPMENT_SLOT_OFFHAND },
-    };
-
-    // Helper lambda to populate 30 slots on a given DynamicUpdateField setter
-    auto populateSlots = [this](auto& slotsSetter, const SlotDef* layout, uint32 count)
-    {
-        for (uint32 i = 0; i < count; ++i)
-        {
-            auto slotRef = AddDynamicUpdateFieldValue(slotsSetter);
-            slotRef.ModifyValue(&UF::TransmogOutfitSlotData::Slot).SetValue(int8(layout[i].slot));
-            slotRef.ModifyValue(&UF::TransmogOutfitSlotData::SlotOption).SetValue(uint8(layout[i].slotOption));
-
-            // For base armor slots (SlotOption=0), fill with equipped item appearance
-            // For weapon sub-slots with SlotOption=1, fill with the equipped weapon appearance
-            // For other sub-slots (SlotOption >= 2), set AppearanceDisplayType based on retail pattern
-            uint32 appearanceId = 0;
-            uint8 displayType = 0;
-            uint8 illusionDisplayType = 0;
-
-            if (layout[i].slotOption == 0)
-            {
-                // Base armor slot - show equipped item
-                Item* pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, layout[i].equipSlot);
-                if (pItem)
-                {
-                    appearanceId = pItem->GetVisibleModifiedAppearanceId(this);
-                    displayType = 1; // 1 = from outfit
-                }
-            }
-            else if (layout[i].slotOption == 1)
-            {
-                // Primary weapon sub-slot - show equipped weapon
-                Item* pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, layout[i].equipSlot);
-                if (pItem)
-                {
-                    appearanceId = pItem->GetVisibleModifiedAppearanceId(this);
-                    displayType = 2; // 2 = equipped item (current)
-                    illusionDisplayType = 2;
-                }
-            }
-            else if (layout[i].slotOption >= 8)
-            {
-                // Hidden/disabled sub-slots (8,9,10,11)
-                displayType = 4;
-                illusionDisplayType = 4;
-            }
-
-            slotRef.ModifyValue(&UF::TransmogOutfitSlotData::ItemModifiedAppearanceID).SetValue(appearanceId);
-            slotRef.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType).SetValue(displayType);
-            slotRef.ModifyValue(&UF::TransmogOutfitSlotData::SpellItemEnchantmentID).SetValue(uint32(0));
-            slotRef.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType).SetValue(illusionDisplayType);
-            slotRef.ModifyValue(&UF::TransmogOutfitSlotData::Flags).SetValue(uint32(0));
-        }
-    };
-
-    // Create a default TransmogOutfits entry (Key=1) so ViewedOutfit.Id=1 references something valid
-    {
-        auto outfitSetter = m_values.ModifyValue(&Player::m_activePlayerData)
-            .ModifyValue(&UF::ActivePlayerData::TransmogOutfits, uint32(1));
-
-        SetUpdateFieldValue(outfitSetter.ModifyValue(&UF::TransmogOutfitData::Id), uint32(1));
-        SetUpdateFieldValue(outfitSetter.ModifyValue(&UF::TransmogOutfitData::Flags), uint32(0));
-
-        // OutfitInfo
-        auto outfitInfo = outfitSetter.ModifyValue(&UF::TransmogOutfitData::OutfitInfo);
-        SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SetType), uint8(1));
-        SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Name), std::string("Outfit 1"));
-        SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Icon), uint32(134400));
-        SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SituationsEnabled), true);
-
-        // Situations (retail has 5 entries)
-        static const uint32 situationIDs[] = { 1, 3, 13, 18, 20 };
-        auto sitSetter = outfitSetter.ModifyValue(&UF::TransmogOutfitData::Situations);
-        for (uint32 sitId : situationIDs)
-        {
-            auto sit = AddDynamicUpdateFieldValue(sitSetter);
-            sit.ModifyValue(&UF::TransmogOutfitSituationInfo::SituationID).SetValue(sitId);
-            sit.ModifyValue(&UF::TransmogOutfitSituationInfo::SpecID).SetValue(uint32(0));
-            sit.ModifyValue(&UF::TransmogOutfitSituationInfo::LoadoutID).SetValue(uint32(0));
-            sit.ModifyValue(&UF::TransmogOutfitSituationInfo::EquipmentSetID).SetValue(uint32(0));
-        }
-
-        // Populate 30 slots on the outfit
-        auto slotsSetter = outfitSetter.ModifyValue(&UF::TransmogOutfitData::Slots);
-        populateSlots(slotsSetter, fullSlotLayout, 30);
-    }
-
-    // Initialize ViewedOutfit with Id=1 referencing the default outfit, and the same 30 slot layout
-    {
-        auto viewedOutfit = m_values.ModifyValue(&Player::m_activePlayerData).ModifyValue(&UF::ActivePlayerData::ViewedOutfit);
-        SetUpdateFieldValue(viewedOutfit.ModifyValue(&UF::TransmogOutfitData::Id), uint32(1));
-        SetUpdateFieldValue(viewedOutfit.ModifyValue(&UF::TransmogOutfitData::Flags), uint32(0));
-
-        // OutfitInfo (SetType=0 for the "viewed/active" outfit per sniff)
-        auto outfitInfo = viewedOutfit.ModifyValue(&UF::TransmogOutfitData::OutfitInfo);
-        SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SetType), uint8(0));
-        SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Name), std::string("Default"));
-        SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Icon), uint32(134400));
-        SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SituationsEnabled), true);
-
-        // Populate ViewedOutfit with the same 30 slots
-        auto slotsSetter = viewedOutfit.ModifyValue(&UF::TransmogOutfitData::Slots);
-        populateSlots(slotsSetter, fullSlotLayout, 30);
-    }
+    //              22            23               24              25
+    //    appearance17, appearance18, mainHandEnchant, offHandEnchant FROM character_transmog_outfits WHERE guid = ? ORDER BY setindex
     if (!result)
         return;
 
@@ -18166,505 +18084,154 @@ void Player::_LoadTransmogOutfits(PreparedQueryResult result)
             continue;
 
         _equipmentSets[eqSet.Data.Guid] = eqSet;
-
-        // Also restore UpdateField TransmogOutfits entry for purchased outfits (SetID >= 2)
-        if (eqSet.Data.SetID >= 2)
-        {
-            uint32 setId = eqSet.Data.SetID;
-            auto outfitSetter = m_values.ModifyValue(&Player::m_activePlayerData)
-                .ModifyValue(&UF::ActivePlayerData::TransmogOutfits, setId);
-
-            SetUpdateFieldValue(outfitSetter.ModifyValue(&UF::TransmogOutfitData::Id), setId);
-            SetUpdateFieldValue(outfitSetter.ModifyValue(&UF::TransmogOutfitData::Flags), uint32(0));
-
-            // OutfitInfo
-            auto outfitInfo = outfitSetter.ModifyValue(&UF::TransmogOutfitData::OutfitInfo);
-            SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SetType), uint8(1));
-            SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Name), eqSet.Data.SetName);
-
-            // Parse icon from SetIcon string
-            uint32 iconId = 134400; // fallback
-            try { iconId = std::stoul(eqSet.Data.SetIcon); } catch (...) {}
-            SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Icon), iconId);
-            SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SituationsEnabled), true);
-
-            // Situations
-            static const uint32 situationIDs[] = { 1, 3, 13, 18, 20 };
-            auto sitSetter = outfitSetter.ModifyValue(&UF::TransmogOutfitData::Situations);
-            for (uint32 sitId : situationIDs)
-            {
-                auto sit = AddDynamicUpdateFieldValue(sitSetter);
-                sit.ModifyValue(&UF::TransmogOutfitSituationInfo::SituationID).SetValue(sitId);
-                sit.ModifyValue(&UF::TransmogOutfitSituationInfo::SpecID).SetValue(uint32(0));
-                sit.ModifyValue(&UF::TransmogOutfitSituationInfo::LoadoutID).SetValue(uint32(0));
-                sit.ModifyValue(&UF::TransmogOutfitSituationInfo::EquipmentSetID).SetValue(uint32(0));
-            }
-
-            // Populate 30 slots from saved appearances
-            auto slotsSetter = outfitSetter.ModifyValue(&UF::TransmogOutfitData::Slots);
-            for (uint32 i = 0; i < 30; ++i)
-            {
-                auto slotRef = AddDynamicUpdateFieldValue(slotsSetter);
-                slotRef.ModifyValue(&UF::TransmogOutfitSlotData::Slot).SetValue(int8(fullSlotLayout[i].slot));
-                slotRef.ModifyValue(&UF::TransmogOutfitSlotData::SlotOption).SetValue(uint8(fullSlotLayout[i].slotOption));
-
-                uint32 appearanceId = 0;
-                uint32 enchantId = 0;
-                uint8 displayType = 0;
-                uint8 illusionDisplayType = 0;
-
-                if (fullSlotLayout[i].slotOption == 0)
-                {
-                    // Armor slot — read from saved appearances
-                    appearanceId = eqSet.Data.Appearances[fullSlotLayout[i].equipSlot];
-                    if (appearanceId)
-                        displayType = 1;
-                }
-                else if (fullSlotLayout[i].slotOption == 1)
-                {
-                    // Primary weapon sub-slot
-                    appearanceId = eqSet.Data.Appearances[fullSlotLayout[i].equipSlot];
-                    if (appearanceId)
-                    {
-                        displayType = 2;
-                        illusionDisplayType = 2;
-                    }
-                    // Enchant (illusion) for this weapon
-                    if (fullSlotLayout[i].equipSlot == EQUIPMENT_SLOT_MAINHAND)
-                        enchantId = eqSet.Data.Enchants[0];
-                    else if (fullSlotLayout[i].equipSlot == EQUIPMENT_SLOT_OFFHAND)
-                        enchantId = eqSet.Data.Enchants[1];
-                }
-                else if (fullSlotLayout[i].slotOption >= 8)
-                {
-                    displayType = 4;
-                    illusionDisplayType = 4;
-                }
-
-                slotRef.ModifyValue(&UF::TransmogOutfitSlotData::ItemModifiedAppearanceID).SetValue(appearanceId);
-                slotRef.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType).SetValue(displayType);
-                slotRef.ModifyValue(&UF::TransmogOutfitSlotData::SpellItemEnchantmentID).SetValue(enchantId);
-                slotRef.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType).SetValue(illusionDisplayType);
-                slotRef.ModifyValue(&UF::TransmogOutfitSlotData::Flags).SetValue(uint32(0));
-            }
-        }
     } while (result->NextRow());
 }
 
-void Player::_LoadTransmogOutfitSituations(PreparedQueryResult result)
+void Player::_LoadTransmogOutfits(PreparedQueryResult setsResult, PreparedQueryResult situationsResult, PreparedQueryResult slotsResult,
+    int32 equippedTransmogOutfitId, bool locked)
 {
-    //             0        1            2       3          4
-    //SELECT setguid, situationID, specID, loadoutID, equipmentSetID FROM character_transmog_outfit_situations WHERE guid = ?
-    if (!result)
-        return;
-
-    do
+    struct SetData
     {
-        Field* fields = result->Fetch();
-        uint64 setGuid = fields[0].GetUInt64();
+        std::vector<WorldPackets::Transmogrification::TransmogOutfitSituationInfo> situations;
+        std::vector<WorldPackets::Transmogrification::TransmogOutfitSlotData> slots;
+    };
 
-        auto itr = _equipmentSets.find(setGuid);
-        if (itr == _equipmentSets.end() || itr->second.Data.Type != EquipmentSetInfo::TRANSMOG)
-            continue;
+    std::unordered_map<uint32, SetData> sets;
 
-        TransmogSituationData situation;
-        situation.SituationID = fields[1].GetUInt32();
-        situation.SpecID = fields[2].GetUInt32();
-        situation.LoadoutID = fields[3].GetUInt32();
-        situation.EquipmentSetID = fields[4].GetUInt32();
-        itr->second.Data.Situations.push_back(situation);
-    } while (result->NextRow());
-}
+    // SELECT transmogOutfitId, situationID, specID, loadoutID, equipmentSetID FROM character_transmog_outfit_situation WHERE guid = ?
+    if (situationsResult)
+    {
+        do
+        {
+            DEFINE_FIELD_ACCESSOR_CACHE_ANONYMOUS(PreparedResultSet, (transmogOutfitId)(situationID)(specID)(loadoutID)(equipmentSetID)) fields { *situationsResult };
 
-void Player::_SyncTransmogOutfitsToActivePlayerData(char const* caller)
-{
-    TC_LOG_DEBUG("network.opcode.transmog",
-        "_SyncTransmogOutfitsToActivePlayerData [{}]: FIRED from '{}' — clearing {} existing ViewedOutfit entries and rebuilding",
-        GetGUID().ToString(), caller, m_activePlayerData->TransmogOutfits.size());
+            uint32 transmogOutfitId = fields.transmogOutfitId().GetUInt32();
+
+            WorldPackets::Transmogrification::TransmogOutfitSituationInfo& situation = sets[transmogOutfitId].situations.emplace_back();
+            situation.SituationID = fields.situationID().GetUInt32();
+            situation.SpecID = fields.specID().GetUInt32();
+            situation.LoadoutID = fields.loadoutID().GetUInt32();
+            situation.EquipmentSetID = fields.equipmentSetID().GetUInt32();
+
+        } while (situationsResult->NextRow());
+    }
+
+    // SELECT transmogOutfitId, slot, slotOption, itemModifiedAppearanceID, appearanceDisplayType, spellItemEnchantmentID, illusionDisplayType, flags FROM character_transmog_outfit_slot guid = ?
+    if (slotsResult)
+    {
+        do
+        {
+            DEFINE_FIELD_ACCESSOR_CACHE_ANONYMOUS(PreparedResultSet, (transmogOutfitId)(slot)(slotOption)(itemModifiedAppearanceID)(appearanceDisplayType)
+                (spellItemEnchantmentID)(illusionDisplayType)(flags)) fields { *slotsResult };
+
+            uint32 transmogOutfitId = fields.transmogOutfitId().GetUInt32();
+
+            WorldPackets::Transmogrification::TransmogOutfitSlotData& slot = sets[transmogOutfitId].slots.emplace_back();
+            slot.Slot = static_cast<TransmogOutfitSlot>(fields.slot().GetInt8());
+            slot.SlotOption = static_cast<TransmogOutfitSlotOption>(fields.slotOption().GetUInt8());
+            slot.ItemModifiedAppearanceID = fields.itemModifiedAppearanceID().GetUInt32();
+            slot.AppearanceDisplayType = static_cast<TransmogOutfitDisplayType>(fields.appearanceDisplayType().GetUInt8());
+            slot.SpellItemEnchantmentID = fields.spellItemEnchantmentID().GetUInt32();
+            slot.IllusionDisplayType = static_cast<TransmogOutfitDisplayType>(fields.illusionDisplayType().GetUInt8());
+            slot.Flags = fields.flags().GetUInt32();
+
+        } while (slotsResult->NextRow());
+    }
 
     auto activePlayerData = m_values.ModifyValue(&Player::m_activePlayerData);
 
-    std::vector<uint32> existingOutfitIds;
-    existingOutfitIds.reserve(m_activePlayerData->TransmogOutfits.size());
-    for (auto itr = m_activePlayerData->TransmogOutfits.begin(); itr != m_activePlayerData->TransmogOutfits.end(); ++itr)
-        existingOutfitIds.push_back(itr->first);
-
-    for (uint32 existingOutfitId : existingOutfitIds)
-        RemoveMapUpdateFieldValue(activePlayerData.ModifyValue(&UF::ActivePlayerData::TransmogOutfits), existingOutfitId);
-
-    uint32 transmogSetCount = 0;
-
-    auto fillOutfitData = [this](auto&& outfitSetter, EquipmentSetInfo::EquipmentSetData const* equipmentSet, bool isStored)
+    // SELECT transmogOutfitId, name, icon, situationsEnabled FROM character_transmog_outfit WHERE guid = ?
+    if (setsResult)
     {
-        // Hidden-appearance detection: checks if an IMAID corresponds to a known hidden transmog item.
-        // Uses the same authoritative item list as CollectionMgr::LoadItemAppearances().
-        // Returns true for items like "Hidden Helm" (134110), "Hidden Shoulder" (134112), etc.
-        static constexpr uint32 hiddenItemIDs[] = {
-            134110, 134111, 134112, 168659, 142503,
-            142504, 168665, 158329, 143539, 168664,
-            216696  // Hidden Pants (IMA 198608)
-        };
-        auto isHiddenAppearance = [](uint32 imaID) -> bool
+        do
         {
-            if (!imaID)
-                return false;
-            ItemModifiedAppearanceEntry const* ima = sItemModifiedAppearanceStore.LookupEntry(imaID);
-            if (!ima)
-                return false;
-            for (uint32 hiddenItemID : hiddenItemIDs)
-                if (uint32(ima->ItemID) == hiddenItemID)
-                    return true;
-            return false;
-        };
-        SetUpdateFieldValue(outfitSetter.ModifyValue(&UF::TransmogOutfitData::Flags), uint32(0));
+            DEFINE_FIELD_ACCESSOR_CACHE_ANONYMOUS(PreparedResultSet, (transmogOutfitId)(name)(icon)(situationsEnabled)) fields { *setsResult };
 
-        // Prepare slot echo for SMSG_TRANSMOG_OUTFIT_SLOTS_UPDATED (30-entry full echo)
-        _lastOutfitSlotEcho.clear();
-        _lastOutfitSlotEcho.reserve(30);
-
-        auto outfitInfoSetter = outfitSetter.ModifyValue(&UF::TransmogOutfitData::OutfitInfo);
-        bool hasSituations = equipmentSet && !equipmentSet->Situations.empty();
-        SetUpdateFieldValue(outfitInfoSetter.ModifyValue(&UF::TransmogOutfitDataInfo::SituationsEnabled), hasSituations);
-        SetUpdateFieldValue(outfitInfoSetter.ModifyValue(&UF::TransmogOutfitDataInfo::SetType), uint8(1));
-        SetUpdateFieldValue(outfitInfoSetter.ModifyValue(&UF::TransmogOutfitDataInfo::Name), equipmentSet ? equipmentSet->SetName : std::string());
-        SetUpdateFieldValue(outfitInfoSetter.ModifyValue(&UF::TransmogOutfitDataInfo::Icon), equipmentSet ? uint32(std::atoi(equipmentSet->SetIcon.c_str())) : uint32(0));
-
-        if (!equipmentSet)
-            return;
-
-        // Sync situations
-        for (TransmogSituationData const& sit : equipmentSet->Situations)
-        {
-            auto sitSetter = AddDynamicUpdateFieldValue(outfitSetter.ModifyValue(&UF::TransmogOutfitData::Situations));
-            sitSetter.ModifyValue(&UF::TransmogOutfitSituationInfo::SituationID).SetValue(sit.SituationID);
-            sitSetter.ModifyValue(&UF::TransmogOutfitSituationInfo::SpecID).SetValue(sit.SpecID);
-            sitSetter.ModifyValue(&UF::TransmogOutfitSituationInfo::LoadoutID).SetValue(sit.LoadoutID);
-            sitSetter.ModifyValue(&UF::TransmogOutfitSituationInfo::EquipmentSetID).SetValue(sit.EquipmentSetID);
-        }
-
-        // Map server EQUIPMENT_SLOT indices to ordinal slot IDs for the client's outfit UI.
-        // The db2SlotInfoID is sent as the Slot field in the TransmogOutfitSlotData UpdateField.
-        // Note: in CMSG packets, byte[0] is this ordinal but is NOT the routing key —
-        // the wire DisplayType (bytes[6-7]) routes IMAIDs to equipment slots.
-        // Retail sends 30 entries per outfit: 12 armor + 9 MH weapon options + 9 OH weapon options.
-        // The `option` field is the sequential wire index (0-8) matching DB2 TransmogOutfitSlotOption
-        // ordering. Option 0 carries the actual IMAID; options 1-8 are empty placeholders.
-        // Options 5-8 on both MH/OH are paired cross-references (DT=4, IllusionDT=4).
-        struct TransmogSlotMapping { uint8 db2SlotInfoID; uint8 equipSlot; uint8 option; };
-        static constexpr TransmogSlotMapping slotMap[] = {
-            // 12 armor entries (option = 0)
-            {  1,  0, 0 }, // Head
-            {  2,  2, 0 }, // ShoulderRight (primary)
-            {  3,  2, 0 }, // ShoulderLeft (secondary)
-            {  4,  3, 0 }, // Shirt
-            {  5,  4, 0 }, // Chest
-            {  6,  5, 0 }, // Waist
-            {  7,  6, 0 }, // Legs
-            {  8,  7, 0 }, // Feet
-            {  9,  8, 0 }, // Wrist
-            { 10,  9, 0 }, // Hands
-            { 11, 14, 0 }, // Back
-            { 12, 18, 0 }, // Tabard
-            // 9 MH weapon options — DB2 OptionEnum order: 1, 6, 2, 3, 7, 8, 9, 10, 11
-            { 13, 15, 0 }, // MH opt0: OE1  — One-Handed Weapon (carries IMAID)
-            { 13, 15, 1 }, // MH opt1: OE6  — Dagger
-            { 13, 15, 2 }, // MH opt2: OE2  — Two-Handed Weapon
-            { 13, 15, 3 }, // MH opt3: OE3  — Ranged Weapon
-            { 13, 15, 4 }, // MH opt4: OE7  — Fist Weapon
-            { 13, 15, 5 }, // MH opt5: OE8  — paired (DT=4)
-            { 13, 15, 6 }, // MH opt6: OE9  — paired (DT=4)
-            { 13, 15, 7 }, // MH opt7: OE10 — paired (DT=4)
-            { 13, 15, 8 }, // MH opt8: OE11 — paired (DT=4)
-            // 9 OH weapon options — DB2 OptionEnum order: 1, 6, 7, 5, 4, 8, 9, 10, 11
-            { 14, 16, 0 }, // OH opt0: OE1  — One-Handed Weapon (carries IMAID)
-            { 14, 16, 1 }, // OH opt1: OE6  — Dagger
-            { 14, 16, 2 }, // OH opt2: OE7  — Fist Weapon
-            { 14, 16, 3 }, // OH opt3: OE5  — Off Hand
-            { 14, 16, 4 }, // OH opt4: OE4  — Shield
-            { 14, 16, 5 }, // OH opt5: OE8  — paired (DT=4)
-            { 14, 16, 6 }, // OH opt6: OE9  — paired (DT=4)
-            { 14, 16, 7 }, // OH opt7: OE10 — paired (DT=4)
-            { 14, 16, 8 }, // OH opt8: OE11 — paired (DT=4)
-        };
-
-        TC_LOG_DEBUG("entities.player", "fillOutfitData [{}]: slotMap size={} setName='{}' ignoreMask=0x{:X}",
-            GetGUID().ToString(), std::size(slotMap), equipmentSet->SetName, equipmentSet->IgnoreMask);
-
-        // --- IgnoreMask repair: DB value cannot be trusted ---
-        // If a slot has a non-zero IMAID, it MUST be active (bit CLEAR).
-        // The DB may store 0x7FFFF (all ignored) from a previous buggy save.
-        uint32 repairedIgnoreMask = equipmentSet->IgnoreMask;
-        for (uint8 s = 0; s < EQUIPMENT_SLOT_END; ++s)
-        {
-            if (equipmentSet->Appearances[s] != 0)
-                repairedIgnoreMask &= ~(1u << s);
-        }
-        // Also force-clear shoulder bit if secondary shoulder has an appearance
-        if (equipmentSet->SecondaryShoulderApparanceID != 0)
-            repairedIgnoreMask &= ~(1u << EQUIPMENT_SLOT_SHOULDERS);
-
-        TC_LOG_DEBUG("network.opcode.transmog",
-            "fillOutfitData [{}]: REPAIRED ignoreMask=0x{:X} (was 0x{:X}) for outfit '{}'",
-            GetGUID().ToString(), repairedIgnoreMask, equipmentSet->IgnoreMask, equipmentSet->SetName);
-
-        for (auto const& mapping : slotMap)
-        {
-            // Weapon option entries (option > 0) are empty placeholder slots for weapon type variants.
-            // They must be emitted so the client sees exactly 30 entries, preventing packet growth.
-            // Retail evidence (build 66263): paired weapon placeholders (OptionEnum 8-11, our options 5-8
-            // for both MH and OH) use behavioral AppearanceDisplayType=4 and IllusionDisplayType=4
-            // ("not applicable"). Other placeholder options (1H, Dagger, 2H, Ranged, Fist, Shield, Off Hand)
-            // remain DT=0 (unassigned).
-            if (mapping.option > 0)
-            {
-                // Paired weapon placeholders: options 5-8 on both MH (db2SlotInfoID=13) and OH (14).
-                // These correspond to DB2 TransmogOutfitSlotOption OptionEnums 8-11 (Flags=2, paired cross-refs).
-                bool isPairedPlaceholder = (mapping.db2SlotInfoID == 13 || mapping.db2SlotInfoID == 14)
-                    && mapping.option >= 5;
-                uint8 placeholderDT = isPairedPlaceholder ? uint8(4) : uint8(0);
-
-                auto slotSetter = AddDynamicUpdateFieldValue(outfitSetter.ModifyValue(&UF::TransmogOutfitData::Slots));
-                slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::Slot).SetValue(mapping.db2SlotInfoID);
-                slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::SlotOption).SetValue(mapping.option);
-                slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::ItemModifiedAppearanceID).SetValue(uint32(0));
-                slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType).SetValue(placeholderDT);
-                slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::Flags).SetValue(uint32(0));
-                slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::SpellItemEnchantmentID).SetValue(uint32(0));
-                slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType).SetValue(placeholderDT);
-
-                _lastOutfitSlotEcho.push_back({ int8(mapping.db2SlotInfoID), mapping.option,
-                    0, placeholderDT, 0, placeholderDT, 0 });
-
-                TC_LOG_DEBUG("network.opcode.transmog",
-                    "fillOutfitData [{}]: SLOT db2={} option={} IMAID=0 enchant=0 ADT={} IDT={} class={}",
-                    GetGUID().ToString(), mapping.db2SlotInfoID, mapping.option,
-                    placeholderDT, placeholderDT,
-                    isPairedPlaceholder ? "placeholder-not-applicable" : "empty");
+            uint32 transmogOutfitId = fields.transmogOutfitId().GetUInt32();
+            TransmogOutfitEntryEntry const* transmogOutfitEntry = sTransmogOutfitEntryStore.LookupEntry(transmogOutfitId);
+            if (!transmogOutfitEntry || transmogOutfitEntry->GetSetType() == TransmogOutfitSetType::CustomSet)
                 continue;
-            }
 
-            // ID 3 (SecondaryShoulder / ShoulderLeft) uses its own dedicated field, not Appearances[]
-            uint32 imaID;
-            if (mapping.db2SlotInfoID == 3)
-                imaID = equipmentSet->SecondaryShoulderApparanceID > 0 ? uint32(equipmentSet->SecondaryShoulderApparanceID) : 0;
-            else
-                imaID = (mapping.equipSlot < EQUIPMENT_SLOT_END && equipmentSet->Appearances[mapping.equipSlot] > 0)
-                    ? uint32(equipmentSet->Appearances[mapping.equipSlot]) : 0;
+            if (transmogOutfitEntry->HasFlag(TransmogOutfitEntryFlags::OnlyAvailableDuringEvent) && !IsHolidayActive(HOLIDAY_TRIAL_OF_STYLE))
+                continue;
 
-            // Bootstrap from the player's equipped item ONLY for viewed outfits and ONLY for
-            // slots the outfit ignores (IgnoreMask bit set = slot not part of this outfit).
-            // Stored outfits must keep empty slots as imaID=0 → ADT=0/IDT=0 ("not in this outfit").
-            // Slots with Appearances==0 and IgnoreMask bit CLEARED are explicit bridge clears —
-            // the user's outfit intentionally has no transmog for that slot. Don't override with
-            // the item's current transmog (which may not have been cleared yet by ApplyTransmogOutfitToPlayer).
-            if (!isStored && imaID == 0 && mapping.db2SlotInfoID != 3 && mapping.equipSlot < EQUIPMENT_SLOT_END
-                && (repairedIgnoreMask & (1u << mapping.equipSlot)))
+            WorldPackets::Transmogrification::TransmogOutfitDataInfo outfitInfo;
+            outfitInfo.SetType = transmogOutfitEntry->GetSetType();
+            outfitInfo.Name = fields.name().GetString();
+            outfitInfo.Icon = fields.icon().GetUInt32();
+            outfitInfo.SituationsEnabled = fields.situationsEnabled().GetBool();
+
+            auto transmogOutfit = activePlayerData.ModifyValue(&UF::ActivePlayerData::TransmogOutfits, transmogOutfitId);
+            InitializeNewTransmogOutfit(transmogOutfit, transmogOutfitId, outfitInfo);
+
+            auto setData = sets.extract(transmogOutfitId);
+            if (!setData)
+                continue;
+
+            auto situations = transmogOutfit.ModifyValue(&UF::TransmogOutfitData::Situations);
+            ClearDynamicUpdateFieldValues(situations);
+            for (WorldPackets::Transmogrification::TransmogOutfitSituationInfo const& situationInfo : setData.mapped().situations)
             {
-                if (Item* equippedItem = GetItemByPos(INVENTORY_SLOT_BAG_0, mapping.equipSlot))
-                {
-                    // Prefer per-spec transmog modifier, then fall back to ALL_SPECS
-                    imaID = equippedItem->GetModifier(AppearanceModifierSlotBySpec[GetActiveTalentGroup()]);
-                    if (!imaID)
-                        imaID = equippedItem->GetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_ALL_SPECS);
-                    // Fall back to the item's base appearance from DB2
-                    if (!imaID)
-                        if (ItemModifiedAppearanceEntry const* baseAppear = equippedItem->GetItemModifiedAppearance())
-                            imaID = baseAppear->ID;
-                }
+                auto situation = AddDynamicUpdateFieldValue(situations);
+                situation.ModifyValue(&UF::TransmogOutfitSituationInfo::SituationID).SetValue(situationInfo.SituationID);
+                situation.ModifyValue(&UF::TransmogOutfitSituationInfo::SpecID).SetValue(situationInfo.SpecID);
+                situation.ModifyValue(&UF::TransmogOutfitSituationInfo::LoadoutID).SetValue(situationInfo.LoadoutID);
+                situation.ModifyValue(&UF::TransmogOutfitSituationInfo::EquipmentSetID).SetValue(situationInfo.EquipmentSetID);
             }
-            else if (imaID == 0 && mapping.db2SlotInfoID != 3 && mapping.equipSlot < EQUIPMENT_SLOT_END
-                && !(repairedIgnoreMask & (1u << mapping.equipSlot)))
+
+            for (WorldPackets::Transmogrification::TransmogOutfitSlotData const& slotData : setData.mapped().slots)
             {
-                // Canary: bootstrap was skipped because IgnoreMask bit is CLEAR (explicit bridge clear).
-                // Log if the equipped item still has a stale transmog modifier — confirms the fix is
-                // actively preventing stale data from leaking into ViewedOutfit.
-                if (Item* dbgItem = GetItemByPos(INVENTORY_SLOT_BAG_0, mapping.equipSlot))
-                    if (uint32 staleIMAID = dbgItem->GetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_ALL_SPECS))
-                        TC_LOG_DEBUG("network.opcode.transmog",
-                            "fillOutfitData [{}]: equipSlot={} CLEAR-SKIP equipped has stale IMAID={} (will be cleared by ApplyTransmogOutfitToPlayer)",
-                            GetGUID().ToString(), mapping.equipSlot, staleIMAID);
+                TransmogMgr::TransmogOutfitSlotAndOptionInfo const* slotInfo = TransmogMgr::GetSlotAndOption(slotData.Slot, slotData.SlotOption);
+                if (!slotInfo)
+                    continue;
+
+                auto slot = transmogOutfit.ModifyValue(&UF::TransmogOutfitData::Slots, slotInfo->SlotIndex);
+                SetUpdateFieldValue(slot.ModifyValue(&UF::TransmogOutfitSlotData::Slot), AsUnderlyingType(slotData.Slot));
+                SetUpdateFieldValue(slot.ModifyValue(&UF::TransmogOutfitSlotData::SlotOption), AsUnderlyingType(slotData.SlotOption));
+                SetUpdateFieldValue(slot.ModifyValue(&UF::TransmogOutfitSlotData::ItemModifiedAppearanceID), slotData.ItemModifiedAppearanceID);
+                SetUpdateFieldValue(slot.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType), AsUnderlyingType(slotData.AppearanceDisplayType));
+                SetUpdateFieldValue(slot.ModifyValue(&UF::TransmogOutfitSlotData::SpellItemEnchantmentID), slotData.SpellItemEnchantmentID);
+                SetUpdateFieldValue(slot.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType), AsUnderlyingType(slotData.IllusionDisplayType));
+                SetUpdateFieldValue(slot.ModifyValue(&UF::TransmogOutfitSlotData::Flags), slotData.Flags);
             }
+        } while (setsResult->NextRow());
+    }
 
-            // Behavioral AppearanceDisplayType (matches Blizzard Enum.TransmogOutfitDisplayType):
-            //   0 = Unassigned — stored empty, slot not in outfit
-            //   1 = Assigned   — apply this specific appearance (both stored and viewed)
-            //   2 = Passthrough — viewed empty, show equipped item or nothing
-            //   3 = Hidden     — apply hidden visual (real hidden IMA ID required, never IMA=0)
-            //   4 = Not applicable — used for weapon placeholders (handled in option>0 block above)
-            bool isHidden = false;
-            uint8 displayType = 0;
-            if (imaID > 0)
-            {
-                isHidden = isHiddenAppearance(imaID);
-                displayType = isHidden ? uint8(3) : uint8(1);
-            }
-            else if (!isStored)
-            {
-                // Viewed empty rows use ADT=2/IDT=2 (equipped passthrough)
-                displayType = uint8(2);
-            }
-
-            auto slotSetter = AddDynamicUpdateFieldValue(outfitSetter.ModifyValue(&UF::TransmogOutfitData::Slots));
-            slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::Slot).SetValue(mapping.db2SlotInfoID);
-            slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::SlotOption).SetValue(mapping.option);
-            slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::ItemModifiedAppearanceID).SetValue(imaID);
-            slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType).SetValue(displayType);
-            slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::Flags).SetValue(uint32(0));
-
-            uint32 enchant = 0;
-            if (mapping.equipSlot == EQUIPMENT_SLOT_MAINHAND)
-                enchant = equipmentSet->Enchants[0] > 0 ? uint32(equipmentSet->Enchants[0]) : 0;
-            else if (mapping.equipSlot == EQUIPMENT_SLOT_OFFHAND)
-                enchant = equipmentSet->Enchants[1] > 0 ? uint32(equipmentSet->Enchants[1]) : 0;
-
-            // Bootstrap illusion from equipped weapon when outfit doesn't define one.
-            // Without this, the paperdoll loses weapon enchant visuals after outfit apply/relog.
-            // Only for ViewedOutfit — stored outfits must only show explicitly-saved illusions.
-            if (!isStored && enchant == 0 && (mapping.equipSlot == EQUIPMENT_SLOT_MAINHAND || mapping.equipSlot == EQUIPMENT_SLOT_OFFHAND))
-            {
-                if (Item* weapon = GetItemByPos(INVENTORY_SLOT_BAG_0, mapping.equipSlot))
-                {
-                    uint32 itemIllusion = weapon->GetModifier(IllusionModifierSlotBySpec[GetActiveTalentGroup()]);
-                    if (!itemIllusion)
-                        itemIllusion = weapon->GetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_ALL_SPECS);
-                    if (itemIllusion)
-                    {
-                        enchant = itemIllusion;
-                        TC_LOG_DEBUG("network.opcode.transmog", "fillOutfitData [{}]: bootstrapped illusion for equipSlot={} enchantID={}",
-                            GetGUID().ToString(), mapping.equipSlot, enchant);
-                    }
-                }
-            }
-
-            slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::SpellItemEnchantmentID).SetValue(enchant);
-            // IllusionDisplayType:
-            //   Weapon option 0 with IMAID + enchant: 1
-            //   Weapon option 0 with IMAID, no enchant: 0
-            //   Assigned armor (any context): 0
-            //   Viewed empty passthrough: 2
-            //   Hidden or stored empty: 0
-            bool isWeaponOption0 = (mapping.equipSlot == EQUIPMENT_SLOT_MAINHAND || mapping.equipSlot == EQUIPMENT_SLOT_OFFHAND);
-            uint8 illusionDT = 0;
-            if (imaID > 0 && !isHidden)
-                illusionDT = isWeaponOption0 ? (enchant ? uint8(1) : uint8(0)) : uint8(0);
-            else if (imaID == 0 && !isStored)
-                illusionDT = uint8(2); // Viewed empty passthrough: IDT=2
-            slotSetter.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType).SetValue(illusionDT);
-
-            _lastOutfitSlotEcho.push_back({ int8(mapping.db2SlotInfoID), mapping.option,
-                imaID, displayType, enchant, illusionDT, 0 });
-
-            // Consolidated per-row diagnostic — classification tag for quick log grep
-            char const* classTag = "empty";
-            if (imaID > 0)
-                classTag = isHidden ? "hidden" : "assigned";
-
-            TC_LOG_DEBUG("network.opcode.transmog",
-                "fillOutfitData [{}]: SLOT db2={} option={} IMAID={} enchant={} ADT={} IDT={} class={} stored={}",
-                GetGUID().ToString(), mapping.db2SlotInfoID, mapping.option, imaID, enchant,
-                displayType, illusionDT, classTag, isStored ? "yes" : "no");
-        }
-    };
-
-    uint32 firstOutfitId = 0;
-    EquipmentSetInfo::EquipmentSetData const* firstOutfitData = nullptr;
-    uint32 activeOutfitId = 0;
-    EquipmentSetInfo::EquipmentSetData const* activeOutfitData = nullptr;
-
-    for (auto const& [_, equipmentSet] : _equipmentSets)
+    for (int32 transmogOutfitId : m_activePlayerData->UnlockedTransmogOutfits)
     {
-        if (equipmentSet.State == EQUIPMENT_SET_DELETED)
-            continue;
-        if (equipmentSet.Data.Type != EquipmentSetInfo::TRANSMOG)
+        TransmogOutfitEntryEntry const* transmogOutfitEntry = sTransmogOutfitEntryStore.AssertEntry(transmogOutfitId);
+
+        if (transmogOutfitEntry->HasFlag(TransmogOutfitEntryFlags::OnlyAvailableDuringEvent) && !IsHolidayActive(HOLIDAY_TRIAL_OF_STYLE))
             continue;
 
-        // Skip legacy SetID=0 entries — client treats TransmogOutfitID=0 as "no outfit"
-        if (equipmentSet.Data.SetID == 0)
+        WorldPackets::Transmogrification::TransmogOutfitDataInfo outfitData;
+        outfitData.SetType = transmogOutfitEntry->GetSetType();
+        outfitData.SituationsEnabled = false;
+        outfitData.Icon = TransmogMgr::DefaultOutfitIcon;
+        outfitData.Name = TransmogMgr::DefaultOutfitName[GetSession()->GetSessionDbcLocale()];
+        if (transmogOutfitEntry->Name.Str[GetSession()->GetSessionDbcLocale()][0])
+            outfitData.Name = transmogOutfitEntry->Name.Str[GetSession()->GetSessionDbcLocale()];
+
+        switch (transmogOutfitEntry->GetSetType())
         {
-            TC_LOG_DEBUG("entities.player", "_SyncTransmogOutfitsToActivePlayerData [{}]: skipping legacy SetID=0 outfit guid={}",
-                GetGUID().ToString(), equipmentSet.Data.Guid);
-            continue;
-        }
-
-        ++transmogSetCount;
-
-        auto transmogOutfitSetter = activePlayerData.ModifyValue(&UF::ActivePlayerData::TransmogOutfits, equipmentSet.Data.SetID);
-        SetUpdateFieldValue(transmogOutfitSetter.ModifyValue(&UF::TransmogOutfitData::Id), equipmentSet.Data.SetID);
-        ClearDynamicUpdateFieldValues(transmogOutfitSetter.ModifyValue(&UF::TransmogOutfitData::Slots));
-        ClearDynamicUpdateFieldValues(transmogOutfitSetter.ModifyValue(&UF::TransmogOutfitData::Situations));
-        fillOutfitData(transmogOutfitSetter, &equipmentSet.Data, true);
-
-        TC_LOG_DEBUG("entities.player", "_SyncTransmogOutfitsToActivePlayerData [{}]: setId={} guid={} name='{}' icon='{}'",
-            GetGUID().ToString(), equipmentSet.Data.SetID, equipmentSet.Data.Guid, equipmentSet.Data.SetName, equipmentSet.Data.SetIcon);
-
-        if (!firstOutfitId || equipmentSet.Data.SetID < firstOutfitId)
-        {
-            firstOutfitId = equipmentSet.Data.SetID;
-            firstOutfitData = &equipmentSet.Data;
-        }
-
-        // Track the actively-applied outfit for ViewedOutfit rendering
-        if (_activeTransmogOutfitID && equipmentSet.Data.SetID == _activeTransmogOutfitID)
-        {
-            activeOutfitId = equipmentSet.Data.SetID;
-            activeOutfitData = &equipmentSet.Data;
+            case TransmogOutfitSetType::Equipped:
+            {
+                outfitData.SituationsEnabled = true;
+                auto equippedOutfit = activePlayerData.ModifyValue(&UF::ActivePlayerData::ViewedOutfit);
+                InitializeNewTransmogOutfit(equippedOutfit, transmogOutfitId, outfitData);
+                break;
+            }
+            case TransmogOutfitSetType::Outfit:
+                if (!m_activePlayerData->TransmogOutfits.Get(transmogOutfitId))
+                    CreateTransmogOutfit(transmogOutfitId, outfitData);
+                break;
+            case TransmogOutfitSetType::CustomSet:
+            default:
+                break;
         }
     }
 
-    // Use the actively-applied outfit for ViewedOutfit + Metadata, falling back to lowest SetID
-    uint32 viewedId = activeOutfitId ? activeOutfitId : firstOutfitId;
-    EquipmentSetInfo::EquipmentSetData const* viewedData = activeOutfitData ? activeOutfitData : firstOutfitData;
-
-    TC_LOG_DEBUG("entities.player", "_SyncTransmogOutfitsToActivePlayerData [{}]: transmogSetCount={} mapSize={} firstOutfitId={} activeOutfitId={} viewedId={}",
-        GetGUID().ToString(), transmogSetCount, m_activePlayerData->TransmogOutfits.size(), firstOutfitId, activeOutfitId, viewedId);
-
-    auto transmogMetadataSetter = activePlayerData.ModifyValue(&UF::ActivePlayerData::TransmogMetadata);
-    SetUpdateFieldValue(transmogMetadataSetter.ModifyValue(&UF::TransmogOutfitMetadata::Locked), false);
-    SetUpdateFieldValue(transmogMetadataSetter.ModifyValue(&UF::TransmogOutfitMetadata::TransmogOutfitID), viewedId);
-    SetUpdateFieldValue(transmogMetadataSetter.ModifyValue(&UF::TransmogOutfitMetadata::SituationTrigger), uint8(0));
-    // StampedOption passes the real selected weapon option enum (0-8) from EquipmentSetData.
-    // This tells the client which weapon type variant is active for MH/OH.
-    uint8 stampedMH = 0, stampedOH = 0;
-    if (viewedData)
-    {
-        stampedMH = uint8(viewedData->MainHandOption);
-        stampedOH = uint8(viewedData->OffHandOption);
-    }
-    SetUpdateFieldValue(transmogMetadataSetter.ModifyValue(&UF::TransmogOutfitMetadata::StampedOptionMainHand), stampedMH);
-    SetUpdateFieldValue(transmogMetadataSetter.ModifyValue(&UF::TransmogOutfitMetadata::StampedOptionOffHand), stampedOH);
-    SetUpdateFieldValue(transmogMetadataSetter.ModifyValue(&UF::TransmogOutfitMetadata::CostMod), 0.0f);
-
-    auto viewedOutfitSetter = activePlayerData.ModifyValue(&UF::ActivePlayerData::ViewedOutfit);
-    SetUpdateFieldValue(viewedOutfitSetter.ModifyValue(&UF::TransmogOutfitData::Id), viewedId);
-    // Clear dynamic arrays before re-populating — without this, Slots/Situations
-    // accumulate across calls (14→28→42...) and the client renders naked.
-    TC_LOG_DEBUG("network.opcode.transmog", "ClearDynamicUpdateFieldValues: clearing ViewedOutfit Slots/Situations for player {} outfitId={}",
-        GetGUID().ToString(), viewedId);
-    ClearDynamicUpdateFieldValues(viewedOutfitSetter.ModifyValue(&UF::TransmogOutfitData::Slots));
-    ClearDynamicUpdateFieldValues(viewedOutfitSetter.ModifyValue(&UF::TransmogOutfitData::Situations));
-    TC_LOG_DEBUG("network.opcode.transmog", "ClearDynamicUpdateFieldValues: done, calling fillOutfitData");
-    fillOutfitData(viewedOutfitSetter, viewedData, false);
-    TC_LOG_DEBUG("network.opcode.transmog", "ClearDynamicUpdateFieldValues: fillOutfitData complete, ViewedOutfit rebuilt");
-
-    // Dump the appearance array that was written to ViewedOutfit
-    if (viewedData)
-    {
-        TC_LOG_DEBUG("network.opcode.transmog",
-            "_SyncTransmogOutfitsToActivePlayerData [{}]: caller='{}' wrote ViewedOutfit from outfit '{}' setId={} (IgnoreMask=0x{:X}):",
-            GetGUID().ToString(), caller, viewedData->SetName, viewedId, viewedData->IgnoreMask);
-        for (uint8 s = 0; s < EQUIPMENT_SLOT_END; ++s)
-            TC_LOG_DEBUG("network.opcode.transmog", "  ViewedOutfit: equipSlot={} Appearances={} ignored={}",
-                s, viewedData->Appearances[s], (viewedData->IgnoreMask & (1u << s)) != 0);
-    }
-
-    // Force-flush ViewedOutfit update fields to client — clear+rebuild alone doesn't
-    // trigger a model refresh without an explicit SMSG_UPDATE_OBJECT delivery.
-    if (IsInWorld())
-    {
-        TC_LOG_DEBUG("network.opcode.transmog", "_SyncTransmogOutfitsToActivePlayerData: flushing update to player (caller='{}').", caller);
-        SendUpdateToPlayer(this);
-        ClearUpdateMask(true);
-    }
+    EquipTransmogOutfit(equippedTransmogOutfitId, TransmogSituationTrigger::Manual, locked);
 }
 
 void Player::_LoadBGData(PreparedQueryResult result)
@@ -18768,7 +18335,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
         // "totalKills, todayKills, yesterdayKills, chosenTitle, watchedFaction, drunk, "
         // "health, power1, power2, power3, power4, power5, power6, power7, power8, power9, power10, instance_id, activeTalentGroup, lootSpecId, exploredZones, knownTitles, actionBars, "
         // "raidDifficulty, legacyRaidDifficulty, fishingSteps, honor, honorLevel, honorRestState, honorRestBonus, numRespecs, "
-        // "personalTabardEmblemStyle, personalTabardEmblemColor, personalTabardBorderStyle, personalTabardBorderColor, personalTabardBackgroundColor "
+        // "personalTabardEmblemStyle, personalTabardEmblemColor, personalTabardBorderStyle, personalTabardBorderColor, personalTabardBackgroundColor, transmogOutfitEquippedId, transmogOutfitLocked "
         // "FROM characters c LEFT JOIN character_fishingsteps cfs ON c.guid = cfs.guid WHERE c.guid = ?", CONNECTION_ASYNC);
 
         ObjectGuid::LowType guid;
@@ -18846,6 +18413,8 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
         int32 personalTabardBorderStyle;
         int32 personalTabardBorderColor;
         int32 personalTabardBackgroundColor;
+        int32 transmogOutfitEquippedId;
+        bool transmogOutfitLocked;
 
         explicit PlayerLoadData(Field const* fields)
         {
@@ -18927,6 +18496,8 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
             personalTabardBorderStyle = fields[i++].GetInt32();
             personalTabardBorderColor = fields[i++].GetInt32();
             personalTabardBackgroundColor = fields[i++].GetInt32();
+            transmogOutfitEquippedId = fields[i++].GetInt32();
+            transmogOutfitLocked = fields[i++].GetBool();
         }
 
     } fields(result->Fetch());
@@ -19437,12 +19008,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     _LoadTalents(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_TALENTS));
     _LoadPvpTalents(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_PVP_TALENTS));
     _LoadSpells(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_SPELLS), holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_SPELL_FAVORITES));
-    GetSession()->GetCollectionMgr()->LoadToys();
-    GetSession()->GetCollectionMgr()->LoadHeirlooms();
-    GetSession()->GetCollectionMgr()->LoadMounts();
-    GetSession()->GetCollectionMgr()->LoadItemAppearances();
-    GetSession()->GetCollectionMgr()->LoadTransmogIllusions();
-    GetSession()->GetCollectionMgr()->LoadWarbandScenes();
+    GetSession()->GetCollectionMgr()->LoadCharacterData();
 
     LearnSpecializationSpells();
 
@@ -19618,6 +19184,9 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
         }
     }
 
+    if (extraflags & PLAYER_EXTRA_FLAG_FREE_TRANSMOG_CLAIMED)
+        SetPlayerLocalFlag(PLAYER_LOCAL_FLAG_FREE_TRANSMOG_CLAIMED);
+
     InitPvP();
 
     // RaF stuff.
@@ -19627,9 +19196,11 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     _LoadDeclinedNames(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_DECLINED_NAMES));
 
     _LoadEquipmentSets(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_EQUIPMENT_SETS));
-    _LoadTransmogOutfits(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFITS));
-    _LoadTransmogOutfitSituations(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SITUATIONS));
-    _SyncTransmogOutfitsToActivePlayerData("PlayerLogin");
+    _LoadTransmogCustomSets(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFITS));
+    _LoadTransmogOutfits(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT),
+        holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SITUATION),
+        holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SLOT),
+        fields.transmogOutfitEquippedId, fields.transmogOutfitLocked);
 
     _LoadCUFProfiles(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_CUF_PROFILES));
 
@@ -21378,27 +20949,7 @@ void Player::SaveToDB(LoginDatabaseTransaction loginTransaction, CharacterDataba
         }
         stmt->setString(index++, ss.str());
 
-        ss.str("");
-        // cache equipment...
-        for (uint32 i = 0; i < REAGENT_BAG_SLOT_END; ++i)
-        {
-            if (Item* item = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
-            {
-                ss << uint32(item->GetTemplate()->GetInventoryType()) << ' ' << item->GetDisplayId(this) << ' ';
-                if (SpellItemEnchantmentEntry const* enchant = sSpellItemEnchantmentStore.LookupEntry(item->GetVisibleEnchantmentId(this)))
-                    ss << enchant->ItemVisual;
-                else
-                    ss << '0';
-
-                ss << ' '
-                    << uint32(sItemStore.AssertEntry(item->GetEntry())->SubclassID) << ' '
-                    << uint32(item->GetVisibleSecondaryModifiedAppearanceId(this)) << ' ';
-            }
-            else
-                ss << "0 0 0 0 0 ";
-        }
-
-        stmt->setString(index++, ss.str());
+        stmt->setString(index++, GetCharacterSelectOutfit());
 
         ss.str("");
         for (uint32 i = 0; i < m_activePlayerData->KnownTitles.size(); ++i)
@@ -21413,6 +20964,14 @@ void Player::SaveToDB(LoginDatabaseTransaction loginTransaction, CharacterDataba
             stmt->setUInt32(index++, ClientBuild::GetMinorMajorBugfixVersionForBuild(currentRealm->Build));
         else
             stmt->setUInt32(index++, 0);
+
+        stmt->setInt32(index++, m_playerData->PersonalTabard->EmblemStyle);
+        stmt->setInt32(index++, m_playerData->PersonalTabard->EmblemColor);
+        stmt->setInt32(index++, m_playerData->PersonalTabard->BorderStyle);
+        stmt->setInt32(index++, m_playerData->PersonalTabard->BorderColor);
+        stmt->setInt32(index++, m_playerData->PersonalTabard->BackgroundColor);
+        stmt->setInt32(index++, m_activePlayerData->TransmogMetadata->TransmogOutfitID);
+        stmt->setBool(index++, m_activePlayerData->TransmogMetadata->Locked);
     }
     else
     {
@@ -21537,27 +21096,7 @@ void Player::SaveToDB(LoginDatabaseTransaction loginTransaction, CharacterDataba
         }
         stmt->setString(index++, ss.str());
 
-        ss.str("");
-        // cache equipment...
-        for (uint32 i = 0; i < REAGENT_BAG_SLOT_END; ++i)
-        {
-            if (Item* item = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
-            {
-                ss << uint32(item->GetTemplate()->GetInventoryType()) << ' ' << item->GetDisplayId(this) << ' ';
-                if (SpellItemEnchantmentEntry const* enchant = sSpellItemEnchantmentStore.LookupEntry(item->GetVisibleEnchantmentId(this)))
-                    ss << enchant->ItemVisual;
-                else
-                    ss << '0';
-
-                ss << ' '
-                    << uint32(sItemStore.AssertEntry(item->GetEntry())->SubclassID) << ' '
-                    << uint32(item->GetVisibleSecondaryModifiedAppearanceId(this)) << ' ';
-            }
-            else
-                ss << "0 0 0 0 0 ";
-        }
-
-        stmt->setString(index++, ss.str());
+        stmt->setString(index++, GetCharacterSelectOutfit());
 
         ss.str("");
         for (uint32 i = 0; i < m_activePlayerData->KnownTitles.size(); ++i)
@@ -21578,6 +21117,14 @@ void Player::SaveToDB(LoginDatabaseTransaction loginTransaction, CharacterDataba
             stmt->setUInt32(index++, ClientBuild::GetMinorMajorBugfixVersionForBuild(currentRealm->Build));
         else
             stmt->setUInt32(index++, 0);
+
+        stmt->setInt32(index++, m_playerData->PersonalTabard->EmblemStyle);
+        stmt->setInt32(index++, m_playerData->PersonalTabard->EmblemColor);
+        stmt->setInt32(index++, m_playerData->PersonalTabard->BorderStyle);
+        stmt->setInt32(index++, m_playerData->PersonalTabard->BorderColor);
+        stmt->setInt32(index++, m_playerData->PersonalTabard->BackgroundColor);
+        stmt->setInt32(index++, m_activePlayerData->TransmogMetadata->TransmogOutfitID);
+        stmt->setBool(index++, m_activePlayerData->TransmogMetadata->Locked);
 
         // Index
         stmt->setUInt64(index, GetGUID().GetCounter());
@@ -21618,6 +21165,7 @@ void Player::SaveToDB(LoginDatabaseTransaction loginTransaction, CharacterDataba
     m_reputationMgr->SaveToDB(trans);
     m_questObjectiveCriteriaMgr->SaveToDB(trans);
     _SaveEquipmentSets(trans);
+    _SaveTransmogOutfits(trans);
     GetSession()->SaveTutorialsData(trans);                 // changed only while character in game
     _SaveInstanceTimeRestrictions(trans);
     _SaveCurrency(trans);
@@ -21633,14 +21181,8 @@ void Player::SaveToDB(LoginDatabaseTransaction loginTransaction, CharacterDataba
         _SaveStats(trans);
 
     // TODO: Move this out
-    GetSession()->GetCollectionMgr()->SaveAccountToys(loginTransaction);
+    GetSession()->GetCollectionMgr()->SaveToDB(loginTransaction);
     GetSession()->GetBattlePetMgr()->SaveToDB(loginTransaction);
-    GetSession()->GetCollectionMgr()->SaveAccountHeirlooms(loginTransaction);
-    GetSession()->GetCollectionMgr()->SaveAccountMounts(loginTransaction);
-    GetSession()->GetCollectionMgr()->SaveAccountItemAppearances(loginTransaction);
-    GetSession()->GetCollectionMgr()->SaveTransmogSetFavorites(loginTransaction);
-    GetSession()->GetCollectionMgr()->SaveAccountTransmogIllusions(loginTransaction);
-    GetSession()->GetCollectionMgr()->SaveAccountWarbandScenes(loginTransaction);
     GetSession()->SavePlayerDataAccount(loginTransaction);
 
     Battlenet::RealmHandle currentRealmId = sRealmList->GetCurrentRealmId();
@@ -23012,7 +22554,7 @@ Pet* Player::GetPet() const
     return nullptr;
 }
 
-void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
+void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent, bool stampeded /*= false*/)
 {
     if (!pet)
         pet = GetPet();
@@ -23063,11 +22605,32 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
 
     pet->CombatStop();
 
+    if (pet->IsAnimalCompanion())
+        SetAnimalCompanion(ObjectGuid::Empty);
+
     // exit areatriggers before saving to remove auras applied by them
     pet->ExitAllAreaTriggers();
 
+    // Stampeded/animal companion pets are not in PetStable, skip all stable logic
+    if (pet->IsInStampeded() || pet->IsAnimalCompanion())
+    {
+        SetMinion(pet, false, true);
+        pet->AddObjectToRemoveList();
+        pet->m_removed = true;
+
+        if (pet->isControlled())
+        {
+            WorldPackets::Pet::PetSpells petSpellsPacket;
+            SendDirectMessage(petSpellsPacket.Write());
+
+            if (GetGroup())
+                SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET);
+        }
+        return;
+    }
+
     // only if current pet in slot
-    pet->SavePetToDB(mode);
+    pet->SavePetToDB(mode, stampeded);
 
     PetStable::PetInfo const* currentPet = m_petStable->GetCurrentPet();
     ASSERT(currentPet && currentPet->PetNumber == pet->GetCharmInfo()->GetPetNumber());
@@ -28931,6 +28494,22 @@ void Player::ResummonPetTemporaryUnSummonedIfAny()
     m_temporaryUnsummonedPetNumber = 0;
 }
 
+void Player::ResummonAnimalCompanionIfAny()
+{
+    if (GetPet() && GetAnimalCompanion().IsEmpty())
+    {
+        Unit::AuraEffectList const& animalCompanion = GetAuraEffectsByType(SPELL_AURA_ANIMAL_COMPANION);
+        for (AuraEffect const* aurEff : animalCompanion)
+        {
+            if (uint32 triggerSpell = aurEff->GetSpellEffectInfo().TriggerSpell)
+            {
+                if (sSpellMgr->GetSpellInfo(triggerSpell, DIFFICULTY_NONE))
+                    CastSpell(this, triggerSpell, true);
+            }
+        }
+    }
+}
+
 void Player::UnsummonBattlePetTemporaryIfAny(bool onFlyingMount /*= false*/)
 {
     Creature* battlepet = GetSummonedBattlePet();
@@ -29301,6 +28880,71 @@ void Player::_SaveEquipmentSets(CharacterDatabaseTransaction trans)
     }
 }
 
+void Player::_SaveTransmogOutfits(CharacterDatabaseTransaction trans)
+{
+    CharacterDatabasePreparedStatement* stmt = nullptr;
+    ObjectGuid::LowType guid = GetGUID().GetCounter();
+
+    for (uint32 transmogOutfitId : m_changedTransmogOutfits)
+    {
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT_SLOT);
+        stmt->setUInt64(0, guid);
+        stmt->setUInt32(1, transmogOutfitId);
+        trans->Append(stmt);
+
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT_SITUATION);
+        stmt->setUInt64(0, guid);
+        stmt->setUInt32(1, transmogOutfitId);
+        trans->Append(stmt);
+
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT_2);
+        stmt->setUInt64(0, guid);
+        stmt->setUInt32(1, transmogOutfitId);
+        trans->Append(stmt);
+
+        UF::TransmogOutfitData const* transmogOutfit = m_activePlayerData->TransmogOutfits.Get(transmogOutfitId);
+        if (!transmogOutfit)
+            continue;
+
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_TRANSMOG_OUTFIT_2);
+        stmt->setUInt64(0, guid);
+        stmt->setUInt32(1, transmogOutfitId);
+        stmt->setString(2, *transmogOutfit->OutfitInfo->Name);
+        stmt->setUInt32(3, *transmogOutfit->OutfitInfo->Icon);
+        stmt->setBool(4, *transmogOutfit->OutfitInfo->SituationsEnabled);
+        trans->Append(stmt);
+
+        for (UF::TransmogOutfitSituationInfo const& situation : transmogOutfit->Situations)
+        {
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_TRANSMOG_OUTFIT_SITUATION);
+            stmt->setUInt64(0, guid);
+            stmt->setUInt32(1, transmogOutfitId);
+            stmt->setUInt32(2, *situation.SituationID);
+            stmt->setUInt32(3, *situation.SpecID);
+            stmt->setUInt32(4, *situation.LoadoutID);
+            stmt->setUInt32(5, *situation.EquipmentSetID);
+            trans->Append(stmt);
+        }
+
+        for (UF::TransmogOutfitSlotData const& slot : transmogOutfit->Slots)
+        {
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_TRANSMOG_OUTFIT_SLOT);
+            stmt->setUInt64(0, guid);
+            stmt->setUInt32(1, transmogOutfitId);
+            stmt->setInt8(2, *slot.Slot);
+            stmt->setUInt8(3, *slot.SlotOption);
+            stmt->setUInt32(4, *slot.ItemModifiedAppearanceID);
+            stmt->setUInt8(5, *slot.AppearanceDisplayType);
+            stmt->setUInt32(6, *slot.SpellItemEnchantmentID);
+            stmt->setUInt8(7, *slot.IllusionDisplayType);
+            stmt->setUInt32(8, *slot.Flags);
+            trans->Append(stmt);
+        }
+    }
+
+    m_changedTransmogOutfits.clear();
+}
+
 void Player::_SaveBGData(CharacterDatabaseTransaction trans)
 {
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_PLAYER_BGDATA);
@@ -29599,8 +29243,16 @@ void Player::_LoadTraits(PreparedQueryResult configsResult, PreparedQueryResult 
                 }
             }
 
-            // Skip clearing on validation failure - private server with level 90
-            TraitMgr::ValidateConfig(traitConfig, this, false, true);
+            if (TraitMgr::ValidateConfig(traitConfig, this, false, true) != TraitMgr::LearnResult::Ok)
+            {
+                traitConfig.Entries.clear();
+                traitConfig.SubTrees.clear();
+                for (UF::TraitEntry const& grantedEntry : TraitMgr::GetGrantedTraitEntriesForConfig(traitConfig, this))
+                    traitConfig.Entries.emplace_back(grantedEntry);
+
+                // rebuild subtrees
+                TraitMgr::ValidateConfig(traitConfig, this, false, true);
+            }
 
             AddTraitConfig(traitConfig);
 
@@ -30694,8 +30346,12 @@ void Player::AddPetToUpdateFields(PetStable::PetInfo const& pet, PetSaveMode slo
     ufPet.ModifyValue(&UF::StablePetInfo::CreatureID).SetValue(pet.CreatureId);
     ufPet.ModifyValue(&UF::StablePetInfo::DisplayID).SetValue(pet.DisplayId);
     ufPet.ModifyValue(&UF::StablePetInfo::ExperienceLevel).SetValue(pet.Level);
-    ufPet.ModifyValue(&UF::StablePetInfo::PetFlags).SetValue(flags);
+    uint8 petFlags = flags;
+    if (pet.IsFavorite)
+        petFlags |= PET_STABLE_FAVORITE;
+    ufPet.ModifyValue(&UF::StablePetInfo::PetFlags).SetValue(petFlags);
     ufPet.ModifyValue(&UF::StablePetInfo::Name).SetValue(pet.Name);
+    ufPet.ModifyValue(&UF::StablePetInfo::Specialization).SetValue(pet.SpecializationId);
 }
 
 void Player::SetPetSlot(uint32 petNumber, PetSaveMode dstPetSlot)
@@ -31112,8 +30768,8 @@ void Player::_LoadPetStable(uint32 summonedPetNumber, PreparedQueryResult result
 
     m_petStable = std::make_unique<PetStable>();
 
-    //         0      1        2      3    4           5     6     7        8          9       10      11        12              13       14              15
-    // SELECT id, entry, modelid, level, exp, Reactstate, slot, name, renamed, curhealth, curmana, abdata, savetime, CreatedBySpell, PetType, specialization FROM character_pet WHERE owner = ?
+    //         0      1        2      3    4           5     6     7        8          9       10      11        12              13       14            15        16
+    // SELECT id, entry, modelid, level, exp, Reactstate, slot, name, renamed, curhealth, curmana, abdata, savetime, CreatedBySpell, PetType, specialization, favorite FROM character_pet WHERE owner = ?
     if (result)
     {
 
@@ -31137,6 +30793,7 @@ void Player::_LoadPetStable(uint32 summonedPetNumber, PreparedQueryResult result
             petInfo.CreatedBySpellId = fields[13].GetUInt32();
             petInfo.Type = PetType(fields[14].GetUInt8());
             petInfo.SpecializationId = fields[15].GetUInt16();
+            petInfo.IsFavorite = fields[16].GetBool();
             if (slot >= PET_SAVE_FIRST_ACTIVE_SLOT && slot < PET_SAVE_LAST_ACTIVE_SLOT)
             {
                 m_petStable->ActivePets[slot] = std::move(petInfo);
@@ -31587,11 +31244,13 @@ Guild const* Player::GetGuild() const
     return guildId ? sGuildMgr->GetGuildById(guildId) : nullptr;
 }
 
-Pet* Player::SummonPet(uint32 entry, Optional<PetSaveMode> slot, float x, float y, float z, float ang, uint32 duration, bool* isNew /*= nullptr*/)
+Pet* Player::SummonPet(uint32 entry, Optional<PetSaveMode> slot, float x, float y, float z, float ang, uint32 duration, bool* isNew /*= nullptr*/, bool stampeded /*= false*/, bool animalCompanion /*= false*/, std::function<void(Pet*, bool)> callBack /*[](Pet*, bool) {}*/)
 {
     PetStable& petStable = GetOrInitPetStable();
 
     Pet* pet = new Pet(this, SUMMON_PET);
+    pet->SetStampeded(stampeded);
+    pet->SetAnimalCompanion(animalCompanion);
 
     if (pet->LoadPetFromDB(this, entry, 0, false, slot))
     {
@@ -31601,6 +31260,7 @@ Pet* Player::SummonPet(uint32 entry, Optional<PetSaveMode> slot, float x, float 
         if (isNew)
             *isNew = false;
 
+        callBack(pet, true);
         return pet;
     }
 
@@ -31608,6 +31268,7 @@ Pet* Player::SummonPet(uint32 entry, Optional<PetSaveMode> slot, float x, float 
     if (!entry)
     {
         delete pet;
+        callBack(nullptr, false);
         return nullptr;
     }
 
@@ -31618,6 +31279,7 @@ Pet* Player::SummonPet(uint32 entry, Optional<PetSaveMode> slot, float x, float 
     {
         TC_LOG_ERROR("misc", "Player::SummonPet: Pet ({}, Entry: {}) not summoned. Suggested coordinates aren't valid (X: {} Y: {})", pet->GetGUID().ToString(), pet->GetEntry(), pet->GetPositionX(), pet->GetPositionY());
         delete pet;
+        callBack(nullptr, false);
         return nullptr;
     }
 
@@ -31672,6 +31334,8 @@ Pet* Player::SummonPet(uint32 entry, Optional<PetSaveMode> slot, float x, float 
 
     if (isNew)
         *isNew = true;
+
+    callBack(pet, true);
 
     return pet;
 }
@@ -32277,6 +31941,316 @@ void Player::UpdateWarModeAuras()
             RemovePvpFlag(UNIT_BYTE2_FLAG_PVP);
         RemoveAurasWithInterruptFlags(SpellAuraInterruptFlags2::WarModeLeave);
     }
+}
+
+void Player::AddUnlockedTransmogOutfits(std::span<int32 const> transmogOutfitIds)
+{
+    auto unlockedTransmogOutfits = m_values.ModifyValue(&Player::m_activePlayerData).ModifyValue(&UF::ActivePlayerData::UnlockedTransmogOutfits);
+    for (int32 transmogOutfitId : transmogOutfitIds)
+        AddDynamicUpdateFieldValue(unlockedTransmogOutfits) = transmogOutfitId;
+}
+
+void Player::CreateTransmogOutfit(uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData)
+{
+    auto outfit = m_values.ModifyValue(&Player::m_activePlayerData).ModifyValue(&UF::ActivePlayerData::TransmogOutfits, id);
+    InitializeNewTransmogOutfit(outfit, id, outfitData);
+    m_changedTransmogOutfits.insert(id);
+}
+
+void Player::InitializeNewTransmogOutfit(UF::MutableFieldReference<UF::TransmogOutfitData, false> outfit,
+    uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData)
+{
+    SetUpdateFieldValue(outfit.ModifyValue(&UF::TransmogOutfitData::Id), id);
+
+    auto outfitInfo = outfit.ModifyValue(&UF::TransmogOutfitData::OutfitInfo);
+    SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SetType), AsUnderlyingType(outfitData.SetType));
+    SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SituationsEnabled), outfitData.SituationsEnabled);
+    SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Icon), outfitData.Icon);
+    SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Name), std::string(outfitData.Name));
+
+    auto situations = outfit.ModifyValue(&UF::TransmogOutfitData::Situations);
+    for (TransmogSituationEntry const* defaultSituation : TransmogMgr::GetDefaultSituations())
+    {
+        auto situation = AddDynamicUpdateFieldValue(situations);
+        situation.ModifyValue(&UF::TransmogOutfitSituationInfo::SituationID).SetValue(defaultSituation->ID);
+    }
+
+    auto slots = outfit.ModifyValue(&UF::TransmogOutfitData::Slots);
+    for (TransmogMgr::TransmogOutfitSlotAndOptionInfo const& slotInfo : TransmogMgr::GetAllSlots())
+    {
+        auto slot = AddDynamicUpdateFieldValue(slots);
+        slot.ModifyValue(&UF::TransmogOutfitSlotData::Slot).SetValue(AsUnderlyingType(slotInfo.Slot->GetSlot()));
+
+        if (slotInfo.SlotOption)
+        {
+            slot.ModifyValue(&UF::TransmogOutfitSlotData::SlotOption).SetValue(AsUnderlyingType(slotInfo.SlotOption->GetOption()));
+
+            switch (slotInfo.SlotOption->GetOption())
+            {
+                case TransmogOutfitSlotOption::ArtifactSpecOne:
+                case TransmogOutfitSlotOption::ArtifactSpecTwo:
+                case TransmogOutfitSlotOption::ArtifactSpecThree:
+                case TransmogOutfitSlotOption::ArtifactSpecFour:
+                    // artifacts are disabled by default
+                    slot.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType).SetValue(AsUnderlyingType(TransmogOutfitDisplayType::Disabled));
+                    slot.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType).SetValue(AsUnderlyingType(TransmogOutfitDisplayType::Disabled));
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+bool Player::UpdateTransmogOutfit(uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData)
+{
+    if (!m_activePlayerData->TransmogOutfits.Get(id))
+        return false;
+
+    auto outfitInfo = m_values.ModifyValue(&Player::m_activePlayerData)
+        .ModifyValue(&UF::ActivePlayerData::TransmogOutfits, id)
+        .ModifyValue(&UF::TransmogOutfitData::OutfitInfo);
+    SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SetType), AsUnderlyingType(outfitData.SetType));
+    SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::SituationsEnabled), outfitData.SituationsEnabled);
+    SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Icon), outfitData.Icon);
+    SetUpdateFieldValue(outfitInfo.ModifyValue(&UF::TransmogOutfitDataInfo::Name), std::string(outfitData.Name));
+
+    m_changedTransmogOutfits.insert(id);
+    return true;
+}
+
+void Player::UpdateTransmogOutfitSituations(uint32 id, bool situationsEnabled, std::span<WorldPackets::Transmogrification::TransmogOutfitSituationInfo const> situations)
+{
+    auto outfit = m_values.ModifyValue(&Player::m_activePlayerData).ModifyValue(&UF::ActivePlayerData::TransmogOutfits, id);
+    SetUpdateFieldValue(outfit.ModifyValue(&UF::TransmogOutfitData::OutfitInfo).ModifyValue(&UF::TransmogOutfitDataInfo::SituationsEnabled), situationsEnabled);
+
+    auto outfitSituations = outfit.ModifyValue(&UF::TransmogOutfitData::Situations);
+
+    ClearDynamicUpdateFieldValues(outfitSituations);
+
+    for (WorldPackets::Transmogrification::TransmogOutfitSituationInfo const& situation : situations)
+    {
+        auto outfitSituation = AddDynamicUpdateFieldValue(outfitSituations);
+        outfitSituation.ModifyValue(&UF::TransmogOutfitSituationInfo::SituationID).SetValue(situation.SituationID);
+        outfitSituation.ModifyValue(&UF::TransmogOutfitSituationInfo::SpecID).SetValue(situation.SpecID);
+        outfitSituation.ModifyValue(&UF::TransmogOutfitSituationInfo::LoadoutID).SetValue(situation.LoadoutID);
+        outfitSituation.ModifyValue(&UF::TransmogOutfitSituationInfo::EquipmentSetID).SetValue(situation.EquipmentSetID);
+    }
+
+    m_changedTransmogOutfits.insert(id);
+}
+
+void Player::UpdateTransmogOutfitSlots(uint32 id, std::span<WorldPackets::Transmogrification::TransmogOutfitSlotData const> slots)
+{
+    UF::TransmogOutfitData const* transmogOutfit = m_activePlayerData->TransmogOutfits.Get(id);
+    if (!transmogOutfit)
+        return;
+
+    auto outfit = m_values.ModifyValue(&Player::m_activePlayerData)
+        .ModifyValue(&UF::ActivePlayerData::TransmogOutfits, id);
+
+    uint32 outfitSlotIndex = 0;
+    for (WorldPackets::Transmogrification::TransmogOutfitSlotData const& slot : slots)
+    {
+        while (std::pair(*transmogOutfit->Slots[outfitSlotIndex].Slot, *transmogOutfit->Slots[outfitSlotIndex].SlotOption) < std::pair(AsUnderlyingType(slot.Slot), AsUnderlyingType(slot.SlotOption)))
+            if (++outfitSlotIndex >= transmogOutfit->Slots.size())
+                return;
+
+        auto viewedOutfitSlot = outfit.ModifyValue(&UF::TransmogOutfitData::Slots, outfitSlotIndex);
+        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::Slot), AsUnderlyingType(slot.Slot));
+        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::SlotOption), AsUnderlyingType(slot.SlotOption));
+        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::ItemModifiedAppearanceID), slot.ItemModifiedAppearanceID);
+        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType), AsUnderlyingType(slot.AppearanceDisplayType));
+        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::SpellItemEnchantmentID), slot.SpellItemEnchantmentID);
+        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType), AsUnderlyingType(slot.IllusionDisplayType));
+        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::Flags), slot.Flags);
+    }
+
+    m_changedTransmogOutfits.insert(id);
+}
+
+void Player::EquipTransmogOutfit(uint32 id, TransmogSituationTrigger trigger, Optional<bool> locked)
+{
+    auto activePlayerData = m_values.ModifyValue(&Player::m_activePlayerData);
+
+    auto transmogMetadata = activePlayerData.ModifyValue(&UF::ActivePlayerData::TransmogMetadata);
+    SetUpdateFieldValue(transmogMetadata.ModifyValue(&UF::TransmogOutfitMetadata::TransmogOutfitID), id);
+    SetUpdateFieldValue(transmogMetadata.ModifyValue(&UF::TransmogOutfitMetadata::SituationTrigger), AsUnderlyingType(trigger));
+    if (locked.has_value())
+        SetUpdateFieldValue(transmogMetadata.ModifyValue(&UF::TransmogOutfitMetadata::Locked), *locked);
+
+    auto viewedOutfit = activePlayerData.ModifyValue(&UF::ActivePlayerData::ViewedOutfit);
+
+    if (UF::TransmogOutfitData const* transmogOutfit = m_activePlayerData->TransmogOutfits.Get(id))
+    {
+        for (UF::TransmogOutfitSlotData const& slot : transmogOutfit->Slots)
+        {
+            uint32 slotIndex = TransmogMgr::GetSlotAndOption(static_cast<TransmogOutfitSlot>(*slot.Slot), static_cast<TransmogOutfitSlotOption>(*slot.SlotOption))->SlotIndex;
+            auto viewedOutfitSlot = viewedOutfit.ModifyValue(&UF::TransmogOutfitData::Slots, slotIndex);
+            if (static_cast<TransmogOutfitDisplayType>(*slot.AppearanceDisplayType) != TransmogOutfitDisplayType::Unassigned)
+            {
+                SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::ItemModifiedAppearanceID), slot.ItemModifiedAppearanceID);
+                SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType), slot.AppearanceDisplayType);
+            }
+            if (static_cast<TransmogOutfitDisplayType>(*slot.IllusionDisplayType) != TransmogOutfitDisplayType::Unassigned)
+            {
+                SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::SpellItemEnchantmentID), slot.SpellItemEnchantmentID);
+                SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType), slot.IllusionDisplayType);
+            }
+            SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::Flags), slot.Flags);
+        }
+    }
+    else
+    {
+        for (TransmogMgr::TransmogOutfitSlotAndOptionInfo const& slotInfo : TransmogMgr::GetAllSlots())
+        {
+            auto viewedOutfitSlot = viewedOutfit.ModifyValue(&UF::TransmogOutfitData::Slots, slotInfo.SlotIndex);
+            SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::Slot), AsUnderlyingType(slotInfo.Slot->GetSlot()));
+
+            TransmogOutfitSlotOption slotOption = slotInfo.SlotOption ? slotInfo.SlotOption->GetOption() : TransmogOutfitSlotOption::None;
+            SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::SlotOption), AsUnderlyingType(slotOption));
+
+            if (Item const* item = GetItemByPos(INVENTORY_SLOT_BAG_0, slotInfo.Slot->InventorySlotEnum))
+            {
+                if (item->GetTemplate()->GetWeaponTransmogOutfitSlotOption() == slotOption)
+                {
+                    if (ItemModifiedAppearanceEntry const* itemModifiedAppearance = item->GetItemModifiedAppearance())
+                    {
+                        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::ItemModifiedAppearanceID), itemModifiedAppearance->ID);
+                        SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType), AsUnderlyingType(TransmogOutfitDisplayType::Equipped));
+                    }
+                }
+            }
+
+            switch (slotOption)
+            {
+                case TransmogOutfitSlotOption::ArtifactSpecOne:
+                case TransmogOutfitSlotOption::ArtifactSpecTwo:
+                case TransmogOutfitSlotOption::ArtifactSpecThree:
+                case TransmogOutfitSlotOption::ArtifactSpecFour:
+                    // artifacts are disabled by default
+                    SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::AppearanceDisplayType), AsUnderlyingType(TransmogOutfitDisplayType::Disabled));
+                    SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType), AsUnderlyingType(TransmogOutfitDisplayType::Disabled));
+                    break;
+                case TransmogOutfitSlotOption::None:
+                    break;
+                default:
+                    SetUpdateFieldValue(viewedOutfitSlot.ModifyValue(&UF::TransmogOutfitSlotData::IllusionDisplayType), AsUnderlyingType(TransmogOutfitDisplayType::Equipped));
+                    break;
+            }
+        }
+    }
+
+    for (uint8 equipSlot = EQUIPMENT_SLOT_START; equipSlot < EQUIPMENT_SLOT_END; ++equipSlot)
+        SetVisibleItemSlot(equipSlot, GetItemByPos(INVENTORY_SLOT_BAG_0, equipSlot));
+}
+
+std::string Player::GetCharacterSelectOutfit() const
+{
+    std::vector<UF::TransmogOutfitData const*> outfits;
+    for (auto const& [_, transmogOutfit] : m_activePlayerData->TransmogOutfits)
+    {
+        if (!transmogOutfit.value.OutfitInfo->SituationsEnabled)
+            continue;
+
+        bool isCharacterSelect = transmogOutfit.value.Situations.FindIndexIf([](UF::TransmogOutfitSituationInfo const& situation)
+        {
+            return sTransmogSituationStore.AssertEntry(situation.SituationID)->GetSituation() == TransmogSituation::LocationCharacterSelect;
+        }) >= 0;
+
+        if (!isCharacterSelect)
+            continue;
+
+        outfits.push_back(&transmogOutfit.value);
+    }
+
+    UF::TransmogOutfitData const* outfit = &*m_activePlayerData->ViewedOutfit;
+    if (!outfits.empty())
+        outfit = Trinity::Containers::SelectRandomContainerElement(outfits);
+
+    auto isTransmogDisplayed = [](TransmogOutfitDisplayType displayType)
+    {
+        return displayType == TransmogOutfitDisplayType::Assigned || displayType == TransmogOutfitDisplayType::Hidden;
+    };
+
+    std::string result;
+    for (EquipmentSlots i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i = EquipmentSlots(i + 1))
+    {
+        TransmogOutfitSlotOption transmogSlotOption = TransmogOutfitSlotOption::None;
+        switch (i)
+        {
+            case EQUIPMENT_SLOT_MAINHAND:
+                transmogSlotOption = static_cast<TransmogOutfitSlotOption>(m_activePlayerData->TransmogMetadata->StampedOptionMainHand);
+                break;
+            case EQUIPMENT_SLOT_OFFHAND:
+                transmogSlotOption = static_cast<TransmogOutfitSlotOption>(m_activePlayerData->TransmogMetadata->StampedOptionOffHand);
+                break;
+            default:
+                break;
+        }
+
+        if (TransmogMgr::TransmogOutfitSlotAndOptionInfo const* slotInfo = TransmogMgr::GetSlotAndOption(i, transmogSlotOption))
+        {
+            UF::TransmogOutfitSlotData const& transmogOutfitSlot = outfit->Slots[slotInfo->SlotIndex];
+
+            uint32 itemModifiedAppearanceId = transmogOutfitSlot.ItemModifiedAppearanceID;
+            if (!isTransmogDisplayed(static_cast<TransmogOutfitDisplayType>(*transmogOutfitSlot.AppearanceDisplayType)))
+                itemModifiedAppearanceId = m_playerData->VisibleItems[i].ItemModifiedAppearanceID;
+
+            InventoryType inventoryType = INVTYPE_NON_EQUIP;
+            int32 displayId = 0;
+            uint16 itemVisual = 0;
+            uint8 subClass = 0;
+            uint32 secondaryItemModifiedAppearanceId = 0;
+            if (ItemModifiedAppearanceEntry const* itemModifiedAppearance = sItemModifiedAppearanceStore.LookupEntry(itemModifiedAppearanceId))
+            {
+                TransmogHolidayEntry const* transmogHoliday = sTransmogHolidayStore.LookupEntry(itemModifiedAppearance->ItemID);
+                if (!transmogHoliday || IsHolidayActive(static_cast<HolidayIds>(transmogHoliday->RequiredTransmogHoliday)))
+                {
+                    if (ItemEntry const* item = sItemStore.LookupEntry(itemModifiedAppearance->ItemID))
+                    {
+                        subClass = item->SubclassID;
+                        inventoryType = static_cast<InventoryType>(item->InventoryType);
+                    }
+
+                    if (ItemAppearanceEntry const* itemAppearance = sItemAppearanceStore.LookupEntry(itemModifiedAppearance->ItemAppearanceID))
+                        displayId = itemAppearance->ItemDisplayInfoID;
+                }
+            }
+
+            if (SpellItemEnchantmentEntry const* spellItemEnchantment = sSpellItemEnchantmentStore.LookupEntry(transmogOutfitSlot.SpellItemEnchantmentID))
+                itemVisual = spellItemEnchantment->ItemVisual;
+
+            if (!isTransmogDisplayed(static_cast<TransmogOutfitDisplayType>(*transmogOutfitSlot.IllusionDisplayType)))
+                itemVisual = m_playerData->VisibleItems[i].ItemVisual;
+
+            if (TransmogOutfitSlotInfoEntry const* secondarySlot = sTransmogOutfitSlotInfoStore.LookupEntry(slotInfo->Slot->SecondarySlotID))
+            {
+                if (TransmogMgr::TransmogOutfitSlotAndOptionInfo const* secondarySlotInfo = TransmogMgr::GetSlotAndOption(secondarySlot->GetSlot(), transmogSlotOption))
+                {
+                    UF::TransmogOutfitSlotData const& secondaryTransmogOutfitSlot = outfit->Slots[secondarySlotInfo->SlotIndex];
+
+                    secondaryItemModifiedAppearanceId = secondaryTransmogOutfitSlot.ItemModifiedAppearanceID;
+                    if (!isTransmogDisplayed(static_cast<TransmogOutfitDisplayType>(*secondaryTransmogOutfitSlot.AppearanceDisplayType)))
+                        secondaryItemModifiedAppearanceId = m_playerData->VisibleItems[i].SecondaryItemModifiedAppearanceID;
+
+                    if (ItemModifiedAppearanceEntry const* itemModifiedAppearance = sItemModifiedAppearanceStore.LookupEntry(secondaryItemModifiedAppearanceId))
+                        if (TransmogHolidayEntry const* transmogHoliday = sTransmogHolidayStore.LookupEntry(itemModifiedAppearance->ItemID))
+                            if (!IsHolidayActive(static_cast<HolidayIds>(transmogHoliday->RequiredTransmogHoliday)))
+                                secondaryItemModifiedAppearanceId = 0;
+                }
+            }
+
+            Trinity::StringFormatTo(std::back_inserter(result), "{} {} {} {} {} ", inventoryType, displayId, itemVisual, subClass, secondaryItemModifiedAppearanceId);
+        }
+        else
+            result += "0 0 0 0 0 "sv;
+    }
+
+    for (uint32 i = EQUIPMENT_SLOT_END; i < REAGENT_BAG_SLOT_END; ++i)
+        result += "0 0 0 0 0 "sv;
+
+    return result;
 }
 
 void Player::OnPhaseChange()

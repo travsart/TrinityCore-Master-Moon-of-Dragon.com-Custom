@@ -57,10 +57,6 @@
 #include "MiscPackets.h"
 #include "MotionMaster.h"
 #include "MoveSpline.h"
-#include "CollectionMgr.h"
-#include "ConditionMgr.h"
-#include "DB2Stores.h"
-#include "EquipmentSet.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "OutdoorPvPMgr.h"
@@ -358,7 +354,7 @@ NonDefaultConstructible<SpellEffectHandlerFn> SpellEffectHandlers[TOTAL_SPELL_EF
     &Spell::EffectUnused,                                   //257 SPELL_EFFECT_257
     &Spell::EffectNULL,                                     //258 SPELL_EFFECT_MODIFY_KEYSTONE
     &Spell::EffectRespecAzeriteEmpoweredItem,               //259 SPELL_EFFECT_RESPEC_AZERITE_EMPOWERED_ITEM
-    &Spell::EffectNULL,                                     //260 SPELL_EFFECT_SUMMON_STABLED_PET
+    &Spell::EffectSummonStabledPet,                         //260 SPELL_EFFECT_SUMMON_STABLED_PET
     &Spell::EffectScrapItem,                                //261 SPELL_EFFECT_SCRAP_ITEM
     &Spell::EffectUnused,                                   //262 SPELL_EFFECT_262
     &Spell::EffectNULL,                                     //263 SPELL_EFFECT_REPAIR_ITEM
@@ -445,7 +441,7 @@ NonDefaultConstructible<SpellEffectHandlerFn> SpellEffectHandlers[TOTAL_SPELL_EF
     &Spell::EffectNULL,                                     //344 SPELL_EFFECT_344
     &Spell::EffectNULL,                                     //345 SPELL_EFFECT_ASSIST_ACTION
     &Spell::EffectNULL,                                     //346 SPELL_EFFECT_346
-    &Spell::EffectEquipTransmogOutfit,                       //347 SPELL_EFFECT_EQUIP_TRANSMOG_OUTFIT
+    &Spell::EffectEquipTransmogOutfit,                      //347 SPELL_EFFECT_EQUIP_TRANSMOG_OUTFIT
     &Spell::EffectNULL,                                     //348 SPELL_EFFECT_GIVE_HOUSE_LEVEL
     &Spell::EffectNULL,                                     //349 SPELL_EFFECT_LEARN_HOUSE_ROOM
     &Spell::EffectNULL,                                     //350 SPELL_EFFECT_LEARN_HOUSE_EXTERIOR_COMPONENT
@@ -595,7 +591,6 @@ void Spell::EffectDummy()
     // normal DB scripted effect
     TC_LOG_DEBUG("spells", "Spell ScriptStart spellid {} in EffectDummy({})", m_spellInfo->Id, effectInfo->EffectIndex);
     m_caster->GetMap()->ScriptsStart(sSpellScripts, uint32(m_spellInfo->Id | (effectInfo->EffectIndex << 24)), m_caster, unitTarget);
-	
 #ifdef ELUNA
     if (Eluna* e = m_caster->GetEluna())
     {
@@ -1070,7 +1065,8 @@ class DelayedSpellTeleportEvent : public BasicEvent
 {
 public:
     explicit DelayedSpellTeleportEvent(Unit* target, TeleportLocation const& targetDest, TeleportToOptions options, uint32 spellId)
-        : _target(target), _targetDest(targetDest), _options(options), _spellId(spellId){ }
+        : _target(target), _targetDest(targetDest), _options(options), _spellId(spellId) {
+    }
 
     bool Execute(uint64 /*e_time*/, uint32 /*p_time*/) override
     {
@@ -1427,11 +1423,11 @@ Item* Spell::DoCreateItem(uint32 itemId, ItemContext context /*= ItemContext::NO
     /* == profession specialization handling == */
 
     // init items_count to 1, since 1 item will be created regardless of specialization
-    int items_count=1;
+    int items_count = 1;
     // the chance to create additional items
-    float additionalCreateChance=0.0f;
+    float additionalCreateChance = 0.0f;
     // the maximum number of created additional items
-    uint8 additionalMaxNum=0;
+    uint8 additionalMaxNum = 0;
     // get the chance and maximum number for creating extra items
     if (CanCreateExtraItems(player, m_spellInfo->Id, additionalCreateChance, additionalMaxNum))
         // roll with this chance till we roll not to create or we create the max num
@@ -1700,7 +1696,7 @@ void Spell::EffectOpenLock()
         // these objects must have been spawned by outdoorpvp!
         else if (gameObjTarget->GetGOInfo()->type == GAMEOBJECT_TYPE_GOOBER && sOutdoorPvPMgr->HandleOpenGo(player, gameObjTarget))
             return;
-		else if (player && gameObjTarget->GetGOInfo()->type == GAMEOBJECT_TYPE_CHEST)
+        else if (player && gameObjTarget->GetGOInfo()->type == GAMEOBJECT_TYPE_CHEST)
             if (PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(goInfo->chest.conditionID1))
                 if (!sConditionMgr->IsPlayerMeetingCondition(player, playerCondition))
                     return;
@@ -2115,7 +2111,7 @@ void Spell::EffectSummonType()
     {
         summon->SetCreatorGUID(caster->GetGUID());
         ExecuteLogEffectSummonObject(SpellEffectName(effectInfo->Effect), summon);
-		CallScriptOnSummonHandlers(summon);
+        CallScriptOnSummonHandlers(summon);
     }
 }
 
@@ -2175,7 +2171,7 @@ void Spell::EffectDispel()
 
     // Create dispel mask by dispel type
     uint32 dispel_type = effectInfo->MiscValue;
-    uint32 dispelMask  = SpellInfo::GetDispelMask(DispelType(dispel_type));
+    uint32 dispelMask = SpellInfo::GetDispelMask(DispelType(dispel_type));
 
     DispelChargesList dispelList;
     unitTarget->GetDispellableAuraList(m_caster, dispelMask, dispelList, targetMissInfo == SPELL_MISS_REFLECT);
@@ -2875,7 +2871,7 @@ void Spell::EffectWeaponDmg()
     }
 
     // some spell specific modifiers
-    float totalDamagePercentMod  = 1.0f;                    // applied to final bonus+weapon damage
+    float totalDamagePercentMod = 1.0f;                    // applied to final bonus+weapon damage
     int32 fixed_bonus = 0;
     int32 spell_bonus = 0;                                  // bonus specific for spell
 
@@ -3079,7 +3075,7 @@ void Spell::EffectSummonObjectWild()
 
     int32 duration = m_spellInfo->CalcDuration(m_caster);
 
-    go->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
+    go->SetRespawnTime(duration > 0 ? duration / IN_MILLISECONDS : 0);
     go->SetSpellId(m_spellInfo->Id);
 
     ExecuteLogEffectSummonObject(SpellEffectName(effectInfo->Effect), go);
@@ -3089,7 +3085,7 @@ void Spell::EffectSummonObjectWild()
 
     if (GameObject* linkedTrap = go->GetLinkedTrap())
     {
-        PhasingHandler::InheritPhaseShift(linkedTrap , m_caster);
+        PhasingHandler::InheritPhaseShift(linkedTrap, m_caster);
 
         linkedTrap->SetRespawnTime(duration > 0 ? duration / IN_MILLISECONDS : 0);
         linkedTrap->SetSpellId(m_spellInfo->Id);
@@ -3113,7 +3109,7 @@ void Spell::EffectScriptEffect()
         {
             switch (m_spellInfo->Id)
             {
-                // Shadow Flame (All script effects, not just end ones to prevent player from dodging the last triggered spell)
+                    // Shadow Flame (All script effects, not just end ones to prevent player from dodging the last triggered spell)
                 case 22539:
                 case 22972:
                 case 22975:
@@ -3139,7 +3135,7 @@ void Spell::EffectScriptEffect()
                     m_caster->CastSpell(unitTarget, 22682, this);
                     return;
                 }
-				case 29830: // Mirren's Drinking Hat
+                case 29830: // Mirren's Drinking Hat
                 {
                     uint32 item = 0;
                     switch (urand(1, 6))
@@ -3184,7 +3180,7 @@ void Spell::EffectScriptEffect()
                     if (bag)
                     {
                         if (m_caster->ToPlayer()->GetItemByPos(bag, slot)->GetCount() == 1) m_caster->ToPlayer()->RemoveItem(bag, slot, true);
-                        else m_caster->ToPlayer()->GetItemByPos(bag, slot)->SetCount(m_caster->ToPlayer()->GetItemByPos(bag, slot)->GetCount()-1);
+                        else m_caster->ToPlayer()->GetItemByPos(bag, slot)->SetCount(m_caster->ToPlayer()->GetItemByPos(bag, slot)->GetCount() - 1);
                         // Spell 42518 (Braufest - Gratisprobe des Braufest herstellen)
                         m_caster->CastSpell(m_caster, 42518, this);
                         return;
@@ -3348,7 +3344,7 @@ void Spell::EffectDuel()
     go->SetFaction(caster->GetFaction());
     go->SetLevel(caster->GetLevel() + 1);
     int32 duration = m_spellInfo->CalcDuration(caster);
-    go->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
+    go->SetRespawnTime(duration > 0 ? duration / IN_MILLISECONDS : 0);
     go->SetSpellId(m_spellInfo->Id);
 
     ExecuteLogEffectSummonObject(SpellEffectName(effectInfo->Effect), go);
@@ -3720,7 +3716,7 @@ void Spell::EffectResurrect()
         return;
 
     uint32 health = player->CountPctFromMaxHealth(damage);
-    uint32 mana   = CalculatePct(player->GetMaxPower(POWER_MANA), damage);
+    uint32 mana = CalculatePct(player->GetMaxPower(POWER_MANA), damage);
 
     ExecuteLogEffectResurrect(SpellEffectName(effectInfo->Effect), player);
 
@@ -4363,7 +4359,7 @@ void Spell::EffectResurrectPet()
     pet->SetHealth(pet->CountPctFromMaxHealth(damage));
 
     // Reset things for when the AI to takes over
-    CharmInfo *ci = pet->GetCharmInfo();
+    CharmInfo* ci = pet->GetCharmInfo();
     if (ci)
     {
         // In case the pet was at stay, we don't want it running back
@@ -4571,13 +4567,13 @@ void Spell::EffectTransmitted()
             int32 lastSec = 0;
             switch (urand(0, 2))
             {
-                case 0: lastSec =  3; break;
-                case 1: lastSec =  7; break;
+                case 0: lastSec = 3; break;
+                case 1: lastSec = 7; break;
                 case 2: lastSec = 13; break;
             }
 
             // Duration of the fishing bobber can't be higher than the Fishing channeling duration
-            duration = std::min(duration, duration - lastSec*IN_MILLISECONDS + FISHING_BOBBER_READY_TIME*IN_MILLISECONDS);
+            duration = std::min(duration, duration - lastSec * IN_MILLISECONDS + FISHING_BOBBER_READY_TIME * IN_MILLISECONDS);
             break;
         }
         case GAMEOBJECT_TYPE_RITUAL:
@@ -4598,7 +4594,7 @@ void Spell::EffectTransmitted()
             break;
     }
 
-    go->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
+    go->SetRespawnTime(duration > 0 ? duration / IN_MILLISECONDS : 0);
 
     go->SetOwnerGUID(unitCaster->GetGUID());
 
@@ -5442,7 +5438,7 @@ void Spell::EffectResurrectWithAura()
         return;
 
     uint32 health = target->CountPctFromMaxHealth(damage);
-    uint32 mana   = CalculatePct(target->GetMaxPower(POWER_MANA), damage);
+    uint32 mana = CalculatePct(target->GetMaxPower(POWER_MANA), damage);
     uint32 resurrectAura = 0;
     if (sSpellMgr->GetSpellInfo(effectInfo->TriggerSpell, DIFFICULTY_NONE))
         resurrectAura = effectInfo->TriggerSpell;
@@ -6422,141 +6418,31 @@ void Spell::EffectSetPlayerDataFlagCharacter()
     target->SetDataFlagCharacter(effectInfo->MiscValue, damage != 0);
 }
 
-enum
-{
-    SPELL_TRANSMOG_VISUAL_EFFECT = 372608
-};
-
 void Spell::EffectEquipTransmogOutfit()
 {
-    if (effectHandleMode != SPELL_EFFECT_HANDLE_LAUNCH)
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
         return;
 
-    Player* player = m_caster->ToPlayer();
-    if (!player)
+    Player* target = Object::ToPlayer(unitTarget);
+    if (!target)
         return;
 
-    // Outfit SetID comes from the client's CMSG_CAST_SPELL Misc values:
-    // m_misc.Raw.Data[0] = unknown (varies)
-    // m_misc.Raw.Data[1] = outfit SetID (matches EquipmentSetData::SetID)
-    // m_misc.Raw.Data[2] = SetType (1 = TRANSMOG)
-    uint32 outfitSetID = m_misc.Raw.Data[1];
-
-    // Find the outfit in the player's equipment sets by SetID
-    EquipmentSetInfo const* foundSet = nullptr;
-    for (auto const& [guid, eqSet] : player->GetEquipmentSets())
+    Optional<bool> locked;
+    switch (static_cast<TransmogOutfitEquipAction>(m_misc.EquipTransmogOutfit.EquipAction))
     {
-        if (eqSet.Data.Type == EquipmentSetInfo::TRANSMOG && eqSet.Data.SetID == outfitSetID && eqSet.State != EQUIPMENT_SET_DELETED)
-        {
-            foundSet = &eqSet;
+        case TransmogOutfitEquipAction::EquipAndLock:
+        case TransmogOutfitEquipAction::RemoveAndLock:
+        case TransmogOutfitEquipAction::Lock:
+            locked = true;
             break;
-        }
+        case TransmogOutfitEquipAction::Unlock:
+            locked = false;
+            break;
+        default:
+            break;
     }
 
-    if (!foundSet)
-    {
-        TC_LOG_DEBUG("spells", "Spell::EffectEquipTransmogOutfit - Player {} tried to equip transmog outfit SetID {} but it was not found.", player->GetName(), outfitSetID);
-        return;
-    }
-
-    // Apply appearances from the saved outfit to all equipment slots
-    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
-    {
-        Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-        if (!item)
-            continue;
-
-        int32 savedAppearance = foundSet->Data.Appearances[slot];
-        if (savedAppearance > 0)
-        {
-            // Validate the appearance exists in the DB2
-            ItemModifiedAppearanceEntry const* itemModifiedAppearance = sItemModifiedAppearanceStore.LookupEntry(uint32(savedAppearance));
-            if (!itemModifiedAppearance)
-                continue;
-
-            // Validate the player has learned the appearance
-            auto [hasAppearance, isTemporary] = player->GetSession()->GetCollectionMgr()->HasItemAppearance(uint32(savedAppearance));
-            if (!hasAppearance)
-                continue;
-
-            // Apply the transmog appearance
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_ALL_SPECS, uint32(savedAppearance));
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_1, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_2, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_3, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_4, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_5, 0);
-            player->SetVisibleItemSlot(item->GetSlot(), item);
-            item->SetNotRefundable(player);
-            item->ClearSoulboundTradeable(player);
-            item->SetState(ITEM_CHANGED, player);
-        }
-        else
-        {
-            // Reset appearance for this slot
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_ALL_SPECS, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_1, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_2, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_3, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_4, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_APPEARANCE_SPEC_5, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_SECONDARY_APPEARANCE_ALL_SPECS, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_SECONDARY_APPEARANCE_SPEC_1, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_SECONDARY_APPEARANCE_SPEC_2, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_SECONDARY_APPEARANCE_SPEC_3, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_SECONDARY_APPEARANCE_SPEC_4, 0);
-            item->SetModifier(ITEM_MODIFIER_TRANSMOG_SECONDARY_APPEARANCE_SPEC_5, 0);
-            item->SetState(ITEM_CHANGED, player);
-            player->SetVisibleItemSlot(item->GetSlot(), item);
-        }
-    }
-
-    // Apply weapon illusions (mainhand and offhand)
-    for (uint8 i = 0; i < 2; ++i)
-    {
-        uint8 weaponSlot = (i == 0) ? EQUIPMENT_SLOT_MAINHAND : EQUIPMENT_SLOT_OFFHAND;
-        Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, weaponSlot);
-        if (!item)
-            continue;
-
-        int32 savedEnchant = foundSet->Data.Enchants[i];
-        if (savedEnchant > 0)
-        {
-            // Validate the illusion
-            TransmogIllusionEntry const* illusion = sDB2Manager.GetTransmogIllusionForEnchantment(uint32(savedEnchant));
-            if (!illusion)
-                continue;
-
-            if (!ConditionMgr::IsPlayerMeetingCondition(player, illusion->UnlockConditionID))
-                continue;
-
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_ALL_SPECS, uint32(savedEnchant));
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_1, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_2, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_3, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_4, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_5, 0);
-            player->SetVisibleItemSlot(item->GetSlot(), item);
-            item->SetNotRefundable(player);
-            item->ClearSoulboundTradeable(player);
-            item->SetState(ITEM_CHANGED, player);
-        }
-        else
-        {
-            // Reset illusion
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_ALL_SPECS, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_1, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_2, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_3, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_4, 0);
-            item->SetModifier(ITEM_MODIFIER_ENCHANT_ILLUSION_SPEC_5, 0);
-            item->SetState(ITEM_CHANGED, player);
-            player->SetVisibleItemSlot(item->GetSlot(), item);
-        }
-    }
-
-    // Play the transmog visual effect
-    player->CastSpell(player, SPELL_TRANSMOG_VISUAL_EFFECT, true);
+    target->EquipTransmogOutfit(m_misc.EquipTransmogOutfit.TransmogOutfitId, static_cast<TransmogSituationTrigger>(m_misc.EquipTransmogOutfit.SituationTrigger), locked);
 }
 
 //NEW
@@ -6609,6 +6495,9 @@ void Spell::EffectCorpseLoot()
 
     Creature* creature = unitTarget->ToCreature();
     if (!creature)
+        return;
+
+    if (!creature->m_loot)
         return;
 
     m_caster->ToPlayer()->SendLoot(*creature->m_loot);
@@ -6851,3 +6740,128 @@ void Spell::EffectScrapItem()
     }
 }
 
+void Spell::EffectSummonStabledPet()
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_LAUNCH)
+        return;
+
+    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    Player* player = m_caster->ToPlayer();
+
+    if (!player)
+        return;
+
+    // Don't summon if animal companion already exists
+    if (!player->GetAnimalCompanion().IsEmpty())
+        return;
+
+    Pet* mainPet = player->GetPet();
+    if (!mainPet)
+        return;
+
+    auto stable = player->GetPetStable();
+    if (!stable)
+        return;
+
+    // Animal companion is taken from the first stable slot (slot 5)
+    if (!stable->StabledPets[0].has_value())
+        return;
+
+    PetStable::PetInfo const& stabledPet = stable->StabledPets[0].value();
+
+    // Calculate positions: main pet to the left, animal companion to the right
+    float playerX = player->GetPositionX();
+    float playerY = player->GetPositionY();
+    float playerZ = player->GetPositionZ();
+    float orient = player->GetOrientation();
+    float dist = player->GetCombatReach() + 2.0f;
+
+    // Move main pet to the left side of the player
+    float mainAngle = orient - M_PI / 2.0f;
+    mainPet->NearTeleportTo(
+        playerX + dist * cos(mainAngle),
+        playerY + dist * sin(mainAngle),
+        playerZ,
+        mainPet->GetOrientation(),
+        true);
+
+    // Place animal companion on the right side of the player
+    float acAngle = orient + M_PI / 2.0f;
+    float px = playerX + dist * cos(acAngle);
+    float py = playerY + dist * sin(acAngle);
+    float pz = playerZ;
+
+    // Create the animal companion pet
+    Pet* pet = new Pet(player, SUMMON_PET);
+
+    Map* map = player->GetMap();
+    uint32 pet_number = sObjectMgr->GeneratePetNumber();
+
+    if (!pet->Create(map->GenerateLowGuid<HighGuid::Pet>(), map, stabledPet.CreatureId, pet_number))
+    {
+        TC_LOG_ERROR("misc", "Spell::EffectSummonStabledPet: No such creature entry {}", stabledPet.CreatureId);
+        delete pet;
+        return;
+    }
+
+    pet->Relocate(px, py, pz, player->GetOrientation());
+    if (!pet->IsPositionValid())
+    {
+        // Fallback: place next to player
+        player->GetClosePoint(px, py, pz, player->GetCombatReach());
+        pet->Relocate(px, py, pz, player->GetOrientation());
+    }
+
+    PhasingHandler::InheritPhaseShift(pet, player);
+
+    pet->SetCreatorGUID(player->GetGUID());
+    pet->SetFaction(player->GetFaction());
+    pet->ReplaceAllNpcFlags(UNIT_NPC_FLAG_NONE);
+    pet->ReplaceAllNpcFlags2(UNIT_NPC_FLAG_2_NONE);
+    pet->InitStatsForLevel(player->GetLevel());
+
+    // Set the pet's custom name from the stable
+    pet->SetName(stabledPet.Name);
+
+    player->SetMinion(pet, true, true);
+
+    pet->GetCharmInfo()->SetPetNumber(pet_number, true);
+    pet->SetClass(CLASS_MAGE);
+    pet->SetPetExperience(0);
+    pet->SetPetNextLevelExperience(1000);
+    pet->SetFullHealth();
+    pet->SetFullPower(POWER_MANA);
+    pet->SetPetNameTimestamp(uint32(GameTime::GetGameTime()));
+
+    // Stampeded pet: no abilities - set BEFORE AddToMap to prevent SavePetToDB crash
+    pet->SetStampeded(true);
+    pet->SetAnimalCompanion(true);
+    player->SetAnimalCompanion(pet->GetGUID());
+
+    // Inherit behavior from main pet
+    pet->SetReactState(mainPet->GetReactState());
+
+    // Clear all spells and autospells - stamped pet doesn't use its own abilities
+    std::list<uint32> spellsToRemove;
+    for (auto iter : pet->m_spells)
+        spellsToRemove.push_back(iter.first);
+
+    for (uint32 id : spellsToRemove)
+    {
+        auto iter = pet->m_spells.find(id);
+        pet->m_spells.erase(iter);
+    }
+
+    pet->m_autospells.clear();
+    pet->m_Events.KillAllEvents(true);
+
+    SpellInfo const* spellInfo = GetSpellInfo();
+    pet->SetCreatedBySpell(spellInfo->Id);
+
+    if (int32 duration = player->CalcSpellDuration(spellInfo, nullptr))
+        pet->SetDuration(duration);
+
+    map->AddToMap(pet->ToCreature());
+}
