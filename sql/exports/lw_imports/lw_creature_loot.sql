@@ -2,7 +2,7 @@
 -- (out of 3,249,258 total LW rows, filtered against our existing DB)
 -- Generated: 2026-02-27 17:15:25
 -- PK dedup on (Entry, Item)
-
+USE `lorewalker_world`;
 INSERT IGNORE INTO `creature_loot_template` (Entry, ItemType, Item, Chance, QuestRequired, LootMode, GroupId, MinCount, MaxCount, Comment, Reference) VALUES
 (48,0,3393,0.00492257,0,1,0,1,1,'',NULL),
 (202,0,3393,0.00441081,0,1,0,1,1,'',NULL),

@@ -12,7 +12,7 @@
 --   gameobject_queststarter: 0 new rows (skipped: 1463 existing, 97 orphan quest, 55 orphan entity)
 --   gameobject_questender: 0 new rows (skipped: 1448 existing, 96 orphan quest, 66 orphan entity)
 --
-
+USE `lorewalker_world`;
 -- ============================================================
 -- quest_offer_reward: 541 new rows
 -- ============================================================

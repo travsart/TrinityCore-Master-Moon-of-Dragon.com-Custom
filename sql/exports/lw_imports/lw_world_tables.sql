@@ -12,7 +12,7 @@
 -- ============================================================
 -- npc_vendor: 248 new rows
 -- ============================================================
-
+USE `lorewalker_world`;
 INSERT IGNORE INTO `npc_vendor` (`entry`, `slot`, `item`, `maxcount`, `incrtime`, `ExtendedCost`, `type`, `BonusListIDs`, `PlayerConditionID`, `IgnoreFiltering`, `VerifiedBuild`, `OverrideGoldCost`) VALUES
 (19227,1,156724,0,0,0,1,NULL,0,0,0,-1),
 (19227,1,156726,0,0,0,1,NULL,0,0,0,-1),

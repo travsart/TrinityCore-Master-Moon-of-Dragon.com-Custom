@@ -10,7 +10,7 @@
 --   reference_loot_template: 662
 --   skinning_loot_template: 402
 --
-
+USE `lorewalker_world`;
 -- conversation_template: 5 new rows
 INSERT IGNORE INTO `conversation_template` (`Id`, `FirstLineId`, `TextureKitId`, `Flags`, `ScriptName`, `VerifiedBuild`) VALUES
 (17844,45415,0,0,'',64978),

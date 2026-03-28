@@ -8,7 +8,7 @@
 -- ============================================================
 -- game_event_creature: 260 rows
 -- ============================================================
-
+USE `lorewalker_world`;
 INSERT IGNORE INTO `game_event_creature` (`eventEntry`, `guid`) VALUES
 (10,298),
 (-84,65523),
