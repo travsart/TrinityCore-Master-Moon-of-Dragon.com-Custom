@@ -83,23 +83,6 @@ sql/exports/existing_smartai_entries.txt
 sql/exports/missing_smartai_entries.txt
 sql/exports/cleanup/*.txt
 
-# -- SQL old archives (historical TDB, keep only 12.x) -----------------------
-sql/old/2.4.3/
-sql/old/3.0.9/
-sql/old/3.1.3/
-sql/old/3.2.2a/
-sql/old/3.3.2/
-sql/old/3.3.3a/
-sql/old/3.3.5a/
-sql/old/4.2.2/
-sql/old/4.3.4/
-sql/old/6.x/
-sql/old/7/
-sql/old/8.x/
-sql/old/9.x/
-sql/old/10.x/
-sql/old/11.x/
-
 # -- Lighthouse reports (generated) -------------------------------------------
 tools/command-center/lighthouse-*
 
