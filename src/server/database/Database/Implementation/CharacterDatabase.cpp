@@ -370,8 +370,6 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_INS_TRANSMOG_OUTFIT_SLOT, "INSERT INTO character_transmog_outfit_slot (guid, transmogOutfitId, slot, slotOption, itemModifiedAppearanceID, appearanceDisplayType, spellItemEnchantmentID, illusionDisplayType, flags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_DEL_TRANSMOG_OUTFIT_SLOT, "DELETE FROM character_transmog_outfit_slot WHERE guid = ? AND transmogOutfitId = ?", CONNECTION_ASYNC);
 
-    PrepareStatement(CHAR_SEL_TRANSMOG_OUTFIT_SITUATIONS, "SELECT setguid, situationID, specID, loadoutID, equipmentSetID FROM character_transmog_outfit_situations WHERE guid = ?", CONNECTION_ASYNC);
-    PrepareStatement(CHAR_DEL_TRANSMOG_OUTFIT_SITUATIONS, "DELETE FROM character_transmog_outfit_situations WHERE guid = ? AND setguid = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_INS_TRANSMOG_OUTFIT_SITUATION, "REPLACE INTO character_transmog_outfit_situations (guid, setguid, situationID, specID, loadoutID, equipmentSetID) VALUES (?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 
     // Auras

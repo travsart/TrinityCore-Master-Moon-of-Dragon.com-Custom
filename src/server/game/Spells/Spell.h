@@ -467,7 +467,6 @@ class TC_GAME_API Spell
         void EffectSetPlayerDataElementCharacter();
         void EffectSetPlayerDataFlagAccount();
         void EffectSetPlayerDataFlagCharacter();
-        void EffectEquipTransmogOutfit();
 
         //NEW
         void EffectApplyAreaAura();
