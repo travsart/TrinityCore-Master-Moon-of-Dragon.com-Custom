@@ -16,7 +16,7 @@ class npc_copy_commandscript : public CommandScript
 public:
     npc_copy_commandscript() : CommandScript("npc_copy_commandscript") { }
 
-    ChatCommandTable GetCommands() const override
+    std::span<ChatCommandBuilder const> GetCommands() const override
     {
         static ChatCommandTable npcCopyTable =
         {

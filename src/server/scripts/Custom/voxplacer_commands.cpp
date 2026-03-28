@@ -186,7 +186,7 @@ class voxplacer_commandscript : public CommandScript
 public:
     voxplacer_commandscript() : CommandScript("voxplacer_commandscript") { }
 
-    ChatCommandTable GetCommands() const override
+    std::span<ChatCommandBuilder const> GetCommands() const override
     {
         static ChatCommandTable vpSubTable =
         {

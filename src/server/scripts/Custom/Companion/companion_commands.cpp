@@ -14,7 +14,7 @@ class CompanionCommands : public CommandScript
 public:
     CompanionCommands() : CommandScript("companion_commands") { }
 
-    ChatCommandTable GetCommands() const override
+    std::span<ChatCommandBuilder const> GetCommands() const override
     {
         static ChatCommandTable compCommandTable =
         {

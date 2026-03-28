@@ -1,10 +1,13 @@
 #include "AchievementMgr.h"
 #include "Chat.h"
+#include "ChatCommand.h"
+#include "ChatCommandTags.h"
 #include "DB2Stores.h"
 #include "Player.h"
 #include "RBAC.h"
 #include "ScriptMgr.h"
 
+using namespace Trinity::ChatCommands;
 namespace
 {
     bool IsReputationAchievement(AchievementEntry const* achievement)
@@ -67,9 +70,9 @@ class maxtitles_commandscript : public CommandScript
 public:
     maxtitles_commandscript() : CommandScript("maxtitles_commandscript") { }
 
-    std::vector<ChatCommand> GetCommands() const override
+    std::span<ChatCommandBuilder const> GetCommands() const override
     {
-        static std::vector<ChatCommand> commandTable =
+        static ChatCommandTable commandTable =
         {
             { "maxtitles", rbac::RBAC_PERM_COMMAND_MAXTITLES, false, &HandleMaxTitlesCommand,
               "Grant all reputation-earned character titles." },

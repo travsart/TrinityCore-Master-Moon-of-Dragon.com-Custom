@@ -547,30 +547,6 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
 
     TC_METRIC_VALUE("processed_packets", processedPackets);
 
-    // TransmogBridge safety net: if HandleTransmogOutfitUpdateSlots deferred
-    // finalization but no TransmogBridge addon message arrived (addon not installed
-    // or message lost), finalize now without overrides — backward compatible.
-    if (_transmogBridgePendingOutfit)
-    {
-        if (!_transmogBridgePartialPayload.empty())
-        {
-            TC_LOG_DEBUG("network.opcode.transmog",
-                "TransmogBridge [{}]: waiting for multipart payload completion before safety-net finalize",
-                GetPlayerInfo());
-        }
-        else if (_transmogBridgeWaitOneUpdate)
-        {
-            _transmogBridgeWaitOneUpdate = false;
-            TC_LOG_DEBUG("network.opcode.transmog",
-                "TransmogBridge [{}]: giving addon payload one extra Update() before safety-net finalize",
-                GetPlayerInfo());
-        }
-        else
-        {
-            FinalizeTransmogBridgePendingOutfit();
-        }
-    }
-
     _recvQueue.readd(requeuePackets.begin(), requeuePackets.end());
 
     if (!updater.ProcessUnsafe()) // <=> updater is of type MapSessionFilter

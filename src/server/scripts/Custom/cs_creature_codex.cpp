@@ -26,7 +26,7 @@ class creature_codex_commandscript : public CommandScript
 public:
     creature_codex_commandscript() : CommandScript("creature_codex_commandscript") {}
 
-    ChatCommandTable GetCommands() const override
+    std::span<ChatCommandBuilder const> GetCommands() const override
     {
         static ChatCommandTable blacklistTable =
         {

@@ -246,7 +246,7 @@ public:
 
     std::span<ChatCommandBuilder const> GetCommands() const override
     {
-        static ChatCommandTable typimgCommandTable =
+        static ChatCommandTable typingCommandTable =
         {
             { "on",              rbac::RBAC_PERM_COMMAND_TYPING_ON,     false,      &HandleTypingOnCommand,     "Enables typing animation."},
             { "off",             rbac::RBAC_PERM_COMMAND_TYPING_OFF,    false,      &HandleTypingOffCommand,    "Disables typing animation."},

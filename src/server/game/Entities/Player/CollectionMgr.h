@@ -179,11 +179,6 @@ public:
     void SetAppearanceIsFavorite(uint32 itemModifiedAppearanceId, bool apply);
     void SendFavoriteAppearances() const;
 
-    // Transmog Set Favorites
-    void LoadTransmogSetFavorites(PreparedQueryResult result);
-    void SaveTransmogSetFavorites(LoginDatabaseTransaction trans);
-    void SetTransmogSetIsFavorite(uint32 transmogSetId, bool apply);
-    void SendTransmogSetFavorites() const;
 
     // Illusions
     void LoadTransmogIllusions();

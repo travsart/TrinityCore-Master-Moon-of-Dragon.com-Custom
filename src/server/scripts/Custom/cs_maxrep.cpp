@@ -1,18 +1,22 @@
 #include "Chat.h"
 #include "DB2Stores.h"
+#include "Chat.h"
+#include "ChatCommand.h"
+#include "ChatCommandTags.h"
 #include "Player.h"
 #include "RBAC.h"
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
 
+using namespace Trinity::ChatCommands;
 class maxrep_commandscript : public CommandScript
 {
 public:
     maxrep_commandscript() : CommandScript("maxrep_commandscript") { }
 
-    std::vector<ChatCommand> GetCommands() const override
+    std::span<ChatCommandBuilder const> GetCommands() const override
     {
-        static std::vector<ChatCommand> commandTable =
+        static ChatCommandTable commandTable =
         {
             { "maxrep", rbac::RBAC_PERM_COMMAND_MAXREP, false, &HandleMaxRepCommand,
               "Max all faction reputations, renown currencies, and related currencies." },

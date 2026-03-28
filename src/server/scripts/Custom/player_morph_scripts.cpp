@@ -45,7 +45,7 @@ namespace
     public:
         PlayerMorphCommandScript() : CommandScript("player_morph_commands") { }
 
-        ChatCommandTable GetCommands() const override
+        std::span<ChatCommandBuilder const> GetCommands() const override
         {
             static ChatCommandTable commandTable =
             {

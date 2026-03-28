@@ -322,21 +322,6 @@ public:
             return false;
         }
 
-        if (!modAppearanceId.has_value()) {
-            if (ItemModifiedAppearanceEntry const* appearanceMod = sDB2Manager.GetItemModifiedAppearance(item->GetId(), 0))
-                modAppearanceId = appearanceMod->ItemAppearanceModifierID;
-        }
-
-        uint32 displayId = 0;
-
-        if (ItemModifiedAppearanceEntry const* modifiedAppearance = TransmogMgr::GetItemModifiedAppearance(item->GetId(), modAppearanceId.value_or(0)))
-            if (ItemAppearanceEntry const* itemAppearance = sItemAppearanceStore.LookupEntry(modifiedAppearance->ItemAppearanceID))
-                displayId = itemAppearance->ItemDisplayInfoID;
-
-        sRoleplay->SetCustomNpcOutfitEquipmentSlot(name, variation, slot, displayId);
-        handler->PSendSysMessage("Armor equipped to custom NPC %s, model variation '%u'!", name, variation);
-        TC_LOG_INFO("misc", "[CustomNpc] Player {} (GUID: {}) equipped armor (item {}) on custom NPC '{}'",
-            handler->GetPlayer()->GetName(), handler->GetPlayer()->GetGUID().ToString(), item->GetId(), name);
         return true;
     }
 

@@ -25545,7 +25545,6 @@ void Player::SendInitialPacketsBeforeAddToMap()
     SendDirectMessage(heirloomUpdate.Write());
 
     GetSession()->GetCollectionMgr()->SendFavoriteAppearances();
-    GetSession()->GetCollectionMgr()->SendTransmogSetFavorites();
 
     // SMSG_ACCOUNT_WARBAND_SCENE_UPDATE
     WorldPackets::Misc::AccountWarbandSceneUpdate warbandSceneUpdate;
@@ -28739,9 +28738,6 @@ void Player::SetEquipmentSet(EquipmentSetInfo::EquipmentSetData const& newEqSet)
         "Player::SetEquipmentSet [{}]: guid={} setId={} type={} state={} name='{}'",
         GetGUID().ToString(), setGuid, eqSlot.Data.SetID,
         int32(eqSlot.Data.Type), int32(eqSlot.State), eqSlot.Data.SetName);
-
-    if (eqSlot.Data.Type == EquipmentSetInfo::TRANSMOG)
-        _SyncTransmogOutfitsToActivePlayerData("SetEquipmentSet");
 }
 
 void Player::_SaveEquipmentSets(CharacterDatabaseTransaction trans)
@@ -28789,7 +28785,7 @@ void Player::_SaveEquipmentSets(CharacterDatabaseTransaction trans)
                     stmt->setUInt32(j, eqSet.Data.SetID);
 
                     // Re-save situations
-                    CharacterDatabasePreparedStatement* delStmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT_SITUATIONS);
+                    CharacterDatabasePreparedStatement* delStmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT_SITUATION);
                     delStmt->setUInt64(0, GetGUID().GetCounter());
                     delStmt->setUInt64(1, eqSet.Data.Guid);
                     trans->Append(delStmt);
@@ -28867,7 +28863,7 @@ void Player::_SaveEquipmentSets(CharacterDatabaseTransaction trans)
                 {
                     stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT);
                     // Also delete situations
-                    CharacterDatabasePreparedStatement* delSitStmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT_SITUATIONS);
+                    CharacterDatabasePreparedStatement* delSitStmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT_SITUATION);
                     delSitStmt->setUInt64(0, GetGUID().GetCounter());
                     delSitStmt->setUInt64(1, eqSet.Data.Guid);
                     trans->Append(delSitStmt);
@@ -29056,9 +29052,6 @@ void Player::DeleteEquipmentSet(uint64 id)
                 itr = _equipmentSets.erase(itr);
             else
                 itr->second.State = EQUIPMENT_SET_DELETED;
-
-            if (isTransmogOutfit)
-                _SyncTransmogOutfitsToActivePlayerData("DeleteEquipmentSet");
 
             break;
         }
@@ -29663,10 +29656,6 @@ void Player::ActivateTalentGroup(ChrSpecializationEntry const* spec)
     for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
         if (Item* equippedItem = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
             SetVisibleItemSlot(i, equippedItem);
-
-    // Resync ViewedOutfit to reflect the new spec's per-spec appearance modifiers.
-    // Without this, the paperdoll shows stale transmog from the previous spec.
-    _SyncTransmogOutfitsToActivePlayerData("ActivateTalentGroup");
 
     for (uint32 glyphId : GetGlyphs(spec->OrderIndex))
         CastSpell(this, sGlyphPropertiesStore.AssertEntry(glyphId)->SpellID, true);
