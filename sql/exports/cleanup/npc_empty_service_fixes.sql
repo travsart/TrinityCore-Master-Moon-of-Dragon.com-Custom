@@ -10,7 +10,7 @@
 -- -------------------------------------------------------
 -- Remove vendor flag (npcflag & ~128) - 14 NPCs
 -- -------------------------------------------------------
-
+USE `world`;
 -- WRONG TYPE - Creature type doesn't match service role
 UPDATE creature_template SET npcflag = npcflag & ~128 WHERE entry = 255203; -- Xiao Dan -- Decor Vendor type=Wild Pet wh_roles=['vendor']
 UPDATE creature_template SET npcflag = npcflag & ~128 WHERE entry = 255213; -- Faarden the Builder -- Decor Vendor type=Wild Pet wh_roles=['vendor']

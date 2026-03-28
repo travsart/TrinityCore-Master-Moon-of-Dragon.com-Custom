@@ -6,6 +6,7 @@ SET innodb_lock_wait_timeout=120;
 -- =============================================================================
 -- Step 7: Hotfix duplicate cleanup
 -- =============================================================================
+USE `hotfixes`;
 
 DELETE hd FROM hotfix_data hd
 INNER JOIN (

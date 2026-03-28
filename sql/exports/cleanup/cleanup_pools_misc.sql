@@ -1,5 +1,7 @@
 -- World DB cleanup: pools, events, vendors, GO orphans, spawn groups
 -- Generated 2026-02-27
+USE `world`;
+
 SET innodb_lock_wait_timeout=120;
 
 -- =============================================================================

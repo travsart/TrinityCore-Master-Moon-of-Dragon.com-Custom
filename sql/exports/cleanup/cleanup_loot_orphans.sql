@@ -13,6 +13,7 @@
 --   pickpocketing_loot_template:  ~1,389 rows (332 entries)
 --   reference_loot_template:      ~1,122 rows (131+ entries)
 -- =============================================================================
+USE `world`;
 
 SET innodb_lock_wait_timeout = 120;
 

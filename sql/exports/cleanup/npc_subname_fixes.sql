@@ -10,7 +10,7 @@
 -- ============================================================
 -- SECTION 1: Mismatch fixes (DB has wrong/outdated subname)
 -- ============================================================
-
+USE `world`;
 -- [remove-dev-tag] was: 'Weaponsmith <Temp>'
 UPDATE `creature_template` SET `subname` = 'Weaponsmith' WHERE `entry` = 1467;
 -- [remove-dev-tag] was: 'Miner <Temp>'

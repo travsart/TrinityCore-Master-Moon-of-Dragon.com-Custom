@@ -1,5 +1,6 @@
 -- Auth DB cleanup: RBAC default permission assignments for custom commands
 -- Generated 2026-02-27
+USE `auth`;
 SET innodb_lock_wait_timeout=120;
 
 -- =============================================================================

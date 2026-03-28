@@ -14,7 +14,7 @@
 -- These smart_scripts rows have source_type=0 (creature) and a negative
 -- entryorguid (meaning creature GUID), but no creature with that GUID exists.
 -- ============================================================================
-
+USE `world`;
 DELETE FROM smart_scripts WHERE source_type = 0 AND entryorguid IN (
     -4000000000141091,
     -4000000000141070,

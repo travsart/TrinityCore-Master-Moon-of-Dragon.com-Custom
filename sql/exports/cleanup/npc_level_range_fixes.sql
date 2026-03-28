@@ -10,7 +10,7 @@
 -- Only CRITICAL/MAJOR severity with exact or tier-match confidence.
 -- Total fixes: 3013 NPCs
 -- =============================================================================
-
+USE `world`;
 -- ContentTuningID 2 -- Classic (5-30) -- 14 NPCs
 -- 217468 Scampering Weave-Rat: WH 5-5, was CT 2677 (70-80)
 -- 219979 Weaver's Agent: WH 5-5, was CT 2677 (70-80)

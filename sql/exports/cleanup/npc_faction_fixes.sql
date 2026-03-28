@@ -8,7 +8,7 @@
 -- These NPCs are vendors/trainers/etc. but hostile to ALL players.
 -- This is almost certainly a data error.
 -- Set to faction 35 (Friendly to all players).
-
+USE `world`;
 -- entry 28589: Gristlegut [Vendor] was faction 2068 (Undead, Scourge, hostile to both)
 UPDATE creature_template SET faction = 35 WHERE entry = 28589; -- was 2068 (hostile to all players)
 -- entry 132568: Volatile Violetscale [Vendor] was faction 2945 (8.0 Hidden Object - Red, hostile to both)

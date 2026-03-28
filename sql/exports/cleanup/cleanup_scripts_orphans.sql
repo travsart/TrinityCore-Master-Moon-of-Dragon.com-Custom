@@ -2,7 +2,7 @@
 -- Cleanup: SmartAI, scripting, pathing, and formation orphans
 -- Generated: 2026-02-27
 -- ============================================================================
-
+USE `world`;
 SET innodb_lock_wait_timeout = 120;
 
 -- ---------------------------------------------------------------------------

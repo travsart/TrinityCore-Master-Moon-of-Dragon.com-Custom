@@ -17,7 +17,7 @@
 -- Breakdown:
 --   tier_label: 243
 -- ============================================================
-
+USE `world`;
 -- === tier_label (243 entries) ===
 -- [Nerubian Fighter, Physical] was: 'T1 (1/1)'
 UPDATE `creature_template` SET `subname` = '' WHERE `entry` = 211852;

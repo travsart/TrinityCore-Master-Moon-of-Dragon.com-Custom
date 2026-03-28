@@ -8,7 +8,7 @@
 --
 -- Uses bitwise OR so operations are idempotent
 -- Safe to re-run: OR with existing flags is a no-op if already set
-
+USE `world`;
 -- ============================================================================
 -- REMAINING: Unused/test NPCs with missing flags (informational, not applied)
 -- These are all [UNUSED], [PH], DEPRECATED, or test entries

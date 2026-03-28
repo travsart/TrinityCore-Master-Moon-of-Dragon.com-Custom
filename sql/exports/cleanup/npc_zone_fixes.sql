@@ -3,7 +3,7 @@
 -- Generated: 2026-03-01 19:27:37
 -- REVIEW CAREFULLY before applying. These are conservative fixes only.
 -- ============================================================================
-
+USE `world`;
 -- ============================================================================
 -- SECTION 1: zoneId/areaId Inconsistencies
 -- The creature's areaId belongs to a different top-level zone than its zoneId.

@@ -3,7 +3,7 @@
 -- Removes clearly invalid display IDs. Does NOT generate replacements.
 -- ==========================================================================
 
-
+USE `world`;
 -- Section 2: Reset invalid per-spawn modelid overrides to 0
 -- (reverts to creature_template_model default)
 
