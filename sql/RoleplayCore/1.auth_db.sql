@@ -1,3 +1,4 @@
+USE `auth`;
 INSERT IGNORE INTO `rbac_permissions` VALUES (1002, 'Command: .barber');
 INSERT IGNORE INTO `rbac_permissions` VALUES (1003, 'Command: .castgroup');
 INSERT IGNORE INTO `rbac_permissions` VALUES (1004, 'Command: .castscene');

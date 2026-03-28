@@ -1,6 +1,7 @@
 -- ----------------------------
 -- Table structure for creature_template_outfits
 -- ----------------------------
+USE `world`;
 DROP TABLE IF EXISTS `creature_template_outfits`;
 CREATE TABLE `creature_template_outfits`  (
   `entry` int UNSIGNED NOT NULL,

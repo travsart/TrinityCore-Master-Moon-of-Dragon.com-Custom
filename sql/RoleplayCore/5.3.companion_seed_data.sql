@@ -8,6 +8,7 @@
 -- Companion creature templates (minimal — ScriptName is the key part)
 -- These use entry range 500001-500010 for companion NPCs
 -- HealthModifier/DamageModifier live in creature_template_difficulty, not creature_template
+USE `world`;
 
 INSERT IGNORE INTO `creature_template` (`entry`, `name`, `subname`, `ScriptName`, `faction`, `npcflag`, `unit_flags`, `BaseAttackTime`) VALUES
 (500001, 'Companion Warrior',   'Tank',       'CompanionAI', 35, 0, 0, 2000),

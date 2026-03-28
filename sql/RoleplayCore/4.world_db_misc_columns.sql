@@ -1,4 +1,5 @@
 -- Idempotent custom column additions (MySQL 8.0 compatible)
+USE `world`;
 DROP PROCEDURE IF EXISTS add_custom_columns;
 DELIMITER //
 CREATE PROCEDURE add_custom_columns()

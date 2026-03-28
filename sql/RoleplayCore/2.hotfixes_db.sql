@@ -1,3 +1,4 @@
+USE `hotfixes`;
 -- ----------------------------
 -- Table structure for chr_customization_material
 -- ----------------------------
