@@ -1,0 +1,7 @@
+start with tdb
+load lorewalker world
+load exports/lw.sql
+load RoleplayCore/rpc.sql
+load exports/cleanup.sql
+load rest of items in exports
+run world server
