@@ -13,7 +13,7 @@
 --   Part 5: creature_template_gossip assignments
 --   Part 6: npc_text entries for gossip menu headers
 -- ============================================================================
-
+USE `world`;
 -- ============================================================================
 -- Part 1: Mechagon spell_target_position (SQL-only fix)
 -- ============================================================================
