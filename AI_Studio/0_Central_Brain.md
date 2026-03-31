@@ -8,7 +8,7 @@
 
 ## Triad Coordination — READ FIRST (all agents)
 
-**Last updated**: 2026-03-22 -- Session 204: Fresh VoxCore fork from TC master. Abandoned merge approach — 3-way audit showed coreretail6 is pure subset of KamiliaBlow, TC has new TransmogMgr neither fork has. New repo VoxCore84/VoxCore (clean start). Layer 2 done (182 files from KB). Old repo → VoxCore-legacy. Repos: `~/VoxCore-new/` (new), `~/VoxCore/` (old ref). Next: Layer 3 (KB mods), CMake reconfigure, Layer 4-6
+**Last updated**: 2026-03-22 -- Session 210: Full C++ custom code audit. 4 parallel agents across ~40 files found 12 HIGH/14 MEDIUM/20+ LOW issues. All 11 HIGH fixed + build verified (725/725 zero errors). Commit `3274d30362`. Fixes: use-after-move UB, null crashes, div-by-zero, dangling pointer, companion oscillation/spam. Handoff: `doc/handoff_cpp_audit.md`. x64-Debug build env freshly configured. Next: 14 MEDIUM fixes, in-game verification, RelWithDebInfo build
 
 ### Architecture (as of session 160)
 

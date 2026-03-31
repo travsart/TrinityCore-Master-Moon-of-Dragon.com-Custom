@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 DB2_DIR = Path(r"C:\Users\atayl\VoxCore\runtime\dbc\enUS")
-CSV_DIR = Path(r"C:\Users\atayl\VoxCore\wago\merged_csv\12.0.1.66527\enUS")
+CSV_DIR = Path(r"C:\Users\atayl\VoxCore\wago\merged_csv\12.0.1.66666\enUS")
 
 CRITICAL_TABLES = {
     "SpellName", "SpellEffect", "SpellMisc", "SpellAuraOptions",

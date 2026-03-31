@@ -289,9 +289,9 @@ def create_all():
         "inv_hearthstone_gold.png")
 
     make_shortcut(d, "1. YMIR Sniffer",
-        os.path.join(EXTTOOLS, r"ymir_retail_12.0.1.66263\ymir_retail.exe"), None,
-        os.path.join(EXTTOOLS, "ymir_retail_12.0.1.66263"),
-        "STEP 1 — Retail packet sniffer for 12.0.1 build 66263. Captures live WoW traffic into .pkt files. Launch this BEFORE opening the game client. Output: .pkt files for WPP to parse.",
+        os.path.join(EXTTOOLS, r"ymir_retail_12.0.1.66666\ymir_retail.exe"), None,
+        os.path.join(EXTTOOLS, "ymir_retail_12.0.1.66666"),
+        "STEP 1 — Retail packet sniffer for 12.0.1 build 66666. Captures live WoW traffic into .pkt files. Launch this BEFORE opening the game client. Output: .pkt files for WPP to parse.",
         "ability_hunter_snipershot.png")
 
     make_shortcut(d, "2. WowPacketParser",
@@ -429,7 +429,7 @@ def create_all():
     make_shortcut(d, "wow.tools.local",
         "cmd.exe", f'/k "{EXTTOOLS}\\WoW.tools\\start_wtl.bat"',
         os.path.join(EXTTOOLS, "WoW.tools"),
-        "Start wow.tools.local — local DB2 data browser at http://localhost:5000 (build 66263). Browse item appearances, spells, creatures, maps, and all 1,097 DB2 tables. Waits for startup then opens browser.",
+        "Start wow.tools.local — local DB2 data browser at http://localhost:5000 (build 66666). Browse item appearances, spells, creatures, maps, and all 1,097 DB2 tables. Waits for startup then opens browser.",
         "inv_misc_spyglass_01.png")
 
     make_shortcut(d, "DBC2CSV",

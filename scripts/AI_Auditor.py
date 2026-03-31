@@ -13,7 +13,7 @@ DB_CONFIG = {
     'database': 'world'
 }
 
-WAGO_DIR = r"C:\Users\atayl\VoxCore\wago\merged_csv\12.0.1.66263\enUS"
+WAGO_DIR = r"C:\Users\atayl\VoxCore\wago\merged_csv\12.0.1.66666\enUS"
 UPDATES_DIR = r"C:\Users\atayl\VoxCore\sql\updates"
 
 def fetch_local_db_data(query):
