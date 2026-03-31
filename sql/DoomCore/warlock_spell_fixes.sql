@@ -1,3 +1,5 @@
+USE `world`;
+
 DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_warl_diabolic_ritual_passive', 'spell_warl_diabolic_ritual', 'spell_warl_demonic_art', 'spell_warl_pit_lord_felseeker', 'spell_warl_pit_lord_felseeker_at', 'spell_warl_mother_chaos_missile', 'spell_warl_overlord_wicked_cleave', 'spell_warl_infernal_bolt_empower_aura', 'spell_warl_overfiend_chaos_bolt', 'spell_warl_avatar_of_destruction', 'spell_warl_dimensional_rift_talent', 'spell_warl_ruination', 'spell_warl_ruination_damage', 'spell_warl_ruination_entry_aura', 'spell_warl_diabolic_oculi');
 INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (428514, 'spell_warl_diabolic_ritual_passive'),
