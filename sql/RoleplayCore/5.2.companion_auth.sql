@@ -2,7 +2,7 @@
 -- Companion Squad System — Auth DB RBAC
 -- Run against: auth
 -- ============================================================================
-USE `characters`;
+USE `auth`;
 
 INSERT IGNORE INTO `rbac_permissions` (`id`, `name`) VALUES
 (3008, 'Command: .comp');
