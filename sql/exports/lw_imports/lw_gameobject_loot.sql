@@ -2,7 +2,7 @@
 -- New rows: 59893 (not in our world DB)
 -- LW total: 123890, duplicates skipped: 63997
 -- Generated: 2026-02-27
-USE `lorewalker_world`;
+USE `world`;
 INSERT IGNORE INTO `gameobject_loot_template` (`Entry`,`ItemType`,`Item`,`Chance`,`QuestRequired`,`LootMode`,`GroupId`,`MinCount`,`MaxCount`,`Comment`) VALUES
 (156,0,9278,100,1,1,0,1,1,NULL),
 (251,0,11112,100,1,1,0,1,1,NULL),
