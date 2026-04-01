@@ -481,7 +481,7 @@ REPLACE INTO `areatrigger_scripts` VALUES (12863, 'at_hunter_wildfire_bomb');
 
 REPLACE INTO `areatrigger_template` VALUES (265163, 0, 0, 0, 0, 0);
 
-REPLACE INTO `areatrigger_create_properties` VALUES (12863, 0, 265163, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 'at_hunter_wildfire_bomb', 0);
+REPLACE INTO `areatrigger_create_properties` VALUES (12863, 0, 265163, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 'at_hunter_wildfire_bomb', 0);
 
 REPLACE INTO `spell_script_names` VALUES (3355, 'spell_hunter_freezing_trap_aura');
 REPLACE INTO `spell_script_names` VALUES (883, 'spell_hun_call_pet');
