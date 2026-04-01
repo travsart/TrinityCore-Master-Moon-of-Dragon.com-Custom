@@ -1,5 +1,5 @@
 -- =====================================================
--- Combined SQL generated on 2026-03-28 23:21:19Z
+-- Combined SQL generated on 2026-04-01 02:07:51Z
 -- Sources:
 --  custom_tables.sql
 --  1.auth_db.sql
@@ -1009,9 +1009,18 @@ CREATE TABLE `pvp_bracket_types` (
 -- ----- Begin file: 2.1.hotfixes_db_spell_changes.sql -----
 USE `hotfixes`;
 
-REPLACE INTO `spell_misc` VALUES (170768, 0, 268435456, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 21, 0, 1, 1, 0, 0, 0, 988194, 0, 0, 0, 0, 0, 196742, 60257);
+REPLACE INTO `spell_misc` (
+    `ID`, 
+    `Attributes1`, `Attributes2`, `Attributes3`, `Attributes4`, `Attributes5`, `Attributes6`, `Attributes7`, `Attributes8`, `Attributes9`, `Attributes10`, 
+    `Attributes11`, `Attributes12`, `Attributes13`, `Attributes14`, `Attributes15`, `Attributes16`, `Attributes17`, 
+    `DifficultyID`, `CastingTimeIndex`, `DurationIndex`, `PvPDurationIndex`, `RangeIndex`, `SchoolMask`, `Speed`, `LaunchDelay`, `MinDuration`, `SpellIconFileDataID`, 
+    `ActiveIconFileDataID`, `ContentTuningID`, `ShowFutureSpellPlayerConditionID`, `SpellVisualScript`, `ActiveSpellVisualScript`, `SpellID`, `VerifiedBuild`) 
+    VALUES (170768, 
+    0, 268435456, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 1, 21, 0, 1, 1, 0, 0, 0, 988194, 0, 0, 0, 0, 0, 196742, 60257);
+REPLACE INTO `hotfix_data` VALUES (170768, 170768, 3322146344, 170768, 1, 60257);
 
-REPLACE INTO `hotfix_data` VALUES (170768, 170768, 3322146344, 170768, 1, 60257);-- ----- End file: 2.1.hotfixes_db_spell_changes.sql -----
+-- ----- End file: 2.1.hotfixes_db_spell_changes.sql -----
 -- ----- Begin file: 3.roleplay_db.sql -----
 CREATE DATABASE IF NOT EXISTS roleplay CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
@@ -1168,7 +1177,7 @@ CREATE TABLE IF NOT EXISTS `character_companion_control` (
 -- Companion Squad System — Auth DB RBAC
 -- Run against: auth
 -- ============================================================================
-USE `characters`;
+USE `auth`;
 
 INSERT IGNORE INTO `rbac_permissions` (`id`, `name`) VALUES
 (3008, 'Command: .comp');
