@@ -23,6 +23,16 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'npc_vendor' AND COLUMN_NAME = 'OverrideGoldCost') THEN
         ALTER TABLE `npc_vendor` ADD COLUMN `OverrideGoldCost` INT NOT NULL DEFAULT '-1';
     END IF;
+
+    -- scrapping_loot_template.ItemType
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scrapping_loot_template' AND COLUMN_NAME = 'ItemType') THEN
+        ALTER TABLE `scrapping_loot_template` ADD COLUMN `ItemType` tinyint NOT NULL DEFAULT 0 AFTER `Entry`;
+    END IF;
+
+    -- creature_loot_template.Reference
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'creature_loot_template' AND COLUMN_NAME = 'Reference') THEN
+        ALTER TABLE `creature_loot_template` ADD COLUMN `Reference` VARCHAR(255) DEFAULT NULL AFTER `Comment`;
+    END IF;
 END //
 DELIMITER ;
 CALL add_custom_columns();
