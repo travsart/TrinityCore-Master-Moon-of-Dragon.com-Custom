@@ -3,5 +3,6 @@ load lorewalker world
 load RoleplayCore/rpc.sql
 load exports/lw.sql
 load exports/cleanup.sql
+load DoomCore
 load rest of items in exports (dont do rp_instant_cast_qol.sql)
 run world server
