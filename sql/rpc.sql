@@ -1,7 +1,7 @@
 -- =====================================================
--- Combined SQL generated on 2026-04-04 04:57:56Z
+-- Combined SQL generated on 2026-04-04 19:23:36Z
 -- Sources:
---  custom_tables.sql
+--  0.custom_tables.sql
 --  1.auth_db.sql
 --  2.hotfixes_db.sql
 --  2.1.hotfixes_db_spell_changes.sql
@@ -12,10 +12,12 @@
 --  5.3.companion_seed_data.sql
 --  6.player_morph.sql
 --  7.characters.sql
---  DarkmoonFaire_patch.sql
+--  8.chromie_time.sql
+--  10.DarkmoonFaire_patch.sql
+--  11.spell_script_class_fixes.sql
 --  ../DoomCore/warlock_spell_fixes.sql
 -- =====================================================\n
--- ----- Begin file: custom_tables.sql -----
+-- ----- Begin file: 0.custom_tables.sql -----
 -- ============================================================================
 -- VoxCore Custom Tables — Consolidated DDL
 -- ============================================================================
@@ -108,18 +110,18 @@ CREATE TABLE IF NOT EXISTS `creature_template_outfits_customizations` (
 ) ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE IF NOT EXISTS `scrapping_loot_template` (
-  `Entry` mediumint UNSIGNED NOT NULL DEFAULT 0,
-  `Item` mediumint NOT NULL DEFAULT 0,
-  `Reference` mediumint UNSIGNED NOT NULL DEFAULT 0,
+  `Entry` int UNSIGNED NOT NULL DEFAULT 0,
+  `ItemType` tinyint NOT NULL DEFAULT 0,
+  `Item` int UNSIGNED NOT NULL DEFAULT 0,
   `Chance` float NOT NULL DEFAULT 100,
   `QuestRequired` tinyint(1) NOT NULL DEFAULT 0,
   `LootMode` smallint UNSIGNED NOT NULL DEFAULT 1,
   `GroupId` tinyint UNSIGNED NOT NULL DEFAULT 0,
-  `MinCount` int UNSIGNED NOT NULL DEFAULT 1,
-  `MaxCount` int UNSIGNED NOT NULL DEFAULT 1,
-  `Comment` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
-  PRIMARY KEY (`Entry`, `Item`) USING BTREE
-) ENGINE=MyISAM CHARACTER SET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=FIXED;
+  `MinCount` tinyint UNSIGNED NOT NULL DEFAULT 1,
+  `MaxCount` tinyint UNSIGNED NOT NULL DEFAULT 1,
+  `Comment` varchar(255) DEFAULT NULL,
+  KEY `idx_entry` (`Entry`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 CREATE TABLE IF NOT EXISTS `companion_roster` (
   `entry`      INT UNSIGNED NOT NULL COMMENT 'creature_template entry',
@@ -258,7 +260,7 @@ CREATE TABLE IF NOT EXISTS `codex_aggregated` (
   KEY `idx_creature` (`creature_entry`),
   KEY `idx_spell` (`spell_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='CreatureCodex multi-player aggregated spell discoveries';
--- ----- End file: custom_tables.sql -----
+-- ----- End file: 0.custom_tables.sql -----
 -- ----- Begin file: 1.auth_db.sql -----
 USE `auth`;
 INSERT IGNORE INTO `rbac_permissions` VALUES (1002, 'Command: .barber');
@@ -1263,6 +1265,9 @@ USE `characters`;
 
 ALTER TABLE `character_pet` ADD COLUMN `favorite` tinyint unsigned NOT NULL DEFAULT '0' AFTER `specialization`;
 
+-- Chromie Time Expansion
+ALTER TABLE `characters` ADD COLUMN `chromieTimeExpansionId` tinyint unsigned NOT NULL DEFAULT '0' AFTER `transmogOutfitLocked`;
+
 -- ============================================================================
 -- WORLD DATABASE: companion_roster
 -- ============================================================================
@@ -1302,6 +1307,7 @@ CREATE TABLE IF NOT EXISTS `companion_roster` (
     `cooldown3`  INT UNSIGNED NOT NULL DEFAULT 15000,
     PRIMARY KEY (`entry`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Companion squad roster definitions';
+
 -- ----- End file: 5.character_db.sql -----
 -- ----- Begin file: 5.1.companion_characters.sql -----
 -- ============================================================================
@@ -1416,7 +1422,73 @@ END //
 DELIMITER ;
 CALL add_crafting_columns();
 DROP PROCEDURE IF EXISTS add_crafting_columns;-- ----- End file: 7.characters.sql -----
--- ----- Begin file: DarkmoonFaire_patch.sql -----
+-- ----- Begin file: 8.chromie_time.sql -----
+-- Chromie Time: terrain swap conditions
+-- ConditionType 60 = CONDITION_CHROMIE_TIME (value1: 0=any CT, N=specific expansion)
+-- NegativeCondition=1 inverts: "NOT in CT for expansion N"
+-- SourceTypeOrReferenceId=25 = CONDITION_SOURCE_TYPE_TERRAIN_SWAP
+-- SourceEntry = terrain swap map ID
+-- Multiple conditions with same ElseGroup are ANDed
+
+-- Remove terrain swaps from defaults that need to be conditional
+-- They will be re-added as conditional via the conditions table
+-- Note: terrain_swap_defaults entries without conditions are always active
+-- Entries WITH conditions are only active when ALL conditions are met
+
+-- Blasted Lands WoD terrain (1190): should NOT be active for Classic/TBC/WotLK/Cata CT
+-- (Blasted Lands was changed by WoD Iron Horde invasion — pre-WoD CT should see original)
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=25 AND `SourceEntry`=1190;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceGroup`,`SourceEntry`,`SourceId`,`ElseGroup`,`ConditionTypeOrReference`,`ConditionTarget`,`ConditionValue1`,`ConditionValue2`,`ConditionValue3`,`NegativeCondition`,`ErrorType`,`ErrorTextId`,`ScriptName`,`Comment`) VALUES
+(25,0,1190,0,0,60,0,1,0,0,1,0,0,'','Blasted Lands WoD terrain: not active in TBC CT'),
+(25,0,1190,0,0,60,0,2,0,0,1,0,0,'','Blasted Lands WoD terrain: not active in WotLK CT'),
+(25,0,1190,0,0,60,0,3,0,0,1,0,0,'','Blasted Lands WoD terrain: not active in Cata CT');
+
+-- Silithus: The Wound (1817): should NOT be active for pre-BfA CT (expansions 1-6)
+-- (Silithus was changed by BfA sword of Sargeras event)
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=25 AND `SourceEntry`=1817;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceGroup`,`SourceEntry`,`SourceId`,`ElseGroup`,`ConditionTypeOrReference`,`ConditionTarget`,`ConditionValue1`,`ConditionValue2`,`ConditionValue3`,`NegativeCondition`,`ErrorType`,`ErrorTextId`,`ScriptName`,`Comment`) VALUES
+(25,0,1817,0,0,60,0,1,0,0,1,0,0,'','Silithus Wound terrain: not active in TBC CT'),
+(25,0,1817,0,0,60,0,2,0,0,1,0,0,'','Silithus Wound terrain: not active in WotLK CT'),
+(25,0,1817,0,0,60,0,3,0,0,1,0,0,'','Silithus Wound terrain: not active in Cata CT'),
+(25,0,1817,0,0,60,0,4,0,0,1,0,0,'','Silithus Wound terrain: not active in MoP CT'),
+(25,0,1817,0,0,60,0,5,0,0,1,0,0,'','Silithus Wound terrain: not active in WoD CT'),
+(25,0,1817,0,0,60,0,6,0,0,1,0,0,'','Silithus Wound terrain: not active in Legion CT');
+
+-- Stormwind Gunship Pandaria Start (1066): should NOT be active for pre-MoP CT (expansions 1-3)
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=25 AND `SourceEntry`=1066;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceGroup`,`SourceEntry`,`SourceId`,`ElseGroup`,`ConditionTypeOrReference`,`ConditionTarget`,`ConditionValue1`,`ConditionValue2`,`ConditionValue3`,`NegativeCondition`,`ErrorType`,`ErrorTextId`,`ScriptName`,`Comment`) VALUES
+(25,0,1066,0,0,60,0,1,0,0,1,0,0,'','SW Gunship MoP terrain: not active in TBC CT'),
+(25,0,1066,0,0,60,0,2,0,0,1,0,0,'','SW Gunship MoP terrain: not active in WotLK CT'),
+(25,0,1066,0,0,60,0,3,0,0,1,0,0,'','SW Gunship MoP terrain: not active in Cata CT');
+
+-- Orgrimmar Gunship Pandaria Start (1074): should NOT be active for pre-MoP CT (expansions 1-3)
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=25 AND `SourceEntry`=1074;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceGroup`,`SourceEntry`,`SourceId`,`ElseGroup`,`ConditionTypeOrReference`,`ConditionTarget`,`ConditionValue1`,`ConditionValue2`,`ConditionValue3`,`NegativeCondition`,`ErrorType`,`ErrorTextId`,`ScriptName`,`Comment`) VALUES
+(25,0,1074,0,0,60,0,1,0,0,1,0,0,'','Org Gunship MoP terrain: not active in TBC CT'),
+(25,0,1074,0,0,60,0,2,0,0,1,0,0,'','Org Gunship MoP terrain: not active in WotLK CT'),
+(25,0,1074,0,0,60,0,3,0,0,1,0,0,'','Org Gunship MoP terrain: not active in Cata CT');
+
+-- Twilight Highlands Dragonmaw Port (736): should NOT be active for pre-Cata CT (expansions 1-2)
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=25 AND `SourceEntry`=736;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceGroup`,`SourceEntry`,`SourceId`,`ElseGroup`,`ConditionTypeOrReference`,`ConditionTarget`,`ConditionValue1`,`ConditionValue2`,`ConditionValue3`,`NegativeCondition`,`ErrorType`,`ErrorTextId`,`ScriptName`,`Comment`) VALUES
+(25,0,736,0,0,60,0,1,0,0,1,0,0,'','TH Dragonmaw terrain: not active in TBC CT'),
+(25,0,736,0,0,60,0,2,0,0,1,0,0,'','TH Dragonmaw terrain: not active in WotLK CT');
+
+-- Mount Hyjal default terrain (719): should NOT be active for pre-Cata CT (expansions 1-2)
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=25 AND `SourceEntry`=719;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceGroup`,`SourceEntry`,`SourceId`,`ElseGroup`,`ConditionTypeOrReference`,`ConditionTarget`,`ConditionValue1`,`ConditionValue2`,`ConditionValue3`,`NegativeCondition`,`ErrorType`,`ErrorTextId`,`ScriptName`,`Comment`) VALUES
+(25,0,719,0,0,60,0,1,0,0,1,0,0,'','Hyjal terrain: not active in TBC CT'),
+(25,0,719,0,0,60,0,2,0,0,1,0,0,'','Hyjal terrain: not active in WotLK CT');
+
+-- ============================================================================
+-- Chromie NPC (167032) gossip option: open Chromie Time UI
+-- OptionNpc=40 (ChromieTimeNpc) triggers NPCInteractionOpenResult with
+-- PlayerInteractionType::ChromieTime, which opens the client's CT expansion picker
+-- ============================================================================
+DELETE FROM `gossip_menu_option` WHERE `MenuID`=25426;
+INSERT INTO `gossip_menu_option` (`MenuID`,`GossipOptionID`,`OptionID`,`OptionNpc`,`OptionText`,`OptionBroadcastTextID`,`Language`,`Flags`,`ActionMenuID`,`ActionPoiID`,`GossipNpcOptionID`,`BoxCoded`,`BoxMoney`,`BoxText`,`BoxBroadcastTextID`,`SpellID`,`OverrideIconID`,`VerifiedBuild`) VALUES
+(25426,-250000,0,40,'I want to select a different timeline.',0,0,0,0,0,NULL,0,0,NULL,0,NULL,NULL,0);-- ----- End file: 8.chromie_time.sql -----
+-- ----- Begin file: 10.DarkmoonFaire_patch.sql -----
 USE `world`;
 -- ----------------------------
 -- Misc fixes
@@ -1446,9 +1518,9 @@ REPLACE INTO `npc_text` VALUES (7790, 1, 0, 0, 0, 0, 0, 0, 0, 10770, 0, 0, 0, 0,
 REPLACE INTO `creature_template_gossip` VALUES (15303, 8590, 48676);
 
 
-REPLACE INTO `creature_template` VALUES (15303, 0, 0, 'Maxima Blastenheimer', 'Darkmoon Faire Cannoneer', NULL, NULL, NULL, 0, 0, 1555, 3, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 1, 768, 2048, 0, 0, 0, 7, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 66, 'npc_canon_maxima', NULL, 62438);
-REPLACE INTO `creature_template` VALUES (33068, 0, 0, 'Darkmoon Faire - Cannon Target Bunny', '', NULL, NULL, NULL, 0, 0, 35, 0, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 1, 33587968, 2099200, 0, 0, 0, 10, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 192, 'npc_darkmoon_canon_target', NULL, 62438);
-REPLACE INTO `creature_template` VALUES (57850, 0, 0, 'Teleportologist Fozlebub', 'Gone Fishin\'', NULL, NULL, NULL, 0, 0, 1555, 1, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 8, 768, 2048, 0, 0, 0, 7, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 0, 'npc_canon_fozlebub', NULL, 62438);
+UPDATE `creature_template` SET `ScriptName` = 'npc_canon_maxima' WHERE `entry` = 15303;
+UPDATE `creature_template` SET `ScriptName` = 'npc_darkmoon_canon_target' WHERE `entry` = 33068;
+UPDATE `creature_template` SET `ScriptName` = 'npc_canon_fozlebub' WHERE `entry` = 57850;
 
 REPLACE INTO `spell_script_names` VALUES (102112, 'spell_darkmoon_canon_preparation');
 
@@ -1474,15 +1546,15 @@ REPLACE INTO `creature_template_gossip` VALUES (181097, 26818, 50000);
 REPLACE INTO `npc_text` VALUES (42770, 1, 0, 0, 0, 0, 0, 0, 0, 207528, 0, 0, 0, 0, 0, 0, 0, 42979);
 REPLACE INTO `npc_text` VALUES (42798, 1, 0, 0, 0, 0, 0, 0, 0, 208986, 0, 0, 0, 0, 0, 0, 0, 42979);
 
-REPLACE INTO `creature_template` VALUES (181097, 0, 0, 'Simon Sezdans', 'Dance Master', NULL, NULL, NULL, 0, 0, 1555, 3, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 1, 768, 2048, 0, 0, 0, 7, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 0, 'npc_dance_battle_simon_sezdans', NULL, 62438);
+UPDATE `creature_template` SET `ScriptName` = 'npc_dance_battle_simon_sezdans' WHERE `entry` = 181097;
 
-REPLACE INTO `scene_template` VALUES (2709, 17, 3193, 0, 'scene_darkmoon_dance_battle');
+REPLACE INTO `scene_template` (`SceneId`, `Flags`, `ScriptPackageID`, `Encrypted`, `ScriptName`) VALUES (2709, 17, 3193, 0, 'scene_darkmoon_dance_battle');
 
 -- ----------------------------
 -- Firebird Challenge fixes
 -- ----------------------------
 
-REPLACE INTO `areatrigger_create_properties` VALUES (3069, 0, 7712, 0, 0, 0, 0, 0, 0, -1, 0, 0, NULL, 0, 1, 0, 5, 5, 0, 0, 0, 0, 0, 0, 'at_darkmoon_firebird_ring', 44061);
+REPLACE INTO `areatrigger_create_properties` (`Id`,`IsCustom`,`AreaTriggerId`,`IsAreatriggerCustom`,`Flags`,`MoveCurveId`,`ScaleCurveId`,`MorphCurveId`,`FacingCurveId`,`AnimId`,`AnimKitId`,`DecalPropertiesId`,`SpellForVisuals`,`TimeToTargetScale`,`Speed`,`SpeedIsTime`,`Shape`,`ShapeData0`,`ShapeData1`,`ShapeData2`,`ShapeData3`,`ShapeData4`,`ShapeData5`,`ShapeData6`,`ShapeData7`,`ScriptName`,`VerifiedBuild`) VALUES (3069, 0, 7712, 0, 0, 0, 0, 0, 0, -1, 0, 0, NULL, 0, 1, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 'at_darkmoon_firebird_ring', 44061);
 REPLACE INTO `areatrigger_template` VALUES (7712, 0, 0, 0, 0, 56819);
 
 REPLACE INTO `spell_script_names` VALUES (170819, 'spell_darkmoon_firebird_challenge');
@@ -1496,7 +1568,7 @@ REPLACE INTO `gossip_menu_option` VALUES (16972, 43062, 0, 0, 'I understand.', 5
 REPLACE INTO `gossip_menu_option_locale` VALUES (16972, 0, 'ruRU', 'Понятно.', NULL);
 REPLACE INTO `npc_text` VALUES (24704, 1, 0, 0, 0, 0, 0, 0, 0, 87078, 0, 0, 0, 0, 0, 0, 0, 19865);
 
-REPLACE INTO `creature_template` VALUES (85546, 0, 0, 'Ziggie Sparks', 'Firebird\'s Challenge', NULL, NULL, NULL, 0, 0, 35, 3, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 1, 0, 2048, 0, 0, 0, 7, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 0, 'npc_ziggie_sparks', NULL, 62438);
+UPDATE `creature_template` SET `ScriptName` = 'npc_ziggie_sparks' WHERE `entry` = 85546;
 
 -- ----------------------------
 -- Ring Toss fixes
@@ -1515,7 +1587,135 @@ REPLACE INTO `spell_script_names` VALUES (101838, 'spell_gen_repair_damaged_tonk
 
 -- ----------------------------
 -- Wrack Gnoll fixes
--- ------------------------------ ----- End file: DarkmoonFaire_patch.sql -----
+-- ------------------------------ ----- End file: 10.DarkmoonFaire_patch.sql -----
+-- ----- Begin file: 11.spell_script_class_fixes.sql -----
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_dh_demon_muzzle';
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(389860, 'spell_dh_demon_muzzle'),
+(204598, 'spell_dh_demon_muzzle'),
+(207685, 'spell_dh_demon_muzzle'),
+(204490, 'spell_dh_demon_muzzle'),
+(204834, 'spell_dh_demon_muzzle');
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_guardian_of_elune_healing');
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(22842, 'spell_dru_guardian_of_elune_healing');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (155578);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(155578,0x00,7,0x00000000,0x00000040,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0,0,0,0); -- Guardian of Elune
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (213680);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(213680,0x00,7,0x00000000,0x40000000,0x00004000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0,0,0,0); -- Guardian of Elune
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (383115);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(383115,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x1000,0x0,0x0,0,0,0,0); -- Concussive Blows
+
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_warlords_torment';
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(390140,'spell_warr_warlords_torment');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (390140);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(390140,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x1,0x0,0x0,0x0,0,0,0,0); -- Warlord's Torment
+
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_bladesmasters_torment';
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(390138,'spell_warr_bladesmasters_torment');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (390138);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(390138,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x1,0x0,0x0,0x0,0,0,0,0); -- Blademaster's Torment
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_thorns_of_iron_damage');
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(400223, 'spell_dru_thorns_of_iron_damage');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (400222);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(400222,0x00,7,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x4,0x0,0x0,0x0,0,0,0,0); -- Thorns of Iron
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_warr_intervene');
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(3411,'spell_warr_intervene'),
+(316531,'spell_warr_intervene_charge');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (147833);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(147833,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x2,0x0,0,0,0,0); -- Intervene
+
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(382551, 'spell_warr_pain_and_gain_heal');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (382549);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(382549,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x2,0x2,0x0,0x2,0x0,0,0,0,0); -- Pain and Gain
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_elunes_favored', 'spell_dru_elunes_favored_proc');
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(370586, 'spell_dru_elunes_favored'),
+(370588, 'spell_dru_elunes_favored_proc');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (370588);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(370588,0x40,7,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0,0,0,0); -- Elune's Favored
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_flower_walk', 'spell_dru_flower_walk_heal');
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(22812, 'spell_dru_flower_walk'),
+(439902, 'spell_dru_flower_walk_heal');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (395446);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(395446,0x00,107,0x00000000,0x00000002,0x00000000,0x00000000,0x0,0x0,0x5,0x2,0x0,0x0,0x0,0,0,0,0); -- Soul Sigils
+
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_dh_soul_sigils';
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(395446, 'spell_dh_soul_sigils');
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_twin_moonfire', 'spell_dru_twin_moons_effect');
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(8921, 'spell_dru_twin_moonfire'),
+(281847, 'spell_dru_twin_moons_effect');
+
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_thunder_clap';
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(6343, 'spell_warr_thunder_clap');
+
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_thunder_clap_rend';
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(6343, 'spell_warr_thunder_clap_rend');
+
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_dh_enduring_torment';
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(452410, 'spell_dh_enduring_torment');
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_moonless_night');
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(400278, 'spell_dru_moonless_night');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (400278);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(400278,0x00,7,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0,0,0,0); -- Moonless Night
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (7384);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(7384,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x8,0x0,0,0,0,1); -- Overpower
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (392792);
+INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
+(392792,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x8,0x0,0,0,0,0); -- Frothing Berserker
+
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_frothing_berserker';
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(392792,'spell_warr_frothing_berserker');
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_pulverize', 'spell_dru_pulverize_thrash');
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(80313, 'spell_dru_pulverize'),
+(77758, 'spell_dru_pulverize_thrash');-- ----- End file: 11.spell_script_class_fixes.sql -----
 -- ----- Begin file: ../DoomCore/warlock_spell_fixes.sql -----
 USE `world`;
 
