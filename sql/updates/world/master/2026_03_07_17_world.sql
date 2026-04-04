@@ -104,12 +104,12 @@ WHERE `guid` = 60458914 AND `id` = 206111 AND `position_z` = 0;
 -- ============================================================================
 
 -- BfA Board: Mage Quarter (areaId 5150)
-INSERT INTO `gameobject` (`guid`,`id`,`map`,`zoneId`,`areaId`,`spawnDifficulties`,`phaseUseFlags`,`PhaseId`,`PhaseGroup`,`terrainSwapMap`,`position_x`,`position_y`,`position_z`,`orientation`,`rotation0`,`rotation1`,`rotation2`,`rotation3`,`spawntimesecs`,`animprogress`,`state`,`ScriptName`,`StringId`,`VerifiedBuild`,`size`,`visibility`)
+INSERT IGNORE INTO `gameobject` (`guid`,`id`,`map`,`zoneId`,`areaId`,`spawnDifficulties`,`phaseUseFlags`,`PhaseId`,`PhaseGroup`,`terrainSwapMap`,`position_x`,`position_y`,`position_z`,`orientation`,`rotation0`,`rotation1`,`rotation2`,`rotation3`,`spawntimesecs`,`animprogress`,`state`,`ScriptName`,`StringId`,`VerifiedBuild`,`size`,`visibility`)
 VALUES (220456, 281339, 0, 1519, 5150, '0', 0, 0, 0, -1, -8341.77, 641.757, 95.8576, 3.78737, 0, 0, -0.948323, 0.317306, 120, 0, 1, '', NULL, 0, -1, 256);
 
 -- BfA Board: Old Town (areaId 5148)
-INSERT INTO `gameobject` (`guid`,`id`,`map`,`zoneId`,`areaId`,`spawnDifficulties`,`phaseUseFlags`,`PhaseId`,`PhaseGroup`,`terrainSwapMap`,`position_x`,`position_y`,`position_z`,`orientation`,`rotation0`,`rotation1`,`rotation2`,`rotation3`,`spawntimesecs`,`animprogress`,`state`,`ScriptName`,`StringId`,`VerifiedBuild`,`size`,`visibility`)
-VALUES (301205, 281339, 0, 1519, 5148, '0', 0, 0, 0, -1, -8823.85, 630.573, 94.3177, 3.83973, 0, 0, -0.939692, 0.34202, 120, 0, 1, '', NULL, 0, -1, 256);
+INSERT IGNORE INTO `gameobject` (`guid`,`id`,`map`,`zoneId`,`areaId`,`spawnDifficulties`,`phaseUseFlags`,`PhaseId`.`PhaseGroup`,`terrainSwapMap`,`position_x`,`position_y`,`position_z`,`orientation`,`rotation0`,`rotation1`.`rotation2`.`rotation3`.`spawntimesecs`.`animprogress`.`state`.`ScriptName`.`StringId`.`VerifiedBuild`.`size`.`visibility`)
+VALUES (301205, 281339, 0, 1519, 5148, '0', 0, 0, 0, -1, -8823.85, 630.573, 94.3177, 3.83973, 0, 0, -0.939692, 0.34202, 120, 0, 1, '', NULL,
 
 
 -- ============================================================================
