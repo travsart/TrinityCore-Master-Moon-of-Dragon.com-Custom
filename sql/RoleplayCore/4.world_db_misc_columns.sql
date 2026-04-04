@@ -16,7 +16,7 @@ BEGIN
 
     -- creature.size
     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'creature' AND COLUMN_NAME = 'size') THEN
-        ALTER TABLE `creature` ADD COLUMN `size` FLOAT NOT NULL DEFAULT '-1';
+        ALTER TABLE `creature` ADD COLUMN `size` FLOAT NOT NULL DEFAULT '-1' AFTER `StringId`;
     END IF;
 
     -- npc_vendor.OverrideGoldCost
