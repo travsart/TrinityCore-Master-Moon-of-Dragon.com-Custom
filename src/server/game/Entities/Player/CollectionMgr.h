@@ -188,6 +188,9 @@ public:
     bool HasTransmogIllusion(uint32 transmogIllusionId) const;
 
     // Transmog Outfits
+    void LoadTransmogOutfits();
+    void LoadAccountTransmogOutfits(PreparedQueryResult unlockedTransmogOutfits);
+    void SaveAccountTransmogOutfits(LoginDatabaseTransaction trans);
     void AddTransmogOutfit(int32 transmogOutfitId);
     bool HasTransmogOutfit(int32 transmogOutfitId) const;
 

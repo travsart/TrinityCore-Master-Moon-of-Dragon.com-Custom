@@ -51,7 +51,7 @@ void AddSC_arena_blades_edge();
 void AddSC_arena_dalaran_sewers();
 void AddSC_arena_nagrand();
 void AddSC_arena_ruins_of_lordaeron();
-void AddSC_arena_ring_of_valor();
+// void AddSC_arena_ring_of_valor();
 
 void AddSC_battleground_twin_peaks();
 void AddSC_battleground_battle_for_gilneas();
@@ -122,7 +122,7 @@ void AddBattlegroundsScripts()
     AddSC_arena_dalaran_sewers();
     AddSC_arena_nagrand();
     AddSC_arena_ruins_of_lordaeron();
-    AddSC_arena_ring_of_valor();
+    // AddSC_arena_ring_of_valor();
 
     AddSC_battleground_twin_peaks();
     AddSC_battleground_battle_for_gilneas();

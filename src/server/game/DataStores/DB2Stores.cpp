@@ -428,12 +428,6 @@ DB2Storage<TransmogSituationTriggerEntry>       sTransmogSituationTriggerStore("
 DB2Storage<TransmogSetEntry>                    sTransmogSetStore("TransmogSet.db2", &TransmogSetLoadInfo::Instance);
 DB2Storage<TransmogSetGroupEntry>               sTransmogSetGroupStore("TransmogSetGroup.db2", &TransmogSetGroupLoadInfo::Instance);
 DB2Storage<TransmogSetItemEntry>                sTransmogSetItemStore("TransmogSetItem.db2", &TransmogSetItemLoadInfo::Instance);
-DB2Storage<TransmogOutfitEntryEntry>            sTransmogOutfitEntryStore("TransmogOutfitEntry.db2", &TransmogOutfitEntryLoadInfo::Instance);
-DB2Storage<TransmogOutfitSlotInfoEntry>         sTransmogOutfitSlotInfoStore("TransmogOutfitSlotInfo.db2", &TransmogOutfitSlotInfoLoadInfo::Instance);
-DB2Storage<TransmogOutfitSlotOptionEntry>       sTransmogOutfitSlotOptionInfoStore("TransmogOutfitSlotOption.db2", &TransmogOutfitSlotOptionLoadInfo::Instance);
-DB2Storage<TransmogSituationEntry>              sTransmogSituationStore("TransmogSituation.db2", &TransmogSituationLoadInfo::Instance);
-DB2Storage<TransmogSituationGroupEntry>         sTransmogSituationGroupStore("TransmogSituationGroup.db2", &TransmogSituationGroupLoadInfo::Instance);
-DB2Storage<TransmogSituationTriggerEntry>       sTransmogSituationTriggerStore("TransmogSituationTrigger.db2", &TransmogSituationTriggerLoadInfo::Instance);
 DB2Storage<TransportAnimationEntry>             sTransportAnimationStore("TransportAnimation.db2", &TransportAnimationLoadInfo::Instance);
 DB2Storage<TransportRotationEntry>              sTransportRotationStore("TransportRotation.db2", &TransportRotationLoadInfo::Instance);
 DB2Storage<UiMapEntry>                          sUiMapStore("UiMap.db2", &UiMapLoadInfo::Instance);
@@ -1112,12 +1106,6 @@ uint32 DB2Manager::LoadStores(std::string const& dataPath, LocaleConstant defaul
     LOAD_DB2(sTransmogSetStore);
     LOAD_DB2(sTransmogSetGroupStore);
     LOAD_DB2(sTransmogSetItemStore);
-    LOAD_DB2(sTransmogOutfitEntryStore);
-    LOAD_DB2(sTransmogOutfitSlotInfoStore);
-    LOAD_DB2(sTransmogOutfitSlotOptionInfoStore);
-    LOAD_DB2(sTransmogSituationStore);
-    LOAD_DB2(sTransmogSituationGroupStore);
-    LOAD_DB2(sTransmogSituationTriggerStore);
     LOAD_DB2(sTransportAnimationStore);
     LOAD_DB2(sTransportRotationStore);
     LOAD_DB2(sUiMapStore);
