@@ -1,31 +1,15 @@
 DELETE FROM `broadcast_text` 
-WHERE (ID, Text1) IN (
+WHERE (ID) IN (
   SELECT * FROM (
-    SELECT ID, Text1 FROM `broadcast_text` 
-    GROUP BY ID, Text1 
+    SELECT ID FROM `broadcast_text` 
+    GROUP BY ID
     HAVING COUNT(*) > 1
   ) AS dup_rows
-) AND (ID, Text1, VerifiedBuild) NOT IN (
+) AND (ID, VerifiedBuild) NOT IN (
   SELECT * FROM (
-    SELECT ID, Text1, MAX(VerifiedBuild) 
+    SELECT ID, MAX(VerifiedBuild) 
     FROM `broadcast_text` 
-    GROUP BY ID, Text1 
-    HAVING COUNT(*) > 1
-  ) AS keep_rows
-);
-
-DELETE FROM `broadcast_text` 
-WHERE (ID, Text) IN (
-  SELECT * FROM (
-    SELECT ID, Text FROM `broadcast_text` 
-    GROUP BY ID, Text
-    HAVING COUNT(*) > 1
-  ) AS dup_rows
-) AND (ID, Text, VerifiedBuild) NOT IN (
-  SELECT * FROM (
-    SELECT ID, Text, MAX(VerifiedBuild) 
-    FROM `broadcast_text` 
-    GROUP BY ID, Text 
+    GROUP BY ID 
     HAVING COUNT(*) > 1
   ) AS keep_rows
 );
