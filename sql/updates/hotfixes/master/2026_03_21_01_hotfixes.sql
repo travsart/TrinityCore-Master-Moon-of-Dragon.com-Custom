@@ -3,7 +3,7 @@
 -- and Haranir Alliance doesn't appear in character creation.
 
 DELETE FROM `char_base_info` WHERE `ID` IN (815,816,817,818,819,820,829,830,831,832,833,834,835,836,879,880,896,897);
-INSERT INTO `char_base_info` (`ID`,`RaceID`,`ClassID`,`OtherFactionRaceID`,`VerifiedBuild`) VALUES
+INSERT IGNORE INTO `char_base_info` (`ID`,`RaceID`,`ClassID`,`OtherFactionRaceID`,`VerifiedBuild`) VALUES
 (815,86,1,91,66527),(816,86,3,91,66527),(817,86,11,91,66527),
 (833,86,9,91,66527),(834,86,5,91,66527),(835,86,4,91,66527),
 (836,86,8,91,66527),(880,86,10,91,66527),(896,86,7,91,66527),
@@ -12,7 +12,7 @@ INSERT INTO `char_base_info` (`ID`,`RaceID`,`ClassID`,`OtherFactionRaceID`,`Veri
 (832,91,8,86,66527),(879,91,10,86,66527),(897,91,7,86,66527);
 
 DELETE FROM `hotfix_data` WHERE `TableHash` = 0x3067A8F8 AND `RecordId` IN (815,816,817,818,819,820,829,830,831,832,833,834,835,836,879,880,896,897);
-INSERT INTO `hotfix_data` (`Id`,`UniqueId`,`TableHash`,`RecordId`,`Status`,`VerifiedBuild`) VALUES
+INSERT IGNORE INTO `hotfix_data` (`Id`,`UniqueId`,`TableHash`,`RecordId`,`Status`,`VerifiedBuild`) VALUES
 (17300001,17300001,0x3067A8F8,815,1,66527),
 (17300002,17300002,0x3067A8F8,816,1,66527),
 (17300003,17300003,0x3067A8F8,817,1,66527),
