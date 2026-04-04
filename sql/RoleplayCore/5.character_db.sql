@@ -28,6 +28,9 @@ USE `characters`;
 
 ALTER TABLE `character_pet` ADD COLUMN `favorite` tinyint unsigned NOT NULL DEFAULT '0' AFTER `specialization`;
 
+-- Chromie Time Expansion
+ALTER TABLE `characters` ADD COLUMN `chromieTimeExpansionId` tinyint unsigned NOT NULL DEFAULT '0' AFTER `transmogOutfitLocked`;
+
 -- ============================================================================
 -- WORLD DATABASE: companion_roster
 -- ============================================================================
@@ -67,3 +70,4 @@ CREATE TABLE IF NOT EXISTS `companion_roster` (
     `cooldown3`  INT UNSIGNED NOT NULL DEFAULT 15000,
     PRIMARY KEY (`entry`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Companion squad roster definitions';
+
