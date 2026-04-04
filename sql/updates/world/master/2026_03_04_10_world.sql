@@ -25,7 +25,7 @@
 --   50253    Twilight Hammer Cult Site  (bunny, ContentTuningID 1227)
 --   9100577  Shang Xi's Hot Air Balloon (custom import)
 
-INSERT INTO `creature_template_difficulty`
+INSERT IGNORE INTO `creature_template_difficulty`
   (`Entry`, `DifficultyID`, `ContentTuningID`, `HealthScalingExpansion`, `CreatureDifficultyID`)
 VALUES
   -- DB2-backed lore NPCs
