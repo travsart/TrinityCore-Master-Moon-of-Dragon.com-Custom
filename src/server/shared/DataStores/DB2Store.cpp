@@ -40,13 +40,13 @@ DB2StorageBase::~DB2StorageBase()
 
 bool DB2StorageBase::HasRecord(uint32 id) const
 {
-    auto snapshot = std::atomic_load(&_snapshot);
+    auto snapshot = _snapshot.load();
     return snapshot && id < snapshot->TableSize && snapshot->IndexTable[id] != nullptr;
 }
 
 uint32 DB2StorageBase::GetNumRows() const
 {
-    auto snapshot = std::atomic_load(&_snapshot);
+    auto snapshot = _snapshot.load();
     return snapshot ? snapshot->TableSize : 0;
 }
 
@@ -60,7 +60,7 @@ void DB2StorageBase::EraseRecord(uint32 id)
 
 void DB2StorageBase::WriteRecord(uint32 id, LocaleConstant locale, ByteBuffer& buffer) const
 {
-    auto snapshot = std::atomic_load(&_snapshot);
+    auto snapshot = _snapshot.load();
     ASSERT(snapshot && id < snapshot->TableSize);
     char const* entry = ASSERT_NOTNULL(snapshot->IndexTable[id]);
 
@@ -120,7 +120,7 @@ void DB2StorageBase::CommitSnapshot()
     auto newSnapshot = std::make_shared<DB2IndexTableSnapshot>(snapshotTable, _indexTableSize, _minId);
 
     // Atomically replace the snapshot (old snapshot will be deleted when no longer referenced)
-    std::atomic_store(&_snapshot, newSnapshot);
+    _snapshot.store(newSnapshot);
 }
 
 void DB2StorageBase::Load(std::string const& path, LocaleConstant locale)

@@ -721,9 +721,10 @@ int32 Player::getMaxTimer(MirrorTimerType timer) const
 {
     switch (timer)
     {
+        
+        case FATIGUE_TIMER:
         if (sConfigMgr->GetBoolDefault("fatigue.enabled", true)) // If "fatigue.enabled" is enabled
         {
-        case FATIGUE_TIMER:
             return MINUTE * IN_MILLISECONDS;
         }
         case BREATH_TIMER:

@@ -84,7 +84,7 @@ public:
      */
     std::shared_ptr<DB2IndexTableSnapshot> GetSnapshot() const
     {
-        return std::atomic_load(&_snapshot);
+        return _snapshot.load();
     }
 
     void Load(std::string const& path, LocaleConstant locale);
@@ -115,7 +115,7 @@ protected:
     // Thread-safe snapshot for readers (RCU semantics)
     // Writers update _indexTable first, then call CommitSnapshot()
     // Readers get a shared_ptr to the snapshot
-    std::shared_ptr<DB2IndexTableSnapshot> _snapshot;
+    std::atomic<std::shared_ptr<DB2IndexTableSnapshot>> _snapshot;
 
     friend class UnitTestDataLoader;
 };
