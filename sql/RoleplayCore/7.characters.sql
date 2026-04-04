@@ -1,3 +1,5 @@
+USE `characters`;
+
 -- Idempotent crafting stat modifier columns (MySQL 8.0 compatible)
 DROP PROCEDURE IF EXISTS add_crafting_columns;
 DELIMITER //

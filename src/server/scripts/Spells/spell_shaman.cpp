@@ -3807,5 +3807,4 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_fire_elemental);
     RegisterSpellScript(spell_sha_feral_spirit);
     RegisterCreatureAI(npc_feral_spirit);
-    RegisterSpellScript(spell_sha_feral_lunge);
 }
