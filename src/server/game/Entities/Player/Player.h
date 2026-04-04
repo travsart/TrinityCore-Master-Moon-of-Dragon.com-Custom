@@ -3374,6 +3374,7 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         uint32 manual_recall_instanceId = -1;
 
         std::unique_ptr<Runes> m_runes;
+        EquipmentSetContainer _equipmentSets;
         uint32 _activeTransmogOutfitID = 0; // SetID of last-applied transmog outfit (0 = use lowest SetID fallback)
         std::vector<OutfitSlotEcho> _lastOutfitSlotEcho;
         std::set<uint32> m_changedTransmogOutfits;
