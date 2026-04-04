@@ -9,7 +9,7 @@
 SET autocommit=0;
 
 -- reference_loot_template (MUST come first — referenced by other loot tables)
-INSERT INTO world.reference_loot_template
+INSERT IGNORE INTO world.reference_loot_template
 SELECT l.* FROM lorewalker_world.reference_loot_template l
 WHERE NOT EXISTS (
   SELECT 1 FROM world.reference_loot_template w
@@ -17,7 +17,7 @@ WHERE NOT EXISTS (
 );
 
 -- gameobject_loot_template
-INSERT INTO world.gameobject_loot_template
+INSERT IGNORE INTO world.gameobject_loot_template
 SELECT l.* FROM lorewalker_world.gameobject_loot_template l
 WHERE NOT EXISTS (
   SELECT 1 FROM world.gameobject_loot_template w
@@ -25,7 +25,7 @@ WHERE NOT EXISTS (
 );
 
 -- pickpocketing_loot_template
-INSERT INTO world.pickpocketing_loot_template
+INSERT IGNORE INTO world.pickpocketing_loot_template
 SELECT l.* FROM lorewalker_world.pickpocketing_loot_template l
 WHERE NOT EXISTS (
   SELECT 1 FROM world.pickpocketing_loot_template w
@@ -33,7 +33,7 @@ WHERE NOT EXISTS (
 );
 
 -- skinning_loot_template
-INSERT INTO world.skinning_loot_template
+INSERT IGNORE INTO world.skinning_loot_template
 SELECT l.* FROM lorewalker_world.skinning_loot_template l
 WHERE NOT EXISTS (
   SELECT 1 FROM world.skinning_loot_template w
@@ -41,7 +41,7 @@ WHERE NOT EXISTS (
 );
 
 -- item_loot_template
-INSERT INTO world.item_loot_template
+INSERT IGNORE INTO world.item_loot_template
 SELECT l.* FROM lorewalker_world.item_loot_template l
 WHERE NOT EXISTS (
   SELECT 1 FROM world.item_loot_template w
@@ -49,7 +49,7 @@ WHERE NOT EXISTS (
 );
 
 -- spell_loot_template
-INSERT INTO world.spell_loot_template
+INSERT IGNORE INTO world.spell_loot_template
 SELECT l.* FROM lorewalker_world.spell_loot_template l
 WHERE NOT EXISTS (
   SELECT 1 FROM world.spell_loot_template w

@@ -1,5 +1,5 @@
 DELETE FROM `world_state` WHERE `ID` IN (18066, 24904, 28305, 28307, 28309, 28311, 28313, 28315, 28255, 28303, 29079, 29044, 29957);
-INSERT INTO `world_state` (`ID`, `DefaultValue`, `MapIDs`, `AreaIDs`, `ScriptName`, `Comment`) VALUES
+INSERT IGNORE INTO `world_state` (`ID`, `DefaultValue`, `MapIDs`, `AreaIDs`, `ScriptName`, `Comment`) VALUES
 (18066, 0, '2236', NULL, '', 'Darkmaul Citadel - Kalecgos - Encounter completed'),
 (24904, 0, '2648', NULL, '', 'The Rookery - Voidstone Monstrosity - Encounter completed'),
 (28305, 0, '2912', NULL, '', 'The Voidspire - Imperator Averzian - Encounter completed'),

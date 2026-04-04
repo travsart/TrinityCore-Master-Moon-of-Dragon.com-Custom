@@ -1,5 +1,5 @@
 DELETE FROM `world_state` WHERE `ID` IN (29688, 30157, 27499, 27489, 27490, 27491, 27492, 27493, 27494, 27495, 27496, 27497, 27498, 27500, 27501, 27502, 27503, 27504, 27505, 27506, 27507, 27508, 27509, 27510, 27488, 29184, 29185, 31021, 31023, 31024, 31025, 30221, 30474);
-INSERT INTO `world_state` (`ID`, `DefaultValue`, `MapIDs`, `AreaIDs`, `ScriptName`, `Comment`) VALUES
+INSERT IGNORE INTO `world_state` (`ID`, `DefaultValue`, `MapIDs`, `AreaIDs`, `ScriptName`, `Comment`) VALUES
 (29688, 0, NULL, NULL, '', 'Conquest - Midnight Season 1 (Currency) - Max quantity'),
 (30157, 0, NULL, NULL, '', 'Bloody Tokens - Midnight Season 1 (Currency) - Max quantity'),
 (27499, 22, NULL, NULL, '', '12.x Professions - Tracker - Weekly Alchemy Knowledge (Currency) - Max quantity'),
