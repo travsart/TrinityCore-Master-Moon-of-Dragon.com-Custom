@@ -221,7 +221,7 @@ private:
     std::unordered_map<uint32, CollectionItemState> _favoriteAppearances;
     std::unordered_map<uint32, CollectionItemState> _transmogSetFavorites;
     std::unique_ptr<boost::dynamic_bitset<uint32>> _transmogIllusions;
-    std::set<int32> _transmogOutfits;
+    Trinity::Containers::FlatSet<int32> _transmogOutfits;
     WarbandSceneCollectionContainer _warbandScenes;
 };
 
