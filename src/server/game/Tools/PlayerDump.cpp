@@ -76,8 +76,7 @@ BaseTable const BaseTables[] =
     { "mail",                       "id",      "receiver",   GUID_TYPE_MAIL          },
     { "item_instance",              "guid",    "owner_guid", GUID_TYPE_ITEM          },
 
-    { "character_equipmentsets",    "setguid", "guid",       GUID_TYPE_EQUIPMENT_SET },
-    { "character_transmog_outfits", "setguid", "guid",       GUID_TYPE_EQUIPMENT_SET }
+    { "character_equipmentsets",    "setguid", "guid",       GUID_TYPE_EQUIPMENT_SET }
 };
 
 struct DumpTable
@@ -126,7 +125,9 @@ DumpTable const DumpTables[] =
     { "character_spell_charges",          DTT_CHAR_TABLE },
     { "character_spell_cooldown",         DTT_CHAR_TABLE },
     { "character_talent",                 DTT_CHAR_TABLE },
-    { "character_transmog_outfits",       DTT_CHAR_TRANSMOG },
+    { "character_transmog_outfit",         DTT_CHAR_TABLE },
+    { "character_transmog_outfit_situation", DTT_CHAR_TABLE },
+    { "character_transmog_outfit_slot",     DTT_CHAR_TABLE },
     { "mail",                             DTT_MAIL       },
     { "mail_items",                       DTT_MAIL_ITEM  }, // must be after mail
     { "pet_aura",                         DTT_PET_TABLE  }, // must be after character_pet

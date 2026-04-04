@@ -187,9 +187,7 @@ public:
     void AddTransmogIllusion(uint32 transmogIllusionId);
     bool HasTransmogIllusion(uint32 transmogIllusionId) const;
 
-    void LoadTransmogOutfits();
-    void LoadAccountTransmogOutfits(PreparedQueryResult unlockedTransmogOutfits);
-    void SaveAccountTransmogOutfits(LoginDatabaseTransaction trans);
+    // Transmog Outfits
     void AddTransmogOutfit(int32 transmogOutfitId);
     bool HasTransmogOutfit(int32 transmogOutfitId) const;
 
@@ -220,7 +218,7 @@ private:
     std::unordered_map<uint32, CollectionItemState> _favoriteAppearances;
     std::unordered_map<uint32, CollectionItemState> _transmogSetFavorites;
     std::unique_ptr<boost::dynamic_bitset<uint32>> _transmogIllusions;
-    Trinity::Containers::FlatSet<int32> _transmogOutfits;
+    std::set<int32> _transmogOutfits;
     WarbandSceneCollectionContainer _warbandScenes;
 };
 

@@ -1,4 +1,5 @@
 #include "Chat.h"
+#include "ChatCommand.h"
 #include "DB2Stores.h"
 #include "Chat.h"
 #include "ChatCommand.h"
@@ -18,8 +19,7 @@ public:
     {
         static ChatCommandTable commandTable =
         {
-            { "maxrep", rbac::RBAC_PERM_COMMAND_MAXREP, false, &HandleMaxRepCommand,
-              "Max all faction reputations, renown currencies, and related currencies." },
+            { "maxrep", HandleMaxRepCommand, rbac::RBAC_PERM_COMMAND_MAXREP, Console::No },
         };
         return commandTable;
     }

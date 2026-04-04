@@ -38,7 +38,7 @@ def detect_and_inject(prompt: str) -> list[str]:
     if any(kw in prompt_lower for kw in ["transmog", "outfit", "wardrobe", "viewedoutfit", "adt", "idt"]):
         context_parts.append(
             "CONTEXT: Transmog UI work is ARCHIVED — reimplemented externally. "
-            "Historical docs in .claude/rules/archive/transmog.md. No active transmog commands or agents."
+            "Historical docs in doc/archive/transmog.md. No active transmog commands or agents."
         )
 
     # --- BUILD / COMPILE ---

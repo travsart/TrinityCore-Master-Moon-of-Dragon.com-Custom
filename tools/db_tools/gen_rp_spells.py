@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "wago"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-VERIFIED_BUILD = 66666
+VERIFIED_BUILD = 66709
 
 # We'll generate raw SQL directly to control hotfix IDs precisely
 lines = []

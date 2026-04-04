@@ -34,6 +34,8 @@
 #include "WorldPacket.h"
 #include "GameTime.h"
 #include "RoleplayDatabase.h"
+
+using namespace Trinity::ChatCommands;
 #include "RolePlay.h"
 
 class StaticTimeManager
@@ -248,19 +250,19 @@ public:
     {
         static ChatCommandTable typingCommandTable =
         {
-            { "on",              rbac::RBAC_PERM_COMMAND_TYPING_ON,     false,      &HandleTypingOnCommand,     "Enables typing animation."},
-            { "off",             rbac::RBAC_PERM_COMMAND_TYPING_OFF,    false,      &HandleTypingOffCommand,    "Disables typing animation."},
+            { "on",              HandleTypingOnCommand,     rbac::RBAC_PERM_COMMAND_TYPING_ON,     Console::No },
+            { "off",             HandleTypingOffCommand,    rbac::RBAC_PERM_COMMAND_TYPING_OFF,    Console::No },
         };
 
         static ChatCommandTable commandTable =
         {
-            { "barbershop",      rbac::RBAC_PERM_COMMAND_BARBER,        false,      &HandleBarberCommand,       "Opens the barbershop interface."},
-            { "castgroup",       rbac::RBAC_PERM_COMMAND_CAST_GROUP,    false,      &HandleCastGroupCommand,    "Syntax: .castgroup <spellId>\nCasts a spell on your entire group."},
-            { "castgroupscene",  rbac::RBAC_PERM_COMMAND_CAST_SCENE,    false,      &HandleCastSceneCommand,    "Syntax: .castscene <scenePackageId> [flags]\nPlays a scene."},
-            { "npcmoveto",       rbac::RBAC_PERM_COMMAND_NPC_MOVE,      false,      &HandleNpcMoveTo,           "Syntax: .npcmoveto <guid> <x> <y> <z>\nMoves an NPC to coordinates."},
-            { "npcguidsay",      rbac::RBAC_PERM_COMMAND_NPC_SAY,       false,      &HandleNpcGuidSay,          "Syntax: .npcguidsay <guid> <text>\nMakes an NPC say text."},
-            { "npcguidyell",     rbac::RBAC_PERM_COMMAND_NPC_YELL,      false,      &HandleNpcGuidYell,         "Syntax: .npcguidyell <guid> <text>\nMakes an NPC yell text."},
-            { "settime",         rbac::RBAC_PERM_COMMAND_SETTIME,       false,      &HandleSetTimeCommand,      "<hour> <minute> [instant|smooth] <ms shift>"},
+            { "barbershop",      HandleBarberCommand,       rbac::RBAC_PERM_COMMAND_BARBER,        Console::No },
+            { "castgroup",       HandleCastGroupCommand,    rbac::RBAC_PERM_COMMAND_CAST_GROUP,    Console::No },
+            { "castgroupscene",  HandleCastSceneCommand,    rbac::RBAC_PERM_COMMAND_CAST_SCENE,    Console::No },
+            { "npcmoveto",       HandleNpcMoveTo,           rbac::RBAC_PERM_COMMAND_NPC_MOVE,      Console::No },
+            { "npcguidsay",      HandleNpcGuidSay,          rbac::RBAC_PERM_COMMAND_NPC_SAY,       Console::No },
+            { "npcguidyell",     HandleNpcGuidYell,         rbac::RBAC_PERM_COMMAND_NPC_YELL,      Console::No },
+            { "settime",         HandleSetTimeCommand,      rbac::RBAC_PERM_COMMAND_SETTIME,       Console::No },
             { "typing",          typingCommandTable },
         };
 

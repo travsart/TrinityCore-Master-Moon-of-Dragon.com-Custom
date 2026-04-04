@@ -1,3 +1,7 @@
+---
+paths: "src/**/*.cpp, src/**/*.h, src/**/*.hpp, sql/**/*.sql, tools/**/*.py, CMakeLists.txt, CMakePresets.json, _build_ps.ps1"
+---
+
 # VoxCore Project Reference
 
 ## Build

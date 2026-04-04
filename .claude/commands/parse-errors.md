@@ -1,6 +1,7 @@
 ---
 allowed-tools: Read, Bash(python3:*), Write, Grep
 description: Parse a worldserver error log and categorize errors by type with counts
+paths: out/**/DBErrors.log, out/**/Server.log, src/**/*.cpp, src/**/*.h
 ---
 
 ## Context

@@ -28,7 +28,7 @@ Prioritized list of known issues, planned work, and blocked items. Updated as it
 
 ### ~~Transmog System~~ ARCHIVED (session 159)
 - **Entire transmog system reimplemented externally.** All VoxCore server-side transmog work (sessions 36-130) is archived.
-- Historical docs preserved in `.claude/rules/archive/transmog.md` and `doc/transmog_*`
+- Historical docs preserved in `doc/archive/transmog.md` and `doc/transmog_*`
 - No further VoxCore transmog work planned
 
 ### Talent Spell Audit -- PIPELINE COMPLETE, STUBS REMOVED

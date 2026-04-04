@@ -1,6 +1,7 @@
 ---
 allowed-tools: Bash(mysql:*), Bash(cat:*), Bash(echo:*), Read
 description: Apply a SQL file to a database (world, characters, auth, hotfixes, roleplay)
+paths: sql/**/*.sql
 ---
 
 ## Context

@@ -1,6 +1,7 @@
 ---
 allowed-tools: Read, Write, Edit
 description: Scaffold a new custom C++ script and register it in the script loader
+paths: src/**/*.cpp, src/**/*.h, src/server/scripts/Custom/**
 ---
 
 ## Context

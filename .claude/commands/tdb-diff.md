@@ -1,6 +1,7 @@
 ---
 allowed-tools: Bash(curl*), Bash(gh*), Bash(mysql*), Bash(powershell*), Bash(python*), Bash(7z*), Bash(tar*), Bash(unzip*), Read, Write, Grep, Glob
 description: Download latest TrinityCore TDB release, extract a table, diff against local DB, and generate update SQL
+paths: sql/**/*.sql
 ---
 
 # TDB Diff

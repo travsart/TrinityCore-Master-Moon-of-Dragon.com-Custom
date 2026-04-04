@@ -1,8 +1,0 @@
--- TDB 1200.26021 delta import: quest reward/request text
--- Source: TDB_full_world_1200.26021_2026_02_06.sql (Feb 6 2026)
--- Applied via INSERT...SELECT from staging tables (not replayable)
---
--- Results:
---   quest_offer_reward:  18,054 -> 20,022 (+1,967 new, 51 updated)
---   quest_request_items: 12,045 -> 12,114 (+69 new)
---   Remaining gap: ~27,819 quests still missing quest_offer_reward

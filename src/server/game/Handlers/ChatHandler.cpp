@@ -589,6 +589,15 @@ void WorldSession::HandleChatAddonMessage(ChatMsg type, std::string prefix, std:
     if (text.length() > 255)
         return;
 
+    // Client-side log relays — write addon log entries to Debug.log
+    if (prefix == "TMOG_LOG" || prefix == "TSPY_LOG")
+    {
+        TC_LOG_DEBUG("network.opcode.transmog", "{} [{}]: {}",
+            prefix == "TMOG_LOG" ? "TransmogBridge client" : "TransmogSpy client",
+            GetPlayerInfo(), text);
+        return;
+    }
+
     switch (type)
     {
         case CHAT_MSG_GUILD:

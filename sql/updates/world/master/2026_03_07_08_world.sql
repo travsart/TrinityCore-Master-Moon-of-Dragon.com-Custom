@@ -1,3 +1,0 @@
--- NEUTRALIZED: Original content registered 114 serverside_spell stubs
--- for SpellAudit C++ classes that were deleted. No-op to prevent
--- worldserver auto-apply errors.

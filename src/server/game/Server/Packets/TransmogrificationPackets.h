@@ -191,6 +191,29 @@ namespace WorldPackets
             std::vector<uint32> FavoriteAppearances;
             std::vector<uint32> NewAppearances;
         };
+
+        // VoxCore additions (retained for compatibility)
+        class AccountTransmogSetFavoritesUpdate final : public ServerPacket
+        {
+        public:
+            explicit AccountTransmogSetFavoritesUpdate() : ServerPacket(SMSG_ACCOUNT_TRANSMOG_SET_FAVORITES_UPDATE) { }
+
+            WorldPacket const* Write() override;
+
+            bool IsFullUpdate = false;
+            bool IsFavorite = false;
+            std::vector<uint32> TransmogSetIDs;
+        };
+
+        class ClearNewAppearance final : public ClientPacket
+        {
+        public:
+            explicit ClearNewAppearance(WorldPacket&& packet) : ClientPacket(CMSG_CLEAR_NEW_APPEARANCE, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 ItemModifiedAppearanceID = 0;
+        };
     }
 }
 

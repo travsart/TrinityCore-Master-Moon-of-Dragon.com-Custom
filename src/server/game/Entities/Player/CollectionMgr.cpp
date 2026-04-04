@@ -1028,44 +1028,6 @@ bool CollectionMgr::HasTransmogIllusion(uint32 transmogIllusionId) const
     return transmogIllusionId < _transmogIllusions->size() && _transmogIllusions->test(transmogIllusionId);
 }
 
-void CollectionMgr::LoadTransmogOutfits()
-{
-    _owner->GetPlayer()->AddUnlockedTransmogOutfits(_transmogOutfits);
-}
-
-void CollectionMgr::LoadAccountTransmogOutfits(PreparedQueryResult unlockedTransmogOutfits)
-{
-    if (unlockedTransmogOutfits)
-    {
-        do
-        {
-            Field* fields = unlockedTransmogOutfits->Fetch();
-
-            int32 transmogOutfitId = fields[0].GetInt32();
-
-            if (!sTransmogOutfitEntryStore.HasRecord(transmogOutfitId))
-                continue;
-
-            _transmogOutfits.insert(transmogOutfitId);
-
-        } while (unlockedTransmogOutfits->NextRow());
-    }
-
-    for (TransmogOutfitEntryEntry const* transmogOutfitEntry : TransmogMgr::GetAutomaticallyUnlockedOutfits())
-        _transmogOutfits.insert(transmogOutfitEntry->ID);
-}
-
-void CollectionMgr::SaveAccountTransmogOutfits(LoginDatabaseTransaction trans)
-{
-    for (int32 transmogOutfitId : _transmogOutfits)
-    {
-        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_INS_BNET_TRANSMOG_OUTFITS);
-        stmt->setUInt32(0, _owner->GetBattlenetAccountId());
-        stmt->setInt32(1, transmogOutfitId);
-        trans->Append(stmt);
-    }
-}
-
 void CollectionMgr::AddTransmogOutfit(int32 transmogOutfitId)
 {
     if (_transmogOutfits.insert(transmogOutfitId).second)

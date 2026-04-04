@@ -1,7 +1,6 @@
 #include "AchievementMgr.h"
 #include "Chat.h"
 #include "ChatCommand.h"
-#include "ChatCommandTags.h"
 #include "DB2Stores.h"
 #include "DBCEnums.h"
 #include "Player.h"
@@ -39,8 +38,7 @@ public:
     {
         static ChatCommandTable commandTable =
         {
-            { "maxachieve", rbac::RBAC_PERM_COMMAND_MAXACHIEVE, false, &HandleMaxAchieveCommand,
-              "Complete all reputation achievements and grant their rewards (titles, items)." },
+            { "maxachieve", HandleMaxAchieveCommand, rbac::RBAC_PERM_COMMAND_MAXACHIEVE, Console::No },
         };
         return commandTable;
     }

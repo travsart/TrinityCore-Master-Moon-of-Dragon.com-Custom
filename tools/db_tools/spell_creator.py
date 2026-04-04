@@ -35,7 +35,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "wago"))
 try:
     from wago_common import VERIFIED_BUILD, WAGO_CSV_DIR, MYSQL_BIN, MYSQL_USER, MYSQL_PASS
 except ImportError:
-    VERIFIED_BUILD = 66666
+    VERIFIED_BUILD = 66709
     WAGO_CSV_DIR = Path(".")
     MYSQL_BIN = "mysql"
     MYSQL_USER = "root"

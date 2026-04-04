@@ -23,7 +23,9 @@
       "TeamDelete(*)",
       "mcp__mysql__*",
       "mcp__wago-db2__*",
-      "mcp__codeintel__*"
+      "mcp__codeintel__*",
+      "mcp__voxcore-db__*",
+      "mcp__voxcore-server__*"
     ]
   }
 }

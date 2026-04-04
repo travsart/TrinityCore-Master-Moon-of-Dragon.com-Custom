@@ -1,6 +1,7 @@
 ---
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(grep:*), Bash(find:*), Bash(python3:*), Bash(sed:*), Agent
 description: Fix only the BLOCKING items from the last /pre-ship audit — surgical remediation, not a full re-audit
+paths: tools/publishable/**, .claude/release-gate-status.json
 ---
 
 # Release Gate Fix

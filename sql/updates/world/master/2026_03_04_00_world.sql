@@ -1,10 +1,3 @@
--- Fix bad quest giver flags on Stormwind guards
--- Entry 68 (Stormwind City Guard): was npcflag=3 (GOSSIP|QUESTGIVER), drop QUESTGIVER, keep GOSSIP (1)
--- Entry 1976 (Stormwind City Patroller): was npcflag=3 (GOSSIP|QUESTGIVER), drop both bits (0)
-UPDATE creature_template SET npcflag = 1 WHERE entry = 68;
-UPDATE creature_template SET npcflag = 0 WHERE entry = 1976;
-
--- Upstream TrinityCore: Warrior Whirlwind + Improved Whirlwind Cleave
 DELETE FROM `spell_proc` WHERE `SpellId` IN (85739);
 INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
 (85739,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x1,0x0,0x18,0x0,0,0,0,0); -- Whirlwind

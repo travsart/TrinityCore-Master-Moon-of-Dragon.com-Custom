@@ -112,6 +112,7 @@ enum class PlayerCreateMode : int8;
 enum RestTypes : uint8;
 enum class SpawnTrackingState : uint8;
 enum TransferAbortReason : uint32;
+enum class TransmogSituationTrigger : uint8;
 enum OpcodeServer : uint32;
 
 namespace BattlePets
@@ -603,8 +604,7 @@ enum PlayerExtraFlags
     PLAYER_EXTRA_HAS_RACE_CHANGED           = 0x0200,
     PLAYER_EXTRA_GRANTED_LEVELS_FROM_RAF    = 0x0400,
     PLAYER_EXTRA_LEVEL_BOOSTED              = 0x0800,
-
-    PLAYER_EXTRA_FLAG_FREE_TRANSMOG_CLAIMED = 0x1000,
+    PLAYER_EXTRA_FREE_TRANSMOG_CLAIMED      = 0x1000,
 };
 
 // 2^n values
@@ -962,6 +962,9 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SLOT,
     PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFITS,
     PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SITUATIONS,
+    PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT,
+    PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SITUATION,
+    PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SLOT,
     PLAYER_LOGIN_QUERY_LOAD_BG_DATA,
     PLAYER_LOGIN_QUERY_LOAD_GLYPHS,
     PLAYER_LOGIN_QUERY_LOAD_TALENTS,
@@ -1288,8 +1291,8 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         void SetBeenGrantedLevelsFromRaF() { m_ExtraFlags |= PLAYER_EXTRA_GRANTED_LEVELS_FROM_RAF; }
         bool HasLevelBoosted() const { return (m_ExtraFlags & PLAYER_EXTRA_LEVEL_BOOSTED) != 0; }
         void SetHasLevelBoosted() { m_ExtraFlags |= PLAYER_EXTRA_LEVEL_BOOSTED; }
-        bool HasClaimedFreeTransmog() const { return (m_ExtraFlags & PLAYER_EXTRA_FLAG_FREE_TRANSMOG_CLAIMED) != 0; }
-        void SetHasClaimedFreeTransmog() { m_ExtraFlags |= PLAYER_EXTRA_FLAG_FREE_TRANSMOG_CLAIMED; }
+        bool HasClaimedFreeTransmog() const { return (m_ExtraFlags & PLAYER_EXTRA_FREE_TRANSMOG_CLAIMED) != 0; }
+        void SetHasClaimedFreeTransmog() { m_ExtraFlags |= PLAYER_EXTRA_FREE_TRANSMOG_CLAIMED; }
 
         uint32 GetXP() const { return m_activePlayerData->XP; }
         uint32 GetXPForNextLevel() const { return m_activePlayerData->NextLevelXP; }
@@ -2560,7 +2563,18 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         uint32 GetActiveTransmogOutfitID() const;
         void SetActiveTransmogOutfitID(uint32 setID) { _activeTransmogOutfitID = setID; }
 
-        // Slot echo for SMSG_TRANSMOG_OUTFIT_SLOTS_UPDATED (retail 488-byte full slot echo)
+        // TC upstream TransmogMgr-based outfit methods
+        void AddUnlockedTransmogOutfits(std::span<int32 const> transmogOutfitIds);
+        void AddUnlockedTransmogOutfit(int32 transmogOutfitId) { AddUnlockedTransmogOutfits(std::span(&transmogOutfitId, 1)); }
+        void CreateTransmogOutfit(uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData);
+        void InitializeNewTransmogOutfit(UF::MutableFieldReference<UF::TransmogOutfitData, false> outfit,
+            uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData);
+        bool UpdateTransmogOutfit(uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData);
+        void UpdateTransmogOutfitSituations(uint32 id, bool situationsEnabled, std::span<WorldPackets::Transmogrification::TransmogOutfitSituationInfo const> situations);
+        void UpdateTransmogOutfitSlots(uint32 id, std::span<WorldPackets::Transmogrification::TransmogOutfitSlotData const> slots);
+        void EquipTransmogOutfit(uint32 id, TransmogSituationTrigger trigger, Optional<bool> locked);
+
+        // Legacy VoxCore slot echo (pending removal in Unit 7)
         struct OutfitSlotEcho
         {
             int8 Slot = 0;
@@ -3189,9 +3203,9 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         void _LoadDeclinedNames(PreparedQueryResult result);
         void _LoadArenaTeamInfo(PreparedQueryResult result);
         void _LoadEquipmentSets(PreparedQueryResult result);
-        void _LoadTransmogCustomSets(PreparedQueryResult result);
         void _LoadTransmogOutfits(PreparedQueryResult setsResult, PreparedQueryResult situationsResult, PreparedQueryResult slotsResult,
             int32 equippedTransmogOutfitId, bool locked);
+        void _SaveTransmogOutfits(CharacterDatabaseTransaction trans);
         void _LoadBGData(PreparedQueryResult result);
         void _LoadGlyphs(PreparedQueryResult result);
         void _LoadTalents(PreparedQueryResult result);
@@ -3377,7 +3391,6 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         std::unique_ptr<Runes> m_runes;
         uint32 _activeTransmogOutfitID = 0; // SetID of last-applied transmog outfit (0 = use lowest SetID fallback)
         std::vector<OutfitSlotEcho> _lastOutfitSlotEcho;
-        EquipmentSetContainer _equipmentSets;
         std::set<uint32> m_changedTransmogOutfits;
 
         bool CanNeverSee(WorldObject const* obj, bool ignorePhaseShift = false) const override;

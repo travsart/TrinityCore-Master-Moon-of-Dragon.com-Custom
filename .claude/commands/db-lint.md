@@ -1,6 +1,7 @@
 ---
 allowed-tools: Bash(mysql*), Bash(powershell*), Read, Write, Grep, Glob, Agent
 description: Scan databases for common data quality issues and generate fix SQL
+paths: sql/**/*.sql
 ---
 
 # DB Lint

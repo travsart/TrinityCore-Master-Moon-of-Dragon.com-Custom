@@ -1,6 +1,7 @@
 ---
 allowed-tools: Read, Bash(python3:*), Write
 description: Validate a SmartAI SQL file against known enum values, deprecated types, and common mistakes
+paths: sql/**/*.sql
 ---
 
 ## Context

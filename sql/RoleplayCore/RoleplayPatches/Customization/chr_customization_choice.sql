@@ -1,3 +1,7 @@
+-- WARNING: This file wipes and replaces the entire chr_customization_choice table.
+-- Only run if you need VoxCore custom character customizations.
+-- Running this on a fresh TDB will destroy all default customization choices.
+
 DELETE FROM hotfixes.chr_customization_choice;
 
 -- ----------------------------

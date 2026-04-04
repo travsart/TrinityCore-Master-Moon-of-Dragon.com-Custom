@@ -1180,8 +1180,6 @@ class spell_sha_feral_lunge : public SpellScript
 {
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
-        if (!sSpellMgr->GetSpellInfo(SPELL_SHAMAN_FERAL_LUNGE_DAMAGE, DIFFICULTY_NONE))
-            return false;
         return ValidateSpellInfo({ SPELL_SHAMAN_GHOST_WOLF });
     }
 
@@ -1201,26 +1199,6 @@ class spell_sha_feral_lunge : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_feral_lunge::HandleDamage, EFFECT_0, SPELL_EFFECT_DUMMY);
-    }
-
-    void HandleDamage(SpellEffIndex /*effIndex*/)
-    {
-        Unit* caster = GetCaster();
-        Unit* target = GetHitUnit();
-        if (!caster || !target)
-            return;
-
-        WorldLocation pTarget = target->GetWorldLocation();
-
-        caster->CastSpell(caster, SPELL_SHAMAN_GHOST_WOLF, true);
-
-        float speedXY, speedZ;
-        speedZ = 1.2f;
-        speedXY = caster->GetExactDist2d(&pTarget) * 10.0f / speedZ;
-
-        caster->CastSpell(target, SPELL_SHAMAN_FERAL_LUNGE_DAMAGE, true);
-        caster->GetMotionMaster()->MoveJump(EVENT_JUMP, pTarget, speedXY, {}, speedZ);
     }
 };
 

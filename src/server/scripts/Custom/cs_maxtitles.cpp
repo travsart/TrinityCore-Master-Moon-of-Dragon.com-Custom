@@ -1,7 +1,6 @@
 #include "AchievementMgr.h"
 #include "Chat.h"
 #include "ChatCommand.h"
-#include "ChatCommandTags.h"
 #include "DB2Stores.h"
 #include "Player.h"
 #include "RBAC.h"
@@ -74,8 +73,7 @@ public:
     {
         static ChatCommandTable commandTable =
         {
-            { "maxtitles", rbac::RBAC_PERM_COMMAND_MAXTITLES, false, &HandleMaxTitlesCommand,
-              "Grant all reputation-earned character titles." },
+            { "maxtitles", HandleMaxTitlesCommand, rbac::RBAC_PERM_COMMAND_MAXTITLES, Console::No },
         };
         return commandTable;
     }

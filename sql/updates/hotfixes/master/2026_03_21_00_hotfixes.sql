@@ -1,9 +1,19 @@
--- Fix spell 1247917 (Clear Current Transmogrifications) effect mismatch
--- Retail row (ID 1250344) had Effect 347 (EQUIP_TRANSMOG_OUTFIT) overriding
--- our custom SCRIPT_EFFECT hook because it had a higher VerifiedBuild.
--- Delete the retail row so our custom Effect 77 handler fires correctly.
-DELETE FROM `spell_effect` WHERE `ID` = 1250344 AND `SpellID` = 1247917 AND `Effect` = 347;
-UPDATE `spell_effect` SET `VerifiedBuild` = 66527 WHERE `ID` = 1900003 AND `SpellID` = 1247917;
+--
+-- Table structure for table `transmog_outfit_entry`
+--
+DROP TABLE IF EXISTS `transmog_outfit_entry`;
+CREATE TABLE `transmog_outfit_entry` (
+  `Cost` bigint unsigned NOT NULL DEFAULT '0',
+  `Name` text,
+  `ID` int unsigned NOT NULL DEFAULT '0',
+  `OrderIndex` int NOT NULL DEFAULT '0',
+  `Source` tinyint unsigned NOT NULL DEFAULT '0',
+  `Flags` int NOT NULL DEFAULT '0',
+  `SetType` tinyint unsigned NOT NULL DEFAULT '0',
+  `OverrideCostModifier` float NOT NULL DEFAULT '0',
+  `VerifiedBuild` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Remove hotfix_blob rows for 8 DB2 stores now natively loaded by TC
 -- These caused ~13,480 error log entries per boot:

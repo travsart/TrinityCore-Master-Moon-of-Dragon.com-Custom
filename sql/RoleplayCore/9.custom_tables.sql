@@ -90,18 +90,18 @@ CREATE TABLE IF NOT EXISTS `creature_template_outfits_customizations` (
 ) ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE IF NOT EXISTS `scrapping_loot_template` (
-  `Entry` mediumint UNSIGNED NOT NULL DEFAULT 0,
-  `Item` mediumint NOT NULL DEFAULT 0,
-  `Reference` mediumint UNSIGNED NOT NULL DEFAULT 0,
+  `Entry` int UNSIGNED NOT NULL DEFAULT 0,
+  `ItemType` tinyint NOT NULL DEFAULT 0,
+  `Item` int UNSIGNED NOT NULL DEFAULT 0,
   `Chance` float NOT NULL DEFAULT 100,
   `QuestRequired` tinyint(1) NOT NULL DEFAULT 0,
   `LootMode` smallint UNSIGNED NOT NULL DEFAULT 1,
   `GroupId` tinyint UNSIGNED NOT NULL DEFAULT 0,
-  `MinCount` int UNSIGNED NOT NULL DEFAULT 1,
-  `MaxCount` int UNSIGNED NOT NULL DEFAULT 1,
-  `Comment` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
-  PRIMARY KEY (`Entry`, `Item`) USING BTREE
-) ENGINE=MyISAM CHARACTER SET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=FIXED;
+  `MinCount` tinyint UNSIGNED NOT NULL DEFAULT 1,
+  `MaxCount` tinyint UNSIGNED NOT NULL DEFAULT 1,
+  `Comment` varchar(255) DEFAULT NULL,
+  KEY `idx_entry` (`Entry`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 CREATE TABLE IF NOT EXISTS `companion_roster` (
   `entry`      INT UNSIGNED NOT NULL COMMENT 'creature_template entry',

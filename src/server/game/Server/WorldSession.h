@@ -845,8 +845,6 @@ namespace WorldPackets
         class ClearNewAppearance;
         class TransmogOutfitNew;
         class TransmogOutfitUpdateInfo;
-        class TransmogOutfitNew;
-        class TransmogOutfitUpdateInfo;
         class TransmogOutfitUpdateSituations;
         class TransmogOutfitUpdateSlots;
     }
@@ -1836,6 +1834,7 @@ class TC_GAME_API WorldSession
         void HandleTransmogOutfitUpdateInfo(WorldPackets::Transmogrification::TransmogOutfitUpdateInfo const& transmogOutfitUpdateInfo);
         void HandleTransmogOutfitUpdateSituations(WorldPackets::Transmogrification::TransmogOutfitUpdateSituations const& transmogOutfitUpdateSituations);
         void HandleTransmogOutfitUpdateSlots(WorldPackets::Transmogrification::TransmogOutfitUpdateSlots const& transmogOutfitUpdateSlots);
+        void HandleClearNewAppearance(WorldPackets::Transmogrification::ClearNewAppearance& packet);
 
         // Miscellaneous
         void HandleSpellClick(WorldPackets::Spells::SpellClick& spellClick);

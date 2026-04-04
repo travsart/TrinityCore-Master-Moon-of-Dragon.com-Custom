@@ -1,6 +1,7 @@
 ---
 allowed-tools: Bash(ls:*), Bash(date:*), Write
 description: Create a new correctly-named SQL update file with the next sequence number
+paths: sql/**/*.sql
 ---
 
 ## Context

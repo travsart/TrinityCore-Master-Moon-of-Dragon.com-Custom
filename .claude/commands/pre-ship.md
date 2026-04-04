@@ -1,6 +1,7 @@
 ---
 allowed-tools: Read, Write, Grep, Glob, Bash(grep:*), Bash(find:*), Bash(python3:*), Bash(git:*), Agent, mcp__mysql__*
 description: Pre-ship audit for addons, tools, and apps — runs automated checks then spawns noob + bully + security reviewers in parallel
+paths: tools/publishable/**
 ---
 
 # Pre-Ship Audit

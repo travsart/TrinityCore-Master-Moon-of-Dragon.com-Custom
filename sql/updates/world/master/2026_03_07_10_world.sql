@@ -1,3 +1,0 @@
--- NEUTRALIZED: Original content registered 1,888 spell_script_names
--- for SpellAudit C++ classes that were deleted. No-op to prevent
--- worldserver auto-apply errors.

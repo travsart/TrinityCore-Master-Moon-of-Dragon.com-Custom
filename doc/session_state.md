@@ -3,7 +3,7 @@
 **Read this FIRST in any new Claude Code tab.**
 This is the single source of truth for what all tabs are doing, what's done, what's blocked, and what to pick up next. Updated by whichever tab finishes work.
 
-**Last updated**: March 22, 2026 -- Session 210: Full C++ audit of custom code. 4 parallel agents, ~40 files, 11 HIGH severity bugs fixed. Build verified 725/725 zero errors. Commit `3274d30362`. Handoff: `doc/handoff_cpp_audit.md`. Next: 14 MEDIUM fixes, in-game verification
+**Last updated**: April 4, 2026 -- Session 224: Applied Session 223 optimizations — 13 conditional skills, FileChanged hook, SubagentStart/ConfigChange hooks. Tier 2 reports COMPLETE (7 reports, 5,550 lines). Commit `8f01aa113c`.
 
 ---
 
@@ -11,7 +11,8 @@ This is the single source of truth for what all tabs are doing, what's done, wha
 
 | Tab | Assignment | Status | Notes |
 |-----|-----------|--------|-------|
-| Antigravity (Current) | Triad Limits Tuning & Wrap-up | COMPLETE | Pushed optimized Triad execution rules and config limits for 128GB RAM. |
+| Main (Current) | TRIAD-DATA-MIGRATION-V1 — Baltic + LoreWalker gap-fill | IN PROGRESS | Phase 1 DONE (inventory). Phase 2 running (staging import). Spec: `AI_Studio/2_Active_Specs/TRIAD-DATA-MIGRATION-V1.md`. Staging DBs: `world_lorewalker_staging`, `hotfixes_lorewalker_staging`. |
+| Antigravity (past) | Triad Limits Tuning & Wrap-up | COMPLETE | Pushed optimized Triad execution rules and config limits for 128GB RAM. |
 | Main (session 107) | Meta infrastructure, gist updates, coordination | COMPLETE | Commit `8aa10362ad`. Created session_state, bug tracker, skills, report |
 | Main (session 108) | Consolidation — review all transmog docs, fix errors, update gists/memory | COMPLETE | Slot ordering fix, sniffing docs tracked |
 | Main (session 109) | ImageMagick install + sniffing guide updates | COMPLETE | `8150cf3dd5` |
@@ -59,6 +60,8 @@ This is the single source of truth for what all tabs are doing, what's done, wha
 | Main (171c) | Brand expansion + Deep Research ingestion | COMPLETE | 2 memory files created. 4 r/ClaudeAI reports ingested. Career guidance. awesome-claude-code email sent |
 | Main (172) | Community engagement + Reddit outreach | COMPLETE | GitHub: 6 comments, #33465 contested, mvanhorn PR contribution. awesome-claude-code fork+branch. Reddit: 26 threads analyzed, 14 comment drafts, 5-day schedule. `606c51309d` |
 | Main (173) | VoxSniffer V2 spec review pipeline (V6→V7) | COMPLETE | Autonomous fix pipeline: V6 reviews (1 CRIT + 4 HIGH + 10 MED + 7 LOW) → V7 with 25+ fixes + 3-pass self-audit. 2 CRITICAL scoping fixes in Phase 6. Spec zipped to Desktop. Remaining: initialized gate, FM.FlushAll guard, payload removal notes |
+| Main (214) | Gemini Pro VoxCore business briefing | COMPLETE | 15-doc briefing package on Desktop. Identity correction + Google ecosystem mapping. `c690e31568` |
+| Main (215) | Angel VA TDIU filing support | COMPLETE | Filled 21-8940 PDF (103 fields), draft answers, migraine legal analysis, 4 buddy statements, neurologist template, action plan, Item 26 continuation sheet. All Desktop/Excluded/Angel_VA/. No VoxCore commit (personal files) |
 | -- | -- | -- | Add rows as tabs are opened |
 
 **Rule**: Before starting work, check this file. If another tab owns a file or task, don't touch it. Update your row when you start and when you finish.
@@ -111,7 +114,7 @@ Custom agent types (`app-reviewer`, `grep-auditor`, `doc-auditor`) require Claud
 
 - **Build**: Current (VS build done). Includes transmog fail-open + bridge grace + BestiaryForge hooks
 - **Server**: NOT RUNNING
-- **Client**: 12.0.1.66263
+- **Client**: 12.0.1.66709
 - **DB**: world ~1,200 MB (712K creatures, +101K from LoreWalker) | hotfixes 811 MB (400K spells) | characters 4 MB
 - **Logs**: Clean — zero crashes/fatals. SmartAI warnings + unhandled 12.x opcodes only.
 - **LoreWalker TDB import**: APPLIED (session 118) — 7 files + _00_ Stormwind fix. Restart worldserver to load.
@@ -132,7 +135,7 @@ Build is done. These need a server restart and in-game testing.
 - [ ] **CreatureCodex in-game test** — C++ build clean (866/866), `.codex` command, addon deployed. GitHub v1.0.0 released
 - [ ] **Enable crash dumps** — Windows crash dump generation for worldserver
 
-> **Note**: Transmog Outfits UI work is ARCHIVED — reimplemented externally. All transmog bugs, slash commands, and agents have been removed. Historical docs preserved in `.claude/rules/archive/transmog.md` and `doc/transmog_*`.
+> **Note**: Transmog Outfits UI work is ARCHIVED — reimplemented externally. All transmog bugs, slash commands, and agents have been removed. Historical docs preserved in `doc/archive/transmog.md` and `doc/transmog_*`.
 
 ### Tier 2: World DB Cleanup (Claude Code tab can do independently)
 
@@ -221,6 +224,13 @@ Each zone produces a SQL file in `sql/exports/` and findings for review.
 
 | Session | What | Key Output |
 |---------|------|-----------|
+| 224 | Session 222/223 wrap-up + optimization application | 13 skills conditional, FileChanged hook, SubagentStart/ConfigChange hooks, SME handoff prompt. `8f01aa113c` |
+| 223 | Claude Code Tier 2 reports (1M tab) | 7 reports (5,550 lines): tool pipeline, swarm, coordinator, hooks, permissions, skills, MCP. 4 audit agents: concurrency, hooks, skills paths, fork mode. 13 skills made conditional |
+| 222 | Claude Code internals research + config optimizations | 11 reports (266KB), 1M context enabled, 3 conditional rules, .gitignore optimized (205→15 untracked), 54 memory frontmatter files. Source: `C:/Users/atayl/Desktop/claude-code-source/`. `0916b667c9` |
+| 221 | Swift Crusade spell + timestamp hook fix | Custom spell 1900031 (+100% move speed, +200% mounted ground+flight). Timestamp hook statusMessage added for terminal visibility. `0916b667c9` |
+| 220 | Bnetserver fix + Chrono Surge spell + DB schema repair | Port 1119 fix, custom spell 1900030 (+250% haste/-75% CD), 3 DB schema fixes (crafting columns/tables for TC sync), duplicate process cleanup. `54d9ef6621` |
+| 215 | Angel VA TDIU (21-8940) filing support | Filled PDF (103 XFA fields), draft answers doc, migraine legal analysis (3 decisions), 4 buddy statements (Adam v2 + 3 templates), neurologist letter template, complete action plan, print-ready Item 26 continuation sheet. All in Desktop/Excluded/Angel_VA/. No VoxCore commit |
+| 214 | Gemini Pro VoxCore business briefing | 15-doc package (1,440 lines combined). 10 memory + 11 desktop files synthesized. Identity correction for wrong VoxCore. Google ecosystem + Triad-to-Vertex migration mapped. `c690e31568` |
 | 185 | Legal filing review + submission package build | 5 FINAL filing packages, 47 evidence subfolders, master checklist, 12 unknown unknowns, 24-claim fact-check. No VoxCore commit (Desktop files) |
 | 184 | Case file organization + folder indexing | 40 documents filed, 7 __Master_Index.md files created. `f6796a89a3` |
 | 183 | Legal audit + cross-tab integration + MASTER_00 | 14 BLOCKING + 20 WARNING fixes across 6 MASTER docs. Exec summary created. Contact numbers verified. No VoxCore commit (Desktop files) |

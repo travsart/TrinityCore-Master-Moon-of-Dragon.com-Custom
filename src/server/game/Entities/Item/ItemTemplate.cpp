@@ -340,6 +340,5 @@ TransmogOutfitSlotOption ItemTemplate::GetWeaponTransmogOutfitSlotOption() const
         default:
             break;
     }
-
     return TransmogOutfitSlotOption::None;
 }

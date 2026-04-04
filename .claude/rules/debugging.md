@@ -1,3 +1,7 @@
+---
+paths: "src/**/*.cpp, src/**/*.h, src/**/*.hpp, sql/**/*.sql, out/**/Server.log, out/**/DBErrors.log, out/**/Debug.log"
+---
+
 # Debugging Methodology — MANDATORY PIPELINE
 
 This is a BLOCKING pipeline. Skipping a gate is a hard error.

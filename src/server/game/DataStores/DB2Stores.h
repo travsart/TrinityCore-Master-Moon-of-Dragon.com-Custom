@@ -349,6 +349,12 @@ TC_GAME_API extern DB2Storage<TransmogSituationTriggerEntry>        sTransmogSit
 TC_GAME_API extern DB2Storage<TransmogSetEntry>                     sTransmogSetStore;
 TC_GAME_API extern DB2Storage<TransmogSetGroupEntry>                sTransmogSetGroupStore;
 TC_GAME_API extern DB2Storage<TransmogSetItemEntry>                 sTransmogSetItemStore;
+TC_GAME_API extern DB2Storage<TransmogOutfitEntryEntry>             sTransmogOutfitEntryStore;
+TC_GAME_API extern DB2Storage<TransmogOutfitSlotInfoEntry>          sTransmogOutfitSlotInfoStore;
+TC_GAME_API extern DB2Storage<TransmogOutfitSlotOptionEntry>        sTransmogOutfitSlotOptionInfoStore;
+TC_GAME_API extern DB2Storage<TransmogSituationEntry>               sTransmogSituationStore;
+TC_GAME_API extern DB2Storage<TransmogSituationGroupEntry>          sTransmogSituationGroupStore;
+TC_GAME_API extern DB2Storage<TransmogSituationTriggerEntry>        sTransmogSituationTriggerStore;
 TC_GAME_API extern DB2Storage<TransportAnimationEntry>              sTransportAnimationStore;
 TC_GAME_API extern DB2Storage<TransportRotationEntry>               sTransportRotationStore;
 TC_GAME_API extern DB2Storage<UiMapEntry>                           sUiMapStore;

@@ -1,3 +1,0 @@
--- NEUTRALIZED: Original content registered 18 spell_proc entries
--- for SpellAudit C++ classes that were deleted. No-op to prevent
--- worldserver auto-apply errors.

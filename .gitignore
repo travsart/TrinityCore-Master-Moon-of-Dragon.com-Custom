@@ -127,3 +127,45 @@ tools/antigravity/watchdog.log
 .mailmap
 docx_extract*.txt
 sql/migration_snapshots/
+
+# -- AI Studio generated reports (review cycles, audits, briefs) --------------
+AI_Studio/Reports/
+AI_Studio/4_NotebookLM/
+
+# -- Published tool snapshots (each has its own GitHub repo) -------------------
+tools/publishable/
+
+# -- MCP servers & local tool config (own repos / local-only) -----------------
+tools/mcp-voxcore-db/
+tools/mcp-voxcore-server/
+tools/mcp-config.toml
+tools/migration/
+tools/voxcore-daemon/state/
+config/migration/
+
+# -- Deprecated Antigravity artifacts -----------------------------------------
+tools/antigravity/patch_mcp_autoconfirm.py
+tools/antigravity/voxguard-extension/package-lock.json
+
+# -- Generated source dumps (API architect) -----------------------------------
+tools/api_architect/*_source*.txt
+
+# -- Temp scripts (tools/) ----------------------------------------------------
+tools/_*.py
+
+# -- Temp files at repo root ---------------------------------------------------
+.tmp_*
+_build_output.txt
+_build_now.bat
+_build_temp.bat
+_cmake_output.txt
+*_dump_*.pkt_hotfixes.sql
+repair_scene_scripts.sql
+repair_scene_scripts_report.txt
+
+# -- Claude Code local state ---------------------------------------------------
+.claude/agent-memory/
+.mcp.json
+
+# -- Data artifacts (generated output) -----------------------------------------
+data/

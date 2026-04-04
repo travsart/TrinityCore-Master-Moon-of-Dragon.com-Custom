@@ -1,3 +1,7 @@
+---
+paths: "src/**/*.cpp, src/**/*.h, src/**/*.hpp, CMakeLists.txt, CMakePresets.json"
+---
+
 # VoxCore C++ Coding Conventions
 
 - **C++ standard**: C++20 features OK (structured bindings, `contains()`, `string_view`, etc.)

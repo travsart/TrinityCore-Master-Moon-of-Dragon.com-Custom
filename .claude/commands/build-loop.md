@@ -1,6 +1,7 @@
 ---
 allowed-tools: Bash(powershell*), Bash(ninja:*), Bash(cd:*), Read, Edit, Grep, Glob
 description: Iteratively build the project and fix compilation errors until the build succeeds
+paths: src/**/*.cpp, src/**/*.h, src/**/*.hpp, CMakeLists.txt, CMakePresets.json, _build_ps.ps1
 ---
 
 # Build-Fix Loop

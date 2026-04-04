@@ -43,6 +43,53 @@ MODELS = {
     "claude": os.environ.get("REVIEW_MODEL_CLAUDE", "claude-sonnet-4-6"),
 }
 
+# --- Context file loading ---
+
+def load_context_files(file_paths: list[str] | None) -> str:
+    """Load supplementary context files and return formatted text block.
+
+    Returns empty string if no files provided. The assembled context is also
+    saved to AI_Studio/Reports/Audits/ for compaction-safe persistence.
+    """
+    if not file_paths:
+        return ""
+
+    parts = []
+    loaded = []
+    for fp in file_paths:
+        p = Path(fp)
+        if not p.is_absolute():
+            p = PROJECT_ROOT / p
+        if not p.exists():
+            print(f"  WARNING: Context file not found, skipping: {fp}")
+            continue
+        text = p.read_text(encoding="utf-8", errors="replace")
+        parts.append(f"--- PROJECT CONTEXT: {p.name} ---\n{text}\n--- END {p.name} ---\n")
+        loaded.append(str(p))
+        print(f"  Loaded context: {p.name} ({len(text):,} chars)")
+
+    if not parts:
+        return ""
+
+    assembled = "\n".join(parts) + "\n"
+
+    # Save assembled context for compaction-safe persistence
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    ctx_path = REPORTS_DIR / f"{timestamp}__REVIEW_CONTEXT.md"
+    ctx_path.write_text(
+        f"# Review Cycle Context Files\n\n"
+        f"**Date**: {datetime.now().isoformat()}\n"
+        f"**Files**: {', '.join(loaded)}\n"
+        f"**Total chars**: {len(assembled):,}\n\n"
+        + assembled,
+        encoding="utf-8",
+    )
+    print(f"  Context saved: {ctx_path.name} ({len(assembled):,} chars total)\n")
+
+    return assembled
+
+
 # --- Phase definitions ---
 # Phase 1 runs in PARALLEL (no prior feedback needed — fresh eyes on artifact)
 # Phase 2-3 run SEQUENTIALLY (need Phase 1 results as input)
@@ -268,7 +315,8 @@ def _run_one_round(artifact_name: str, artifact_text: str, round_num: int,
 # --- Parallel pipeline (default) ---
 
 def run_cycle_parallel(artifact_path: Path, max_rounds: int = 5,
-                       skip_claude: bool = False, use_chatgpt_api: bool = False):
+                       skip_claude: bool = False, use_chatgpt_api: bool = False,
+                       context_text: str = ""):
     """Run the parallel-first review pipeline.
 
     Phase 1: 3 reviewers in parallel (no prior feedback)
@@ -276,7 +324,9 @@ def run_cycle_parallel(artifact_path: Path, max_rounds: int = 5,
     Phase 3: Final seal (sequential, gets all condensed feedback)
     """
     artifact_name = artifact_path.name
-    artifact_text = artifact_path.read_text(encoding="utf-8")
+    raw_artifact = artifact_path.read_text(encoding="utf-8")
+    # Prepend context files so reviewers have project knowledge
+    artifact_text = context_text + raw_artifact if context_text else raw_artifact
     wall_start = time.time()
 
     phase1_plan = PHASE1_API if use_chatgpt_api else PHASE1_CODEX
@@ -413,10 +463,12 @@ def run_cycle_parallel(artifact_path: Path, max_rounds: int = 5,
 # --- Legacy sequential pipeline (--sequential flag) ---
 
 def run_cycle_sequential(artifact_path: Path, max_rounds: int = 5,
-                         skip_claude: bool = False, use_chatgpt_api: bool = False):
+                         skip_claude: bool = False, use_chatgpt_api: bool = False,
+                         context_text: str = ""):
     """Run the old fully-sequential review pipeline."""
     artifact_name = artifact_path.name
-    artifact_text = artifact_path.read_text(encoding="utf-8")
+    raw_artifact = artifact_path.read_text(encoding="utf-8")
+    artifact_text = context_text + raw_artifact if context_text else raw_artifact
     wall_start = time.time()
 
     base_plan = ROUND_PLAN_API if use_chatgpt_api else ROUND_PLAN_CODEX
@@ -532,6 +584,10 @@ def main():
                         help="Use ChatGPT API instead of Codex CLI for rounds 1 & 4")
     parser.add_argument("--sequential", action="store_true",
                         help="Use old sequential pipeline (slower, full feedback chain)")
+    parser.add_argument("--context-files", nargs="+", type=str, metavar="FILE",
+                        help="Supplementary context files to prepend to the artifact "
+                             "(e.g., CLAUDE.md, intake docs). Reviewers see these as "
+                             "project context before the artifact itself.")
     args = parser.parse_args()
 
     if args.test:
@@ -543,16 +599,21 @@ def main():
             print(f"ERROR: File not found: {args.file}")
             sys.exit(1)
 
+        # Load and prepend context files if provided
+        context_text = load_context_files(args.context_files)
+
         if args.sequential:
             result = run_cycle_sequential(
                 path, max_rounds=args.rounds,
                 skip_claude=args.skip_claude,
-                use_chatgpt_api=args.use_chatgpt_api)
+                use_chatgpt_api=args.use_chatgpt_api,
+                context_text=context_text)
         else:
             result = run_cycle_parallel(
                 path, max_rounds=args.rounds,
                 skip_claude=args.skip_claude,
-                use_chatgpt_api=args.use_chatgpt_api)
+                use_chatgpt_api=args.use_chatgpt_api,
+                context_text=context_text)
 
         sys.exit(0 if result["final_verdict"] == "PASS" else 1)
 

@@ -1,6 +1,7 @@
 ---
 allowed-tools: Agent, Read, Grep, Glob, Bash(powershell*), Edit, Write
 description: Audit C++ code for bugs, performance issues, and correctness problems using parallel agents
+paths: src/**/*.cpp, src/**/*.h, src/**/*.hpp
 ---
 
 # Code Audit

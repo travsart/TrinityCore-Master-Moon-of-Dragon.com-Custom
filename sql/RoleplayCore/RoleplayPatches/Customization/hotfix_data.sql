@@ -1,3 +1,7 @@
+-- WARNING: This file uses REPLACE INTO hotfix_data with low sequential IDs.
+-- Running this on a live server will overwrite any existing hotfix_data entries
+-- that share these IDs. Only run if you need VoxCore custom customization hotfixes.
+
 -- ----------------------------
 -- Records of hotfix_data
 -- ----------------------------

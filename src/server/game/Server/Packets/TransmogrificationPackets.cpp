@@ -209,4 +209,21 @@ WorldPacket const* AccountTransmogUpdate::Write()
 
     return &_worldPacket;
 }
+
+// VoxCore additions (retained for compatibility)
+WorldPacket const* AccountTransmogSetFavoritesUpdate::Write()
+{
+    _worldPacket << Bits<1>(IsFullUpdate);
+    _worldPacket << Bits<1>(IsFavorite);
+    _worldPacket << Size<uint32>(TransmogSetIDs);
+    if (!TransmogSetIDs.empty())
+        _worldPacket.append(TransmogSetIDs.data(), TransmogSetIDs.size());
+
+    return &_worldPacket;
+}
+
+void ClearNewAppearance::Read()
+{
+    _worldPacket >> ItemModifiedAppearanceID;
+}
 }

@@ -27,9 +27,9 @@ REPLACE INTO `npc_text` VALUES (7790, 1, 0, 0, 0, 0, 0, 0, 0, 10770, 0, 0, 0, 0,
 REPLACE INTO `creature_template_gossip` VALUES (15303, 8590, 48676);
 
 
-REPLACE INTO `creature_template` VALUES (15303, 0, 0, 'Maxima Blastenheimer', 'Darkmoon Faire Cannoneer', NULL, NULL, NULL, 0, 0, 1555, 3, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 1, 768, 2048, 0, 0, 0, 7, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 66, 'npc_canon_maxima', NULL, 62438);
-REPLACE INTO `creature_template` VALUES (33068, 0, 0, 'Darkmoon Faire - Cannon Target Bunny', '', NULL, NULL, NULL, 0, 0, 35, 0, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 1, 33587968, 2099200, 0, 0, 0, 10, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 192, 'npc_darkmoon_canon_target', NULL, 62438);
-REPLACE INTO `creature_template` VALUES (57850, 0, 0, 'Teleportologist Fozlebub', 'Gone Fishin\'', NULL, NULL, NULL, 0, 0, 1555, 1, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 8, 768, 2048, 0, 0, 0, 7, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 0, 'npc_canon_fozlebub', NULL, 62438);
+UPDATE `creature_template` SET `ScriptName` = 'npc_canon_maxima' WHERE `entry` = 15303;
+UPDATE `creature_template` SET `ScriptName` = 'npc_darkmoon_canon_target' WHERE `entry` = 33068;
+UPDATE `creature_template` SET `ScriptName` = 'npc_canon_fozlebub' WHERE `entry` = 57850;
 
 REPLACE INTO `spell_script_names` VALUES (102112, 'spell_darkmoon_canon_preparation');
 
@@ -55,15 +55,15 @@ REPLACE INTO `creature_template_gossip` VALUES (181097, 26818, 50000);
 REPLACE INTO `npc_text` VALUES (42770, 1, 0, 0, 0, 0, 0, 0, 0, 207528, 0, 0, 0, 0, 0, 0, 0, 42979);
 REPLACE INTO `npc_text` VALUES (42798, 1, 0, 0, 0, 0, 0, 0, 0, 208986, 0, 0, 0, 0, 0, 0, 0, 42979);
 
-REPLACE INTO `creature_template` VALUES (181097, 0, 0, 'Simon Sezdans', 'Dance Master', NULL, NULL, NULL, 0, 0, 1555, 3, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 1, 768, 2048, 0, 0, 0, 7, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 0, 'npc_dance_battle_simon_sezdans', NULL, 62438);
+UPDATE `creature_template` SET `ScriptName` = 'npc_dance_battle_simon_sezdans' WHERE `entry` = 181097;
 
-REPLACE INTO `scene_template` VALUES (2709, 17, 3193, 0, 'scene_darkmoon_dance_battle');
+REPLACE INTO `scene_template` (`SceneId`, `Flags`, `ScriptPackageID`, `Encrypted`, `ScriptName`) VALUES (2709, 17, 3193, 0, 'scene_darkmoon_dance_battle');
 
 -- ----------------------------
 -- Firebird Challenge fixes
 -- ----------------------------
 
-REPLACE INTO `areatrigger_create_properties` VALUES (3069, 0, 7712, 0, 0, 0, 0, 0, 0, -1, 0, 0, NULL, 0, 1, 0, 5, 5, 0, 0, 0, 0, 0, 0, 'at_darkmoon_firebird_ring', 44061);
+REPLACE INTO `areatrigger_create_properties` (`Id`,`IsCustom`,`AreaTriggerId`,`IsAreatriggerCustom`,`Flags`,`MoveCurveId`,`ScaleCurveId`,`MorphCurveId`,`FacingCurveId`,`AnimId`,`AnimKitId`,`DecalPropertiesId`,`SpellForVisuals`,`TimeToTargetScale`,`Speed`,`SpeedIsTime`,`Shape`,`ShapeData0`,`ShapeData1`,`ShapeData2`,`ShapeData3`,`ShapeData4`,`ShapeData5`,`ShapeData6`,`ShapeData7`,`ScriptName`,`VerifiedBuild`) VALUES (3069, 0, 7712, 0, 0, 0, 0, 0, 0, -1, 0, 0, NULL, 0, 1, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 'at_darkmoon_firebird_ring', 44061);
 REPLACE INTO `areatrigger_template` VALUES (7712, 0, 0, 0, 0, 56819);
 
 REPLACE INTO `spell_script_names` VALUES (170819, 'spell_darkmoon_firebird_challenge');
@@ -77,7 +77,7 @@ REPLACE INTO `gossip_menu_option` VALUES (16972, 43062, 0, 0, 'I understand.', 5
 REPLACE INTO `gossip_menu_option_locale` VALUES (16972, 0, 'ruRU', 'Понятно.', NULL);
 REPLACE INTO `npc_text` VALUES (24704, 1, 0, 0, 0, 0, 0, 0, 0, 87078, 0, 0, 0, 0, 0, 0, 0, 19865);
 
-REPLACE INTO `creature_template` VALUES (85546, 0, 0, 'Ziggie Sparks', 'Firebird\'s Challenge', NULL, NULL, NULL, 0, 0, 35, 3, 1, 1.14286, 1, 0, 0, 2000, 2000, 1, 1, 1, 0, 2048, 0, 0, 0, 7, 0, '', 0, 0, 0, 0, 0, 0, 1, 0, 0, 'npc_ziggie_sparks', NULL, 62438);
+UPDATE `creature_template` SET `ScriptName` = 'npc_ziggie_sparks' WHERE `entry` = 85546;
 
 -- ----------------------------
 -- Ring Toss fixes

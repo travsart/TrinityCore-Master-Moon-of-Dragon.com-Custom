@@ -8,7 +8,7 @@
 
 ## Triad Coordination — READ FIRST (all agents)
 
-**Last updated**: 2026-03-22 -- Session 210: Full C++ custom code audit. 4 parallel agents across ~40 files found 12 HIGH/14 MEDIUM/20+ LOW issues. All 11 HIGH fixed + build verified (725/725 zero errors). Commit `3274d30362`. Fixes: use-after-move UB, null crashes, div-by-zero, dangling pointer, companion oscillation/spam. Handoff: `doc/handoff_cpp_audit.md`. x64-Debug build env freshly configured. Next: 14 MEDIUM fixes, in-game verification, RelWithDebInfo build
+**Last updated**: 2026-04-04 -- Session 224: 18 Claude Code internals reports complete (Tier 1+2). 13 skills made conditional. FileChanged hook staged. Commit `8f01aa113c`
 
 ### Architecture (as of session 160)
 
@@ -70,6 +70,7 @@ Update THIS file on `/wrap-up` with: what was completed, what's deployed, infras
 - Found a conflict → write `[CONFLICT]` tag here, don't proceed
 
 ## Current Focus
+- **Claude Code Internals**: 11 reports written (266KB knowledge base). 1M context enabled, 3 conditional rules, .gitignore optimized, 54 memory frontmatter files. 17 Tier 2-4 reports pending. Reports: `AI_Studio/Reports/ClaudeCodeInternals/`
 - **VoxSniffer v1.0.0**: SHIPPED (session 168). 7-round dual ChatGPT review (API + Browser). 62 files, 8,881 lines. Deployed to GitHub + AddOns + publishable/. **NEEDS IN-GAME TEST**
 - **VoxGM v1.0.0**: SHIPPED (session 167). **NEEDS IN-GAME TEST**
 - **CreatureCodex v1.0.0**: RELEASED (session 171b). Build clean. GitHub release live. **NEEDS IN-GAME TEST**
@@ -92,8 +93,8 @@ Potentially actionable specs remaining in `1_Inbox/`:
 
 ## Infrastructure State
 - **Build**: Current (VS build done)
-- **Server**: NOT RUNNING
-- **Client**: 12.0.1.66263
+- **Server**: NOT RUNNING (DB schema repaired — 3 fixes applied for TC sync compat)
+- **Client**: 12.0.1.66709
 - **DB**: world ~1,200 MB | hotfixes 811 MB | characters 4 MB
 - **31 slash commands** (+12 case management skills session 178)
 - **Cowork**: OPERATIONAL with 5 scheduled tasks
