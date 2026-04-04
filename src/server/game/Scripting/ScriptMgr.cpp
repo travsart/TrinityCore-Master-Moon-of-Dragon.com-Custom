@@ -3147,10 +3147,10 @@ BattlegroundMapScript::BattlegroundMapScript(char const* name, uint32 mapId) noe
     : ScriptObject(name), MapScript(sMapStore.LookupEntry(mapId))
 {
     if (!GetEntry())
-        TC_LOG_ERROR("scripts", "Invalid BattlegroundMapScript for {}; no such map ID.", mapId);
+        TC_LOG_ERROR("scripts", "Invalid BattlegroundMapScript {} for {}; no such map ID.", name, mapId);
 
     if (GetEntry() && !GetEntry()->IsBattlegroundOrArena())
-        TC_LOG_ERROR("scripts", "BattlegroundMapScript for map {} is invalid.", mapId);
+        TC_LOG_ERROR("scripts", "BattlegroundMapScript {} for map {} is invalid.", name, mapId);
 
     ScriptRegistry<BattlegroundMapScript>::Instance()->AddScript(this);
 }
