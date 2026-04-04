@@ -1,5 +1,5 @@
 -- =====================================================
--- Combined SQL generated on 2026-04-01 02:07:51Z
+-- Combined SQL generated on 2026-04-04 04:57:56Z
 -- Sources:
 --  custom_tables.sql
 --  1.auth_db.sql
@@ -11,7 +11,9 @@
 --  5.2.companion_auth.sql
 --  5.3.companion_seed_data.sql
 --  6.player_morph.sql
+--  7.characters.sql
 --  DarkmoonFaire_patch.sql
+--  ../DoomCore/warlock_spell_fixes.sql
 -- =====================================================\n
 -- ----- Begin file: custom_tables.sql -----
 -- ============================================================================
@@ -1005,6 +1007,155 @@ CREATE TABLE `pvp_bracket_types` (
   `WeeklyQuestID_3` int NOT NULL DEFAULT '0',
   `VerifiedBuild` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`ID`, `VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `crafting_data_item_quality`;
+CREATE TABLE `crafting_data_item_quality` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`ItemID` INT(10) NOT NULL DEFAULT '0',
+	`CraftingDataID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `crafting_difficulty`;
+CREATE TABLE `crafting_difficulty` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`MaxRandomSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`CraftSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`ReCraftSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`InspirationSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`Field_10_0_0_44649_004` FLOAT(10) NOT NULL DEFAULT '0',
+	`ConcentrationSkillCurveID` INT(10) NOT NULL DEFAULT '0',
+	`ConcentrationDifficultyCurveID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `crafting_difficulty_quality`;
+CREATE TABLE `crafting_difficulty_quality` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`Order` INT(10) NOT NULL DEFAULT '0',
+	`CraftingQualityID` INT(10) NOT NULL DEFAULT '0',
+	`QualityPercentage` FLOAT(10) NOT NULL DEFAULT '0',
+	`Field_10_0_0_44895_004` FLOAT(10) NOT NULL DEFAULT '0',
+	`CraftingDifficultyID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `crafting_reagent_quality`;
+CREATE TABLE `crafting_reagent_quality` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`OrderIndex` INT(10) NOT NULL DEFAULT '0',
+	`ItemID` INT(10) NOT NULL DEFAULT '0',
+	`CurrencyTypesID` INT(10) NOT NULL DEFAULT '0',
+	`MaxDifficultyAdjustment` FLOAT(10) NOT NULL DEFAULT '0',
+	`ReagentEffectPct` FLOAT(10) NOT NULL DEFAULT '0',
+	`Field_12_0_0_64124_006` INT(10) NOT NULL DEFAULT '0',
+	`ModifiedCraftingCategoryID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `mcr_slot_x_mcr_category`;
+CREATE TABLE `mcr_slot_x_mcr_category` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`ModifiedCraftingCategoryID` INT(10) NOT NULL DEFAULT '0',
+	`Order` INT(10) NOT NULL DEFAULT '0',
+	`ModifiedCraftingReagentSlotID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `modified_crafting_category`;
+CREATE TABLE `modified_crafting_category` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`DisplayName` text,
+	`Description` text,
+	`Field_9_0_1_33978_001` INT(10) NOT NULL DEFAULT '0',
+	`MatQualityWeight` INT(10) NOT NULL DEFAULT '0',
+	`Field_10_0_0_44649_004` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `modified_crafting_category_locale`;
+CREATE TABLE `modified_crafting_category_locale` (
+  `ID` int(10) unsigned NOT NULL DEFAULT '0',
+  `locale` varchar(4) NOT NULL,
+  `DisplayName_lang` text,
+  `Description_lang` text,
+  `VerifiedBuild` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`ID`,`locale`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `modified_crafting_reagent_item`;
+CREATE TABLE `modified_crafting_reagent_item` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`Description` text,
+	`ModifiedCraftingCategoryID` INT(10) NOT NULL DEFAULT '0',
+	`ItemBonusTreeID` INT(10) NOT NULL DEFAULT '0',
+	`Flags` INT(10) NOT NULL DEFAULT '0',
+	`Field_9_1_0_38511_004` INT(10) NOT NULL DEFAULT '0',
+	`ItemContextOffset` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `modified_crafting_reagent_item_locale`;
+CREATE TABLE `modified_crafting_reagent_item_locale` (
+  `ID` int(10) unsigned NOT NULL DEFAULT '0',
+  `locale` varchar(4) NOT NULL,
+  `Description_lang` text,
+  `VerifiedBuild` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`ID`,`locale`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `modified_crafting_reagent_slot`;
+CREATE TABLE `modified_crafting_reagent_slot` (
+	`Name` text,
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`Flags` INT(10) NOT NULL DEFAULT '0',
+	`PlayerConditionID` INT(10) NOT NULL DEFAULT '0',
+	`ReagentType` INT(10) NOT NULL DEFAULT '0',
+	`ReagentSource` INT(10) NOT NULL DEFAULT '0',
+	`Field_11_2_0_61476_006` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+	`Field_12_0_0_63534_007` float NOT NULL DEFAULT 0,
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `modified_crafting_reagent_slot_locale`;
+CREATE TABLE `modified_crafting_reagent_slot_locale` (
+  `ID` int(10) unsigned NOT NULL DEFAULT '0',
+  `locale` varchar(4) NOT NULL,
+  `Name_lang` text,
+  `VerifiedBuild` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`ID`,`locale`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `modified_crafting_spell_slot`;
+CREATE TABLE `modified_crafting_spell_slot` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`SpellID` INT(10) NOT NULL DEFAULT '0',
+	`Slot` INT(10) NOT NULL DEFAULT '0',
+	`ModifiedCraftingReagentSlotID` INT(10) NOT NULL DEFAULT '0',
+	`Field_9_0_1_35679_003` INT(10) NOT NULL DEFAULT '0',
+	`ReagentCount` INT(10) NOT NULL DEFAULT '0',
+	`ReagentReCraftCount` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;-- ----- End file: 2.hotfixes_db.sql -----
 -- ----- Begin file: 2.1.hotfixes_db_spell_changes.sql -----
 USE `hotfixes`;
@@ -1248,6 +1399,23 @@ CREATE TABLE IF NOT EXISTS `player_morph` (
   PRIMARY KEY (`playerGuid`)
 ) ENGINE=InnoDB;
 -- ----- End file: 6.player_morph.sql -----
+-- ----- Begin file: 7.characters.sql -----
+USE `characters`;
+
+-- Idempotent crafting stat modifier columns (MySQL 8.0 compatible)
+DROP PROCEDURE IF EXISTS add_crafting_columns;
+DELIMITER //
+CREATE PROCEDURE add_crafting_columns()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'item_instance_modifiers' AND COLUMN_NAME = 'craftingModifiedStat1') THEN
+        ALTER TABLE `item_instance_modifiers`
+            ADD COLUMN `craftingModifiedStat1` INT(10) UNSIGNED DEFAULT 0 NULL AFTER `artifactKnowledgeLevel`,
+            ADD COLUMN `craftingModifiedStat2` INT(10) UNSIGNED DEFAULT 0 NULL AFTER `craftingModifiedStat1`;
+    END IF;
+END //
+DELIMITER ;
+CALL add_crafting_columns();
+DROP PROCEDURE IF EXISTS add_crafting_columns;-- ----- End file: 7.characters.sql -----
 -- ----- Begin file: DarkmoonFaire_patch.sql -----
 USE `world`;
 -- ----------------------------
@@ -1348,3 +1516,49 @@ REPLACE INTO `spell_script_names` VALUES (101838, 'spell_gen_repair_damaged_tonk
 -- ----------------------------
 -- Wrack Gnoll fixes
 -- ------------------------------ ----- End file: DarkmoonFaire_patch.sql -----
+-- ----- Begin file: ../DoomCore/warlock_spell_fixes.sql -----
+USE `world`;
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_warl_diabolic_ritual_passive', 'spell_warl_diabolic_ritual', 'spell_warl_demonic_art', 'spell_warl_pit_lord_felseeker', 'spell_warl_pit_lord_felseeker_at', 'spell_warl_mother_chaos_missile', 'spell_warl_overlord_wicked_cleave', 'spell_warl_infernal_bolt_empower_aura', 'spell_warl_overfiend_chaos_bolt', 'spell_warl_avatar_of_destruction', 'spell_warl_dimensional_rift_talent', 'spell_warl_ruination', 'spell_warl_ruination_damage', 'spell_warl_ruination_entry_aura', 'spell_warl_diabolic_oculi');
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(428514, 'spell_warl_diabolic_ritual_passive'),
+(431944, 'spell_warl_diabolic_ritual'),
+(432815, 'spell_warl_diabolic_ritual'),
+(432816, 'spell_warl_diabolic_ritual'),
+(428524, 'spell_warl_demonic_art'),
+(432794, 'spell_warl_demonic_art'),
+(432795, 'spell_warl_demonic_art'),
+(438973, 'spell_warl_pit_lord_felseeker'),
+(434404, 'spell_warl_pit_lord_felseeker_at'),
+(432596, 'spell_warl_mother_chaos_missile'),
+(432113, 'spell_warl_overlord_wicked_cleave'),
+(432120, 'spell_warl_overlord_wicked_cleave'),
+(433891, 'spell_warl_infernal_bolt_empower_aura'),
+(434589, 'spell_warl_overfiend_chaos_bolt'),
+(1245089, 'spell_warl_avatar_of_destruction'),
+(1280868, 'spell_warl_dimensional_rift_talent'),
+(433885, 'spell_warl_ruination_entry_aura'),
+(434635, 'spell_warl_ruination'),
+(434636, 'spell_warl_ruination_damage'),
+(1269643, 'spell_warl_diabolic_oculi');
+
+DELETE FROM `spell_proc` WHERE `SpellId` IN (428514, 428524, 432794, 432795, 1245089, 1280868);
+INSERT INTO `spell_proc` (`SpellId`, `SchoolMask`, `SpellFamilyName`, `SpellFamilyMask0`, `SpellFamilyMask1`, `SpellFamilyMask2`, `SpellFamilyMask3`, `ProcFlags`, `ProcFlags2`, `SpellTypeMask`, `SpellPhaseMask`, `HitMask`, `AttributesMask`, `DisableEffectsMask`, `ProcsPerMinute`, `Chance`, `Cooldown`, `Charges`) VALUES
+(428514, 0, 5, 0, 0, 0, 0, 0x10000, 0, 1, 2, 0, 0, 0, 0, 100, 0, 0),
+(428524, 0, 0, 0, 0, 0, 0, 0, 0x4, 0, 1, 0, 0, 0, 0, 100, 0, 0),
+(432794, 0, 0, 0, 0, 0, 0, 0, 0x4, 0, 1, 0, 0, 0, 0, 100, 0, 0),
+(432795, 0, 0, 0, 0, 0, 0, 0, 0x4, 0, 1, 0, 0, 0, 0, 100, 0, 0),
+(1245089, 0, 5, 0, 0, 0, 0, 0x10000, 0, 1, 2, 0, 0, 0, 0, 100, 0, 0),
+(1280868, 0, 5, 0, 0, 0, 0, 0x10000, 0, 1, 2, 0, 0, 0, 0, 10, 0, 0);
+
+UPDATE `creature_template` SET `ScriptName` = 'npc_warl_diabolist_overlord' WHERE `entry` = 228575;
+UPDATE `creature_template` SET `ScriptName` = 'npc_warl_diabolist_mother_of_chaos' WHERE `entry` = 228576;
+UPDATE `creature_template` SET `ScriptName` = 'npc_warl_diabolist_pit_lord' WHERE `entry` = 228574;
+UPDATE `creature_template` SET `ScriptName` = 'npc_warl_avatar_of_destruction_overfiend' WHERE `entry` = 217429;
+UPDATE `creature_template` SET `ScriptName` = 'npc_warl_diabolic_imp' WHERE `entry` = 219161;
+
+UPDATE `creature_template` SET `ScriptName` = 'npc_warl_dimensional_rift_unstable_tear' WHERE `entry` = 196280;
+UPDATE `creature_template` SET `ScriptName` = 'npc_warl_dimensional_rift_chaos_tear' WHERE `entry` = 108493;
+UPDATE `creature_template` SET `ScriptName` = 'npc_warl_dimensional_rift_shadowy_tear' WHERE `entry` = 99887;
+
+-- ----- End file: ../DoomCore/warlock_spell_fixes.sql -----
