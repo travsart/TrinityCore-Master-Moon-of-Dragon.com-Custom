@@ -962,9 +962,6 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SLOT,
     PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFITS,
     PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SITUATIONS,
-    PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT,
-    PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SITUATION,
-    PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFIT_SLOT,
     PLAYER_LOGIN_QUERY_LOAD_BG_DATA,
     PLAYER_LOGIN_QUERY_LOAD_GLYPHS,
     PLAYER_LOGIN_QUERY_LOAD_TALENTS,
@@ -2563,17 +2560,6 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         uint32 GetActiveTransmogOutfitID() const;
         void SetActiveTransmogOutfitID(uint32 setID) { _activeTransmogOutfitID = setID; }
 
-        // TC upstream TransmogMgr-based outfit methods
-        void AddUnlockedTransmogOutfits(std::span<int32 const> transmogOutfitIds);
-        void AddUnlockedTransmogOutfit(int32 transmogOutfitId) { AddUnlockedTransmogOutfits(std::span(&transmogOutfitId, 1)); }
-        void CreateTransmogOutfit(uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData);
-        void InitializeNewTransmogOutfit(UF::MutableFieldReference<UF::TransmogOutfitData, false> outfit,
-            uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData);
-        bool UpdateTransmogOutfit(uint32 id, WorldPackets::Transmogrification::TransmogOutfitDataInfo const& outfitData);
-        void UpdateTransmogOutfitSituations(uint32 id, bool situationsEnabled, std::span<WorldPackets::Transmogrification::TransmogOutfitSituationInfo const> situations);
-        void UpdateTransmogOutfitSlots(uint32 id, std::span<WorldPackets::Transmogrification::TransmogOutfitSlotData const> slots);
-        void EquipTransmogOutfit(uint32 id, TransmogSituationTrigger trigger, Optional<bool> locked);
-
         // Legacy VoxCore slot echo (pending removal in Unit 7)
         struct OutfitSlotEcho
         {
@@ -3205,7 +3191,6 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         void _LoadEquipmentSets(PreparedQueryResult result);
         void _LoadTransmogOutfits(PreparedQueryResult setsResult, PreparedQueryResult situationsResult, PreparedQueryResult slotsResult,
             int32 equippedTransmogOutfitId, bool locked);
-        void _SaveTransmogOutfits(CharacterDatabaseTransaction trans);
         void _LoadBGData(PreparedQueryResult result);
         void _LoadGlyphs(PreparedQueryResult result);
         void _LoadTalents(PreparedQueryResult result);
