@@ -24,6 +24,7 @@
 #include "GameTime.h"
 #include "Optional.h"
 #include "SharedDefines.h"
+#include "DB2Structure.h"
 #include <deque>
 #include <unordered_map>
 #include <vector>

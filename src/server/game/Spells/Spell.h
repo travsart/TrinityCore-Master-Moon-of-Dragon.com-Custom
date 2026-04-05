@@ -28,6 +28,7 @@
 #include "Position.h"
 #include "SharedDefines.h"
 #include "SpellDefines.h"
+#include "TemporarySummon.h"
 #include "Types.h"
 #include "UniqueTrackablePtr.h"
 #include <memory>

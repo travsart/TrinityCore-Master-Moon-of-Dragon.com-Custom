@@ -10,6 +10,7 @@
 #include "ClaimResolver.h"
 #include "Log.h"
 #include <algorithm>
+#include <atomic>
 
 namespace Playerbot
 {
