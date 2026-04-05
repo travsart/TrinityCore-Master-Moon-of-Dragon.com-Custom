@@ -34,6 +34,7 @@
 #include "Player.h"
 #include "Unit.h"
 #include "UnitAI.h"
+#include "RaceMask.h"
 #include "World.h"
 #include "WorldSession.h"
 #include "DB2Stores.h"
@@ -50,7 +51,7 @@ namespace Playerbot
 {
     PlayerbotCommandScript::PlayerbotCommandScript() : CommandScript("PlayerbotCommandScript") { }
 
-    ChatCommandTable PlayerbotCommandScript::GetCommands() const
+    std::span<ChatCommandBuilder const> PlayerbotCommandScript::GetCommands() const
     {
         static ChatCommandTable botFormationCommandTable =
         {

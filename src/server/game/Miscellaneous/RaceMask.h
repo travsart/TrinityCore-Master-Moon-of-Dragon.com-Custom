@@ -81,6 +81,7 @@ enum Races
     //RACE_ROSTRUM_AIRSHIP_SEASON_2   = 90,
     RACE_HARANIR_ALLIANCE             = 91, // TITLE Haranir DESCRIPTION Haranir (Alliance) (RaceMask bit 19)
     //RACE_ROSTRUM_AIRSHIP_SEASON_3   = 92,
+    MAX_RACES = 93
 };
 
 namespace Trinity

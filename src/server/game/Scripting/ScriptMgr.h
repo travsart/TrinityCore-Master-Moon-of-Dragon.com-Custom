@@ -21,6 +21,7 @@
 #include "Common.h"
 #include "ObjectGuid.h"
 #include "Tuples.h"
+#include "SharedDefines.h"
 #include <boost/preprocessor/punctuation/remove_parens.hpp>
 #include <memory>
 #include <vector>

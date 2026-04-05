@@ -125,7 +125,7 @@ namespace Playerbot
             }
 
             // Verify GetCommands() returns command table
-            Trinity::ChatCommands::ChatCommandTable commands = script->GetCommands();
+            auto commands = script->GetCommands();
             if (commands.empty())
             {
                 TC_LOG_ERROR("playerbot.test", "FAIL: GetCommands() returned empty table");

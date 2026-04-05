@@ -65,7 +65,7 @@ namespace Playerbot
     public:
         PlayerbotCommandScript();
 
-        Trinity::ChatCommands::ChatCommandTable GetCommands() const;
+        std::span<Trinity::ChatCommands::ChatCommandBuilder const> GetCommands() const override;
 
     private:
         // Bot spawning commands
