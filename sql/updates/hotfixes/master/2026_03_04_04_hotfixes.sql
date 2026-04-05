@@ -34,6 +34,11 @@ DELETE hd FROM `hotfixes`.`hotfix_data` hd
   LEFT JOIN `hotfixes`.`item_sparse` t ON hd.RecordId = t.ID
   WHERE hd.TableHash = 2442913102 AND t.ID IS NULL;
 
+-- spell: ~8,062 orphaned rows (hash 3776013982)
+DELETE hd FROM `hotfixes`.`hotfix_data` hd
+  LEFT JOIN `hotfixes`.`spell` t ON hd.RecordId = t.ID
+  WHERE hd.TableHash = 3776013982 AND t.ID IS NULL;
+
 -- transmog_set: ~4,874 orphaned rows (hash 356071576)
 DELETE hd FROM `hotfixes`.`hotfix_data` hd
   LEFT JOIN `hotfixes`.`transmog_set` t ON hd.RecordId = t.ID
@@ -278,6 +283,11 @@ DELETE hd FROM `hotfixes`.`hotfix_data` hd
 DELETE hd FROM `hotfixes`.`hotfix_data` hd
   LEFT JOIN `hotfixes`.`conditional_content_tuning` t ON hd.RecordId = t.ID
   WHERE hd.TableHash = 1913965383 AND t.ID IS NULL;
+
+-- global_strings: ~10 orphaned rows (hash 3205218938)
+DELETE hd FROM `hotfixes`.`hotfix_data` hd
+  LEFT JOIN `hotfixes`.`global_strings` t ON hd.RecordId = t.ID
+  WHERE hd.TableHash = 3205218938 AND t.ID IS NULL;
 
 -- item_appearance: ~8 orphaned rows (hash 1109793673)
 DELETE hd FROM `hotfixes`.`hotfix_data` hd

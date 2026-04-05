@@ -1,5 +1,5 @@
 -- ============================================================
--- VoxCore RP Fun Spells — Batch Generation
+-- VoxCore RP Fun Spells ï¿½ Batch Generation
 -- 23 spells: 9 visual auras, 2 scale, 1 thunderking,
 --            1 stealth, 10 costumes
 -- IDs: 1900005 - 1900027
@@ -7,7 +7,7 @@
 
 
 -- ============================================================
--- Arcane Radiance (ID: 1900005) — Visual Aura
+-- Arcane Radiance (ID: 1900005) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900005, 'Arcane Radiance', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900100, 19001064, 1187407512, 1900005, 1, 66263);
@@ -19,7 +19,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900103, 19001097, 4030871717, 1900100, 1, 66263);
 
 -- ============================================================
--- Shadow Embrace (ID: 1900006) — Visual Aura
+-- Shadow Embrace (ID: 1900006) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900006, 'Shadow Embrace', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900104, 19001108, 1187407512, 1900006, 1, 66263);
@@ -31,7 +31,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900107, 19001141, 4030871717, 1900101, 1, 66263);
 
 -- ============================================================
--- Divine Luminance (ID: 1900007) — Visual Aura
+-- Divine Luminance (ID: 1900007) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900007, 'Divine Luminance', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900108, 19001152, 1187407512, 1900007, 1, 66263);
@@ -43,7 +43,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900111, 19001185, 4030871717, 1900102, 1, 66263);
 
 -- ============================================================
--- Ember Wreath (ID: 1900008) — Visual Aura
+-- Ember Wreath (ID: 1900008) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900008, 'Ember Wreath', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900112, 19001196, 1187407512, 1900008, 1, 66263);
@@ -55,7 +55,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900115, 19001229, 4030871717, 1900103, 1, 66263);
 
 -- ============================================================
--- Frost Mantle (ID: 1900009) — Visual Aura
+-- Frost Mantle (ID: 1900009) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900009, 'Frost Mantle', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900116, 19001240, 1187407512, 1900009, 1, 66263);
@@ -67,7 +67,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900119, 19001273, 4030871717, 1900104, 1, 66263);
 
 -- ============================================================
--- Nature's Blessing (ID: 1900010) — Visual Aura
+-- Nature's Blessing (ID: 1900010) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900010, 'Nature\'s Blessing', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900120, 19001284, 1187407512, 1900010, 1, 66263);
@@ -79,7 +79,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900123, 19001317, 4030871717, 1900105, 1, 66263);
 
 -- ============================================================
--- Fel Corruption (ID: 1900011) — Visual Aura
+-- Fel Corruption (ID: 1900011) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900011, 'Fel Corruption', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900124, 19001328, 1187407512, 1900011, 1, 66263);
@@ -91,7 +91,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900127, 19001361, 4030871717, 1900106, 1, 66263);
 
 -- ============================================================
--- Storm's Fury (ID: 1900012) — Visual Aura
+-- Storm's Fury (ID: 1900012) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900012, 'Storm\'s Fury', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900128, 19001372, 1187407512, 1900012, 1, 66263);
@@ -103,7 +103,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900131, 19001405, 4030871717, 1900107, 1, 66263);
 
 -- ============================================================
--- Void Whispers (ID: 1900013) — Visual Aura
+-- Void Whispers (ID: 1900013) ï¿½ Visual Aura
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900013, 'Void Whispers', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900132, 19001416, 1187407512, 1900013, 1, 66263);
@@ -115,7 +115,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900135, 19001352, 4030871717, 1900108, 1, 66263);
 
 -- ============================================================
--- Giant's Might (ID: 1900014) — +200% Scale
+-- Giant's Might (ID: 1900014) ï¿½ +200% Scale
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900014, 'Giant\'s Might', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900136, 19001363, 1187407512, 1900014, 1, 66263);
@@ -127,7 +127,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900139, 19001396, 4030871717, 1900109, 1, 66263);
 
 -- ============================================================
--- Pixie Dust (ID: 1900015) — -50% Scale
+-- Pixie Dust (ID: 1900015) ï¿½ -50% Scale
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900015, 'Pixie Dust', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900140, 19001407, 1187407512, 1900015, 1, 66263);
@@ -151,7 +151,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900147, 19001484, 4030871717, 1900111, 1, 66263);
 
 -- ============================================================
--- Phase Walk (ID: 1900017) — Stealth 5min
+-- Phase Walk (ID: 1900017) ï¿½ Stealth 5min
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900017, 'Phase Walk', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900148, 19001495, 1187407512, 1900017, 1, 66263);
@@ -163,7 +163,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900151, 19001528, 4030871717, 1900112, 1, 66263);
 
 -- ============================================================
--- Costume: The Lich King (ID: 1900018) — 20min Costume
+-- Costume: The Lich King (ID: 1900018) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900018, 'Costume: The Lich King', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900152, 19001539, 1187407512, 1900018, 1, 66263);
@@ -175,7 +175,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900155, 19001572, 4030871717, 1900113, 1, 66263);
 
 -- ============================================================
--- Costume: Illidan Stormrage (ID: 1900019) — 20min Costume
+-- Costume: Illidan Stormrage (ID: 1900019) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900019, 'Costume: Illidan Stormrage', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900156, 19001583, 1187407512, 1900019, 1, 66263);
@@ -187,7 +187,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900159, 19001616, 4030871717, 1900114, 1, 66263);
 
 -- ============================================================
--- Costume: Sylvanas Windrunner (ID: 1900020) — 20min Costume
+-- Costume: Sylvanas Windrunner (ID: 1900020) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900020, 'Costume: Sylvanas Windrunner', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900160, 19001627, 1187407512, 1900020, 1, 66263);
@@ -199,7 +199,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900163, 19001660, 4030871717, 1900115, 1, 66263);
 
 -- ============================================================
--- Costume: Thrall (ID: 1900021) — 20min Costume
+-- Costume: Thrall (ID: 1900021) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900021, 'Costume: Thrall', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900164, 19001671, 1187407512, 1900021, 1, 66263);
@@ -211,7 +211,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900167, 19001704, 4030871717, 1900116, 1, 66263);
 
 -- ============================================================
--- Costume: Jaina Proudmoore (ID: 1900022) — 20min Costume
+-- Costume: Jaina Proudmoore (ID: 1900022) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900022, 'Costume: Jaina Proudmoore', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900168, 19001715, 1187407512, 1900022, 1, 66263);
@@ -223,7 +223,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900171, 19001748, 4030871717, 1900117, 1, 66263);
 
 -- ============================================================
--- Costume: Tyrande Whisperwind (ID: 1900023) — 20min Costume
+-- Costume: Tyrande Whisperwind (ID: 1900023) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900023, 'Costume: Tyrande Whisperwind', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900172, 19001759, 1187407512, 1900023, 1, 66263);
@@ -235,7 +235,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900175, 19001792, 4030871717, 1900118, 1, 66263);
 
 -- ============================================================
--- Costume: Ragnaros (ID: 1900024) — 20min Costume
+-- Costume: Ragnaros (ID: 1900024) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900024, 'Costume: Ragnaros', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900176, 19001803, 1187407512, 1900024, 1, 66263);
@@ -247,7 +247,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900179, 19001836, 4030871717, 1900119, 1, 66263);
 
 -- ============================================================
--- Costume: Alexstrasza (ID: 1900025) — 20min Costume
+-- Costume: Alexstrasza (ID: 1900025) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900025, 'Costume: Alexstrasza', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900180, 19001847, 1187407512, 1900025, 1, 66263);
@@ -259,7 +259,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900183, 19001880, 4030871717, 1900120, 1, 66263);
 
 -- ============================================================
--- Costume: Archmage Khadgar (ID: 1900026) — 20min Costume
+-- Costume: Archmage Khadgar (ID: 1900026) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900026, 'Costume: Archmage Khadgar', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900184, 19001891, 1187407512, 1900026, 1, 66263);
@@ -271,7 +271,7 @@ REPLACE INTO `hotfixes`.`spell_effect` (`ID`, `EffectAura`, `DifficultyID`, `Eff
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900187, 19001924, 4030871717, 1900121, 1, 66263);
 
 -- ============================================================
--- Costume: Bolvar Fordragon (ID: 1900027) — 20min Costume
+-- Costume: Bolvar Fordragon (ID: 1900027) ï¿½ 20min Costume
 -- ============================================================
 REPLACE INTO `hotfixes`.`spell_name` (`ID`, `Name`, `VerifiedBuild`) VALUES (1900027, 'Costume: Bolvar Fordragon', 66263);
 REPLACE INTO `hotfixes`.`hotfix_data` (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`) VALUES (1900188, 19001935, 1187407512, 1900027, 1, 66263);
