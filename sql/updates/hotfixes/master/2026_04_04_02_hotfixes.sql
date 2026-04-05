@@ -3,6 +3,66 @@
 -- These are required by HotfixDatabase.cpp prepared statements
 --
 
+DROP TABLE IF EXISTS `crafting_data`;
+CREATE TABLE `crafting_data` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`Type` INT(10) NOT NULL DEFAULT '0',
+	`CraftingDifficultyID` INT(10) NOT NULL DEFAULT '0',
+	`CraftedItemID` INT(10) NOT NULL DEFAULT '0',
+	`ItemBonusTreeID` INT(10) NOT NULL DEFAULT '0',
+	`CraftingDifficulty` INT(10) NOT NULL DEFAULT '0',
+	`Field_10_0_0_44649_005` FLOAT(10) NOT NULL DEFAULT '0',
+	`CraftSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`ReCraftSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`InspirationSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`Field_10_0_0_44649_009` FLOAT(10) NOT NULL DEFAULT '0',
+	`Field_10_0_0_45141_011` FLOAT(10) NOT NULL DEFAULT '0',
+	`FirstCraftFlagQuestID` INT(10) NOT NULL DEFAULT '0',
+	`FirstCraftTreasureID` INT(10) NOT NULL DEFAULT '0',
+	`Field_10_2_5_52432_014` INT(10) NOT NULL DEFAULT '0',
+	`CraftedTreasureID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `crafting_data_item_quality`;
+CREATE TABLE `crafting_data_item_quality` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`ItemID` INT(10) NOT NULL DEFAULT '0',
+	`CraftingDataID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `crafting_difficulty`;
+CREATE TABLE `crafting_difficulty` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`MaxRandomSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`CraftSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`ReCraftSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`InspirationSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
+	`Field_10_0_0_44649_004` FLOAT(10) NOT NULL DEFAULT '0',
+	`ConcentrationSkillCurveID` INT(10) NOT NULL DEFAULT '0',
+	`ConcentrationDifficultyCurveID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE IF EXISTS `crafting_difficulty_quality`;
+CREATE TABLE `crafting_difficulty_quality` (
+	`ID` INT(10) UNSIGNED NOT NULL,
+	`Order` INT(10) NOT NULL DEFAULT '0',
+	`CraftingQualityID` INT(10) NOT NULL DEFAULT '0',
+	`QualityPercentage` FLOAT(10) NOT NULL DEFAULT '0',
+	`Field_10_0_0_44895_004` FLOAT(10) NOT NULL DEFAULT '0',
+	`CraftingDifficultyID` INT(10) NOT NULL DEFAULT '0',
+	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`ID`,`VerifiedBuild`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 1. crafting_reagent_quality (CraftingReagentQuality.db2)
 CREATE TABLE IF NOT EXISTS `crafting_reagent_quality` (
   `ID` int unsigned NOT NULL DEFAULT '0',
