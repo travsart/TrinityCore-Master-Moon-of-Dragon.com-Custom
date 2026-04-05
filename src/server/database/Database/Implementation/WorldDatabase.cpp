@@ -107,6 +107,8 @@ void WorldDatabaseConnection::DoPrepareStatements()
     PrepareStatement(WORLD_DEL_DRESSNPC_OUTFIT, "DELETE FROM creature_template_outfits WHERE entry = ?", CONNECTION_ASYNC);
     PrepareStatement(WORLD_REP_CREATURE_TEMPLATE_ADDON, "REPLACE INTO creature_template_addon (entry, PathId, mount, emote, aiAnimKit, movementAnimKit, meleeAnimkit, visibilityDistanceType, auras) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(WORLD_DEL_CREATURE_TEMPLATE_ADDON, "DELETE FROM creature_template_addon WHERE entry = ?", CONNECTION_ASYNC);
+    // Playerbot module statements
+    PrepareStatement(WORLD_SEL_QUEST_GIVER_SPAWNS, "SELECT c.guid, c.id, c.position_x, c.position_y, c.position_z, c.map, ct.faction, COALESCE(c.zoneId, 0) as zoneId FROM creature c INNER JOIN creature_template ct ON c.id = ct.entry WHERE ct.npcflag & 2 != 0", CONNECTION_SYNCH);
 }
 
 WorldDatabaseConnection::WorldDatabaseConnection(MySQLConnectionInfo& connInfo, ConnectionFlags connectionFlags) : MySQLConnection(connInfo, connectionFlags)
