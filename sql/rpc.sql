@@ -1212,6 +1212,7 @@ END //
 DELIMITER ;
 CALL add_crafting_columns();
 DROP PROCEDURE IF EXISTS add_crafting_columns;-- ----- End file: 4.characters.sql -----
+
 -- ----- Begin file: 5.chromie_time.sql -----
 -- Chromie Time: terrain swap conditions
 -- ConditionType 60 = CONDITION_CHROMIE_TIME (value1: 0=any CT, N=specific expansion)
@@ -1227,6 +1228,7 @@ DROP PROCEDURE IF EXISTS add_crafting_columns;-- ----- End file: 4.characters.sq
 
 -- Blasted Lands WoD terrain (1190): should NOT be active for Classic/TBC/WotLK/Cata CT
 -- (Blasted Lands was changed by WoD Iron Horde invasion — pre-WoD CT should see original)
+USE `world`;
 DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=25 AND `SourceEntry`=1190;
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceGroup`,`SourceEntry`,`SourceId`,`ElseGroup`,`ConditionTypeOrReference`,`ConditionTarget`,`ConditionValue1`,`ConditionValue2`,`ConditionValue3`,`NegativeCondition`,`ErrorType`,`ErrorTextId`,`ScriptName`,`Comment`) VALUES
 (25,0,1190,0,0,60,0,1,0,0,1,0,0,'','Blasted Lands WoD terrain: not active in TBC CT'),
