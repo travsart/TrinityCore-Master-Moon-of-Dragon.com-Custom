@@ -1,8 +1,7 @@
+start with create
+start with base
 start with tdb
 load lorewalker world
-load RoleplayCore/rpc.sql
-load exports/lw.sql
+load rpc.sql
 load exports/cleanup.sql
-load DoomCore
-load rest of items in exports (dont do rp_instant_cast_qol.sql)
 run world server
