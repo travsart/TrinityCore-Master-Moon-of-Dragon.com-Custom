@@ -15,7 +15,7 @@
 --
 -- Table structure for table `bestiary_aggregated`
 --
-
+USE `roleplay`;
 CREATE TABLE IF NOT EXISTS `bestiary_aggregated` (
   `creature_entry` int unsigned NOT NULL,
   `spell_id` int unsigned NOT NULL,
