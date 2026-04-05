@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <chrono>
+#include <atomic>
 
 namespace Playerbot
 {

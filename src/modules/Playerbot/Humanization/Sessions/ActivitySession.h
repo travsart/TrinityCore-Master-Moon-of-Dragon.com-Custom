@@ -19,6 +19,7 @@
 #include "Define.h"
 #include "../Core/ActivityType.h"
 #include "ObjectGuid.h"
+#include <atomic>
 #include <chrono>
 #include <string>
 #include <vector>
