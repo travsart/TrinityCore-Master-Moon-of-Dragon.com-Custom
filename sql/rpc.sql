@@ -1,28 +1,21 @@
 -- =====================================================
--- Combined SQL generated on 2026-04-04 19:23:36Z
+-- Combined SQL generated on 2026-04-05 20:51:06Z
 -- Sources:
 --  0.custom_tables.sql
---  1.auth_db.sql
---  2.hotfixes_db.sql
---  2.1.hotfixes_db_spell_changes.sql
---  3.roleplay_db.sql
---  5.character_db.sql
---  5.1.companion_characters.sql
---  5.2.companion_auth.sql
---  5.3.companion_seed_data.sql
---  6.player_morph.sql
---  7.characters.sql
---  8.chromie_time.sql
---  10.DarkmoonFaire_patch.sql
---  11.spell_script_class_fixes.sql
---  ../DoomCore/warlock_spell_fixes.sql
+--  1.auth.sql
+--  2.hotfixes.sql
+--  3.character_db.sql
+--  4.characters.sql
+--  5.chromie_time.sql
+--  6.darkmoon_farie.sql
+--  9.trinity_strings.sql
 -- =====================================================\n
 -- ----- Begin file: 0.custom_tables.sql -----
 -- ============================================================================
 -- VoxCore Custom Tables — Consolidated DDL
 -- ============================================================================
 -- Run this after any fresh TDB import to recreate all VoxCore-custom tables.
--- Order: auth → hotfixes (skip, already in TDB) → world → characters → roleplay
+-- Order: auth → hotfixes → world → characters → roleplay
 --
 -- Usage:
 --   mysql -u root -padmin < sql/RoleplayCore/custom_tables.sql
@@ -62,6 +55,24 @@ CREATE TABLE IF NOT EXISTS `battlenet_transmog_set_favorites` (
   `transmogSetId` int unsigned NOT NULL,
   PRIMARY KEY (`battlenetAccountId`, `transmogSetId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================================================
+-- HOTFIXES DATABASE — Schema fixes for columns missing from TC TDB
+-- ============================================================================
+USE hotfixes;
+
+-- crafting_quality: C++ expects CraftingQualityAtlasSetID but TC TDB omits it
+DROP PROCEDURE IF EXISTS fix_crafting_quality;
+DELIMITER //
+CREATE PROCEDURE fix_crafting_quality()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'hotfixes' AND TABLE_NAME = 'crafting_quality' AND COLUMN_NAME = 'CraftingQualityAtlasSetID') THEN
+        ALTER TABLE `crafting_quality` ADD COLUMN `CraftingQualityAtlasSetID` int NOT NULL DEFAULT 0 AFTER `QualityTier`;
+    END IF;
+END //
+DELIMITER ;
+CALL fix_crafting_quality();
+DROP PROCEDURE IF EXISTS fix_crafting_quality;
 
 -- ============================================================================
 -- WORLD DATABASE
@@ -260,8 +271,50 @@ CREATE TABLE IF NOT EXISTS `codex_aggregated` (
   KEY `idx_creature` (`creature_entry`),
   KEY `idx_spell` (`spell_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='CreatureCodex multi-player aggregated spell discoveries';
--- ----- End file: 0.custom_tables.sql -----
--- ----- Begin file: 1.auth_db.sql -----
+
+
+USE world;
+
+-- Idempotent custom column additions (MySQL 8.0 compatible)
+USE `world`;
+DROP PROCEDURE IF EXISTS add_custom_columns;
+DELIMITER //
+CREATE PROCEDURE add_custom_columns()
+BEGIN
+    -- gameobject.size
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'gameobject' AND COLUMN_NAME = 'size') THEN
+        ALTER TABLE `gameobject` ADD COLUMN `size` FLOAT NOT NULL DEFAULT '-1';
+    END IF;
+
+    -- gameobject.visibility
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'gameobject' AND COLUMN_NAME = 'visibility') THEN
+        ALTER TABLE `gameobject` ADD COLUMN `visibility` FLOAT NOT NULL DEFAULT '256';
+    END IF;
+
+    -- creature.size
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'creature' AND COLUMN_NAME = 'size') THEN
+        ALTER TABLE `creature` ADD COLUMN `size` FLOAT NOT NULL DEFAULT '-1' AFTER `StringId`;
+    END IF;
+
+    -- npc_vendor.OverrideGoldCost
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'npc_vendor' AND COLUMN_NAME = 'OverrideGoldCost') THEN
+        ALTER TABLE `npc_vendor` ADD COLUMN `OverrideGoldCost` INT NOT NULL DEFAULT '-1';
+    END IF;
+
+    -- scrapping_loot_template.ItemType
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scrapping_loot_template' AND COLUMN_NAME = 'ItemType') THEN
+        ALTER TABLE `scrapping_loot_template` ADD COLUMN `ItemType` tinyint NOT NULL DEFAULT 0 AFTER `Entry`;
+    END IF;
+
+    -- creature_loot_template.Reference
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'creature_loot_template' AND COLUMN_NAME = 'Reference') THEN
+        ALTER TABLE `creature_loot_template` ADD COLUMN `Reference` VARCHAR(255) DEFAULT NULL AFTER `Comment`;
+    END IF;
+END //
+DELIMITER ;
+CALL add_custom_columns();
+DROP PROCEDURE IF EXISTS add_custom_columns;-- ----- End file: 0.custom_tables.sql -----
+-- ----- Begin file: 1.auth.sql -----
 USE `auth`;
 INSERT IGNORE INTO `rbac_permissions` VALUES (1002, 'Command: .barber');
 INSERT IGNORE INTO `rbac_permissions` VALUES (1003, 'Command: .castgroup');
@@ -382,27 +435,9 @@ INSERT IGNORE INTO `rbac_linked_permissions` VALUES (193, 3009);
 INSERT IGNORE INTO `rbac_linked_permissions` VALUES (193, 3010);
 INSERT IGNORE INTO `rbac_linked_permissions` VALUES (193, 3011);
 
-CREATE TABLE IF NOT EXISTS `account_warband_groups` (
-  `id` bigint(20) unsigned NOT NULL,
-  `accountId` int(10) unsigned NOT NULL,
-  `realmId` int(10) unsigned NOT NULL DEFAULT '1',
-  `orderIndex` tinyint(3) unsigned NOT NULL,
-  `name` varchar(257) NOT NULL,
-  `warbandSceneId` int(10) unsigned NOT NULL DEFAULT '0',
-  `flags` int(10) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  KEY `idx_account_realm` (`accountId`, `realmId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `account_warband_group_members` (
-  `groupId` bigint(20) unsigned NOT NULL,
-  `characterGuid` bigint(20) unsigned NOT NULL,
-  `placementId` int(10) unsigned NOT NULL,
-  `type` int(10) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`groupId`, `characterGuid`),
-  CONSTRAINT `fk_warband_group` FOREIGN KEY (`groupId`) REFERENCES `account_warband_groups` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;-- ----- End file: 1.auth_db.sql -----
--- ----- Begin file: 2.hotfixes_db.sql -----
+INSERT IGNORE INTO `rbac_default_permissions` (`secId`, `permissionId`) VALUES
+(0, 3008);-- ----- End file: 1.auth.sql -----
+-- ----- Begin file: 2.hotfixes.sql -----
 USE `hotfixes`;
 -- ----------------------------
 -- Table structure for chr_customization_material
@@ -1011,157 +1046,6 @@ CREATE TABLE `pvp_bracket_types` (
   PRIMARY KEY (`ID`, `VerifiedBuild`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-DROP TABLE IF EXISTS `crafting_data_item_quality`;
-CREATE TABLE `crafting_data_item_quality` (
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`ItemID` INT(10) NOT NULL DEFAULT '0',
-	`CraftingDataID` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `crafting_difficulty`;
-CREATE TABLE `crafting_difficulty` (
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`MaxRandomSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
-	`CraftSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
-	`ReCraftSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
-	`InspirationSkillBonusPercent` FLOAT(10) NOT NULL DEFAULT '0',
-	`Field_10_0_0_44649_004` FLOAT(10) NOT NULL DEFAULT '0',
-	`ConcentrationSkillCurveID` INT(10) NOT NULL DEFAULT '0',
-	`ConcentrationDifficultyCurveID` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `crafting_difficulty_quality`;
-CREATE TABLE `crafting_difficulty_quality` (
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`Order` INT(10) NOT NULL DEFAULT '0',
-	`CraftingQualityID` INT(10) NOT NULL DEFAULT '0',
-	`QualityPercentage` FLOAT(10) NOT NULL DEFAULT '0',
-	`Field_10_0_0_44895_004` FLOAT(10) NOT NULL DEFAULT '0',
-	`CraftingDifficultyID` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `crafting_reagent_quality`;
-CREATE TABLE `crafting_reagent_quality` (
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`OrderIndex` INT(10) NOT NULL DEFAULT '0',
-	`ItemID` INT(10) NOT NULL DEFAULT '0',
-	`CurrencyTypesID` INT(10) NOT NULL DEFAULT '0',
-	`MaxDifficultyAdjustment` FLOAT(10) NOT NULL DEFAULT '0',
-	`ReagentEffectPct` FLOAT(10) NOT NULL DEFAULT '0',
-	`Field_12_0_0_64124_006` INT(10) NOT NULL DEFAULT '0',
-	`ModifiedCraftingCategoryID` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-DROP TABLE IF EXISTS `mcr_slot_x_mcr_category`;
-CREATE TABLE `mcr_slot_x_mcr_category` (
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`ModifiedCraftingCategoryID` INT(10) NOT NULL DEFAULT '0',
-	`Order` INT(10) NOT NULL DEFAULT '0',
-	`ModifiedCraftingReagentSlotID` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `modified_crafting_category`;
-CREATE TABLE `modified_crafting_category` (
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`DisplayName` text,
-	`Description` text,
-	`Field_9_0_1_33978_001` INT(10) NOT NULL DEFAULT '0',
-	`MatQualityWeight` INT(10) NOT NULL DEFAULT '0',
-	`Field_10_0_0_44649_004` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `modified_crafting_category_locale`;
-CREATE TABLE `modified_crafting_category_locale` (
-  `ID` int(10) unsigned NOT NULL DEFAULT '0',
-  `locale` varchar(4) NOT NULL,
-  `DisplayName_lang` text,
-  `Description_lang` text,
-  `VerifiedBuild` int(11) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`ID`,`locale`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `modified_crafting_reagent_item`;
-CREATE TABLE `modified_crafting_reagent_item` (
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`Description` text,
-	`ModifiedCraftingCategoryID` INT(10) NOT NULL DEFAULT '0',
-	`ItemBonusTreeID` INT(10) NOT NULL DEFAULT '0',
-	`Flags` INT(10) NOT NULL DEFAULT '0',
-	`Field_9_1_0_38511_004` INT(10) NOT NULL DEFAULT '0',
-	`ItemContextOffset` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `modified_crafting_reagent_item_locale`;
-CREATE TABLE `modified_crafting_reagent_item_locale` (
-  `ID` int(10) unsigned NOT NULL DEFAULT '0',
-  `locale` varchar(4) NOT NULL,
-  `Description_lang` text,
-  `VerifiedBuild` int(11) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`ID`,`locale`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `modified_crafting_reagent_slot`;
-CREATE TABLE `modified_crafting_reagent_slot` (
-	`Name` text,
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`Flags` INT(10) NOT NULL DEFAULT '0',
-	`PlayerConditionID` INT(10) NOT NULL DEFAULT '0',
-	`ReagentType` INT(10) NOT NULL DEFAULT '0',
-	`ReagentSource` INT(10) NOT NULL DEFAULT '0',
-	`Field_11_2_0_61476_006` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-	`Field_12_0_0_63534_007` float NOT NULL DEFAULT 0,
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-DROP TABLE IF EXISTS `modified_crafting_reagent_slot_locale`;
-CREATE TABLE `modified_crafting_reagent_slot_locale` (
-  `ID` int(10) unsigned NOT NULL DEFAULT '0',
-  `locale` varchar(4) NOT NULL,
-  `Name_lang` text,
-  `VerifiedBuild` int(11) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`ID`,`locale`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-DROP TABLE IF EXISTS `modified_crafting_spell_slot`;
-CREATE TABLE `modified_crafting_spell_slot` (
-	`ID` INT(10) UNSIGNED NOT NULL,
-	`SpellID` INT(10) NOT NULL DEFAULT '0',
-	`Slot` INT(10) NOT NULL DEFAULT '0',
-	`ModifiedCraftingReagentSlotID` INT(10) NOT NULL DEFAULT '0',
-	`Field_9_0_1_35679_003` INT(10) NOT NULL DEFAULT '0',
-	`ReagentCount` INT(10) NOT NULL DEFAULT '0',
-	`ReagentReCraftCount` INT(10) NOT NULL DEFAULT '0',
-	`VerifiedBuild` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`ID`,`VerifiedBuild`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;-- ----- End file: 2.hotfixes_db.sql -----
--- ----- Begin file: 2.1.hotfixes_db_spell_changes.sql -----
-USE `hotfixes`;
-
 REPLACE INTO `spell_misc` (
     `ID`, 
     `Attributes1`, `Attributes2`, `Attributes3`, `Attributes4`, `Attributes5`, `Attributes6`, `Attributes7`, `Attributes8`, `Attributes9`, `Attributes10`, 
@@ -1171,70 +1055,8 @@ REPLACE INTO `spell_misc` (
     VALUES (170768, 
     0, 268435456, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 1, 21, 0, 1, 1, 0, 0, 0, 988194, 0, 0, 0, 0, 0, 196742, 60257);
-REPLACE INTO `hotfix_data` VALUES (170768, 170768, 3322146344, 170768, 1, 60257);
-
--- ----- End file: 2.1.hotfixes_db_spell_changes.sql -----
--- ----- Begin file: 3.roleplay_db.sql -----
-CREATE DATABASE IF NOT EXISTS roleplay CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-
-USE roleplay;
-
--- ----------------------------
--- Table structure for creature_extra
--- ----------------------------
-DROP TABLE IF EXISTS `creature_extra`;
-CREATE TABLE `creature_extra`  (
-  `guid` bigint UNSIGNED NOT NULL,
-  `scale` float NOT NULL DEFAULT -1,
-  `id_creator_bnet` int UNSIGNED NOT NULL DEFAULT 0,
-  `id_creator_player` bigint UNSIGNED NOT NULL DEFAULT 0,
-  `id_modifier_bnet` int UNSIGNED NOT NULL DEFAULT 0,
-  `id_modifier_player` bigint UNSIGNED NOT NULL DEFAULT 0,
-  `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `phaseMask` int UNSIGNED NOT NULL DEFAULT 1,
-  `displayLock` tinyint UNSIGNED NOT NULL DEFAULT 0,
-  `displayId` int UNSIGNED NOT NULL DEFAULT 0,
-  `nativeDisplayId` int UNSIGNED NOT NULL DEFAULT 0,
-  `genderLock` tinyint UNSIGNED NOT NULL DEFAULT 0,
-  `gender` tinyint UNSIGNED NOT NULL DEFAULT 0,
-  `swim` tinyint UNSIGNED NOT NULL DEFAULT 1,
-  `gravity` tinyint UNSIGNED NOT NULL DEFAULT 1,
-  `fly` tinyint UNSIGNED NOT NULL DEFAULT 0,
-  PRIMARY KEY (`guid`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Table structure for creature_template_extra
--- ----------------------------
-DROP TABLE IF EXISTS `creature_template_extra`;
-CREATE TABLE `creature_template_extra`  (
-  `id_entry` int UNSIGNED NOT NULL,
-  `disabled` tinyint NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id_entry`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Table structure for custom_npcs
--- ----------------------------
-DROP TABLE IF EXISTS `custom_npcs`;
-CREATE TABLE `custom_npcs`  (
-  `Key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `Entry` int UNSIGNED NOT NULL,
-  PRIMARY KEY (`Key`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Table structure for server_settings
--- ----------------------------
-DROP TABLE IF EXISTS `server_settings`;
-CREATE TABLE `server_settings`  (
-    `setting_name` VARCHAR(50) NOT NULL,
-    `setting_value` VARCHAR(255) NOT NULL,
-    PRIMARY KEY (`setting_name`)
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
--- ----- End file: 3.roleplay_db.sql -----
--- ----- Begin file: 5.character_db.sql -----
+REPLACE INTO `hotfix_data` VALUES (170768, 170768, 3322146344, 170768, 1, 60257);-- ----- End file: 2.hotfixes.sql -----
+-- ----- Begin file: 3.character_db.sql -----
 -- Favorites
 
 -- ============================================================================
@@ -1308,42 +1130,22 @@ CREATE TABLE IF NOT EXISTS `companion_roster` (
     PRIMARY KEY (`entry`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Companion squad roster definitions';
 
--- ----- End file: 5.character_db.sql -----
--- ----- Begin file: 5.1.companion_characters.sql -----
--- ============================================================================
--- Companion Squad System — Characters DB tables
--- Run against: characters
--- ============================================================================
-USE `characters`;
-CREATE TABLE IF NOT EXISTS `character_companion_squad` (
-    `guid`          BIGINT UNSIGNED NOT NULL,
-    `slot`          TINYINT UNSIGNED NOT NULL COMMENT '0-4',
-    `roster_entry`  INT UNSIGNED NOT NULL,
-    PRIMARY KEY (`guid`, `slot`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Per-character companion squad slots';
 
-CREATE TABLE IF NOT EXISTS `character_companion_control` (
-    `guid`       BIGINT UNSIGNED NOT NULL,
-    `mode`       TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '0=Passive,1=Defend,2=Assist',
-    `following`  TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    PRIMARY KEY (`guid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Per-character companion control state';
--- ----- End file: 5.1.companion_characters.sql -----
--- ----- Begin file: 5.2.companion_auth.sql -----
--- ============================================================================
--- Companion Squad System — Auth DB RBAC
--- Run against: auth
--- ============================================================================
-USE `auth`;
+DROP PROCEDURE IF EXISTS add_crafting_columns;
+DELIMITER //
+CREATE PROCEDURE add_crafting_columns()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'item_instance_modifiers' AND COLUMN_NAME = 'craftingModifiedStat1') THEN
+        ALTER TABLE `item_instance_modifiers`
+            ADD COLUMN `craftingModifiedStat1` INT(10) UNSIGNED DEFAULT 0 NULL AFTER `artifactKnowledgeLevel`,
+            ADD COLUMN `craftingModifiedStat2` INT(10) UNSIGNED DEFAULT 0 NULL AFTER `craftingModifiedStat1`;
+    END IF;
+END //
+DELIMITER ;
+CALL add_crafting_columns();
+DROP PROCEDURE IF EXISTS add_crafting_columns;
 
-INSERT IGNORE INTO `rbac_permissions` (`id`, `name`) VALUES
-(3008, 'Command: .comp');
 
--- Grant to all players (secId 0 = default player)
-INSERT IGNORE INTO `rbac_default_permissions` (`secId`, `permissionId`) VALUES
-(0, 3008);
--- ----- End file: 5.2.companion_auth.sql -----
--- ----- Begin file: 5.3.companion_seed_data.sql -----
 -- ============================================================================
 -- Companion Squad System — Seed Data
 -- Run against: world
@@ -1394,18 +1196,8 @@ REPLACE INTO `companion_roster` (`entry`, `name`, `role`, `spell1`, `spell2`, `s
 (500002, 'Rogue',    1, 1752, 53, 0, 4000, 8000, 0),             -- Melee: Sinister Strike, Backstab
 (500003, 'Hunter',   2, 6660, 0, 0, 3000, 0, 0),                 -- Ranged: Shoot
 (500004, 'Mage',     3, 133, 116, 0, 4000, 5000, 0),             -- Caster: Fireball, Frostbolt
-(500005, 'Priest',   4, 2061, 139, 0, 5000, 12000, 0);           -- Healer: Flash Heal, Renew
--- ----- End file: 5.3.companion_seed_data.sql -----
--- ----- Begin file: 6.player_morph.sql -----
-USE `roleplay`;
-CREATE TABLE IF NOT EXISTS `player_morph` (
-  `playerGuid` bigint unsigned NOT NULL,
-  `morphDisplayId` int unsigned NOT NULL DEFAULT 0,
-  `scale` float NOT NULL DEFAULT 1,
-  PRIMARY KEY (`playerGuid`)
-) ENGINE=InnoDB;
--- ----- End file: 6.player_morph.sql -----
--- ----- Begin file: 7.characters.sql -----
+(500005, 'Priest',   4, 2061, 139, 0, 5000, 12000, 0);           -- Healer: Flash Heal, Renew-- ----- End file: 3.character_db.sql -----
+-- ----- Begin file: 4.characters.sql -----
 USE `characters`;
 
 -- Idempotent crafting stat modifier columns (MySQL 8.0 compatible)
@@ -1421,8 +1213,8 @@ BEGIN
 END //
 DELIMITER ;
 CALL add_crafting_columns();
-DROP PROCEDURE IF EXISTS add_crafting_columns;-- ----- End file: 7.characters.sql -----
--- ----- Begin file: 8.chromie_time.sql -----
+DROP PROCEDURE IF EXISTS add_crafting_columns;-- ----- End file: 4.characters.sql -----
+-- ----- Begin file: 5.chromie_time.sql -----
 -- Chromie Time: terrain swap conditions
 -- ConditionType 60 = CONDITION_CHROMIE_TIME (value1: 0=any CT, N=specific expansion)
 -- NegativeCondition=1 inverts: "NOT in CT for expansion N"
@@ -1487,8 +1279,8 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceGroup`,`SourceEntry`,
 -- ============================================================================
 DELETE FROM `gossip_menu_option` WHERE `MenuID`=25426;
 INSERT INTO `gossip_menu_option` (`MenuID`,`GossipOptionID`,`OptionID`,`OptionNpc`,`OptionText`,`OptionBroadcastTextID`,`Language`,`Flags`,`ActionMenuID`,`ActionPoiID`,`GossipNpcOptionID`,`BoxCoded`,`BoxMoney`,`BoxText`,`BoxBroadcastTextID`,`SpellID`,`OverrideIconID`,`VerifiedBuild`) VALUES
-(25426,-250000,0,40,'I want to select a different timeline.',0,0,0,0,0,NULL,0,0,NULL,0,NULL,NULL,0);-- ----- End file: 8.chromie_time.sql -----
--- ----- Begin file: 10.DarkmoonFaire_patch.sql -----
+(25426,-250000,0,40,'I want to select a different timeline.',0,0,0,0,0,NULL,0,0,NULL,0,NULL,NULL,0);-- ----- End file: 5.chromie_time.sql -----
+-- ----- Begin file: 6.darkmoon_farie.sql -----
 USE `world`;
 -- ----------------------------
 -- Misc fixes
@@ -1587,178 +1379,21 @@ REPLACE INTO `spell_script_names` VALUES (101838, 'spell_gen_repair_damaged_tonk
 
 -- ----------------------------
 -- Wrack Gnoll fixes
--- ------------------------------ ----- End file: 10.DarkmoonFaire_patch.sql -----
--- ----- Begin file: 11.spell_script_class_fixes.sql -----
-DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_dh_demon_muzzle';
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(389860, 'spell_dh_demon_muzzle'),
-(204598, 'spell_dh_demon_muzzle'),
-(207685, 'spell_dh_demon_muzzle'),
-(204490, 'spell_dh_demon_muzzle'),
-(204834, 'spell_dh_demon_muzzle');
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_guardian_of_elune_healing');
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(22842, 'spell_dru_guardian_of_elune_healing');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (155578);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(155578,0x00,7,0x00000000,0x00000040,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0,0,0,0); -- Guardian of Elune
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (213680);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(213680,0x00,7,0x00000000,0x40000000,0x00004000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0,0,0,0); -- Guardian of Elune
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (383115);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(383115,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x1000,0x0,0x0,0,0,0,0); -- Concussive Blows
-
-DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_warlords_torment';
-INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
-(390140,'spell_warr_warlords_torment');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (390140);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(390140,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x1,0x0,0x0,0x0,0,0,0,0); -- Warlord's Torment
-
-DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_bladesmasters_torment';
-INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
-(390138,'spell_warr_bladesmasters_torment');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (390138);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(390138,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x1,0x0,0x0,0x0,0,0,0,0); -- Blademaster's Torment
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_thorns_of_iron_damage');
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(400223, 'spell_dru_thorns_of_iron_damage');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (400222);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(400222,0x00,7,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x4,0x0,0x0,0x0,0,0,0,0); -- Thorns of Iron
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_warr_intervene');
-INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
-(3411,'spell_warr_intervene'),
-(316531,'spell_warr_intervene_charge');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (147833);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(147833,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x2,0x0,0,0,0,0); -- Intervene
-
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(382551, 'spell_warr_pain_and_gain_heal');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (382549);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(382549,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x2,0x2,0x0,0x2,0x0,0,0,0,0); -- Pain and Gain
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_elunes_favored', 'spell_dru_elunes_favored_proc');
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(370586, 'spell_dru_elunes_favored'),
-(370588, 'spell_dru_elunes_favored_proc');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (370588);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(370588,0x40,7,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0,0,0,0); -- Elune's Favored
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_flower_walk', 'spell_dru_flower_walk_heal');
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(22812, 'spell_dru_flower_walk'),
-(439902, 'spell_dru_flower_walk_heal');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (395446);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(395446,0x00,107,0x00000000,0x00000002,0x00000000,0x00000000,0x0,0x0,0x5,0x2,0x0,0x0,0x0,0,0,0,0); -- Soul Sigils
-
-DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_dh_soul_sigils';
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(395446, 'spell_dh_soul_sigils');
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_twin_moonfire', 'spell_dru_twin_moons_effect');
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(8921, 'spell_dru_twin_moonfire'),
-(281847, 'spell_dru_twin_moons_effect');
-
-DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_thunder_clap';
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(6343, 'spell_warr_thunder_clap');
-
-DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_thunder_clap_rend';
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(6343, 'spell_warr_thunder_clap_rend');
-
-DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_dh_enduring_torment';
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(452410, 'spell_dh_enduring_torment');
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_moonless_night');
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(400278, 'spell_dru_moonless_night');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (400278);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(400278,0x00,7,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0,0,0,0); -- Moonless Night
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (7384);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(7384,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x8,0x0,0,0,0,1); -- Overpower
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (392792);
-INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES
-(392792,0x00,4,0x00000000,0x00000000,0x00000000,0x00000000,0x0,0x0,0x0,0x2,0x0,0x8,0x0,0,0,0,0); -- Frothing Berserker
-
-DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_warr_frothing_berserker';
-INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
-(392792,'spell_warr_frothing_berserker');
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dru_pulverize', 'spell_dru_pulverize_thrash');
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(80313, 'spell_dru_pulverize'),
-(77758, 'spell_dru_pulverize_thrash');-- ----- End file: 11.spell_script_class_fixes.sql -----
--- ----- Begin file: ../DoomCore/warlock_spell_fixes.sql -----
+-- ------------------------------ ----- End file: 6.darkmoon_farie.sql -----
+-- ----- Begin file: 9.trinity_strings.sql -----
 USE `world`;
-
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_warl_diabolic_ritual_passive', 'spell_warl_diabolic_ritual', 'spell_warl_demonic_art', 'spell_warl_pit_lord_felseeker', 'spell_warl_pit_lord_felseeker_at', 'spell_warl_mother_chaos_missile', 'spell_warl_overlord_wicked_cleave', 'spell_warl_infernal_bolt_empower_aura', 'spell_warl_overfiend_chaos_bolt', 'spell_warl_avatar_of_destruction', 'spell_warl_dimensional_rift_talent', 'spell_warl_ruination', 'spell_warl_ruination_damage', 'spell_warl_ruination_entry_aura', 'spell_warl_diabolic_oculi');
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
-(428514, 'spell_warl_diabolic_ritual_passive'),
-(431944, 'spell_warl_diabolic_ritual'),
-(432815, 'spell_warl_diabolic_ritual'),
-(432816, 'spell_warl_diabolic_ritual'),
-(428524, 'spell_warl_demonic_art'),
-(432794, 'spell_warl_demonic_art'),
-(432795, 'spell_warl_demonic_art'),
-(438973, 'spell_warl_pit_lord_felseeker'),
-(434404, 'spell_warl_pit_lord_felseeker_at'),
-(432596, 'spell_warl_mother_chaos_missile'),
-(432113, 'spell_warl_overlord_wicked_cleave'),
-(432120, 'spell_warl_overlord_wicked_cleave'),
-(433891, 'spell_warl_infernal_bolt_empower_aura'),
-(434589, 'spell_warl_overfiend_chaos_bolt'),
-(1245089, 'spell_warl_avatar_of_destruction'),
-(1280868, 'spell_warl_dimensional_rift_talent'),
-(433885, 'spell_warl_ruination_entry_aura'),
-(434635, 'spell_warl_ruination'),
-(434636, 'spell_warl_ruination_damage'),
-(1269643, 'spell_warl_diabolic_oculi');
-
-DELETE FROM `spell_proc` WHERE `SpellId` IN (428514, 428524, 432794, 432795, 1245089, 1280868);
-INSERT INTO `spell_proc` (`SpellId`, `SchoolMask`, `SpellFamilyName`, `SpellFamilyMask0`, `SpellFamilyMask1`, `SpellFamilyMask2`, `SpellFamilyMask3`, `ProcFlags`, `ProcFlags2`, `SpellTypeMask`, `SpellPhaseMask`, `HitMask`, `AttributesMask`, `DisableEffectsMask`, `ProcsPerMinute`, `Chance`, `Cooldown`, `Charges`) VALUES
-(428514, 0, 5, 0, 0, 0, 0, 0x10000, 0, 1, 2, 0, 0, 0, 0, 100, 0, 0),
-(428524, 0, 0, 0, 0, 0, 0, 0, 0x4, 0, 1, 0, 0, 0, 0, 100, 0, 0),
-(432794, 0, 0, 0, 0, 0, 0, 0, 0x4, 0, 1, 0, 0, 0, 0, 100, 0, 0),
-(432795, 0, 0, 0, 0, 0, 0, 0, 0x4, 0, 1, 0, 0, 0, 0, 100, 0, 0),
-(1245089, 0, 5, 0, 0, 0, 0, 0x10000, 0, 1, 2, 0, 0, 0, 0, 100, 0, 0),
-(1280868, 0, 5, 0, 0, 0, 0, 0x10000, 0, 1, 2, 0, 0, 0, 0, 10, 0, 0);
-
-UPDATE `creature_template` SET `ScriptName` = 'npc_warl_diabolist_overlord' WHERE `entry` = 228575;
-UPDATE `creature_template` SET `ScriptName` = 'npc_warl_diabolist_mother_of_chaos' WHERE `entry` = 228576;
-UPDATE `creature_template` SET `ScriptName` = 'npc_warl_diabolist_pit_lord' WHERE `entry` = 228574;
-UPDATE `creature_template` SET `ScriptName` = 'npc_warl_avatar_of_destruction_overfiend' WHERE `entry` = 217429;
-UPDATE `creature_template` SET `ScriptName` = 'npc_warl_diabolic_imp' WHERE `entry` = 219161;
-
-UPDATE `creature_template` SET `ScriptName` = 'npc_warl_dimensional_rift_unstable_tear' WHERE `entry` = 196280;
-UPDATE `creature_template` SET `ScriptName` = 'npc_warl_dimensional_rift_chaos_tear' WHERE `entry` = 108493;
-UPDATE `creature_template` SET `ScriptName` = 'npc_warl_dimensional_rift_shadowy_tear' WHERE `entry` = 99887;
-
--- ----- End file: ../DoomCore/warlock_spell_fixes.sql -----
+INSERT INTO `trinity_string` (`entry`,`content_default`) VALUES
+(200000, "Syntax: .display head <itemId> [bonusId]\nOverrides head appearance."),
+(200001, "Syntax: .display shoulders <itemId> [bonusId]\nOverrides shoulder appearance."),
+(200002, "Syntax: .display lshoulder <itemId> [bonusId]\nOverrides secondary shoulder."),
+(200003, "Syntax: .display shirt <itemId> [bonusId]\nOverrides shirt appearance."),
+(200004, "Syntax: .display chest <itemId> [bonusId]\nOverrides chest appearance."),
+(200005, "Syntax: .display waist <itemId> [bonusId]\nOverrides belt appearance."),
+(200006, "Syntax: .display legs <itemId> [bonusId]\nOverrides leg appearance."),
+(200007, "Syntax: .display feet <itemId> [bonusId]\nOverrides boot appearance."),
+(200008, "Syntax: .display wrists <itemId> [bonusId]\nOverrides bracer appearance."),
+(200009, "Syntax: .display hands <itemId> [bonusId]\nOverrides glove appearance."),
+(200010, "Syntax: .display back <itemId> [bonusId]\nOverrides cloak appearance."),
+(200011, "Syntax: .display tabard <itemId> [bonusId]\nOverrides tabard appearance."),
+(200012, "Syntax: .display mainhand <itemId> [bonusId]\nOverrides main-hand weapon appearance."),
+(200013, "Syntax: .display offhand <itemId> [bonusId]\nOverrides off-hand weapon appearance.");-- ----- End file: 9.trinity_strings.sql -----
