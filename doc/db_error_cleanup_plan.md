@@ -107,6 +107,35 @@ Same likely applies to factions, spells, and other DB2-sourced data.
 | 124K | Template: orphan child | Phase 4 |
 | 103K | Faction: missing | Phase 1-2 |
 
+## What Was Done (Session 228 Tab A)
+
+### RoleplayCore SQL Re-applied
+All 18 numbered files from `sql/RoleplayCore/` recovered from git (commit `de0c04bea2`) and re-applied:
+- hotfixes: 33 table schemas recreated, spell_misc/hotfix_data, crafting_data
+- world: creature_template_outfits, scrapping_loot, spell_script_names (100+), areatrigger_*, companion seed data, player_morph, custom columns, DarkmoonFaire
+- roleplay: 4 custom tables (creature_extra, creature_template_extra, custom_npcs, server_settings)
+- characters: companion tables, crafting columns, profession backfill, reputations
+- auth: RBAC perms, unlocks (appearances, mounts, heirlooms, toys, warband_scenes)
+- **Skipped**: RoleplayPatches/Customization (destructive — wipes chr_customization_choice)
+
+### Phase 4 Orphan Cleanup
+| File | DB | What | Rows |
+|------|-----|------|------|
+| `2026_04_04_04_world.sql` | world | 10 orphan table cleanups | ~32,644 |
+| `2026_04_04_01_hotfixes.sql` | hotfixes | DB2 redirect blob + hotfix_data entries | ~20,424 |
+
+Orphan tables cleaned: quest_visual_effect (30,590), creature_addon (1,284), creature_template_movement (237), npc_vendor (200), creature_queststarter (114), smart_scripts GO (69), creature_template_gossip (55), creature_formations (40), creature_questender (13), creature_template_difficulty (2).
+
+### Expected Error Reduction on Next Boot
+- Phase 1-2a (session 226): eliminated ~886K row sources → ~2-3M fewer errors
+- Phase 4 (session 228): eliminated ~53K row sources → ~800K fewer errors (32K world + 20K hotfix blobs)
+- **Remaining errors** (not fixable with SQL cleanup):
+  - ~1.6M loot item missing (needs DB2 re-extraction or Wago import)
+  - ~300K flags disallowed (cosmetic, server auto-fixes)
+  - ~220K serverside spell conflicts (code-level, not data)
+  - ~200K miscellaneous (SmartAI conditions, display models, etc.)
+- **Estimated post-restart**: ~2.3M errors (down from 6.8M — 66% reduction)
+
 ## Key Files
 - TC TDB: `ExtTools/TC_TDB/TDB_full_world_1200.26021_2026_02_06.sql`
 - LoreWalker TDB: `ExtTools/LoreWalkerTDB/world.sql`

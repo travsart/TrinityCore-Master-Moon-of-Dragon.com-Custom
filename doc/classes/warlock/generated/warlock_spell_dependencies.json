@@ -1,0 +1,2113 @@
+{
+  "nodes": [
+    {
+      "id": 71931,
+      "name": "Fel Domination",
+      "tree": "class"
+    },
+    {
+      "id": 71933,
+      "name": "Soul Leech",
+      "tree": "class"
+    },
+    {
+      "id": 71949,
+      "name": "Burning Rush",
+      "tree": "class"
+    },
+    {
+      "id": 71932,
+      "name": "Fel Pact",
+      "tree": "class"
+    },
+    {
+      "id": 71952,
+      "name": "Demon Skin",
+      "tree": "class"
+    },
+    {
+      "id": 71950,
+      "name": "Fel Armor",
+      "tree": "class"
+    },
+    {
+      "id": 71948,
+      "name": "Fiendish Stride",
+      "tree": "class"
+    },
+    {
+      "id": 71930,
+      "name": "Demonic Embrace",
+      "tree": "class"
+    },
+    {
+      "id": 71916,
+      "name": "Nightmare",
+      "tree": "class"
+    },
+    {
+      "id": 71922,
+      "name": "Demonic Fortitude",
+      "tree": "class"
+    },
+    {
+      "id": 71944,
+      "name": "Banish",
+      "tree": "class"
+    },
+    {
+      "id": 109847,
+      "name": "Curse of Exhaustion",
+      "tree": "class"
+    },
+    {
+      "id": 109846,
+      "name": "Curse of Tongues",
+      "tree": "class"
+    },
+    {
+      "id": 109844,
+      "name": "Infernal Beneficiary",
+      "tree": "class"
+    },
+    {
+      "id": 71942,
+      "name": "Mortal Coil",
+      "tree": "class"
+    },
+    {
+      "id": 110071,
+      "name": "Pact of the Annihilan",
+      "tree": "class"
+    },
+    {
+      "id": 100941,
+      "name": "Demonic Circle",
+      "tree": "class"
+    },
+    {
+      "id": 110072,
+      "name": "Pact of the Satyr",
+      "tree": "class"
+    },
+    {
+      "id": 109845,
+      "name": "Improved Mortal Coil",
+      "tree": "class"
+    },
+    {
+      "id": 71936,
+      "name": "Dark Pact",
+      "tree": "class"
+    },
+    {
+      "id": 109840,
+      "name": "Foul Mouth",
+      "tree": "class"
+    },
+    {
+      "id": 110075,
+      "name": "Empowered Healthstone",
+      "tree": "class"
+    },
+    {
+      "id": 71954,
+      "name": "Abyss Walker",
+      "tree": "class"
+    },
+    {
+      "id": 110074,
+      "name": "Fortified Soul",
+      "tree": "class"
+    },
+    {
+      "id": 71938,
+      "name": "Teachings of the Black Harvest",
+      "tree": "class"
+    },
+    {
+      "id": 71923,
+      "name": "Gorefiend's Avarice",
+      "tree": "class"
+    },
+    {
+      "id": 71937,
+      "name": "Ichor of Devils",
+      "tree": "class"
+    },
+    {
+      "id": 109843,
+      "name": "Pact of the Eredar",
+      "tree": "class"
+    },
+    {
+      "id": 110073,
+      "name": "Pact of the Nathrezim",
+      "tree": "class"
+    },
+    {
+      "id": 71917,
+      "name": "Demonic Resilience",
+      "tree": "class"
+    },
+    {
+      "id": 110076,
+      "name": "Empowered Drain Life",
+      "tree": "class"
+    },
+    {
+      "id": 71956,
+      "name": "Strength of Will",
+      "tree": "class"
+    },
+    {
+      "id": 71955,
+      "name": "Demonic Gateway",
+      "tree": "class"
+    },
+    {
+      "id": 71947,
+      "name": "Howl of Terror",
+      "tree": "class"
+    },
+    {
+      "id": 71918,
+      "name": "Swift Artifice",
+      "tree": "class"
+    },
+    {
+      "id": 109842,
+      "name": "Soul Link",
+      "tree": "class"
+    },
+    {
+      "id": 109841,
+      "name": "Frequent Traveler",
+      "tree": "class"
+    },
+    {
+      "id": 71924,
+      "name": "Fel Synergy",
+      "tree": "class"
+    },
+    {
+      "id": 71941,
+      "name": "Oppressive Darkness",
+      "tree": "class"
+    },
+    {
+      "id": 71926,
+      "name": "Pact of Gluttony",
+      "tree": "class"
+    },
+    {
+      "id": 71957,
+      "name": "Soulburn",
+      "tree": "class"
+    },
+    {
+      "id": 109848,
+      "name": "Blight of Weakness",
+      "tree": "class"
+    },
+    {
+      "id": 72049,
+      "name": "Agony",
+      "tree": "affliction"
+    },
+    {
+      "id": 109862,
+      "name": "Unstable Affliction",
+      "tree": "affliction"
+    },
+    {
+      "id": 72050,
+      "name": "Seed of Corruption",
+      "tree": "affliction"
+    },
+    {
+      "id": 72047,
+      "name": "Nightfall",
+      "tree": "affliction"
+    },
+    {
+      "id": 72032,
+      "name": "Haunt",
+      "tree": "affliction"
+    },
+    {
+      "id": 109861,
+      "name": "Shared Agony",
+      "tree": "affliction"
+    },
+    {
+      "id": 72045,
+      "name": "Improved Shadow Bolt",
+      "tree": "affliction"
+    },
+    {
+      "id": 102031,
+      "name": "Improved Haunt",
+      "tree": "affliction"
+    },
+    {
+      "id": 72051,
+      "name": "Absolute Corruption",
+      "tree": "affliction"
+    },
+    {
+      "id": 72054,
+      "name": "Cunning Cruelty",
+      "tree": "affliction"
+    },
+    {
+      "id": 72055,
+      "name": "Withering Bolt",
+      "tree": "affliction"
+    },
+    {
+      "id": 72058,
+      "name": "Creeping Death",
+      "tree": "affliction"
+    },
+    {
+      "id": 109860,
+      "name": "Dark Harvest",
+      "tree": "affliction"
+    },
+    {
+      "id": 110269,
+      "name": "Practiced Pestilence",
+      "tree": "affliction"
+    },
+    {
+      "id": 72034,
+      "name": "Summon Darkglare",
+      "tree": "affliction"
+    },
+    {
+      "id": 72037,
+      "name": "Summoner's Embrace",
+      "tree": "affliction"
+    },
+    {
+      "id": 109859,
+      "name": "Cull the Weak",
+      "tree": "affliction"
+    },
+    {
+      "id": 72046,
+      "name": "Malediction",
+      "tree": "affliction"
+    },
+    {
+      "id": 109849,
+      "name": "Sudden Onset",
+      "tree": "affliction"
+    },
+    {
+      "id": 110270,
+      "name": "Eye Contract",
+      "tree": "affliction"
+    },
+    {
+      "id": 109858,
+      "name": "Malefic Grasp",
+      "tree": "affliction"
+    },
+    {
+      "id": 71987,
+      "name": "Nether Plating",
+      "tree": "affliction"
+    },
+    {
+      "id": 109850,
+      "name": "Sacrolash's Dark Strike",
+      "tree": "affliction"
+    },
+    {
+      "id": 72041,
+      "name": "Contagion",
+      "tree": "affliction"
+    },
+    {
+      "id": 109857,
+      "name": "Shard Instability",
+      "tree": "affliction"
+    },
+    {
+      "id": 109863,
+      "name": "Niskaran Methods",
+      "tree": "affliction"
+    },
+    {
+      "id": 109864,
+      "name": "Potent Soul Shards",
+      "tree": "affliction"
+    },
+    {
+      "id": 109851,
+      "name": "Nocturnal Yield",
+      "tree": "affliction"
+    },
+    {
+      "id": 109865,
+      "name": "Xavius' Gambit",
+      "tree": "affliction"
+    },
+    {
+      "id": 102247,
+      "name": "Ravenous Afflictions",
+      "tree": "affliction"
+    },
+    {
+      "id": 109866,
+      "name": "Seeds of Destruction",
+      "tree": "affliction"
+    },
+    {
+      "id": 109852,
+      "name": "Fatal Echoes",
+      "tree": "affliction"
+    },
+    {
+      "id": 109855,
+      "name": "Cascading Calamity",
+      "tree": "affliction"
+    },
+    {
+      "id": 72033,
+      "name": "Death's Embrace",
+      "tree": "affliction"
+    },
+    {
+      "id": 109853,
+      "name": "Patient Zero",
+      "tree": "affliction"
+    },
+    {
+      "id": 109854,
+      "name": "Sow the Seeds",
+      "tree": "affliction"
+    },
+    {
+      "id": 110405,
+      "name": "Shadow of Nathreza",
+      "tree": "affliction"
+    },
+    {
+      "id": 101891,
+      "name": "Hand of Gul'dan",
+      "tree": "demonology"
+    },
+    {
+      "id": 109244,
+      "name": "Demoniac",
+      "tree": "demonology"
+    },
+    {
+      "id": 101894,
+      "name": "Call Dreadstalkers",
+      "tree": "demonology"
+    },
+    {
+      "id": 110195,
+      "name": "Dominant Hand",
+      "tree": "demonology"
+    },
+    {
+      "id": 109250,
+      "name": "Fel Intellect",
+      "tree": "demonology"
+    },
+    {
+      "id": 109251,
+      "name": "Practiced Rituals",
+      "tree": "demonology"
+    },
+    {
+      "id": 101888,
+      "name": "Dreadlash",
+      "tree": "demonology"
+    },
+    {
+      "id": 101923,
+      "name": "Imp-erator",
+      "tree": "demonology"
+    },
+    {
+      "id": 101893,
+      "name": "Implosion",
+      "tree": "demonology"
+    },
+    {
+      "id": 109257,
+      "name": "Summon Felguard",
+      "tree": "demonology"
+    },
+    {
+      "id": 109934,
+      "name": "Infernal Rapidity",
+      "tree": "demonology"
+    },
+    {
+      "id": 101914,
+      "name": "Rune of Shadows",
+      "tree": "demonology"
+    },
+    {
+      "id": 101887,
+      "name": "Carnivorous Stalkers",
+      "tree": "demonology"
+    },
+    {
+      "id": 109936,
+      "name": "Fel Armaments",
+      "tree": "demonology"
+    },
+    {
+      "id": 109253,
+      "name": "Imp Gang Boss",
+      "tree": "demonology"
+    },
+    {
+      "id": 101920,
+      "name": "Demonic Brutality",
+      "tree": "demonology"
+    },
+    {
+      "id": 110194,
+      "name": "Inner Demons",
+      "tree": "demonology"
+    },
+    {
+      "id": 101905,
+      "name": "Summon Demonic Tyrant",
+      "tree": "demonology"
+    },
+    {
+      "id": 109248,
+      "name": "Blighted Maw",
+      "tree": "demonology"
+    },
+    {
+      "id": 101892,
+      "name": "Improved Demonic Tactics",
+      "tree": "demonology"
+    },
+    {
+      "id": 110192,
+      "name": "Empowered Felstorm",
+      "tree": "demonology"
+    },
+    {
+      "id": 110193,
+      "name": "Spiteful Reconstitution",
+      "tree": "demonology"
+    },
+    {
+      "id": 110191,
+      "name": "Tyrant's Oblation",
+      "tree": "demonology"
+    },
+    {
+      "id": 109241,
+      "name": "Antoran Armaments",
+      "tree": "demonology"
+    },
+    {
+      "id": 101909,
+      "name": "Flametouched",
+      "tree": "demonology"
+    },
+    {
+      "id": 109249,
+      "name": "Demonic Knowledge",
+      "tree": "demonology"
+    },
+    {
+      "id": 101886,
+      "name": "Sacrificed Souls",
+      "tree": "demonology"
+    },
+    {
+      "id": 110201,
+      "name": "Reign of Tyranny",
+      "tree": "demonology"
+    },
+    {
+      "id": 101908,
+      "name": "Master Summoner",
+      "tree": "demonology"
+    },
+    {
+      "id": 101903,
+      "name": "Demonic Calling",
+      "tree": "demonology"
+    },
+    {
+      "id": 110200,
+      "name": "Doom",
+      "tree": "demonology"
+    },
+    {
+      "id": 110198,
+      "name": "Hellbent Commander",
+      "tree": "demonology"
+    },
+    {
+      "id": 110197,
+      "name": "Grimoire: Imp Lord",
+      "tree": "demonology"
+    },
+    {
+      "id": 109252,
+      "name": "Summon Vilefiend",
+      "tree": "demonology"
+    },
+    {
+      "id": 101917,
+      "name": "Summon Doomguard",
+      "tree": "demonology"
+    },
+    {
+      "id": 110199,
+      "name": "To Hell and Back",
+      "tree": "demonology"
+    },
+    {
+      "id": 110196,
+      "name": "Stabilized Portals",
+      "tree": "demonology"
+    },
+    {
+      "id": 101895,
+      "name": "Mark of Shatug",
+      "tree": "demonology"
+    },
+    {
+      "id": 110404,
+      "name": "Dominion of Argus",
+      "tree": "demonology"
+    },
+    {
+      "id": 110282,
+      "name": "Chaos Bolt",
+      "tree": "destruction"
+    },
+    {
+      "id": 72068,
+      "name": "Conflagrate",
+      "tree": "destruction"
+    },
+    {
+      "id": 72069,
+      "name": "Rain of Fire",
+      "tree": "destruction"
+    },
+    {
+      "id": 108680,
+      "name": "Improved Conflagrate",
+      "tree": "destruction"
+    },
+    {
+      "id": 72067,
+      "name": "Backdraft",
+      "tree": "destruction"
+    },
+    {
+      "id": 108678,
+      "name": "Practiced Chaos",
+      "tree": "destruction"
+    },
+    {
+      "id": 72065,
+      "name": "Roaring Blaze",
+      "tree": "destruction"
+    },
+    {
+      "id": 72059,
+      "name": "Explosive Potential",
+      "tree": "destruction"
+    },
+    {
+      "id": 71979,
+      "name": "Mayhem",
+      "tree": "destruction"
+    },
+    {
+      "id": 71973,
+      "name": "Scalding Flames",
+      "tree": "destruction"
+    },
+    {
+      "id": 72060,
+      "name": "Shadowburn",
+      "tree": "destruction"
+    },
+    {
+      "id": 71983,
+      "name": "Backlash",
+      "tree": "destruction"
+    },
+    {
+      "id": 71961,
+      "name": "Improved Havoc",
+      "tree": "destruction"
+    },
+    {
+      "id": 71969,
+      "name": "Ashen Remains",
+      "tree": "destruction"
+    },
+    {
+      "id": 71974,
+      "name": "Cataclysm",
+      "tree": "destruction"
+    },
+    {
+      "id": 101994,
+      "name": "Fiendish Cruelty",
+      "tree": "destruction"
+    },
+    {
+      "id": 72061,
+      "name": "Chaotic Inferno",
+      "tree": "destruction"
+    },
+    {
+      "id": 71972,
+      "name": "Flashpoint",
+      "tree": "destruction"
+    },
+    {
+      "id": 71985,
+      "name": "Summon Infernal",
+      "tree": "destruction"
+    },
+    {
+      "id": 72062,
+      "name": "Emberstorm",
+      "tree": "destruction"
+    },
+    {
+      "id": 71982,
+      "name": "Fire and Brimstone",
+      "tree": "destruction"
+    },
+    {
+      "id": 102427,
+      "name": "Lake of Fire",
+      "tree": "destruction"
+    },
+    {
+      "id": 71980,
+      "name": "Reverse Entropy",
+      "tree": "destruction"
+    },
+    {
+      "id": 71960,
+      "name": "Crashing Chaos",
+      "tree": "destruction"
+    },
+    {
+      "id": 71971,
+      "name": "Summoner's Embrace",
+      "tree": "destruction"
+    },
+    {
+      "id": 72066,
+      "name": "Ruin",
+      "tree": "destruction"
+    },
+    {
+      "id": 101992,
+      "name": "Improved Chaos Bolt",
+      "tree": "destruction"
+    },
+    {
+      "id": 71964,
+      "name": "Destructive Rapidity",
+      "tree": "destruction"
+    },
+    {
+      "id": 110281,
+      "name": "Devastation",
+      "tree": "destruction"
+    },
+    {
+      "id": 108681,
+      "name": "Dimensional Rift",
+      "tree": "destruction"
+    },
+    {
+      "id": 71975,
+      "name": "Inferno",
+      "tree": "destruction"
+    },
+    {
+      "id": 71965,
+      "name": "Conflagration of Chaos",
+      "tree": "destruction"
+    },
+    {
+      "id": 71968,
+      "name": "Diabolic Embers",
+      "tree": "destruction"
+    },
+    {
+      "id": 72064,
+      "name": "Demonfire Infusion",
+      "tree": "destruction"
+    },
+    {
+      "id": 110280,
+      "name": "Avatar of Destruction",
+      "tree": "destruction"
+    },
+    {
+      "id": 71966,
+      "name": "Chaos Incarnate",
+      "tree": "destruction"
+    },
+    {
+      "id": 102003,
+      "name": "Alythess's Ire",
+      "tree": "destruction"
+    },
+    {
+      "id": 101993,
+      "name": "Raging Demonfire",
+      "tree": "destruction"
+    },
+    {
+      "id": 110406,
+      "name": "Embers of Nihilam",
+      "tree": "destruction"
+    },
+    {
+      "id": 94855,
+      "name": "Diabolic Ritual",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94849,
+      "name": "Cloven Souls",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94856,
+      "name": "Touch of Rancora",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94826,
+      "name": "Secrets of the Coven",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 109833,
+      "name": "Diabolic Oculi",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94836,
+      "name": "Soul-Etched Circles",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94848,
+      "name": "Cruelty of Kerxan",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94852,
+      "name": "Infernal Vitality",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 109832,
+      "name": "Looks That Kill",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94833,
+      "name": "Flames of Xoroth",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94831,
+      "name": "Abyssal Dominion",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94843,
+      "name": "Gloom of Nathreza",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 109831,
+      "name": "Mind's Eyes",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94830,
+      "name": "Ruination",
+      "tree": "hero_diabolist"
+    },
+    {
+      "id": 94840,
+      "name": "Wither",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94853,
+      "name": "Xalan's Ferocity",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94837,
+      "name": "Blackened Soul",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94845,
+      "name": "Xalan's Cruelty",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 109836,
+      "name": "Through the Felvine",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94822,
+      "name": "Curse of the Satyr",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94854,
+      "name": "Hatefury Rituals",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94835,
+      "name": "Zevrim's Resilience",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 109835,
+      "name": "Devil Fruit",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94834,
+      "name": "Mark of Xavius",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94829,
+      "name": "Seeds of Their Demise",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94844,
+      "name": "Mark of Peroth'arn",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 109834,
+      "name": "Alzzin's Iniquity",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94842,
+      "name": "Malevolence",
+      "tree": "hero_hellcaller"
+    },
+    {
+      "id": 94851,
+      "name": "Demonic Soul",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94825,
+      "name": "Necrolyte Teachings",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94847,
+      "name": "Soul Anathema",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94832,
+      "name": "Demoniac's Fervor",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 109839,
+      "name": "Manifested Avarice",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94850,
+      "name": "Gorebound Fortitude",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94823,
+      "name": "Shared Fate",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94824,
+      "name": "Eternal Servitude",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 109838,
+      "name": "Shared Vessel",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94821,
+      "name": "Wicked Reaping",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94846,
+      "name": "Quietus",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94838,
+      "name": "Sataiel's Volition",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 109837,
+      "name": "Eternal Hunger",
+      "tree": "hero_soul_harvester"
+    },
+    {
+      "id": 94857,
+      "name": "Shadow of Death",
+      "tree": "hero_soul_harvester"
+    }
+  ],
+  "edges": [
+    {
+      "parent": 71931,
+      "child": 71932
+    },
+    {
+      "parent": 71931,
+      "child": 71952
+    },
+    {
+      "parent": 71933,
+      "child": 71950
+    },
+    {
+      "parent": 71933,
+      "child": 71952
+    },
+    {
+      "parent": 71949,
+      "child": 71948
+    },
+    {
+      "parent": 71949,
+      "child": 71950
+    },
+    {
+      "parent": 71932,
+      "child": 71930
+    },
+    {
+      "parent": 71952,
+      "child": 71916
+    },
+    {
+      "parent": 71952,
+      "child": 71930
+    },
+    {
+      "parent": 71950,
+      "child": 71916
+    },
+    {
+      "parent": 71950,
+      "child": 71922
+    },
+    {
+      "parent": 71948,
+      "child": 71922
+    },
+    {
+      "parent": 71930,
+      "child": 71944
+    },
+    {
+      "parent": 71930,
+      "child": 109847
+    },
+    {
+      "parent": 71916,
+      "child": 109846
+    },
+    {
+      "parent": 71916,
+      "child": 109847
+    },
+    {
+      "parent": 71922,
+      "child": 71942
+    },
+    {
+      "parent": 71922,
+      "child": 109844
+    },
+    {
+      "parent": 71922,
+      "child": 109846
+    },
+    {
+      "parent": 71944,
+      "child": 110071
+    },
+    {
+      "parent": 109847,
+      "child": 100941
+    },
+    {
+      "parent": 109847,
+      "child": 110071
+    },
+    {
+      "parent": 109846,
+      "child": 100941
+    },
+    {
+      "parent": 109846,
+      "child": 110072
+    },
+    {
+      "parent": 109844,
+      "child": 110072
+    },
+    {
+      "parent": 71942,
+      "child": 109845
+    },
+    {
+      "parent": 71942,
+      "child": 110072
+    },
+    {
+      "parent": 110071,
+      "child": 71936
+    },
+    {
+      "parent": 110071,
+      "child": 109840
+    },
+    {
+      "parent": 110071,
+      "child": 110075
+    },
+    {
+      "parent": 100941,
+      "child": 71954
+    },
+    {
+      "parent": 100941,
+      "child": 110074
+    },
+    {
+      "parent": 100941,
+      "child": 110075
+    },
+    {
+      "parent": 110072,
+      "child": 71923
+    },
+    {
+      "parent": 110072,
+      "child": 71938
+    },
+    {
+      "parent": 110072,
+      "child": 110074
+    },
+    {
+      "parent": 109845,
+      "child": 71923
+    },
+    {
+      "parent": 71936,
+      "child": 71937
+    },
+    {
+      "parent": 109840,
+      "child": 109843
+    },
+    {
+      "parent": 110075,
+      "child": 109843
+    },
+    {
+      "parent": 71954,
+      "child": 109843
+    },
+    {
+      "parent": 71954,
+      "child": 110073
+    },
+    {
+      "parent": 110074,
+      "child": 71917
+    },
+    {
+      "parent": 110074,
+      "child": 110073
+    },
+    {
+      "parent": 71938,
+      "child": 71917
+    },
+    {
+      "parent": 71923,
+      "child": 71917
+    },
+    {
+      "parent": 71923,
+      "child": 110076
+    },
+    {
+      "parent": 71937,
+      "child": 71956
+    },
+    {
+      "parent": 109843,
+      "child": 71955
+    },
+    {
+      "parent": 109843,
+      "child": 71956
+    },
+    {
+      "parent": 110073,
+      "child": 71947
+    },
+    {
+      "parent": 110073,
+      "child": 71955
+    },
+    {
+      "parent": 71917,
+      "child": 71947
+    },
+    {
+      "parent": 110076,
+      "child": 71947
+    },
+    {
+      "parent": 71956,
+      "child": 71918
+    },
+    {
+      "parent": 71956,
+      "child": 109842
+    },
+    {
+      "parent": 71955,
+      "child": 71924
+    },
+    {
+      "parent": 71955,
+      "child": 109841
+    },
+    {
+      "parent": 71955,
+      "child": 109842
+    },
+    {
+      "parent": 71947,
+      "child": 71924
+    },
+    {
+      "parent": 71947,
+      "child": 71941
+    },
+    {
+      "parent": 71918,
+      "child": 71926
+    },
+    {
+      "parent": 109842,
+      "child": 71926
+    },
+    {
+      "parent": 109842,
+      "child": 71957
+    },
+    {
+      "parent": 109841,
+      "child": 71957
+    },
+    {
+      "parent": 71924,
+      "child": 71957
+    },
+    {
+      "parent": 71924,
+      "child": 109848
+    },
+    {
+      "parent": 71941,
+      "child": 109848
+    },
+    {
+      "parent": 72049,
+      "child": 72050
+    },
+    {
+      "parent": 72049,
+      "child": 109862
+    },
+    {
+      "parent": 109862,
+      "child": 72032
+    },
+    {
+      "parent": 109862,
+      "child": 72047
+    },
+    {
+      "parent": 72050,
+      "child": 72032
+    },
+    {
+      "parent": 72050,
+      "child": 109861
+    },
+    {
+      "parent": 72047,
+      "child": 72045
+    },
+    {
+      "parent": 72032,
+      "child": 102031
+    },
+    {
+      "parent": 109861,
+      "child": 72051
+    },
+    {
+      "parent": 72045,
+      "child": 72054
+    },
+    {
+      "parent": 72045,
+      "child": 72055
+    },
+    {
+      "parent": 102031,
+      "child": 72055
+    },
+    {
+      "parent": 102031,
+      "child": 72058
+    },
+    {
+      "parent": 72051,
+      "child": 72058
+    },
+    {
+      "parent": 72051,
+      "child": 109860
+    },
+    {
+      "parent": 72054,
+      "child": 110269
+    },
+    {
+      "parent": 72055,
+      "child": 72034
+    },
+    {
+      "parent": 72055,
+      "child": 110269
+    },
+    {
+      "parent": 72058,
+      "child": 72034
+    },
+    {
+      "parent": 72058,
+      "child": 72037
+    },
+    {
+      "parent": 109860,
+      "child": 72037
+    },
+    {
+      "parent": 109860,
+      "child": 109859
+    },
+    {
+      "parent": 110269,
+      "child": 72046
+    },
+    {
+      "parent": 110269,
+      "child": 109849
+    },
+    {
+      "parent": 72034,
+      "child": 71987
+    },
+    {
+      "parent": 72034,
+      "child": 109858
+    },
+    {
+      "parent": 72034,
+      "child": 110270
+    },
+    {
+      "parent": 72037,
+      "child": 72041
+    },
+    {
+      "parent": 72037,
+      "child": 109850
+    },
+    {
+      "parent": 109859,
+      "child": 72041
+    },
+    {
+      "parent": 72046,
+      "child": 109857
+    },
+    {
+      "parent": 109849,
+      "child": 109857
+    },
+    {
+      "parent": 109849,
+      "child": 109863
+    },
+    {
+      "parent": 110270,
+      "child": 109863
+    },
+    {
+      "parent": 109858,
+      "child": 109863
+    },
+    {
+      "parent": 109858,
+      "child": 109864
+    },
+    {
+      "parent": 71987,
+      "child": 109864
+    },
+    {
+      "parent": 109850,
+      "child": 109851
+    },
+    {
+      "parent": 109850,
+      "child": 109864
+    },
+    {
+      "parent": 72041,
+      "child": 109851
+    },
+    {
+      "parent": 109857,
+      "child": 109865
+    },
+    {
+      "parent": 109863,
+      "child": 102247
+    },
+    {
+      "parent": 109863,
+      "child": 109865
+    },
+    {
+      "parent": 109864,
+      "child": 102247
+    },
+    {
+      "parent": 109864,
+      "child": 109866
+    },
+    {
+      "parent": 109851,
+      "child": 109866
+    },
+    {
+      "parent": 109865,
+      "child": 109852
+    },
+    {
+      "parent": 109865,
+      "child": 109855
+    },
+    {
+      "parent": 102247,
+      "child": 72033
+    },
+    {
+      "parent": 109866,
+      "child": 109853
+    },
+    {
+      "parent": 109866,
+      "child": 109854
+    },
+    {
+      "parent": 101891,
+      "child": 101894
+    },
+    {
+      "parent": 101891,
+      "child": 109244
+    },
+    {
+      "parent": 109244,
+      "child": 109250
+    },
+    {
+      "parent": 109244,
+      "child": 110195
+    },
+    {
+      "parent": 101894,
+      "child": 101888
+    },
+    {
+      "parent": 101894,
+      "child": 109251
+    },
+    {
+      "parent": 110195,
+      "child": 101923
+    },
+    {
+      "parent": 109250,
+      "child": 101893
+    },
+    {
+      "parent": 109250,
+      "child": 101923
+    },
+    {
+      "parent": 109251,
+      "child": 101893
+    },
+    {
+      "parent": 109251,
+      "child": 109257
+    },
+    {
+      "parent": 101888,
+      "child": 109257
+    },
+    {
+      "parent": 101923,
+      "child": 101914
+    },
+    {
+      "parent": 101923,
+      "child": 109934
+    },
+    {
+      "parent": 101893,
+      "child": 101887
+    },
+    {
+      "parent": 101893,
+      "child": 101914
+    },
+    {
+      "parent": 109257,
+      "child": 101887
+    },
+    {
+      "parent": 109257,
+      "child": 109936
+    },
+    {
+      "parent": 109934,
+      "child": 101920
+    },
+    {
+      "parent": 109934,
+      "child": 109253
+    },
+    {
+      "parent": 101914,
+      "child": 101905
+    },
+    {
+      "parent": 101914,
+      "child": 101920
+    },
+    {
+      "parent": 101914,
+      "child": 110194
+    },
+    {
+      "parent": 101887,
+      "child": 101892
+    },
+    {
+      "parent": 101887,
+      "child": 101905
+    },
+    {
+      "parent": 101887,
+      "child": 109248
+    },
+    {
+      "parent": 109936,
+      "child": 101892
+    },
+    {
+      "parent": 109936,
+      "child": 110192
+    },
+    {
+      "parent": 109253,
+      "child": 110193
+    },
+    {
+      "parent": 101920,
+      "child": 110193
+    },
+    {
+      "parent": 110194,
+      "child": 110193
+    },
+    {
+      "parent": 101905,
+      "child": 109241
+    },
+    {
+      "parent": 101905,
+      "child": 110191
+    },
+    {
+      "parent": 109248,
+      "child": 101909
+    },
+    {
+      "parent": 101892,
+      "child": 101909
+    },
+    {
+      "parent": 110192,
+      "child": 101909
+    },
+    {
+      "parent": 110193,
+      "child": 101886
+    },
+    {
+      "parent": 110193,
+      "child": 109249
+    },
+    {
+      "parent": 110191,
+      "child": 101886
+    },
+    {
+      "parent": 110191,
+      "child": 110201
+    },
+    {
+      "parent": 109241,
+      "child": 101908
+    },
+    {
+      "parent": 109241,
+      "child": 110201
+    },
+    {
+      "parent": 101909,
+      "child": 101903
+    },
+    {
+      "parent": 101909,
+      "child": 101908
+    },
+    {
+      "parent": 109249,
+      "child": 110198
+    },
+    {
+      "parent": 109249,
+      "child": 110200
+    },
+    {
+      "parent": 101886,
+      "child": 110198
+    },
+    {
+      "parent": 110201,
+      "child": 110197
+    },
+    {
+      "parent": 110201,
+      "child": 110198
+    },
+    {
+      "parent": 101908,
+      "child": 110197
+    },
+    {
+      "parent": 101903,
+      "child": 109252
+    },
+    {
+      "parent": 101903,
+      "child": 110197
+    },
+    {
+      "parent": 110200,
+      "child": 101917
+    },
+    {
+      "parent": 110198,
+      "child": 110199
+    },
+    {
+      "parent": 110197,
+      "child": 110196
+    },
+    {
+      "parent": 109252,
+      "child": 101895
+    },
+    {
+      "parent": 110282,
+      "child": 72068
+    },
+    {
+      "parent": 110282,
+      "child": 72069
+    },
+    {
+      "parent": 72068,
+      "child": 72067
+    },
+    {
+      "parent": 72068,
+      "child": 108680
+    },
+    {
+      "parent": 72069,
+      "child": 72065
+    },
+    {
+      "parent": 72069,
+      "child": 108678
+    },
+    {
+      "parent": 108680,
+      "child": 72059
+    },
+    {
+      "parent": 72067,
+      "child": 71979
+    },
+    {
+      "parent": 72067,
+      "child": 72059
+    },
+    {
+      "parent": 108678,
+      "child": 71973
+    },
+    {
+      "parent": 108678,
+      "child": 71979
+    },
+    {
+      "parent": 72065,
+      "child": 71973
+    },
+    {
+      "parent": 72059,
+      "child": 71983
+    },
+    {
+      "parent": 72059,
+      "child": 72060
+    },
+    {
+      "parent": 71979,
+      "child": 71961
+    },
+    {
+      "parent": 71979,
+      "child": 71969
+    },
+    {
+      "parent": 71979,
+      "child": 71983
+    },
+    {
+      "parent": 71973,
+      "child": 71969
+    },
+    {
+      "parent": 71973,
+      "child": 71974
+    },
+    {
+      "parent": 72060,
+      "child": 72061
+    },
+    {
+      "parent": 72060,
+      "child": 101994
+    },
+    {
+      "parent": 71983,
+      "child": 71972
+    },
+    {
+      "parent": 71983,
+      "child": 71985
+    },
+    {
+      "parent": 71983,
+      "child": 72061
+    },
+    {
+      "parent": 71961,
+      "child": 71985
+    },
+    {
+      "parent": 71969,
+      "child": 71982
+    },
+    {
+      "parent": 71969,
+      "child": 71985
+    },
+    {
+      "parent": 71969,
+      "child": 72062
+    },
+    {
+      "parent": 71974,
+      "child": 71982
+    },
+    {
+      "parent": 71974,
+      "child": 102427
+    },
+    {
+      "parent": 101994,
+      "child": 71980
+    },
+    {
+      "parent": 72061,
+      "child": 71980
+    },
+    {
+      "parent": 71972,
+      "child": 71980
+    },
+    {
+      "parent": 71985,
+      "child": 71960
+    },
+    {
+      "parent": 72062,
+      "child": 71971
+    },
+    {
+      "parent": 71982,
+      "child": 71971
+    },
+    {
+      "parent": 102427,
+      "child": 71971
+    },
+    {
+      "parent": 71980,
+      "child": 72066
+    },
+    {
+      "parent": 71980,
+      "child": 101992
+    },
+    {
+      "parent": 71960,
+      "child": 71964
+    },
+    {
+      "parent": 71960,
+      "child": 101992
+    },
+    {
+      "parent": 71971,
+      "child": 71964
+    },
+    {
+      "parent": 71971,
+      "child": 110281
+    },
+    {
+      "parent": 72066,
+      "child": 71975
+    },
+    {
+      "parent": 72066,
+      "child": 108681
+    },
+    {
+      "parent": 101992,
+      "child": 71965
+    },
+    {
+      "parent": 101992,
+      "child": 71975
+    },
+    {
+      "parent": 71964,
+      "child": 71965
+    },
+    {
+      "parent": 71964,
+      "child": 71968
+    },
+    {
+      "parent": 110281,
+      "child": 71968
+    },
+    {
+      "parent": 110281,
+      "child": 72064
+    },
+    {
+      "parent": 108681,
+      "child": 110280
+    },
+    {
+      "parent": 71975,
+      "child": 71966
+    },
+    {
+      "parent": 71968,
+      "child": 102003
+    },
+    {
+      "parent": 72064,
+      "child": 101993
+    },
+    {
+      "parent": 94855,
+      "child": 94826
+    },
+    {
+      "parent": 94855,
+      "child": 94849
+    },
+    {
+      "parent": 94855,
+      "child": 94856
+    },
+    {
+      "parent": 94855,
+      "child": 109833
+    },
+    {
+      "parent": 94849,
+      "child": 94836
+    },
+    {
+      "parent": 94856,
+      "child": 94848
+    },
+    {
+      "parent": 94826,
+      "child": 94852
+    },
+    {
+      "parent": 109833,
+      "child": 109832
+    },
+    {
+      "parent": 94836,
+      "child": 94833
+    },
+    {
+      "parent": 94848,
+      "child": 94831
+    },
+    {
+      "parent": 94852,
+      "child": 94843
+    },
+    {
+      "parent": 109832,
+      "child": 109831
+    },
+    {
+      "parent": 94833,
+      "child": 94830
+    },
+    {
+      "parent": 94831,
+      "child": 94830
+    },
+    {
+      "parent": 94843,
+      "child": 94830
+    },
+    {
+      "parent": 109831,
+      "child": 94830
+    },
+    {
+      "parent": 94840,
+      "child": 94837
+    },
+    {
+      "parent": 94840,
+      "child": 94845
+    },
+    {
+      "parent": 94840,
+      "child": 94853
+    },
+    {
+      "parent": 94840,
+      "child": 109836
+    },
+    {
+      "parent": 94853,
+      "child": 94822
+    },
+    {
+      "parent": 94837,
+      "child": 94854
+    },
+    {
+      "parent": 94845,
+      "child": 94835
+    },
+    {
+      "parent": 109836,
+      "child": 109835
+    },
+    {
+      "parent": 94822,
+      "child": 94834
+    },
+    {
+      "parent": 94854,
+      "child": 94829
+    },
+    {
+      "parent": 94835,
+      "child": 94844
+    },
+    {
+      "parent": 109835,
+      "child": 109834
+    },
+    {
+      "parent": 94834,
+      "child": 94842
+    },
+    {
+      "parent": 94829,
+      "child": 94842
+    },
+    {
+      "parent": 94844,
+      "child": 94842
+    },
+    {
+      "parent": 109834,
+      "child": 94842
+    },
+    {
+      "parent": 94851,
+      "child": 94825
+    },
+    {
+      "parent": 94851,
+      "child": 94832
+    },
+    {
+      "parent": 94851,
+      "child": 94847
+    },
+    {
+      "parent": 94851,
+      "child": 109839
+    },
+    {
+      "parent": 94825,
+      "child": 94850
+    },
+    {
+      "parent": 94847,
+      "child": 94823
+    },
+    {
+      "parent": 94832,
+      "child": 94824
+    },
+    {
+      "parent": 109839,
+      "child": 109838
+    },
+    {
+      "parent": 94850,
+      "child": 94821
+    },
+    {
+      "parent": 94823,
+      "child": 94846
+    },
+    {
+      "parent": 94824,
+      "child": 94838
+    },
+    {
+      "parent": 109838,
+      "child": 109837
+    },
+    {
+      "parent": 94821,
+      "child": 94857
+    },
+    {
+      "parent": 94846,
+      "child": 94857
+    },
+    {
+      "parent": 94838,
+      "child": 94857
+    },
+    {
+      "parent": 109837,
+      "child": 94857
+    }
+  ]
+}

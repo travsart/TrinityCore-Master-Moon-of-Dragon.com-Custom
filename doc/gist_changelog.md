@@ -1,6 +1,93 @@
-RoleplayCore â€” Session Changelog (WoW 12.x private server)
+RoleplayCore -- Session Changelog (WoW 12.x private server)
 
 
+
+## Apr 4 2026
+
+### Session 228 -- DB Cleanup & Housekeeping
+- **Dropped staging databases**: `world_lorewalker_staging` + `hotfixes_lorewalker_staging` (session 118 leftovers). No orphan views remaining
+- **LoreWalker loot error fix**: 428 rows in `creature_template_difficulty` had LootID referencing missing `creature_loot_template` entries. 208 unique creatures zeroed out. Eliminates ~1.78M DBErrors at startup
+- **Gist sync**: Updated all 3 gists (DB Report, Changelog, Open Issues) to cover sessions 214-228
+
+### Session 227 (main) -- VoxSniffer Combat Audit v1
+- **CombatAudit module implemented**: CombatAudit.lua (player CLEU capture, proc watchdog, spell stats accumulators, aura timeline), ProcExpectations.lua (data-driven proc validation), audit_report.py (Python report generator)
+- **Gemini audit**: PASS after 4 HIGH fixes (guard clauses, event validation, performance bounds, error handling)
+- Commit: `5cd63fdd3f`
+
+### Session 227 (tab 2) -- DB Error Cleanup + TC TDB Backfill
+- **6.1M DBErrors analyzed**: Categorized all errors -- loot orphans (30%), SmartAI (22%), hotfix schema (18%), difficulty (15%), SmartAI links (11%)
+- **Phase 1 cleanup**: Deleted orphan difficulty rows (26K), quest_template_addon (57K), SmartAI (195), zeroed bad loot refs (412K), hotfix cleanup (203K). Total ~698K rows
+- **Phase 2a cleanup**: SmartAI broken link chains (164K), quest_poi orphans (21K), game_event orphans (3.5K)
+- **TC TDB backfill**: Downloaded TDB 1200.26021, built converter, applied 598MB world (771 tables) + 334MB hotfixes (433 tables) via INSERT IGNORE on LoreWalker base. 329 removed items purged from loot
+- **Plan**: `doc/db_error_cleanup_plan.md` for remaining 6.8M errors
+- Commit: `eef19fe221`
+
+### Session 226 -- Warlock + VoxSniffer Specs (Triad)
+- **TRIAD-WARLOCK-FULLCLASS-V1**: 31KB spec via ChatGPT API. All 3 specs + class tree + 3 hero talent trees. 8-phase implementation plan
+- **TRIAD-VOXSNIFFER-COMBAT-AUDIT-V1**: 18KB spec. Player CLEU capture, proc watchdog, spell stats, aura timeline, Python report generator
+- Commit: `6e32ef1e0f`
+
+### Session 225 -- LoreWalker Migration Apply + MySQL Tuning
+- **Applied LoreWalker migration SQL**: 3 world files + 1 hotfixes file. ~3.3M rows (680K creatures, 194K gameobjects, 2M broadcast_text_locale, etc.)
+- **MySQL 8.0 NVMe optimization**: 12 InnoDB settings tuned for 128GB RAM + Samsung 9100 PRO (buffer_pool 8G, io_capacity 20K, redo_log 2G, doublewrite OFF)
+- **Crash fix**: Duplicate `RegisterSpellScript(spell_sha_feral_lunge)` from TC upstream sync
+- **Account recreated**: auth DB was empty post-migration, created via bnetaccount create
+- Server boots in ~31s, 22GB RAM, 1.78M DBErrors (cosmetic loot orphans)
+
+### Session 224 -- Wrap-up + 13 Conditional Skills
+- **13 skills made conditional**: `paths:` frontmatter (5 C++/build, 5 SQL, 2 addon, 1 packet)
+- **FileChanged hook**: Script ready for schema support
+- **SubagentStart + ConfigChange hooks** registered
+- Commit: `8f01aa113c`
+
+### Session 223 -- Claude Code Tier 2 Reports (1M context)
+- **7 reports written** (5,550 lines): tool pipeline, swarm system, coordinator/agents, hooks, permissions, skills, MCP client
+- **Key findings**: hook allow doesn't bypass deny, tool results >100K persisted to disk, fork subagents share prompt cache, MCP timeout ~27.8h
+- Reports at `AI_Studio/Reports/ClaudeCodeInternals/06-12_*.md`
+
+### Session 222 -- Claude Code Internals Deep-Dive
+- **Source analysis**: 4 npm archives (162MB, 1,884 TS files). Mapped 22 internal systems across 213 directories
+- **11 reports** (266KB): compaction, system prompt, context window, memory, AutoDream + 6 optimization reports
+- **Optimizations applied**: 1M context enabled, 3 conditional rules, .gitignore 205->15 untracked, 54 memory frontmatter files
+- Commit: `0916b667c9`
+
+### Session 221 -- Swift Crusade Spell + Timestamp Hook Fix
+- **Custom spell 1900031**: “Swift Crusade” -- +100% move speed always, +200% mounted ground+flight. Permanent, self-cast
+- **Timestamp hook**: Added statusMessage for terminal visibility
+- Commit: `0916b667c9`
+
+## Apr 3 2026
+
+### Session 220 -- Bnetserver Fix + Chrono Surge + DB Schema Repair
+- **Custom spell 1900030**: “Chrono Surge” -- +250% haste, -75% CD recovery. Permanent, self-cast
+- **DB schema repair**: 3 fixes for TC sync compat (crafting columns, 14 missing tables, ALTER TABLE)
+- **Bnetserver port 1119 fix** + duplicate MCP process cleanup
+- Commit: `54d9ef6621`
+
+### Session 219 -- Samsung 9100 PRO SSD Install Prep
+- **Hardware planning**: 34-step SSD swap checklist, disk audit (82% full), full clone strategy
+- **USB recovery**: Repartitioned 57GB SanDisk from broken 1GB FAT32
+
+### Session 218 -- Timestamp Hook + “Convos with Claude” Blog
+- **Timestamp hook built**: `UserPromptSubmit` hook injecting datetime. GitHub repo: `claude-code-timestamp-hook`
+- **dev.to blog post published**: “Convos with Claude: Teaching an AI to Tell Time”
+- **Twitter/X cross-linked**: Tagged @AnthropicAI, @alexalbert__
+
+### Session 217 -- TC Upstream Sync (19 Commits)
+- **Full TC sync**: All 19 TrinityCore commits Mar 21 -- Apr 1 2026
+- **Command system refactor**: `std::vector<ChatCommand>` -> `ChatCommandTable` (std::span). Updated 55 TC + 12 custom files
+- **Transmog fixes** (3 TC commits): Full ViewedOutfit processing, TransmogHoliday.db2, artifact crash fix
+- **Build**: Zero errors, 13/13 targets. Commit: `762a20e97a`
+
+## Mar 23-31 2026
+
+### Session 215 -- Angel VA TDIU Filing Support
+- **21-8940 PDF filled**: 103 XFA fields, draft answers, migraine legal analysis (3 decisions)
+- **4 buddy statements** + neurologist template + action plan + Item 26 continuation sheet
+
+### Session 214 -- Gemini Pro Business Briefing
+- **15-doc briefing package**: 10 memory + 11 desktop files synthesized. Identity correction, Google ecosystem mapping
+- Commit: `c690e31568`
 
 ## Mar 21 2026
 

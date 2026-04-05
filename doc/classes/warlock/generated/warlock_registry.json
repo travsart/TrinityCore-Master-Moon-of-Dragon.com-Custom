@@ -1,0 +1,7142 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "source": "build_warlock_registry.py",
+    "rawExtractionFile": "warlock_raw_extraction.json",
+    "totalNodes": 199,
+    "choiceNodes": 30,
+    "tierDistribution": {
+      "C": 41,
+      "A": 14,
+      "B": 144
+    },
+    "treeDistribution": {
+      "class": 42,
+      "affliction": 37,
+      "demonology": 39,
+      "destruction": 39,
+      "hero_diabolist": 14,
+      "hero_hellcaller": 14,
+      "hero_soul_harvester": 14
+    },
+    "handlerStats": {
+      "HAS_HANDLER": 33,
+      "TC_NATIVE": 155,
+      "NEEDS_HANDLER": 10,
+      "DISABLED": 1
+    },
+    "classifiedBy": "classify_warlock_handlers.py",
+    "sourceFile": "src\\server\\scripts\\Spells\\spell_warlock.cpp",
+    "totalRegisteredScripts": 84,
+    "activeScripts": 83,
+    "disabledScripts": 1,
+    "triageNote": "Post-Phase 5 Tier C: Demon Skin + Soul Link handlers written. Mortal Coil, Soulburn, Ichor of Devils classified TC_NATIVE (verified via DB2 effect/targeting analysis)."
+  },
+  "heroSubtrees": [
+    {
+      "subTreeId": 57,
+      "name": "Soul Harvester",
+      "description": "Few grasp the power hidden within souls, but many know the hunger demons share for spirits of the fallen. Soul Harvesters enter pacts with demons from the Twisting Nether, serving as their host and feeding them the souls of their foes in exchange for incredible power.",
+      "key": "hero_soul_harvester",
+      "eligibleSpecs": [
+        "affliction",
+        "demonology"
+      ]
+    },
+    {
+      "subTreeId": 58,
+      "name": "Hellcaller",
+      "description": "Amongst the satyr sects throughout Azeroth, Hellcallers are the most feared. Hellcaller warlocks have learned to weave together the vilest of shadow magic and entropic fel fire at the cost of corrupting their own soul.",
+      "key": "hero_hellcaller",
+      "eligibleSpecs": [
+        "affliction",
+        "destruction"
+      ]
+    },
+    {
+      "subTreeId": 59,
+      "name": "Diabolist",
+      "description": "The defeat of the Legion left many powerful demons unbound. Diabolists command greater demons once thought to be uncontrollable and wield abyssal powers from the Twisting Nether on the battlefield.",
+      "key": "hero_diabolist",
+      "eligibleSpecs": [
+        "demonology",
+        "destruction"
+      ]
+    }
+  ],
+  "spellLookup": {
+    "172": "Corruption",
+    "710": "Banish",
+    "980": "Agony",
+    "1122": "Summon Infernal",
+    "1714": "Curse of Tongues",
+    "5484": "Howl of Terror",
+    "5740": "Rain of Fire",
+    "6353": "Soul Fire",
+    "6789": "Mortal Coil",
+    "17877": "Shadowburn",
+    "17962": "Conflagrate",
+    "27243": "Seed of Corruption",
+    "30146": "Summon Felguard",
+    "30283": "Shadowfury",
+    "48181": "Haunt",
+    "56244": "Horrify",
+    "80240": "Havoc",
+    "104316": "Call Dreadstalkers",
+    "105174": "Hand of Gul'dan",
+    "108370": "Soul Leech",
+    "108415": "Soul Link",
+    "108416": "Dark Pact",
+    "108503": "Grimoire of Sacrifice",
+    "108558": "Nightfall",
+    "111400": "Burning Rush",
+    "111771": "Demonic Gateway",
+    "116858": "Chaos Bolt",
+    "152108": "Cataclysm",
+    "196103": "Absolute Corruption",
+    "196226": "Sow the Seeds",
+    "196277": "Implosion",
+    "196406": "Backdraft",
+    "196408": "Fire and Brimstone",
+    "196447": "Channel Demonfire",
+    "205148": "Reverse Entropy",
+    "205180": "Summon Darkglare",
+    "219272": "Demon Skin",
+    "231793": "Improved Conflagrate",
+    "234876": "Death's Embrace",
+    "264000": "Creeping Death",
+    "264078": "Dreadlash",
+    "264130": "Power Siphon",
+    "265187": "Summon Demonic Tyrant",
+    "266086": "Rain of Chaos",
+    "266134": "Internal Combustion",
+    "267214": "Sacrificed Souls",
+    "267216": "Inner Demons",
+    "268358": "Demonic Circle",
+    "288843": "Demonic Embrace",
+    "317138": "Strength of Will",
+    "333889": "Fel Domination",
+    "334275": "Curse of Exhaustion",
+    "385881": "Teachings of the Black Harvest",
+    "385899": "Soulburn",
+    "386110": "Fiendish Stride",
+    "386113": "Fel Pact",
+    "386124": "Fel Armor",
+    "386185": "Demonic Knowledge",
+    "386194": "Carnivorous Stalkers",
+    "386617": "Demonic Fortitude",
+    "386648": "Nightmare",
+    "386659": "Dark Accord",
+    "386664": "Ichor of Devils",
+    "386686": "Frequent Donor",
+    "386689": "Pact of Gluttony",
+    "386976": "Withering Bolt",
+    "386986": "Sacrolash's Dark Strike",
+    "387103": "Ruin",
+    "387108": "Conflagration of Chaos",
+    "387166": "Raging Demonfire",
+    "387173": "Diabolic Embers",
+    "387252": "Ashen Remains",
+    "387259": "Flashpoint",
+    "387275": "Chaos Incarnate",
+    "387384": "Backlash",
+    "387506": "Mayhem",
+    "388667": "Drain Soul",
+    "388827": "Explosive Potential",
+    "388832": "Scalding Flames",
+    "389367": "Fel Synergy",
+    "389590": "Demonic Resilience",
+    "389609": "Abyss Walker",
+    "389623": "Gorefiend's Resolve",
+    "416230": "Imp-erator",
+    "416615": "Xavius' Gambit",
+    "417234": "Crashing Chaos",
+    "426115": "Demoniac",
+    "428394": "Spiteful Reconstitution",
+    "428514": "Diabolic Ritual",
+    "428517": "Cloven Souls",
+    "428518": "Secrets of the Coven",
+    "428522": "Ruination",
+    "428911": "Soul-Etched Circles",
+    "429072": "Annihilan's Bellow",
+    "429115": "Infernal Vitality",
+    "429130": "Infernal Bulwark",
+    "429581": "Abyssal Dominion",
+    "429657": "Flames of Xoroth",
+    "429893": "Touch of Rancora",
+    "429899": "Gloom of Nathreza",
+    "429902": "Cruelty of Kerxan",
+    "429917": "Infernal Machine",
+    "430014": "Malevolence",
+    "440040": "Xalan's Cruelty",
+    "440043": "Blackened Soul",
+    "440044": "Xalan's Ferocity",
+    "440045": "Mark of Peroth'arn",
+    "440046": "Mark of Xavius",
+    "440048": "Hatefury Rituals",
+    "440051": "Bleakheart Tactics",
+    "440055": "Seeds of Their Demise",
+    "440057": "Curse of the Satyr",
+    "440059": "Aura of Enfeeblement",
+    "440065": "Zevrim's Resilience",
+    "440070": "Illhoof's Design",
+    "442726": "Malevolence",
+    "445465": "Wither",
+    "445468": "Wither",
+    "449614": "Demonic Soul",
+    "449620": "Necrolyte Teachings",
+    "449624": "Soul Anathema",
+    "449629": "Demoniac's Fervor",
+    "449631": "Wicked Reaping",
+    "449634": "Quietus",
+    "449637": "Sataiel's Volition",
+    "449638": "Shadow of Death",
+    "449701": "Gorebound Fortitude",
+    "449703": "Friends In Dark Places",
+    "449704": "Shared Fate",
+    "449706": "Feast of Souls",
+    "449707": "Eternal Servitude",
+    "452902": "Swift Artifice",
+    "452999": "Siphon Life",
+    "453080": "Improved Shadow Bolt",
+    "453087": "Malediction",
+    "453096": "Contagion",
+    "453105": "Summoner's Embrace",
+    "453172": "Cunning Cruelty",
+    "453699": "Flametouched",
+    "453744": "Rune of Shadows",
+    "453800": "Improved Demonic Tactics",
+    "453908": "Demonic Brutality",
+    "454735": "Devastation",
+    "454744": "Emberstorm",
+    "455449": "Mark of Shatug",
+    "455450": "Mark of F'harg",
+    "456951": "Improved Chaos Bolt",
+    "458034": "Improved Haunt",
+    "459440": "Ravenous Afflictions",
+    "460551": "Doom",
+    "1214442": "Demonfire Infusion",
+    "1214467": "Rain of Fire",
+    "1240189": "Master Summoner",
+    "1244284": "Practiced Chaos",
+    "1244310": "Roaring Blaze",
+    "1244460": "Improved Havoc",
+    "1244788": "Chaotic Inferno",
+    "1244877": "Lake of Fire",
+    "1244928": "Destructive Rapidity",
+    "1244941": "Alythess's Ire",
+    "1245089": "Avatar of Destruction",
+    "1245633": "Fiendish Cruelty",
+    "1250273": "Hand of Gul'dan",
+    "1250372": "Fel Intellect",
+    "1250375": "Practiced Rituals",
+    "1250768": "Imp Gang Boss",
+    "1250897": "Hellbent Commander",
+    "1250921": "Antoran Armaments",
+    "1251778": "Summon Vilefiend",
+    "1257052": "Dark Harvest",
+    "1259790": "Unstable Affliction",
+    "1259811": "Practiced Pestilence",
+    "1259815": "Potent Soul Shards",
+    "1259825": "Shared Agony",
+    "1259838": "Seeds of Destruction",
+    "1259886": "Cull the Weak",
+    "1260209": "Sudden Onset",
+    "1260229": "Fatal Echoes",
+    "1260264": "Shard Instability",
+    "1260271": "Nocturnal Yield",
+    "1260285": "Patient Zero",
+    "1261124": "Cascading Calamity",
+    "1261149": "Malefic Grasp",
+    "1261984": "Shadow of Nathreza",
+    "1261990": "Shadow of Nathreza",
+    "1261992": "Shadow of Nathreza",
+    "1263935": "Fel Armaments",
+    "1263941": "Infernal Rapidity",
+    "1265770": "Embers of Nihilam",
+    "1265772": "Embers of Nihilam",
+    "1265774": "Embers of Nihilam",
+    "1265799": "Blight of Weakness",
+    "1265801": "Frequent Traveler",
+    "1265810": "Infernal Beneficiary",
+    "1265813": "Foul Mouth",
+    "1265816": "Improved Mortal Coil",
+    "1266799": "Through the Felvine",
+    "1266803": "Alzzin's Iniquity",
+    "1266805": "Devil Fruit",
+    "1268709": "Diabolic Oculi",
+    "1268713": "Looks That Kill",
+    "1268716": "Mind's Eyes",
+    "1268884": "Manifested Avarice",
+    "1268889": "Shared Vessel",
+    "1268903": "Eternal Hunger",
+    "1270255": "Oppressive Darkness",
+    "1270690": "Pact of the Nathrezim",
+    "1270691": "Pact of the Satyr",
+    "1270693": "Pact of the Annihilan",
+    "1270695": "Pact of the Eredar",
+    "1270701": "Gorefiend's Avarice",
+    "1271689": "Empowered Drain Life",
+    "1271694": "Fortified Soul",
+    "1271699": "Empowered Healthstone",
+    "1271748": "Blight of Weakness",
+    "1271802": "Blight of Tongues",
+    "1276163": "Dominion of Argus",
+    "1276190": "Dominion of Argus",
+    "1276222": "Dominion of Argus",
+    "1276433": "Dominant Hand",
+    "1276452": "Grimoire: Imp Lord",
+    "1276467": "Grimoire: Fel Ravager",
+    "1276661": "Stabilized Portals",
+    "1276672": "Summon Doomguard",
+    "1276746": "Tyrant's Oblation",
+    "1276748": "Reign of Tyranny",
+    "1276947": "Demonic Calling",
+    "1276956": "Blighted Maw",
+    "1279510": "Niskaran Methods",
+    "1279521": "Eye Contract",
+    "1279575": "Empowered Felstorm",
+    "1280483": "Inferno",
+    "1280733": "Nether Plating",
+    "1280868": "Dimensional Rift",
+    "1281511": "To Hell and Back"
+  },
+  "entries": [
+    {
+      "nodeId": 71931,
+      "name": "Fel Domination",
+      "tree": "class",
+      "posX": 3000,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 333889,
+      "maxRanks": 1,
+      "allSpellIds": [
+        333889
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        71932,
+        71952
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71933,
+      "name": "Soul Leech",
+      "tree": "class",
+      "posX": 4200,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 108370,
+      "maxRanks": 1,
+      "allSpellIds": [
+        108370
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        71950,
+        71952
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71949,
+      "name": "Burning Rush",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 111400,
+      "maxRanks": 1,
+      "allSpellIds": [
+        111400
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        71948,
+        71950
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "BOTH",
+      "scriptClass": "spell_warl_burning_rush",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4518
+    },
+    {
+      "nodeId": 71932,
+      "name": "Fel Pact",
+      "tree": "class",
+      "posX": 3000,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 386113,
+      "maxRanks": 1,
+      "allSpellIds": [
+        386113
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71931
+      ],
+      "childNodeIds": [
+        71930
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71952,
+      "name": "Demon Skin",
+      "tree": "class",
+      "posX": 3600,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 219272,
+      "maxRanks": 2,
+      "allSpellIds": [
+        219272
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71931,
+        71933
+      ],
+      "childNodeIds": [
+        71916,
+        71930
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "AURASCRIPT",
+      "scriptClass": "spell_warl_demon_skin",
+      "scriptFile": "src/server/scripts/Spells/spell_warlock.cpp",
+      "scriptLine": 4735
+    },
+    {
+      "nodeId": 71950,
+      "name": "Fel Armor",
+      "tree": "class",
+      "posX": 4800,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 386124,
+      "maxRanks": 2,
+      "allSpellIds": [
+        386124
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71933,
+        71949
+      ],
+      "childNodeIds": [
+        71916,
+        71922
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71948,
+      "name": "Fiendish Stride",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 386110,
+      "maxRanks": 1,
+      "allSpellIds": [
+        386110
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71949
+      ],
+      "childNodeIds": [
+        71922
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71930,
+      "name": "Demonic Embrace",
+      "tree": "class",
+      "posX": 3000,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 288843,
+      "maxRanks": 1,
+      "allSpellIds": [
+        288843
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71932,
+        71952
+      ],
+      "childNodeIds": [
+        71944,
+        109847
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71916,
+      "name": "Nightmare",
+      "tree": "class",
+      "posX": 4200,
+      "posY": 2400,
+      "isChoice": true,
+      "spellId": 386648,
+      "maxRanks": 1,
+      "allSpellIds": [
+        56244,
+        386648
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91422,
+          "spellId": 386648,
+          "name": "Nightmare",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 115459,
+          "spellId": 56244,
+          "name": "Horrify",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        71950,
+        71952
+      ],
+      "childNodeIds": [
+        109846,
+        109847
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71922,
+      "name": "Demonic Fortitude",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 386617,
+      "maxRanks": 1,
+      "allSpellIds": [
+        386617
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71948,
+        71950
+      ],
+      "childNodeIds": [
+        71942,
+        109844,
+        109846
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71944,
+      "name": "Banish",
+      "tree": "class",
+      "posX": 2400,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 710,
+      "maxRanks": 1,
+      "allSpellIds": [
+        710
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71930
+      ],
+      "childNodeIds": [
+        110071
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_banish",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4515
+    },
+    {
+      "nodeId": 109847,
+      "name": "Curse of Exhaustion",
+      "tree": "class",
+      "posX": 3600,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 334275,
+      "maxRanks": 1,
+      "allSpellIds": [
+        334275
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71916,
+        71930
+      ],
+      "childNodeIds": [
+        100941,
+        110071
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109846,
+      "name": "Curse of Tongues",
+      "tree": "class",
+      "posX": 4800,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 1714,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1714
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71916,
+        71922
+      ],
+      "childNodeIds": [
+        100941,
+        110072
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109844,
+      "name": "Infernal Beneficiary",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 1265810,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1265810
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71922
+      ],
+      "childNodeIds": [
+        110072
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71942,
+      "name": "Mortal Coil",
+      "tree": "class",
+      "posX": 6000,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 6789,
+      "maxRanks": 1,
+      "allSpellIds": [
+        6789
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71922
+      ],
+      "childNodeIds": [
+        109845,
+        110072
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": null,
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null,
+      "tcNativeReason": "FEAR (EFFECT_0) works natively. TRIGGER_SPELL (EFFECT_2) fires 108396 (HEAL_PCT 20%, ImplicitTarget_0=1=CASTER). No handler needed."
+    },
+    {
+      "nodeId": 110071,
+      "name": "Pact of the Annihilan",
+      "tree": "class",
+      "posX": 3000,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 1270693,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1270693
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71944,
+        109847
+      ],
+      "childNodeIds": [
+        71936,
+        109840,
+        110075
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 100941,
+      "name": "Demonic Circle",
+      "tree": "class",
+      "posX": 4200,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 268358,
+      "maxRanks": 1,
+      "allSpellIds": [
+        268358
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109846,
+        109847
+      ],
+      "childNodeIds": [
+        71954,
+        110074,
+        110075
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110072,
+      "name": "Pact of the Satyr",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 1270691,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1270691
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71942,
+        109844,
+        109846
+      ],
+      "childNodeIds": [
+        71923,
+        71938,
+        110074
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109845,
+      "name": "Improved Mortal Coil",
+      "tree": "class",
+      "posX": 6000,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 1265816,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1265816
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71942
+      ],
+      "childNodeIds": [
+        71923
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71936,
+      "name": "Dark Pact",
+      "tree": "class",
+      "posX": 2400,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 108416,
+      "maxRanks": 1,
+      "allSpellIds": [
+        108416
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110071
+      ],
+      "childNodeIds": [
+        71937
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_dark_pact",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4527
+    },
+    {
+      "nodeId": 109840,
+      "name": "Foul Mouth",
+      "tree": "class",
+      "posX": 3000,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1265813,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1265813
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110071
+      ],
+      "childNodeIds": [
+        109843
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110075,
+      "name": "Empowered Healthstone",
+      "tree": "class",
+      "posX": 3600,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1271699,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1271699
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        100941,
+        110071
+      ],
+      "childNodeIds": [
+        109843
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71954,
+      "name": "Abyss Walker",
+      "tree": "class",
+      "posX": 4200,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 389609,
+      "maxRanks": 1,
+      "allSpellIds": [
+        389609
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        100941
+      ],
+      "childNodeIds": [
+        109843,
+        110073
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110074,
+      "name": "Fortified Soul",
+      "tree": "class",
+      "posX": 4800,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1271694,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1271694
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        100941,
+        110072
+      ],
+      "childNodeIds": [
+        71917,
+        110073
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71938,
+      "name": "Teachings of the Black Harvest",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 385881,
+      "maxRanks": 1,
+      "allSpellIds": [
+        385881
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110072
+      ],
+      "childNodeIds": [
+        71917
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71923,
+      "name": "Gorefiend's Avarice",
+      "tree": "class",
+      "posX": 6000,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1270701,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1270701
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109845,
+        110072
+      ],
+      "childNodeIds": [
+        71917,
+        110076
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71937,
+      "name": "Ichor of Devils",
+      "tree": "class",
+      "posX": 2400,
+      "posY": 4800,
+      "isChoice": true,
+      "spellId": 386664,
+      "maxRanks": 1,
+      "allSpellIds": [
+        386664,
+        386686
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91446,
+          "spellId": 386664,
+          "name": "Ichor of Devils",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "TC_NATIVE"
+        },
+        {
+          "entryId": 91445,
+          "spellId": 386686,
+          "name": "Frequent Donor",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "TC_NATIVE"
+        }
+      ],
+      "parentNodeIds": [
+        71936
+      ],
+      "childNodeIds": [
+        71956
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": null,
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109843,
+      "name": "Pact of the Eredar",
+      "tree": "class",
+      "posX": 3600,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1270695,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1270695
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71954,
+        109840,
+        110075
+      ],
+      "childNodeIds": [
+        71955,
+        71956
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110073,
+      "name": "Pact of the Nathrezim",
+      "tree": "class",
+      "posX": 4800,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1270690,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1270690
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71954,
+        110074
+      ],
+      "childNodeIds": [
+        71947,
+        71955
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71917,
+      "name": "Demonic Resilience",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 389590,
+      "maxRanks": 1,
+      "allSpellIds": [
+        389590
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71923,
+        71938,
+        110074
+      ],
+      "childNodeIds": [
+        71947
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110076,
+      "name": "Empowered Drain Life",
+      "tree": "class",
+      "posX": 6000,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1271689,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1271689
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71923
+      ],
+      "childNodeIds": [
+        71947
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": null,
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null,
+      "triageNote": "Phase 5 Warlock-D: ADD_FLAT_MODIFIER(107) works natively. DUMMY(4) bp=10 is passive data. No handler needed."
+    },
+    {
+      "nodeId": 71956,
+      "name": "Strength of Will",
+      "tree": "class",
+      "posX": 3000,
+      "posY": 5400,
+      "isChoice": true,
+      "spellId": 317138,
+      "maxRanks": 1,
+      "allSpellIds": [
+        317138,
+        386659
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91468,
+          "spellId": 317138,
+          "name": "Strength of Will",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 91467,
+          "spellId": 386659,
+          "name": "Dark Accord",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        71937,
+        109843
+      ],
+      "childNodeIds": [
+        71918,
+        109842
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71955,
+      "name": "Demonic Gateway",
+      "tree": "class",
+      "posX": 4200,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 111771,
+      "maxRanks": 1,
+      "allSpellIds": [
+        111771
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109843,
+        110073
+      ],
+      "childNodeIds": [
+        71924,
+        109841,
+        109842
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_demonic_gateway",
+      "scriptFile": "src/server/scripts/Spells/spell_warlock.cpp",
+      "scriptLine": 2389,
+      "triageNote": "Phase 5 Warlock-D: Handler already exists (line 2389) + npc_warl_demonic_gateway. DB binding present. Registry was stale."
+    },
+    {
+      "nodeId": 71947,
+      "name": "Howl of Terror",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 5400,
+      "isChoice": true,
+      "spellId": 5484,
+      "maxRanks": 1,
+      "allSpellIds": [
+        5484,
+        30283
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91458,
+          "spellId": 5484,
+          "name": "Howl of Terror",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 91457,
+          "spellId": 30283,
+          "name": "Shadowfury",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        71917,
+        110073,
+        110076
+      ],
+      "childNodeIds": [
+        71924,
+        71941
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71918,
+      "name": "Swift Artifice",
+      "tree": "class",
+      "posX": 2400,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 452902,
+      "maxRanks": 1,
+      "allSpellIds": [
+        452902
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71956
+      ],
+      "childNodeIds": [
+        71926
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109842,
+      "name": "Soul Link",
+      "tree": "class",
+      "posX": 3600,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 108415,
+      "maxRanks": 2,
+      "allSpellIds": [
+        108415
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71955,
+        71956
+      ],
+      "childNodeIds": [
+        71926,
+        71957
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "AURASCRIPT",
+      "scriptClass": "spell_warl_soul_link",
+      "scriptFile": "src/server/scripts/Spells/spell_warlock.cpp",
+      "scriptLine": 4787
+    },
+    {
+      "nodeId": 109841,
+      "name": "Frequent Traveler",
+      "tree": "class",
+      "posX": 4200,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 1265801,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1265801
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71955
+      ],
+      "childNodeIds": [
+        71957
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71924,
+      "name": "Fel Synergy",
+      "tree": "class",
+      "posX": 4800,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 389367,
+      "maxRanks": 2,
+      "allSpellIds": [
+        389367
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71947,
+        71955
+      ],
+      "childNodeIds": [
+        71957,
+        109848
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71941,
+      "name": "Oppressive Darkness",
+      "tree": "class",
+      "posX": 6000,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 1270255,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1270255
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71947
+      ],
+      "childNodeIds": [
+        109848
+      ],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71926,
+      "name": "Pact of Gluttony",
+      "tree": "class",
+      "posX": 3000,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 386689,
+      "maxRanks": 1,
+      "allSpellIds": [
+        386689
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71918,
+        109842
+      ],
+      "childNodeIds": [],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71957,
+      "name": "Soulburn",
+      "tree": "class",
+      "posX": 4200,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 385899,
+      "maxRanks": 1,
+      "allSpellIds": [
+        385899
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71924,
+        109841,
+        109842
+      ],
+      "childNodeIds": [],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": null,
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null,
+      "tcNativeReason": "LEARN_SPELL(64) teaches 387626 natively. No handler needed for the talent passive."
+    },
+    {
+      "nodeId": 109848,
+      "name": "Blight of Weakness",
+      "tree": "class",
+      "posX": 5400,
+      "posY": 6600,
+      "isChoice": true,
+      "spellId": 1265799,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1265799,
+        1271748,
+        1271802
+      ],
+      "overridesSpellId": 0,
+      "specGates": [],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 136108,
+          "spellId": 1265799,
+          "name": "Blight of Weakness",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136738,
+          "spellId": 1271802,
+          "name": "Blight of Tongues",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        71924,
+        71941
+      ],
+      "childNodeIds": [],
+      "priorityTier": "C",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72049,
+      "name": "Agony",
+      "tree": "affliction",
+      "posX": 12600,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 980,
+      "maxRanks": 1,
+      "allSpellIds": [
+        980
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        72050,
+        109862
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109862,
+      "name": "Unstable Affliction",
+      "tree": "affliction",
+      "posX": 12000,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 1259790,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1259790
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72049
+      ],
+      "childNodeIds": [
+        72032,
+        72047
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_unstable_affliction",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4566
+    },
+    {
+      "nodeId": 72050,
+      "name": "Seed of Corruption",
+      "tree": "affliction",
+      "posX": 13200,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 27243,
+      "maxRanks": 1,
+      "allSpellIds": [
+        27243
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72049
+      ],
+      "childNodeIds": [
+        72032,
+        109861
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "BOTH",
+      "scriptClass": "spell_warl_seed_of_corruption",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4548
+    },
+    {
+      "nodeId": 72047,
+      "name": "Nightfall",
+      "tree": "affliction",
+      "posX": 11400,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 108558,
+      "maxRanks": 1,
+      "allSpellIds": [
+        108558
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109862
+      ],
+      "childNodeIds": [
+        72045
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72032,
+      "name": "Haunt",
+      "tree": "affliction",
+      "posX": 12600,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 48181,
+      "maxRanks": 1,
+      "allSpellIds": [
+        48181
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72050,
+        109862
+      ],
+      "childNodeIds": [
+        102031
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_haunt",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4537
+    },
+    {
+      "nodeId": 109861,
+      "name": "Shared Agony",
+      "tree": "affliction",
+      "posX": 13800,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 1259825,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1259825
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72050
+      ],
+      "childNodeIds": [
+        72051
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72045,
+      "name": "Improved Shadow Bolt",
+      "tree": "affliction",
+      "posX": 11400,
+      "posY": 3000,
+      "isChoice": true,
+      "spellId": 453080,
+      "maxRanks": 1,
+      "allSpellIds": [
+        388667,
+        453080
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91566,
+          "spellId": 453080,
+          "name": "Improved Shadow Bolt",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 124692,
+          "spellId": 388667,
+          "name": "Drain Soul",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        72047
+      ],
+      "childNodeIds": [
+        72054,
+        72055
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_drain_soul",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4536
+    },
+    {
+      "nodeId": 102031,
+      "name": "Improved Haunt",
+      "tree": "affliction",
+      "posX": 12600,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 458034,
+      "maxRanks": 1,
+      "allSpellIds": [
+        458034
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72032
+      ],
+      "childNodeIds": [
+        72055,
+        72058
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72051,
+      "name": "Absolute Corruption",
+      "tree": "affliction",
+      "posX": 13800,
+      "posY": 3000,
+      "isChoice": true,
+      "spellId": 196103,
+      "maxRanks": 1,
+      "allSpellIds": [
+        196103,
+        452999
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91572,
+          "spellId": 196103,
+          "name": "Absolute Corruption",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "HAS_HANDLER",
+          "scriptClass": "spell_warl_absolute_corruption"
+        },
+        {
+          "entryId": 124693,
+          "spellId": 452999,
+          "name": "Siphon Life",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        109861
+      ],
+      "childNodeIds": [
+        72058,
+        109860
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_absolute_corruption",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4513
+    },
+    {
+      "nodeId": 72054,
+      "name": "Cunning Cruelty",
+      "tree": "affliction",
+      "posX": 10800,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 453172,
+      "maxRanks": 1,
+      "allSpellIds": [
+        453172
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72045
+      ],
+      "childNodeIds": [
+        110269
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": null,
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null,
+      "triageNote": "Phase 5 Warlock-D: DUMMY(4) bp=5 stores proc chance. Actual 'hit second target' proc needs complex C++ (deferred)."
+    },
+    {
+      "nodeId": 72055,
+      "name": "Withering Bolt",
+      "tree": "affliction",
+      "posX": 12000,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 386976,
+      "maxRanks": 2,
+      "allSpellIds": [
+        386976
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72045,
+        102031
+      ],
+      "childNodeIds": [
+        72034,
+        110269
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72058,
+      "name": "Creeping Death",
+      "tree": "affliction",
+      "posX": 13200,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 264000,
+      "maxRanks": 2,
+      "allSpellIds": [
+        264000
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72051,
+        102031
+      ],
+      "childNodeIds": [
+        72034,
+        72037
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109860,
+      "name": "Dark Harvest",
+      "tree": "affliction",
+      "posX": 14400,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 1257052,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1257052
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72051
+      ],
+      "childNodeIds": [
+        72037,
+        109859
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110269,
+      "name": "Practiced Pestilence",
+      "tree": "affliction",
+      "posX": 11400,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1259811,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1259811
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72054,
+        72055
+      ],
+      "childNodeIds": [
+        72046,
+        109849
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72034,
+      "name": "Summon Darkglare",
+      "tree": "affliction",
+      "posX": 12600,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 205180,
+      "maxRanks": 1,
+      "allSpellIds": [
+        205180
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72055,
+        72058
+      ],
+      "childNodeIds": [
+        71987,
+        109858,
+        110270
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warlock_summon_darkglare",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4608
+    },
+    {
+      "nodeId": 72037,
+      "name": "Summoner's Embrace",
+      "tree": "affliction",
+      "posX": 13800,
+      "posY": 4200,
+      "isChoice": true,
+      "spellId": 453105,
+      "maxRanks": 1,
+      "allSpellIds": [
+        108503,
+        453105
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91558,
+          "spellId": 453105,
+          "name": "Summoner's Embrace",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "TC_NATIVE",
+          "triageNote": "Phase 5 Warlock-D: ADD_PCT_MODIFIER(108) x2 + ADD_PCT_MODIFIER_BY_SPELL_LABEL(429) — all native modifiers."
+        },
+        {
+          "entryId": 124691,
+          "spellId": 108503,
+          "name": "Grimoire of Sacrifice",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        72058,
+        109860
+      ],
+      "childNodeIds": [
+        72041,
+        109850
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "NEEDS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109859,
+      "name": "Cull the Weak",
+      "tree": "affliction",
+      "posX": 14400,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1259886,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1259886
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109860
+      ],
+      "childNodeIds": [
+        72041
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72046,
+      "name": "Malediction",
+      "tree": "affliction",
+      "posX": 10800,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 453087,
+      "maxRanks": 1,
+      "allSpellIds": [
+        453087
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110269
+      ],
+      "childNodeIds": [
+        109857
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109849,
+      "name": "Sudden Onset",
+      "tree": "affliction",
+      "posX": 11400,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1260209,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1260209
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110269
+      ],
+      "childNodeIds": [
+        109857,
+        109863
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110270,
+      "name": "Eye Contract",
+      "tree": "affliction",
+      "posX": 12000,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1279521,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1279521
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72034
+      ],
+      "childNodeIds": [
+        109863
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": null,
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null,
+      "triageNote": "Phase 5 Warlock-D: ADD_FLAT_MODIFIER(107) + ADD_PCT_MODIFIER_BY_SPELL_LABEL(219) both work natively. Duration extension by 5000ms."
+    },
+    {
+      "nodeId": 109858,
+      "name": "Malefic Grasp",
+      "tree": "affliction",
+      "posX": 12600,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1261149,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1261149
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72034
+      ],
+      "childNodeIds": [
+        109863,
+        109864
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71987,
+      "name": "Nether Plating",
+      "tree": "affliction",
+      "posX": 13200,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1280733,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1280733
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72034
+      ],
+      "childNodeIds": [
+        109864
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109850,
+      "name": "Sacrolash's Dark Strike",
+      "tree": "affliction",
+      "posX": 13800,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 386986,
+      "maxRanks": 1,
+      "allSpellIds": [
+        386986
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72037
+      ],
+      "childNodeIds": [
+        109851,
+        109864
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": null,
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null,
+      "triageNote": "Phase 5 Warlock-D: ADD_PCT_MODIFIER(108) x2 boost Corruption dmg 15% natively. DUMMY(3) cast effect fires once on learn (no-op). Slow-on-Corruption deferred."
+    },
+    {
+      "nodeId": 72041,
+      "name": "Contagion",
+      "tree": "affliction",
+      "posX": 14400,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 453096,
+      "maxRanks": 1,
+      "allSpellIds": [
+        453096
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72037,
+        109859
+      ],
+      "childNodeIds": [
+        109851
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109857,
+      "name": "Shard Instability",
+      "tree": "affliction",
+      "posX": 10800,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1260264,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1260264
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72046,
+        109849
+      ],
+      "childNodeIds": [
+        109865
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109863,
+      "name": "Niskaran Methods",
+      "tree": "affliction",
+      "posX": 12000,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1279510,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1279510
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109849,
+        109858,
+        110270
+      ],
+      "childNodeIds": [
+        102247,
+        109865
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109864,
+      "name": "Potent Soul Shards",
+      "tree": "affliction",
+      "posX": 13200,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1259815,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1259815
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71987,
+        109850,
+        109858
+      ],
+      "childNodeIds": [
+        102247,
+        109866
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109851,
+      "name": "Nocturnal Yield",
+      "tree": "affliction",
+      "posX": 14400,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1260271,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1260271
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72041,
+        109850
+      ],
+      "childNodeIds": [
+        109866
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109865,
+      "name": "Xavius' Gambit",
+      "tree": "affliction",
+      "posX": 11400,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 416615,
+      "maxRanks": 2,
+      "allSpellIds": [
+        416615
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109857,
+        109863
+      ],
+      "childNodeIds": [
+        109852,
+        109855
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 102247,
+      "name": "Ravenous Afflictions",
+      "tree": "affliction",
+      "posX": 12600,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 459440,
+      "maxRanks": 1,
+      "allSpellIds": [
+        459440
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109863,
+        109864
+      ],
+      "childNodeIds": [
+        72033
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109866,
+      "name": "Seeds of Destruction",
+      "tree": "affliction",
+      "posX": 13800,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 1259838,
+      "maxRanks": 2,
+      "allSpellIds": [
+        1259838
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109851,
+        109864
+      ],
+      "childNodeIds": [
+        109853,
+        109854
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109852,
+      "name": "Fatal Echoes",
+      "tree": "affliction",
+      "posX": 10800,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 1260229,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1260229
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109865
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109855,
+      "name": "Cascading Calamity",
+      "tree": "affliction",
+      "posX": 12000,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 1261124,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1261124
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109865
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72033,
+      "name": "Death's Embrace",
+      "tree": "affliction",
+      "posX": 12600,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 234876,
+      "maxRanks": 1,
+      "allSpellIds": [
+        234876
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        102247
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_deaths_embrace",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4528
+    },
+    {
+      "nodeId": 109853,
+      "name": "Patient Zero",
+      "tree": "affliction",
+      "posX": 13200,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 1260285,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1260285
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109866
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109854,
+      "name": "Sow the Seeds",
+      "tree": "affliction",
+      "posX": 14400,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 196226,
+      "maxRanks": 1,
+      "allSpellIds": [
+        196226
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109866
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110405,
+      "name": "Shadow of Nathreza",
+      "tree": "affliction",
+      "posX": 12600,
+      "posY": 7350,
+      "isChoice": true,
+      "spellId": 1261984,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1261984,
+        1261990,
+        1261992
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 136983,
+          "spellId": 1261984,
+          "name": "Shadow of Nathreza",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136982,
+          "spellId": 1261990,
+          "name": "Shadow of Nathreza",
+          "maxRanks": 2,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136981,
+          "spellId": 1261992,
+          "name": "Shadow of Nathreza",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101891,
+      "name": "Hand of Gul'dan",
+      "tree": "demonology",
+      "posX": 12600,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 1250273,
+      "maxRanks": 1,
+      "allSpellIds": [
+        172,
+        105174,
+        1250273
+      ],
+      "overridesSpellId": 172,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        101894,
+        109244
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_hand_of_guldan",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4614
+    },
+    {
+      "nodeId": 109244,
+      "name": "Demoniac",
+      "tree": "demonology",
+      "posX": 12000,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 426115,
+      "maxRanks": 1,
+      "allSpellIds": [
+        426115
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101891
+      ],
+      "childNodeIds": [
+        109250,
+        110195
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101894,
+      "name": "Call Dreadstalkers",
+      "tree": "demonology",
+      "posX": 13200,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 104316,
+      "maxRanks": 1,
+      "allSpellIds": [
+        104316
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101891
+      ],
+      "childNodeIds": [
+        101888,
+        109251
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110195,
+      "name": "Dominant Hand",
+      "tree": "demonology",
+      "posX": 11400,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 1276433,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1276433
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109244
+      ],
+      "childNodeIds": [
+        101923
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109250,
+      "name": "Fel Intellect",
+      "tree": "demonology",
+      "posX": 12000,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 1250372,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1250372
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109244
+      ],
+      "childNodeIds": [
+        101893,
+        101923
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109251,
+      "name": "Practiced Rituals",
+      "tree": "demonology",
+      "posX": 13200,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 1250375,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1250375
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101894
+      ],
+      "childNodeIds": [
+        101893,
+        109257
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101888,
+      "name": "Dreadlash",
+      "tree": "demonology",
+      "posX": 13800,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 264078,
+      "maxRanks": 1,
+      "allSpellIds": [
+        264078
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101894
+      ],
+      "childNodeIds": [
+        109257
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101923,
+      "name": "Imp-erator",
+      "tree": "demonology",
+      "posX": 11400,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 416230,
+      "maxRanks": 1,
+      "allSpellIds": [
+        416230
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109250,
+        110195
+      ],
+      "childNodeIds": [
+        101914,
+        109934
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101893,
+      "name": "Implosion",
+      "tree": "demonology",
+      "posX": 12600,
+      "posY": 3000,
+      "isChoice": true,
+      "spellId": 196277,
+      "maxRanks": 1,
+      "allSpellIds": [
+        196277,
+        264130
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 125836,
+          "spellId": 196277,
+          "name": "Implosion",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136731,
+          "spellId": 264130,
+          "name": "Power Siphon",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        109250,
+        109251
+      ],
+      "childNodeIds": [
+        101887,
+        101914
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109257,
+      "name": "Summon Felguard",
+      "tree": "demonology",
+      "posX": 13800,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 30146,
+      "maxRanks": 1,
+      "allSpellIds": [
+        30146
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101888,
+        109251
+      ],
+      "childNodeIds": [
+        101887,
+        109936
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "NEEDS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109934,
+      "name": "Infernal Rapidity",
+      "tree": "demonology",
+      "posX": 10800,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 1263941,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1263941
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101923
+      ],
+      "childNodeIds": [
+        101920,
+        109253
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": null,
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null,
+      "triageNote": "Phase 5 Warlock-D: DUMMY(4) bp=10 + DUMMY(4) bp=200 — pure passive data (pet haste values). No handler needed."
+    },
+    {
+      "nodeId": 101914,
+      "name": "Rune of Shadows",
+      "tree": "demonology",
+      "posX": 12000,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 453744,
+      "maxRanks": 2,
+      "allSpellIds": [
+        453744
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101893,
+        101923
+      ],
+      "childNodeIds": [
+        101905,
+        101920,
+        110194
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101887,
+      "name": "Carnivorous Stalkers",
+      "tree": "demonology",
+      "posX": 13200,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 386194,
+      "maxRanks": 2,
+      "allSpellIds": [
+        386194
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101893,
+        109257
+      ],
+      "childNodeIds": [
+        101892,
+        101905,
+        109248
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109936,
+      "name": "Fel Armaments",
+      "tree": "demonology",
+      "posX": 14400,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 1263935,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1263935
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109257
+      ],
+      "childNodeIds": [
+        101892,
+        110192
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109253,
+      "name": "Imp Gang Boss",
+      "tree": "demonology",
+      "posX": 10800,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1250768,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1250768
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109934
+      ],
+      "childNodeIds": [
+        110193
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101920,
+      "name": "Demonic Brutality",
+      "tree": "demonology",
+      "posX": 11400,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 453908,
+      "maxRanks": 1,
+      "allSpellIds": [
+        453908
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101914,
+        109934
+      ],
+      "childNodeIds": [
+        110193
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110194,
+      "name": "Inner Demons",
+      "tree": "demonology",
+      "posX": 12000,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 267216,
+      "maxRanks": 1,
+      "allSpellIds": [
+        267216
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101914
+      ],
+      "childNodeIds": [
+        110193
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": "spell_warl_inner_demons",
+      "scriptFile": "src/server/scripts/Spells/spell_warlock.cpp",
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101905,
+      "name": "Summon Demonic Tyrant",
+      "tree": "demonology",
+      "posX": 12600,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 265187,
+      "maxRanks": 1,
+      "allSpellIds": [
+        265187
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101887,
+        101914
+      ],
+      "childNodeIds": [
+        109241,
+        110191
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": "spell_warl_summon_demonic_tyrant",
+      "scriptFile": "src/server/scripts/Spells/spell_warlock.cpp",
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109248,
+      "name": "Blighted Maw",
+      "tree": "demonology",
+      "posX": 13200,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1276956,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1276956
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101887
+      ],
+      "childNodeIds": [
+        101909
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101892,
+      "name": "Improved Demonic Tactics",
+      "tree": "demonology",
+      "posX": 13800,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 453800,
+      "maxRanks": 1,
+      "allSpellIds": [
+        453800
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101887,
+        109936
+      ],
+      "childNodeIds": [
+        101909
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110192,
+      "name": "Empowered Felstorm",
+      "tree": "demonology",
+      "posX": 14400,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1279575,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1279575
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109936
+      ],
+      "childNodeIds": [
+        101909
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110193,
+      "name": "Spiteful Reconstitution",
+      "tree": "demonology",
+      "posX": 11400,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 428394,
+      "maxRanks": 1,
+      "allSpellIds": [
+        428394
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101920,
+        109253,
+        110194
+      ],
+      "childNodeIds": [
+        101886,
+        109249
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110191,
+      "name": "Tyrant's Oblation",
+      "tree": "demonology",
+      "posX": 12000,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1276746,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1276746
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101905
+      ],
+      "childNodeIds": [
+        101886,
+        110201
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109241,
+      "name": "Antoran Armaments",
+      "tree": "demonology",
+      "posX": 13200,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1250921,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1250921
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101905
+      ],
+      "childNodeIds": [
+        101908,
+        110201
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101909,
+      "name": "Flametouched",
+      "tree": "demonology",
+      "posX": 13800,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 453699,
+      "maxRanks": 1,
+      "allSpellIds": [
+        453699
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101892,
+        109248,
+        110192
+      ],
+      "childNodeIds": [
+        101903,
+        101908
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109249,
+      "name": "Demonic Knowledge",
+      "tree": "demonology",
+      "posX": 11400,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 386185,
+      "maxRanks": 2,
+      "allSpellIds": [
+        386185
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110193
+      ],
+      "childNodeIds": [
+        110198,
+        110200
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101886,
+      "name": "Sacrificed Souls",
+      "tree": "demonology",
+      "posX": 12000,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 267214,
+      "maxRanks": 1,
+      "allSpellIds": [
+        267214
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110191,
+        110193
+      ],
+      "childNodeIds": [
+        110198
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110201,
+      "name": "Reign of Tyranny",
+      "tree": "demonology",
+      "posX": 12600,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1276748,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1276748
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109241,
+        110191
+      ],
+      "childNodeIds": [
+        110197,
+        110198
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101908,
+      "name": "Master Summoner",
+      "tree": "demonology",
+      "posX": 13200,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1240189,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1240189
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101909,
+        109241
+      ],
+      "childNodeIds": [
+        110197
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101903,
+      "name": "Demonic Calling",
+      "tree": "demonology",
+      "posX": 13800,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1276947,
+      "maxRanks": 2,
+      "allSpellIds": [
+        1276947
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101909
+      ],
+      "childNodeIds": [
+        109252,
+        110197
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110200,
+      "name": "Doom",
+      "tree": "demonology",
+      "posX": 10800,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 460551,
+      "maxRanks": 1,
+      "allSpellIds": [
+        460551
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109249
+      ],
+      "childNodeIds": [
+        101917
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "DISABLED",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_doom",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4535
+    },
+    {
+      "nodeId": 110198,
+      "name": "Hellbent Commander",
+      "tree": "demonology",
+      "posX": 12000,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 1250897,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1250897
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101886,
+        109249,
+        110201
+      ],
+      "childNodeIds": [
+        110199
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110197,
+      "name": "Grimoire: Imp Lord",
+      "tree": "demonology",
+      "posX": 13200,
+      "posY": 6000,
+      "isChoice": true,
+      "spellId": 1276452,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1276452,
+        1276467
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 136726,
+          "spellId": 1276452,
+          "name": "Grimoire: Imp Lord",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136725,
+          "spellId": 1276467,
+          "name": "Grimoire: Fel Ravager",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        101903,
+        101908,
+        110201
+      ],
+      "childNodeIds": [
+        110196
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "NEEDS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109252,
+      "name": "Summon Vilefiend",
+      "tree": "demonology",
+      "posX": 14400,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 1251778,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1251778
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        101903
+      ],
+      "childNodeIds": [
+        101895
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "NEEDS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101917,
+      "name": "Summon Doomguard",
+      "tree": "demonology",
+      "posX": 10800,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 1276672,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1276672
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110200
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "NEEDS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110199,
+      "name": "To Hell and Back",
+      "tree": "demonology",
+      "posX": 12000,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 1281511,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1281511
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110198
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110196,
+      "name": "Stabilized Portals",
+      "tree": "demonology",
+      "posX": 13200,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 1276661,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1276661
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110197
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101895,
+      "name": "Mark of Shatug",
+      "tree": "demonology",
+      "posX": 14400,
+      "posY": 6600,
+      "isChoice": true,
+      "spellId": 455449,
+      "maxRanks": 1,
+      "allSpellIds": [
+        455449,
+        455450
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 125839,
+          "spellId": 455449,
+          "name": "Mark of Shatug",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 125838,
+          "spellId": 455450,
+          "name": "Mark of F'harg",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        109252
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110404,
+      "name": "Dominion of Argus",
+      "tree": "demonology",
+      "posX": 12600,
+      "posY": 7350,
+      "isChoice": true,
+      "spellId": 1276163,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1276163,
+        1276190,
+        1276222
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 136980,
+          "spellId": 1276163,
+          "name": "Dominion of Argus",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136979,
+          "spellId": 1276190,
+          "name": "Dominion of Argus",
+          "maxRanks": 2,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136978,
+          "spellId": 1276222,
+          "name": "Dominion of Argus",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110282,
+      "name": "Chaos Bolt",
+      "tree": "destruction",
+      "posX": 12600,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 116858,
+      "maxRanks": 1,
+      "allSpellIds": [
+        116858
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        72068,
+        72069
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_chaos_bolt",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4523
+    },
+    {
+      "nodeId": 72068,
+      "name": "Conflagrate",
+      "tree": "destruction",
+      "posX": 12000,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 17962,
+      "maxRanks": 1,
+      "allSpellIds": [
+        17962
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        110282
+      ],
+      "childNodeIds": [
+        72067,
+        108680
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_conflagrate",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4525
+    },
+    {
+      "nodeId": 72069,
+      "name": "Rain of Fire",
+      "tree": "destruction",
+      "posX": 13200,
+      "posY": 1800,
+      "isChoice": true,
+      "spellId": 5740,
+      "maxRanks": 1,
+      "allSpellIds": [
+        5740,
+        1214467
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91592,
+          "spellId": 5740,
+          "name": "Rain of Fire",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "HAS_HANDLER",
+          "scriptClass": "spell_warl_rain_of_fire"
+        },
+        {
+          "entryId": 128601,
+          "spellId": 1214467,
+          "name": "Rain of Fire",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        110282
+      ],
+      "childNodeIds": [
+        72065,
+        108678
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_rain_of_fire",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4543
+    },
+    {
+      "nodeId": 108680,
+      "name": "Improved Conflagrate",
+      "tree": "destruction",
+      "posX": 11400,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 231793,
+      "maxRanks": 1,
+      "allSpellIds": [
+        231793
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72068
+      ],
+      "childNodeIds": [
+        72059
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72067,
+      "name": "Backdraft",
+      "tree": "destruction",
+      "posX": 12000,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 196406,
+      "maxRanks": 1,
+      "allSpellIds": [
+        196406
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72068
+      ],
+      "childNodeIds": [
+        71979,
+        72059
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_backdraft",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4514
+    },
+    {
+      "nodeId": 108678,
+      "name": "Practiced Chaos",
+      "tree": "destruction",
+      "posX": 13200,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 1244284,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1244284
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72069
+      ],
+      "childNodeIds": [
+        71973,
+        71979
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72065,
+      "name": "Roaring Blaze",
+      "tree": "destruction",
+      "posX": 13800,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 1244310,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1244310
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72069
+      ],
+      "childNodeIds": [
+        71973
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_roaring_blaze",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4545
+    },
+    {
+      "nodeId": 72059,
+      "name": "Explosive Potential",
+      "tree": "destruction",
+      "posX": 11400,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 388827,
+      "maxRanks": 1,
+      "allSpellIds": [
+        388827
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72067,
+        108680
+      ],
+      "childNodeIds": [
+        71983,
+        72060
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71979,
+      "name": "Mayhem",
+      "tree": "destruction",
+      "posX": 12600,
+      "posY": 3000,
+      "isChoice": true,
+      "spellId": 387506,
+      "maxRanks": 1,
+      "allSpellIds": [
+        80240,
+        387506
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91494,
+          "spellId": 387506,
+          "name": "Mayhem",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "HAS_HANDLER"
+        },
+        {
+          "entryId": 91493,
+          "spellId": 80240,
+          "name": "Havoc",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        72067,
+        108678
+      ],
+      "childNodeIds": [
+        71961,
+        71969,
+        71983
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_mayhem",
+      "scriptFile": "src/server/scripts/Spells/spell_warlock.cpp",
+      "scriptLine": 4827
+    },
+    {
+      "nodeId": 71973,
+      "name": "Scalding Flames",
+      "tree": "destruction",
+      "posX": 13800,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 388832,
+      "maxRanks": 1,
+      "allSpellIds": [
+        388832
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72065,
+        108678
+      ],
+      "childNodeIds": [
+        71969,
+        71974
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72060,
+      "name": "Shadowburn",
+      "tree": "destruction",
+      "posX": 10800,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 17877,
+      "maxRanks": 1,
+      "allSpellIds": [
+        17877
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72059
+      ],
+      "childNodeIds": [
+        72061,
+        101994
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "BOTH",
+      "scriptClass": "spell_warl_shadowburn",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4551
+    },
+    {
+      "nodeId": 71983,
+      "name": "Backlash",
+      "tree": "destruction",
+      "posX": 12000,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 387384,
+      "maxRanks": 2,
+      "allSpellIds": [
+        387384
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71979,
+        72059
+      ],
+      "childNodeIds": [
+        71972,
+        71985,
+        72061
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71961,
+      "name": "Improved Havoc",
+      "tree": "destruction",
+      "posX": 12600,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 1244460,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1244460
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71979
+      ],
+      "childNodeIds": [
+        71985
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71969,
+      "name": "Ashen Remains",
+      "tree": "destruction",
+      "posX": 13200,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 387252,
+      "maxRanks": 2,
+      "allSpellIds": [
+        387252
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71973,
+        71979
+      ],
+      "childNodeIds": [
+        71982,
+        71985,
+        72062
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71974,
+      "name": "Cataclysm",
+      "tree": "destruction",
+      "posX": 14400,
+      "posY": 3600,
+      "isChoice": false,
+      "spellId": 152108,
+      "maxRanks": 1,
+      "allSpellIds": [
+        152108
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71973
+      ],
+      "childNodeIds": [
+        71982,
+        102427
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_cataclysm",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4519
+    },
+    {
+      "nodeId": 101994,
+      "name": "Fiendish Cruelty",
+      "tree": "destruction",
+      "posX": 10800,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1245633,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1245633
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72060
+      ],
+      "childNodeIds": [
+        71980
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72061,
+      "name": "Chaotic Inferno",
+      "tree": "destruction",
+      "posX": 11400,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1244788,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1244788
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71983,
+        72060
+      ],
+      "childNodeIds": [
+        71980
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71972,
+      "name": "Flashpoint",
+      "tree": "destruction",
+      "posX": 12000,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 387259,
+      "maxRanks": 1,
+      "allSpellIds": [
+        387259
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71983
+      ],
+      "childNodeIds": [
+        71980
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71985,
+      "name": "Summon Infernal",
+      "tree": "destruction",
+      "posX": 12600,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1122,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1122
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71961,
+        71969,
+        71983
+      ],
+      "childNodeIds": [
+        71960
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "NEEDS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72062,
+      "name": "Emberstorm",
+      "tree": "destruction",
+      "posX": 13200,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 454744,
+      "maxRanks": 1,
+      "allSpellIds": [
+        454744
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71969
+      ],
+      "childNodeIds": [
+        71971
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71982,
+      "name": "Fire and Brimstone",
+      "tree": "destruction",
+      "posX": 13800,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 196408,
+      "maxRanks": 1,
+      "allSpellIds": [
+        196408
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71969,
+        71974
+      ],
+      "childNodeIds": [
+        71971
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 102427,
+      "name": "Lake of Fire",
+      "tree": "destruction",
+      "posX": 14400,
+      "posY": 4200,
+      "isChoice": false,
+      "spellId": 1244877,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1244877
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71974
+      ],
+      "childNodeIds": [
+        71971
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71980,
+      "name": "Reverse Entropy",
+      "tree": "destruction",
+      "posX": 11400,
+      "posY": 4800,
+      "isChoice": true,
+      "spellId": 205148,
+      "maxRanks": 1,
+      "allSpellIds": [
+        205148,
+        266134
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91496,
+          "spellId": 205148,
+          "name": "Reverse Entropy",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 91495,
+          "spellId": 266134,
+          "name": "Internal Combustion",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        71972,
+        72061,
+        101994
+      ],
+      "childNodeIds": [
+        72066,
+        101992
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71960,
+      "name": "Crashing Chaos",
+      "tree": "destruction",
+      "posX": 12600,
+      "posY": 4800,
+      "isChoice": true,
+      "spellId": 417234,
+      "maxRanks": 1,
+      "allSpellIds": [
+        266086,
+        417234
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91473,
+          "spellId": 417234,
+          "name": "Crashing Chaos",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 126494,
+          "spellId": 266086,
+          "name": "Rain of Chaos",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        71985
+      ],
+      "childNodeIds": [
+        71964,
+        101992
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71971,
+      "name": "Summoner's Embrace",
+      "tree": "destruction",
+      "posX": 13800,
+      "posY": 4800,
+      "isChoice": true,
+      "spellId": 453105,
+      "maxRanks": 1,
+      "allSpellIds": [
+        108503,
+        453105
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91484,
+          "spellId": 453105,
+          "name": "Summoner's Embrace",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "TC_NATIVE",
+          "triageNote": "Phase 5 Warlock-D: ADD_PCT_MODIFIER(108) x2 + ADD_PCT_MODIFIER_BY_SPELL_LABEL(429) — all native modifiers."
+        },
+        {
+          "entryId": 125618,
+          "spellId": 108503,
+          "name": "Grimoire of Sacrifice",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        71982,
+        72062,
+        102427
+      ],
+      "childNodeIds": [
+        71964,
+        110281
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "NEEDS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72066,
+      "name": "Ruin",
+      "tree": "destruction",
+      "posX": 11400,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 387103,
+      "maxRanks": 2,
+      "allSpellIds": [
+        387103
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71980
+      ],
+      "childNodeIds": [
+        71975,
+        108681
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101992,
+      "name": "Improved Chaos Bolt",
+      "tree": "destruction",
+      "posX": 12000,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 456951,
+      "maxRanks": 1,
+      "allSpellIds": [
+        456951
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71960,
+        71980
+      ],
+      "childNodeIds": [
+        71965,
+        71975
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71964,
+      "name": "Destructive Rapidity",
+      "tree": "destruction",
+      "posX": 13200,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1244928,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1244928
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71960,
+        71971
+      ],
+      "childNodeIds": [
+        71965,
+        71968
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110281,
+      "name": "Devastation",
+      "tree": "destruction",
+      "posX": 13800,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 454735,
+      "maxRanks": 2,
+      "allSpellIds": [
+        454735
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71971
+      ],
+      "childNodeIds": [
+        71968,
+        72064
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 108681,
+      "name": "Dimensional Rift",
+      "tree": "destruction",
+      "posX": 10800,
+      "posY": 6000,
+      "isChoice": true,
+      "spellId": 1280868,
+      "maxRanks": 1,
+      "allSpellIds": [
+        6353,
+        1280868
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 128600,
+          "spellId": 1280868,
+          "name": "Dimensional Rift",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "HAS_HANDLER",
+          "scriptClass": "spell_warl_dimensional_rift_talent"
+        },
+        {
+          "entryId": 134221,
+          "spellId": 6353,
+          "name": "Soul Fire",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "HAS_HANDLER",
+          "scriptClass": "spell_warl_soul_fire"
+        }
+      ],
+      "parentNodeIds": [
+        72066
+      ],
+      "childNodeIds": [
+        110280
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_soul_fire",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4555
+    },
+    {
+      "nodeId": 71975,
+      "name": "Inferno",
+      "tree": "destruction",
+      "posX": 12000,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 1280483,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1280483
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72066,
+        101992
+      ],
+      "childNodeIds": [
+        71966
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71965,
+      "name": "Conflagration of Chaos",
+      "tree": "destruction",
+      "posX": 12600,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 387108,
+      "maxRanks": 1,
+      "allSpellIds": [
+        387108
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71964,
+        101992
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 71968,
+      "name": "Diabolic Embers",
+      "tree": "destruction",
+      "posX": 13200,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 387173,
+      "maxRanks": 1,
+      "allSpellIds": [
+        387173
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71964,
+        110281
+      ],
+      "childNodeIds": [
+        102003
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 72064,
+      "name": "Demonfire Infusion",
+      "tree": "destruction",
+      "posX": 14400,
+      "posY": 6000,
+      "isChoice": true,
+      "spellId": 1214442,
+      "maxRanks": 1,
+      "allSpellIds": [
+        196447,
+        1214442
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 91586,
+          "spellId": 1214442,
+          "name": "Demonfire Infusion",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 128599,
+          "spellId": 196447,
+          "name": "Channel Demonfire",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        110281
+      ],
+      "childNodeIds": [
+        101993
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_channel_demonfire_activator",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4520
+    },
+    {
+      "nodeId": 110280,
+      "name": "Avatar of Destruction",
+      "tree": "destruction",
+      "posX": 10800,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 1245089,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1245089
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        108681
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_avatar_of_destruction",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4595
+    },
+    {
+      "nodeId": 71966,
+      "name": "Chaos Incarnate",
+      "tree": "destruction",
+      "posX": 12000,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 387275,
+      "maxRanks": 1,
+      "allSpellIds": [
+        387275
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71975
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 102003,
+      "name": "Alythess's Ire",
+      "tree": "destruction",
+      "posX": 13200,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 1244941,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1244941
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        71968
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 101993,
+      "name": "Raging Demonfire",
+      "tree": "destruction",
+      "posX": 14400,
+      "posY": 6600,
+      "isChoice": false,
+      "spellId": 387166,
+      "maxRanks": 1,
+      "allSpellIds": [
+        387166
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": null,
+      "parentNodeIds": [
+        72064
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 110406,
+      "name": "Embers of Nihilam",
+      "tree": "destruction",
+      "posX": 12600,
+      "posY": 7350,
+      "isChoice": true,
+      "spellId": 1265770,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1265770,
+        1265772,
+        1265774
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "destruction"
+      ],
+      "heroTree": null,
+      "choiceOptions": [
+        {
+          "entryId": 136986,
+          "spellId": 1265770,
+          "name": "Embers of Nihilam",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136985,
+          "spellId": 1265772,
+          "name": "Embers of Nihilam",
+          "maxRanks": 2,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 136984,
+          "spellId": 1265774,
+          "name": "Embers of Nihilam",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94855,
+      "name": "Diabolic Ritual",
+      "tree": "hero_diabolist",
+      "posX": 8150,
+      "posY": 4250,
+      "isChoice": false,
+      "spellId": 428514,
+      "maxRanks": 1,
+      "allSpellIds": [
+        428514
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        94826,
+        94849,
+        94856,
+        109833
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_diabolic_ritual_passive",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4571
+    },
+    {
+      "nodeId": 94849,
+      "name": "Cloven Souls",
+      "tree": "hero_diabolist",
+      "posX": 7200,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 428517,
+      "maxRanks": 1,
+      "allSpellIds": [
+        428517
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94855
+      ],
+      "childNodeIds": [
+        94836
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94856,
+      "name": "Touch of Rancora",
+      "tree": "hero_diabolist",
+      "posX": 7800,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 429893,
+      "maxRanks": 1,
+      "allSpellIds": [
+        429893
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94855
+      ],
+      "childNodeIds": [
+        94848
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94826,
+      "name": "Secrets of the Coven",
+      "tree": "hero_diabolist",
+      "posX": 8400,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 428518,
+      "maxRanks": 1,
+      "allSpellIds": [
+        428518
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94855
+      ],
+      "childNodeIds": [
+        94852
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109833,
+      "name": "Diabolic Oculi",
+      "tree": "hero_diabolist",
+      "posX": 9000,
+      "posY": 4800,
+      "isChoice": false,
+      "spellId": 1268709,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1268709
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94855
+      ],
+      "childNodeIds": [
+        109832
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_diabolic_oculi",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4572
+    },
+    {
+      "nodeId": 94836,
+      "name": "Soul-Etched Circles",
+      "tree": "hero_diabolist",
+      "posX": 7200,
+      "posY": 5400,
+      "isChoice": true,
+      "spellId": 428911,
+      "maxRanks": 1,
+      "allSpellIds": [
+        428911,
+        429072
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": [
+        {
+          "entryId": 117433,
+          "spellId": 428911,
+          "name": "Soul-Etched Circles",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 118837,
+          "spellId": 429072,
+          "name": "Annihilan's Bellow",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94849
+      ],
+      "childNodeIds": [
+        94833
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94848,
+      "name": "Cruelty of Kerxan",
+      "tree": "hero_diabolist",
+      "posX": 7800,
+      "posY": 5400,
+      "isChoice": true,
+      "spellId": 429902,
+      "maxRanks": 1,
+      "allSpellIds": [
+        429902,
+        429917
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": [
+        {
+          "entryId": 117445,
+          "spellId": 429902,
+          "name": "Cruelty of Kerxan",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 118838,
+          "spellId": 429917,
+          "name": "Infernal Machine",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94856
+      ],
+      "childNodeIds": [
+        94831
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94852,
+      "name": "Infernal Vitality",
+      "tree": "hero_diabolist",
+      "posX": 8400,
+      "posY": 5400,
+      "isChoice": true,
+      "spellId": 429115,
+      "maxRanks": 1,
+      "allSpellIds": [
+        429115,
+        429130
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": [
+        {
+          "entryId": 117449,
+          "spellId": 429115,
+          "name": "Infernal Vitality",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 118839,
+          "spellId": 429130,
+          "name": "Infernal Bulwark",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94826
+      ],
+      "childNodeIds": [
+        94843
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109832,
+      "name": "Looks That Kill",
+      "tree": "hero_diabolist",
+      "posX": 9000,
+      "posY": 5400,
+      "isChoice": false,
+      "spellId": 1268713,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1268713
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109833
+      ],
+      "childNodeIds": [
+        109831
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94833,
+      "name": "Flames of Xoroth",
+      "tree": "hero_diabolist",
+      "posX": 7200,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 429657,
+      "maxRanks": 1,
+      "allSpellIds": [
+        429657
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94836
+      ],
+      "childNodeIds": [
+        94830
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94831,
+      "name": "Abyssal Dominion",
+      "tree": "hero_diabolist",
+      "posX": 7800,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 429581,
+      "maxRanks": 1,
+      "allSpellIds": [
+        429581
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94848
+      ],
+      "childNodeIds": [
+        94830
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94843,
+      "name": "Gloom of Nathreza",
+      "tree": "hero_diabolist",
+      "posX": 8400,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 429899,
+      "maxRanks": 1,
+      "allSpellIds": [
+        429899
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94852
+      ],
+      "childNodeIds": [
+        94830
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109831,
+      "name": "Mind's Eyes",
+      "tree": "hero_diabolist",
+      "posX": 9000,
+      "posY": 6000,
+      "isChoice": false,
+      "spellId": 1268716,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1268716
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109832
+      ],
+      "childNodeIds": [
+        94830
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94830,
+      "name": "Ruination",
+      "tree": "hero_diabolist",
+      "posX": 8150,
+      "posY": 6649,
+      "isChoice": false,
+      "spellId": 428522,
+      "maxRanks": 1,
+      "allSpellIds": [
+        428522
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "demonology",
+        "destruction"
+      ],
+      "heroTree": "hero_diabolist",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94831,
+        94833,
+        94843,
+        109831
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": "spell_warl_ruination_entry_aura",
+      "scriptFile": "spell_warlock.cpp",
+      "scriptLine": 4580
+    },
+    {
+      "nodeId": 94840,
+      "name": "Wither",
+      "tree": "hero_hellcaller",
+      "posX": 15900,
+      "posY": 600,
+      "isChoice": false,
+      "spellId": 445465,
+      "maxRanks": 1,
+      "allSpellIds": [
+        445465,
+        445468
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        94837,
+        94845,
+        94853,
+        109836
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "HAS_HANDLER",
+      "implementationType": "SPELLSCRIPT",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94853,
+      "name": "Xalan's Ferocity",
+      "tree": "hero_hellcaller",
+      "posX": 15000,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 440044,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440044
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94840
+      ],
+      "childNodeIds": [
+        94822
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94837,
+      "name": "Blackened Soul",
+      "tree": "hero_hellcaller",
+      "posX": 15600,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 440043,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440043
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94840
+      ],
+      "childNodeIds": [
+        94854
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94845,
+      "name": "Xalan's Cruelty",
+      "tree": "hero_hellcaller",
+      "posX": 16200,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 440040,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440040
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94840
+      ],
+      "childNodeIds": [
+        94835
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109836,
+      "name": "Through the Felvine",
+      "tree": "hero_hellcaller",
+      "posX": 16800,
+      "posY": 1200,
+      "isChoice": false,
+      "spellId": 1266799,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1266799
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94840
+      ],
+      "childNodeIds": [
+        109835
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94822,
+      "name": "Curse of the Satyr",
+      "tree": "hero_hellcaller",
+      "posX": 15000,
+      "posY": 1800,
+      "isChoice": true,
+      "spellId": 440057,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440057,
+        440059
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": [
+        {
+          "entryId": 117419,
+          "spellId": 440057,
+          "name": "Curse of the Satyr",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 123309,
+          "spellId": 440059,
+          "name": "Aura of Enfeeblement",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94853
+      ],
+      "childNodeIds": [
+        94834
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94854,
+      "name": "Hatefury Rituals",
+      "tree": "hero_hellcaller",
+      "posX": 15600,
+      "posY": 1800,
+      "isChoice": true,
+      "spellId": 440048,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440048,
+        440051
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": [
+        {
+          "entryId": 117451,
+          "spellId": 440048,
+          "name": "Hatefury Rituals",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 123310,
+          "spellId": 440051,
+          "name": "Bleakheart Tactics",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94837
+      ],
+      "childNodeIds": [
+        94829
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94835,
+      "name": "Zevrim's Resilience",
+      "tree": "hero_hellcaller",
+      "posX": 16200,
+      "posY": 1800,
+      "isChoice": true,
+      "spellId": 440065,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440065,
+        440070
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": [
+        {
+          "entryId": 117432,
+          "spellId": 440065,
+          "name": "Zevrim's Resilience",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 123308,
+          "spellId": 440070,
+          "name": "Illhoof's Design",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94845
+      ],
+      "childNodeIds": [
+        94844
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109835,
+      "name": "Devil Fruit",
+      "tree": "hero_hellcaller",
+      "posX": 16800,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 1266805,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1266805
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109836
+      ],
+      "childNodeIds": [
+        109834
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94834,
+      "name": "Mark of Xavius",
+      "tree": "hero_hellcaller",
+      "posX": 15000,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 440046,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440046
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94822
+      ],
+      "childNodeIds": [
+        94842
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94829,
+      "name": "Seeds of Their Demise",
+      "tree": "hero_hellcaller",
+      "posX": 15600,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 440055,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440055
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94854
+      ],
+      "childNodeIds": [
+        94842
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94844,
+      "name": "Mark of Peroth'arn",
+      "tree": "hero_hellcaller",
+      "posX": 16200,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 440045,
+      "maxRanks": 1,
+      "allSpellIds": [
+        440045
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94835
+      ],
+      "childNodeIds": [
+        94842
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109834,
+      "name": "Alzzin's Iniquity",
+      "tree": "hero_hellcaller",
+      "posX": 16800,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 1266803,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1266803
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109835
+      ],
+      "childNodeIds": [
+        94842
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94842,
+      "name": "Malevolence",
+      "tree": "hero_hellcaller",
+      "posX": 15900,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 430014,
+      "maxRanks": 1,
+      "allSpellIds": [
+        430014,
+        442726
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "destruction"
+      ],
+      "heroTree": "hero_hellcaller",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94829,
+        94834,
+        94844,
+        109834
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94851,
+      "name": "Demonic Soul",
+      "tree": "hero_soul_harvester",
+      "posX": 8150,
+      "posY": 1250,
+      "isChoice": false,
+      "spellId": 449614,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449614
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [],
+      "childNodeIds": [
+        94825,
+        94832,
+        94847,
+        109839
+      ],
+      "priorityTier": "A",
+      "handlerStatus": "NEEDS_HANDLER",
+      "implementationType": "PET_LIFECYCLE",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94825,
+      "name": "Necrolyte Teachings",
+      "tree": "hero_soul_harvester",
+      "posX": 7200,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 449620,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449620
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94851
+      ],
+      "childNodeIds": [
+        94850
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94847,
+      "name": "Soul Anathema",
+      "tree": "hero_soul_harvester",
+      "posX": 7800,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 449624,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449624
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94851
+      ],
+      "childNodeIds": [
+        94823
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94832,
+      "name": "Demoniac's Fervor",
+      "tree": "hero_soul_harvester",
+      "posX": 8400,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 449629,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449629
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94851
+      ],
+      "childNodeIds": [
+        94824
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109839,
+      "name": "Manifested Avarice",
+      "tree": "hero_soul_harvester",
+      "posX": 9000,
+      "posY": 1800,
+      "isChoice": false,
+      "spellId": 1268884,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1268884
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94851
+      ],
+      "childNodeIds": [
+        109838
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94850,
+      "name": "Gorebound Fortitude",
+      "tree": "hero_soul_harvester",
+      "posX": 7200,
+      "posY": 2400,
+      "isChoice": true,
+      "spellId": 449701,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449701,
+        449703
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": [
+        {
+          "entryId": 117447,
+          "spellId": 449701,
+          "name": "Gorebound Fortitude",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 123840,
+          "spellId": 449703,
+          "name": "Friends In Dark Places",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94825
+      ],
+      "childNodeIds": [
+        94821
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94823,
+      "name": "Shared Fate",
+      "tree": "hero_soul_harvester",
+      "posX": 7800,
+      "posY": 2400,
+      "isChoice": true,
+      "spellId": 449704,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449704,
+        449706
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": [
+        {
+          "entryId": 117420,
+          "spellId": 449704,
+          "name": "Shared Fate",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 123839,
+          "spellId": 449706,
+          "name": "Feast of Souls",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94847
+      ],
+      "childNodeIds": [
+        94846
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94824,
+      "name": "Eternal Servitude",
+      "tree": "hero_soul_harvester",
+      "posX": 8400,
+      "posY": 2400,
+      "isChoice": true,
+      "spellId": 449707,
+      "maxRanks": 1,
+      "allSpellIds": [
+        389623,
+        449707
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": [
+        {
+          "entryId": 117421,
+          "spellId": 449707,
+          "name": "Eternal Servitude",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        },
+        {
+          "entryId": 123838,
+          "spellId": 389623,
+          "name": "Gorefiend's Resolve",
+          "maxRanks": 1,
+          "overridesSpellId": 0,
+          "handlerStatus": "NEEDS_HANDLER"
+        }
+      ],
+      "parentNodeIds": [
+        94832
+      ],
+      "childNodeIds": [
+        94838
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109838,
+      "name": "Shared Vessel",
+      "tree": "hero_soul_harvester",
+      "posX": 9000,
+      "posY": 2400,
+      "isChoice": false,
+      "spellId": 1268889,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1268889
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109839
+      ],
+      "childNodeIds": [
+        109837
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94821,
+      "name": "Wicked Reaping",
+      "tree": "hero_soul_harvester",
+      "posX": 7200,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 449631,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449631
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94850
+      ],
+      "childNodeIds": [
+        94857
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94846,
+      "name": "Quietus",
+      "tree": "hero_soul_harvester",
+      "posX": 7800,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 449634,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449634
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94823
+      ],
+      "childNodeIds": [
+        94857
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94838,
+      "name": "Sataiel's Volition",
+      "tree": "hero_soul_harvester",
+      "posX": 8400,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 449637,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449637
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94824
+      ],
+      "childNodeIds": [
+        94857
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 109837,
+      "name": "Eternal Hunger",
+      "tree": "hero_soul_harvester",
+      "posX": 9000,
+      "posY": 3000,
+      "isChoice": false,
+      "spellId": 1268903,
+      "maxRanks": 1,
+      "allSpellIds": [
+        1268903
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        109838
+      ],
+      "childNodeIds": [
+        94857
+      ],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    },
+    {
+      "nodeId": 94857,
+      "name": "Shadow of Death",
+      "tree": "hero_soul_harvester",
+      "posX": 8150,
+      "posY": 3649,
+      "isChoice": false,
+      "spellId": 449638,
+      "maxRanks": 1,
+      "allSpellIds": [
+        449638
+      ],
+      "overridesSpellId": 0,
+      "specGates": [
+        "affliction",
+        "demonology"
+      ],
+      "heroTree": "hero_soul_harvester",
+      "choiceOptions": null,
+      "parentNodeIds": [
+        94821,
+        94838,
+        94846,
+        109837
+      ],
+      "childNodeIds": [],
+      "priorityTier": "B",
+      "handlerStatus": "TC_NATIVE",
+      "implementationType": "passive_modifier",
+      "scriptClass": null,
+      "scriptFile": null,
+      "scriptLine": null
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Warlock Registry",
+  "description": "Canonical Warlock talent/spell registry for VoxCore implementation tracking",
+  "type": "object",
+  "required": ["metadata", "entries", "spellLookup"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["version", "totalNodes"],
+      "properties": {
+        "version": { "type": "string" },
+        "source": { "type": "string" },
+        "totalNodes": { "type": "integer" },
+        "choiceNodes": { "type": "integer" },
+        "tierDistribution": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "treeDistribution": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "handlerStats": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        }
+      }
+    },
+    "heroSubtrees": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["subTreeId", "name", "key"],
+        "properties": {
+          "subTreeId": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "key": { "type": "string" },
+          "eligibleSpecs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "spellLookup": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["nodeId", "name", "tree", "spellId", "handlerStatus"],
+        "properties": {
+          "nodeId": { "type": "integer" },
+          "name": { "type": "string" },
+          "tree": {
+            "type": "string",
+            "enum": ["class", "affliction", "demonology", "destruction",
+                     "hero_diabolist", "hero_hellcaller", "hero_soul_harvester"]
+          },
+          "posX": { "type": "integer" },
+          "posY": { "type": "integer" },
+          "isChoice": { "type": "boolean" },
+          "spellId": { "type": "integer" },
+          "maxRanks": { "type": "integer" },
+          "allSpellIds": {
+            "type": "array",
+            "items": { "type": "integer" }
+          },
+          "overridesSpellId": { "type": "integer" },
+          "specGates": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "heroTree": { "type": ["string", "null"] },
+          "choiceOptions": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "object",
+              "properties": {
+                "entryId": { "type": "integer" },
+                "spellId": { "type": "integer" },
+                "name": { "type": "string" },
+                "maxRanks": { "type": "integer" }
+              }
+            }
+          },
+          "parentNodeIds": {
+            "type": "array",
+            "items": { "type": "integer" }
+          },
+          "childNodeIds": {
+            "type": "array",
+            "items": { "type": "integer" }
+          },
+          "priorityTier": {
+            "type": "string",
+            "enum": ["A", "B", "C"]
+          },
+          "handlerStatus": {
+            "type": "string",
+            "enum": ["HAS_HANDLER", "NEEDS_HANDLER", "DISABLED", "DB_ONLY",
+                     "NATIVE", "STUB_ONLY", "UNCLASSIFIED", "BLOCKED_SOURCE_VALIDATION"]
+          },
+          "implementationType": {
+            "type": ["string", "null"],
+            "enum": [null, "SPELLSCRIPT", "AURASCRIPT", "BOTH", "PROC_EVENT",
+                     "PET_LIFECYCLE", "SUMMON_EXTENSION", "RESOURCE_ENGINE",
+                     "SPELL_REPLACEMENT", "TARGET_CAP_CUSTOM", "HYBRID",
+                     "NATIVE_AURA", "DB_ONLY"]
+          },
+          "scriptClass": { "type": ["string", "null"] },
+          "scriptFile": { "type": ["string", "null"] },
+          "scriptLine": { "type": ["integer", "null"] }
+        }
+      }
+    }
+  }
+}

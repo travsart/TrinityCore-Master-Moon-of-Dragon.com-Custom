@@ -2,7 +2,7 @@
 -- VoxCore Custom Tables — Consolidated DDL
 -- ============================================================================
 -- Run this after any fresh TDB import to recreate all VoxCore-custom tables.
--- Order: auth → hotfixes (skip, already in TDB) → world → characters → roleplay
+-- Order: auth → hotfixes → world → characters → roleplay
 --
 -- Usage:
 --   mysql -u root -padmin < sql/RoleplayCore/custom_tables.sql
@@ -42,6 +42,24 @@ CREATE TABLE IF NOT EXISTS `battlenet_transmog_set_favorites` (
   `transmogSetId` int unsigned NOT NULL,
   PRIMARY KEY (`battlenetAccountId`, `transmogSetId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================================================
+-- HOTFIXES DATABASE — Schema fixes for columns missing from TC TDB
+-- ============================================================================
+USE hotfixes;
+
+-- crafting_quality: C++ expects CraftingQualityAtlasSetID but TC TDB omits it
+DROP PROCEDURE IF EXISTS fix_crafting_quality;
+DELIMITER //
+CREATE PROCEDURE fix_crafting_quality()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'hotfixes' AND TABLE_NAME = 'crafting_quality' AND COLUMN_NAME = 'CraftingQualityAtlasSetID') THEN
+        ALTER TABLE `crafting_quality` ADD COLUMN `CraftingQualityAtlasSetID` int NOT NULL DEFAULT 0 AFTER `QualityTier`;
+    END IF;
+END //
+DELIMITER ;
+CALL fix_crafting_quality();
+DROP PROCEDURE IF EXISTS fix_crafting_quality;
 
 -- ============================================================================
 -- WORLD DATABASE

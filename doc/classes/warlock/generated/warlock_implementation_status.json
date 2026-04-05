@@ -1,0 +1,123 @@
+{
+  "summary": {
+    "total": 199,
+    "hasHandler": 38,
+    "tcNative": 156,
+    "needsHandler": 4,
+    "disabled": 1,
+    "dbOnly": 0,
+    "note": "Post-Phase 5 Tier A2: Mayhem handler done (spell_warl_mayhem). Remaining: 1 Tier A (Demonic Soul) + 2 Summoner's Embrace + 1 hero (Demonic Soul)."
+  },
+  "byTree": {
+    "affliction": {
+      "total": 37,
+      "hasHandler": 8,
+      "tcNative": 27,
+      "needsHandler": 2,
+      "note": "4 MAYBE resolved as TC_NATIVE (Cunning Cruelty, Eye Contract, Sacrolash's Dark Strike, Summoner's Embrace option). 2 remaining: Summoner's Embrace node (Grimoire of Sacrifice choice) x1 + Sacrolash-adjacent."
+    },
+    "class": {
+      "total": 42,
+      "hasHandler": 7,
+      "tcNative": 34,
+      "needsHandler": 1,
+      "note": "Phase 5 Tier C DONE: Demon Skin (AuraScript), Soul Link (AuraScript) handlers written. Mortal Coil, Soulburn, Ichor of Devils verified TC_NATIVE via DB2 analysis. 1 remaining: Summoner's Embrace node."
+    },
+    "demonology": {
+      "total": 39,
+      "hasHandler": 9,
+      "tcNative": 28,
+      "needsHandler": 2,
+      "note": "Tier B summons DONE: Inner Demons, Grimoire: Imp Lord, Summon Vilefiend, Summon Doomguard have C++ handlers. Summon Felguard is TC_NATIVE (SUMMON_PET works natively). Demonic Tyrant done by Tab A1. Remaining: 2 (Summoner's Embrace choice node pending Grimoire of Sacrifice)."
+    },
+    "destruction": {
+      "total": 39,
+      "hasHandler": 12,
+      "tcNative": 27,
+      "needsHandler": 0,
+      "note": "Mayhem DONE (spell_warl_mayhem, AuraScript proc on Chaos Bolt/Rain of Fire). Summon Infernal DONE. All destruction handled."
+    },
+    "hero_diabolist": {
+      "total": 14,
+      "hasHandler": 3,
+      "tcNative": 11,
+      "needsHandler": 0,
+      "note": "All non-handled nodes are TC-native modifiers."
+    },
+    "hero_hellcaller": {
+      "total": 14,
+      "hasHandler": 1,
+      "tcNative": 13,
+      "needsHandler": 0,
+      "note": "Wither handled (Phase 3). All others are modifier auras."
+    },
+    "hero_soul_harvester": {
+      "total": 14,
+      "hasHandler": 0,
+      "tcNative": 13,
+      "needsHandler": 1,
+      "note": "Only Demonic Soul (449614) needs C++ — PROC_TRIGGER_SPELL_COPY with resource tracking."
+    }
+  },
+  "realTodo": {
+    "tierA": [
+      {"name": "Summon Demonic Tyrant", "spellId": 265187, "tree": "demonology", "complexity": "HIGH", "status": "DONE", "note": "spell_warl_summon_demonic_tyrant: extends Wild Imp/Dreadstalker/Vilefiend duration +15s, Reign of Tyranny +10% Tyrant dmg per demon"},
+      {"name": "Mayhem", "spellId": 387506, "tree": "destruction", "complexity": "HIGH", "note": "Spell duplication to secondary target (Havoc variant). 3x DUMMY auras."},
+      {"name": "Demonic Soul", "spellId": 449614, "tree": "hero_soul_harvester", "complexity": "HIGH", "note": "PROC_TRIGGER_SPELL_COPY x5 — resource-spend tracking + spec-dependent procs"}
+    ],
+    "tierB_summons_DONE": [
+      {"name": "Summon Felguard", "spellId": 30146, "tree": "demonology", "status": "TC_NATIVE", "note": "SUMMON_PET (56) works natively. Creature 17252 exists."},
+      {"name": "Inner Demons", "spellId": 267216, "tree": "demonology", "status": "DONE", "note": "spell_warl_inner_demons AuraScript periodic summons Wild Imp"},
+      {"name": "Grimoire: Imp Lord", "spellId": 1276452, "tree": "demonology", "status": "DONE", "note": "spell_warl_grimoire_imp_lord + npc_warl_imp_lord PetAI. creature 258584"},
+      {"name": "Summon Vilefiend", "spellId": 1251778, "tree": "demonology", "status": "DONE", "note": "spell_warl_summon_vilefiend casts 1251781 + npc_warl_vilefiend melee. creature 135816"},
+      {"name": "Summon Doomguard", "spellId": 1276672, "tree": "demonology", "status": "DONE", "note": "npc_warl_doomguard PetAI casts Doom Bolt. creature 250785"},
+      {"name": "Summon Infernal", "spellId": 1122, "tree": "destruction", "status": "DONE", "note": "npc_warl_infernal melee + Immolation. Spell chain triggers natively. creature 89"}
+    ],
+    "tierC_class": [
+      {"name": "Demon Skin", "spellId": 219272, "tree": "class", "status": "DONE", "note": "spell_warl_demon_skin AuraScript: PERIODIC_DUMMY regens Soul Leech absorb shield (bp% max HP per tick, capped at Soul Leech EFFECT_1 %)"},
+      {"name": "Mortal Coil", "spellId": 6789, "tree": "class", "status": "TC_NATIVE", "note": "FEAR (EFFECT_0) works natively. TRIGGER_SPELL (EFFECT_2) fires 108396 (HEAL_PCT 20%, self-targeted via ImplicitTarget_0=1)."},
+      {"name": "Ichor of Devils", "spellId": 386664, "tree": "class", "status": "TC_NATIVE", "note": "ADD_PCT_MODIFIER_BY_SPELL_LABEL(219) + ADD_FLAT_MODIFIER_BY_SPELL_LABEL(218) work natively. DUMMY(3) bp=5 is tooltip data storage."},
+      {"name": "Soul Link", "spellId": 108415, "tree": "class", "status": "DONE", "note": "spell_warl_soul_link AuraScript: OnEffectApply casts split damage aura (108446) on warlock when pet active. OnEffectRemove cleans up."},
+      {"name": "Soulburn", "spellId": 385899, "tree": "class", "status": "TC_NATIVE", "note": "LEARN_SPELL(64) teaches 387626 natively via talent system. No handler needed."}
+    ],
+    "maybe_RESOLVED": [
+      {"name": "Empowered Drain Life", "spellId": 1271689, "tree": "class", "resolved": "TC_NATIVE", "reason": "ADD_FLAT_MODIFIER natively modifies Drain Life tick. DUMMY stores passive data."},
+      {"name": "Demonic Gateway", "spellId": 111771, "tree": "class", "resolved": "HAS_HANDLER", "reason": "Handler exists at line 2389 + npc AI + DB binding. Registry was stale."},
+      {"name": "Cunning Cruelty", "spellId": 453172, "tree": "affliction", "resolved": "TC_NATIVE", "reason": "DUMMY(4) bp=5 stores proc chance. Hit-second-target proc needs complex C++ (deferred)."},
+      {"name": "Summoner's Embrace", "spellId": 453105, "tree": "affliction", "resolved": "TC_NATIVE", "reason": "ADD_PCT_MODIFIER(108) x2 + ADD_PCT_MODIFIER_BY_SPELL_LABEL(429) — all native modifiers."},
+      {"name": "Eye Contract", "spellId": 1279521, "tree": "affliction", "resolved": "TC_NATIVE", "reason": "ADD_FLAT_MODIFIER(107) + ADD_PCT_MODIFIER_BY_SPELL_LABEL(219) — both native modifiers."},
+      {"name": "Sacrolash's Dark Strike", "spellId": 386986, "tree": "affliction", "resolved": "TC_NATIVE", "reason": "ADD_PCT_MODIFIER(108) x2 boost Corruption 15%. DUMMY(3) cast effect is no-op. Slow deferred."},
+      {"name": "Infernal Rapidity", "spellId": 1263941, "tree": "demonology", "resolved": "TC_NATIVE", "reason": "DUMMY(4) x2 — pure passive data (pet haste values)."},
+      {"name": "Summoner's Embrace (Destro)", "spellId": 453105, "tree": "destruction", "resolved": "TC_NATIVE", "reason": "Same spell as affliction — duplicate entry, same native modifiers."}
+    ]
+  },
+  "triageLog": {
+    "session229": {
+      "date": "2026-04-04",
+      "method": "DB2 SpellEffect query — classified by effect type and aura type",
+      "tcNativeCount": 147,
+      "needsHandlerCount": 22,
+      "maybeCount": 8,
+      "note": "Conservative classification. DUMMY auras classified as TC_NATIVE when combined with numeric modifiers (data storage pattern). Standalone DUMMY/PERIODIC_DUMMY/SUMMON marked as NEEDS_HANDLER."
+    },
+    "warlockC_phase5": {
+      "date": "2026-04-04",
+      "method": "DB2 SpellEffect + ImplicitTarget analysis. Verified targeting for TRIGGER_SPELL chains. Checked LEARN_SPELL native behavior.",
+      "resolved": 5,
+      "hasHandler": 2,
+      "tcNative": 3,
+      "newHandlers": 2,
+      "note": "Demon Skin: AuraScript for PERIODIC_DUMMY shield regen. Soul Link: AuraScript for split damage aura on pet. Mortal Coil: TRIGGER_SPELL fires self-heal natively (ImplicitTarget_0=1). Soulburn: LEARN_SPELL native. Ichor of Devils: modifiers native, DUMMY is data."
+    },
+    "warlockD_phase5": {
+      "date": "2026-04-04",
+      "method": "Manual DB2 effect analysis per spell — checked SpellEffect, SpellMisc, trigger relationships, existing C++ handlers",
+      "resolved": 8,
+      "tcNative": 6,
+      "hasHandler": 1,
+      "duplicate": 1,
+      "newHandlers": 0,
+      "note": "All 8 MAYBE spells resolved. 0 new C++ handlers needed. Key findings: Demonic Gateway had existing handler (stale registry). All others are passive modifiers or data-storage DUMMYs. Deferred complex procs: Cunning Cruelty (hit second target), Sacrolash's Dark Strike (slow on Corruption)."
+    }
+  }
+}

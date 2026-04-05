@@ -1,0 +1,200 @@
+nodeId,name,tree,spellId,maxRanks,isChoice,tier,handlerStatus,posX,posY
+71931,Fel Domination,class,333889,1,False,C,UNCLASSIFIED,3000,1200
+71933,Soul Leech,class,108370,1,False,A,UNCLASSIFIED,4200,1200
+71949,Burning Rush,class,111400,1,False,C,UNCLASSIFIED,5400,1200
+71932,Fel Pact,class,386113,1,False,C,UNCLASSIFIED,3000,1800
+71952,Demon Skin,class,219272,2,False,C,UNCLASSIFIED,3600,1800
+71950,Fel Armor,class,386124,2,False,C,UNCLASSIFIED,4800,1800
+71948,Fiendish Stride,class,386110,1,False,C,UNCLASSIFIED,5400,1800
+71930,Demonic Embrace,class,288843,1,False,C,UNCLASSIFIED,3000,2400
+71916,Nightmare,class,386648,1,True,C,UNCLASSIFIED,4200,2400
+71922,Demonic Fortitude,class,386617,1,False,C,UNCLASSIFIED,5400,2400
+71944,Banish,class,710,1,False,C,UNCLASSIFIED,2400,3000
+109847,Curse of Exhaustion,class,334275,1,False,C,UNCLASSIFIED,3600,3000
+109846,Curse of Tongues,class,1714,1,False,C,UNCLASSIFIED,4800,3000
+109844,Infernal Beneficiary,class,1265810,1,False,C,UNCLASSIFIED,5400,3000
+71942,Mortal Coil,class,6789,1,False,C,UNCLASSIFIED,6000,3000
+110071,Pact of the Annihilan,class,1270693,1,False,C,UNCLASSIFIED,3000,3600
+100941,Demonic Circle,class,268358,1,False,C,UNCLASSIFIED,4200,3600
+110072,Pact of the Satyr,class,1270691,1,False,C,UNCLASSIFIED,5400,3600
+109845,Improved Mortal Coil,class,1265816,1,False,C,UNCLASSIFIED,6000,3600
+71936,Dark Pact,class,108416,1,False,C,UNCLASSIFIED,2400,4200
+109840,Foul Mouth,class,1265813,1,False,C,UNCLASSIFIED,3000,4200
+110075,Empowered Healthstone,class,1271699,1,False,C,UNCLASSIFIED,3600,4200
+71954,Abyss Walker,class,389609,1,False,C,UNCLASSIFIED,4200,4200
+110074,Fortified Soul,class,1271694,1,False,C,UNCLASSIFIED,4800,4200
+71938,Teachings of the Black Harvest,class,385881,1,False,C,UNCLASSIFIED,5400,4200
+71923,Gorefiend's Avarice,class,1270701,1,False,C,UNCLASSIFIED,6000,4200
+71937,Ichor of Devils,class,386664,1,True,C,UNCLASSIFIED,2400,4800
+109843,Pact of the Eredar,class,1270695,1,False,C,UNCLASSIFIED,3600,4800
+110073,Pact of the Nathrezim,class,1270690,1,False,C,UNCLASSIFIED,4800,4800
+71917,Demonic Resilience,class,389590,1,False,C,UNCLASSIFIED,5400,4800
+110076,Empowered Drain Life,class,1271689,1,False,C,UNCLASSIFIED,6000,4800
+71956,Strength of Will,class,317138,1,True,C,UNCLASSIFIED,3000,5400
+71955,Demonic Gateway,class,111771,1,False,C,UNCLASSIFIED,4200,5400
+71947,Howl of Terror,class,5484,1,True,C,UNCLASSIFIED,5400,5400
+71918,Swift Artifice,class,452902,1,False,C,UNCLASSIFIED,2400,6000
+109842,Soul Link,class,108415,2,False,C,UNCLASSIFIED,3600,6000
+109841,Frequent Traveler,class,1265801,1,False,C,UNCLASSIFIED,4200,6000
+71924,Fel Synergy,class,389367,2,False,C,UNCLASSIFIED,4800,6000
+71941,Oppressive Darkness,class,1270255,1,False,C,UNCLASSIFIED,6000,6000
+71926,Pact of Gluttony,class,386689,1,False,C,UNCLASSIFIED,3000,6600
+71957,Soulburn,class,385899,1,False,C,UNCLASSIFIED,4200,6600
+109848,Blight of Weakness,class,1265799,1,True,C,UNCLASSIFIED,5400,6600
+72049,Agony,affliction,980,1,False,A,UNCLASSIFIED,12600,1200
+109862,Unstable Affliction,affliction,1259790,1,False,B,UNCLASSIFIED,12000,1800
+72050,Seed of Corruption,affliction,27243,1,False,A,UNCLASSIFIED,13200,1800
+72047,Nightfall,affliction,108558,1,False,B,UNCLASSIFIED,11400,2400
+72032,Haunt,affliction,48181,1,False,B,UNCLASSIFIED,12600,2400
+109861,Shared Agony,affliction,1259825,1,False,B,UNCLASSIFIED,13800,2400
+72045,Improved Shadow Bolt,affliction,453080,1,True,B,UNCLASSIFIED,11400,3000
+102031,Improved Haunt,affliction,458034,1,False,B,UNCLASSIFIED,12600,3000
+72051,Absolute Corruption,affliction,196103,1,True,B,UNCLASSIFIED,13800,3000
+72054,Cunning Cruelty,affliction,453172,1,False,B,UNCLASSIFIED,10800,3600
+72055,Withering Bolt,affliction,386976,2,False,B,UNCLASSIFIED,12000,3600
+72058,Creeping Death,affliction,264000,2,False,B,UNCLASSIFIED,13200,3600
+109860,Dark Harvest,affliction,1257052,1,False,B,UNCLASSIFIED,14400,3600
+110269,Practiced Pestilence,affliction,1259811,1,False,B,UNCLASSIFIED,11400,4200
+72034,Summon Darkglare,affliction,205180,1,False,B,UNCLASSIFIED,12600,4200
+72037,Summoner's Embrace,affliction,453105,1,True,B,UNCLASSIFIED,13800,4200
+109859,Cull the Weak,affliction,1259886,1,False,B,UNCLASSIFIED,14400,4200
+72046,Malediction,affliction,453087,1,False,B,UNCLASSIFIED,10800,4800
+109849,Sudden Onset,affliction,1260209,1,False,B,UNCLASSIFIED,11400,4800
+110270,Eye Contract,affliction,1279521,1,False,B,UNCLASSIFIED,12000,4800
+109858,Malefic Grasp,affliction,1261149,1,False,B,UNCLASSIFIED,12600,4800
+71987,Nether Plating,affliction,1280733,1,False,B,UNCLASSIFIED,13200,4800
+109850,Sacrolash's Dark Strike,affliction,386986,1,False,B,UNCLASSIFIED,13800,4800
+72041,Contagion,affliction,453096,1,False,B,UNCLASSIFIED,14400,4800
+109857,Shard Instability,affliction,1260264,1,False,B,UNCLASSIFIED,10800,5400
+109863,Niskaran Methods,affliction,1279510,1,False,B,UNCLASSIFIED,12000,5400
+109864,Potent Soul Shards,affliction,1259815,1,False,B,UNCLASSIFIED,13200,5400
+109851,Nocturnal Yield,affliction,1260271,1,False,B,UNCLASSIFIED,14400,5400
+109865,Xavius' Gambit,affliction,416615,2,False,B,UNCLASSIFIED,11400,6000
+102247,Ravenous Afflictions,affliction,459440,1,False,B,UNCLASSIFIED,12600,6000
+109866,Seeds of Destruction,affliction,1259838,2,False,B,UNCLASSIFIED,13800,6000
+109852,Fatal Echoes,affliction,1260229,1,False,B,UNCLASSIFIED,10800,6600
+109855,Cascading Calamity,affliction,1261124,1,False,B,UNCLASSIFIED,12000,6600
+72033,Death's Embrace,affliction,234876,1,False,B,UNCLASSIFIED,12600,6600
+109853,Patient Zero,affliction,1260285,1,False,B,UNCLASSIFIED,13200,6600
+109854,Sow the Seeds,affliction,196226,1,False,B,UNCLASSIFIED,14400,6600
+110405,Shadow of Nathreza,affliction,1261984,1,True,B,UNCLASSIFIED,12600,7350
+101891,Hand of Gul'dan,demonology,1250273,1,False,B,UNCLASSIFIED,12600,1200
+109244,Demoniac,demonology,426115,1,False,B,UNCLASSIFIED,12000,1800
+101894,Call Dreadstalkers,demonology,104316,1,False,A,UNCLASSIFIED,13200,1800
+110195,Dominant Hand,demonology,1276433,1,False,B,UNCLASSIFIED,11400,2400
+109250,Fel Intellect,demonology,1250372,1,False,B,UNCLASSIFIED,12000,2400
+109251,Practiced Rituals,demonology,1250375,1,False,B,UNCLASSIFIED,13200,2400
+101888,Dreadlash,demonology,264078,1,False,B,UNCLASSIFIED,13800,2400
+101923,Imp-erator,demonology,416230,1,False,B,UNCLASSIFIED,11400,3000
+101893,Implosion,demonology,196277,1,True,B,UNCLASSIFIED,12600,3000
+109257,Summon Felguard,demonology,30146,1,False,B,UNCLASSIFIED,13800,3000
+109934,Infernal Rapidity,demonology,1263941,1,False,B,UNCLASSIFIED,10800,3600
+101914,Rune of Shadows,demonology,453744,2,False,B,UNCLASSIFIED,12000,3600
+101887,Carnivorous Stalkers,demonology,386194,2,False,B,UNCLASSIFIED,13200,3600
+109936,Fel Armaments,demonology,1263935,1,False,B,UNCLASSIFIED,14400,3600
+109253,Imp Gang Boss,demonology,1250768,1,False,B,UNCLASSIFIED,10800,4200
+101920,Demonic Brutality,demonology,453908,1,False,B,UNCLASSIFIED,11400,4200
+110194,Inner Demons,demonology,267216,1,False,B,UNCLASSIFIED,12000,4200
+101905,Summon Demonic Tyrant,demonology,265187,1,False,A,UNCLASSIFIED,12600,4200
+109248,Blighted Maw,demonology,1276956,1,False,B,UNCLASSIFIED,13200,4200
+101892,Improved Demonic Tactics,demonology,453800,1,False,B,UNCLASSIFIED,13800,4200
+110192,Empowered Felstorm,demonology,1279575,1,False,B,UNCLASSIFIED,14400,4200
+110193,Spiteful Reconstitution,demonology,428394,1,False,B,UNCLASSIFIED,11400,4800
+110191,Tyrant's Oblation,demonology,1276746,1,False,B,UNCLASSIFIED,12000,4800
+109241,Antoran Armaments,demonology,1250921,1,False,B,UNCLASSIFIED,13200,4800
+101909,Flametouched,demonology,453699,1,False,B,UNCLASSIFIED,13800,4800
+109249,Demonic Knowledge,demonology,386185,2,False,B,UNCLASSIFIED,11400,5400
+101886,Sacrificed Souls,demonology,267214,1,False,B,UNCLASSIFIED,12000,5400
+110201,Reign of Tyranny,demonology,1276748,1,False,B,UNCLASSIFIED,12600,5400
+101908,Master Summoner,demonology,1240189,1,False,B,UNCLASSIFIED,13200,5400
+101903,Demonic Calling,demonology,1276947,2,False,B,UNCLASSIFIED,13800,5400
+110200,Doom,demonology,460551,1,False,B,UNCLASSIFIED,10800,6000
+110198,Hellbent Commander,demonology,1250897,1,False,B,UNCLASSIFIED,12000,6000
+110197,Grimoire: Imp Lord,demonology,1276452,1,True,B,UNCLASSIFIED,13200,6000
+109252,Summon Vilefiend,demonology,1251778,1,False,B,UNCLASSIFIED,14400,6000
+101917,Summon Doomguard,demonology,1276672,1,False,B,UNCLASSIFIED,10800,6600
+110199,To Hell and Back,demonology,1281511,1,False,B,UNCLASSIFIED,12000,6600
+110196,Stabilized Portals,demonology,1276661,1,False,B,UNCLASSIFIED,13200,6600
+101895,Mark of Shatug,demonology,455449,1,True,B,UNCLASSIFIED,14400,6600
+110404,Dominion of Argus,demonology,1276163,1,True,B,UNCLASSIFIED,12600,7350
+110282,Chaos Bolt,destruction,116858,1,False,A,UNCLASSIFIED,12600,1200
+72068,Conflagrate,destruction,17962,1,False,A,UNCLASSIFIED,12000,1800
+72069,Rain of Fire,destruction,5740,1,True,A,UNCLASSIFIED,13200,1800
+108680,Improved Conflagrate,destruction,231793,1,False,B,UNCLASSIFIED,11400,2400
+72067,Backdraft,destruction,196406,1,False,B,UNCLASSIFIED,12000,2400
+108678,Practiced Chaos,destruction,1244284,1,False,B,UNCLASSIFIED,13200,2400
+72065,Roaring Blaze,destruction,1244310,1,False,B,UNCLASSIFIED,13800,2400
+72059,Explosive Potential,destruction,388827,1,False,B,UNCLASSIFIED,11400,3000
+71979,Mayhem,destruction,387506,1,True,A,UNCLASSIFIED,12600,3000
+71973,Scalding Flames,destruction,388832,1,False,B,UNCLASSIFIED,13800,3000
+72060,Shadowburn,destruction,17877,1,False,A,UNCLASSIFIED,10800,3600
+71983,Backlash,destruction,387384,2,False,B,UNCLASSIFIED,12000,3600
+71961,Improved Havoc,destruction,1244460,1,False,B,UNCLASSIFIED,12600,3600
+71969,Ashen Remains,destruction,387252,2,False,B,UNCLASSIFIED,13200,3600
+71974,Cataclysm,destruction,152108,1,False,B,UNCLASSIFIED,14400,3600
+101994,Fiendish Cruelty,destruction,1245633,1,False,B,UNCLASSIFIED,10800,4200
+72061,Chaotic Inferno,destruction,1244788,1,False,B,UNCLASSIFIED,11400,4200
+71972,Flashpoint,destruction,387259,1,False,B,UNCLASSIFIED,12000,4200
+71985,Summon Infernal,destruction,1122,1,False,B,UNCLASSIFIED,12600,4200
+72062,Emberstorm,destruction,454744,1,False,B,UNCLASSIFIED,13200,4200
+71982,Fire and Brimstone,destruction,196408,1,False,B,UNCLASSIFIED,13800,4200
+102427,Lake of Fire,destruction,1244877,1,False,B,UNCLASSIFIED,14400,4200
+71980,Reverse Entropy,destruction,205148,1,True,B,UNCLASSIFIED,11400,4800
+71960,Crashing Chaos,destruction,417234,1,True,B,UNCLASSIFIED,12600,4800
+71971,Summoner's Embrace,destruction,453105,1,True,B,UNCLASSIFIED,13800,4800
+72066,Ruin,destruction,387103,2,False,B,UNCLASSIFIED,11400,5400
+101992,Improved Chaos Bolt,destruction,456951,1,False,B,UNCLASSIFIED,12000,5400
+71964,Destructive Rapidity,destruction,1244928,1,False,B,UNCLASSIFIED,13200,5400
+110281,Devastation,destruction,454735,2,False,B,UNCLASSIFIED,13800,5400
+108681,Dimensional Rift,destruction,1280868,1,True,B,UNCLASSIFIED,10800,6000
+71975,Inferno,destruction,1280483,1,False,B,UNCLASSIFIED,12000,6000
+71965,Conflagration of Chaos,destruction,387108,1,False,B,UNCLASSIFIED,12600,6000
+71968,Diabolic Embers,destruction,387173,1,False,B,UNCLASSIFIED,13200,6000
+72064,Demonfire Infusion,destruction,1214442,1,True,A,UNCLASSIFIED,14400,6000
+110280,Avatar of Destruction,destruction,1245089,1,False,B,UNCLASSIFIED,10800,6600
+71966,Chaos Incarnate,destruction,387275,1,False,B,UNCLASSIFIED,12000,6600
+102003,Alythess's Ire,destruction,1244941,1,False,B,UNCLASSIFIED,13200,6600
+101993,Raging Demonfire,destruction,387166,1,False,B,UNCLASSIFIED,14400,6600
+110406,Embers of Nihilam,destruction,1265770,1,True,B,UNCLASSIFIED,12600,7350
+94855,Diabolic Ritual,hero_diabolist,428514,1,False,A,UNCLASSIFIED,8150,4250
+94849,Cloven Souls,hero_diabolist,428517,1,False,B,UNCLASSIFIED,7200,4800
+94856,Touch of Rancora,hero_diabolist,429893,1,False,B,UNCLASSIFIED,7800,4800
+94826,Secrets of the Coven,hero_diabolist,428518,1,False,B,UNCLASSIFIED,8400,4800
+109833,Diabolic Oculi,hero_diabolist,1268709,1,False,B,UNCLASSIFIED,9000,4800
+94836,Soul-Etched Circles,hero_diabolist,428911,1,True,B,UNCLASSIFIED,7200,5400
+94848,Cruelty of Kerxan,hero_diabolist,429902,1,True,B,UNCLASSIFIED,7800,5400
+94852,Infernal Vitality,hero_diabolist,429115,1,True,B,UNCLASSIFIED,8400,5400
+109832,Looks That Kill,hero_diabolist,1268713,1,False,B,UNCLASSIFIED,9000,5400
+94833,Flames of Xoroth,hero_diabolist,429657,1,False,B,UNCLASSIFIED,7200,6000
+94831,Abyssal Dominion,hero_diabolist,429581,1,False,B,UNCLASSIFIED,7800,6000
+94843,Gloom of Nathreza,hero_diabolist,429899,1,False,B,UNCLASSIFIED,8400,6000
+109831,Mind's Eyes,hero_diabolist,1268716,1,False,B,UNCLASSIFIED,9000,6000
+94830,Ruination,hero_diabolist,428522,1,False,B,UNCLASSIFIED,8150,6649
+94840,Wither,hero_hellcaller,445465,1,False,A,UNCLASSIFIED,15900,600
+94853,Xalan's Ferocity,hero_hellcaller,440044,1,False,B,UNCLASSIFIED,15000,1200
+94837,Blackened Soul,hero_hellcaller,440043,1,False,B,UNCLASSIFIED,15600,1200
+94845,Xalan's Cruelty,hero_hellcaller,440040,1,False,B,UNCLASSIFIED,16200,1200
+109836,Through the Felvine,hero_hellcaller,1266799,1,False,B,UNCLASSIFIED,16800,1200
+94822,Curse of the Satyr,hero_hellcaller,440057,1,True,B,UNCLASSIFIED,15000,1800
+94854,Hatefury Rituals,hero_hellcaller,440048,1,True,B,UNCLASSIFIED,15600,1800
+94835,Zevrim's Resilience,hero_hellcaller,440065,1,True,B,UNCLASSIFIED,16200,1800
+109835,Devil Fruit,hero_hellcaller,1266805,1,False,B,UNCLASSIFIED,16800,1800
+94834,Mark of Xavius,hero_hellcaller,440046,1,False,B,UNCLASSIFIED,15000,2400
+94829,Seeds of Their Demise,hero_hellcaller,440055,1,False,B,UNCLASSIFIED,15600,2400
+94844,Mark of Peroth'arn,hero_hellcaller,440045,1,False,B,UNCLASSIFIED,16200,2400
+109834,Alzzin's Iniquity,hero_hellcaller,1266803,1,False,B,UNCLASSIFIED,16800,2400
+94842,Malevolence,hero_hellcaller,430014,1,False,B,UNCLASSIFIED,15900,3000
+94851,Demonic Soul,hero_soul_harvester,449614,1,False,A,UNCLASSIFIED,8150,1250
+94825,Necrolyte Teachings,hero_soul_harvester,449620,1,False,B,UNCLASSIFIED,7200,1800
+94847,Soul Anathema,hero_soul_harvester,449624,1,False,B,UNCLASSIFIED,7800,1800
+94832,Demoniac's Fervor,hero_soul_harvester,449629,1,False,B,UNCLASSIFIED,8400,1800
+109839,Manifested Avarice,hero_soul_harvester,1268884,1,False,B,UNCLASSIFIED,9000,1800
+94850,Gorebound Fortitude,hero_soul_harvester,449701,1,True,B,UNCLASSIFIED,7200,2400
+94823,Shared Fate,hero_soul_harvester,449704,1,True,B,UNCLASSIFIED,7800,2400
+94824,Eternal Servitude,hero_soul_harvester,449707,1,True,B,UNCLASSIFIED,8400,2400
+109838,Shared Vessel,hero_soul_harvester,1268889,1,False,B,UNCLASSIFIED,9000,2400
+94821,Wicked Reaping,hero_soul_harvester,449631,1,False,B,UNCLASSIFIED,7200,3000
+94846,Quietus,hero_soul_harvester,449634,1,False,B,UNCLASSIFIED,7800,3000
+94838,Sataiel's Volition,hero_soul_harvester,449637,1,False,B,UNCLASSIFIED,8400,3000
+109837,Eternal Hunger,hero_soul_harvester,1268903,1,False,B,UNCLASSIFIED,9000,3000
+94857,Shadow of Death,hero_soul_harvester,449638,1,False,B,UNCLASSIFIED,8150,3649

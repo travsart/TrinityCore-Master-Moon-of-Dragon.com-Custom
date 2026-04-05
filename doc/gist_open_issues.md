@@ -32,11 +32,10 @@ Prioritized list of known issues, planned work, and blocked items. Updated as it
 - No further VoxCore transmog work planned
 
 ### Talent Spell Audit -- PIPELINE COMPLETE, STUBS REMOVED
-- **1,842 C++ stubs generated** (session 88), then **removed** (session 101) — empty handlers caused load failures
-- **SQL still applied**: 114 serverside_spell stubs, 18 spell_proc entries, 1,888 spell_script_names
-- **DB state (session 199)**: 5,777 spell_script_names (+220 new entries registered session 199), 4,503 serverside_spells
-- **13 RED / 84 YELLOW remaining** — need real C++ implementations
-- **Session 199**: 220 new spell_script_names registered, hook test harness upgraded
+- **1,842 C++ stubs generated** (session 88), then **removed** (session 101) -- empty handlers caused load failures
+- **DB state (session 228)**: 3,743 spell_script_names (post-TC TDB backfill normalization)
+- **13 RED / 84 YELLOW remaining** -- need real C++ implementations
+- **Warlock Full Class spec generated** (session 226): TRIAD-WARLOCK-FULLCLASS-V1, 31KB, 8-phase plan
 - **Next**: Implement actual spell logic using SimC references (991 spells have behavioral refs)
 
 ### Companion Squad -- `companion_roster` Table Missing
@@ -44,9 +43,15 @@ Prioritized list of known issues, planned work, and blocked items. Updated as it
 - **Companion system SQL** (`sql/RoleplayCore/5.1 companion characters.sql`) needs to be applied
 - Companion system code compiles but can't persist data without this table
 
+### DB Error Cleanup -- IN PROGRESS (6.8M remaining)
+- **Phase 1-2a COMPLETE** (session 227): 886K orphan rows removed (difficulty, quest_template_addon, SmartAI, loot refs, hotfix cleanup)
+- **Phase 2b** (session 228): 428 orphan LootID refs cleared from creature_template_difficulty
+- **Remaining**: SmartAI GUID orphans, difficulty spawns, broken flags, factions. Plan: `doc/db_error_cleanup_plan.md`
+
 ### Midnight Data Processing -- PARTIALLY IMPORTED
 - **Imported** (sessions 61-67): 58+226 quest starters, 60+181 quest enders, 819 loot entries, 526 creature spells, 174 vendor items
 - **310K NPC pipeline** (sessions 73-74): Full Wowhead NPC database in SQLite (309,996 NPCs, 338 MB), coordinate converter built
+- **TC TDB backfilled** (session 227): Full TDB 1200.26021 applied via INSERT IGNORE on LoreWalker base
 - **Remaining**: 38,119 gap NPCs identified, 15K vendor items (blocked on ExtendedCost), 402K loot drops (need reference_loot mapping), 32K trainer spells
 
 ## MEDIUM Priority
@@ -149,6 +154,17 @@ Prioritized list of known issues, planned work, and blocked items. Updated as it
 
 ## Recently Completed
 
+### April 4, 2026 (sessions 217-228)
+- ~~**TC Upstream Sync** (session 217)~~: All 19 TrinityCore commits Mar 21-Apr 1. ChatCommandTable refactor (67 files). Build 66709
+- ~~**Timestamp Hook** (session 218)~~: UserPromptSubmit hook, published to GitHub + dev.to blog
+- ~~**Chrono Surge + Swift Crusade spells** (sessions 220-221)~~: GM utility spells 1900030 + 1900031
+- ~~**Claude Code Internals** (sessions 222-224)~~: 11 reports (266KB), 1M context enabled, 13 conditional skills, 54 memory frontmatter files
+- ~~**LoreWalker Migration Applied** (session 225)~~: 3.3M rows, MySQL NVMe tuning, crash fix (duplicate spell script)
+- ~~**Warlock + VoxSniffer specs** (session 226)~~: Triad-generated specs (31KB + 18KB)
+- ~~**VoxSniffer Combat Audit v1** (session 227)~~: CombatAudit.lua + ProcExpectations.lua + audit_report.py. Gemini audit PASS
+- ~~**DB Error Cleanup Phase 1-2a** (session 227)~~: 886K orphan rows removed, TC TDB backfilled
+- ~~**Staging DBs dropped + Orphan LootIDs fixed** (session 228)~~: 428 difficulty rows cleared, 1.78M DBErrors eliminated
+
 ### March 21, 2026 (session 199)
 - ~~**Spell Script Names** (session 199)~~: 220 new spell_script_names registered (5,470 -> 5,777), hook test harness upgraded
 - ~~**SmartAI Orphan Cleanup** (session 199)~~: 1,196 AIName fixes, 99 orphan deletions, 546 broken link chains cleared
@@ -217,5 +233,5 @@ Prioritized list of known issues, planned work, and blocked items. Updated as it
 
 ---
 
-*Updated March 21, 2026 (session 199)*
+*Updated April 4, 2026 (session 228)*
 

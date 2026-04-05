@@ -1,9 +1,9 @@
 # RoleplayCore Database Report
 ## Data Quality & Optimization Summary
 **Prepared for CaptainCore (LoreWalkerTDB)**
-**March 8, 2026 | VoxCore Project — WoW 12.x / Midnight**
+**April 4, 2026 | VoxCore Project — WoW 12.x / Midnight**
 
-> **TL;DR** — Imported ~1M rows from LoreWalkerTDB, repaired 103K hotfix entries, removed 10.6M redundant rows (97.8%), fixed 78K NPCs, added 1.6M item locale translations, and cut server startup from 3m24s → 17s. All tooling is open and reproducible.
+> **TL;DR** — Imported ~1M rows from LoreWalkerTDB, repaired 103K hotfix entries, removed 10.6M redundant rows (97.8%), fixed 78K NPCs, added 1.6M item locale translations, and cut server startup from 3m24s → 17s. **April update**: Applied full LoreWalker migration (3.3M rows), backfilled TC TDB 1200.26021 on top, cleaned 886K orphan rows, fixed 428 orphan loot references. Client build 66709.
 
 ---
 
@@ -594,59 +594,40 @@ Over 50 Python scripts, MCP servers, audit tools, and SQL generators were built 
 </details>
 
 <details>
-<summary><strong>Part 11: Final Database State</strong> &mdash; <em>Row counts and database sizes as of March 21, 2026 (session 199)</em></summary>
+<summary><strong>Part 11: Final Database State</strong> &mdash; <em>Row counts and database sizes as of April 4, 2026 (session 228)</em></summary>
 
-### 11.1 Table Counts (March 21, 2026)
+### 11.1 Table Counts (April 4, 2026)
 
-**World database:**
-
-| Table | Rows | Notes |
-|-------|------|-------|
-| creature_template | 225,989 | NPC definitions |
-| creature | 712,283 | NPC spawn instances |
-| creature_template_difficulty | 532,376 | Per-difficulty NPC stats |
-| creature_template_spell | 157,851 | NPC spell assignments |
-| creature_model_info | 109,460 | NPC model data |
-| creature_equip_template | 42,093 | NPC equipment loadouts |
-| creature_text | 52,924 | NPC dialogue/emote text |
-| smart_scripts | 457,492 | NPC AI behavior scripts |
-| gameobject_template | 89,702 | World object definitions |
-| gameobject | 151,754 | World object spawn instances |
-| npc_vendor | 178,064 | Vendor inventory entries |
-| quest_template | 47,975 | Quest definitions |
-| quest_template_addon | 47,807 | Quest chain/config data |
-| quest_poi | 143,988 | Quest map markers |
-| creature_queststarter | 31,484 | NPC quest associations |
-| creature_questender | 38,475 | NPC quest turn-in associations |
-| conditions | 26,621 | Conditional logic entries |
-| trainer | 1,147 | Trainer definitions |
-| trainer_spell | 40,305 | Trainer spell listings |
-| spell_script_names | 5,777 | C++ spell script bindings |
-| serverside_spell | 4,503 | Server-side spell definitions |
-| spell_target_position | 3,408 | Spell teleport targets |
-| game_event_creature | 3,263 | Event-gated NPC spawns |
-
-**Hotfixes database (post-repair, build 66337):**
+**World database (LoreWalker + TC TDB 1200.26021 merged, build 66709):**
 
 | Table | Rows | Notes |
 |-------|------|-------|
-| spell_misc | 403,796 | Spell misc data (full DB2 restore) |
-| spell_name | 400,155 | Spell name registry (full DB2 restore) |
-| broadcast_text | 235,581 | TC community + custom text entries |
-| item_sparse | 175,744 | Item data (full DB2 restore) |
-| hotfix_blob | 59,821 | Binary hotfix data |
-| hotfix_data | 237,530 | Client correction registry |
+| creature_template | 225,842 | NPC definitions |
+| creature | 712,400 | NPC spawn instances |
+| creature_template_difficulty | 595,899 | Per-difficulty NPC stats (428 orphan loot refs cleared) |
+| creature_loot_template | 3,078,121 | NPC loot tables (TC TDB backfill) |
+| smart_scripts | 635,329 | NPC AI behavior scripts (+170K from TC TDB) |
+| gameobject | 204,499 | World object spawn instances (+45K from TC TDB) |
+| npc_vendor | 170,411 | Vendor inventory entries |
+| quest_template | 48,300 | Quest definitions (+1.6K from TC TDB) |
+| creature_queststarter | 29,064 | NPC quest associations |
+| creature_questender | 36,051 | NPC quest turn-in associations |
+| spell_script_names | 3,743 | C++ spell script bindings |
 
-> **Note**: Hotfix repair (build 66337) restored full DB2 content — 2.7M missing rows inserted, 496 zeroed columns fixed across 28 tables. Pre-repair counts were near zero for most content tables after the redundancy audit (see [Part 13](#part-13-hotfix-redundancy-audit-complete)). Current counts reflect full content + custom overrides. hotfix_data grew significantly after the build 66337 repair cycle (104 zeroed fixes, 4,291 custom diffs preserved, 237,530 total rows).
+**Hotfixes database (build 66709):**
+
+Hotfix tables contain TC TDB + LoreWalker + custom overrides. 433 tables backfilled from TC TDB 1200.26021.
+
+> **Note**: Build bumped from 66337 to 66709 (session 200+217). LoreWalker migration applied (3.3M rows, session 225). TC TDB 1200.26021 backfilled via INSERT IGNORE (session 227). DB error cleanup removed 886K orphan rows across phases 1-2a (session 227). Orphan LootID fix cleared 428 difficulty rows (session 228).
 
 ### 11.2 Database Sizes
 
 | Database | Size |
 |----------|------|
-| world | 1,389 MB |
-| hotfixes | 1,135 MB |
-| characters | 4 MB |
-| auth | 3 MB |
+| world | 1,370 MB |
+| hotfixes | 1,291 MB |
+| characters | 3 MB |
+| auth | 1 MB |
 | roleplay | < 1 MB |
 
 </details>

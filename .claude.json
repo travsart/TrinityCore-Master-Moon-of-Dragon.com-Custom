@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "wago-db2": {
+      "command": "python",
+      "args": ["C:/Users/atayl/VoxCore/wago/wago_db2_server.py"]
+    },
+    "mysql": {
+      "command": "npx",
+      "args": ["-y", "@benborla29/mcp-server-mysql"],
+      "env": {
+        "MYSQL_HOST": "127.0.0.1",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "root",
+        "MYSQL_PASS": "admin",
+        "MYSQL_DB": "world",
+        "ALLOW_INSERT_OPERATION": "true",
+        "ALLOW_UPDATE_OPERATION": "true",
+        "ALLOW_DELETE_OPERATION": "true",
+        "MULTI_DB_MODE": "true"
+      }
+    },
+    "codeintel": {
+      "command": "python",
+      "args": ["C:/Users/atayl/VoxCore/tools-dev/code-intel/code_intel_server.py"],
+      "env": {
+        "PROJECT_ROOT": "C:/Users/atayl/VoxCore",
+        "COMPILE_COMMANDS_DIR": "C:/Users/atayl/VoxCore/out/build/x64-Debug",
+        "CLANGD_PATH": "C:/Program Files/LLVM/bin/clangd.exe",
+        "CTAGS_PATH": "C:/Users/atayl/AppData/Local/Microsoft/WinGet/Packages/UniversalCtags.Ctags_Microsoft.Winget.Source_8wekyb3d8bbwe/ctags.exe"
+      }
+    },
+    "arcanum": {
+      "command": "python",
+      "args": ["C:/Users/atayl/VoxCore/tools-dev/arcanum/arcanum_server.py"]
+    }
+  }
+}

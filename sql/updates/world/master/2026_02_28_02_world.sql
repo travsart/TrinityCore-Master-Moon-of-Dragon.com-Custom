@@ -6,7 +6,7 @@ DELETE FROM `areatrigger_template` WHERE `IsCustom`=0 AND `Id`=38618;
 INSERT INTO `areatrigger_template` (`Id`, `IsCustom`, `VerifiedBuild`) VALUES
 (38618, 0, 65727);
 
-DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dh_shattered_souls_devourer', 'spell_dh_shattered_souls_devourer_missile', 'spell_dh_shattered_souls_devourer_dummy');
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_dh_shattered_souls_devourer', 'spell_dh_shattered_souls_devourer_trigger', 'spell_dh_shattered_souls_devourer_missile', 'spell_dh_shattered_souls_devourer_dummy');
 INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (1227619, 'spell_dh_shattered_souls_devourer'),
 (1223445, 'spell_dh_shattered_souls_devourer_trigger'),
