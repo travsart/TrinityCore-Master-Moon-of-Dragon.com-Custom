@@ -1,5 +1,5 @@
 -- =====================================================
--- Combined SQL generated on 2026-04-05 20:51:06Z
+-- Combined SQL generated on 2026-04-05 20:56:53Z
 -- Sources:
 --  0.custom_tables.sql
 --  1.auth.sql
@@ -8,7 +8,6 @@
 --  4.characters.sql
 --  5.chromie_time.sql
 --  6.darkmoon_farie.sql
---  9.trinity_strings.sql
 -- =====================================================\n
 -- ----- Begin file: 0.custom_tables.sql -----
 -- ============================================================================
@@ -1085,6 +1084,20 @@ CREATE TABLE IF NOT EXISTS `companion_roster` (
 
 USE `characters`;
 
+DROP PROCEDURE IF EXISTS add_crafting_columns;
+DELIMITER //
+CREATE PROCEDURE add_crafting_columns()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'item_instance_modifiers' AND COLUMN_NAME = 'craftingModifiedStat1') THEN
+        ALTER TABLE `item_instance_modifiers`
+            ADD COLUMN `craftingModifiedStat1` INT(10) UNSIGNED DEFAULT 0 NULL AFTER `artifactKnowledgeLevel`,
+            ADD COLUMN `craftingModifiedStat2` INT(10) UNSIGNED DEFAULT 0 NULL AFTER `craftingModifiedStat1`;
+    END IF;
+END //
+DELIMITER ;
+CALL add_crafting_columns();
+DROP PROCEDURE IF EXISTS add_crafting_columns;
+
 ALTER TABLE `character_pet` ADD COLUMN `favorite` tinyint unsigned NOT NULL DEFAULT '0' AFTER `specialization`;
 
 -- Chromie Time Expansion
@@ -1129,21 +1142,6 @@ CREATE TABLE IF NOT EXISTS `companion_roster` (
     `cooldown3`  INT UNSIGNED NOT NULL DEFAULT 15000,
     PRIMARY KEY (`entry`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Companion squad roster definitions';
-
-
-DROP PROCEDURE IF EXISTS add_crafting_columns;
-DELIMITER //
-CREATE PROCEDURE add_crafting_columns()
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'item_instance_modifiers' AND COLUMN_NAME = 'craftingModifiedStat1') THEN
-        ALTER TABLE `item_instance_modifiers`
-            ADD COLUMN `craftingModifiedStat1` INT(10) UNSIGNED DEFAULT 0 NULL AFTER `artifactKnowledgeLevel`,
-            ADD COLUMN `craftingModifiedStat2` INT(10) UNSIGNED DEFAULT 0 NULL AFTER `craftingModifiedStat1`;
-    END IF;
-END //
-DELIMITER ;
-CALL add_crafting_columns();
-DROP PROCEDURE IF EXISTS add_crafting_columns;
 
 
 -- ============================================================================
@@ -1380,20 +1378,3 @@ REPLACE INTO `spell_script_names` VALUES (101838, 'spell_gen_repair_damaged_tonk
 -- ----------------------------
 -- Wrack Gnoll fixes
 -- ------------------------------ ----- End file: 6.darkmoon_farie.sql -----
--- ----- Begin file: 9.trinity_strings.sql -----
-USE `world`;
-INSERT INTO `trinity_string` (`entry`,`content_default`) VALUES
-(200000, "Syntax: .display head <itemId> [bonusId]\nOverrides head appearance."),
-(200001, "Syntax: .display shoulders <itemId> [bonusId]\nOverrides shoulder appearance."),
-(200002, "Syntax: .display lshoulder <itemId> [bonusId]\nOverrides secondary shoulder."),
-(200003, "Syntax: .display shirt <itemId> [bonusId]\nOverrides shirt appearance."),
-(200004, "Syntax: .display chest <itemId> [bonusId]\nOverrides chest appearance."),
-(200005, "Syntax: .display waist <itemId> [bonusId]\nOverrides belt appearance."),
-(200006, "Syntax: .display legs <itemId> [bonusId]\nOverrides leg appearance."),
-(200007, "Syntax: .display feet <itemId> [bonusId]\nOverrides boot appearance."),
-(200008, "Syntax: .display wrists <itemId> [bonusId]\nOverrides bracer appearance."),
-(200009, "Syntax: .display hands <itemId> [bonusId]\nOverrides glove appearance."),
-(200010, "Syntax: .display back <itemId> [bonusId]\nOverrides cloak appearance."),
-(200011, "Syntax: .display tabard <itemId> [bonusId]\nOverrides tabard appearance."),
-(200012, "Syntax: .display mainhand <itemId> [bonusId]\nOverrides main-hand weapon appearance."),
-(200013, "Syntax: .display offhand <itemId> [bonusId]\nOverrides off-hand weapon appearance.");-- ----- End file: 9.trinity_strings.sql -----
