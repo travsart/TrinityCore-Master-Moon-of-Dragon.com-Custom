@@ -503,7 +503,7 @@ void Group::BroadcastPacket(PacketType const& typedPacket, bool ignorePlayersInB
     }
 
     // Call existing BroadcastPacket with serialized packet
-    BroadcastPacket(typedPacket.Write(), ignorePlayersInBGRaid, group, ignoredPlayer);
+    BroadcastPacket(typedPacket->Write(), ignorePlayersInBGRaid, group, ignoredPlayer);
 }
 
 #endif // BUILD_PLAYERBOT

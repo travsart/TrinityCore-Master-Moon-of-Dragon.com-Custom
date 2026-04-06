@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <memory>
+#include <mutex>
 
 namespace Playerbot
 {

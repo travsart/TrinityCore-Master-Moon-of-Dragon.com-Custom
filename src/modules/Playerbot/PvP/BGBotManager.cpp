@@ -1099,7 +1099,7 @@ bool BGBotManager::QueueBot(Player* bot, BattlegroundTypeId bgTypeId, Battlegrou
     {
         // CRITICAL FIX: Update bot's player state to know it's in the queue
         // This is required for the BG system to properly track the bot
-        uint32 queueSlot = bot->AddBattlegroundQueueId(bgQueueTypeId);
+        uint32 queueSlot = bot->AddBattlegroundQueueId(bgQueueTypeId, GameTime::GetGameTimeMS(), 0);
 
         TC_LOG_INFO("module.playerbot.bg", "BGBotManager::QueueBot - Bot {} queued for BG type {} in slot {} (bracket {})",
                      bot->GetName(), static_cast<uint32>(bgTypeId), queueSlot, static_cast<uint32>(bracketEntry->GetBracketId()));
