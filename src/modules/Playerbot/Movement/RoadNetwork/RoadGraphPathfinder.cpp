@@ -20,6 +20,7 @@
 #include <queue>
 #include <unordered_map>
 #include <limits>
+#include <algorithm>
 
 namespace Playerbot
 {

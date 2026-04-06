@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <shared_mutex>
+#include <memory>
 
 class Player;
 
