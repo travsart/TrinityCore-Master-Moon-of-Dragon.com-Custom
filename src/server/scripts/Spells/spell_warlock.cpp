@@ -20,6 +20,7 @@
  * Ordered alphabetically using scriptname.
  * Scriptnames of files in this file should be prefixed with "spell_warl_".
  */
+#include <algorithm>
 
 #include "AreaTriggerAI.h"
 #include "AreaTriggerTemplate.h"
@@ -1634,8 +1635,10 @@ class spell_warl_soul_leech : public AuraScript
 
         // Stack with existing shield
         if (Aura const* existing = caster->GetAura(SPELL_WARLOCK_SOUL_LEECH_ABSORB))
-            if (AuraEffect const* existingAbsorb = existing->GetEffect(EFFECT_0))
-                absorb = std::min(absorb + existingAbsorb->GetAmount(), cap);
+            if (AuraEffect const* existingAbsorb = existing->GetEffect(EFFECT_0)){
+                int32 existingAmount = existingAbsorb->GetAmount() + absorb;
+                absorb = std::min(existingAmount, cap);
+            }
 
         caster->CastSpell(caster, SPELL_WARLOCK_SOUL_LEECH_ABSORB, CastSpellExtraArgs(aurEff)
             .AddSpellMod(SPELLVALUE_BASE_POINT0, absorb));
@@ -2675,7 +2678,7 @@ class spell_warlock_call_dreadstalkers : public SpellScript
         {
             auto effect = aura->GetEffect(0);
 
-            if (roll_chance_i(effect->GetBaseAmount()))
+            if (roll_chance(effect->GetBaseAmount()))
                 caster->CastSpell(caster, SPELL_WARLOCK_CALL_DREADSTALKERS_SUMMON, true);
 
             Player* player = caster->ToPlayer();
@@ -2777,25 +2780,17 @@ class spell_warl_demonic_calling : public AuraScript
 {
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
-        return ValidateSpellInfo({ SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER });
+        if (!sSpellMgr->GetSpellInfo(SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER, DIFFICULTY_NONE))
+            return false;
+        return true;
     }
 
-        bool Validate(SpellInfo const* /*spellInfo*/) override
-        {
-            if (!sSpellMgr->GetSpellInfo(SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER, DIFFICULTY_NONE))
-                return false;
-            return true;
-        }
-
-        bool CheckProc(ProcEventInfo& eventInfo)
-        {
-            Unit* caster = GetCaster();
-            if (!caster)
-                return false;
-            if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_DEMONBOLT || eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_SHADOW_BOLT) && roll_chance(20))
-                caster->CastSpell(caster, SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER, true);
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = GetCaster();
+        if (!caster)
             return false;
-        if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_DEMONBOLT || eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_SHADOW_BOLT) && roll_chance_i(20))
+        if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_DEMONBOLT || eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_SHADOW_BOLT) && roll_chance(20))
             caster->CastSpell(caster, SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER, true);
         return false;
     }
@@ -2931,7 +2926,7 @@ class spell_warl_soul_conduit : public AuraScript
         if (!caster)
             return;
 
-        if (roll_chance_i(GetSpellInfo()->GetEffect(EFFECT_0).BasePoints))
+        if (roll_chance(GetSpellInfo()->GetEffect(EFFECT_0).BasePoints))
             caster->CastSpell(caster, SPELL_WARLOCK_SOUL_CONDUIT_REFUND, CastSpellExtraArgs(TRIGGERED_FULL_MASK).AddSpellBP0(refund));
     }
 
@@ -4907,7 +4902,7 @@ class spell_warl_mayhem : public AuraScript
         if (!procChanceEffect)
             return false;
 
-        return roll_chance_i(procChanceEffect->GetAmount());
+        return roll_chance(procChanceEffect->GetAmount());
     }
 
     void HandleProc(AuraEffect* /*aurEff*/, ProcEventInfo& eventInfo)

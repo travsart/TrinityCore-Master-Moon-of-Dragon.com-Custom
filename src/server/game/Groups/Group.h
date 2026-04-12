@@ -28,6 +28,7 @@
 #include "Timer.h"
 #include "UniqueTrackablePtr.h"
 #include <map>
+#include <type_traits>
 
 class Battlefield;
 class Battleground;
@@ -503,7 +504,15 @@ void Group::BroadcastPacket(PacketType const& typedPacket, bool ignorePlayersInB
     }
 
     // Call existing BroadcastPacket with serialized packet
-    BroadcastPacket(typedPacket->Write(), ignorePlayersInBGRaid, group, ignoredPlayer);
+    if constexpr (std::is_same_v<std::remove_reference_t<PacketType>, WorldPacket*> ||
+                  std::is_same_v<std::remove_reference_t<PacketType>, WorldPacket const*>)
+    {
+        BroadcastPacket(typedPacket, ignorePlayersInBGRaid, group, ignoredPlayer);
+    }
+    else
+    {
+        BroadcastPacket(typedPacket->Write(), ignorePlayersInBGRaid, group, ignoredPlayer);
+    }
 }
 
 #endif // BUILD_PLAYERBOT
