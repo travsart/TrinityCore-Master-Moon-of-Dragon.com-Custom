@@ -1,31 +1,201 @@
 {
-  "model": "opus",
   "permissions": {
     "allow": [
-      "Bash(*)",
-      "Read(*)",
       "Edit(C:/Users/atayl/VoxCore/**)",
       "Edit(C:/Users/atayl/Desktop/**)",
       "Write(C:/Users/atayl/VoxCore/**)",
       "Write(C:/Users/atayl/Desktop/**)",
-      "Glob(*)",
-      "Grep(*)",
-      "Agent(*)",
-      "LSP",
-      "NotebookEdit(*)",
-      "TaskCreate(*)",
-      "TaskGet(*)",
-      "TaskList(*)",
-      "TaskOutput(*)",
-      "TaskStop(*)",
-      "TaskUpdate(*)",
-      "TeamCreate(*)",
-      "TeamDelete(*)",
-      "mcp__mysql__*",
-      "mcp__wago-db2__*",
-      "mcp__codeintel__*",
-      "mcp__voxcore-db__*",
-      "mcp__voxcore-server__*"
+      "mcp__arcanum__*"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/hook_daemon.py\" --ensure",
+            "timeout": 3,
+            "statusMessage": "Ensuring hook daemon..."
+          },
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/timestamp-injector",
+            "timeout": 2
+          },
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/prompt-context-injector",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "CronCreate",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/block-recurring-cron",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/sql-safety",
+            "timeout": 2
+          },
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/release-gate-enforce",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/sensitive-file-guard",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/large-file-guard",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/edit-verifier",
+            "timeout": 5
+          },
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/cpp-build-reminder",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/release-gate-revalidate",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/session-stats",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/sync-on-git",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/docx-auto-extract",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/stop-verify",
+            "timeout": 5
+          },
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/cowork-sync",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/subagent-complete",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/precompact-snapshot",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/notification-toast",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "matcher": "session_state.md|Central_Brain.md|todo.md",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:19484/hook/file-changed-monitor",
+            "timeout": 3
+          }
+        ]
+      }
     ]
   }
 }

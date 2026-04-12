@@ -1,0 +1,102 @@
+{
+  "_comment": "Single source of truth for deadlines tracked across slash commands, agents, and the deadline-alert hook. Update when items resolve. Format: YYYY-MM-DD. Today is 2026-04-08.",
+  "_last_updated": "2026-04-08",
+  "deadlines": [
+    {
+      "name": "DCSA SIR response",
+      "date": "2026-04-15",
+      "category": "CASE",
+      "severity": "HARD",
+      "owner": "Tolin (civilian counsel)",
+      "notes": "Package building: Meadows records + Mar 2026 MH records + Tranchant letter + Mario letter + OPR + Tolin cover narrative + DISS IR. Commander contacted re routing. SEVEN-COMPONENT PACKAGE on bounded Guideline I question."
+    },
+    {
+      "name": "CARE Event JBSA",
+      "date": "2026-04-20",
+      "category": "CASE",
+      "severity": "SOFT",
+      "owner": "Adam",
+      "notes": "Invited, not confirmed"
+    },
+    {
+      "name": "HAF/A1Z follow-up (Dean Sides re-ping)",
+      "date": "2026-04-13",
+      "category": "CASE",
+      "severity": "SOFT",
+      "owner": "Adam (ping Dean if no response)",
+      "notes": "Dean Sides (DoD SAPRO) forwarded VLC/SARC/DSAID to HAF/A1Z on Apr 8. If no response by Mon Apr 13, email Dean: 'Haven't heard from HAF/A1Z yet. Appreciate any additional nudge.'"
+    },
+    {
+      "name": "Mario provider letter deadline",
+      "date": "2026-04-14",
+      "category": "CASE",
+      "severity": "SOFT",
+      "owner": "Mario (Connect Counseling NM)",
+      "notes": "Letter request package sent Apr 8 to connectcounselingnm@gmail.com. One day buffer before DCSA SIR deadline. Fallback: noon Apr 15."
+    },
+    {
+      "name": "Angel migraine supplemental 50% filing target",
+      "date": "2026-05-01",
+      "category": "VA",
+      "severity": "SOFT",
+      "owner": "Angel (via DAV)",
+      "notes": "Drafted, waiting on headache diary + neurology notes. Every month = ~$700/mo lost."
+    },
+    {
+      "name": "Angel TDIU 21-8940 filing target",
+      "date": "2026-05-01",
+      "category": "VA",
+      "severity": "SOFT",
+      "owner": "Angel (via DAV)",
+      "notes": "Drafted, waiting on evidence. Every month of delay = $1,738/mo lost. HIGHEST-ROI pending action."
+    },
+    {
+      "name": "AFBCMR filing target (DD-149)",
+      "date": "2026-05-15",
+      "category": "CASE",
+      "severity": "TARGET",
+      "owner": "Adam",
+      "notes": "Self-imposed, must file before ADSCD"
+    },
+    {
+      "name": "Retention request",
+      "date": "2026-05-15",
+      "category": "CASE",
+      "severity": "TARGET",
+      "owner": "Adam",
+      "notes": "DoDI 1332.18 s7.7"
+    },
+    {
+      "name": "ADSCD (separation)",
+      "date": "2026-08-10",
+      "category": "CASE",
+      "severity": "HARD",
+      "owner": "Adam",
+      "notes": "HARD separation deadline — everything else orbits this"
+    },
+    {
+      "name": "Angel tinnitus/radic appeal window",
+      "date": "2026-08-14",
+      "category": "VA",
+      "severity": "HARD",
+      "owner": "Angel",
+      "notes": "1 year from 8/13/2025 denial. Needs nexus opinion for tinnitus."
+    },
+    {
+      "name": "Section 1983 SOL (Rio Vista)",
+      "date": "2026-09-23",
+      "category": "CASE",
+      "severity": "HARD",
+      "owner": "Adam",
+      "notes": "2 years from Oct 23, 2024"
+    },
+    {
+      "name": "SEAD 9 trigger (1yr clearance suspension)",
+      "date": "2026-11-26",
+      "category": "CASE",
+      "severity": "SOFT",
+      "owner": "Adam",
+      "notes": "If still active duty"
+    }
+  ]
+}

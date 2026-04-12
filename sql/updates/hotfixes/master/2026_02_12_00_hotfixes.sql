@@ -1,32 +1,25 @@
 --
-DROP PROCEDURE IF EXISTS `add_trait_tree_columns`;
-DELIMITER //
-CREATE PROCEDURE `add_trait_tree_columns`()
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trait_tree' AND COLUMN_NAME = 'TitleText') THEN
-        ALTER TABLE `trait_tree` ADD COLUMN `TitleText` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL FIRST;
-    END IF;
+-- Idempotent schema changes for trait_tree
+--
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='hotfixes' AND TABLE_NAME='trait_tree' AND COLUMN_NAME='TitleText');
+SET @sql = IF(@col_exists = 0, "ALTER TABLE `trait_tree` ADD COLUMN `TitleText` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL FIRST", 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-    IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trait_tree' AND COLUMN_NAME = 'Unused1000_1') THEN
-        ALTER TABLE `trait_tree` CHANGE `Unused1000_1` `BaseNodeGroup` int NOT NULL DEFAULT 0 AFTER `TraitSystemID`;
-    END IF;
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='hotfixes' AND TABLE_NAME='trait_tree' AND COLUMN_NAME='BaseNodeGroup');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `trait_tree` CHANGE `Unused1000_1` `BaseNodeGroup` int NOT NULL DEFAULT 0 AFTER `TraitSystemID`', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-    IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trait_tree' AND COLUMN_NAME = 'Unused1000_2') THEN
-        ALTER TABLE `trait_tree` CHANGE `Unused1000_2` `MinZoom` float NOT NULL DEFAULT 0 AFTER `Flags`;
-    END IF;
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='hotfixes' AND TABLE_NAME='trait_tree' AND COLUMN_NAME='MinZoom');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `trait_tree` CHANGE `Unused1000_2` `MinZoom` float NOT NULL DEFAULT 0 AFTER `Flags`', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-    IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trait_tree' AND COLUMN_NAME = 'Unused1000_3') THEN
-        ALTER TABLE `trait_tree` CHANGE `Unused1000_3` `MaxZoom` float NOT NULL DEFAULT 0 AFTER `MinZoom`;
-    END IF;
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='hotfixes' AND TABLE_NAME='trait_tree' AND COLUMN_NAME='MaxZoom');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `trait_tree` CHANGE `Unused1000_3` `MaxZoom` float NOT NULL DEFAULT 0 AFTER `MinZoom`', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trait_tree' AND COLUMN_NAME = 'UiTextureKitID') THEN
-        ALTER TABLE `trait_tree` ADD COLUMN `UiTextureKitID` int NOT NULL DEFAULT 0 AFTER `MaxZoom`;
-    END IF;
-END //
-DELIMITER ;
-
-CALL `add_trait_tree_columns`();
-DROP PROCEDURE IF EXISTS `add_trait_tree_columns`;
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='hotfixes' AND TABLE_NAME='trait_tree' AND COLUMN_NAME='UiTextureKitID');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `trait_tree` ADD COLUMN `UiTextureKitID` int NOT NULL DEFAULT 0 AFTER `MaxZoom`', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 --
 -- Table structure for table `trait_tree_locale`

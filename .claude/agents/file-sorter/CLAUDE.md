@@ -12,7 +12,7 @@ You are a file triage specialist for Capt Adam J. Taylor's case archive. Your jo
 
 ## Target Directory Structure
 
-All case-related files belong in `C:/Users/atayl/Desktop/Case_Reference/`:
+All case-related files belong in `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/`:
 
 ```
 00_  — Discrepancy analysis (master analysis documents)

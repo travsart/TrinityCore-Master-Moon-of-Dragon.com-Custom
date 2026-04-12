@@ -38,6 +38,44 @@
                 "LIB_EAY_RELEASE": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib",
                 "SSL_EAY_RELEASE": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libssl.lib"
             }
+        },
+        {
+            "name": "x64-Release",
+            "displayName": "x64 Release",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/x64-Release",
+            "installDir": "${sourceDir}/out/install/x64-Release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "SCRIPTS": "static",
+                "ELUNA": "ON",
+                "TOOLS": "ON",
+                "SERVERS": "ON",
+                "OPENSSL_CRYPTO_LIBRARY": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib",
+                "OPENSSL_SSL_LIBRARY": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libssl.lib",
+                "LIB_EAY_RELEASE": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib",
+                "SSL_EAY_RELEASE": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libssl.lib"
+            }
+        },
+        {
+            "name": "x64-MinSizeRel",
+            "displayName": "x64 MinSizeRel",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/x64-MinSizeRel",
+            "installDir": "${sourceDir}/out/install/x64-MinSizeRel",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "MinSizeRel",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "SCRIPTS": "static",
+                "ELUNA": "ON",
+                "TOOLS": "ON",
+                "SERVERS": "ON",
+                "OPENSSL_CRYPTO_LIBRARY": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib",
+                "OPENSSL_SSL_LIBRARY": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libssl.lib",
+                "LIB_EAY_RELEASE": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib",
+                "SSL_EAY_RELEASE": "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libssl.lib"
+            }
         }
     ],
     "buildPresets": [
@@ -62,6 +100,30 @@
             "name": "x64-RelWithDebInfo-scripts",
             "displayName": "x64 RelWithDebInfo (scripts only)",
             "configurePreset": "x64-RelWithDebInfo",
+            "targets": ["scripts"],
+            "nativeToolOptions": ["-j20"]
+        },
+        {
+            "name": "x64-Release",
+            "configurePreset": "x64-Release",
+            "nativeToolOptions": ["-j20"]
+        },
+        {
+            "name": "x64-Release-scripts",
+            "displayName": "x64 Release (scripts only)",
+            "configurePreset": "x64-Release",
+            "targets": ["scripts"],
+            "nativeToolOptions": ["-j20"]
+        },
+        {
+            "name": "x64-MinSizeRel",
+            "configurePreset": "x64-MinSizeRel",
+            "nativeToolOptions": ["-j20"]
+        },
+        {
+            "name": "x64-MinSizeRel-scripts",
+            "displayName": "x64 MinSizeRel (scripts only)",
+            "configurePreset": "x64-MinSizeRel",
             "targets": ["scripts"],
             "nativeToolOptions": ["-j20"]
         }

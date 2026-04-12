@@ -38,7 +38,7 @@ Follow the citation in FINAL 03's evidence map to the actual source file. Verify
 
 ### Step 4: Search Broadly
 If FINAL 03 doesn't cite a source, search the full archive:
-1. Grep across `C:/Users/atayl/Desktop/Case_Reference/` (text files)
+1. Grep across `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` (text files)
 2. Search .docx files via python-docx
 3. Check email attachments in `11_EMAILS/Takeout_Extracted/`
 4. Check screenshot filenames in `05_EVIDENCE_SCREENSHOTS/`

@@ -124,3 +124,36 @@ End with summary statistics:
 - If a file is encrypted or password-protected, flag it.
 - Process files in alphabetical order for consistency.
 - If you find a file that contains PII (SSN, DOB, medical records of non-parties), flag it for the redaction-scanner.
+
+## Mbox Attachment Catalog
+
+Attachments referenced in Gmail (full takeout) live in a content-addressable
+store at `C:/Users/atayl/Desktop/Excluded/mbox/attachments/<XX>/<sha256>`.
+Each unique file is stored exactly once regardless of how many emails
+attached it.
+
+To catalog them, query the mbox SQLite DB directly:
+
+```bash
+# List every unique attachment with its mime/size/first-seen timestamp
+sqlite3 "C:/Users/atayl/Desktop/Excluded/mbox/mbox_index.db" \
+  "SELECT sha256, filename, mime_type, size_bytes, stored_path FROM attachments ORDER BY size_bytes DESC LIMIT 500"
+
+# Find every email that attached a specific SHA256
+sqlite3 "C:/Users/atayl/Desktop/Excluded/mbox/mbox_index.db" \
+  "SELECT m.id, m.date_sent, m.from_addr, m.subject FROM messages m
+   JOIN message_attachments ma ON ma.message_id = m.id
+   WHERE ma.attachment_sha256 = 'HASH_HERE'"
+
+# Filename-driven discovery (glob supported via LIKE %)
+python -m tools.mbox.search --attachments "narsum*.pdf" --json
+```
+
+Catalog rules for mbox attachments:
+- **SHA256 is the canonical identity.** Report by hash, not filename —
+  filenames often collide.
+- **Note the first-seen context.** `first_seen_ts` + the first email that
+  referenced it gives the provenance chain.
+- When an attachment is present in both the mbox CAS store AND the
+  `Case_Reference/11_EMAILS/attachments/` curated set, hash-compare and
+  note if they differ (a modified version would be a red flag).

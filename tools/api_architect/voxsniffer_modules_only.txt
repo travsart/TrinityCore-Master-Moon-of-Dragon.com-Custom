@@ -1,0 +1,3886 @@
+
+========== VoxSniffer.lua ==========
+-- VoxSniffer — Universal Client-Side Data Vacuum for TrinityCore
+-- Bootstrap: initializes core systems, registers events, provides slash commands
+--
+-- Phase 1: Skeleton + session infrastructure + core systems
+-- Capture modules loaded in Phase 2+
+
+local ADDON_NAME, NS = ...
+
+local C = NS.Constants
+local Log = NS.Log
+local Cfg = NS.Config
+local SM = NS.SessionManager
+local FM = NS.FlushManager
+local Schema = NS.Schema
+local Sched = NS.Scheduler
+local EB = NS.EventBus
+local GU = NS.GuidUtils
+
+-- ============================================================
+-- Module registry
+-- ============================================================
+
+NS.modules = {}  -- [moduleName] = { Enable, Disable, GetStats, ... }
+
+function NS.RegisterModule(name, module)
+    NS.modules[name] = module
+    Log.Debug("Core", "Module registered: " .. name)
+end
+
+function NS.GetModule(name)
+    return NS.modules[name]
+end
+
+-- ============================================================
+-- Main frame
+-- ============================================================
+
+local frame = CreateFrame("Frame", "VoxSnifferFrame")
+local initialized = false
+
+-- ============================================================
+-- Capture gate — single source of truth for "should we record?"
+-- ============================================================
+
+function NS.IsCaptureActive()
+    return SM.IsActive()
+end
+
+-- ============================================================
+-- Cached player context (updated on a low-frequency tick)
+-- Avoids repeated C_Map lookups on every MakeEnvelope call
+-- ============================================================
+
+local cachedMapId = 0
+local cachedPos = nil
+local cachedZone = ""
+
+local function RefreshPlayerContext()
+    cachedMapId = C_Map.GetBestMapForUnit("player") or 0
+    cachedPos = nil
+    if cachedMapId ~= 0 then
+        local p = C_Map.GetPlayerMapPosition(cachedMapId, "player")
+        if p then cachedPos = { x = p.x, y = p.y } end
+    end
+    cachedZone = GetRealZoneText() or ""
+end
+
+-- ============================================================
+-- Observation envelope builder
+-- ============================================================
+
+function NS.MakeEnvelope(obsType, entityKey, payload, extra)
+    -- Session gate: no envelopes without an active session
+    if not SM.IsActive() then return nil end
+
+    return {
+        t = obsType,
+        ek = entityKey,
+        sid = SM.GetId(),
+        map = cachedMapId,
+        zone = cachedZone,
+        pos = cachedPos,
+        ts = GetTime(),
+        epoch = time(),
+        src = extra and extra.source_module or nil,
+        fp = extra and extra.fingerprint or nil,
+        p = payload,
+    }
+end
+
+-- ============================================================
+-- Module lifecycle hooks
+-- Called on session start/stop/reset to clear per-module runtime state
+-- ============================================================
+
+function NS.ResetAllModuleState()
+    for name, mod in pairs(NS.modules) do
+        if mod.ResetState then
+            mod.ResetState()
+            Log.Debug("Core", "Reset runtime state: " .. name)
+        end
+    end
+end
+
+-- ============================================================
+-- Status output
+-- ============================================================
+
+local function PrintStatus()
+    local session = SM.GetSession()
+    local db = VoxSnifferDB
+
+    print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " Status:")
+
+    if session then
+        print(format("  Session: #%d %s— %s on %s",
+            session.session_id,
+            session.label ~= "" and ("\"" .. session.label .. "\" ") or "",
+            session.character, session.realm))
+        print(format("  Running: %s | Observations: %d | Chunks: %d",
+            date("%H:%M:%S", session.start_time),
+            session.observation_count, session.chunk_count))
+    else
+        print("  Session: |cffff4444INACTIVE|r — use /vs start")
+    end
+
+    if db then
+        print(format("  DB: schema v%d | %d sessions | %d chunks | %d total obs",
+            db.schema_version,
+            db.stats.total_sessions or 0,
+            db.stats.total_chunks or 0,
+            db.stats.total_observations or 0))
+    end
+
+    -- Flush stats
+    local fStats = FM.GetStats()
+    print(format("  Buffers: %d pending | %d flushed this session", fStats.pendingCount, fStats.totalFlushed))
+
+    -- Module status
+    local cfg = Cfg.Get()
+    local enabledList, disabledList = {}, {}
+    for name, enabled in pairs(cfg.modules) do
+        if enabled then
+            enabledList[#enabledList + 1] = name
+        else
+            disabledList[#disabledList + 1] = name
+        end
+    end
+    table.sort(enabledList)
+    table.sort(disabledList)
+
+    if #enabledList > 0 then
+        print("  Modules ON: |cff00ff00" .. table.concat(enabledList, ", ") .. "|r")
+    end
+    if #disabledList > 0 then
+        print("  Modules OFF: |cffff4444" .. table.concat(disabledList, ", ") .. "|r")
+    end
+
+    -- Scheduler info
+    local sched = Sched.GetRegistered()
+    local schedCount = 0
+    for _ in pairs(sched) do schedCount = schedCount + 1 end
+    if schedCount > 0 then
+        print(format("  Scheduler: %d registered callbacks", schedCount))
+    end
+end
+
+-- ============================================================
+-- Module enable/disable
+-- ============================================================
+
+local function SetModuleState(name, enabled)
+    -- Find the module (case-insensitive search)
+    local matchedName = nil
+    for modName in pairs(C.MODULE) do
+        if C.MODULE[modName]:lower() == name:lower() then
+            matchedName = C.MODULE[modName]
+            break
+        end
+    end
+
+    if not matchedName then
+        -- Try direct match
+        for _, modName in pairs(C.MODULE) do
+            if modName:lower() == name:lower() then
+                matchedName = modName
+                break
+            end
+        end
+    end
+
+    if not matchedName then
+        Log.Warn("Core", "Unknown module: " .. name)
+        return
+    end
+
+    Cfg.SetModuleEnabled(matchedName, enabled)
+    local mod = NS.modules[matchedName]
+    if mod then
+        if enabled and mod.Enable then
+            mod.Enable()
+        elseif not enabled and mod.Disable then
+            mod.Disable()
+        end
+    end
+
+    Sched.SetEnabled(matchedName, enabled)
+
+    local state = enabled and "|cff00ff00ON|r" or "|cffff4444OFF|r"
+    print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " " .. matchedName .. ": " .. state)
+end
+
+-- ============================================================
+-- Slash commands
+-- ============================================================
+
+SLASH_VOXSNIFFER1 = "/vs"
+SLASH_VOXSNIFFER2 = "/voxsniffer"
+SlashCmdList["VOXSNIFFER"] = function(msg)
+    local args = {}
+    for word in (msg or ""):gmatch("%S+") do
+        args[#args + 1] = word:lower()
+    end
+    local cmd = args[1] or ""
+
+    if cmd == "start" then
+        local label = ""
+        if #args > 1 then
+            label = table.concat(args, " ", 2)
+        end
+        if SM.Start(label) then
+            NS.ResetAllModuleState()
+            print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " Recording started.")
+        end
+
+    elseif cmd == "stop" then
+        FM.FlushAll("session_stop")
+        if SM.Stop() then
+            print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " Recording stopped.")
+        end
+
+    elseif cmd == "status" then
+        PrintStatus()
+
+    elseif cmd == "flush" then
+        if not SM.IsActive() then
+            print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " No active session. Nothing buffered.")
+        else
+            local count = FM.FlushAll("manual")
+            print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. format(" Flushed %d records.", count))
+        end
+
+    elseif cmd == "module" or cmd == "mod" then
+        local modName = args[2]
+        local state = args[3]
+        if not modName then
+            Log.Warn("Core", "Usage: /vs module <name> on|off")
+        elseif state == "on" or state == "enable" then
+            SetModuleState(modName, true)
+        elseif state == "off" or state == "disable" then
+            SetModuleState(modName, false)
+        else
+            -- Toggle
+            local cfg = Cfg.Get()
+            for _, mName in pairs(C.MODULE) do
+                if mName:lower() == modName then
+                    local current = cfg.modules[mName] ~= false
+                    SetModuleState(modName, not current)
+                    return
+                end
+            end
+            Log.Warn("Core", "Unknown module: " .. modName .. ". Use /vs module <name> on|off")
+        end
+
+    elseif cmd == "label" then
+        if #args > 1 then
+            SM.SetLabel(table.concat(args, " ", 2))
+        else
+            SM.SetLabel("")
+        end
+
+    elseif cmd == "debug" then
+        local cfg = Cfg.Get()
+        Cfg.SetDebug(not cfg.debugMode)
+        print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " Debug " .. (Cfg.Get().debugMode and "|cff00ff00ON|r" or "OFF"))
+
+    elseif cmd == "verbose" then
+        local cfg = Cfg.Get()
+        Cfg.SetVerbose(not cfg.verboseMode)
+        print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " Verbose " .. (Cfg.Get().verboseMode and "|cff00ff00ON|r" or "OFF"))
+
+    elseif cmd == "reset" then
+        StaticPopup_Show("VOXSNIFFER_RESET")
+
+    else
+        -- No args or unknown command — open the control panel
+        if NS.TogglePanel then
+            NS.TogglePanel()
+        else
+            print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " v" .. C.VERSION .. " — /vs start | stop | status | flush | module | debug | verbose | reset")
+        end
+    end
+end
+
+-- ============================================================
+-- Reset dialog
+-- ============================================================
+
+StaticPopupDialogs["VOXSNIFFER_RESET"] = {
+    text = "Reset ALL VoxSniffer data? This cannot be undone.",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        -- Stop active session first
+        if SM.IsActive() then
+            FM.FlushAll("session_stop")
+            SM.Stop()
+        end
+        -- Drain all module buffers to prevent stale data leaking
+        FM.DrainAll()
+        -- Clear all module runtime state (dedup caches, tracking tables, etc.)
+        NS.ResetAllModuleState()
+        VoxSnifferDB = Schema.CreateEmpty()
+        Cfg.Init(VoxSnifferDB.config)
+        FM.Reset()
+        print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " All data reset.")
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
+-- ============================================================
+-- Addon Compartment (minimap button)
+-- ============================================================
+
+function VoxSniffer_OnCompartmentClick(_, buttonName)
+    if buttonName == "RightButton" then
+        if SM.IsActive() then
+            FM.FlushAll("session_stop")
+            SM.Stop()
+            print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " Recording stopped.")
+        else
+            if SM.Start() then
+                NS.ResetAllModuleState()
+            end
+            print(C.COLOR .. "[VoxSniffer]" .. C.CLOSE .. " Recording started.")
+        end
+    else
+        -- Left-click opens the control panel
+        if NS.TogglePanel then
+            NS.TogglePanel()
+        else
+            PrintStatus()
+        end
+    end
+end
+
+function VoxSniffer_OnCompartmentEnter(_, menuButtonFrame)
+    GameTooltip:SetOwner(menuButtonFrame, "ANCHOR_LEFT")
+    GameTooltip:SetText("VoxSniffer", 0, 0.8, 1)
+
+    local session = SM.GetSession()
+    if session then
+        GameTooltip:AddLine(format("Recording: session #%d", session.session_id), 0, 1, 0)
+        GameTooltip:AddLine(format("%d observations | %d chunks", session.observation_count, session.chunk_count), 1, 1, 1)
+    else
+        GameTooltip:AddLine("Not recording", 0.6, 0.6, 0.6)
+    end
+
+    local pending = FM.GetPendingCount()
+    if pending > 0 then
+        GameTooltip:AddLine(format("%d pending flush", pending), 1, 0.8, 0)
+    end
+
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("|cff00ff00Left-click|r Panel  |cff00ff00Right-click|r Start/Stop", 0.8, 0.8, 0.8)
+    GameTooltip:Show()
+end
+
+function VoxSniffer_OnCompartmentLeave()
+    GameTooltip:Hide()
+end
+
+-- ============================================================
+-- Event handler + bootstrap
+-- ============================================================
+
+frame:SetScript("OnEvent", function(_, event, ...)
+    if event == "PLAYER_LOGIN" then
+        -- 1. Validate/migrate SavedVariables
+        VoxSnifferDB = Schema.Validate(VoxSnifferDB)
+
+        -- 2. Initialize config from saved state
+        Cfg.Init(VoxSnifferDB.config)
+
+        -- 3. Enable modules that have registered
+        for name, mod in pairs(NS.modules) do
+            if Cfg.IsModuleEnabled(name) and mod.Enable then
+                mod.Enable()
+            end
+        end
+
+        initialized = true
+
+        -- 4. Initial context refresh
+        RefreshPlayerContext()
+
+        -- 5. Auto-start session if configured
+        if Cfg.Get().autoStartSession then
+            if SM.Start("auto") then
+                NS.ResetAllModuleState()
+            end
+        end
+
+        -- Summary
+        local db = VoxSnifferDB
+        -- Count enabled modules (don't spam a line per module)
+        local enabledCount = 0
+        for name in pairs(NS.modules) do
+            if Cfg.IsModuleEnabled(name) then enabledCount = enabledCount + 1 end
+        end
+        print(format("%s[VoxSniffer]%s v%s loaded — %d modules active | %d sessions | %d observations stored. /vs to open panel.",
+            C.COLOR, C.CLOSE, C.VERSION, enabledCount,
+            db.stats.total_sessions or 0, db.stats.total_observations or 0))
+
+    elseif event == "PLAYER_LOGOUT" then
+        -- Flush everything before logout
+        FM.FlushAll("logout")
+
+        -- Save config
+        if VoxSnifferDB then
+            VoxSnifferDB.config = Cfg.Save()
+        end
+
+        -- Close session if active
+        if SM.IsActive() then
+            SM.Stop()
+        end
+
+    elseif event == "ZONE_CHANGED_NEW_AREA" then
+        SM.UpdateZone()
+        RefreshPlayerContext()
+    end
+end)
+
+local contextTimer = 0
+frame:SetScript("OnUpdate", function(_, elapsed)
+    if not initialized then return end
+    Sched.OnUpdate(elapsed)
+    FM.OnUpdate(elapsed)
+    -- Refresh cached player context every 1s (not every frame)
+    contextTimer = contextTimer + elapsed
+    if contextTimer >= 1 then
+        contextTimer = 0
+        RefreshPlayerContext()
+    end
+end)
+
+frame:RegisterEvent("PLAYER_LOGIN")
+frame:RegisterEvent("PLAYER_LOGOUT")
+frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+
+========== Modules/AuraScanner.lua ==========
+-- VoxSniffer AuraScanner
+-- Periodic scan of auras (buffs/debuffs) on visible NPC units
+-- Supplements CombatCapture with full aura snapshots (stacks, duration, source)
+-- Borrows nameplate iteration from CreatureCodex's 5Hz aura scraper
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+local Sched = NS.Scheduler
+
+local MODULE_NAME = C.MODULE.AURA_SCANNER
+local scanner = {}
+NS.RegisterModule(MODULE_NAME, scanner)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+-- Track seen aura combos to avoid re-recording identical snapshots
+local seenAuras = {}  -- [entityKey.."|"..spellId] = GetTime()
+local DEDUP_AGE = 15  -- seconds before re-recording same aura on same unit
+
+-- Units to scan each tick
+local SCAN_UNITS = { "target", "focus", "mouseover", "softenemy" }
+local BOSS_UNITS = {}
+for i = 1, 8 do BOSS_UNITS[#BOSS_UNITS + 1] = "boss" .. i end
+
+-- Active nameplates (maintained by UnitScanner events, but we track our own copy)
+local activeNameplates = {}
+
+local eventFrame = CreateFrame("Frame")
+
+-- ============================================================
+-- Aura extraction
+-- ============================================================
+
+local function ScanUnitAuras(unit, source)
+    if not UnitExists(unit) then return end
+    if UnitIsPlayer(unit) then return end
+
+    local guid = UnitGUID(unit)
+    if not guid then return end
+
+    local entityKey = GU.EntityKey(guid)
+    if not entityKey then return end
+
+    local npcId = GU.GetNpcId(guid)
+    local unitName = GU.SafeString(UnitName(unit))
+    local now = GetTime()
+
+    -- Modern API: C_UnitAuras.GetAuraDataByIndex
+    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+        for i = 1, 80 do  -- cap at 80 to avoid infinite loop
+            local aura = C_UnitAuras.GetAuraDataByIndex(unit, i)
+            if not aura then break end
+
+            local dedupKey = entityKey .. "|" .. (aura.spellId or 0)
+            if not seenAuras[dedupKey] or (now - seenAuras[dedupKey]) >= DEDUP_AGE then
+                local payload = {
+                    spellId = aura.spellId,
+                    name = aura.name,
+                    stacks = aura.applications or 0,
+                    duration = aura.duration,
+                    expirationTime = aura.expirationTime,
+                    isHelpful = aura.isHelpful,
+                    isHarmful = aura.isHarmful,
+                    sourceUnit = aura.sourceUnit,
+                    canApplyAura = aura.canApplyAura,
+                    isBossAura = aura.isBossAura,
+                    isFromPlayerOrPlayerPet = aura.isFromPlayerOrPlayerPet,
+                    npcId = npcId,
+                    unitName = unitName,
+                    scanSource = source,
+                }
+
+                local envelope = NS.MakeEnvelope(C.OBS_TYPE.AURA_SEEN, entityKey, payload, {
+                    source_module = MODULE_NAME,
+                })
+                if not envelope then return end
+
+                seenAuras[dedupKey] = now
+                buffer:Push(envelope)
+                Log.Verbose(MODULE_NAME, format("Aura: %s on %s [%s] (%s)",
+                    aura.name or "?", unitName or "?", entityKey, source))
+            end
+        end
+        return
+    end
+
+    -- Fallback: UnitAura (deprecated but works on older clients)
+    if UnitAura then
+        for i = 1, 40 do
+            local name, icon, count, dispelType, duration, expirationTime, source_unit,
+                  isStealable, nameplateShowPersonal, spellId = UnitAura(unit, i, "HELPFUL")
+            if not name then break end
+
+            local dedupKey = entityKey .. "|" .. (spellId or 0)
+            if not seenAuras[dedupKey] or (now - seenAuras[dedupKey]) >= DEDUP_AGE then
+                local payload = {
+                    spellId = spellId,
+                    name = name,
+                    stacks = count or 0,
+                    duration = duration,
+                    expirationTime = expirationTime,
+                    isHelpful = true,
+                    dispelType = dispelType,
+                    sourceUnit = source_unit,
+                    npcId = npcId,
+                    unitName = unitName,
+                    scanSource = source,
+                }
+                local envelope = NS.MakeEnvelope(C.OBS_TYPE.AURA_SEEN, entityKey, payload, {
+                    source_module = MODULE_NAME,
+                })
+                if envelope then
+                    seenAuras[dedupKey] = now
+                    buffer:Push(envelope)
+                end
+            end
+        end
+
+        for i = 1, 40 do
+            local name, icon, count, dispelType, duration, expirationTime, source_unit,
+                  isStealable, nameplateShowPersonal, spellId = UnitAura(unit, i, "HARMFUL")
+            if not name then break end
+
+            local dedupKey = entityKey .. "|" .. (spellId or 0)
+            if not seenAuras[dedupKey] or (now - seenAuras[dedupKey]) >= DEDUP_AGE then
+                local payload = {
+                    spellId = spellId,
+                    name = name,
+                    stacks = count or 0,
+                    duration = duration,
+                    expirationTime = expirationTime,
+                    isHarmful = true,
+                    dispelType = dispelType,
+                    sourceUnit = source_unit,
+                    npcId = npcId,
+                    unitName = unitName,
+                    scanSource = source,
+                }
+                local envelope = NS.MakeEnvelope(C.OBS_TYPE.AURA_SEEN, entityKey, payload, {
+                    source_module = MODULE_NAME,
+                })
+                if envelope then
+                    seenAuras[dedupKey] = now
+                    buffer:Push(envelope)
+                end
+            end
+        end
+    end
+end
+
+-- ============================================================
+-- Tick handler
+-- ============================================================
+
+local sweepTimer = 0
+
+local function OnTick()
+    if not NS.IsCaptureActive() then return end
+
+    -- Scan explicit units
+    for _, unit in ipairs(SCAN_UNITS) do
+        if UnitExists(unit) then
+            ScanUnitAuras(unit, "tick_" .. unit)
+        end
+    end
+
+    -- Scan boss units
+    for _, unit in ipairs(BOSS_UNITS) do
+        if UnitExists(unit) then
+            ScanUnitAuras(unit, "tick_boss")
+        end
+    end
+
+    -- Scan active nameplates
+    for unit in pairs(activeNameplates) do
+        if UnitExists(unit) then
+            ScanUnitAuras(unit, "nameplate")
+        end
+    end
+
+    -- Periodic dedup sweep
+    sweepTimer = sweepTimer + NS.Config.GetTickRate(MODULE_NAME)
+    if sweepTimer >= 30 then
+        sweepTimer = 0
+        local cutoff = GetTime() - DEDUP_AGE
+        for k, t in pairs(seenAuras) do
+            if t < cutoff then seenAuras[k] = nil end
+        end
+    end
+end
+
+-- ============================================================
+-- Nameplate tracking events
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "NAME_PLATE_UNIT_ADDED" then
+        local unit = ...
+        if unit then activeNameplates[unit] = true end
+    elseif event == "NAME_PLATE_UNIT_REMOVED" then
+        local unit = ...
+        if unit then activeNameplates[unit] = nil end
+    end
+end)
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function scanner.ResetState()
+    wipe(seenAuras)
+    wipe(activeNameplates)
+    sweepTimer = 0
+
+    -- Re-enumerate currently visible nameplates so we don't miss units
+    -- already on screen when a session starts mid-gameplay
+    if C_NamePlate and C_NamePlate.GetNamePlates then
+        local plates = C_NamePlate.GetNamePlates()
+        if plates then
+            for _, plate in ipairs(plates) do
+                local unit = plate and plate.namePlateUnitToken
+                if unit then
+                    activeNameplates[unit] = true
+                end
+            end
+        end
+    end
+end
+
+function scanner.Enable()
+    eventFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    eventFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+
+    Sched.Register(MODULE_NAME, OnTick, NS.Config.GetTickRate(MODULE_NAME))
+    Log.Debug(MODULE_NAME, "Enabled — scanning auras on NPCs at 1Hz")
+end
+
+function scanner.Disable()
+    eventFrame:UnregisterAllEvents()
+    Sched.Unregister(MODULE_NAME)
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function scanner.GetStats()
+    local stats = buffer:GetStats()
+    stats.trackedAuras = 0
+    for _ in pairs(seenAuras) do stats.trackedAuras = stats.trackedAuras + 1 end
+    stats.activeNameplates = 0
+    for _ in pairs(activeNameplates) do stats.activeNameplates = stats.activeNameplates + 1 end
+    return stats
+end
+
+========== Modules/CombatCapture.lua ==========
+-- VoxSniffer CombatCapture
+-- COMBAT_LOG_EVENT_UNFILTERED dispatch via token table (Details! pattern)
+-- Captures spell casts, damage, healing, aura applications from NPCs
+-- Only records NPC-involved events (skips pure player-vs-player)
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+
+local MODULE_NAME = C.MODULE.COMBAT_CAPTURE
+local capture = {}
+NS.RegisterModule(MODULE_NAME, capture)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+-- ============================================================
+-- GUID type checks
+-- ============================================================
+
+local NPC_GUID_TYPES = {
+    Creature = true,
+    Vehicle = true,
+}
+
+local PET_GUID_TYPE = "Pet"
+
+local function IsNpcGuid(guid)
+    if not guid or guid == "" then return false end
+    local guidType = guid:match("^(%a+)-")
+    return guidType and NPC_GUID_TYPES[guidType] or false
+end
+
+local function IsPetGuid(guid)
+    if not guid or guid == "" then return false end
+    local guidType = guid:match("^(%a+)-")
+    return guidType == PET_GUID_TYPE
+end
+
+-- ============================================================
+-- Token dispatch table (Details! pattern — O(1) lookup)
+-- ============================================================
+
+local tokenHandlers = {}
+
+-- Helper: record a combat observation
+local function RecordCombat(subEvent, sourceGUID, sourceName, destGUID, destName, payload)
+    -- At least one side must be an NPC (creature/vehicle)
+    local sourceIsNpc = IsNpcGuid(sourceGUID)
+    local destIsNpc = IsNpcGuid(destGUID)
+    local sourceIsPet = IsPetGuid(sourceGUID)
+    local destIsPet = IsPetGuid(destGUID)
+
+    -- Require at least one real NPC; pet-only events are tagged but not primary
+    if not sourceIsNpc and not destIsNpc then
+        -- Allow pet events through but tag them
+        if not sourceIsPet and not destIsPet then return end
+    end
+
+    -- Use the NPC as the entity key (prefer NPC over pet)
+    local entityKey, npcId
+    if sourceIsNpc then
+        entityKey = GU.EntityKey(sourceGUID)
+        npcId = GU.GetNpcId(sourceGUID)
+    elseif destIsNpc then
+        entityKey = GU.EntityKey(destGUID)
+        npcId = GU.GetNpcId(destGUID)
+    elseif sourceIsPet then
+        entityKey = GU.EntityKey(sourceGUID)
+        npcId = GU.GetNpcId(sourceGUID)
+    else
+        entityKey = GU.EntityKey(destGUID)
+        npcId = GU.GetNpcId(destGUID)
+    end
+    if not entityKey then return end
+
+    payload.subEvent = subEvent
+    payload.sourceGUID = sourceGUID
+    payload.sourceName = sourceName
+    payload.destGUID = destGUID
+    payload.destName = destName
+    payload.sourceIsNpc = sourceIsNpc
+    payload.destIsNpc = destIsNpc
+    payload.sourceIsPet = sourceIsPet
+    payload.destIsPet = destIsPet
+    payload.npcId = npcId
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.COMBAT_EVENT, entityKey, payload, {
+        source_module = MODULE_NAME,
+    })
+    if not envelope then return end
+
+    buffer:Push(envelope)
+end
+
+-- ============================================================
+-- Spell events
+-- ============================================================
+
+local function HandleSpellEvent(subEvent, ts, sourceGUID, sourceName, sf, sr, destGUID, destName, df, dr,
+                                 spellId, spellName, spellSchool, ...)
+    local payload = {
+        spellId = spellId,
+        spellName = spellName,
+        spellSchool = spellSchool,
+    }
+
+    -- Damage suffix
+    if subEvent == "SPELL_DAMAGE" or subEvent == "SPELL_PERIODIC_DAMAGE" then
+        local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
+        payload.amount = amount
+        payload.overkill = overkill
+        payload.critical = critical
+        payload.absorbed = absorbed
+
+    -- Heal suffix
+    elseif subEvent == "SPELL_HEAL" or subEvent == "SPELL_PERIODIC_HEAL" then
+        local amount, overhealing, absorbed, critical = ...
+        payload.amount = amount
+        payload.overhealing = overhealing
+        payload.critical = critical
+
+    -- Miss suffix
+    elseif subEvent == "SPELL_MISSED" or subEvent == "SPELL_PERIODIC_MISSED" then
+        local missType, isOffHand, amountMissed, critical = ...
+        payload.missType = missType
+        payload.amountMissed = amountMissed
+
+    -- Energize
+    elseif subEvent == "SPELL_ENERGIZE" or subEvent == "SPELL_PERIODIC_ENERGIZE" then
+        local amount, overEnergize, powerType = ...
+        payload.amount = amount
+        payload.powerType = powerType
+
+    -- Interrupt
+    elseif subEvent == "SPELL_INTERRUPT" then
+        local extraSpellId, extraSpellName, extraSchool = ...
+        payload.extraSpellId = extraSpellId
+        payload.extraSpellName = extraSpellName
+
+    -- Dispel / Stolen
+    elseif subEvent == "SPELL_DISPEL" or subEvent == "SPELL_STOLEN" then
+        local extraSpellId, extraSpellName, extraSchool, auraType = ...
+        payload.extraSpellId = extraSpellId
+        payload.extraSpellName = extraSpellName
+        payload.auraType = auraType
+
+    -- Summon
+    elseif subEvent == "SPELL_SUMMON" then
+        -- No extra args beyond spell info
+    end
+
+    RecordCombat(subEvent, sourceGUID, sourceName, destGUID, destName, payload)
+end
+
+-- Register all spell-prefix tokens
+local SPELL_TOKENS = {
+    "SPELL_CAST_START", "SPELL_CAST_SUCCESS", "SPELL_CAST_FAILED",
+    "SPELL_DAMAGE", "SPELL_PERIODIC_DAMAGE",
+    "SPELL_HEAL", "SPELL_PERIODIC_HEAL",
+    "SPELL_MISSED", "SPELL_PERIODIC_MISSED",
+    "SPELL_ENERGIZE", "SPELL_PERIODIC_ENERGIZE",
+    "SPELL_INTERRUPT", "SPELL_DISPEL", "SPELL_STOLEN",
+    "SPELL_SUMMON",
+    "SPELL_AURA_APPLIED", "SPELL_AURA_REMOVED",
+    "SPELL_AURA_APPLIED_DOSE", "SPELL_AURA_REMOVED_DOSE",
+    "SPELL_AURA_REFRESH",
+}
+
+for _, token in ipairs(SPELL_TOKENS) do
+    tokenHandlers[token] = HandleSpellEvent
+end
+
+-- ============================================================
+-- Aura events (special handling for stacks)
+-- ============================================================
+
+local function HandleAuraEvent(subEvent, ts, sourceGUID, sourceName, sf, sr, destGUID, destName, df, dr,
+                                spellId, spellName, spellSchool, auraType, amount)
+    local payload = {
+        spellId = spellId,
+        spellName = spellName,
+        spellSchool = spellSchool,
+        auraType = auraType,
+        stacks = amount,
+    }
+    RecordCombat(subEvent, sourceGUID, sourceName, destGUID, destName, payload)
+end
+
+-- Override aura tokens with the aura-specific handler
+tokenHandlers["SPELL_AURA_APPLIED"] = HandleAuraEvent
+tokenHandlers["SPELL_AURA_REMOVED"] = HandleAuraEvent
+tokenHandlers["SPELL_AURA_APPLIED_DOSE"] = HandleAuraEvent
+tokenHandlers["SPELL_AURA_REMOVED_DOSE"] = HandleAuraEvent
+tokenHandlers["SPELL_AURA_REFRESH"] = HandleAuraEvent
+
+-- ============================================================
+-- Swing events
+-- ============================================================
+
+local function HandleSwingEvent(subEvent, ts, sourceGUID, sourceName, sf, sr, destGUID, destName, df, dr, ...)
+    local payload = {}
+    if subEvent == "SWING_DAMAGE" then
+        local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
+        payload.amount = amount
+        payload.overkill = overkill
+        payload.critical = critical
+    elseif subEvent == "SWING_MISSED" then
+        local missType, isOffHand, amountMissed = ...
+        payload.missType = missType
+    end
+    RecordCombat(subEvent, sourceGUID, sourceName, destGUID, destName, payload)
+end
+
+tokenHandlers["SWING_DAMAGE"] = HandleSwingEvent
+tokenHandlers["SWING_MISSED"] = HandleSwingEvent
+
+-- ============================================================
+-- Unit death / destroy
+-- ============================================================
+
+local function HandleUnitDied(subEvent, ts, sourceGUID, sourceName, sf, sr, destGUID, destName, df, dr)
+    RecordCombat(subEvent, sourceGUID or "", sourceName or "", destGUID, destName, {})
+end
+
+tokenHandlers["UNIT_DIED"] = HandleUnitDied
+tokenHandlers["UNIT_DESTROYED"] = HandleUnitDied
+
+-- ============================================================
+-- Range events (same shape as spell events)
+-- ============================================================
+tokenHandlers["RANGE_DAMAGE"] = HandleSpellEvent
+tokenHandlers["RANGE_MISSED"] = HandleSpellEvent
+
+-- ============================================================
+-- Environmental damage
+-- ============================================================
+
+local function HandleEnvDamage(subEvent, ts, sourceGUID, sourceName, sf, sr, destGUID, destName, df, dr,
+                                envType, amount, overkill, school, resisted, blocked, absorbed, critical)
+    local payload = {
+        envType = envType,
+        amount = amount,
+        overkill = overkill,
+        critical = critical,
+    }
+    RecordCombat(subEvent, sourceGUID or "", sourceName or "", destGUID, destName, payload)
+end
+
+tokenHandlers["ENVIRONMENTAL_DAMAGE"] = HandleEnvDamage
+
+-- ============================================================
+-- Main CLEU dispatcher
+-- ============================================================
+
+local function OnCombatLogEvent()
+    -- Single CombatLogGetCurrentEventInfo call; varargs capture suffix
+    local ts, subEvent, hideCaster,
+        sourceGUID, sourceName, sourceFlags, sourceRaidFlags,
+        destGUID, destName, destFlags, destRaidFlags,
+        ... = CombatLogGetCurrentEventInfo()
+
+    local handler = tokenHandlers[subEvent]
+    if handler then
+        handler(subEvent, ts,
+            sourceGUID, sourceName, sourceFlags, sourceRaidFlags,
+            destGUID, destName, destFlags, destRaidFlags,
+            ...)
+    end
+end
+
+local eventFrame = CreateFrame("Frame")
+
+eventFrame:SetScript("OnEvent", function(_, event)
+    if event == "COMBAT_LOG_EVENT_UNFILTERED" then
+        OnCombatLogEvent()
+    end
+end)
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+local cleuEnabled = false
+
+function capture.ResetState()
+    -- No module-local dedup state to clear; buffer drain handled by FlushManager
+end
+
+function capture.Enable()
+    cleuEnabled = true
+    -- Register CLEU from a clean execution context via C_Timer.After
+    -- Direct registration during module Enable() inherits taint from earlier
+    -- module calls (UnitHealth etc.), causing ADDON_ACTION_FORBIDDEN.
+    C_Timer.After(0, function()
+        if not cleuEnabled then return end  -- guard against Disable() before timer fires
+        eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+        Log.Info(MODULE_NAME, format("CLEU registered — %d tokens dispatched via lookup table", #SPELL_TOKENS + 6))
+    end)
+    Log.Debug(MODULE_NAME, "Enabled — CLEU registration deferred to clean context")
+end
+
+function capture.Disable()
+    cleuEnabled = false
+    eventFrame:UnregisterAllEvents()
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function capture.GetStats()
+    return buffer:GetStats()
+end
+
+========== Modules/CombatEnricher.lua ==========
+-- VoxSniffer CombatEnricher
+-- Captures combat context snapshots: unit health/power at key moments,
+-- spell cast start/stop/interrupt, phase transitions during encounters
+-- Supplements CombatCapture with richer behavioral data for NPC AI analysis
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+
+local MODULE_NAME = C.MODULE.COMBAT_ENRICHER
+local enricher = {}
+NS.RegisterModule(MODULE_NAME, enricher)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+local eventFrame = CreateFrame("Frame")
+
+-- Track units in combat for context snapshots
+local combatUnits = {}  -- [guid] = { name, npcId, entityKey, lastSnapshot }
+local SNAPSHOT_INTERVAL = 2  -- seconds between health snapshots per unit
+
+-- ============================================================
+-- Unit tracking helpers
+-- ============================================================
+
+local function IsNpcUnit(unit)
+    if not UnitExists(unit) then return false end
+    if UnitIsPlayer(unit) then return false end
+    local guid = UnitGUID(unit)
+    if not guid then return false end
+    local guidType = guid:match("^(%a+)-")
+    return guidType == "Creature" or guidType == "Vehicle"
+end
+
+local function TrackUnit(unit)
+    if not IsNpcUnit(unit) then return end
+    local guid = UnitGUID(unit)
+    if not guid then return end
+    if combatUnits[guid] then return end
+
+    combatUnits[guid] = {
+        name = GU.SafeString(UnitName(unit)),
+        npcId = GU.GetNpcId(guid),
+        entityKey = GU.EntityKey(guid),
+        lastSnapshot = 0,
+    }
+end
+
+-- ============================================================
+-- Context snapshot (health/power at a point in time)
+-- ============================================================
+
+local function SnapshotUnit(unit, trigger)
+    if not UnitExists(unit) then return end
+    local guid = UnitGUID(unit)
+    if not guid then return end
+
+    local tracked = combatUnits[guid]
+    if not tracked then return end
+
+    local now = GetTime()
+    if trigger == "tick" and (now - tracked.lastSnapshot) < SNAPSHOT_INTERVAL then
+        return
+    end
+    tracked.lastSnapshot = now
+
+    local health = GU.SafeNumber(UnitHealth(unit))
+    local maxHealth = GU.SafeNumber(UnitHealthMax(unit))
+    local power = GU.SafeNumber(UnitPower(unit))
+    local maxPower = GU.SafeNumber(UnitPowerMax(unit))
+    local powerType = GU.SafeNumber(UnitPowerType(unit))
+
+    local payload = {
+        trigger = trigger,
+        npcId = tracked.npcId,
+        unitName = tracked.name,
+        guid = guid,
+        health = health,
+        maxHealth = maxHealth,
+        healthPct = maxHealth and maxHealth > 0 and health and math.floor(health / maxHealth * 100) or nil,
+        power = power,
+        maxPower = maxPower,
+        powerType = powerType,
+    }
+
+    -- Add cast info if casting
+    if UnitCastingInfo then
+        local ok, castName, _, _, _, _, _, castSpellID = pcall(UnitCastingInfo, unit)
+        if ok and castName then
+            payload.castName = castName
+            payload.castSpellID = castSpellID
+        end
+    end
+
+    if UnitChannelInfo then
+        local ok, chanName, _, _, _, _, _, _, chanSpellID = pcall(UnitChannelInfo, unit)
+        if ok and chanName then
+            payload.chanName = chanName
+            payload.chanSpellID = chanSpellID
+        end
+    end
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.COMBAT_CONTEXT, tracked.entityKey, payload, {
+        source_module = MODULE_NAME,
+    })
+    if not envelope then return end
+
+    buffer:Push(envelope)
+end
+
+-- ============================================================
+-- Cast tracking events
+-- ============================================================
+
+local function OnSpellcastEvent(unit, trigger, castGUID, spellID)
+    if not unit then return end
+    if not IsNpcUnit(unit) then return end
+
+    local guid = UnitGUID(unit)
+    if not guid then return end
+
+    TrackUnit(unit)
+
+    local tracked = combatUnits[guid]
+    if not tracked then return end
+
+    local health = GU.SafeNumber(UnitHealth(unit))
+    local maxHealth = GU.SafeNumber(UnitHealthMax(unit))
+
+    local payload = {
+        trigger = trigger,
+        npcId = tracked.npcId,
+        unitName = tracked.name,
+        guid = guid,
+        spellID = spellID,
+        castGUID = castGUID,
+        healthPct = maxHealth and maxHealth > 0 and health and math.floor(health / maxHealth * 100) or nil,
+    }
+
+    -- Get spell name
+    if spellID and GetSpellInfo then
+        local ok, name = pcall(GetSpellInfo, spellID)
+        if ok then payload.spellName = name end
+    end
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.COMBAT_CONTEXT, tracked.entityKey, payload, {
+        source_module = MODULE_NAME,
+    })
+    if not envelope then return end
+
+    buffer:Push(envelope)
+    Log.Verbose(MODULE_NAME, format("[%s] %s: spell %s (%d) at %d%% HP",
+        trigger, tracked.name or "?", payload.spellName or "?", spellID or 0, payload.healthPct or 0))
+end
+
+-- ============================================================
+-- Event handler
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "UNIT_SPELLCAST_START" then
+        local unit, castGUID, spellID = ...
+        OnSpellcastEvent(unit, "cast_start", castGUID, spellID)
+
+    elseif event == "UNIT_SPELLCAST_STOP" then
+        local unit, castGUID, spellID = ...
+        OnSpellcastEvent(unit, "cast_stop", castGUID, spellID)
+
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local unit, castGUID, spellID = ...
+        OnSpellcastEvent(unit, "cast_succeeded", castGUID, spellID)
+
+    elseif event == "UNIT_SPELLCAST_INTERRUPTED" then
+        local unit, castGUID, spellID = ...
+        OnSpellcastEvent(unit, "cast_interrupted", castGUID, spellID)
+
+    elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
+        local unit, castGUID, spellID = ...
+        OnSpellcastEvent(unit, "channel_start", castGUID, spellID)
+
+    elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+        local unit, castGUID, spellID = ...
+        OnSpellcastEvent(unit, "channel_stop", castGUID, spellID)
+
+    elseif event == "UNIT_HEALTH" then
+        local unit = ...
+        if unit and IsNpcUnit(unit) then
+            TrackUnit(unit)
+            SnapshotUnit(unit, "health_change")
+        end
+
+    elseif event == "UNIT_TARGET" then
+        -- NPC changed target — useful for threat/aggro analysis
+        local unit = ...
+        if unit and IsNpcUnit(unit) then
+            TrackUnit(unit)
+            local guid = UnitGUID(unit)
+            local tracked = guid and combatUnits[guid]
+            if tracked then
+                local targetUnit = unit .. "target"
+                local targetName = UnitExists(targetUnit) and UnitName(targetUnit) or nil
+                local targetGUID = UnitExists(targetUnit) and UnitGUID(targetUnit) or nil
+
+                local payload = {
+                    trigger = "target_change",
+                    npcId = tracked.npcId,
+                    unitName = tracked.name,
+                    guid = guid,
+                    targetName = targetName,
+                    targetGUID = targetGUID,
+                    targetIsPlayer = targetGUID and UnitIsPlayer(targetUnit) or nil,
+                }
+
+                local envelope = NS.MakeEnvelope(C.OBS_TYPE.COMBAT_CONTEXT, tracked.entityKey, payload, {
+                    source_module = MODULE_NAME,
+                })
+                if envelope then
+                    buffer:Push(envelope)
+                end
+            end
+        end
+    end
+end)
+
+-- ============================================================
+-- Periodic combat unit cleanup
+-- ============================================================
+
+local function SweepCombatUnits()
+    -- Remove units that no longer exist or are dead
+    for guid, tracked in pairs(combatUnits) do
+        -- We can't easily check if a GUID's unit still exists without iterating,
+        -- so just prune entries older than 60 seconds since last snapshot
+        if (GetTime() - tracked.lastSnapshot) > 60 then
+            combatUnits[guid] = nil
+        end
+    end
+end
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function enricher.ResetState()
+    wipe(combatUnits)
+end
+
+function enricher.Enable()
+    eventFrame:RegisterEvent("UNIT_SPELLCAST_START")
+    eventFrame:RegisterEvent("UNIT_SPELLCAST_STOP")
+    eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    eventFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+    eventFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+    eventFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+    eventFrame:RegisterEvent("UNIT_HEALTH")
+    eventFrame:RegisterEvent("UNIT_TARGET")
+
+    NS.Scheduler.Register(MODULE_NAME .. "_sweep", SweepCombatUnits, 30)
+
+    Log.Debug(MODULE_NAME, "Enabled — enriching combat data with cast/health/target context")
+end
+
+function enricher.Disable()
+    eventFrame:UnregisterAllEvents()
+    NS.Scheduler.Unregister(MODULE_NAME .. "_sweep")
+    wipe(combatUnits)
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function enricher.GetStats()
+    local stats = buffer:GetStats()
+    stats.trackedCombatUnits = 0
+    for _ in pairs(combatUnits) do stats.trackedCombatUnits = stats.trackedCombatUnits + 1 end
+    return stats
+end
+
+========== Modules/CoverageHeatmap.lua ==========
+-- VoxSniffer CoverageHeatmap
+-- Tracks player position on a per-map grid to build coverage maps
+-- Shows which areas have been explored (for Python delta pipeline to find gaps)
+-- Borrows position tracking pattern from SilverDragon's zone scanning
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local Sched = NS.Scheduler
+
+local MODULE_NAME = C.MODULE.COVERAGE_HEATMAP
+local heatmap = {}
+NS.RegisterModule(MODULE_NAME, heatmap)
+
+-- Grid cells are keyed by "mapId:gridX:gridY"
+-- Value is visit count (incremented each tick while player is in that cell)
+-- Stored in VoxSnifferDB.heatmaps for persistence across sessions
+
+local CELL_SIZE = C.HEATMAP_CELL_SIZE  -- yards per cell (configurable via constants)
+local currentMapId = nil
+local lastCellKey = nil
+
+-- ============================================================
+-- Grid math
+-- ============================================================
+
+-- Convert map-normalized coords (0-1) to grid cell indices
+-- Grid resolution derived from CELL_SIZE: ~50yd cells on a ~5000yd map = 100 divisions
+local GRID_DIVISIONS = math.max(10, math.floor(5000 / CELL_SIZE))
+
+local function GetCellCoords(mapX, mapY)
+    local gridX = math.floor(mapX * GRID_DIVISIONS)
+    local gridY = math.floor(mapY * GRID_DIVISIONS)
+    return gridX, gridY
+end
+
+local function MakeCellKey(mapId, gridX, gridY)
+    return format("%d:%d:%d", mapId, gridX, gridY)
+end
+
+-- ============================================================
+-- Position sampling (called by Scheduler)
+-- ============================================================
+
+local function OnTick()
+    if not NS.IsCaptureActive() then return end
+
+    local mapId = C_Map.GetBestMapForUnit("player")
+    if not mapId then return end
+
+    local pos = C_Map.GetPlayerMapPosition(mapId, "player")
+    if not pos then return end
+
+    local gridX, gridY = GetCellCoords(pos.x, pos.y)
+    local cellKey = MakeCellKey(mapId, gridX, gridY)
+
+    -- Skip if we haven't moved to a new cell
+    if cellKey == lastCellKey then return end
+    lastCellKey = cellKey
+
+    -- Update heatmap in SavedVariables
+    if not VoxSnifferDB then return end
+    if not VoxSnifferDB.heatmaps then VoxSnifferDB.heatmaps = {} end
+
+    local mapKey = tostring(mapId)
+    if not VoxSnifferDB.heatmaps[mapKey] then
+        VoxSnifferDB.heatmaps[mapKey] = {
+            mapId = mapId,
+            cells = {},
+            firstVisit = time(),
+            lastVisit = time(),
+        }
+    end
+
+    local mapData = VoxSnifferDB.heatmaps[mapKey]
+    local coordKey = format("%d,%d", gridX, gridY)
+
+    if not mapData.cells[coordKey] then
+        mapData.cells[coordKey] = {
+            visits = 1,
+            firstSeen = time(),
+            lastSeen = time(),
+        }
+        Log.Verbose(MODULE_NAME, format("New cell: map %d [%d,%d]", mapId, gridX, gridY))
+    else
+        local cell = mapData.cells[coordKey]
+        cell.visits = cell.visits + 1
+        cell.lastSeen = time()
+    end
+
+    mapData.lastVisit = time()
+
+    -- Track map change
+    if currentMapId ~= mapId then
+        currentMapId = mapId
+        Log.Debug(MODULE_NAME, format("Map changed to %d", mapId))
+    end
+end
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function heatmap.ResetState()
+    currentMapId = nil
+    lastCellKey = nil
+end
+
+function heatmap.Enable()
+    currentMapId = C_Map.GetBestMapForUnit("player")
+    Sched.Register(MODULE_NAME, OnTick, NS.Config.GetTickRate(MODULE_NAME))
+    Log.Debug(MODULE_NAME, "Enabled — tracking player coverage grid")
+end
+
+function heatmap.Disable()
+    Sched.Unregister(MODULE_NAME)
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function heatmap.GetStats()
+    local stats = {
+        totalMaps = 0,
+        totalCells = 0,
+    }
+
+    if VoxSnifferDB and VoxSnifferDB.heatmaps then
+        for _, mapData in pairs(VoxSnifferDB.heatmaps) do
+            stats.totalMaps = stats.totalMaps + 1
+            if mapData.cells then
+                for _ in pairs(mapData.cells) do
+                    stats.totalCells = stats.totalCells + 1
+                end
+            end
+        end
+    end
+
+    return stats
+end
+
+-- Summary for /vs status
+function heatmap.GetCoverageSummary()
+    local summary = {}
+    if not VoxSnifferDB or not VoxSnifferDB.heatmaps then return summary end
+
+    for mapKey, mapData in pairs(VoxSnifferDB.heatmaps) do
+        local cellCount = 0
+        if mapData.cells then
+            for _ in pairs(mapData.cells) do cellCount = cellCount + 1 end
+        end
+        summary[#summary + 1] = {
+            mapId = mapData.mapId or tonumber(mapKey),
+            cells = cellCount,
+            lastVisit = mapData.lastVisit,
+        }
+    end
+
+    table.sort(summary, function(a, b) return (a.cells or 0) > (b.cells or 0) end)
+    return summary
+end
+
+========== Modules/DeltaHints.lua ==========
+-- VoxSniffer DeltaHints
+-- Live comparison of observed data against a loaded "hotset" baseline
+-- OFF by default — requires baseline data to be loaded into VoxSnifferDB.hotset
+-- When active, flags differences between observed and expected NPC data
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local EB = NS.EventBus
+local Sched = NS.Scheduler
+
+local MODULE_NAME = C.MODULE.DELTA_HINTS
+local hints = {}
+NS.RegisterModule(MODULE_NAME, hints)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+-- Hotset: loaded from VoxSnifferDB.hotset (populated by Python pipeline)
+-- Format: { creatures = { [npcId] = { name, level, faction, ... }, ... } }
+local hotset = nil
+
+-- Track reported deltas to avoid spam
+local reportedDeltas = {}  -- [deltaKey] = GetTime()
+local REPORT_COOLDOWN = 300  -- 5 minutes between re-reporting same delta
+
+-- ============================================================
+-- Hotset loading
+-- ============================================================
+
+local function LoadHotset()
+    if not VoxSnifferDB or not VoxSnifferDB.hotset then
+        return false
+    end
+    hotset = VoxSnifferDB.hotset
+    local creatureCount = 0
+    if hotset.creatures then
+        for _ in pairs(hotset.creatures) do creatureCount = creatureCount + 1 end
+    end
+    Log.Info(MODULE_NAME, format("Loaded hotset: %d creatures", creatureCount))
+    return creatureCount > 0
+end
+
+-- ============================================================
+-- Delta detection
+-- ============================================================
+
+local function CheckCreatureDelta(npcId, observed)
+    if not hotset or not hotset.creatures then return end
+    if not npcId then return end
+
+    local expected = hotset.creatures[npcId]
+    if not expected then
+        -- NPC not in baseline — this IS a delta (new/unknown creature)
+        local deltaKey = format("new_creature:%d", npcId)
+        local now = GetTime()
+        if reportedDeltas[deltaKey] and (now - reportedDeltas[deltaKey]) < REPORT_COOLDOWN then
+            return
+        end
+
+        local payload = {
+            deltaType = "new_creature",
+            npcId = npcId,
+            observedName = observed.name,
+            observedLevel = observed.level,
+            observedClassification = observed.classification,
+        }
+
+        local envelope = NS.MakeEnvelope(C.OBS_TYPE.DELTA_HINT, format("C:%d", npcId), payload, {
+            source_module = MODULE_NAME,
+        })
+        if not envelope then return end
+        reportedDeltas[deltaKey] = now
+        buffer:Push(envelope)
+        Log.Info(MODULE_NAME, format("DELTA: New creature %d (%s) not in baseline",
+            npcId, observed.name or "?"))
+        return
+    end
+
+    -- Compare fields
+    local deltas = {}
+
+    if expected.name and observed.name and expected.name ~= observed.name then
+        deltas[#deltas + 1] = {
+            field = "name",
+            expected = expected.name,
+            observed = observed.name,
+        }
+    end
+
+    if expected.level and observed.level and expected.level ~= observed.level then
+        deltas[#deltas + 1] = {
+            field = "level",
+            expected = expected.level,
+            observed = observed.level,
+        }
+    end
+
+    if expected.classification and observed.classification
+        and expected.classification ~= observed.classification then
+        deltas[#deltas + 1] = {
+            field = "classification",
+            expected = expected.classification,
+            observed = observed.classification,
+        }
+    end
+
+    if expected.creatureType and observed.creatureType
+        and expected.creatureType ~= observed.creatureType then
+        deltas[#deltas + 1] = {
+            field = "creatureType",
+            expected = expected.creatureType,
+            observed = observed.creatureType,
+        }
+    end
+
+    if #deltas == 0 then return end
+
+    local deltaKey = format("creature_diff:%d", npcId)
+    local now = GetTime()
+    if reportedDeltas[deltaKey] and (now - reportedDeltas[deltaKey]) < REPORT_COOLDOWN then
+        return
+    end
+
+    local payload = {
+        deltaType = "creature_diff",
+        npcId = npcId,
+        unitName = observed.name,
+        deltas = deltas,
+        deltaCount = #deltas,
+    }
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.DELTA_HINT, format("C:%d", npcId), payload, {
+        source_module = MODULE_NAME,
+    })
+    if not envelope then return end
+    reportedDeltas[deltaKey] = now
+    buffer:Push(envelope)
+    Log.Info(MODULE_NAME, format("DELTA: Creature %d (%s) — %d field differences",
+        npcId, observed.name or "?", #deltas))
+end
+
+-- ============================================================
+-- EventBus subscriber — listens for unit observations from UnitScanner
+-- ============================================================
+
+local function OnUnitSeen(data)
+    if not hotset then return end
+    if not data or not data.p then return end
+
+    local payload = data.p
+    local npcId = payload.npcId
+    if npcId then
+        CheckCreatureDelta(npcId, payload)
+    end
+end
+
+-- ============================================================
+-- Periodic cooldown sweep
+-- ============================================================
+
+local function SweepCooldowns()
+    local cutoff = GetTime() - REPORT_COOLDOWN * 2
+    for k, t in pairs(reportedDeltas) do
+        if t < cutoff then reportedDeltas[k] = nil end
+    end
+end
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+local ebHandle = nil
+
+function hints.ResetState()
+    wipe(reportedDeltas)
+    -- Reload hotset from DB (nil-ing it breaks delta detection until next Enable)
+    LoadHotset()
+end
+
+function hints.Enable()
+    -- Idempotent: unsubscribe existing handle before re-subscribing
+    if ebHandle then
+        EB.Unsubscribe(ebHandle)
+        ebHandle = nil
+    end
+
+    if not LoadHotset() then
+        Log.Warn(MODULE_NAME, "No hotset loaded — DeltaHints will not detect differences")
+        Log.Warn(MODULE_NAME, "Use Python pipeline to populate VoxSnifferDB.hotset")
+    end
+
+    -- Subscribe to unit observations via EventBus
+    ebHandle = EB.Subscribe("UNIT_OBSERVED", OnUnitSeen)
+
+    Sched.Register(MODULE_NAME .. "_sweep", SweepCooldowns, 60)
+    Log.Debug(MODULE_NAME, "Enabled — comparing observations against baseline hotset")
+end
+
+function hints.Disable()
+    if ebHandle then
+        EB.Unsubscribe(ebHandle)
+        ebHandle = nil
+    end
+    Sched.Unregister(MODULE_NAME .. "_sweep")
+    hotset = nil
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function hints.GetStats()
+    local stats = buffer:GetStats()
+    stats.hotsetLoaded = hotset ~= nil
+    stats.hotsetCreatures = 0
+    if hotset and hotset.creatures then
+        for _ in pairs(hotset.creatures) do stats.hotsetCreatures = stats.hotsetCreatures + 1 end
+    end
+    stats.reportedDeltas = 0
+    for _ in pairs(reportedDeltas) do stats.reportedDeltas = stats.reportedDeltas + 1 end
+    return stats
+end
+
+-- Expose reload function for slash commands
+function hints.ReloadHotset()
+    LoadHotset()
+end
+
+========== Modules/EmoteCapture.lua ==========
+-- VoxSniffer EmoteCapture
+-- Capture NPC speech: SAY, YELL, EMOTE, WHISPER, PARTY, RAID_BOSS_EMOTE/WHISPER
+-- Borrows broadcast text sanitization from Datamine (replace player name/class)
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local EB = NS.EventBus
+
+local MODULE_NAME = C.MODULE.EMOTE_CAPTURE
+local capture = {}
+NS.RegisterModule(MODULE_NAME, capture)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+-- Player info for text sanitization
+local playerName, playerClass
+
+-- Dedup recent texts to avoid spam
+local recentTexts = {}  -- [hash] = GetTime()
+local DEDUP_WINDOW = 5  -- seconds
+
+local eventFrame = CreateFrame("Frame")
+
+-- ============================================================
+-- Text sanitization (Datamine pattern)
+-- ============================================================
+
+local function SanitizeText(text)
+    if not text or text == "" then return text end
+
+    -- Replace player name and class with placeholders
+    -- Escape Lua pattern magic characters in names (e.g. "Al-Rashid", "Dot.Com")
+    if playerName and playerName ~= "" then
+        local escaped = playerName:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+        text = text:gsub(escaped, "$PLAYER_NAME$")
+    end
+    if playerClass and playerClass ~= "" then
+        local escaped = playerClass:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+        text = text:gsub(escaped, "$PLAYER_CLASS$")
+    end
+
+    return text
+end
+
+-- Simple hash for dedup
+local function TextHash(senderGuid, text, eventType)
+    return (senderGuid or "") .. "|" .. (text or "") .. "|" .. (eventType or "")
+end
+
+-- ============================================================
+-- Event handler
+-- ============================================================
+
+local EVENT_MAP = {
+    CHAT_MSG_MONSTER_SAY     = "say",
+    CHAT_MSG_MONSTER_YELL    = "yell",
+    CHAT_MSG_MONSTER_EMOTE   = "emote",
+    CHAT_MSG_MONSTER_WHISPER = "whisper",
+    CHAT_MSG_MONSTER_PARTY   = "party",
+    CHAT_MSG_RAID_BOSS_EMOTE   = "raid_boss_emote",
+    CHAT_MSG_RAID_BOSS_WHISPER = "raid_boss_whisper",
+}
+
+local function OnChatEvent(event, text, senderName, languageName, _, _, _, _, _, _, _, _, senderGUID)
+    if not text or text == "" then return end
+
+    local emoteType = EVENT_MAP[event]
+    if not emoteType then return end
+
+    -- Dedup check
+    local hash = TextHash(senderGUID, text, emoteType)
+    local now = GetTime()
+    if recentTexts[hash] and (now - recentTexts[hash]) < DEDUP_WINDOW then
+        return
+    end
+
+    -- Entity identification
+    local entityKey = nil
+    local npcId = nil
+    if senderGUID then
+        entityKey = GU.EntityKey(senderGUID)
+        npcId = GU.GetNpcId(senderGUID)
+    end
+
+    local sanitizedText = SanitizeText(text)
+
+    local payload = {
+        text = sanitizedText,
+        rawText = (sanitizedText ~= text) and text or nil, -- only store raw if different
+        emoteType = emoteType,
+        senderName = senderName,
+        senderGUID = senderGUID,
+        npcId = npcId,
+        language = languageName,
+    }
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.EMOTE_TEXT, entityKey, payload, {
+        source_module = MODULE_NAME,
+    })
+    if not envelope then return end
+
+    recentTexts[hash] = now
+    buffer:Push(envelope)
+    Log.Debug(MODULE_NAME, format("[%s] %s: %s", emoteType, senderName or "?", (sanitizedText or ""):sub(1, 60)))
+end
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    OnChatEvent(event, ...)
+end)
+
+-- Periodic sweep of dedup cache
+local function SweepDedup()
+    local cutoff = GetTime() - DEDUP_WINDOW * 2
+    for k, t in pairs(recentTexts) do
+        if t < cutoff then recentTexts[k] = nil end
+    end
+end
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function capture.ResetState()
+    wipe(recentTexts)
+end
+
+function capture.Enable()
+    -- Cache player info for sanitization
+    playerName = UnitName("player") or ""
+    local _, classToken = UnitClass("player")
+    -- Get localized class name for text replacement
+    local classInfo = C_CreatureInfo and C_CreatureInfo.GetClassInfo
+    if classInfo then
+        local info = classInfo(select(3, UnitClass("player")))
+        playerClass = info and info.className or ""
+    else
+        playerClass = UnitClass("player") or ""
+    end
+
+    for event in pairs(EVENT_MAP) do
+        eventFrame:RegisterEvent(event)
+    end
+
+    -- Sweep dedup cache periodically via scheduler
+    NS.Scheduler.Register(MODULE_NAME .. "_sweep", SweepDedup, 30)
+
+    Log.Debug(MODULE_NAME, "Enabled — capturing 7 NPC speech event types")
+end
+
+function capture.Disable()
+    eventFrame:UnregisterAllEvents()
+    NS.Scheduler.Unregister(MODULE_NAME .. "_sweep")
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function capture.GetStats()
+    return buffer:GetStats()
+end
+
+========== Modules/GossipCapture.lua ==========
+-- VoxSniffer GossipCapture
+-- Full gossip menu snapshot on GOSSIP_SHOW
+-- Captures options, available quests, active quests, NPC text
+-- Borrows interaction hook pattern from Journalator
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+
+local MODULE_NAME = C.MODULE.GOSSIP_CAPTURE
+local capture = {}
+NS.RegisterModule(MODULE_NAME, capture)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+local eventFrame = CreateFrame("Frame")
+local moduleEnabled = false
+
+-- ============================================================
+-- Gossip data extraction
+-- ============================================================
+
+local function CaptureGossipMenu(snapshotGuid)
+    local npcGuid = snapshotGuid or UnitGUID("npc")
+    if not npcGuid then return end
+
+    -- If a snapshot was provided, verify the same NPC is still present
+    if snapshotGuid then
+        local currentGuid = UnitGUID("npc")
+        if currentGuid ~= snapshotGuid then return end
+    end
+
+    local entityKey = GU.EntityKey(npcGuid)
+    local npcId = GU.GetNpcId(npcGuid)
+    local npcName = GU.SafeString(UnitName("npc"))
+
+    -- Get gossip text (NPC speech bubble text)
+    local gossipText = nil
+    if C_GossipInfo and C_GossipInfo.GetText then
+        local ok, text = pcall(C_GossipInfo.GetText)
+        if ok then gossipText = text end
+    end
+
+    -- Get gossip options
+    local options = {}
+    if C_GossipInfo and C_GossipInfo.GetOptions then
+        local ok, optionList = pcall(C_GossipInfo.GetOptions)
+        if ok and optionList then
+            for i, opt in ipairs(optionList) do
+                options[i] = {
+                    gossipOptionID = opt.gossipOptionID,
+                    name = opt.name,
+                    icon = opt.icon,
+                    status = opt.status,
+                    spellID = opt.spellID,
+                    overrideIconID = opt.overrideIconID,
+                    selectOptionWhenOnlyOption = opt.selectOptionWhenOnlyOption,
+                    orderIndex = opt.orderIndex,
+                    flags = opt.flags,
+                }
+            end
+        end
+    end
+
+    -- Get available quests from this NPC
+    local availableQuests = {}
+    if C_GossipInfo and C_GossipInfo.GetAvailableQuests then
+        local ok, questList = pcall(C_GossipInfo.GetAvailableQuests)
+        if ok and questList then
+            for i, q in ipairs(questList) do
+                availableQuests[i] = {
+                    questID = q.questID,
+                    title = q.title,
+                    questLevel = q.questLevel,
+                    isTrivial = q.isTrivial,
+                    frequency = q.frequency,
+                    repeatable = q.repeatable,
+                    isComplete = q.isComplete,
+                    isLegendary = q.isLegendary,
+                    isIgnored = q.isIgnored,
+                    isImportant = q.isImportant,
+                }
+            end
+        end
+    end
+
+    -- Get active quests (in-progress, completable)
+    local activeQuests = {}
+    if C_GossipInfo and C_GossipInfo.GetActiveQuests then
+        local ok, questList = pcall(C_GossipInfo.GetActiveQuests)
+        if ok and questList then
+            for i, q in ipairs(questList) do
+                activeQuests[i] = {
+                    questID = q.questID,
+                    title = q.title,
+                    questLevel = q.questLevel,
+                    isTrivial = q.isTrivial,
+                    isComplete = q.isComplete,
+                    isLegendary = q.isLegendary,
+                    isIgnored = q.isIgnored,
+                    isImportant = q.isImportant,
+                }
+            end
+        end
+    end
+
+    -- Get NPC position
+    local mapId = C_Map.GetBestMapForUnit("player")
+    local pos = nil
+    if mapId then
+        local p = C_Map.GetPlayerMapPosition(mapId, "player")
+        if p then pos = { x = p.x, y = p.y } end
+    end
+
+    -- Skip if completely empty (NPC with no gossip content)
+    if not gossipText and #options == 0 and #availableQuests == 0 and #activeQuests == 0 then
+        return
+    end
+
+    -- Fingerprint for dedup — include option text/IDs, not just counts
+    local optionSigs = {}
+    for _, opt in ipairs(options) do
+        optionSigs[#optionSigs + 1] = tostring(opt.gossipOptionID or opt.name or "")
+    end
+    local questSigs = {}
+    for _, q in ipairs(availableQuests) do
+        questSigs[#questSigs + 1] = tostring(q.questID or q.title or "")
+    end
+    local fpData = {
+        npc = npcId or 0,
+        opts = table.concat(optionSigs, ","),
+        avail = table.concat(questSigs, ","),
+        active = #activeQuests,
+        text = gossipText and gossipText:sub(1, 80) or "",
+    }
+    local gossipFP = FP.Compute(fpData)
+
+    -- Dedup against local cache
+    local cache = VoxSnifferDB and VoxSnifferDB.local_cache and VoxSnifferDB.local_cache.seen_gossip
+    if not cache and VoxSnifferDB and VoxSnifferDB.local_cache then
+        VoxSnifferDB.local_cache.seen_gossip = {}
+        cache = VoxSnifferDB.local_cache.seen_gossip
+    end
+    if cache and cache[npcId or 0] == gossipFP then
+        Log.Debug(MODULE_NAME, format("Gossip for %s unchanged, skipping", npcName or "?"))
+        return
+    end
+
+    local payload = {
+        npcId = npcId,
+        npcName = npcName,
+        npcGuid = npcGuid,
+        gossipText = gossipText,
+        options = #options > 0 and options or nil,
+        availableQuests = #availableQuests > 0 and availableQuests or nil,
+        activeQuests = #activeQuests > 0 and activeQuests or nil,
+        optionCount = #options,
+        availableQuestCount = #availableQuests,
+        activeQuestCount = #activeQuests,
+        mapId = mapId,
+        position = pos,
+    }
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.GOSSIP_SNAPSHOT, entityKey, payload, {
+        source_module = MODULE_NAME,
+        fingerprint = gossipFP,
+    })
+    if not envelope then return end
+
+    if cache then
+        cache[npcId or 0] = gossipFP
+    end
+    buffer:Push(envelope)
+    Log.Info(MODULE_NAME, format("Captured gossip: %s (%d opts, %d avail, %d active)",
+        npcName or "?", #options, #availableQuests, #activeQuests))
+end
+
+-- ============================================================
+-- Event handler
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "GOSSIP_SHOW" then
+        local npcGuid = UnitGUID("npc")
+        C_Timer.After(0.1, function()
+            if moduleEnabled and NS.IsCaptureActive() and UnitExists("npc") then CaptureGossipMenu(npcGuid) end
+        end)
+
+    elseif event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW" then
+        local interactionType = ...
+        if interactionType == Enum.PlayerInteractionType.Gossip then
+            local npcGuid = UnitGUID("npc")
+            C_Timer.After(0.1, function()
+                if moduleEnabled and NS.IsCaptureActive() and UnitExists("npc") then CaptureGossipMenu(npcGuid) end
+            end)
+        end
+    end
+end)
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function capture.ResetState()
+    -- Persistent dedup cache lives in VoxSnifferDB.local_cache.seen_gossip
+    -- which gets wiped on full reset via Schema.CreateEmpty()
+end
+
+function capture.Enable()
+    moduleEnabled = true
+    eventFrame:RegisterEvent("GOSSIP_SHOW")
+    -- Modern 12.x interaction event
+    pcall(function() eventFrame:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW") end)
+
+    Log.Debug(MODULE_NAME, "Enabled — captures gossip menus on NPC interaction")
+end
+
+function capture.Disable()
+    moduleEnabled = false
+    eventFrame:UnregisterAllEvents()
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function capture.GetStats()
+    return buffer:GetStats()
+end
+
+========== Modules/LootCapture.lua ==========
+-- VoxSniffer LootCapture
+-- Captures loot window contents when looting mobs/containers/pickpocket
+-- Uses LOOT_READY + GetLootSlotInfo/GetLootSlotLink for item data
+-- Borrows loot source tracking from Journalator's vendor/loot hooks
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+
+local MODULE_NAME = C.MODULE.LOOT_CAPTURE
+local capture = {}
+NS.RegisterModule(MODULE_NAME, capture)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+local eventFrame = CreateFrame("Frame")
+local moduleEnabled = false
+
+-- ============================================================
+-- Loot data extraction
+-- ============================================================
+
+local function CaptureLootWindow(snapshotTargetGuid, snapshotTargetName)
+    local numItems = GetNumLootItems and GetNumLootItems() or 0
+    if numItems == 0 then return end
+
+    -- Identify loot source
+    local sourceGUIDs = {}
+    local primarySource = nil
+
+    for i = 1, numItems do
+        if GetLootSourceInfo then
+            local ok, sources = pcall(GetLootSourceInfo, i)
+            if ok and sources then
+                -- GetLootSourceInfo returns guid1, count1, guid2, count2, ...
+                -- In modern API it may return a table
+                if type(sources) == "string" then
+                    -- Classic-style: returns GUID directly
+                    sourceGUIDs[sources] = true
+                    if not primarySource then primarySource = sources end
+                end
+            end
+        end
+    end
+
+    -- Fallback: use snapshotted target from event time, then live target
+    if not primarySource then
+        if snapshotTargetGuid then
+            primarySource = snapshotTargetGuid
+        else
+            local targetGuid = UnitGUID("target")
+            if targetGuid and UnitIsDead("target") then
+                primarySource = targetGuid
+            end
+        end
+    end
+
+    local entityKey = nil
+    local npcId = nil
+    if primarySource then
+        entityKey = GU.EntityKey(primarySource)
+        npcId = GU.GetNpcId(primarySource)
+    end
+
+    -- Get player position
+    local mapId = C_Map.GetBestMapForUnit("player")
+    local pos = nil
+    if mapId then
+        local p = C_Map.GetPlayerMapPosition(mapId, "player")
+        if p then pos = { x = p.x, y = p.y } end
+    end
+
+    -- Capture each loot slot
+    local items = {}
+    for i = 1, numItems do
+        local slotData = nil
+
+        -- Try modern API
+        if C_LootInfo and C_LootInfo.GetLootSlot then
+            local ok, info = pcall(C_LootInfo.GetLootSlot, i)
+            if ok and info then
+                slotData = {
+                    slot = i,
+                    name = info.item,
+                    icon = info.icon,
+                    quantity = info.quantity,
+                    quality = info.quality,
+                    locked = info.locked,
+                    isQuestItem = info.isQuestItem,
+                    questID = info.questID,
+                    isActive = info.isActive,
+                }
+            end
+        end
+
+        -- Fallback to classic API
+        if not slotData and GetLootSlotInfo then
+            local ok, icon, name, quantity, currencyID, quality, locked, isQuestItem, questID, isActive = pcall(GetLootSlotInfo, i)
+            if ok and name then
+                slotData = {
+                    slot = i,
+                    name = name,
+                    icon = icon,
+                    quantity = quantity,
+                    quality = quality,
+                    locked = locked,
+                    isQuestItem = isQuestItem,
+                    questID = questID,
+                    isActive = isActive,
+                    currencyID = currencyID,
+                }
+            end
+        end
+
+        if slotData then
+            -- Get item link for ID extraction
+            if GetLootSlotLink then
+                local ok, link = pcall(GetLootSlotLink, i)
+                if ok and link then
+                    slotData.itemLink = link
+                    local itemId = link:match("item:(%d+)")
+                    slotData.itemId = tonumber(itemId)
+                end
+            end
+
+            -- Get loot slot type
+            if GetLootSlotType then
+                local ok, slotType = pcall(GetLootSlotType, i)
+                if ok then slotData.slotType = slotType end
+            end
+
+            items[#items + 1] = slotData
+        end
+    end
+
+    if #items == 0 then return end
+
+    local payload = {
+        sourceGUID = primarySource,
+        npcId = npcId,
+        sourceName = primarySource and (snapshotTargetName or GU.SafeString(UnitName("target"))) or nil,
+        itemCount = #items,
+        items = items,
+        mapId = mapId,
+        position = pos,
+    }
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.LOOT_EVENT, entityKey or "UNKNOWN", payload, {
+        source_module = MODULE_NAME,
+    })
+    if not envelope then return end
+
+    buffer:Push(envelope)
+    Log.Info(MODULE_NAME, format("Captured loot: %d items from %s",
+        #items, payload.sourceName or (npcId and ("NPC:" .. npcId) or "unknown")))
+end
+
+-- ============================================================
+-- Event handler
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event)
+    if event == "LOOT_READY" or event == "LOOT_OPENED" then
+        local targetGuid = UnitGUID("target")
+        local targetName = UnitExists("target") and UnitName("target") or nil
+        C_Timer.After(0.1, function()
+            if moduleEnabled and NS.IsCaptureActive() then CaptureLootWindow(targetGuid, targetName) end
+        end)
+    end
+end)
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function capture.ResetState()
+    -- No module-local dedup state
+end
+
+function capture.Enable()
+    moduleEnabled = true
+    -- LOOT_READY is the modern event (fires when loot window is ready)
+    pcall(function() eventFrame:RegisterEvent("LOOT_READY") end)
+    -- LOOT_OPENED is the classic fallback
+    eventFrame:RegisterEvent("LOOT_OPENED")
+
+    Log.Debug(MODULE_NAME, "Enabled — captures loot window contents")
+end
+
+function capture.Disable()
+    moduleEnabled = false
+    eventFrame:UnregisterAllEvents()
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function capture.GetStats()
+    return buffer:GetStats()
+end
+
+========== Modules/MovementTracker.lua ==========
+-- VoxSniffer MovementTracker
+-- Samples NPC positions over time to infer patrol waypoints
+-- OFF by default (high volume) — enable with /vs module movementtracker on
+-- Tracks nameplated NPCs + target/focus, records position when movement detected
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local Sched = NS.Scheduler
+
+local MODULE_NAME = C.MODULE.MOVEMENT_TRACKER
+local tracker = {}
+NS.RegisterModule(MODULE_NAME, tracker)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+-- Track last known position per NPC to detect movement
+local unitPositions = {}  -- [guid] = { x, y, mapId, time, name, npcId, entityKey }
+local MIN_MOVE_DIST = 0.001  -- minimum normalized coord change to record (avoids idle jitter)
+local PRUNE_AGE = 120  -- seconds before pruning stale entries
+
+-- Units to track
+local TRACK_UNITS = { "target", "focus" }
+
+-- Active nameplates
+local activeNameplates = {}
+
+local eventFrame = CreateFrame("Frame")
+
+-- ============================================================
+-- Position helpers
+-- ============================================================
+
+local function GetUnitMapPosition(unit)
+    local mapId = C_Map.GetBestMapForUnit(unit)
+    if not mapId then return nil, nil, nil end
+
+    local pos = C_Map.GetPlayerMapPosition(mapId, unit)
+    if not pos then
+        -- For NPCs, try using unit position directly
+        -- C_Map.GetPlayerMapPosition only works for "player" on most maps
+        -- We can try the world position approach
+        return nil, nil, mapId
+    end
+
+    return pos.x, pos.y, mapId
+end
+
+-- For NPCs we need a different approach since GetPlayerMapPosition
+-- only works reliably for "player". We use position relative to player.
+local function EstimateUnitPosition(unit)
+    -- Get player's map position as anchor
+    local mapId = C_Map.GetBestMapForUnit("player")
+    if not mapId then return nil, nil, nil end
+
+    local playerPos = C_Map.GetPlayerMapPosition(mapId, "player")
+    if not playerPos then return nil, nil, nil end
+
+    -- We can't get exact NPC map coords without C_Map support for that unit
+    -- But we CAN detect movement by comparing player-relative distance over time
+    -- Use UnitPosition for world coords (works in instances, may be restricted in open world)
+    if UnitPosition then
+        local ok, y, x, z, instanceId = pcall(UnitPosition, unit)
+        if ok and y and x then
+            return x, y, mapId  -- world coords, not map-normalized
+        end
+    end
+
+    return nil, nil, mapId
+end
+
+local function DistSq(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    return dx * dx + dy * dy
+end
+
+-- ============================================================
+-- Movement sampling
+-- ============================================================
+
+local function SampleUnit(unit, source)
+    if not NS.IsCaptureActive() then return end
+    if not UnitExists(unit) then return end
+    if UnitIsPlayer(unit) then return end
+    if UnitIsDead(unit) then return end
+
+    local guid = UnitGUID(unit)
+    if not guid then return end
+
+    local guidType = guid:match("^(%a+)-")
+    if guidType ~= "Creature" and guidType ~= "Vehicle" then return end
+
+    local x, y, mapId = EstimateUnitPosition(unit)
+    if not x or not y then return end
+
+    local now = GetTime()
+    local prev = unitPositions[guid]
+
+    if prev then
+        -- Check if unit has moved enough to record
+        local distSq = DistSq(x, y, prev.x, prev.y)
+        if distSq < MIN_MOVE_DIST * MIN_MOVE_DIST then
+            return  -- hasn't moved enough
+        end
+
+        -- Record waypoint
+        local entityKey = prev.entityKey
+        local payload = {
+            npcId = prev.npcId,
+            unitName = prev.name,
+            guid = guid,
+            fromX = prev.x,
+            fromY = prev.y,
+            toX = x,
+            toY = y,
+            mapId = mapId,
+            elapsed = now - prev.time,
+            distance = math.sqrt(distSq),
+            source = source,
+        }
+
+        local envelope = NS.MakeEnvelope(C.OBS_TYPE.MOVEMENT_SAMPLE, entityKey, payload, {
+            source_module = MODULE_NAME,
+        })
+        if not envelope then return end
+
+        buffer:Push(envelope)
+        Log.Verbose(MODULE_NAME, format("Move: %s [%.4f,%.4f]->[%.4f,%.4f] (%.2fs)",
+            prev.name or "?", prev.x, prev.y, x, y, payload.elapsed))
+    end
+
+    -- Update position
+    unitPositions[guid] = {
+        x = x,
+        y = y,
+        mapId = mapId,
+        time = now,
+        name = prev and prev.name or GU.SafeString(UnitName(unit)),
+        npcId = prev and prev.npcId or GU.GetNpcId(guid),
+        entityKey = prev and prev.entityKey or GU.EntityKey(guid),
+    }
+end
+
+-- ============================================================
+-- Tick handler
+-- ============================================================
+
+local sweepTimer = 0
+
+local function OnTick()
+    if not NS.IsCaptureActive() then return end
+
+    -- Track explicit units
+    for _, unit in ipairs(TRACK_UNITS) do
+        if UnitExists(unit) then
+            SampleUnit(unit, "tick_" .. unit)
+        end
+    end
+
+    -- Track nameplated NPCs
+    for unit in pairs(activeNameplates) do
+        if UnitExists(unit) then
+            SampleUnit(unit, "nameplate")
+        end
+    end
+
+    -- Prune stale entries
+    sweepTimer = sweepTimer + NS.Config.GetTickRate(MODULE_NAME)
+    if sweepTimer >= 30 then
+        sweepTimer = 0
+        local cutoff = GetTime() - PRUNE_AGE
+        for guid, data in pairs(unitPositions) do
+            if data.time < cutoff then
+                unitPositions[guid] = nil
+            end
+        end
+    end
+end
+
+-- ============================================================
+-- Nameplate tracking
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "NAME_PLATE_UNIT_ADDED" then
+        local unit = ...
+        if unit then activeNameplates[unit] = true end
+    elseif event == "NAME_PLATE_UNIT_REMOVED" then
+        local unit = ...
+        if unit then activeNameplates[unit] = nil end
+    end
+end)
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function tracker.ResetState()
+    wipe(unitPositions)
+    sweepTimer = 0
+end
+
+function tracker.Enable()
+    eventFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    eventFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+
+    Sched.Register(MODULE_NAME, OnTick, NS.Config.GetTickRate(MODULE_NAME))
+    Log.Debug(MODULE_NAME, "Enabled — sampling NPC movement at 1Hz (high volume)")
+end
+
+function tracker.Disable()
+    eventFrame:UnregisterAllEvents()
+    Sched.Unregister(MODULE_NAME)
+    wipe(unitPositions)
+    wipe(activeNameplates)
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function tracker.GetStats()
+    local stats = buffer:GetStats()
+    stats.trackedUnits = 0
+    for _ in pairs(unitPositions) do stats.trackedUnits = stats.trackedUnits + 1 end
+    return stats
+end
+
+========== Modules/ObjectTracker.lua ==========
+-- VoxSniffer ObjectTracker
+-- Discovers GameObjects via mouseover and tooltip scanning
+-- Captures chests, herbs, mining nodes, doors, levers, quest objects
+-- Uses UPDATE_MOUSEOVER_UNIT + GameTooltip scanning for GO identification
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+local EB = NS.EventBus
+
+local MODULE_NAME = C.MODULE.OBJECT_TRACKER
+local tracker = {}
+NS.RegisterModule(MODULE_NAME, tracker)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+local eventFrame = CreateFrame("Frame")
+
+-- Dedup recently seen objects
+local seenObjects = {}  -- [entityKey] = GetTime()
+local DEDUP_AGE = 30    -- seconds before re-recording
+
+-- ============================================================
+-- GameObject detection
+-- ============================================================
+
+local function OnMouseoverChanged()
+    local guid = UnitGUID("mouseover")
+    if not guid then return end
+
+    -- Only track GameObjects
+    local guidType = guid:match("^(%a+)-")
+    if guidType ~= "GameObject" then return end
+
+    local entityKey = GU.EntityKey(guid)
+    if not entityKey then return end
+
+    -- Dedup check (don't mark until record confirmed)
+    local now = GetTime()
+    if seenObjects[entityKey] and (now - seenObjects[entityKey]) < DEDUP_AGE then
+        return
+    end
+
+    local goEntry = GU.GetGameObjectEntry(guid)
+    local name = GU.SafeString(UnitName("mouseover"))
+
+    -- Get position
+    local mapId = C_Map.GetBestMapForUnit("player")
+    local pos = nil
+    if mapId then
+        local p = C_Map.GetPlayerMapPosition(mapId, "player")
+        if p then pos = { x = p.x, y = p.y } end
+    end
+
+    -- Try to get tooltip info (GameObjects don't support C_TooltipInfo.GetUnit,
+    -- so we read from the GameTooltip frame which auto-populates on mouseover)
+    local tooltipData = nil
+    if GameTooltip and GameTooltip:IsShown() then
+        tooltipData = {}
+        for i = 1, GameTooltip:NumLines() do
+            local leftLine = _G["GameTooltipTextLeft" .. i]
+            if leftLine then
+                local text = leftLine:GetText()
+                if text and text ~= "" then
+                    local r, g, b = leftLine:GetTextColor()
+                    tooltipData[#tooltipData + 1] = {
+                        text = text,
+                        color = { r = r, g = g, b = b },
+                    }
+                end
+            end
+        end
+        if #tooltipData == 0 then tooltipData = nil end
+    end
+
+    local payload = {
+        goEntry = goEntry,
+        name = name,
+        guid = guid,
+        mapId = mapId,
+        position = pos,
+        tooltipLines = tooltipData,
+    }
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.OBJECT_SEEN, entityKey, payload, {
+        source_module = MODULE_NAME,
+        fingerprint = FP.Compute({ go = goEntry or 0, name = name or "" }),
+    })
+    if not envelope then return end
+
+    seenObjects[entityKey] = now
+    buffer:Push(envelope)
+    Log.Debug(MODULE_NAME, format("GameObject: %s [%s] entry=%s",
+        name or "?", entityKey, tostring(goEntry)))
+end
+
+-- ============================================================
+-- Vignette scanning (SilverDragon pattern)
+-- Detects special objects/rares via the minimap vignette system
+-- ============================================================
+
+local seenVignettes = {}  -- [vignetteGUID] = true
+
+local function ScanVignettes()
+    if not C_VignetteInfo or not C_VignetteInfo.GetVignettes then return end
+
+    local ok, vignettes = pcall(C_VignetteInfo.GetVignettes)
+    if not ok or not vignettes then return end
+
+    for _, vignetteGUID in ipairs(vignettes) do
+        if not seenVignettes[vignetteGUID] then
+            local vInfo = C_VignetteInfo.GetVignetteInfo(vignetteGUID)
+            if vInfo then
+                -- Get position
+                local mapId = C_Map.GetBestMapForUnit("player")
+                local pos = nil
+                if mapId then
+                    local p = C_Map.GetPlayerMapPosition(mapId, "player")
+                    if p then pos = { x = p.x, y = p.y } end
+                end
+
+                -- Vignette position on map
+                local vignettePos = nil
+                if vInfo.vignetteGUID and C_VignetteInfo.GetVignettePosition then
+                    local vp = C_VignetteInfo.GetVignettePosition(vignetteGUID, mapId)
+                    if vp then vignettePos = { x = vp.x, y = vp.y } end
+                end
+
+                local payload = {
+                    vignetteGUID = vignetteGUID,
+                    name = vInfo.name,
+                    vignetteID = vInfo.vignetteID,
+                    objectGUID = vInfo.objectGUID,
+                    type = vInfo.type,  -- 0=normal, 1=PvPBounty, 2=Torghast, 3=Vignette, 4=TreasureStar, 5=Stacking
+                    isDead = vInfo.isDead,
+                    onWorldMap = vInfo.onWorldMap,
+                    onMinimap = vInfo.onMinimap,
+                    isUnique = vInfo.isUnique,
+                    inFogOfWar = vInfo.inFogOfWar,
+                    atlasName = vInfo.atlasName,
+                    hasTooltip = vInfo.hasTooltip,
+                    mapId = mapId,
+                    playerPosition = pos,
+                    vignettePosition = vignettePos,
+                }
+
+                -- If vignette has an objectGUID, parse it
+                if vInfo.objectGUID then
+                    local objEntityKey = GU.EntityKey(vInfo.objectGUID)
+                    local npcId = GU.GetNpcId(vInfo.objectGUID)
+                    local goEntry = GU.GetGameObjectEntry(vInfo.objectGUID)
+                    payload.entityKey = objEntityKey
+                    payload.npcId = npcId
+                    payload.goEntry = goEntry
+                end
+
+                local entityKey = payload.entityKey or ("VIG:" .. (vInfo.vignetteID or vignetteGUID))
+
+                local envelope = NS.MakeEnvelope(C.OBS_TYPE.OBJECT_SEEN, entityKey, payload, {
+                    source_module = MODULE_NAME,
+                    fingerprint = FP.Compute({ vig = vInfo.vignetteID or 0, name = vInfo.name or "" }),
+                })
+                if envelope then
+                    seenVignettes[vignetteGUID] = true
+                    buffer:Push(envelope)
+                    Log.Debug(MODULE_NAME, format("Vignette: %s (type %d) %s",
+                        vInfo.name or "?", vInfo.type or -1, vInfo.isDead and "[DEAD]" or ""))
+                end
+            end
+        end
+    end
+end
+
+-- ============================================================
+-- Event handler
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "UPDATE_MOUSEOVER_UNIT" then
+        OnMouseoverChanged()
+    elseif event == "VIGNETTE_MINIMAP_UPDATED" or event == "VIGNETTES_UPDATED" then
+        ScanVignettes()
+    end
+end)
+
+-- Periodic dedup sweep + vignette check
+local function OnTick()
+    if not NS.IsCaptureActive() then return end
+
+    -- Sweep stale dedup entries
+    local cutoff = GetTime() - DEDUP_AGE
+    for k, t in pairs(seenObjects) do
+        if t < cutoff then seenObjects[k] = nil end
+    end
+
+    -- Periodic vignette scan
+    ScanVignettes()
+end
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function tracker.ResetState()
+    wipe(seenObjects)
+    wipe(seenVignettes)
+end
+
+function tracker.Enable()
+    eventFrame:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+    pcall(function() eventFrame:RegisterEvent("VIGNETTE_MINIMAP_UPDATED") end)
+    pcall(function() eventFrame:RegisterEvent("VIGNETTES_UPDATED") end)
+
+    NS.Scheduler.Register(MODULE_NAME, OnTick, 5)  -- 5s sweep cycle
+    Log.Debug(MODULE_NAME, "Enabled — tracking GameObjects + vignettes")
+end
+
+function tracker.Disable()
+    eventFrame:UnregisterAllEvents()
+    NS.Scheduler.Unregister(MODULE_NAME)
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function tracker.GetStats()
+    local stats = buffer:GetStats()
+    stats.trackedObjects = 0
+    for _ in pairs(seenObjects) do stats.trackedObjects = stats.trackedObjects + 1 end
+    stats.seenVignettes = 0
+    for _ in pairs(seenVignettes) do stats.seenVignettes = stats.seenVignettes + 1 end
+    return stats
+end
+
+========== Modules/PhaseTracker.lua ==========
+-- VoxSniffer PhaseTracker
+-- Detects phase/terrain swap evidence by tracking visibility changes
+-- When NPCs appear/disappear near the player without dying, that's phase evidence
+-- Also tracks SCENARIO_UPDATE, AREA_POIS_UPDATED, and phase-related events
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+
+local MODULE_NAME = C.MODULE.PHASE_TRACKER
+local tracker = {}
+NS.RegisterModule(MODULE_NAME, tracker)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+local eventFrame = CreateFrame("Frame")
+
+-- Track nameplate appearances/disappearances for phase inference
+local knownUnits = {}  -- [guid] = { name, npcId, entityKey, firstSeen, lastSeen, mapId }
+local PHASE_WINDOW = 3  -- seconds — if NPC vanishes within this window, could be phase change
+
+-- ============================================================
+-- Phase evidence recording
+-- ============================================================
+
+local function RecordPhaseEvidence(trigger, data)
+    local mapId = C_Map.GetBestMapForUnit("player")
+    local pos = nil
+    if mapId then
+        local p = C_Map.GetPlayerMapPosition(mapId, "player")
+        if p then pos = { x = p.x, y = p.y } end
+    end
+
+    data.trigger = trigger
+    data.mapId = mapId
+    data.position = pos
+
+    local entityKey = data.entityKey or format("PHASE:%d:%s", mapId or 0, trigger)
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.PHASE_EVIDENCE, entityKey, data, {
+        source_module = MODULE_NAME,
+    })
+    if not envelope then return end
+
+    buffer:Push(envelope)
+    Log.Debug(MODULE_NAME, format("Phase evidence: %s (map %d)", trigger, mapId or 0))
+end
+
+-- ============================================================
+-- Nameplate-based phase detection
+-- When an NPC's nameplate disappears without UNIT_DIED, it may have phased out
+-- ============================================================
+
+local function OnNameplateAdded(unit)
+    if not unit then return end
+    if not UnitExists(unit) then return end
+    if UnitIsPlayer(unit) then return end
+
+    local guid = UnitGUID(unit)
+    if not guid then return end
+
+    local guidType = guid:match("^(%a+)-")
+    if guidType ~= "Creature" and guidType ~= "Vehicle" then return end
+
+    local now = GetTime()
+    local entityKey = GU.EntityKey(guid)
+    local npcId = GU.GetNpcId(guid)
+    local name = GU.SafeString(UnitName(unit))
+    local mapId = C_Map.GetBestMapForUnit("player")
+
+    local prev = knownUnits[guid]
+    if prev and prev.removed and (now - prev.removed) < PHASE_WINDOW then
+        -- NPC reappeared quickly — possible phase flicker
+        RecordPhaseEvidence("unit_reappeared", {
+            npcId = npcId,
+            unitName = name,
+            entityKey = entityKey,
+            guid = guid,
+            gapSeconds = now - prev.removed,
+        })
+    end
+
+    knownUnits[guid] = {
+        name = name,
+        npcId = npcId,
+        entityKey = entityKey,
+        firstSeen = prev and prev.firstSeen or now,
+        lastSeen = now,
+        mapId = mapId,
+        removed = nil,
+    }
+end
+
+local function OnNameplateRemoved(unit)
+    if not unit then return end
+    local guid = UnitGUID(unit)
+    if not guid then return end
+
+    local tracked = knownUnits[guid]
+    if not tracked then return end
+
+    -- Mark removal time (don't delete yet — check for reappearance)
+    tracked.removed = GetTime()
+    tracked.lastSeen = GetTime()
+end
+
+-- ============================================================
+-- Zone/scenario/phase events
+-- ============================================================
+
+local lastZoneText = nil
+local lastSubZoneText = nil
+
+local function OnZoneChanged()
+    local zoneText = GetZoneText and GetZoneText() or nil
+    local subZoneText = GetSubZoneText and GetSubZoneText() or nil
+
+    if zoneText ~= lastZoneText or subZoneText ~= lastSubZoneText then
+        RecordPhaseEvidence("zone_changed", {
+            fromZone = lastZoneText,
+            fromSubZone = lastSubZoneText,
+            toZone = zoneText,
+            toSubZone = subZoneText,
+        })
+        lastZoneText = zoneText
+        lastSubZoneText = subZoneText
+    end
+end
+
+local function OnScenarioUpdate()
+    if not C_Scenario or not C_Scenario.GetInfo then return end
+
+    local ok, scenarioName, currentStage, numStages, flags, _, _, _, _, textDescription = pcall(C_Scenario.GetInfo)
+    if not ok then return end
+
+    if scenarioName and scenarioName ~= "" then
+        RecordPhaseEvidence("scenario_update", {
+            scenarioName = scenarioName,
+            currentStage = currentStage,
+            numStages = numStages,
+            description = textDescription,
+        })
+    end
+end
+
+-- ============================================================
+-- Event handler
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "NAME_PLATE_UNIT_ADDED" then
+        OnNameplateAdded(...)
+
+    elseif event == "NAME_PLATE_UNIT_REMOVED" then
+        OnNameplateRemoved(...)
+
+    elseif event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS"
+        or event == "ZONE_CHANGED_NEW_AREA" then
+        OnZoneChanged()
+
+    elseif event == "SCENARIO_UPDATE" or event == "SCENARIO_CRITERIA_UPDATE" then
+        OnScenarioUpdate()
+
+    elseif event == "AREA_POIS_UPDATED" then
+        RecordPhaseEvidence("area_pois_updated", {})
+
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        local isInitialLogin, isReloadingUi = ...
+        RecordPhaseEvidence("entering_world", {
+            isInitialLogin = isInitialLogin,
+            isReloadingUi = isReloadingUi,
+            zone = GetZoneText and GetZoneText() or nil,
+            subZone = GetSubZoneText and GetSubZoneText() or nil,
+        })
+        lastZoneText = GetZoneText and GetZoneText()
+        lastSubZoneText = GetSubZoneText and GetSubZoneText()
+    end
+end)
+
+-- ============================================================
+-- Periodic cleanup
+-- ============================================================
+
+local function SweepTrackedUnits()
+    local cutoff = GetTime() - 120  -- 2 minutes
+    for guid, data in pairs(knownUnits) do
+        if data.lastSeen < cutoff then
+            knownUnits[guid] = nil
+        end
+    end
+end
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function tracker.ResetState()
+    wipe(knownUnits)
+    lastZoneText = GetZoneText and GetZoneText() or nil
+    lastSubZoneText = GetSubZoneText and GetSubZoneText() or nil
+
+    -- Re-enumerate currently visible nameplates to rebuild baseline
+    -- so phase detection works for NPCs already on screen at session start
+    if C_NamePlate and C_NamePlate.GetNamePlates then
+        local plates = C_NamePlate.GetNamePlates()
+        if plates then
+            local now = GetTime()
+            for _, plate in ipairs(plates) do
+                local unit = plate and plate.namePlateUnitToken
+                if unit and UnitExists(unit) and not UnitIsPlayer(unit) then
+                    local guid = UnitGUID(unit)
+                    if guid then
+                        local guidType = guid:match("^(%a+)-")
+                        if guidType == "Creature" or guidType == "Vehicle" then
+                            local mapId = C_Map.GetBestMapForUnit("player")
+                            knownUnits[guid] = {
+                                name = GU.SafeString(UnitName(unit)),
+                                npcId = GU.GetNpcId(guid),
+                                entityKey = GU.EntityKey(guid),
+                                firstSeen = now,
+                                lastSeen = now,
+                                mapId = mapId,
+                                removed = nil,
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+function tracker.Enable()
+    eventFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    eventFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+    eventFrame:RegisterEvent("ZONE_CHANGED")
+    eventFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
+    eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+    pcall(function() eventFrame:RegisterEvent("SCENARIO_UPDATE") end)
+    pcall(function() eventFrame:RegisterEvent("SCENARIO_CRITERIA_UPDATE") end)
+    pcall(function() eventFrame:RegisterEvent("AREA_POIS_UPDATED") end)
+
+    NS.Scheduler.Register(MODULE_NAME .. "_sweep", SweepTrackedUnits, 30)
+
+    lastZoneText = GetZoneText and GetZoneText()
+    lastSubZoneText = GetSubZoneText and GetSubZoneText()
+
+    Log.Debug(MODULE_NAME, "Enabled — tracking phase/visibility/zone transitions")
+end
+
+function tracker.Disable()
+    eventFrame:UnregisterAllEvents()
+    NS.Scheduler.Unregister(MODULE_NAME .. "_sweep")
+    wipe(knownUnits)
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function tracker.GetStats()
+    local stats = buffer:GetStats()
+    stats.trackedUnits = 0
+    for _ in pairs(knownUnits) do stats.trackedUnits = stats.trackedUnits + 1 end
+    return stats
+end
+
+========== Modules/QuestCapture.lua ==========
+-- VoxSniffer QuestCapture
+-- Captures quest data when quests are offered, accepted, or turned in
+-- Uses QUEST_DETAIL, QUEST_ACCEPTED, QUEST_COMPLETE, QUEST_TURNED_IN
+-- Borrows quest text extraction patterns from AllTheThings
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+
+local MODULE_NAME = C.MODULE.QUEST_CAPTURE
+local capture = {}
+NS.RegisterModule(MODULE_NAME, capture)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+local eventFrame = CreateFrame("Frame")
+local moduleEnabled = false
+
+-- Track recently captured quest IDs to avoid duplicates
+local recentQuests = {}  -- [questID] = GetTime()
+local DEDUP_WINDOW = 10  -- seconds
+
+-- ============================================================
+-- Quest data extraction
+-- ============================================================
+
+local function GetQuestRewards()
+    local rewards = {}
+
+    -- Item rewards (choose one)
+    local numChoices = GetNumQuestChoices and GetNumQuestChoices() or 0
+    if numChoices > 0 then
+        rewards.choices = {}
+        for i = 1, numChoices do
+            local ok, name, texture, count, quality, isUsable = pcall(GetQuestItemInfo, "choice", i)
+            if ok and name then
+                local entry = {
+                    name = name,
+                    count = count,
+                    quality = quality,
+                }
+                local lok, link = pcall(GetQuestItemLink, "choice", i)
+                if lok and link then
+                    entry.itemLink = link
+                    entry.itemId = tonumber(link:match("item:(%d+)"))
+                end
+                rewards.choices[i] = entry
+            end
+        end
+    end
+
+    -- Fixed item rewards
+    local numRewards = GetNumQuestRewards and GetNumQuestRewards() or 0
+    if numRewards > 0 then
+        rewards.items = {}
+        for i = 1, numRewards do
+            local ok, name, texture, count, quality, isUsable = pcall(GetQuestItemInfo, "reward", i)
+            if ok and name then
+                local entry = {
+                    name = name,
+                    count = count,
+                    quality = quality,
+                }
+                local lok, link = pcall(GetQuestItemLink, "reward", i)
+                if lok and link then
+                    entry.itemLink = link
+                    entry.itemId = tonumber(link:match("item:(%d+)"))
+                end
+                rewards.items[i] = entry
+            end
+        end
+    end
+
+    -- Currency rewards
+    if GetNumRewardCurrencies then
+        local numCurrencies = GetNumRewardCurrencies() or 0
+        if numCurrencies > 0 then
+            rewards.currencies = {}
+            for i = 1, numCurrencies do
+                local ok, name, texture, count, quality = pcall(GetQuestCurrencyInfo, "reward", i)
+                if ok and name then
+                    rewards.currencies[i] = {
+                        name = name,
+                        count = count,
+                    }
+                end
+            end
+        end
+    end
+
+    -- Money reward
+    local money = GetRewardMoney and GetRewardMoney() or 0
+    if money > 0 then
+        rewards.money = money
+    end
+
+    -- XP reward
+    local xp = GetRewardXP and GetRewardXP() or 0
+    if xp > 0 then
+        rewards.xp = xp
+    end
+
+    return rewards
+end
+
+local function GetQuestObjectives(questID)
+    local objectives = {}
+
+    if C_QuestLog and C_QuestLog.GetNumQuestObjectives then
+        local ok, numObj = pcall(C_QuestLog.GetNumQuestObjectives, questID)
+        if ok and numObj then
+            for i = 1, numObj do
+                local ook, text, objectiveType, finished, fulfilled, required = pcall(GetQuestObjectiveInfo, questID, i, false)
+                if ook and text then
+                    objectives[i] = {
+                        text = text,
+                        type = objectiveType,
+                        finished = finished,
+                        fulfilled = fulfilled,
+                        required = required,
+                    }
+                end
+            end
+        end
+    end
+
+    return #objectives > 0 and objectives or nil
+end
+
+local function CaptureQuestDetail(trigger, snapshotQuestID, snapshotNpcGuid)
+    -- Use snapshotted questID if provided, fall back to live API
+    local questID = snapshotQuestID or (GetQuestID and GetQuestID() or nil)
+    if not questID or questID == 0 then return end
+
+    -- If a snapshot was provided, verify the quest frame still shows the same quest
+    -- Abort if frame closed (ID=0) or showing a different quest
+    if snapshotQuestID then
+        local currentQuestID = GetQuestID and GetQuestID() or 0
+        if currentQuestID ~= snapshotQuestID then return end
+    end
+
+    -- Dedup check (don't mark until record confirmed)
+    local now = GetTime()
+    if recentQuests[questID] and (now - recentQuests[questID]) < DEDUP_WINDOW then
+        return
+    end
+
+    -- NPC offering the quest — use snapshot if provided
+    local npcGuid = snapshotNpcGuid or UnitGUID("npc") or UnitGUID("questnpc")
+    local entityKey = nil
+    local npcId = nil
+    local npcName = nil
+    if npcGuid then
+        entityKey = GU.EntityKey(npcGuid)
+        npcId = GU.GetNpcId(npcGuid)
+        npcName = GU.SafeString(UnitName("npc") or UnitName("questnpc"))
+    end
+
+    -- Quest text
+    local title = GU.SafeString(GetTitleText and GetTitleText())
+    local questText = GU.SafeString(GetQuestText and GetQuestText())
+    local objectiveText = GU.SafeString(GetObjectiveText and GetObjectiveText())
+    local progressText = GU.SafeString(GetProgressText and GetProgressText())
+    local rewardText = GU.SafeString(GetRewardText and GetRewardText())
+
+    -- Quest info
+    local questInfo = {}
+    if C_QuestLog then
+        if C_QuestLog.IsQuestFlaggedCompleted then
+            questInfo.isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+        end
+        if C_QuestLog.IsLegendaryQuest then
+            questInfo.isLegendary = C_QuestLog.IsLegendaryQuest(questID)
+        end
+    end
+
+    -- Required items (quest requires you to bring items)
+    local requiredItems = {}
+    local numRequired = GetNumQuestItems and GetNumQuestItems() or 0
+    for i = 1, numRequired do
+        local ok, name, texture, count = pcall(GetQuestItemInfo, "required", i)
+        if ok and name then
+            local entry = { name = name, count = count }
+            local lok, link = pcall(GetQuestItemLink, "required", i)
+            if lok and link then
+                entry.itemLink = link
+                entry.itemId = tonumber(link:match("item:(%d+)"))
+            end
+            requiredItems[i] = entry
+        end
+    end
+
+    -- Rewards
+    local rewards = GetQuestRewards()
+
+    -- Position
+    local mapId = C_Map.GetBestMapForUnit("player")
+    local pos = nil
+    if mapId then
+        local p = C_Map.GetPlayerMapPosition(mapId, "player")
+        if p then pos = { x = p.x, y = p.y } end
+    end
+
+    local payload = {
+        questID = questID,
+        title = title,
+        questText = questText,
+        objectiveText = objectiveText,
+        progressText = (trigger == "QUEST_COMPLETE") and progressText or nil,
+        rewardText = (trigger == "QUEST_COMPLETE" or trigger == "QUEST_TURNED_IN") and rewardText or nil,
+        trigger = trigger,
+        npcId = npcId,
+        npcName = npcName,
+        npcGuid = npcGuid,
+        rewards = next(rewards) and rewards or nil,
+        requiredItems = #requiredItems > 0 and requiredItems or nil,
+        objectives = GetQuestObjectives(questID),
+        questInfo = next(questInfo) and questInfo or nil,
+        mapId = mapId,
+        position = pos,
+    }
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.QUEST_SNAPSHOT, entityKey or ("Q:" .. questID), payload, {
+        source_module = MODULE_NAME,
+        fingerprint = FP.Compute({ quest = questID, trigger = trigger }),
+    })
+    if not envelope then return end
+
+    recentQuests[questID] = GetTime()
+    buffer:Push(envelope)
+    Log.Info(MODULE_NAME, format("[%s] Quest %d: %s (from %s)",
+        trigger, questID, title or "?", npcName or "?"))
+end
+
+-- ============================================================
+-- Event handler
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "QUEST_DETAIL" then
+        local questID = GetQuestID and GetQuestID() or nil
+        local npcGuid = UnitGUID("npc") or UnitGUID("questnpc")
+        C_Timer.After(0.1, function()
+            if moduleEnabled and NS.IsCaptureActive() then CaptureQuestDetail("QUEST_DETAIL", questID, npcGuid) end
+        end)
+
+    elseif event == "QUEST_COMPLETE" then
+        local questID = GetQuestID and GetQuestID() or nil
+        local npcGuid = UnitGUID("npc") or UnitGUID("questnpc")
+        C_Timer.After(0.1, function()
+            if moduleEnabled and NS.IsCaptureActive() then CaptureQuestDetail("QUEST_COMPLETE", questID, npcGuid) end
+        end)
+
+    elseif event == "QUEST_ACCEPTED" then
+        local questID = ...
+        if questID then
+            local title = C_QuestLog and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID) or "?"
+            local npcGuid = UnitGUID("npc") or UnitGUID("questnpc")
+            local entityKey = npcGuid and GU.EntityKey(npcGuid) or ("Q:" .. questID)
+            local npcId = npcGuid and GU.GetNpcId(npcGuid) or nil
+
+            local payload = {
+                questID = questID,
+                title = title,
+                trigger = "QUEST_ACCEPTED",
+                npcId = npcId,
+                npcName = npcGuid and GU.SafeString(UnitName("npc") or UnitName("questnpc")) or nil,
+            }
+
+            local envelope = NS.MakeEnvelope(C.OBS_TYPE.QUEST_SNAPSHOT, entityKey, payload, {
+                source_module = MODULE_NAME,
+                fingerprint = FP.Compute({ quest = questID, trigger = "accepted" }),
+            })
+            if envelope then
+                recentQuests[questID] = GetTime()
+                buffer:Push(envelope)
+                Log.Debug(MODULE_NAME, format("Quest accepted: %d (%s)", questID, title))
+            end
+        end
+
+    elseif event == "QUEST_TURNED_IN" then
+        local questID, xpReward, moneyReward = ...
+        if questID then
+            local title = C_QuestLog and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID) or "?"
+
+            local payload = {
+                questID = questID,
+                title = title,
+                trigger = "QUEST_TURNED_IN",
+                xpReward = xpReward,
+                moneyReward = moneyReward,
+            }
+
+            local envelope = NS.MakeEnvelope(C.OBS_TYPE.QUEST_SNAPSHOT, "Q:" .. questID, payload, {
+                source_module = MODULE_NAME,
+                fingerprint = FP.Compute({ quest = questID, trigger = "turned_in" }),
+            })
+            if envelope then
+                buffer:Push(envelope)
+                Log.Debug(MODULE_NAME, format("Quest turned in: %d (%s)", questID, title))
+            end
+        end
+    end
+end)
+
+-- Periodic dedup cache sweep
+local function SweepDedup()
+    local cutoff = GetTime() - DEDUP_WINDOW * 2
+    for k, t in pairs(recentQuests) do
+        if t < cutoff then recentQuests[k] = nil end
+    end
+end
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function capture.ResetState()
+    wipe(recentQuests)
+end
+
+function capture.Enable()
+    moduleEnabled = true
+    eventFrame:RegisterEvent("QUEST_DETAIL")
+    eventFrame:RegisterEvent("QUEST_COMPLETE")
+    eventFrame:RegisterEvent("QUEST_ACCEPTED")
+    eventFrame:RegisterEvent("QUEST_TURNED_IN")
+
+    NS.Scheduler.Register(MODULE_NAME .. "_sweep", SweepDedup, 30)
+
+    Log.Debug(MODULE_NAME, "Enabled — captures quest offer/accept/turn-in data")
+end
+
+function capture.Disable()
+    moduleEnabled = false
+    eventFrame:UnregisterAllEvents()
+    NS.Scheduler.Unregister(MODULE_NAME .. "_sweep")
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function capture.GetStats()
+    return buffer:GetStats()
+end
+
+========== Modules/UnitScanner.lua ==========
+-- VoxSniffer UnitScanner
+-- Passive unit discovery via nameplates, target, mouseover, soft-target, focus
+-- Borrows 8-event pattern from Datamine + nameplate tracking from CreatureCodex
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+local Sched = NS.Scheduler
+local EB = NS.EventBus
+
+local MODULE_NAME = C.MODULE.UNIT_SCANNER
+local scanner = {}
+NS.RegisterModule(MODULE_NAME, scanner)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+-- Dedup: don't re-record the same unit within this interval
+local seenUnits = {}        -- [entityKey] = GetTime()
+local DEDUP_AGE = 10        -- seconds before re-scanning same entity
+local sweepTimer = 0
+
+-- Active nameplate tracking (event-driven, not polled)
+local activeNameplates = {} -- [unitToken] = true
+
+-- All unit tokens to scan on each tick
+local EXPLICIT_UNITS = { "target", "focus", "mouseover", "softenemy", "softfriend", "softinteract" }
+local BOSS_UNITS = {}
+for i = 1, 8 do BOSS_UNITS[#BOSS_UNITS + 1] = "boss" .. i end
+local GROUP_TARGETS = {}
+for i = 1, 4 do GROUP_TARGETS[#GROUP_TARGETS + 1] = "party" .. i .. "target" end
+for i = 1, 40 do GROUP_TARGETS[#GROUP_TARGETS + 1] = "raid" .. i .. "target" end
+
+-- ============================================================
+-- Unit data extraction
+-- ============================================================
+
+local function ExtractUnitData(unit)
+    if not UnitExists(unit) then return nil end
+    if UnitIsPlayer(unit) then return nil end
+
+    local guid = UnitGUID(unit)
+    if not guid then return nil end
+
+    local entityKey = GU.EntityKey(guid)
+    if not entityKey then return nil end
+
+    -- Dedup check (don't mark seen yet — that happens after successful envelope creation)
+    local now = GetTime()
+    if seenUnits[entityKey] and (now - seenUnits[entityKey]) < DEDUP_AGE then
+        return nil
+    end
+
+    local name = GU.SafeString(UnitName(unit))
+    local level = GU.SafeNumber(UnitLevel(unit))
+    local classification = UnitClassification(unit) or "normal"
+    local creatureType = UnitCreatureType(unit)
+    local reaction = UnitReaction(unit, "player")
+    local isFriend = UnitIsFriend(unit, "player")
+    local health = GU.SafeNumber(UnitHealth(unit))
+    local maxHealth = GU.SafeNumber(UnitHealthMax(unit))
+    local power = GU.SafeNumber(UnitPower(unit))
+    local maxPower = GU.SafeNumber(UnitPowerMax(unit))
+    local powerType = GU.SafeNumber(UnitPowerType(unit))
+    local sex = GU.SafeNumber(UnitSex(unit))
+    local isDead = UnitIsDead(unit)
+
+    -- Cast info
+    local castName, _, _, _, _, _, castSpellID = nil, nil, nil, nil, nil, nil, nil
+    local ok, cn, _, _, _, _, _, csid = pcall(UnitCastingInfo, unit)
+    if ok then castName, castSpellID = cn, csid end
+
+    local chanName, chanSpellID = nil, nil
+    ok, cn, _, _, _, _, _, _, csid = pcall(UnitChannelInfo, unit)
+    if ok then chanName, chanSpellID = cn, csid end
+
+    -- NPC ID from GUID
+    local npcId = GU.GetNpcId(guid)
+    local goEntry = GU.GetGameObjectEntry(guid)
+
+    local payload = {
+        name = name,
+        npcId = npcId,
+        goEntry = goEntry,
+        level = level,
+        classification = classification,
+        creatureType = creatureType,
+        reaction = reaction,
+        isFriend = isFriend,
+        health = health,
+        maxHealth = maxHealth,
+        healthPct = health and maxHealth and maxHealth > 0 and math.floor(health / maxHealth * 100) or nil,
+        power = power,
+        maxPower = maxPower,
+        powerType = powerType,
+        sex = sex,
+        isDead = isDead,
+        castSpellID = GU.SafeNumber(castSpellID),
+        castName = GU.SafeString(castName),
+        chanSpellID = GU.SafeNumber(chanSpellID),
+        chanName = GU.SafeString(chanName),
+        guid = guid,
+    }
+
+    return entityKey, payload
+end
+
+local function RecordUnit(unit, source)
+    local entityKey, payload = ExtractUnitData(unit)
+    if not entityKey then return end
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.UNIT_SEEN, entityKey, payload, {
+        source_module = MODULE_NAME,
+        fingerprint = FP.Unit(entityKey, payload.name, payload.level, payload.classification),
+    })
+    if not envelope then return end
+    envelope.unit_source = source
+
+    buffer:Push(envelope)
+    seenUnits[entityKey] = GetTime()
+    EB.Publish("UNIT_OBSERVED", envelope)
+    Log.Verbose(MODULE_NAME, format("Unit: %s [%s] %s", payload.name or "?", entityKey, source))
+end
+
+-- ============================================================
+-- Event handlers (8-event passive capture from Datamine pattern)
+-- ============================================================
+
+local eventFrame = CreateFrame("Frame")
+
+local function OnTargetChanged()
+    RecordUnit("target", "target")
+end
+
+local function OnMouseover()
+    RecordUnit("mouseover", "mouseover")
+end
+
+local function OnSoftEnemyChanged()
+    RecordUnit("softenemy", "softenemy")
+end
+
+local function OnSoftFriendChanged()
+    RecordUnit("softfriend", "softfriend")
+end
+
+local function OnSoftInteractChanged()
+    RecordUnit("softinteract", "softinteract")
+end
+
+local function OnNameplateAdded(_, unit)
+    if unit then
+        activeNameplates[unit] = true
+        RecordUnit(unit, "nameplate")
+    end
+end
+
+local function OnNameplateRemoved(_, unit)
+    if unit then
+        activeNameplates[unit] = nil
+    end
+end
+
+local function OnForbiddenNameplateAdded(_, unit)
+    -- Can't read full data from forbidden nameplates but record what we can
+    if unit then
+        RecordUnit(unit, "forbidden_nameplate")
+    end
+end
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "PLAYER_TARGET_CHANGED" then OnTargetChanged()
+    elseif event == "UPDATE_MOUSEOVER_UNIT" then OnMouseover()
+    elseif event == "PLAYER_SOFT_ENEMY_CHANGED" then OnSoftEnemyChanged()
+    elseif event == "PLAYER_SOFT_FRIEND_CHANGED" then OnSoftFriendChanged()
+    elseif event == "PLAYER_SOFT_INTERACT_CHANGED" then OnSoftInteractChanged()
+    elseif event == "NAME_PLATE_UNIT_ADDED" then OnNameplateAdded(nil, ...)
+    elseif event == "NAME_PLATE_UNIT_REMOVED" then OnNameplateRemoved(nil, ...)
+    elseif event == "FORBIDDEN_NAME_PLATE_UNIT_ADDED" then OnForbiddenNameplateAdded(nil, ...)
+    end
+end)
+
+-- ============================================================
+-- Periodic scan tick — catch boss units, group targets, focus
+-- ============================================================
+
+local function OnTick()
+    if not NS.IsCaptureActive() then return end
+
+    -- Explicit units
+    for _, unit in ipairs(EXPLICIT_UNITS) do
+        if UnitExists(unit) then
+            RecordUnit(unit, "tick_" .. unit)
+        end
+    end
+
+    -- Boss units
+    for _, unit in ipairs(BOSS_UNITS) do
+        if UnitExists(unit) then
+            RecordUnit(unit, "tick_boss")
+        end
+    end
+
+    -- Group targets (passive data from party/raid)
+    for _, unit in ipairs(GROUP_TARGETS) do
+        if UnitExists(unit) then
+            RecordUnit(unit, "tick_group_target")
+        end
+    end
+
+    -- Dedup sweep
+    sweepTimer = sweepTimer + NS.Config.GetTickRate(MODULE_NAME)
+    if sweepTimer >= 30 then
+        sweepTimer = 0
+        local cutoff = GetTime() - DEDUP_AGE
+        for k, t in pairs(seenUnits) do
+            if t < cutoff then seenUnits[k] = nil end
+        end
+    end
+end
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function scanner.ResetState()
+    wipe(seenUnits)
+    wipe(activeNameplates)
+    sweepTimer = 0
+
+    -- Re-enumerate currently visible nameplates so we don't miss units
+    -- already on screen when a session starts mid-gameplay
+    if C_NamePlate and C_NamePlate.GetNamePlates then
+        local plates = C_NamePlate.GetNamePlates()
+        if plates then
+            for _, plate in ipairs(plates) do
+                local unit = plate and plate.namePlateUnitToken
+                if unit then
+                    activeNameplates[unit] = true
+                end
+            end
+        end
+    end
+end
+
+function scanner.Enable()
+    eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+    eventFrame:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+    eventFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    eventFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+
+    -- Soft-target events (12.x)
+    pcall(function() eventFrame:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED") end)
+    pcall(function() eventFrame:RegisterEvent("PLAYER_SOFT_FRIEND_CHANGED") end)
+    pcall(function() eventFrame:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED") end)
+    pcall(function() eventFrame:RegisterEvent("FORBIDDEN_NAME_PLATE_UNIT_ADDED") end)
+
+    Sched.Register(MODULE_NAME, OnTick, NS.Config.GetTickRate(MODULE_NAME))
+    Log.Debug(MODULE_NAME, "Enabled — 8-event passive capture + periodic scan")
+end
+
+function scanner.Disable()
+    eventFrame:UnregisterAllEvents()
+    Sched.Unregister(MODULE_NAME)
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function scanner.GetStats()
+    local stats = buffer:GetStats()
+    stats.activeNameplates = 0
+    for _ in pairs(activeNameplates) do stats.activeNameplates = stats.activeNameplates + 1 end
+    stats.trackedEntities = 0
+    for _ in pairs(seenUnits) do stats.trackedEntities = stats.trackedEntities + 1 end
+    return stats
+end
+
+========== Modules/VendorCapture.lua ==========
+-- VoxSniffer VendorCapture
+-- Full vendor inventory snapshot on MERCHANT_SHOW
+-- Borrows cost extraction from Datamine + hook pattern from Journalator
+
+local _, NS = ...
+local C = NS.Constants
+local Log = NS.Log
+local GU = NS.GuidUtils
+local FP = NS.Fingerprint
+local EB = NS.EventBus
+
+local MODULE_NAME = C.MODULE.VENDOR_CAPTURE
+local capture = {}
+NS.RegisterModule(MODULE_NAME, capture)
+
+local buffer = NS.RingBuffer.New(C.RING_BUFFER_CAP)
+NS.FlushManager.RegisterBuffer(MODULE_NAME, buffer)
+
+local eventFrame = CreateFrame("Frame")
+local moduleEnabled = false
+
+-- ============================================================
+-- Vendor data extraction
+-- ============================================================
+
+local function CaptureVendorInventory(snapshotGuid)
+    -- Identify the NPC
+    local npcGuid = snapshotGuid or UnitGUID("npc")
+    if not npcGuid then return end
+
+    -- If a snapshot was provided, verify the same NPC is still present
+    if snapshotGuid then
+        local currentGuid = UnitGUID("npc")
+        if currentGuid ~= snapshotGuid then return end
+    end
+
+    local entityKey = GU.EntityKey(npcGuid)
+    local npcId = GU.GetNpcId(npcGuid)
+    local npcName = GU.SafeString(UnitName("npc"))
+
+    -- Get item count
+    local numItems = GetMerchantNumItems and GetMerchantNumItems() or 0
+    if numItems == 0 then return end
+
+    -- Get NPC position
+    local mapId = C_Map.GetBestMapForUnit("player")
+    local pos = nil
+    if mapId then
+        local p = C_Map.GetPlayerMapPosition(mapId, "player")
+        if p then pos = { x = p.x, y = p.y } end
+    end
+
+    -- Capture each item
+    local items = {}
+    for i = 1, numItems do
+        local item = nil
+
+        -- Try modern API first
+        if C_MerchantFrame and C_MerchantFrame.GetItemInfo then
+            local ok, info = pcall(C_MerchantFrame.GetItemInfo, i)
+            if ok and info then
+                item = {
+                    slot = i,
+                    name = info.name,
+                    price = info.price,
+                    stackCount = info.stackCount,
+                    numAvailable = info.numAvailable,
+                    isPurchasable = info.isPurchasable,
+                    isUsable = info.isUsable,
+                    hasExtendedCost = info.hasExtendedCost,
+                    currencyID = info.currencyID,
+                    isQuestItem = info.isQuestStartItem,
+                }
+            end
+        end
+
+        -- Fallback to classic API
+        if not item and GetMerchantItemInfo then
+            local ok, name, texture, price, stackCount, numAvailable, isPurchasable, isUsable, hasExtendedCost = pcall(GetMerchantItemInfo, i)
+            if ok and name then
+                item = {
+                    slot = i,
+                    name = name,
+                    price = price,
+                    stackCount = stackCount,
+                    numAvailable = numAvailable,
+                    isPurchasable = isPurchasable,
+                    isUsable = isUsable,
+                    hasExtendedCost = hasExtendedCost,
+                }
+            end
+        end
+
+        if item then
+            -- Get item link for item ID
+            if GetMerchantItemLink then
+                local ok, link = pcall(GetMerchantItemLink, i)
+                if ok and link then
+                    item.itemLink = link
+                    local itemId = link:match("item:(%d+)")
+                    item.itemId = tonumber(itemId)
+                end
+            end
+
+            -- Get extended cost details (currency costs)
+            if item.hasExtendedCost and GetMerchantItemCostInfo then
+                local ok, numCosts = pcall(GetMerchantItemCostInfo, i)
+                if ok and numCosts and numCosts > 0 then
+                    item.costs = {}
+                    for j = 1, numCosts do
+                        local cOk, cTexture, cCount, cLink, cCurrencyName = pcall(GetMerchantItemCostItem, i, j)
+                        if cOk then
+                            local costEntry = {
+                                count = cCount,
+                                name = cCurrencyName,
+                            }
+                            if cLink then
+                                local costItemId = cLink:match("item:(%d+)")
+                                costEntry.itemId = tonumber(costItemId)
+                                local currId = cLink:match("currency:(%d+)")
+                                costEntry.currencyId = tonumber(currId)
+                            end
+                            item.costs[j] = costEntry
+                        end
+                    end
+                end
+            end
+
+            items[#items + 1] = item
+        end
+    end
+
+    if #items == 0 then return end
+
+    -- Build a content-aware fingerprint from item IDs, prices, and costs
+    local fpParts = {}
+    for _, itm in ipairs(items) do
+        fpParts[#fpParts + 1] = format("%s:%s:%s",
+            tostring(itm.itemId or itm.name or itm.slot),
+            tostring(itm.price or 0),
+            tostring(itm.stackCount or 1))
+    end
+    table.sort(fpParts)
+    local vendorFP = FP.Compute({ npc = npcId or 0, items = table.concat(fpParts, ",") })
+    local cache = VoxSnifferDB and VoxSnifferDB.local_cache and VoxSnifferDB.local_cache.seen_vendors
+    if cache and cache[npcId or 0] == vendorFP then
+        Log.Debug(MODULE_NAME, format("Vendor %s unchanged, skipping", npcName or "?"))
+        return
+    end
+
+    local payload = {
+        npcId = npcId,
+        npcName = npcName,
+        npcGuid = npcGuid,
+        itemCount = #items,
+        items = items,
+        mapId = mapId,
+        position = pos,
+    }
+
+    local envelope = NS.MakeEnvelope(C.OBS_TYPE.VENDOR_SNAPSHOT, entityKey, payload, {
+        source_module = MODULE_NAME,
+        fingerprint = vendorFP,
+    })
+    if not envelope then return end
+
+    if cache then
+        cache[npcId or 0] = vendorFP
+    end
+    buffer:Push(envelope)
+    Log.Info(MODULE_NAME, format("Captured vendor: %s (%d items)", npcName or "?", #items))
+end
+
+-- ============================================================
+-- Event handler
+-- ============================================================
+
+eventFrame:SetScript("OnEvent", function(_, event, ...)
+    if event == "MERCHANT_SHOW" then
+        local npcGuid = UnitGUID("npc")
+        C_Timer.After(0.2, function()
+            if moduleEnabled and NS.IsCaptureActive() and UnitExists("npc") then CaptureVendorInventory(npcGuid) end
+        end)
+
+    elseif event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW" then
+        local interactionType = ...
+        if interactionType == Enum.PlayerInteractionType.Merchant then
+            local npcGuid = UnitGUID("npc")
+            C_Timer.After(0.2, function()
+                if moduleEnabled and NS.IsCaptureActive() and UnitExists("npc") then CaptureVendorInventory(npcGuid) end
+            end)
+        end
+    end
+end)
+
+-- ============================================================
+-- Module interface
+-- ============================================================
+
+function capture.ResetState()
+    -- Persistent dedup cache lives in VoxSnifferDB.local_cache.seen_vendors
+end
+
+function capture.Enable()
+    moduleEnabled = true
+    eventFrame:RegisterEvent("MERCHANT_SHOW")
+    -- Modern 12.x interaction event
+    pcall(function() eventFrame:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW") end)
+
+    Log.Debug(MODULE_NAME, "Enabled — captures vendor inventory on interaction")
+end
+
+function capture.Disable()
+    moduleEnabled = false
+    eventFrame:UnregisterAllEvents()
+    Log.Info(MODULE_NAME, "Disabled")
+end
+
+function capture.GetStats()
+    return buffer:GetStats()
+end

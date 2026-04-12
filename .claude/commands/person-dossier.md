@@ -18,10 +18,10 @@ The user provides a person's name (or partial name). Examples:
 
 Search ALL of these in parallel:
 
-1. `C:/Users/atayl/Desktop/Case_Reference/` — all 16 folders recursively (.md, .txt files)
+1. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` — all 16 folders recursively (.md, .txt files)
 2. `C:/Users/atayl/Desktop/Claude_Browser_FINAL_*.md` — 6 FINAL case documents
-3. `C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/Takeout_Extracted/` — email txt extracts
-4. `C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/CROSS_REFERENCE_REPORT.md` — cross-reference report
+3. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/Takeout_Extracted/` — email txt extracts
+4. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/CROSS_REFERENCE_REPORT.md` — cross-reference report
 5. `.docx` files via python-docx extraction
 
 ## Search Strategy

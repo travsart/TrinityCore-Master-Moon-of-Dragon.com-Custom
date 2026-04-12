@@ -116,3 +116,29 @@ RECOMMENDATION: [SAFE TO SEND / REDACTION NEEDED / REVIEW REQUIRED]
 - When in doubt, flag it. False positives are cheap; missed PII is not.
 - For .pdf files, note that you can only scan the filename — flag PDFs for manual review if they're in the outgoing package
 - Check both the document content AND filenames (sometimes PII is in the filename)
+
+## Scanning the Mbox Archive
+
+The full Gmail takeout (`C:/Users/atayl/Desktop/Excluded/mbox/mbox_index.db`)
+has its body text stored in the `messages.body_text` column. To sweep it for
+PII before using any email as an exhibit:
+
+```bash
+# Dump a range of messages as JSON for parallel regex scanning
+python -m tools.mbox.search --from wareham --json --limit 1000 > /tmp/mbox_slice.jsonl
+
+# Attachments are stored by SHA256 at:
+#   C:/Users/atayl/Desktop/Excluded/mbox/attachments/<XX>/<sha256>
+# Each unique file is stored exactly once — so a single scan of the
+# attachments dir covers every email that referenced it.
+```
+
+**Scan targets to prioritise** (in addition to usual PII):
+- Medical record numbers, DoD ID numbers in headers + body
+- Patient names in .mil email threads (HIPAA exposure)
+- PRHP deliberation text (privileged)
+- SAPR restricted-report content (8 USC 1565b violation if leaked)
+- Third-party SSNs in quoted/forwarded sections
+
+Report findings by mbox row id (`#12345`) so the sender can pull them from
+the DB for manual review.

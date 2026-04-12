@@ -7,7 +7,7 @@ Rules for launching and managing agents (subagents, background agents, file-sort
 1. **Pre-read existing memory** — Check `memory/` topic files for cached data before sending agents to re-discover it. If `memory/dossier_angel.md` exists, read it instead of searching 40 files.
 2. **Use /index-folder first** — For large directories (Case_Reference, Finances), generate a manifest with `python tools/folder_index.py <dir>` and pass the manifest path to agents. They read one JSON file instead of doing hundreds of ls/find calls.
 3. **Set hard output limits** — Tell agents: "Your output should be under 200 lines. If you need more, split into sections and write each to a file immediately." Prevents accumulate-then-choke failures.
-4. **Give agents file paths, not descriptions** — "Read `C:/Users/atayl/Desktop/Finances/02_VA_Benefits_Income/Angel_Full_Checklist.md`" beats "find Angel's checklist."
+4. **Give agents file paths, not descriptions** — "Read `C:/Users/atayl/Desktop/IMPORTANT DOCS/Finances/02_VA_Benefits_Income/Angel_Full_Checklist.md`" beats "find Angel's checklist."
 
 ## During Execution
 

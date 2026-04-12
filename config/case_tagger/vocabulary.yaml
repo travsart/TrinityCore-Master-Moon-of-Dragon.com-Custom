@@ -1,0 +1,342 @@
+# Case_Reference Controlled Vocabulary
+# Tags are only emitted when keywords match. No free-form tags allowed.
+
+tags:
+  retaliation:
+    - retaliation
+    - reprisal
+    - retaliatory
+    - retaliating
+    - punitive action
+  QAI:
+    - quality assurance investigation
+    - QAI
+    - quality action
+    - clinical quality investigation
+  NPDB:
+    - NPDB
+    - National Practitioner Data Bank
+    - practitioner data bank
+    - data bank report
+  MST:
+    - MST
+    - military sexual trauma
+    - sexual assault
+    - sexual harassment
+    - SARC
+  privileging:
+    - privileging
+    - clinical privilege
+    - privilege suspension
+    - summary suspension
+    - privilege revocation
+    - credentialing
+  DHA:
+    - DHA
+    - Defense Health Agency
+    - DHA-PM
+    - "6025.13"
+  IDES:
+    - IDES
+    - Integrated Disability Evaluation
+    - disability evaluation
+    - medical evaluation board
+  MEB:
+    - MEB
+    - Medical Evaluation Board
+    - medical board
+    - med board
+  IG_complaint:
+    - Inspector General
+    - IG complaint
+    - IG investigation
+    - AF/IG
+    - DODIG
+    - IG referral
+  suicide_data:
+    - suicide
+    - DODSER
+    - Suicide Event Report
+    - completed suicide
+    - suicide prevention
+    - DPH
+  NJP:
+    - NJP
+    - nonjudicial punishment
+    - non-judicial punishment
+    - Article 15
+    - letter of reprimand
+    - letter of counseling
+    - letter of admonishment
+  due_process:
+    - due process
+    - procedural rights
+    - procedural error
+    - denied hearing
+    - denied representation
+    - denied notice
+  clinical_quality:
+    - clinical quality
+    - standard of care
+    - patient safety
+    - patient harm
+    - malpractice
+  mental_health:
+    - mental health
+    - PTSD
+    - depression
+    - anxiety
+    - behavioral health
+    - psychiatric
+    - psychologist
+    - psychiatrist
+    - counseling
+    - therapy
+  PRHP:
+    - PRHP
+    - Physician Review and Hearing Process
+    - hearing panel
+    - privilege hearing
+  clearance:
+    - security clearance
+    - clearance revocation
+    - clearance suspension
+    - SCI
+    - TS/SCI
+    - access determination
+  separation:
+    - separation
+    - ADSCD
+    - date of separation
+    - discharge
+    - involuntary separation
+  whistleblower:
+    - whistleblower
+    - protected communication
+    - protected disclosure
+    - "1034"
+    - 10 USC 1034
+    - Military Whistleblower Protection Act
+  CWI:
+    - CWI
+    - Commander-Directed Investigation
+    - CDI
+    - command investigation
+    - command-directed
+  DODSER:
+    - DODSER
+    - DoD Suicide Event Report
+    - suicide event report
+  fitness_for_duty:
+    - fitness for duty
+    - FFD
+    - unfit for duty
+    - fitness determination
+    - DAWG
+  adverse_action:
+    - adverse action
+    - adverse information
+    - unfavorable information
+    - UIF
+    - administrative action
+  command_influence:
+    - command influence
+    - unlawful command influence
+    - UCI
+    - improper influence
+  brady_material:
+    - brady
+    - exculpatory
+    - favorable evidence
+    - withheld evidence
+    - suppressed evidence
+
+# Filing types and their keyword triggers
+filings:
+  DD7050:
+    - "7050"
+    - DD Form 7050
+    - reprisal complaint
+    - whistleblower complaint
+    - restricted report
+  DD149_AFBCMR:
+    - AFBCMR
+    - DD Form 149
+    - Board for Correction
+    - military records correction
+    - records correction
+  NPDB_dispute:
+    - NPDB dispute
+    - NPDB report
+    - void report
+    - data bank dispute
+    - Secretary dispute
+  HIPAA_complaint:
+    - HIPAA
+    - privacy rule
+    - protected health information
+    - PHI
+    - unauthorized disclosure
+    - privacy violation
+    - "45 CFR"
+  OSC_supplement:
+    - OSC
+    - Office of Special Counsel
+    - special counsel complaint
+    - PPP
+    - Prohibited Personnel Practice
+  congressional:
+    - congressman
+    - congresswoman
+    - senator
+    - congressional inquiry
+    - congressional office
+    - constituent inquiry
+    - member of congress
+    - representative
+
+# Doc type classification rules (keyword -> doc_type)
+# Higher-weight matches win
+doc_types:
+  email:
+    weight: 10
+    keywords:
+      - "Subject:"
+      - "From:"
+      - "To:"
+      - "Sent:"
+      - "Date:"
+      - "RE:"
+      - "FW:"
+  analysis:
+    weight: 5
+    keywords:
+      - analysis
+      - assessment
+      - evaluation
+      - findings
+      - discrepancy
+      - synthesis
+  brief:
+    weight: 5
+    keywords:
+      - brief
+      - summary
+      - overview
+      - executive summary
+      - one-pager
+  regulation:
+    weight: 8
+    keywords:
+      - regulation
+      - instruction
+      - directive
+      - DoDI
+      - DoDM
+      - AFI
+      - DHA-PM
+      - USC
+      - CFR
+      - policy memo
+  medical:
+    weight: 6
+    keywords:
+      - diagnosis
+      - treatment
+      - provider
+      - clinical
+      - patient
+      - medical record
+      - NARSUM
+      - profile
+      - LOD
+  personnel:
+    weight: 5
+    keywords:
+      - OPR
+      - EPR
+      - PRF
+      - assignment
+      - PCS
+      - personnel action
+      - performance report
+  legal_filing:
+    weight: 7
+    keywords:
+      - petition
+      - application
+      - complaint
+      - filing
+      - DD Form
+      - appeal
+      - formal complaint
+  evidence:
+    weight: 4
+    keywords:
+      - exhibit
+      - evidence
+      - attachment
+      - enclosure
+      - supporting document
+  correspondence:
+    weight: 5
+    keywords:
+      - memorandum
+      - MFR
+      - memo for record
+      - letter
+      - notification
+      - correspondence
+  report:
+    weight: 5
+    keywords:
+      - report
+      - investigation report
+      - inquiry
+      - findings of fact
+  transcript:
+    weight: 8
+    keywords:
+      - transcript
+      - verbatim
+      - testimony
+      - "Q:"
+      - "A:"
+  index:
+    weight: 6
+    keywords:
+      - index
+      - table of contents
+      - master list
+      - inventory
+      - catalog
+  checklist:
+    weight: 6
+    keywords:
+      - checklist
+      - "[ ]"
+      - "[x]"
+      - action items
+      - to-do
+  timeline:
+    weight: 7
+    keywords:
+      - timeline
+      - chronology
+      - chronological
+      - sequence of events
+
+# Known people in the case (name -> aliases)
+known_people:
+  "Adam J. Taylor":
+    - Adam Taylor
+    - Capt Taylor
+    - Captain Taylor
+    - Capt Adam Taylor
+    - Capt Adam J. Taylor
+    - CPT Taylor
+    - Adam J. Taylor
+  "Angel Taylor":
+    - Angel Taylor
+    - Mrs. Taylor
+    - Angel

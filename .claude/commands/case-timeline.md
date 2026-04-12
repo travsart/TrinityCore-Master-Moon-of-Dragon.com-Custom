@@ -16,12 +16,12 @@ Generate a comprehensive chronological timeline from all evidence sources, or up
 
 ## Source Files (read in parallel)
 
-1. `C:/Users/atayl/Desktop/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_TIMELINE.md` — existing master timeline
-2. `C:/Users/atayl/Desktop/Case_Reference/00_COMPLETE_DISCREPANCY_ANALYSIS.md` — 60 discrepancies with dates
-3. `C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/CROSS_REFERENCE_REPORT.md` — email-derived timeline events
-4. `C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/Takeout_Extracted/EXTRACTION_REPORT.md` — email dates
-5. `C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/Takeout_Extracted/MASTER_EMAIL_INDEX.csv` — all email metadata
-6. `C:/Users/atayl/Desktop/Case_Reference/SESSION_FINDINGS_*.md` — session findings
+1. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_TIMELINE.md` — existing master timeline
+2. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/00_COMPLETE_DISCREPANCY_ANALYSIS.md` — 60 discrepancies with dates
+3. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/CROSS_REFERENCE_REPORT.md` — email-derived timeline events
+4. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/Takeout_Extracted/EXTRACTION_REPORT.md` — email dates
+5. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/Takeout_Extracted/MASTER_EMAIL_INDEX.csv` — all email metadata
+6. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/SESSION_FINDINGS_*.md` — session findings
 7. `C:/Users/atayl/Desktop/Claude_Browser_FINAL_*.md` — FINAL case documents (especially 02 Theory, 03 Evidence Map)
 
 ## Timeline Entry Format

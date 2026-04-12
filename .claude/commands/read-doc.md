@@ -10,7 +10,7 @@ Read a .docx file by extracting its text content via python-docx.
 ## Arguments
 
 The user provides a file path or partial name. If a full path, use it directly. If a partial name or search term, use Glob to find matching .docx files under these directories (in order):
-1. `C:/Users/atayl/Desktop/Case_Reference/`
+1. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/`
 2. `C:/Users/atayl/Desktop/`
 3. `C:/Users/atayl/Documents/Personal/Legal/`
 4. Current working directory

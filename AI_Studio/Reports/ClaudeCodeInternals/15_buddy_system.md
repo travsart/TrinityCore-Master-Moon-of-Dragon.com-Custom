@@ -1,8 +1,12 @@
-# 15. Buddy System (Tamagotchi Pet)
+# 15. Buddy System (Tamagotchi Pet) — HISTORICAL
 
-> Source: `src/buddy/` (6 files, 1,298 lines)
+> Source: `src/buddy/` (6 files, 1,298 lines) — v2.1.88
 > Feature flag: `feature('BUDDY')` (compile-time) -- no runtime gate
-> Status: SHIPPED (April 1, 2026 launch window)
+> Status: **REMOVED in 2.1.97** (shipped in 2.1.x for the April 1–7, 2026 teaser window; stripped from the bundle one day after the window closed)
+>
+> **2.1.97 delta** (grep spot-check, 2026-04-08): The entire buddy subsystem is gone from cli.js@2.1.97. The PRNG salt `friend-2026-401`, the `Mulberry32` PRNG, the gacha roll functions (`rollFrom`, `rollRarity`), the sprite renderers (`CompanionSprite`, `CompanionBones`), the stat enums (`SNARK`/`CHAOS`/`WISDOM`/`PATIENCE`/`DEBUGGING`), the species and rarity tables, the animation constants (`IDLE_SEQUENCE`, `PET_BURST_MS`, `TICK_MS`), the easter-egg species (`tinyduck`, `chonk`), and the `/buddy` slash command — all absent. Only one vestigial reference remains: the message-pruning denylist `N9Y=new Set(["compaction_reminder","companion_intro"])` (cli.js line 3138) still drops `companion_intro` attachments if it finds them in old session logs — a one-line back-compat reader with no producer. 2.1.97 users will never see a companion.
+>
+> **This report is now historical.** It documents the v2.1.88 implementation of the April Fools 2026 buddy system as shipped. All mechanics described below were real in v2.1.88.
 
 ## Executive Summary
 

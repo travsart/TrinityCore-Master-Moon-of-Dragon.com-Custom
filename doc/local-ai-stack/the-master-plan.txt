@@ -1,0 +1,153 @@
+● 1. The Master UI: Open WebUI
+
+  https://github.com/open-webui/open-webui — 90K+ GitHub stars, this is THE interface. It's basically a self-hosted ChatGPT that runs on top of Ollama. Here's why it's the one:
+
+  - Built-in RAG — drag & drop PDFs/DOCX/TXT, it chunks and embeds them automatically using your local embedding model. Create "Collections" (e.g., "Case Evidence", "Regulations", "Emails") and query them with
+  #collection-name
+  - 9 vector DB backends — ChromaDB built-in by default, or Qdrant/Milvus/PGVector if you outgrow it
+  - Model switching — swap between Qwen 3.5, DeepSeek-R1, Gemma 4 mid-conversation
+  - Web search — 15+ providers (SearXNG, Brave, DuckDuckGo) injected into chat
+  - Multi-user — you could give Angel access too
+  - Image understanding — upload images, use vision models to describe/analyze them
+  - Python function calling — write custom tools directly in the UI
+  - 100% local — nothing leaves your machine
+
+  Install is one Docker command:
+  docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway \
+    -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main
+
+  Then hit localhost:3000 in your browser. Done.
+
+  ---
+  2. Embeddings: You Need THREE Types
+
+  Your case files aren't just text. You've got PDFs with scanned forms, photos of documents, audio recordings, email attachments. Standard text embeddings miss most of this.
+
+  Layer 1: Text Embeddings (the basics)
+
+  nomic-embed-text or mxbai-embed-large via Ollama
+  - Handles: plain text, extracted PDF text, emails, markdown
+  - This is what Open WebUI uses by default
+  - Covers ~70% of your case files
+
+  Layer 2: Vision Embeddings (the game-changer for legal)
+
+  ColQwen2 / ColPali — these treat entire document PAGES as images. No OCR, no text extraction, no layout detection. The model literally "looks" at the page and understands it.
+
+  Why this matters for your case:
+  - Scanned military forms (DD-214s, MFRs, medical records) that OCR butchers
+  - Documents with tables, signatures, stamps, handwritten notes
+  - Photos of physical documents
+  - Charts, diagrams, organizational charts
+
+  ColQwen2 scores higher than NVIDIA's NeMo retriever at every top-k level. It's the current king of document retrieval.
+
+  Layer 3: Audio Embeddings (emerging)
+
+  Whisper (OpenAI's open-source model) transcribes audio → then text-embed the transcription. For actual audio-semantic search, WavRAG and SEAL are the research frontier but not production-ready locally yet.
+
+  Practical approach: Whisper transcribe → text embed → done.
+
+  ---
+  3. Thinking Out of the Box
+
+  Here's where I'd push the architecture further than "standard RAG":
+
+  The "Legal War Room" Stack
+
+  ┌─────────────────────────────────────────────────┐
+  │                  Open WebUI (UI)                 │
+  │         localhost:3000 — your command center      │
+  ├─────────────────────────────────────────────────┤
+  │                                                   │
+  │  ┌─── Ollama (Model Server) ──────────────────┐  │
+  │  │  Qwen 3.5 27B    → legal reasoning         │  │
+  │  │  DeepSeek-R1 32B → chain-of-thought         │  │
+  │  │  Gemma 4 26B MoE → bulk processing          │  │
+  │  │  nomic-embed-text → text embeddings          │  │
+  │  │  Whisper          → audio transcription      │  │
+  │  └────────────────────────────────────────────┘  │
+  │                                                   │
+  │  ┌─── ChromaDB (Vector Store) ────────────────┐  │
+  │  │  Collection: case_evidence                   │  │
+  │  │  Collection: regulations                     │  │
+  │  │  Collection: emails                          │  │
+  │  │  Collection: medical_records                 │  │
+  │  │  Collection: correspondence                  │  │
+  │  └────────────────────────────────────────────┘  │
+  │                                                   │
+  │  ┌─── ColQwen2 (Vision Retrieval) ────────────┐  │
+  │  │  Scanned forms, photos, tables as images     │  │
+  │  └────────────────────────────────────────────┘  │
+  │                                                   │
+  │  ┌─── Claude Code (Orchestrator via MCP) ─────┐  │
+  │  │  Delegates to local models for bulk work     │  │
+  │  │  Keeps Anthropic API for hard reasoning      │  │
+  │  │  Coordinates everything                      │  │
+  │  └────────────────────────────────────────────┘  │
+  │                                                   │
+  │  ┌─── OpenClaw + NemoClaw (Always-On Agent) ──┐  │
+  │  │  Background: continuously index new files    │  │
+  │  │  Background: find contradictions in evidence │  │
+  │  │  Background: flag missing cross-references   │  │
+  │  │  Privacy guardrails on all case data         │  │
+  │  └────────────────────────────────────────────┘  │
+  └─────────────────────────────────────────────────┘
+
+  What's different from standard RAG:
+
+  1. Hybrid search with BM25 + semantic — ChromaDB natively supports this. For legal work, exact term matching ("10 USC 1034", "DoDI 6025.13") matters as much as semantic similarity. Standard vector-only RAG misses exact
+  citations. BM25 catches them.
+
+  2. ColQwen2 vision pipeline — Instead of OCR → text → embed (lossy), you embed the raw page image. This is a fundamentally different approach that preserves layout, signatures, stamps, redaction marks — things that matter
+   in legal evidence.
+
+  3. The "Contradiction Finder" loop — This is the out-of-the-box idea. You already have a contradiction-finder agent in Claude Code. Imagine that running continuously via OpenClaw:
+  - Ingest every case document into ChromaDB
+  - Nightly: Gemma 4 sweeps every document pair looking for inconsistencies
+  - Finds: "Command stated X in this MFR but stated Y in this email"
+  - Outputs a contradiction report with citations
+  - Zero API cost, runs while you sleep
+
+  4. Automatic frontmatter/indexing pipeline — OpenClaw + Gemma 4 watches your case folder. New file appears → Gemma classifies it, generates frontmatter (date, author, type, relevance, key claims), adds it to the vector
+  DB, updates the master index. You said you wanted this — it's the always-on agent use case.
+
+  5. Two-tier RAG routing — Easy questions (lookup, citation, date finding) go to local Gemma 4. Hard questions (legal reasoning, strategy, gap analysis) get routed to Claude via API. You save money on the 90% that's grunt
+  work and spend API tokens only on the 10% that needs frontier intelligence.
+
+  The one thing I'd do differently from what we discussed:
+
+  ChromaDB over LanceDB for your case. ChromaDB's native BM25 hybrid search is critical for legal work where you need BOTH "find documents semantically related to whistleblower retaliation" AND "find every document that
+  mentions '10 USC 1034' exactly." LanceDB is better for massive corpora (1M+ vectors) but your 1,579 files are well within ChromaDB's sweet spot, and the hybrid search alone justifies the choice.
+
+  ---
+  Bottom Line
+
+  ┌───────────────────┬──────────────────────┬────────────────────────────────────────────┐
+  │     Component     │        Choice        │                    Why                     │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ UI                │ Open WebUI           │ Best-in-class, built-in RAG, 90K stars     │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Reasoning Model   │ Qwen 3.5 27B         │ Highest legal reasoning scores             │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Deep Thinking     │ DeepSeek-R1 32B      │ Chain-of-thought for hard questions        │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Bulk/Always-On    │ Gemma 4 26B MoE Q8   │ Fast, efficient, background agent          │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Text Embeddings   │ nomic-embed-text     │ Best local option for legal docs           │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Vision Embeddings │ ColQwen2             │ Scanned docs without OCR                   │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Audio             │ Whisper → text embed │ Transcribe then index                      │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Vector DB         │ ChromaDB             │ Hybrid search (BM25 + semantic)            │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Always-On Agent   │ OpenClaw + NemoClaw  │ Background indexing, contradiction finding │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Orchestrator      │ Claude Code via MCP  │ Smart routing, hard reasoning              │
+  ├───────────────────┼──────────────────────┼────────────────────────────────────────────┤
+  │ Privacy           │ NemoClaw guardrails  │ Case data never leaves machine             │
+  └───────────────────┴──────────────────────┴────────────────────────────────────────────┘
+
+  Want me to start building this? I'd suggest we go in order: (1) Install Ollama + pull models, (2) Docker up Open WebUI, (3) Test basic RAG with a few case files, (4) Add the MCP bridge so Claude Code can delegate. We can
+  do steps 1-3 today.

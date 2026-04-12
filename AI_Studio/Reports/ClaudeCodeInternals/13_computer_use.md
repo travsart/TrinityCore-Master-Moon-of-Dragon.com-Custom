@@ -1,9 +1,11 @@
 # 13. Computer Use ("Chicago")
 
-> Source: `src/utils/computerUse/` (15 files, ~2,161 lines)
+> Source: `src/utils/computerUse/` (15 files, ~2,161 lines) — v2.1.88 source
 > Feature flags: `feature('CHICAGO_MCP')` (compile-time) + `tengu_malort_pedway` (GrowthBook runtime)
 > Platform: macOS ONLY (darwin guard, throws on other platforms)
 > Status: GATED -- Max/Pro subscribers only, disabled by default
+>
+> **Verified unchanged vs v2.1.97 cli.js** (grep spot-check, 2026-04-08): all 11 tool names (`request_access`, `list_granted_applications`, `computer_batch`, `left_click_drag`, `double_click`, `triple_click`, `hold_key`, `open_application`, `read_clipboard`, etc.), both native NAPI paths (`COMPUTER_USE_INPUT_NODE_PATH`, `COMPUTER_USE_SWIFT_NODE_PATH`), the libuv pump (`drainRunLoop` / `_drainMainRunLoop`), the GrowthBook flag (`tengu_malort_pedway`), the macOS notification string ("Claude is using your computer"), and the MCP server name (`computer-use`) are all present in cli.js@2.1.97.
 
 ## Executive Summary
 

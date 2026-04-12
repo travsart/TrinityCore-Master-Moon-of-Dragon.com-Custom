@@ -50,10 +50,10 @@ Based on the filing type, list every required element.
 
 ### Step 2: Search Archive
 For each required element, search:
-- `C:/Users/atayl/Desktop/Case_Reference/` (all folders)
+- `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` (all folders)
 - `C:/Users/atayl/Desktop/Claude_Browser_FINAL_*.md`
-- `C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/Takeout_Extracted/`
-- `C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/CROSS_REFERENCE_REPORT.md`
+- `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/Takeout_Extracted/`
+- `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/CROSS_REFERENCE_REPORT.md`
 
 ### Step 3: Rate Evidence Availability
 

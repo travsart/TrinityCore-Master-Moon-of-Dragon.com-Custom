@@ -12,27 +12,27 @@ You are a case document intake processor for Capt Adam J. Taylor's military lega
 
 ## The 5 Master Files (canonical sources of truth)
 
-1. **Discrepancy Analysis**: `C:/Users/atayl/Desktop/Case_Reference/00_COMPLETE_DISCREPANCY_ANALYSIS.md`
+1. **Discrepancy Analysis**: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/00_COMPLETE_DISCREPANCY_ANALYSIS.md`
    - Numbered discrepancies (D-1 through D-60+)
    - Complaint trail table (16+ channels)
    - Summary statistics
 
-2. **MEB Tracker**: `C:/Users/atayl/Desktop/Case_Reference/03_MEB_IDES/MASTER_MEB_TRACKER.md`
+2. **MEB Tracker**: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/03_MEB_IDES/MASTER_MEB_TRACKER.md`
    - IDES phase status, PEBLO, NARSUM, C&P, CIS
    - VA rating expectations
    - SSDI status
    - Key personnel contacts
 
-3. **Legal Tracker**: `C:/Users/atayl/Desktop/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_LEGAL_TRACKER.md`
+3. **Legal Tracker**: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_LEGAL_TRACKER.md`
    - Active legal representation (Tolin, ADC Ko, VLC gap, ODC)
    - Active legal matters (QAI, clearance, ET, whistleblower, congressional, MST)
    - Filing pathways table
 
-4. **Master Timeline**: `C:/Users/atayl/Desktop/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_TIMELINE.md`
+4. **Master Timeline**: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_TIMELINE.md`
    - Chronological events Dec 2023 through Aug 2026
    - Each entry: Date | Event | Confidence | Source
 
-5. **Action Items**: `C:/Users/atayl/Desktop/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md`
+5. **Action Items**: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md`
    - Tiered by urgency: THIS WEEK / THIS MONTH / BY MAY / BEFORE SEPARATION
    - Numbered items with specific contacts, deadlines, policy bases
 

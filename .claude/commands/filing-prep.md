@@ -73,7 +73,7 @@ Flag anything that's:
 
 ## Output
 
-Write the draft to: `C:/Users/atayl/Desktop/Case_Reference/13_ANALYSIS_AND_BRIEFS/DRAFT_[filing_type]_[date].md`
+Write the draft to: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/13_ANALYSIS_AND_BRIEFS/DRAFT_[filing_type]_[date].md`
 
 ```
 # DRAFT — [Filing Type]

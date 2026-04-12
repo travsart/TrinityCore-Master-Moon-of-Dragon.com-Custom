@@ -25,7 +25,7 @@ Military clinical social worker (LCSW) case spanning Dec 2023 through present. K
 ## Archive Locations
 
 ### Primary Sources
-`C:/Users/atayl/Desktop/Case_Reference/` — 16 folders (00_ through 15_)
+`C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` — 16 folders (00_ through 15_)
 
 Key dated-event sources:
 - `10_TIMELINE_AND_NARRATIVES/` — existing timeline documents and MFRs
@@ -110,3 +110,28 @@ These are anchor dates — use them to validate your timeline:
 - 2024-09-15 (approx): PRHP hearing
 - 2024-10-15: PA final decision (Col Earles override)
 - 2025-11-26: Security clearance suspension
+
+## Mbox Archive (Gmail Takeout, 9.8 GB)
+
+For dated-events extraction, the full mbox is at
+`C:/Users/atayl/Desktop/Excluded/mbox/mbox_index.db` (SQLite FTS5, trigram).
+
+Sent/received dates on emails are **highly reliable** timeline anchors —
+they're set by the mail server, not the author. Use this DB to fill gaps the
+curated `11_EMAILS/` set doesn't cover.
+
+```bash
+# Get every message in a date window as JSON
+python -m tools.mbox.search --since 2024-08-01 --until 2024-08-31 --json --limit 500
+
+# By participant + date window
+python -m tools.mbox.search --from wheeler --since 2024-07-01 --until 2024-09-01 --json
+python -m tools.mbox.search --from earles --since 2024-10-01 --until 2024-11-01 --json
+
+# Topic sweeps
+python -m tools.mbox.search "NARSUM" --json --limit 200
+python -m tools.mbox.search "PCS" --json --limit 200
+```
+
+Cite timeline entries with `mbox #<id> · <Date>` so later auditors can
+reproduce. The row id is stable once the DB is built.

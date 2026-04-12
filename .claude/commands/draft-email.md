@@ -30,8 +30,8 @@ Draft an email and save it as a **plain text `.txt` file** ready to copy-paste d
 
 Before drafting, search for context about the recipient and topic:
 1. `memory/` files — any prior contact or context
-2. `Desktop/Finances/` — financial/VA/employment context
-3. `Desktop/Case_Reference/` — legal case context
+2. `Desktop/IMPORTANT DOCS/Finances/` — financial/VA/employment context
+3. `Desktop/IMPORTANT DOCS/Case_Reference/` — legal case context
 4. Previous emails to/from this person (search `11_EMAILS/` if available)
 
 Pull any relevant: names, dates, reference numbers, phone numbers, prior commitments.

@@ -13,10 +13,10 @@ Read these files IN PARALLEL, then synthesize a compact dashboard:
 
 ### Required Files
 
-1. `C:/Users/atayl/Desktop/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md`
-2. `C:/Users/atayl/Desktop/Case_Reference/03_MEB_IDES/MASTER_MEB_TRACKER.md`
-3. `C:/Users/atayl/Desktop/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_LEGAL_TRACKER.md`
-4. `C:/Users/atayl/Desktop/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_TIMELINE.md`
+1. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md`
+2. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/03_MEB_IDES/MASTER_MEB_TRACKER.md`
+3. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_LEGAL_TRACKER.md`
+4. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_TIMELINE.md`
 
 ### Dashboard Sections
 

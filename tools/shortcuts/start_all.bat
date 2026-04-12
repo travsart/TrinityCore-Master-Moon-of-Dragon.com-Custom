@@ -16,7 +16,7 @@ echo ============================================
 echo.
 
 :: 1. Start MySQL (UniServerZ)
-echo [1/6] Starting MySQL (UniServerZ 9.5.0)...
+echo [1/7] Starting MySQL (UniServerZ 9.5.0)...
 netstat -ano | findstr ":3306 " | findstr "LISTENING" >nul 2>&1
 if %ERRORLEVEL%==0 (
     echo        MySQL already running on port 3306.
@@ -51,19 +51,19 @@ echo        UniServerZ MySQL started in ~%tries% seconds.
 echo.
 
 :: 1.5. Apply Pending SQL
-echo [1.5/6] Checking for pending database patches...
+echo [1.5/7] Checking for pending database patches...
 call "%~dp0apply_pending_sql.bat"
 echo.
 
 :: 2. Start bnetserver
-echo [2/6] Starting bnetserver...
+echo [2/7] Starting bnetserver...
 start "bnetserver" /D "%RUNTIME%" "%RUNTIME%\bnetserver.exe"
 %SYSTEMROOT%\system32\timeout.exe /t 3 /nobreak >nul
 echo        bnetserver launched.
 echo.
 
 :: 3. Start worldserver
-echo [3/6] Starting worldserver...
+echo [3/7] Starting worldserver...
 start "worldserver" /D "%RUNTIME%" "%RUNTIME%\worldserver.exe"
 echo        worldserver launched. Waiting for initialization...
 
@@ -86,7 +86,7 @@ echo        worldserver ready in ~%tries% seconds.
 echo.
 
 :: 4. Start Arctium Game Launcher
-echo [4/6] Starting Arctium Game Launcher...
+echo [4/7] Starting Arctium Game Launcher...
 if exist "%ARCTIUM%" (
     start "" /D "C:\WoW\_retail_" "%ARCTIUM%"
     echo        Arctium launched.
@@ -96,7 +96,7 @@ if exist "%ARCTIUM%" (
 echo.
 
 :: 5. Start Command Center
-echo [5/6] Starting Command Center...
+echo [5/7] Starting Command Center...
 netstat -ano | findstr ":5050 " | findstr "LISTENING" >nul 2>&1
 if %ERRORLEVEL%==0 (
     echo        Command Center already running on port 5050.
@@ -107,9 +107,22 @@ if %ERRORLEVEL%==0 (
 echo.
 
 :: 6. Start Auto-Parse Daemon
-echo [6/6] Starting Auto-Parse Session Watcher...
+echo [6/7] Starting Auto-Parse Session Watcher...
 start "VoxCore Auto-Parse v3" /D "%~dp0" auto_parse_watch.bat
 echo        Auto-Parse daemon launched.
+echo.
+
+:: 7. Start Hook Daemon (Claude Code HTTP hooks)
+echo [7/7] Starting VoxCore Hook Daemon...
+netstat -ano | findstr ":19484 " | findstr "LISTENING" >nul 2>&1
+if %ERRORLEVEL%==0 (
+    echo        Hook daemon already running on port 19484.
+    goto hook_done
+)
+start "VoxCore HookDaemon" /MIN python "%ROOT%\.claude\hooks\hook_daemon.py"
+%SYSTEMROOT%\system32\timeout.exe /t 2 /nobreak >nul
+echo        Hook daemon started — http://127.0.0.1:19484/health
+:hook_done
 echo.
 
 echo ============================================

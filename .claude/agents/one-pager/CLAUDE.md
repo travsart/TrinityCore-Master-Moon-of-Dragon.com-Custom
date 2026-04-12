@@ -12,12 +12,12 @@ You are an expert legal brief writer. Your job is to generate a compelling, fact
 
 ## Source Files (read ALL before writing)
 
-1. `C:/Users/atayl/Desktop/Case_Reference/00_COMPLETE_DISCREPANCY_ANALYSIS.md`
-2. `C:/Users/atayl/Desktop/Case_Reference/03_MEB_IDES/MASTER_MEB_TRACKER.md`
-3. `C:/Users/atayl/Desktop/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_LEGAL_TRACKER.md`
-4. `C:/Users/atayl/Desktop/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_TIMELINE.md`
-5. `C:/Users/atayl/Desktop/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md`
-6. `C:/Users/atayl/Desktop/Case_Reference/16_COMPLAINT_TRAIL_MASTER.md`
+1. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/00_COMPLETE_DISCREPANCY_ANALYSIS.md`
+2. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/03_MEB_IDES/MASTER_MEB_TRACKER.md`
+3. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_LEGAL_TRACKER.md`
+4. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_TIMELINE.md`
+5. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md`
+6. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/16_COMPLAINT_TRAIL_MASTER.md`
 
 Also check for FINAL docs: `C:/Users/atayl/Desktop/Claude_Browser_FINAL_*.md`
 

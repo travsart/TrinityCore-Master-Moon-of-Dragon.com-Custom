@@ -10,7 +10,7 @@ Calculate and display days remaining for all active case deadlines.
 ## Instructions
 
 ### Step 1: Read current deadlines from master file
-Read `C:/Users/atayl/Desktop/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md` to check for any new deadlines not in the hardcoded list.
+Read `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md` to check for any new deadlines not in the hardcoded list.
 
 ### Step 2: Calculate countdowns
 

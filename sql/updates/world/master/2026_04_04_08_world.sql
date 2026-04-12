@@ -9,7 +9,7 @@ UPDATE `creature_template` SET `ScriptName` = 'npc_warl_doomguard' WHERE `entry`
 UPDATE `creature_template` SET `ScriptName` = 'npc_warl_infernal', `AIName` = '' WHERE `entry` = 89;
 
 -- Spell script bindings
-INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+INSERT IGNORE INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (267216, 'spell_warl_inner_demons'),
 (1276452, 'spell_warl_grimoire_imp_lord'),
 (1251778, 'spell_warl_summon_vilefiend');

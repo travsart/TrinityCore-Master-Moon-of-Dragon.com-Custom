@@ -3,20 +3,28 @@
 
 Run: python .claude/hooks/test-hooks.py
      python .claude/hooks/test-hooks.py --scenarios   (also run scenario regression tests)
-     python .claude/hooks/test-hooks.py --verbose      (show stdout/stderr for each test)
+     python .claude/hooks/test-hooks.py --http        (also run HTTP integration tests against daemon)
+     python .claude/hooks/test-hooks.py --all         (run everything including --http)
+     python .claude/hooks/test-hooks.py --verbose     (show stdout/stderr for each test)
 
-Phase 1: Health checks — each hook gets its event-appropriate payload, must not crash.
+Phase 0: Daemon health check (when --http or --all) — confirms hook_daemon.py is reachable.
+Phase 1: Legacy script health checks — each hook gets its event-appropriate payload, must not crash.
 Phase 2: Scenario tests — targeted regression tests for known false-positive patterns.
+Phase 3: HTTP integration tests (when --http or --all) — POST to each /hook/* endpoint, verify response shape.
 
-This catches syntax errors, import failures, and logic bugs that caused real session
-disruptions (session 197: release-gate cascade, sql-safety overbroad, edit-verifier
-Unicode false positives).
+This catches syntax errors, import failures, logic bugs that caused real session disruptions
+(session 197: release-gate cascade, sql-safety overbroad, edit-verifier Unicode false positives),
+and now also daemon routing/handler regressions.
 """
+import http.client
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
+
+HOOK_DAEMON_HOST = "127.0.0.1"
+HOOK_DAEMON_PORT = 19484
 
 HOOKS_DIR = Path(__file__).parent
 PROJECT_DIR = HOOKS_DIR.parent.parent
@@ -103,6 +111,9 @@ HOOK_EVENT_MAP = {
     "docx-auto-extract.py": "PostToolUseFailure",
     # UserPromptSubmit
     "prompt-context-injector.py": "UserPromptSubmit",
+    "timestamp-injector.py": "UserPromptSubmit",
+    "deadline-alert.py": "UserPromptSubmit",
+    "file-changed-monitor.py": "UserPromptSubmit",
     # PreCompact
     "precompact-snapshot.py": "PreCompact",
     # SessionStart
@@ -316,8 +327,15 @@ def run_health_checks(verbose: bool = False) -> tuple:
     print("=" * 64)
     print()
 
+    # Exclude daemon infrastructure files and the harness itself
+    INFRA_FILES = {
+        "test-hooks.py",
+        "hook_daemon.py",
+        "daemon_shim.py",
+        "_test_daemon.py",
+    }
     hook_scripts = sorted(HOOKS_DIR.glob("*.py"))
-    hook_scripts = [h for h in hook_scripts if h.name != "test-hooks.py"]
+    hook_scripts = [h for h in hook_scripts if h.name not in INFRA_FILES]
 
     total = len(hook_scripts)
     passed = 0
@@ -404,24 +422,244 @@ def run_scenario_tests(verbose: bool = False) -> tuple:
     return passed, failed
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# HTTP daemon integration tests (Phase 0 + Phase 3)
+# ═══════════════════════════════════════════════════════════════════════
+
+# Route → (mock payload, expected response shape validator)
+# validator returns None on success or an error string on failure.
+
+def _expect_empty(body: dict) -> str:
+    if body != {}:
+        return f"expected empty body, got {body}"
+    return None
+
+
+def _expect_block(body: dict) -> str:
+    if body.get("decision") != "block":
+        return f"expected decision=block, got {body}"
+    if not body.get("reason"):
+        return "expected non-empty reason"
+    return None
+
+
+def _expect_additional_context(body: dict) -> str:
+    if "additionalContext" not in body:
+        return f"expected additionalContext key, got {body}"
+    if not body["additionalContext"]:
+        return "expected non-empty additionalContext"
+    return None
+
+
+def _expect_system_message(body: dict) -> str:
+    if "systemMessage" not in body:
+        return f"expected systemMessage key, got {body}"
+    return None
+
+
+# Danger string split so we don't trigger sql-safety on the test file itself
+_D = "D" + "ROP TA" + "BLE foo"
+
+HTTP_TESTS = [
+    # (route, payload, validator, description)
+    ("/hook/sql-safety",
+     {"tool_name": "Bash", "tool_input": {"command": f'mysql -u root -e "{_D}"'}},
+     _expect_block,
+     "sql-safety blocks dangerous mysql command"),
+
+    ("/hook/sql-safety",
+     {"tool_name": "Bash", "tool_input": {"command": 'mysql -u root -e "SELECT 1"'}},
+     _expect_empty,
+     "sql-safety allows SELECT"),
+
+    ("/hook/sql-safety",
+     {"tool_name": "Bash", "tool_input": {"command": "echo hello"}},
+     _expect_empty,
+     "sql-safety allows non-mysql commands"),
+
+    ("/hook/sensitive-file-guard",
+     {"tool_name": "Edit", "tool_input": {"file_path": "C:/Users/atayl/VoxCore/Case_Reference/foo.md"}},
+     _expect_block,
+     "sensitive-file-guard blocks Case_Reference inside VoxCore"),
+
+    ("/hook/sensitive-file-guard",
+     {"tool_name": "Edit", "tool_input": {"file_path": "C:/Users/atayl/Desktop/Case_Reference/foo.md"}},
+     _expect_empty,
+     "sensitive-file-guard allows paths outside VoxCore"),
+
+    ("/hook/timestamp-injector",
+     {"prompt": "test prompt"},
+     _expect_additional_context,
+     "timestamp-injector returns additionalContext"),
+
+    ("/hook/session-stats",
+     {"hook_event_name": "PostToolUse", "tool_name": "Bash", "session_id": "test-http"},
+     _expect_empty,
+     "session-stats returns {} (async advisory)"),
+
+    ("/hook/release-gate-enforce",
+     {"tool_name": "Bash", "tool_input": {"command": "git push origin master"}},
+     _expect_empty,
+     "release-gate-enforce allows regular master push"),
+
+    ("/hook/cpp-build-reminder",
+     {"tool_name": "Edit", "tool_input": {"file_path": "src/server/game/Player.cpp"}},
+     _expect_system_message,
+     "cpp-build-reminder returns systemMessage for .cpp"),
+
+    ("/hook/cpp-build-reminder",
+     {"tool_name": "Edit", "tool_input": {"file_path": "notes.md"}},
+     _expect_empty,
+     "cpp-build-reminder returns empty for non-cpp"),
+
+    ("/hook/prompt-context-injector",
+     {"prompt": "Help me write a SQL update for creature_template"},
+     _expect_additional_context,
+     "prompt-context-injector matches SQL keyword"),
+
+    ("/hook/prompt-context-injector",
+     {"prompt": "yes"},
+     _expect_empty,
+     "prompt-context-injector skips short prompts"),
+
+    ("/hook/large-file-guard",
+     {"tool_name": "Read", "tool_input": {"file_path": "nonexistent.txt"}},
+     _expect_empty,
+     "large-file-guard returns empty for missing file"),
+]
+
+
+def daemon_health() -> "tuple[bool, str]":
+    """Check if the hook daemon is reachable. Returns (alive, info_string)."""
+    try:
+        conn = http.client.HTTPConnection(HOOK_DAEMON_HOST, HOOK_DAEMON_PORT, timeout=1.0)
+        conn.request("GET", "/health")
+        r = conn.getresponse()
+        body = r.read().decode("utf-8")
+        if r.status == 200:
+            try:
+                data = json.loads(body)
+                return True, f"pid={data.get('pid')} uptime={data.get('uptime')}s version={data.get('version')}"
+            except json.JSONDecodeError:
+                return True, body[:200]
+        return False, f"HTTP {r.status}"
+    except Exception as e:
+        return False, f"unreachable: {e}"
+
+
+def http_post(path: str, payload: dict, timeout: float = 2.0) -> "tuple[int, dict | None, str]":
+    """POST to the daemon. Returns (status, parsed_body, raw_body)."""
+    body_bytes = json.dumps(payload).encode("utf-8")
+    conn = http.client.HTTPConnection(HOOK_DAEMON_HOST, HOOK_DAEMON_PORT, timeout=timeout)
+    conn.request("POST", path, body_bytes, {
+        "Content-Type": "application/json",
+        "Content-Length": str(len(body_bytes)),
+    })
+    r = conn.getresponse()
+    raw = r.read().decode("utf-8")
+    try:
+        parsed = json.loads(raw) if raw else None
+    except json.JSONDecodeError:
+        parsed = None
+    return r.status, parsed, raw
+
+
+def run_phase_0_daemon_health(verbose: bool = False) -> bool:
+    """Phase 0: Confirm daemon is running."""
+    print("=" * 64)
+    print("  Phase 0: Hook Daemon Health Check")
+    print("=" * 64)
+    print()
+    alive, info = daemon_health()
+    if alive:
+        print(f"  [  OK] Daemon healthy: {info}")
+        print()
+        return True
+    print(f"  [FAIL] Daemon not reachable: {info}")
+    print(f"         Start it with: python .claude/hooks/hook_daemon.py")
+    print()
+    return False
+
+
+def run_phase_3_http_tests(verbose: bool = False) -> "tuple[int, int]":
+    """Phase 3: HTTP integration tests against the running daemon."""
+    print("=" * 64)
+    print("  Phase 3: HTTP Integration Tests")
+    print("=" * 64)
+    print()
+    passed = 0
+    failed = 0
+    for route, payload, validator, description in HTTP_TESTS:
+        try:
+            status, body, raw = http_post(route, payload)
+        except Exception as e:
+            failed += 1
+            print(f"  [FAIL] {description}")
+            print(f"         -> POST {route} error: {e}")
+            continue
+        if status != 200:
+            failed += 1
+            print(f"  [FAIL] {description}")
+            print(f"         -> HTTP {status}: {raw[:200]}")
+            continue
+        err = validator(body if body is not None else {})
+        if err is None:
+            passed += 1
+            if verbose:
+                print(f"  [  OK] {description}")
+                print(f"         -> body: {raw[:200]}")
+            else:
+                print(f"  [  OK] {description}")
+        else:
+            failed += 1
+            print(f"  [FAIL] {description}")
+            print(f"         -> {err}")
+    print()
+    print(f"  HTTP: {passed} passed, {failed} failed / {len(HTTP_TESTS)} tests")
+    return passed, failed
+
+
 def main():
     verbose = "--verbose" in sys.argv or "-v" in sys.argv
-    run_scenarios = "--scenarios" in sys.argv or "-s" in sys.argv or "--all" in sys.argv
+    run_all = "--all" in sys.argv
+    run_scenarios = run_all or "--scenarios" in sys.argv or "-s" in sys.argv
+    run_http = run_all or "--http" in sys.argv
 
+    # Phase 0: daemon health (only if --http or --all)
+    daemon_ok = True
+    if run_http:
+        daemon_ok = run_phase_0_daemon_health(verbose)
+        if not daemon_ok:
+            print("  Skipping Phase 3 HTTP tests — daemon is down.")
+            print()
+
+    # Phase 1: legacy script health checks
     h_passed, h_failed, h_unmapped = run_health_checks(verbose)
 
+    # Phase 2: scenario regression tests
     s_passed = 0
     s_failed = 0
     if run_scenarios:
         s_passed, s_failed = run_scenario_tests(verbose)
 
-    total_failed = h_failed + s_failed
+    # Phase 3: HTTP integration tests
+    ht_passed = 0
+    ht_failed = 0
+    if run_http and daemon_ok:
+        ht_passed, ht_failed = run_phase_3_http_tests(verbose)
+
+    total_failed = h_failed + s_failed + ht_failed
     print()
     print("=" * 64)
+    parts = [f"Health {h_passed}ok/{h_failed}fail"]
     if run_scenarios:
-        print(f"  TOTAL: Health {h_passed}ok/{h_failed}fail  |  Scenarios {s_passed}ok/{s_failed}fail")
-    else:
-        print(f"  TOTAL: Health {h_passed}ok/{h_failed}fail  (run with --scenarios for regression tests)")
+        parts.append(f"Scenarios {s_passed}ok/{s_failed}fail")
+    if run_http and daemon_ok:
+        parts.append(f"HTTP {ht_passed}ok/{ht_failed}fail")
+    print(f"  TOTAL: " + "  |  ".join(parts))
+
+    if run_http and not daemon_ok:
+        print(f"  (HTTP Phase 3 skipped — daemon unreachable)")
 
     if total_failed > 0:
         print(f"\n  {total_failed} test(s) FAILED!")

@@ -1,8 +1,22 @@
 # 17. Bridge (IDE Integration / Remote Control)
 
-> Source: `src/bridge/` (31 files, ~15,000+ lines) + `src/commands/bridge/` (2 files)
+> Source: v2.1.88 `src/bridge/` (31 files, ~15,000+ lines) + `src/commands/bridge/` (2 files) + cli.js@2.1.97 grep refresh (2026-04-08)
 > Feature flag: `feature('BRIDGE_MODE')` (compile-time) + `tengu_ccr_bridge` (GrowthBook runtime)
 > Status: SHIPPED -- claude.ai subscribers, branded as "Remote Control"
+
+## 2.1.97 Delta (summary)
+
+> **Note on the changelog's `[invalidates]` tag**: The handoff says `/remote-control` "landed in 2.1.79". That's misleading. The full `src/bridge/` tree, the `name: 'remote-control'` slash command, both protocol versions, and the GrowthBook gating were **already present in v2.1.88** (and predate it). What 2.1.79 actually shipped is the public branding (exposing the command to claude.ai subscribers). The report's existing coverage is correct; the items below are additive.
+
+| Change | Version | Type |
+|---|---|---|
+| **Bridge session cards show local git repo info.** Bridge config now serializes `git_repo_url` (snake_case API wire format) + `gitRepo*` camelCase internal fields. 12 grep hits for `gitRepo*` in cli.js@2.1.97. "Session cards" are a claude.ai UI concept — Claude Code doesn't render them itself, it just reports `gitRepoUrl` into the bridge session metadata which claude.ai then displays. Already threaded through 5 bridge files in v2.1.88 (`bridgeApi.ts`, `bridgeMain.ts`, `createSession.ts`, `initReplBridge.ts`, `replBridge.ts`, `types.ts`). | 2.1.97 | gap |
+| **AI-generated session titles from first prompt.** `generateSessionTitle` (1 match), `sessionTitle` (6 matches), `tengu_session_title_generated` telemetry, querySource label `generate_session_title` — all in cli.js@2.1.97. The Haiku prompt literal "Generate a concise, sentence-case title" + "Bad (too long)" examples are grep-verified in cli.js@2.1.97. Already in v2.1.88 `utils/sessionTitle.ts`. Refined in 2.1.86 (the title refinement pass). | 2.1.83 / 2.1.86 | refines |
+| **`allowedChannelPlugins` managed setting** — already in v2.1.88 (3 files: `LogoV2/ChannelsNotice.tsx`, `services/mcp/channelNotification.ts`, `utils/settings/types.ts`). 3 grep hits in cli.js@2.1.97. Predates the baseline; the 2.1.84 changelog is documenting pre-baseline introduction. | 2.1.84 | no-op |
+| **Session quality survey** → schema field is actually `feedbackSurveyRate` (NOT `qualitySurvey`). 2 hits in cli.js@2.1.97 for `feedbackSurveyRate`, 1 for `tengu_feedback_survey_config`. Already in v2.1.88 `components/FeedbackSurvey/useFeedbackSurvey.tsx` and `utils/settings/types.ts`. Enterprise-configurable. Correct the changelog's informal wording when editing. | 2.1.76 | refines |
+| **`tengu_cobalt_harbor` REMOVED** (auto-connect default flag was in v2.1.88 `bridge/bridgeEnabled.ts` with 2 hits; 0 matches in cli.js@2.1.97). The auto-connect logic now uses `remoteControlAtStartup` (7 hits in cli.js) + different gating. | 2.1.97 | refines |
+| **`tengu_ccr_mirror` REMOVED** (outbound-only mirror mode was a v2.1.88 concept; 0 matches in cli.js@2.1.97). | 2.1.97 | refines |
+| **`CLAUDE_REMOTE_CONTROL_SESSION_NAME_PREFIX` (NEW env var, 4 hits in cli.js@2.1.97)** — prefixes auto-generated session names for the new Remote Control spawn mode. Not in v2.1.88. | 2.1.97 | gap |
 
 ## Executive Summary
 

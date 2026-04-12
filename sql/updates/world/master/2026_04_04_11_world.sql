@@ -1,9 +1,9 @@
 -- Warlock Phase 5 deep audit: fix orphan DB entries and name mismatches
 -- These cause "Script not found" warnings at server startup
 
--- Fix 1: Rename eye_laser -> darkglare_eye_laser to match C++ class name
-UPDATE `spell_script_names` SET `ScriptName` = 'spell_warl_darkglare_eye_laser'
-WHERE `spell_id` = 205231 AND `ScriptName` = 'spell_warl_eye_laser';
+-- Fix 1: Ensure darkglare_eye_laser exists and stale eye_laser is removed
+DELETE FROM `spell_script_names` WHERE `spell_id` = 205231 AND `ScriptName` = 'spell_warl_eye_laser';
+INSERT IGNORE INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES (205231, 'spell_warl_darkglare_eye_laser');
 
 -- Fix 2: Fix typo warr -> warl for shadowbolt affliction
 UPDATE `spell_script_names` SET `ScriptName` = 'spell_warl_shadowbolt_affliction'

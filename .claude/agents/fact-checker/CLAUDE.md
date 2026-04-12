@@ -44,7 +44,7 @@ When given a document (or section of a document), you must:
 `C:/Users/atayl/Desktop/Claude_Browser_FINAL_*.md`
 
 ### Case_Reference Archive (the SOURCES you check against)
-`C:/Users/atayl/Desktop/Case_Reference/` — 16 folders (00_ through 15_), 341 files
+`C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` — 16 folders (00_ through 15_), 341 files
 
 Key source files:
 - `00_COMPLETE_DISCREPANCY_ANALYSIS.md` — 57 procedural violations catalog

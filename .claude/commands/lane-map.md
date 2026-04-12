@@ -9,7 +9,7 @@ Display the current legal representation lanes showing who handles what.
 
 ## Instructions
 
-Read `C:/Users/atayl/Desktop/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_LEGAL_TRACKER.md` for current status of each representative.
+Read `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/10_TIMELINE_AND_NARRATIVES/MASTER_LEGAL_TRACKER.md` for current status of each representative.
 
 Then display this lane map, updated with current status from the file:
 

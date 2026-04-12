@@ -17,7 +17,7 @@ Military clinical social worker subjected to laundered investigation (workplace 
 ## Archive Locations
 
 ### MASTER Synthesis Documents (authoritative — 7 docs)
-`C:/Users/atayl/Desktop/Case_Reference/99_MASTER_SYNTHESIS_OUTPUT/`
+`C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/99_MASTER_SYNTHESIS_OUTPUT/`
 - MASTER_00 — Executive Summary (478 words, cold-outreach)
 - MASTER_01 — Case Brief (2,100 words, comprehensive)
 - MASTER_02 — Theory of Case (legal brief with 16 Record Integrity Problems)
@@ -28,7 +28,7 @@ Military clinical social worker subjected to laundered investigation (workplace 
 - 00_EVIDENCE_VALIDATION_REPORT.md — audit of what's confirmed vs missing
 
 ### Case_Reference Archive (primary evidence — 16 folders)
-`C:/Users/atayl/Desktop/Case_Reference/`
+`C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/`
 
 ```
 00_  — Complete Discrepancy Analysis (60 items, 16 categories)
@@ -52,7 +52,7 @@ Military clinical social worker subjected to laundered investigation (workplace 
 ```
 
 ### Email Extraction
-`C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/Takeout_Extracted/`
+`C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/Takeout_Extracted/`
 - `Legal/` — legal correspondence emails + attachments
 - `UNOPENED_EVIDENCE/` — unopened evidence emails + attachments
 - `MASTER_EMAIL_INDEX.csv` — 128 rows, full metadata
@@ -131,3 +131,38 @@ for path in glob.glob(os.path.join(base, '**', '*.docx'), recursive=True):
 - **VADM Darin K. Via** — Director DHA, final decision authority on privilege appeal
 - **Shyla** — congressional staffer (Sen. Lujan's office, primary POC)
 - **Constance Williams** — congressional staffer (Sen. Lujan's office)
+
+## Mbox Archive — Full Gmail Takeout (9.8 GB)
+
+Location: `C:/Users/atayl/Desktop/Excluded/mbox/mbox_index.db` (SQLite FTS5, built by `tools/mbox/index.py`)
+
+This is **separate from `Case_Reference/11_EMAILS/`**:
+- `11_EMAILS/` = 689 curated, authoritative evidence emails (use for citations)
+- `mbox_index.db` = full Gmail history, ~tens of thousands of messages (use for discovery)
+
+When asked to find emails that may not be in the curated set, query the mbox DB:
+
+```bash
+# Trigram FTS — substring matching (finds "Wareham" when you search "Warehm")
+python -m tools.mbox.search "Wheeler NARSUM"
+python -m tools.mbox.search Tolin
+
+# Structured filters (combine freely)
+python -m tools.mbox.search --from wareham --since 2025-10-01 --until 2025-11-01
+python -m tools.mbox.search --subject "privilege" --has-attachment
+python -m tools.mbox.search --label Legal "DCSA"
+python -m tools.mbox.search --attachments "narsum*.pdf"
+
+# Full message view (use the #id from a list result)
+python -m tools.mbox.search --id 12345
+
+# JSON for downstream processing
+python -m tools.mbox.search --from tolin --json --limit 200
+```
+
+**Rules:**
+- Always check `11_EMAILS/` curated set first for authoritative citations.
+- Use mbox for discovery — new threads, missing participants, background context.
+- When citing mbox results, include the DB row id (`#12345`) AND the RFC Message-ID so later auditors can trace back.
+- Use `--since` / `--until` to narrow date ranges. The full DB has years of traffic; unconstrained queries return noise.
+- If the DB doesn't exist, say so and stop — don't claim "no results" for an unindexed archive.

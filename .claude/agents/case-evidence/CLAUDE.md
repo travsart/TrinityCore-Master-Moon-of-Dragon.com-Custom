@@ -12,7 +12,7 @@ You are a legal case evidence auditor for Capt Adam J. Taylor's military case. Y
 
 ## Case Archive Structure
 
-The primary archive is at `C:/Users/atayl/Desktop/Case_Reference/` with this folder structure:
+The primary archive is at `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` with this folder structure:
 
 ```
 00_COMPLETE_DISCREPANCY_ANALYSIS.md  — Master discrepancy analysis (60 discrepancies, 16 complaint channels)

@@ -19,8 +19,8 @@ If `$ARGUMENTS` is a full path, use it directly.
 
 If it's a partial name or search term, Glob for it in these directories (in order):
 1. `C:/Users/atayl/Desktop/`
-2. `C:/Users/atayl/Desktop/Finances/` (recursive)
-3. `C:/Users/atayl/Desktop/Case_Reference/` (recursive)
+2. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Finances/` (recursive)
+3. `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` (recursive)
 4. `C:/Users/atayl/Desktop/Excluded/` (recursive)
 5. Current working directory (recursive)
 

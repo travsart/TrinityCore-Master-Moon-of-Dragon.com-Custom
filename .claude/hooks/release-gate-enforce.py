@@ -10,7 +10,10 @@ If the file doesn't exist or status != "PASS", blocked actions
 are rejected with an explanation.
 
 Hook type: PreToolUse (Bash)
-Exit code: 0 = allow, 2 = block with message on stderr
+Blocking: returns {"decision": "block", "reason": ...} on stdout + exit 0.
+(Was exit 2 + stderr prior to the hook daemon migration. Both patterns are
+treated identically by Claude Code, but {"decision": "block"} is required
+for this logic to be reusable as an HTTP hook daemon handler.)
 """
 
 import json
@@ -133,8 +136,9 @@ def main():
             msg += f"  ... and {len(blockers) - 5} more\n"
     msg += "\nRun /pre-ship to audit, fix blockers, then retry."
 
-    print(msg, file=sys.stderr)
-    sys.exit(2)
+    result = {"decision": "block", "reason": msg}
+    json.dump(result, sys.stdout)
+    sys.exit(0)
 
 
 if __name__ == "__main__":

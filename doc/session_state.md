@@ -3,7 +3,7 @@
 **Read this FIRST in any new Claude Code tab.**
 This is the single source of truth for what all tabs are doing, what's done, what's blocked, and what to pick up next. Updated by whichever tab finishes work.
 
-**Last updated**: April 4, 2026 -- Session 229 Main: Warlock Phase 4 DONE (13 SpellScriptLoaders + 2 CreatureScripts modernized) + Tier B triage (147 TC-native, 22 real TODO). Spawning 6 tabs for remaining implementation.
+**Last updated**: April 10, 2026 — CalmCore-244 tab (session 244) completed Codebase Intelligence DB + FastMCP server. CalmCore-244 COMPLETE. VoxCore `src/` domain-split commit still pending. (Dean Sides email, Scott Tranchant letter, both OPBs, Tolin rebuttal, NJP forgery analysis). User confirmed 23-24 referral OPB still in official record and held-past-SCOD delay was purposeful to enable forgery-based NJP finalization. `AI_Studio/Reports/memory_patch_23-24_OPB_and_forgery.md` handed off to Case-SME tab for merge. Case-SME is concurrently in error-correction phase of 9-pass SME sweep + editing `memory/case-contacts.md` — my case-contacts edits are in the patch file, NOT applied, to avoid collision. Mbox-Fast tab finished massive parallel work (45 audio transcribed, unredact toolchain, 13 FOIA redaction identifications, Lawrence QAI audio smoking gun, FOIA draft ready) — commit `737f50cc9d`. Zero physical ops in `Case_Reference/` until Case-SME finishes error-correction phase.
 
 ---
 
@@ -18,215 +18,26 @@ This is the single source of truth for what all tabs are doing, what's done, wha
 | **Warlock-B** | Tier B: 6 Summon spells | COMPLETE | 5 handlers + 1 TC_NATIVE. C++ compiles clean (LNK1104 = server running). SQL: `2026_04_04_08_world.sql`. |
 | **Warlock-C** | Tier C: 5 Class utilities | COMPLETE | Demon Skin + Soul Link handlers. Mortal Coil/Soulburn/Ichor TC_NATIVE. Deep audit: GetPet() fix. SQL: `_09_world.sql`. Commits: `0d4717c013`, `51d8381bd1`. |
 | **Warlock-D** | Tier D: 8 MAYBE spells + deep audit | COMPLETE | All 8 resolved. Deep audit: fixed 5 orphan DB entries (2 name mismatches + 3 stale), Soul Link pet check. SQL: `_11`. Commits: `0d4717c013`, `51d8381bd1`. |
-| Main (session 107) | Meta infrastructure, gist updates, coordination | COMPLETE | Commit `8aa10362ad`. Created session_state, bug tracker, skills, report |
-| Main (session 108) | Consolidation — review all transmog docs, fix errors, update gists/memory | COMPLETE | Slot ordering fix, sniffing docs tracked |
-| Main (session 109) | ImageMagick install + sniffing guide updates | COMPLETE | `8150cf3dd5` |
-| Transmog Tab | Bug fixes from `memory/transmog-bugtracker.md` | COMPLETE | Session 110. 8 bugs fixed (G,H1,M6,M9,M1,M5,M2,UNICODE), 3 QA passes done. Ready for build. |
-| Resource Tab (113) | Transmog resource audit — 3-pass QA of all tooling | COMPLETE | `7cef6952b0`. Bridge v3 IMPLEMENTED. lookup.py wrong DT labels. Enriched CSVs stale. Report: `doc/transmog_resource_audit.md` |
-| Main (114) | LoreWalker import v3 — 3-pass QA of import prompt | COMPLETE | `80917a2739`. Fixed VB-in-PK bug, verified all 53 row counts, pre-baked SQL. Prompt: `doc/lorewalker_import_v3.md` |
-| Tooling Tab (115b) | Phase 1 transmog tooling — DT maps, enriched CSVs, bridge annotation | COMPLETE | No commit (gitignored files). Created `transmog_common_maps.py`, fixed 3 tools, regenerated enriched CSVs for 66263 |
-| Main (116) | Sniffing pipeline + accumulated commit | COMPLETE | `7ecad9990d`, `1419293a01`, `0808414a7e` |
-| Commit Tab (117) | Commit coordination + transmog handoff | COMPLETE | No new commits. Recovered 3 reset commits from reflog. Generated transmog handoff prompt |
-| Import Tab (118) | LoreWalker TDB import — write & apply 7 SQL files + fix _00_ | COMPLETE | `0997d17565`. Wrote 01-07, applied all 8 files (00-07). Fixed _00_ gameobject_template column count bug (32→35 Data zeros). ~502K inserts + 7.7K updates landed. QA clean. |
-| Main (120) | NotebookLM knowledge base + tooling evaluation | COMPLETE | `b36bbb5811`. Created `doc/notebooklm/` (97 files). Evaluated Antigravity IDE. Reviewed 12 claude-code issues. |
-| Main (121) | VoxPlacer polish — undo, face, favorites, minimap, ghost aura, QA | COMPLETE | `4fc562e404`. 4 features (undo stack, face-toward, favorites list, minimap button), ghost preview aura (37800), 6 QA fixes (keybinds, memory leak, false-positive state, fragile clone ref, GO clone props/orientation) |
-| Main (123) | auto_parse v3 — modular log pipeline rewrite + QA + audit | COMPLETE | `98aa66149c`. 19-module package, 2,498 lines. 3 QA passes + Antigravity audit. 7 parsers, HTML dashboard, TOML config, tray icon, toast notifications |
-| Main (124) | Tongue & Quill Auto-Formatter (standalone project) | COMPLETE | `C:\Users\atayl\TongueAndQuill\`. v2.1 production release, 8 AFH templates, auto-detect, PyInstaller build, audit prompt. No VoxCore commits. |
-| Main (125) | DevOps pipeline overhaul — memory sync | COMPLETE | Synced memory with pipeline. Created `doc/claude_memory.md`. Updated 5 memory files |
-| Main (127) | AI Studio + full sync + commit | COMPLETE | `9ee8c2bb55`. AI Studio hub (junctions for 3 projects), .agentrules, gitignore hardening (discord exports, transmog export, session logs), discord analytics script, DevOps prompts. 21 files, 855 insertions |
-| Main (128) | VoxTip v1.0 + idTip rewrite + Triad handoff | COMPLETE | `97dd4ee6a2`. VoxTip debug toolkit (3 files), handoff to Antigravity, Central Brain + Triad workflow adopted. System pause acknowledged |
-| Transmog (130) | Transmog bridge fail-open + MINI-BRIDGE sender | PAUSED | C++ `4f2512f29d`. Lua MINI-BRIDGE in TransmogSpy (slots 0/2/12/13, option-aware). Awaiting acceptance test |
-| TQ (131) | TongueAndQuill v2.2 — page numbers, batch, 13 fixes | PAUSED | Code complete. Awaiting: AUDIT_PROMPT update, Z_Global fix, exe build, git init, Antigravity audit |
-| Main (133) | Full ecosystem review + wrap-up | COMPLETE | `13ff762a9a`. Reviewed all sessions 123-132, committed Nexus Report tool + NotebookLM Enterprise docs. Memory synced |
-| Main (134) | Triad guardrails + Antigravity briefing | COMPLETE | `43884ca85b`. Guardrails in MEMORY.md, coordination header in Central Brain, full capability dump for Antigravity |
-| Antigravity (Auditor) | Wago CSV vs SQL Auditor pipeline | PAUSED | Python environment set up (`Setup-VoxCoreEnv.ps1`), `scripts/AI_Auditor.py` scaffolded. Command permissions overhauled in `.agentrules`. Awaiting DB connection logic. |
-| Main (135) | Claude Code complaint taxonomy + support email | COMPLETE | `aa4aa29998`. Meta-issue updated, Triad/Grok reviewed. 16 issues. Support escalated. |
-| Antigravity (Architect) | API Architect Producer MVP | COMPLETE | Configured run_architect.py pipeline + prompts + schemas. |
-| Antigravity (Triad) | Triad Stream 1 & Stream 2 | COMPLETE | Built `build.py` orchestrator and `run_architect.py` live OpenAI pipeline. Specs saved heavily to doc/. |
-| Antigravity (Bridge) | Stream 3, 4, 5 (Triad Control Plane) | COMPLETE | `2d9a9c38a2`. Built UI Command Center, Orchestrator jobs/adapters, and Claude live-bridge. DB bridge sync failed. |
-| Antigravity (Loop) | Stream 6 (Triad Feedback Loop) | COMPLETE | Native `auto_retry` pipeline natively loops Headless Build -> Extract Errors -> Claude Fix -> Rebuild. |
-| Antigravity (Support) | DraconicBot Novice Overhaul | COMPLETE | `d1b9cf8b08`. NLP parser (25K msgs), `diagnose.bat` auto-fixer, SME knowledge base, DM guide wizard. |
-| Main (136) | DraconicBot v2.2 retool + Antigravity integration | COMPLETE | `e992e98c5e`. Lookups→Wowhead, troubleshooter retooled, 4 boot bugs fixed, bot deployed (17 cogs, 14 commands) |
-| Antigravity | FAQ Phrase Banking & Regex Expansion | COMPLETE | `688bef7b1b`. 15 FAQ responses bulk expanded with 1500+ trigger phrases. |
-| Antigravity (Restructure) | AI Studio Restructuring (P0) | COMPLETE | `fa550b7a81`. Moved Z_Global, schemas, templates to config/triad/. Repointed python configs. |
-| Main (139) | BestiaryForge spec — creature→spell mapping pipeline | COMPLETE | `28df2070db`. 1,409-line spec, 3 QA passes + 2 adversarial rounds. Triad-approved. Phase 1 MVP next |
-| Main (138b) | System optimization + AI fleet API integration | COMPLETE | `2dffaca3f2`. Power/perf tuning, OneDrive/Miniconda removed, all 3 API keys active, ChatGPT bridge operational, models upgraded, memory files overhauled |
-| Main (144) | AWS Lambda deploy + Social media strategy + AI tool research | COMPLETE | `cf4a598c4f`. Lambda on AWS, 265 web searches, 20-platform social media strategy, Buffer recommended, brand identity = VoxCore (not DraconicWoW) |
-| Main (145) | Audit Gap Analysis + Infrastructure Commit | COMPLETE | `263bac9675`. 33 files, Claude rules/hooks/agents, Antigravity toolkit |
-| Main (146) | Lambda Tor Army v4 scraper improvements | COMPLETE | wago/ gitignored. Upgraded scraper_v4.py (adaptive WAF, multi-region, graceful shutdown), parsers.py (5 new specialized parsers, single-quote fix), generate_id_lists.py (validate sync, density stats), handler.py (15 fingerprints, coherent headers, WAF detection) |
-| Main (147) | Greedy Parser v2 + Relationship Web + 66337 Hotfix Applied | COMPLETE | wago/ gitignored. parsers.py rewritten (1,245 lines, 18 extractors, relationship web — 45 edges/page, ~32M projected). generate_id_lists.py build-delta mode. scraper_v4.py 38 targets + delta mode. 66337 hotfix SQL applied (237,530 rows). |
-| Main (148) | Claude Code Power Hooks + 7 Published Repos | COMPLETE | `206f2bb852`. BurntToast toasts, 3 new skills, hook test harness. Published 7 repos to VoxCore84 GitHub. |
-| Main (160) | Cowork cleanup, Triad P0, Antigravity deprecation, inbox triage | COMPLETE | `b6e75874e0`. Removed prompt injections, archived transmog (3 commands, 1 agent, rules), Antigravity→API, P0 Triad directive in all core files, 39 stale specs archived, 2 personal files relocated. 20 files, -533/+180 lines |
-| Main (167) | VoxGM v1.0.0 iterative review pipeline (9 rounds) | COMPLETE | `769fc01` (VoxGM GitHub), `767091feb9` (audit reports). Release gate PASS. Deployed to AddOns + Desktop zip + publishable/ |
-| Main (168) | VoxSniffer v1.0.0 iterative review pipeline (7 rounds) | COMPLETE | `db077c0afc` (62 files, 8,881 lines). Dual ChatGPT review (API + Browser). Deployed to GitHub + AddOns + publishable/ + Desktop zip |
-| Main (170) | Codex CLI pipeline integration | COMPLETE | Device-auth, config.toml, call_codex_review.py, review_cycle.py updated. Codex replaces ChatGPT API in rounds 1 & 4 (flat rate, repo-aware) |
-| Main (171/173) | VoxGM v2.0 spec — autonomous review loop | PAUSED (R6) | 6 iterations, 30 rounds. R6 FAIL with ~15 well-scoped remaining issues. Packaged to Desktop. `e1e3ad393e`. **DO NOT implement until moved to 2_Active_Specs/** |
-| Release Gate (171c) | 8 claude-code-* repo audit + v1.0.0 releases | COMPLETE | Full audit: em dashes, .gitignore, VoxCore refs, config naming, __pycache__. All 8 repos pushed + released. enforce.py bug fixed (overbroad `gh release` match). Gate status PASS |
-| Main (171c) | Brand expansion + Deep Research ingestion | COMPLETE | 2 memory files created. 4 r/ClaudeAI reports ingested. Career guidance. awesome-claude-code email sent |
-| Main (172) | Community engagement + Reddit outreach | COMPLETE | GitHub: 6 comments, #33465 contested, mvanhorn PR contribution. awesome-claude-code fork+branch. Reddit: 26 threads analyzed, 14 comment drafts, 5-day schedule. `606c51309d` |
-| Main (173) | VoxSniffer V2 spec review pipeline (V6→V7) | COMPLETE | Autonomous fix pipeline: V6 reviews (1 CRIT + 4 HIGH + 10 MED + 7 LOW) → V7 with 25+ fixes + 3-pass self-audit. 2 CRITICAL scoping fixes in Phase 6. Spec zipped to Desktop. Remaining: initialized gate, FM.FlushAll guard, payload removal notes |
-| Main (214) | Gemini Pro VoxCore business briefing | COMPLETE | 15-doc briefing package on Desktop. Identity correction + Google ecosystem mapping. `c690e31568` |
-| Main (215) | Angel VA TDIU filing support | COMPLETE | Filled 21-8940 PDF (103 fields), draft answers, migraine legal analysis, 4 buddy statements, neurologist template, action plan, Item 26 continuation sheet. All Desktop/Excluded/Angel_VA/. No VoxCore commit (personal files) |
-| Tab 2 (228) | DB Cleanup & Housekeeping — drop staging DBs, loot error fix, gist update | COMPLETE | Dropped 2 staging DBs, cleared 428 orphan LootIDs (1.78M DBErrors eliminated), pushed 3 gists (sessions 214-228). SQL: `2026_04_04_03_world.sql` |
-| Tab A (228) | RoleplayCore Re-Apply + DB Error Cleanup Phase 4 | COMPLETE | Re-applied 18 RoleplayCore SQL files (hotfixes/world/roleplay/characters/auth). Phase 4 cleanup: 32K world orphans (10 tables) + 20K hotfix_blob/data entries. SQL: `2026_04_04_04_world.sql`, `2026_04_04_01_hotfixes.sql` |
-| Main (227) | VoxSniffer Combat Audit v1 implementation | COMPLETE | CombatAudit.lua + ProcExpectations.lua + audit_report.py. Gemini audit PASS (4 HIGH fixes). Commit `5cd63fdd3f`. Needs in-game test |
+| **CC-297-Refresh** | Re-extract claude-code 2.1.97 sources, diff vs 2.1.88, patch all 22 internals reports + memory file | COMPLETE | Commit: `1e8db7592d`. 8 tracked reports + README committed (188 insertions, 18 deletions). 14 more reports updated on disk (gitignored). memory/claude-code-internals.md updated (outside git, ~/.claude/projects/). 15 findings files in `_2.1.97_refresh/`. Sourcemap extraction impossible (Anthropic stripped cli.js.map post-2.1.88 leak); used hybrid changelog + cli.js grep methodology instead. |
+| **Hook-Daemon** | Persistent asyncio HTTP daemon replacing per-hook Python subprocess spawns. 18/20 hooks converted from `type:"command"` → `type:"http"` pointing at `localhost:19484/hook/<name>`. | COMPLETE (2026-04-09) | `hook_daemon.py` (1,244 lines, stdlib only), `daemon_shim.py` (72 lines, SessionStart auto-starter), `release-gate-enforce.py` refactored exit(2)→JSON block, `test-hooks.py` added Phase 0 + Phase 3 HTTP integration tests, `start_all.bat` step 7 added, handoff rewritten. Latency: 119ms → 0.94ms avg (~127× faster). Tests: 49/49 passing. Live-verified during implementation session. Daemon auto-starts via SessionStart shim on every CC boot. Rollback: one `git checkout` + `taskkill`. The original handoff proposed a TCP+dispatch.py architecture that would've still spawned Python per hook — 2.1.97 source refresh revealed `type:"http"` hooks as the correct primitive. |
+| **Case-SME** | SME sweep of IMPORTANT DOCS (9 passes complete) → infrastructure build (extract_cache, audio_transcribe_v2 with GPU, ocr_images, rag_build/query, /sme-sweep, /rag-search) → Pass 7-9 + RAG ingest → user corrections (Chad/CWI/Tolin) | ACTIVE | Started 2026-04-09. Output: `AI_Studio/Reports/sme_importantdocs/` (12 pass reports + 5 dossiers + master_timeline.md + pii_redaction_report.md + sprint reports). New tools in `tools/` (extract_cache.py, audio_transcribe_v2.py, ocr_images.py, rag_build.py, rag_query.py). New skills `/sme-sweep`, `/rag-search`. New memory files: `sme-sweep-infrastructure.md`, `case-audio-recordings.md`. RAG live: 9082 chunks at `.cache/rag/chroma/`. Currently in error-correction phase (CWI/QAI conflation, Tolin payment, Chad→Robert L. Johnston). Owns: `AI_Studio/Reports/sme_importantdocs/`, `tools/{extract_cache,audio_transcribe_v2,ocr_images,rag_build,rag_query}.py`, `.claude/commands/{sme-sweep,rag-search}.md`, `memory/{case-audio-recordings,sme-sweep-infrastructure}.md`, `memory/case-contacts.md` (edits per Pass 5/7), `.cache/{extracted,ocr,transcribed,rag}/`. Does NOT touch: `Case_Reference/` actual files (read-only) — JD-Planner restructure must wait until I finish all corrections. |
+| **JD-Planner** | Design Johnny Decimal `XXX_YYY` restructure for `Case_Reference/` (proposal only, zero file ops) | COMPLETE (2026-04-09) | Deliverables: (1) `AI_Studio/Reports/case_archive_jd_proposal.md` (~550 lines) — 29-category JD map + 21-rename plan + `_INDEX.json` schema + 7-phase runbook + 3 approval gates. (2) `tools/migrate_case_archive_jd.py` (~920 lines, stdlib only) — staging+swap pattern, 5 subcommands (index/plan/migrate/verify/delete), folder renames only (filenames preserved for chain-of-custody), pre/post sha256 verification. Survey: 1,895 files, 27 top-level entries, 3 number collisions, 4 duplicate folders, 6 loose entries, 1 audio misfile. Script committed as part of `3551a0bb39` (Split-Audit tab's harvest). **Zero physical ops in `Case_Reference/`.** Execution blocked on Case-SME tab completion — resumption playbook in `memory/todo.md` Next Session. |
+| **Mbox-Fast + Recordings + Unredact** | Session 240. (1) `tools/mbox/parallel.py` bug fixes (contentless FTS5 DELETE, ATTACH cross-DB persistence, journal_mode=MEMORY, attachment dedup FK, argparse %, cp1252 stdout). Live DB 17,050 msgs / 3,248 atts. (2) Transcribed **45 audio files** across `Recordings/` (24) + `Recordings Pt 2/` (21, 419 MB) via `audio_transcribe_v2.py --model medium --device cuda`. Caches: `Recordings_816ff3c0e3` + `Recordings_Pt_2_d392a2a3c7`. **Smoking gun**: 5-hr self-identification recording with explicit IHPP coercion language; Capt Lawrence's QAI interview opening captured in `Cannon Air Force Base 3.m4a`. RAG rebuilt: 9,082 chunks. (3) Built **`tools/unredact/`** (10 modules, 3,645 lines) + applied to QAI binder 2025-01787-F: **60 Category 1 pages recovered** + **13 high-confidence ChatGPT gpt-5.4 identifications** (Cermak email ×6, Elliot Ko ×2, McMaster, Taylor ×5) + **forensic chain of custody**: PDF author metadata `1565647551A` matches digital signature ID of **USAF FOIA Manager Victor Delgado-Cusibichan** on the 2025-01787-F Closure Letter. (4) FOIA draft at `Desktop/Excluded/unredact/foia_drafts/FOIA_REQUEST_2026-04_GAP_PERIOD.md` — gap period 12/19/2024–present, 5 parallel component filings, Section 8 over-redaction challenge citing *Stern v. FBI* and *Lesar v. DOJ*. Ready for Tolin review. | COMPLETE (2026-04-09) | Commit: `737f50cc9d` (11 files, +3,645 / -2). Owned: `tools/mbox/*`, `tools/unredact/*`, `Desktop/Excluded/mbox/mbox_index.db`, `Desktop/Excluded/unredact/*`, `.cache/transcribed/Recordings_*`. Did NOT commit: `src/` deletions (Split-Audit in-progress), `AI_Studio/0_Central_Brain.md` (ghost M flag — no actual staged diff). Used read-only: `tools/rag_*.py`, `tools/audio_transcribe*.py`. |
+| **Split-Audit** | VoxCore/CalmCore split audit under new rule (all WoW → CalmCore, all non-WoW → VoxCore). Produced `AI_Studio/Reports/voxcore_calmcore_split.md` (34-delete-from-CalmCore, 29-delete-from-VoxCore inventory). Committed Tier 1 isolation in CalmCore (`ce2cdc4f86`, `e5a4b8880b` — local only, no remote). Harvested session 238 non-WoW tooling into VoxCore commit `3551a0bb39`. | COMPLETE (2026-04-09) | Touched: VoxCore `.claude/agents/redaction-scanner/`, `.claude/agents/evidence-cataloger/`, `AI_Studio/Reports/voxcore_calmcore_split.md`, `doc/session_state.md`, `memory/{recent-work,todo,improvements}.md`. Touched in CalmCore: `.claude/settings.json`, `.claude/commands/{build-loop,handoff,person-dossier}.md`, `.claude/agents/file-sorter/CLAUDE.md`, `.claude/hooks/{docx-auto-extract,stop-verify}.py`, `tools/shortcuts/create_shortcuts.py`. Did NOT touch: `tools/mbox/*` (Mbox-Fast owns), `Case_Reference/*` or `memory/case-*.md` (Case-SME owns), `src/` (user manually wiped + recovered mid-session). |
+| **Case-DCSA-Review** | Session 240: Non-invasive legal document review + DCSA SIR package pre-review + 23-24 OPB / NJP forgery analysis. User-driven thread, no code written, all output is analysis/advice + memory patch. (1) Drafted Dean Sides SAPRO update email (re: SA Grice AFOSI §1044e victim access denial) with a per-se conflict-of-interest paragraph that translates user's "I don't trust anyone at Cannon" into actionable structural language Dean can forward to HAF/A1Z on Mon Apr 13. (2) Reviewed Scott Tranchant DCSA supervisor letter draft — top-tier Guideline I rebuttal with three small fixes flagged (letterhead 27 SOSS→27 SOW/MAFR, Para 7 typo "responsibility"→"responsibly", CUI marking inconsistency) and Tolin P7 signoff gate preserved. (3) Reviewed 24-25 OPB — rater Lt Col Etienne (memory-hostile insider threat actor, now 27 SOMRS/CC) + HLR Col Earles (memory-hostile DHA privilege revoker, active AFBCMR target) + **66 days supervised** (possibly below DAFI 36-2406 120-day minimum) + duty title/bullet mismatch documenting Aug 2024 removal from clinical duties. (4) Reviewed 23-24 referral OPB + Tolin 2 Feb 2025 rebuttal — **user confirmed referral still in official record** (Tolin rebuttal unsuccessful), NJP was still pending at referral (Tolin Para 2 procedurally fatal if true), and **121-day held-past-SCOD delay was purposeful** to allow NJP forgery documentation to be finalized ("they kept my OPB open past the SCOD of 31 Aug just so they could finally get the forged signature and forged initials and other B.S. taken care of and still give me the NJP and referral OPB"). (5) Identified Wareham 21 Oct 2024 supplemental appeal as **earliest formal §1034 reprisal claim in case record** — predates every later IG/congressional/AFBCMR element. (6) Flagged Labor Day 2024 suicide attempt as documented in Adam's own Sep 10 2024 NJP response ("drove me to attempt suicide") — same event as Sep 3 2024 DISS IR currently subject of DCSA SIR. (7) Plaud audio export walkthrough for user; recordings to be handed off to Mbox-Fast tab's `Desktop/Excluded/Recordings/` pipeline. (8) SVC vs VLC terminology explainer. **Cross-tab note**: Case-SME tab is actively editing `memory/case-contacts.md` per its own Pass 5/7 (Chad→Johnston, CWI/QAI conflation, Tolin payment) — my case-contacts.md edits are in patch file, not applied, to avoid collision. **Cross-tab overlap**: Mbox-Fast tab's `Cannon Air Force Base 3.m4a` (Lawrence QAI interview opening) may corroborate the 23-24 referral OPB / NJP forgery timeline documented in this session — Case-SME should cross-reference when merging the patch. | COMPLETE (2026-04-09) | Touched: `doc/session_state.md` (this row), `AI_Studio/Reports/memory_patch_23-24_OPB_and_forgery.md` (new, ~430 lines — handoff to Case-SME), `AI_Studio/0_Central_Brain.md` (timestamp + focus refresh), `memory/recent-work.md` (session 240 entry), `memory/todo.md` (Next Session refresh), `memory/improvements.md` (session 240 retro). Did NOT touch: `memory/case-*.md` (Case-SME owns — patch file handed off instead), `Case_Reference/*` (Case-SME + JD-Planner ownership chain), `tools/mbox/*` or `.cache/transcribed/*` (Mbox-Fast owns), `tools/unredact/*` (Mbox-Fast owns), `src/` (pending split execution). **No code written.** All output is legal analysis, email drafts for user review, coordination docs, and the case memory patch file for Case-SME handoff. |
+| **CalmCore-244** | Session 244: Built CalmCore Codebase Intelligence DB + FastMCP MCP server. `tools/build_code_index.py` (9-layer builder: 2222 files, 197K functions, 25K classes, 1001 opcodes, 494 aura handlers, 648 config keys, 823 AddSC_ registrations, 275 digest sections). `tools/codebase_db_server.py` (9 FastMCP tools: codebase_query, codebase_search, codebase_stats, codebase_digest, etc.). `.claude.json` MCP registration. DB at `.cache/codebase.db` (42MB, rebuilds in 17s). CalmCore push still failing HTTP 500 (1.2GB repo). | COMPLETE (2026-04-10) | Commit: CalmCore `7a020c45b3`. Owns: `CalmCore/tools/build_code_index.py`, `CalmCore/tools/codebase_db_server.py`, `CalmCore/.claude.json`. Did NOT touch: `Case_Reference/`, `memory/case-*.md`, `tools/mbox/*`, `tools/unredact/*`, VoxCore `src/` (domain-split pending). |
+| **CalmCore-245** | Session 245: DB findings triage + tiered digest + NPCHandler crash fix. (1) Script loader triage: 2 real bugs fixed (`AddSC_ironforge` + `AddSC_darkmoon_mount_race`), 4 false positives in DB builder fixed (L6f now matches `scripts_loader` + ScriptMgr.cpp → 0 unregistered). (2) Config mismatch triage: 3 real bugs fixed (`fatigue.enabled`, `fishing_fix.enabled`, `SoloLFG.Enable` code defaults), 18 false positives (bool/int repr). (3) Tiered digest system: `digest_source.py` extended with `--tier auto|xlarge|large|medium|small|tiny`, batch calling for small/tiny, `--gen-list` from DB. 5 tier target lists generated (2,185 files, ~$36 total). (4) NPCHandler null-crash: removed 2 dead `else` branches calling `go->AI()` on null. (5) GitHub push: HTTP 500 blocked by early commits with 38-44MB SQL blobs — `tools/push_incremental.py` written. Root cause: need SSH or `git filter-repo --strip-blobs-bigger-than 20M`. All builds clean. | COMPLETE (2026-04-10) | Commits: CalmCore `6a5ddfe390`, `424db8e670`, `3f4d74700c`, `99b51efef4`. Owned: `CalmCore/src/server/scripts/DarkmoonIsland/darkmoon_island_script_loader.cpp`, `CalmCore/src/server/scripts/EasternKingdoms/eastern_kingdoms_script_loader.cpp`, `CalmCore/src/server/game/DungeonFinding/LFGScripts.cpp`, `CalmCore/src/server/game/Entities/Player/Player.cpp`, `CalmCore/src/server/game/Handlers/NPCHandler.cpp`, `CalmCore/tools/build_code_index.py`, `CalmCore/tools/digest_source.py`, `CalmCore/tools/push_incremental.py`, `CalmCore/tools/digest_targets_*.txt`. Did NOT touch: `Case_Reference/`, `memory/case-*.md`, VoxCore `src/` (domain-split pending). |
+| **docs-rag-247** | Session 247: Built docs-rag MCP server (`tools-dev/docs-rag/`, 2 files, 6 FastMCP tools). Semantic vector search over IMPORTANT DOCS via ChromaDB + Ollama nomic-embed-text. Tools: `docs_rag_search`, `docs_rag_read`, `docs_rag_list`, `docs_rag_status`, `docs_rag_rebuild`, `docs_rag_reload`. Registered in `.mcp.json` + `settings.local.json`. All tools verified working. Index: 9,082 chunks (Angel_VA full, others partial from legacy sweep). Next: `docs_rag_rebuild()` to extract remaining 5 folders. | COMPLETE (2026-04-11) | Commit: `e880aae2d4`. Owns: `tools-dev/docs-rag/*`, `.mcp.json` docs-rag entry, `.claude/settings.local.json` enabledMcpjsonServers. Did NOT touch: `Case_Reference/`, `memory/case-*.md`, `src/`. |
+| **SME-sweep-248** | Session 248: Full SME sweep of IMPORTANT DOCS + SAPR-standard ___MASTER.md architecture. (1) 11-phase SME sweep: 2,265 files, 826 extracted, 739 OCR'd, 7 audio transcribed. 7 parallel content mapping agents. 17 contradictions, 10 memory edits. (2) 4-pass dedup/archive/master: 30 ___MASTER files written to SAPR standard, 29 ___INDEX.json, ___ALL_MASTERS.md manifest. (3) Hub documents renamed 01-14 by importance. VA Benefits content restored. (4) Verification passes: automated filename/path/count/duration checks. (5) Quick fixes: Wareham email, "400+" sessions, OPB OCR, misplaced files resolved. (6) docs-rag rebuilt to 25,820 chunks. (7) Monday HAF call prep prompt written to Desktop. | COMPLETE (2026-04-11) | Commit: `8129fce161`. Touched: `AI_Studio/Reports/sme_important_docs/` (20 files), `doc/session_state.md`, `AI_Studio/0_Central_Brain.md`, 10 memory files. Created on IMPORTANT DOCS Desktop: 30 ___MASTER files, 29 ___INDEX.json, ___ALL_MASTERS.md, 14 subfolder _Archive/ entries, OPB OCR. Did NOT touch: `src/`, CalmCore, Case_Reference source files (only added ___MASTER/___INDEX + copied SAPR packet). |
+| **Session-251** | Cron fix + Clinical summary + HAF call prep audit | COMPLETE (2026-04-11) | Banned recurring CronCreate (3-layer defense, both repos). Built 399-line clinical summary from 66 MH notes (5 parallel agents). Full packet audit + "how bad is this" assessment + forms/filings checklist. Commit: `1deb72a8db`. Did NOT touch: `src/`, CalmCore code, Case_Reference source files. Created: `Monday_HAF_Call_13Apr2026/11_CLINICAL_SUMMARY_FOR_TOLIN.md`, `Case_Reference/06_CLINICAL_RECORDS/MHS_Genesis_Clinical_Summary_Oct2024_Mar2026.md`. |
 | -- | -- | -- | Add rows as tabs are opened |
 
 **Rule**: Before starting work, check this file. If another tab owns a file or task, don't touch it. Update your row when you start and when you finish.
 
 ---
 
-## Warlock Tab Handoffs (Session 229)
 
-All tabs edit `src/server/scripts/Spells/spell_warlock.cpp`. Coordinate: each tab adds NEW classes at the end of the file (before `AddSC_warlock_spell_scripts`) and adds registration lines inside it. Do NOT modify existing classes — only add new ones.
-
-**Shared context**: Registry at `doc/classes/warlock/generated/warlock_registry.json`. Status at `doc/classes/warlock/generated/warlock_implementation_status.json`. Spec docs at `doc/classes/warlock/generated/*.md`.
-
-### Tab Warlock-A1: Summon Demonic Tyrant (265187)
-
-```
-Warlock Phase 5 — implement Summon Demonic Tyrant spell handler (265187).
-
-CONTEXT: Read doc/session_state.md first. You own ONLY this spell. The PetAI (npc_pet_warlock_demonic_tyrant) is already registered at line ~3100 of spell_warlock.cpp. What's missing is the SPELL HANDLER that:
-1. Summons the Tyrant (Effect 0: SUMMON creature 135002) — this part likely works via DB
-2. Extends duration of all active demons by 15s (Effect 1: ENERGIZE type 7)
-3. EFFECT_4 is DUMMY aura — may track Tyrant buff state
-
-DB2 effects for 265187:
-- EFFECT_0: SUMMON (28), creature 135002
-- EFFECT_1: ENERGIZE (30), misc 7 (soul shards?)
-- EFFECT_2: NONE
-- EFFECT_3: SUMMON (28), creature 250289
-- EFFECT_4: APPLY_AURA DUMMY
-
-The key behavior: on cast, iterate all warlock temporary summons (Wild Imps, Dreadstalkers, Vilefiend, Felguard) and extend their duration by the amount from the spell data. Also check for Reign of Tyranny (1276748) which scales Tyrant damage per demon.
-
-File: src/server/scripts/Spells/spell_warlock.cpp
-Pattern: Add new class before AddSC_warlock_spell_scripts(), add RegisterSpellScript() inside it.
-Convention: class spell_warl_summon_demonic_tyrant : public SpellScript
-Spell constants: Add to WarlockSpells enum if needed.
-Build: powershell.exe -ExecutionPolicy Bypass -File "_build_ps.ps1" rel scripts 2>&1
-DB binding: INSERT INTO spell_script_names VALUES (265187, 'spell_warl_summon_demonic_tyrant');
-```
-
-### Tab Warlock-A2: Mayhem (387506)
-
-```
-Warlock Phase 5 — implement Mayhem talent handler (387506).
-
-CONTEXT: Read doc/session_state.md first. You own ONLY this spell. Mayhem is the Destruction Havoc variant.
-
-BEHAVIOR: When talented, your single-target Chaos Bolt and Rain of Fire have a chance to also hit a nearby second enemy. The 3 DUMMY auras store:
-- EFFECT_0: DUMMY bp=35 (proc chance %)
-- EFFECT_1: DUMMY bp=60 (Havoc duration ms?)
-- EFFECT_2: DUMMY bp=5000 (some tracking value)
-
-Implementation approach: This is an AuraScript on 387506 that procs when the player casts Chaos Bolt (116858) or Rain of Fire (5740). On proc, find a nearby second valid target and cast a copy of the spell on it. Similar to how Havoc (80240) works — Havoc is the choice-node alternative.
-
-Check existing code: search spell_warlock.cpp for any Havoc references or SPELL_WARLOCK_HAVOC constants that might exist.
-
-File: src/server/scripts/Spells/spell_warlock.cpp
-Pattern: class spell_warl_mayhem : public AuraScript (proc handler)
-Build: powershell.exe -ExecutionPolicy Bypass -File "_build_ps.ps1" rel scripts 2>&1
-DB: INSERT INTO spell_script_names VALUES (387506, 'spell_warl_mayhem');
-```
-
-### Tab Warlock-A3: Demonic Soul (449614)
-
-```
-Warlock Phase 5 — implement Demonic Soul talent handler (449614).
-
-CONTEXT: Read doc/session_state.md first. You own ONLY this spell. Demonic Soul is the Soul Harvester hero talent keystone.
-
-DB2 effects for 449614 — 5x PROC_TRIGGER_SPELL_COPY (aura 396):
-- EFFECT_0: trigger 450510, misc 7, bp=10
-- EFFECT_1: trigger 450510, misc 7, bp=20
-- EFFECT_2: trigger 450510, misc 7, bp=30
-- EFFECT_3: trigger 450510, misc 7, bp=40
-- EFFECT_4: trigger 450510, misc 7, bp=50
-
-BEHAVIOR: Every 10 Soul Shards spent, trigger Demonic Soul effect (450510). The effect empowers your next few casts based on your spec:
-- Affliction: empowers Malefic Rapture
-- Demonology: empowers Demonbolt
-- Destruction: empowers Chaos Bolt
-
-The 5 effects with increasing bp (10/20/30/40/50) likely scale the power with consecutive triggers.
-
-Implementation: AuraScript that tracks soul shard expenditure via OnProc, counting shards spent. When threshold reached, cast 450510. Needs to detect player spec for the right empowerment.
-
-File: src/server/scripts/Spells/spell_warlock.cpp
-Pattern: class spell_warl_demonic_soul : public AuraScript
-Build: powershell.exe -ExecutionPolicy Bypass -File "_build_ps.ps1" rel scripts 2>&1
-DB: INSERT INTO spell_script_names VALUES (449614, 'spell_warl_demonic_soul');
-```
-
-### Tab Warlock-B: Tier B Summons (6 spells)
-
-```
-Warlock Phase 5 — implement 6 summon-related spell handlers.
-
-CONTEXT: Read doc/session_state.md first. You own these 6 spells ONLY.
-
-SPELLS:
-1. Summon Felguard (30146) — SUMMON_PET effect. May Just Work if creature_template entry 17252 exists with proper AI. Verify creature exists, has PetAI, and spell binding works.
-2. Inner Demons (267216) — PERIODIC_DUMMY (aura 226) every 5s. Spawns a Wild Imp periodically. Needs AuraScript with OnEffectPeriodic that casts SPELL_WARLOCK_WILD_IMP_SUMMON.
-3. Grimoire: Imp Lord (1276452) — DUMMY(3) + SUMMON(28) creature 258584. Replaces standard imp with Imp Lord. Needs SpellScript.
-4. Summon Vilefiend (1251778) — DUMMY aura only. Likely needs a summon spell cast + creature AI. Check if 1251778 has a linked summon spell.
-5. Summon Doomguard (1276672) — SUMMON(28) creature 250785 + DUMMY(3). Needs creature_template + PetAI.
-6. Summon Infernal (1122) — SUMMON(28) creature 47319 + TRIGGER_SPELL(32) 22703 + TRIGGER(148) 111685. The infernal creature likely exists from TC baseline. Check if AI works, add spell handler for the crash-landing damage.
-
-Pattern: Each gets its own class. Use existing npc_pet_warlock_wild_imp as reference for PetAI pattern.
-File: src/server/scripts/Spells/spell_warlock.cpp
-Build: powershell.exe -ExecutionPolicy Bypass -File "_build_ps.ps1" rel scripts 2>&1
-```
-
-### Tab Warlock-C: Tier C Class Utilities (5 spells)
-
-```
-Warlock Phase 5 — implement 5 class utility spell handlers.
-
-CONTEXT: Read doc/session_state.md first. You own these 5 spells ONLY.
-
-SPELLS:
-1. Demon Skin (219272) — PERIODIC_DUMMY every 2s (aura 226). Passively regenerates Soul Leech shield. AuraScript: OnEffectPeriodic, apply/refresh absorb shield based on max HP %. Also has ADD_FLAT_MODIFIER effects (107) for armor/leech.
-2. Mortal Coil (6789) — FEAR(7) + DUMMY(3) + TRIGGER(32) 108396. The FEAR component works natively. The DUMMY effect heals the caster for % max HP. SpellScript: OnEffectHitTarget for the DUMMY heal.
-3. Soul Link (108415) — DUMMY(3) bp=50 + ADD_FLAT_MODIFIER(107) + MOD_TOTAL_STAT(137). Redirects damage to pet. The DUMMY cast effect likely transfers damage — needs SpellScript + AuraScript for the damage redirect.
-4. Soulburn (385899) — LEARN_SPELL(64) trigger 387626. Teaches an empowered spell variant on use. May work natively via the LEARN_SPELL effect, or may need a handler to manage the buff/empowerment window.
-5. Ichor of Devils (386664) — ADD_PCT_MODIFIER_BY_SPELL_LABEL(219) + ADD_FLAT_MODIFIER_BY_SPELL_LABEL(218) + DUMMY(3) cast effect. The modifiers work natively. The DUMMY cast effect (bp=5) may need a handler for additional logic.
-
-File: src/server/scripts/Spells/spell_warlock.cpp
-Build: powershell.exe -ExecutionPolicy Bypass -File "_build_ps.ps1" rel scripts 2>&1
-```
-
-### Tab Warlock-D: Tier D MAYBE Spells (8 spells)
-
-```
-Warlock Phase 5 — triage and implement 8 ambiguous spell handlers.
-
-CONTEXT: Read doc/session_state.md first. You own these 8 spells ONLY.
-
-These were classified as MAYBE during triage — they have DUMMY auras mixed with modifiers and need manual review to determine if they're TC-native (passive data storage) or need C++ handlers.
-
-TASK: For each spell, look up its tooltip (use /lookup-spell), examine the DB2 effects, and determine:
-- [TC] = No handler needed, mark as TC_NATIVE in the registry
-- [TODO] = Write the handler
-
-SPELLS:
-1. Empowered Drain Life (1271689) — class — ADD_FLAT_MODIFIER(107) + DUMMY(4). Tooltip will clarify if DUMMY is passive.
-2. Demonic Gateway (111771) — class — ALREADY HAS HANDLER (spell_warl_demonic_gateway). Registry is stale. Just mark as HAS_HANDLER.
-3. Cunning Cruelty (453172) — affliction — DUMMY(4) bp=5. Likely passive data for Shadow Bolt crit bonus.
-4. Summoner's Embrace (453105) — affliction/destruction — ADD_PCT_MODIFIER(108) x2 + ADD_PCT_MODIFIER_BY_SPELL_LABEL(429). Looks purely passive — verify and mark [TC].
-5. Eye Contract (1279521) — affliction — ADD_FLAT_MODIFIER(107) + ADD_PCT_MODIFIER_BY_SPELL_LABEL(219). Looks passive.
-6. Sacrolash's Dark Strike (386986) — affliction — ADD_PCT_MODIFIER(108) + DUMMY(3) + ADD_PCT_MODIFIER(108). The DUMMY cast effect may apply a slow.
-7. Infernal Rapidity (1263941) — demonology — DUMMY(4) x2. Likely passive data (pet haste values).
-8. Summoner's Embrace (453105) — destruction — same spell as #4, shared.
-
-File: src/server/scripts/Spells/spell_warlock.cpp (if handlers needed)
-Registry: doc/classes/warlock/generated/warlock_registry.json (update handlerStatus)
-Build: powershell.exe -ExecutionPolicy Bypass -File "_build_ps.ps1" rel scripts 2>&1
-```
-
----
+> Historical tab rows (sessions 107-228) and Warlock session 229 handoff prompts archived to [session_state_archive.md](session_state_archive.md).
 
 ## Release Gate System (NEW — Session 165)
 

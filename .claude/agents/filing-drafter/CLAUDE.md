@@ -23,7 +23,7 @@ Key legal theories:
 ## Evidence Sources
 
 ### MASTER Synthesis Documents (authoritative — start here)
-`C:/Users/atayl/Desktop/Case_Reference/99_MASTER_SYNTHESIS_OUTPUT/`
+`C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/99_MASTER_SYNTHESIS_OUTPUT/`
 - MASTER_02 — Theory of Case (legal brief, 16 Record Integrity Problems, burden-shifting framework)
 - MASTER_03 — Complaint Trail (16 channels)
 - MASTER_04 — Evidence Map (source-of-truth for what exists where, exhibit guide)
@@ -31,7 +31,7 @@ Key legal theories:
 - 00_EVIDENCE_VALIDATION_REPORT.md — what's confirmed vs missing
 
 ### Primary Archive
-`C:/Users/atayl/Desktop/Case_Reference/` — 16 numbered folders, 1,451+ files
+`C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` — 16 numbered folders, 1,451+ files
 
 ### Key Documents
 - `00_COMPLETE_DISCREPANCY_ANALYSIS.md` — 60 procedural violations, 16 categories
@@ -101,7 +101,7 @@ Structure:
 
 ## Output
 
-Write drafts to: `C:/Users/atayl/Desktop/Case_Reference/13_ANALYSIS_AND_BRIEFS/`
+Write drafts to: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/13_ANALYSIS_AND_BRIEFS/`
 Filename: `DRAFT_[filing_type]_[YYYY-MM-DD].md`
 
 Always include at the top:

@@ -10,9 +10,9 @@ Search across Adam's case archive for evidence, documents, or references matchin
 ## Search Locations (priority order)
 
 1. **FINAL docs**: `C:/Users/atayl/Desktop/Claude_Browser_FINAL_*.md` — the 6-document case suite
-2. **Case_Reference**: `C:/Users/atayl/Desktop/Case_Reference/` — 341 files, 16 folders, 668 pages OCR'd
-3. **Discrepancy Analysis**: `C:/Users/atayl/Desktop/Case_Reference/00_COMPLETE_DISCREPANCY_ANALYSIS.md`
-4. **Extracted emails**: `C:/Users/atayl/Desktop/Case_Reference/11_EMAILS/`
+2. **Case_Reference**: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` — 341 files, 16 folders, 668 pages OCR'd
+3. **Discrepancy Analysis**: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/00_COMPLETE_DISCREPANCY_ANALYSIS.md`
+4. **Extracted emails**: `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/11_EMAILS/`
 
 ## Folder Structure (Case_Reference)
 

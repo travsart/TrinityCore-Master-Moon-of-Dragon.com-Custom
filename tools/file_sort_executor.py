@@ -26,13 +26,79 @@ import sys
 from pathlib import Path
 
 
+# ---------------------------------------------------------------------------
+# Known destination shorthands — keeps inventory tables compact
+# ---------------------------------------------------------------------------
+DEST_ALIASES = {
+    "Case_Reference/": r"C:\Users\atayl\Desktop\Case_Reference\\",
+    "VoxCore/": r"C:\Users\atayl\VoxCore\\",
+    "VoxCore ": r"C:\Users\atayl\VoxCore\\",
+    "Excluded/": r"C:\Users\atayl\Desktop\Excluded\\",
+    "Desktop/": r"C:\Users\atayl\Desktop\\",
+}
+
+# Patterns that mean "this row is NOT a real file action"
+SKIP_PATTERNS = re.compile(
+    r"^(File|---|------|-+|Action|Target|Target Folder|Why|Reason|Size|Item)$",
+    re.IGNORECASE,
+)
+
+# Patterns that mean "delete"
+DELETE_PATTERNS = re.compile(r"\*\*DELETE\*\*|^DELETE$|^DELETE\b", re.IGNORECASE)
+
+# Patterns that mean "review / manual / skip"
+REVIEW_PATTERNS = re.compile(
+    r"NEEDS MANUAL REVIEW|ARCHIVE|password manager|SECURITY SENSITIVE",
+    re.IGNORECASE,
+)
+
+
+def _resolve_dest(raw_dest: str, source_dir: str) -> str:
+    """Expand shorthand destination to absolute path."""
+    dest = raw_dest.strip().rstrip("/\\")
+    if not dest:
+        return ""
+
+    # Try each alias prefix
+    for prefix, expansion in DEST_ALIASES.items():
+        if dest.startswith(prefix):
+            remainder = dest[len(prefix):]
+            return os.path.join(expansion, remainder)
+
+    # If it looks absolute already, use as-is
+    if os.path.isabs(dest):
+        return dest
+
+    # Fall back to treating as subdir of source_dir
+    return os.path.join(source_dir, dest)
+
+
+def _classify_action(target: str, reason: str) -> str:
+    """Determine action from target/reason text."""
+    combined = f"{target} {reason}"
+
+    # Password manager check FIRST — trumps DELETE pattern
+    if "password manager" in combined.lower():
+        return "secure_delete"
+    if DELETE_PATTERNS.search(target):
+        return "delete"
+    if REVIEW_PATTERNS.search(combined):
+        return "skip"
+    return "move"
+
+
 def parse_inventory_md(md_path: str) -> list[dict]:
     """Parse a markdown inventory file into a JSON move plan.
 
-    Looks for tables with columns like: File | Size | Target | Reason
-    and rows that specify MOVE, DELETE, or other actions.
+    Handles multiple table formats:
+      | File | Size | Target | Reason |     (4-col move tables)
+      | File | Action | Reason |            (3-col action tables)
+      | File | Reason |                     (2-col delete/dupe tables)
+
+    Also handles composite entries and section headers gracefully.
     """
     plan = []
+    seen_sources = set()
     text = Path(md_path).read_text(encoding="utf-8")
 
     # Find the source directory from the inventory header
@@ -41,60 +107,142 @@ def parse_inventory_md(md_path: str) -> list[dict]:
     if m:
         source_dir = m.group(1).rstrip("/\\")
 
-    # Parse table rows — look for | file | size | target | reason |
-    # Handle both "MOVE to Case_Reference" and "MOVE to Non-Case" sections
-    table_pattern = re.compile(
-        r"^\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|",
-        re.MULTILINE,
-    )
+    # Current section context (helps classify ambiguous rows)
+    current_section = ""
 
-    for match in table_pattern.finditer(text):
-        filename = match.group(1).strip()
-        _size = match.group(2).strip()
-        target = match.group(3).strip()
-        reason = match.group(4).strip()
+    for line in text.splitlines():
+        # Track section headers for context
+        section_match = re.match(r"^###?\s+(.+)", line)
+        if section_match:
+            current_section = section_match.group(1).strip().upper()
+            continue
 
-        # Skip header rows and separator rows
-        if filename in ("File", "---", "------") or filename.startswith("-"):
+        # Must be a table row
+        if not line.strip().startswith("|"):
             continue
-        if target in ("Target", "Target Folder", "Action", "---", "------"):
+
+        # Split cells
+        cells = [c.strip() for c in line.split("|")]
+        # Remove empty first/last from leading/trailing pipes
+        cells = [c for c in cells if c]
+
+        if len(cells) < 2:
             continue
+
+        filename = cells[0].strip("`")
+
+        # Skip header/separator rows
+        if SKIP_PATTERNS.match(filename) or filename.startswith("-"):
+            continue
+        # Skip if filename contains only dashes or stars
+        if re.match(r"^[-*]+$", filename):
+            continue
+        # Skip summary/prose rows (action column contains full sentences)
+        if any(
+            len(c) > 80 and " " in c
+            for c in cells[1:]
+        ):
+            continue
+        # Skip rows from space-recovery or aggregation tables
+        if re.match(
+            r"^(Delete |Unpack |Move |Total|\*\*)",
+            filename,
+        ):
+            continue
+        # Skip table headers that slip through
+        if filename.lower() in ("folder", "action"):
+            continue
+
+        # Skip composite/aggregate entries that aren't real filenames
+        # e.g., "logo/cover jpegs (2 files)", "Extracted zip files (6 zips)"
+        if re.search(r"\(\d+ (files?|zips?|items?)\)", filename, re.IGNORECASE):
+            continue
+        # Skip entries with ellipsis truncation
+        if "..." in filename and not os.path.exists(
+            os.path.join(source_dir, filename) if source_dir else filename
+        ):
+            # Try to glob-match truncated names
+            if source_dir:
+                import glob
+
+                prefix = filename.split("...")[0]
+                suffix = filename.split("...")[-1] if "..." in filename else ""
+                matches = glob.glob(
+                    os.path.join(source_dir, f"{prefix}*{suffix}")
+                )
+                if len(matches) == 1:
+                    filename = os.path.basename(matches[0])
+                else:
+                    continue  # Can't resolve — skip
 
         source = os.path.join(source_dir, filename) if source_dir else filename
 
-        if "**DELETE**" in target or target.upper() == "DELETE":
-            action = "delete"
-            dest = ""
-        elif "password manager" in target.lower():
-            action = "secure_delete"
-            dest = ""
+        # Deduplicate — same source may appear in multiple tables
+        if source in seen_sources:
+            continue
+        seen_sources.add(source)
+
+        # Determine action and destination based on column count
+        if len(cells) >= 4:
+            # | File | Size | Target | Reason |
+            target = cells[2]
+            reason = cells[3]
+        elif len(cells) == 3:
+            # | File | Target/Action | Reason |  OR  | File | Size | Target |
+            # Heuristic: if cell[1] looks like a size, shift
+            if re.match(r"^\d+\s*(KB|MB|GB|B|bytes?)$", cells[1], re.IGNORECASE):
+                target = cells[2]
+                reason = ""
+            else:
+                target = cells[1]
+                reason = cells[2]
         else:
-            action = "move"
-            # Clean up target path
-            dest = target.replace("**DELETE**", "").strip()
-            if dest.startswith("Case_Reference/") or dest.endswith("/"):
-                # Relative to Desktop
-                if dest.startswith("Case_Reference/"):
-                    dest = os.path.join(
-                        r"C:\Users\atayl\Desktop\Case_Reference",
-                        dest.removeprefix("Case_Reference/"),
-                    )
-                elif dest.startswith("VoxCore ") or dest.startswith("VoxCore/"):
-                    dest = os.path.join(
-                        r"C:\Users\atayl\VoxCore",
-                        dest.removeprefix("VoxCore ").removeprefix("VoxCore/"),
-                    )
-                elif dest.startswith("Excluded/"):
-                    dest = os.path.join(
-                        r"C:\Users\atayl\Desktop\Excluded", dest.removeprefix("Excluded/")
-                    )
-                elif dest.startswith("Desktop/"):
-                    dest = os.path.join(
-                        r"C:\Users\atayl\Desktop", dest.removeprefix("Desktop/")
-                    )
-                else:
-                    # Assume Case_Reference subfolder
-                    dest = os.path.join(r"C:\Users\atayl\Desktop\Case_Reference", dest)
+            # | File | Reason | — 2-col tables are typically DELETE or REVIEW
+            target = ""
+            reason = cells[1]
+
+        # 2-column rows with no target should default to skip, not move
+        if len(cells) <= 2 and not target:
+            if "delete" not in current_section.lower() and "duplicate" not in current_section.lower():
+                action = "skip"
+                plan.append(
+                    {"action": action, "source": source, "dest": "", "reason": reason}
+                )
+                continue
+
+        # Use section context to help classify
+        section_lower = current_section.lower()
+        if not target and ("security" in section_lower or "password manager" in section_lower):
+            action = "secure_delete"
+        elif not target and ("delete" in section_lower or "duplicate" in section_lower):
+            action = "delete"
+        elif not target and ("review" in section_lower or "manual" in section_lower):
+            action = "skip"
+        else:
+            action = _classify_action(target, reason)
+
+        # Build destination path for moves
+        dest = ""
+        if action == "move":
+            dest = _resolve_dest(target, source_dir)
+            # Sanity: if resolved dest looks like a reason (contains common
+            # English words but no path separators), this is a parser
+            # misclassification — downgrade to skip
+            if dest and not os.sep in dest and not "/" in dest:
+                action = "skip"
+                reason = f"[parser: ambiguous target '{target}'] {reason}"
+                dest = ""
+            # Another guard: if dest contains words like "duplicate",
+            # "identical", "plaintext", it's a reason not a path
+            if dest and re.search(
+                r"(identical|duplicate|plaintext|re-downloadable|superseded|"
+                r"redundant|stale|wrong|already|zero value)",
+                dest,
+                re.IGNORECASE,
+            ):
+                action = "skip"
+                reason = f"[parser: reason-as-path '{target}'] {reason}"
+                dest = ""
 
         plan.append(
             {
@@ -106,6 +254,30 @@ def parse_inventory_md(md_path: str) -> list[dict]:
         )
 
     return plan
+
+
+def _path_size(p: Path) -> int:
+    """Return byte size of a file, or recursive total size of a directory.
+
+    Used to detect silent no-clobber / partial-move bugs by comparing source
+    size before the move against destination size after. Returns -1 if the
+    path can't be stat'd (missing, permission denied, etc.).
+    """
+    try:
+        if p.is_file():
+            return p.stat().st_size
+        if p.is_dir():
+            total = 0
+            for child in p.rglob("*"):
+                if child.is_file():
+                    try:
+                        total += child.stat().st_size
+                    except OSError:
+                        pass  # unreadable file — best-effort
+            return total
+    except OSError:
+        return -1
+    return -1
 
 
 def execute_plan(plan: list[dict], dry_run: bool = True, allow_delete: bool = False):
@@ -147,12 +319,52 @@ def execute_plan(plan: list[dict], dry_run: bool = True, allow_delete: bool = Fa
                 try:
                     dest_dir.mkdir(parents=True, exist_ok=True)
                     if dest_file.exists():
-                        print(f"{prefix} CONFLICT: {dest_file} already exists — skipping")
+                        print(
+                            f"{prefix} CONFLICT: {dest_file} already exists — skipping"
+                        )
                         stats["skipped"] += 1
                     else:
+                        # Silent-no-clobber safety: capture source size before
+                        # the move, then verify dest matches afterwards. Catches
+                        # the session-235 bug where a pre-created target folder
+                        # silently swallowed a 26 GB move (the mv -n class of
+                        # failure where nothing errors but bytes disappear).
+                        src_size = _path_size(source_path)
+
                         shutil.move(str(source_path), str(dest_file))
-                        print(f"{prefix} MOVED: {source_path.name} -> {dest_dir}")
-                        stats["moved"] += 1
+
+                        # Post-move verification gate
+                        if source_path.exists():
+                            print(
+                                f"{prefix} ERROR: source still present after move "
+                                f"— likely silent merge into existing dest: {source_path}"
+                            )
+                            stats["errors"] += 1
+                        elif not dest_file.exists():
+                            print(
+                                f"{prefix} ERROR: dest missing after move "
+                                f"(move reported success but path absent): {dest_file}"
+                            )
+                            stats["errors"] += 1
+                        else:
+                            dst_size = _path_size(dest_file)
+                            if src_size >= 0 and dst_size != src_size:
+                                delta = dst_size - src_size
+                                print(
+                                    f"{prefix} WARN: size mismatch post-move "
+                                    f"(src {src_size:,}B -> dst {dst_size:,}B, "
+                                    f"delta {delta:+,}B): {dest_file}"
+                                )
+                                stats["errors"] += 1
+                            else:
+                                size_note = (
+                                    f" ({src_size:,}B)" if src_size >= 0 else ""
+                                )
+                                print(
+                                    f"{prefix} MOVED: {source_path.name}"
+                                    f"{size_note} -> {dest_dir}"
+                                )
+                                stats["moved"] += 1
                 except Exception as e:
                     print(f"{prefix} ERROR: {source} — {e}")
                     stats["errors"] += 1
@@ -178,7 +390,9 @@ def execute_plan(plan: list[dict], dry_run: bool = True, allow_delete: bool = Fa
                 stats["skipped"] += 1
 
         elif action == "secure_delete":
-            print(f"{prefix} SECURE: {source} — MOVE TO PASSWORD MANAGER FIRST, then delete")
+            print(
+                f"{prefix} SECURE: {source} — MOVE TO PASSWORD MANAGER FIRST, then delete"
+            )
             stats["skipped"] += 1
 
     # Summary
@@ -201,10 +415,24 @@ def execute_plan(plan: list[dict], dry_run: bool = True, allow_delete: bool = Fa
 def main():
     parser = argparse.ArgumentParser(description="Execute a file sort plan")
     parser.add_argument("plan", nargs="?", help="Path to JSON plan file")
-    parser.add_argument("--execute", action="store_true", help="Actually move files (default: dry-run)")
-    parser.add_argument("--delete", action="store_true", help="Also execute delete actions (requires --execute)")
-    parser.add_argument("--from-inventory", type=str, help="Parse a .md inventory file into a JSON plan")
-    parser.add_argument("--output", "-o", type=str, help="Output path for generated JSON plan")
+    parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Actually move files (default: dry-run)",
+    )
+    parser.add_argument(
+        "--delete",
+        action="store_true",
+        help="Also execute delete actions (requires --execute)",
+    )
+    parser.add_argument(
+        "--from-inventory",
+        type=str,
+        help="Parse a .md inventory file into a JSON plan",
+    )
+    parser.add_argument(
+        "--output", "-o", type=str, help="Output path for generated JSON plan"
+    )
     args = parser.parse_args()
 
     if args.from_inventory:

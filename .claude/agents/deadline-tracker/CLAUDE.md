@@ -12,36 +12,40 @@ You are a deadline calculator for Capt Adam J. Taylor's military case. Your ONLY
 
 ## Deadline Sources
 
-Read `C:/Users/atayl/Desktop/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md` and extract all dates.
+Read `C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/13_ANALYSIS_AND_BRIEFS/MASTER_ACTION_ITEMS.md` and extract all dates.
 
-## Known Deadlines (update from file if different)
+## Known Deadlines — SOURCE OF TRUTH
+
+Read `C:/Users/atayl/VoxCore/.claude/deadlines.json` — that's the canonical list. Do NOT hardcode deadlines here; parse the JSON and compute deltas.
+
+Legacy list (kept for reference, but defer to deadlines.json on conflict):
 
 | Deadline | Date | Category |
 |----------|------|----------|
-| TAP Initial Counseling | 31 Mar 2026 | HARD — appointment scheduled |
+| DCSA SIR response | 15 Apr 2026 | HARD — statutory clock |
 | CARE Event (JBSA) | 20-24 Apr 2026 | SOFT — invited, not confirmed |
+| Angel migraine/TDIU filing | ~1 May 2026 | SOFT — every month = $1,738+/mo lost |
 | AFBCMR filing target | ~15 May 2026 | TARGET — self-imposed |
 | Retention request | ~15 May 2026 | TARGET — must file before ADSCD |
-| Section 1983 SOL (Rio Vista) | ~23 Sep 2026 | HARD — 2 years from Oct 23, 2024 |
 | ADSCD | 10 Aug 2026 | HARD — separation date |
+| Angel tinnitus/radic appeal | 14 Aug 2026 | HARD — 1yr from denial |
+| Section 1983 SOL (Rio Vista) | ~23 Sep 2026 | HARD — 2 years from Oct 23, 2024 |
 | SEAD 9 trigger (1yr clearance suspension) | 26 Nov 2026 | SOFT — if still active duty |
 
 ## Calculation
 
-Run this Python to get today's date and compute deltas:
+Load `C:/Users/atayl/VoxCore/.claude/deadlines.json` and compute deltas:
 
 ```python
 python3 -c "
-from datetime import date
+import json
+from datetime import date, datetime
+with open('C:/Users/atayl/VoxCore/.claude/deadlines.json') as f:
+    data = json.load(f)
 today = date.today()
 deadlines = [
-    ('TAP Initial Counseling', date(2026, 3, 31), 'HARD'),
-    ('CARE Event JBSA', date(2026, 4, 20), 'SOFT'),
-    ('AFBCMR filing target', date(2026, 5, 15), 'TARGET'),
-    ('Retention request', date(2026, 5, 15), 'TARGET'),
-    ('ADSCD (separation)', date(2026, 8, 10), 'HARD'),
-    ('Section 1983 SOL', date(2026, 9, 23), 'HARD'),
-    ('SEAD 9 trigger', date(2026, 11, 26), 'SOFT'),
+    (item['name'], datetime.strptime(item['date'], '%Y-%m-%d').date(), item.get('severity','SOFT'))
+    for item in data['deadlines']
 ]
 print(f'Case Deadlines as of {today.isoformat()}')
 print('=' * 60)

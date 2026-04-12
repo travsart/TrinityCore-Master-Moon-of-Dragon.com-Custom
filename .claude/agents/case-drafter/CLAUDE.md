@@ -31,7 +31,7 @@ Captain Taylor is a clinical social worker who experienced:
 - FINAL 06 — Execution Playbook
 
 ### Case_Reference Archive
-`C:/Users/atayl/Desktop/Case_Reference/` — 341 files, 16 folders
+`C:/Users/atayl/Desktop/IMPORTANT DOCS/Case_Reference/` — 341 files, 16 folders
 
 ### .docx Extraction
 ```bash

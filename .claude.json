@@ -2,7 +2,8 @@
   "mcpServers": {
     "wago-db2": {
       "command": "python",
-      "args": ["C:/Users/atayl/VoxCore/wago/wago_db2_server.py"]
+      "args": ["C:/Users/atayl/VoxCore/wago/wago_db2_server.py"],
+      "env": { "PYTHONUTF8": "1" }
     },
     "mysql": {
       "command": "npx",
@@ -23,6 +24,7 @@
       "command": "python",
       "args": ["C:/Users/atayl/VoxCore/tools-dev/code-intel/code_intel_server.py"],
       "env": {
+        "PYTHONUTF8": "1",
         "PROJECT_ROOT": "C:/Users/atayl/VoxCore",
         "COMPILE_COMMANDS_DIR": "C:/Users/atayl/VoxCore/out/build/x64-Debug",
         "CLANGD_PATH": "C:/Program Files/LLVM/bin/clangd.exe",
@@ -31,7 +33,8 @@
     },
     "arcanum": {
       "command": "python",
-      "args": ["C:/Users/atayl/VoxCore/tools-dev/arcanum/arcanum_server.py"]
+      "args": ["C:/Users/atayl/VoxCore/tools-dev/arcanum/arcanum_server.py"],
+      "env": { "PYTHONUTF8": "1" }
     }
   }
 }

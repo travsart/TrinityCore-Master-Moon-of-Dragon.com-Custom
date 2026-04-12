@@ -7,7 +7,7 @@
 
 -- Add spell effect: Effect=15 (TELEPORT_UNITS), ImplicitTarget1=1 (UNIT_CASTER),
 -- ImplicitTarget2=17 (DEST_DB) — reads destination from world.spell_target_position
-INSERT INTO `spell_effect`
+INSERT IGNORE INTO `spell_effect`
     (`ID`, `EffectAura`, `DifficultyID`, `EffectIndex`, `Effect`,
      `EffectAmplitude`, `EffectAttributes`, `EffectAuraPeriod`,
      `EffectBonusCoefficient`, `EffectChainAmplitude`, `EffectChainTargets`,
@@ -35,7 +35,7 @@ VALUES
      1, 17, 1235595, 66102);
 
 -- Register in hotfix_data so TC pushes this to the client
-INSERT INTO `hotfix_data`
+INSERT IGNORE INTO `hotfix_data`
     (`Id`, `UniqueId`, `TableHash`, `RecordId`, `Status`, `VerifiedBuild`)
 VALUES
     (17006229, 17006229, 4030871717, 1900004, 1, 0);
