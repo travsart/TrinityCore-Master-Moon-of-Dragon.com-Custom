@@ -200,7 +200,7 @@ class spell_torghast_uncontrolled_darkness_proc : public AuraScript
 
         if (caster->HasAura(SPELL_UNCONTROLLED_DARKNESS_BUFF))
         {
-            if (++script->KillCounter >= uncontrolledDarkness->GetSpellInfo()->GetEffect(EFFECT_1).CalcValue())
+            if (++script->KillCounter >= uncontrolledDarkness->GetSpellInfo()->GetEffect(EFFECT_1).CalcValueAsInt())
             {
                 caster->RemoveAura(SPELL_UNCONTROLLED_DARKNESS_BUFF);
                 script->KillCounter = 0;
@@ -208,7 +208,7 @@ class spell_torghast_uncontrolled_darkness_proc : public AuraScript
         }
         else
         {
-            if (++script->KillCounter >= uncontrolledDarkness->GetSpellInfo()->GetEffect(EFFECT_0).CalcValue())
+            if (++script->KillCounter >= uncontrolledDarkness->GetSpellInfo()->GetEffect(EFFECT_0).CalcValueAsInt())
             {
                 caster->CastSpell(caster, SPELL_UNCONTROLLED_DARKNESS_BUFF, true);
                 script->KillCounter = 0;

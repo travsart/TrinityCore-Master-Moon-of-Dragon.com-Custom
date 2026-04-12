@@ -316,7 +316,7 @@ class spell_warl_absolute_corruption : public SpellScript
         if (Aura const* absoluteCorruption = GetCaster()->GetAura(SPELL_WARLOCK_ABSOLUTE_CORRUPTION))
         {
             Milliseconds duration = GetHitUnit()->IsPvP()
-                ? Seconds(absoluteCorruption->GetSpellInfo()->GetEffect(EFFECT_0).CalcValue())
+                ? Seconds(absoluteCorruption->GetSpellInfo()->GetEffect(EFFECT_0).CalcValueAsInt())
                 : Milliseconds(-1);
 
             GetHitAura()->SetMaxDuration(duration.count());
@@ -460,7 +460,7 @@ class spell_warl_burning_rush : public SpellScript
     {
         Unit* caster = GetCaster();
 
-        if (caster->GetHealthPct() <= float(GetEffectInfo(EFFECT_1).CalcValue(caster)))
+        if (caster->GetHealthPct() <= GetEffectInfo(EFFECT_1).CalcValue(caster))
         {
             SetCustomCastResultMessage(SPELL_CUSTOM_ERROR_YOU_DONT_HAVE_ENOUGH_HEALTH);
             return SPELL_FAILED_CUSTOM_ERROR;
@@ -480,7 +480,7 @@ class spell_warl_burning_rush_aura : public AuraScript
 {
     void PeriodicTick(AuraEffect const* aurEff)
     {
-        if (GetTarget()->GetHealthPct() <= float(aurEff->GetAmount()))
+        if (GetTarget()->GetHealthPct() <= aurEff->GetAmount())
         {
             PreventDefaultAction();
             Remove();
@@ -646,7 +646,7 @@ class spell_warl_chaotic_energies : public AuraScript
         }
 
         // You take ${$s2/3}% reduced damage
-        float damageReductionPct = float(effect1->GetAmount()) / 3;
+        float damageReductionPct = effect1->GetAmount() / 3;
         // plus a random amount of up to ${$s2/3}% additional reduced damage
         damageReductionPct += frand(0.0f, damageReductionPct);
 
@@ -716,13 +716,13 @@ class spell_warl_dark_pact : public AuraScript
         return ValidateSpellEffect({ { spellInfo->Id, EFFECT_1 }, { spellInfo->Id, EFFECT_2 } });
     }
 
-    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+    void CalculateAmount(AuraEffect const* /*aurEff*/, SpellEffectValue& amount, bool& canBeRecalculated)
     {
         canBeRecalculated = false;
         if (Unit* caster = GetCaster())
         {
             float extraAmount = caster->SpellBaseDamageBonusDone(GetSpellInfo()->GetSchoolMask()) * 2.5f;
-            int32 absorb = caster->CountPctFromCurHealth(GetEffectInfo(EFFECT_1).CalcValue(caster));
+            uint64 absorb = caster->CountPctFromCurHealth(GetEffectInfo(EFFECT_1).CalcValue(caster));
             caster->SetHealth(caster->GetHealth() - absorb);
             amount = CalculatePct(absorb, GetEffectInfo(EFFECT_2).CalcValue(caster)) + extraAmount;
         }
@@ -1115,7 +1115,7 @@ class spell_warl_perpetual_unstability : public SpellScript
         {
             if (Aura const* unstableAfflictionAura = target->GetAura(GetSpellInfo()->Id, caster->GetGUID()))
             {
-                Milliseconds maxUnstableAfflictionDuration = Seconds(perpetualUnstability->GetAmount());
+                FloatSeconds maxUnstableAfflictionDuration(perpetualUnstability->GetAmount());
                 if (Milliseconds(unstableAfflictionAura->GetDuration()) <= maxUnstableAfflictionDuration)
                     caster->CastSpell(target, SPELL_WARLOCK_PERPETUAL_UNSTABILITY_DAMAGE, CastSpellExtraArgs()
                         .SetTriggerFlags(TRIGGERED_IGNORE_CAST_IN_PROGRESS | TRIGGERED_DONT_REPORT_CAST_ERROR)
@@ -1368,7 +1368,7 @@ class spell_warl_seed_of_corruption_dummy_aura : public AuraScript
             caster->CastSpell(GetTarget(), SPELL_WARLOCK_SEED_OF_CORRUPTION_DAMAGE, aurEff);
     }
 
-    void CalculateBuffer(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/) const
+    void CalculateBuffer(AuraEffect const* /*aurEff*/, SpellEffectValue& amount, bool& /*canBeRecalculated*/) const
     {
         Unit* caster = GetCaster();
         if (!caster)
@@ -1395,7 +1395,7 @@ class spell_warl_seed_of_corruption_dummy_aura : public AuraScript
         // other seed explosions detonate this instantly, no matter what damage amount is
         if (!damageInfo->GetSpellInfo() || damageInfo->GetSpellInfo()->Id != SPELL_WARLOCK_SEED_OF_CORRUPTION_DAMAGE)
         {
-            int32 amount = aurEff->GetAmount() - damageInfo->GetDamage();
+            SpellEffectValue amount = aurEff->GetAmount() - damageInfo->GetDamage();
             if (amount > 0)
             {
                 aurEff->SetAmount(amount);
@@ -1438,10 +1438,10 @@ class spell_warl_seed_of_corruption_generic : public AuraScript
         if (!damageInfo || !damageInfo->GetDamage())
             return;
 
-        int32 amount = aurEff->GetAmount() - damageInfo->GetDamage();
+        SpellEffectValue amount = aurEff->GetAmount() - damageInfo->GetDamage();
         if (amount > 0)
         {
-            const_cast<AuraEffect*>(aurEff)->SetAmount(amount);
+            aurEff->SetAmount(amount);
             return;
         }
 
@@ -1916,7 +1916,7 @@ class spell_warl_summon_sayaad : public SpellScript
 
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
-        GetCaster()->CastSpell(nullptr, roll_chance_i(50) ? SPELL_WARLOCK_SUMMON_SUCCUBUS : SPELL_WARLOCK_SUMMON_INCUBUS, TRIGGERED_FULL_MASK);
+        GetCaster()->CastSpell(nullptr, roll_chance(50) ? SPELL_WARLOCK_SUMMON_SUCCUBUS : SPELL_WARLOCK_SUMMON_INCUBUS, TRIGGERED_FULL_MASK);
     }
 
     void Register() override
@@ -1967,7 +1967,7 @@ class spell_warl_unstable_affliction : public AuraScript
         if (!removedEffect)
             return;
 
-        int32 damage = GetEffectInfo(EFFECT_0).CalcValue(caster, nullptr, GetUnitOwner()) / 100.0f * *removedEffect->CalculateEstimatedAmount(caster, removedEffect->GetAmount());
+        SpellEffectValue damage = GetEffectInfo(EFFECT_0).CalcValue(caster, nullptr, GetUnitOwner()) / 100.0 * *removedEffect->CalculateEstimatedAmount(caster, removedEffect->GetAmount());
         caster->CastSpell(dispelInfo->GetDispeller(), SPELL_WARLOCK_UNSTABLE_AFFLICTION_DAMAGE, CastSpellExtraArgs()
             .AddSpellMod(SPELLVALUE_BASE_POINT0, damage)
             .SetTriggerFlags(TRIGGERED_IGNORE_CAST_IN_PROGRESS | TRIGGERED_DONT_REPORT_CAST_ERROR));
@@ -2039,7 +2039,7 @@ class spell_warl_volatile_agony : public SpellScript
         {
             if (Aura const* agonyAura = target->GetAura(GetSpellInfo()->Id, caster->GetGUID()))
             {
-                Milliseconds maxAgonyDuration = Seconds(volatileAgony->GetAmount());
+                FloatSeconds maxAgonyDuration(volatileAgony->GetAmount());
                 if (Milliseconds(agonyAura->GetDuration()) <= maxAgonyDuration)
                     caster->CastSpell(target, SPELL_WARLOCK_VOLATILE_AGONY_DAMAGE, CastSpellExtraArgs()
                         .SetTriggerFlags(TRIGGERED_IGNORE_CAST_IN_PROGRESS | TRIGGERED_DONT_REPORT_CAST_ERROR)
@@ -2214,7 +2214,7 @@ class spell_warl_drain_life : public AuraScript
         return _caster != nullptr;
     }
 
-    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    void CalculateAmount(AuraEffect const* /*aurEff*/, SpellEffectValue& amount, bool& /*canBeRecalculated*/)
     {
         if (!_caster)
             return;
@@ -2677,6 +2677,19 @@ class spell_warlock_call_dreadstalkers : public SpellScript
 
             if (roll_chance_i(effect->GetBaseAmount()))
                 caster->CastSpell(caster, SPELL_WARLOCK_CALL_DREADSTALKERS_SUMMON, true);
+
+            Player* player = caster->ToPlayer();
+            if (!player)
+                return;
+
+            // Check if player has aura with ID 387485
+            if (Aura* aura = caster->GetAura(387485))
+            {
+                auto effect = aura->GetEffect(0);
+
+                if (roll_chance(effect->GetBaseAmount()))
+                    caster->CastSpell(caster, SPELL_WARLOCK_CALL_DREADSTALKERS_SUMMON, true);
+            }
         }
     }
 
@@ -2767,10 +2780,20 @@ class spell_warl_demonic_calling : public AuraScript
         return ValidateSpellInfo({ SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER });
     }
 
-    bool CheckProc(ProcEventInfo& eventInfo)
-    {
-        Unit* caster = GetCaster();
-        if (!caster)
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            if (!sSpellMgr->GetSpellInfo(SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER, DIFFICULTY_NONE))
+                return false;
+            return true;
+        }
+
+        bool CheckProc(ProcEventInfo& eventInfo)
+        {
+            Unit* caster = GetCaster();
+            if (!caster)
+                return false;
+            if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_DEMONBOLT || eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_SHADOW_BOLT) && roll_chance(20))
+                caster->CastSpell(caster, SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER, true);
             return false;
         if (eventInfo.GetSpellInfo() && (eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_DEMONBOLT || eventInfo.GetSpellInfo()->Id == SPELL_WARLOCK_SHADOW_BOLT) && roll_chance_i(20))
             caster->CastSpell(caster, SPELL_WARLOCK_DEMONIC_CALLING_TRIGGER, true);
@@ -2858,7 +2881,7 @@ public:
             if (caster->HasAura(SPELL_WARLOCK_IMPENDING_DOOM))
                 caster->CastSpell(GetTarget(), SPELL_WARLOCK_WILD_IMP_SUMMON, true);
 
-            if (caster->HasAura(SPELL_WARLOCK_DOOM_DOUBLED) && roll_chance_i(25))
+            if (caster->HasAura(SPELL_WARLOCK_DOOM_DOUBLED) && roll_chance(25))
                 GetEffect(EFFECT_0)->SetAmount(aurEff->GetAmount() * 2);
         }
 
@@ -2895,8 +2918,8 @@ class spell_warl_soul_conduit : public AuraScript
             if (costData == costs.end())
                 return false;
 
-            refund = costData->Amount;
-            return true;
+            if (roll_chance(GetSpellInfo()->GetEffect(EFFECT_0).BasePoints))
+                caster->CastSpell(caster, SPELL_WARLOCK_SOUL_CONDUIT_REFUND, CastSpellExtraArgs(TRIGGERED_FULL_MASK).AddSpellBP0(refund));
         }
 
         return false;

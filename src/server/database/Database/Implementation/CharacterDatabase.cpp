@@ -309,6 +309,7 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_UPD_GUILD_RANK_ORDER, "UPDATE guild_rank SET RankOrder = ? WHERE rid = ? AND guildid = ?", CONNECTION_ASYNC); // 0-1: uint8, 2: uint32
     PrepareStatement(CHAR_UPD_GUILD_RANK_NAME, "UPDATE guild_rank SET rname = ? WHERE rid = ? AND guildid = ?", CONNECTION_ASYNC); // 0: string, 1: uint8, 2: uint32
     PrepareStatement(CHAR_UPD_GUILD_RANK_RIGHTS, "UPDATE guild_rank SET rights = ? WHERE rid = ? AND guildid = ?", CONNECTION_ASYNC); // 0: uint32, 1: uint8, 2: uint32
+    PrepareStatement(CHAR_UPD_GUILD_FLAGS, "UPDATE guild SET flags = ? WHERE guildid = ?", CONNECTION_ASYNC); // 0: uint32, 1: uint32
     // 0-5: uint32
     PrepareStatement(CHAR_UPD_GUILD_EMBLEM_INFO, "UPDATE guild SET EmblemStyle = ?, EmblemColor = ?, BorderStyle = ?, BorderColor = ?, BackgroundColor = ? WHERE guildid = ?", CONNECTION_ASYNC);
     // 0: string, 1: string, 2: uint32, 3: uint8
@@ -824,6 +825,16 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_SEL_COMPANION_CONTROL, "SELECT mode, following FROM character_companion_control WHERE guid = ?", CONNECTION_SYNCH);
     PrepareStatement(CHAR_DEL_COMPANION_CONTROL, "DELETE FROM character_companion_control WHERE guid = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_REP_COMPANION_CONTROL, "REPLACE INTO character_companion_control (guid, mode, following) VALUES (?, ?, ?)", CONNECTION_ASYNC);
+    // Club Finder
+    PrepareStatement(CHAR_SEL_CLUB_FINDER_POSTS, "SELECT postingID, guildID, description, playstyle, interests, specIDs, classMask, minLevel, maxLevel, slotsAvailable, maxApplicants, language, status, timestamp FROM club_finder_post", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_SEL_CLUB_FINDER_APPLICANTS, "SELECT id, postingID, playerGUID, status, comment, timestamp FROM club_finder_applicant", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_INS_CLUB_FINDER_POST, "INSERT INTO club_finder_post (guildID, description, playstyle, interests, classMask, minLevel, maxLevel, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_UPD_CLUB_FINDER_POST, "UPDATE club_finder_post SET description = ?, playstyle = ?, interests = ?, classMask = ?, minLevel = ?, maxLevel = ? WHERE postingID = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_DEL_CLUB_FINDER_POST, "DELETE FROM club_finder_post WHERE postingID = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_INS_CLUB_FINDER_APPLICANT, "INSERT INTO club_finder_applicant (postingID, playerGUID, comment, timestamp) VALUES (?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_UPD_CLUB_FINDER_APPLICANT_STATUS, "UPDATE club_finder_applicant SET status = ? WHERE id = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_DEL_CLUB_FINDER_APPLICANT, "DELETE FROM club_finder_applicant WHERE id = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_DEL_CLUB_FINDER_APPLICANTS_BY_POSTING, "DELETE FROM club_finder_applicant WHERE postingID = ?", CONNECTION_ASYNC);
 }
 
 CharacterDatabaseConnection::CharacterDatabaseConnection(MySQLConnectionInfo& connInfo, ConnectionFlags connectionFlags) : MySQLConnection(connInfo, connectionFlags)
