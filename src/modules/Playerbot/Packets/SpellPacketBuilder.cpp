@@ -14,8 +14,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "SpellPacketBuilder.h"
+#include <memory>
 
 // TrinityCore includes
 #include "CombatLogPacketsCommon.h"
@@ -1387,7 +1387,7 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCancelAutoRepeatPacketInte
     if (!caster)
         return nullptr;
 
-    auto packet = std::make_unique<>(CMSG_CANCEL_AUTO_REPEAT_SPELL);
+    auto packet = std::make_unique<WorldPacket>(CMSG_CANCEL_AUTO_REPEAT_SPELL);
     // No data for this packet
 
     TC_LOG_TRACE("playerbot.spells.packets",
