@@ -140,7 +140,7 @@ namespace Threading
             auto newPtr = ::std::make_shared<T>(::std::move(newState));
 
             // Atomically update the shared_ptr
-            ::std::atomic_store_explicit(&_state, newPtr, ::std::memory_order_release);
+            _state.store(newPtr, ::std::memory_order_release);
 
             // Increment version
             _version.fetch_add(1, ::std::memory_order_release);
@@ -149,7 +149,7 @@ namespace Threading
         T Read(uint64& version) const
         {
             // Atomically load the shared_ptr
-            auto statePtr = ::std::atomic_load_explicit(&_state, ::std::memory_order_acquire);
+            auto statePtr = _state.load(::std::memory_order_acquire);
 
             // Get version
             version = _version.load(::std::memory_order_acquire);
@@ -159,7 +159,7 @@ namespace Threading
         }
 
     private:
-        ::std::shared_ptr<T> _state;
+        ::std::atomic<::std::shared_ptr<T>> _state;
         ::std::atomic<uint64> _version;
     };
 

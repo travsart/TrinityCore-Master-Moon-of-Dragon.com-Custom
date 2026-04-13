@@ -1,4 +1,5 @@
 -- Club Finder tables for guild recruitment system
+USE `characters`;
 
 DROP TABLE IF EXISTS `club_finder_applicant`;
 DROP TABLE IF EXISTS `club_finder_post`;

@@ -1,4 +1,5 @@
 -- Evoker spell script bindings
+USE `world`;
 
 -- 359073 - Eternity Surge (3-stage base version)
 DELETE FROM `spell_script_names` WHERE `spell_id` = 359073 AND `ScriptName` IN ('spell_evo_eternity_surge', 'spell_evo_eternity_surge_base');
